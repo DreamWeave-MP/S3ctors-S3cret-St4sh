@@ -42,8 +42,8 @@ mv OpenMWModTemplate.omwscripts "${mod_id}".omwscripts
 sed -i "s|openmw-mod-template|${mod_id}|g" .gitlab-ci.yml
 
 # build.sh:8:file_name=openmw-mod-template.zip
-# build.sh:14:zip --must-match --recurse-paths ${file_name} scripts CHANGELOG.md LICENSE README.md openmw-mod-template.omwscripts version.txt
-sed -i "s|openmw-mod-template|${mod_id}|g" build.sh
+# build.sh:14:zip --must-match --recurse-paths ${file_name} scripts CHANGELOG.md LICENSE README.md OpenMWModTemplate.omwscripts version.txt
+sed -i "s|openmw-mod-template|${mod_id}|g;s|OpenMWModTemplate|${mod_id}|g" build.sh
 
 # CHANGELOG.md:1:## OpenMW Mod Template Changelog
 # CHANGELOG.md:7:<!--[Download Link](https://gitlab.com/modding-openmw/openmw-mod-template/-/packages/TODO)-->
@@ -56,7 +56,7 @@ sed -i "s|A template for building OpenMW mods, designed to be used as a base for
 sed -i "s|2022|${this_year}|;s|OpenMW Mod Template|${name}|" LICENSE
 
 # openmw-mod-template.omwscripts:1:PLAYER: scripts/openmw-mod-template/player.lua
-sed -i "s|openmw-mod-template|${mod_id}|" "${mod_id}".omwscripts
+sed -i "s|OpenMWModTemplate|${mod_id}|" "${mod_id}".omwscripts
 
 # README.md:1:# OpenMW Mod Template
 # README.md:3:A template for building OpenMW mods, designed to be used as a base for new projects to quickly get going with. Made to be used with [this modders' guide](https://modding-openmw.com/guides/modders/).
