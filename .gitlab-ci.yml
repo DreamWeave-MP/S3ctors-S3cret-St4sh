@@ -1,0 +1,50 @@
+stages:
+  - build
+  - deploy
+  - site
+
+variables:
+  build_img: alpine:3.15.4
+  curl_img: curlimages/curl:7.83.0
+  project: openmw-mod-template
+  pkg_name: "${project}.zip"
+  pkg_url:
+    "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${project}/${CI_COMMIT_TAG}"
+
+make:
+  image: ${build_img}
+  stage: build
+  script:
+  - apk add git zip
+  - ./build.sh
+  artifacts:
+    paths:
+      - "${pkg_name}*"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_TAG
+
+pages:
+  stage: site
+  artifacts:
+    paths:
+      - public
+  image: ${build_img}
+  script:
+    - apk add bash cmark git highlight
+    - git submodule init
+    - git submodule update
+    - ./web/build.sh --profile prod
+    - mv web/build public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+
+upload:
+  stage: deploy
+  image: ${curl_img}
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - 'curl -s --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${pkg_name} "${pkg_url}/${pkg_name}"'
+    - 'curl -s --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${pkg_name}.sha256sum.txt "${pkg_url}/${pkg_name}.sha256sum.txt"'
+    - 'curl -s --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${pkg_name}.sha512sum.txt "${pkg_url}/${pkg_name}.sha512sum.txt"'
