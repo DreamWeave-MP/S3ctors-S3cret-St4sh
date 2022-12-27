@@ -1,0 +1,41 @@
+a:hover {
+    border-bottom: 1px solid #ffffff;
+}
+
+h3 {
+    margin-top: 15px;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.center {
+    text-align: center;
+}
+
+div#dev-build {
+    font-size: 0.9em;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+div#links {
+    font-size: 1.1em;
+}
+
+div#errors {
+    color: red;
+}
+
+div#shas {
+    font-size: 0.8em;
+}
+
+footer img {
+    margin-bottom: 0;
+}
+
+div#links a#download:visited {
+  color: #e6e6e6;
+}
