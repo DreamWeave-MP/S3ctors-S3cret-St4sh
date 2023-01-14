@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -eu -o pipefail
+#!/bin/sh
+set -eu
 
 #
 # This script packages the project into a zip file.
