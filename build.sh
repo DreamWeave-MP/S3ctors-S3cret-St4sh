@@ -8,7 +8,7 @@ set -eu
 file_name=openmw-mod-template.zip
 
 cat > version.txt <<EOF
-Mod version: $(git describe --tags)
+Mod version: $(git describe --tags || git rev-parse --short HEAD)
 EOF
 
 zip --must-match --recurse-paths ${file_name} scripts CHANGELOG.md LICENSE README.md OpenMWModTemplate.omwscripts version.txt
