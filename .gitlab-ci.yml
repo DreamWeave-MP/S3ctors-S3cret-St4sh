@@ -6,10 +6,9 @@ stages:
 variables:
   build_img: alpine:3.15.4
   curl_img: curlimages/curl:7.83.0
-  project: openmw-mod-template
-  pkg_name: "${project}.zip"
+  pkg_name: "${CI_PROJECT_NAME}.zip"
   pkg_url:
-    "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${project}/${CI_COMMIT_TAG}"
+    "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}"
 
 make:
   image: ${build_img}
