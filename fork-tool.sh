@@ -41,9 +41,9 @@ mv OpenMWModTemplate.omwscripts "${mod_id}".omwscripts
 # .gitlab-ci.yml:9:  project: openmw-mod-template
 sed -i "s|openmw-mod-template|${mod_id}|g" .gitlab-ci.yml
 
-# build.sh:8:file_name=openmw-mod-template.zip
-# build.sh:14:zip --must-match --recurse-paths ${file_name} scripts CHANGELOG.md LICENSE README.md OpenMWModTemplate.omwscripts version.txt
-sed -i "s|openmw-mod-template|${mod_id}|g;s|OpenMWModTemplate|${mod_id}|g" build.sh
+# pkg.sh:8:file_name=openmw-mod-template.zip
+# pkg.sh:14:zip --must-match --recurse-paths ${file_name} scripts CHANGELOG.md LICENSE README.md OpenMWModTemplate.omwscripts version.txt
+sed -i "s|openmw-mod-template|${mod_id}|g;s|OpenMWModTemplate|${mod_id}|g" pkg.sh
 
 # CHANGELOG.md:1:## OpenMW Mod Template Changelog
 # CHANGELOG.md:7:<!--[Download Link](https://gitlab.com/modding-openmw/openmw-mod-template/-/packages/TODO)-->
