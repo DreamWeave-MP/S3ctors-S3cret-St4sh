@@ -6,7 +6,7 @@ clean:
 	cd $(proj_dir) && rm -f *.zip *.sha*sum.txt version.txt
 
 pkg: clean
-	cd $(proj_dir) && ./build.sh
+	cd $(proj_dir) && ./pkg.sh
 
 web-clean:
 	cd $(proj_dir)/web && rm -rf build site/*.md sha256sums soupault-*-linux-x86_64.tar.gz
