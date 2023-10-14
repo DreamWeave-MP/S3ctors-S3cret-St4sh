@@ -89,6 +89,10 @@ sed -i "s|A template for building OpenMW mods, designed to be used as a base for
 # web/templates/main.html:43:    <div id="modProject" data-mod-project="openmw-mod-template"></div>
 sed -i "s|A template for building OpenMW mods, designed to be used as a base for new projects to quickly get going with.|${desc}|;s|OpenMW Mod Template|${name}|g;s|modding-openmw|${acct}|g;s|openmw-mod-template|${mod_id}|g" web/templates/main.html
 
+rm -rf .git
+
+git init
+
 # Inform the user how they can save their changes
 cat <<EOF
 
