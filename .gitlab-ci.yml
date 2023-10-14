@@ -15,7 +15,7 @@ make:
   stage: build
   script:
   - apk add git zip
-  - ./build.sh
+  - ./pkg.sh
   artifacts:
     paths:
       - "${pkg_name}*"

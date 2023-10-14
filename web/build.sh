@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu -o pipefail
+set -euo pipefail
 
 #
 # This script builds the project website. It downloads soupault as needed and
@@ -9,7 +9,7 @@ set -eu -o pipefail
 this_dir=$(realpath "$(dirname "${0}")")
 cd "${this_dir}"
 
-soupault_version=4.3.1
+soupault_version=4.6.0
 soupault_pkg=soupault-${soupault_version}-linux-x86_64.tar.gz
 soupault_path=./soupault-${soupault_version}-linux-x86_64
 
