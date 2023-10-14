@@ -9,7 +9,7 @@ second_arg="${2-none}"
 third_arg="${3-none}"
 
 if [[ "${first_arg}" = none ]]; then
-    echo "Please enter your new mod's name (no special characters):"
+    echo "Please enter your new mod's name (no special characters and all lowercase!):"
     read -r name
 else
     name="${first_arg}"
