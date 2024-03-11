@@ -9,7 +9,7 @@ set -euo pipefail
 this_dir=$(realpath "$(dirname "${0}")")
 cd "${this_dir}"
 
-soupault_version=4.6.0
+soupault_version=4.8.0
 soupault_pkg=soupault-${soupault_version}-linux-x86_64.tar.gz
 soupault_path=./soupault-${soupault_version}-linux-x86_64
 
