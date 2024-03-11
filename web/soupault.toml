@@ -25,8 +25,8 @@
 [widgets.page-title]
   widget = "title"
   selector = "h2"
-  default = "OpenMW Mod Template &mdash; A template for building OpenMW mods, designed to be used as a base for new projects to quickly get going with"
-  append = " | OpenMW Mod Template &mdash; A template for building OpenMW mods, designed to be used as a base for new projects to quickly get going with"
+  default = "MOMW Mod Template &mdash; A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with."
+  append = " | MOMW Mod Template &mdash; A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with."
   force = false
 
 [widgets.generator-meta]
@@ -70,19 +70,12 @@
   ]
   widget = "prod-mode"
   profile = "prod"
-  project = "openmw-mod-template"
+  project = "momw-mod-template"
 
 [widgets.highlight-active-link]
   widget = "section-link-highlight"
   selector = "nav#nav"
   active_link_class = "bold"
-
-[widgets.tracking-js]
-  profile = "prod"
-  widget = "insert_html"
-  html = '<script data-goatcounter="https://stats.gitlab.modding-openmw.com/count" async src="//stats.gitlab.modding-openmw.com/count.js"></script>'
-  selector = "body"
-  parse = true
 
 [widgets.highlight-code]
   widget = "preprocess_element"

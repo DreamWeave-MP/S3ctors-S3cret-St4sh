@@ -3,8 +3,14 @@
     <meta charset="utf-8">
     <title></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A template for building OpenMW mods, designed to be used as a base for new projects to quickly get going with.">
-    <meta name="author" content="OpenMW Mod Template Authors">
+    <meta name="description" content="A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with.">
+    <meta name="author" content="MOMW Mod Template Authors">
+    <meta property="og:site_name" content="Go Home! for OpenMW-Lua" />
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://modding-openmw.gitlab.io/go-home/">
+    <meta property="og:title" content="Go Home! for OpenMW-Lua">
+    <meta property="og:description" content="Gives NPCs a schedule.">
+    <meta property="og:image" content="https://modding-openmw.gitlab.io/go-home/img/go-home.gif">
     <link rel="stylesheet" type="text/css" href="/css/normalize.css">
     <link rel="stylesheet" type="text/css" href="/css/sakura.css">
     <link rel="stylesheet" type="text/css" media="(prefers-color-scheme: dark)" href="/css/sakura-dark.css">
@@ -12,7 +18,7 @@
     <link rel="stylesheet" type="text/css" media="(prefers-color-scheme: dark)" href="/css/site-dark.css">
   </head>
   <body>
-    <h1 class="center">OpenMW Mod Template</h1>
+    <h1 class="center"><img src="/img/title.png" title="MOMW Mod Template" /></h1>
     <noscript>
       <p class="bold center">
         Please enable Javascript for this page, Gitlab itself also requires Javascript in order to even look at packages. Sorry :(
@@ -20,27 +26,27 @@
     </noscript>
     <p class="center">Latest version: <span class="bold" id="latestVersion">...</span></p>
     <div id="links" class="bold center">
-      <a class="button" id="download" title="Download the latest release of OpenMW Mod Template">Download</a>
+      <a class="button" id="download" title="Download the latest release of MOMW Mod Template">Download</a>
     </div>
     <div id="shas" class="bold center">
       <a id="sha256" title="Verify the integrity of the file you downloaded">sha256</a>/<a id="sha512" title="Verify the integrity of the file you downloaded">sha512</a>
     </div>
     <div class="bold center" id="errors"></div>
     <div class="center" id="dev-build">
-      <a id="download" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fopenmw-mod-template/jobs/artifacts/master/raw/openmw-mod-template.zip?job=make" title="Dev builds may have newer features, but they will be less tested">Dev Build</a> (<a id="sha256" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fopenmw-mod-template/jobs/artifacts/master/raw/openmw-mod-template.zip.sha256sum.txt?job=make" title="Verify the integrity of the file you downloaded">sha256</a>/<a id="sha512" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fopenmw-mod-template/jobs/artifacts/master/raw/openmw-mod-template.zip.sha512sum.txt?job=make" title="Verify the integrity of the file you downloaded">sha512</a>)
+      <a id="download" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fmomw-mod-template/jobs/artifacts/master/raw/momw-mod-template.zip?job=make" title="Dev builds may have newer features, but they will be less tested">Dev Build</a> (<a id="sha256" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fmomw-mod-template/jobs/artifacts/master/raw/momw-mod-template.zip.sha256sum.txt?job=make" title="Verify the integrity of the file you downloaded">sha256</a>/<a id="sha512" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fmomw-mod-template/jobs/artifacts/master/raw/momw-mod-template.zip.sha512sum.txt?job=make" title="Verify the integrity of the file you downloaded">sha512</a>)
     </div>
     <nav class="center" id="nav">
-      <a href="/">Home</a> | <a href="/changelog/">Changelog</a> | <a href="/readme/">README</a>
+      <a href="/">Home</a> | <a href="/changelog/">Changelog</a>
     </nav>
     <div class="center" id="gitlab-links" title="These are external links that will take you to GitLab.">
-      <a href="https://gitlab.com/modding-openmw/openmw-mod-template/activity">Activity</a> | <a href="https://gitlab.com/modding-openmw/openmw-mod-template/-/issues">Report A Bug</a>
+      <a href="https://gitlab.com/modding-openmw/momw-mod-template/activity">Activity</a> | <a href="https://gitlab.com/modding-openmw/momw-mod-template/-/issues">Report A Bug</a>
     </div>
     <div id="content"></div>
     <footer style="text-align: center;">
       <a href="https://soupault.app/"><img src="/img/powered_by_soupault_88x31.png" title="This website is built using soupault"></a>
     </footer>
     <div id="modOrg" data-mod-org="modding-openmw"></div>
-    <div id="modProject" data-mod-project="openmw-mod-template"></div>
+    <div id="modProject" data-mod-project="momw-mod-template"></div>
     <script src="/js/gitlab.js"></script>
   </body>
 </html>
