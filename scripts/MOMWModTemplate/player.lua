@@ -14,7 +14,7 @@ local I = require("openmw.interfaces")
 -- L: Use OpenMW's builtin localization handling to support multiple languages more easily
 -- Player: Access the player object in the game
 -- playerSettings: Access the player's settings
-local MOD_ID = "OpenMWModTemplate"
+local MOD_ID = "MOMWModTemplate"
 local L = require("openmw.core").l10n(MOD_ID)
 local Player = require("openmw.types").Player
 local playerSettings = storage.playerSection("SettingsPlayer" .. MOD_ID)
@@ -31,7 +31,7 @@ local interfaceVersion = 1
 I.Settings.registerPage {
     key = MOD_ID,
     l10n = MOD_ID,
-    name = "OpenMW Mod Template",
+    name = "MOMW Mod Template",
     description = L("modDescription")
 }
 
@@ -46,7 +46,7 @@ I.Settings.registerPage {
 I.Settings.registerGroup {
     key = "SettingsPlayer" .. MOD_ID,
     l10n = MOD_ID,
-    name = "OpenMW Mod Template",
+    name = "MOMW Mod Template",
     page = MOD_ID,
     description = "settingsDescription",
     permanentStorage = false,
@@ -100,7 +100,7 @@ return {
     },
     -- This is how we make functionality from our mod available to other mods.
     -- The code in another mod might look like this:
-    -- I.OpenMWModTemplate.SayHello()
+    -- I.MOMWModTemplate.SayHello()
     interfaceName = MOD_ID,
     interface = {
         version = interfaceVersion,
