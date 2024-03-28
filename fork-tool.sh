@@ -46,7 +46,7 @@ sed -i "s|2022|${this_year}|;s|MOMW Mod Template|${name}|" LICENSE
 sed -i "s|MOMWModTemplate|${mod_id}|" "${mod_id}".omwscripts
 sed -i "s|MOMW Mod Template|${name}|;s|A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with. Made to be used with \[this modders' guide\](https://modding-openmw.com/guides/modders/).|${desc}|" README.md
 sed -i "s|MOMWModTemplate|${mod_id}|g;s|MOMW Mod Template|%{name}|g" ./scripts/"${mod_id}"/player.lua
-sed -i "s|MOMW Mod Template|${name}|g;s|A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with.${desc}|g;s|momw-mod-template|${mod_id}|" web/soupault.toml
+sed -i "s|MOMW Mod Template|${name}|g;s|A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with.|${desc}|g;s|momw-mod-template|${mod_id}|" web/soupault.toml
 sed -i "s|A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with. Made to be used with <a href=\"https://modding-openmw.com/guides/modders/\"> this modders' guide</a>.|${desc}|" web/site/index.html
 sed -i "s|A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with.|${desc}|;s|MOMW Mod Template|${name}|g;s|modding-openmw|${acct}|g;s|momw-mod-template|${mod_id}|g" web/templates/main.html
 
