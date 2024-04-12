@@ -59,7 +59,7 @@ Settings.registerGroup {
             renderer = 'inputBinding',
             name = 'Confirm Glamour',
             description = 'Confirms choices in the glamour menu',
-            default = 'Space',
+            default = 'Return',
             argument = {
               key = 'transmogMenuConfirm', -- The key here should match the key in the action table
               type = "trigger" -- And whether it's an action or trigger
