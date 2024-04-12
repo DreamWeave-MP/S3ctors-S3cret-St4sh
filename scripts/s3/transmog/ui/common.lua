@@ -115,7 +115,13 @@ common.resetPortraits = function()
 end
 
 common.messageBoxSingleton = function(widgetName, message, duration)
-  if I.transmogActions.message.singleton ~= nil then return end
+  if I.transmogActions.message.singleton ~= nil then
+    async:newUnsavableSimulationTimer(duration or 1,
+                                      function()
+                                        common.messageBoxSingleton(widgetName, message, duration)
+    end)
+    return
+  end
 
   I.transmogActions.message.singleton = ui.create {
     template = I.MWUI.templates.boxTransparentThick,
