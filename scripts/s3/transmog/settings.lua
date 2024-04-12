@@ -5,7 +5,7 @@ local Settings = require('openmw.interfaces').Settings
 -- So we *must* define an entire one
 -- This is just the page name and description
 Settings.registerPage {
-    key = 's3_transmogMenu',
+    key = 's3_transmogMenuPage',
     l10n = 'TransmogrificationMenu',
     name = 'Transmog Menu',
     description = 'Settings for the Transmog Menu',
@@ -15,25 +15,14 @@ Settings.registerPage {
 -- The actual bound key value is the `default` value in the tables within settings table
 Settings.registerGroup {
     key = 'Settingss3_transmogMenuGroup',
-    page = 's3_transmogMenu',
+    page = 's3_transmogMenuPage',
     l10n = 'TransmogrificationMenu',
     name = 'Key Bindings',
     description = '',
-    permanentStorage = true, -- Need to figure out exactly what this is
+    permanentStorage = true,
     settings = {
         {
-            key = 'TransmogMenuKey',
-            renderer = 'inputBinding',
-            name = 'Open Glamour Menu',
-            description = 'Key which opens the transmogrification menu',
-            default = 'k',
-            argument = {
-              key = 'transmogMenuKey', -- The key here should match the key in the action table
-              type = "action" -- And whether it's an action or trigger
-            }
-        },
-        {
-            key = 'TransmogMenuRotateRight',
+            key = 'SettingsTransmogMenuRotateRight',
             renderer = 'inputBinding',
             name = 'Rotate Right',
             description = 'Rotates the character to the right in the glamour menu',
@@ -44,7 +33,7 @@ Settings.registerGroup {
             }
         },
         {
-            key = 'TransmogMenuRotateLeft',
+            key = 'SettingsTransmogMenuRotateLeft',
             renderer = 'inputBinding',
             name = 'Rotate Left',
             description = 'Rotates the character to the left in the glamour menu',
@@ -55,11 +44,22 @@ Settings.registerGroup {
             }
         },
         {
-            key = 'TransmogMenuConfirm',
+            key = 'SettingsTransmogMenuOpen',
+            renderer = 'inputBinding',
+            name = 'Open Glamour Menu',
+            description = 'Key which opens the transmogrification menu',
+            default = 'k',
+            argument = {
+              key = 'transmogMenuOpen', -- The key here should match the key in the action table
+              type = "trigger" -- And whether it's an action or trigger
+            }
+        },
+        {
+            key = 'SettingsTransmogMenuKeyConfirm',
             renderer = 'inputBinding',
             name = 'Confirm Glamour',
             description = 'Confirms choices in the glamour menu',
-            default = 'Return',
+            default = 'return',
             argument = {
               key = 'transmogMenuConfirm', -- The key here should match the key in the action table
               type = "trigger" -- And whether it's an action or trigger
@@ -68,21 +68,11 @@ Settings.registerGroup {
     },
 }
 
-
 -- This is the #ActionInfo table that will be used to register the action
 -- The name appears in the settings menu along with the description
 local actions = {
   {
-    name = 'Open',
-    l10n = 'Open', -- localization key; meant to be replaced by translation files
-    description = '', -- description of the action
-    type = input.ACTION_TYPE.Boolean, -- Actions can have bool, integer, or string values
-    defaultValue = false,
-    key = 'transmogMenuKey', -- This is not the key that will be used to bind the action,
-    -- but rather the table key which is used to refer to it elsewhere
-  },
-  {
-    name = 'Rotate Right',
+    name = '',
     l10n = 'RotateRight',
     description = '',
     type = input.ACTION_TYPE.Boolean,
@@ -90,7 +80,7 @@ local actions = {
     key = 'transmogMenuRotateRight',
   },
   {
-    name = 'Rotate Left',
+    name = '',
     l10n = 'RotateLeft',
     description = '',
     type = input.ACTION_TYPE.Boolean,
@@ -101,11 +91,18 @@ local actions = {
 
 local triggers = {
   {
-    name = 'Confirm',
-    l10n = 'Confirm',
-    description = 'Confirms choices in the glamour menu',
-    -- type = input.ACTION_TYPE.Boolean,
+    name = '',
+    l10n = 'MogMenuOpen', -- localization key; meant to be replaced by translation files
+    description = '', -- description of the action
+    type = input.ACTION_TYPE.Boolean, -- Actions can have bool, integer, or string values
     defaultValue = false,
+    key = 'transmogMenuOpen', -- This is not the key that will be used to bind the action,
+    -- but rather the table key which is used to refer to it elsewhere
+  },
+  {
+    name = '',
+    l10n = 'ConfirmGlamour',
+    description = '',
     key = 'transmogMenuConfirm',
   },
 }

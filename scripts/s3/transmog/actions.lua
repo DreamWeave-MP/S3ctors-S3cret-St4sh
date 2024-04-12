@@ -19,6 +19,9 @@ local ConfirmScreen = require('scripts.s3.transmog.ui.leftpanel.glamourbutton').
 
 local playerSettings = storage.playerSection('Settingss3_transmogMenuGroup'):asTable()
 
+-- add safeties for unsupported types
+-- add stacking for ammunition
+
 local prevCam = nil
 local prevStance = nil
 local rotateStopFn = {
@@ -35,11 +38,11 @@ local outInterface = {
 local function rotateWarning()
   if outInterface.message.hasShowedControls then return end
   common.messageBoxSingleton("Rotate Warning", "Use the "
-                             .. string.upper(playerSettings.TransmogMenuRotateRight)
-                             ..  " and " .. string.upper(playerSettings.TransmogMenuRotateLeft)
-                             .. " keys to rotate your character.\n"
-                             .. "Confirm your choices with the "
-                             .. string.upper(playerSettings.TransmogMenuConfirm) .. " key")
+                             .. string.upper(playerSettings.SettingsTransmogMenuRotateRight)
+                             ..  " and " .. string.upper(playerSettings.SettingsTransmogMenuRotateLeft)
+                             .. " keys to rotate your character.", 2)
+  common.messageBoxSingleton("Confirm Warning", "Confirm your choices with the "
+                             .. string.upper(playerSettings.SettingsTransmogMenuKeyConfirm) .. " key", 2)
   outInterface.message.hasShowedControls = true
 end
 
@@ -112,8 +115,7 @@ end
 
 -- Now we set up the callback
 local menuStateSwitch = async:callback(function()
-    if not input.getBooleanActionValue("transmogMenuKey")
-      or not types.Actor.isOnGround(self)
+    if not types.Actor.isOnGround(self)
       or types.Actor.isSwimming(self)
       or outInterface.message.confirmScreen
       or I.UI.getMode() == I.UI.MODE.MainMenu
@@ -170,9 +172,6 @@ local menuStateSwitch = async:callback(function()
     end
 end)
 
--- And this is where we actually bind the action to the callback
-input.registerActionHandler("transmogMenuKey", menuStateSwitch)
-
 input.registerActionHandler("transmogMenuRotateRight", async:callback(function()
     if not outInterface.menu or outInterface.message.confirmScreen or not outInterface.menu.layout.props.visible then return end
     if not input.getBooleanActionValue("transmogMenuRotateRight") and rotateStopFn.funcRight then
@@ -199,6 +198,9 @@ input.registerActionHandler("transmogMenuRotateLeft", async:callback(function()
       0.1,
       {})
 end))
+
+-- And this is where we actually bind the action to the callback
+input.registerTriggerHandler("transmogMenuOpen", menuStateSwitch)
 
 input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
                                 -- Use this key to finish the 'mog
