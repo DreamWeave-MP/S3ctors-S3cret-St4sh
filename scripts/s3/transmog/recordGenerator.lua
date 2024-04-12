@@ -1,4 +1,3 @@
-local aux_util = require('openmw_aux.util')
 local types = require('openmw.types')
 local world = require('openmw.world')
 
@@ -23,10 +22,6 @@ return {
       if not toRemoveBook or not toRemoveItem then error("Item not found in inventory") end
       toRemoveBook:remove(1)
       toRemoveItem:remove(1)
-
-      -- print("toRemoveBook: " .. toRemoveBook.id)
-      -- print("book enchant and capacity: " .. types.Book.record(toRemoveBook).enchant
-      --       .. " " .. types.Book.record(toRemoveBook).enchantCapacity)
 
       recordTable.enchant = types.Book.record(toRemoveBook).enchant
       recordTable.enchantCapacity = types.Book.record(toRemoveBook).enchantCapacity
