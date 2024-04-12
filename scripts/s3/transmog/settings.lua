@@ -54,6 +54,17 @@ Settings.registerGroup {
               type = "action" -- And whether it's an action or trigger
             }
         },
+        {
+            key = 'TransmogMenuConfirm',
+            renderer = 'inputBinding',
+            name = 'Confirm Glamour',
+            description = 'Confirms choices in the glamour menu',
+            default = 'Space',
+            argument = {
+              key = 'transmogMenuConfirm', -- The key here should match the key in the action table
+              type = "trigger" -- And whether it's an action or trigger
+            }
+        },
     },
 }
 
@@ -85,12 +96,26 @@ local actions = {
     type = input.ACTION_TYPE.Boolean,
     defaultValue = false,
     key = 'transmogMenuRotateLeft',
-  }
+  },
 }
 
--- The actions are now defined, but have no values assigned to them
--- Check settings.lua for the actual key bindings and settings page
+local triggers = {
+  {
+    name = 'Confirm',
+    l10n = 'Confirm',
+    description = 'Confirms choices in the glamour menu',
+    -- type = input.ACTION_TYPE.Boolean,
+    defaultValue = false,
+    key = 'transmogMenuConfirm',
+  },
+}
+
 for _, actionInfo in ipairs(actions) do
   print("Registering action: " .. actionInfo.key)
   input.registerAction(actionInfo)
+end
+
+for _, triggerInfo in ipairs(triggers) do
+  print("Registering trigger: " .. triggerInfo.key)
+  input.registerTrigger(triggerInfo)
 end

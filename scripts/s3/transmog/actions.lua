@@ -4,6 +4,7 @@ local async = require('openmw.async')
 local aux_util = require('openmw_aux.util')
 local camera = require('openmw.camera')
 local common = require('scripts.s3.transmog.ui.common')
+local core = require('openmw.core')
 local input = require('openmw.input')
 local self = require('openmw.self')
 local storage = require('openmw.storage')
@@ -14,6 +15,7 @@ local util = require('openmw.util')
 
 local MainWidget = require('scripts.s3.transmog.ui.mainwidget')
 local ItemContainer = require('scripts.s3.transmog.ui.rightpanel.itemcontainer')
+local ConfirmScreen = require('scripts.s3.transmog.ui.leftpanel.glamourbutton').createCallback
 
 local playerSettings = storage.playerSection('Settingss3_transmogMenuGroup'):asTable()
 
@@ -31,10 +33,67 @@ local outInterface = {
 }
 
 local function rotateWarning()
+  if outInterface.message.hasShowedControls then return end
   common.messageBoxSingleton("Rotate Warning", "Use the "
                              .. string.upper(playerSettings.TransmogMenuRotateRight)
                              ..  " and " .. string.upper(playerSettings.TransmogMenuRotateLeft)
-                             .. " keys to rotate your character")
+                             .. " keys to rotate your character.\n"
+                             .. "Confirm your choices with the "
+                             .. string.upper(playerSettings.TransmogMenuConfirm) .. " key")
+  outInterface.message.hasShowedControls = true
+end
+
+outInterface.acceptTransmog = function()
+  if I.transmogActions.message.confirmScreen == nil then return end
+
+  local newItemName = I.transmogActions.message.confirmScreen.layout.content[2].content[1].props.text
+
+  if newItemName == "" then
+    common.messageBoxSingleton("No Name Warning", "You must name your item!")
+    return
+  end
+
+  local baseItem = I.transmogActions.baseItemContainer.content[2].userData
+  local newItem = I.transmogActions.newItemContainer.content[2].userData
+
+  -- A weapon is used as base, with the appearance of a non-equippable item
+  -- In this case we only apply the model from the new item on the new record.
+  if baseItem.type == types.Weapon then
+    local weaponTable = {name = newItemName, model = newItem.record.model, icon = newItem.record.icon}
+    core.sendGlobalEvent("mogOnWeaponCreate",
+                         {
+                           target = self,
+                           item = weaponTable,
+                           toRemove = baseItem.recordId
+    })
+  elseif baseItem.type == types.Book then
+    local bookTable = { name = newItemName }
+    core.sendGlobalEvent("mogOnBookCreate",
+                         {
+                           target = self,
+                           item = bookTable,
+                           toRemoveBook = baseItem.recordId,
+                           toRemoveItem = newItem.recordId,
+    })
+  elseif baseItem.type == types.Clothing or baseItem.type == types.Armor then
+    local apparelTable = { name = newItemName }
+    core.sendGlobalEvent("mogOnApparelCreate",
+                         {
+                           target = self,
+                           item = apparelTable,
+                           oldItem = baseItem.recordId,
+                           newItem = newItem.recordId,
+    })
+  end
+  types.Actor.setEquipment(self, I.transmogActions.originalInventory)
+  outInterface.message.confirmScreen:destroy()
+  outInterface.message.confirmScreen = nil
+  async:newUnsavableSimulationTimer(0.01, function()
+                                      common.resetPortraits()
+                                      outInterface.itemContainer.content = ui.content(ItemContainer.updateContent("Apparel"))
+                                      outInterface.menu.layout.props.visible = true
+                                      outInterface.menu:update()
+                                      end)
 end
 
 outInterface.restoreUserInterface = function()
@@ -111,6 +170,9 @@ local menuStateSwitch = async:callback(function()
     end
 end)
 
+-- And this is where we actually bind the action to the callback
+input.registerActionHandler("transmogMenuKey", menuStateSwitch)
+
 input.registerActionHandler("transmogMenuRotateRight", async:callback(function()
     if not outInterface.menu or outInterface.message.confirmScreen or not outInterface.menu.layout.props.visible then return end
     if not input.getBooleanActionValue("transmogMenuRotateRight") and rotateStopFn.funcRight then
@@ -138,43 +200,57 @@ input.registerActionHandler("transmogMenuRotateLeft", async:callback(function()
       {})
 end))
 
--- And this is where we actually bind the action to the callback
-input.registerActionHandler("transmogMenuKey", menuStateSwitch)
-
-local consolePressed = false
+input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
+                                -- Use this key to finish the 'mog
+                                -- Only if either of the two relevant menus is open
+                                -- Guess we'll also need to do this for enhancements as well.
+                                if outInterface.menu and outInterface.menu.layout.props.visible then
+                                  ConfirmScreen()
+                                elseif outInterface.message.confirmScreen then
+                                  outInterface.acceptTransmog()
+                                end
+end))
 
 return {
   interface = outInterface,
   interfaceName = 'transmogActions',
   engineHandlers = {
-    onFrame = function()
-      -- Close the menu if opened and the escape key is pressed
-      -- also track closures of the console via escape (which fortunately seems hardcoded)
-      if input.isKeyPressed(input.KEY.Escape) then
+    onKeyRelease = function(key)
+      -- Since the engine doesn't let you bind ESC
+      -- and it's generally just used to close stuff, do that here
+      if key.code == input.KEY.Escape then
         if outInterface.consoleOpen then
           outInterface.consoleOpen = false
         end
-        if outInterface.menu and outInterface.menu.layout.props.visible then
+        if outInterface.message.confirmScreen then
+          outInterface.message.confirmScreen:destroy()
+          outInterface.message.confirmScreen = nil
+          outInterface.menu.layout.props.visible = true
+          outInterface.menu:update()
+          I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
+        elseif outInterface.menu and outInterface.menu.layout.props.visible then
           common.teardownTransmog(prevStance)
         end
-        return
       end
-
-      if input.isActionPressed(input.ACTION.Console) and not consolePressed then
-        consolePressed = true
+    end,
+    onInputAction = function(action)
+        -- Intercept attempts to reopen the HUD and override them while 'mogging
+        -- Not sure if this one can be made into an action?
+      if action == input.ACTION.ToggleHUD then
+        if I.UI.isHudVisible()
+          and outInterface.menu
+          and outInterface.menu.layout.props.visible then
+          I.UI.setHudVisibility(false)
+        end
       end
-
-      -- Intercept attemtps to reopen the HUD and override them
-      if input.isActionPressed(input.ACTION.ToggleHUD)
-        and I.UI.isHudVisible()
-        and outInterface.menu
-        and outInterface.menu.layout.props.visible then
-        I.UI.setHudVisibility(false)
+    end,
+    onFrame = function()
+      if input.isActionPressed(input.ACTION.Console) and not outInterface.consoleOpen then
+        outInterface.consoleOpen = true
       end
-
       -- close the menu if the console is opened
-      if consolePressed and not input.isActionPressed(input.ACTION.Console) then
-        consolePressed = false
+      if outInterface.consoleOpen and not input.isActionPressed(input.ACTION.Console) then
+        outInterface.consoleOpen = false
         outInterface.consoleOpen = not outInterface.consoleOpen
         if outInterface.consoleOpen
           and outInterface.menu
