@@ -266,7 +266,7 @@ input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
                                 -- Guess we'll also need to do this for enhancements as well.
                                 -- I decided I like doing it this way better than attaching
                                 -- callbacks to the widget directly because I can't actually correlate a keybind to a widget there
-                                 if common.menuIsVisible() then
+                                 if common.mainIsVisible() then
                                   ConfirmScreen()
                                  elseif common.confirmIsVisible() then
                                   outInterface.acceptTransmog()
