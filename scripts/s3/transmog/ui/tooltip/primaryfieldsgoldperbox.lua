@@ -25,7 +25,7 @@ return function()
             type = ui.TYPE.Image,
             props = {
               name = "Primary Fields GoldPer Image 1",
-              size = util.vector2(12, 12),
+              size = util.vector2(20, 20),
               resource = ui.texture { path = "icons\\gold.tga" },
             },
           },
@@ -45,11 +45,11 @@ return function()
             type = ui.TYPE.Image,
             props = {
               name = "Primary Fields GoldPer Image 2",
-              size = util.vector2(12, 12),
+              size = util.vector2(20, 20),
               resource = ui.texture { path = "icons\\weight.tga" },
             },
           },
-          { external = { grow = 0.5 } },
+          { external = { grow = 0.3 } },
           {
             type = ui.TYPE.Text,
             external = {
