@@ -173,7 +173,9 @@ _ItemContainer.ItemPortrait = function(itemData)
           common.addHighlight(layout)
           ToolTip.refreshItem(itemData)
           I.transmogActions.menu:update()
-          I.transmogActions.updatePreview()
+          if input.getBooleanActionValue("transmogMenuActivePreview") then
+            I.transmogActions.updatePreview()
+          end
       end),
       focusLoss = async:callback(function(_, layout)
           local toolTip = I.transmogActions.message.toolTip
