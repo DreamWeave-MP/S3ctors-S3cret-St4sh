@@ -138,10 +138,18 @@ _ItemContainer.mapItemToEquipmentSlot = function(itemData)
   end
 end
 
+_ItemContainer.getUserDataFromLayout = function(layout)
+  for _, content in ipairs(layout.content) do
+    if content.userData then
+      return content.userData
+    end
+  end
+end
+
 _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
     -- The portrait, then the box, then the actual image
     -- It should be at index 1, but the highlight is at index 1
-    local itemData = layout.content[2].userData
+    local itemData = _ItemContainer.getUserDataFromLayout(layout)
     local mainWidget = I.transmogActions.menu
     local basePortrait = I.transmogActions.baseItemContainer
     local newPortrait = I.transmogActions.newItemContainer
@@ -184,6 +192,17 @@ _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
     end
 end)
 
+_ItemContainer.getEnchantmentFrame = function(record)
+  if record.enchant == nil or record.enchant == "" then return nil end
+  return {
+    type = ui.TYPE.Image,
+    props = {
+      resource = ui.texture{ path = "textures\\mogenchant\\menu_icon_magic.dds" },
+      size = const.IMAGE_SIZE,
+    },
+  }
+end
+
 _ItemContainer.ItemPortrait = function(itemData)
   if not itemData then
     error("Oops! Empty item data!")
@@ -196,48 +215,52 @@ _ItemContainer.ItemPortrait = function(itemData)
     --type = ui.TYPE.Flex,
     props = {
       propagateEvents = false,
+      name = itemData.recordId .. " container portrait",
     },
     events = {
       mousePress = _ItemContainer.addToLeftPanel,
-      mouseMove = async:callback(function(mouse, _layout)
-          if not common.toolTipIsVisible() then return end
-          I.transmogActions.message.toolTip.layout.props.position = mouse.position + util.vector2(25, 25)
-          I.transmogActions.message.toolTip:update()
-      end),
+      mouseMove = ToolTip.updateTooltip,
       focusGain = async:callback(function(_, layout)
           if not I.transmogActions.message.toolTip then
-            I.transmogActions.message.toolTip = ui.create(ToolTip)
+            print("Creating tooltip")
+            I.transmogActions.message.toolTip = ui.create(ToolTip.create())
           end
 
-          if #layout.content ~= 1 then return end
-
-          layout.content:insert(1, {
-                                  type = ui.TYPE.Image,
-                                  props = {
-                                    name = "highlight",
-                                    resource = ui.texture{ path = 'white' },
-                                    color = util.color.rgba(44 / 255, 46 / 255, 45 / 255, 0.5),
-                                    size = const.IMAGE_SIZE
-                                  },
-          })
-          I.transmogActions.message.toolTip.layout.props.visible = true
-          I.transmogActions.message.toolTip:update()
+          -- if #layout.content ~= 1 then return end
+          print(aux_util.deepToString(layout.content, 2))
+          if layout.content[1].props.name ~= "highlight" then
+            layout.content:insert(1, {
+                                    type = ui.TYPE.Image,
+                                    props = {
+                                      name = "highlight",
+                                      resource = ui.texture{ path = 'white' },
+                                      color = util.color.rgba(44 / 255, 46 / 255, 45 / 255, 0.5),
+                                      size = const.IMAGE_SIZE
+                                    },
+            })
+          end
+          ToolTip.refreshItem(itemData)
           I.transmogActions.menu:update()
       end),
       focusLoss = async:callback(function(_, layout)
           -- Remove the highlight and hide the tooltip
-          if #layout.content == 1 then return end
+          -- if #layout.content == 1 then return end
           local toolTip = I.transmogActions.message.toolTip
-
+          -- print("focusLoss")
           if common.toolTipIsVisible() then
             toolTip.layout.props.visible = false
             toolTip:update()
           end
-          layout.content[1] = table.remove(layout.content, 2)
+          if layout.content[1].props.name == "highlight" then
+            layout.content[1] = table.remove(layout.content, 2)
+            I.transmogActions.menu:update()
+          end
+          -- layout.content[1] = table.remove(layout.content, 2)
           I.transmogActions.menu:update()
       end),
     },
     content = ui.content {
+      _ItemContainer.getEnchantmentFrame(itemData.record) or { props = { name = "Fake Enchantment Frame" }},
       {
         --template = I.MWUI.templates.boxTransparentThick,
         --content = ui.content {{
