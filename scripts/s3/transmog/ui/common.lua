@@ -39,46 +39,90 @@ local common = {
       [types.Armor.TYPE.Cuirass] = {
         name = "Cuirass",
         slot = types.Actor.EQUIPMENT_SLOT.Cuirass,
+        weightClasses = {
+          low = 18.0,
+          high = 27.0,
+        }
       },
       [types.Armor.TYPE.Greaves] = {
         name = "Greaves",
         slot = types.Actor.EQUIPMENT_SLOT.Greaves,
+        weightClasses = {
+          low = 9.0,
+          high = 13.5,
+        }
       },
       [types.Armor.TYPE.Boots] = {
         name = "Boots",
         slot = types.Actor.EQUIPMENT_SLOT.Boots,
+        weightClasses = {
+          low = 12.0,
+          high = 18.0,
+        }
       },
       [types.Armor.TYPE.Helmet] = {
         name = "Helmet",
         slot = types.Actor.EQUIPMENT_SLOT.Helmet,
+        weightClasses = {
+          low = 3.0,
+          high = 4.5,
+        }
       },
       [types.Armor.TYPE.LPauldron] = {
         name = "Left Pauldron",
         slot = types.Actor.EQUIPMENT_SLOT.LeftPauldron,
+        weightClasses = {
+          low = 6.0,
+          high = 9.0,
+        },
       },
       [types.Armor.TYPE.RPauldron] = {
         name = "Right Pauldron",
         slot = types.Actor.EQUIPMENT_SLOT.RightPauldron,
+        weightClasses = {
+          low = 6.0,
+          high = 9.0,
+        },
       },
       [types.Armor.TYPE.LGauntlet] = {
         name = "Left Gauntlet",
         slot = types.Actor.EQUIPMENT_SLOT.LeftGauntlet,
+        weightClasses = {
+          low = 3.0,
+          high = 4.5,
+        }
       },
       [types.Armor.TYPE.LBracer] = {
         name = "Left Bracer",
         slot = types.Actor.EQUIPMENT_SLOT.LeftGauntlet,
+        weightClasses = {
+          low = 3.0,
+          high = 4.5,
+        }
       },
       [types.Armor.TYPE.RGauntlet] = {
         name = "Right Gauntlet",
         slot = types.Actor.EQUIPMENT_SLOT.RightGauntlet,
+        weightClasses = {
+          low = 3.0,
+          high = 4.5,
+        }
       },
       [types.Armor.TYPE.RBracer] = {
         name = "Right Bracer",
         slot = types.Actor.EQUIPMENT_SLOT.RightGauntlet,
+        weightClasses = {
+          low = 3.0,
+          high = 4.5,
+        }
       },
       [types.Armor.TYPE.Shield] = {
         name = "Shield",
         slot = types.Actor.EQUIPMENT_SLOT.CarriedLeft,
+        weightClasses = {
+          low = 9.0,
+          high = 13.5,
+        }
       },
     },
     [types.Weapon] = {
@@ -495,6 +539,18 @@ end
 
 common.deepPrint = function(item, depth)
 print(aux_util.deepToString(item, depth or 1))
+end
+
+--- Gets the armor class for a given armor type and weight
+--- @param armorType types.Armor.TYPE: The type of armor
+--- @param weight number: The weight of the armor
+common.getArmorClass = function(armorType, weight)
+  local classes = common.recordAliases[types.Armor][armorType].weightClasses
+  return classes and (
+    (weight <= classes.low and "Light") or
+    (weight >= classes.high and "Heavy") or
+    "Medium"
+  )
 end
 
 return common
