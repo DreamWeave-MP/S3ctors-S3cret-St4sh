@@ -85,19 +85,6 @@ _ItemContainer.itemFitsSlot = function(itemData, widget)
   return true
 end
 
-_ItemContainer.mapItemToEquipmentSlot = function(itemData)
-  local record = itemData.record
-
-  if itemData.type == types.Weapon
-    or itemData.type == types.Probe
-    or itemData.type == types.Lockpick then
-    return types.Actor.EQUIPMENT_SLOT.CarriedRight
-
-  else
-    error("Item type not recognized")
-  end
-end
-
 _ItemContainer.getUserDataFromLayout = function(layout)
   for _, content in ipairs(layout.content) do
     if content.userData then
