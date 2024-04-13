@@ -146,11 +146,37 @@ ToolTip.setValueText = function(value)
   ToolTip.getValueText().props.text = tostring(value)
 end
 
+ToolTip.getSkillImage = function()
+  return common.getElementByName(ToolTip.getPrimaryFieldsRow(), "Primary Fields Skill Image")
+end
+
+ToolTip.findSkillImage = function(record, itemType)
+  if record.type and common.recordAliases[itemType][record.type].icon then
+    return common.recordAliases[itemType][record.type].icon
+  end
+
+  if common.recordAliases[itemType].icon and type(common.recordAliases[itemType].icon) == 'string' then
+    return common.recordAliases[itemType].icon
+  end
+
+  if common.recordAliases[itemType].icon[common.getArmorClass(record.type, record.weight)] then
+    return common.recordAliases[itemType].icon[common.getArmorClass(record.type, record.weight)]
+  end
+  -- else
+  return 'white'
+  -- end
+end
+
+ToolTip.setSkillImage = function(value)
+  ToolTip.getSkillImage().props.resource = ui.texture { path = value or "white" }
+end
+
 ToolTip.setRecordPrimaryFields = function(record, type)
   ToolTip.setTypeText(record, type)
   ToolTip.setValueText(record.value)
   ToolTip.setWeightText(record.weight)
   ToolTip.setGoldPerText(record.value / record.weight)
+  ToolTip.setSkillImage(ToolTip.findSkillImage(record, type))
 end
 
 ToolTip.getRecordId = function()

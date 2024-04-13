@@ -17,7 +17,7 @@ return function()
           name = "Primary Fields Weight Flex",
           align = ui.ALIGNMENT.Start,
           arrange = ui.ALIGNMENT.Center,
-          size = util.vector2(90, 0),
+          size = util.vector2(const.TOOLTIP_PRIMARY_FIELDS_WIDTH, 0),
           horizontal = true,
         },
         content = ui.content {

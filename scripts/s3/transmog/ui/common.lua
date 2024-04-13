@@ -29,13 +29,19 @@ local common = {
     ROW_LIMIT = 15,
     WIDGET_ORIGIN_PCT = 0.75, -- % of the distance from the top-left corner of the widget to the center of the screen
     TOOLTIP_SEGMENT_HEIGHT = 85,
-    TOOLTIP_TYPE_TEXT_SIZE = util.vector2(90, 28)
+    TOOLTIP_TYPE_TEXT_SIZE = util.vector2(120.0, 28),
+    TOOLTIP_PRIMARY_FIELDS_WIDTH = 120.0,
   },
   recordAliases = {
     [types.Armor] = {
       name = "Armor",
       wearable = true,
       recordGenerator = types.Armor.record,
+      icon = {
+        Light = "icons\\k\\stealth_lightarmor.dds",
+        Medium = "icons\\k\\combat_mediumarmor.dds",
+        Heavy = "icons\\k\\combat_heavyarmor.dds",
+      },
       [types.Armor.TYPE.Cuirass] = {
         name = "Cuirass",
         slot = types.Actor.EQUIPMENT_SLOT.Cuirass,
@@ -118,6 +124,7 @@ local common = {
       },
       [types.Armor.TYPE.Shield] = {
         name = "Shield",
+        icon = "icons\\k\\combat_block.dds",
         slot = types.Actor.EQUIPMENT_SLOT.CarriedLeft,
         weightClasses = {
           low = 9.0,
@@ -131,50 +138,65 @@ local common = {
       recordGenerator = types.Weapon.record,
       [types.Weapon.TYPE.AxeOneHand] = {
         name = "One Handed Axe",
+        icon = 'icons\\k\\combat_axe.dds',
       },
       [types.Weapon.TYPE.AxeTwoHand] = {
         name = "Two Handed Axe",
+        icon = 'icons\\k\\combat_axe.dds',
       },
       [types.Weapon.TYPE.BluntOneHand] = {
         name = "One Handed Blunt",
+        icon = 'icons\\k\\combat_blunt.dds',
       },
       [types.Weapon.TYPE.BluntTwoClose] = {
         name = "Close Two Handed Blunt",
+        icon = 'icons\\k\\combat_blunt.dds',
       },
       [types.Weapon.TYPE.BluntTwoWide] = {
         name = "Wide Two Handed Blunt",
+        icon = 'icons\\k\\combat_blunt.dds',
       },
       [types.Weapon.TYPE.MarksmanBow] = {
         name = "Bow",
+        icon = 'icons\\k\\stealth_marksman.dds',
       },
       [types.Weapon.TYPE.MarksmanCrossbow] = {
         name = "Crossbow",
+        icon = 'icons\\k\\stealth_marksman.dds',
       },
       [types.Weapon.TYPE.MarksmanThrown] = {
         name = "Thrown",
+        icon = 'icons\\k\\stealth_marksman.dds',
       },
       [types.Weapon.TYPE.LongBladeOneHand] = {
         name = "One Handed Long Blade",
+        icon = 'icons\\k\\combat_longblade.dds',
       },
       [types.Weapon.TYPE.LongBladeTwoHand] = {
         name = "Two Handed Long Blade",
+        icon = 'icons\\k\\combat_longblade.dds',
       },
       [types.Weapon.TYPE.ShortBladeOneHand] = {
         name = "Short Blade",
+        icon = 'icons\\k\\stealth_shortblade.dds',
       },
       [types.Weapon.TYPE.SpearTwoWide] = {
         name = "Spear",
+        icon = 'icons\\k\\combat_spear.dds',
       },
       [types.Weapon.TYPE.Arrow] = {
         name = "Arrow",
+        icon = 'icons\\k\\stealth_marksman.dds',
       },
       [types.Weapon.TYPE.Bolt] = {
         name = "Bolt",
+        icon = 'icons\\k\\stealth_marksman.dds',
       },
     },
     [types.Clothing] = {
       name = "Clothing",
       wearable = true,
+      icon = 'icons\\k\\magic_unarmored.dds',
       recordGenerator = types.Clothing.record,
       [types.Clothing.TYPE.Shirt] = {
         name = "Shirt",
@@ -213,45 +235,69 @@ local common = {
     [types.Miscellaneous] = {
       name = "Miscellaneous",
       recordGenerator = types.Miscellaneous.record,
+      icon = "icons\\k\\attribute_luck.dds",
     },
     [types.Apparatus] = {
       name = "Apparatus",
       recordGenerator = types.Apparatus.record,
+      [types.Apparatus.TYPE.Alembic] = {
+        name = "Alembic",
+        icon = "icons\\k\\magic_alchemy.dds",
+      },
+      [types.Apparatus.TYPE.Calcinator] = {
+        name = "Calcinator",
+        icon = "icons\\k\\magic_alchemy.dds",
+      },
+      [types.Apparatus.TYPE.Retort] = {
+        name = "Retort",
+        icon = "icons\\k\\magic_alchemy.dds",
+      },
+      [types.Apparatus.TYPE.MortarPestle] = {
+        name = "Mortar and Pestle",
+        icon = "icons\\k\\magic_alchemy.dds",
+      },
     },
     [types.Book] = {
       name = "Book",
       recordGenerator = types.Book.record,
+      icon = "icons\\k\\attribute_int.dds",
       alternate = "Scroll",
     },
     [types.Ingredient] = {
       name = "Ingredient",
+      icon = "icons\\k\\magic_alchemy.dds",
       recordGenerator = types.Ingredient.record,
     },
     [types.Light] = {
       name = "Light",
+      icon = "icons\\s\\tx_s_light.dds",
       wearable = true,
       recordGenerator = types.Light.record,
       slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Lockpick] = {
       name = "Lockpick",
+      icon = "icons\\k\\stealth_security.dds",
       wearable = true,
       recordGenerator = types.Lockpick.record,
       slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Probe] = {
       name = "Probe",
+      icon = "icons\\k\\stealth_security.dds",
       wearable = true,
       recordGenerator = types.Probe.record,
       slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Repair] = {
       recordGenerator = types.Repair.record,
+      icon = "icons\\k\\combat_armor.dds",
       name = "Repair",
     },
     [types.Potion] = {
       recordGenerator = types.Potion.record,
       name = "Potion",
+      icon = "icons\\k\\magic_alchemy.dds",
     },
   }
 }
@@ -444,10 +490,12 @@ common.messageBoxSingleton = function(widgetName, message, duration)
                 wordWrap = true,
                 multiline = true,
                 textShadow = true,
+                autoSize = false,
                 textShadowColor = util.color.rgb(40, 40, 40),
                 textSize = 20,
+                textAlignV = ui.ALIGNMENT.Center,
                 textAlignH = ui.ALIGNMENT.Center,
-                size = util.vector2(128, 64),
+                size = util.vector2(256, 64),
               }
             },
           }
