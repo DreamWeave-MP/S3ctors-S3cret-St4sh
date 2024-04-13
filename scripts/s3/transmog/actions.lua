@@ -207,25 +207,29 @@ end))
 local isPreviewing = false
 outInterface.updatePreview = function()
   if not common.toolTipIsVisible() and not isPreviewing then
-    common.messageBoxSingleton("Preview Warning", "You must have an item selected to preview it!", 2)
+    common.messageBoxSingleton("Preview Warning", "You must have an item selected to preview it!", 0.5)
     return
   end
 
   if outInterface.newItemContainer.content[2].userData then
     isPreviewing = true
-    common.messageBoxSingleton("Preview Warning", "You must confirm your current choices before previewing another item!", 2)
+    common.messageBoxSingleton("Preview Warning", "You must confirm your current choices before previewing another item!", 0.5)
     return
   end
 
   local toolTip = ToolTip.get()
+  local recordId = ToolTip.getRecordId()
 
   local equipment = {}
   for slot, item in pairs(outInterface.originalInventory) do
+    if item.recordId == recordId then
+      common.messageBoxSingleton("Preview Warning", "You cannot preview an item you are currently wearing!", 0.5)
+      return
+    end
     equipment[slot] = item
   end
 
   if input.getBooleanActionValue("transmogMenuActivePreview") then
-    local recordId = ToolTip.getRecordId()
     local targetItem = types.Actor.inventory(self):find(recordId)
 
     if not targetItem then return end
@@ -242,7 +246,6 @@ outInterface.updatePreview = function()
     isPreviewing = true
     toolTip.layout.props.visible = false
   else
-    print("Disengaging preview...")
     isPreviewing = false
     toolTip.layout.props.visible = true
   end
@@ -263,13 +266,11 @@ input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
                                 -- Guess we'll also need to do this for enhancements as well.
                                 -- I decided I like doing it this way better than attaching
                                 -- callbacks to the widget directly because I can't actually correlate a keybind to a widget there
-                                if outInterface.menu
-                                  and outInterface.menu.layout.props.visible then
+                                 if common.menuIsVisible() then
                                   ConfirmScreen()
-                                elseif outInterface.message.confirmScreen
-                                  and outInterface.message.confirmScreen.layout.props.visible then
+                                 elseif common.confirmIsVisible() then
                                   outInterface.acceptTransmog()
-                                end
+                                 end
 end))
 
 local consoleOpenedThisFrame = false
