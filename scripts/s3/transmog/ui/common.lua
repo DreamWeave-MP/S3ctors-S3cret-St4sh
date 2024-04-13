@@ -34,9 +34,55 @@ local common = {
   recordAliases = {
     [types.Armor] = {
       name = "Armor",
+      wearable = true,
+      [types.Armor.TYPE.Cuirass] = {
+        name = "Cuirass",
+        slot = types.Actor.EQUIPMENT_SLOT.Cuirass,
+      },
+      [types.Armor.TYPE.Greaves] = {
+        name = "Greaves",
+        slot = types.Actor.EQUIPMENT_SLOT.Greaves,
+      },
+      [types.Armor.TYPE.Boots] = {
+        name = "Boots",
+        slot = types.Actor.EQUIPMENT_SLOT.Boots,
+      },
+      [types.Armor.TYPE.Helmet] = {
+        name = "Helmet",
+        slot = types.Actor.EQUIPMENT_SLOT.Helmet,
+      },
+      [types.Armor.TYPE.LPauldron] = {
+        name = "Left Pauldron",
+        slot = types.Actor.EQUIPMENT_SLOT.LeftPauldron,
+      },
+      [types.Armor.TYPE.RPauldron] = {
+        name = "Right Pauldron",
+        slot = types.Actor.EQUIPMENT_SLOT.RightPauldron,
+      },
+      [types.Armor.TYPE.LGauntlet] = {
+        name = "Left Gauntlet",
+        slot = types.Actor.EQUIPMENT_SLOT.LeftGauntlet,
+      },
+      [types.Armor.TYPE.LBracer] = {
+        name = "Left Bracer",
+        slot = types.Actor.EQUIPMENT_SLOT.LeftGauntlet,
+      },
+      [types.Armor.TYPE.RGauntlet] = {
+        name = "Right Gauntlet",
+        slot = types.Actor.EQUIPMENT_SLOT.RightGauntlet,
+      },
+      [types.Armor.TYPE.RBracer] = {
+        name = "Right Bracer",
+        slot = types.Actor.EQUIPMENT_SLOT.RightGauntlet,
+      },
+      [types.Armor.TYPE.Shield] = {
+        name = "Shield",
+        slot = types.Actor.EQUIPMENT_SLOT.CarriedLeft,
+      },
     },
     [types.Weapon] = {
       name = "Weapon",
+      wearable = true,
       [types.Weapon.TYPE.AxeOneHand] = {
         name = "One Handed Axe",
       },
@@ -82,6 +128,40 @@ local common = {
     },
     [types.Clothing] = {
       name = "Clothing",
+      wearable = true,
+      [types.Clothing.TYPE.Shirt] = {
+        name = "Shirt",
+        slot = types.Actor.EQUIPMENT_SLOT.Shirt,
+      },
+      [types.Clothing.TYPE.Pants] = {
+        name = "Pants",
+        slot = types.Actor.EQUIPMENT_SLOT.Pants,
+      },
+      [types.Clothing.TYPE.Skirt] = {
+        name = "Skirt",
+        slot = types.Actor.EQUIPMENT_SLOT.Skirt,
+      },
+      [types.Clothing.TYPE.Robe] = {
+        name = "Robe",
+        slot = types.Actor.EQUIPMENT_SLOT.Robe,
+      },
+      [types.Clothing.TYPE.Shoes] = {
+        name = "Shoes",
+        slot = types.Actor.EQUIPMENT_SLOT.Boots,
+      },
+      [types.Clothing.TYPE.Amulet] = {
+        name = "Amulet",
+        slot = types.Actor.EQUIPMENT_SLOT.Amulet,
+      },
+      [types.Clothing.TYPE.Belt] = {
+        name = "Belt",
+        slot = types.Actor.EQUIPMENT_SLOT.Belt,
+      },
+      [types.Clothing.TYPE.Ring] = {
+        name = "Ring",
+        -- Maybe a bit sus to only offer one ring slot, but they're not visible anyway.
+        slot = types.Actor.EQUIPMENT_SLOT.LeftRing,
+      },
     },
     [types.Miscellaneous] = {
       name = "Miscellaneous",
@@ -98,12 +178,18 @@ local common = {
     },
     [types.Light] = {
       name = "Light",
+      wearable = true,
+      slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Lockpick] = {
       name = "Lockpick",
+      wearable = true,
+      slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Probe] = {
       name = "Probe",
+      wearable = true,
+      slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Repair] = {
       name = "Repair",

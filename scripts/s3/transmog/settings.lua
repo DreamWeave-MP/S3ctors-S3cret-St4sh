@@ -65,6 +65,17 @@ Settings.registerGroup {
               type = "trigger" -- And whether it's an action or trigger
             }
         },
+        {
+            key = 'SettingsTransmogMenuKeyActivePreview',
+            renderer = 'inputBinding',
+            name = 'Active Preview',
+            description = 'Temporarily enables the preview of the current item',
+            default = 'Space',
+            argument = {
+              key = 'transmogMenuActivePreview', -- The key here should match the key in the action table
+              type = "action" -- And whether it's an action or trigger
+            }
+        },
     },
 }
 
@@ -86,6 +97,14 @@ local actions = {
     type = input.ACTION_TYPE.Boolean,
     defaultValue = false,
     key = 'transmogMenuRotateLeft',
+  },
+  {
+    name = '',
+    l10n = 'ActivePreview',
+    description = '',
+    type = input.ACTION_TYPE.Boolean,
+    defaultValue = false,
+    key = 'transmogMenuActivePreview',
   },
 }
 
