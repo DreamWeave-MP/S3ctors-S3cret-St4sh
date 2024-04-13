@@ -279,9 +279,9 @@ return {
   interfaceName = 'transmogActions',
   engineHandlers = {
     onInit = function()
-      common.messageBoxSingleton("Welcome", "Thank you for installing Glamour Menu!", 3)
-      common.messageBoxSingleton("Welcome", "Please be aware that OpenMW does not\npresently allow mods to use default keybinds!", 3)
-      common.messageBoxSingleton("Welcome", "We recommend the following defaults:\n"
+      common.messageBoxSingleton("Welcome One", "Thank you for installing Glamour Menu!", 3)
+      common.messageBoxSingleton("Welcome Two", "Please be aware that OpenMW does not\npresently allow mods to use default keybinds!", 3)
+      common.messageBoxSingleton("Welcome Three", "We recommend the following defaults:\n"
                                  .. "Q and E for rotate right and left respectively\n"
                                  .. "Enter/Return for select\n"
                                  .. "And L to open the menu.\n"
