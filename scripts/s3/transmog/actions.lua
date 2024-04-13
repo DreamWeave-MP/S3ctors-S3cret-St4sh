@@ -17,7 +17,7 @@ local MainWidget = require('scripts.s3.transmog.ui.mainwidget')
 local ItemContainer = require('scripts.s3.transmog.ui.rightpanel.itemcontainer')
 local ConfirmScreen = require('scripts.s3.transmog.ui.leftpanel.glamourbutton').createCallback
 
-local playerSettings = storage.playerSection('Settingss3_transmogMenuGroup'):asTable()
+local mogBinds = storage.playerSection('Settingss3_transmogMenuGroup'):asTable()
 
 -- add safeties for unsupported types
 -- add stacking for ammunition
@@ -38,11 +38,11 @@ local outInterface = {
 local function rotateWarning()
   if outInterface.message.hasShowedControls then return end
   common.messageBoxSingleton("Rotate Warning", "Use the "
-                             .. string.upper(playerSettings.SettingsTransmogMenuRotateRight)
-                             ..  " and " .. string.upper(playerSettings.SettingsTransmogMenuRotateLeft)
+                             .. string.upper(mogBinds.SettingsTransmogMenuRotateRight)
+                             ..  " and " .. string.upper(mogBinds.SettingsTransmogMenuRotateLeft)
                              .. " keys to rotate your character.", 2)
   common.messageBoxSingleton("Confirm Warning", "Confirm your choices with the "
-                             .. string.upper(playerSettings.SettingsTransmogMenuKeyConfirm) .. " key", 2)
+                             .. string.upper(mogBinds.SettingsTransmogMenuKeyConfirm) .. " key", 2)
   outInterface.message.hasShowedControls = true
 end
 
@@ -89,14 +89,12 @@ outInterface.acceptTransmog = function()
     })
   end
   types.Actor.setEquipment(self, I.transmogActions.originalInventory)
-  outInterface.message.confirmScreen:destroy()
-  outInterface.message.confirmScreen = nil
-  async:newUnsavableSimulationTimer(0.01, function()
-                                      common.resetPortraits()
-                                      outInterface.itemContainer.content = ui.content(ItemContainer.updateContent("Apparel"))
-                                      outInterface.menu.layout.props.visible = true
-                                      outInterface.menu:update()
-                                      end)
+  common.resetPortraits()
+  outInterface.itemContainer.content = ui.content(ItemContainer.updateContent("Apparel"))
+  outInterface.menu.layout.props.visible = true
+  outInterface.message.confirmScreen.layout.props.visible = false
+  outInterface.message.confirmScreen:update()
+  outInterface.menu:update()
 end
 
 outInterface.restoreUserInterface = function()
@@ -117,9 +115,10 @@ end
 local menuStateSwitch = async:callback(function()
     if not types.Actor.isOnGround(self)
       or types.Actor.isSwimming(self)
-      or outInterface.message.confirmScreen
       or I.UI.getMode() == I.UI.MODE.MainMenu
       or outInterface.consoleOpen
+      or common.messageIsVisible()
+      or common.confirmIsVisible()
     then return end
 
     if not prevCam then
@@ -151,6 +150,7 @@ local menuStateSwitch = async:callback(function()
       outInterface.originalInventory = types.Actor.getEquipment(self)
       outInterface.message.singleton = nil
       outInterface.message.confirmScreen = nil
+      outInterface.message.toolTip = nil
       outInterface.message.hasShowedPreviewWarning = false
       prevStance = types.Actor.getStance(self)
       rotateWarning()
@@ -167,6 +167,10 @@ local menuStateSwitch = async:callback(function()
         outInterface.message.hasShowedPreviewWarning = false
         types.Actor.setEquipment(self, outInterface.originalInventory)
         types.Actor.setStance(self, prevStance)
+      end
+      if common.toolTipIsVisible() then
+        outInterface.message.toolTip.layout.props.visible = false
+        outInterface.message.toolTip:update()
       end
       outInterface.menu:update()
     end
@@ -206,17 +210,33 @@ input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
                                 -- Use this key to finish the 'mog
                                 -- Only if either of the two relevant menus is open
                                 -- Guess we'll also need to do this for enhancements as well.
-                                if outInterface.menu and outInterface.menu.layout.props.visible then
+                                -- I decided I like doing it this way better than attaching
+                                -- callbacks to the widget directly because I can't actually correlate a keybind to a widget there
+                                if outInterface.menu
+                                  and outInterface.menu.layout.props.visible then
                                   ConfirmScreen()
-                                elseif outInterface.message.confirmScreen then
+                                elseif outInterface.message.confirmScreen
+                                  and outInterface.message.confirmScreen.layout.props.visible then
                                   outInterface.acceptTransmog()
                                 end
 end))
 
+local consoleOpenedThisFrame = false
 return {
   interface = outInterface,
   interfaceName = 'transmogActions',
   engineHandlers = {
+    onInit = function()
+      common.messageBoxSingleton("Welcome", "Thank you for installing Glamour Menu!", 3)
+      common.messageBoxSingleton("Welcome", "Please be aware that OpenMW does not\npresently allow mods to use default keybinds!", 3)
+      common.messageBoxSingleton("Welcome", "We recommend the following defaults:\n"
+                                 .. "Q and E for rotate right and left respectively\n"
+                                 .. "Enter/Return for select\n"
+                                 .. "And L to open the menu.\n"
+                                 .. "Happy Glamming!", 3)
+      -- Add a check for Kartoffel's empty gear mod
+
+    end,
     onKeyRelease = function(key)
       -- Since the engine doesn't let you bind ESC
       -- and it's generally just used to close stuff, do that here
@@ -224,13 +244,13 @@ return {
         if outInterface.consoleOpen then
           outInterface.consoleOpen = false
         end
-        if outInterface.message.confirmScreen then
-          outInterface.message.confirmScreen:destroy()
-          outInterface.message.confirmScreen = nil
+        if common.confirmIsVisible() then
+          outInterface.message.confirmScreen.layout.props.visible = false
           outInterface.menu.layout.props.visible = true
           outInterface.menu:update()
+          outInterface.message.confirmScreen:update()
           I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
-        elseif outInterface.menu and outInterface.menu.layout.props.visible then
+        elseif common.mainIsVisible() then
           common.teardownTransmog(prevStance)
         end
       end
@@ -238,26 +258,28 @@ return {
     onInputAction = function(action)
         -- Intercept attempts to reopen the HUD and override them while 'mogging
         -- Not sure if this one can be made into an action?
-      if action == input.ACTION.ToggleHUD then
-        if I.UI.isHudVisible()
-          and outInterface.menu
-          and outInterface.menu.layout.props.visible then
+      if action == input.ACTION.ToggleHUD
+        and I.UI.isHudVisible()
+        and (common.mainIsVisible() or common.confirmIsVisible()) then
           I.UI.setHudVisibility(false)
-        end
       end
     end,
     onFrame = function()
-      if input.isActionPressed(input.ACTION.Console) and not outInterface.consoleOpen then
-        outInterface.consoleOpen = true
+      if input.isActionPressed(input.ACTION.Console) and not consoleOpenedThisFrame then
+        consoleOpenedThisFrame = true
       end
       -- close the menu if the console is opened
-      if outInterface.consoleOpen and not input.isActionPressed(input.ACTION.Console) then
-        outInterface.consoleOpen = false
+      if consoleOpenedThisFrame and not input.isActionPressed(input.ACTION.Console) then
+        consoleOpenedThisFrame = false
         outInterface.consoleOpen = not outInterface.consoleOpen
-        if outInterface.consoleOpen
-          and outInterface.menu
-          and outInterface.menu.layout.props.visible then
-          common.teardownTransmog(prevStance)
+        if outInterface.consoleOpen then
+          if common.mainIsVisible() or common.confirmIsVisible() then
+            if common.confirmIsVisible() then
+              outInterface.message.confirmScreen.layout.props.visible = false
+              outInterface.message.confirmScreen:update()
+            end
+            common.teardownTransmog(prevStance)
+          end
         end
       end
     end,

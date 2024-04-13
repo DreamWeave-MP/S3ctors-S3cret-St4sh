@@ -1,4 +1,5 @@
 local async = require('openmw.async')
+local aux_ui = require('openmw_aux.ui')
 local aux_util = require('openmw_aux.util')
 local self = require('openmw.self')
 local types = require('openmw.types')
@@ -7,6 +8,7 @@ local util = require('openmw.util')
 
 local common = require('scripts.s3.transmog.ui.common')
 local const = common.const
+local ToolTip = require('scripts.s3.transmog.ui.tooltip')
 
 local I = require('openmw.interfaces')
 
@@ -138,7 +140,8 @@ end
 
 _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
     -- The portrait, then the box, then the actual image
-    local itemData = layout.content[1].userData
+    -- It should be at index 1, but the highlight is at index 1
+    local itemData = layout.content[2].userData
     local mainWidget = I.transmogActions.menu
     local basePortrait = I.transmogActions.baseItemContainer
     local newPortrait = I.transmogActions.newItemContainer
@@ -188,27 +191,69 @@ _ItemContainer.ItemPortrait = function(itemData)
 
   -- Maybe later we remove the padding. It seems sus.
   local container = {
-    template = I.MWUI.templates.padding,
+    template = I.MWUI.templates.boxTransparent,
+    -- template = I.MWUI.templates.padding,
     --type = ui.TYPE.Flex,
+    props = {
+      propagateEvents = false,
+    },
     events = {
       mousePress = _ItemContainer.addToLeftPanel,
+      mouseMove = async:callback(function(mouse, _layout)
+          if not common.toolTipIsVisible() then return end
+          I.transmogActions.message.toolTip.layout.props.position = mouse.position + util.vector2(25, 25)
+          I.transmogActions.message.toolTip:update()
+      end),
+      focusGain = async:callback(function(_, layout)
+          if not I.transmogActions.message.toolTip then
+            I.transmogActions.message.toolTip = ui.create(ToolTip)
+          end
+
+          if #layout.content ~= 1 then return end
+
+          layout.content:insert(1, {
+                                  type = ui.TYPE.Image,
+                                  props = {
+                                    name = "highlight",
+                                    resource = ui.texture{ path = 'white' },
+                                    color = util.color.rgba(44 / 255, 46 / 255, 45 / 255, 0.5),
+                                    size = const.IMAGE_SIZE
+                                  },
+          })
+          I.transmogActions.message.toolTip.layout.props.visible = true
+          I.transmogActions.message.toolTip:update()
+          I.transmogActions.menu:update()
+      end),
+      focusLoss = async:callback(function(_, layout)
+          -- Remove the highlight and hide the tooltip
+          if #layout.content == 1 then return end
+          local toolTip = I.transmogActions.message.toolTip
+
+          if common.toolTipIsVisible() then
+            toolTip.layout.props.visible = false
+            toolTip:update()
+          end
+          layout.content[1] = table.remove(layout.content, 2)
+          I.transmogActions.menu:update()
+      end),
     },
     content = ui.content {
       {
         --template = I.MWUI.templates.boxTransparentThick,
         --content = ui.content {{
-            type = ui.TYPE.Image,
-            props = {
-              resource = ui.texture{ path = itemData.record.icon },
-              size = const.IMAGE_SIZE
-            },
-            userData = {
-              record = itemData.record,
-              recordId = itemData.recordId,
-              type = itemData.type,
-            },
-    --}}
-    }},
+        type = ui.TYPE.Image,
+        props = {
+          resource = ui.texture{ path = itemData.record.icon },
+          size = const.IMAGE_SIZE
+        },
+        userData = {
+          record = itemData.record,
+          recordId = itemData.recordId,
+          type = itemData.type,
+        },
+        --}}
+      },
+    },
   }
 
   return container
