@@ -136,6 +136,7 @@ local common = {
       name = "Weapon",
       wearable = true,
       recordGenerator = types.Weapon.record,
+      slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
       [types.Weapon.TYPE.AxeOneHand] = {
         name = "One Handed Axe",
         icon = 'icons\\k\\combat_axe.dds',
