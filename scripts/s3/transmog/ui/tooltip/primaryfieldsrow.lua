@@ -34,13 +34,13 @@ return function()
         },
         content = ui.content {
           PrimaryFieldsTypeBox(),
-          -- { external = { grow = 1 } },
+          { external = { grow = 1 } },
           PrimaryFieldsValueBox(),
-          -- { external = { grow = 1 } },
+          { external = { grow = 1 } },
           PrimaryFieldsWeightBox(),
-          -- { external = { grow = 1 } },
+          { external = { grow = 1 } },
           PrimaryFieldsGoldPerBox(),
-          -- { external = { grow = 1 } },
+          { external = { grow = 1 } },
         }
       },
       {
