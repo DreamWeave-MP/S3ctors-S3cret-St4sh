@@ -628,7 +628,6 @@ end
 common.getElementByName = function(layout, name)
   for _, child in ipairs(layout.content or {}) do
     if child.props and child.props.name == name then
-      -- print("Found " .. name)
       return child
     end
     local found = common.getElementByName(child, name)

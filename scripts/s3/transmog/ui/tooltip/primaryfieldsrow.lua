@@ -60,10 +60,13 @@ return function()
         props = {
           align = ui.ALIGNMENT.Center,
           arrange = ui.ALIGNMENT.Center,
-          -- size = util.vector2(90, 0),
+          name = "Tooltip: Secondary Fields Row",
+        },
+        external = {
+          stretch = 1.0,
+          grow = 1.0,
         },
         content = ui.content {
-          common.templateImage(util.color.hex('0000ff'), nil, nil),
         }
       },
     },
