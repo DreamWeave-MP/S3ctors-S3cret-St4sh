@@ -29,6 +29,7 @@ local common = {
     ROW_LIMIT = 15,
     WIDGET_ORIGIN_PCT = 0.75, -- % of the distance from the top-left corner of the widget to the center of the screen
     TOOLTIP_SEGMENT_HEIGHT = 85,
+    TOOLTIP_TYPE_TEXT_SIZE = util.vector2(90, 28)
   },
   recordAliases = {
     [types.Armor] = {
@@ -82,9 +83,6 @@ local common = {
     [types.Clothing] = {
       name = "Clothing",
     },
-    -- [types.Ammunition] = {
-    --   name = "Ammo",
-    -- },
     [types.Miscellaneous] = {
       name = "Miscellaneous",
     },
@@ -209,7 +207,7 @@ end
 --- Generates an image element
 --- could be used for testing or actual elements
 --- Stretch and grow are set to 1 by default, so fills empty space in a flex
---- @param path string: The path to the image, possibl an item record
+--- @param path string: The path to the image, possibly an item record
 --- @param size util.vector2: The size of the image
 --- @param color util.color: The color of the image
 common.templateImage = function(color, path, size)
