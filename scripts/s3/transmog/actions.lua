@@ -210,6 +210,12 @@ outInterface.updatePreview = function()
     common.messageBoxSingleton("Preview Warning", "You must have an item selected to preview it!", 2)
     return
   end
+
+  if outInterface.newItemContainer.content[2].userData then
+    common.messageBoxSingleton("Preview Warning", "You must confirm your current choices before previewing another item!", 2)
+    return
+  end
+
   local toolTip = ToolTip.get()
 
   local equipment = {}
