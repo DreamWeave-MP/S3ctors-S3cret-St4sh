@@ -212,6 +212,7 @@ outInterface.updatePreview = function()
   end
 
   if outInterface.newItemContainer.content[2].userData then
+    isPreviewing = true
     common.messageBoxSingleton("Preview Warning", "You must confirm your current choices before previewing another item!", 2)
     return
   end
