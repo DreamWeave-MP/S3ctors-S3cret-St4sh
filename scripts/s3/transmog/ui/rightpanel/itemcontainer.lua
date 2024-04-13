@@ -224,6 +224,7 @@ end
 _ItemContainer.getItemData = function(typedInventory, itemIndex)
   local item = typedInventory[itemIndex]
   local itemRecord
+
   if not item then
     return nil
   end
