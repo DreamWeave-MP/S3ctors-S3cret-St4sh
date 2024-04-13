@@ -409,7 +409,9 @@ local messages = {}
 common.messageBoxSingleton = function(widgetName, message, duration)
   if I.transmogActions.message.singleton then
     if I.transmogActions.message.singleton.layout.props.visible then
-      messages[#messages + 1] = {widgetName, message, duration}
+      if not messages[widgetName] then
+        messages[widgetName] = {widgetName, message, duration}
+      end
       return
     else
       I.transmogActions.message.singleton.layout.props.visible = true
