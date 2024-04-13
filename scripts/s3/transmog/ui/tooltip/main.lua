@@ -9,70 +9,12 @@ local common = require("scripts.s3.transmog.ui.common")
 local const = common.const
 
 local I = require("openmw.interfaces")
+local PrimaryFieldsRow = require("scripts.s3.transmog.ui.tooltip.primaryfieldsrow")
 
 local ToolTip = {}
 local _toolTip = {}
 
-_toolTip.primaryFieldsRow = function()
-  return {
-    type = ui.TYPE.Flex,
-    props = {
-      name = "Tooltip: Primary Fields Row",
-      align = ui.ALIGNMENT.Start,
-      horizontal = true,
-    },
-    external = {
-      grow = 1,
-      stretch = 1,
-    },
-    content = ui.content {
-      -- common.templateImage(nil, util.vector2(126, const.TOOLTIP_SEGMENT_HEIGHT), util.color.hex('ff0000')),
-      {
-        type = ui.TYPE.Text,
-        props = {
-          name = "Primary Fields Type Text",
-          text = "Primary Fields",
-          size = util.vector2(90, 0),
-          textColor = const.TEXT_COLOR,
-          textSize = 12,
-          textAlignH = ui.ALIGNMENT.Center,
-          textAlignV = ui.ALIGNMENT.Center,
-          multiline = true,
-          wordWrap = true,
-          autoSize = false,
-        },
-        external = {
-          stretch = 1.0,
-        },
-      },
-      -- {
-      --   type = ui.TYPE.Text,
-      --   props = {
-      --     name = "Primary Fields Text",
-      --     text = "Primary Fields",
-      --     size = util.vector2(126, const.TOOLTIP_SEGMENT_HEIGHT),
-      --     textColor = const.TEXT_COLOR,
-      --     textSize = 24,
-      --     textAlignH = ui.ALIGNMENT.Start,
-      --     textAlignV = ui.ALIGNMENT.Center,
-      --     multiline = true,
-      --     wordWrap = true,
-      --     autoSize = false,
-      --   }
-      -- },
-      -- { external = { grow = 1} },
-      {
-        type = ui.TYPE.Image,
-        props = {
-          name = "primaryFieldsDivisor",
-          size = util.vector2(4, const.TOOLTIP_SEGMENT_HEIGHT),
-          resource = ui.texture{ path = 'textures/menu_thick_border_right' .. '.dds' },
-          relativePosition = util.vector2(0.5, 0),
-        },
-      },
-      common.templateImage(util.color.hex('00ffff'), nil, nil),
-    },
-  }
+_toolTip.typeWeightValueRow = function()
 end
 
 _toolTip.iconAndNameRow = function()
@@ -143,34 +85,41 @@ ToolTip.getRecordIcon = function()
   return common.getElementByName(ToolTip.getIconAndNameRow(), "Tooltip Item Icon")
 end
 
+--- Updates the icon for the tooltip
+--- Maybe this should be part of the internal table?
+--- @param iconPath string: The path to the icon to display
+ToolTip.setRecordIcon = function(iconPath)
+  ToolTip.getRecordIcon().props.resource = ui.texture { path = iconPath }
+end
+
 -- Returns the name for the tooltip
 -- Note this is the entire element, not just the text
 ToolTip.getNameText = function()
   return common.getElementByName(ToolTip.getIconAndNameRow(), "Tooltip Item Name Text")
 end
 
+--- Updates the name for the tooltip
+--- @param name string: The name to display
+ToolTip.setNameText = function(name)
+  ToolTip.getNameText().props.text = name
+end
+
 ToolTip.getTypeText = function()
   return common.getElementByName(ToolTip.getPrimaryFieldsRow(), "Primary Fields Type Text")
 end
 
---- Updates the icon for the tooltip
---- Maybe this should be part of the internal table?
---- @param iconPath string: The path to the icon to display
-ToolTip.updateRecordIcon = function(iconPath)
-  ToolTip.getRecordIcon().props.resource = ui.texture { path = iconPath }
+ToolTip.getGoldPerText = function()
+  return common.getElementByName(ToolTip.getPrimaryFieldsRow(), "Primary Fields GoldPer Text")
 end
 
---- Updates the name for the tooltip
---- @param name string: The name to display
-ToolTip.updateRecordName = function(name)
-  ToolTip.getNameText().props.text = name
+ToolTip.setGoldPerText = function(value)
+  ToolTip.getGoldPerText().props.text = string.format("%.2f", tostring(value))
 end
 
-ToolTip.updateRecordPrimaryFields = function(record, type)
+ToolTip.setTypeText = function(record, type)
   local primaryFieldsText = ToolTip.getTypeText()
-  -- local newTypeText = "Type: "
   local newTypeText = ""
-  if type == types.Book and record.isScroll then
+  if record.isScroll then
       newTypeText = newTypeText .. common.recordAliases[type].alternate
   elseif type == types.Weapon then
     print("Weapon type is " .. record.type)
@@ -178,10 +127,30 @@ ToolTip.updateRecordPrimaryFields = function(record, type)
   else
     newTypeText = newTypeText .. common.recordAliases[type].name
   end
-
-  newTypeText = newTypeText .. "\nValue:\n" ..record.value .."\n"
-  newTypeText = newTypeText .. "Weight:\n" .. record.weight .."\n"
   primaryFieldsText.props.text = newTypeText
+end
+
+ToolTip.getWeightText = function()
+  return common.getElementByName(ToolTip.getPrimaryFieldsRow(), "Primary Fields Weight Text")
+end
+
+ToolTip.setWeightText = function(value)
+  ToolTip.getWeightText().props.text = string.format("%.2f", tostring(value))
+end
+
+ToolTip.getValueText = function()
+  return common.getElementByName(ToolTip.getPrimaryFieldsRow(), "Primary Fields Value Text")
+end
+
+ToolTip.setValueText = function(value)
+  ToolTip.getValueText().props.text = tostring(value)
+end
+
+ToolTip.setRecordPrimaryFields = function(record, type)
+  ToolTip.setTypeText(record, type)
+  ToolTip.setValueText(record.value)
+  ToolTip.setWeightText(record.weight)
+  ToolTip.setGoldPerText(record.value / record.weight)
 end
 
 --- Callback function for updating the tooltip
@@ -202,9 +171,9 @@ ToolTip.refreshItem = function(itemData)
   if I.transmogActions.message.toolTip.layout.userData.recordId ~= itemData.recordId then
     I.transmogActions.message.toolTip.layout.userData.recordId = itemData.recordId
     -- print(aux_util.deepToString(I.transmogActions.message.toolTip.layout.content[1].content[1].content[1], 2))
-    ToolTip.updateRecordIcon(itemData.record.icon)
-    ToolTip.updateRecordName(itemData.record.name)
-    ToolTip.updateRecordPrimaryFields(itemData.record, itemData.type)
+    ToolTip.setRecordIcon(itemData.record.icon)
+    ToolTip.setNameText(itemData.record.name)
+    ToolTip.setRecordPrimaryFields(itemData.record, itemData.type)
     -- common.getElementByName(ToolTip.get().layout, "Primary Fields Text").props.text = itemData.record.name
   end
   I.transmogActions.message.toolTip:update()
@@ -230,15 +199,21 @@ ToolTip.create = function()
         },
         content = ui.content {
           _toolTip.iconAndNameRow(),
-          -- {
-          --   type = ui.TYPE.Image,
-          --   props = {
-          --     size = util.vector2(256, 85),
-          --     resource = ui.texture { path = "white" },
-          --     color = util.color.hex('0000ff'),
-          --   },
-          -- },
-          _toolTip.primaryFieldsRow(),
+          {
+            type = ui.TYPE.Image,
+            props = {
+              size = util.vector2(256, 2),
+              resource = ui.texture { path = "textures\\menu_thick_border_bottom.dds" },
+            },
+          },
+          PrimaryFieldsRow(),
+          {
+            type = ui.TYPE.Image,
+            props = {
+              size = util.vector2(256, 2),
+              resource = ui.texture { path = "textures\\menu_thick_border_bottom.dds" },
+            },
+          },
           -- {
           --   type = ui.TYPE.Image,
           --   props = {
@@ -247,7 +222,7 @@ ToolTip.create = function()
           --     color = util.color.hex('00ff00'),
           --   },
           -- },
-          common.templateImage(util.color.hex('00ff00'), nil, util.vector2(256, 85)),
+          common.templateImage(util.color.hex('000000'), nil, util.vector2(256, 32)),
           -- {
           --   type = ui.TYPE.Image,
           --   props = {
