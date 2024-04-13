@@ -8,7 +8,7 @@ local util = require('openmw.util')
 
 local common = require('scripts.s3.transmog.ui.common')
 local const = common.const
-local ToolTip = require('scripts.s3.transmog.ui.tooltip')
+local ToolTip = require('scripts.s3.transmog.ui.tooltip.main')
 
 local I = require('openmw.interfaces')
 
