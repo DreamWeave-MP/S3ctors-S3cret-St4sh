@@ -228,29 +228,9 @@ _ItemContainer.getItemData = function(typedInventory, itemIndex)
     return nil
   end
 
-  if item.type == types.Armor then
-    itemRecord = types.Armor.record(item)
-  elseif item.type == types.Clothing then
-    itemRecord = types.Clothing.record(item)
-  elseif item.type == types.Weapon then
-    itemRecord = types.Weapon.record(item)
-  elseif item.type == types.Miscellaneous then
-    itemRecord = types.Miscellaneous.record(item)
-  elseif item.type == types.Probe then
-    itemRecord = types.Probe.record(item)
-  elseif item.type == types.Lockpick then
-    itemRecord = types.Lockpick.record(item)
-  elseif item.type == types.Apparatus then
-    itemRecord = types.Apparatus.record(item)
-  elseif item.type == types.Book then
-    itemRecord = types.Book.record(item)
-  elseif item.type == types.Ingredient then
-    itemRecord = types.Ingredient.record(item)
-  elseif item.type == types.Potion then
-    itemRecord = types.Potion.record(item)
-  elseif item.type == types.Repair then
-    itemRecord = types.Repair.record(item)
-  else
+  itemRecord = common.recordAliases[item.type].recordGenerator(item)
+
+  if not itemRecord then
     error("Unequippable item type, you dun goofed")
   end
 
