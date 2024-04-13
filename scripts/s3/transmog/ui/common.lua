@@ -1,4 +1,5 @@
 local async = require('openmw.async')
+local aux_util = require('openmw_aux.util')
 local self = require('openmw.self')
 local types = require('openmw.types')
 local ui = require('openmw.ui')
@@ -27,7 +28,92 @@ local common = {
     FOOTER_REL_SIZE = 0.05,
     ROW_LIMIT = 15,
     WIDGET_ORIGIN_PCT = 0.75, -- % of the distance from the top-left corner of the widget to the center of the screen
+    TOOLTIP_SEGMENT_HEIGHT = 85,
   },
+  recordAliases = {
+    [types.Armor] = {
+      name = "Armor",
+    },
+    [types.Weapon] = {
+      name = "Weapon",
+      [types.Weapon.TYPE.AxeOneHand] = {
+        name = "One Handed Axe",
+      },
+      [types.Weapon.TYPE.AxeTwoHand] = {
+        name = "Two Handed Axe",
+      },
+      [types.Weapon.TYPE.BluntOneHand] = {
+        name = "One Handed Blunt",
+      },
+      [types.Weapon.TYPE.BluntTwoClose] = {
+        name = "Close Two Handed Blunt",
+      },
+      [types.Weapon.TYPE.BluntTwoWide] = {
+        name = "Wide Two Handed Blunt",
+      },
+      [types.Weapon.TYPE.MarksmanBow] = {
+        name = "Bow",
+      },
+      [types.Weapon.TYPE.MarksmanCrossbow] = {
+        name = "Crossbow",
+      },
+      [types.Weapon.TYPE.MarksmanThrown] = {
+        name = "Thrown",
+      },
+      [types.Weapon.TYPE.LongBladeOneHand] = {
+        name = "One Handed Long Blade",
+      },
+      [types.Weapon.TYPE.LongBladeTwoHand] = {
+        name = "Two Handed Long Blade",
+      },
+      [types.Weapon.TYPE.ShortBladeOneHand] = {
+        name = "Short Blade",
+      },
+      [types.Weapon.TYPE.SpearTwoWide] = {
+        name = "Spear",
+      },
+      [types.Weapon.TYPE.Arrow] = {
+        name = "Arrow",
+      },
+      [types.Weapon.TYPE.Bolt] = {
+        name = "Bolt",
+      },
+    },
+    [types.Clothing] = {
+      name = "Clothing",
+    },
+    -- [types.Ammunition] = {
+    --   name = "Ammo",
+    -- },
+    [types.Miscellaneous] = {
+      name = "Miscellaneous",
+    },
+    [types.Apparatus] = {
+      name = "Apparatus",
+    },
+    [types.Book] = {
+      name = "Book",
+      alternate = "Scroll",
+    },
+    [types.Ingredient] = {
+      name = "Ingredient",
+    },
+    [types.Light] = {
+      name = "Light",
+    },
+    [types.Lockpick] = {
+      name = "Lockpick",
+    },
+    [types.Probe] = {
+      name = "Probe",
+    },
+    [types.Repair] = {
+      name = "Repair",
+    },
+    [types.Potion] = {
+      name = "Potion",
+    },
+  }
 }
 
 --- Just a simple text box, this is used in multiple places
@@ -120,12 +206,38 @@ common.defaultPortraitContent = function()
   }
 end
 
+--- Generates an image element
+--- could be used for testing or actual elements
+--- Stretch and grow are set to 1 by default, so fills empty space in a flex
+--- @param path string: The path to the image, possibl an item record
+--- @param size util.vector2: The size of the image
+--- @param color util.color: The color of the image
+common.templateImage = function(color, path, size)
+  local image = {
+    type = ui.TYPE.Image,
+    external = {
+      stretch = 1,
+      grow = 1,
+    },
+    props = {
+      size = size or common.const.IMAGE_SIZE,
+      resource = ui.texture { path = path or "white" },
+    },
+  }
+  if color then
+    image.props.color = color
+  end
+  return image
+end
+
 --- Resets the left panel item portraits to their default state
 common.resetPortraits = function()
   I.transmogActions.baseItemContainer.content = ui.content(common.defaultPortraitContent())
   I.transmogActions.newItemContainer.content = ui.content(common.defaultPortraitContent())
 end
 
+--- Checks if the confirm menu is visible
+--- @return boolean
 common.confirmIsVisible = function()
   return I.transmogActions.message.confirmScreen and I.transmogActions.message.confirmScreen.layout.props.visible
 end
@@ -226,6 +338,67 @@ common.teardownTransmog = function(prevStance)
   types.Actor.setStance(self, prevStance or types.Actor.STANCE.Nothing)
   I.transmogActions.menu.layout.props.visible = false
   I.transmogActions.menu:update()
+end
+
+--- Checks if a layout has a highlight
+--- @param layout openmw_ui#Layout: The layout to check for a highlight
+--- @return boolean
+common.hasHighlight = function(layout)
+  for _, child in ipairs(layout.content) do
+    if child.props and child.props.name == "highlight" then
+      return true
+    end
+  end
+  return false
+end
+
+--- Removes a highlight from an arbitrary layout
+--- Don't forget you need to actually update it after!
+--- @param layout openmw_ui#Layout: The layout to remove the highlight from
+common.removeHighlight = function(layout)
+  for index, child in ipairs(layout.content) do
+    if child.props and child.props.name == "highlight" then
+      table.remove(layout.content, index)
+      break
+    end
+  end
+end
+
+--- Adds a highlight to an arbitrary layout
+--- Don't forget you need to actually update it after!
+--- @param layout openmw_ui#Layout: The layout to add the highlight to
+common.addHighlight = function(layout, size)
+  if common.hasHighlight(layout) then
+    return
+  end
+
+  layout.content:insert(1,
+                        {
+                          type = ui.TYPE.Image,
+                          props = {
+                            name = "highlight",
+                            resource = ui.texture{ path = 'white' },
+                            color = common.const.HIGHLIGHT_COLOR,
+                            size = size or common.const.IMAGE_SIZE,
+                            relativeSize = util.vector2(1, 1),
+                          },
+                        }
+  )
+end
+
+common.getElementByName = function(layout, name)
+  for _, child in ipairs(layout.content or {}) do
+    if child.props and child.props.name == name then
+      -- print("Found " .. name)
+      return child
+    end
+    local found = common.getElementByName(child, name)
+    if found then return found end
+  end
+end
+
+common.deepPrint = function(item, depth)
+print(aux_util.deepToString(item, depth or 1))
 end
 
 return common
