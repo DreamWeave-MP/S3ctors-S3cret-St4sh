@@ -108,11 +108,9 @@ local triggers = {
 }
 
 for _, actionInfo in ipairs(actions) do
-  print("Registering action: " .. actionInfo.key)
   input.registerAction(actionInfo)
 end
 
 for _, triggerInfo in ipairs(triggers) do
-  print("Registering trigger: " .. triggerInfo.key)
   input.registerTrigger(triggerInfo)
 end
