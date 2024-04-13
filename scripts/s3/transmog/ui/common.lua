@@ -417,6 +417,54 @@ common.templateImage = function(color, path, size)
   return image
 end
 
+common.templateBoxImageWithText = function(widgetName, iconPath)
+  return {
+    template = I.MWUI.templates.boxTransparentThick,
+    props = {
+      name = widgetName .. " Border",
+    },
+    content = ui.content {
+      {
+        type = ui.TYPE.Flex,
+        props = {
+          name = widgetName .. " Flex",
+          align = ui.ALIGNMENT.Start,
+          arrange = ui.ALIGNMENT.Center,
+          size = util.vector2(common.const.TOOLTIP_PRIMARY_FIELDS_WIDTH, 0),
+          horizontal = true,
+        },
+        content = ui.content {
+          {
+            type = ui.TYPE.Image,
+            props = {
+              name = widgetName .. " Image",
+              size = util.vector2(24, 24),
+              resource = ui.texture { path = iconPath or 'white' },
+            },
+          },
+          { external = { grow = 1 } },
+          {
+            type = ui.TYPE.Text,
+            external = {
+              grow = 1,
+              stretch = 1,
+            },
+            props = {
+              name = widgetName .. " Text",
+              text = widgetName .. " Text",
+              textColor = common.const.TEXT_COLOR,
+              textSize = 16,
+              textAlignV = ui.ALIGNMENT.Center,
+              autoSize = false,
+            },
+          },
+          { external = { grow = 1 } },
+        }
+      },
+    }
+  }
+end
+
 --- Resets the left panel item portraits to their default state
 common.resetPortraits = function()
   I.transmogActions.baseItemContainer.content = ui.content(common.defaultPortraitContent())
