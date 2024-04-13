@@ -122,8 +122,7 @@ ToolTip.setTypeText = function(record, type)
   local newTypeText = ""
   if record.isScroll then
       newTypeText = newTypeText .. common.recordAliases[type].alternate
-  elseif type == types.Weapon then
-    print("Weapon type is " .. record.type)
+  elseif type == types.Weapon or type == types.Armor or type == types.Clothing then
     newTypeText = newTypeText .. common.recordAliases[type][record.type].name
   else
     newTypeText = newTypeText .. common.recordAliases[type].name
