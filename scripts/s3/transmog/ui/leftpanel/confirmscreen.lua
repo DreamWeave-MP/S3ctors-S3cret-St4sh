@@ -1,14 +1,16 @@
 local async = require('openmw.async')
+local aux_util = require('openmw_aux.util')
+local input = require('openmw.input')
 local ui = require('openmw.ui')
 local util = require('openmw.util')
 
 local const = require('scripts.s3.transmog.ui.common').const
 local CancelButton = require('scripts.s3.transmog.ui.leftpanel.cancelbutton')
+local ClearButton = require('scripts.s3.transmog.ui.leftpanel.clearbutton')
 local CreateButton = require('scripts.s3.transmog.ui.leftpanel.createbutton')
 local I = require('openmw.interfaces')
 
 return function(itemData)
-  I.transmogActions.message.confirmScreen = true
   return {
     type = ui.TYPE.Flex,
     layer = 'HUD',
@@ -18,6 +20,7 @@ return function(itemData)
       relativePosition = util.vector2(0.5, 0.5),
       anchor = util.vector2(0.5, 0.5),
       arrange = ui.ALIGNMENT.Center,
+      visible = true,
     },
     content = ui.content {
       {
@@ -69,6 +72,8 @@ return function(itemData)
         },
         content = ui.content {
           CancelButton(),
+          { external = { grow = 1 } },
+          ClearButton(),
           { external = { grow = 1 } },
           CreateButton(),
         }
