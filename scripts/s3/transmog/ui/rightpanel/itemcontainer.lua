@@ -184,7 +184,6 @@ _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
         end
       else
         if isEquippable(itemData) or itemData.type == types.Book then
-          print("Updating base portrait")
           basePortrait.content = ui.content(updatedPortrait)
         end
       end
@@ -222,23 +221,9 @@ _ItemContainer.ItemPortrait = function(itemData)
       mouseMove = ToolTip.updateTooltip,
       focusGain = async:callback(function(_, layout)
           if not I.transmogActions.message.toolTip then
-            print("Creating tooltip")
             I.transmogActions.message.toolTip = ui.create(ToolTip.create())
           end
-
-          -- if #layout.content ~= 1 then return end
-          print(aux_util.deepToString(layout.content, 2))
-          if layout.content[1].props.name ~= "highlight" then
-            layout.content:insert(1, {
-                                    type = ui.TYPE.Image,
-                                    props = {
-                                      name = "highlight",
-                                      resource = ui.texture{ path = 'white' },
-                                      color = const.HIGHLIGHT_COLOR,
-                                      size = const.IMAGE_SIZE
-                                    },
-            })
-          end
+          common.addHighlight(layout)
           ToolTip.refreshItem(itemData)
           I.transmogActions.menu:update()
       end),
@@ -248,10 +233,7 @@ _ItemContainer.ItemPortrait = function(itemData)
             toolTip.layout.props.visible = false
             toolTip:update()
           end
-          if layout.content[1].props.name == "highlight" then
-            layout.content[1] = table.remove(layout.content, 2)
-            I.transmogActions.menu:update()
-          end
+          common.removeHighlight(layout)
           I.transmogActions.menu:update()
       end),
     },
@@ -367,7 +349,6 @@ ItemContainer.updateContent = function(itemType)
 
     local book = types.Actor.inventory(self):getAll(types.Book)
     for _, item in ipairs(book) do
-      print(aux_util.deepToString(types.Book.record(item.recordId).enchant))
       if types.Book.record(item.recordId).enchant ~= "" then
         typedInventory[#typedInventory + 1] = item
       end

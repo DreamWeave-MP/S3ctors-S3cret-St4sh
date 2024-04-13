@@ -18,7 +18,6 @@ local function getWidgetOrigin()
   if widgetOriginRelative < 0.1 then
     widgetOriginRelative = 0
   end
-  print("Relative widget origin is " .. widgetOriginRelative)
   return  widgetOriginRelative
 end
 
