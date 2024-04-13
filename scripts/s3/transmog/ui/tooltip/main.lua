@@ -1,5 +1,6 @@
 local aux_util = require('openmw_aux.util')
 local async = require("openmw.async")
+local input = require("openmw.input")
 local types = require("openmw.types")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
@@ -153,6 +154,30 @@ ToolTip.setRecordPrimaryFields = function(record, type)
   ToolTip.setGoldPerText(record.value / record.weight)
 end
 
+ToolTip.getRecordId = function()
+  return ToolTip.get().layout.userData.recordId
+end
+
+ToolTip.setRecordId = function(recordId)
+  ToolTip.get().layout.userData.recordId = recordId
+end
+
+ToolTip.getRecordType = function()
+  return ToolTip.get().layout.userData.type
+end
+
+ToolTip.setRecordType = function(type)
+  ToolTip.get().layout.userData.type = type
+end
+
+ToolTip.getRecord = function()
+  return ToolTip.get().layout.userData.record
+end
+
+ToolTip.setRecord = function(record)
+  ToolTip.get().layout.userData.record = record
+end
+
 --- Callback function for updating the tooltip
 --- @param mousePosition openmw.ui#MouseEvent: https://openmw.readthedocs.io/en/latest/reference/lua-scripting/openmw_ui.html##(MouseEvent)
 --- @param layout openmt_ui#Layout: https://openmw.readthedocs.io/en/latest/reference/lua-scripting/openmw_ui.html##(Layout)
@@ -168,13 +193,13 @@ end)
 ToolTip.refreshItem = function(itemData)
   if not I.transmogActions.message.toolTip then print("Tooltip should be constructed!") return end
   I.transmogActions.message.toolTip.layout.props.visible = true
-  if I.transmogActions.message.toolTip.layout.userData.recordId ~= itemData.recordId then
-    I.transmogActions.message.toolTip.layout.userData.recordId = itemData.recordId
-    -- print(aux_util.deepToString(I.transmogActions.message.toolTip.layout.content[1].content[1].content[1], 2))
+  if ToolTip.getRecordId() ~= itemData.recordId then
+    ToolTip.setRecordId(itemData.recordId)
+    ToolTip.setRecordType(itemData.type)
+    ToolTip.setRecord(itemData.record)
     ToolTip.setRecordIcon(itemData.record.icon)
     ToolTip.setNameText(itemData.record.name)
     ToolTip.setRecordPrimaryFields(itemData.record, itemData.type)
-    -- common.getElementByName(ToolTip.get().layout, "Primary Fields Text").props.text = itemData.record.name
   end
   I.transmogActions.message.toolTip:update()
 end
@@ -186,8 +211,6 @@ ToolTip.create = function()
     layer = 'Notification',
     props = {
       name = "Tooltip",
-      -- relativePosition = util.vector2(0.5, 0.5),
-      -- anchor = util.vector2(0.5, 0.5)
     },
     userData = {},
     content = ui.content {
