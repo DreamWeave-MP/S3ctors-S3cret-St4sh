@@ -35,6 +35,7 @@ local common = {
     [types.Armor] = {
       name = "Armor",
       wearable = true,
+      recordGenerator = types.Armor.record,
       [types.Armor.TYPE.Cuirass] = {
         name = "Cuirass",
         slot = types.Actor.EQUIPMENT_SLOT.Cuirass,
@@ -83,6 +84,7 @@ local common = {
     [types.Weapon] = {
       name = "Weapon",
       wearable = true,
+      recordGenerator = types.Weapon.record,
       [types.Weapon.TYPE.AxeOneHand] = {
         name = "One Handed Axe",
       },
@@ -129,6 +131,7 @@ local common = {
     [types.Clothing] = {
       name = "Clothing",
       wearable = true,
+      recordGenerator = types.Clothing.record,
       [types.Clothing.TYPE.Shirt] = {
         name = "Shirt",
         slot = types.Actor.EQUIPMENT_SLOT.Shirt,
@@ -165,36 +168,45 @@ local common = {
     },
     [types.Miscellaneous] = {
       name = "Miscellaneous",
+      recordGenerator = types.Miscellaneous.record,
     },
     [types.Apparatus] = {
       name = "Apparatus",
+      recordGenerator = types.Apparatus.record,
     },
     [types.Book] = {
       name = "Book",
+      recordGenerator = types.Book.record,
       alternate = "Scroll",
     },
     [types.Ingredient] = {
       name = "Ingredient",
+      recordGenerator = types.Ingredient.record,
     },
     [types.Light] = {
       name = "Light",
       wearable = true,
+      recordGenerator = types.Light.record,
       slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Lockpick] = {
       name = "Lockpick",
       wearable = true,
+      recordGenerator = types.Lockpick.record,
       slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Probe] = {
       name = "Probe",
       wearable = true,
+      recordGenerator = types.Probe.record,
       slot = types.Actor.EQUIPMENT_SLOT.CarriedRight,
     },
     [types.Repair] = {
+      recordGenerator = types.Repair.record,
       name = "Repair",
     },
     [types.Potion] = {
+      recordGenerator = types.Potion.record,
       name = "Potion",
     },
   }
