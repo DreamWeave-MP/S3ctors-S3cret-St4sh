@@ -234,7 +234,7 @@ _ItemContainer.ItemPortrait = function(itemData)
                                     props = {
                                       name = "highlight",
                                       resource = ui.texture{ path = 'white' },
-                                      color = util.color.rgba(44 / 255, 46 / 255, 45 / 255, 0.5),
+                                      color = const.HIGHLIGHT_COLOR,
                                       size = const.IMAGE_SIZE
                                     },
             })
@@ -243,10 +243,7 @@ _ItemContainer.ItemPortrait = function(itemData)
           I.transmogActions.menu:update()
       end),
       focusLoss = async:callback(function(_, layout)
-          -- Remove the highlight and hide the tooltip
-          -- if #layout.content == 1 then return end
           local toolTip = I.transmogActions.message.toolTip
-          -- print("focusLoss")
           if common.toolTipIsVisible() then
             toolTip.layout.props.visible = false
             toolTip:update()
@@ -255,7 +252,6 @@ _ItemContainer.ItemPortrait = function(itemData)
             layout.content[1] = table.remove(layout.content, 2)
             I.transmogActions.menu:update()
           end
-          -- layout.content[1] = table.remove(layout.content, 2)
           I.transmogActions.menu:update()
       end),
     },
