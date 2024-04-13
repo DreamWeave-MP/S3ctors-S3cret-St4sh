@@ -26,16 +26,21 @@ return function()
         props = {
           align = ui.ALIGNMENT.Center,
           arrange = ui.ALIGNMENT.Center,
-          size = util.vector2(90, 0),
+          size = util.vector2(120, 0),
         },
         external = {
           stretch = 1.0,
+          -- grow = 1.0,
         },
         content = ui.content {
           PrimaryFieldsTypeBox(),
+          -- { external = { grow = 1 } },
           PrimaryFieldsValueBox(),
+          -- { external = { grow = 1 } },
           PrimaryFieldsWeightBox(),
+          -- { external = { grow = 1 } },
           PrimaryFieldsGoldPerBox(),
+          -- { external = { grow = 1 } },
         }
       },
       {
@@ -50,7 +55,17 @@ return function()
           stretch = 1,
         },
       },
-      common.templateImage(util.color.hex('000000'), nil, nil),
+      {
+        type = ui.TYPE.Flex,
+        props = {
+          align = ui.ALIGNMENT.Center,
+          arrange = ui.ALIGNMENT.Center,
+          -- size = util.vector2(90, 0),
+        },
+        content = ui.content {
+          common.templateImage(util.color.hex('0000ff'), nil, nil),
+        }
+      },
     },
   }
 end
