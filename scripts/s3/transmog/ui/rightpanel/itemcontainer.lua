@@ -1,6 +1,7 @@
 local async = require('openmw.async')
-local aux_ui = require('openmw_aux.ui')
-local aux_util = require('openmw_aux.util')
+-- local aux_ui = require('openmw_aux.ui')
+-- local aux_util = require('openmw_aux.util')
+local input = require('openmw.input')
 local self = require('openmw.self')
 local types = require('openmw.types')
 local ui = require('openmw.ui')
@@ -91,48 +92,7 @@ _ItemContainer.mapItemToEquipmentSlot = function(itemData)
     or itemData.type == types.Probe
     or itemData.type == types.Lockpick then
     return types.Actor.EQUIPMENT_SLOT.CarriedRight
-  elseif itemData.type == types.Armor then
-    if record.type == types.Armor.TYPE.Helmet then
-      return types.Actor.EQUIPMENT_SLOT.Helmet
-    elseif record.type == types.Armor.TYPE.LGauntlet or record.type == types.Armor.TYPE.LBracer then
-      return types.Actor.EQUIPMENT_SLOT.LeftGauntlet
-    elseif record.type == types.Armor.TYPE.RGauntlet or record.type == types.Armor.TYPE.RBracer then
-      return types.Actor.EQUIPMENT_SLOT.RightGauntlet
-    elseif record.type == types.Armor.TYPE.LPauldron then
-      return types.Actor.EQUIPMENT_SLOT.LeftPauldron
-    elseif record.type == types.Armor.TYPE.RPauldron then
-      return types.Actor.EQUIPMENT_SLOT.RightPauldron
-    elseif record.type == types.Armor.TYPE.Cuirass then
-      return types.Actor.EQUIPMENT_SLOT.Cuirass
-    elseif record.type == types.Armor.TYPE.Greaves then
-      return types.Actor.EQUIPMENT_SLOT.Greaves
-    elseif record.type == types.Armor.TYPE.Shield then
-      return types.Actor.EQUIPMENT_SLOT.CarriedLeft
-    elseif record.type == types.Armor.TYPE.Boots then
-      return types.Actor.EQUIPMENT_SLOT.Boots
-    end
-  elseif itemData.type == types.Clothing then
-    if record.type == types.Clothing.TYPE.Amulet then
-      return types.Actor.EQUIPMENT_SLOT.Amulet
-    elseif record.type == types.Clothing.TYPE.Belt then
-      return types.Actor.EQUIPMENT_SLOT.Belt
-    elseif record.type == types.Clothing.TYPE.LGlove then
-      return types.Actor.EQUIPMENT_SLOT.LeftGauntlet
-    elseif record.type == types.Clothing.TYPE.Pants then
-      return types.Actor.EQUIPMENT_SLOT.Pants
-    elseif record.type == types.Clothing.TYPE.RGlove then
-      return types.Actor.EQUIPMENT_SLOT.RightGauntlet
-    elseif record.type == types.Clothing.TYPE.Robe then
-      return types.Actor.EQUIPMENT_SLOT.Robe
-    elseif record.type == types.Clothing.TYPE.Shirt then
-      return types.Actor.EQUIPMENT_SLOT.Shirt
-    elseif record.type == types.Clothing.TYPE.Shoes then
-      return types.Actor.EQUIPMENT_SLOT.Boots
-    elseif record.type == types.Armor.TYPE.Boots then
-      return types.Actor.EQUIPMENT_SLOT.Boots
-    elseif record.type == types.Clothing.TYPE.Skirt then
-      return types.Actor.EQUIPMENT_SLOT.Skirt
-    end
+
   else
     error("Item type not recognized")
   end
@@ -164,7 +124,7 @@ _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
         if itemData.type == types.Book then return end
         newPortrait.content = ui.content(updatedPortrait)
         if isEquippable(itemData) then
-          local equipmentSlot = _ItemContainer.mapItemToEquipmentSlot(itemData)
+          local equipmentSlot =  common.recordAliases[itemData.type].slot or common.recordAliases[itemData.type][itemData.record.type].slot
           local equipment = {}
           for slot, item in pairs(I.transmogActions.originalInventory) do
             equipment[slot] = item
@@ -226,6 +186,7 @@ _ItemContainer.ItemPortrait = function(itemData)
           common.addHighlight(layout)
           ToolTip.refreshItem(itemData)
           I.transmogActions.menu:update()
+          I.transmogActions.updatePreview()
       end),
       focusLoss = async:callback(function(_, layout)
           local toolTip = I.transmogActions.message.toolTip

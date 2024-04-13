@@ -16,6 +16,7 @@ local util = require('openmw.util')
 local MainWidget = require('scripts.s3.transmog.ui.mainwidget')
 local ItemContainer = require('scripts.s3.transmog.ui.rightpanel.itemcontainer')
 local ConfirmScreen = require('scripts.s3.transmog.ui.leftpanel.glamourbutton').createCallback
+local ToolTip = require('scripts.s3.transmog.ui.tooltip.main')
 
 local mogBinds = storage.playerSection('Settingss3_transmogMenuGroup'):asTable()
 
@@ -202,6 +203,49 @@ input.registerActionHandler("transmogMenuRotateLeft", async:callback(function()
       0.1,
       {})
 end))
+
+local isPreviewing = false
+outInterface.updatePreview = function()
+  if not common.toolTipIsVisible() and not isPreviewing then
+    common.messageBoxSingleton("Preview Warning", "You must have an item selected to preview it!", 2)
+    return
+  end
+  local toolTip = ToolTip.get()
+
+  local equipment = {}
+  for slot, item in pairs(outInterface.originalInventory) do
+    equipment[slot] = item
+  end
+
+  if input.getBooleanActionValue("transmogMenuActivePreview") then
+    local recordId = ToolTip.getRecordId()
+    local targetItem = types.Actor.inventory(self):find(recordId)
+
+    if not targetItem then return end
+
+    if not common.recordAliases[ToolTip.getRecordType()].wearable then
+      common.messageBoxSingleton("Preview Warning", "This item cannot be previewed!")
+      return
+    end
+
+    local slot = common.recordAliases[ToolTip.getRecordType()].slot
+      or common.recordAliases[ToolTip.getRecordType()][ToolTip.getRecord().type].slot
+
+    equipment[slot] = recordId
+    isPreviewing = true
+    toolTip.layout.props.visible = false
+  else
+    print("Disengaging preview...")
+    isPreviewing = false
+    toolTip.layout.props.visible = true
+  end
+  toolTip:update()
+  async:newUnsavableSimulationTimer(0.1, function()
+                                      types.Actor.setEquipment(self, equipment)
+  end)
+end
+
+input.registerActionHandler("transmogMenuActivePreview", async:callback(outInterface.updatePreview))
 
 -- And this is where we actually bind the action to the callback
 input.registerTriggerHandler("transmogMenuOpen", menuStateSwitch)
