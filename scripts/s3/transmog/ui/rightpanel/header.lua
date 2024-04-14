@@ -24,52 +24,95 @@ local updateContainerCategory = async:callback(function(_, layout)
   local name = layout.props.name
 
   local itemContainer = I.transmogActions.itemContainer
-  if name == "Apparel Button" then
-    types.Actor.setStance(self, types.Actor.STANCE.Nothing)
-    itemContainer.content = ui.content(ItemContainer.updateContent("Apparel"))
-  elseif name == "Weapons Button" then
+  if name == "Weapon" then
     types.Actor.setStance(self, types.Actor.STANCE.Weapon)
-    itemContainer.content = ui.content(ItemContainer.updateContent("Weapons"))
+  else
+    types.Actor.setStance(self, types.Actor.STANCE.Nothing)
   end
-  common.resetPortraits()
+  local typeIsActive = itemContainer.userData[layout.userData.recordType]
+  if typeIsActive then
+    itemContainer.userData[layout.userData.recordType] = false
+  else
+    itemContainer.userData[layout.userData.recordType] = true
+  end
+  itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
   types.Actor.setEquipment(self, I.transmogActions.originalInventory)
   I.transmogActions.menu:update()
 end)
 
-local function categoryButton(categoryName)
-  local button = common.createButton(categoryName)
-  button.props.name = categoryName .. " Button"
+local function categoryButton(recordType)
+  local recordString = common.recordAliases[recordType].name
+  local button = common.createButton(recordString)
+  button.props.name =  recordString
   button.events.mousePress = updateContainerCategory
+  button.userData = { recordType = recordType }
   return button
 end
 
 local function categoryButtons()
-  local ApparelButton = categoryButton("Apparel")
-  -- local ArmorButton = categoryButton("Armor")
-  -- local ClothingButton = categoryButton("Clothing")
-  local WeaponsButton = categoryButton("Weapons")
   return {
     type = ui.TYPE.Flex,
     props = {
-      name = "Right Panel: Category Button Container",
+      name = "Right Panel: Vertical Category Button Container",
       size = util.vector2(0, const.WINDOW_HEIGHT * const.HEADER_REL_SIZE),
-      arrange = ui.ALIGNMENT.End,
+      arrange = ui.ALIGNMENT.Center,
       align = ui.ALIGNMENT.Center,
-      horizontal = true,
     },
     external = {
       stretch = 1,
     },
     content = ui.content {
-      { external = { grow = 1 } },
-      ApparelButton,
-      -- ArmorButton,
-      { external = { grow = 0.5 } },
-      -- ClothingButton,
-      -- { external = { grow = 0.5 } },
-      WeaponsButton,
-      { external = { grow = 1 } },
-    }
+      {
+        type = ui.TYPE.Flex,
+        props = {
+          name = "Right Panel: Category Button Horizontal Container 1",
+          size = util.vector2(0, (const.WINDOW_HEIGHT * const.HEADER_REL_SIZE) / 2),
+          arrange = ui.ALIGNMENT.Center,
+          align = ui.ALIGNMENT.Center,
+          horizontal = true,
+        },
+        external = {
+          stretch = 1,
+        },
+        content = ui.content {
+          { external = { grow = 1 } },
+          categoryButton(types.Armor),
+          -- { external = { grow = 0.5 } },
+          categoryButton(types.Clothing),
+          -- { external = { grow = 0.5 } },
+          categoryButton(types.Weapon),
+          -- { external = { grow = 1 } },
+          categoryButton(types.Ingredient),
+          -- { external = { grow = 1 } },
+          categoryButton(types.Potion),
+          { external = { grow = 1 } },
+        }
+      },
+      {
+        type = ui.TYPE.Flex,
+        props = {
+          name = "Right Panel: Category Button Horizontal Container 1",
+          size = util.vector2(0, (const.WINDOW_HEIGHT * const.HEADER_REL_SIZE) / 2),
+          arrange = ui.ALIGNMENT.Center,
+          align = ui.ALIGNMENT.Center,
+          horizontal = true,
+        },
+        external = {
+          stretch = 1,
+        },
+        content = ui.content {
+          { external = { grow = 1 } },
+          categoryButton(types.Book),
+          -- { external = { grow = 1 } },
+          categoryButton(types.Lockpick),
+          -- { external = { grow = 1 } },
+          categoryButton(types.Probe),
+          -- { external = { grow = 1 } },
+          categoryButton(types.Miscellaneous),
+          { external = { grow = 1 } }
+        }
+      },
+    },
   }
 end
 
