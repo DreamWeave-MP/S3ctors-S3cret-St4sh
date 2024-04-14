@@ -212,13 +212,12 @@ end
 
 _ItemContainer.getItemData = function(typedInventory, itemIndex)
   local item = typedInventory[itemIndex]
-  local itemRecord
 
   if not item then
-    return nil
+    return
   end
 
-  itemRecord = common.recordAliases[item.type].recordGenerator(item)
+  local itemRecord = common.recordAliases[item.type].recordGenerator(item)
 
   if not itemRecord then
     error("Unequippable item type, you dun goofed")
@@ -229,7 +228,7 @@ _ItemContainer.getItemData = function(typedInventory, itemIndex)
     recordId = item.recordId,
     type = item.type,
   }
-end
+  end
 
 _ItemContainer.ItemRow = function(maxRows, typedInventory, itemIndex)
   local ItemRow = {
@@ -267,73 +266,16 @@ _ItemContainer.ItemRow = function(maxRows, typedInventory, itemIndex)
 
 local ItemContainer = {}
 
-ItemContainer.updateContent = function(itemType)
-  local maxRows = math.min(math.floor(const.RIGHT_PANE_WIDTH / (const.IMAGE_SIZE.x)), const.ROW_LIMIT)
-  local maxCols = math.floor((const.WINDOW_HEIGHT / (const.IMAGE_SIZE.y))
-    * (1 - const.HEADER_REL_SIZE - const.FOOTER_REL_SIZE))
-
+ItemContainer.updateContent = function(acceptedTypes)
   local typedInventory = {}
 
-  if itemType == "Apparel" then
-    local armor = types.Actor.inventory(self):getAll(types.Armor)
-    for _, item in ipairs(armor) do
-      typedInventory[#typedInventory + 1] = item
-    end
+  local maxCols = const.MAX_ITEMS.x
+  local maxRows = const.MAX_ITEMS.y
 
-    local clothing = types.Actor.inventory(self):getAll(types.Clothing)
-    for _, item in ipairs(clothing) do
-      typedInventory[#typedInventory + 1] = item
-    end
+  local typedItems = types.Actor.inventory(self):getAll()
 
-    local book = types.Actor.inventory(self):getAll(types.Book)
-    for _, item in ipairs(book) do
-      if types.Book.record(item.recordId).enchant ~= "" then
-        typedInventory[#typedInventory + 1] = item
-      end
-    end
-  elseif itemType == "Weapons" then
-    local weapons = types.Actor.inventory(self):getAll(types.Weapon)
-    for _, item in ipairs(weapons) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local misc = types.Actor.inventory(self):getAll(types.Miscellaneous)
-    for _, item in ipairs(misc) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local lockpicks = types.Actor.inventory(self):getAll(types.Lockpick)
-    for _, item in ipairs(lockpicks) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local probes = types.Actor.inventory(self):getAll(types.Probe)
-    for _, item in ipairs(probes) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local apparatuses = types.Actor.inventory(self):getAll(types.Apparatus)
-    for _, item in ipairs(apparatuses) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local books = types.Actor.inventory(self):getAll(types.Book)
-    for _, item in ipairs(books) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local ingredients = types.Actor.inventory(self):getAll(types.Ingredient)
-    for _, item in ipairs(ingredients) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local potions = types.Actor.inventory(self):getAll(types.Potion)
-    for _, item in ipairs(potions) do
-      typedInventory[#typedInventory + 1] = item
-    end
-
-    local repairs = types.Actor.inventory(self):getAll(types.Repair)
-    for _, item in ipairs(repairs) do
+  for _, item in ipairs(typedItems) do
+    if acceptedTypes[item.type] then
       typedInventory[#typedInventory + 1] = item
     end
   end
@@ -350,15 +292,16 @@ ItemContainer.updateContent = function(itemType)
   return content
 end
 
-ItemContainer.ItemContainer = function()
+ItemContainer.ItemContainer = function(acceptedTypes)
   local Container = {
     type = ui.TYPE.Flex,
     props = {
       name = "Right Panel: Item Container",
     },
+    userData = acceptedTypes or {[types.Armor] = true, [types.Clothing] = true},
   }
 
-  Container.content = ui.content(ItemContainer.updateContent("Apparel"))
+  Container.content = ui.content(ItemContainer.updateContent(Container.userData))
 
   return Container
 end

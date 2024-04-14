@@ -91,7 +91,7 @@ outInterface.acceptTransmog = function()
   end
   types.Actor.setEquipment(self, I.transmogActions.originalInventory)
   common.resetPortraits()
-  outInterface.itemContainer.content = ui.content(ItemContainer.updateContent("Apparel"))
+  outInterface.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
   outInterface.menu.layout.props.visible = true
   outInterface.message.confirmScreen.layout.props.visible = false
   outInterface.message.confirmScreen:update()
@@ -154,7 +154,7 @@ local canUseMogMenu = function()
 end
 
 -- Now we set up the callback
-local menuStateSwitch = async:callback(function()
+local menuStateSwitch = function()
     if not canUseMogMenu() then return end
     if not prevCam then
       types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Controls, false)
@@ -193,7 +193,7 @@ local menuStateSwitch = async:callback(function()
       outInterface.menu.layout.props.visible = not outInterface.menu.layout.props.visible
       if outInterface.menu.layout.props.visible then
         common.resetPortraits()
-        outInterface.itemContainer.content = ui.content(ItemContainer.updateContent("Apparel"))
+        outInterface.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
         outInterface.originalInventory = types.Actor.getEquipment(self)
         prevStance = types.Actor.getStance(self)
         types.Actor.setStance(self, types.Actor.STANCE.Nothing)
@@ -209,7 +209,7 @@ local menuStateSwitch = async:callback(function()
       end
       outInterface.menu:update()
     end
-end)
+end
 
 input.registerActionHandler("transmogMenuRotateRight", async:callback(function()
     if not outInterface.menu or outInterface.message.confirmScreen or not outInterface.menu.layout.props.visible then return end
@@ -293,7 +293,7 @@ end
 input.registerActionHandler("transmogMenuActivePreview", async:callback(outInterface.updatePreview))
 
 -- And this is where we actually bind the action to the callback
-input.registerTriggerHandler("transmogMenuOpen", menuStateSwitch)
+input.registerTriggerHandler("transmogMenuOpen", async:callback(menuStateSwitch))
 
 input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
                                 -- Use this key to finish the 'mog
@@ -322,7 +322,6 @@ return {
                                  .. "And L to open the menu.\n"
                                  .. "Happy Glamming!", 3)
       -- Add a check for Kartoffel's empty gear mod
-
     end,
     onKeyRelease = function(key)
       -- Since the engine doesn't let you bind ESC
