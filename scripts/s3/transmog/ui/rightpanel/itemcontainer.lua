@@ -298,7 +298,7 @@ ItemContainer.ItemContainer = function(acceptedTypes)
     props = {
       name = "Right Panel: Item Container",
     },
-    userData = acceptedTypes or {[types.Armor] = true, [types.Clothing] = true},
+    userData = acceptedTypes or const.DEFAULT_ITEM_TYPES,
   }
 
   Container.content = ui.content(ItemContainer.updateContent(Container.userData))

@@ -13,7 +13,7 @@ return function()
   button.props.name =  "Clear Button"
   button.events.mousePress = async:callback(function()
     local itemContainer = I.transmogActions.itemContainer
-    itemContainer.userData = {[types.Armor] = true , [types.Clothing] = true}
+    itemContainer.userData = common.const.DEFAULT_ITEM_TYPES
     itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
     types.Actor.setEquipment(self, I.transmogActions.originalInventory)
     common.resetPortraits()
