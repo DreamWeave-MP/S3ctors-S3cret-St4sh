@@ -12,8 +12,6 @@ return {
     props = {
       name = "Right Pane",
       size = util.vector2(const.RIGHT_PANE_WIDTH, 0),
-      --resource = ui.texture { path = "white" },
-      --color = util.color.hex('000000'),
     },
     external = {
       stretch = 1,
