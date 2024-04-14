@@ -250,6 +250,13 @@ _ItemContainer.ItemRow = function(maxRows, typedInventory, itemIndex)
     local itemData = _ItemContainer.getItemData(typedInventory, itemIndex + rowIndex)
     if itemData then
       ItemRow.content[#ItemRow.content + 1] = _ItemContainer.ItemPortrait(itemData)
+    else
+      ItemRow.content[#ItemRow.content + 1] = {
+        template = I.MWUI.templates.Interval,
+        props = {
+          size = const.IMAGE_SIZE * 1.5,
+        },
+      }
     end
   end
 
