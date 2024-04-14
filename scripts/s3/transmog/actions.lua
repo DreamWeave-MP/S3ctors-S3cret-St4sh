@@ -240,6 +240,7 @@ end))
 
 local isPreviewing = false
 outInterface.updatePreview = function()
+  if not canUseMogMenu() or not common.mainIsVisible() then return end
   if not common.toolTipIsVisible() and not isPreviewing then
     common.messageBoxSingleton("Preview Warning", "You must have an item selected to preview it!", 0.5)
     return
