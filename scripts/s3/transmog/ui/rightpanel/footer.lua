@@ -1,7 +1,9 @@
-local ui = require('openmw.ui')
-local util = require('openmw.util')
 local common = require('scripts.s3.transmog.ui.common')
 local const = common.const
+local ui = require('openmw.ui')
+local util = require('openmw.util')
+
+local ClearButton = require('scripts.s3.transmog.ui.rightpanel.clearbutton')
 
 return {
   type = ui.TYPE.Flex,
@@ -17,6 +19,8 @@ return {
   content = ui.content {
     { external = { grow = 1.0 } },
     common.createButton("Next Page"), -- We'll probably need to have some helper functions in here that
+    { external = { grow = 0.5 } },
+    ClearButton(),
     { external = { grow = 0.5 } },
     common.createButton("Previous Page"),
     { external = { grow = 1 } },
