@@ -112,16 +112,50 @@ outInterface.restoreUserInterface = function()
   end
 end
 
+local canUseMogMenu = function()
+    if not types.Actor.isOnGround(self) then
+      if not outInterface.message.cantUseControls then
+        outInterface.message.cantUseControls = true
+        common.messageBoxSingleton("Ground Warning", "You must be on the ground to use the glamour menu!", 2)
+      end
+      return false
+    elseif types.Actor.isSwimming(self) then
+      if not outInterface.message.cantUseSwimming then
+        outInterface.message.cantUseSwimming = true
+        common.messageBoxSingleton("Swimming Warning", "You use the glamour menu while swimming!", 2)
+      end
+      return false
+    elseif I.UI.getMode() == I.UI.MODE.MainMenu then
+      if not outInterface.message.cantUseMainMenu then
+        outInterface.message.cantUseMainMenu = true
+        common.messageBoxSingleton("Main Menu Warning", "You must not be in the main menu to use the glamour menu!", 2)
+      end
+      return false
+    elseif outInterface.consoleOpen then
+      if not outInterface.message.cantUseConsole then
+        outInterface.message.cantUseConsole = true
+        common.messageBoxSingleton("Console Warning", "You must close the console before opening the glamour menu!", 2)
+      end
+      return false
+    elseif common.messageIsVisible() then
+      if not outInterface.message.cantUseMessage then
+        outInterface.message.cantUseMessage = true
+        common.messageBoxSingleton("Message Warning", "You must not have a messagebox open before opening the glamour menu!", 2)
+      end
+      return false
+    elseif common.confirmIsVisible() then
+      if not outInterface.message.cantUseConfirm then
+        outInterface.message.cantUseConfirm = true
+        common.messageBoxSingleton("Confirm Warning", "You must confirm or cancel your current choices before opening the glamour menu!", 2)
+      end
+      return false
+    end
+    return true
+end
+
 -- Now we set up the callback
 local menuStateSwitch = async:callback(function()
-    if not types.Actor.isOnGround(self)
-      or types.Actor.isSwimming(self)
-      or I.UI.getMode() == I.UI.MODE.MainMenu
-      or outInterface.consoleOpen
-      or common.messageIsVisible()
-      or common.confirmIsVisible()
-    then return end
-
+    if not canUseMogMenu() then return end
     if not prevCam then
       types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Controls, false)
       types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Looking, false)
