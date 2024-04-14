@@ -587,6 +587,8 @@ common.messageBoxSingleton = function(widgetName, message, duration)
           type = ui.TYPE.Flex,
           props = {
             align = ui.ALIGNMENT.Center,
+            arrange = ui.ALIGNMENT.Center,
+            size = util.vector2(256, 64),
           },
           content = ui.content {
             {
@@ -597,12 +599,10 @@ common.messageBoxSingleton = function(widgetName, message, duration)
                 wordWrap = true,
                 multiline = true,
                 textShadow = true,
-                autoSize = false,
                 textShadowColor = util.color.rgb(40, 40, 40),
                 textSize = 20,
                 textAlignV = ui.ALIGNMENT.Center,
                 textAlignH = ui.ALIGNMENT.Center,
-                size = util.vector2(256, 64),
               }
             },
           }
