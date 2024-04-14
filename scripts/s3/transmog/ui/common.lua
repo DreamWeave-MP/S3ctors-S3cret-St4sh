@@ -418,7 +418,7 @@ common.templateImage = function(color, path, size)
 end
 
 common.templateBoxImageWithText = function(widgetName, iconPath)
-  return {
+  local templateBox = {
     template = I.MWUI.templates.boxTransparentThick,
     props = {
       name = widgetName .. " Border",
@@ -434,15 +434,7 @@ common.templateBoxImageWithText = function(widgetName, iconPath)
           horizontal = true,
         },
         content = ui.content {
-          {
-            type = ui.TYPE.Image,
-            props = {
-              name = widgetName .. " Image",
-              size = util.vector2(24, 24),
-              resource = ui.texture { path = iconPath or 'white' },
-            },
-          },
-          { external = { grow = 1 } },
+          { external = { grow = 1 }, props = { name = "Spacer Left" } },
           {
             type = ui.TYPE.Text,
             external = {
@@ -451,16 +443,78 @@ common.templateBoxImageWithText = function(widgetName, iconPath)
             },
             props = {
               name = widgetName .. " Text",
-              text = widgetName .. " Text",
+              text = widgetName or "",
               textColor = common.const.TEXT_COLOR,
               textSize = 16,
               textAlignV = ui.ALIGNMENT.Center,
               autoSize = false,
             },
           },
-          { external = { grow = 1 } },
+          { external = { grow = 1 }, props = { name = "Spacer Right" } },
         }
       },
+    }
+  }
+  local templateFlex = templateBox.content[1]
+  common.deepPrint(templateFlex)
+  if iconPath then
+    templateFlex.content:insert(1,
+                                {
+                                  type = ui.TYPE.Image,
+                                  props = {
+                                    name = widgetName .. " Image",
+                                    size = util.vector2(24, 24),
+                                    resource = ui.texture { path = iconPath or 'white' },
+                                  },
+    })
+  end
+  return templateBox
+end
+
+common.templateBorderlessBoxStack = function(stackName, boxes, horizontal)
+  local BoxStack = {}
+  for _, stackedBox in ipairs(boxes) do
+    local newBox = common.templateBoxImageWithText(stackedBox.name, stackedBox.icon)
+    newBox.template = stackedBox.template or I.MWUI.templates.boxTransparent
+    local size = stackedBox.iconSize or util.vector2(22, 22)
+    local fakeSpacer = stackedBox.spacer --or { external = { grow = 0.5 } }
+    local text = common.getElementByName(newBox, stackedBox.name .. " Text")
+    local image = common.getElementByName(newBox, stackedBox.name .. " Image")
+    if image then
+      image.props.size = size
+    else
+      text.props.autoSize = true
+      text.props.textSize = stackedBox.textSize or 16
+    end
+    if stackedBox.spacer then
+      newBox.content[1].content[2] = fakeSpacer
+      newBox.content[1].content[4] = fakeSpacer
+    end
+
+    if stackedBox.autoSize and not text.props.autoSize then
+      text.props.autoSize = true
+    end
+
+    BoxStack[#BoxStack + 1] = newBox
+  end
+
+  return {
+    template = I.MWUI.templates.boxTransparent,
+    props = {
+      name = stackName .. " Container",
+    },
+    content = ui.content {
+      {
+        type = ui.TYPE.Flex,
+        props = {
+          name = stackName .. " Row",
+          align = ui.ALIGNMENT.Center,
+          arrange = ui.ALIGNMENT.Center,
+          relativeSize = util.vector2(1, 0),
+          horizontal = horizontal,
+        },
+        content = ui.content(BoxStack),
+      }
     }
   }
 end
