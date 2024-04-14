@@ -30,11 +30,7 @@ local updateContainerCategory = async:callback(function(_, layout)
     types.Actor.setStance(self, types.Actor.STANCE.Nothing)
   end
   local typeIsActive = itemContainer.userData[layout.userData.recordType]
-  if typeIsActive then
-    itemContainer.userData[layout.userData.recordType] = false
-  else
-    itemContainer.userData[layout.userData.recordType] = true
-  end
+  itemContainer.userData[layout.userData.recordType] = not typeIsActive
   itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
   types.Actor.setEquipment(self, I.transmogActions.originalInventory)
   I.transmogActions.menu:update()
