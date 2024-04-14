@@ -5,7 +5,6 @@ local types = require("openmw.types")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 
-
 local common = require("scripts.s3.transmog.ui.common")
 local const = common.const
 
@@ -19,7 +18,6 @@ _toolTip.iconAndNameRow = function()
   return {
     type = ui.TYPE.Flex,
     props = {
-      -- size = util.vector2(256, 85),
       name = "Tooltip: Icon and Name Row",
       align = ui.ALIGNMENT.Start,
       horizontal = true,
@@ -31,16 +29,8 @@ _toolTip.iconAndNameRow = function()
       {
         type = ui.TYPE.Image,
         props = {
-          -- text = "Tooltip",
           name = "Tooltip Item Icon",
           size = util.vector2(85, const.TOOLTIP_SEGMENT_HEIGHT),
-          -- resource = ui.texture { path = "white" },
-          -- color = util.color.hex('ff00ff'),
-          -- textColor = util.color.hex('ffffff'),
-          -- textSize = 24,
-          -- textAlignH = ui.ALIGNMENT.Center,
-          -- textAlignV = ui.ALIGNMENT.Center,
-          -- autoSize = false,
         },
       },
       {
@@ -165,9 +155,8 @@ ToolTip.findSkillImage = function(record, itemType)
   if common.recordAliases[itemType].icon[common.getArmorClass(record.type, record.weight)] then
     return common.recordAliases[itemType].icon[common.getArmorClass(record.type, record.weight)]
   end
-  -- else
+
   return 'white'
-  -- end
 end
 
 ToolTip.setSkillImage = function(value)
@@ -188,7 +177,6 @@ end
 
 ToolTip.setWeaponSpeedText = function(value)
   ToolTip.getWeaponSpeedText().props.text = string.format("%.2f", tostring(value))
-  print("Speed: " .. string.format("%.2f", tostring(value)))
 end
 
 ToolTip.getWeaponReachText = function()
@@ -197,7 +185,6 @@ end
 
 ToolTip.setWeaponReachText = function(value)
   ToolTip.getWeaponReachText().props.text = string.format("%.2f", tostring(value))
-  print("Updated reach to " .. ToolTip.getWeaponSpeedText().props.text)
 end
 
 ToolTip.getWeaponThrustText = function()
@@ -224,131 +211,69 @@ ToolTip.setWeaponSlashText = function(min, max)
   ToolTip.getWeaponSlashText().props.text = tostring(min) .. " - " .. tostring(max)
 end
 
-ToolTip.WeaponDamageRow = function()
-  local thrustDamage = common.templateBoxImageWithText("Secondary Fields Weapon Thrust", 'icons\\k\\stealth_shortblade.dds')
-  local chopDamage = common.templateBoxImageWithText("Secondary Fields Weapon Chop", 'icons\\k\\combat_axe.dds')
-  local slashDamage = common.templateBoxImageWithText("Secondary Fields Weapon Slash", 'icons\\k\\combat_longblade.dds')
-
-  thrustDamage.template = I.MWUI.templates.boxTransparent
-  chopDamage.template = I.MWUI.templates.boxTransparent
-  slashDamage.template = I.MWUI.templates.boxTransparent
-
-  local size = util.vector2(22, 22)
-  local fakeSpacer = { external = { grow = 0.5 } }
-
-  thrustDamage.content[1].content[1].props.size = size
-  thrustDamage.content[1].content[2] = fakeSpacer
-  thrustDamage.content[1].content[4] = fakeSpacer
-  chopDamage.content[1].content[1].props.size = size
-  chopDamage.content[1].content[2] = fakeSpacer
-  chopDamage.content[1].content[4] = fakeSpacer
-  slashDamage.content[1].content[1].props.size = size
-  slashDamage.content[1].content[2] = fakeSpacer
-  slashDamage.content[1].content[4] = fakeSpacer
-  return {
-    template = I.MWUI.templates.boxTransparent,
-    props = {
-      name = "Tooltip: Weapon Damage Container",
-      -- size = const.IMAGE_SIZE * 3,
+ToolTip.WeaponSecondaryRow = function()
+  local commonSpacer = { external = { grow = 0.1 } }
+  return common.templateBorderlessBoxStack ("Tooltip: Weapon Secondary Row", {
+    {
+      name = "Secondary Fields Weapon Reach",
+      icon = 'icons\\k\\combat_spear.dds',
+      -- template = I.MWUI.templates.boxTransparentThick,
+      spacer = commonSpacer
     },
-    -- external = {
-    --   stretch = 1,
-    --   grow = 1,
-    -- },
-    content = ui.content {
-      {
-        type = ui.TYPE.Flex,
-        props = {
-          name = "Tooltip: Weapon Damage Row",
-          align = ui.ALIGNMENT.Center,
-          arrange = ui.ALIGNMENT.Center,
-          -- horizontal = true,
-          relativeSize = util.vector2(1, 0),
-        },
-        -- external = {
-        --   stretch = 1,
-        --   grow = 1,
-        -- },
-        content = ui.content {
-          -- common.templateImage(util.color.hex('ff0000'), nil, util.vector2(16, 16)),
-          -- {
-          --   type = ui.TYPE.Text,
-          --   props = {
-          --     name = "Tooltip: Weapon Damage Text",
-          --     text = "Slash: 1-1",
-          --     textColor = util.color.hex('ffffff'),
-          --     textSize = 16,
-          --     textAlignH = ui.ALIGNMENT.Start,
-          --     textAlignV = ui.ALIGNMENT.Center,
-          --     multiline = true,
-          --     wordWrap = true,
-          --     -- autoSize = false,
-          --   }
-          -- },
-          thrustDamage,
-          chopDamage,
-          slashDamage,
-        },
-      }
-    }
+    {
+      name = "Secondary Fields Weapon Speed",
+      icon = 'icons\\k\\attribute_speed.dds',
+      spacer = commonSpacer
+    },
+    {
+      name = "Secondary Fields Weapon Thrust",
+      icon = 'icons\\k\\stealth_shortblade.dds',
+      -- template = I.MWUI.templates.boxTransparentThick,
+      spacer = commonSpacer
+    },
+    {
+      name = "Secondary Fields Weapon Chop",
+      icon = 'icons\\k\\combat_axe.dds',
+      spacer = commonSpacer
+    },
+    {
+      name = "Secondary Fields Weapon Slash",
+      icon = 'icons\\k\\combat_longblade.dds',
+      -- template = I.MWUI.templates.boxTransparentThick,
+      spacer = commonSpacer
+    },
   }
+  )
 end
 
-ToolTip.buildRecordSecondaryFields = function(record, type)
-  local secondaryFields = ToolTip.getSecondaryFieldsRow()
-  for index, _ in ipairs(secondaryFields.content) do
-    secondaryFields.content[index] = nil
-    -- table.remove(secondaryFields.content, index)
-  end
-  if type == types.Weapon then
-    common.deepPrint(secondaryFields.content, 2)
-    secondaryFields.content[#secondaryFields.content + 1] = common.templateBoxImageWithText("Secondary Fields Weapon Speed", 'icons\\k\\attribute_speed.dds')
-    -- secondaryFields.content[#secondaryFields.content + 1] = { external = { grow = 0.2 } }
-    secondaryFields.content[#secondaryFields.content + 1] = common.templateBoxImageWithText("Secondary Fields Weapon Reach", 'icons\\k\\combat_spear.dds')
-    secondaryFields.content[#secondaryFields.content + 1] = { external = { grow = 1 } }
-    secondaryFields.content[#secondaryFields.content + 1] = ToolTip.WeaponDamageRow()
-    secondaryFields.content[#secondaryFields.content + 1] = { external = { grow = 1 } }
-    -- secondaryFields.content =
-      -- ui.content
-    -- {
-      -- common.templateBoxImageWithText("Secondary Fields Weapon Speed", 'icons\\k\\attribute_speed.dds'),
-      -- common.templateBoxImageWithText("Secondary Fields Weapon Reach", 'icons\\k\\attribute_speed.dds'),
-      -- {
-      --   type = ui.TYPE.Text,
-      --   props = {
-      --     text = "Speed: " .. tostring(record.speed),
-      --     textColor = util.color.hex('ffffff'),
-      --     textSize = 16,
-      --     textAlignH = ui.ALIGNMENT.Start,
-      --     textAlignV = ui.ALIGNMENT.Center,
-      --     multiline = true,
-      --     wordWrap = true,
-      --     -- autoSize = false,
-      --   }
-      -- },
-      -- {
-      --   type = ui.TYPE.Text,
-      --   props = {
-      --     text = "Reach: " .. tostring(record.reach),
-      --     textColor = util.color.hex('ffffff'),
-      --     textSize = 16,
-      --     textAlignH = ui.ALIGNMENT.Start,
-      --     textAlignV = ui.ALIGNMENT.Center,
-      --     multiline = true,
-      --     wordWrap = true,
-      --     -- autoSize = false,
-      --   }
-      -- },
-    -- }
-
-    secondaryFields.content = ui.content(secondaryFields.content)
+ToolTip.updateWeaponSecondaryRow = function(record)
     ToolTip.setWeaponSpeedText(record.speed)
     ToolTip.setWeaponReachText(record.reach)
     ToolTip.setWeaponThrustText(record.thrustMinDamage, record.thrustMaxDamage)
     ToolTip.setWeaponChopText(record.chopMinDamage, record.chopMaxDamage)
     ToolTip.setWeaponSlashText(record.slashMinDamage, record.slashMaxDamage)
-    print("Updated weapon speed and reach")
-    common.deepPrint(secondaryFields.content[1].content[1].content[3], 3)
+end
+
+ToolTip.helpWeaponSecondaryRow = function()
+    ToolTip.setWeaponSpeedText("Speed")
+    ToolTip.setWeaponReachText("Reach")
+    ToolTip.setWeaponThrustText("Min", "Max")
+    ToolTip.setWeaponChopText("Min", "Max")
+    ToolTip.setWeaponSlashText("Min", "Max")
+end
+
+ToolTip.SecondaryRowFunctions = {
+  [types.Weapon] = {ToolTip.WeaponSecondaryRow, ToolTip.updateWeaponSecondaryRow}
+}
+
+ToolTip.buildRecordSecondaryFields = function(record, recordType)
+  local secondaryFields = ToolTip.getSecondaryFieldsRow()
+  for index, _ in ipairs(secondaryFields.content) do
+    secondaryFields.content[index] = nil
+  end
+  if ToolTip.SecondaryRowFunctions[recordType] then
+    secondaryFields.content = ui.content{ToolTip.SecondaryRowFunctions[recordType][1]()}
+    ToolTip.SecondaryRowFunctions[recordType][2](record)
   end
 end
 
@@ -376,6 +301,14 @@ ToolTip.setRecord = function(record)
   ToolTip.get().layout.userData.record = record
 end
 
+ToolTip.updateCommonFields = function(itemData)
+    ToolTip.setRecordId(itemData.recordId)
+    ToolTip.setRecordType(itemData.type)
+    ToolTip.setRecord(itemData.record)
+    ToolTip.setRecordIcon(itemData.record.icon)
+    ToolTip.setNameText(itemData.record.name)
+end
+
 --- Callback function for updating the tooltip
 --- @param mousePosition openmw.ui#MouseEvent: https://openmw.readthedocs.io/en/latest/reference/lua-scripting/openmw_ui.html##(MouseEvent)
 --- @param layout openmt_ui#Layout: https://openmw.readthedocs.io/en/latest/reference/lua-scripting/openmw_ui.html##(Layout)
@@ -392,11 +325,7 @@ ToolTip.refreshItem = function(itemData)
   if not I.transmogActions.message.toolTip then print("Tooltip should be constructed!") return end
   I.transmogActions.message.toolTip.layout.props.visible = true
   if ToolTip.getRecordId() ~= itemData.recordId then
-    ToolTip.setRecordId(itemData.recordId)
-    ToolTip.setRecordType(itemData.type)
-    ToolTip.setRecord(itemData.record)
-    ToolTip.setRecordIcon(itemData.record.icon)
-    ToolTip.setNameText(itemData.record.name)
+    ToolTip.updateCommonFields(itemData)
     ToolTip.setRecordPrimaryFields(itemData.record, itemData.type)
     ToolTip.buildRecordSecondaryFields(itemData.record, itemData.type)
   end
@@ -417,7 +346,7 @@ ToolTip.create = function()
         type = ui.TYPE.Flex,
         props = {
           align = ui.ALIGNMENT.End,
-          size = util.vector2(256, 256),
+          size = util.vector2(256, 320),
         },
         content = ui.content {
           _toolTip.iconAndNameRow(),
@@ -436,23 +365,7 @@ ToolTip.create = function()
               resource = ui.texture { path = "textures\\menu_thick_border_bottom.dds" },
             },
           },
-          -- {
-          --   type = ui.TYPE.Image,
-          --   props = {
-          --     size = util.vector2(256, 85),
-          --     resource = ui.texture { path = "white" },
-          --     color = util.color.hex('00ff00'),
-          --   },
-          -- },
-          common.templateImage(util.color.hex('000000'), nil, util.vector2(256, 32)),
-          -- {
-          --   type = ui.TYPE.Image,
-          --   props = {
-          --     size = util.vector2(256, 85),
-          --     resource = ui.texture { path = "white" },
-          --     color = util.color.hex('ff0000'),
-          --   },
-          -- },
+          common.templateImage(util.color.hex('000000'), nil, util.vector2(256, 72)),
         }
       }
     }
