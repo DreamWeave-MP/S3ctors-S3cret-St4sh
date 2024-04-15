@@ -35,7 +35,7 @@ local updateContainerCategory = async:callback(function(_, layout)
   itemContainer.userData[layout.userData.recordType] = not typeIsActive
   itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
   types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
-  I.transmogActions.menus.main:update()
+  common.mainMenu():update()
 end)
 
 local function categoryButton(recordType)

@@ -100,10 +100,10 @@ outInterface.acceptTransmog = function()
   types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
   common.resetPortraits()
   outInterface.menus.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.menus.itemContainer.userData))
-  outInterface.menus.main.layout.props.visible = true
+  common.mainMenu().layout.props.visible = true
   outInterface.message.confirmScreen.layout.props.visible = false
   outInterface.message.confirmScreen:update()
-  outInterface.menus.main:update()
+  common.mainMenu():update()
 end
 
 outInterface.restoreUserInterface = function()
@@ -183,10 +183,10 @@ outInterface.menuStateSwitch = function()
       outInterface.restoreUserInterface()
     end
 
-    if not outInterface.menus.main then
-      outInterface.menus.main = MainWidget()
-      outInterface.menus.leftPane = outInterface.menus.main.layout.content[1].content[1]
-      outInterface.menus.rightPane = outInterface.menus.main.layout.content[1].content[3]
+    if not common.mainMenu() then
+      I.transmogActions.menus.main = MainWidget()
+      outInterface.menus.leftPane = common.mainMenu().layout.content[1].content[1]
+      outInterface.menus.rightPane = common.mainMenu().layout.content[1].content[3]
       outInterface.menus.baseItemContainer = outInterface.menus.leftPane.content[2]
       outInterface.menus.newItemContainer = outInterface.menus.leftPane.content[4]
       outInterface.menus.itemContainer = outInterface.menus.rightPane.content[1].content[3].content[1].content[1]
@@ -198,8 +198,8 @@ outInterface.menuStateSwitch = function()
       prevStance = types.Actor.getStance(self)
       rotateWarning()
     else
-      outInterface.menus.main.layout.props.visible = not outInterface.menus.main.layout.props.visible
-      if outInterface.menus.main.layout.props.visible then
+      common.mainMenu().layout.props.visible = not common.mainMenu().layout.props.visible
+      if common.mainMenu().layout.props.visible then
         common.resetPortraits()
         -- So when you close it, it keeps whatever layout it had last.
         -- Is this desirable??
@@ -218,7 +218,7 @@ outInterface.menuStateSwitch = function()
         outInterface.message.toolTip.layout.props.visible = false
         outInterface.message.toolTip:update()
       end
-      outInterface.menus.main:update()
+      common.mainMenu():update()
     end
 end
 
@@ -511,8 +511,9 @@ return {
         end
         if common.confirmIsVisible() then
           outInterface.message.confirmScreen.layout.props.visible = false
-          outInterface.menus.main.layout.props.visible = true
-          outInterface.menus.main:update()
+          local mainMenu = common.mainMenu()
+          mainMenu.layout.props.visible = true
+          mainMenu:update()
           outInterface.message.confirmScreen:update()
           I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
         elseif common.mainIsVisible() then
