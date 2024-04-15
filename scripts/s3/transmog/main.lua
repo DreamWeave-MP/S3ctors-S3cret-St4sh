@@ -53,9 +53,9 @@ local function extractHandlers(handlers)
         if type(handle) == 'function' then handle()
         else error("invalid content for externalFunctions")
         end
-      elseif engineHandleKey == 'interface' then
-        globalHandlers.interface[handleName] = handle
-      elseif engineHandleKey == 'eventHandlers' or engineHandleKey == 'engineHandlers' then
+      elseif engineHandleKey == 'interface' or engineHandleKey == 'eventHandlers' then
+        globalHandlers[engineHandleKey][handleName] = handle
+      elseif engineHandleKey == 'engineHandlers' then
         if not localHandlers[engineHandleKey][handleName] then localHandlers[engineHandleKey][handleName] = {} end
         local destinationTable = localHandlers[engineHandleKey][handleName]
         destinationTable[#destinationTable + 1] = handle
