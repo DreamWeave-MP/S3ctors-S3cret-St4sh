@@ -70,10 +70,12 @@ _ItemContainer.itemFitsSlot = function(itemData, widget)
   local targetIsDefault = targetPortraitData == nil
 
   if widget.props.name == "New Item" and not targetIsDefault then
-    local basePortraitData = I.transmogActions.baseItemContainer.content[2].userData
-    if basePortraitData and basePortraitData.type == types.Book and (itemData.type ~= types.Weapon
-                                                                     and itemData.type ~= types.Armor
-                                                                     and itemData.type ~= types.Clothing) then
+    local basePortraitData = I.transmogActions.menus.baseItemContainer.content[2].userData
+    if basePortraitData
+      and basePortraitData.type == types.Book
+      and (itemData.type ~= types.Weapon
+           and itemData.type ~= types.Armor
+           and itemData.type ~= types.Clothing) then
       return false
     end
   end
@@ -97,9 +99,9 @@ _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
     -- The portrait, then the box, then the actual image
     -- It should be at index 1, but the highlight is at index 1
     local itemData = _ItemContainer.getUserDataFromLayout(layout)
-    local mainWidget = I.transmogActions.menu
-    local basePortrait = I.transmogActions.baseItemContainer
-    local newPortrait = I.transmogActions.newItemContainer
+    local mainWidget = I.transmogActions.menus.main
+    local basePortrait = I.transmogActions.menus.baseItemContainer
+    local newPortrait = I.transmogActions.menus.newItemContainer
 
     local updatedPortrait = _ItemContainer.updateSelectionPortrait(itemData)
 
@@ -113,7 +115,7 @@ _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
         if isEquippable(itemData) then
           local equipmentSlot =  common.recordAliases[itemData.type].slot or common.recordAliases[itemData.type][itemData.record.type].slot
           local equipment = {}
-          for slot, item in pairs(I.transmogActions.originalInventory) do
+          for slot, item in pairs(I.transmogActions.menus.originalInventory) do
             equipment[slot] = item
           end
           equipment[equipmentSlot] = itemData.recordId
@@ -124,7 +126,7 @@ _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
             I.transmogActions.message.hasShowedPreviewWarning = true
           end
           local equipment = {}
-          for slot, item in pairs(I.transmogActions.originalInventory) do
+          for slot, item in pairs(I.transmogActions.menus.originalInventory) do
             equipment[slot] = item
           end
           types.Actor.setEquipment(self, equipment)
@@ -144,7 +146,7 @@ _ItemContainer.getEnchantmentFrame = function(record)
     type = ui.TYPE.Image,
     props = {
       resource = ui.texture{ path = "textures\\mogenchant\\menu_icon_magic.dds" },
-      size = const.IMAGE_SIZE,
+      size = const.IMAGE_SIZE * 1.5,
     },
   }
 end
@@ -172,7 +174,7 @@ _ItemContainer.ItemPortrait = function(itemData)
           end
           common.addHighlight(layout)
           ToolTip.refreshItem(itemData)
-          I.transmogActions.menu:update()
+          I.transmogActions.menus.main:update()
           if input.getBooleanActionValue("transmogMenuActivePreview") then
             I.transmogActions.updatePreview()
           end
@@ -184,25 +186,22 @@ _ItemContainer.ItemPortrait = function(itemData)
             toolTip:update()
           end
           common.removeHighlight(layout)
-          I.transmogActions.menu:update()
+          I.transmogActions.menus.main:update()
       end),
     },
     content = ui.content {
       _ItemContainer.getEnchantmentFrame(itemData.record) or { props = { name = "Fake Enchantment Frame" }},
       {
-        --template = I.MWUI.templates.boxTransparentThick,
-        --content = ui.content {{
         type = ui.TYPE.Image,
         props = {
           resource = ui.texture{ path = itemData.record.icon },
-          size = const.IMAGE_SIZE
+          size = const.IMAGE_SIZE * 1.5,
         },
         userData = {
           record = itemData.record,
           recordId = itemData.recordId,
           type = itemData.type,
         },
-        --}}
       },
     },
   }
@@ -236,7 +235,7 @@ _ItemContainer.ItemRow = function(maxRows, typedInventory, itemIndex)
     props = {
       name = "Right Panel: Item Row ",
       horizontal = true,
-      size = util.vector2(maxRows * (const.IMAGE_SIZE.x - 4), (const.IMAGE_SIZE.y - 4)),
+      size = util.vector2(common.const.MAX_ITEMS.x * (const.IMAGE_SIZE.x - 4), 0),
     },
     external = {
       stretch = 1,

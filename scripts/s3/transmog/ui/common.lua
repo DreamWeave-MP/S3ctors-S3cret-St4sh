@@ -1,5 +1,6 @@
 local async = require('openmw.async')
 local aux_util = require('openmw_aux.util')
+local input = require('openmw.input')
 local self = require('openmw.self')
 local types = require('openmw.types')
 local ui = require('openmw.ui')
@@ -27,11 +28,31 @@ local common = {
     HEADER_FONT_SIZE = 24,
     HEADER_REL_SIZE = 0.1,
     FOOTER_REL_SIZE = 0.05,
-    ROW_LIMIT = 15,
+    MAX_ITEMS = util.vector2(9, 9),
     WIDGET_ORIGIN_PCT = 0.75, -- % of the distance from the top-left corner of the widget to the center of the screen
     TOOLTIP_SEGMENT_HEIGHT = 85,
     TOOLTIP_TYPE_TEXT_SIZE = util.vector2(120.0, 28),
     TOOLTIP_PRIMARY_FIELDS_WIDTH = 120.0,
+  },
+  actionNames = {
+    [input.ACTION.Use] = "Use",
+    [input.ACTION.MoveForward] = "Move Forward",
+    [input.ACTION.MoveBackward] = "Move Backward",
+    [input.ACTION.MoveLeft] = "Move Left",
+    [input.ACTION.MoveRight] = "Move Right",
+    [input.ACTION.Jump] = "Jump",
+    [input.ACTION.ZoomIn] = "Zoom In",
+    [input.ACTION.ZoomOut] = "Zoom Out",
+  },
+  defaultActions = {
+    [input.ACTION.Use] = 'Mouse 1',
+    [input.ACTION.MoveForward] = 'w',
+    [input.ACTION.MoveBackward] = 's',
+    [input.ACTION.MoveLeft] = 'a',
+    [input.ACTION.MoveRight] = 'd',
+    [input.ACTION.Jump] = 'e',
+    [input.ACTION.ZoomIn] = 'Wheel Up',
+    [input.ACTION.ZoomOut] = 'Wheel Down',
   },
   recordAliases = {
     [types.Armor] = {
@@ -522,8 +543,8 @@ end
 
 --- Resets the left panel item portraits to their default state
 common.resetPortraits = function()
-  I.transmogActions.baseItemContainer.content = ui.content(common.defaultPortraitContent())
-  I.transmogActions.newItemContainer.content = ui.content(common.defaultPortraitContent())
+  I.transmogActions.menus.baseItemContainer.content = ui.content(common.defaultPortraitContent())
+  I.transmogActions.menus.newItemContainer.content = ui.content(common.defaultPortraitContent())
 end
 
 --- Checks if the confirm menu is visible
@@ -535,7 +556,7 @@ end
 --- Checks if the menu is visible
 --- @return boolean
 common.mainIsVisible = function()
-  return I.transmogActions.menu and I.transmogActions.menu.layout.props.visible
+  return I.transmogActions.menus.main and I.transmogActions.menus.main.layout.props.visible
 end
 
 --- Checks if the message box is visible
@@ -631,10 +652,10 @@ common.teardownTransmog = function(prevStance)
   end
   I.transmogActions.restoreUserInterface()
   I.transmogActions.message.hasShowedPreviewWarning = false
-  types.Actor.setEquipment(self, I.transmogActions.originalInventory)
+  types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
   types.Actor.setStance(self, prevStance or types.Actor.STANCE.Nothing)
-  I.transmogActions.menu.layout.props.visible = false
-  I.transmogActions.menu:update()
+  I.transmogActions.menus.main.layout.props.visible = false
+  I.transmogActions.menus.main:update()
 end
 
 --- Checks if a layout has a highlight
