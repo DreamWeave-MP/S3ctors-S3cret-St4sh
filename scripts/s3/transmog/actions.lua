@@ -570,14 +570,7 @@ return {
       end
     end,
     onInputAction = function(action)
-        -- Intercept attempts to reopen the HUD and override them while 'mogging
-        -- Not sure if this one can be made into an action?
       lastAction = action
-      if action == input.ACTION.ToggleHUD
-        and I.UI.isHudVisible()
-        and (common.mainIsVisible() or common.confirmIsVisible()) then
-          I.UI.setHudVisibility(false)
-      end
     end,
     onFrame = function()
       if input.isActionPressed(input.ACTION.Console) and not consoleOpenedThisFrame then

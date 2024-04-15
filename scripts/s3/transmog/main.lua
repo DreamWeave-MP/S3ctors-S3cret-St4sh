@@ -49,29 +49,25 @@ local globalHandlers = {
 local function extractHandlers(handlers)
   if type(handlers) ~= 'table' then error("Only tables are supported by the openmw interface") end
   for engineHandleKey, engineHandleTable in pairs(handlers) do
-    print(engineHandleKey)
     if type(engineHandleTable) ~= 'table' then error("Only tables are supported by the openmw interface") end
-    -- deepPrint(engineHandleTable)
     for handleName, handle in pairs(engineHandleTable) do
       if engineHandleKey == 'externalFunctions' then
         if type(handle) == 'function' then handle()
         else error("invalid content for externalFunctions")
         end
       elseif engineHandleKey == 'interface' then
-        print("Requested to add interface " .. handleName)
         globalHandlers.interface[handleName] = handle
       elseif engineHandleKey == 'eventHandlers' or engineHandleKey == 'engineHandlers' then
-        print(engineHandleKey .. " " .. handleName)
         if not localHandlers[engineHandleKey][handleName] then localHandlers[engineHandleKey][handleName] = {} end
         local destinationTable = localHandlers[engineHandleKey][handleName]
-        destinationTable[#destinationTable] = handle
+        destinationTable[#destinationTable + 1] = handle
       end
     end
   end
 end
 
 require('scripts.s3.transmog.settings')
-extractHandlers(require('scripts.s3.transmog.test'))
+extractHandlers(require('scripts.s3.transmog.hooks.inputinterceptor'))
 extractHandlers(require('scripts.s3.transmog.actions'))
 -- return(require('scripts.s3.transmog.actions'))
 
