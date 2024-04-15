@@ -20,9 +20,9 @@ _confirmScreen.createCallback = function()
       I.transmogActions.message.confirmScreen:update()
     end
     I.transmogActions.message.toolTip.layout.props.visible = false
-    I.transmogActions.menus.main.layout.props.visible = false
+    common.mainMenu().layout.props.visible = false
     I.transmogActions.message.toolTip:update()
-    I.transmogActions.menus.main:update()
+    common.mainMenu():update()
   else
     common.messageBoxSingleton("No Glamour Warning", "You must choose two items!")
   end
