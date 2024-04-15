@@ -16,6 +16,7 @@ local yRes = ui.screenSize().y
 --- @field const table<string, any>: Constants used throughout the UI
 local common = {
   const = {
+    CHAR_ROTATE_SPEED = 0.3,
     DEFAULT_ITEM_TYPES = {[types.Armor] = true , [types.Clothing] = true},
     WINDOW_HEIGHT = math.min(640, yRes * 0.95), -- Occupy 800px preferably, or full vertical size
     RIGHT_PANE_WIDTH = math.min(720, xRes * 0.30), -- Occupy 600px preferably, or 25% horizontal size
