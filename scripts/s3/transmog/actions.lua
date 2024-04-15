@@ -14,7 +14,6 @@ local util = require('openmw.util')
 
 local MainWidget = require('scripts.s3.transmog.ui.mainwidget')
 local ItemContainer = require('scripts.s3.transmog.ui.rightpanel.itemcontainer')
-local ConfirmScreen = require('scripts.s3.transmog.ui.leftpanel.glamourbutton').createCallback
 local ToolTip = require('scripts.s3.transmog.ui.tooltip.main')
 
 local mogBinds = storage.playerSection('Settingss3_transmogMenuGroup'):asTable()
@@ -100,7 +99,7 @@ outInterface.acceptTransmog = function()
   end
   types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
   common.resetPortraits()
-  outInterface.menus.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
+  outInterface.menus.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.menus.itemContainer.userData))
   outInterface.menus.main.layout.props.visible = true
   outInterface.message.confirmScreen.layout.props.visible = false
   outInterface.message.confirmScreen:update()
@@ -163,8 +162,8 @@ local canUseMogMenu = function()
 end
 
 -- Now we set up the callback
-local menuStateSwitch = function()
-    if not canUseMogMenu() then return end
+outInterface.menuStateSwitch = function()
+  if not canUseMogMenu() then return end
     if not prevCam then
       types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Controls, false)
       types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Looking, false)
@@ -204,9 +203,9 @@ local menuStateSwitch = function()
         common.resetPortraits()
         -- So when you close it, it keeps whatever layout it had last.
         -- Is this desirable??
-        outInterface.menus.main.itemContainer.content
-          = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
-        outInterface.menus.main.originalInventory = types.Actor.getEquipment(self)
+        outInterface.menus.itemContainer.content
+          = ui.content(ItemContainer.updateContent(outInterface.menus.itemContainer.userData))
+        outInterface.menus.originalInventory = types.Actor.getEquipment(self)
         prevStance = types.Actor.getStance(self)
         types.Actor.setStance(self, types.Actor.STANCE.Nothing)
         rotateWarning()
@@ -222,35 +221,6 @@ local menuStateSwitch = function()
       outInterface.menus.main:update()
     end
 end
-
-input.registerActionHandler("transmogMenuRotateRight", async:callback(function()
-    if not outInterface.menus.main or outInterface.message.confirmScreen
-      or not outInterface.menus.main.layout.props.visible then return end
-    if not input.getBooleanActionValue("transmogMenuRotateRight") and rotateStopFn.funcRight then
-        rotateStopFn.funcRight()
-        return
-    end
-    rotateStopFn.funcRight = time.runRepeatedly(function()
-                                             self.controls.yawChange = 0.3
-    end,
-      0.1,
-      {})
-end))
-
-input.registerActionHandler("transmogMenuRotateLeft", async:callback(function()
-    if not outInterface.menus.main or outInterface.message.confirmScreen
-      or not outInterface.menus.main.layout.props.visible then return end
-    if not input.getBooleanActionValue("transmogMenuRotateLeft") and rotateStopFn.funcLeft then
-        rotateStopFn.funcLeft()
-        return
-    end
-
-    rotateStopFn.funcLeft = time.runRepeatedly(function()
-        self.controls.yawChange = -0.3
-    end,
-      0.1,
-      {})
-end))
 
 local isPreviewing = false
 outInterface.updatePreview = function()
@@ -303,24 +273,6 @@ outInterface.updatePreview = function()
                                       types.Actor.setEquipment(self, equipment)
   end)
 end
-
-input.registerActionHandler("transmogMenuActivePreview", async:callback(outInterface.updatePreview))
-
--- And this is where we actually bind the action to the callback
-input.registerTriggerHandler("transmogMenuOpen", async:callback(menuStateSwitch))
-
-input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
-                                -- Use this key to finish the 'mog
-                                -- Only if either of the two relevant menus is open
-                                -- Guess we'll also need to do this for enhancements as well.
-                                -- I decided I like doing it this way better than attaching
-                                -- callbacks to the widget directly because I can't actually correlate a keybind to a widget there
-                                 if common.mainIsVisible() then
-                                  ConfirmScreen()
-                                 elseif common.confirmIsVisible() then
-                                  outInterface.acceptTransmog()
-                                 end
-end))
 
 local lastAction = nil
 local lastKey = nil
@@ -492,7 +444,6 @@ end
 local consoleOpenedThisFrame = false
 return {
   interface = outInterface,
-  -- interfaceName = 'transmogActions',
   eventHandlers = {
     inputKeyRequest = function(actionData)
       local action = actionData.action
