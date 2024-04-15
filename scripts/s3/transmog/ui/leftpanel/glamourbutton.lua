@@ -9,8 +9,8 @@ local ConfirmScreen = require("scripts.s3.transmog.ui.leftpanel.confirmscreen")
 local _confirmScreen = {}
 
 _confirmScreen.createCallback = function()
-  local baseItem = I.transmogActions.baseItemContainer.content[2].userData
-  local newItem = I.transmogActions.newItemContainer.content[2].userData
+  local baseItem = I.transmogActions.menus.baseItemContainer.content[2].userData
+  local newItem = I.transmogActions.menus.newItemContainer.content[2].userData
   if baseItem and newItem then
     if not I.transmogActions.message.confirmScreen then
       I.transmogActions.message.confirmScreen = ui.create(ConfirmScreen(baseItem))
@@ -20,9 +20,9 @@ _confirmScreen.createCallback = function()
       I.transmogActions.message.confirmScreen:update()
     end
     I.transmogActions.message.toolTip.layout.props.visible = false
-    I.transmogActions.menu.layout.props.visible = false
+    I.transmogActions.menus.main.layout.props.visible = false
     I.transmogActions.message.toolTip:update()
-    I.transmogActions.menu:update()
+    I.transmogActions.menus.main:update()
   else
     common.messageBoxSingleton("No Glamour Warning", "You must choose two items!")
   end

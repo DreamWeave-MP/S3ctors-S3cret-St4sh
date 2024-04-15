@@ -1,7 +1,6 @@
 local I = require('openmw.interfaces')
 
 local async = require('openmw.async')
-local aux_util = require('openmw_aux.util')
 local camera = require('openmw.camera')
 local common = require('scripts.s3.transmog.ui.common')
 local core = require('openmw.core')
@@ -31,7 +30,17 @@ local rotateStopFn = {
 }
 
 local outInterface = {
-  message = {},
+  message = {
+  },
+  menus = {
+    main = nil,
+    leftPane = nil,
+    rightPane = nil,
+    baseItemContainer = nil,
+    newItemContainer = nil,
+    itemContainer = nil,
+    originalInventory = nil,
+  },
   consoleOpen = false,
   messageBox = common.messageBoxSingleton,
 }
@@ -57,8 +66,8 @@ outInterface.acceptTransmog = function()
     return
   end
 
-  local baseItem = I.transmogActions.baseItemContainer.content[2].userData
-  local newItem = I.transmogActions.newItemContainer.content[2].userData
+  local baseItem = I.transmogActions.menus.baseItemContainer.content[2].userData
+  local newItem = I.transmogActions.menus.newItemContainer.content[2].userData
 
   -- A weapon is used as base, with the appearance of a non-equippable item
   -- In this case we only apply the model from the new item on the new record.
@@ -89,13 +98,13 @@ outInterface.acceptTransmog = function()
                            newItem = newItem.recordId,
     })
   end
-  types.Actor.setEquipment(self, I.transmogActions.originalInventory)
+  types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
   common.resetPortraits()
-  outInterface.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
-  outInterface.menu.layout.props.visible = true
+  outInterface.menus.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
+  outInterface.menus.main.layout.props.visible = true
   outInterface.message.confirmScreen.layout.props.visible = false
   outInterface.message.confirmScreen:update()
-  outInterface.menu:update()
+  outInterface.menus.main:update()
 end
 
 outInterface.restoreUserInterface = function()
@@ -175,14 +184,14 @@ local menuStateSwitch = function()
       outInterface.restoreUserInterface()
     end
 
-    if not outInterface.menu then
-      outInterface.menu = MainWidget()
-      outInterface.leftPane = outInterface.menu.layout.content[1].content[1]
-      outInterface.rightPane = outInterface.menu.layout.content[1].content[3]
-      outInterface.baseItemContainer = outInterface.leftPane.content[2]
-      outInterface.newItemContainer = outInterface.leftPane.content[4]
-      outInterface.itemContainer = outInterface.rightPane.content[1].content[3].content[1].content[1]
-      outInterface.originalInventory = types.Actor.getEquipment(self)
+    if not outInterface.menus.main then
+      outInterface.menus.main = MainWidget()
+      outInterface.menus.leftPane = outInterface.menus.main.layout.content[1].content[1]
+      outInterface.menus.rightPane = outInterface.menus.main.layout.content[1].content[3]
+      outInterface.menus.baseItemContainer = outInterface.menus.leftPane.content[2]
+      outInterface.menus.newItemContainer = outInterface.menus.leftPane.content[4]
+      outInterface.menus.itemContainer = outInterface.menus.rightPane.content[1].content[3].content[1].content[1]
+      outInterface.menus.originalInventory = types.Actor.getEquipment(self)
       outInterface.message.singleton = nil
       outInterface.message.confirmScreen = nil
       outInterface.message.toolTip = nil
@@ -190,29 +199,33 @@ local menuStateSwitch = function()
       prevStance = types.Actor.getStance(self)
       rotateWarning()
     else
-      outInterface.menu.layout.props.visible = not outInterface.menu.layout.props.visible
-      if outInterface.menu.layout.props.visible then
+      outInterface.menus.main.layout.props.visible = not outInterface.menus.main.layout.props.visible
+      if outInterface.menus.main.layout.props.visible then
         common.resetPortraits()
-        outInterface.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
-        outInterface.originalInventory = types.Actor.getEquipment(self)
+        -- So when you close it, it keeps whatever layout it had last.
+        -- Is this desirable??
+        outInterface.menus.main.itemContainer.content
+          = ui.content(ItemContainer.updateContent(outInterface.itemContainer.userData))
+        outInterface.menus.main.originalInventory = types.Actor.getEquipment(self)
         prevStance = types.Actor.getStance(self)
         types.Actor.setStance(self, types.Actor.STANCE.Nothing)
         rotateWarning()
       else
         outInterface.message.hasShowedPreviewWarning = false
-        types.Actor.setEquipment(self, outInterface.originalInventory)
+        types.Actor.setEquipment(self, outInterface.menus.originalInventory)
         types.Actor.setStance(self, prevStance)
       end
       if common.toolTipIsVisible() then
         outInterface.message.toolTip.layout.props.visible = false
         outInterface.message.toolTip:update()
       end
-      outInterface.menu:update()
+      outInterface.menus.main:update()
     end
 end
 
 input.registerActionHandler("transmogMenuRotateRight", async:callback(function()
-    if not outInterface.menu or outInterface.message.confirmScreen or not outInterface.menu.layout.props.visible then return end
+    if not outInterface.menus.main or outInterface.message.confirmScreen
+      or not outInterface.menus.main.layout.props.visible then return end
     if not input.getBooleanActionValue("transmogMenuRotateRight") and rotateStopFn.funcRight then
         rotateStopFn.funcRight()
         return
@@ -225,7 +238,8 @@ input.registerActionHandler("transmogMenuRotateRight", async:callback(function()
 end))
 
 input.registerActionHandler("transmogMenuRotateLeft", async:callback(function()
-    if not outInterface.menu or outInterface.message.confirmScreen or not outInterface.menu.layout.props.visible then return end
+    if not outInterface.menus.main or outInterface.message.confirmScreen
+      or not outInterface.menus.main.layout.props.visible then return end
     if not input.getBooleanActionValue("transmogMenuRotateLeft") and rotateStopFn.funcLeft then
         rotateStopFn.funcLeft()
         return
@@ -246,7 +260,7 @@ outInterface.updatePreview = function()
     return
   end
 
-  if outInterface.newItemContainer.content[2].userData then
+  if outInterface.menus.newItemContainer.content[2].userData then
     isPreviewing = true
     common.messageBoxSingleton("Preview Warning", "You must confirm your current choices before previewing another item!", 0.5)
     return
@@ -256,7 +270,7 @@ outInterface.updatePreview = function()
   local recordId = ToolTip.getRecordId()
 
   local equipment = {}
-  for slot, item in pairs(outInterface.originalInventory) do
+  for slot, item in pairs(outInterface.menus.originalInventory) do
     if item.recordId == recordId then
       common.messageBoxSingleton("Preview Warning", "You cannot preview an item you are currently wearing!", 0.5)
       return
@@ -308,10 +322,198 @@ input.registerTriggerHandler("transmogMenuConfirm", async:callback(function()
                                  end
 end))
 
+local lastAction = nil
+local lastKey = nil
+local lastMouse = nil
+local updateQueued = false
+local pressedKeys = {}
+local pressedMice = {}
+
+local savedBinds = {
+  keys = {},
+  mice = {},
+}
+local neededActions = {
+  [input.ACTION.Console] = "Console",
+  [input.ACTION.Sneak] = "Sneak",
+  [input.ACTION.ZoomOut] = "Zoom Out",
+  [input.ACTION.ZoomIn] = "Zoom In",
+  [input.ACTION.Use] = "Use",
+  [input.ACTION.Jump] = "Jump",
+  [input.ACTION.Activate] = "Activate",
+  [input.ACTION.MoveForward] = "Forward",
+  [input.ACTION.MoveBackward] = "Backward",
+}
+local keyAliases = {
+  [input.KEY.LeftCtrl] = "Left Ctrl",
+  [input.KEY.RightCtrl] = "Right Ctrl",
+  [input.KEY.LeftAlt] = "Left Alt",
+  [input.KEY.RightAlt] = "Right Alt",
+  [input.KEY.LeftShift] = "Left Shift",
+  [input.KEY.RightShift] = "Right Shift",
+  [input.KEY.LeftSuper] = "Left Super",
+  [input.KEY.RightSuper] = "Right Super",
+  [input.KEY.Space] = "Space",
+  [input.KEY.Enter] = "Return",
+}
+
+local function updateKeybind(actionBind, key)
+  if not lastKey or lastKey.code ~= key.code or lastMouse then return end
+  local updateKey = true
+  for savedKey, _ in pairs(savedBinds.keys) do
+    if savedBinds.keys[savedKey] == actionBind then
+      if savedKey.code ~= key.code then
+        savedBinds.keys[savedKey] = nil
+      else
+        updateKey = false
+      end
+    end
+  end
+
+  if updateKey then
+    savedBinds.keys[actionBind] = {code = key.code, symbol = keyAliases[key.code] or key.symbol}
+  end
+end
+
+local function updateMouse(actionBind, mouseButton)
+  if not lastMouse or lastMouse ~= mouseButton or lastKey then return end
+  local updateMouseBind = true
+  for savedMouse, _ in pairs(savedBinds.mice) do
+    if savedBinds.mice[savedMouse] == actionBind then
+      if savedMouse ~= mouseButton then
+        savedBinds.mice[savedMouse] = nil
+      else
+        updateMouseBind = false
+      end
+    end
+  end
+  if updateMouseBind then
+    savedBinds.mice[actionBind] = mouseButton
+  end
+end
+
+local function removePressedKey(key)
+  for index, oldKey in pairs(pressedKeys) do
+    if oldKey.code == key.code then
+      pressedKeys[index] = nil
+    end
+  end
+end
+
+local function removePressedMouse(mouse)
+  for index, oldMouse in pairs(pressedMice) do
+    if oldMouse == mouse then
+      pressedMice[index] = nil
+    end
+  end
+end
+
+local function removePressedWheels(wheelState)
+  -- ????
+  -- for index, oldWheel in pairs(pressedWheels) do
+    -- if oldMouse == input.MOUSE.WheelUp or oldMouse == input.MOUSE.WheelDown then
+    --   pressedMice[index] = nil
+    -- end
+end
+
+--- This function is used to delete a keybind if it is not unique
+--- @param actionBind openmw.input.ACTION: table key for all intercepted keybinds
+--- @param userInput openmw.input.KEY: the actual button pressed by the user when trying to intercept this bind
+local function deleteUniqueAction(actionBind, userInput)
+  for action, key in pairs(savedBinds.keys) do
+    if action == actionBind then
+      if key.code == userInput and not savedBinds.mice[actionBind] then return true end
+      savedBinds.keys[action] = nil
+    end
+  end
+  for action, button in pairs(savedBinds.mice) do
+    if action == actionBind then
+      if button == userInput and not savedBinds.keys[actionBind] then return true end
+      savedBinds.mice[action] = nil
+    end
+  end
+end
+
+--- This function is used to filter out keybinds that are not unique
+--- If it exists at all in one of the two tables (we'll need more) we see if it's the same as our current input
+--- If not, we delete it, if it is, we return true and bail on the whole thing
+--- @param actionBind openmw.input.ACTION: table key for all intercepted keybinds
+--- @param userInput openmw.input.KEY: the actual button pressed by the user when trying to intercept this bind
+local function filterUniqueActions(actionBind, userInput)
+  if savedBinds.keys[actionBind] or savedBinds.mice[actionBind] then
+    return deleteUniqueAction(actionBind, userInput)
+  end
+end
+
+--- This function is used to map a keybind to an action
+--- Agnostic of input, but does act based on what exactly you're binding against
+--- of course doing system keybinds is a bit different than just using the settings menu which
+--- requires far less fuckery
+local function mapKeyToAction(actionBind, userInput, isMouse)
+  if not actionBind then return end
+  local convertKeyboard = isMouse and userInput or userInput.code
+  if filterUniqueActions(actionBind, convertKeyboard) then return end
+  if isMouse then
+    updateMouse(actionBind, userInput)
+  else
+    updateKeybind(actionBind, userInput)
+    common.deepPrint(savedBinds.keys, 3)
+  end
+  updateQueued = false
+  lastKey = nil
+  lastMouse = nil
+  lastAction = nil
+end
+
+local function queueActionBinding(action, userInput, isMouse)
+  async:newUnsavableSimulationTimer(0.25, function()
+                                if #pressedMice == 0 and #pressedKeys == 0 then
+                                  mapKeyToAction(action, userInput, isMouse)
+                                else
+                                  queueActionBinding(action, userInput, isMouse)
+                                end
+  end)
+end
+
+outInterface.getKeyByAction = function(requestedAction)
+  for action, key in pairs(savedBinds.keys) do
+    if action == requestedAction then return keyAliases[key.code] or key.symbol end
+  end
+end
+
+outInterface.getMiceActions = function()
+  return savedBinds.mice
+end
+
+outInterface.getWheelActions = function()
+  return savedBinds.wheels
+end
+
 local consoleOpenedThisFrame = false
 return {
   interface = outInterface,
-  interfaceName = 'transmogActions',
+  -- interfaceName = 'transmogActions',
+  eventHandlers = {
+    inputKeyRequest = function(actionData)
+      local action = actionData.action
+      local foundKey = savedBinds.keys[action]
+      -- Unimplemented, but we send this event back to ourselves to get the right keybind
+      -- local responseName = actionData.responseName
+      if not foundKey then
+        if not common.defaultActions[action] then return end
+        foundKey = common.defaultActions[action] .. " from defaults"
+      else
+        foundKey = keyAliases[foundKey.code] or foundKey.symbol .. " from input"
+      end
+      if not foundKey then return end
+      print("Key requested for action: " .. common.actionNames[action]
+            .. " and is "
+            .. foundKey)
+    end,
+    itemContainerRequest = function(receiver)
+      self:sendEvent(receiver, outInterface.itemContainer)
+    end,
+  },
   engineHandlers = {
     onInit = function()
       common.messageBoxSingleton("Welcome One", "Thank you for installing Glamour Menu!", 3)
@@ -323,7 +525,33 @@ return {
                                  .. "Happy Glamming!", 3)
       -- Add a check for Kartoffel's empty gear mod
     end,
+    onMouseButtonRelease = function(button)
+      removePressedMouse(button)
+      if not updateQueued
+        and lastAction
+        and neededActions[lastAction]
+        and #pressedMice == 0
+        and button == lastMouse then
+        queueActionBinding(lastAction, button, true)
+      end
+    end,
+    onMouseButtonPress = function(button)
+      pressedMice[#pressedMice + 1] = button
+      lastMouse = button
+    end,
+    onKeyPress = function(key)
+      pressedKeys[#pressedKeys + 1] = key
+      lastKey = key
+    end,
     onKeyRelease = function(key)
+      removePressedKey(key)
+      if not updateQueued
+        and lastAction
+        and neededActions[lastAction]
+        and #pressedKeys == 0
+        and key.code == lastKey.code then
+        queueActionBinding(lastAction, key, false)
+      end
       -- Since the engine doesn't let you bind ESC
       -- and it's generally just used to close stuff, do that here
       if key.code == input.KEY.Escape then
@@ -332,8 +560,8 @@ return {
         end
         if common.confirmIsVisible() then
           outInterface.message.confirmScreen.layout.props.visible = false
-          outInterface.menu.layout.props.visible = true
-          outInterface.menu:update()
+          outInterface.menus.main.layout.props.visible = true
+          outInterface.menus.main:update()
           outInterface.message.confirmScreen:update()
           I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
         elseif common.mainIsVisible() then
@@ -344,6 +572,7 @@ return {
     onInputAction = function(action)
         -- Intercept attempts to reopen the HUD and override them while 'mogging
         -- Not sure if this one can be made into an action?
+      lastAction = action
       if action == input.ACTION.ToggleHUD
         and I.UI.isHudVisible()
         and (common.mainIsVisible() or common.confirmIsVisible()) then
@@ -354,6 +583,14 @@ return {
       if input.isActionPressed(input.ACTION.Console) and not consoleOpenedThisFrame then
         consoleOpenedThisFrame = true
       end
+      if I.UI.getMode() == I.UI.MODE.MainMenu then
+        for _, bindTable in pairs(savedBinds) do
+          for action, _ in pairs(bindTable) do
+            bindTable[action] = nil
+          end
+        end
+      end
+
       -- close the menu if the console is opened
       if consoleOpenedThisFrame and not input.isActionPressed(input.ACTION.Console) then
         consoleOpenedThisFrame = false
