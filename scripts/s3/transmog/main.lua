@@ -1,5 +1,3 @@
-local deepPrint = require('scripts.s3.transmog.ui.common').deepPrint
-
 local localHandlers = {
   engineHandlers = {
     onInputAction = {},
@@ -66,10 +64,12 @@ local function extractHandlers(handlers)
   end
 end
 
+-- Settings Bindings are stored here
 require('scripts.s3.transmog.settings')
+-- Correlating actions are registered here
+require('scripts.s3.transmog.actionregistrations')
 extractHandlers(require('scripts.s3.transmog.hooks.inputinterceptor'))
 extractHandlers(require('scripts.s3.transmog.actions'))
--- return(require('scripts.s3.transmog.actions'))
 
 
 return globalHandlers
