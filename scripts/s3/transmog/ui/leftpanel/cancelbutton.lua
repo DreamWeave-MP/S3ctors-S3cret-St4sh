@@ -8,9 +8,9 @@ return function()
   button.events.mousePress = async:callback(
     function (_, _layout)
       I.transmogActions.message.confirmScreen.layout.props.visible = false
-      I.transmogActions.menus.main.layout.props.visible = true
+      common.mainMenu().layout.props.visible = true
       I.transmogActions.message.confirmScreen:update()
-      I.transmogActions.menus.main:update()
+      common.mainMenu():update()
     end)
   return button
 end

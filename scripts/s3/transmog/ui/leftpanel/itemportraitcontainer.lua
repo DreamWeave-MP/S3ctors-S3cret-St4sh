@@ -26,7 +26,7 @@ local function ItemPortraitContainer(widgetName)
 
           if name ~= "Default" then
             layout.content = ui.content(common.defaultPortraitContent())
-            I.transmogActions.menus.main:update()
+            common.mainMenu():update()
             if name == "New Item" then
               types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
             end
