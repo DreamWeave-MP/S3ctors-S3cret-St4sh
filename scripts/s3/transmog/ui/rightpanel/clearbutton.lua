@@ -12,12 +12,12 @@ return function()
   local button = common.createButton("Clear")
   button.props.name =  "Clear Button"
   button.events.mousePress = async:callback(function()
-    local itemContainer = I.transmogActions.itemContainer
+    local itemContainer = I.transmogActions.menus.itemContainer
     itemContainer.userData = common.const.DEFAULT_ITEM_TYPES
     itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
-    types.Actor.setEquipment(self, I.transmogActions.originalInventory)
+    types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
     common.resetPortraits()
-    I.transmogActions.menu:update()
+    I.transmogActions.menus.main:update()
   end)
   return button
 end

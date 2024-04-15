@@ -23,7 +23,9 @@ end
 local updateContainerCategory = async:callback(function(_, layout)
   local name = layout.props.name
 
-  local itemContainer = I.transmogActions.itemContainer
+  self:sendEvent('itemContainerRequest', 'CategoryButtonItemContainer')
+
+  local itemContainer = I.transmogActions.menus.itemContainer
   if name == "Weapon" then
     types.Actor.setStance(self, types.Actor.STANCE.Weapon)
   else
@@ -32,8 +34,8 @@ local updateContainerCategory = async:callback(function(_, layout)
   local typeIsActive = itemContainer.userData[layout.userData.recordType]
   itemContainer.userData[layout.userData.recordType] = not typeIsActive
   itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
-  types.Actor.setEquipment(self, I.transmogActions.originalInventory)
-  I.transmogActions.menu:update()
+  types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
+  I.transmogActions.menus.main:update()
 end)
 
 local function categoryButton(recordType)
