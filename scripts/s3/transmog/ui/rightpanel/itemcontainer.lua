@@ -99,7 +99,7 @@ _ItemContainer.addToLeftPanel = async:callback(function(_, layout)
     -- The portrait, then the box, then the actual image
     -- It should be at index 1, but the highlight is at index 1
     local itemData = _ItemContainer.getUserDataFromLayout(layout)
-    local mainWidget = I.transmogActions.menus.main
+    local mainWidget = common.mainMenu()
     local basePortrait = I.transmogActions.menus.baseItemContainer
     local newPortrait = I.transmogActions.menus.newItemContainer
 
@@ -174,7 +174,7 @@ _ItemContainer.ItemPortrait = function(itemData)
           end
           common.addHighlight(layout)
           ToolTip.refreshItem(itemData)
-          I.transmogActions.menus.main:update()
+          common.mainMenu():update()
           if input.getBooleanActionValue("transmogMenuActivePreview") then
             I.transmogActions.updatePreview()
           end
@@ -186,7 +186,7 @@ _ItemContainer.ItemPortrait = function(itemData)
             toolTip:update()
           end
           common.removeHighlight(layout)
-          I.transmogActions.menus.main:update()
+          common.mainMenu():update()
       end),
     },
     content = ui.content {

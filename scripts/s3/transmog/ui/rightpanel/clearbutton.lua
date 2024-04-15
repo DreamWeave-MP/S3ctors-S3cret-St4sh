@@ -17,7 +17,7 @@ return function()
     itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
     types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
     common.resetPortraits()
-    I.transmogActions.menus.main:update()
+    common.mainMenu():update()
   end)
   return button
 end

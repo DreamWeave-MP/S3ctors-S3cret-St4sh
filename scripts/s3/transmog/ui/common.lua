@@ -557,7 +557,7 @@ end
 --- Checks if the menu is visible
 --- @return boolean
 common.mainIsVisible = function()
-  return I.transmogActions.menus.main and I.transmogActions.menus.main.layout.props.visible
+  return common.mainMenu() and common.mainMenu().layout.props.visible
 end
 
 --- Checks if the message box is visible
@@ -570,6 +570,10 @@ end
 --- @return boolean
 common.toolTipIsVisible = function()
   return I.transmogActions.message.toolTip and I.transmogActions.message.toolTip.layout.props.visible
+end
+
+common.mainMenu = function()
+  return I.transmogActions.menus.main
 end
 
 local messages = {}
@@ -655,8 +659,8 @@ common.teardownTransmog = function(prevStance)
   I.transmogActions.message.hasShowedPreviewWarning = false
   types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
   types.Actor.setStance(self, prevStance or types.Actor.STANCE.Nothing)
-  I.transmogActions.menus.main.layout.props.visible = false
-  I.transmogActions.menus.main:update()
+  common.mainMenu().layout.props.visible = false
+  common.mainMenu():update()
 end
 
 --- Checks if a layout has a highlight
