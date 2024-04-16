@@ -5,7 +5,7 @@ local input = require('openmw.input')
 --- Intercept attempts to reopen the HUD and override them while 'mogging
 --- @param isHud boolean: AND result of the input action
 local function forceCloseHud(isHud)
-  if isHud and I.UI.isHudVisible() and (common.mainIsVisible() or common.confirmIsVisible())
+  if isHud and I.UI.isHudVisible() and (common.isVisible('main menu') or common.isVisible('confirm screen'))
   then I.UI.setHudVisibility(false)
   end
 end

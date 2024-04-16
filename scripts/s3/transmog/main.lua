@@ -68,7 +68,10 @@ end
 require('scripts.s3.transmog.settings')
 -- Correlating actions are registered here
 require('scripts.s3.transmog.actionregistrations')
-extractHandlers(require('scripts.s3.transmog.hooks.inputinterceptor'))
+-- standalone engineHandlers go here
+extractHandlers(require('scripts.s3.transmog.enginehandlers.oninit'))
+extractHandlers(require('scripts.s3.transmog.enginehandlers.hudinterceptor'))
+-- standalone eventHandlers go here
 extractHandlers(require('scripts.s3.transmog.actions'))
 
 
