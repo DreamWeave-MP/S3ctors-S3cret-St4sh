@@ -2,9 +2,9 @@ local I = require('openmw.interfaces')
 
 local function mogMenuEvent(mogArgs)
   for aliasName, menuItem in pairs(I.transmogActions.MenuAliases()) do
-    if aliasName ~= 'original inventory'
-      and aliasName ~= 'current inventory'
-      and aliasName ~= 'equipment' then
+    if aliasName ~= 'original equipment'
+      and aliasName ~= 'inventory'
+      and aliasName ~= 'current equipment' then
       if not mogArgs.targetName or mogArgs.targetName == aliasName then
         if menuItem.userData
           and menuItem.userData.mogMenuEvent
