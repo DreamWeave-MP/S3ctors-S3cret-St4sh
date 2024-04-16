@@ -1,15 +1,15 @@
-local Aliases = require('scripts.s3.transmog.ui.menualiases')
+local I = require('openmw.interfaces')
 
 local function mogMenuEvent(mogArgs)
-  for aliasName, menuItem in pairs(Aliases()) do
+  for aliasName, menuItem in pairs(I.transmogActions.MenuAliases()) do
     if aliasName ~= 'original inventory'
-    and aliasName ~= 'current inventory'
-    and aliasName ~= 'equipment' then
-      if menuItem.userData
-        and menuItem.userData.mogMenuEvent
-        and type(menuItem.userData.mogMenuEvent) == 'function' then
-        menuItem.userData.mogMenuEvent(mogArgs)
-      end
+      and aliasName ~= 'current inventory'
+      and aliasName ~= 'equipment'
+      and menuItem.userData
+      and menuItem.userData.mogMenuEvent
+      and type(menuItem.userData.mogMenuEvent) == 'function'
+      and (not mogArgs.targetName or mogArgs.targetName == aliasName) then
+      menuItem.userData.mogMenuEvent(mogArgs)
     end
   end
 end
