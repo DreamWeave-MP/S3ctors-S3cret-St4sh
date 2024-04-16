@@ -6,10 +6,9 @@ local util = require('openmw.util')
 
 local I = require('openmw.interfaces')
 
-
 local prevCam = nil
 
-local function teardownUserInterface()
+local function teardownVanillaUserInterface()
   types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Controls, false)
   types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Looking, false)
   I.Controls.overrideUiControls(true)
@@ -26,7 +25,7 @@ local function teardownUserInterface()
   I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
 end
 
-local function restoreUserInterface()
+local function restoreVanillaUserInterface()
   types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Controls, true)
   types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Looking, true)
   I.Controls.overrideUiControls(false)
@@ -39,13 +38,11 @@ local function restoreUserInterface()
 end
 
 local function switchTransmogMenu()
-  if prevCam then
-    restoreUserInterface()
-  else
-    teardownUserInterface()
-  end
+  if prevCam then restoreVanillaUserInterface() else teardownVanillaUserInterface() end
 end
 
+--- This file is somewhat misnamed
+--- It's responsible for switching between states of the transmog menu
 return {
   eventHandlers = {
     switchTransmogMenu = switchTransmogMenu,

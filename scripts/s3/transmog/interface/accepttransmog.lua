@@ -21,13 +21,13 @@ local function acceptTransmog()
   local newItem = Aliases('new item'):itemData()
 
   -- we should add the capability of stacking ammunition
-  for slot, item in pairs(Aliases()['original inventory']) do
+  for slot, item in pairs(Aliases()['original equipment']) do
     if item.recordId == baseItem.recordId and item.count <= 1 then
-      Aliases()['original inventory'][slot] = nil
+      Aliases()['original equipment'][slot] = nil
       break
     end
   end
-  types.Actor.setEquipment(self, I.transmogActions.originalInventory)
+  types.Actor.setEquipment(self, I.transmogActions.originalEquipment)
 
   -- A weapon is used as base, with the appearance of a non-equippable item
   -- In this case we only apply the model from the new item on the new record.
