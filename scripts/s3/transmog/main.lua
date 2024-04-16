@@ -76,11 +76,14 @@ end
 require('scripts.s3.transmog.settings')
 -- Correlating actions are registered here
 require('scripts.s3.transmog.actionregistrations')
+-- additional interface elements go here
+extractHandlers(require('scripts.s3.transmog.interface.accepttransmog'))
 -- standalone engineHandlers go here
-extractHandlers(require('scripts.s3.transmog.enginehandlers.oninit'))
+extractHandlers(require('scripts.s3.transmog.enginehandlers.oninstallmessage'))
 extractHandlers(require('scripts.s3.transmog.enginehandlers.hudinterceptor'))
 -- standalone eventHandlers go here
 extractHandlers(require('scripts.s3.transmog.actions'))
-extractHandlers(require('scripts.s3.transmog.mogmenuevent'))
+extractHandlers(require('scripts.s3.transmog.eventhandlers.mogmenuevent'))
+extractHandlers(require('scripts.s3.transmog.eventhandlers.restoreuserinterface'))
 
 return globalHandlers

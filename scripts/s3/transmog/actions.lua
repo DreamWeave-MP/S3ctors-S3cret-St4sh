@@ -55,71 +55,6 @@ local function rotateWarning()
   outInterface.message.hasShowedControls = true
 end
 
-outInterface.acceptTransmog = function()
-  if I.transmogActions.message.confirmScreen == nil then return end
-
-  local newItemName = I.transmogActions.message.confirmScreen.layout.content[2].content[1].props.text
-
-  if newItemName == "" then
-    common.messageBoxSingleton("No Name Warning", "You must name your item!")
-    return
-  end
-
-  local baseItem = I.transmogActions.menus.baseItemContainer.content[2].userData
-  local newItem = I.transmogActions.menus.newItemContainer.content[2].userData
-
-  -- A weapon is used as base, with the appearance of a non-equippable item
-  -- In this case we only apply the model from the new item on the new record.
-  if baseItem.type == types.Weapon then
-    local weaponTable = {name = newItemName, model = newItem.record.model, icon = newItem.record.icon}
-    core.sendGlobalEvent("mogOnWeaponCreate",
-                         {
-                           target = self,
-                           item = weaponTable,
-                           toRemove = baseItem.recordId
-    })
-  elseif baseItem.type == types.Book then
-    local bookTable = { name = newItemName }
-    core.sendGlobalEvent("mogOnBookCreate",
-                         {
-                           target = self,
-                           item = bookTable,
-                           toRemoveBook = baseItem.recordId,
-                           toRemoveItem = newItem.recordId,
-    })
-  elseif baseItem.type == types.Clothing or baseItem.type == types.Armor then
-    local apparelTable = { name = newItemName }
-    core.sendGlobalEvent("mogOnApparelCreate",
-                         {
-                           target = self,
-                           item = apparelTable,
-                           oldItem = baseItem.recordId,
-                           newItem = newItem.recordId,
-    })
-  end
-  types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
-  common.resetPortraits()
-  outInterface.menus.itemContainer.content = ui.content(ItemContainer.updateContent(outInterface.menus.itemContainer.userData))
-  common.mainMenu().layout.props.visible = true
-  outInterface.message.confirmScreen.layout.props.visible = false
-  outInterface.message.confirmScreen:update()
-  common.mainMenu():update()
-end
-
-outInterface.restoreUserInterface = function()
-  if prevCam then
-    types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Controls, true)
-    types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Looking, true)
-    I.Controls.overrideUiControls(false)
-    camera.showCrosshair(true)
-    camera.setMode(prevCam)
-    I.UI.setHudVisibility(true)
-    I.UI.setPauseOnMode(I.UI.MODE.Interface, true)
-    I.UI.setMode()
-    prevCam = nil
-  end
-end
-
 local canUseMogMenu = function()
     if not types.Actor.isOnGround(self) then
       if not outInterface.message.cantUseControls then
@@ -161,70 +96,51 @@ local canUseMogMenu = function()
     return true
 end
 
+-- Also just make most of this an event; everything that isn't related to the menus directly
 -- Now we set up the callback
 outInterface.menuStateSwitch = function()
   if not canUseMogMenu() then return end
-    if not prevCam then
-      types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Controls, false)
-      types.Player.setControlSwitch(self, input.CONTROL_SWITCH.Looking, false)
-      I.Controls.overrideUiControls(true)
-      self.controls.sneak = false -- This is a special case, it's not covered by the control switch
-      camera.showCrosshair(false)
-      camera.setYaw(3.14)
-      camera.setPitch(0)
-      camera.setRoll(0)
-      prevCam = camera.getMode()
-      camera.setMode(camera.MODE.Static)
-      camera.setStaticPosition(self.position + util.vector3(25, 75, 75))
-      I.UI.setHudVisibility(false)
-      I.UI.setPauseOnMode(I.UI.MODE.Interface, false)
-      I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
-    else
-      outInterface.restoreUserInterface()
-    end
+  --- Maybe some event should handle this bit?
+  self:sendEvent('switchTransmogMenu')
 
-    if not common.mainMenu() then
-      I.transmogActions.menus.main = MainWidget()
-      outInterface.menus.leftPane = common.mainMenu().layout.content[1].content[1]
-      outInterface.menus.rightPane = common.mainMenu().layout.content[1].content[3]
-      outInterface.menus.baseItemContainer = outInterface.menus.leftPane.content[2]
-      outInterface.menus.newItemContainer = outInterface.menus.leftPane.content[4]
-      outInterface.menus.itemContainer = outInterface.menus.rightPane.content[1].content[3].content[1].content[1]
-      outInterface.menus.originalInventory = types.Actor.getEquipment(self)
-      outInterface.message.singleton = nil
-      outInterface.message.confirmScreen = nil
-      outInterface.message.toolTip = nil
-      outInterface.message.hasShowedPreviewWarning = false
+  if not I.transmogActions.menus.main then
+      MainWidget()
+      common.updateOriginalInventory()
+      -- print('inventory has been assigned on initial construction...')
+      -- common.deepPrint(Aliases('original inventory'), 3)
       prevStance = types.Actor.getStance(self)
       rotateWarning()
     else
-      common.mainMenu().layout.props.visible = not common.mainMenu().layout.props.visible
-      if common.mainMenu().layout.props.visible then
+      local mainMenu = Aliases('main menu')
+      local mainIsVisible = common.isVisible('main menu')
+      mainMenu.layout.props.visible = not mainIsVisible
+      if common.isVisible('main menu') then
         common.resetPortraits()
         -- So when you close it, it keeps whatever layout it had last.
         -- Is this desirable??
-        outInterface.menus.itemContainer.content
-          = ui.content(ItemContainer.updateContent(outInterface.menus.itemContainer.userData))
-        outInterface.menus.originalInventory = types.Actor.getEquipment(self)
+        local itemContainer = Aliases('item container')
+        itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
+        common.updateOriginalInventory()
         prevStance = types.Actor.getStance(self)
         types.Actor.setStance(self, types.Actor.STANCE.Nothing)
         rotateWarning()
       else
         outInterface.message.hasShowedPreviewWarning = false
-        types.Actor.setEquipment(self, outInterface.menus.originalInventory)
+        types.Actor.setEquipment(self, Aliases()['original inventory'])
         types.Actor.setStance(self, prevStance)
       end
       if common.toolTipIsVisible() then
         outInterface.message.toolTip.layout.props.visible = false
         outInterface.message.toolTip:update()
       end
-      common.mainMenu():update()
+      Aliases('main menu'):update()
     end
 end
 
+-- make this an event
 local isPreviewing = false
 outInterface.updatePreview = function()
-  if not canUseMogMenu() or not common.mainIsVisible() then return end
+  if not canUseMogMenu() or not common.isVisible('main menu') then return end
   if not common.toolTipIsVisible() and not isPreviewing then
     common.messageBoxSingleton("Preview Warning", "You must have an item selected to preview it!", 0.5)
     return
@@ -409,7 +325,6 @@ local function mapKeyToAction(actionBind, userInput, isMouse)
     updateMouse(actionBind, userInput)
   else
     updateKeybind(actionBind, userInput)
-    common.deepPrint(savedBinds.keys, 3)
   end
   updateQueued = false
   lastKey = nil
