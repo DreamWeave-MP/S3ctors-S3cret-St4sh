@@ -42,6 +42,44 @@ group.rotateImpl = function(isLeft)
   end
 end
 
+local prevStance = nil
+-- Now we set up the callback
+group.menuStateSwitch = function()
+  if not I.transmogActions.canMog() then return end
+  local Aliases = I.transmogActions.MenuAliases
+  local mainMenu = Aliases('main menu')
+
+  self:sendEvent('switchTransmogMenu')
+
+  if not mainMenu then
+    MainWidget()
+    common.updateOriginalEquipment()
+    prevStance = types.Actor.getStance(self)
+    rotateWarning()
+    return
+  end
+
+  local mainIsVisible = not common.isVisible('main menu')
+  mainMenu.layout.props.visible = mainIsVisible
+
+  if mainIsVisible then
+    prevStance = types.Actor.getStance(self)
+    types.Actor.setStance(self, types.Actor.STANCE.Nothing)
+    rotateWarning()
+    self:sendEvent('updateItemContainer', {resetPortraits = true, resetEquipment = true})
+  else
+    I.transmogActions.message.hasShowedPreviewWarning = false
+    types.Actor.setEquipment(self, Aliases()['original equipment'])
+    types.Actor.setStance(self, prevStance)
+    mainMenu:update()
+  end
+
+  if common.toolTipIsVisible() then
+    I.transmogActions.message.toolTip.layout.props.visible = false
+    I.transmogActions.message.toolTip:update()
+  end
+end
+
 -- And this is where we actually bind the action to the callback
 -- Do it on a delay so we wait for the interface to be ready
 group.registerActions = function()
