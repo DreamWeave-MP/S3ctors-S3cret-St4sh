@@ -1,3 +1,7 @@
+local self = require('openmw.self')
+
+local MenuAliases = require('scripts.s3.transmog.ui.menualiases')
+
 local localHandlers = {
   engineHandlers = {
     onInputAction = {},
@@ -28,6 +32,10 @@ end
 local globalHandlers = {
   interfaceName = 'transmogActions',
   interface = {
+    MenuAliases = MenuAliases,
+    MogMenuEvent = function(mogArgs)
+      self:sendEvent('mogMenuEvent', mogArgs)
+    end,
   },
   eventHandlers = {},
   engineHandlers = {
@@ -73,6 +81,6 @@ extractHandlers(require('scripts.s3.transmog.enginehandlers.oninit'))
 extractHandlers(require('scripts.s3.transmog.enginehandlers.hudinterceptor'))
 -- standalone eventHandlers go here
 extractHandlers(require('scripts.s3.transmog.actions'))
-
+extractHandlers(require('scripts.s3.transmog.mogmenuevent'))
 
 return globalHandlers
