@@ -78,6 +78,7 @@ require('scripts.s3.transmog.settings')
 require('scripts.s3.transmog.actionregistrations')
 -- additional interface elements go here
 extractHandlers(require('scripts.s3.transmog.interface.accepttransmog'))
+extractHandlers(require('scripts.s3.transmog.interface.canmog'))
 -- standalone engineHandlers go here
 extractHandlers(require('scripts.s3.transmog.enginehandlers.oninstallmessage'))
 extractHandlers(require('scripts.s3.transmog.enginehandlers.hudinterceptor'))
