@@ -1,17 +1,16 @@
-local async = require('openmw.async')
-local aux_util = require('openmw_aux.util')
-local input = require('openmw.input')
 local ui = require('openmw.ui')
 local util = require('openmw.util')
 
 local const = require('scripts.s3.transmog.ui.common').const
+local NameInputBox = require('scripts.s3.transmog.ui.leftpanel.nameinputbox')
 local CancelButton = require('scripts.s3.transmog.ui.leftpanel.cancelbutton')
 local ClearButton = require('scripts.s3.transmog.ui.leftpanel.clearbutton')
 local CreateButton = require('scripts.s3.transmog.ui.leftpanel.createbutton')
 local I = require('openmw.interfaces')
 
 return function(itemData)
-  return {
+  local nameInputBox = NameInputBox.new(itemData)
+  local confirmScreen = {
     type = ui.TYPE.Flex,
     layer = 'HUD',
     props = {
@@ -40,25 +39,7 @@ return function(itemData)
           name = "Name Input Box",
         },
         content = ui.content {
-          {
-            type = ui.TYPE.TextEdit,
-            events = {
-              textChanged = async:callback(
-                function (text, layout)
-                  layout.props.text = text
-                end)
-            },
-            props = {
-              name = "Name Input",
-              size = util.vector2(384, 32),
-              textSize = const.FONT_SIZE,
-              text = itemData.record.name,
-              textColor = const.TEXT_COLOR,
-              textAlignH = ui.ALIGNMENT.Center,
-              textAlignV = ui.ALIGNMENT.Center,
-              autoSize = false,
-            }
-          }
+          nameInputBox,
         }
       },
       {
@@ -80,4 +61,7 @@ return function(itemData)
       }
     }
   }
+  I.transmogActions.menus.confirmScreenInput = nameInputBox
+  I.transmogActions.menus.confirmScreen = confirmScreen
+  return confirmScreen
 end
