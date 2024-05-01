@@ -7,3 +7,5 @@ web/sha256sums
 web/soupault-*-linux-x86_64*
 *.~undo-tree~
 *~
+*.omwaddon
+*.esp
