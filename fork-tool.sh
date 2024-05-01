@@ -40,7 +40,7 @@ mv MOMWModTemplate.omwscripts "${mod_id}".omwscripts
 # Find and replace
 sed -i "s|momw-mod-template|${mod_id}|g" .gitlab-ci.yml
 sed -i "s|momw-mod-template|${mod_id}|g;s|MOMWModTemplate|${mod_id}|g" pkg.sh
-sed -i "s|MOMW Mod Template|${name}|;s|modding-openmw|${acct}|;s|momw-mod-template|${mod_id}|" CHANGELOG.md
+sed -i "s|MOMW Mod Template|${name}|;s|modding-openmw|${acct}|;s|momw-mod-template|${mod_id}|" CHANGELOG.md  README.md
 sed -i "s|A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with.|${desc}|" ./l10n/"${mod_id}"/en.yaml
 sed -i "s|2022|${this_year}|;s|MOMW Mod Template|${name}|" LICENSE
 sed -i "s|MOMWModTemplate|${mod_id}|" "${mod_id}".omwscripts
