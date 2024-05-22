@@ -7,40 +7,64 @@ local ui = require('openmw.ui')
 local util = require('openmw.util')
 
 local I = require('openmw.interfaces')
-local ItemContainer = require('scripts.s3.transmog.ui.rightpanel.itemcontainer')
+local sizes = require('scripts.s3.transmog.const.size')
+local Aliases = require('scripts.s3.transmog.ui.menualiases')
 
 local function greeting()
-  return {
-    type = ui.TYPE.Text,
+  local box = {
     props = {
-      text = "Use your glamour prisms!",
-      textColor = const.TEXT_COLOR,
-      textSize = const.HEADER_FONT_SIZE,
+      relativeSize = util.vector2(1, 1.0),
+      -- relativePosition = util.vector2(0, 0),
+    },
+    external = {
+      grow = 1,
+      stretch = 1,
+    },
+    content = ui.content {
+      {
+        template = I.MWUI.templates.boxTransparentThick,
+        content = ui.content {
+          {
+            type = ui.TYPE.Text,
+            props = {
+              text = "Use your glamour prisms!",
+              textColor = const.TEXT_COLOR,
+              textSize = const.HEADER_FONT_SIZE,
+              textAlignH = ui.ALIGNMENT.Center,
+              textAlignV = ui.ALIGNMENT.Center,
+              wordWrap = true,
+              multiline = true,
+            }
+          }
+        }
+      }
     }
   }
+
+  return box
 end
 
 local updateContainerCategory = async:callback(function(_, layout)
   local name = layout.props.name
 
-  self:sendEvent('itemContainerRequest', 'CategoryButtonItemContainer')
-
-  local itemContainer = I.transmogActions.menus.itemContainer
   if name == "Weapon" then
     types.Actor.setStance(self, types.Actor.STANCE.Weapon)
   else
     types.Actor.setStance(self, types.Actor.STANCE.Nothing)
   end
-  local typeIsActive = itemContainer.userData[layout.userData.recordType]
-  itemContainer.userData[layout.userData.recordType] = not typeIsActive
-  itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
-  types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
-  common.mainMenu():update()
+
+  -- This way allows you to enable or disable item types
+  -- But I kinda don't like that? We'll leave the code unmodified, but override the behavior for now
+  -- local typeIsActive = itemContainer.userData[layout.userData.recordType]
+  -- itemContainer.userData[layout.userData.recordType] = not typeIsActive
+  Aliases('inventory container').userData = {[layout.userData.recordType] = true}
+  self:sendEvent('updateInventoryContainer')
 end)
 
 local function categoryButton(recordType)
   local recordString = common.recordAliases[recordType].name
   local button = common.createButton(recordString)
+  -- Autosize props here...?
   button.props.name =  recordString
   button.events.mousePress = updateContainerCategory
   button.userData = { recordType = recordType }
@@ -52,25 +76,23 @@ local function categoryButtons()
     type = ui.TYPE.Flex,
     props = {
       name = "Right Panel: Vertical Category Button Container",
-      size = util.vector2(0, const.WINDOW_HEIGHT * const.HEADER_REL_SIZE),
-      arrange = ui.ALIGNMENT.Center,
-      align = ui.ALIGNMENT.Center,
-    },
-    external = {
-      stretch = 1,
+      relativeSize = sizes.CATEGORY_BUTTON_CONTAINER,
+      arrange = ui.ALIGNMENT.Start,
+      align = ui.ALIGNMENT.Start,
     },
     content = ui.content {
       {
         type = ui.TYPE.Flex,
         props = {
           name = "Right Panel: Category Button Horizontal Container 1",
-          size = util.vector2(0, (const.WINDOW_HEIGHT * const.HEADER_REL_SIZE) / 2),
+          relativeSize = sizes.CATEGORY_BUTTON_CONTAINER_ROW,
           arrange = ui.ALIGNMENT.Center,
           align = ui.ALIGNMENT.Center,
           horizontal = true,
         },
         external = {
           stretch = 1,
+          grow = 1,
         },
         content = ui.content {
           { external = { grow = 1 } },
@@ -86,17 +108,21 @@ local function categoryButtons()
           { external = { grow = 1 } },
         }
       },
+
+
       {
         type = ui.TYPE.Flex,
         props = {
           name = "Right Panel: Category Button Horizontal Container 1",
-          size = util.vector2(0, (const.WINDOW_HEIGHT * const.HEADER_REL_SIZE) / 2),
+          relativeSize = sizes.CATEGORY_BUTTON_CONTAINER_ROW,
+          -- size = util.vector2(0, (const.WINDOW_HEIGHT * const.HEADER_REL_SIZE) / 2),
           arrange = ui.ALIGNMENT.Center,
           align = ui.ALIGNMENT.Center,
           horizontal = true,
         },
         external = {
           stretch = 1,
+          grow = 1,
         },
         content = ui.content {
           { external = { grow = 1 } },
@@ -114,18 +140,43 @@ local function categoryButtons()
   }
 end
 
-return {
-  type = ui.TYPE.Flex,
-  props = {
-    name = "Right Panel: Header",
-    arrange = ui.ALIGNMENT.Center,
-    size = util.vector2(const.RIGHT_PANE_WIDTH, 0),
-  },
-  external = {
+return function()
+  local greetingImage = common.templateImage(util.color.hex('ff0000'), 'white', util.vector2(1, 1))
+  local fullImage = common.templateImage(util.color.hex('00ff00'), 'white', util.vector2(1.0, 1.0))
+  local newGreeting = greeting()
+  -- newGreeting.external = {
+    -- stretch = 1,
+    -- grow = 1,
+  -- }
+  greetingImage.external = {
     stretch = 1,
-  },
-  content = ui.content {
-    greeting(),
-    categoryButtons(),
+    grow = 1,
   }
-}
+  -- greetingImage.props.relativePosition = util.vector2(0.25, 0)
+
+  local Header = {
+    type = ui.TYPE.Flex,
+    props = {
+      name = "Right Panel: Header",
+      arrange = ui.ALIGNMENT.Center,
+      align = ui.ALIGNMENT.Center,
+      -- autoSize = false,
+      horizontal = true,
+      -- does it need to be 0 or 1? 0 seems okay
+      relativeSize = sizes.RPANEL.HEADER,
+    },
+    external = {
+      -- stretch = 1,
+      -- grow = 0.1,
+    },
+    content = ui.content {
+      {external = { grow = 1 }},
+      -- fullImage,
+      newGreeting,
+      -- greetingImage,
+      {external = { grow = 1 }},
+      -- categoryButtons(),
+    },
+  }
+  return Header
+end

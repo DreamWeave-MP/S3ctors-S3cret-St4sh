@@ -2,11 +2,15 @@ local async = require("openmw.async")
 local input = require("openmw.input")
 local self = require('openmw.self')
 local time = require('openmw_aux.time')
+local types = require('openmw.types')
 
 local I = require("openmw.interfaces")
 
 local common = require("scripts.s3.transmog.ui.common")
+local MainWidget = require('scripts.s3.transmog.ui.mainwidget')
 local ConfirmScreen = require('scripts.s3.transmog.ui.leftpanel.glamourbutton').createCallback
+
+local mogBinds = require('openmw.storage').playerSection('Settingss3_transmogMenuGroup'):asTable()
 
 local group = {
   rotateStopFn = nil,
@@ -18,15 +22,28 @@ local group = {
 -- I decided I like doing it this way better than attaching
 -- callbacks to the widget directly because I can't actually correlate a keybind to a widget there
 group.transmogMenuConfirmImpl = function()
-  if common.mainIsVisible() then
+  if common.isVisible('main menu') then
     ConfirmScreen()
-  elseif common.confirmIsVisible() then
+  elseif common.isVisible('confirm screen') then
     I.transmogActions.acceptTransmog()
   end
 end
 
+
+local function rotateWarning()
+  local messageStore = I.transmogActions.message
+  if messageStore.hasShowedControls then return end
+  common.messageBoxSingleton("Rotate Warning", "Use the "
+                             .. string.upper(mogBinds.SettingsTransmogMenuRotateRight)
+                             ..  " and " .. string.upper(mogBinds.SettingsTransmogMenuRotateLeft)
+                             .. " keys to rotate your character.", 2)
+  common.messageBoxSingleton("Confirm Warning", "Confirm your choices with the "
+                             .. string.upper(mogBinds.SettingsTransmogMenuKeyConfirm) .. " key", 2)
+  messageStore.hasShowedControls = true
+end
+
 group.rotateImpl = function(isLeft)
-  if not common.mainIsVisible() and not common.confirmIsVisible() then
+  if not common.isVisible('main menu') and not common.isVisible('confirm screen') then
     if group.rotateStopFn then group.rotateStopFn() end
     return
   end
@@ -66,7 +83,7 @@ group.menuStateSwitch = function()
     prevStance = types.Actor.getStance(self)
     types.Actor.setStance(self, types.Actor.STANCE.Nothing)
     rotateWarning()
-    self:sendEvent('updateItemContainer', {resetPortraits = true, resetEquipment = true})
+    self:sendEvent('updateInventoryContainer', {resetPortraits = true, updateEquipment = true})
   else
     I.transmogActions.message.hasShowedPreviewWarning = false
     types.Actor.setEquipment(self, Aliases()['original equipment'])
@@ -74,7 +91,7 @@ group.menuStateSwitch = function()
     mainMenu:update()
   end
 
-  if common.toolTipIsVisible() then
+  if common.isVisible('tooltip') then
     I.transmogActions.message.toolTip.layout.props.visible = false
     I.transmogActions.message.toolTip:update()
   end
@@ -84,11 +101,11 @@ end
 -- Do it on a delay so we wait for the interface to be ready
 group.registerActions = function()
   if not I.transmogActions then async:newUnsavableGameTimer(1, async:callback(group.registerActions)) return end
-  input.registerActionHandler("transmogMenuActivePreview", async:callback(I.transmogActions.updatePreview))
+  input.registerActionHandler("transmogMenuActivePreview", async:callback(function() self:sendEvent('updatePreview') end))
   input.registerActionHandler("transmogMenuRotateLeft", async:callback(function() group.rotateImpl(true) end))
   input.registerActionHandler("transmogMenuRotateRight", async:callback(function() group.rotateImpl(false) end))
   input.registerTriggerHandler("transmogMenuConfirm", async:callback(group.transmogMenuConfirmImpl))
-  input.registerTriggerHandler("transmogMenuOpen", async:callback(I.transmogActions.menuStateSwitch))
+  input.registerTriggerHandler("transmogMenuOpen", async:callback(group.menuStateSwitch))
 end
 
 group.registerActions()
