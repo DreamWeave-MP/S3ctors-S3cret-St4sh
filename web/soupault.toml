@@ -25,8 +25,8 @@
 [widgets.page-title]
   widget = "title"
   selector = "h2"
-  default = "MOMW Mod Template &mdash; A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with."
-  append = " | MOMW Mod Template &mdash; A template for building and distributing Morrowind mods, designed to be used as a base for new projects to quickly get going with."
+  default = "s3ctors-s3cret-st4sh &mdash; Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise."
+  append = " | s3ctors-s3cret-st4sh &mdash; Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise."
   force = false
 
 [widgets.generator-meta]
@@ -70,7 +70,7 @@
   ]
   widget = "prod-mode"
   profile = "prod"
-  project = "momw-mod-template"
+  project = "s3ctors-s3cret-st4sh"
 
 [widgets.highlight-active-link]
   widget = "section-link-highlight"
