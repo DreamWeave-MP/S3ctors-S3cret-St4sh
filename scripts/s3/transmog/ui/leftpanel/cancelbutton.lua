@@ -7,9 +7,9 @@ return function()
   local button = common.createButton("Cancel")
   button.events.mousePress = async:callback(
     function (_, _layout)
-      I.transmogActions.message.confirmScreen.layout.props.visible = false
+      I.transmogActions.menus.confirmScreen.layout.props.visible = false
       common.mainMenu().layout.props.visible = true
-      I.transmogActions.message.confirmScreen:update()
+      I.transmogActions.menus.confirmScreen:update()
       common.mainMenu():update()
     end)
   return button
