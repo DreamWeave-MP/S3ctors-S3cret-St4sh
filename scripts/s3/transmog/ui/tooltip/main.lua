@@ -10,6 +10,7 @@ local const = common.const
 
 local I = require("openmw.interfaces")
 local PrimaryFieldsRow = require("scripts.s3.transmog.ui.tooltip.primaryfieldsrow")
+local Border = require('scripts.s3.transmog.ui.template.border')
 
 local ToolTip = {}
 local _toolTip = {}
@@ -314,7 +315,7 @@ end
 --- @param layout openmt_ui#Layout: https://openmw.readthedocs.io/en/latest/reference/lua-scripting/openmw_ui.html##(Layout)
 ToolTip.updateTooltip = async:callback(function(mouseEvent, _layout)
     -- print("Tooltip is:\n" .. aux_util.deepToString(layout.content[2], 2))
-    if not I.transmogActions.message.toolTip then print("Tooltip should be constructed!") return end
+    if not I.transmogActions.message.toolTip then return end
     I.transmogActions.message.toolTip.layout.props.position = mouseEvent.position + util.vector2(25, 25)
     I.transmogActions.message.toolTip:update()
 end)
@@ -322,7 +323,7 @@ end)
 --- Refreshes the tooltip with new item data
 --- @param itemData table: The item data to display, contains the type, recordId, and the whole record
 ToolTip.refreshItem = function(itemData)
-  if not I.transmogActions.message.toolTip then print("Tooltip should be constructed!") return end
+  if not I.transmogActions.message.toolTip then return end
   I.transmogActions.message.toolTip.layout.props.visible = true
   if ToolTip.getRecordId() ~= itemData.recordId then
     ToolTip.updateCommonFields(itemData)
@@ -334,6 +335,7 @@ end
 
 ToolTip.create = function()
   if I.transmogActions.message.toolTip then error("Duplicate tooltip!") return end
+  local hBorder = Border(true, 4)
   return {
     template = I.MWUI.templates.boxTransparentThick,
     layer = 'Notification',
@@ -350,22 +352,10 @@ ToolTip.create = function()
         },
         content = ui.content {
           _toolTip.iconAndNameRow(),
-          {
-            type = ui.TYPE.Image,
-            props = {
-              size = util.vector2(256, 2),
-              resource = ui.texture { path = "textures\\menu_thick_border_bottom.dds" },
-            },
-          },
+          hBorder,
           PrimaryFieldsRow(),
-          {
-            type = ui.TYPE.Image,
-            props = {
-              size = util.vector2(256, 2),
-              resource = ui.texture { path = "textures\\menu_thick_border_bottom.dds" },
-            },
-          },
-          common.templateImage(util.color.hex('000000'), nil, util.vector2(256, 72)),
+          hBorder,
+          common.templateImage(util.color.hex('000000'), nil, util.vector2(1, 0)),
         }
       }
     }

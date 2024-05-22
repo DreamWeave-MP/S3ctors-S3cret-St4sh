@@ -2,6 +2,23 @@ local self = require('openmw.self')
 
 local MenuAliases = require('scripts.s3.transmog.ui.menualiases')
 
+-- Settings Bindings are stored here
+require('scripts.s3.transmog.settings')
+-- Correlating actions are registered here
+require('scripts.s3.transmog.actionregistrations')
+
+local scriptsToExtract = {
+  require('scripts.s3.transmog.enginehandlers.hudinterceptor'),
+  require('scripts.s3.transmog.interface.accepttransmog'),
+  require('scripts.s3.transmog.interface.canmog'),
+  require('scripts.s3.transmog.enginehandlers.oninstallmessage'),
+  require('scripts.s3.transmog.actions'),
+  require('scripts.s3.transmog.eventhandlers.mogmenuevent'),
+  require('scripts.s3.transmog.eventhandlers.switchTransmogMenu'),
+  require('scripts.s3.transmog.eventhandlers.updatepreview'),
+  require('scripts.s3.transmog.eventhandlers.updateInventoryContainer'),
+}
+
 local localHandlers = {
   engineHandlers = {
     onInputAction = {},
@@ -72,19 +89,8 @@ local function extractHandlers(handlers)
   end
 end
 
--- Settings Bindings are stored here
-require('scripts.s3.transmog.settings')
--- Correlating actions are registered here
-require('scripts.s3.transmog.actionregistrations')
--- additional interface elements go here
-extractHandlers(require('scripts.s3.transmog.interface.accepttransmog'))
-extractHandlers(require('scripts.s3.transmog.interface.canmog'))
--- standalone engineHandlers go here
-extractHandlers(require('scripts.s3.transmog.enginehandlers.oninstallmessage'))
-extractHandlers(require('scripts.s3.transmog.enginehandlers.hudinterceptor'))
--- standalone eventHandlers go here
-extractHandlers(require('scripts.s3.transmog.actions'))
-extractHandlers(require('scripts.s3.transmog.eventhandlers.mogmenuevent'))
-extractHandlers(require('scripts.s3.transmog.eventhandlers.restoreuserinterface'))
+for _, script in pairs(scriptsToExtract) do
+  extractHandlers(script)
+end
 
 return globalHandlers

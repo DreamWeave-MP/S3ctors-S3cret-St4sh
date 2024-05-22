@@ -1,194 +1,44 @@
 local I = require('openmw.interfaces')
 
 local async = require('openmw.async')
-local camera = require('openmw.camera')
 local common = require('scripts.s3.transmog.ui.common')
-local core = require('openmw.core')
 local input = require('openmw.input')
 local self = require('openmw.self')
-local storage = require('openmw.storage')
-local time = require('openmw_aux.time')
 local types = require('openmw.types')
 local ui = require('openmw.ui')
-local util = require('openmw.util')
 
-local MainWidget = require('scripts.s3.transmog.ui.mainwidget')
-local ItemContainer = require('scripts.s3.transmog.ui.rightpanel.itemcontainer')
-local ToolTip = require('scripts.s3.transmog.ui.tooltip.main')
+-- UI Elements
+local InventoryContainer = require('scripts.s3.transmog.ui.inventorycontainer.main')
+local Aliases = require('scripts.s3.transmog.ui.menualiases')
 
-local mogBinds = storage.playerSection('Settingss3_transmogMenuGroup'):asTable()
-
+-- Lib
+local tearDownTransmog = require('scripts.s3.transmog.lib.teardowntransmog')
 -- add safeties for unsupported types
 -- add stacking for ammunition
 
-local prevCam = nil
 local prevStance = nil
-local rotateStopFn = {
-  funcLeft = nil,
-  funcRight = nil,
-}
 
 local outInterface = {
   message = {
+    singleton = nil,
+    toolTip = nil,
+    hasShowedPreviewWarning = false,
   },
   menus = {
+    -- Standalone widgets
     main = nil,
+    confirmScreen = nil,
+    -- child widgets, but still referenced somehow
     leftPane = nil,
     rightPane = nil,
     baseItemContainer = nil,
     newItemContainer = nil,
-    itemContainer = nil,
-    originalInventory = nil,
+    inventoryContainer = nil,
   },
+  originalEquipment = {},
   consoleOpen = false,
   messageBox = common.messageBoxSingleton,
 }
-
-local function rotateWarning()
-  if outInterface.message.hasShowedControls then return end
-  common.messageBoxSingleton("Rotate Warning", "Use the "
-                             .. string.upper(mogBinds.SettingsTransmogMenuRotateRight)
-                             ..  " and " .. string.upper(mogBinds.SettingsTransmogMenuRotateLeft)
-                             .. " keys to rotate your character.", 2)
-  common.messageBoxSingleton("Confirm Warning", "Confirm your choices with the "
-                             .. string.upper(mogBinds.SettingsTransmogMenuKeyConfirm) .. " key", 2)
-  outInterface.message.hasShowedControls = true
-end
-
-local canUseMogMenu = function()
-    if not types.Actor.isOnGround(self) then
-      if not outInterface.message.cantUseControls then
-        outInterface.message.cantUseControls = true
-        common.messageBoxSingleton("Ground Warning", "You must be on the ground to use the glamour menu!", 2)
-      end
-      return false
-    elseif types.Actor.isSwimming(self) then
-      if not outInterface.message.cantUseSwimming then
-        outInterface.message.cantUseSwimming = true
-        common.messageBoxSingleton("Swimming Warning", "You use the glamour menu while swimming!", 2)
-      end
-      return false
-    elseif I.UI.getMode() == I.UI.MODE.MainMenu then
-      if not outInterface.message.cantUseMainMenu then
-        outInterface.message.cantUseMainMenu = true
-        common.messageBoxSingleton("Main Menu Warning", "You must not be in the main menu to use the glamour menu!", 2)
-      end
-      return false
-    elseif outInterface.consoleOpen then
-      if not outInterface.message.cantUseConsole then
-        outInterface.message.cantUseConsole = true
-        common.messageBoxSingleton("Console Warning", "You must close the console before opening the glamour menu!", 2)
-      end
-      return false
-    elseif common.messageIsVisible() then
-      if not outInterface.message.cantUseMessage then
-        outInterface.message.cantUseMessage = true
-        common.messageBoxSingleton("Message Warning", "You must not have a messagebox open before opening the glamour menu!", 2)
-      end
-      return false
-    elseif common.confirmIsVisible() then
-      if not outInterface.message.cantUseConfirm then
-        outInterface.message.cantUseConfirm = true
-        common.messageBoxSingleton("Confirm Warning", "You must confirm or cancel your current choices before opening the glamour menu!", 2)
-      end
-      return false
-    end
-    return true
-end
-
--- Also just make most of this an event; everything that isn't related to the menus directly
--- Now we set up the callback
-outInterface.menuStateSwitch = function()
-  if not canUseMogMenu() then return end
-  --- Maybe some event should handle this bit?
-  self:sendEvent('switchTransmogMenu')
-
-  if not I.transmogActions.menus.main then
-      MainWidget()
-      common.updateOriginalInventory()
-      -- print('inventory has been assigned on initial construction...')
-      -- common.deepPrint(Aliases('original inventory'), 3)
-      prevStance = types.Actor.getStance(self)
-      rotateWarning()
-    else
-      local mainMenu = Aliases('main menu')
-      local mainIsVisible = common.isVisible('main menu')
-      mainMenu.layout.props.visible = not mainIsVisible
-      if common.isVisible('main menu') then
-        common.resetPortraits()
-        -- So when you close it, it keeps whatever layout it had last.
-        -- Is this desirable??
-        local itemContainer = Aliases('item container')
-        itemContainer.content = ui.content(ItemContainer.updateContent(itemContainer.userData))
-        common.updateOriginalInventory()
-        prevStance = types.Actor.getStance(self)
-        types.Actor.setStance(self, types.Actor.STANCE.Nothing)
-        rotateWarning()
-      else
-        outInterface.message.hasShowedPreviewWarning = false
-        types.Actor.setEquipment(self, Aliases()['original inventory'])
-        types.Actor.setStance(self, prevStance)
-      end
-      if common.toolTipIsVisible() then
-        outInterface.message.toolTip.layout.props.visible = false
-        outInterface.message.toolTip:update()
-      end
-      Aliases('main menu'):update()
-    end
-end
-
--- make this an event
-local isPreviewing = false
-outInterface.updatePreview = function()
-  if not canUseMogMenu() or not common.isVisible('main menu') then return end
-  if not common.toolTipIsVisible() and not isPreviewing then
-    common.messageBoxSingleton("Preview Warning", "You must have an item selected to preview it!", 0.5)
-    return
-  end
-
-  if outInterface.menus.newItemContainer.content[2].userData then
-    isPreviewing = true
-    common.messageBoxSingleton("Preview Warning", "You must confirm your current choices before previewing another item!", 0.5)
-    return
-  end
-
-  local toolTip = ToolTip.get()
-  local recordId = ToolTip.getRecordId()
-
-  local equipment = {}
-  for slot, item in pairs(outInterface.menus.originalInventory) do
-    if item.recordId == recordId then
-      common.messageBoxSingleton("Preview Warning", "You cannot preview an item you are currently wearing!", 0.5)
-      return
-    end
-    equipment[slot] = item
-  end
-
-  if input.getBooleanActionValue("transmogMenuActivePreview") then
-    local targetItem = types.Actor.inventory(self):find(recordId)
-
-    if not targetItem then return end
-
-    if not common.recordAliases[ToolTip.getRecordType()].wearable then
-      common.messageBoxSingleton("Preview Warning", "This item cannot be previewed!")
-      return
-    end
-
-    local slot = common.recordAliases[ToolTip.getRecordType()].slot
-      or common.recordAliases[ToolTip.getRecordType()][ToolTip.getRecord().type].slot
-
-    equipment[slot] = recordId
-    isPreviewing = true
-    toolTip.layout.props.visible = false
-  else
-    isPreviewing = false
-    toolTip.layout.props.visible = true
-  end
-  toolTip:update()
-  async:newUnsavableSimulationTimer(0.1, function()
-                                      types.Actor.setEquipment(self, equipment)
-  end)
-end
 
 local lastAction = nil
 local lastKey = nil
@@ -376,21 +226,8 @@ return {
             .. " and is "
             .. foundKey)
     end,
-    itemContainerRequest = function(receiver)
-      self:sendEvent(receiver, outInterface.itemContainer)
-    end,
   },
   engineHandlers = {
-    onInit = function()
-      common.messageBoxSingleton("Welcome One", "Thank you for installing Glamour Menu!", 3)
-      common.messageBoxSingleton("Welcome Two", "Please be aware that OpenMW does not\npresently allow mods to use default keybinds!", 3)
-      common.messageBoxSingleton("Welcome Three", "We recommend the following defaults:\n"
-                                 .. "Q and E for rotate right and left respectively\n"
-                                 .. "Enter/Return for select\n"
-                                 .. "And L to open the menu.\n"
-                                 .. "Happy Glamming!", 3)
-      -- Add a check for Kartoffel's empty gear mod
-    end,
     onMouseButtonRelease = function(button)
       removePressedMouse(button)
       if not updateQueued
@@ -424,15 +261,16 @@ return {
         if outInterface.consoleOpen then
           outInterface.consoleOpen = false
         end
-        if common.confirmIsVisible() then
-          outInterface.message.confirmScreen.layout.props.visible = false
-          local mainMenu = common.mainMenu()
+        if common.isVisible('confirm screen') then
+          local confirmScreen = Aliases('confirm screen')
+          local mainMenu = Aliases('main menu')
+          confirmScreen.layout.props.visible = false
           mainMenu.layout.props.visible = true
           mainMenu:update()
-          outInterface.message.confirmScreen:update()
+          confirmScreen:update()
           I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
-        elseif common.mainIsVisible() then
-          common.teardownTransmog(prevStance)
+        elseif common.isVisible('main menu') then
+          tearDownTransmog(prevStance)
         end
       end
     end,
@@ -456,12 +294,13 @@ return {
         consoleOpenedThisFrame = false
         outInterface.consoleOpen = not outInterface.consoleOpen
         if outInterface.consoleOpen then
-          if common.mainIsVisible() or common.confirmIsVisible() then
-            if common.confirmIsVisible() then
-              outInterface.message.confirmScreen.layout.props.visible = false
-              outInterface.message.confirmScreen:update()
+          if common.isVisible('main menu') or common.isVisible('confirm screen') then
+            if common.isVisible('confirm screen') then
+              local confirmScreen = Aliases('confirm screen')
+              confirmScreen.layout.props.visible = false
+              confirmScreen:update()
             end
-            common.teardownTransmog(prevStance)
+            tearDownTransmog(prevStance)
           end
         end
       end

@@ -5,6 +5,7 @@ local ui = require("openmw.ui")
 local I = require("openmw.interfaces")
 
 local ConfirmScreen = require("scripts.s3.transmog.ui.leftpanel.confirmscreen")
+local Aliases = require("scripts.s3.transmog.ui.menualiases")
 
 local _confirmScreen = {}
 
@@ -12,17 +13,17 @@ _confirmScreen.createCallback = function()
   local baseItem = I.transmogActions.menus.baseItemContainer.content[2].userData
   local newItem = I.transmogActions.menus.newItemContainer.content[2].userData
   if baseItem and newItem then
-    if not I.transmogActions.message.confirmScreen then
-      I.transmogActions.message.confirmScreen = ui.create(ConfirmScreen(baseItem))
-    elseif not I.transmogActions.message.confirmScreen.layout.props.visible then
-      I.transmogActions.message.confirmScreen.layout.props.visible = true
-      I.transmogActions.message.confirmScreen.layout.content[2].content[1].props.text = baseItem.record.name
-      I.transmogActions.message.confirmScreen:update()
+    if not I.transmogActions.menus.confirmScreen then
+      I.transmogActions.menus.confirmScreen = ui.create(ConfirmScreen(baseItem))
+    elseif not I.transmogActions.menus.confirmScreen.layout.props.visible then
+      I.transmogActions.menus.confirmScreen.layout.props.visible = true
+      I.transmogActions.menus.confirmScreen.layout.content[2].content[1].props.text = baseItem.record.name
+      I.transmogActions.menus.confirmScreen:update()
     end
     I.transmogActions.message.toolTip.layout.props.visible = false
-    common.mainMenu().layout.props.visible = false
+    Aliases('main menu').layout.props.visible = false
     I.transmogActions.message.toolTip:update()
-    common.mainMenu():update()
+    Aliases('main menu'):update()
   else
     common.messageBoxSingleton("No Glamour Warning", "You must choose two items!")
   end
