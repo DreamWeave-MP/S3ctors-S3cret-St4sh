@@ -7,6 +7,7 @@ local ui = require('openmw.ui')
 local util = require('openmw.util')
 
 local I = require('openmw.interfaces')
+local Aliases = require('scripts.s3.transmog.ui.menualiases')
 local templates = I.MWUI.templates
 
 local xRes = ui.screenSize().x
@@ -17,7 +18,7 @@ local yRes = ui.screenSize().y
 local common = {
   const = {
     CHAR_ROTATE_SPEED = 0.3,
-    DEFAULT_ITEM_TYPES = {[types.Armor] = true , [types.Clothing] = true},
+    DEFAULT_ITEM_TYPES = {[types.Clothing] = true},
     WINDOW_HEIGHT = math.min(640, yRes * 0.95), -- Occupy 800px preferably, or full vertical size
     RIGHT_PANE_WIDTH = math.min(720, xRes * 0.30), -- Occupy 600px preferably, or 25% horizontal size
     LEFT_PANE_WIDTH = math.min(140, xRes * 0.2), -- Occupy 200px preferably, or 20% horizontal size
@@ -25,6 +26,7 @@ local common = {
     BACKGROUND_COLOR = util.color.rgb(0, 0, 0),
     HIGHLIGHT_COLOR = util.color.rgba(44 / 255, 46 / 255, 45 / 255, 0.5),
     IMAGE_SIZE = util.vector2(32, 32),
+    INVENTORY_IMAGE_SIZE = util.vector2(48, 48),
     FONT_SIZE = 18,
     HEADER_FONT_SIZE = 24,
     HEADER_REL_SIZE = 0.1,
@@ -368,61 +370,13 @@ return {
 }
 end
 
---- Generates the element containing the item image/icon
---- It's contained inside of an ItemPortraitContainer
---- @return ui.TYPE.Container
-function common.portraitDefault()
-  return {
-    template = templates.boxTransparentThick,
-    content = ui.content {
-      {
-        template = templates.interval,
-        props = {
-          name = "Default",
-          size = common.const.IMAGE_SIZE * 2,
-        },
-        external = {
-          grow = 1,
-        }
-      }
-    }
-  }
-end
-
---- The actual item name goes here
---- This is also part of an ItemPortraitContainer
--- @return ui.TYPE.Text
-function common.portraitTextDefault()
-  return {
-    type = ui.TYPE.Text,
-      props = {
-        text = "Empty",
-        size = util.vector2(128, 64),
-        textColor = common.const.TEXT_COLOR,
-        textSize = common.const.FONT_SIZE,
-        textAlignH = ui.ALIGNMENT.Center,
-        multiline = true,
-        autoSize = false,
-        wordWrap = true,
-      }
-  }
-end
-
---- Generates the content for the left panel item portraits
-common.defaultPortraitContent = function()
-  return {
-    common.portraitDefault(),
-    common.portraitTextDefault(),
-  }
-end
-
 --- Generates an image element
 --- could be used for testing or actual elements
 --- Stretch and grow are set to 1 by default, so fills empty space in a flex
 --- @param path string: The path to the image, possibly an item record
---- @param size util.vector2: The size of the image
+--- @param relativeSize util.vector2: The size of the image
 --- @param color util.color: The color of the image
-common.templateImage = function(color, path, size)
+common.templateImage = function(color, path, relativeSize)
   local image = {
     type = ui.TYPE.Image,
     external = {
@@ -430,7 +384,7 @@ common.templateImage = function(color, path, size)
       grow = 1,
     },
     props = {
-      size = size or common.const.IMAGE_SIZE,
+      relativeSize = relativeSize or util.vector2(1, 1),
       resource = ui.texture { path = path or "white" },
     },
   }
@@ -479,7 +433,6 @@ common.templateBoxImageWithText = function(widgetName, iconPath)
     }
   }
   local templateFlex = templateBox.content[1]
-  common.deepPrint(templateFlex)
   if iconPath then
     templateFlex.content:insert(1,
                                 {
@@ -542,38 +495,10 @@ common.templateBorderlessBoxStack = function(stackName, boxes, horizontal)
   }
 end
 
---- Resets the left panel item portraits to their default state
-common.resetPortraits = function()
-  I.transmogActions.menus.baseItemContainer.content = ui.content(common.defaultPortraitContent())
-  I.transmogActions.menus.newItemContainer.content = ui.content(common.defaultPortraitContent())
-end
-
---- Checks if the confirm menu is visible
---- @return boolean
-common.confirmIsVisible = function()
-  return I.transmogActions.message.confirmScreen and I.transmogActions.message.confirmScreen.layout.props.visible
-end
-
---- Checks if the menu is visible
---- @return boolean
-common.mainIsVisible = function()
-  return common.mainMenu() and common.mainMenu().layout.props.visible
-end
-
---- Checks if the message box is visible
---- @return boolean
-common.messageIsVisible = function()
-  return I.transmogActions.message.singleton and I.transmogActions.message.singleton.layout.props.visible
-end
-
---- Checks if the tooltip is visible
---- @return boolean
-common.toolTipIsVisible = function()
-  return I.transmogActions.message.toolTip and I.transmogActions.message.toolTip.layout.props.visible
-end
-
-common.mainMenu = function()
-  return I.transmogActions.menus.main
+--- Checks if the element is visible
+--- @param element openmw_ui#ContentOrElement: The element to check for visibility
+common.isVisible = function(element)
+  return Aliases(element) and Aliases(element).layout.props.visible
 end
 
 local messages = {}
@@ -648,67 +573,6 @@ common.messageBoxSingleton = function(widgetName, message, duration)
                                         end)
 end
 
---- Restores the user interface to its original state
---- @field prevStance types.Actor.STANCE
-common.teardownTransmog = function(prevStance)
-  if common.toolTipIsVisible() then
-    I.transmogActions.message.toolTip.layout.props.visible = false
-    I.transmogActions.message.toolTip:update()
-  end
-  I.transmogActions.restoreUserInterface()
-  I.transmogActions.message.hasShowedPreviewWarning = false
-  types.Actor.setEquipment(self, I.transmogActions.menus.originalInventory)
-  types.Actor.setStance(self, prevStance or types.Actor.STANCE.Nothing)
-  common.mainMenu().layout.props.visible = false
-  common.mainMenu():update()
-end
-
---- Checks if a layout has a highlight
---- @param layout openmw_ui#Layout: The layout to check for a highlight
---- @return boolean
-common.hasHighlight = function(layout)
-  for _, child in ipairs(layout.content) do
-    if child.props and child.props.name == "highlight" then
-      return true
-    end
-  end
-  return false
-end
-
---- Removes a highlight from an arbitrary layout
---- Don't forget you need to actually update it after!
---- @param layout openmw_ui#Layout: The layout to remove the highlight from
-common.removeHighlight = function(layout)
-  for index, child in ipairs(layout.content) do
-    if child.props and child.props.name == "highlight" then
-      table.remove(layout.content, index)
-      break
-    end
-  end
-end
-
---- Adds a highlight to an arbitrary layout
---- Don't forget you need to actually update it after!
---- @param layout openmw_ui#Layout: The layout to add the highlight to
-common.addHighlight = function(layout, size)
-  if common.hasHighlight(layout) then
-    return
-  end
-
-  layout.content:insert(1,
-                        {
-                          type = ui.TYPE.Image,
-                          props = {
-                            name = "highlight",
-                            resource = ui.texture{ path = 'white' },
-                            color = common.const.HIGHLIGHT_COLOR,
-                            size = size or common.const.IMAGE_SIZE,
-                            relativeSize = util.vector2(1, 1),
-                          },
-                        }
-  )
-end
-
 common.getElementByName = function(layout, name)
   for _, child in ipairs(layout.content or {}) do
     if child.props and child.props.name == name then
@@ -720,7 +584,7 @@ common.getElementByName = function(layout, name)
 end
 
 common.deepPrint = function(item, depth)
-print(aux_util.deepToString(item, depth or 1))
+  print(aux_util.deepToString(item, depth or 1))
 end
 
 --- Gets the armor class for a given armor type and weight
@@ -734,5 +598,57 @@ common.getArmorClass = function(armorType, weight)
     "Medium"
   )
 end
+
+--- Gets the item slot for a given item
+--- @param itemRecord #Types.RECORD: can actually be any record type, but not an ID or GO
+common.getItemSlotForRecord = function(itemType, subType)
+  if not subType -- no subtype, thus not equippable
+    or not common.recordAliases[itemType] -- Not saved at all
+    or not common.recordAliases[itemType].wearable -- Save but not wearable
+  then return end
+
+  return common.recordAliases[itemType][subType].slot
+end
+
+--- Gets the item slot for a given game object
+--- Because I suddenly realized I was working directly with gameObjects
+--- @param gameObject #GameObject: The game object to get the slot for
+common.getItemSlotForGameObject = function(gameObject)
+  local record = gameObject.type.record(gameObject.recordId)
+  return common.getItemSlotForRecord(gameObject.type, record.type)
+end
+
+--- When a mog is done, and equip is true on the `updateItemContainer` event,
+--- Run this to add the item to the player's inventory and refresh it
+--- @param item #GameObject: The item to equip
+--- @return #Types.EQUIPMENT_SLOT: The slot the item was equipped to, or nil
+common.refreshEquipment = function(item)
+  local newSlot = common.getItemSlotForGameObject(item)
+  if newSlot then
+    common.addToOriginalEquipment(newSlot, item)
+  end
+  return newSlot
+end
+
+
+--- Adds an item to the original equipment
+--- This is used when 'mogging an item, and an inventorry slot was replaced
+--- @param slot #Types.EQUIPMENT_SLOT: The slot to add the item to
+--- @param gameObjectOrId #GameObjectOrRecordId: Can be an item from the inventory directly (or another), or just a string id
+common.addToOriginalEquipment = function(slot, gameObjectOrId)
+  Aliases()['original equipment'][slot] = gameObjectOrId
+end
+
+--- Updates the original equipment
+--- This is used to restore the player's inventory to its correct state
+--- Mostly only when constructing the ui from scratch
+--- This is NOT used when 'mogging an item, as you may be previewing something
+common.updateOriginalEquipment = function()
+  Aliases()['original equipment'] = {}
+  for slot, item in pairs(Aliases('current equipment')) do
+    Aliases()['original equipment'][slot] = item
+  end
+end
+
 
 return common

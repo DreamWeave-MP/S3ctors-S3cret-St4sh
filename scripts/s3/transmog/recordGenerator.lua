@@ -1,9 +1,54 @@
+local async = require('openmw.async')
+local aux_util = require('openmw_aux.util')
+local core = require('openmw.core')
 local types = require('openmw.types')
 local world = require('openmw.world')
+local time = require('openmw_aux.time')
+
+
+-- async:newUnsavableSimulationTimer(0.1, function()
+--   print('Record Generator loaded')
+--   async:newUnsavableGameTimer(0.1, function()
+--                                 print('Record Generator loaded')
+--   end)
+-- end)
+
+
 
 return {
+  engineHandlers = {
+    onPlayerAdded = function()
+      print("a player was added")
+    end,
+    onActivate = function()
+      print("Activating object...")
+    end,
+    onInit = function()
+      -- local caiusCell = nil
+      -- for _, cell in ipairs(world.cells) do
+      --   print(cell.name)
+      --   if cell.name == 'Balmora, Caius Cosades\' House' then
+      --     print('\n\n\n\n\n\n\n\n\nFound Caius\' house\n\n\n\n\n\n\n\n\n')
+      --     caiusCell = cell
+      --     break
+      --   end
+      -- end
+      -- if not caiusCell then return end
+      -- for _, object in ipairs(caiusCell:getAll()) do
+        -- print(object.id, object.recordId)
+        -- if object.recordId == 'caius cosades' then
+          -- local newObject = world.createObject("daedric dagger_soultrap")
+          -- newObject:moveInto(types.Actor.inventory(object))
+          -- print('\n\n\n\n\n\n\n\nMoved daedric dagger_soultrap into Caius\n\n\n\n\n\n\n\n\n')
+         -- end
+      -- end
+    end,
+    onUpdate = function()
+    end,
+  },
   eventHandlers = {
     mogOnWeaponCreate = function(mogData)
+      print('mog request received')
       local recordTable = mogData.item
       local target = mogData.target
       local toRemove = types.Actor.inventory(target):find(mogData.toRemove)
@@ -42,6 +87,7 @@ return {
       world.createObject(newRecord.id):moveInto(target)
     end,
     mogOnApparelCreate = function(mogData)
+      -- Fix bug when removing original items in a 'mog
       -- print(aux_util.deepToString(mogData.item), 2)
       local recordTable = mogData.item
       local target = mogData.target
@@ -84,8 +130,15 @@ return {
         recordDraft = types.Armor.createRecordDraft(recordTable)
       end
 
-      local newRecord = world.createRecord(recordDraft)
-      world.createObject(newRecord.id):moveInto(target)
+      local createdRecord = world.createRecord(recordDraft)
+      local createdObject = world.createObject(createdRecord.id)
+      createdObject:moveInto(target)
+      target:sendEvent('updateInventoryContainer', {
+                         sender = 'transmogFinished',
+                         resetPortraits = true,
+                         equip = true,
+                         createdObject = createdObject
+      })
     end,
   }
 }

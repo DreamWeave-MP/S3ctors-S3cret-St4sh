@@ -17,8 +17,8 @@ local function acceptTransmog()
     return
   end
 
-  local baseItem = Aliases('base item'):itemData()
-  local newItem = Aliases('new item'):itemData()
+  local baseItem = Aliases('base item'):getUserData()
+  local newItem = Aliases('new item'):getUserData()
 
   -- we should add the capability of stacking ammunition
   for slot, item in pairs(Aliases()['original equipment']) do
@@ -58,7 +58,7 @@ local function acceptTransmog()
                            newItem = newItem.recordId,
     })
   end
-  common.resetPortraits()
+  I.transmogActions.MogMenuEvent({action = 'clear'})
   Aliases('main menu').layout.props.visible = true
   local confirmScreen = Aliases('confirm screen')
   if not confirmScreen then error('confirm screen update called but it does not exist') end

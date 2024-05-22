@@ -11,14 +11,15 @@ local function MenuAliases(alias)
     ['main menu'] = I.transmogActions.menus.main,
     ['left pane'] = I.transmogActions.menus.leftPane,
     ['right pane'] = I.transmogActions.menus.rightPane,
-    ['item container'] = I.transmogActions.menus.itemContainer,
+    ['inventory container'] = I.transmogActions.menus.inventoryContainer,
     ['glamour button'] = I.transmogActions.menus.glamourButton,
     ['confirm screen'] = I.transmogActions.menus.confirmScreen,
     ['confirm screen input'] = I.transmogActions.menus.confirmScreenInput,
+    ['tooltip'] = I.transmogActions.message.toolTip,
     ['message box'] = I.transmogActions.message.singleton,
-    ['original inventory'] = I.transmogActions.originalInventory,
-    ['current inventory'] = types.Actor.inventory(self):getAll(),
-    ['equipment'] = types.Actor.getEquipment(self),
+    ['inventory'] = types.Actor.inventory(self):getAll(),
+    ['original equipment'] = I.transmogActions.originalEquipment,
+    ['current equipment'] = types.Actor.getEquipment(self),
   }
 
   if alias == 'diag' then

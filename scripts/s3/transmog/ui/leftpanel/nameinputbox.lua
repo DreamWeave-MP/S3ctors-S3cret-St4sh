@@ -1,5 +1,5 @@
 local const = require('scripts.s3.transmog.ui.common').const
-local Object = require('scripts.s3.transmog.makeobject')
+local Object = require('scripts.s3.transmog.lib.object')
 
 local async = require('openmw.async')
 local ui = require('openmw.ui')
@@ -29,7 +29,6 @@ local NameInputBox = {
 }
 
 function NameInputBox.new(itemData)
-  print(type(NameInputBox))
   NameInputBox.props.text = itemData.record.name
   return Object:new(NameInputBox)
 end
