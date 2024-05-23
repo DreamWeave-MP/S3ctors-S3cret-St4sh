@@ -1,10 +1,9 @@
-# s3-toolgun
-
+![s3-toolgun](../site/img/title.png)
 Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise.
 
 #### Credits
 
-Author: **Your Name Here**
+Author: **S3ctor & Epoch**
 
 #### Installation
 
@@ -28,5 +27,5 @@ Author: **Your Name Here**
 If you've found an issue with this mod, or if you simply have a question, please use one of the following ways to reach out:
 
 * [Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
-* Email `YOUR EMAIL HERE`
-* Contact the author on Discord: `@YOUR DISCORD HERE`
+* Email `corleycomputerrepair@protonmail.ch`
+* Contact the author on Discord: `@s3kshun.8`
