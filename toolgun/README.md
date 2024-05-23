@@ -1,4 +1,4 @@
-# s3ctors-s3cret-st4sh
+# s3-toolgun
 
 Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise.
 
