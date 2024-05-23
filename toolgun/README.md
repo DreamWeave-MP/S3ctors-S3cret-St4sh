@@ -1,4 +1,4 @@
-![s3-toolgun](../site/img/title.png)
+![s3-toolgun](../img/tooltitle.png)
 Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise.
 
 #### Credits
