@@ -1,0 +1,13 @@
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+    <style type="text/css">
+        @font-face {
+            font-family: 'Pelagiad';
+            src: url('./Pelagiad.ttf');
+        }
+        text {
+            font-family: 'Pelagiad';
+            font-size: 32px;
+        }
+    </style>
+    <text x="36" y="36">Hello, SVG with local font!</text>
+</svg>
