@@ -30,6 +30,6 @@ grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
 # Index
 # echo '<div class="center"><a href="/img/image.png"><img src="/img/image.png" title="The stats menu" /></a></div>' > site/index.md
 grep -v "# MOMW Mod Template" ../README.md >> site/index.md
-cp ../toolgun/README.md site/index.md
+cp ../toolgun/README.md site/toolgunIndex.md
 
 PATH=${soupault_path}:$PATH soupault "$@"
