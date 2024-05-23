@@ -25,7 +25,7 @@ Author: **Your Name Here**
 
 #### Report A Problem
 
-Try the toolgun mod! [toolgun](./toolgun/index.md)
+Try the toolgun mod! [toolgun](./toolgunIndex.md)
 
 If you've found an issue with this mod, or if you simply have a question, please use one of the following ways to reach out:
 
