@@ -25,6 +25,8 @@ Author: **Your Name Here**
 
 #### Report A Problem
 
+[toolgun](./toolgun/index.md)
+
 If you've found an issue with this mod, or if you simply have a question, please use one of the following ways to reach out:
 
 * [Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
