@@ -3,4 +3,4 @@
 	url = https://gitlab.com/modding-openmw/modweb-lua
 [submodule "web/site/js"]
 	path = web/site/js
-	url = https://gitlab.com/modding-openmw/modweb-js
+	url = https://gitlab.com/magicaldave1/modweb-js
