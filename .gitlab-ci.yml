@@ -45,6 +45,6 @@ upload:
   rules:
     - if: $CI_COMMIT_TAG
   script:
-    - 'curl -s --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file $(cut -f 1 -d - $CI_COMMIT_TAG).zip "${pkg_url}/$(cut -f 1 -d - $CI_COMMIT_TAG)"'
+    - 'curl -s --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file $(echo  $CI_COMMIT_TAG | cut -f 1 -d -).zip "${pkg_url}/$(echo  $CI_COMMIT_TAG | cut -f 1 -d -)"'
     - 'curl -s --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${pkg_name}.sha256sum.txt "${pkg_url}/${pkg_name}.sha256sum.txt"'
     - 'curl -s --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${pkg_name}.sha512sum.txt "${pkg_url}/${pkg_name}.sha512sum.txt"'
