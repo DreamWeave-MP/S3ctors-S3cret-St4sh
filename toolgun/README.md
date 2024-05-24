@@ -8,6 +8,8 @@ Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose
 
 Author: **S3ctor & Epoch**
 
+All code was written by S3ctor, NIF assets were converted by Epoch. Facepunch owns the original Toolgun mesh, and the SFX are sourced from [Valve](https://developer.valvesoftware.com/wiki/Mod_Content_Usage) in accordance with their mod content policy for non-commercial products.
+
 #### Installation
 
 1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/)
