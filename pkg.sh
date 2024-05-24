@@ -22,6 +22,9 @@ zip --must-match \
     "$mod".zip \
     "$mod"/
 
+sha256sum "$mod".zip > "$mod".sha256sum.txt
+sha512sum "$mod".zip > "$mod".sha512sum.txt
+
 done
 
 zip --must-match \
