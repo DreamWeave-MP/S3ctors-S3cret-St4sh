@@ -1,5 +1,3 @@
-![s3-toolgun](../img/toolgun.svg)
-
 # s3-toolgun
 
 Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose built for OpenMW. Fix floaters, rotate or scale objects to your liking, and then save them all back into a REAL mod you can share with the world after!
@@ -73,10 +71,6 @@ Otherwise, just equip the toolgun and fire to activate it.
   <img src="../img/modathonbanner2024.png" alt="Modathon 2024" />
 </p>
 
-<a align="center" href="../index.html">
-  <img src="../img/home.svg" alt="Home" />
-</a>
-
 #### Report A Problem
 
 If you've found an issue with this mod, or if you simply have a question, please use one of the following ways to reach out:
@@ -84,3 +78,9 @@ If you've found an issue with this mod, or if you simply have a question, please
 * [Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
 * Email `corleycomputerrepair@protonmail.ch`
 * Contact the author on Discord: `@s3kshun.8`
+
+<a align="center" href="../index.html">
+  <img src="../img/home.svg" alt="Home" />
+</a>
+
+<div id="modName" data-mod-name="toolgun"></div>
