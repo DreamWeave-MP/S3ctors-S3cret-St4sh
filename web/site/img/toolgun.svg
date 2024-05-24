@@ -73,22 +73,22 @@
             id="feComposite50" />
          </filter>
       </defs>
+      <style>
+         @font-face {
+         font-family: "Pelagiad";
+         font-weight: 100 900;
+         font-style: normal italic;
+         src: url(/font/Pelagiad.ttf);
+         }
+         text {
+         font-family: 'Pelagiad';
+         font-size: 32px;
+         }
+      </style>
       <g
          inkscape:label="Layer 1"
          inkscape:groupmode="layer"
          id="layer1">
-         <style>
-            @font-face {
-            font-family: "Pelagiad";
-            font-weight: 100 900;
-            font-style: normal italic;
-            src: url(/font/Pelagiad.ttf);
-            }
-            text {
-            font-family: 'Pelagiad';
-            font-size: 32px;
-            }
-         </style>
          <foreignObject font-family="Pelagiad" width="300" height="400" style="margin: 0 auto;text-align:center;">
             <textArea
                xmlns="http://www.w3.org/1999/xhtml"
