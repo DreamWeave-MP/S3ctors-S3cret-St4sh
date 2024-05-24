@@ -1,4 +1,5 @@
 stages:
+  - archives
   - build
   - deploy
   - site
@@ -9,6 +10,19 @@ variables:
   pkg_name: "${CI_PROJECT_NAME}.zip"
   pkg_url:
     "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}"
+
+toolgun:
+  image: ${build_img}
+  stage: archives
+  script:
+    - apk add zip
+    - zip --must-match --recurse-paths toolgun.zip toolgun/
+  artifacts:
+    paths:
+      - toolgun.zip
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_TAG
 
 make:
   image: ${build_img}
