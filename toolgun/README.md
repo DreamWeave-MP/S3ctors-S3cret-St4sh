@@ -1,5 +1,8 @@
-![s3-toolgun](../img/titletemplate.svg)
-Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise.
+![s3-toolgun](../img/toolgun.svg)
+
+# s3-toolgun
+
+Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose built for OpenMW. Fix floaters, rotate or scale objects to your liking, and then save them all back into a REAL mod you can share with the world after!
 
 #### Credits
 
@@ -11,16 +14,16 @@ Author: **S3ctor & Epoch**
 1. Extract the zip to a location of your choosing, examples below:
 
         # Windows
-        C:\games\OpenMWMods\s3ctors-s3cret-st4sh
+        C:\games\OpenMWMods\toolgun
 
         # Linux
-        /home/username/games/OpenMWMods/s3ctors-s3cret-st4sh
+        /home/username/games/OpenMWMods/toolgun
 
         # macOS
-        /Users/username/games/OpenMWMods/s3ctors-s3cret-st4sh
+        /Users/username/games/OpenMWMods/toolgun
 
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3ctors-s3cret-st4sh"`)
-1. Add `content=s3ctors-s3cret-st4sh.omwaddon` and `content=momw-mod-template.omwscripts` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
+1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\toolgun"`)
+1. Add `content=s3ctors-s3cret-st4sh.omwaddon` and `content=toolgun.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
 
 #### Report A Problem
 
