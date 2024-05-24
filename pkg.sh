@@ -16,7 +16,7 @@ ls -l1
 zip --must-match \
     --recurse-paths \
     ${file_name} \
-    version.txt
+    version.txt \
     toolgun.zip
 
 sha256sum ${file_name} > ${file_name}.sha256sum.txt
