@@ -7,18 +7,18 @@ pkg: clean
 	./pkg.sh
 
 web-clean:
-	rm -rf build site/*.md sha256sums soupault-*-linux-x86_64.tar.gz
+	cd web && rm -rf build site/*.md sha256sums soupault-*-linux-x86_64.tar.gz
 
 web: web-clean
 	cd web && ./build.sh
 
 web-debug: web-clean
-	./build.sh --debug
+	cd web && ./build.sh --debug
 
 web-verbose: web-clean
-	./build.sh --verbose
+	cd web && ./build.sh --verbose
 
 clean-all: clean web-clean
 
-local-web:
+local-web: web
 	cd web && python3 -m http.server -d build
