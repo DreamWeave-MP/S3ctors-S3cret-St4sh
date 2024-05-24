@@ -29,6 +29,7 @@ make:
   stage: build
   script:
   - apk add git zip
+  - ls -laR
   - ./pkg.sh
   artifacts:
     paths:
