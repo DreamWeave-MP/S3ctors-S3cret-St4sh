@@ -52,7 +52,6 @@ Otherwise, just equip the toolgun and fire to activate it.
    - Point - In this submode, you can bind two objects together. First, shoot wherever you want your object to go. Then, shoot the object you want to move. The second object will snap to whatever the first point you shot was, and you can continue from there.
 5. Rotate - Just rotates objects around. Quite unwieldy when rotating on all three axes, so highly recommended to lock rotation to a specific axis.
 
-
 #### Installation
 
 1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/)
@@ -69,6 +68,8 @@ Otherwise, just equip the toolgun and fire to activate it.
 
 1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\toolgun"`)
 1. Add `content=toolgun.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
+
+![modathon 2024](../img/modathonbanner2024.png)
 
 #### Report A Problem
 
