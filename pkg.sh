@@ -14,11 +14,7 @@ EOF
 zip --must-match \
     --recurse-paths \
     toolgun.zip \
-    toolgun/l10n \
-    toolgun/scripts \
-    toolgun/CHANGELOG.md \
-    toolgun/LICENSE \
-    toolgun/README.md \
+    toolgun/ \
     version.txt
 
 zip --must-match \
