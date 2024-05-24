@@ -1,4 +1,4 @@
-![s3-stash](../img/title.svg)
+![s3-stash](./img/title.svg)
 
 # s3ctors-s3cret-st4sh
 
