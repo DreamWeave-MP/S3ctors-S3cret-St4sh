@@ -1,5 +1,3 @@
-![s3-stash](./img/title.svg)
-
 # s3ctors-s3cret-st4sh
 
 Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise. From now to the end of time, you'll find everything I make for Morrowind here. That's a promise, Nexus. You can bookmark this URL to keep up-to-date with all my solo and collaborative releases.
@@ -36,3 +34,5 @@ If you've found an issue with any of my content, or if you simply have a questio
 * [Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
 * Email `corleycomputerrepair@protonmail.ch`
 * Contact the author on Discord: `@s3kshun.8`
+
+<div id="modName" data-mod-name="s3ctors-s3cret-st4sh"></div>
