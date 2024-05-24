@@ -69,7 +69,13 @@ Otherwise, just equip the toolgun and fire to activate it.
 1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\toolgun"`)
 1. Add `content=toolgun.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
 
-![modathon 2024](../img/modathonbanner2024.png)
+<p align="center">
+  <img src="../img/modathonbanner2024.png" alt="Modathon 2024" />
+</p>
+
+<a align="center" href="../index.html">
+  <img src="../img/home.svg" alt="Home" />
+</a>
 
 #### Report A Problem
 
