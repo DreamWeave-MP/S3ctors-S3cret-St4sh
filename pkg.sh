@@ -13,13 +13,8 @@ EOF
 
 zip --must-match \
     --recurse-paths \
-    toolgun.zip \
-    toolgun/ \
-    version.txt
-
-zip --must-match \
-    --recurse-paths \
     ${file_name} \
+    version.txt
     toolgun.zip
 
 sha256sum ${file_name} > ${file_name}.sha256sum.txt
