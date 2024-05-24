@@ -11,6 +11,8 @@ cat > version.txt <<EOF
 Mod version: $(git describe --tags || git rev-parse --short HEAD)
 EOF
 
+ls -l1
+
 zip --must-match \
     --recurse-paths \
     ${file_name} \
