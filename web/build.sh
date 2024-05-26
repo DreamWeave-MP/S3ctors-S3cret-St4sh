@@ -40,7 +40,7 @@ grep -vi "# $mod Changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
 
-modimages="$modimages<a href=\"./"$mod"/\"><img src=\"./img/"$mod".svg\" alt=\""$mod"\"/></a>+"
+modimages="$modimages<a href=\"./"$mod"/\"><img src=\"./img/"$mod".svg\" alt=\""$mod"\"/></a>+<br>+"
 
 done
 
