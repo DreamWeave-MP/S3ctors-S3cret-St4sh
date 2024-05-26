@@ -71,16 +71,22 @@ Otherwise, just equip the toolgun and fire to activate it.
   <img src="../img/modathonbanner2024.png" alt="Modathon 2024" />
 </p>
 
+<div id="end" style="text-align: center;">
+
 #### Report A Problem
 
 If you've found an issue with this mod, or if you simply have a question, please use one of the following ways to reach out:
 
-* [Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
-* Email `corleycomputerrepair@protonmail.ch`
-* Contact the author on Discord: `@s3kshun.8`
+[Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
+  
+Email `corleycomputerrepair@protonmail.ch`
 
-<a align="center" href="../index.html">
+Contact the author on Discord: `@s3kshun.8`
+
+<a align="center" href="../">
   <img src="../img/home.svg" alt="Home" />
 </a>
+
+</div>
 
 <div id="modName" data-mod-name="toolgun"></div>
