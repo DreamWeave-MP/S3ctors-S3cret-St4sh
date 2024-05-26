@@ -83,8 +83,4 @@ Email `corleycomputerrepair@protonmail.ch`
 
 Contact the author on Discord: `@s3kshun.8`
 
-<a align="center" href="../">
-  <img src="../img/home.svg" alt="Home" />
-</a>
-
 </div>
