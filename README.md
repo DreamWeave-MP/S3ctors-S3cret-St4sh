@@ -6,7 +6,7 @@ Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise. From 
 
 If you just wanna download everything, you can do so from the above link. Follow these links for a description and individual download for each of my mods.
 
-<a href="./toolgun/index.html">
+<a href="./toolgun/">
   <img src="./img/toolgun.svg" alt="ToolGun" />
 </a>
 
