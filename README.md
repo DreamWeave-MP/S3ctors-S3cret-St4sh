@@ -34,5 +34,3 @@ If you've found an issue with any of my content, or if you simply have a questio
 * [Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
 * Email `corleycomputerrepair@protonmail.ch`
 * Contact the author on Discord: `@s3kshun.8`
-
-<div id="modName" data-mod-name="s3ctors-s3cret-st4sh"></div>

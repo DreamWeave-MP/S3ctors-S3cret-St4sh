@@ -88,5 +88,3 @@ Contact the author on Discord: `@s3kshun.8`
 </a>
 
 </div>
-
-<div id="modName" data-mod-name="toolgun"></div>
