@@ -40,9 +40,6 @@ cat ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
 
-echo -n "<a align="center" href="../"> <img src="../img/home.svg" alt="Home" /> </a>" >> site/"$mod".md
-echo -n "<a align="center" href="../"> <img src="../img/home.svg" alt="Home" /> </a>" >> site/"$mod"-changelog.md
-
 modimages="$modimages<a href=\"./"$mod"/\"><img src=\"./img/"$mod".svg\" alt=\""$mod"\"/></a>+"
 
 done
