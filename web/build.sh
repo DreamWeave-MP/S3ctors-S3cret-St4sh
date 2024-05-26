@@ -25,11 +25,27 @@ fi
 
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
-grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
+
+mods="toolgun"
+
+set -- mods
+
+for mod in $mods; do
+
+grep -v "# $mod" ../"$mod"/README.md >> site/"$mod".md
+cat ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
+
+echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
+echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
+
+done
 
 # Index
 # echo '<div class="center"><a href="/img/image.png"><img src="/img/image.png" title="The stats menu" /></a></div>' > site/index.md
 grep -v "# s3ctors-s3cret-st4sh" ../README.md >> site/index.md
-grep -v "# s3-toolgun" ../toolgun/README.md >> site/toolgun.md
+cat ../CHANGELOG.md >> site/s3ctors-s3cret-st4sh-changelog.md
+
+echo "<div id=\"modName\" data-mod-name=\"s3ctors-s3cret-st4sh\"></div>" >> site/s3ctors-s3cret-st4sh.md
+echo "<div id=\"modName\" data-mod-name=\"s3ctors-s3cret-st4sh\"></div>" >> site/s3ctors-s3cret-st4sh-changelog.md
 
 PATH=${soupault_path}:$PATH soupault "$@"
