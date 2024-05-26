@@ -1,5 +1,6 @@
 *.zip
 *.zip.sha*sum.txt
+*sha*sum.txt
 version.txt
 web/build/
 web/site/*.md
