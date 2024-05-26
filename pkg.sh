@@ -30,6 +30,7 @@ done
 zip --must-match \
     ${file_name} \
     version.txt \
+    *sha*sum.txt \
     *.zip
 
 sha256sum ${file_name} > ${file_name}.sha256sum.txt
