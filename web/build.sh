@@ -26,7 +26,9 @@ fi
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
 
-mods="toolgun"
+mods=$(./modDirs.sh ..)
+
+modimages=""
 
 set -- mods
 
@@ -38,11 +40,17 @@ cat ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
 
+modimages="$modimages<a href=\"./"$mod"/\"><img src=\"./img/"$mod".svg\" alt=\""$mod"\"/></a>+"
+
 done
 
 # Index
 # echo '<div class="center"><a href="/img/image.png"><img src="/img/image.png" title="The stats menu" /></a></div>' > site/index.md
-grep -v "# s3ctors-s3cret-st4sh" ../README.md >> site/index.md
+
+sed "s|<div id=\"modMarker\"></div>|$modimages|" ../README.md \
+    | tr '+' '\n' \
+    | grep -v "# s3ctors-s3cret-st4sh" >> site/index.md
+
 cat ../CHANGELOG.md >> site/s3ctors-s3cret-st4sh-changelog.md
 
 echo "<div id=\"modName\" data-mod-name=\"s3ctors-s3cret-st4sh\"></div>" >> site/s3ctors-s3cret-st4sh.md

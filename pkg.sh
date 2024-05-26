@@ -11,7 +11,7 @@ cat > version.txt <<EOF
 Mod version: $(git describe --tags || git rev-parse --short HEAD)
 EOF
 
-mods="toolgun"
+mods=$(./web/modDirs.sh .)
 
 set -- mods
 
