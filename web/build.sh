@@ -35,7 +35,7 @@ set -- mods
 for mod in $mods; do
 
 grep -v "# $mod" ../"$mod"/README.md >> site/"$mod".md
-cat ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
+grep -vi "# $mod Changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
 
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
 echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
