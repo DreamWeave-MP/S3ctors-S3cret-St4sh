@@ -27,7 +27,9 @@ mods=$(./modDirs.sh ..)
 
 modimages=""
 
-# set -- mods
+launch_args="$@"
+
+set -- mods
 
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
@@ -38,4 +40,4 @@ grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
 grep -v "# s3ctors-s3cret-st4sh" ../README.md >> site/index.md
 grep -v "# s3-toolgun" ../toolgun/README.md >> site/toolgun.md
 
-PATH=${soupault_path}:$PATH soupault "$@"
+PATH=${soupault_path}:$PATH soupault "$launch_args"
