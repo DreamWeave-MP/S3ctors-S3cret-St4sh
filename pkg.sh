@@ -25,6 +25,7 @@ for mod in $mods; do
 zip --must-match \
     --recurse-paths \
     "$mod".zip \
+    version.txt \
     "$mod"/
 
 sha256sum "$mod".zip > "$mod".sha256sum.txt
