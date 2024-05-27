@@ -22,11 +22,16 @@ set -- mods
 
 for mod in $mods; do
 
+cp version.txt "$mod"/
+
+cd "$mod"/
+
 zip --must-match \
     --recurse-paths \
-    "$mod".zip \
-    version.txt \
-    "$mod"/
+    ../"$mod".zip \
+    .
+
+cd ..
 
 sha256sum "$mod".zip > "$mod".sha256sum.txt
 sha512sum "$mod".zip > "$mod".sha512sum.txt
