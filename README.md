@@ -25,12 +25,4 @@ Special thanks to:
 - The [MWSE team](https://mwse.github.io/MWSE/#authors), who are all really cool folks that carried our community for years while OpenMW was waking itself up. You all constantly inspire me to break my own limits, and the engine's.
 - [AltheaR](https://i.pinimg.com/originals/79/0c/3f/790c3f415354fd7c31edab3bbac5d9fc.gif), whose zealous moderation on Nexus inspired the creation of this repository. None of this would have happened without you.
 
-#### Report A Problem
-
-If you've found an issue with any of my content, or if you simply have a question, please use one of the following ways to reach out:
-
-* [Open an issue on GitLab](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues)
-* Email `corleycomputerrepair@protonmail.ch`
-* Contact the author on Discord: `@s3kshun.8`
-
 <div id="modName" data-mod-name="s3ctors-s3cret-st4sh"></div>
