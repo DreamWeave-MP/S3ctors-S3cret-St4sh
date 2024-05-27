@@ -31,6 +31,18 @@ launch_args="$@"
 
 set -- mods
 
+for mod in $mods; do
+
+    grep -vi "# $mod" ../"$mod"/README.md >> site/"$mod".md
+    grep -vi "# $mod Changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
+
+    echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
+    echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
+
+    modimages="$modimages<a href=\"./"$mod"/\"><img src=\"./img/"$mod".svg\" alt=\""$mod"\"/></a>+<br>+"
+
+done
+
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
 grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
