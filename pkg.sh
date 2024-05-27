@@ -5,6 +5,11 @@ set -eu
 # This script packages the project into a zip file.
 #
 
+# Some stuff needs to be special cased as we pull from starwind-builder
+wget 'https://gitlab.com/modding-openmw/starwind-builder/-/jobs/artifacts/master/raw/Starwind_Community_Patch_Project.zip?job=build_cpp' -O sw_cpp.zip
+unzip -o sw_cpp.zip -d sw_cpp/
+rm sw_cpp.zip
+
 file_name=s3ctors-s3cret-st4sh.zip
 
 cat > version.txt <<EOF
