@@ -23,6 +23,8 @@ if ! [ -f ${soupault_path}/soupault ]; then
     grep linux sha256sums | sha256sum -c -
 fi
 
+mods=$(./modDirs.sh ..)
+
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
 grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
