@@ -1,5 +1,9 @@
 # Crassified Navigation
 
+<div align="center"> <img src="../img/crassnav-map.png" alt="Crassius Curio is on the Map." /> </div>
+
+<h2 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Uncle Crassius Doesn't Need A Map. Why Should You?</h2>
+
 Crassified Navigation is a simple mod, but meant to be as cursed as possible. It's effectively an OpenMW port of the mod `Get Lost`, spawned by a user request in MMC. But it comes with an extra cursed twist, being that as much of the operative Lua code as possible is embedded directly into the mod's omwaddon.
 
 Nevertheless, it works just as well and easily as anything else.
@@ -25,9 +29,7 @@ Nevertheless, it works just as well and easily as anything else.
         [Windows]
         map hidden = true
 
-<p align="center">
-  <img src="../img/modathonbanner2024.png" alt="Modathon 2024" />
-</p>
+<div align="center"> <img src="../img/modathonbanner2024.png" alt="Modathon 2024" /> </div>
 
 <div id="credits" style="text-align: center;">
 
