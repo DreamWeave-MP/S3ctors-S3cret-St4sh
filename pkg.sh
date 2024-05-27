@@ -10,7 +10,7 @@ wget 'https://gitlab.com/modding-openmw/starwind-builder/-/jobs/artifacts/master
 unzip -o sw_cpp.zip -d sw_cpp/
 rm sw_cpp.zip
 
-file_name=s3ctors-s3cret-st4sh.zip
+file_name=s3ctors_s3cret_st4sh.zip
 
 cat > version.txt <<EOF
 Mod version: $(git describe --tags || git rev-parse --short HEAD)
