@@ -45,7 +45,7 @@ done
 
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
-grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
+grep -v "## S3St4sh Changelog" ../CHANGELOG.md >> site/changelog.md
 
 # Index
 # echo '<div class="center"><a href="/img/image.png"><img src="/img/image.png" title="The stats menu" /></a></div>' > site/index.md
