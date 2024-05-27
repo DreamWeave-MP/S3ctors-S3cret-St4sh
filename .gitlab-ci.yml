@@ -19,6 +19,7 @@ make:
   artifacts:
     paths:
       - "*.zip"
+      - "*sha*.txt"
       - "${pkg_name}*"
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
