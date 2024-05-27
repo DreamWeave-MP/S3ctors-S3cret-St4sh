@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="1150"
-   height="450"
-   viewBox="0 0 304.27083 119.0625"
+   width="700"
+   height="160"
+   viewBox="290 -30 120 120"
    version="1.1"
    id="svg1"
    inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
@@ -17,31 +17,12 @@
       id="namedview1"
       pagecolor="#505050"
       bordercolor="#eeeeee"
-      borderopacity="1"
-      inkscape:showpageshadow="0"
-      inkscape:pageopacity="0"
-      inkscape:pagecheckerboard="0"
-      inkscape:deskcolor="#505050"
-      inkscape:document-units="mm"
-      inkscape:zoom="0.70710678"
-      inkscape:cx="595.38391"
-      inkscape:cy="343.6539"
-      inkscape:window-width="1920"
-      inkscape:window-height="1036"
-      inkscape:window-x="0"
-      inkscape:window-y="44"
-      inkscape:window-maximized="1"
-      inkscape:current-layer="layer1" />
+      borderopacity="1"/>
    <defs
       id="defs1">
       <filter
          style="color-interpolation-filters:sRGB;"
-         inkscape:label="Drop Shadow"
-         id="filter50"
-         x="-0.0051172445"
-         y="-0.015064682"
-         width="1.2187632"
-         height="1.0552372">
+         id="filter50">
          <feFlood
             result="flood"
             in="SourceGraphic"
@@ -56,8 +37,8 @@
          <feOffset
             result="offset"
             in="blur"
-            dx="1.200000"
-            dy="1.200000"
+            dx="1.000000"
+            dy="1.000000"
             id="feOffset49" />
          <feComposite
             result="comp1"
@@ -86,23 +67,23 @@
             }
             text {
             font-family: 'Pelagiad';
-            font-size: 32px;
+            font-size:2.25em;
             }
          </style>
-         <foreignObject font-family="Pelagiad" width="300" height="400" style="margin: 0 auto;text-align:center;">
+         <foreignObject font-family="Pelagiad" width="700" height="250" style="margin: 0 auto;text-align:center;">
             <textArea
                xmlns="http://www.w3.org/1999/xhtml"
                xml:space="preserve"
-               style="color:#ea48f0;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48.795px;line-height:1;font-family:Pelagiad;-inkscape-font-specification:Pelagiad;fill:#000000;stroke-width:0.263976;filter:url(#filter50)"
-               x="151.01292"
+               style="color:#ea48f0;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.25em;line-height:1;font-family:Pelagiad;-inkscape-font-specification:Pelagiad;fill:#000000;stroke-width:1.0;filter:url(#filter50)"
+               x="0"
                y="45.644508"
                id="text1"
                transform="scale(1.0023001,0.99770517)"><tspan
                   sodipodi:role="line"
                   id="tspan1"
-                  style="font-size:48.795px;line-height:1;text-align:center;text-anchor:middle;fill:#ea48f0;fill-opacity:1;stroke-width:0.263976"
-                  x="151.01292"
-                  y="45.644508"
+                  style="font-size:2.25em;line-height:1;text-align:center;text-anchor:middle;fill:#ea48f0;fill-opacity:1;stroke-width:1.0"
+                  x="0"
+                  y="500"
                   dx="0">BBL Drizzay</tspan></textArea>
             </foreignObject>
          </g>
