@@ -49,7 +49,6 @@ grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
 
 # Index
 # echo '<div class="center"><a href="/img/image.png"><img src="/img/image.png" title="The stats menu" /></a></div>' > site/index.md
-grep -v "# s3ctors-s3cret-st4sh" ../README.md >> site/index.md
 
 sed "s|<div id=\"modMarker\"></div>|$modimages|" ../README.md \
     | tr '+' '\n' \
