@@ -8,3 +8,4 @@ web/sha256sums
 web/soupault-*-linux-x86_64*
 *.~undo-tree~
 *~
+sw_cpp/*
