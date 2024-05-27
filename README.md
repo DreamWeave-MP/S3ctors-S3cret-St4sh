@@ -24,5 +24,3 @@ Special thanks to:
 - The rest of the [Morrowind community](https://discord.gg/pqkUvKfG3q), for whom this is a gift. I genuinely hope you all enjoy what I've put together for you here.
 - The [MWSE team](https://mwse.github.io/MWSE/#authors), who are all really cool folks that carried our community for years while OpenMW was waking itself up. You all constantly inspire me to break my own limits, and the engine's.
 - [AltheaR](https://i.pinimg.com/originals/79/0c/3f/790c3f415354fd7c31edab3bbac5d9fc.gif), whose zealous moderation on Nexus inspired the creation of this repository. None of this would have happened without you.
-
-<div id="modName" data-mod-name="s3ctors-s3cret-st4sh"></div>
