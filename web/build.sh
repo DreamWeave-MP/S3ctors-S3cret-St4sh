@@ -56,8 +56,8 @@ sed "s|<div id=\"modMarker\"></div>|$modimages|" ../README.md \
 
 cat ../CHANGELOG.md >> site/changelog.md
 
-echo "<div id=\"modName\" data-mod-name=\"s3ctors-s3cret-st4sh\"></div>" >> site/index.md
-echo "<div id=\"modName\" data-mod-name=\"s3ctors-s3cret-st4sh\"></div>" >> site/changelog.md
+echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/index.md
+echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/changelog.md
 
 
 set -- $launch_args
