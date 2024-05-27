@@ -40,4 +40,6 @@ grep -v "## MOMW Mod Template" ../CHANGELOG.md >> site/changelog.md
 grep -v "# s3ctors-s3cret-st4sh" ../README.md >> site/index.md
 grep -v "# s3-toolgun" ../toolgun/README.md >> site/toolgun.md
 
-PATH=${soupault_path}:$PATH soupault "$launch_args"
+set -- $launch_args
+
+PATH=${soupault_path}:$PATH soupault "$@"
