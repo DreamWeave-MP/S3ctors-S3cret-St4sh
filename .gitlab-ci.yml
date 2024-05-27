@@ -18,7 +18,7 @@ make:
   - ./pkg.sh
   artifacts:
     paths:
-      - "toolgun*"
+      - "*.zip"
       - "${pkg_name}*"
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
