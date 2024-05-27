@@ -27,7 +27,7 @@ mods=$(./modDirs.sh ..)
 
 modimages=""
 
-set -- mods
+# set -- mods
 
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
