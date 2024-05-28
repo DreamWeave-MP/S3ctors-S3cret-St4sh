@@ -1,33 +1,25 @@
-# Crassified Navigation
+<h2 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Brought to you by the Starwind Team and all the players on <a href="https://discord.gg/wcMj2b2svh">The Starwind Initiative</a></h2>
 
-<div align="center"> <img src="../img/crassnav-map.png" alt="Crassius Curio is on the Map." /> </div>
+The Starwind Community patch project was born as a fix for crashes we found after someone made a [bunch of normal maps for everything](https://www.nexusmods.com/morrowind/mods/52567), including Starwind. Technically, these crashes are an engine bug, but it's also because the meshes are broken as well. Thus, SW_CPP was born.
 
-<h2 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Uncle Crassius Doesn't Need A Map. Why Should You?</h2>
-
-Crassified Navigation is a simple mod, but meant to be as cursed as possible. It's effectively an OpenMW port of the mod `Get Lost`, spawned by a user request in MMC. But it comes with an extra cursed twist, being that as much of the operative Lua code as possible is embedded directly into the mod's omwaddon.
-
-Nevertheless, it works just as well and easily as anything else.
+Over time as The Starwind Initiative matured, we collected lots of minor bug fixes we needed to implement for multiplayer and wanted to make sure they were available to all Starwind players. Everything built here is available in the [Starwind-Builder](https://gitlab.com/modding-openmw/Starwind-Builder) repo, which is also used for deploying all content patches for TSI.
 
 #### Installation
 
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/crass-nav)
+1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/sw_cpp)
 1. Extract the zip to a location of your choosing, examples below:
 
         # Windows
-        C:\games\OpenMWMods\crass-nav
+        C:\games\OpenMWMods\sw_cpp
 
         # Linux
-        /home/username/games/OpenMWMods/crass-nav
+        /home/username/games/OpenMWMods/sw_cpp
 
         # macOS
-        /Users/username/games/OpenMWMods/crass-nav
+        /Users/username/games/OpenMWMods/sw_cpp
 
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\crass-nav"`)
-1. Add `content=Crassified Navigation.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
-1. Add the following to your [settings.cfg](https://openmw.readthedocs.io/en/stable/reference/modding/paths.html)
-
-        [Windows]
-        map hidden = true
+1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\sw_cpp"`)
+1. Add `content=Starwind Community Patch Project.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
 
 <div align="center"> <img src="../img/modathonbanner2024.png" alt="Modathon 2024" /> </div>
 
