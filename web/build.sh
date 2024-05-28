@@ -54,10 +54,10 @@ sed "s|<div id=\"modMarker\"></div>|$modimages|" ../README.md \
     | tr '+' '\n' \
     | grep -v "# s3ctors-s3cret-st4sh" >> site/index.md
 
-cat ../CHANGELOG.md >> site/changelog.md
+cat ../CHANGELOG.md >> site/s3ctors_s3cret_st4sh-changelog.md
 
 echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/index.md
-echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/changelog.md
+echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/s3ctors_s3cret_st4sh-changelog.md
 
 
 set -- $launch_args
