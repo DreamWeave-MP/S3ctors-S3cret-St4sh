@@ -10,8 +10,7 @@ Baldurwind is specifically designed to be compatible with whatever the latest st
 
 Otherwise, just follow the installation instructions below and be ready for a hard time. Turn-based Morrowind is extremely punishing and necessitates a proper build, and having friends along helps quite a bit. If you don't typically play with followers or companions, you probably will now!
 
-<!-- add the actual attendMe link when we have internet -->
-Pairs great with attendMe.
+Pairs great with [AttendMe](https://gitlab.com/urm-openmw-mods/attend-me/-/tree/0.49?ref_type=heads) and [OpenNeverMind](https://modding-openmw.gitlab.io/opennevermind/).
 
 <!-- Insert gif here when I feel like it -->
 

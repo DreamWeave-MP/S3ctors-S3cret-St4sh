@@ -1,6 +1,6 @@
-## s3ctors-s3cret-st4sh Changelog
+## Baldurwind Changelog
 
-#### Version 1.0
+#### Version 0.1
 
 Initial version of the mod.
 
