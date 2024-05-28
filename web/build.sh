@@ -34,7 +34,7 @@ set -- mods
 for mod in $mods; do
 
     grep -vi "# $mod" ../"$mod"/README.md >> site/"$mod".md
-    grep -vi "# $mod Changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
+    grep -vi "#.*changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
 
     echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
     echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
@@ -45,7 +45,7 @@ done
 
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
-grep -v "## S3St4sh Changelog" ../CHANGELOG.md >> site/changelog.md
+grep -vi "#.*changelog" ../CHANGELOG.md >> site/s3ctors_s3cret_st4sh-changelog.md
 
 # Index
 # echo '<div class="center"><a href="/img/image.png"><img src="/img/image.png" title="The stats menu" /></a></div>' > site/index.md
@@ -53,8 +53,6 @@ grep -v "## S3St4sh Changelog" ../CHANGELOG.md >> site/changelog.md
 sed "s|<div id=\"modMarker\"></div>|$modimages|" ../README.md \
     | tr '+' '\n' \
     | grep -v "# s3ctors-s3cret-st4sh" >> site/index.md
-
-cat ../CHANGELOG.md >> site/s3ctors_s3cret_st4sh-changelog.md
 
 echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/index.md
 echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/s3ctors_s3cret_st4sh-changelog.md
