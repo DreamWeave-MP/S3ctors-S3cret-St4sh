@@ -1,7 +1,13 @@
-## s3ctors-s3cret-st4sh Changelog
+## Transmog Changelog
 
-#### Version 1.0
+#### Version 0.4
 
-Initial version of the mod.
+Initial version of the mod published in OpenMW's Discord
 
-<!--[Download Link](https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/packages/TODO)-->
+#### Version 0.45
+
+Completely rewrite the entire thing with almost no functional difference
+
+#### Version 0.5
+
+Publish via S3St4sh
