@@ -1,4 +1,4 @@
-## S3St4sh Changelog
+## S3ctor's S3cret St4sh Changelog
 
 #### Version 1.0
 
