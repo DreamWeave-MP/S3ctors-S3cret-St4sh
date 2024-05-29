@@ -1,6 +1,6 @@
 # s3ctors-s3cret-st4sh
 
-Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise. From now to the end of time, you'll find everything I make for Morrowind here. That's a promise, Nexus. You can bookmark this URL to keep up-to-date with all my solo and collaborative releases.
+Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise. From now to the end of time, you'll find everything I make for Morrowind here. That's a promise, Nexus. You can bookmark [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/) to keep up-to-date with all my solo and collaborative releases.
 
 #### Available Mods
 
