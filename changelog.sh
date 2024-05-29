@@ -29,7 +29,7 @@ fi
 
 # Initialize previous tag as the first tag in the list
 previous_tag=""
-GITLAB_REPO_URL="https://gitlab.com/$(git remote get-url origin | cut -d ':' -f 2 | cut -d '.' -f 1)"
+GITLAB_REPO_URL="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh"
 
 # Iterate through the tags
 for tag in $tags; do
