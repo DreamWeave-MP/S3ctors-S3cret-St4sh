@@ -22,19 +22,32 @@ set -- mods
 
 for mod in $mods; do
 
-cp version.txt "$mod"/
+    cp version.txt "$mod"/
 
-cd "$mod"/
+    cd "$mod"/
 
-zip --must-match \
-    --recurse-paths \
-    ../"$mod".zip \
-    .
+    if [ -f CHANGELOG.md ]; then
+        mv CHANGELOG.md orig_CHANGELOG.md
+        cat <(../changelog.sh "$mod") orig_CHANGELOG.md > CHANGELOG.md
+    else
+        ../changelog.sh "$mod" > CHANGELOG.md
+    fi
 
-cd ..
+    zip --recurse-paths \
+        ../"$mod".zip \
+        . \
+        --exclude=orig_CHANGELOG.md
 
-sha256sum "$mod".zip > "$mod".sha256sum.txt
-sha512sum "$mod".zip > "$mod".sha512sum.txt
+    rm -rf CHANGELOG.md
+
+    if [ -f orig_CHANGELOG.md ]; then
+        mv orig_CHANGELOG.md CHANGELOG.md
+    fi
+
+    cd ..
+
+    sha256sum "$mod".zip > "$mod".sha256sum.txt
+    sha512sum "$mod".zip > "$mod".sha512sum.txt
 
 done
 

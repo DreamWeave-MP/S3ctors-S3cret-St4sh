@@ -6,6 +6,12 @@ set -euo pipefail
 # then runs it, the built website can be found at: web/build
 #
 
+append_mod_name_div() {
+  local mod=$1
+  local file=$2
+  echo "<div id=\"modName\" data-mod-name=\"${mod}\"></div>" >> "$file"
+}
+
 this_dir=$(realpath "$(dirname "${0}")")
 cd "${this_dir}"
 
@@ -34,28 +40,32 @@ set -- mods
 for mod in $mods; do
 
     grep -vi "# $mod" ../"$mod"/README.md >> site/"$mod".md
-    grep -vi "#.*changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
 
-    echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod".md
-    echo "<div id=\"modName\" data-mod-name=\""$mod"\"></div>" >> site/"$mod"-changelog.md
+    ../changelog.sh "$mod" >> site/"$mod"-changelog.md
+
+    if [ -f ../"$mod"/CHANGELOG.md ]; then
+        grep -vi "#.*changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
+    fi
+
+    append_mod_name_div "$mod" site/"$mod".md
+    append_mod_name_div "$mod" site/"$mod"-changelog.md
 
     modimages="$modimages<a href=\"./"$mod"/\"><img src=\"./img/"$mod".svg\" alt=\""$mod"\"/></a>+<br>+"
 
 done
 
 # Changelog
-echo "Releases without a download link can be downloaded as a dev build from the link above." > site/changelog.md
-grep -vi "#.*changelog" ../CHANGELOG.md >> site/s3ctors_s3cret_st4sh-changelog.md
-
-# Index
-# echo '<div class="center"><a href="/img/image.png"><img src="/img/image.png" title="The stats menu" /></a></div>' > site/index.md
+echo "Releases without a download link can be downloaded as a dev build from the link above." > site/index.md
 
 sed "s|<div id=\"modMarker\"></div>|$modimages|" ../README.md \
     | tr '+' '\n' \
     | grep -v "# s3ctors-s3cret-st4sh" >> site/index.md
 
-echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/index.md
-echo "<div id=\"modName\" data-mod-name=\"s3ctors_s3cret_st4sh\"></div>" >> site/s3ctors_s3cret_st4sh-changelog.md
+append_mod_name_div s3ctors_s3cret_st4sh site/index.md
+
+../changelog.sh "s3ctors_s3cret_st4sh" >> site/s3ctors_s3cret_st4sh-changelog.md
+
+append_mod_name_div s3ctors_s3cret_st4sh site/s3ctors_s3cret_st4sh-changelog.md
 
 
 set -- $launch_args
