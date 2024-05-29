@@ -51,11 +51,19 @@ for mod in $mods; do
 
 done
 
+mv CHANGELOG.md orig_CHANGELOG.md
+cat <(./changelog.sh s3ctors_s3cret_st4sh) orig_CHANGELOG.md > CHANGELOG.md
+
 zip --must-match \
     ${file_name}.zip \
+    CHANGELOG.md \
     version.txt \
     *sha*sum.txt \
     *.zip
+
+rm -rf CHANGELOG.md
+
+mv orig_CHANGELOG.md CHANGELOG.md
 
 sha256sum ${file_name}.zip > ${file_name}.sha256sum.txt
 sha512sum ${file_name}.zip > ${file_name}.sha512sum.txt
