@@ -8,9 +8,7 @@
     src: url('/font/MysticCards.ttf') format('truetype');
 }
 
-.modHeader {
-    /* width: 100px; */
-    /* height: 100px; */
+.modHeader, #homeButton {
     color: #75076a;
     display: grid;
     align-items: center;
@@ -20,6 +18,10 @@
     margin: 10px;
     font-family: 'Pelagiad', sans-serif;
     filter: drop-shadow(3px 1.5px #000);
+}
+
+#homeButton {
+    font-size: 8rem;
 }
 
 #baldurwind {
