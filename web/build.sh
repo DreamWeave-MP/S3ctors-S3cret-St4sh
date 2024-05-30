@@ -53,7 +53,7 @@ for mod in $mods; do
     mod_title=$(head -1 ../"$mod"/README.md | cut -c 3- | tr -d '\n')
 
     modimages="$modimages
-<a class="modTitle" href=\"./"$mod"/\">$mod_title</a>
+<div style=\"border: 1px solid #000;\"><a class="modTitle" id="$mod" href=\"./"$mod"/\">$mod_title</a></div>
 <br>
 "
 
