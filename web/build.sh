@@ -44,7 +44,7 @@ for mod in $mods; do
 
     rm -rf site/"$mod"
     mkdir -p site/"$mod"
-    grep -vi "# $mod" ../"$mod"/README.md >> site/"$mod"/index.md
+    awk 'NR == 1 { next } { print }' ../"$mod"/README.md >> site/"$mod"/index.md
 
     ../changelog.sh "$mod" >> site/"$mod"/changelog.md
 
