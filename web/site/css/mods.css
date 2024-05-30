@@ -8,7 +8,7 @@
     src: url('/font/MysticCards.ttf') format('truetype');
 }
 
-.modTitle {
+.modHeader {
     /* width: 100px; */
     /* height: 100px; */
     color: #75076a;
