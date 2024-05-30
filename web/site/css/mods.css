@@ -1,14 +1,4 @@
-@font-face {
-    font-family: 'Pelagiad';
-    src: url('/font/Pelagiad.ttf') format('truetype');
-}
-
-@font-face {
-    font-family: 'Mystic Cards';
-    src: url('/font/MysticCards.ttf') format('truetype');
-}
-
-a.modHeader, #homeButton {
+.MWText, a.modHeader, #homeButton {
     color: #75076a;
     display: grid;
     align-items: center;
@@ -18,6 +8,11 @@ a.modHeader, #homeButton {
     margin: 10px;
     font-family: 'Pelagiad', sans-serif;
     filter: drop-shadow(3px 1.5px #000);
+}
+
+#kartoffel {
+    color: #eb5252;
+    font-size: 10rem;
 }
 
 #homeButton {
