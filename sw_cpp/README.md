@@ -1,3 +1,5 @@
+# Starwind Community Patch Project
+
 <h2 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Brought to you by the Starwind Team and all the players on <a href="https://discord.gg/wcMj2b2svh">The Starwind Initiative</a></h2>
 
 The Starwind Community patch project was born as a fix for crashes we found after someone made a [bunch of normal maps for everything](https://www.nexusmods.com/morrowind/mods/52567), including Starwind. Technically, these crashes are an engine bug, but it's also because the meshes are broken as well. Thus, SW_CPP was born.
