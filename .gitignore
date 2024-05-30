@@ -3,6 +3,7 @@
 *sha*sum.txt
 version.txt
 web/build/
+web/site/*/
 web/site/*.md
 web/sha256sums
 web/soupault-*-linux-x86_64*
