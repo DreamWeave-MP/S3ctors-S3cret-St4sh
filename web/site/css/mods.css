@@ -1,0 +1,58 @@
+@font-face {
+    font-family: 'Pelagiad';
+    src: url('/font/Pelagiad.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Mystic Cards';
+    src: url('/font/MysticCards.ttf') format('truetype');
+}
+
+.modTitle {
+    /* width: 100px; */
+    /* height: 100px; */
+    color: #75076a;
+    display: grid;
+    align-items: center;
+    text-align: center;
+    line-height: 1;
+    font-size: 32px;
+    margin: 10px;
+    font-family: 'Pelagiad', sans-serif;
+    filter: drop-shadow(3px 1.5px #000);
+}
+
+#baldurwind {
+    color: #820a26;
+    font-size: 48px;
+}
+
+#bbl_drizzy {
+    color: #ea48f0;
+    font-size: 48px;
+}
+
+#crass_nav {
+    color: #846f06;
+    font-size: 8rem;
+}
+
+#starwind_pvp {
+    color: #700b15;
+    font-size: 8rem;
+}
+
+#sw_cpp {
+    color: #0d6980;
+    font-size: 7rem;
+}
+
+#toolgun {
+    color: #75076a;
+    font-size: 15rem;
+}
+
+#transmog {
+    color: #55ffff;
+    font-size: 12rem;
+}
