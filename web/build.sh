@@ -57,7 +57,7 @@ for mod in $mods; do
 
 
     modimages="$modimages
-<div style=\"border: 1px solid #000;\"><a class="modTitle" id="$mod" href=\"./"$mod"/\">$mod_title</a></div>
+<div style=\"border: 1px solid #000;\"><a class="modHeader" id="$mod" href=\"./"$mod"/\">$mod_title</a></div>
 <br>
 "
 
