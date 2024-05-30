@@ -50,16 +50,23 @@ for mod in $mods; do
     append_mod_name_div "$mod" site/"$mod".md
     append_mod_name_div "$mod" site/"$mod"-changelog.md
 
-    modimages="$modimages<a href=\"./"$mod"/\"><img src=\"./img/"$mod".svg\" alt=\""$mod"\"/></a>+<br>+"
+    mod_title=$(head -1 ../"$mod"/README.md | cut -c 3- | tr -d '\n')
+
+    modimages="$modimages
+<a class="modTitle" href=\"./"$mod"/\">$mod_title</a>
+<br>
+"
 
 done
 
 # Changelog
 echo "Releases without a download link can be downloaded as a dev build from the link above." > site/index.md
 
-sed "s|<div id=\"modMarker\"></div>|$modimages|" ../README.md \
-    | tr '+' '\n' \
-    | grep -v "# s3ctors-s3cret-st4sh" >> site/index.md
+awk -v mods="$modimages" '
+    NR == 1 { next }
+    /<div id="modMarker"><\/div>/ { print mods; next }
+    { print }
+' ../README.md >> site/index.md
 
 append_mod_name_div s3ctors_s3cret_st4sh site/index.md
 
