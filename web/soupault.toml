@@ -42,7 +42,7 @@ selector = "#fonts"
 [widgets.changelog-toc-html]
   widget = "insert_html"
   html = '<h3>Releases</h3><div id="toc"></div>'
-  page = ["changelog.md"]
+  page = []
   selector = "h4"
   action = "insert_before"
 
