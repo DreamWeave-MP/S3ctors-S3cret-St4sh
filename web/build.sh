@@ -8,8 +8,9 @@ set -euo pipefail
 
 append_mod_name_div() {
   local mod=$1
-  local file=$2
-  echo "<div id=\"modName\" data-mod-name=\"${mod}\"></div>" >> "$file"
+  local modName=$2
+  local file=$3
+  echo "<div id=\"modData\" data-mod-path=\"${mod}\" data-mod-title=\"${modName}\"></div>" >> "$file"
 }
 
 this_dir=$(realpath "$(dirname "${0}")")
@@ -39,18 +40,21 @@ set -- mods
 
 for mod in $mods; do
 
-    grep -vi "# $mod" ../"$mod"/README.md >> site/"$mod".md
+    mod_title=$(head -1 ../"$mod"/README.md | cut -c 3- | tr -d '\n')
 
-    ../changelog.sh "$mod" >> site/"$mod"-changelog.md
+    rm -rf site/"$mod"
+    mkdir -p site/"$mod"
+    grep -vi "# $mod" ../"$mod"/README.md >> site/"$mod"/index.md
+
+    ../changelog.sh "$mod" >> site/"$mod"/changelog.md
 
     if [ -f ../"$mod"/CHANGELOG.md ]; then
-        grep -vi "#.*changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"-changelog.md
+        grep -vi "#.*changelog" ../"$mod"/CHANGELOG.md >> site/"$mod"/changelog.md
     fi
 
-    append_mod_name_div "$mod" site/"$mod".md
-    append_mod_name_div "$mod" site/"$mod"-changelog.md
+    append_mod_name_div "$mod" "$mod_title" site/"$mod"/index.md
+    append_mod_name_div "$mod" "$mod_title" site/"$mod"/changelog.md
 
-    mod_title=$(head -1 ../"$mod"/README.md | cut -c 3- | tr -d '\n')
 
     modimages="$modimages
 <div style=\"border: 1px solid #000;\"><a class="modTitle" id="$mod" href=\"./"$mod"/\">$mod_title</a></div>
@@ -68,11 +72,11 @@ awk -v mods="$modimages" '
     { print }
 ' ../README.md >> site/index.md
 
-append_mod_name_div s3ctors_s3cret_st4sh site/index.md
+append_mod_name_div s3ctors_s3cret_st4sh "S3ctor's S3cret St4sh" site/index.md
 
-../changelog.sh "s3ctors_s3cret_st4sh" >> site/s3ctors_s3cret_st4sh-changelog.md
+../changelog.sh "s3ctors_s3cret_st4sh" >> site/changelog.md
 
-append_mod_name_div s3ctors_s3cret_st4sh site/s3ctors_s3cret_st4sh-changelog.md
+append_mod_name_div s3ctors_s3cret_st4sh "S3ctor's S3cret St4sh" site/changelog.md
 
 
 set -- $launch_args
