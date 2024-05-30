@@ -30,7 +30,7 @@ for tag in $tags; do
     text-decoration: underline;
   }
 </style>
-    "
+"
 
     echo -e "<details><summary><h4>Version $version:</h4></summary>"
     git log --pretty=format:"%h %s" "$tag".."$previous_tag" | while read -r commit_hash commit_message; do
