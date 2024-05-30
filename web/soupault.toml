@@ -22,6 +22,11 @@
 [preprocessors]
   md = "cmark --unsafe --smart"
 
+[widgets.fonts]
+widget = "include"
+file = "templates/font.html"
+selector = "#fonts"
+
 [widgets.page-title]
   widget = "title"
   selector = "h2"
