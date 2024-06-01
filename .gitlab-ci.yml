@@ -38,7 +38,7 @@ pages:
     - git fetch --all
     - git submodule init
     - git submodule update
-    - ./web/build.sh --profile prod
+    - ./web/build.sh --profile prod --debug
     - mv web/build public
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
