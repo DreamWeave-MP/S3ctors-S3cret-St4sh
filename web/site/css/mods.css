@@ -1,3 +1,29 @@
+.modLinkContainer {
+    border: 1px solid #000;
+    margin: 5px;
+}
+
+a#backToToc:hover {
+    text-decoration: underline;
+}
+
+div#toc {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+    margin: 10px;
+    justify-items: center;
+}
+
+ul.toc {
+    list-style-image: url('/img/todd.png');
+}
+
+ul.toc > li {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
 .MWText, a.modHeader, #homeButton {
     color: #75076a;
     display: grid;
