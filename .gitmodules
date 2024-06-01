@@ -1,6 +1,6 @@
 [submodule "web/plugins"]
 	path = web/plugins
-	url = https://gitlab.com/modding-openmw/modweb-lua
+	url = https://gitlab.com/magicaldave1/modweb-lua
 [submodule "web/site/js"]
 	path = web/site/js
 	url = https://gitlab.com/magicaldave1/modweb-js
