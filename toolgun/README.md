@@ -8,13 +8,13 @@ Author: **S3ctor & Epoch**
 
 All code was written by S3ctor, NIF assets were converted by Epoch. Facepunch owns the original Toolgun mesh, and the SFX are sourced from [Valve](https://developer.valvesoftware.com/wiki/Mod_Content_Usage) in accordance with their mod content policy for non-commercial products.
 
-## Usage
+#### Usage
 
 Please keep in mind that Toolgun requires OpenMW version 0.49, or at time of writing, a [development build](https://openmw.org/downloads/). Linux users may (probably) find development builds through their respective package managers, or failing all else, check out [JohnnyHostile's AppImages](https://modding-openmw.com/mods/openmw-appimage/) 
 
 With that out of the way...
 
-### It's TOOL TIME!
+###### It's TOOL TIME!
 
 Toolgun offers a series of built-in tool modes for manipulating the game world around you. The entire table of tool modes is exposed through the interface `toolTime`, and modders may add their own tool modes through the member `tools`. In `mode.lua`, modders can find the base tool object for making their own.
 
@@ -24,7 +24,7 @@ How hard was that?
 
 <!-- Insert gif here when I feel like it -->
 
-#### Controls
+###### Controls
 
 Many controls in toolgun are mode-specific. However, there are a small handful of (hardcoded, I am not changing this until default keybinds are properly implemented) controls which apply to all modes:
 
@@ -36,7 +36,7 @@ Many controls in toolgun are mode-specific. However, there are a small handful o
 
 Otherwise, just equip the toolgun and fire to activate it. 
 
-#### Built-in Tools
+## Built-in Tools
 
 1. Scale - Use this to increase or decrease the size of objects. WARNING: Scaling an object below 0.5 or above 2.0 violates Bethesda's usage of the ESP format, and so, extreme object scales will not work when trying to save them with tes3conv. Sorry.
 2. Delete - Self-explanatory. 
