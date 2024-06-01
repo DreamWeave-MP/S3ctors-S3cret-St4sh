@@ -4,7 +4,7 @@ Baldurwind is a mechanical total conversion for OpenMW. More features are planne
 
 The idea was inspired due to the sheer popularity of Baldur's Gate 3 (obviously) and some of my longstanding grievances with the combat system. There's not enough audiovisual feedback in typical Morrowind combat, so instead of removing hit chance (as I did in another mod), I designed some mechanics which enable the game to (in my opinion) more properly lean into that idea.
 
-## Usage
+### Usage
 
 Baldurwind is specifically designed to be compatible with whatever the latest stable release of OpenMW is. At the time of this writing, that is 0.48. To the best of my knowledge, Baldurwind still works on development builds as of commit cd116ebe5f .
 
