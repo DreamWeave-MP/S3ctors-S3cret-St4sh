@@ -138,6 +138,7 @@
 
 [widgets.prod-mode]
   after = [
+    "headerFixer",
     "highlight-active-link",
     "highlight-code-css",
     "highlight-code-darkmode-css"
