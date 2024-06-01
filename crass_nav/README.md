@@ -1,5 +1,13 @@
 # Crassified Navigation
 
+<style>
+
+ul.toc {
+    list-style-image: url('/img/crassius.png');
+}
+
+</style>
+
 <div align="center"> <img src="../img/crassnav-map.png" alt="Crassius Curio is on the Map." /> </div>
 
 <h2 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Uncle Crassius Doesn't Need A Map. Why Should You?</h2>
