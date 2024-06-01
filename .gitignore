@@ -4,8 +4,12 @@
 version.txt
 web/build/
 web/site/*/
+!web/site/css
+!web/site/img
+!web/site/js
 web/site/*.md
 web/sha256sums
+web/soupault
 web/soupault-*-linux-x86_64*
 *.~undo-tree~
 *~
