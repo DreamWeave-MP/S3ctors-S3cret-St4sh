@@ -22,10 +22,69 @@
 [preprocessors]
   md = "cmark --unsafe --smart"
 
+# [BUILDER]
+[hooks.startup]
+  file = 'plugins/mod-info.lua'
+  # Comment this out to skip any logging from the template
+  do_log = "true"
+  # Disable this if you wish to only host one mod on your site.
+  multi_mod = "true"
+  # This should be the GitLab account to which your site will be deployed
+  org = "modding-openmw"
+  # This is the name of your repository
+  project = "s3ctors-s3cret-st4sh"
+  # MANDATORY: Omits certain directories during the build process
+  # Do not remove any of these, or you will start a big fire
+  # But feel free to add new ones!
+  global_exclude_paths = "js|.git|web|img|css"
+
+# Creates the modData tag
+# Which includes the mod's directory, the project, and the org name
+[widgets.mod-paths]
+  widget = "insert-data"
+  check-selector = "head"
+  selector = "modData"
+
+# [TITLE FIXER]
+# Writes the name of the document's first header
+# To the top of the page and assigns the special
+# modHeader class for styling
+[widgets.title-fixer]
+  after = 'mod-paths'
+  widget = "title-fixer"
+  # If 'true', puts a notice on release pages
+  # Indicating you can get the mod from the dev link
+  # dev_warning = 'true'
+  dev_message = """
+  Releases without a download link can be downloaded as a dev build link above.
+  """
+
+# Insert the following element anywhere
+# in your root README.md to have a
+# list of all available mods inserted there:
+# <div id="modMarker"></div>
+# This widget will not do anything
+# if `multi_mod` is not set to `true`
+# This only runs on /index.html and /blog/index.html
+[hooks.post-build]
+  file = 'plugins/mod-list.lua'
+
 [widgets.fonts]
-widget = "include"
-file = "templates/font.html"
-selector = "#fonts"
+  after = 'title-fixer'
+  widget = "include"
+  file = "templates/font.html"
+  selector = "#fonts"
+
+[widgets.downloadHeader]
+  widget = "include"
+  file = "templates/header.html"
+  selector = "#downloadHeader"
+
+# [HEADER FIXER]
+# Correct links from the modHeader stage
+[widgets.headerFixer]
+  after = ["downloadHeader", "title-fixer"]
+  widget = "header-fixer"
 
 [widgets.page-title]
   widget = "title"
@@ -41,31 +100,41 @@ selector = "#fonts"
 
 [widgets.changelog-toc-html]
   widget = "insert_html"
-  html = '<h3>Releases</h3><div id="toc"></div>'
-  page = []
-  selector = "h4"
+  html = """
+  <h5 class="notoc"
+      style="text-align: center;"
+      id="contents">Contents</h3>
+  <div
+    style="text-align: center;"
+    id="toc">
+  </div>
+  """
+  selector = ["h4", "h5", "h6"]
   action = "insert_before"
-
-[widgets.other-toc-html]
-  widget = "insert_html"
-  html = '<div id="toc"></div>'
-  page = ["events_and_interface.md", "readme.md"]
-  selector = "h4"
-  action = "insert_before"
+  exclude_path_regex = '^(.*)changelog(.*)$'
 
 [widgets.table-of-contents]
-  after = ["changelog-toc-html", "other-toc-html"]
+  after = ["changelog-toc-html"]
   widget = "toc"
   selector = "div#toc"
-  heading_links = true
-  heading_link_text = "→ "
-  heading_link_class = "here"
-  min_level = 3
+  min_level = 4
   numbered_list = false
   toc_list_class = "toc"
   toc_class_levels = false
   use_heading_slug = true
   valid_html = true
+  ignore_heading_selectors = ['.notoc']
+  exclude_path_regex = '^(.*)changelog(.*)$'
+
+[widgets.wrap-toc]
+  after = ["table-of-contents"]
+  widget = "wrap"
+  wrapper = """
+  <a id="backToToc" href="#contents">
+  """
+  selector = ["h3", "h4", "h5"]
+  wrap_all = true
+  exclude_path_regex = '^(.*)changelog(.*)$'
 
 [widgets.prod-mode]
   after = [
