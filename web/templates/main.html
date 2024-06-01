@@ -1,7 +1,12 @@
 <html lang="en">
+
   <head>
-  <style id="fonts"></style>
     <meta charset="utf-8">
+
+    <style id="fonts"></style>
+
+    <modData></modData>
+
     <title></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise.">
@@ -12,57 +17,46 @@
     <meta property="og:title" content="S3ctor's S3cret St4sh">
     <meta property="og:description" content="The forever home of S3ctor's OpenMW mods & tools.">
     <meta property="og:image" content="https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/img/s3.png">
+
     <link rel="stylesheet" type="text/css" href="/css/normalize.css">
     <link rel="stylesheet" type="text/css" href="/css/sakura.css">
     <link rel="stylesheet" type="text/css" media="(prefers-color-scheme: dark)" href="/css/sakura-dark.css">
     <link rel="stylesheet" type="text/css" href="/css/site.css">
     <link rel="stylesheet" type="text/css" href="/css/mods.css">
-    <link rel="stylesheet" type="text/style" href="/css/fonts2.css">
     <link rel="stylesheet" type="text/css" media="(prefers-color-scheme: dark)" href="/css/site-dark.css">
+
   </head>
   <body>
-    <a class="modHeader" id="modHeader" href="/"/>S3ctor's S3cret St4sh</a>
     <noscript>
       <p class="bold center">
         Please enable Javascript for this page, Gitlab itself also requires Javascript in order to even look at packages. Sorry :(
       </p>
     </noscript>
-    <p class="center">Latest version: <span class="bold" id="latestVersion">...</span></p>
-    <div id="links" class="bold center">
-      <a class="button" id="download" title="Download the latest release of s3ctors-s3cret-st4sh">Download</a>
-    </div>
-    <div id="shas" class="bold center">
-      <a id="sha256" title="Verify the integrity of the file you downloaded">sha256</a>/<a id="sha512" title="Verify the integrity of the file you downloaded">sha512</a>
-    </div>
-    <div class="bold center" id="errors"></div>
-    <div class="center" id="dev-build">
-      <a id="dev-download" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fs3ctors-s3cret-st4sh/jobs/artifacts/master/raw/MOD_FILE.zip?job=make" title="Dev builds may have newer features, but they will be less tested">Dev Build</a> (<a id="dev-sha256" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fs3ctors-s3cret-st4sh/jobs/artifacts/master/raw/MOD_FILE.sha256sum.txt?job=make" title="Verify the integrity of the file you downloaded">sha256</a>/<a id="dev-sha512" href="https://gitlab.com/api/v4/projects/modding-openmw%2Fs3ctors-s3cret-st4sh/jobs/artifacts/master/raw/MOD_FILE.sha512sum.txt?job=make" title="Verify the integrity of the file you downloaded">sha512</a>)
-    </div>
-    <nav class="center" id="nav">
-      <a href="/">Home</a> | <a id="changelog" href="/changelog/">Changelog</a>
-    </nav>
-    <div class="center" id="gitlab-links" title="These are external links that will take you to GitLab.">
-      <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/activity">Activity</a> | <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues">Report A Bug</a>
-    </div>
-    <br>
+
+    <div id="downloadHeader"></div>
+
     <div id="content"></div>
-       <div id="end" style="text-align: center;">
-    <h4>
-     Report A Problem
-    </h4>
-    <p>
-     If you’ve found an issue with this mod, or if you simply have a question, please use one of the following ways to reach out:
-    </p>
-    <p>
-     <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues">Open an issue on GitLab</a>
-    </p>
-    <p>
-     Email <code>corleycomputerrepair@protonmail.ch</code>
-    </p>
-    <p>
-     Contact the author on Discord: <code>@s3kshun.8</code>
-    </p>
+
+    <div id="end" style="text-align: center;">
+      <h4>
+        Report A Problem
+      </h4>
+      <p>
+        If you’ve found an issue with this mod, or if you simply have a question, please use one of the following ways to reach out:
+      </p>
+      <p>
+        <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/-/issues">Open an issue on GitLab</a>
+      </p>
+      <p>
+        Email <code>corleycomputerrepair@protonmail.ch</code>
+      </p>
+      <p>
+        Contact the author on Discord: <code>@s3kshun.8</code>
+      </p>
    </div>
+
+  </body>
+
     <footer style="text-align: center;">
       <a align="center" id="homeButton" href="/">Home</a>
       <br>
@@ -72,8 +66,7 @@
       <br>
       <a href="https://handbook.gitlab.com/handbook/support/workflows/dmca/">Gitlab DMCA Policy</a>
     </footer>
-    <div id="modOrg" data-mod-org="modding-openmw"></div>
-    <div id="modProject" data-mod-project="s3ctors-s3cret-st4sh"></div>
-    <script src="/js/gitlab.js"></script>
-  </body>
+
 </html>
+
+<script src="/js/gitlab.js"></script>
