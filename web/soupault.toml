@@ -38,9 +38,22 @@
   # But feel free to add new ones!
   global_exclude_paths = "js|.git|web|img|css"
 
+[hooks.pre-process]
+  profile = 'prod'
+  lua_source = """
+  if not Sys.is_file('.prod') then
+     Sys.write_file('.prod', '')
+  end
+  """
+
+[widgets.package]
+  profile = 'pkg'
+  widget = 'package'
+
 # Creates the modData tag
 # Which includes the mod's directory, the project, and the org name
 [widgets.mod-paths]
+  after = 'package'
   widget = "insert-data"
   check-selector = "head"
   selector = "modData"
