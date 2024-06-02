@@ -37,8 +37,6 @@ Nevertheless, it works just as well and easily as anything else.
         [Windows]
         map hidden = true
 
-<div align="center"> <img src="../img/modathonbanner2024.png" alt="Modathon 2024" /> </div>
-
 <div id="credits" style="text-align: center;">
 
 #### Credits
