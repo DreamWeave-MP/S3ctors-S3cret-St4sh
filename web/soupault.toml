@@ -25,14 +25,17 @@
 # [BUILDER]
 [hooks.startup]
   file = 'plugins/mod-info.lua'
-  # Comment this out to skip any logging from the template
-  do_log = "true"
-  # Disable this if you wish to only host one mod on your site.
-  multi_mod = "true"
   # This should be the GitLab account to which your site will be deployed
   org = "modding-openmw"
   # This is the name of your repository
   project = "s3ctors-s3cret-st4sh"
+  # Comment this out to skip any logging from the template
+  do_log = "true"
+  # Disable this if you wish to only host one mod on your site.
+  multi_mod = "true"
+  # Include links to download file digests
+  # for verification purposes
+  # use_digests = 'true'
   # MANDATORY: Omits certain directories during the build process
   # Do not remove any of these, or you will start a big fire
   # But feel free to add new ones!
@@ -88,16 +91,11 @@
   file = "templates/font.html"
   selector = "#fonts"
 
-[widgets.downloadHeader]
-  widget = "include"
-  file = "templates/header.html"
-  selector = "#downloadHeader"
-
 # [HEADER FIXER]
 # Correct links from the modHeader stage
 [widgets.headerFixer]
-  after = ["downloadHeader", "title-fixer"]
-  widget = "header-fixer"
+  after = ["title-fixer"]
+  widget = "header-insert"
 
 [widgets.page-title]
   widget = "title"
