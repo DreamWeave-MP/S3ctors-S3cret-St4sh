@@ -33,6 +33,15 @@
   do_log = "true"
   # Disable this if you wish to only host one mod on your site.
   multi_mod = "true"
+  # The next four fields are for the `Report a Problem` section of the Template.
+  # Optionally insert your contact info for each platform.
+  # For gitlab issues, just set to `true` to have a link to the issues page,
+  # or omit it completely to skip it.
+  # contact_irc = "s3kshun.8"
+  contact_discord = "s3kshun.8"
+  contact_email = "corleycomputerrepair@protonmail.ch"
+  contact_issues_page = 'true'
+
   # Include links to download file digests
   # for verification purposes
   # use_digests = 'true'
@@ -92,10 +101,14 @@
   selector = "#fonts"
 
 # [HEADER FIXER]
-# Correct links from the modHeader stage
-[widgets.headerFixer]
+[widgets.header]
   after = ["title-fixer"]
   widget = "header-insert"
+
+[widgets.footer]
+  after = 'header'
+  widget = 'footer-insert'
+  extra_exclude_dirs = "changelog"
 
 [widgets.page-title]
   widget = "title"
@@ -149,7 +162,7 @@
 
 [widgets.prod-mode]
   after = [
-    "headerFixer",
+    "header",
     "highlight-active-link",
     "highlight-code-css",
     "highlight-code-darkmode-css"
