@@ -172,10 +172,10 @@ return function()
     content = ui.content {
       {external = { grow = 1 }},
       -- fullImage,
-      newGreeting,
+      -- newGreeting,
       -- greetingImage,
+      categoryButtons(),
       {external = { grow = 1 }},
-      -- categoryButtons(),
     },
   }
   return Header
