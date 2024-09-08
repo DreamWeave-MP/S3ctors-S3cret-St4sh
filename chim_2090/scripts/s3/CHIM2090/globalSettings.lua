@@ -12,8 +12,8 @@ local agilityHitChancePctDesc = "Percentage of agility that is added to hit chan
 local luckHitChancePctDesc = "Percentage of luck that is added to hit chance, vanilla is 10%. Related damage scaling is capped by the Max Strength Multiplier setting."
 -- Fatigue settings description(s)
 local useVanillaFatigueDesc = "Use the original fatigue regeneration formula instead of CHIM 2090's internal one. This still uses below regen settings, but omits advanced functionality."
-local fatiguePerSecondDesc = "Fatigue restored per second when using either formula. Replaces the vanilla GMST \"fFatigueReturnBase\""
-local fatigueEndMultDesc = "Percentage of endurance regained as fatigue, per second, with either formula. Replaces the vanilla GMST \"fFatigueReturnMult\""
+local fatiguePerSecondDesc = "Fatigue restored per second when using either formula. Replaces the vanilla GMST (2.5) \"fFatigueReturnBase\""
+local fatigueEndMultDesc = "Percentage of endurance regained as fatigue, per second, with either formula. Replaces the vanilla GMST (0.02) \"fFatigueReturnMult\""
 -- Critical hit settings description(s)
 local critFumbleEnableDesc = "Enable the critical hit and fumble module. This module adds a chance to deal extra damage on a critical hit, and less on a fumble."
 local critChancePercentDesc = "Base chance of a critical hit"
