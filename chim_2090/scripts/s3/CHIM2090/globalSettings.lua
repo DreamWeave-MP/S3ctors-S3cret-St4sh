@@ -14,6 +14,10 @@ local luckHitChancePctDesc = "Percentage of luck that is added to hit chance, va
 local useVanillaFatigueDesc = "Use the original fatigue regeneration formula instead of CHIM 2090's internal one. This still uses below regen settings, but omits advanced functionality."
 local fatiguePerSecondDesc = "Fatigue restored per second when using either formula. Replaces the vanilla GMST (2.5) \"fFatigueReturnBase\""
 local fatigueEndMultDesc = "Percentage of endurance regained as fatigue, per second, with either formula. Replaces the vanilla GMST (0.02) \"fFatigueReturnMult\""
+local maxFatigueStrMultDesc = "Percentage of strength factored into max fatigue. Vanilla is 100."
+local maxFatigueWilMultDesc = "Percentage of willpower factored into max fatigue. Vanilla is 100."
+local maxFatigueAgiMultDesc = "Percentage of agility factored into max fatigue. Vanilla is 100."
+local maxFatigueEndMultDesc = "Percentage of endurance factored into max fatigue. Vanilla is 100."
 -- Critical hit settings description(s)
 local critFumbleEnableDesc = "Enable the critical hit and fumble module. This module adds a chance to deal extra damage on a critical hit, and less on a fumble."
 local critChancePercentDesc = "Base chance of a critical hit"
@@ -64,6 +68,14 @@ I.Settings.registerGroup {
               "Fatigue Per Second", fatiguePerSecondDesc, 3),
       setting('FatigueEndMult', 'number', {integer = false, min = 0.001, max = 10.0 },
               "Fatigue Endurance Multiplier", fatigueEndMultDesc, 0.02),
+      setting('MaxFatigueStrMult', 'number', {integer = true, min = 0, max = 1090 },
+              "Fatigue Strength Multiplier", maxFatigueStrMultDesc, 100),
+      setting('MaxFatigueWilMult', 'number', {integer = true, min = 0, max = 1000 },
+              "Fatigue Willpower Multiplier", maxFatigueWilMultDesc, 100),
+      setting('MaxFatigueAgiMult', 'number', {integer = true, min = 0, max = 1000 },
+              "Fatigue Agility Multiplier", maxFatigueAgiMultDesc, 100),
+      setting('MaxFatigueEndMult', 'number', {integer = true, min = 0, max = 1000 },
+              "Fatigue Endurance Multiplier", maxFatigueEndMultDesc, 100),
 	}
 }
 
