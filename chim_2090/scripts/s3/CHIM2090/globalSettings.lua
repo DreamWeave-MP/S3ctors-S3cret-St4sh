@@ -69,13 +69,13 @@ I.Settings.registerGroup {
       setting('FatigueEndMult', 'number', {integer = false, min = 0.001, max = 10.0 },
               "Fatigue Endurance Multiplier", fatigueEndMultDesc, 0.02),
       setting('MaxFatigueStrMult', 'number', {integer = true, min = 0, max = 1090 },
-              "Fatigue Strength Multiplier", maxFatigueStrMultDesc, 100),
+              "Fatigue Strength Multiplier", maxFatigueStrMultDesc, 125),
       setting('MaxFatigueWilMult', 'number', {integer = true, min = 0, max = 1000 },
-              "Fatigue Willpower Multiplier", maxFatigueWilMultDesc, 100),
+              "Fatigue Willpower Multiplier", maxFatigueWilMultDesc, 50),
       setting('MaxFatigueAgiMult', 'number', {integer = true, min = 0, max = 1000 },
-              "Fatigue Agility Multiplier", maxFatigueAgiMultDesc, 100),
+              "Fatigue Agility Multiplier", maxFatigueAgiMultDesc, 25),
       setting('MaxFatigueEndMult', 'number', {integer = true, min = 0, max = 1000 },
-              "Fatigue Endurance Multiplier", maxFatigueEndMultDesc, 100),
+              "Fatigue Endurance Multiplier", maxFatigueEndMultDesc, 75),
 	}
 }
 
