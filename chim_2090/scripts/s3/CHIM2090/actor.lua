@@ -40,6 +40,7 @@ local agility = self.type.stats.attributes.agility(self)
 local endurance = self.type.stats.attributes.endurance(self)
 local luck = self.type.stats.attributes.luck(self)
 local strength = self.type.stats.attributes.strength(self)
+local willpower = self.type.stats.attributes.willpower(self)
 
 local handToHand = self.type.stats.skills.handtohand(self)
 
@@ -73,6 +74,10 @@ local UseRangedBonus = globalSettings:get('UseRangedBonus')
 local FatiguePerSecond = fatigueSettings:get('FatiguePerSecond')
 local FatigueEndMult = fatigueSettings:get('FatigueEndMult')
 local UseVanillaFatigueFormula = fatigueSettings:get('UseVanillaFatigueFormula')
+local MaxFatigueStrMult = fatigueSettings:get('MaxFatigueStrMult')
+local MaxFatigueWilMult = fatigueSettings:get('MaxFatigueWilMult')
+local MaxFatigueAgiMult = fatigueSettings:get('MaxFatigueAgiMult')
+local MaxFatigueEndMult = fatigueSettings:get('MaxFatigueEndMult')
 -- Hit Chance
 local EnableHitChance = hitChanceSettings:get('EnableHitChance')
 local AgilityHitChancePct = hitChanceSettings:get('AgilityHitChancePct')
@@ -262,6 +267,23 @@ local function applyRangedAttackBonus(enable)
   hasRangedBonus = enable
 end
 
+local function calculateMaxFatigue()
+  local fatigueWil = willpower.modified * (MaxFatigueWilMult / 100)
+  local fatigueAgi = agility.modified * (MaxFatigueAgiMult / 100)
+  local fatigueEnd = endurance.modified * (MaxFatigueEndMult / 100)
+  local fatigueStr = strength.modified * (MaxFatigueStrMult / 100)
+  return math.floor(fatigueWil + fatigueAgi + fatigueEnd + fatigueStr + 0.5)
+end
+
+local function overrideNativeFatigue()
+  local expectedMaxFatigue = calculateMaxFatigue()
+  if fatigue.base == expectedMaxFatigue then return end
+
+  local normalizedFatigue = fatigue.current / fatigue.base
+  fatigue.base = expectedMaxFatigue
+  fatigue.current = normalizedFatigue * fatigue.base
+end
+
 local settingHandlers = {
   ["SettingsGlobal" .. modInfo.name] = {
     DebugEnable = function(newDebugEnable)
@@ -284,6 +306,19 @@ local settingHandlers = {
     end,
     FatigueEndMult = function(newFatigueEndMult)
       FatigueEndMult = newFatigueEndMult
+    end,
+    -- Call the thing that actually updates max fatigue on all of these
+    MaxFatigueStrMult = function(newMaxFatigueStrMult)
+      MaxFatigueStrMult = newMaxFatigueStrMult
+    end,
+    MaxFatigueWilMult = function(newMaxFatigueWilMult)
+      MaxFatigueWilMult = newMaxFatigueWilMult
+    end,
+    MaxFatigueAgiMult = function(newMaxFatigueAgiMult)
+      MaxFatigueAgiMult = newMaxFatigueAgiMult
+    end,
+    MaxFatigueEndMult = function(newMaxFatigueEndMult)
+      MaxFatigueEndMult = newMaxFatigueEndMult
     end,
   },
   ["SettingsGlobal" .. modInfo.name .. "HitChance"] = {
@@ -512,6 +547,11 @@ local function handleFatigueRegen(dt)
   fatigue.current = math.min(fatigue.base, fatigue.current + (fatigueThisFrame * dt))
 end
 
+local function manageFatigue(dt)
+  overrideNativeFatigue()
+  handleFatigueRegen(dt)
+end
+
 local function handleRangedAttackBonus()
   if not UseRangedBonus then return end
 
@@ -556,7 +596,7 @@ return {
   engineHandlers = {
     onFrame = function(dt)
       handleRangedAttackBonus()
-      handleFatigueRegen(dt)
+      manageFatigue(dt)
       applyPerFrameAttackBonus(dt)
     end,
     onSave = onSave,
