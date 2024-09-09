@@ -66,5 +66,10 @@ return {
   interface = {
     version = modInfo.version,
     Manager = ProtectedTable(FatigueManager, groupName),
-  }
+  },
+  engineHandlers = {
+    onUpdate = function(dt)
+      FatigueManager:manageFatigue(dt)
+    end,
+  },
 }
