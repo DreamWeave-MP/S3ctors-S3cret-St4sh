@@ -13,6 +13,11 @@ local I = require('openmw.interfaces')
 
 local modInfo = require("scripts.s3.CHIM2090.modInfo")
 
+print(string.format("%s loaded version %s. Thank you for playing %s! <3",
+                    modInfo.logPrefix,
+                    modInfo.version,
+                    modInfo.name))
+
 local rangedWeaponTypes = {
   [types.Weapon.TYPE.MarksmanBow] = true,
   [types.Weapon.TYPE.MarksmanCrossbow] = true,
@@ -37,10 +42,8 @@ local weaponTypesToSkills = {
 local ActiveEffects = self.type.activeEffects(self)
 
 local agility = self.type.stats.attributes.agility(self)
-local endurance = self.type.stats.attributes.endurance(self)
 local luck = self.type.stats.attributes.luck(self)
 local strength = self.type.stats.attributes.strength(self)
-local willpower = self.type.stats.attributes.willpower(self)
 
 local handToHand = self.type.stats.skills.handtohand(self)
 
@@ -61,7 +64,6 @@ local startRamping = false
 local startRampDown = false
 
 local globalSettings = storage.globalSection('SettingsGlobal' .. modInfo.name)
-local fatigueSettings = storage.globalSection('SettingsGlobal' .. modInfo.name .. 'Fatigue')
 local hitChanceSettings = storage.globalSection('SettingsGlobal' .. modInfo.name .. 'HitChance')
 local strWghtSettings = storage.globalSection('SettingsGlobal' .. modInfo.name .. 'StrWght')
 local critFumbleSettings = storage.globalSection('SettingsGlobal' .. modInfo.name .. 'CritFumble')
@@ -70,14 +72,6 @@ local critFumbleSettings = storage.globalSection('SettingsGlobal' .. modInfo.nam
 local DebugLog = globalSettings:get('DebugEnable')
 local showMessages = globalSettings:get('MessageEnable')
 local UseRangedBonus = globalSettings:get('UseRangedBonus')
--- Fatigue
-local FatiguePerSecond = fatigueSettings:get('FatiguePerSecond')
-local FatigueEndMult = fatigueSettings:get('FatigueEndMult')
-local UseVanillaFatigueFormula = fatigueSettings:get('UseVanillaFatigueFormula')
-local MaxFatigueStrMult = fatigueSettings:get('MaxFatigueStrMult')
-local MaxFatigueWilMult = fatigueSettings:get('MaxFatigueWilMult')
-local MaxFatigueAgiMult = fatigueSettings:get('MaxFatigueAgiMult')
-local MaxFatigueEndMult = fatigueSettings:get('MaxFatigueEndMult')
 -- Hit Chance
 local EnableHitChance = hitChanceSettings:get('EnableHitChance')
 local AgilityHitChancePct = hitChanceSettings:get('AgilityHitChancePct')
@@ -97,8 +91,7 @@ local FumbleDamagePercent = critFumbleSettings:get('FumbleDamagePercent')
 
 local function notifyPlayer(message)
     if self.type ~= types.Player or not showMessages then return end
-    print(message)
-    -- self:sendEvent("notify", { message = message })
+    I.chimInterfacePlayer.notifyPlayer(message)
 end
 
 local function debugLog(...)
@@ -267,27 +260,12 @@ local function applyRangedAttackBonus(enable)
   hasRangedBonus = enable
 end
 
-local function calculateMaxFatigue()
-  local fatigueWil = willpower.modified * (MaxFatigueWilMult / 100)
-  local fatigueAgi = agility.modified * (MaxFatigueAgiMult / 100)
-  local fatigueEnd = endurance.modified * (MaxFatigueEndMult / 100)
-  local fatigueStr = strength.modified * (MaxFatigueStrMult / 100)
-  return math.floor(fatigueWil + fatigueAgi + fatigueEnd + fatigueStr + 0.5)
-end
-
-local function overrideNativeFatigue()
-  local expectedMaxFatigue = calculateMaxFatigue()
-  if fatigue.base == expectedMaxFatigue then return end
-
-  local normalizedFatigue = fatigue.current / fatigue.base
-  fatigue.base = expectedMaxFatigue
-  fatigue.current = normalizedFatigue * fatigue.base
-end
-
 local settingHandlers = {
   ["SettingsGlobal" .. modInfo.name] = {
     DebugEnable = function(newDebugEnable)
+      if self.type ~= types.Player then return end
       DebugLog = newDebugEnable
+      I.chimInterfacePlayer.notifyPlayer(modInfo.logPrefix, 'Debug messages enabled: ', tostring(DebugLog))
     end,
     MessageEnable = function(newMessageEnable)
       showMessages = newMessageEnable
@@ -299,26 +277,26 @@ local settingHandlers = {
   },
   ["SettingsGlobal" .. modInfo.name .. 'Fatigue'] = {
     UseVanillaFatigueFormula = function(newUseVanillaFatigueFormula)
-      UseVanillaFatigueFormula = newUseVanillaFatigueFormula
+      I.s3ChimFatigue.Manager.UseVanillaFatigueFormula = newUseVanillaFatigueFormula
     end,
     FatiguePerSecond = function(newFatiguePerSecond)
-      FatiguePerSecond = newFatiguePerSecond
+      I.s3ChimFatigue.Manager.FatiguePerSecond = newFatiguePerSecond
     end,
     FatigueEndMult = function(newFatigueEndMult)
-      FatigueEndMult = newFatigueEndMult
+      I.s3ChimFatigue.Manager.FatigueEndMult = newFatigueEndMult
     end,
     -- Call the thing that actually updates max fatigue on all of these
     MaxFatigueStrMult = function(newMaxFatigueStrMult)
-      MaxFatigueStrMult = newMaxFatigueStrMult
+      I.s3ChimFatigue.Manager.MaxFatigueStrMult = newMaxFatigueStrMult
     end,
     MaxFatigueWilMult = function(newMaxFatigueWilMult)
-      MaxFatigueWilMult = newMaxFatigueWilMult
+      I.s3ChimFatigue.Manager.MaxFatigueWilMult = newMaxFatigueWilMult
     end,
     MaxFatigueAgiMult = function(newMaxFatigueAgiMult)
-      MaxFatigueAgiMult = newMaxFatigueAgiMult
+      I.s3ChimFatigue.Manager.MaxFatigueAgiMult = newMaxFatigueAgiMult
     end,
     MaxFatigueEndMult = function(newMaxFatigueEndMult)
-      MaxFatigueEndMult = newMaxFatigueEndMult
+      I.s3ChimFatigue.Manager.MaxFatigueEndMult = newMaxFatigueEndMult
     end,
   },
   ["SettingsGlobal" .. modInfo.name .. "HitChance"] = {
@@ -533,25 +511,6 @@ local function applyPerFrameAttackBonus(dt)
     end
 end
 
-local function handleFatigueRegen(dt)
-  if fatigue.current >= fatigue.base then return end
-
-  local fatigueThisFrame
-
-  if UseVanillaFatigueFormula then
-    fatigueThisFrame = FatiguePerSecond + (FatigueEndMult * endurance.modified)
-  else
-    fatigueThisFrame = FatiguePerSecond
-  end
-
-  fatigue.current = math.min(fatigue.base, fatigue.current + (fatigueThisFrame * dt))
-end
-
-local function manageFatigue(dt)
-  overrideNativeFatigue()
-  handleFatigueRegen(dt)
-end
-
 local function handleRangedAttackBonus()
   if not UseRangedBonus then return end
 
@@ -596,7 +555,7 @@ return {
   engineHandlers = {
     onFrame = function(dt)
       handleRangedAttackBonus()
-      manageFatigue(dt)
+      I.s3ChimFatigue.Manager:manageFatigue(dt)
       applyPerFrameAttackBonus(dt)
     end,
     onSave = onSave,
