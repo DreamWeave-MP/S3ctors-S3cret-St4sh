@@ -1,4 +1,5 @@
 PLAYER: scripts/s3/CHIM2090/actor.lua
 PLAYER: scripts/s3/CHIM2090/playerInterface.lua
 PLAYER, NPC: scripts/s3/CHIM2090/fatigueManager.lua
+PLAYER, NPC: scripts/s3/CHIM2090/hitChanceManager.lua
 GLOBAL: scripts/s3/CHIM2090/globalSettings.lua
