@@ -3,7 +3,6 @@
 -- Make plugin to disable vanilla fatigue regen
 -- Add climbing :)
 
-local animation = require('openmw.animation')
 local async = require('openmw.async')
 local core = require('openmw.core')
 local self = require('openmw.self')
@@ -18,65 +17,26 @@ print(string.format("%s loaded version %s. Thank you for playing %s! <3",
                     modInfo.version,
                     modInfo.name))
 
-local rangedWeaponTypes = {
-  [types.Weapon.TYPE.MarksmanBow] = true,
-  [types.Weapon.TYPE.MarksmanCrossbow] = true,
-  [types.Weapon.TYPE.MarksmanThrown] = true,
-}
-
-local weaponTypesToSkills = {
-  [types.Weapon.TYPE.ShortBladeOneHand] = self.type.stats.skills.shortblade(self),
-  [types.Weapon.TYPE.LongBladeOneHand] = self.type.stats.skills.longblade(self),
-  [types.Weapon.TYPE.LongBladeTwoHand] = self.type.stats.skills.longblade(self),
-  [types.Weapon.TYPE.BluntOneHand] = self.type.stats.skills.bluntweapon(self),
-  [types.Weapon.TYPE.BluntTwoClose] = self.type.stats.skills.bluntweapon(self),
-  [types.Weapon.TYPE.BluntTwoWide] = self.type.stats.skills.bluntweapon(self),
-  [types.Weapon.TYPE.SpearTwoWide] = self.type.stats.skills.spear(self),
-  [types.Weapon.TYPE.AxeOneHand] = self.type.stats.skills.axe(self),
-  [types.Weapon.TYPE.AxeTwoHand] = self.type.stats.skills.axe(self),
-  [types.Weapon.TYPE.MarksmanBow] = self.type.stats.skills.marksman(self),
-  [types.Weapon.TYPE.MarksmanCrossbow] = self.type.stats.skills.marksman(self),
-  [types.Weapon.TYPE.MarksmanThrown] = self.type.stats.skills.marksman(self),
-}
-
 local ActiveEffects = self.type.activeEffects(self)
 
-local agility = self.type.stats.attributes.agility(self)
 local luck = self.type.stats.attributes.luck(self)
 local strength = self.type.stats.attributes.strength(self)
 
-local handToHand = self.type.stats.skills.handtohand(self)
-
 local fatigue = self.type.stats.dynamic.fatigue(self)
 
--- Global State
-local currentAttackBonus = 0
 local currentStrengthMod = 0
 local currentWeightBonus = 0
-local currentDeltaTime = 0.
-local attackDuration = 0.
 
-local hasHitBuff = false
-local hasRangedBonus = false
 local hasStrengthBonus = false
 local hasWeightBonus = false
-local startRamping = false
-local startRampDown = false
 
 local globalSettings = storage.globalSection('SettingsGlobal' .. modInfo.name)
-local hitChanceSettings = storage.globalSection('SettingsGlobal' .. modInfo.name .. 'HitChance')
 local strWghtSettings = storage.globalSection('SettingsGlobal' .. modInfo.name .. 'StrWght')
 local critFumbleSettings = storage.globalSection('SettingsGlobal' .. modInfo.name .. 'CritFumble')
 
 -- Global
 local DebugLog = globalSettings:get('DebugEnable')
 local showMessages = globalSettings:get('MessageEnable')
-local UseRangedBonus = globalSettings:get('UseRangedBonus')
--- Hit Chance
-local EnableHitChance = hitChanceSettings:get('EnableHitChance')
-local AgilityHitChancePct = hitChanceSettings:get('AgilityHitChancePct')
-local LuckHitChancePct = hitChanceSettings:get('LuckHitChancePct')
-local MaxAttackBonus = hitChanceSettings:get('PlayerMaxAttackBonus')
 -- Strength
 local EnableStrWght = strWghtSettings:get('EnableStrWght')
 local MaxStrengthMultiplier = strWghtSettings:get('MaxStrengthMultiplier')
@@ -97,36 +57,6 @@ end
 local function debugLog(...)
   if not DebugLog then return end
   print(modInfo.logPrefix .. " " .. table.concat({...}, " "))
-end
-
-local function isUsingRanged()
-  local weapon = self.type.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedRight)
-  if not weapon then return false end
-  return rangedWeaponTypes[types.Weapon.records[weapon.recordId].type] or false
-end
-
-local function getNativeHitChance()
-    local normalizedFatigue = fatigue.current / fatigue.base
-    local fatigueTerm = core.getGMST('fFatigueBase') - core.getGMST('fFatigueMult') * (1 - normalizedFatigue)
-
-    local weapon = self.type.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedRight)
-    local weaponType = types.Weapon.records[weapon.recordId].type
-    local skill
-    if not weapon then
-        skill = handToHand.modified
-    else
-        skill = weaponTypesToSkills[weaponType].modified
-    end
-
-    local agilityInfluence = AgilityHitChancePct * agility.modified
-    local luckInfluence = LuckHitChancePct * luck.modified
-
-    local attackTerm = (skill + agilityInfluence +  luckInfluence) * fatigueTerm
-    -- normally we wouldn't subtract anything but this script screws with the native hit chance
-    local attackBonus = ActiveEffects:getEffect("fortifyattack").magnitude - currentAttackBonus
-    local blindMagnitude = ActiveEffects:getEffect("blind").magnitude
-
-    return (attackTerm + (attackBonus - blindMagnitude)) / 100
 end
 
 local function getStrengthModifier(hitChance)
@@ -154,29 +84,6 @@ local function setWeightBonus(enable)
 
     ActiveEffects:modify(currentWeightBonus, targetEffect)
     hasWeightBonus = enable
-end
-
-local function toggleRangedHitBonus(enable)
-  debugLog("Toggling ranged hit chance bonus:",
-    'Enable:', tostring(enable),
-    'CurrentAttackBonus:', currentAttackBonus,
-    'MaxAttackBonus:', MaxAttackBonus,
-    "EnableHitChance:", tostring(EnableHitChance))
-
-    if hasHitBuff then
-        ActiveEffects:modify(-currentAttackBonus, "fortifyattack")
-        currentAttackBonus = 0
-        hasHitBuff = false
-        startRamping = false
-        startRampDown = false
-    end
-
-    if not enable or not EnableHitChance or not UseRangedBonus then return end
-
-    currentAttackBonus = MaxAttackBonus
-
-    ActiveEffects:modify(currentAttackBonus, "fortifyattack")
-    hasHitBuff = true
 end
 
 local function setDamageBonus()
@@ -248,31 +155,19 @@ local function toggleStrengthBonus(enable, melee)
     setWeightBonus(true)
 end
 
-local function applyRangedAttackBonus(enable)
-  if hasHitBuff ~= enable then
-    toggleRangedHitBonus(enable)
-  end
-
-  if hasStrengthBonus ~= enable then
-    toggleStrengthBonus(enable, false)
-  end
-
-  hasRangedBonus = enable
-end
-
 local settingHandlers = {
   ["SettingsGlobal" .. modInfo.name] = {
     DebugEnable = function(newDebugEnable)
       if self.type ~= types.Player then return end
       DebugLog = newDebugEnable
+      I.s3ChimChance.Manager.toggleDebug(DebugLog)
       I.chimInterfacePlayer.notifyPlayer(modInfo.logPrefix, 'Debug messages enabled: ', tostring(DebugLog))
     end,
     MessageEnable = function(newMessageEnable)
       showMessages = newMessageEnable
     end,
     UseRangedBonus = function(newUseRangedBonus)
-      UseRangedBonus = newUseRangedBonus
-      applyRangedAttackBonus(UseRangedBonus and isUsingRanged())
+      I.s3ChimChance.Manager:toggleRangedBonus(newUseRangedBonus)
     end,
   },
   ["SettingsGlobal" .. modInfo.name .. 'Fatigue'] = {
@@ -301,55 +196,36 @@ local settingHandlers = {
   },
   ["SettingsGlobal" .. modInfo.name .. "HitChance"] = {
     EnableHitChance = function(newEnableHitChance)
-      if not newEnableHitChance then
-        debugLog('Disabling hit chance bonus from setting:',
-          'hasHitBuff:', tostring(hasHitBuff),
-          'hasRangedBonus:', tostring(hasRangedBonus))
-        toggleRangedHitBonus(false)
-      end
-
-      EnableHitChance = newEnableHitChance
-
-      if isUsingRanged() then
-        debugLog('Enabling hit chance bonus from setting:',
-          'hasHitBuff:', tostring(hasHitBuff),
-          'hasRangedBonus:', tostring(hasRangedBonus),
-          'UseRangedBonus:', tostring(UseRangedBonus))
-        toggleRangedHitBonus(true)
-      end
+      I.s3ChimChance.Manager:toggleHitChance(newEnableHitChance)
     end,
     PlayerMaxAttackBonus = function(newMaxAttackBonus)
-      local oldAttackBonus = currentAttackBonus
-      MaxAttackBonus = newMaxAttackBonus
-      if hasHitBuff then
-        ActiveEffects:modify(-currentAttackBonus, "fortifyattack")
-        currentAttackBonus = math.min(MaxAttackBonus, oldAttackBonus)
-        ActiveEffects:modify(currentAttackBonus, "fortifyattack")
-      end
+      I.s3ChimChance.Manager:updateMaxAttackBonus(newMaxAttackBonus)
     end,
     AgilityHitChancePct = function(newAgilityHitChancePct)
-      AgilityHitChancePct = newAgilityHitChancePct
+      I.s3ChimChance.Manager.AgilityHitChancePct = newAgilityHitChancePct
     end,
     LuckHitChancePct = function(newLuckHitChancePct)
-      LuckHitChancePct = newLuckHitChancePct
+      I.s3ChimChance.Manager.LuckHitChancePct = newLuckHitChancePct
     end,
   },
   ["SettingsGlobal" .. modInfo.name .. "StrWght"] = {
     EnableStrWght = function(newEnableStrWght)
+      local hitManager = I.s3ChimChance.Manager
+
       if not newEnableStrWght then
         debugLog('Disabling strength bonus from setting:',
           'hasStrWghtBuff:', tostring(hasStrengthBonus),
-          'hasRangedBonus:', tostring(hasRangedBonus))
-        toggleStrengthBonus(false)
+          'hasRangedBonus:', tostring(hitManager.hasRangedBonus))
+        -- toggleStrengthBonus(false)
       end
 
       EnableStrWght = newEnableStrWght
 
-      if isUsingRanged() and UseRangedBonus then
+      if hitManager.isUsingRanged() and hitManager.UseRangedBonus then
         debugLog('Enabling strength bonus from setting:',
           'hasStrWghtBuff:', tostring(hasStrengthBonus),
-          'hasRangedBonus:', tostring(hasRangedBonus))
-        toggleStrengthBonus(true)
+          'hasRangedBonus:', tostring(hitManager.hasRangedBonus))
+        -- toggleStrengthBonus(true)
       end
     end,
     MaxStrengthMultiplier = function(newMaxStrengthMultiplier)
@@ -414,149 +290,24 @@ I.Settings.registerPage {
 	description = "Manages actor fatigue, carry weight, hit chance, and strength in combat."
 }
 
-local attackStartKeys = {
-  ["weapononehand:thrust start"] = "weapononehand: thrust ",
-  ["weapononehand:chop start"] = "weapononehand: chop ",
-  ["weapononehand:slash start"] = "weapononehand: slash ",
-  ["weapontwowide:thrust start"] = "weapontwowide: thrust ",
-  ["weapontwowide:chop start"] = "weapontwowide: chop ",
-  ["weapontwowide:slash start"] = "weapontwowide: slash ",
-  ["weapontwohand:thrust start"] = "weapontwohand: thrust ",
-  ["weapontwohand:chop start"] =  "weapontwohand: chop ",
-  ["weapontwohand:slash start"] = "weapontwohand: slash ",
-  ["handtohand:thrust start"] = "handtohand: thrust ",
-  ["handtohand:chop start"] =  "handtohand: chop ",
-  ["handtohand:slash start"] = "handtohand: slash ",
-}
-
-local minAttackKeys = {
-  ["thrust min attack"] = true,
-  ["chop min attack"] = true,
-  ["slash min attack"] = true,
-}
-
-local maxAttackKeys = {
-  ["chop small follow stop"] = true,
-  ["thrust small follow stop"] = true,
-  ["slash small follow stop"] = true,
-}
-
-local function handleAttackBonus(groupname, key)
-  if groupname == "crossbow" or groupname == "bowandarrow" or groupname == "throwweapon" then
-    return
-  end
-
-  local attackStartKey = attackStartKeys[groupname .. ":" .. key]
-
-  if attackStartKey then
-    local minAttackTime = animation.getTextKeyTime(self, attackStartKey .. "min attack")
-
-    local maxAttackTime = animation.getTextKeyTime(self, attackStartKey .. "max attack")
-
-    attackDuration = maxAttackTime - minAttackTime
-
-    toggleStrengthBonus(true, true)
-
-  elseif minAttackKeys[key] and not hasHitBuff and EnableHitChance then
-    hasHitBuff = true
-    startRamping = true
-    currentAttackBonus = 0
-    currentDeltaTime = 0.
-
-  elseif maxAttackKeys[key] then
-
-    toggleStrengthBonus(false)
-
-    if hasHitBuff then
-      if not startRamping then startRamping = true end
-      currentDeltaTime = 0.
-      startRampDown = true
-    end
-  end
-end
-
-I.AnimationController.addTextKeyHandler('', handleAttackBonus)
-
-local function applyPerFrameAttackBonus(dt)
-
-    if not startRamping then return end
-
-    currentDeltaTime = currentDeltaTime + dt
-    local rateToMax = math.min(currentDeltaTime / attackDuration, 1)
-
-    local deltaThisFrame
-
-    if startRampDown then
-        deltaThisFrame = currentAttackBonus * rateToMax
-    else
-        deltaThisFrame = (MaxAttackBonus * rateToMax) - currentAttackBonus
-    end
-
-    deltaThisFrame = math.floor(deltaThisFrame + 0.5)
-
-    if deltaThisFrame <= 0 then return end
-
-    if startRampDown then deltaThisFrame = -deltaThisFrame end
-
-    ActiveEffects:modify(deltaThisFrame, "fortifyattack")
-    currentAttackBonus = currentAttackBonus + deltaThisFrame
-
-    debugLog("Current attack bonus:", currentAttackBonus, "magnitude. Delta this frame:", deltaThisFrame)
-
-    if currentAttackBonus == 0 and startRampDown then
-        currentDeltaTime = 0
-        startRampDown = false
-        startRamping = false
-        hasHitBuff = false
-    end
-end
-
-local function handleRangedAttackBonus()
-  if not UseRangedBonus then return end
-
-  if isUsingRanged() and not hasRangedBonus then
-    applyRangedAttackBonus(true)
-  elseif not isUsingRanged() and hasRangedBonus then
-    applyRangedAttackBonus(false)
-  end
-end
-
 local function onSave()
   return {
-    hasHitBuff = hasHitBuff,
-    hasRangedBonus = hasRangedBonus,
     hasStrengthBonus = hasStrengthBonus,
     hasWeightBonus = hasWeightBonus,
-    startRampDown = startRampDown,
-    startRamping = startRamping,
-    attackDuration = attackDuration,
-    currentAttackBonus = currentAttackBonus,
-    currentDeltaTime = currentDeltaTime,
     currentStrengthMod = currentStrengthMod,
     currentWeightBonus = currentWeightBonus,
   }
 end
 
 local function onLoad(state)
-  hasHitBuff = state.hasHitBuff or false
-  hasRangedBonus = state.hasRangedBonus or false
   hasStrengthBonus = state.hasStrengthBonus or false
   hasWeightBonus = state.hasWeightBonus or false
-  startRampDown = state.startRampDown or false
-  startRamping = state.startRamping or false
-  attackDuration = state.attackDuration or 0
-  currentAttackBonus = state.currentAttackBonus or 0
-  currentDeltaTime = state.currentDeltaTime or 0
   currentStrengthMod = state.currentStrengthMod or 0
   currentWeightBonus = state.currentWeightBonus or 0
 end
 
 return {
   engineHandlers = {
-    onFrame = function(dt)
-      handleRangedAttackBonus()
-      applyPerFrameAttackBonus(dt)
-    end,
     onSave = onSave,
     onLoad = onLoad,
   }
