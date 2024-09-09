@@ -1,4 +1,5 @@
 local animation = require('openmw.animation')
+local async = require('openmw.async')
 local core = require('openmw.core')
 local gameSelf = require('openmw.self')
 local storage = require('openmw.storage')
@@ -7,12 +8,9 @@ local types = require('openmw.types')
 local I = require('openmw.interfaces')
 
 local modInfo = require('scripts.s3.CHIM2090.modInfo')
-local ProtectedTable = require('scripts.s3.CHIM2090.protectedTable')
+local Manager = require('scripts.s3.CHIM2090.protectedTable')
 
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'HitChance'
-
-local globalSettings = storage.globalSection('SettingsGlobal' .. modInfo.name)
-local hitChanceSettings = storage.globalSection(groupName)
 
 local ActiveEffects = gameSelf.type.activeEffects(gameSelf)
 
@@ -70,14 +68,7 @@ local rangedWeaponTypes = {
   [types.Weapon.TYPE.MarksmanThrown] = true,
 }
 
-local HitManager = {
-  EnableHitChance = hitChanceSettings:get('EnableHitChance'),
-  AgilityHitChancePct = hitChanceSettings:get('AgilityHitChancePct'),
-  LuckHitChancePct = hitChanceSettings:get('LuckHitChancePct'),
-  PlayerMaxAttackBonus = hitChanceSettings:get('PlayerMaxAttackBonus'),
-  UseRangedBonus = globalSettings:get('UseRangedBonus'),
-  DebugLog = globalSettings:get('DebugEnable')
-}
+local HitManager = Manager(groupName)
 
 local attackDuration = 0.
 local currentAttackBonus = 0
@@ -92,15 +83,6 @@ function HitManager.isUsingRanged()
   local weapon = gameSelf.type.getEquipment(gameSelf, gameSelf.type.EQUIPMENT_SLOT.CarriedRight)
   if not weapon then return false end
   return rangedWeaponTypes[types.Weapon.records[weapon.recordId].type] or false
-end
-
-function HitManager.toggleDebug(newDebugEnable)
-  rawset(HitManager, 'DebugLog', newDebugEnable)
-end
-
-function HitManager:debugLog(...)
-  if not self.DebugLog then return end
-  print(modInfo.logPrefix, 'HitManager:', table.concat({...}, " "))
 end
 
 function HitManager:getNativeHitChance()
@@ -187,7 +169,7 @@ function HitManager:applyPerFrameAttackBonus(dt)
     ActiveEffects:modify(deltaThisFrame, "fortifyattack")
     currentAttackBonus = currentAttackBonus + deltaThisFrame
 
-    self:debugLog("Current attack bonus:", currentAttackBonus, "magnitude. Delta this frame:", deltaThisFrame)
+    self.debugLog("Current attack bonus:", currentAttackBonus, "magnitude. Delta this frame:", deltaThisFrame)
 
     if currentAttackBonus == 0 and startRampDown then
         currentDeltaTime = 0
@@ -197,18 +179,18 @@ function HitManager:applyPerFrameAttackBonus(dt)
     end
 end
 
-function HitManager:updateMaxAttackBonus(newMaxAttackBonus)
+function HitManager:updateMaxAttackBonus()
+  if not hasHitBuff then return end
+
   local oldAttackBonus = currentAttackBonus
-  self.PlayerMaxAttackBonus = newMaxAttackBonus
-  if hasHitBuff then
-    ActiveEffects:modify(-currentAttackBonus, "fortifyattack")
-    currentAttackBonus = math.min(self.PlayerMaxAttackBonus, oldAttackBonus)
-    ActiveEffects:modify(currentAttackBonus, "fortifyattack")
-  end
+  ActiveEffects:modify(-currentAttackBonus, "fortifyattack")
+
+  currentAttackBonus = math.min(self.PlayerMaxAttackBonus, oldAttackBonus)
+  ActiveEffects:modify(currentAttackBonus, "fortifyattack")
 end
 
 function HitManager:toggleRangedHitBonus(enable)
-  self:debugLog("Toggling ranged hit chance bonus:",
+  self.debugLog("Toggling ranged hit chance bonus:",
     'Enable:', tostring(enable),
     'CurrentAttackBonus:', currentAttackBonus,
     'MaxAttackBonus:', self.PlayerMaxAttackBonus,
@@ -243,45 +225,44 @@ function HitManager:applyRangedAttackBonus(enable)
   hasRangedBonus = enable
 end
 
-function HitManager:toggleHitChance(newEnableHitChance)
-  if not newEnableHitChance then
-    self:debugLog('Disabling hit chance bonus from setting:',
-                  'hasHitBuff:', tostring(hasHitBuff),
-             'hasRangedBonus:', tostring(hasRangedBonus))
-    self:toggleRangedHitBonus(false)
-  end
-
-  I.s3ChimChance.Manager.EnableHitChance = newEnableHitChance
-
-  if self.isUsingRanged() then
-    self:debugLog('Enabling hit chance bonus from setting:',
-                  'hasHitBuff:', tostring(hasHitBuff),
-                  'hasRangedBonus:', tostring(self.hasRangedBonus),
-                  'UseRangedBonus:', tostring(self.UseRangedBonus))
-    self:toggleRangedHitBonus(true)
-  end
-end
-
 function HitManager:handleRangedAttackBonus()
   if not self.UseRangedBonus then return end
 
-  if self.isUsingRanged() and not hasRangedBonus then
-    self:applyRangedAttackBonus(true)
-  elseif not self.isUsingRanged() and hasRangedBonus then
-    self:applyRangedAttackBonus(false)
-  end
+  local currentRangedState = self.isUsingRanged()
+  if currentRangedState == lastRangedState then return end
+
+  self:applyRangedAttackBonus(currentRangedState)
+  lastRangedState = currentRangedState
 end
 
-function HitManager:toggleRangedBonus(newUseRangedBonus)
-  rawset(HitManager, 'UseRangedBonus', newUseRangedBonus)
-  self:applyRangedAttackBonus(self.UseRangedBonus and self.isUsingRanged())
+function HitManager:toggleRangedBonus()
+    self:applyRangedAttackBonus(self.UseRangedBonus and self.isUsingRanged())
 end
+
+local updateHitMgr = async:callback(function(section, key)
+  if key == nil then
+    HitManager:toggleRangedBonus()
+    HitManager:updateMaxAttackBonus()
+  elseif key == 'UseRangedBonus' or key == 'EnableHitChance' then
+    HitManager:toggleRangedBonus()
+  elseif key == 'PlayerMaxAttackBonus' then
+    HitManager:updateMaxAttackBonus()
+  end
+
+  if key then
+    HitManager.debugLog('Updated', key, 'in', section, 'to', tostring(HitManager[key]))
+  else
+    HitManager.debugLog('Updated HitManager:', HitManager)
+  end
+end)
+
+storage.globalSection(groupName):subscribe(updateHitMgr)
 
 return {
   interfaceName = "s3ChimChance",
   interface = {
     version = modInfo.version,
-    Manager = ProtectedTable(HitManager, groupName),
+    Manager = HitManager,
   },
   engineHandlers = {
     onUpdate = function(dt)
