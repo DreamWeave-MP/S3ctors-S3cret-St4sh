@@ -555,7 +555,6 @@ return {
   engineHandlers = {
     onFrame = function(dt)
       handleRangedAttackBonus()
-      I.s3ChimFatigue.Manager:manageFatigue(dt)
       applyPerFrameAttackBonus(dt)
     end,
     onSave = onSave,
