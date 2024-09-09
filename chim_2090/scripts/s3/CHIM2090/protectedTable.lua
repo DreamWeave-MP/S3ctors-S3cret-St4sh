@@ -8,11 +8,13 @@ return function(inputTable, inputGroupName)
     __index = inputTable,
     __newindex = function(_, key, value)
       if type(value) ~= 'function' then
-        if value ~= storage.globalSection(inputGroupName):get(key) then
+        local settingValue = storage.globalSection(inputGroupName):get(key)
+        if value ~= settingValue or inputTable[key] == nil then
           error(
             string.format(
               [[%s Unauthorized table access when updating '%s' to '%s'.
-This table must be updated through its associated storage group: '%s']],
+This table must be updated through its associated storage group: '%s'.
+New values may not be added.]],
               modInfo.logPrefix,
               tostring(key),
               tostring(value),
