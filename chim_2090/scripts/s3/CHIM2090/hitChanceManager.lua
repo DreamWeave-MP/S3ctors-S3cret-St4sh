@@ -8,9 +8,9 @@ local types = require('openmw.types')
 local I = require('openmw.interfaces')
 
 local modInfo = require('scripts.s3.CHIM2090.modInfo')
-local Manager = require('scripts.s3.CHIM2090.protectedTable')
 
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'HitChance'
+local HitManager = require('scripts.s3.CHIM2090.protectedTable')(groupName)
 
 local ActiveEffects = gameSelf.type.activeEffects(gameSelf)
 
@@ -68,8 +68,6 @@ local rangedWeaponTypes = {
   [types.Weapon.TYPE.MarksmanThrown] = true,
 }
 
-local HitManager = Manager(groupName)
-
 local attackDuration = 0.
 local currentAttackBonus = 0
 local currentDeltaTime = 0.
@@ -123,7 +121,7 @@ function HitManager:handleAttackBonus(groupname, key)
 
     attackDuration = maxAttackTime - minAttackTime
 
-    -- toggleStrengthBonus(true, true)
+    I.s3ChimDamage.Manager:toggleStrengthBonus(true, true)
 
   elseif keys.minAttack[key] and not hasHitBuff and self.EnableHitChance then
     hasHitBuff = true
@@ -133,7 +131,7 @@ function HitManager:handleAttackBonus(groupname, key)
 
   elseif keys.maxAttack[key] then
 
-    -- toggleStrengthBonus(false)
+    I.s3ChimDamage.Manager:toggleStrengthBonus(false)
 
     if hasHitBuff then
       if not startRamping then startRamping = true end
@@ -219,7 +217,7 @@ function HitManager:applyRangedAttackBonus(enable)
   end
 
   -- if hasStrengthBonus ~= enable then
-  --   toggleStrengthBonus(enable, false)
+    I.s3ChimDamage.Manager:toggleStrengthBonus(enable, false)
   -- end
 
   hasRangedBonus = enable
