@@ -19,7 +19,7 @@ local maxFatigueWilMultDesc = "Percentage of willpower factored into max fatigue
 local maxFatigueAgiMultDesc = "Percentage of agility factored into max fatigue. Vanilla is 100."
 local maxFatigueEndMultDesc = "Percentage of endurance factored into max fatigue. Vanilla is 100."
 -- Critical hit settings description(s)
-local critFumbleEnableDesc = "Enable the critical hit and fumble module. This module adds a chance to deal extra damage on a critical hit, and less on a fumble."
+local critFumbleEnableDesc = "Enable the critical hit and fumble module. This module adds a chance to deal extra damage on a critical hit, and less on a fumble. Requires the strength module to work."
 local critChancePercentDesc = "Base chance of a critical hit"
 local critLuckPercentDesc = "Influence of luck on critical hit chance and fumble as a percentage"
 local critMultDesc = "Critical hit damage multiplier. Only applies in melee combat."
@@ -51,7 +51,6 @@ I.Settings.registerGroup {
 	settings = {
       setting("DebugEnable", "checkbox", {}, "Show Debug Messages", '', false),
       setting("MessageEnable", "checkbox", {}, "Show Combat Messages", combatMessageDescription, false),
-      setting("UseRangedBonus", "checkbox", {}, "Apply to ranged weapons", useRangedBonusDesc, true),
 	}
 }
 
@@ -88,6 +87,7 @@ I.Settings.registerGroup {
 	permanentStorage = false,
 	settings = {
       setting("EnableHitChance", "checkbox", {}, "Enable Hit Chance Module", hitChanceEnableDescription, true),
+      setting("UseRangedBonus", "checkbox", {}, "Apply to ranged weapons", useRangedBonusDesc, true),
       setting('PlayerMaxAttackBonus', 'number', {integer = true, min = 0, max = 500 },
               "Player Maximum Attack Bonus", maxAttackBonusDesc, 100),
       setting('AgilityHitChancePct', 'number', {integer = false, min = 0.001, max = 1.0 },
@@ -98,27 +98,16 @@ I.Settings.registerGroup {
 }
 
 I.Settings.registerGroup {
-	key = "SettingsGlobal" .. modInfo.name .. "StrWght",
+	key = "SettingsGlobal" .. modInfo.name .. "Damage",
 	page = modInfo.name,
 	order = 3,
 	l10n = modInfo.l10nName,
-	name = "Strength and Weight",
+	name = "Damage, Crit, and Fumble",
 	permanentStorage = false,
 	settings = {
       setting("EnableStrWght", "checkbox", {}, "Enable Strength and Weight Module", strWghtEnableDesc, true),
       setting('MaxStrengthMultiplier', 'number', {integer = false, min = 0.01, max = 10. },
               "Max Strength Multiplier", maxStrMultDesc, 1.5),
-	}
-}
-
-I.Settings.registerGroup {
-	key = "SettingsGlobal" .. modInfo.name .. "CritFumble",
-	page = modInfo.name,
-	order = 4,
-	l10n = modInfo.l10nName,
-	name = "Critical and Fumble",
-	permanentStorage = false,
-	settings = {
       setting("EnableCritFumble", "checkbox", {}, "Enable Crit and Fumble Module", critFumbleEnableDesc, true),
       setting('CritChancePercent', 'number', {integer = true, min = 0, max = 100 },
               "Base Critical Hit Chance", critChancePercentDesc, 4),
