@@ -33,7 +33,7 @@ return function(inputGroupName)
   end
 
   function proxy.notifyPlayer(...)
-    if gameSelf.type ~= types.Player then return end
+    if gameSelf.type ~= types.Player or not proxy.MessageEnable then return end
     require('openmw.ui').showMessage(modInfo.logPrefix .. ' ' .. table.concat({...}, ' '))
   end
 
