@@ -1,5 +1,4 @@
 local gameSelf = require('openmw.self')
-local storage = require('openmw.storage')
 
 local agility = gameSelf.type.stats.attributes.agility(gameSelf)
 local endurance = gameSelf.type.stats.attributes.endurance(gameSelf)
@@ -8,20 +7,9 @@ local strength = gameSelf.type.stats.attributes.strength(gameSelf)
 local willpower = gameSelf.type.stats.attributes.willpower(gameSelf)
 
 local modInfo = require('scripts.s3.CHIM2090.modInfo')
-local ProtectedTable = require('scripts.s3.CHIM2090.protectedTable')
+local Manager = require('scripts.s3.CHIM2090.protectedTable')
 
-local groupName = 'SettingsGlobal' .. modInfo.name .. 'Fatigue'
-local fatigueSettings = storage.globalSection(groupName)
-
-local FatigueManager = {
-  FatiguePerSecond = fatigueSettings:get('FatiguePerSecond'),
-  FatigueEndMult = fatigueSettings:get('FatigueEndMult'),
-  UseVanillaFatigueFormula = fatigueSettings:get('UseVanillaFatigueFormula'),
-  MaxFatigueStrMult = fatigueSettings:get('MaxFatigueStrMult'),
-  MaxFatigueWilMult = fatigueSettings:get('MaxFatigueWilMult'),
-  MaxFatigueAgiMult = fatigueSettings:get('MaxFatigueAgiMult'),
-  MaxFatigueEndMult = fatigueSettings:get('MaxFatigueEndMult'),
-}
+local FatigueManager = Manager('SettingsGlobal' .. modInfo.name .. 'Fatigue')
 
 function FatigueManager:calculateMaxFatigue()
   local fatigueWil = willpower.modified * (self.MaxFatigueWilMult / 100)
@@ -35,9 +23,11 @@ function FatigueManager:overrideNativeFatigue()
   local expectedMaxFatigue = self:calculateMaxFatigue()
   if fatigue.base == expectedMaxFatigue then return end
 
+  local oldFatigue = fatigue.base
   local normalizedFatigue = fatigue.current / fatigue.base
   fatigue.base = expectedMaxFatigue
   fatigue.current = normalizedFatigue * fatigue.base
+  self.debugLog('FatigueMgr: Fatigue updated from', oldFatigue, 'to', fatigue.base)
 end
 
 function FatigueManager:handleFatigueRegen(dt)
@@ -65,7 +55,7 @@ return {
   interfaceName = 's3ChimFatigue',
   interface = {
     version = modInfo.version,
-    Manager = ProtectedTable(FatigueManager, groupName),
+    Manager = FatigueManager,
   },
   engineHandlers = {
     onUpdate = function(dt)

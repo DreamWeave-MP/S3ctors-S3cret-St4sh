@@ -3,11 +3,11 @@
 -- Make plugin to disable vanilla fatigue regen
 -- Add climbing :)
 
-local async = require('openmw.async')
+-- local async = require('openmw.async')
 local core = require('openmw.core')
 local self = require('openmw.self')
 local storage = require('openmw.storage')
-local types = require('openmw.types')
+-- local types = require('openmw.types')
 local I = require('openmw.interfaces')
 
 local modInfo = require("scripts.s3.CHIM2090.modInfo")
@@ -36,7 +36,6 @@ local critFumbleSettings = storage.globalSection('SettingsGlobal' .. modInfo.nam
 
 -- Global
 local DebugLog = globalSettings:get('DebugEnable')
-local showMessages = globalSettings:get('MessageEnable')
 -- Strength
 local EnableStrWght = strWghtSettings:get('EnableStrWght')
 local MaxStrengthMultiplier = strWghtSettings:get('MaxStrengthMultiplier')
@@ -48,16 +47,6 @@ local CritDamageMultiplier = critFumbleSettings:get('CritDamageMultiplier')
 local FumbleBaseChance = critFumbleSettings:get('FumbleBaseChance')
 local FumbleChanceScale = critFumbleSettings:get('FumbleChanceScale')
 local FumbleDamagePercent = critFumbleSettings:get('FumbleDamagePercent')
-
-local function notifyPlayer(message)
-    if self.type ~= types.Player or not showMessages then return end
-    I.chimInterfacePlayer.notifyPlayer(message)
-end
-
-local function debugLog(...)
-  if not DebugLog then return end
-  print(modInfo.logPrefix .. " " .. table.concat({...}, " "))
-end
 
 local function getStrengthModifier(hitChance)
   local localHitChance = hitChance or math.min(MaxStrengthMultiplier, getNativeHitChance())
@@ -103,10 +92,10 @@ local function setDamageBonus()
 
   if EnableCritFumble then
     if roll < critChance then
-      notifyPlayer("Critical Hit!")
+      -- notifyPlayer("Critical Hit!")
       hitChance = hitChance * CritDamageMultiplier
     elseif roll < fumbleChance then
-      notifyPlayer("Fumble!")
+      -- notifyPlayer("Fumble!")
       hitChance = (hitChance / 100) * FumbleDamagePercent
     end
   end
@@ -156,58 +145,6 @@ local function toggleStrengthBonus(enable, melee)
 end
 
 local settingHandlers = {
-  ["SettingsGlobal" .. modInfo.name] = {
-    DebugEnable = function(newDebugEnable)
-      if self.type ~= types.Player then return end
-      DebugLog = newDebugEnable
-      I.s3ChimChance.Manager.toggleDebug(DebugLog)
-      I.chimInterfacePlayer.notifyPlayer(modInfo.logPrefix, 'Debug messages enabled: ', tostring(DebugLog))
-    end,
-    MessageEnable = function(newMessageEnable)
-      showMessages = newMessageEnable
-    end,
-    UseRangedBonus = function(newUseRangedBonus)
-      I.s3ChimChance.Manager:toggleRangedBonus(newUseRangedBonus)
-    end,
-  },
-  ["SettingsGlobal" .. modInfo.name .. 'Fatigue'] = {
-    UseVanillaFatigueFormula = function(newUseVanillaFatigueFormula)
-      I.s3ChimFatigue.Manager.UseVanillaFatigueFormula = newUseVanillaFatigueFormula
-    end,
-    FatiguePerSecond = function(newFatiguePerSecond)
-      I.s3ChimFatigue.Manager.FatiguePerSecond = newFatiguePerSecond
-    end,
-    FatigueEndMult = function(newFatigueEndMult)
-      I.s3ChimFatigue.Manager.FatigueEndMult = newFatigueEndMult
-    end,
-    -- Call the thing that actually updates max fatigue on all of these
-    MaxFatigueStrMult = function(newMaxFatigueStrMult)
-      I.s3ChimFatigue.Manager.MaxFatigueStrMult = newMaxFatigueStrMult
-    end,
-    MaxFatigueWilMult = function(newMaxFatigueWilMult)
-      I.s3ChimFatigue.Manager.MaxFatigueWilMult = newMaxFatigueWilMult
-    end,
-    MaxFatigueAgiMult = function(newMaxFatigueAgiMult)
-      I.s3ChimFatigue.Manager.MaxFatigueAgiMult = newMaxFatigueAgiMult
-    end,
-    MaxFatigueEndMult = function(newMaxFatigueEndMult)
-      I.s3ChimFatigue.Manager.MaxFatigueEndMult = newMaxFatigueEndMult
-    end,
-  },
-  ["SettingsGlobal" .. modInfo.name .. "HitChance"] = {
-    EnableHitChance = function(newEnableHitChance)
-      I.s3ChimChance.Manager:toggleHitChance(newEnableHitChance)
-    end,
-    PlayerMaxAttackBonus = function(newMaxAttackBonus)
-      I.s3ChimChance.Manager:updateMaxAttackBonus(newMaxAttackBonus)
-    end,
-    AgilityHitChancePct = function(newAgilityHitChancePct)
-      I.s3ChimChance.Manager.AgilityHitChancePct = newAgilityHitChancePct
-    end,
-    LuckHitChancePct = function(newLuckHitChancePct)
-      I.s3ChimChance.Manager.LuckHitChancePct = newLuckHitChancePct
-    end,
-  },
   ["SettingsGlobal" .. modInfo.name .. "StrWght"] = {
     EnableStrWght = function(newEnableStrWght)
       local hitManager = I.s3ChimChance.Manager
@@ -228,60 +165,8 @@ local settingHandlers = {
         -- toggleStrengthBonus(true)
       end
     end,
-    MaxStrengthMultiplier = function(newMaxStrengthMultiplier)
-      MaxStrengthMultiplier = newMaxStrengthMultiplier
-    end,
-  },
-  ["SettingsGlobal" .. modInfo.name .. "CritFumble"] = {
-    EnableCritFumble = function(newEnableCritFumble)
-      EnableCritFumble = newEnableCritFumble
-    end,
-    CritChancePercent = function(newCritChancePercent)
-      CritChancePercent = newCritChancePercent
-    end,
-    CritLuckPercent = function(newCritLuckPercent)
-      CritLuckPercent = newCritLuckPercent
-    end,
-    CritDamageMultiplier = function(newCritDamageMultiplier)
-      CritDamageMultiplier = newCritDamageMultiplier
-    end,
-    FumbleBaseChance = function(newFumbleBaseChance)
-      FumbleBaseChance = newFumbleBaseChance
-    end,
-    FumbleChanceScale = function(newFumbleChanceScale)
-      FumbleChanceScale = newFumbleChanceScale
-    end,
-    FumbleDamagePercent = function(newFumbleDamagePercent)
-      FumbleDamagePercent = newFumbleDamagePercent
-    end,
   },
 }
-
-local updateSection = async:callback(function(section, key)
-    assert(settingHandlers[section] ~= nil, 'Unsupported section: ' .. section)
-    local storageSection = storage.globalSection(section)
-
-    local function logSettingChanged(newValue)
-      debugLog("Changed", key, "in", section, "to", tostring(newValue))
-    end
-
-    if key then
-      assert(settingHandlers[section][key] ~= nil, 'Unsupported key: ' .. key .. " in section: " .. section)
-      local newValue = storageSection:get(key)
-      settingHandlers[section][key](newValue)
-      logSettingChanged(newValue)
-    else
-      for subKey, updateFunction in pairs(settingHandlers[section]) do
-        local newValue = storageSection:get(subKey)
-        updateFunction(newValue)
-        logSettingChanged(newValue)
-      end
-    end
-end)
-
-for section, _ in pairs(settingHandlers) do
-  storage.globalSection(section):subscribe(updateSection)
-end
 
 I.Settings.registerPage {
 	key = modInfo.name,
