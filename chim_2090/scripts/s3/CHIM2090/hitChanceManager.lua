@@ -75,7 +75,8 @@ local startRampDown = false
 function HitManager.isUsingRanged()
   local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
   if not weapon then return false end
-  return rangedWeaponTypes[types.Weapon.records[weapon.recordId].type] or false
+  local weaponType = s3lf.From(weapon).record.type
+  return rangedWeaponTypes[weaponType] or false
 end
 
 function HitManager:getNativeHitChance()
