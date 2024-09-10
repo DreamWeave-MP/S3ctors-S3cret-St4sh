@@ -1,3 +1,5 @@
+local core = require('openmw.core')
+
 local s3lf = require('scripts.s3.lf')
 local modInfo = require('scripts.s3.CHIM2090.modInfo')
 local FatigueManager = require('scripts.s3.CHIM2090.protectedTable')('SettingsGlobal' .. modInfo.name .. 'Fatigue')
@@ -52,6 +54,7 @@ return {
   },
   engineHandlers = {
     onUpdate = function(dt)
+      if core.isWorldPaused() then return end
       FatigueManager:manageFatigue(dt)
     end,
   },
