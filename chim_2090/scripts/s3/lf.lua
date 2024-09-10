@@ -63,6 +63,8 @@ GameObjectWrapper._mt = {
       local record = gameObject.type.records[gameObject.recordId]
       rawset(instance, key, record)
       return record
+    elseif key == 'cell' then
+      return gameObject.cell
     elseif key == 'object' then
       return gameObject
     elseif key == 'baseType' or key == 'type' or key == 'stats' then
