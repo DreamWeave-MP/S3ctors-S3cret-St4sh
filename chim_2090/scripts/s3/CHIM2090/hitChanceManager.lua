@@ -207,14 +207,8 @@ function HitManager:toggleRangedHitBonus(enable)
 end
 
 function HitManager:applyRangedAttackBonus(enable)
-  if hasHitBuff ~= enable then
-    self:toggleRangedHitBonus(enable)
-  end
-
-  -- if hasStrengthBonus ~= enable then
-    I.s3ChimDamage.Manager:toggleStrengthBonus(enable, false)
-  -- end
-
+  self:toggleRangedHitBonus(enable)
+  I.s3ChimDamage.Manager:toggleStrengthBonus(enable, false)
   hasRangedBonus = enable
 end
 
