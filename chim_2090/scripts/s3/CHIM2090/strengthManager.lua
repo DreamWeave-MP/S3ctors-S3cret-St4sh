@@ -5,21 +5,21 @@
 
 local async = require('openmw.async')
 local core = require('openmw.core')
-local gameSelf = require('openmw.self')
 local storage = require('openmw.storage')
 local I = require('openmw.interfaces')
 
 local modInfo = require("scripts.s3.CHIM2090.modInfo")
+local s3lf = require('scripts.s3.lf')
 
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'Damage'
 local StrengthManager = require("scripts.s3.CHIM2090.protectedTable")(groupName)
 
-local ActiveEffects = gameSelf.type.activeEffects(gameSelf)
+local ActiveEffects = s3lf.activeEffects()
 
-local Luck = gameSelf.type.stats.attributes.luck(gameSelf)
-local Strength = gameSelf.type.stats.attributes.strength(gameSelf)
+local Luck = s3lf.luck
+local Strength = s3lf.strength
 
-local Fatigue = gameSelf.type.stats.dynamic.fatigue(gameSelf)
+local Fatigue = s3lf.fatigue
 
 local currentStrengthMod = 0
 local currentWeightBonus = 0
