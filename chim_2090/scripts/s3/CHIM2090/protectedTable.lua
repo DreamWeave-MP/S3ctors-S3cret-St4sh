@@ -38,6 +38,7 @@ return function(inputGroupName)
   end
 
   local meta = {
+    __metatable = 'CHIMManager',
     __index = function(_, key)
       if key == 'DebugLog' then
         return storage.globalSection('SettingsGlobal' .. modInfo.name):get('DebugEnable')
