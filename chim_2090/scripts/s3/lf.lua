@@ -1,3 +1,4 @@
+local animation = require('openmw.animation')
 local gameSelf = require('openmw.self')
 local types = require('openmw.types')
 
@@ -97,6 +98,12 @@ GameObjectWrapper._mt = {
       rawset(instance, key, stats.attributes[key](gameObject))
     elseif isActor and stats.dynamic[key] then
       rawset(instance, key, stats.dynamic[key](gameObject))
+    elseif isActor and animation[key] then
+      if type(animation[key]) == 'function' then
+        rawset(instance, key, function(...) return animation[key](gameObject, ...) end)
+      else
+        rawset(instance, key, animation[key])
+      end
     elseif gameObject[key] then
       rawset(instance, key, gameObject[key])
     end
