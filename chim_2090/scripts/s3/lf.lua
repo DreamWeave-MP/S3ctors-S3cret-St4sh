@@ -114,7 +114,9 @@ GameObjectWrapper._mt = {
 }
 
 local function From(gameObject)
-  local instance = { gameObject = gameObject }
+  assert(type(gameObject) == 'userdata' and gameObject.id ~= nil
+         and gameObject.recordId ~= nil, 'S3GameSelf.From expects a raw gameObject')
+  local instance = { gameObject = gameObject, From = From }
   setmetatable(instance, GameObjectWrapper._mt)
   return instance
 end
