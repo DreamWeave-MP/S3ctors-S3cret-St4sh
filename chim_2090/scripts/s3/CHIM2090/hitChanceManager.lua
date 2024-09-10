@@ -1,7 +1,7 @@
 local animation = require('openmw.animation')
 local async = require('openmw.async')
 local core = require('openmw.core')
-local gameSelf = require('openmw.self')
+local s3lf = require('scripts.s3.lf')
 local storage = require('openmw.storage')
 local types = require('openmw.types')
 
@@ -12,27 +12,22 @@ local modInfo = require('scripts.s3.CHIM2090.modInfo')
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'HitChance'
 local HitManager = require('scripts.s3.CHIM2090.protectedTable')(groupName)
 
-local ActiveEffects = gameSelf.type.activeEffects(gameSelf)
+local ActiveEffects = s3lf.activeEffects()
 
-local Fatigue = gameSelf.type.stats.dynamic.fatigue(gameSelf)
-
-local Agility = gameSelf.type.stats.attributes.agility(gameSelf)
-local Luck = gameSelf.type.stats.attributes.luck(gameSelf)
-local HandToHand = gameSelf.type.stats.skills.handtohand(gameSelf)
-
+local weaponTypes = types.Weapon.TYPE
 local weaponTypesToSkills = {
-  [types.Weapon.TYPE.ShortBladeOneHand] = gameSelf.type.stats.skills.shortblade(gameSelf),
-  [types.Weapon.TYPE.LongBladeOneHand] = gameSelf.type.stats.skills.longblade(gameSelf),
-  [types.Weapon.TYPE.LongBladeTwoHand] = gameSelf.type.stats.skills.longblade(gameSelf),
-  [types.Weapon.TYPE.BluntOneHand] = gameSelf.type.stats.skills.bluntweapon(gameSelf),
-  [types.Weapon.TYPE.BluntTwoClose] = gameSelf.type.stats.skills.bluntweapon(gameSelf),
-  [types.Weapon.TYPE.BluntTwoWide] = gameSelf.type.stats.skills.bluntweapon(gameSelf),
-  [types.Weapon.TYPE.SpearTwoWide] = gameSelf.type.stats.skills.spear(gameSelf),
-  [types.Weapon.TYPE.AxeOneHand] = gameSelf.type.stats.skills.axe(gameSelf),
-  [types.Weapon.TYPE.AxeTwoHand] = gameSelf.type.stats.skills.axe(gameSelf),
-  [types.Weapon.TYPE.MarksmanBow] = gameSelf.type.stats.skills.marksman(gameSelf),
-  [types.Weapon.TYPE.MarksmanCrossbow] = gameSelf.type.stats.skills.marksman(gameSelf),
-  [types.Weapon.TYPE.MarksmanThrown] = gameSelf.type.stats.skills.marksman(gameSelf),
+  [weaponTypes.ShortBladeOneHand] = s3lf.shortblade,
+  [weaponTypes.LongBladeOneHand] = s3lf.longblade,
+  [weaponTypes.LongBladeTwoHand] = s3lf.longblade,
+  [weaponTypes.BluntOneHand] = s3lf.bluntweapon,
+  [weaponTypes.BluntTwoClose] = s3lf.bluntweapon,
+  [weaponTypes.BluntTwoWide] = s3lf.bluntweapon,
+  [weaponTypes.SpearTwoWide] = s3lf.spear,
+  [weaponTypes.AxeOneHand] = s3lf.axe,
+  [weaponTypes.AxeTwoHand] = s3lf.axe,
+  [weaponTypes.MarksmanBow] = s3lf.marksman,
+  [weaponTypes.MarksmanCrossbow] = s3lf.marksman,
+  [weaponTypes.MarksmanThrown] = s3lf.marksman,
 }
 
 local keys = {
@@ -78,26 +73,26 @@ local startRamping = false
 local startRampDown = false
 
 function HitManager.isUsingRanged()
-  local weapon = gameSelf.type.getEquipment(gameSelf, gameSelf.type.EQUIPMENT_SLOT.CarriedRight)
+  local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
   if not weapon then return false end
   return rangedWeaponTypes[types.Weapon.records[weapon.recordId].type] or false
 end
 
 function HitManager:getNativeHitChance()
-    local normalizedFatigue = Fatigue.current / Fatigue.base
+    local normalizedFatigue = s3lf.fatigue.current / s3lf.fatigue.base
     local fatigueTerm = core.getGMST('fFatigueBase') - core.getGMST('fFatigueMult') * (1 - normalizedFatigue)
 
-    local weapon = gameSelf.type.getEquipment(gameSelf, gameSelf.type.EQUIPMENT_SLOT.CarriedRight)
-    local weaponType = types.Weapon.records[weapon.recordId].type
+    local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+    local weaponType = s3lf.From(weapon).record.type
     local skill
     if not weapon then
-        skill = HandToHand.modified
+        skill = s3lf.handtohand.modified
     else
         skill = weaponTypesToSkills[weaponType].modified
     end
 
-    local agilityInfluence = self.AgilityHitChancePct * Agility.modified
-    local luckInfluence = self.LuckHitChancePct * Luck.modified
+    local agilityInfluence = self.AgilityHitChancePct * s3lf.agility.modified
+    local luckInfluence = self.LuckHitChancePct * s3lf.luck.modified
 
     local attackTerm = (skill + agilityInfluence +  luckInfluence) * fatigueTerm
     -- normally we wouldn't subtract anything but this script screws with the native hit chance
@@ -115,9 +110,9 @@ function HitManager:handleAttackBonus(groupname, key)
   local attackStartKey = keys.attackStart[groupname .. ":" .. key]
 
   if attackStartKey then
-    local minAttackTime = animation.getTextKeyTime(gameSelf, attackStartKey .. "min attack")
+    local minAttackTime = animation.getTextKeyTime(s3lf.object, attackStartKey .. "min attack")
 
-    local maxAttackTime = animation.getTextKeyTime(gameSelf, attackStartKey .. "max attack")
+    local maxAttackTime = animation.getTextKeyTime(s3lf.object, attackStartKey .. "max attack")
 
     attackDuration = maxAttackTime - minAttackTime
 
