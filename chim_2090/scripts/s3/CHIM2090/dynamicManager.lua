@@ -3,11 +3,11 @@ local storage = require('openmw.storage')
 
 local s3lf = require('scripts.s3.lf')
 local modInfo = require('scripts.s3.CHIM2090.modInfo')
-local FatigueManager = require('scripts.s3.CHIM2090.protectedTable')('SettingsGlobal' .. modInfo.name .. 'Fatigue')
+local DynamicManager = require('scripts.s3.CHIM2090.protectedTable')('SettingsGlobal' .. modInfo.name .. 'Dynamic')
 
 local Fatigue = s3lf.fatigue
 
-function FatigueManager:calculateMaxFatigue()
+function DynamicManager:calculateMaxFatigue()
   local fatigueWil = s3lf.willpower.modified * (self.MaxFatigueWilMult / 100)
   local fatigueAgi = s3lf.agility.modified * (self.MaxFatigueAgiMult / 100)
   local fatigueEnd = s3lf.endurance.modified * (self.MaxFatigueEndMult / 100)
@@ -15,7 +15,7 @@ function FatigueManager:calculateMaxFatigue()
   return math.floor(fatigueWil + fatigueAgi + fatigueEnd + fatigueStr + 0.5)
 end
 
-function FatigueManager:overrideNativeFatigue()
+function DynamicManager:overrideNativeFatigue()
   local expectedMaxFatigue = self:calculateMaxFatigue()
   if Fatigue.base == expectedMaxFatigue then return end
 
@@ -26,7 +26,7 @@ function FatigueManager:overrideNativeFatigue()
   self.debugLog('FatigueMgr: Fatigue updated from', oldFatigue, 'to', Fatigue.base)
 end
 
-function FatigueManager:handleFatigueRegen(dt)
+function DynamicManager:handleFatigueRegen(dt)
   if Fatigue.current >= Fatigue.base then return end
 
   local fatigueThisFrame
@@ -42,34 +42,34 @@ function FatigueManager:handleFatigueRegen(dt)
   Fatigue.current = math.min(Fatigue.base, fatigueThisFrame)
 end
 
-function FatigueManager:manageFatigue(dt)
+function DynamicManager:manageFatigue(dt)
   self:overrideNativeFatigue()
   self:handleFatigueRegen(dt)
 end
 
-function FatigueManager.canRegenerateMagicka()
+function DynamicManager.canRegenerateMagicka()
   return s3lf.activeEffects():getEffect('stuntedmagicka').magnitude == 0
 end
 
-function FatigueManager.canRegenerateFatigue()
+function DynamicManager.canRegenerateFatigue()
   return true
 end
 
-function FatigueManager.canRegenerateHealth()
+function DynamicManager.canRegenerateHealth()
   return true
 end
 
-function FatigueManager:getSleepHealthRegenBase(sleepHours)
+function DynamicManager:getSleepHealthRegenBase(sleepHours)
   local healthMult = storage.globalSection("SettingsGlobal" .. modInfo.name .. 'Sleep'):get('RestHealthMult')
   return sleepHours * healthMult * (s3lf.endurance.modified + s3lf.willpower.modified)
 end
 
-function FatigueManager:getSleepMagickaRegenBase(sleepHours)
+function DynamicManager:getSleepMagickaRegenBase(sleepHours)
   local magicMult = storage.globalSection("SettingsGlobal" .. modInfo.name .. 'Sleep'):get('RestMagicMult')
   return sleepHours * magicMult * (s3lf.intelligence.modified + s3lf.willpower.modified)
 end
 
-function FatigueManager:getSleepFatigueRegenBase(sleepHours)
+function DynamicManager:getSleepFatigueRegenBase(sleepHours)
   local endFatigueMult = self.FatigueEndMult
   local totalEncumbrance = core.getGMST('fEncumbranceStrMult') * s3lf.strength.modified
   local regenPct = 1.0 - (s3lf.getEncumbrance() / totalEncumbrance)
@@ -78,7 +78,7 @@ function FatigueManager:getSleepFatigueRegenBase(sleepHours)
   return (fatiguePerSecond * sleepHours) * self.SleepFatigueMult
 end
 
-function FatigueManager.calculateNewDynamic(stat, multiplied, newTotal, old)
+function DynamicManager.calculateNewDynamic(stat, multiplied, newTotal, old)
   local current = old or stat.current
   local base = stat.base
   if multiplied == base then
@@ -91,7 +91,7 @@ function FatigueManager.calculateNewDynamic(stat, multiplied, newTotal, old)
   return current
 end
 
-function FatigueManager:sleepHealthRecoveryActor(sleepData)
+function DynamicManager:sleepHealthRecoveryActor(sleepData)
   if not self.canRegenerateHealth() then return end
   local totalHealthRegen = self:getSleepHealthRegenBase(sleepData.time)
   local newTotal = sleepData.oldHealth + totalHealthRegen
@@ -99,7 +99,7 @@ function FatigueManager:sleepHealthRecoveryActor(sleepData)
   self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.health.current - sleepData.oldHealth, 'health.')
 end
 
-function FatigueManager:sleepHealthRecoveryPlayer(sleepData)
+function DynamicManager:sleepHealthRecoveryPlayer(sleepData)
   if not self.canRegenerateHealth() then return end
 
   local totalHealthRegen = self:getSleepHealthRegenBase(sleepData.time)
@@ -111,7 +111,7 @@ function FatigueManager:sleepHealthRecoveryPlayer(sleepData)
   self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.health.current - sleepData.oldHealth, 'health.')
 end
 
-function FatigueManager:sleepMagickaRecoveryActor(sleepData)
+function DynamicManager:sleepMagickaRecoveryActor(sleepData)
   if not self.canRegenerateMagicka() then return end
 
   local totalFatigueRegen = self:getSleepMagickaRegenBase(sleepData.time)
@@ -121,7 +121,7 @@ function FatigueManager:sleepMagickaRecoveryActor(sleepData)
   self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.magicka.current - prevMagicka, 'magicka.')
 end
 
-function FatigueManager:sleepMagickaRecoveryPlayer(sleepData)
+function DynamicManager:sleepMagickaRecoveryPlayer(sleepData)
   if not self.canRegenerateMagicka() then return end
 
   local totalMagickaRegen = self:getSleepMagickaRegenBase(sleepData.time)
@@ -135,7 +135,7 @@ function FatigueManager:sleepMagickaRecoveryPlayer(sleepData)
   self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.magicka.current - prevMagicka, 'magicka.')
 end
 
-function FatigueManager:sleepFatigueRecoveryActor(sleepData)
+function DynamicManager:sleepFatigueRecoveryActor(sleepData)
   if not self.canRegenerateFatigue() then return end
 
   local totalFatigueRegen = self:getSleepFatigueRegenBase(sleepData.time)
@@ -143,7 +143,7 @@ function FatigueManager:sleepFatigueRecoveryActor(sleepData)
   s3lf.fatigue.current = math.min(s3lf.fatigue.base, newTotal)
 end
 
-function FatigueManager:sleepFatigueRecoveryPlayer(sleepData)
+function DynamicManager:sleepFatigueRecoveryPlayer(sleepData)
   if not self.canRegenerateFatigue() then return end
 
   local totalFatigueRegen = self:getSleepFatigueRegenBase(sleepData.time)
@@ -163,7 +163,7 @@ function FatigueManager:sleepFatigueRecoveryPlayer(sleepData)
                 , '. Their multiplier was', multiplier)
 end
 
-function FatigueManager:sleepRecoveryActor(sleepData)
+function DynamicManager:sleepRecoveryActor(sleepData)
   if sleepData.restOrWait then
     self:sleepHealthRecoveryActor(sleepData)
     self:sleepMagickaRecoveryActor(sleepData)
@@ -171,13 +171,13 @@ function FatigueManager:sleepRecoveryActor(sleepData)
   self:sleepFatigueRecoveryActor(sleepData)
 end
 
-function FatigueManager:sleepRecoveryPlayer(sleepData)
+function DynamicManager:sleepRecoveryPlayer(sleepData)
   self:sleepHealthRecoveryPlayer(sleepData)
   self:sleepMagickaRecoveryPlayer(sleepData)
   self:sleepFatigueRecoveryPlayer(sleepData)
 end
 
-function FatigueManager:sleepRecoveryVanilla(sleepData)
+function DynamicManager:sleepRecoveryVanilla(sleepData)
   if self.UseVanillaFatigueFormula then
     -- For health, do nothing, as it's handled engine-side based on endurance
     if self.canRegenerateFatigue() then
@@ -197,39 +197,39 @@ function FatigueManager:sleepRecoveryVanilla(sleepData)
   return false
 end
 
-function FatigueManager.sleepActorHandler(sleepData)
+function DynamicManager.sleepActorHandler(sleepData)
   assert(sleepData and sleepData.time and sleepData.restOrWait ~= nil
-         and sleepData.oldHealth, 's3ChimFatigue_SleepActor event requires a time value')
+         and sleepData.oldHealth, 's3ChimDynamic_SleepActor event requires a time value')
 
-  if not FatigueManager:sleepRecoveryVanilla(sleepData) then
-    FatigueManager:sleepRecoveryActor(sleepData)
+  if not DynamicManager:sleepRecoveryVanilla(sleepData) then
+    DynamicManager:sleepRecoveryActor(sleepData)
   end
 end
 
-function FatigueManager.sleepPlayerHandler(sleepData)
+function DynamicManager.sleepPlayerHandler(sleepData)
   assert(sleepData and sleepData.time and sleepData.restOrWait ~= nil
          and sleepData.oldHealth and sleepData.sleepMultiplier,
-         's3ChimFatigue_SleepPlayer event requires a time value and a sleep multiplier')
+         's3ChimDynamic_SleepPlayer event requires a time value and a sleep multiplier')
 
-  if not FatigueManager:sleepRecoveryVanilla(sleepData) then
-    FatigueManager:sleepRecoveryPlayer(sleepData)
+  if not DynamicManager:sleepRecoveryVanilla(sleepData) then
+    DynamicManager:sleepRecoveryPlayer(sleepData)
   end
 end
 
 return {
-  interfaceName = 's3ChimFatigue',
+  interfaceName = 's3ChimDynamic',
   interface = {
     version = modInfo.version,
-    Manager = FatigueManager,
+    Manager = DynamicManager,
   },
   engineHandlers = {
     onUpdate = function(dt)
       if core.isWorldPaused() then return end
-      FatigueManager:manageFatigue(dt)
+      DynamicManager:manageFatigue(dt)
     end,
   },
   eventHandlers = {
-    s3ChimFatigue_SleepActor = FatigueManager.sleepActorHandler,
-    s3ChimFatigue_SleepPlayer = FatigueManager.sleepPlayerHandler,
+    s3ChimDynamic_SleepActor = DynamicManager.sleepActorHandler,
+    s3ChimDynamic_SleepPlayer = DynamicManager.sleepPlayerHandler,
   },
 }

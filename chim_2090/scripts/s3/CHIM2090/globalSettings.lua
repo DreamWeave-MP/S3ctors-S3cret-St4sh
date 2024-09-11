@@ -69,11 +69,11 @@ I.Settings.registerGroup {
 }
 
 I.Settings.registerGroup {
-	key = "SettingsGlobal" .. modInfo.name .. "Fatigue",
+	key = "SettingsGlobal" .. modInfo.name .. "Dynamic",
 	page = modInfo.name,
 	order = 1,
 	l10n = modInfo.l10nName,
-	name = "Fatigue Management",
+	name = "Health, Fatigue, Magicka",
 	permanentStorage = false,
 	settings = {
       setting("UseVanillaFatigueFormula", "checkbox", {}, "Use Vanilla Fatigue Formula", useVanillaFatigueDesc, false),
