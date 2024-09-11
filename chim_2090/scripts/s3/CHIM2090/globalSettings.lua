@@ -18,6 +18,8 @@ local fatigueEndMultDesc = "Percentage of endurance regained as fatigue, per sec
 -- Sleep settings description(s)
 local pillowEnableDesc = "Enable the pillow modifier. This adds a bonus to attributes restored while sleeping or waiting."
 local pillowMultDesc = "Restoration bonus from carrying a pillow while sleeping."
+-- local noSleepOnGroundDesc = "Prevent sleeping on the ground. This will enforce only sleeping in some kind of bed (including bedrolls)."
+local restMagicMultDesc = "Multiplier for magicka restored while resting. Replaces the vanilla GMST (0.15) \"fRestMagicMult\"."
 local sleepFatigueMultDesc = "Multiplier for fatigue restored while sleeping. Does not replace a vanilla GMST."
 local groundSleepMultDesc = "Percentage of fatigue restored while sleeping on the ground. Does not replace a vanilla GMST."
 local bedrollSleepMultDesc = "Multiplier for fatigue restored while sleeping on the ground. Does not replace a vanilla GMST."
@@ -103,8 +105,11 @@ I.Settings.registerGroup {
       setting("PillowEnable", "checkbox", {}, "Pillow Restoration Multiplier", pillowEnableDesc, true),
       setting('PillowMult', 'number', {integer = false, min = -10.0, max = 10.0 },
               "Pillow Multiplier", pillowMultDesc, 0.10),
+      -- setting('NoSleepOnGround', 'checkbox', {}, "No Sleep on Ground", noSleepOnGroundDesc, false),
       setting('SleepFatigueMult', 'number', {integer = true, min = -1000, max = 1000 },
               "Sleep Restoration Multiplier", sleepFatigueMultDesc, 10),
+      setting('RestMagicMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Resting Magicka Multiplier", restMagicMultDesc, 0.15),
       setting('GroundSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
               "Ground Resting Multiplier", groundSleepMultDesc, 0.50),
       setting('BedrollSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
