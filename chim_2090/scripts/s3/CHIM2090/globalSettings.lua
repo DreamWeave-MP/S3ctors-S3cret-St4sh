@@ -110,6 +110,8 @@ I.Settings.registerGroup {
               "Sleep Restoration Multiplier", sleepFatigueMultDesc, 10),
       setting('RestMagicMult', 'number', {integer = false, min = -10.0, max = 10.0 },
               "Resting Magicka Multiplier", restMagicMultDesc, 0.15),
+      setting('RestHealthMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Resting Health Multiplier", restMagicMultDesc, 0.15),
       setting('GroundSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
               "Ground Resting Multiplier", groundSleepMultDesc, 0.50),
       setting('BedrollSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
