@@ -11,9 +11,21 @@ local maxAttackBonusDesc = "Max magnitude of fortify attack bonus on the player"
 local agilityHitChancePctDesc = "Percentage of agility that is added to hit chance, vanilla is 20%. Related damage scaling is capped by the Max Strength Multiplier setting."
 local luckHitChancePctDesc = "Percentage of luck that is added to hit chance, vanilla is 10%. Related damage scaling is capped by the Max Strength Multiplier setting."
 -- Fatigue settings description(s)
-local useVanillaFatigueDesc = "Use the original fatigue regeneration formula instead of CHIM 2090's internal one. This still uses below regen settings, but omits advanced functionality."
+local useVanillaFatigueDesc = "Use the original fatigue regeneration formula instead of CHIM 2090's internal one. This still uses below regen settings, but omits advanced functionality related to fatigue."
 local fatiguePerSecondDesc = "Fatigue restored per second when using either formula. Replaces the vanilla GMST (2.5) \"fFatigueReturnBase\""
-local fatigueEndMultDesc = "Percentage of endurance regained as fatigue, per second, with either formula. Replaces the vanilla GMST (0.02) \"fFatigueReturnMult\""
+local fatigueReturnMultDesc = "Percentage of endurance regained as fatigue, per second, with either formula. Replaces the vanilla GMST (0.02) \"fFatigueReturnMult\""
+local fatigueEndMultDesc = "Percentage of endurance regained as fatigue, per second, with either formula, while sleeping. Replaces the vanilla GMST (0.04) \"fEndFatigueMult\""
+-- Sleep settings description(s)
+local pillowEnableDesc = "Enable the pillow modifier. This adds a bonus to attributes restored while sleeping or waiting."
+local pillowMultDesc = "Restoration bonus from carrying a pillow while sleeping."
+local sleepFatigueMultDesc = "Multiplier for fatigue restored while sleeping. Does not replace a vanilla GMST."
+local groundSleepMultDesc = "Percentage of fatigue restored while sleeping on the ground. Does not replace a vanilla GMST."
+local bedrollSleepMultDesc = "Multiplier for fatigue restored while sleeping on the ground. Does not replace a vanilla GMST."
+local bedSleepMultDesc = "Multiplier for fatigue restored while sleeping on the ground. Does not replace a vanilla GMST, only applies indoors."
+local ownedSleepMultDesc = "Multiplier for fatigue restored while sleeping in an owned bed. Does not replace a vanilla GMST, only applies indoors."
+local outdoorSleepMultDesc = "Multiplier for fatigue restored while sleeping outdoors, in a bed. Does not replace a vanilla GMST."
+local outdoorWaitMultDesc = "Multiplier for fatigue restored while sleeping on the ground or waiting, while outdoors. Does not replace a vanilla GMST."
+local indoorWaitMultDesc = "Multiplier for fatigue restored while waiting indoors. Does not replace a vanilla GMST."
 local maxFatigueStrMultDesc = "Percentage of strength factored into max fatigue. Vanilla is 100."
 local maxFatigueWilMultDesc = "Percentage of willpower factored into max fatigue. Vanilla is 100."
 local maxFatigueAgiMultDesc = "Percentage of agility factored into max fatigue. Vanilla is 100."
@@ -65,9 +77,11 @@ I.Settings.registerGroup {
       setting("UseVanillaFatigueFormula", "checkbox", {}, "Use Vanilla Fatigue Formula", useVanillaFatigueDesc, false),
       setting('FatiguePerSecond', 'number', {integer = true, min = -500, max = 500 },
               "Fatigue Per Second", fatiguePerSecondDesc, 3),
+      setting('FatigueReturnMult', 'number', {integer = false, min = 0.001, max = 10.0 },
+              "Fatigue Endurance Multiplier", fatigueReturnMultDesc, 0.02),
       setting('FatigueEndMult', 'number', {integer = false, min = 0.001, max = 10.0 },
-              "Fatigue Endurance Multiplier", fatigueEndMultDesc, 0.02),
-      setting('MaxFatigueStrMult', 'number', {integer = true, min = 0, max = 1090 },
+              "Resting Endurance Multiplier", fatigueEndMultDesc, 0.04),
+      setting('MaxFatigueStrMult', 'number', {integer = true, min = 0, max = 1000 },
               "Fatigue Strength Multiplier", maxFatigueStrMultDesc, 125),
       setting('MaxFatigueWilMult', 'number', {integer = true, min = 0, max = 1000 },
               "Fatigue Willpower Multiplier", maxFatigueWilMultDesc, 50),
@@ -79,9 +93,39 @@ I.Settings.registerGroup {
 }
 
 I.Settings.registerGroup {
-	key = "SettingsGlobal" .. modInfo.name .. "HitChance",
+	key = "SettingsGlobal" .. modInfo.name .. 'Sleep',
 	page = modInfo.name,
 	order = 2,
+	l10n = modInfo.l10nName,
+	name = "Sleep Management",
+	permanentStorage = false,
+	settings = {
+      setting("PillowEnable", "checkbox", {}, "Pillow Restoration Multiplier", pillowEnableDesc, true),
+      setting('PillowMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Pillow Multiplier", pillowMultDesc, 0.10),
+      setting('SleepFatigueMult', 'number', {integer = true, min = -1000, max = 1000 },
+              "Sleep Restoration Multiplier", sleepFatigueMultDesc, 10),
+      setting('GroundSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Ground Resting Multiplier", groundSleepMultDesc, 0.50),
+      setting('BedrollSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Bedroll Resting Multiplier", bedrollSleepMultDesc, 0.75),
+      setting('BedSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Bed Resting Multiplier", bedSleepMultDesc, 1.25),
+      setting('OwnedSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Owned Bed Resting Multiplier", ownedSleepMultDesc, 1.40),
+      setting('OutdoorSleepMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Outdoor Bed Resting Multiplier", outdoorSleepMultDesc, 0.50),
+      setting('OutdoorWaitMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Outdoor Waiting Multiplier", outdoorWaitMultDesc, 0.15),
+      setting('IndoorWaitMult', 'number', {integer = false, min = -10.0, max = 10.0 },
+              "Indoor Waiting Multiplier", indoorWaitMultDesc, 0.50),
+	}
+}
+
+I.Settings.registerGroup {
+	key = "SettingsGlobal" .. modInfo.name .. "HitChance",
+	page = modInfo.name,
+	order = 3,
 	l10n = modInfo.l10nName,
 	name = "Attack Bonus",
 	permanentStorage = false,
@@ -100,7 +144,7 @@ I.Settings.registerGroup {
 I.Settings.registerGroup {
 	key = "SettingsGlobal" .. modInfo.name .. "Damage",
 	page = modInfo.name,
-	order = 3,
+	order = 4,
 	l10n = modInfo.l10nName,
 	name = "Damage, Crit, and Fumble",
 	permanentStorage = false,
