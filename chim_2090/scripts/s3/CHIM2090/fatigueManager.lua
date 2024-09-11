@@ -59,7 +59,17 @@ function FatigueManager.canRegenerateHealth()
   return true
 end
 
-function FatigueManager:getSleepRegenBase(sleepHours)
+function FatigueManager:getSleepHealthRegenBase(sleepHours)
+  local healthMult = storage.globalSection("SettingsGlobal" .. modInfo.name .. 'Sleep'):get('RestHealthMult')
+  return sleepHours * healthMult * (s3lf.endurance.modified + s3lf.willpower.modified)
+end
+
+function FatigueManager:getSleepMagickaRegenBase(sleepHours)
+  local magicMult = storage.globalSection("SettingsGlobal" .. modInfo.name .. 'Sleep'):get('RestMagicMult')
+  return sleepHours * magicMult * (s3lf.intelligence.modified + s3lf.willpower.modified)
+end
+
+function FatigueManager:getSleepFatigueRegenBase(sleepHours)
   local endFatigueMult = self.FatigueEndMult
   local totalEncumbrance = core.getGMST('fEncumbranceStrMult') * s3lf.strength.modified
   local regenPct = 1.0 - (s3lf.getEncumbrance() / totalEncumbrance)
@@ -68,13 +78,8 @@ function FatigueManager:getSleepRegenBase(sleepHours)
   return (fatiguePerSecond * sleepHours) * self.SleepFatigueMult
 end
 
-function FatigueManager:getSleepMagickaRegenBase(sleepHours)
-  local magicMult = storage.globalSection("SettingsGlobal" .. modInfo.name .. 'Sleep'):get('RestMagicMult')
-  return sleepHours * magicMult * (s3lf.intelligence.modified + s3lf.willpower.modified)
-end
-
-function FatigueManager.calculateNewDynamic(stat, multiplied, newTotal)
-  local current = stat.current
+function FatigueManager.calculateNewDynamic(stat, multiplied, newTotal, old)
+  local current = old or stat.current
   local base = stat.base
   if multiplied == base then
     return math.min(base, newTotal)
@@ -83,13 +88,27 @@ function FatigueManager.calculateNewDynamic(stat, multiplied, newTotal)
   elseif current < multiplied or multiplied <= 0 then
     return multiplied
   end
-  return stat.current
+  return current
 end
 
-function FatigueManager:sleepHealthRecoveryActor(prevHealth)
+function FatigueManager:sleepHealthRecoveryActor(sleepData)
+  if not self.canRegenerateHealth() then return end
+  local totalHealthRegen = self:getSleepHealthRegenBase(sleepData.time)
+  local newTotal = sleepData.oldHealth + totalHealthRegen
+  s3lf.health.current = math.min(s3lf.health.base, newTotal)
+  self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.health.current - sleepData.oldHealth, 'health.')
 end
 
-function FatigueManager:sleepHealthRecoveryPlayer(prevHealth)
+function FatigueManager:sleepHealthRecoveryPlayer(sleepData)
+  if not self.canRegenerateHealth() then return end
+
+  local totalHealthRegen = self:getSleepHealthRegenBase(sleepData.time)
+
+  local newTotal = sleepData.oldHealth + totalHealthRegen
+  local multipliedHealth = s3lf.health.base * sleepData.sleepMultiplier
+
+  s3lf.health.current = self.calculateNewDynamic(s3lf.health, multipliedHealth, newTotal, sleepData.oldHealth)
+  self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.health.current - sleepData.oldHealth, 'health.')
 end
 
 function FatigueManager:sleepMagickaRecoveryActor(sleepData)
@@ -97,7 +116,9 @@ function FatigueManager:sleepMagickaRecoveryActor(sleepData)
 
   local totalFatigueRegen = self:getSleepMagickaRegenBase(sleepData.time)
   local newTotal = s3lf.magicka.current + totalFatigueRegen
+  local prevMagicka = s3lf.magicka.current
   s3lf.magicka.current = math.min(s3lf.magicka.base, newTotal)
+  self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.magicka.current - prevMagicka, 'magicka.')
 end
 
 function FatigueManager:sleepMagickaRecoveryPlayer(sleepData)
@@ -109,13 +130,15 @@ function FatigueManager:sleepMagickaRecoveryPlayer(sleepData)
   local newTotal = s3lf.magicka.current + totalMagickaRegen
   local multipliedMagicka = s3lf.magicka.base * multiplier
 
+  local prevMagicka = s3lf.magicka.current
   s3lf.magicka.current = self.calculateNewDynamic(s3lf.magicka, multipliedMagicka, newTotal)
+  self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.magicka.current - prevMagicka, 'magicka.')
 end
 
 function FatigueManager:sleepFatigueRecoveryActor(sleepData)
   if not self.canRegenerateFatigue() then return end
 
-  local totalFatigueRegen = self:getSleepRegenBase(sleepData.time)
+  local totalFatigueRegen = self:getSleepFatigueRegenBase(sleepData.time)
   local newTotal = s3lf.fatigue.current + totalFatigueRegen
   s3lf.fatigue.current = math.min(s3lf.fatigue.base, newTotal)
 end
@@ -123,7 +146,7 @@ end
 function FatigueManager:sleepFatigueRecoveryPlayer(sleepData)
   if not self.canRegenerateFatigue() then return end
 
-  local totalFatigueRegen = self:getSleepRegenBase(sleepData.time)
+  local totalFatigueRegen = self:getSleepFatigueRegenBase(sleepData.time)
 
   local multiplier = sleepData.sleepMultiplier
 
@@ -141,11 +164,15 @@ function FatigueManager:sleepFatigueRecoveryPlayer(sleepData)
 end
 
 function FatigueManager:sleepRecoveryActor(sleepData)
-  self:sleepMagickaRecoveryActor(sleepData)
+  if sleepData.restOrWait then
+    self:sleepHealthRecoveryActor(sleepData)
+    self:sleepMagickaRecoveryActor(sleepData)
+  end
   self:sleepFatigueRecoveryActor(sleepData)
 end
 
 function FatigueManager:sleepRecoveryPlayer(sleepData)
+  self:sleepHealthRecoveryPlayer(sleepData)
   self:sleepMagickaRecoveryPlayer(sleepData)
   self:sleepFatigueRecoveryPlayer(sleepData)
 end
