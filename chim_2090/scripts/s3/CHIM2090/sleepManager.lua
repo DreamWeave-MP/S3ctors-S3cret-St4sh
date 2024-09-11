@@ -21,7 +21,6 @@ print(string.format("%s loaded version %s. Thank you for playing %s! <3",
                     modInfo.version,
                     modInfo.name))
 
-local currentCell = nil
 local didRest = false
 local fromBed = false
 local fromBedroll = false
@@ -87,6 +86,7 @@ function SleepManager.handleUiMode(data)
                             , 'fromBedroll:', tostring(fromBedroll)
                             , 'sleepingOnGround:', tostring(sleepingOnGround)
                             , 'sleepMultiplier:', sleepMultiplier)
+    SleepManager.getLocalActorHealthTable()
   elseif data.oldMode == 'Rest' then
     fromOwnedBed = false
     fromBed = false
@@ -101,44 +101,37 @@ function SleepManager.handleSleepFrame()
   if core.isWorldPaused() then return end
   local currentWorldTime = core.getGameTime()
 
-  if currentWorldTime - oldWorldTime > 3600 then
-    if didRest then
+  if didRest then
+    if currentWorldTime - oldWorldTime > 3600 then
       local sleptHours = math.floor((currentWorldTime - oldWorldTime) / 3600)
       for _, actor in pairs(nearby.actors) do
         if actor.id ~= s3lf.id then
           actor:sendEvent('s3ChimFatigue_SleepActor', { time = sleptHours,
-                                                        actorStats = nearbyActorStats[actor.id]})
+                                                        restOrWait = restOrWait,
+                                                        oldHealth = nearbyActorStats[actor.id]})
         else
           actor:sendEvent('s3ChimFatigue_SleepPlayer', { time = sleptHours,
-                                                         actorStats = nearbyActorStats[actor.id],
+                                                         restOrWait = restOrWait,
+                                                         oldHealth = nearbyActorStats[actor.id],
                                                          sleepMultiplier = sleepMultiplier })
         end
       end
     end
-    currentCell = nil
     didRest = false
   end
 
   oldWorldTime = core.getGameTime()
 end
 
-function SleepManager.handleCellChanged()
-  if currentCell ~= s3lf.cell then
-    nearbyActorStats = {}
-    for _, actor in pairs(nearby.actors) do
-      local s3lfActor = s3lf.From(actor)
-      nearbyActorStats[actor.id] = {
-        health = s3lfActor.health.current,
-        magicka = s3lfActor.magicka.current,
-      }
-      SleepManager.debugLog('Added actor', actor.id, 'to nearbyActorStats')
-    end
-    currentCell = s3lf.cell
+function SleepManager.getLocalActorHealthTable()
+  nearbyActorStats = {}
+  for _, actor in pairs(nearby.actors) do
+    nearbyActorStats[actor.id] = s3lf.From(actor).health.current
+    SleepManager.debugLog('Added actor', actor.id, 'to nearbyActorStats')
   end
 end
 
 function SleepManager.onUpdate(_dt)
-  SleepManager.handleCellChanged()
   SleepManager.handleSleepFrame()
 end
 
