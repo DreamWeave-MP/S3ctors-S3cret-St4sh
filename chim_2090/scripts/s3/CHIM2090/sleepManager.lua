@@ -111,11 +111,11 @@ function SleepManager.handleSleepFrame()
       local sleptHours = math.floor((currentWorldTime - oldWorldTime) / 3600)
       for _, actor in pairs(nearby.actors) do
         if actor.id ~= s3lf.id then
-          actor:sendEvent('s3ChimFatigue_SleepActor', { time = sleptHours,
+          actor:sendEvent('s3ChimDynamic_SleepActor', { time = sleptHours,
                                                         restOrWait = restOrWait,
                                                         oldHealth = nearbyActorStats[actor.id]})
         else
-          actor:sendEvent('s3ChimFatigue_SleepPlayer', { time = sleptHours,
+          actor:sendEvent('s3ChimDynamic_SleepPlayer', { time = sleptHours,
                                                          restOrWait = restOrWait,
                                                          oldHealth = nearbyActorStats[actor.id],
                                                          sleepMultiplier = sleepMultiplier })
