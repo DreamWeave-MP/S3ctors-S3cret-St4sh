@@ -1,6 +1,8 @@
+local ambient = require('openmw.ambient')
 local async = require('openmw.async')
 local calendar = require('openmw_aux.calendar')
 local core = require('openmw.core')
+local s3lf = require('scripts.s3.lf')
 local time = require('openmw_aux.time')
 local ui = require('openmw.ui')
 local util = require('openmw.util')
@@ -40,13 +42,14 @@ local RestMenu = {
     position = util.vector2(0, 0),
     relativePosition = util.vector2(.5, .5),
     relativeSize = util.vector2(.25, .25),
-    visible = true,
+    visible = false,
   },
   userData = {
+    clickSound = 'sound/fx/menu click.wav',
     doDrag = false,
     lastMousePos = nil,
-    minorSize = util.vector2(1, .125),
     majorSize = util.vector2(1, .35),
+    minorSize = util.vector2(1, .125),
     RestString = 'Sleeping',
     WaitString = 'You cannot sleep here. You\'ll need to find a bed.',
   }
@@ -161,7 +164,27 @@ RestMenu.userData.colors = {
   journalPressed = RestMenu.colorFromGMST('FontColor_color_journal_link_pressed'),
 }
 
-local function updateHighlight(highlightData)
+local function updateButtonHighlight(highlightData)
+  local layout = highlightData.layout
+  local state = highlightData.state
+
+  if state == HighlightStates.DARK then
+    layout.props.color = RestMenu.userData.colors.textNormalPressed
+    layout.props.textSize = constants.textHeaderSize - 2
+  elseif state == HighlightStates.MEDIUM then
+    layout.props.color = RestMenu.userData.colors.textNormalOver
+    layout.props.textSize = constants.textHeaderSize + 2
+  elseif state == HighlightStates.NORMAL then
+    layout.props.color = RestMenu.userData.colors.textNormal
+    layout.props.textSize = constants.textHeaderSize
+  end
+
+  if not highlightData.update then return end
+
+  I.s3ChimSleep.Menu:update()
+end
+
+local function updateArrowHighlight(highlightData)
   local layout = highlightData.layout
   local state = highlightData.state
 
@@ -176,9 +199,9 @@ local function updateHighlight(highlightData)
     layout.props.size = util.vector2(32, 32)
   end
 
-  if highlightData.update then
-    I.s3ChimSleep.Menu:update()
-  end
+  if not highlightData.update then return end
+
+  I.s3ChimSleep.Menu:update()
 end
 
 local function updateTime(left)
@@ -219,30 +242,32 @@ function RestMenu.ArrowContainer(left)
     },
     events = {
       mousePress = async:callback(function(_, layout)
-        updateHighlight {
+        updateArrowHighlight {
           state = HighlightStates.DARK,
           layout = layout,
         }
         if RestMenu.timeStopFn then RestMenu.timeStopFn() end
-        RestMenu.timeStopFn = time.runRepeatedly(function() updateTime(left) end, .2, { initialDelay = 0 })
+        RestMenu.timeStopFn = time.runRepeatedly(function() updateTime(left) end, .2
+          , { initialDelay = 0 })
       end),
       mouseRelease = async:callback(function(_, layout)
-        updateHighlight {
+        updateArrowHighlight {
           state = HighlightStates.MEDIUM,
           layout = layout,
           update = true,
         }
+        ambient.playSoundFile(RestMenu.userData.clickSound)
         if RestMenu.timeStopFn then RestMenu.timeStopFn() end
       end),
       focusGain = async:callback(function(_, layout)
-          updateHighlight {
+          updateArrowHighlight {
             state = HighlightStates.MEDIUM,
             layout = layout,
             update = true,
           }
       end),
       focusLoss = async:callback(function(_, layout)
-        updateHighlight {
+        updateArrowHighlight {
           state = HighlightStates.NORMAL,
           layout = layout,
           update = true,
@@ -337,7 +362,10 @@ function RestMenu.Button(text)
       textAlignH = ui.ALIGNMENT.Center,
       textAlignV = ui.ALIGNMENT.Center,
       autoSize = false,
-    }
+    },
+    userData = {
+      isFocused = false,
+    },
   }
 end
 
@@ -355,6 +383,42 @@ function RestMenu.HoursToHeal()
   return hoursToHeal
 end
 
+local buttonHighlightEnter = async:callback(function(_, layout)
+    if layout.userData.isFocused then return end
+
+    updateButtonHighlight {
+      state = HighlightStates.MEDIUM,
+      layout = layout,
+      update = true,
+    }
+    layout.userData.isFocused = true
+end)
+
+local buttonHighlightExit = async:callback(function(_, layout)
+    if not layout.userData.isFocused then return end
+
+    updateButtonHighlight {
+      state = HighlightStates.NORMAL,
+      layout = layout,
+      update = true,
+    }
+    layout.userData.isFocused = false
+end)
+
+local function cancelEvent(clicked, layout)
+    if clicked then
+      updateButtonHighlight {
+        state = HighlightStates.NORMAL,
+        layout = layout,
+        update = true,
+      }
+      layout.userData.isFocused = false
+    else
+      ambient.playSoundFile(RestMenu.userData.clickSound)
+      I.UI.setMode()
+    end
+end
+
 --- Returns a container element with
 --- interactive elements which allow the user to select
 --- whether to rest or now
@@ -364,6 +428,25 @@ function RestMenu.BottomRowContainer()
   local cancelButton = RestMenu.Button('Cancel')
   local waitButton = RestMenu.Button('Wait')
   local untilHealedButton = RestMenu.Button('Until Healed')
+
+  local events = {
+    focusGain = buttonHighlightEnter,
+    focusLoss = buttonHighlightExit,
+  }
+
+  cancelButton.events = {
+    focusGain = buttonHighlightEnter,
+    focusLoss = buttonHighlightExit,
+    mousePress = async:callback(function(_, layout)
+        cancelEvent(true, layout)
+    end),
+    mouseRelease = async:callback(function(_, layout)
+        cancelEvent(false, layout)
+    end),
+  }
+
+  waitButton.events = events
+  untilHealedButton.events = events
 
   return {
     type = ui.TYPE.Flex,
@@ -384,7 +467,6 @@ function RestMenu.BottomRowContainer()
       waitButton,
     }
   }
-
 end
 
 --- Just a simple text box, this is used in multiple places
@@ -400,7 +482,7 @@ function RestMenu.TextBox(text)
       textAlignH = ui.ALIGNMENT.Center,
       textAlignV = ui.ALIGNMENT.Center,
       autoSize = false,
-    }
+    },
   }
   return textBox
 end

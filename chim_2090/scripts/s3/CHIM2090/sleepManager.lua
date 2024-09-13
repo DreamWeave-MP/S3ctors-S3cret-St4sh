@@ -41,26 +41,24 @@ local restOrWait = false
 local sleepMultiplier = 1.0
 local sleepingOnGround = false
 
-local sleepMenu = nil
-function SleepManager.makeSleepMenu()
-  if not I.UI.getMode() then
-    I.UI.setMode('Dialogue', { windows = {} })
-  else
-    I.UI.setMode()
-  end
+local sleepMenu = ui.create(RestMenu)
 
-  if sleepMenu then
-    sleepMenu.layout.props.visible = not sleepMenu.layout.props.visible
-    sleepMenu:update()
-    return
-  end
+function SleepManager.makeSleepMenu(state)
+  assert(state ~= nil
+         , modInfo.logPrefix .. 'Must provide a state when calling toggle sleep menu!')
 
-  sleepMenu = ui.create(RestMenu)
+  local sleepProps = sleepMenu.layout.props
+  if state == sleepProps.visible then return end
+
+  sleepProps.visible = not sleepProps.visible
+  sleepMenu:update()
+
+  if not state then I.UI.setMode() end
 end
 
-SleepManager.makeSleepMenu()
-
--- I.UI.registerWindow('WaitDialog', SleepManager.makeSleepMenu, SleepManager.makeSleepMenu)
+I.UI.setPauseOnMode('Rest', false)
+I.UI.registerWindow('WaitDialog', function() SleepManager.makeSleepMenu(true) end
+                    , function() SleepManager.makeSleepMenu(false) end)
 
 function SleepManager.getSleepMenu()
   return sleepMenu
