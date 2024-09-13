@@ -1,5 +1,7 @@
 local async = require('openmw.async')
 local calendar = require('openmw_aux.calendar')
+local core = require('openmw.core')
+local time = require('openmw_aux.time')
 local ui = require('openmw.ui')
 local util = require('openmw.util')
 
@@ -94,6 +96,7 @@ function RestMenu.DateHeader()
   local headerText = calendar.formatGameTime(getDateStr())
   local dateHeader = RestMenu.TextBox(headerText)
   dateHeader.props.relativeSize = RestMenu.userData.minorSize
+  dateHeader.props.textColor = RestMenu.userData.colors.textHeader
   dateHeader.name = 'dateHeader'
   return dateHeader
 end
@@ -108,13 +111,87 @@ function RestMenu.SleepInfoString()
   return sleepInfo
 end
 
+local HighlightStates = {
+  DARK = 0,
+  MEDIUM = 1,
+  NORMAL = 2,
+}
+
+function RestMenu.colorFromGMST(gmst)
+  local colorString = core.getGMST(gmst)
+  local numberTable = {}
+  for numberString in colorString:gmatch("([^,]+)") do
+    if #numberTable == 3 then break end
+    local number = tonumber(numberString:match("^%s*(.-)%s*$"))
+    if number then
+      table.insert(numberTable, number / 255)
+    end
+  end
+
+  if #numberTable < 3 then error('Invalid color GMST name: ' .. gmst) end
+
+  return util.color.rgb(table.unpack(numberTable))
+end
+
+RestMenu.userData.colors = {
+  textHeader = RestMenu.colorFromGMST('fontcolor_color_header'),
+  textNormal = RestMenu.colorFromGMST('fontcolor_color_normal'),
+  textNormalOver = RestMenu.colorFromGMST('fontcolor_color_normal_over'),
+  textNormalPressed = RestMenu.colorFromGMST('fontcolor_color_normal_pressed'),
+  highlightNormal = RestMenu.colorFromGMST('fontcolor_color_big_normal'),
+  highlightOver = RestMenu.colorFromGMST('fontcolor_color_big_normal_over'),
+  highlightPressed = RestMenu.colorFromGMST('fontcolor_color_big_normal_pressed'),
+  journalNormal = RestMenu.colorFromGMST('FontColor_color_journal_link'),
+  journalOver = RestMenu.colorFromGMST('FontColor_color_journal_link_over'),
+  journalPressed = RestMenu.colorFromGMST('FontColor_color_journal_link_pressed'),
+}
+
+local function updateHighlight(highlightData)
+  local layout = highlightData.layout
+  local state = highlightData.state
+
+  if state == HighlightStates.DARK then
+    layout.props.color = RestMenu.userData.colors.highlightPressed
+    layout.props.size = util.vector2(30, 30)
+  elseif state == HighlightStates.MEDIUM then
+    layout.props.color = RestMenu.userData.colors.highlightOver
+    layout.props.size = util.vector2(40, 40)
+  elseif state == HighlightStates.NORMAL then
+    layout.props.color = RestMenu.userData.colors.highlightNormal
+    layout.props.size = util.vector2(32, 32)
+  end
+
+  if highlightData.update then
+    I.s3ChimSleep.Menu:update()
+  end
+end
+
+local function updateTime(left)
+  local menu = I.s3ChimSleep.Menu
+
+  local mainLayout = menu.layout
+
+  local hourBox = RestMenu.getElementByName('sleepTimeSelection', mainLayout)
+  local hours = hourBox.props.text
+
+  if left then
+    hours = hours - 1 >= 1 and hours - 1 or 24
+  else
+    hours = math.max(1, (hours + 1) % 25)
+  end
+
+  hourBox.props.text = tostring(hours)
+
+  menu:update()
+end
+
 --- Returns a container element with an interactive arrow
 --- for either increasing or decreasing the time spent resting
 --- @param left boolean: Whether the arrow should point left or right
 --- @return ui.TYPE.Flex
 function RestMenu.ArrowContainer(left)
   local arrowPath = 'textures/menu_scroll_' .. (left and 'left' or 'right') .. '.dds'
-  local arrowName = left and 'increase' or 'decrese' .. 'SleepArrow'
+  local arrowName = (left and 'decrease' or 'increase') .. 'SleepArrow'
   local containerName = arrowName .. 'Container'
 
   local arrow = {
@@ -123,7 +200,40 @@ function RestMenu.ArrowContainer(left)
     props = {
       resource = ui.texture { path = arrowPath },
       size = util.vector2(32, 32),
+      color = RestMenu.userData.colors.highlightNormal,
     },
+    events = {
+      mousePress = async:callback(function(_, layout)
+        updateHighlight {
+          state = HighlightStates.DARK,
+          layout = layout,
+        }
+        if RestMenu.timeStopFn then RestMenu.timeStopFn() end
+        RestMenu.timeStopFn = time.runRepeatedly(function() updateTime(left) end, .2, { initialDelay = 0 })
+      end),
+      mouseRelease = async:callback(function(_, layout)
+        updateHighlight {
+          state = HighlightStates.MEDIUM,
+          layout = layout,
+          update = true,
+        }
+        if RestMenu.timeStopFn then RestMenu.timeStopFn() end
+      end),
+      focusGain = async:callback(function(_, layout)
+          updateHighlight {
+            state = HighlightStates.MEDIUM,
+            layout = layout,
+            update = true,
+          }
+      end),
+      focusLoss = async:callback(function(_, layout)
+        updateHighlight {
+          state = HighlightStates.NORMAL,
+          layout = layout,
+          update = true,
+        }
+      end),
+    }
   }
 
   return {
@@ -155,14 +265,24 @@ function RestMenu.SleepTimeContainer()
     },
     content = ui.content {
       {
-        type = ui.TYPE.Text,
+        type = ui.TYPE.TextEdit,
         name = 'sleepTimeSelection',
+        external = { grow = 1, stretch = 1 },
         props = {
           text = '24',
           textAlignH = ui.ALIGNMENT.Center,
           textAlignV = ui.ALIGNMENT.Center,
-          textColor = constants.normalColor,
+          textColor = RestMenu.userData.colors.textNormal,
           textSize = 48,
+        },
+        events = {
+          textChanged = async:callback(function(input, layout)
+              local subInput = input:gsub('%D', '')
+              local hours = tonumber(subInput) or 24
+              local newHours = math.min(24, math.max(1, hours))
+              layout.props.text = tostring(newHours)
+              I.s3ChimSleep.Menu:update()
+          end),
         },
       }
     },
@@ -198,7 +318,7 @@ function RestMenu.Button(text)
       relativeSize = util.vector2(0.25, 1),
       text = text,
       textSize = constants.textHeaderSize,
-      textColor = constants.normalColor,
+      textColor = RestMenu.userData.colors.textNormal,
       textAlignH = ui.ALIGNMENT.Center,
       textAlignV = ui.ALIGNMENT.Center,
       autoSize = false,
@@ -260,7 +380,7 @@ function RestMenu.TextBox(text)
     type = ui.TYPE.Text,
     props = {
       text = text,
-      textColor = constants.normalColor,
+      textColor = RestMenu.userData.colors.textNormal,
       textSize = constants.textHeaderSize,
       textAlignH = ui.ALIGNMENT.Center,
       textAlignV = ui.ALIGNMENT.Center,
@@ -270,12 +390,14 @@ function RestMenu.TextBox(text)
   return textBox
 end
 
-RestMenu.startDrag = async:callback(function(coord)
-  RestMenu.userData.doDrag = true
-  RestMenu.userData.lastMousePos = coord.position
+RestMenu.startDrag = async:callback(function(mouseEvent)
+    if mouseEvent.button ~= 1 then return end
+    RestMenu.userData.doDrag = true
+    RestMenu.userData.lastMousePos = mouseEvent.position
 end)
 
-RestMenu.stopDrag = async:callback(function()
+RestMenu.stopDrag = async:callback(function(mouseEvent)
+    if mouseEvent.button ~= 1 then return end
     RestMenu.userData.doDrag = false
 end)
 
@@ -313,14 +435,14 @@ end
 --- Returns a ui layout with the input name
 --- @param name string: The name of the element to find
 --- @return ui.Layout
-function RestMenu:getElementByName(name)
-  for _, child in ipairs(self.content or {}) do
-    if child.props and child.props.name == name then
+function RestMenu.getElementByName(name, layout)
+  for _, child in ipairs(layout.content or {}) do
+    if child.name and child.name == name then
       return child
     end
-    local found = self:getElementByName(child, name)
+    local found = RestMenu.getElementByName(name, child)
     if found then return found end
   end
 end
 
-return RestMenu
+return RestMenu:new()
