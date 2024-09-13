@@ -55,8 +55,9 @@ function SleepManager.makeSleepMenu()
     return
   end
 
-  sleepMenu = ui.create(RestMenu:new())
+  sleepMenu = ui.create(RestMenu)
 end
+
 SleepManager.makeSleepMenu()
 
 -- I.UI.registerWindow('WaitDialog', SleepManager.makeSleepMenu, SleepManager.makeSleepMenu)
