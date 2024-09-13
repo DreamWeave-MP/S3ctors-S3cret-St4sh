@@ -156,6 +156,9 @@ RestMenu.userData.colors = {
   textNormal = RestMenu.colorFromGMST('fontcolor_color_normal'),
   textNormalOver = RestMenu.colorFromGMST('fontcolor_color_normal_over'),
   textNormalPressed = RestMenu.colorFromGMST('fontcolor_color_normal_pressed'),
+  textAnswer = RestMenu.colorFromGMST('fontcolor_color_answer'),
+  textAnswerOver = RestMenu.colorFromGMST('fontcolor_color_answer_over'),
+  textAnswerPressed = RestMenu.colorFromGMST('fontcolor_color_answer_pressed'),
   highlightNormal = RestMenu.colorFromGMST('fontcolor_color_big_normal'),
   highlightOver = RestMenu.colorFromGMST('fontcolor_color_big_normal_over'),
   highlightPressed = RestMenu.colorFromGMST('fontcolor_color_big_normal_pressed'),
@@ -167,15 +170,16 @@ RestMenu.userData.colors = {
 local function updateButtonHighlight(highlightData)
   local layout = highlightData.layout
   local state = highlightData.state
+  local colors = RestMenu.userData.colors
 
   if state == HighlightStates.DARK then
-    layout.props.color = RestMenu.userData.colors.textNormalPressed
-    layout.props.textSize = constants.textHeaderSize - 2
+    layout.props.textColor = colors.textAnswer
+    layout.props.textSize = constants.textHeaderSize - 1
   elseif state == HighlightStates.MEDIUM then
-    layout.props.color = RestMenu.userData.colors.textNormalOver
+    layout.props.textColor = colors.textNormalOver
     layout.props.textSize = constants.textHeaderSize + 2
   elseif state == HighlightStates.NORMAL then
-    layout.props.color = RestMenu.userData.colors.textNormal
+    layout.props.textColor = colors.textNormal
     layout.props.textSize = constants.textHeaderSize
   end
 
@@ -412,7 +416,7 @@ end)
 local function cancelEvent(clicked, layout)
     if clicked then
       updateButtonHighlight {
-        state = HighlightStates.NORMAL,
+        state = HighlightStates.DARK,
         layout = layout,
         update = true,
       }
