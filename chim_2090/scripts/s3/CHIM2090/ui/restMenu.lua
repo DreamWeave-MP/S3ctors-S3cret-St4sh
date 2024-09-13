@@ -247,7 +247,11 @@ function RestMenu.ArrowContainer(left)
           layout = layout,
         }
         if RestMenu.timeStopFn then RestMenu.timeStopFn() end
-        RestMenu.timeStopFn = time.runRepeatedly(function() updateTime(left) end, .2
+        RestMenu.timeStopFn = time.runRepeatedly(function()
+            if not I.s3ChimSleep.Menu.layout.props.visible then RestMenu.timeStopFn() return end
+            updateTime(left)
+        end
+          , .2
           , { initialDelay = 0 })
       end),
       mouseRelease = async:callback(function(_, layout)
