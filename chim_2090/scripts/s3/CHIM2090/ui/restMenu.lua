@@ -102,7 +102,18 @@ function RestMenu.DateHeader()
   dateHeader.props.relativeSize = RestMenu.userData.minorSize
   dateHeader.props.textColor = RestMenu.userData.colors.textHeader
   dateHeader.name = 'dateHeader'
+  RestMenu.startUpdateDate()
   return dateHeader
+end
+
+function RestMenu.startUpdateDate()
+  RestMenu.userData.dateUpdate = time.runRepeatedly(function()
+      local restMenu = I.s3ChimSleep.Menu
+      if not restMenu.layout.props.visible then return end
+      local dateHeader = RestMenu.getElementByName('dateHeader', I.s3ChimSleep.Menu.layout)
+      dateHeader.props.text = calendar.formatGameTime(getDateStr())
+      restMenu:update()
+  end, 60, { initialDelay = 0, type = time.GameTime })
 end
 
 --- Returns a text element describing
