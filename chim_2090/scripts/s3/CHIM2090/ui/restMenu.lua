@@ -15,7 +15,11 @@ local Object = require('scripts.s3.CHIM2090.lib.object')
 --- for Starwind or Morrowind
 --- @return string
 local function getDateStr()
-  return '%H:%M, Day %d of %b, %Y BBY'
+  if core.contentFiles.has('Starwind.omwaddon') or core.contentFiles.has('StarwindRemasteredPatch.esm') then
+    return '%H:%M, Day %d of %b, %Y BBY'
+  else
+    return '%H:%M, Day %d of %b, 3E%Y'
+  end
 end
 
 --- The RestMenu class
