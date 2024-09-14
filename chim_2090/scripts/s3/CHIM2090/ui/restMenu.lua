@@ -50,7 +50,11 @@ local RestMenu = {
     lastMousePos = nil,
     majorSize = util.vector2(1, .35),
     minorSize = util.vector2(1, .125),
-    RestString = 'Sleeping',
+    RestOnGroundString = 'You will be sleeping on the ground. It won\'t be very comfortable.',
+    OutsideBedString = 'You will be sleeping outside. It might actually be pretty nice.',
+    BedString = 'You will be sleeping in a bed. It should be pretty comfortable.',
+    OwnedBedString = 'You will be sleeping in your own bed. It will be very comfortable.',
+    BedrollString = 'You will be sleeping on a bedroll. It won\'t be great, but much better than the floor.',
     WaitString = 'You cannot sleep here. You\'ll need to find a bed.',
   }
 }
@@ -110,13 +114,40 @@ function RestMenu.DateHeader()
 end
 
 function RestMenu.startUpdateDate()
-  RestMenu.userData.dateUpdate = time.runRepeatedly(function()
-      local restMenu = I.s3ChimSleep.Menu
-      if not restMenu.layout.props.visible then return end
-      local dateHeader = RestMenu.getElementByName('dateHeader', I.s3ChimSleep.Menu.layout)
-      dateHeader.props.text = calendar.formatGameTime(getDateStr())
-      restMenu:update()
-  end, 60, { initialDelay = 0, type = time.GameTime })
+    RestMenu.userData.dateUpdate = time.runRepeatedly(function()
+        local restMenu = I.s3ChimSleep.Menu
+        if not restMenu.layout.props.visible then return end
+        local dateHeader = RestMenu.getElementByName('dateHeader', I.s3ChimSleep.Menu.layout)
+        dateHeader.props.text = calendar.formatGameTime(getDateStr())
+        restMenu:update()
+    end, 60, { initialDelay = 0, type = time.GameTime })
+end
+
+function RestMenu.updateSleepInfo(sleepInfo)
+  local sleepInfoBox = RestMenu.getElementByName('sleepInfoBox', I.s3ChimSleep.Menu.layout)
+  local newString = ''
+
+  if sleepInfo.sleeping then
+    if sleepInfo.sleepingOnGround then
+      newString = RestMenu.userData.RestOnGroundString
+    elseif sleepInfo.fromBedroll then
+      if sleepInfo.isOutside then
+        newString = RestMenu.userData.OutsideBedString
+      else
+        newString = RestMenu.userData.BedrollString
+      end
+    elseif sleepInfo.fromOwnedBed then
+      newString = RestMenu.userData.OwnedBedString
+    else
+      newString = RestMenu.userData.BedString
+    end
+  else
+    newString = RestMenu.userData.WaitString
+  end
+
+  sleepInfoBox.props.text = newString
+
+  if sleepInfo.update then I.s3ChimSleep.Menu:update() end
 end
 
 --- Returns a text element describing
@@ -124,7 +155,9 @@ end
 --- @return ui.TYPE.Text
 function RestMenu.SleepInfoString()
   local sleepInfo = RestMenu.TextBox(RestMenu.userData.RestString)
-  sleepInfo.props.relativeSize = RestMenu.userData.minorSize
+  sleepInfo.props.relativeSize = util.vector2(.8, .15)
+  sleepInfo.props.multipline = true
+  sleepInfo.props.wordWrap = true
   sleepInfo.name = 'sleepInfoBox'
   return sleepInfo
 end
