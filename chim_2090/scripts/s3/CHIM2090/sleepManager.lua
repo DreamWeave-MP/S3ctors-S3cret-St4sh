@@ -31,15 +31,14 @@ print(string.format("%s loaded version %s. Thank you for playing %s! <3",
                     modInfo.version,
                     modInfo.name))
 
-local didRest = false
 local fromBed = false
 local fromBedroll = false
 local fromOwnedBed = false
+local restOrWait = false
+local sleepingOnGround = false
 local nearbyActorStats = {}
 local oldWorldTime = core.getGameTime()
-local restOrWait = false
 local sleepMultiplier = 1.0
-local sleepingOnGround = false
 
 local sleepMenu = ui.create(RestMenu)
 
@@ -50,9 +49,14 @@ function SleepManager.makeSleepMenu(state)
   local sleepProps = sleepMenu.layout.props
   if state == sleepProps.visible then return end
 
-  sleepProps.visible = not sleepProps.visible
+  sleepProps.visible = state
 
   if not state then
+    fromBed = false
+    fromBedroll = false
+    fromOwnedBed = false
+    restOrWait = false
+    sleepingOnGround = false
     sleepMenu:update()
     I.UI.setMode()
   end
@@ -122,22 +126,15 @@ function SleepManager.handleUiMode(data)
       sleepMultiplier = sleepMultiplier + SleepManager.PillowMult
     end
 
-    RestMenu.updateSleepInfo {
-      fromBedroll = fromBedroll
-      , fromOwnedBed = fromOwnedBed
-      , isOutside = isOutside
-      , multiplier = sleepMultiplier
-      , sleeping = restOrWait
-      , sleepingOnGround = sleepingOnGround
-    }
-
-    RestMenu.updateHoursToHeal {
-      needsToHeal = s3lf.health.current < s3lf.health.base,
-      sleepMultiplier = sleepMultiplier,
+    RestMenu.refreshMenuState {
+      fromBedroll = fromBedroll,
+      fromOwnedBed = fromOwnedBed,
+      isOutside = isOutside,
       restOrWait = restOrWait,
+      sleeping = restOrWait,
+      sleepMultiplier = sleepMultiplier,
+      sleepingOnGround = sleepingOnGround,
     }
-
-    sleepMenu:update()
 
     SleepManager.debugLog('rest menu opened, restOrWait:', tostring(restOrWait)
                             , 'fromBed:', tostring(fromBed)
@@ -145,17 +142,10 @@ function SleepManager.handleUiMode(data)
                             , 'fromBedroll:', tostring(fromBedroll)
                             , 'sleepingOnGround:', tostring(sleepingOnGround)
                             , 'sleepMultiplier:', sleepMultiplier)
-    SleepManager.getLocalActorHealthTable()
-  elseif data.oldMode == 'Rest' then
-    fromOwnedBed = false
-    fromBed = false
-    fromBedroll = false
-    didRest = true
-  elseif data.newMode ~= 'Rest' then
-    didRest = false
   end
 end
 
+local didRest = nil
 function SleepManager.handleSleepFrame()
   if core.isWorldPaused() then return end
   local currentWorldTime = core.getGameTime()
@@ -180,14 +170,6 @@ function SleepManager.handleSleepFrame()
   end
 
   oldWorldTime = core.getGameTime()
-end
-
-function SleepManager.getLocalActorHealthTable()
-  nearbyActorStats = {}
-  for _, actor in pairs(nearby.actors) do
-    nearbyActorStats[actor.id] = s3lf.From(actor).health.current
-    SleepManager.debugLog('Added actor', actor.id, 'to nearbyActorStats')
-  end
 end
 
 function SleepManager.onUpdate(_dt)
