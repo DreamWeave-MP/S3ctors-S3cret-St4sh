@@ -89,10 +89,10 @@ function SleepManager.handleUiMode(data)
 
     sleepingOnGround = restOrWait and not fromBed
 
-    -- if sleepingOnGround and self.NoSleepOnGround then
-      -- I.UI.setMode()
-      -- return
-    -- end
+    if sleepingOnGround and SleepManager.NoSleepOnGround then
+      I.UI.setMode()
+      return
+    end
 
     if sleepingOnGround then
       sleepMultiplier = SleepManager.GroundSleepMult
