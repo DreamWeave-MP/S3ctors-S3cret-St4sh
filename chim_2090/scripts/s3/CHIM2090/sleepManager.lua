@@ -51,9 +51,11 @@ function SleepManager.makeSleepMenu(state)
   if state == sleepProps.visible then return end
 
   sleepProps.visible = not sleepProps.visible
-  sleepMenu:update()
 
-  if not state then I.UI.setMode() end
+  if not state then
+    sleepMenu:update()
+    I.UI.setMode()
+  end
 end
 
 I.UI.setPauseOnMode('Rest', false)
@@ -104,19 +106,31 @@ function SleepManager.handleUiMode(data)
       sleepMultiplier = SleepManager.OwnedSleepMult
     end
 
-    if s3lf.cell.isExterior or s3lf.cell:hasTag('QuasiExterior') then
-      if restOrWait and fromBed then
+    local isOutside = s3lf.cell.isExterior or s3lf.cell:hasTag('QuasiExterior')
+
+    if isOutside and not fromBedroll then
+      if restOrWait then
         sleepMultiplier = sleepMultiplier * SleepManager.OutdoorSleepMult
       else
         sleepMultiplier = sleepMultiplier * SleepManager.OutdoorWaitMult
       end
-    elseif not restOrWait then
+    elseif not isOutside and not restOrWait then
       sleepMultiplier = sleepMultiplier * SleepManager.IndoorWaitMult
     end
 
     if SleepManager.PillowEnable and SleepManager.playerHasPillow() then
       sleepMultiplier = sleepMultiplier + SleepManager.PillowMult
     end
+
+    RestMenu.updateSleepInfo {
+      fromBedroll = fromBedroll
+      , fromOwnedBed = fromOwnedBed
+      , isOutside = isOutside
+      , multiplier = sleepMultiplier
+      , sleeping = restOrWait
+      , sleepingOnGround = sleepingOnGround
+      , update = true
+    }
 
     SleepManager.debugLog('rest menu opened, restOrWait:', tostring(restOrWait)
                             , 'fromBed:', tostring(fromBed)
