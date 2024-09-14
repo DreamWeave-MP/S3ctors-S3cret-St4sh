@@ -129,8 +129,15 @@ function SleepManager.handleUiMode(data)
       , multiplier = sleepMultiplier
       , sleeping = restOrWait
       , sleepingOnGround = sleepingOnGround
-      , update = true
     }
+
+    RestMenu.updateHoursToHeal {
+      needsToHeal = s3lf.health.current < s3lf.health.base,
+      sleepMultiplier = sleepMultiplier,
+      restOrWait = restOrWait,
+    }
+
+    sleepMenu:update()
 
     SleepManager.debugLog('rest menu opened, restOrWait:', tostring(restOrWait)
                             , 'fromBed:', tostring(fromBed)
