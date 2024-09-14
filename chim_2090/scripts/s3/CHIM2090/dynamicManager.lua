@@ -59,9 +59,9 @@ function DynamicManager.canRegenerateHealth()
   return true
 end
 
-function DynamicManager:getSleepHealthRegenBase(sleepHours)
+function DynamicManager.getSleepHealthRegenBase()
   local healthMult = storage.globalSection("SettingsGlobal" .. modInfo.name .. 'Sleep'):get('RestHealthMult')
-  return sleepHours * healthMult * (s3lf.endurance.modified + s3lf.willpower.modified)
+  return healthMult * (s3lf.endurance.modified + s3lf.willpower.modified)
 end
 
 function DynamicManager:getSleepMagickaRegenBase(sleepHours)
@@ -93,7 +93,7 @@ end
 
 function DynamicManager:sleepHealthRecoveryActor(sleepData)
   if not self.canRegenerateHealth() then return end
-  local totalHealthRegen = self:getSleepHealthRegenBase(sleepData.time)
+  local totalHealthRegen = self:getSleepHealthRegenBase() * sleepData.time
   local newTotal = sleepData.oldHealth + totalHealthRegen
   s3lf.health.current = math.min(s3lf.health.base, newTotal)
   self.debugLog(s3lf.id, s3lf.recordId, 'Restored', s3lf.health.current - sleepData.oldHealth, 'health.')
@@ -102,7 +102,7 @@ end
 function DynamicManager:sleepHealthRecoveryPlayer(sleepData)
   if not self.canRegenerateHealth() then return end
 
-  local totalHealthRegen = self:getSleepHealthRegenBase(sleepData.time)
+  local totalHealthRegen = self:getSleepHealthRegenBase() * sleepData.time
 
   local newTotal = sleepData.oldHealth + totalHealthRegen
   local multipliedHealth = s3lf.health.base * sleepData.sleepMultiplier
