@@ -48,14 +48,17 @@ local RestMenu = {
     clickSound = 'sound/fx/menu click.wav',
     doDrag = false,
     lastMousePos = nil,
-    majorSize = util.vector2(1, .35),
+    sleepInfoSize = util.vector2(.8, .15),
+    majorSize = util.vector2(1, .3),
     minorSize = util.vector2(1, .125),
+    HoursToHealString = 'You will need to sleep for %d hours to recover from your wounds.',
     RestOnGroundString = 'You will be sleeping on the ground. It won\'t be very comfortable.',
     OutsideBedString = 'You will be sleeping outside. It might actually be pretty nice.',
     BedString = 'You will be sleeping in a bed. It should be pretty comfortable.',
     OwnedBedString = 'You will be sleeping in your own bed. It will be very comfortable.',
     BedrollString = 'You will be sleeping on a bedroll. It won\'t be great, but much better than the floor.',
     WaitString = 'You cannot sleep here. You\'ll need to find a bed.',
+    WaitNoHealString = 'Waiting does not heal your wounds.',
   }
 }
 
@@ -117,7 +120,7 @@ function RestMenu.startUpdateDate()
     RestMenu.userData.dateUpdate = time.runRepeatedly(function()
         local restMenu = I.s3ChimSleep.Menu
         if not restMenu.layout.props.visible then return end
-        local dateHeader = RestMenu.getElementByName('dateHeader', I.s3ChimSleep.Menu.layout)
+        local dateHeader = RestMenu.getElementByName('dateHeader', restMenu.layout)
         dateHeader.props.text = calendar.formatGameTime(getDateStr())
         restMenu:update()
     end, 60, { initialDelay = 0, type = time.GameTime })
@@ -145,9 +148,12 @@ function RestMenu.updateSleepInfo(sleepInfo)
     newString = RestMenu.userData.WaitString
   end
 
-  sleepInfoBox.props.text = newString
+  if not sleepInfoBox.props.visible then
+    sleepInfoBox.props.visible = true
+    sleepInfoBox.props.relativeSize = RestMenu.userData.sleepInfoSize
+  end
 
-  if sleepInfo.update then I.s3ChimSleep.Menu:update() end
+  sleepInfoBox.props.text = newString
 end
 
 --- Returns a text element describing
@@ -350,7 +356,7 @@ function RestMenu.SleepTimeContainer()
         name = 'sleepTimeSelection',
         external = { grow = 1, stretch = 1 },
         props = {
-          text = '24',
+          text = '1',
           textAlignH = ui.ALIGNMENT.Center,
           textAlignV = ui.ALIGNMENT.Center,
           textColor = RestMenu.userData.colors.textNormal,
@@ -410,13 +416,46 @@ function RestMenu.Button(text)
   }
 end
 
+function RestMenu.updateHoursToHeal(healData)
+  local menu = I.s3ChimSleep.Menu.layout
+  if not menu.props.visible then return end
+
+  local hoursToHeal = RestMenu.getElementByName('totalHoursToHeal', menu)
+  local sleepInfoBox = RestMenu.getElementByName('sleepInfoBox', menu)
+  local sleepTimeSelectionBox = RestMenu.getElementByName('sleepTimeSelection', menu)
+  local untilHealedButton = RestMenu.getElementByName('untilHealedButton', menu)
+
+  if not healData.needsToHeal then
+    hoursToHeal.props.text = sleepInfoBox.props.text
+    sleepInfoBox.props.visible = false
+    sleepInfoBox.props.relativeSize = util.vector2(0, 0)
+    sleepTimeSelectionBox.text = '1'
+  elseif not healData.restOrWait then
+    hoursToHeal.props.text = RestMenu.userData.WaitNoHealString
+  else
+    local healthPerHour = I.s3ChimDynamic.Manager.getSleepHealthRegenBase()
+    local multiplier = healData.sleepMultiplier
+    local healthToRecover = s3lf.health.base - s3lf.health.current
+
+    local numHoursToHeal = healthToRecover / (healthPerHour * multiplier)
+    numHoursToHeal = math.max(1, math.floor(numHoursToHeal + .5))
+    numHoursToHeal = tostring(numHoursToHeal)
+
+    hoursToHeal.props.text = RestMenu.userData.HoursToHealString:format(numHoursToHeal)
+    sleepTimeSelectionBox.props.text = numHoursToHeal
+
+    I.s3ChimSleep.Manager.debugLog('Hours to heal:', numHoursToHeal, 'Health per hour:', healthPerHour
+                                   , 'Multiplier:', multiplier, 'Health to recover:', healthToRecover)
+  end
+
+  untilHealedButton.props.visible = healData.needsToHeal and healData.restOrWait
+end
+
 --- Returns a text element
 --- describing how long it will take to heal via sleeping
 --- @return ui.TYPE.Text
 function RestMenu.HoursToHeal()
-  local hoursToHeal = RestMenu.TextBox('You will need to sleep for '
-                                       ..  'X'
-                                       .. ' hours to recover from your wounds.')
+  local hoursToHeal = RestMenu.TextBox('')
   hoursToHeal.props.multiline = true
   hoursToHeal.props.wordWrap = true
   hoursToHeal.props.relativeSize = util.vector2(.75, .2)
@@ -469,6 +508,7 @@ function RestMenu.BottomRowContainer()
   local cancelButton = RestMenu.Button('Cancel')
   local waitButton = RestMenu.Button('Wait')
   local untilHealedButton = RestMenu.Button('Until Healed')
+  untilHealedButton.name = 'untilHealedButton'
 
   local events = {
     focusGain = buttonHighlightEnter,
