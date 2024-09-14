@@ -2,6 +2,7 @@ local ambient = require('openmw.ambient')
 local async = require('openmw.async')
 local calendar = require('openmw_aux.calendar')
 local core = require('openmw.core')
+local nearby = require('openmw.nearby')
 local s3lf = require('scripts.s3.lf')
 local time = require('openmw_aux.time')
 local ui = require('openmw.ui')
@@ -46,6 +47,7 @@ local RestMenu = {
   },
   userData = {
     clickSound = 'sound/fx/menu click.wav',
+    nearbyActorStats = {},
     doDrag = false,
     lastMousePos = nil,
     sleepInfoSize = util.vector2(.8, .15),
@@ -264,6 +266,42 @@ local function updateTime(left)
   hourBox.props.text = tostring(hours)
 
   menu:update()
+end
+
+function RestMenu.updateLocalActorStats()
+  RestMenu.userData.nearbyActorStats = {}
+  for _, actor in pairs(nearby.actors) do
+    RestMenu.userData.nearbyActorStats[actor.id] = s3lf.From(actor).health.current
+    I.s3ChimSleep.Manager.debugLog('Added actor', actor.id, 'to nearbyActorStats')
+  end
+end
+
+function RestMenu.refreshMenuState(newState)
+  local sleepMenu = I.s3ChimSleep.Menu
+
+  RestMenu.updateLocalActorStats()
+
+  RestMenu.updateSleepInfo {
+    fromBedroll = newState.fromBedroll,
+    fromOwnedBed = newState.fromOwnedBed,
+    isOutside = newState.isOutside,
+    sleeping = newState.restOrWait,
+    sleepingOnGround = newState.sleepingOnGround,
+  }
+
+  RestMenu.updateHoursToHeal {
+    needsToHeal = s3lf.health.current < s3lf.health.base,
+    sleepMultiplier = newState.sleepMultiplier,
+    restOrWait = newState.restOrWait,
+  }
+
+  RestMenu.unhighlightAllButtons()
+
+  local waitButton = RestMenu.getElementByName('waitButton', sleepMenu.layout)
+
+  waitButton.props.text = newState.restOrWait and 'Sleep' or 'Wait'
+
+  sleepMenu:update()
 end
 
 --- Returns a container element with an interactive arrow
@@ -487,16 +525,28 @@ end)
 
 local function cancelEvent(clicked, layout)
     if clicked then
-      updateButtonHighlight {
-        state = HighlightStates.DARK,
-        layout = layout,
-        update = true,
-      }
-      layout.userData.isFocused = false
+        updateButtonHighlight {
+            state = HighlightStates.DARK,
+            layout = layout,
+            update = true,
+        }
+        layout.userData.isFocused = false
     else
-      ambient.playSoundFile(RestMenu.userData.clickSound)
-      I.UI.setMode()
+        ambient.playSoundFile(RestMenu.userData.clickSound)
+        I.UI.setMode()
     end
+end
+
+function RestMenu.unhighlightAllButtons()
+  local layout = I.s3ChimSleep.Menu.layout
+  for _, element in pairs({ 'waitButton', 'untilHealedButton', 'cancelButton' }) do
+    local button = RestMenu.getElementByName(element, layout)
+    button.userData.isFocused = false
+    updateButtonHighlight {
+      state = HighlightStates.NORMAL,
+      layout = button,
+    }
+  end
 end
 
 --- Returns a container element with
@@ -508,7 +558,9 @@ function RestMenu.BottomRowContainer()
   local cancelButton = RestMenu.Button('Cancel')
   local waitButton = RestMenu.Button('Wait')
   local untilHealedButton = RestMenu.Button('Until Healed')
+  cancelButton.name = 'cancelButton'
   untilHealedButton.name = 'untilHealedButton'
+  waitButton.name = 'waitButton'
 
   local events = {
     focusGain = buttonHighlightEnter,
