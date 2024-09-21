@@ -365,13 +365,13 @@ end
 --- Takes text as input and gives back a laid-out button /w border
 --- @param text string: The text to display on the button
 --- @return ui.TYPE.Container
-function common.createButton(text, noBackground)
+function common.createButton(text, noBackground, newAlpha)
   local template = auxUi.deepLayoutCopy(templates.boxTransparentThick)
 
   if noBackground then
     table.remove(template.content, 1)
   else
-    template.content[1].props.alpha = 0.5
+    template.content[1].props.alpha = newAlpha or 0.5
   end
 
 return {
