@@ -9,42 +9,29 @@ local I = require('openmw.interfaces')
 local BaseUI = require('scripts.s3.transmog.ui.baseobject')
 local common = require('scripts.s3.transmog.ui.common')
 local const = common.const
-local size = require('scripts.s3.transmog.const.size')
 
 --- Generates the element containing the item image/icon
 --- It's contained inside of an ItemPortraitContainer
 --- @return ui.TYPE.Container
 local function PortraitDefault()
-  local boxHPos = (1 - size.LPANEL.UPGRADE_PORTRAIT_BOX.x) / 2
-
   return {
+    template = I.MWUI.templates.bordersThick,
+    type = ui.TYPE.Flex,
+    props = {
+      align = ui.ALIGNMENT.Center,
+      arrange = ui.ALIGNMENT.Center,
+      autoSize = false,
+    },
     external = {
-      grow = 1,
-      stretch = 1,
+      grow = .5,
+      stretch = .75,
     },
     content = ui.content {
       {
-        template = I.MWUI.templates.bordersThick,
-        type = ui.TYPE.Flex,
+        template = I.MWUI.templates.interval,
         props = {
-          align = ui.ALIGNMENT.Center,
-          arrange = ui.ALIGNMENT.Center,
-          autoSize = false,
-          relativePosition  = util.vector2(boxHPos, 0),
-          relativeSize = size.LPANEL.UPGRADE_PORTRAIT_BOX,
+          name = "Default",
         },
-        external = {
-          grow = 1,
-        },
-        content = ui.content {
-          {
-            template = I.MWUI.templates.interval,
-            props = {
-              name = "Default",
-              relativeSize = size.LPANEL.UPGRADE_ITEM_SIZE,
-            },
-          }
-        }
       }
     }
   }
@@ -59,7 +46,7 @@ local function PortraitTextDefault()
     props = {
       text = "Empty",
       textColor = common.const.TEXT_COLOR,
-      textSize = common.const.FONT_SIZE,
+      textSize = common.getTextSize(),
       textAlignH = ui.ALIGNMENT.Center,
       textAlignV = ui.ALIGNMENT.Center,
       multiline = true,
@@ -82,10 +69,10 @@ local ItemPortraitContainer = {
   type = ui.TYPE.Flex,
   props = {
     arrange = ui.ALIGNMENT.Center,
-    relativeSize = size.LPANEL.UPGRADE_PORTRAIT,
   },
   external = {
     grow = 1,
+    stretch = 1,
   },
   events = {
     mousePress = async:callback(
@@ -119,45 +106,37 @@ function ItemPortraitContainer:populate(recordId)
   self.content = ui.content {
     {
       template = I.MWUI.templates.bordersThick,
+      type = ui.TYPE.Flex,
+      props = {
+        align = ui.ALIGNMENT.Center,
+        arrange = ui.ALIGNMENT.Center,
+        autoSize = false,
+        horizontal = true,
+      },
       external = {
-        grow = 1,
-        stretch = 1,
+        grow = .5,
+        stretch = .75,
       },
       content = ui.content {
         {
-          type = ui.TYPE.Flex,
+          type = ui.TYPE.Image,
           props = {
-            align = ui.ALIGNMENT.End,
-            arrange = ui.ALIGNMENT.Center,
-            relativeSize = util.vector2(1, 1),
+            name = recordId .. " portrait",
+            resource = ui.texture { path = itemRecord.icon },
+            relativeSize = util.vector2(.75, .75),
           },
-          external = {
-            grow = 1,
-          },
-          content = ui.content {
-            {
-              type = ui.TYPE.Image,
-              external = {
-                grow = 1,
-              },
-              props = {
-                name = recordId .. " portrait",
-                resource = ui.texture{ path = itemRecord.icon },
-                relativeSize = size.LPANEL.UPGRADE_ITEM_SIZE,
-              },
-            }
-          }
-        },
-
+        }
       }
     },
+
     {
       type = ui.TYPE.Text,
       props = {
         text = itemRecord.name,
         textColor = const.TEXT_COLOR,
-        textSize = const.FONT_SIZE,
+        textSize = common.getTextSize(),
         textAlignH = ui.ALIGNMENT.Center,
+        textAlignV = ui.ALIGNMENT.Center,
         multiline = true,
         wordWrap = true,
       },
