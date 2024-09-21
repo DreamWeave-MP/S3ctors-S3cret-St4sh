@@ -7,7 +7,7 @@ local I = require('openmw.interfaces')
 local playerSettings = require('openmw.storage').playerSection('Settingss3_transmogMenuGroup'):asTable()
 
 return function()
-  local button = common.createButton("Create")
+  local button = common.createButton("Create", false, .87)
   button.events.mousePress = async:callback(I.transmogActions.acceptTransmog)
   if not I.transmogActions.message.createExplain then
     common.messageBoxSingleton("Confirm Explanation",

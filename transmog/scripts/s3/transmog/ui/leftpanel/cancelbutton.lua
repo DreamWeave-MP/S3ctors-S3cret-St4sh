@@ -5,7 +5,7 @@ local I = require('openmw.interfaces')
 local Aliases = require('scripts.s3.transmog.ui.menualiases')
 
 return function()
-  local button = common.createButton("Cancel")
+  local button = common.createButton("Cancel", false, .87)
   button.events.mousePress = async:callback(
     function (_, _layout)
       local mainMenu = Aliases('main menu')

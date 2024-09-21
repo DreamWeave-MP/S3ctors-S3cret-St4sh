@@ -4,7 +4,7 @@ local common = require('scripts.s3.transmog.ui.common')
 local I = require('openmw.interfaces')
 
 return function()
-  local button = common.createButton("Clear")
+  local button = common.createButton("Clear", false, .87)
   button.events.mousePress = async:callback(function()
       local Aliases = I.transmogActions.MenuAliases()
       if not Aliases['confirm screen'] or not Aliases['confirm screen input']
