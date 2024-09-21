@@ -124,12 +124,10 @@ ItemPortrait.itemFitsSlot = function(itemData, widget)
 
   if widget.props.name == "New Item" and not targetIsDefault then
     local basePortraitData = I.transmogActions.MenuAliases('base item'):getUserData()
-    if basePortraitData
-      and basePortraitData.type == types.Book
-      and (itemData.type ~= types.Weapon
-           and itemData.type ~= types.Armor
-           and itemData.type ~= types.Clothing) then
-      return false
+    if basePortraitData and basePortraitData.type == types.Book then
+      local canStealEnchantment = itemData.type ~= types.Book
+      local itemHasEnchantment = itemData.record.enchant ~= nil
+      return canStealEnchantment and itemHasEnchantment
     end
   end
 
