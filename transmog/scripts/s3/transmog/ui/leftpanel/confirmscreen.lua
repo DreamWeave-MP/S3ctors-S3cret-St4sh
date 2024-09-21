@@ -38,17 +38,24 @@ return function(itemData)
       },
       {
         template = I.MWUI.templates.bordersThick,
-        type = ui.TYPE.Image,
         props = {
-          name = "Name Input Box",
           relativeSize = util.vector2(.8, .15),
-          resource = ui.texture { path = 'white' },
-          color = util.color.rgb(0, 0, 0),
-          alpha = .5,
         },
         content = ui.content {
-          nameInputBox,
-        }
+          {
+            type = ui.TYPE.Image,
+            props = {
+              name = "Name Input Box",
+              relativeSize = util.vector2(1, 1),
+              resource = ui.texture { path = 'white' },
+              color = util.color.rgb(0, 0, 0),
+              alpha = .5,
+            },
+            content = ui.content {
+              nameInputBox,
+            }
+          },
+        },
       },
       {
         type = ui.TYPE.Flex,
