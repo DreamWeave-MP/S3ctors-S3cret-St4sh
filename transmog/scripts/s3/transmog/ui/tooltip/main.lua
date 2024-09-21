@@ -1,6 +1,4 @@
-local aux_util = require('openmw_aux.util')
 local async = require("openmw.async")
-local input = require("openmw.input")
 local types = require("openmw.types")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
@@ -42,7 +40,7 @@ _toolTip.iconAndNameRow = function()
         props = {
           name = "Tooltip Item Name Text",
           relativeSize = util.vector2(1, 1),
-          textColor = util.color.hex('ffffff'),
+          textColor = const.TOOLTIP_TEXT_COLOR,
           textSize = 24,
           textAlignH = ui.ALIGNMENT.Start,
           textAlignV = ui.ALIGNMENT.Center,
