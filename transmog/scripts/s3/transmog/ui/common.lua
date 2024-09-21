@@ -1,7 +1,9 @@
 local async = require('openmw.async')
+-- local auxUi = require('openmw_aux.ui')
 local aux_util = require('openmw_aux.util')
+local core = require('openmw.core')
 local input = require('openmw.input')
-local self = require('openmw.self')
+-- local self = require('openmw.self')
 local types = require('openmw.types')
 local ui = require('openmw.ui')
 local util = require('openmw.util')
@@ -13,21 +15,38 @@ local templates = I.MWUI.templates
 local xRes = ui.screenSize().x
 local yRes = ui.screenSize().y
 
+local function colorFromGMST(gmst)
+  local colorString = core.getGMST(gmst)
+  local numberTable = {}
+  for numberString in colorString:gmatch("([^,]+)") do
+    if #numberTable == 3 then break end
+    local number = tonumber(numberString:match("^%s*(.-)%s*$"))
+    if number then
+      table.insert(numberTable, number / 255)
+    end
+  end
+
+  assert(#numberTable == 3, 'Invalid color GMST name: ' .. gmst)
+
+  return util.color.rgb(table.unpack(numberTable))
+end
+
 --- @class common
 --- @field const table<string, any>: Constants used throughout the UI
 local common = {
   const = {
     CHAR_ROTATE_SPEED = 0.3,
     DEFAULT_ITEM_TYPES = {[types.Clothing] = true},
-    WINDOW_HEIGHT = math.min(640, yRes * 0.95), -- Occupy 800px preferably, or full vertical size
-    RIGHT_PANE_WIDTH = math.min(720, xRes * 0.30), -- Occupy 600px preferably, or 25% horizontal size
-    LEFT_PANE_WIDTH = math.min(140, xRes * 0.2), -- Occupy 200px preferably, or 20% horizontal size
-    TEXT_COLOR = util.color.rgb(255, 255, 255),
+    WINDOW_HEIGHT = math.min(640, yRes * 0.95),
+    RIGHT_PANE_WIDTH = math.min(720, xRes * 0.30),
+    LEFT_PANE_WIDTH = math.min(140, xRes * 0.2),
+    TEXT_COLOR = colorFromGMST('fontcolor_color_normal'),
+    TOOLTIP_TEXT_COLOR = colorFromGMST('fontcolor_color_header'),
     BACKGROUND_COLOR = util.color.rgb(0, 0, 0),
     HIGHLIGHT_COLOR = util.color.rgba(44 / 255, 46 / 255, 45 / 255, 0.5),
     IMAGE_SIZE = util.vector2(32, 32),
     INVENTORY_IMAGE_SIZE = util.vector2(48, 48),
-    FONT_SIZE = 18,
+    FONT_SIZE = 16,
     HEADER_FONT_SIZE = 24,
     HEADER_REL_SIZE = 0.1,
     FOOTER_REL_SIZE = 0.05,
@@ -62,100 +81,80 @@ local common = {
       name = "Armor",
       wearable = true,
       recordGenerator = types.Armor.record,
+
       icon = {
         Light = "icons\\k\\stealth_lightarmor.dds",
         Medium = "icons\\k\\combat_mediumarmor.dds",
         Heavy = "icons\\k\\combat_heavyarmor.dds",
       },
+
       [types.Armor.TYPE.Cuirass] = {
         name = "Cuirass",
         slot = types.Actor.EQUIPMENT_SLOT.Cuirass,
-        weightClasses = {
-          low = 18.0,
-          high = 27.0,
-        }
+        weight = core.getGMST('iCuirassWeight'),
       },
+
       [types.Armor.TYPE.Greaves] = {
         name = "Greaves",
         slot = types.Actor.EQUIPMENT_SLOT.Greaves,
-        weightClasses = {
-          low = 9.0,
-          high = 13.5,
-        }
+        weight = core.getGMST('iGreavesWeight'),
       },
+
       [types.Armor.TYPE.Boots] = {
         name = "Boots",
         slot = types.Actor.EQUIPMENT_SLOT.Boots,
-        weightClasses = {
-          low = 12.0,
-          high = 18.0,
-        }
+        weight = core.getGMST('iBootsWeight'),
       },
+
       [types.Armor.TYPE.Helmet] = {
         name = "Helmet",
         slot = types.Actor.EQUIPMENT_SLOT.Helmet,
-        weightClasses = {
-          low = 3.0,
-          high = 4.5,
-        }
+        weight = core.getGMST('iHelmWeight'),
       },
+
       [types.Armor.TYPE.LPauldron] = {
         name = "Left Pauldron",
         slot = types.Actor.EQUIPMENT_SLOT.LeftPauldron,
-        weightClasses = {
-          low = 6.0,
-          high = 9.0,
-        },
+        weight = core.getGMST('iCuirassWeight'),
       },
+
       [types.Armor.TYPE.RPauldron] = {
         name = "Right Pauldron",
         slot = types.Actor.EQUIPMENT_SLOT.RightPauldron,
-        weightClasses = {
-          low = 6.0,
-          high = 9.0,
-        },
+        weight = core.getGMST('iPauldronWeight'),
       },
+
       [types.Armor.TYPE.LGauntlet] = {
         name = "Left Gauntlet",
         slot = types.Actor.EQUIPMENT_SLOT.LeftGauntlet,
-        weightClasses = {
-          low = 3.0,
-          high = 4.5,
-        }
+        weight = core.getGMST('iGauntletWeight'),
       },
+
       [types.Armor.TYPE.LBracer] = {
         name = "Left Bracer",
         slot = types.Actor.EQUIPMENT_SLOT.LeftGauntlet,
-        weightClasses = {
-          low = 3.0,
-          high = 4.5,
-        }
+        weight = core.getGMST('iGauntletWeight'),
       },
+
       [types.Armor.TYPE.RGauntlet] = {
         name = "Right Gauntlet",
         slot = types.Actor.EQUIPMENT_SLOT.RightGauntlet,
-        weightClasses = {
-          low = 3.0,
-          high = 4.5,
-        }
+        weight = core.getGMST('iGauntletWeight'),
       },
+
       [types.Armor.TYPE.RBracer] = {
         name = "Right Bracer",
         slot = types.Actor.EQUIPMENT_SLOT.RightGauntlet,
-        weightClasses = {
-          low = 3.0,
-          high = 4.5,
-        }
+        weight = core.getGMST('iGauntletWeight'),
       },
+
       [types.Armor.TYPE.Shield] = {
         name = "Shield",
         icon = "icons\\k\\combat_block.dds",
         slot = types.Actor.EQUIPMENT_SLOT.CarriedLeft,
-        weightClasses = {
-          low = 9.0,
-          high = 13.5,
-        }
+        weight = core.getGMST('iShieldWeight'),
       },
+
     },
     [types.Weapon] = {
       name = "Weapon",
@@ -328,27 +327,32 @@ local common = {
   }
 }
 
+function common.getTextSize()
+  if ui.layers[1].size.y <= 600 then
+    return common.const.FONT_SIZE - 8
+  elseif ui.layers[1].size.y <= 720 then
+    return common.const.FONT_SIZE - 4
+  elseif ui.layers[1].size.y <= 1080 then
+    return common.const.FONT_SIZE
+  elseif ui.layers[1].size.y >= 2160 then
+    return common.const.FONT_SIZE + 8
+  end
+end
+
 --- Just a simple text box, this is used in multiple places
 --- @param text string: The text to display
 --- @return ui.TYPE.Text
 function common.TextBox(text)
+
   local textBox = {
     type = ui.TYPE.Text,
     props = {
       text = text,
       textColor = common.const.TEXT_COLOR,
-      textSize = common.const.FONT_SIZE,
+      textSize = common.getTextSize(),
       autoSize = true,
     }
   }
-
-  -- We'll probably need to extend this throughout the app but I want to get a
-  -- rough gauge for what vertical resolutions people actually use
-  if common.const.RIGHT_PANE_WIDTH + common.const.LEFT_PANE_WIDTH < 600 then
-    --textBox.props.wordWrap = true
-    textBox.props.textSize = 24
-    common.const.HEADER_FONT_SIZE = 20
-  end
 
   local widget = {
     template = templates.padding,
@@ -411,7 +415,7 @@ common.templateBoxImageWithText = function(widgetName, iconPath)
           horizontal = true,
         },
         content = ui.content {
-          { external = { grow = 1 }, props = { name = "Spacer Left" } },
+          { external = { grow = 1 }, name = "Spacer Left" },
           {
             type = ui.TYPE.Text,
             external = {
@@ -427,7 +431,7 @@ common.templateBoxImageWithText = function(widgetName, iconPath)
               autoSize = false,
             },
           },
-          { external = { grow = 1 }, props = { name = "Spacer Right" } },
+          { external = { grow = 1 }, name = "Spacer Right" },
         }
       },
     }
@@ -524,6 +528,7 @@ common.messageBoxSingleton = function(widgetName, message, duration)
       I.transmogActions.message.singleton:update()
     end
   else
+    local shadowColor = common.const.TEXT_COLOR:asRgb() * .5
     I.transmogActions.message.singleton = ui.create {
       template = I.MWUI.templates.boxTransparentThick,
       layer = 'Notification',
@@ -550,7 +555,7 @@ common.messageBoxSingleton = function(widgetName, message, duration)
                 wordWrap = true,
                 multiline = true,
                 textShadow = true,
-                textShadowColor = util.color.rgb(40, 40, 40),
+                textShadowColor = util.color.rgb(shadowColor.x, shadowColor.y, shadowColor.z),
                 textSize = 20,
                 textAlignV = ui.ALIGNMENT.Center,
                 textAlignH = ui.ALIGNMENT.Center,
@@ -591,12 +596,15 @@ end
 --- @param armorType types.Armor.TYPE: The type of armor
 --- @param weight number: The weight of the armor
 common.getArmorClass = function(armorType, weight)
-  local classes = common.recordAliases[types.Armor][armorType].weightClasses
-  return classes and (
-    (weight <= classes.low and "Light") or
-    (weight >= classes.high and "Heavy") or
-    "Medium"
-  )
+  local epsilon = 5e-4
+  local weightMod = common.recordAliases[types.Armor][armorType].weight
+  local lightMaxmod = core.getGMST('fLightMaxMod')
+  local medMaxmod = core.getGMST('fMedMaxMod')
+
+  if weight == 0 then return 'Unarmored' end
+  if weight <= weightMod * lightMaxmod + epsilon then return 'Light' end
+  if weight <= weightMod * medMaxmod + epsilon then return 'Medium' end
+  return 'Heavy'
 end
 
 --- Gets the item slot for a given item
@@ -614,7 +622,8 @@ end
 --- Because I suddenly realized I was working directly with gameObjects
 --- @param gameObject #GameObject: The game object to get the slot for
 common.getItemSlotForGameObject = function(gameObject)
-  local record = gameObject.type.record(gameObject.recordId)
+  assert(gameObject ~= nil, 'Gameobject must not be nil!')
+  local record = gameObject.type.records[gameObject.recordId]
   return common.getItemSlotForRecord(gameObject.type, record.type)
 end
 
@@ -629,7 +638,6 @@ common.refreshEquipment = function(item)
   end
   return newSlot
 end
-
 
 --- Adds an item to the original equipment
 --- This is used when 'mogging an item, and an inventorry slot was replaced
