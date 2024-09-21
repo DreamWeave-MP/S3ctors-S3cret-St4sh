@@ -1,4 +1,5 @@
-local const = require('scripts.s3.transmog.ui.common').const
+local common = require('scripts.s3.transmog.ui.common')
+local const = common.const
 local Object = require('scripts.s3.transmog.lib.object')
 
 local async = require('openmw.async')
@@ -19,8 +20,8 @@ local NameInputBox = {
   props = {
     name = "Name Input",
     -- Can we flex this or something?
-    size = util.vector2(384, 32),
-    textSize = const.FONT_SIZE,
+    relativeSize = util.vector2(1, 1),
+    textSize = common.getTextSize(),
     textColor = const.TEXT_COLOR,
     textAlignH = ui.ALIGNMENT.Center,
     textAlignV = ui.ALIGNMENT.Center,
