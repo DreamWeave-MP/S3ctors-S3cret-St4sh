@@ -29,10 +29,12 @@ return function(itemData)
         type = ui.TYPE.Text,
         props = {
           text = "Pick a name and confirm",
-          relativeSize = util.vector2(1, .15),
+          relativeSize = util.vector2(1, .25),
           textColor = const.TEXT_COLOR,
           textSize = const.FONT_SIZE + 2,
           textAlignH = ui.ALIGNMENT.Center,
+          multiline = true,
+          wordWrap = true,
           autoSize = false,
         }
       },
