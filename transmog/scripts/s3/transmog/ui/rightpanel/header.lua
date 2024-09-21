@@ -29,7 +29,7 @@ end)
 
 local function categoryButton(recordType)
   local recordString = common.recordAliases[recordType].name
-  local button = common.createButton(recordString)
+  local button = common.createButton(recordString, true)
 
   button.name = recordString
   button.events.mousePress = updateContainerCategory

@@ -30,7 +30,7 @@ _confirmScreen.createCallback = function()
 end
 
 _confirmScreen.createButton = function()
-  local button = common.createButton("Apply Glamour")
+  local button = common.createButton("Apply Glamour", true)
   button.events.mousePress = async:callback(_confirmScreen.createCallback)
   return button
 end

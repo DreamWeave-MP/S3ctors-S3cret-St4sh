@@ -13,11 +13,11 @@ return {
   external = { stretch = 1, grow = .05, },
   content = ui.content {
     { external = { grow = 1.0 } },
-    common.createButton("Next Page"),
+    common.createButton("Next Page", true),
     { external = { grow = 0.25 } },
     ClearButton(),
     { external = { grow = 0.25 } },
-    common.createButton("Previous Page"),
+    common.createButton("Previous Page", true),
     { external = { grow = 1 } },
   }
 }
