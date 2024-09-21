@@ -41,6 +41,7 @@ function ItemRow.new(maxRows, typedInventory, itemIndex)
   }
   newRow.external = {
     grow = 1,
+    stretch = 1,
   }
   newRow.content = {}
 
@@ -54,6 +55,7 @@ function ItemRow.new(maxRows, typedInventory, itemIndex)
         template = I.MWUI.templates.Interval,
         external = {
           grow = 1,
+          stretch = 1,
         },
       }
     end

@@ -17,7 +17,6 @@ local InventoryContainer = {
     name = "Right Panel: Inventory Container",
     autoSize = false,
     relativeSize = sizes.RPANEL.INVENTORY,
-    arrange = ui.ALIGNMENT.End,
   },
   userData = const.DEFAULT_ITEM_TYPES,
 }
