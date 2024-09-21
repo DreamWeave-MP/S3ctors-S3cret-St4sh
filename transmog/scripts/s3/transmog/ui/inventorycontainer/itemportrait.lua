@@ -36,7 +36,7 @@ function ItemPortrait:focusGain()
 
   ToolTip.refreshItem(self:getUserData())
 
-  menus['main menu']:update()
+  self.userData.element:update()
 
   -- there's a bit of a flaw here in that the preview itself
   -- depends on the content of the tooltip to update
@@ -59,7 +59,7 @@ function ItemPortrait:focusLoss()
 
   self:removeHighlight()
 
-  menus['main menu']:update()
+  self.userData.element:update()
 end
 
 function ItemPortrait:addToLeftPanel(_, _layout)
@@ -139,11 +139,11 @@ ItemPortrait.itemFitsSlot = function(itemData, widget)
 end
 
 function ItemPortrait.new(itemData)
-  if not itemData or not itemData.record then error("Cannot create portrait for nonexistent item!") end
-
+  assert(itemData and itemData.recordId, "Cannot create portrait for nonexistent item!")
 
   local newPortrait = BaseUI.new(ItemPortrait)
-  newPortrait.props.name = itemData.recordId .. " container portrait"
+  newPortrait.name = itemData.recordId .. " container portrait"
+  newPortrait.userData = {}
 
   newPortrait.content = ui.content {
     newPortrait.getEnchantmentFrame(itemData.record.enchant or ""),
@@ -172,8 +172,10 @@ function ItemPortrait.new(itemData)
     mousePress = async:callback(function(_, _layout) newPortrait:addToLeftPanel() end),
   }
 
+  newPortrait.userData.element = ui.create(newPortrait)
 
-  return newPortrait
+
+  return newPortrait.userData.element
 end
 
 
