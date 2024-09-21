@@ -6,6 +6,8 @@ local Object = require('scripts.s3.transmog.lib.object')
 
 local BaseUIObject = {}
 
+local ElementValidateString = "No content available, has this element been constructed?"
+
 function BaseUIObject.new(props)
   local newUIObject = Object:new(BaseUIObject)
 
@@ -70,7 +72,7 @@ end
 --- @param layout openmw_ui#Layout: The layout to check for a highlight
 --- @return boolean
 function BaseUIObject:hasHighlight()
-  if not self.content then error('no content available, has this element been constructed?') end
+  assert(self.content, ElementValidateString)
   for _, child in ipairs(self.content) do
     if child.props and child.props.name == "highlight" then
       return true
@@ -83,7 +85,7 @@ end
 --- Don't forget you need to actually update it after!
 --- @param layout openmw_ui#Layout: The layout to remove the highlight from
 function BaseUIObject:removeHighlight()
-  if not self.content then error('no content available, has this element been constructed?') end
+  assert(self.content, ElementValidateString)
   for index, child in ipairs(self.content) do
     if child.props and child.props.name == "highlight" then
       table.remove(self.content, index)
@@ -97,7 +99,7 @@ end
 --- @param layout openmw_ui#Layout: The layout to add the highlight to
 --- @param size openmw_util#Vector2: The size of the highlight
 function BaseUIObject:addHighlight(highlightArgs)
-  if not self.content then error('no content available, has this element been constructed?') end
+  assert(self.content, ElementValidateString)
   if self:hasHighlight() then return end
   highlightArgs = highlightArgs or {}
 
@@ -125,7 +127,7 @@ function BaseUIObject:getElementByName(name)
 end
 
 function BaseUIObject:getUserData()
-  if not self.content then error('no content available, is this even a ui element?') end
+  assert(self.content, ElementValidateString)
   for _, content in ipairs(self.content) do
     if content.userData then
       return content.userData
