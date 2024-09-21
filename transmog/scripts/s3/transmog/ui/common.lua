@@ -1,5 +1,5 @@
 local async = require('openmw.async')
--- local auxUi = require('openmw_aux.ui')
+local auxUi = require('openmw_aux.ui')
 local aux_util = require('openmw_aux.util')
 local core = require('openmw.core')
 local input = require('openmw.input')
@@ -365,9 +365,17 @@ end
 --- Takes text as input and gives back a laid-out button /w border
 --- @param text string: The text to display on the button
 --- @return ui.TYPE.Container
-function common.createButton(text)
+function common.createButton(text, noBackground)
+  local template = auxUi.deepLayoutCopy(templates.boxTransparentThick)
+
+  if noBackground then
+    table.remove(template.content, 1)
+  else
+    template.content[1].props.alpha = 0.5
+  end
+
 return {
-  template = templates.boxTransparentThick,
+  template = template,
   content = common.TextBox(text),
   props = {},
   events = {},
