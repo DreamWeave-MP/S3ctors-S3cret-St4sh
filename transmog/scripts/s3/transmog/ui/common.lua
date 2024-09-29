@@ -1,3 +1,8 @@
+-- Bugs to fix:
+-- 1. The input box tooltip is not updating when the item is changed
+-- 2. Original equipment table gets stuck sometimes, still
+-- 3. Common table still uses `record` function in recordGenerators
+
 local async = require('openmw.async')
 local auxUi = require('openmw_aux.ui')
 local aux_util = require('openmw_aux.util')
