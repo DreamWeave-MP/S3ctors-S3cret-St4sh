@@ -6,19 +6,19 @@
 
 #### Installation
 
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/baldurwind)
+1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/shremiku)
 1. Extract the zip to a location of your choosing, examples below:
 
         # Windows
-        C:\games\OpenMWMods\baldurwind
+        C:\games\OpenMWMods\shremiku
 
         # Linux
-        /home/username/games/OpenMWMods/baldurwind
+        /home/username/games/OpenMWMods/shremiku
 
         # macOS
-        /Users/username/games/OpenMWMods/baldurwind
+        /Users/username/games/OpenMWMods/shremiku
 1. Decide whether to use the 1080p or 4K versions of the replacer
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\ShreMiku\1080p"`)
+1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\shremiku\1080p"`)
 
 #### Credits
 
