@@ -1,5 +1,3 @@
-ACTIVATOR: scripts/s3/CHIM2090/bedEvent.lua
-PLAYER: scripts/s3/CHIM2090/sleepManager.lua
 PLAYER, NPC: scripts/s3/CHIM2090/strengthManager.lua
 PLAYER, NPC: scripts/s3/CHIM2090/dynamicManager.lua
 PLAYER, NPC: scripts/s3/CHIM2090/hitChanceManager.lua
