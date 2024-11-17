@@ -61,6 +61,15 @@ local RestMenu = {
     BedrollString = 'You will be sleeping on a bedroll. It won\'t be great, but much better than the floor.',
     WaitString = 'You cannot sleep here. You\'ll need to find a bed.',
     WaitNoHealString = 'Waiting does not heal your wounds.',
+    totalTicks = 240,
+    tickInterval = 0.01 * time.second,
+    tickIncrement = 1.00 / 240,
+    backgroundStopFn = nil,
+    hiddenBackground = nil,
+    sleepBar = nil,
+    originalTimescale = core.getGameTimeScale(),
+    hoursToSleep = 24,
+    wakeUpTime = core.getGameTime(),
   }
 }
 
@@ -121,11 +130,11 @@ end
 function RestMenu.startUpdateDate()
     RestMenu.userData.dateUpdate = time.runRepeatedly(function()
         local restMenu = I.s3ChimSleep.Menu
-        if not restMenu.layout.props.visible then return end
         local dateHeader = RestMenu.getElementByName('dateHeader', restMenu.layout)
         dateHeader.props.text = calendar.formatGameTime(getDateStr())
+        if not restMenu.layout.props.visible then return end
         restMenu:update()
-    end, 60, { initialDelay = 0, type = time.GameTime })
+    end, 1  * time.minute, { initialDelay = 0, type = time.GameTime })
 end
 
 function RestMenu.updateSleepInfo(sleepInfo)
@@ -206,6 +215,10 @@ RestMenu.userData.colors = {
   journalNormal = RestMenu.colorFromGMST('FontColor_color_journal_link'),
   journalOver = RestMenu.colorFromGMST('FontColor_color_journal_link_over'),
   journalPressed = RestMenu.colorFromGMST('FontColor_color_journal_link_pressed'),
+  disabled = RestMenu.colorFromGMST('fontcolor_color_disabled'),
+  magic = RestMenu.colorFromGMST('fontcolor_color_magic'),
+  health = RestMenu.colorFromGMST('fontcolor_color_health'),
+  fatigue = RestMenu.colorFromGMST('fontcolor_color_fatigue'),
 }
 
 local function updateButtonHighlight(highlightData)
@@ -294,6 +307,9 @@ function RestMenu.refreshMenuState(newState)
     sleepMultiplier = newState.sleepMultiplier,
     restOrWait = newState.restOrWait,
   }
+
+  RestMenu.getElementByName('dateHeader', sleepMenu.layout).props.text
+    = calendar.formatGameTime(getDateStr())
 
   RestMenu.unhighlightAllButtons()
 
@@ -481,6 +497,7 @@ function RestMenu.updateHoursToHeal(healData)
 
     hoursToHeal.props.text = RestMenu.userData.HoursToHealString:format(numHoursToHeal)
     sleepTimeSelectionBox.props.text = numHoursToHeal
+    RestMenu.userData.hoursToHeal = numHoursToHeal
 
     I.s3ChimSleep.Manager.debugLog('Hours to heal:', numHoursToHeal, 'Health per hour:', healthPerHour
                                    , 'Multiplier:', multiplier, 'Health to recover:', healthToRecover)
@@ -537,6 +554,32 @@ local function cancelEvent(clicked, layout)
     end
 end
 
+local prevHudState = false
+local function startSleepFromInputEvent(clicked, layout, toHealed)
+    if clicked then
+        updateButtonHighlight {
+            state = HighlightStates.DARK,
+            layout = layout,
+            update = true,
+        }
+        layout.userData.isFocused = false
+    else
+        ambient.playSoundFile(RestMenu.userData.clickSound)
+        prevHudState = I.UI.isHudVisible()
+        I.UI.setHudVisibility(false)
+        I.s3ChimSleep.Menu.layout.props.visible = false
+        I.s3ChimSleep.Menu:update()
+        local sleepDuration
+        if not toHealed then
+          sleepDuration = tonumber(RestMenu.getElementByName('sleepTimeSelection'
+                                                                 , I.s3ChimSleep.Menu.layout).props.text)
+        else
+          sleepDuration = RestMenu.userData.hoursToHeal
+        end
+        RestMenu.SleepFade(sleepDuration)
+    end
+end
+
 function RestMenu.unhighlightAllButtons()
   local layout = I.s3ChimSleep.Menu.layout
   for _, element in pairs({ 'waitButton', 'untilHealedButton', 'cancelButton' }) do
@@ -554,32 +597,43 @@ end
 --- whether to rest or now
 --- @return ui.TYPE.Flex
 function RestMenu.BottomRowContainer()
-  -- These will all need events corresponding to their actions
-  local cancelButton = RestMenu.Button('Cancel')
+  local events = { focusGain = buttonHighlightEnter, focusLoss = buttonHighlightExit, }
+
   local waitButton = RestMenu.Button('Wait')
-  local untilHealedButton = RestMenu.Button('Until Healed')
-  cancelButton.name = 'cancelButton'
-  untilHealedButton.name = 'untilHealedButton'
   waitButton.name = 'waitButton'
+  waitButton.events = RestMenu.cloneTo({
+      mousePress = async:callback(function(_, layout)
+        startSleepFromInputEvent(true, layout)
+      end),
+      mouseRelease = async:callback(function(_, layout)
+        startSleepFromInputEvent(false, layout, false)
+      end),
+    }
+    , events)
 
-  local events = {
-    focusGain = buttonHighlightEnter,
-    focusLoss = buttonHighlightExit,
-  }
-
-  cancelButton.events = {
-    focusGain = buttonHighlightEnter,
-    focusLoss = buttonHighlightExit,
+  local cancelButton = RestMenu.Button('Cancel')
+  cancelButton.name = 'cancelButton'
+  cancelButton.events = RestMenu.cloneTo({
     mousePress = async:callback(function(_, layout)
-        cancelEvent(true, layout)
+      cancelEvent(true, layout)
     end),
     mouseRelease = async:callback(function(_, layout)
-        cancelEvent(false, layout)
+      cancelEvent(false, layout)
     end),
   }
+  , events)
 
-  waitButton.events = events
-  untilHealedButton.events = events
+  local untilHealedButton = RestMenu.Button('Until Healed')
+  untilHealedButton.name = 'untilHealedButton'
+  untilHealedButton.events = RestMenu.cloneTo({
+      mousePress = async:callback(function(_, layout)
+        startSleepFromInputEvent(true, layout)
+      end),
+      mouseRelease = async:callback(function(_, layout)
+        startSleepFromInputEvent(false, layout, true)
+      end),
+    }
+    , events)
 
   return {
     type = ui.TYPE.Flex,
@@ -587,7 +641,7 @@ function RestMenu.BottomRowContainer()
     props = {
       relativeSize = RestMenu.userData.minorSize,
       horizontal = true,
-      align = ui.ALIGNMENT.Center,
+      align = ui.ALIGNMENT.End,
       arrange = ui.ALIGNMENT.Center,
       autoSize = false,
     },
@@ -620,6 +674,150 @@ function RestMenu.TextBox(text)
   return textBox
 end
 
+local function alphaStep(up, props)
+  local background = RestMenu.userData.hiddenBackground
+  if background == nil then return end
+
+  local tickIncrement = RestMenu.userData.tickIncrement
+  props.alpha = props.alpha + (up and tickIncrement or -tickIncrement)
+
+  props.alpha = math.max(math.min(props.alpha, 1), 0.00)
+
+  if RestMenu.userData.sleepBar then
+    local sleepLayout = RestMenu.userData.sleepBar.layout
+    local hoursToSleep = RestMenu.userData.hoursToSleep
+
+    local progressBar = RestMenu.getElementByName('progressBar', sleepLayout)
+    local progressBarBlend = RestMenu.getElementByName('progressBarBlend', sleepLayout)
+    progressBar.props.relativeSize = util.vector2(props.alpha, 1)
+    progressBarBlend.props.relativeSize = util.vector2(props.alpha, 1)
+
+    local progressBarText = RestMenu.getElementByName('progressBarText', sleepLayout)
+    local sleepProgress = math.floor(hoursToSleep * props.alpha)
+    progressBarText.props.text = (' %d / %d '):format(sleepProgress, hoursToSleep)
+
+    RestMenu.userData.sleepBar:update()
+  end
+
+  if (up and props.alpha < 1.00 )
+    or (not up and props.alpha > 0.00) then
+    background:update()
+    return true
+  elseif not up and props.alpha <= 0.00 then
+    background:destroy()
+    RestMenu.userData.hiddenBackground = nil
+    return true
+  end
+
+  return false
+end
+
+local function tickBackground()
+  local imageProps = RestMenu.userData.hiddenBackground.layout.props
+
+  if not RestMenu.userData.sleepBar then RestMenu.SleepProgressBar() end
+
+  local canWakeUp = core.getGameTime() >= RestMenu.userData.wakeUpTime
+  if not alphaStep(true, imageProps) and canWakeUp then
+    core.sendGlobalEvent('SetGameTimeScale', RestMenu.userData.originalTimescale)
+    RestMenu.userData.backgroundStopFn()
+    RestMenu.userData.backgroundStopFn = time.runRepeatedly(function()
+
+        if RestMenu.userData.sleepBar then
+          RestMenu.userData.sleepBar:destroy()
+          RestMenu.userData.sleepBar = nil
+        end
+
+        if not alphaStep(false, imageProps) then
+          RestMenu.userData.backgroundStopFn()
+          I.UI.setMode()
+          I.UI.setHudVisibility(prevHudState)
+        end
+
+    end
+      , RestMenu.userData.tickInterval
+      , { initialDelay = 1 })
+  end
+end
+
+function RestMenu.SleepFade(hours)
+  assert(tonumber(hours), 'Hours must be a number')
+  RestMenu.userData.hoursToSleep = hours
+
+  RestMenu.userData.hiddenBackground = ui.create {
+    type = ui.TYPE.Image,
+    layer = 'FadeToBlack',
+    props = {
+      resource = ui.texture { path = 'white' },
+      color = util.color.hex('000000'),
+      relativeSize = util.vector2(1, 1),
+      alpha = 0.0,
+    },
+  }
+
+  RestMenu.userData.wakeUpTime = core.getGameTime() + hours * time.hour
+  RestMenu.userData.originalTimescale = core.getGameTimeScale()
+  core.sendGlobalEvent('SetGameTimeScale', 1000 * hours)
+
+  RestMenu.userData.backgroundStopFn
+    = time.runRepeatedly(tickBackground,
+                         RestMenu.userData.tickInterval,
+                         { initialDelay = 0 })
+end
+
+function RestMenu.SleepProgressBar()
+  RestMenu.userData.sleepBar = ui.create {
+    template = I.MWUI.templates.bordersThick,
+    layer = 'Modal',
+    props = {
+      relativeSize = util.vector2(.15, .035),
+      anchor = util.vector2(.5, .5),
+      relativePosition = util.vector2(.5, .5),
+    },
+    content = ui.content {
+      {
+        type = ui.TYPE.Image,
+        name = 'progressBarBackground',
+        props = {
+          relativeSize = util.vector2(1, 1),
+          resource = ui.texture { path = 'white' },
+          color = util.color.rgb(0, 0, 0),
+          alpha = .75,
+        },
+      },
+      {
+        type = ui.TYPE.Image,
+        name = 'progressBar',
+        props = {
+          resource = ui.texture { path = 'white' },
+          color = RestMenu.userData.colors.textAnswer,
+          alpha = .5,
+        },
+      },
+      {
+        type = ui.TYPE.Image,
+        name = 'progressBarBlend',
+        props = {
+          resource = ui.texture { path = 'white' },
+          color = RestMenu.userData.colors.magic,
+          alpha = .5,
+        },
+      },
+      {
+        type = ui.TYPE.Text,
+        name = 'progressBarText',
+        props = {
+          relativePosition = util.vector2(.5, .5),
+          anchor = util.vector2(.5, .5),
+          text = (' %d / %d '):format(0, RestMenu.userData.hoursToSleep or 24),
+          textColor = RestMenu.userData.colors.textNormal,
+          textSize = 18,
+        }
+      },
+    },
+  }
+end
+
 RestMenu.startDrag = async:callback(function(mouseEvent)
     if mouseEvent.button ~= 1 then return end
     RestMenu.userData.doDrag = true
@@ -644,6 +842,13 @@ RestMenu.events = {
   mouseRelease = RestMenu.stopDrag,
   mouseMove = RestMenu.drag,
 }
+
+function RestMenu.cloneTo(clone, base)
+  for k, v in pairs(base) do
+    clone[k] = v
+  end
+  return clone
+end
 
 --- Rest menu constructor
 --- @return RestMenu
