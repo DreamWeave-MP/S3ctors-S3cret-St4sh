@@ -10,6 +10,9 @@ wget 'https://gitlab.com/modding-openmw/starwind-builder/-/jobs/artifacts/master
 unzip -o sw_cpp.zip -d sw_cpp/
 rm sw_cpp.zip
 
+wget 'https://gitlab.com/modding-openmw/Starwind-Builder/-/jobs/artifacts/master/download?job=build_tsi' -O sw_merged/Starwind.omwaddon
+wget 'https://gitlab.com/modding-openmw/Starwind-Builder/-/jobs/artifacts/master/download?job=build_vanilla' -O sw_merged/Starwind_SP.omwaddon
+
 file_name=s3ctors_s3cret_st4sh
 
 cat > version.txt <<EOF

@@ -16,7 +16,7 @@ div#toc {
 }
 
 ul.toc {
-    list-style-image: url('/img/todd.png');
+    list-style-image: url("/img/todd.png");
 }
 
 ul.toc > li {
@@ -24,7 +24,9 @@ ul.toc > li {
     margin-bottom: 10px;
 }
 
-.MWText, a.modHeader, #homeButton {
+.MWText,
+a.modHeader,
+#homeButton {
     color: #75076a;
     display: grid;
     align-items: center;
@@ -32,7 +34,7 @@ ul.toc > li {
     line-height: 1;
     font-size: 32px;
     margin: 10px;
-    font-family: 'Pelagiad', sans-serif;
+    font-family: "Pelagiad", sans-serif;
     filter: drop-shadow(3px 1.5px #000);
 }
 
@@ -67,6 +69,11 @@ ul.toc > li {
 #starwind_pvp {
     color: #700b15;
     font-size: 8rem;
+}
+
+#sw_merged {
+    color: #0d6980;
+    font-size: 7rem;
 }
 
 #sw_cpp {
