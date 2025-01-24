@@ -6,6 +6,8 @@ The Starwind Community patch project was born as a fix for crashes we found afte
 
 Over time as The Starwind Initiative matured, we collected lots of minor bug fixes we needed to implement for multiplayer and wanted to make sure they were available to all Starwind players. Everything built here is available in the [Starwind-Builder](https://gitlab.com/modding-openmw/Starwind-Builder) repo, which is also used for deploying all content patches for TSI.
 
+Community Patch Project also now includes a replacement file for Lua scripts to make their default layout colors look better. This means better compatibility with fancy script mods for Morrowind, basically. Also, a new and improved font, `Oxanium-SemiBold` has been added. Starwind's UI should look better than ever with CPP!
+
 #### Installation
 
 1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/sw_cpp)
@@ -22,6 +24,12 @@ Over time as The Starwind Initiative matured, we collected lots of minor bug fix
 
 1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\sw_cpp"`)
 1. Add `content=Starwind Community Patch Project.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
+1. Add the following lines to your openmw.cfg to enable the Oxanium font:
+
+``` toml
+fallback=Fonts_Font_0,oxanium-semibold
+fallback=Fonts_Font_2,oxanium-semibold
+```
 
 <div align="center"> <img src="../img/modathonbanner2024.png" alt="Modathon 2024" /> </div>
 
