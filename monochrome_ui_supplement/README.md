@@ -46,6 +46,25 @@ Additionally, this mod includes standard-defintion and 4X upscales of the Beta M
 1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\monochrome_ui_supplement"`)
 1. For the skill icons modules, add either `data="C:\games\OpenMWMods\monochrome_ui_supplement\OPTIONAL - beta Skill icons HD"` or `data="C:\games\OpenMWMods\monochrome_ui_supplement\OPTIONAL - beta Skill icons SD"`
 
+Alternatively, here's an example set of momw-configurator customizations for use with total-overhaul:
+
+``` toml
+## Total Overhaul
+[[Customizations]]
+listName = "total-overhaul"
+
+# Monochrome UI Supplement
+[[Customizations.insert]]
+insert = "/home/sk3shun-8/GitHub/s3stash/monochrome_ui_supplement"
+after = "MonochromeUserInterface/monochrome-user-interface"
+
+[[Customizations.insert]]
+insert = "/home/sk3shun-8/GitHub/s3stash/monochrome_ui_supplement/OPTIONAL - beta Skill icons HD"
+after = "BigIcons/07 8X Textured"
+```
+
+Some of the icons added by this mod are overwritten by BigIcons, hence the placement.
+
 <div id="credits" style="text-align: center;">
 
 #### Credits
