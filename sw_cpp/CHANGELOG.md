@@ -32,3 +32,6 @@ Also, replace the Gamorrean Axe.
 # Version 1.3
 1. Fix meshes with non-orthogonal rotation matrices, whose collision boxes were not generated properly in openmw 0.49
 1. Include replacements for Lua modules and Oxanium font
+
+# Version 1.31
+1. Include galactic basic font
