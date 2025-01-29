@@ -1,0 +1,4 @@
+PLAYER, NPC: scripts/s3/CHIM2090/strengthManager.lua
+PLAYER, NPC: scripts/s3/CHIM2090/dynamicManager.lua
+PLAYER, NPC: scripts/s3/CHIM2090/hitChanceManager.lua
+GLOBAL: scripts/s3/CHIM2090/globalSettings.lua
