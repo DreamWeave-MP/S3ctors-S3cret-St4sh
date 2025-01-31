@@ -14,9 +14,15 @@ return {
     SW4_AmbientEvent = function(ambientData)
       local soundFile = ambientData.soundFile
       local soundRecord = ambientData.soundRecord
-      if soundFile and not ambient.isSoundFilePlaying(soundFile) then
+      if soundFile then
+        if ambient.isSoundFilePlaying(soundFile) then
+          ambient.stopSoundFile(soundFile)
+        end
         ambient.playSoundFile(soundFile, ambientData.options)
-      elseif soundRecord and not ambient.isSoundPlaying(soundRecord) then
+      elseif soundRecord then
+        if ambient.isSoundPlaying(soundRecord) then
+          ambient.stopSound(soundRecord)
+        end
         ambient.playSound(soundRecord, ambientData.options)
       elseif not soundRecord and not soundFile then
         error("Invalid sound information provided to SW4_AmbientEvent!")
