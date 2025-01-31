@@ -236,7 +236,7 @@ local function removeOldDoors(freighterCell)
   end
 
   for _, door in ipairs(localDoors) do
-    if door.recordId == 'sw_freightertonone' then
+    if door.recordId == 'sw_freightertonone' or door.recordId == 'sw_freightertoextra' then
       door.enabled = false
       door:remove()
       replaceCount = replaceCount + 1
