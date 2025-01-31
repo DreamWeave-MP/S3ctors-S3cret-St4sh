@@ -1,3 +1,5 @@
+local async = require('openmw.async')
+local time = require('openmw_aux.time')
 local types = require('openmw.types')
 local util = require('openmw.util')
 local world = require('openmw.world')
@@ -6,8 +8,12 @@ local freighterData = {
   currentPlanet = nil,
   replacementFreighterId = nil,
   replacementDoorId = nil,
+  replacementLightSpeed = nil,
   doorModel = 'meshes/ig/activators/door1.nif',
   freighterModel = 'meshes/ig/spshipfreight.nif',
+  lightSpeedModel = 'meshes/ig/freightltspeed.nif',
+  travelEffect = 'sound/ig/flyingsound.wav',
+  travelActive = false,
 }
 
 local playerShipIds = {
@@ -165,17 +171,72 @@ local function activateCurrentPlanet(targetPlanet)
   end
 end
 
+local lightSpeedActivatorCallback =
+    async:registerTimerCallback('SW4_TravelEndCallback', function(lightSpeedActivator)
+      lightSpeedActivator.enabled = false
+      for _, player in ipairs(world.players) do
+        if player.cell.name == freighterCellName then
+          player:sendEvent('SW4_UIMessage', 'You have reached your destination.')
+          freighterData.travelActive = false
+        end
+      end
+    end)
+
+local function getLightSpeedActivator(freighterCell)
+  local replacementLightSpeed = freighterData.replacementLightSpeed
+
+  for _, object in ipairs(freighterCell:getAll(types.Activator)) do
+    if object.recordId == 'sw_lightspeedact' then
+
+      local newActivator =  world.createObject(freighterData.replacementLightSpeed)
+      newActivator:teleport(freighterCell,
+        object.position,
+        object.rotation)
+
+      object.enabled = false
+      object:remove()
+      return newActivator
+    elseif object.recordId == replacementLightSpeed then
+      object.enabled = true
+      return object
+    end
+  end
+end
+
 local function handleButtonActivate(object)
   local targetCell = liveButtonToCellMap[object.recordId]
   if not targetCell then return end
 
+  if freighterData.travelActive then return end
+
   freighterData.currentPlanet = targetCell
   activateCurrentPlanet(object.cell)
-  -- Still need to play sfx and activate the space-thing
+
+  local ambientData = {
+    soundFile = freighterData.travelEffect,
+    options = {},
+  }
+  -- local travelDelay = math.random(15, 45)
+  -- local travelStr = string.format('You will reach your destination in %d minutes. Please enjoy the trip.', travelDelay)
+  local targetPlanet = object.type.records[object.recordId].name
+  local travelStr = string.format("Engaging warp drive, on course for %s.", targetPlanet)
+
+  for _, player in ipairs(world.players) do
+    if player.cell.name == freighterCellName then
+      player:sendEvent('SW4_AmbientEvent', ambientData)
+      player:sendEvent('SW4_UIMessage', travelStr)
+    end
+  end
+
+  local lightSpeedActivator = getLightSpeedActivator(object.cell)
+  assert(lightSpeedActivator, 'Failed to locate lightspeed activator in freighter cell!')
+
+  time.newSimulationTimer(time.second * 5, lightSpeedActivatorCallback, lightSpeedActivator)
+  freighterData.travelActive = true
 end
 
 local function handleDoorActivate(door, actor)
-  if door.recordId ~= freighterData.replacementDoorId then return end
+  if door.recordId ~= freighterData.replacementDoorId or freighterData.travelActive then return end
 
   local teleportTarget = freighterCells[freighterData.currentPlanet]
   assert(teleportTarget, "Could not find current planet in cell data!")
@@ -312,8 +373,10 @@ return {
     onSave = function()
       return {
         currentPlanet = freighterData.currentPlanet,
+        replacementLightSpeed = freighterData.replacementLightSpeed,
         replacementFreighterId = freighterData.replacementFreighterId,
         replacementDoorId = freighterData.replacementDoorId,
+        travelActive = freighterData.travelActive,
         buttonToCellMap = liveButtonToCellMap
       }
     end,
@@ -321,6 +384,8 @@ return {
       freighterData.currentPlanet = saveData.currentPlanet
       freighterData.replacementDoorId = saveData.replacementDoorId
       freighterData.replacementFreighterId = saveData.replacementFreighterId
+      freighterData.replacementLightSpeed = saveData.replacementLightSpeed
+      freighterData.travelActive = saveData.travelActive
       liveButtonToCellMap = saveData.buttonToCellMap
     end,
     onActivate = function(object, actor)
@@ -347,6 +412,14 @@ return {
           model = freighterData.doorModel,
         })
         freighterData.replacementDoorId = newDoor.id
+      end
+
+      -- Replace lightspeed activator since it self-deletes
+      if not freighterData.replacementLightSpeed then
+        local newLightSpeed = CreateRecord(ActivatorDraft {
+          model = freighterData.lightSpeedModel,
+        })
+        freighterData.replacementLightSpeed = newLightSpeed.id
       end
 
       -- Check if the live button to cell map is empty, and if so, create necessary records for buttons
