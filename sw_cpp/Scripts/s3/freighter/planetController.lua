@@ -148,7 +148,9 @@ local CreateRecord = world.createRecord
 --- but this shouldn't *break* anything per se
 --- I don't think. :D
 ---@param targetPlanet core.Cell
-local function activateCurrentPlanet()
+local function activateCurrentPlanet(targetPlanet)
+  if targetPlanet.name ~= freighterCellName then return end
+
   local localActivators = world.getCellByName(freighterCellName):getAll(types.Activator)
 
   for _, activator in ipairs(localActivators) do
@@ -168,7 +170,21 @@ local function handleButtonActivate(object)
   if not targetCell then return end
 
   freighterData.currentPlanet = targetCell
-  activateCurrentPlanet()
+  activateCurrentPlanet(object.cell)
+  -- Still need to play sfx and activate the space-thing
+end
+
+local function handleDoorActivate(door, actor)
+  if door.recordId ~= freighterData.replacementDoorId then return end
+
+  local teleportTarget = freighterCells[freighterData.currentPlanet]
+  assert(teleportTarget, "Could not find current planet in cell data!")
+
+  actor:teleport(freighterData.currentPlanet,
+    teleportTarget.teleportTo.pos,
+    util.transform.rotateZ(math.rad(teleportTarget.teleportTo.rot),
+      util.transform.identity))
+  return true
 end
 
 --- Handles freighter activation by teleporting the player into the freighter,
@@ -310,6 +326,7 @@ return {
     onActivate = function(object, actor)
       if handleFreighterActivate(object, actor) then return
       elseif handleButtonActivate(object) then return
+      elseif handleDoorActivate(object, actor) then return
       end
     end,
     --- Player is passed as the first argument to this function, but right now we don't actually use it.
@@ -358,7 +375,7 @@ return {
       else
         replaceOldButtons(newCell)
         removeOldDoors(newCell)
-        activateCurrentPlanet()
+        activateCurrentPlanet(newCell)
       end
     end,
   }
