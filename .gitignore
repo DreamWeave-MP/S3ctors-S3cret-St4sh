@@ -14,3 +14,6 @@ web/soupault-*-linux-x86_64*
 *.~undo-tree~
 *~
 sw_cpp/*
+!sw_cpp/Scripts
+!sw_cpp/Scripts/*
+!sw_cpp/*.omwscripts
