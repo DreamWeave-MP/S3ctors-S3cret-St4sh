@@ -19,18 +19,6 @@ function SleepManager.test()
   Debug.reloadLua()
 end
 
-I.Settings.registerPage {
-  key = modInfo.name,
-  l10n = modInfo.l10nName,
-  name = "CHIM 2090",
-  description = "Manages actor fatigue, carry weight, hit chance, and strength in combat."
-}
-
-print(string.format("%s loaded version %s. Thank you for playing %s! <3",
-                    modInfo.logPrefix,
-                    modInfo.version,
-                    modInfo.name))
-
 local fromBed = false
 local fromBedroll = false
 local fromOwnedBed = false
