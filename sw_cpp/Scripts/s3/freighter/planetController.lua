@@ -13,6 +13,7 @@ local freighterData = {
   freighterModel = 'meshes/ig/spshipfreight.nif',
   lightSpeedModel = 'meshes/ig/freightltspeed.nif',
   travelEffect = 'sound/ig/flyingsound.wav',
+  doorEffect = 'sound/fx/trans/drmtl_opn.wav',
   travelActive = false,
 }
 
@@ -241,10 +242,18 @@ local function handleDoorActivate(door, actor)
   local teleportTarget = freighterCells[freighterData.currentPlanet]
   assert(teleportTarget, "Could not find current planet in cell data!")
 
-  actor:teleport(freighterData.currentPlanet,
-    teleportTarget.teleportTo.pos,
-    util.transform.rotateZ(math.rad(teleportTarget.teleportTo.rot),
-      util.transform.identity))
+  actor:sendEvent('SW4_AmbientEvent', {
+    soundFile = freighterData.doorEffect,
+    options = {},
+  })
+
+  async:newUnsavableSimulationTimer(0.15 * time.second, function()
+    actor:teleport(freighterData.currentPlanet,
+      teleportTarget.teleportTo.pos,
+      util.transform.rotateZ(math.rad(teleportTarget.teleportTo.rot),
+        util.transform.identity))
+  end)
+
   return true
 end
 
@@ -267,7 +276,15 @@ local function handleFreighterActivate(object, actor)
 
   -- Add an appropriate quest progress check, or messageBox otherwise
   -- And the sound effect!
-  actor:teleport(freighterCellName, teleportPosition, teleportRot)
+  actor:sendEvent('SW4_AmbientEvent', {
+    soundFile = freighterData.doorEffect,
+    options = {},
+  })
+
+  async:newUnsavableSimulationTimer(0.15 * time.second, function()
+    actor:teleport(freighterCellName, teleportPosition, teleportRot)
+  end)
+
   return true
 end
 
