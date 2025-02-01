@@ -1,4 +1,5 @@
 local async = require('openmw.async')
+local core = require('openmw.core')
 local time = require('openmw_aux.time')
 local types = require('openmw.types')
 local util = require('openmw.util')
@@ -15,6 +16,11 @@ local freighterData = {
   travelEffect = 'sound/ig/flyingsound.wav',
   doorEffect = 'sound/fx/trans/drmtl_opn.wav',
   travelActive = false,
+}
+
+local freighterQuestData = {
+  repairedShip = false,
+  -- componentsSpent = 0,
 }
 
 local playerShipIds = {
@@ -204,6 +210,17 @@ local function getLightSpeedActivator(freighterCell)
   end
 end
 
+local function enterShip(actor)
+  actor:sendEvent('SW4_AmbientEvent', {
+    soundFile = freighterData.doorEffect,
+    options = {},
+  })
+
+  async:newUnsavableSimulationTimer(0.1 * time.second, function()
+    actor:teleport(freighterCellName, teleportPosition, teleportRot)
+  end)
+end
+
 local function handleButtonActivate(object)
   local targetCell = liveButtonToCellMap[object.recordId]
   if not targetCell then return end
@@ -274,18 +291,41 @@ local function handleFreighterActivate(object, actor)
   -- When handling other teleports, when possible
   freighterData.currentPlanet = actor.cell.name:lower()
 
-  -- Add an appropriate quest progress check, or messageBox otherwise
-  -- And the sound effect!
-  actor:sendEvent('SW4_AmbientEvent', {
-    soundFile = freighterData.doorEffect,
-    options = {},
-  })
+  if not types.Player.objectIsInstance(actor) then return end
 
-  async:newUnsavableSimulationTimer(0.15 * time.second, function()
-    actor:teleport(freighterCellName, teleportPosition, teleportRot)
-  end)
+  local playerQuests = actor.type.quests(actor)
+  local shipQuest = playerQuests['sw_tarischap1-2']
+  local shipQuestProgress = shipQuest.stage
 
-  return true
+  if shipQuestProgress < 10 then
+    actor:sendEvent('SW4_UIMessage', 'I wonder whose ship this is. . .')
+  elseif shipQuestProgress == 10 then
+    local inventory = actor.type.inventory(actor)
+    local environmentFilterCount = inventory:countOf('sw_envirofilter')
+    if environmentFilterCount >= 3 then
+      inventory:find('sw_envirofilter'):remove(environmentFilterCount)
+
+      -- Still need to add the topic "head to ship"
+      for _, activeActor in ipairs(world.activeActors) do
+        if activeActor.recordId == 'sw_shademanaan1' then
+          core.sound.say('sound/ig/kellishipfix.wav', activeActor, 'It\'s all fixed up! Let\'s check it out.')
+          break
+        end
+      end
+
+      actor:sendEvent('SW4_UIMessage', 'You repair the ship!')
+      shipQuest:addJournalEntry(15, actor)
+      playerQuests['sw_shipown']:addJournalEntry(15, actor)
+      -- enterShip(actor)
+    else
+      actor:sendEvent('SW4_UIMessage',
+                      string.format('This ship needs repairs! Components %d/3',
+                                    environmentFilterCount))
+    end
+  else
+    enterShip(actor)
+    return true
+  end
 end
 
 ---@param replaceCell core.Cell target cell containing the player and freighter to remove
@@ -378,6 +418,15 @@ local function replaceOldButtons(freighterCell)
   return replaceCount > 0
 end
 
+-- Disables relevant NPCs when sw_tarischap1-2 is over 10 and the player repairs the ship
+local function disableShipQuestActors(object)
+  if not freighterQuestData.repairedShip then return end
+  if object.recordId == 'sw_shademanaan1' or object.recordId == 'sw_shipquester' then
+    object.enabled = false
+    object:remove()
+  end
+end
+
 return {
   interfaceName = 'SW4_FreighterController',
   interface = {
@@ -394,7 +443,8 @@ return {
         replacementFreighterId = freighterData.replacementFreighterId,
         replacementDoorId = freighterData.replacementDoorId,
         travelActive = freighterData.travelActive,
-        buttonToCellMap = liveButtonToCellMap
+        buttonToCellMap = liveButtonToCellMap,
+        freighterQuestData = freighterQuestData,
       }
     end,
     onLoad = function(saveData)
@@ -404,12 +454,16 @@ return {
       freighterData.replacementLightSpeed = saveData.replacementLightSpeed
       freighterData.travelActive = saveData.travelActive
       liveButtonToCellMap = saveData.buttonToCellMap
+      freighterQuestData = saveData.freighterQuestData
     end,
     onActivate = function(object, actor)
       if handleFreighterActivate(object, actor) then return
       elseif handleButtonActivate(object) then return
       elseif handleDoorActivate(object, actor) then return
       end
+    end,
+    onObjectActive = function(object)
+      disableShipQuestActors(object)
     end,
     --- Player is passed as the first argument to this function, but right now we don't actually use it.
     onPlayerAdded = function(_)
