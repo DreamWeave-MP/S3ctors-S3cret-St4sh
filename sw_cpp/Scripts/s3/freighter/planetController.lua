@@ -179,11 +179,11 @@ local function activateCurrentPlanet(targetPlanet)
 end
 
 local lightSpeedActivatorCallback =
-    async:registerTimerCallback('SW4_TravelEndCallback', function(lightSpeedActivator)
-      lightSpeedActivator.enabled = false
+    async:registerTimerCallback('SW4_TravelEndCallback', function(activatorData)
+      activatorData.activator.enabled = false
       for _, player in ipairs(world.players) do
         if player.cell.name == freighterCellName then
-          player:sendEvent('SW4_UIMessage', 'You have reached your destination.')
+          player:sendEvent('SW4_UIMessage', string.format('You have reached %s.', activatorData.cellDest))
           freighterData.travelActive = false
         end
       end
@@ -249,7 +249,12 @@ local function handleButtonActivate(object)
   local lightSpeedActivator = getLightSpeedActivator(object.cell)
   assert(lightSpeedActivator, 'Failed to locate lightspeed activator in freighter cell!')
 
-  time.newSimulationTimer(time.second * 5, lightSpeedActivatorCallback, lightSpeedActivator)
+  time.newSimulationTimer(time.second * 5,
+                          lightSpeedActivatorCallback,
+                          {
+                            activator = lightSpeedActivator,
+                            cellDest = targetPlanet,
+  })
   freighterData.travelActive = true
 end
 
