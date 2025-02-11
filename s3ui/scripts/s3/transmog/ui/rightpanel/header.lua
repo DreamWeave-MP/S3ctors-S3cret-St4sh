@@ -46,6 +46,7 @@ local function categoryButton(recordType)
 end
 
 local function categoryButtons()
+  local categoryButtonDistance = 0.01
   local containerSize = util.vector2(1, .425)
   return {
     type = ui.TYPE.Flex,
@@ -69,15 +70,17 @@ local function categoryButtons()
           relativeSize = containerSize,
         },
         content = ui.content {
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Armor),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Clothing),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Weapon),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Ingredient),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Potion),
+          { external = { grow = categoryButtonDistance } },
         }
       },
 
@@ -99,15 +102,15 @@ local function categoryButtons()
           relativeSize = containerSize,
         },
         content = ui.content {
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Book),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Lockpick),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Probe),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
           categoryButton(types.Miscellaneous),
-          -- { external = { grow = categoryButtonDistance } },
+          { external = { grow = categoryButtonDistance } },
         }
       },
 
