@@ -95,3 +95,9 @@ a.modHeader,
     color: #eeeeff;
     font-size: 8rem;
 }
+
+#birr {
+    background-image: linear-gradient(to bottom, pink 60%, green);
+    background-clip: text;
+    color: transparent;
+}
