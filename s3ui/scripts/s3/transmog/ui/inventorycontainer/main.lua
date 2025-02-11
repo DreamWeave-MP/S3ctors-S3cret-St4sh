@@ -27,7 +27,6 @@ function InventoryContainer:updateContent()
   local acceptedTypes = self.userData
   local typedInventory = {}
 
-  local maxCols = const.MAX_ITEMS.x
   local maxRows = const.MAX_ITEMS.y
 
   local typedItems = types.Actor.inventory(gameSelf):getAll()
@@ -42,10 +41,8 @@ function InventoryContainer:updateContent()
   local itemIndex = 0
   local newContent = {}
 
-  for _ = 1, maxCols do
-    local newRow = ItemRow.new(maxRows, typedInventory, itemIndex)
-    itemIndex = itemIndex + #newRow.content
-    newContent[#newContent + 1] = newRow
+  for rowIndex = 1, maxRows do
+    newContent[#newContent + 1] = ItemRow.new(typedInventory, itemIndex + rowIndex)
   end
 
   self.content = ui.content(newContent)
