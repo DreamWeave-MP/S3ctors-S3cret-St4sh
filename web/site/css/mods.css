@@ -101,3 +101,9 @@ a.modHeader,
     background-clip: text;
     color: transparent;
 }
+
+#luamics {
+    background-image: linear-gradient(to bottom, red 60%, orange);
+    background-clip: text;
+    color: transparent;
+}
