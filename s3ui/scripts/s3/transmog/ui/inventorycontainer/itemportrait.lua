@@ -169,7 +169,7 @@ function ItemPortrait.new(itemData)
     focusGain = async:callback(function(_, _layout) newPortrait:focusGain() end),
     focusLoss = async:callback(function(_, _layout) newPortrait:focusLoss() end),
     mouseMove = ToolTip.updateTooltip,
-    mousePress = async:callback(function(_, _layout) newPortrait:addToLeftPanel() end),
+    -- mousePress = async:callback(function(_, _layout) newPortrait:addToLeftPanel() end),
   }
 
   newPortrait.userData.element = ui.create(newPortrait)
