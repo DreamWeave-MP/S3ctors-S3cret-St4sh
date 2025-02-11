@@ -236,6 +236,9 @@ local function handleButtonActivate(object)
   }
   -- local travelDelay = math.random(15, 45)
   -- local travelStr = string.format('You will reach your destination in %d minutes. Please enjoy the trip.', travelDelay)
+  -- Maybe if we later come up with interesting things to do in the ship, we can make up an excuse to increase travel times.
+  -- For now I think it's a bad idea since it would be boring and you'd just sleep through it.
+  -- Or maybe fight through it...
   local targetPlanet = object.type.records[object.recordId].name
   local travelStr = string.format("Engaging warp drive, on course for %s.", targetPlanet)
 
@@ -269,7 +272,8 @@ local function handleDoorActivate(door, actor)
     options = {},
   })
 
-  async:newUnsavableSimulationTimer(0.15 * time.second, function()
+  -- Maybe can deduplicate this and enterShip later
+  async:newUnsavableSimulationTimer(0.05 * time.second, function()
     actor:teleport(freighterData.currentPlanet,
       teleportTarget.teleportTo.pos,
       util.transform.rotateZ(math.rad(teleportTarget.teleportTo.rot),
@@ -459,7 +463,10 @@ return {
       freighterData.replacementLightSpeed = saveData.replacementLightSpeed
       freighterData.travelActive = saveData.travelActive
       liveButtonToCellMap = saveData.buttonToCellMap
-      freighterQuestData = saveData.freighterQuestData
+      freighterQuestData = saveData.freighterQuestData or
+        {
+          repairedShip = false,
+        }
     end,
     onActivate = function(object, actor)
       if handleFreighterActivate(object, actor) then return
