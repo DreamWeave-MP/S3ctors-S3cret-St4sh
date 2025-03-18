@@ -74,7 +74,11 @@ local function basketMove(rollData)
   local newBasketPos = basketObject.position + rollData.moveThisFrame
   local newTargetPos = rollData.target.position + rollData.moveThisFrame
 
-  -- Move them
+  -- Why does this happen?
+  if not basketObject.cell then
+    return
+  end
+
   basketObject:teleport(basketObject.cell, newBasketPos, newTransform)
   rollData.target:teleport(rollData.target.cell, newTargetPos)
 end
