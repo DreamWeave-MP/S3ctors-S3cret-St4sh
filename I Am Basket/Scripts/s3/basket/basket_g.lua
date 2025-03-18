@@ -32,7 +32,7 @@ local function basketTransform(transformData)
   local targetScale
   if not basket then
     basket = world.createObject(BASKET_ACTI_ID)
-    local basketHeight = basket:getBoundingBox().halfSize.z
+    local basketHeight = target:getBoundingBox().halfSize.z * 2
     local targetPos = util.vector3(teleportPos.x, teleportPos.y, teleportPos.z + basketHeight)
 
     basket:teleport(target.cell, targetPos)
