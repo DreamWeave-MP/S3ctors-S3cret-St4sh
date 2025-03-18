@@ -51,50 +51,28 @@ local function basketTransform(transformData)
   target:setScale(targetScale)
 end
 
-local ForwardRadsPerSecond = 1.0
----@param dt float deltaTime
+local ForwardRadsPerSecond = 1.5
+---@param dt number deltaTime
 ---@param movement integer movement on a given axis between -1 and 1
 local function getPerFrameRoll(movement, dt)
   return (dt * ForwardRadsPerSecond) * movement
 end
 
-local MoveUnitsPerSecond = 64
-local HorizontalMovementMultiplier = 0.75
-local function getPerFrameMoveUnits(dt, movement, horizontal)
-  local units = (dt * MoveUnitsPerSecond)
-  if horizontal then
-    units = units * HorizontalMovementMultiplier
-  end
-  return units * movement
-end
-
-local function basketMove(rollData)
+local function getPerFrameRollTransform(rollData)
   local side = getPerFrameRoll(rollData.sideMovement, rollData.dt)
   local forward = getPerFrameRoll(rollData.forwardMovement, rollData.dt)
 
   local xTransform = util.transform.rotateX(-side)
   local yTransform = util.transform.rotateY(-forward)
-  local newTransform = basketObject.rotation * yTransform * xTransform
+  return basketObject.rotation * yTransform * xTransform
+end
 
-  local horizontalMovement = getPerFrameMoveUnits(rollData.dt, rollData.sideMovement, true)
-  local forwardMovement = getPerFrameMoveUnits(rollData.dt, rollData.forwardMovement, false)
-  print("Horizontal", horizontalMovement, "Forward", forwardMovement)
-
-  -- Get the Z rotation of the player inside the basket
-  local zRot, _, _ = rollData.target.rotation:getAnglesZYX()
-  -- Construct a transform composed of only this rotation
-  local zAdjustedTransform = util.transform.identity * util.transform.rotateZ(zRot)
-  -- Get corresponding forward + side vectors
-  local forwardVector = zAdjustedTransform:apply(util.vector3(0, 1, 0))
-  local sideVector = zAdjustedTransform:apply(util.vector3(1, 0, 0))
-
-  -- Apply the distances to each rotation vector
-  local forwardMovementVector = forwardVector * forwardMovement
-  local sideMovementVector = sideVector * horizontalMovement
+local function basketMove(rollData)
+  local newTransform = getPerFrameRollTransform(rollData)
 
   -- Actually apply the new positions to both entities
-  local newBasketPos = basketObject.position + forwardMovementVector + sideMovementVector
-  local newTargetPos = rollData.target.position + forwardMovementVector + sideMovementVector
+  local newBasketPos = basketObject.position + rollData.moveThisFrame
+  local newTargetPos = rollData.target.position + rollData.moveThisFrame
 
   -- Move them
   basketObject:teleport(basketObject.cell, newBasketPos, newTransform)
