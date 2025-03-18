@@ -1,4 +1,3 @@
-local core = require("openmw.core")
 local util = require("openmw.util")
 local world = require("openmw.world")
 
@@ -25,69 +24,52 @@ local function onPlayerAddedHandler(player)
   addBasketGear(player)
 end
 
-local basketObject
 local function basketTransform(transformData)
   local target = transformData.target
-  local toggle = transformData.toggle
-  local teleportPos = transformData.teleportPos
-
-  assert(basketObject == nil == toggle, "BasketObject state should match the toggle state!")
+  local basket = transformData.basket
+  local teleportPos = target.position
 
   local targetScale
-  if toggle then
-    basketObject = world.createObject(BASKET_ACTI_ID)
-    local basketHeight = basketObject:getBoundingBox().halfSize.z
+  if not basket then
+    basket = world.createObject(BASKET_ACTI_ID)
+    local basketHeight = basket:getBoundingBox().halfSize.z
     local targetPos = util.vector3(teleportPos.x, teleportPos.y, teleportPos.z + basketHeight)
 
-    basketObject:teleport(target.cell, targetPos)
+    basket:teleport(target.cell, targetPos)
+    target:sendEvent("S3_BasketMode_BasketToPlayer", basket)
 
     targetScale = 0.01
   else
-    basketObject:remove()
-    basketObject = nil
+    basket:remove()
     targetScale = 1.0
   end
 
   target:setScale(targetScale)
 end
 
-local ForwardRadsPerSecond = 1.5
----@param dt number deltaTime
----@param movement integer movement on a given axis between -1 and 1
-local function getPerFrameRoll(movement, dt)
-  return (dt * ForwardRadsPerSecond) * movement
-end
-
-local function getPerFrameRollTransform(rollData)
-  local side = getPerFrameRoll(rollData.sideMovement, rollData.dt)
-  local forward = getPerFrameRoll(rollData.forwardMovement, rollData.dt)
-
-  local xTransform = util.transform.rotateX(-side)
-  local yTransform = util.transform.rotateY(-forward)
-  return basketObject.rotation * yTransform * xTransform
-end
-
 local function basketMove(rollData)
-  local newTransform = getPerFrameRollTransform(rollData)
+  local basket = rollData.basket
+  local moveThisFrame = rollData.moveThisFrame
+  local rollThisFrame = rollData.rollThisFrame
+  local target = rollData.target
 
-  -- Actually apply the new positions to both entities
-  local newBasketPos = basketObject.position + rollData.moveThisFrame
-  local newTargetPos = rollData.target.position + rollData.moveThisFrame
-
-  if not basketObject.cell then
+  if not basket.cell then
     return
-  elseif not basketObject:isValid() or basketObject.count == 0 then
+  elseif not basket:isValid() or basket.count == 0 then
     return
-  elseif not rollData.target:isValid() or rollData.target.count == 0 then
+  elseif not target:isValid() or target.count == 0 then
     return
   end
 
-  basketObject:teleport(basketObject.cell, newBasketPos, newTransform)
-  rollData.target:teleport(rollData.target.cell, newTargetPos)
+  local newBasketPos = basket.position + moveThisFrame
+  local newTargetPos = target.position + moveThisFrame
+
+  basket:teleport(basket.cell, newBasketPos, rollThisFrame)
+  target:teleport(target.cell, newTargetPos)
 end
 
 local function basketInput(inputData)
-  assert(basketObject ~= nil, "Basket input functions should never be called without a matching basket!")
+  assert(inputData.basket ~= nil, "Basket input functions should never be called without a matching basket!")
   basketMove(inputData)
 end
 
