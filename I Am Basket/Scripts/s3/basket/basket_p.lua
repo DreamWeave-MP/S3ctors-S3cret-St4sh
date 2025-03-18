@@ -70,7 +70,7 @@ input.registerActionHandler(
 	end)
 )
 
-local MoveUnitsPerSecond = 64
+local MoveUnitsPerSecond = 128
 local HorizontalMovementMultiplier = 0.75
 BasketFuncs.getPerFrameMoveUnits = function(dt, movement, horizontal)
 	local units = (dt * MoveUnitsPerSecond)
@@ -120,12 +120,42 @@ function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, dt,
 	return basket.rotation * yTransform * xTransform
 end
 
+function BasketFuncs.basketIsColliding(moveThisFrame)
+	local basketBounds = myBasket:getBoundingBox()
+
+	local basketIgnoreTable = {
+		collideType = nearby.COLLISION_TYPE.Default,
+		ignore = myBasket,
+	}
+
+	local center = basketBounds.center
+	local centerRay = nearby.castRay(center, center + moveThisFrame, basketIgnoreTable)
+
+	if centerRay.hit then
+		return true
+	end
+
+	for _, vertex in ipairs(basketBounds.vertices) do
+		local vertexRay = nearby.castRay(vertex, vertex + moveThisFrame, basketIgnoreTable)
+
+		if vertexRay.hit then
+			return true
+		end
+	end
+end
+
+local everyOther = false
 BasketFuncs.handleBasketMove = function(dt)
 	if self.controls.sneak then
 		self.controls.sneak = false
 	end
 
 	if not myBasket then
+		return
+	end
+
+	everyOther = not everyOther
+	if not everyOther then
 		return
 	end
 
@@ -139,6 +169,10 @@ BasketFuncs.handleBasketMove = function(dt)
 
 	local moveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
 	local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, dt, myBasket)
+
+	if BasketFuncs.basketIsColliding(moveThisFrame) then
+		return
+	end
 
 	BasketFuncs.handleCameraMove(moveThisFrame)
 
