@@ -125,11 +125,11 @@ BasketFuncs.handleBasketMove = function(dt)
 
 	local movement = input.getRangeActionValue("MoveForward") - input.getRangeActionValue("MoveBackward")
 	local sideMovement = input.getRangeActionValue("MoveRight") - input.getRangeActionValue("MoveLeft")
-	local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
+	-- local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
 
 	local moveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
 
-	print("Basket forward:", movement, "Basket horizontal:", sideMovement, "Basket Run:", run)
+	-- print("Basket forward:", movement, "Basket horizontal:", sideMovement, "Basket Run:", run)
 
 	if movement ~= 0 or sideMovement ~= 0 then
 		core.sendGlobalEvent("S3_BasketMode_BasketMove", {
@@ -163,7 +163,7 @@ BasketFuncs.getGroundPos = function()
 		ignore = self.object,
 	})
 
-	print("Ray Result", rayHit, rayHit.hit, rayHit.hitObject, rayHit.hitPos, rayHit.hitNormal)
+	-- print("Ray Result", rayHit, rayHit.hit, rayHit.hitObject, rayHit.hitPos, rayHit.hitNormal)
 
 	if rayHit.hit and rayHit.hitPos then
 		return rayHit.hitPos
@@ -182,13 +182,10 @@ BasketFuncs.equipBasket = function()
 		end
 	else
 		local allowedEquipment = {}
-		local modified = 1
 
 		for slot, item in pairs(currentEquipment) do
 			if HARD_MODE_ALLOWED_SLOTS[slot] then
 				allowedEquipment[slot] = item
-			else
-				modified = modified + 1
 			end
 		end
 
