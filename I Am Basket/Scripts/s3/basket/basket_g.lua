@@ -74,8 +74,11 @@ local function basketMove(rollData)
   local newBasketPos = basketObject.position + rollData.moveThisFrame
   local newTargetPos = rollData.target.position + rollData.moveThisFrame
 
-  -- Why does this happen?
   if not basketObject.cell then
+    return
+  elseif not basketObject:isValid() or basketObject.count == 0 then
+    return
+  elseif not rollData.target:isValid() or rollData.target.count == 0 then
     return
   end
 
