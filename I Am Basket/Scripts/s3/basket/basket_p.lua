@@ -144,6 +144,63 @@ function BasketFuncs.basketIsColliding(moveThisFrame)
 	end
 end
 
+local function getLowestVertex(object)
+	local box = object:getBoundingBox()
+	local vertex
+
+	for _, boxVertex in ipairs(box.vertices) do
+		if not vertex or boxVertex.z < vertex.z then
+			vertex = boxVertex
+		end
+	end
+
+	assert(vertex ~= nil, "Failed to find the lowest vertex of the bounding box!")
+
+	return vertex
+end
+
+local GravityForce = 98.1 * 2
+local MinDistanceToGround = 10
+local DTMult = 8
+BasketFuncs.getPerFrameGravity = function(dt)
+	local fallAcceleration = GravityForce * dt
+
+	-- Cast a ray downward from the center to detect the ground
+	local startPos = getLowestVertex(myBasket)
+	local endPos = util.vector3(startPos.x, startPos.y, startPos.z - camera.getViewDistance())
+
+	local result = nearby.castRay(startPos, endPos, {
+		ignore = myBasket,
+	})
+
+	if not result or not result.hitPos then
+		-- If not down, try up
+		endPos = util.vector3(startPos.x, startPos.y, startPos.z + camera.getViewDistance())
+		local raiseResult = nearby.castRay(startPos, endPos, {
+			ignore = myBasket,
+		})
+
+		if raiseResult.hit and raiseResult.hitPos then
+			return (raiseResult.hitPos.z - startPos.z) * dt * DTMult
+		else
+			-- If neither up nor down, just try raising them
+			return 60 * dt * DTMult
+		end
+	end
+
+	-- Calculate how far we need to fall
+	local distanceToGround = startPos.z - result.hitPos.z
+	print(distanceToGround)
+	if distanceToGround <= MinDistanceToGround then
+		-- return (MinDistanceToGround - distanceToGround)
+		return (MinDistanceToGround - distanceToGround) * dt * DTMult
+	end
+
+	-- Smooth falling using a lerp-like approach
+	local fallDistance = math.min(distanceToGround, fallAcceleration)
+	return -fallDistance
+end
+
 local everyOther = false
 BasketFuncs.handleBasketMove = function(dt)
 	if self.controls.sneak then
@@ -161,18 +218,20 @@ BasketFuncs.handleBasketMove = function(dt)
 
 	local movement = input.getRangeActionValue("MoveForward") - input.getRangeActionValue("MoveBackward")
 	local sideMovement = input.getRangeActionValue("MoveRight") - input.getRangeActionValue("MoveLeft")
-	if movement == 0 and sideMovement == 0 then
-		return
-	end
 
 	-- local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
 
-	local moveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
+	local xyMoveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
+
 	local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, dt, myBasket)
 
-	if BasketFuncs.basketIsColliding(moveThisFrame) then
-		return
+	-- Don't process z movement during collision handling, since the script will try to correct your position
+	if BasketFuncs.basketIsColliding(xyMoveThisFrame) then
+		print("Basket will collide with this move", xyMoveThisFrame, "bailing on XY movement")
+		xyMoveThisFrame = -xyMoveThisFrame
 	end
+
+	local moveThisFrame = util.vector3(xyMoveThisFrame.x, xyMoveThisFrame.y, BasketFuncs.getPerFrameGravity(dt))
 
 	BasketFuncs.handleCameraMove(moveThisFrame)
 
