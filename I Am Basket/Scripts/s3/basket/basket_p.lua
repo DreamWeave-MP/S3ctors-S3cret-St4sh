@@ -56,7 +56,7 @@ input.registerActionHandler(
 		print("Teleport pos is . . . ", teleportPos)
 		core.sendGlobalEvent(
 			"S3_BasketMode_BasketTransform",
-			{ teleportPos = teleportPos, toggle = isBasket, target = self.object }
+			{ teleportPos = self.position, toggle = isBasket, target = self.object }
 		)
 		I.Controls.overrideCombatControls(isBasket)
 		I.Controls.overrideMovementControls(isBasket)
