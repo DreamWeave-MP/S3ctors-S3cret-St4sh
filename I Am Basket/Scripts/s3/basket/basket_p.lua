@@ -92,6 +92,32 @@ function BasketFuncs.getPerFrameRoll(dt, movement)
 	return (dt * forwardRadsPerSecond) * movement
 end
 
+local MoveUnitsPerSecond = 64
+local HorizontalMovementMultiplier = 0.75
+BasketFuncs.getPerFrameMoveUnits = function(dt, movement, horizontal)
+	local units = (dt * MoveUnitsPerSecond)
+	if horizontal then
+		units = units * HorizontalMovementMultiplier
+	end
+	return units * movement
+end
+
+BasketFuncs.getPerFrameMovement = function(dt, sideMovementControl, forwardMovementControl)
+	local horizontalMovementThisFrame = BasketFuncs.getPerFrameMoveUnits(dt, sideMovementControl, true)
+	local forwardMovementThisFrame = BasketFuncs.getPerFrameMoveUnits(dt, forwardMovementControl, false)
+
+	-- Get the Z rotation of the player inside the basket
+	local zRot, _, _ = self.rotation:getAnglesZYX()
+	-- Construct a transform composed of only this rotation
+	local zAdjustedTransform = util.transform.identity * util.transform.rotateZ(zRot)
+	-- Get corresponding forward + side vectors
+	local forwardVector = zAdjustedTransform:apply(util.vector3(0, 1, 0))
+	local sideVector = zAdjustedTransform:apply(util.vector3(1, 0, 0))
+
+	-- Apply the distances to each rotation vector
+	return (sideVector * horizontalMovementThisFrame) + (forwardVector * forwardMovementThisFrame)
+end
+
 BasketFuncs.handleBasketMove = function(dt)
 	if not isBasket then
 		return
@@ -101,28 +127,18 @@ BasketFuncs.handleBasketMove = function(dt)
 	local sideMovement = input.getRangeActionValue("MoveRight") - input.getRangeActionValue("MoveLeft")
 	local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
 
-	-- local _, y, x = self.rotation:getAnglesZYX()
-	--
-	-- local forward = BasketFuncs.getPerFrameRoll(dt, movement)
-	-- local side = BasketFuncs.getPerFrameRoll(dt, sideMovement)
+	local moveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
 
 	print("Basket forward:", movement, "Basket horizontal:", sideMovement, "Basket Run:", run)
 
-	-- local xTransform = util.transform.rotateX(x, side)
-	-- local yTransform = util.transform.rotateY(y, forward)
-	-- local newTransform = self.rotation * yTransform * xTransform
-	-- print("New transform is . . .", newTransform)
-	--
-	-- print("Roll forward:", forward, "Roll side:", side)
-
-	-- local z, _, _ = self.rotation:getAnglesZYX()
-	-- local newTransform = self.rotation * util.transform.rotateZ(-z)
-
 	if movement ~= 0 or sideMovement ~= 0 then
-		core.sendGlobalEvent(
-			"S3_BasketMode_BasketMove",
-			{ target = self.object, forwardMovement = movement, sideMovement = sideMovement, dt = dt }
-		)
+		core.sendGlobalEvent("S3_BasketMode_BasketMove", {
+			moveThisFrame = moveThisFrame,
+			target = self.object,
+			forwardMovement = movement,
+			sideMovement = sideMovement,
+			dt = dt,
+		})
 	end
 end
 
