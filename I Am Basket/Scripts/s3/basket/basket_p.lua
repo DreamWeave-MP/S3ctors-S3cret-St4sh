@@ -35,7 +35,7 @@ local HARD_MODE_ALLOWED_SLOTS = {
 
 local prevHudState
 local prevCamMode
-local isBasket = false
+local myBasket
 input.registerActionHandler(
 	"Sneak",
 	async:callback(function(sneak)
@@ -43,31 +43,21 @@ input.registerActionHandler(
 			return
 		end
 
-		-- Should this happen...?
-		if not BasketFuncs.getBasket() then
-			print("Bailing early on basket sneak handler . . .")
-			return
-		end
-
 		if not sneak then
 			return
 		end
 
-		isBasket = not isBasket
-
-		local teleportPos = BasketFuncs.getGroundPos()
-
-		print("Teleport pos is . . . ", teleportPos)
 		core.sendGlobalEvent(
 			"S3_BasketMode_BasketTransform",
-			{ teleportPos = self.position, toggle = isBasket, target = self.object }
+			{ teleportPos = self.position, target = self.object, basket = myBasket }
 		)
-		I.Controls.overrideCombatControls(isBasket)
-		I.Controls.overrideMovementControls(isBasket)
-		I.Controls.overrideUiControls(isBasket)
+
+		I.Controls.overrideCombatControls(myBasket == nil)
+		I.Controls.overrideUiControls(myBasket == nil)
+		I.Controls.overrideMovementControls(myBasket == nil)
 
 		-- Dangerous?
-		if isBasket then
+		if not myBasket then
 			prevHudState = I.UI.isHudVisible()
 			I.UI.setHudVisibility(false)
 			prevCamMode = camera.getMode()
@@ -76,14 +66,10 @@ input.registerActionHandler(
 			camera.setMode(camera.MODE.Static)
 			camera.setStaticPosition(camPos)
 		else
+			myBasket = nil
 			camera.setMode(prevCamMode)
 			I.UI.setHudVisibility(prevHudState)
 		end
-		-- if sneak then
-		-- Do Something else
-		-- else
-		-- Do Stuff
-		-- end
 	end)
 )
 
@@ -121,12 +107,28 @@ BasketFuncs.handleCameraMove = function(moveThisFrame)
 	camera.setYaw(playerRotZ)
 end
 
+local ForwardRadsPerSecond = 1.5
+---@param dt number deltaTime
+---@param movement integer movement on a given axis between -1 and 1
+function BasketFuncs.getPerFrameRoll(movement, dt)
+	return (dt * ForwardRadsPerSecond) * movement
+end
+
+function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, dt, basket)
+	local side = BasketFuncs.getPerFrameRoll(sideMovement, dt)
+	local forward = BasketFuncs.getPerFrameRoll(forwardMovement, dt)
+
+	local xTransform = util.transform.rotateX(-side)
+	local yTransform = util.transform.rotateY(-forward)
+	return basket.rotation * yTransform * xTransform
+end
+
 BasketFuncs.handleBasketMove = function(dt)
 	if self.controls.sneak then
 		self.controls.sneak = false
 	end
 
-	if not isBasket then
+	if not myBasket then
 		return
 	end
 
@@ -139,10 +141,13 @@ BasketFuncs.handleBasketMove = function(dt)
 	-- local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
 
 	local moveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
+	local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, dt, myBasket)
 
 	BasketFuncs.handleCameraMove(moveThisFrame)
 
 	core.sendGlobalEvent("S3_BasketMode_BasketMove", {
+		rollThisFrame = rollThisFrame,
+		basket = myBasket,
 		moveThisFrame = moveThisFrame,
 		target = self.object,
 		forwardMovement = movement,
@@ -171,8 +176,6 @@ BasketFuncs.getGroundPos = function()
 		collisionType = nearby.COLLISION_TYPE.AnyPhysical,
 		ignore = self.object,
 	})
-
-	-- print("Ray Result", rayHit, rayHit.hit, rayHit.hitObject, rayHit.hitPos, rayHit.hitNormal)
 
 	if rayHit.hit and rayHit.hitPos then
 		return rayHit.hitPos
@@ -229,6 +232,12 @@ BasketFuncs.basketOnFrame = function(dt)
 end
 
 return {
+	eventHandlers = {
+		S3_BasketMode_BasketToPlayer = function(basket)
+			assert(basket, "Received basket assignment event with no basket!")
+			myBasket = basket
+		end,
+	},
 	engineHandlers = {
 		onFrame = BasketFuncs.basketOnFrame,
 	},
