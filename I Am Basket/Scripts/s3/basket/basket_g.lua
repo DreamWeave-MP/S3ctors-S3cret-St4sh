@@ -62,12 +62,10 @@ local function basketMove(rollData)
   end
 
   local newBasketPos = basket.position + moveThisFrame
-  local newTargetPos = util.vector3(newBasketPos.x, newBasketPos.y, newBasketPos.z)
-
   local newTargetRot = util.transform.identity * util.transform.rotateZ(target.rotation:getYaw())
 
   basket:teleport(basket.cell, newBasketPos, rollThisFrame)
-  target:teleport(target.cell, newTargetPos, newTargetRot)
+  target:teleport(target.cell, newBasketPos, newTargetRot)
 end
 
 local function basketInput(inputData)
