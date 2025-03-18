@@ -74,7 +74,6 @@ input.registerActionHandler(
 		else
 			camera.setMode(prevCamMode)
 			I.UI.setHudVisibility(prevHudState)
-			-- self.controls.sneak = 0
 		end
 		-- if sneak then
 		-- Do Something else
@@ -83,14 +82,6 @@ input.registerActionHandler(
 		-- end
 	end)
 )
-
-local forwardRadsPerSecond = 1.0
-
----@param dt float deltaTime
----@param movement integer movement on a given axis between -1 and 1
-function BasketFuncs.getPerFrameRoll(dt, movement)
-	return (dt * forwardRadsPerSecond) * movement
-end
 
 local MoveUnitsPerSecond = 64
 local HorizontalMovementMultiplier = 0.75
@@ -118,28 +109,42 @@ BasketFuncs.getPerFrameMovement = function(dt, sideMovementControl, forwardMovem
 	return (sideVector * horizontalMovementThisFrame) + (forwardVector * forwardMovementThisFrame)
 end
 
+BasketFuncs.handleCameraMove = function(moveThisFrame)
+	local playerRotZ, _, _ = self.rotation:getAnglesZYX()
+	local cameraOffset = util.transform.rotateZ(playerRotZ):apply(util.vector3(0, -128, 128))
+	local newCameraPos = self.position + moveThisFrame + cameraOffset
+	camera.setStaticPosition(newCameraPos)
+	camera.setYaw(playerRotZ)
+end
+
 BasketFuncs.handleBasketMove = function(dt)
+	if self.controls.sneak then
+		self.controls.sneak = false
+	end
+
 	if not isBasket then
 		return
 	end
 
 	local movement = input.getRangeActionValue("MoveForward") - input.getRangeActionValue("MoveBackward")
 	local sideMovement = input.getRangeActionValue("MoveRight") - input.getRangeActionValue("MoveLeft")
+	if movement == 0 and sideMovement == 0 then
+		return
+	end
+
 	-- local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
 
 	local moveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
 
-	-- print("Basket forward:", movement, "Basket horizontal:", sideMovement, "Basket Run:", run)
+	BasketFuncs.handleCameraMove(moveThisFrame)
 
-	if movement ~= 0 or sideMovement ~= 0 then
-		core.sendGlobalEvent("S3_BasketMode_BasketMove", {
-			moveThisFrame = moveThisFrame,
-			target = self.object,
-			forwardMovement = movement,
-			sideMovement = sideMovement,
-			dt = dt,
-		})
-	end
+	core.sendGlobalEvent("S3_BasketMode_BasketMove", {
+		moveThisFrame = moveThisFrame,
+		target = self.object,
+		forwardMovement = movement,
+		sideMovement = sideMovement,
+		dt = dt,
+	})
 end
 
 ---@return #core.gameObject|nil
