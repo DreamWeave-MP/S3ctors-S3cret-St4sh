@@ -62,7 +62,7 @@ local function basketMove(rollData)
   end
 
   local newBasketPos = basket.position + moveThisFrame
-  local newTargetPos = target.position + moveThisFrame
+  local newTargetPos = util.vector3(newBasketPos.x, newBasketPos.y, newBasketPos.z + 5)
 
   basket:teleport(basket.cell, newBasketPos, rollThisFrame)
   target:teleport(target.cell, newTargetPos)
