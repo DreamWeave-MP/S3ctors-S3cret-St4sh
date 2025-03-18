@@ -47,10 +47,7 @@ input.registerActionHandler(
 			return
 		end
 
-		core.sendGlobalEvent(
-			"S3_BasketMode_BasketTransform",
-			{ teleportPos = self.position, target = self.object, basket = myBasket }
-		)
+		core.sendGlobalEvent("S3_BasketMode_BasketTransform", { target = self.object, basket = myBasket })
 
 		I.Controls.overrideCombatControls(myBasket == nil)
 		I.Controls.overrideUiControls(myBasket == nil)
@@ -150,9 +147,6 @@ BasketFuncs.handleBasketMove = function(dt)
 		basket = myBasket,
 		moveThisFrame = moveThisFrame,
 		target = self.object,
-		forwardMovement = movement,
-		sideMovement = sideMovement,
-		dt = dt,
 	})
 end
 
