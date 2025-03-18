@@ -39,6 +39,10 @@ local isBasket = false
 input.registerActionHandler(
 	"Sneak",
 	async:callback(function(sneak)
+		if I.UI.getMode() then
+			return
+		end
+
 		-- Should this happen...?
 		if not BasketFuncs.getBasket() then
 			print("Bailing early on basket sneak handler . . .")
