@@ -72,11 +72,22 @@ input.registerActionHandler(
 
 local MoveUnitsPerSecond = 128
 local HorizontalMovementMultiplier = 0.75
+
+local Illusion = self.type.stats.skills.illusion(self)
+local Speed = self.type.stats.attributes.speed(self)
+
 BasketFuncs.getPerFrameMoveUnits = function(dt, movement, horizontal)
-	local units = (dt * MoveUnitsPerSecond)
+	local illusionTerm = math.min(0.75, Illusion.modified / 100)
+	local speedTerm = math.min(0.25, Speed.modified / 100)
+
+	local moveTerm = MoveUnitsPerSecond * (1 + illusionTerm + speedTerm)
+
+	local units = (dt * moveTerm)
+
 	if horizontal then
 		units = units * HorizontalMovementMultiplier
 	end
+
 	return units * movement
 end
 
