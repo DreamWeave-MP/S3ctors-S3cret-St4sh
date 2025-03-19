@@ -115,7 +115,7 @@ BasketFuncs.handleCameraMove = function(moveThisFrame)
 	camera.setYaw(playerRotZ)
 end
 
-local ForwardRadsPerSecond = 1.5
+local ForwardRadsPerSecond = 2.5
 ---@param dt number deltaTime
 ---@param movement integer movement on a given axis between -1 and 1
 function BasketFuncs.getPerFrameRoll(movement, dt)
