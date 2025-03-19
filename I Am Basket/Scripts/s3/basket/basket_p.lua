@@ -126,12 +126,12 @@ local xAxisLocked = false
 local yAxisLocked = false
 function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, dt, basket)
 	local side = 0
-	if not xAxisLocked then
+	if not input.isShiftPressed() then
 		side = BasketFuncs.getPerFrameRoll(sideMovement, dt)
 	end
 
 	local forward = 0
-	if not yAxisLocked then
+	if not input.isAltPressed() then
 		forward = BasketFuncs.getPerFrameRoll(forwardMovement, dt)
 	end
 
@@ -221,6 +221,7 @@ BasketFuncs.getPerFrameGravity = function(dt)
 	return -fallDistance
 end
 
+local MovementLocked = false
 local everyOther = false
 BasketFuncs.handleBasketMove = function(dt)
 	if self.controls.sneak then
@@ -252,10 +253,12 @@ BasketFuncs.handleBasketMove = function(dt)
 	end
 
 	local moveThisFrame
-	if not input.isKeyPressed(input.KEY.Tab) then
-		moveThisFrame = util.vector3(xyMoveThisFrame.x, xyMoveThisFrame.y, BasketFuncs.getPerFrameGravity(dt))
+	local gravityMove = BasketFuncs.getPerFrameGravity(dt)
+
+	if not MovementLocked then
+		moveThisFrame = util.vector3(xyMoveThisFrame.x, xyMoveThisFrame.y, gravityMove)
 	else
-		moveThisFrame = util.vector3(0, 0, BasketFuncs.getPerFrameGravity(dt))
+		moveThisFrame = util.vector3(0, 0, gravityMove)
 	end
 
 	BasketFuncs.handleCameraMove(moveThisFrame)
@@ -353,12 +356,8 @@ return {
 	engineHandlers = {
 		onFrame = BasketFuncs.basketOnFrame,
 		onKeyPress = function(key)
-			if key.code == input.KEY.LeftShift or key.code == input.KEY.RightShift then
-				xAxisLocked = not xAxisLocked
-				print("Switched X Axis lock", xAxisLocked)
-			elseif key.code == input.KEY.LeftAlt or key.code == input.KEY.RightAlt then
-				yAxisLocked = not yAxisLocked
-				print("Switched Y Axis lock", yAxisLocked)
+			if key.code == input.KEY.Tab then
+				MovementLocked = not MovementLocked
 			end
 		end,
 	},
