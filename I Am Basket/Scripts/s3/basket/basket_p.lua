@@ -122,12 +122,21 @@ function BasketFuncs.getPerFrameRoll(movement, dt)
 	return (dt * ForwardRadsPerSecond) * movement
 end
 
+local xAxisLocked = false
+local yAxisLocked = false
 function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, dt, basket)
-	local side = BasketFuncs.getPerFrameRoll(sideMovement, dt)
-	local forward = BasketFuncs.getPerFrameRoll(forwardMovement, dt)
+	local side = 0
+	if not xAxisLocked then
+		side = BasketFuncs.getPerFrameRoll(sideMovement, dt)
+	end
 
-	local xTransform = util.transform.rotateX(-side)
-	local yTransform = util.transform.rotateY(-forward)
+	local forward = 0
+	if not yAxisLocked then
+		forward = BasketFuncs.getPerFrameRoll(forwardMovement, dt)
+	end
+
+	local xTransform = util.transform.rotateX(-forward)
+	local yTransform = util.transform.rotateY(-side)
 	return basket.rotation * yTransform * xTransform
 end
 
@@ -242,7 +251,12 @@ BasketFuncs.handleBasketMove = function(dt)
 		xyMoveThisFrame = -xyMoveThisFrame
 	end
 
-	local moveThisFrame = util.vector3(xyMoveThisFrame.x, xyMoveThisFrame.y, BasketFuncs.getPerFrameGravity(dt))
+	local moveThisFrame
+	if not input.isKeyPressed(input.KEY.Tab) then
+		moveThisFrame = util.vector3(xyMoveThisFrame.x, xyMoveThisFrame.y, BasketFuncs.getPerFrameGravity(dt))
+	else
+		moveThisFrame = util.vector3(0, 0, BasketFuncs.getPerFrameGravity(dt))
+	end
 
 	BasketFuncs.handleCameraMove(moveThisFrame)
 
@@ -338,5 +352,14 @@ return {
 	},
 	engineHandlers = {
 		onFrame = BasketFuncs.basketOnFrame,
+		onKeyPress = function(key)
+			if key.code == input.KEY.LeftShift or key.code == input.KEY.RightShift then
+				xAxisLocked = not xAxisLocked
+				print("Switched X Axis lock", xAxisLocked)
+			elseif key.code == input.KEY.LeftAlt or key.code == input.KEY.RightAlt then
+				yAxisLocked = not yAxisLocked
+				print("Switched Y Axis lock", yAxisLocked)
+			end
+		end,
 	},
 }
