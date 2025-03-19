@@ -210,9 +210,7 @@ BasketFuncs.getPerFrameGravity = function(dt)
 
 	-- Calculate how far we need to fall
 	local distanceToGround = startPos.z - result.hitPos.z
-	print(distanceToGround)
 	if distanceToGround <= MinDistanceToGround then
-		-- return (MinDistanceToGround - distanceToGround)
 		return (MinDistanceToGround - distanceToGround) * dt * DTMult
 	end
 
