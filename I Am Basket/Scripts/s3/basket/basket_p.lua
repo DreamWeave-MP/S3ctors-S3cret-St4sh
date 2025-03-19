@@ -109,7 +109,7 @@ end
 
 BasketFuncs.handleCameraMove = function(moveThisFrame)
 	local playerRotZ, _, _ = self.rotation:getAnglesZYX()
-	local cameraOffset = util.transform.rotateZ(playerRotZ):apply(util.vector3(0, -64, 48))
+	local cameraOffset = util.transform.rotateZ(playerRotZ):apply(util.vector3(0, -64, 128))
 	local newCameraPos = self.position + moveThisFrame + cameraOffset
 	camera.setStaticPosition(newCameraPos)
 	camera.setYaw(playerRotZ)
