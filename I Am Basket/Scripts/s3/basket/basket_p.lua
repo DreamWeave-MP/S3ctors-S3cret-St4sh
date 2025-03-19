@@ -70,6 +70,19 @@ input.registerActionHandler(
 	end)
 )
 
+local isJumping = false
+local canJump = false
+input.registerTriggerHandler(
+	"Jump",
+	async:callback(function(jump)
+		if not canJump then
+			return
+		end
+		print(jump)
+		isJumping = true
+	end)
+)
+
 local MoveUnitsPerSecond = 128
 local HorizontalMovementMultiplier = 0.75
 
@@ -182,7 +195,23 @@ end
 local GravityForce = 98.1 * 2
 local MinDistanceToGround = 15
 local DTMult = 8
+
+local jumpDist = 0
+local JumpTargetDistance = 120
+local JumpPerSecond = 800
 BasketFuncs.getPerFrameGravity = function(dt)
+	if isJumping then
+		local jumpThisFrame = JumpPerSecond * dt
+		jumpDist = jumpDist + jumpThisFrame
+
+		if jumpDist <= JumpTargetDistance then
+			return jumpThisFrame
+		else
+			isJumping = false
+			jumpDist = 0
+		end
+	end
+
 	local fallAcceleration = GravityForce * dt
 
 	-- Cast a ray downward from the center to detect the ground
@@ -210,8 +239,12 @@ BasketFuncs.getPerFrameGravity = function(dt)
 
 	-- Calculate how far we need to fall
 	local distanceToGround = startPos.z - result.hitPos.z
+
 	if distanceToGround <= MinDistanceToGround then
+		canJump = true
 		return (MinDistanceToGround - distanceToGround) * dt * DTMult
+	else
+		canJump = false
 	end
 
 	-- Smooth falling using a lerp-like approach
