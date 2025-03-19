@@ -180,7 +180,7 @@ local function getLowestVertex(object)
 end
 
 local GravityForce = 98.1 * 2
-local MinDistanceToGround = 10
+local MinDistanceToGround = 15
 local DTMult = 8
 BasketFuncs.getPerFrameGravity = function(dt)
 	local fallAcceleration = GravityForce * dt
