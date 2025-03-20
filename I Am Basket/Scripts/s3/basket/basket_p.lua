@@ -153,7 +153,7 @@ function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, dt,
 	return basket.rotation * yTransform * xTransform
 end
 
-function BasketFuncs.basketIsColliding(moveThisFrame)
+function BasketFuncs.basketIsColliding(moveThisFrame, rollThisFrame)
 	local basketBounds = myBasket:getBoundingBox()
 
 	local moveDir = moveThisFrame:normalize()
@@ -173,9 +173,7 @@ function BasketFuncs.basketIsColliding(moveThisFrame)
 	end
 
 	for _, vertex in ipairs(basketBounds.vertices) do
-		local vertexRay = nearby.castRay(vertex, vertex + moveThisFrame, basketIgnoreTable)
-
-		if vertexRay.hit then
+		if nearby.castRay(vertex, vertex + rollThisFrame:apply(moveThisFrame), basketIgnoreTable).hit then
 			return true
 		end
 	end
@@ -282,7 +280,7 @@ BasketFuncs.handleBasketMove = function(dt)
 	local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, dt, myBasket)
 
 	-- Don't process z movement during collision handling, since the script will try to correct your position
-	if BasketFuncs.basketIsColliding(xyMoveThisFrame) then
+	if BasketFuncs.basketIsColliding(xyMoveThisFrame, rollThisFrame) then
 		print("Basket will collide with this move", xyMoveThisFrame, "bailing on XY movement")
 		xyMoveThisFrame = -xyMoveThisFrame
 	end
