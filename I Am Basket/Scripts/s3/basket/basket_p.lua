@@ -255,18 +255,12 @@ BasketFuncs.getPerFrameGravity = function(dt)
 end
 
 local MovementLocked = false
-local everyOther = false
 BasketFuncs.handleBasketMove = function(dt)
 	if self.controls.sneak then
 		self.controls.sneak = false
 	end
 
 	if not myBasket then
-		return
-	end
-
-	everyOther = not everyOther
-	if not everyOther then
 		return
 	end
 
