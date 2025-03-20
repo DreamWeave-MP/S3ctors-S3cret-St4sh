@@ -285,14 +285,10 @@ BasketFuncs.handleBasketMove = function(dt)
 		xyMoveThisFrame = -xyMoveThisFrame
 	end
 
-	local moveThisFrame
 	local gravityMove = BasketFuncs.getPerFrameGravity(dt)
 
-	if not MovementLocked then
-		moveThisFrame = util.vector3(xyMoveThisFrame.x, xyMoveThisFrame.y, gravityMove)
-	else
-		moveThisFrame = util.vector3(0, 0, gravityMove)
-	end
+	local moveThisFrame =
+			util.vector3(MovementLocked and 0 or xyMoveThisFrame.x, MovementLocked and 0 or xyMoveThisFrame.y, gravityMove)
 
 	BasketFuncs.handleCameraMove(moveThisFrame)
 
