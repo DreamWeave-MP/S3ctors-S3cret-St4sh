@@ -156,13 +156,17 @@ end
 function BasketFuncs.basketIsColliding(moveThisFrame)
 	local basketBounds = myBasket:getBoundingBox()
 
+	local moveDir = moveThisFrame:normalize()
+	local useX = math.abs(moveDir.x) > math.abs(moveDir.y)
+	local offset = useX and basketBounds.halfSize.x or basketBounds.halfSize.y
+
 	local basketIgnoreTable = {
 		collideType = nearby.COLLISION_TYPE.Default,
 		ignore = myBasket,
 	}
 
 	local center = basketBounds.center
-	local centerRay = nearby.castRay(center, center + moveThisFrame, basketIgnoreTable)
+	local centerRay = nearby.castRay(center, center + moveThisFrame + (moveDir * offset), basketIgnoreTable)
 
 	if centerRay.hit then
 		return true
