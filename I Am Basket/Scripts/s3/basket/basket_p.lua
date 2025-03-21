@@ -290,7 +290,8 @@ BasketFuncs.handleBasketMove = function(dt)
 	-- Don't process z movement during collision handling, since the script will try to correct your position
 	if BasketFuncs.basketIsColliding(xyMoveThisFrame, rollThisFrame) then
 		print("Basket will collide with this move", xyMoveThisFrame, "bailing on XY movement")
-		xyMoveThisFrame = -xyMoveThisFrame
+		-- xyMoveThisFrame = -xyMoveThisFrame
+		xyMoveThisFrame = util.vector3(0, 0, 0)
 	end
 
 	local gravityMove = BasketFuncs.getPerFrameGravity(dt)
