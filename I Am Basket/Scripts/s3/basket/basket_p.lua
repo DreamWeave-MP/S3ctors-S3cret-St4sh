@@ -206,6 +206,28 @@ local function getLowestVertex(object)
 	return vertex
 end
 
+function BasketFuncs.getVerticalVertex(basket, down)
+	assert(basket, "")
+	local viewDistance = camera.getViewDistance()
+	local rangeLow = down and 1 or 5
+	local rangeHigh = down and 4 or 8
+
+	-- The lower 4 verts are the minimums of the box
+	local vertices = basket:getBoundingBox().vertices
+	for i = rangeLow, rangeHigh do
+		local vertex = vertices[i]
+		local downCast = nearby.castRay(
+			vertex,
+			util.vector3(vertex.x, vertex.y, vertex.z + (down and -viewDistance or viewDistance)),
+			{ ignore = basket }
+		)
+
+		if downCast.hit then
+			return vertex, downCast
+		end
+	end
+end
+
 local GravityForce = 98.1 * 2
 local MinDistanceToGround = 15
 local DTMult = 8
@@ -228,26 +250,17 @@ BasketFuncs.getPerFrameGravity = function(dt)
 
 	local fallAcceleration = GravityForce * dt
 
-	-- Cast a ray downward from the center to detect the ground
 	local startPos = getLowestVertex(myBasket)
-	local endPos = util.vector3(startPos.x, startPos.y, startPos.z - camera.getViewDistance())
+	local groundVertex, groundResult = BasketFuncs.getVerticalVertex(myBasket, true)
+	if not groundResult or not groundResult.hitPos then
+		local _, upResult = BasketFuncs.getVerticalVertex(myBasket, false)
 
-	local result = nearby.castRay(startPos, endPos, {
-		ignore = myBasket,
-	})
-
-	if not result or not result.hitPos then
-		-- If not down, try up
-		endPos = util.vector3(startPos.x, startPos.y, startPos.z + camera.getViewDistance())
-		local raiseResult = nearby.castRay(startPos, endPos, {
-			ignore = myBasket,
-		})
-
-		if raiseResult.hit and raiseResult.hitPos then
-			return (raiseResult.hitPos.z - startPos.z) * dt * DTMult
+		if upResult and upResult.hit and upResult.hitPos then
+			return (upResult.hitPos.z - startPos.z) * dt * DTMult
 		else
-			-- If neither up nor down, just try raising them
-			return 60 * dt * DTMult
+			-- If they get stuck, then, they're stuck, so apply a little gravity and allow jumping
+			canJump = true
+			return -0.001 * dt
 		end
 	end
 
