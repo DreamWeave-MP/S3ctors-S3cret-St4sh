@@ -244,7 +244,9 @@ BasketFuncs.getPerFrameGravity = function(dt)
 
 	if math.floor(distanceToGround) <= MinDistanceToGround then
 		canJump = true
-		return (MinDistanceToGround - distanceToGround) * dt * DTMult
+		local raiseThisFrame = (MinDistanceToGround - distanceToGround) * dt * DTMult
+
+		return math.max(0.001, raiseThisFrame)
 	else
 		canJump = false
 	end
