@@ -49,9 +49,10 @@ input.registerActionHandler(
 
 		core.sendGlobalEvent("S3_BasketMode_BasketTransform", { target = self.object, basket = myBasket })
 
-		I.Controls.overrideCombatControls(myBasket == nil)
-		I.Controls.overrideUiControls(myBasket == nil)
-		I.Controls.overrideMovementControls(myBasket == nil)
+		local overrideControls = myBasket == nil
+		I.Controls.overrideCombatControls(overrideControls)
+		I.Controls.overrideUiControls(overrideControls)
+		I.Controls.overrideMovementControls(overrideControls)
 
 		-- Dangerous?
 		if not myBasket then
