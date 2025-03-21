@@ -174,7 +174,18 @@ function BasketFuncs.basketIsColliding(moveThisFrame, rollThisFrame)
 	end
 
 	for _, vertex in ipairs(basketBounds.vertices) do
-		if nearby.castRay(vertex, vertex + rollThisFrame:apply(moveThisFrame), basketIgnoreTable).hit then
+		if
+			nearby.castRay(
+				vertex,
+				vertex + rollThisFrame:apply(moveThisFrame),
+				{
+					ignore = myBasket,
+					collideType = nearby.COLLISION_TYPE.World
+						+ nearby.COLLISION_TYPE.Door
+						+ nearby.COLLISION_TYPE.Actor,
+				}
+			).hit
+		then
 			return true
 		end
 	end
