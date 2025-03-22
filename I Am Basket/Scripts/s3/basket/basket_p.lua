@@ -169,17 +169,15 @@ function BasketFuncs.basketIsColliding(moveThisFrame, rollThisFrame)
   local centerRay = nearby.castRay(center, center + moveThisFrame + (moveDir * offset), basketIgnoreTable)
 
   if centerRay.hit then
-    return true
+    return centerRay.hitNormal
   end
 
   for _, vertex in ipairs(basketBounds.vertices) do
-    if
-        nearby.castRay(vertex, vertex + rollThisFrame:apply(moveThisFrame), {
-          ignore = myBasket,
-          -- collideType = nearby.COLLISION_TYPE.World + nearby.COLLISION_TYPE.Door + nearby.COLLISION_TYPE.Actor,
-        }).hit
-    then
-      return true
+    local vertexRay = nearby.castRay(vertex, vertex + rollThisFrame:apply(moveThisFrame), {
+      ignore = myBasket,
+    })
+    if vertexRay.hit then
+      return vertexRay.hitNormal
     end
   end
 end
@@ -294,6 +292,43 @@ BasketFuncs.getPerFrameGravity = function(dt)
   end
 end
 
+BasketFuncs.handleBasketCollision = function(movementVector, collisionNormal)
+  collisionNormal = collisionNormal:normalize()
+
+  local dotProduct = movementVector:dot(collisionNormal)
+
+  -- I'm not actually sure why this would happen.
+  if dotProduct == 0 then
+    return
+  end
+
+  -- For collisions which are not especially significant in either direction
+  -- just process the move
+  if math.abs(dotProduct) < 0.5 then
+    return movementVector
+  end
+
+  -- Most collisions return negative values, greater than 0.5
+  -- So those are the ones we ignore
+  -- Past this, are collisions which are severe enough to need adjustment, but
+  -- not so severe as to be completely invalid
+  if dotProduct < 0 and math.abs(dotProduct) > 0.5 then
+    return
+  end
+
+  -- Subtract the "into the surface" component from the movement vector
+  -- This leaves us with a vector that's parallel to the surface
+  local slideVector = movementVector - (collisionNormal * dotProduct)
+
+  -- Adjust friction based on the collision angle
+  -- Steeper angles (higher dotProduct) result in less friction
+  local friction = 1 - (dotProduct * 0.5) -- Adjust the multiplier as needed
+
+  slideVector = slideVector * friction
+
+  return slideVector
+end
+
 local MovementLocked = false
 BasketFuncs.handleBasketMove = function(dt)
   if self.controls.sneak then
@@ -314,10 +349,14 @@ BasketFuncs.handleBasketMove = function(dt)
   local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, myBasket.rotation)
 
   -- Don't process z movement during collision handling, since the script will try to correct your position
-  if BasketFuncs.basketIsColliding(xyMoveThisFrame, rollThisFrame) then
-    print("Basket will collide with this move", xyMoveThisFrame, "bailing on XY movement")
-    -- xyMoveThisFrame = -xyMoveThisFrame
-    xyMoveThisFrame = util.vector3(0, 0, 0)
+  local basketCollisionNormal = BasketFuncs.basketIsColliding(xyMoveThisFrame, rollThisFrame)
+  if basketCollisionNormal then
+    local slideVector = BasketFuncs.handleBasketCollision(xyMoveThisFrame, basketCollisionNormal)
+    if slideVector then
+      xyMoveThisFrame = slideVector
+    else
+      xyMoveThisFrame = util.vector3(0, 0, 0)
+    end
   end
 
   local gravityMove = BasketFuncs.getPerFrameGravity(dt)
