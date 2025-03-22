@@ -75,12 +75,10 @@ local isJumping = false
 local canJump = false
 input.registerTriggerHandler(
   "Jump",
-  async:callback(function(jump)
-    if not canJump then
-      return
+  async:callback(function()
+    if canJump then
+      isJumping = true
     end
-    print(jump)
-    isJumping = true
   end)
 )
 
