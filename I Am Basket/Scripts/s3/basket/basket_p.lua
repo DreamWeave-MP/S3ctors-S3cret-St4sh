@@ -131,8 +131,8 @@ end
 
 local ForwardRadsPerSecond = 2.5
 local RollTimeStep = 1.0 / 60.0
----@param dt number deltaTime
 ---@param movement integer movement on a given axis between -1 and 1
+---@return integer axisTransform Transformation for a given axis relative to the movement provided
 function BasketFuncs.getPerFrameRoll(movement)
   return (RollTimeStep * ForwardRadsPerSecond) * movement
 end
@@ -206,11 +206,23 @@ function BasketFuncs.getVerticalVertex(basket, down)
   local rangeLow = down and 1 or 5
   local rangeHigh = down and 4 or 8
 
+  local box = basket:getBoundingBox()
+  local startPos = util.vector3(box.center.x, box.center.y, box.center.z - box.halfSize.z)
+  local downCast = nearby.castRay(
+    startPos,
+    util.vector3(box.center.x, box.center.y, box.center.z + (down and -viewDistance or viewDistance)),
+    { ignore = basket }
+  )
+
+  if downCast.hit then
+    return box.center, downCast
+  end
+
   -- The lower 4 verts are the minimums of the box
-  local vertices = basket:getBoundingBox().vertices
+  local vertices = box.vertices
   for i = rangeLow, rangeHigh do
     local vertex = vertices[i]
-    local downCast = nearby.castRay(
+    downCast = nearby.castRay(
       vertex,
       util.vector3(vertex.x, vertex.y, vertex.z + (down and -viewDistance or viewDistance)),
       { ignore = basket }
