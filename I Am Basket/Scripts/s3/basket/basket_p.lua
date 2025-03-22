@@ -280,14 +280,13 @@ BasketFuncs.getPerFrameGravity = function(dt)
 
     canJump = true
     local targetHeight = MinDistanceToGround - distanceToGround
-    local nudgeFactor = math.min(1, (MinDistanceToGround - distanceToGround) / MinDistanceToGround)
+    local nudgeFactor = math.min(1, targetHeight / MinDistanceToGround)
     return targetHeight * nudgeFactor
   elseif distanceToGround > MinDistanceToGround + DeadZone then
     -- Basket is too far from the ground; apply gravity smoothly
 
     canJump = false
-    local fallDistance = math.min(distanceToGround, fallAcceleration)
-    return -fallDistance
+    return -math.min(distanceToGround, fallAcceleration)
   else
     -- Basket is within the dead zone; no adjustment needed
 
