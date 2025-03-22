@@ -130,30 +130,32 @@ BasketFuncs.handleCameraMove = function(moveThisFrame)
 end
 
 local ForwardRadsPerSecond = 2.5
+local RollTimeStep = 1.0 / 60.0
 ---@param dt number deltaTime
 ---@param movement integer movement on a given axis between -1 and 1
-function BasketFuncs.getPerFrameRoll(movement, dt)
-  return (dt * ForwardRadsPerSecond) * movement
+function BasketFuncs.getPerFrameRoll(movement)
+  return (RollTimeStep * ForwardRadsPerSecond) * movement
 end
 
-function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, dt, basket)
-  local side = 0
-  if not input.isShiftPressed() then
-    side = BasketFuncs.getPerFrameRoll(sideMovement, dt)
+function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, basketRotation)
+  if sideMovement == 0 and forwardMovement == 0 then
+    return nil
   end
 
-  local forward = 0
-  if not input.isAltPressed() then
-    forward = BasketFuncs.getPerFrameRoll(forwardMovement, dt)
-  end
+  local side = input.isShiftPressed() and 0 or BasketFuncs.getPerFrameRoll(sideMovement)
+  local forward = input.isAltPressed() and 0 or BasketFuncs.getPerFrameRoll(forwardMovement)
 
   local xTransform = util.transform.rotateX(-forward)
   local yTransform = util.transform.rotateY(-side)
-  return basket.rotation * yTransform * xTransform
+  return basketRotation * yTransform * xTransform
 end
 
 function BasketFuncs.basketIsColliding(moveThisFrame, rollThisFrame)
   local basketBounds = myBasket:getBoundingBox()
+
+  if not rollThisFrame then
+    rollThisFrame = util.transform.identity
+  end
 
   local moveDir = moveThisFrame:normalize()
   local useX = math.abs(moveDir.x) > math.abs(moveDir.y)
@@ -299,7 +301,7 @@ BasketFuncs.handleBasketMove = function(dt)
 
   local xyMoveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
 
-  local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, dt, myBasket)
+  local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, myBasket.rotation)
 
   -- Don't process z movement during collision handling, since the script will try to correct your position
   if BasketFuncs.basketIsColliding(xyMoveThisFrame, rollThisFrame) then
