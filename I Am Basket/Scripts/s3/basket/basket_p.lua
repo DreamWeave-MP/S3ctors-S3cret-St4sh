@@ -275,7 +275,7 @@ BasketFuncs.getPerFrameGravity = function(dt)
 
   local distanceToGround = math.floor(getLowestVertex(myBasket).z - groundResult.hitPos.z)
 
-  if distanceToGround < MinDistanceToGround - DeadZone then
+  if distanceToGround < MinDistanceToGround then
     -- Basket is too close to the ground; nudge it up smoothly
 
     canJump = true
