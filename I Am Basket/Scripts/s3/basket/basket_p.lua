@@ -109,7 +109,7 @@ BasketFuncs.getPerFrameMovement = function(dt, sideMovementControl, forwardMovem
   local forwardMovementThisFrame = BasketFuncs.getPerFrameMoveUnits(dt, forwardMovementControl, false)
 
   -- Get the Z rotation of the player inside the basket
-  local zRot, _, _ = self.rotation:getAnglesZYX()
+  local zRot = self.rotation:getYaw()
   -- Construct a transform composed of only this rotation
   local zAdjustedTransform = util.transform.identity * util.transform.rotateZ(zRot)
   -- Get corresponding forward + side vectors
