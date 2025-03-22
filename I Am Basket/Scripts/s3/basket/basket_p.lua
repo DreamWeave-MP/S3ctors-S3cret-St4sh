@@ -207,78 +207,87 @@ local function getLowestVertex(object)
 end
 
 function BasketFuncs.getVerticalVertex(basket, down)
-	assert(basket, "")
-	local viewDistance = camera.getViewDistance()
-	local rangeLow = down and 1 or 5
-	local rangeHigh = down and 4 or 8
+  assert(basket, "")
+  local viewDistance = camera.getViewDistance()
+  local rangeLow = down and 1 or 5
+  local rangeHigh = down and 4 or 8
 
-	-- The lower 4 verts are the minimums of the box
-	local vertices = basket:getBoundingBox().vertices
-	for i = rangeLow, rangeHigh do
-		local vertex = vertices[i]
-		local downCast = nearby.castRay(
-			vertex,
-			util.vector3(vertex.x, vertex.y, vertex.z + (down and -viewDistance or viewDistance)),
-			{ ignore = basket }
-		)
+  -- The lower 4 verts are the minimums of the box
+  local vertices = basket:getBoundingBox().vertices
+  for i = rangeLow, rangeHigh do
+    local vertex = vertices[i]
+    local downCast = nearby.castRay(
+      vertex,
+      util.vector3(vertex.x, vertex.y, vertex.z + (down and -viewDistance or viewDistance)),
+      { ignore = basket }
+    )
 
-		if downCast.hit then
-			return vertex, downCast
-		end
-	end
+    if downCast.hit then
+      return vertex, downCast
+    end
+  end
 end
 
 local GravityForce = 98.1 * 2
-local MinDistanceToGround = 15
+local MinDistanceToGround = 10
 local DTMult = 8
 
 local jumpDist = 0
 local JumpTargetDistance = 120
 local JumpPerSecond = 800
+
+local DeadZone = 2
 BasketFuncs.getPerFrameGravity = function(dt)
-	if isJumping then
-		local jumpThisFrame = JumpPerSecond * dt
-		jumpDist = jumpDist + jumpThisFrame
+  if isJumping then
+    local jumpThisFrame = JumpPerSecond * dt
+    jumpDist = jumpDist + jumpThisFrame
 
-		if jumpDist <= JumpTargetDistance then
-			return jumpThisFrame
-		else
-			isJumping = false
-			jumpDist = 0
-		end
-	end
+    if jumpDist <= JumpTargetDistance then
+      return jumpThisFrame
+    else
+      isJumping = false
+      jumpDist = 0
+    end
+  end
 
-	local fallAcceleration = GravityForce * dt
+  local fallAcceleration = GravityForce * dt
 
-	local startPos = getLowestVertex(myBasket)
-	local groundVertex, groundResult = BasketFuncs.getVerticalVertex(myBasket, true)
-	if not groundResult or not groundResult.hitPos then
-		local _, upResult = BasketFuncs.getVerticalVertex(myBasket, false)
+  local startPos = getLowestVertex(myBasket)
+  local _, groundResult = BasketFuncs.getVerticalVertex(myBasket, true)
 
-		if upResult and upResult.hit and upResult.hitPos then
-			return (upResult.hitPos.z - startPos.z) * dt * DTMult
-		else
-			-- If they get stuck, then, they're stuck, so apply a little gravity and allow jumping
-			canJump = true
-			return -0.001 * dt
-		end
-	end
+  if not groundResult or not groundResult.hitPos then
+    local _, upResult = BasketFuncs.getVerticalVertex(myBasket, false)
 
-	-- Calculate how far we need to fall
-	local distanceToGround = startPos.z - result.hitPos.z
+    if upResult and upResult.hit and upResult.hitPos then
+      return (upResult.hitPos.z - startPos.z) * dt * DTMult
+    else
+      -- If they get stuck, then, they're stuck, so apply a little gravity and allow jumping
+      canJump = true
+      return -0.01 * dt
+    end
+  end
 
-	if math.floor(distanceToGround) <= MinDistanceToGround then
-		canJump = true
-		local raiseThisFrame = (MinDistanceToGround - distanceToGround) * dt * DTMult
+  local distanceToGround = math.floor(getLowestVertex(myBasket).z - groundResult.hitPos.z)
 
-		return math.max(0.001, raiseThisFrame)
-	else
-		canJump = false
-	end
+  if distanceToGround < MinDistanceToGround - DeadZone then
+    -- Basket is too close to the ground; nudge it up smoothly
 
-	-- Smooth falling using a lerp-like approach
-	local fallDistance = math.min(distanceToGround, fallAcceleration)
-	return -fallDistance
+    canJump = true
+    local targetHeight = MinDistanceToGround - distanceToGround
+    local nudgeFactor = math.min(1, (MinDistanceToGround - distanceToGround) / MinDistanceToGround)
+    return targetHeight * nudgeFactor
+  elseif distanceToGround > MinDistanceToGround + DeadZone then
+    -- Basket is too far from the ground; apply gravity smoothly
+
+    canJump = false
+    local fallDistance = math.min(distanceToGround, fallAcceleration)
+    return -fallDistance
+  else
+    -- Basket is within the dead zone; no adjustment needed
+
+    canJump = true
+    return 0
+  end
 end
 
 local MovementLocked = false
