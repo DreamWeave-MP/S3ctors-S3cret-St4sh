@@ -422,7 +422,7 @@ return {
   engineHandlers = {
     onFrame = BasketFuncs.basketOnFrame,
     onKeyPress = function(key)
-      if key.code == input.KEY.Tab then
+      if key.code == input.KEY.Tab and myBasket then
         MovementLocked = not MovementLocked
       end
     end,
