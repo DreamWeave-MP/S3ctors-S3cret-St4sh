@@ -211,7 +211,7 @@ function BasketFuncs.getVerticalVertex(basket, down)
     local downCast = nearby.castRay(
       vertex,
       util.vector3(vertex.x, vertex.y, vertex.z + (down and -viewDistance or viewDistance)),
-      { ignore = basket }
+      { ignore = basket, collisionType = nearby.COLLISION_TYPE.AnyPhysical }
     )
 
     if downCast.hit then
