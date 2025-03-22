@@ -87,12 +87,13 @@ input.registerTriggerHandler(
 local MoveUnitsPerSecond = 128
 local HorizontalMovementMultiplier = 0.75
 
-local Illusion = self.type.stats.skills.illusion(self)
-local Speed = self.type.stats.attributes.speed(self)
+local Skills = self.type.stats.skills
+local Illusion = Skills.illusion(self)
+local Athletics = Skills.athletics(self)
 
 BasketFuncs.getPerFrameMoveUnits = function(dt, movement, horizontal)
   local illusionTerm = math.min(0.75, Illusion.modified / 100)
-  local speedTerm = math.min(0.25, Speed.modified / 100)
+  local speedTerm = math.min(0.25, Athletics.modified / 100)
 
   local moveTerm = MoveUnitsPerSecond * (1 + illusionTerm + speedTerm)
 
