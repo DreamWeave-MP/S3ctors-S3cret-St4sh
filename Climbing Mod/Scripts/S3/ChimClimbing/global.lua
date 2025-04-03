@@ -4,6 +4,11 @@ local ClimbQueue = {}
 
 local ZHeightBuffer = 10
 
+---@class ClimbData
+---@field climber table The entity that is performing the climb.
+---@field startPos util.vector3 The starting position of the climb.
+---@field endPos util.vector3 The ending position of the climb.
+
 ---@class GameObject userdata
 ---@field position util.vector3
 ---@field getBoundingBox function(): userdata
@@ -36,43 +41,45 @@ local function moveTargetTowards(target, targetPos, dt)
 end
 
 --- Handles the per-frame climbing logic for a target.
---- This function moves the target towards specified positions (startPos or endPos) 
---- and updates the climbing state accordingly. If the target reaches the end of 
+--- This function moves the target towards specified positions (startPos or endPos)
+--- and updates the climbing state accordingly. If the target reaches the end of
 --- the climb, it sends a climb end event and clears the climb queue for the target.
 ---
 --- @param dt number The delta time since the last frame, used to calculate movement.
---- @param target table The entity that is performing the climb.
---- @param targetPositions table A table containing the positions for the climb:
----                              - `startPos`: The starting position of the climb.
----                              - `endPos`: The ending position of the climb.
+--- @param climbData ClimbData
 ---
 --- The function performs the following steps:
 --- 1. If `startPos` exists, it moves the target towards it. Once reached, `startPos` is cleared.
---- 2. If `startPos` is nil and `endPos` exists, it moves the target towards `endPos`. 
+--- 2. If `startPos` is nil and `endPos` exists, it moves the target towards `endPos`.
 ---    Once reached, the target is teleported to a buffered position, and `endPos` is cleared.
---- 3. If both `startPos` and `endPos` are nil, it sends a climb end event and removes 
+--- 3. If both `startPos` and `endPos` are nil, it sends a climb end event and removes
 ---    the target from the climb queue.
-local function handlePerFrameClimb(dt, target, targetPositions)
-    if targetPositions.startPos then
-        if not moveTargetTowards(target, targetPositions.startPos, dt) then
-            ClimbQueue[target].startPos = nil
+local function handlePerFrameClimb(dt, climbData)
+    local startPos = climbData.startPos
+    local endPos = climbData.endPos
+    local target = climbData.climber
+    local targetId = target.id
+
+    if startPos then
+        if not moveTargetTowards(target, startPos, dt) then
+            ClimbQueue[targetId].startPos = nil
         end
-    elseif targetPositions.endPos then
-        if not moveTargetTowards(target, targetPositions.endPos, dt) then
+    elseif endPos then
+        if not moveTargetTowards(target, endPos, dt) then
             target:teleport(target.cell, BufferedPosition(target), { onGround = true })
-            ClimbQueue[target].endPos = nil
+            ClimbQueue[targetId].endPos = nil
         end
     else
         target:sendEvent('S3_ChimClimb_ClimbEnd')
-        ClimbQueue[target] = nil
+        ClimbQueue[targetId] = nil
     end
 end
 
 return {
     engineHandlers = {
         onUpdate = function(dt)
-            for player, positions in pairs(ClimbQueue) do
-                handlePerFrameClimb(dt, player, positions)
+            for _, climbData in pairs(ClimbQueue) do
+                handlePerFrameClimb(dt, climbData)
             end
         end,
     },
@@ -80,11 +87,16 @@ return {
         S3_ChimClimb_ClimbStart = function(climbData)
             local queuedClimber = ClimbQueue[climbData.target]
             if not queuedClimber then
-                ClimbQueue[climbData.target] = {
+                local climberId = climbData.target.id
+                ClimbQueue[climberId] = {
+                    climber = climbData.target,
                     startPos = climbData.startPos,
                     endPos = climbData.endPos,
                 }
             end
+        end,
+        S3_ChimClimb_ClimbInterrupt = function(targetId)
+            if ClimbQueue[targetId] then ClimbQueue[targetId] = nil end
         end,
     }
 }
