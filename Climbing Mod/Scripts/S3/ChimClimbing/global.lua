@@ -8,8 +8,6 @@ local ZHeightBuffer = 10
 ---@field position util.vector3
 ---@field getBoundingBox function(): userdata
 
-
-
 --- Calculates a buffered position for a given object by adjusting its Z-coordinate.
 --- The buffered position is determined by adding the half-size of the object's bounding box
 --- along the Z-axis to the object's current position.
