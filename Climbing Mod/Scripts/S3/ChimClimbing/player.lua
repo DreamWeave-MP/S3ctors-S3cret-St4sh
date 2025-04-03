@@ -16,8 +16,8 @@ local I = require('openmw.interfaces')
 
 --- @class ClimbState
 --- @field climbEngaged boolean Indicates whether the climbing state is currently active.
---- @field climbRisePos nil|table The first stopping point during the climb, before moving forward. Nil if not climbing.
---- @field climbEndPos nil|table The position where the climb ends. Nil if not climbing.
+--- @field climbRisePos nil|util.vector3 The first stopping point during the climb, before moving forward. Nil if not climbing.
+--- @field climbEndPos nil|util.vector3 The position where the climb ends. Nil if not climbing.
 --- @field prevCamMode nil|number The previous camera mode before climbing was engaged. Nil if not climbing.
 
 local ClimbMod = {
