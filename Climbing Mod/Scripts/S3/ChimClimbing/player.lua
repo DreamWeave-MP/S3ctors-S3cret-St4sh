@@ -102,13 +102,8 @@ input.registerTriggerHandler(
         if not waistHit.hit then
             print("No hit detected at waist level.")
             return
-        else
-            local hitCheck = waistHit.hitObject
-
-            if not hitCheck then
+        elseif not waistHit.hitObject then
                 error("No hit object detected, but something was hit! Is the collisionType correct?")
-                return
-            end
         end
 
         print('\n', "Center is:", center, '\n', 'scanPos is:', scanPos, '\n', 'zTransform is', zTransform, '\n\n\n')
