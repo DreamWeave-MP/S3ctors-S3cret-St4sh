@@ -12,10 +12,11 @@ local I = require("openmw.interfaces")
 
 local movementSettings = storage.playerSection("SettingsOMWControls")
 
+local BasketData = require("scripts.s3.basket.basketData")
+
 local Inventory = self.type.inventory(self)
 
 local RobeSlot = self.type.EQUIPMENT_SLOT.Robe
-local BASKET_ROBE_ID = "s3_basket_gear"
 
 local BasketFuncs = {}
 
@@ -33,40 +34,86 @@ local HARD_MODE_ALLOWED_SLOTS = {
   [self.type.EQUIPMENT_SLOT.Robe] = true,
 }
 
+local TransformStates = {
+  ["Start"] = 1,
+  ["Transforming"] = 2,
+  ["Normal"] = 3,
+  ["Basket"] = 4,
+  ["End"] = 5,
+}
+
+local CurrentTransformState = TransformStates.Normal
+local DoTest = false
+
 local prevHudState
 local prevCamMode
 local myBasket
+
+BasketFuncs.toggleBasket = function()
+  if CurrentTransformState ~= TransformStates.Start and CurrentTransformState ~= TransformStates.End then
+    return
+  end
+
+  if I.UI.getMode() then
+    return
+  end
+
+  local groundPos = CurrentTransformState == TransformStates.End and BasketFuncs.getGroundPos() or nil
+
+  core.sendGlobalEvent(
+    "S3_BasketMode_BasketTransform",
+    { target = self.object, basket = myBasket, state = CurrentTransformState, groundPos = groundPos }
+  )
+
+  -- local overrideControls = myBasket == nil
+  -- I.Controls.overrideCombatControls(overrideControls)
+  -- I.Controls.overrideUiControls(overrideControls)
+  -- I.Controls.overrideMovementControls(overrideControls)
+
+  -- Dangerous?
+  if CurrentTransformState == TransformStates.Start then
+    prevHudState = I.UI.isHudVisible()
+    I.UI.setHudVisibility(false)
+    prevCamMode = camera.getMode()
+    -- Get rotation too?
+    local camPos = camera.getPosition()
+    camera.setMode(camera.MODE.Static)
+    camera.setStaticPosition(camPos)
+  elseif CurrentTransformState == TransformStates.End then
+    -- myBasket = nil
+    camera.setMode(prevCamMode)
+    I.UI.setHudVisibility(prevHudState)
+  end
+  CurrentTransformState = TransformStates.Transforming
+end
+
+local function CollisionTestFunction()
+  if CurrentTransformState == TransformStates.Normal then
+    CurrentTransformState = TransformStates.Start
+  elseif CurrentTransformState == TransformStates.Basket then
+    CurrentTransformState = TransformStates.End
+  end
+end
+
+-- Testing function to reproduce bad/weird drops
+local time = require("openmw_aux.time")
+if DoTest then
+  time.runRepeatedly(CollisionTestFunction, 0.666 * time.second, { initialDelay = 0.5 * time.second })
+end
+
 input.registerActionHandler(
   "Sneak",
   async:callback(function(sneak)
-    if I.UI.getMode() then
-      return
-    end
-
     if not sneak then
       return
     end
 
-    core.sendGlobalEvent("S3_BasketMode_BasketTransform", { target = self.object, basket = myBasket })
-
-    local overrideControls = myBasket == nil
-    I.Controls.overrideCombatControls(overrideControls)
-    I.Controls.overrideUiControls(overrideControls)
-    I.Controls.overrideMovementControls(overrideControls)
-
-    -- Dangerous?
-    if not myBasket then
-      prevHudState = I.UI.isHudVisible()
-      I.UI.setHudVisibility(false)
-      prevCamMode = camera.getMode()
-      -- Get rotation too?
-      local camPos = camera.getPosition()
-      camera.setMode(camera.MODE.Static)
-      camera.setStaticPosition(camPos)
-    else
-      myBasket = nil
-      camera.setMode(prevCamMode)
-      I.UI.setHudVisibility(prevHudState)
+    if CurrentTransformState == TransformStates.Normal then
+      CurrentTransformState = TransformStates.Start
+      -- self.type.setTeleportingEnabled(self, true)
+    elseif CurrentTransformState == TransformStates.Basket then
+      CurrentTransformState = TransformStates.End
+      -- self.type.setTeleportingEnabled(self, false)
     end
   end)
 )
@@ -82,7 +129,7 @@ input.registerTriggerHandler(
   end)
 )
 
-local MoveUnitsPerSecond = 128
+local MoveUnitsPerSecond = DoTest and 1024 or 128
 local HorizontalMovementMultiplier = 0.75
 
 local Skills = self.type.stats.skills
@@ -330,6 +377,12 @@ BasketFuncs.handleBasketCollision = function(movementVector, collisionNormal)
 end
 
 local MovementLocked = false
+-- local TestMove = math.random(-1, 1)
+-- local TestSideMove = math.random(-1, 1)
+
+local TestMove = 1
+local TestSideMove = -1
+
 BasketFuncs.handleBasketMove = function(dt)
   if self.controls.sneak then
     self.controls.sneak = false
@@ -339,8 +392,15 @@ BasketFuncs.handleBasketMove = function(dt)
     return
   end
 
-  local movement = input.getRangeActionValue("MoveForward") - input.getRangeActionValue("MoveBackward")
-  local sideMovement = input.getRangeActionValue("MoveRight") - input.getRangeActionValue("MoveLeft")
+  local movement
+  local sideMovement
+  if DoTest then
+    movement = TestMove
+    sideMovement = TestSideMove
+  else
+    movement = input.getRangeActionValue("MoveForward") - input.getRangeActionValue("MoveBackward")
+    sideMovement = input.getRangeActionValue("MoveRight") - input.getRangeActionValue("MoveLeft")
+  end
 
   -- local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
 
@@ -378,7 +438,7 @@ end
 BasketFuncs.getBasket = function()
   local equippedRobe = self.type.getEquipment(self, RobeSlot)
 
-  if equippedRobe and equippedRobe.recordId == BASKET_ROBE_ID then
+  if equippedRobe and equippedRobe.recordId == BasketData.DefaultRobeId then
     return equippedRobe
   end
 end
@@ -406,7 +466,7 @@ BasketFuncs.equipBasket = function()
 
   if not HardMode then
     if not BasketFuncs.getBasket() then
-      currentEquipment[RobeSlot] = BASKET_ROBE_ID
+      currentEquipment[RobeSlot] = BasketData.DefaultRobeId
 
       self.type.setEquipment(self, currentEquipment)
     end
@@ -419,7 +479,7 @@ BasketFuncs.equipBasket = function()
       end
     end
 
-    allowedEquipment[RobeSlot] = BASKET_ROBE_ID
+    allowedEquipment[RobeSlot] = BasketData.DefaultRobeId
 
     self.type.setEquipment(self, allowedEquipment)
   end
@@ -434,7 +494,7 @@ BasketFuncs.equipBasket = function()
 end
 
 BasketFuncs.forceHasBasket = function()
-  local basketCount = Inventory:countOf(BASKET_ROBE_ID)
+  local basketCount = Inventory:countOf(BasketData.DefaultRobeId)
 
   if basketCount >= 1 then
     return
@@ -443,10 +503,21 @@ BasketFuncs.forceHasBasket = function()
   core.sendGlobalEvent("S3_BasketMode_AddBasket", self.object)
 end
 
+BasketFuncs.isBasket = function()
+  return CurrentTransformState == TransformStates.Basket
+end
+
 BasketFuncs.basketOnFrame = function(dt)
   BasketFuncs.forceHasBasket()
   BasketFuncs.equipBasket()
-  BasketFuncs.handleBasketMove(dt)
+
+  -- print(TransformStarted, IsTransforming)
+  if CurrentTransformState == TransformStates.Start or CurrentTransformState == TransformStates.End then
+    -- print("processing transformation . . .")
+    BasketFuncs.toggleBasket()
+  elseif CurrentTransformState == TransformStates.Basket then
+    BasketFuncs.handleBasketMove(dt)
+  end
 end
 
 return {
@@ -454,12 +525,29 @@ return {
     S3_BasketMode_BasketToPlayer = function(basket)
       assert(basket, "Received basket assignment event with no basket!")
       myBasket = basket
+      I.Controls.overrideCombatControls(true)
+      I.Controls.overrideUiControls(true)
+      I.Controls.overrideMovementControls(true)
+      CurrentTransformState = TransformStates.Basket
+    end,
+    S3_BasketMode_BasketOff = function()
+      print("BasketOff Event:", self.cell, self.position)
+      I.Controls.overrideCombatControls(false)
+      I.Controls.overrideUiControls(false)
+      I.Controls.overrideMovementControls(false)
+      -- self.type.setTeleportingEnabled(self, true)
+      CurrentTransformState = TransformStates.Normal
+      myBasket = nil
     end,
   },
   engineHandlers = {
     onFrame = BasketFuncs.basketOnFrame,
     onKeyPress = function(key)
-      if key.code == input.KEY.Tab and myBasket then
+      if not BasketFuncs.isBasket() then
+        return
+      end
+
+      if key.code == input.KEY.Tab then
         MovementLocked = not MovementLocked
       end
     end,
