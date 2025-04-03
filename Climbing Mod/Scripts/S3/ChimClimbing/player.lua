@@ -2,7 +2,6 @@
 --- TODO: Scale climb speed based on movement speed
 --- TODO: Implement animations
 --- TODO: Increase reach (optionally??)
---- TODO: Fix forward movement going too far
 ---]]
 
 local async = require('openmw.async')
@@ -186,7 +185,8 @@ local function calculateFinalDestination(upwardHit, zTransform)
     print("Vertical destination is", upwardHit.hitObject, upwardHit.hitPos)
 
     -- Determine the final destination after moving forward
-    local forwardVec = zTransform:apply(util.vector3(0, self:getBoundingBox().halfSize.y, 0))
+    local forwardStep = self:getBoundingBox().halfSize.y / 2
+    local forwardVec = zTransform:apply(util.vector3(0, forwardStep, 0))
     local finalStopPoint = firstStopPoint + forwardVec
 
     local finalHit = nearby.castRay(firstStopPoint, finalStopPoint, { ignore = { self } })
