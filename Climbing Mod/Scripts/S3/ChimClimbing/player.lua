@@ -1,3 +1,10 @@
+---[[
+--- TODO: Scale climb speed based on movement speed
+--- TODO: Implement fatigue drain
+--- TODO: Implement animations
+--- TODO: Cancellable climbing (same control, call disengage, send a global event in it)
+---]]
+
 local async = require('openmw.async')
 local camera = require('openmw.camera')
 local core = require('openmw.core')
