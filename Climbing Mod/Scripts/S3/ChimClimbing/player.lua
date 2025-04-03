@@ -54,9 +54,9 @@ function ClimbMod.engage(risePos, endPos)
     camera.setMode(camera.MODE.FirstPerson)
 
     core.sendGlobalEvent('S3_ChimClimb_ClimbStart', {
-        target = self.object,
-        startPos = ClimbState.climbRisePos,
         endPos = ClimbState.climbEndPos,
+        startPos = ClimbState.climbRisePos,
+        target = self.object,
     })
 end
 
