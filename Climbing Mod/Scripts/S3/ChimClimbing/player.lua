@@ -1,5 +1,4 @@
 ---[[
---- TODO: Scale climb speed based on movement speed
 --- TODO: Implement animations
 --- TODO: Increase reach (optionally??)
 ---]]
@@ -16,8 +15,17 @@ local util = require('openmw.util')
 local I = require('openmw.interfaces')
 
 local Stats = self.type.stats
+
 local DynamicStats = Stats.dynamic
 local Fatigue = DynamicStats.fatigue(self)
+
+local Attributes = Stats.attributes
+local Agility = Attributes.agility(self)
+local Speed = Attributes.speed(self)
+
+local Skills = Stats.skills
+local Athletics = Skills.athletics(self)
+local Acrobatics = Skills.acrobatics(self)
 
 --- @class ClimbMod
 --- @field CLIMB_ACTIVATE_RANGE number The maximum range (in units) within which climbing can be activated.
@@ -42,6 +50,14 @@ local ClimbState = {
 }
 
 
+--- Toggles the override state for various control systems in the game.
+--- 
+--- This function enables or disables the override for movement, combat, 
+--- and UI controls based on the provided state.
+---
+--- @param state boolean
+---   A boolean value indicating whether to enable (`true`) or disable (`false`) 
+---   the override for the controls.
 function ClimbMod.switchControls(state)
     I.Controls.overrideMovementControls(state)
     I.Controls.overrideCombatControls(state)
@@ -70,6 +86,7 @@ function ClimbMod.engage(risePos, endPos)
         endPos = ClimbState.climbEndPos,
         fatigueDrain = ClimbMod.getFatigueDrain(),
         startPos = ClimbState.climbRisePos,
+        speedMult = ClimbMod.getSpeedMult(),
         target = self.object,
     })
 end
@@ -113,6 +130,35 @@ function ClimbMod.getFatigueDrain()
     local normalizedEncumbrance = self.type.getEncumbrance(self) / self.type.getCapacity(self)
 
     return fatigueJumpBase + (fatigueJumpMult * normalizedEncumbrance)
+end
+
+--- Calculates the flat value of a given stat, ensuring it does not exceed 100.
+--- 
+--- This function takes a stat object with a `modified` property and returns
+--- the lesser of the `modified` value or 100. It is useful for clamping
+--- stat values to a maximum threshold.
+---
+--- @param stat userdata A table representing the stat, which must contain a `modified` field.
+--- @return number The clamped stat value, capped at 100.
+local function getStatMult(stat)
+---@diagnostic disable-next-line: undefined-field
+    return math.min(stat.modified, 100) / 100
+end
+
+--- Calculates the climbing speed multiplier based on player attributes and skills.
+--- TODO: Also account for normalized encumbrance, maybe
+--- @return number The climbing speed multiplier.
+function ClimbMod.getSpeedMult()
+    local agilityFactor = getStatMult(Agility)
+    local speedFactor = getStatMult(Speed)
+    local athleticsFactor = getStatMult(Athletics)
+    local acrobaticsFactor = getStatMult(Acrobatics)
+
+    -- Weighted formula for climbing speed multiplier
+    local multiplier = 1.0 + (0.4 * speedFactor) + (0.3 * athleticsFactor) + (0.1 * agilityFactor) + (0.2 * acrobaticsFactor)
+
+    -- Clamp the multiplier to a reasonable range (e.g., 1.0 to 2.0)
+    return math.min(math.max(multiplier, 1.0), 2.0)
 end
 
 --- Calculates the climbing range for the player based on their bounding box.

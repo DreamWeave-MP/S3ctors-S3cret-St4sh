@@ -14,6 +14,7 @@ local FatigueFailCost = -300
 ---@field endPos util.vector3 The ending position of the climb.
 ---@field fatigueDrain number The amount of fatigue drained during the climb.
 ---@field startPos util.vector3 The starting position of the climb.
+---@field speedMult number The speed multiplier for the climb.
 ---@field target GameObject The entity that is performing the climb.
 
 ---@class GameObject userdata
@@ -41,9 +42,10 @@ end
 --- @param target table The target object to move.
 --- @param targetPos util.vector3 The target position to move toward.
 --- @param dt number Delta time for the frame.
+--- @param speedMult number Speed multiplier for the movement.
 --- @return boolean True if the target was moved, false if the movement is complete.
-local function moveTargetTowards(target, targetPos, dt)
-    local moveDistance = (targetPos - target.position) * dt
+local function moveTargetTowards(target, targetPos, dt, speedMult)
+    local moveDistance = (targetPos - target.position) * dt * speedMult
     if moveDistance:length() > 0.1 then
         target:teleport(target.cell, target.position + moveDistance)
         return true
@@ -90,11 +92,12 @@ end
 local function handlePerFrameClimb(dt, climbData)
     local startPos = climbData.startPos
     local endPos = climbData.endPos
+    local speedMult = climbData.speedMult
     local target = climbData.target
     local targetId = target.id
 
     if startPos then
-        if not moveTargetTowards(target, startPos, dt) then
+        if not moveTargetTowards(target, startPos, dt, speedMult) then
             ClimbQueue[targetId].startPos = nil
         end
     elseif endPos then
@@ -107,7 +110,7 @@ local function handlePerFrameClimb(dt, climbData)
             end
         end
 
-        if not moveTargetTowards(target, endPos, dt) then
+        if not moveTargetTowards(target, endPos, dt, speedMult) then
             target:teleport(target.cell, BufferedPosition(target), { onGround = true })
             ClimbQueue[targetId].endPos = nil
         end
