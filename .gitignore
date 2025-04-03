@@ -17,3 +17,6 @@ sw_cpp/*
 !sw_cpp/Scripts
 !sw_cpp/Scripts/*
 !sw_cpp/*.omwscripts
+Empowered Races of Tamriel/*
+Survival/*
+mod_metadata_mod/*
