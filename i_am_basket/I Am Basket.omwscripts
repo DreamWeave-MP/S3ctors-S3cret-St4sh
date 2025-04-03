@@ -1,2 +1,2 @@
-GLOBAL: Scripts/s3/basket/basket_g.lua
 PLAYER: Scripts/s3/basket/basket_p.lua
+GLOBAL: Scripts/s3/basket/basket_g.lua
