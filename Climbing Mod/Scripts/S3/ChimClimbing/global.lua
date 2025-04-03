@@ -1,17 +1,28 @@
 local util = require('openmw.util')
+local types = require('openmw.types')
+
+local ActorType = types.Actor
+local Fatigue = ActorType.stats.dynamic.fatigue
 
 local ClimbQueue = {}
 
 local ZHeightBuffer = 10
+local FatigueFailCost = -300
 
 ---@class ClimbData
----@field climber table The entity that is performing the climb.
----@field startPos util.vector3 The starting position of the climb.
+---@field didDrainFatigue nil|boolean Indicates whether fatigue has been drained during the climb.
 ---@field endPos util.vector3 The ending position of the climb.
+---@field fatigueDrain number The amount of fatigue drained during the climb.
+---@field startPos util.vector3 The starting position of the climb.
+---@field target GameObject The entity that is performing the climb.
 
 ---@class GameObject userdata
 ---@field position util.vector3
 ---@field getBoundingBox function(): userdata
+---@field teleport function(cell: userdata, position: util.vector3, options: table)
+---@field sendEvent function(eventName: string, eventData: any)
+---@field id string The unique identifier for the object.
+---@field cell userdata The cell in which the object is located.
 
 --- Calculates a buffered position for a given object by adjusting its Z-coordinate.
 --- The buffered position is determined by adding the half-size of the object's bounding box
@@ -40,6 +51,28 @@ local function moveTargetTowards(target, targetPos, dt)
     return false
 end
 
+--- Handles the fatigue drain during a mantle action in the climbing system.
+--- This function ensures that fatigue is properly drained from the target
+--- and determines whether the mantle action fails due to insufficient fatigue.
+---
+--- @param climbData ClimbData A table containing data related to the current climb.
+--- @return boolean `true` if the mantle action fails due to insufficient fatigue, `false` otherwise.
+--- @throws Error if `didDrainFatigue` is already `true`, indicating fatigue has already been drained.
+local function handleMantleFatigue(climbData)
+    assert(not climbData.didDrainFatigue, "Fatigue already drained for this climb.")
+
+    local targetFatigue = Fatigue(climbData.target)
+
+    local fatigueAfterMantle = targetFatigue.current - climbData.fatigueDrain
+    local didFail = fatigueAfterMantle < 0
+    local newFatigue = (didFail and FatigueFailCost) or fatigueAfterMantle
+
+    climbData.target:sendEvent('S3_ChimClimb_DrainFatigue', newFatigue)
+    climbData.didDrainFatigue = true
+
+    return didFail
+end
+
 --- Handles the per-frame climbing logic for a target.
 --- This function moves the target towards specified positions (startPos or endPos)
 --- and updates the climbing state accordingly. If the target reaches the end of
@@ -57,7 +90,7 @@ end
 local function handlePerFrameClimb(dt, climbData)
     local startPos = climbData.startPos
     local endPos = climbData.endPos
-    local target = climbData.climber
+    local target = climbData.target
     local targetId = target.id
 
     if startPos then
@@ -65,6 +98,15 @@ local function handlePerFrameClimb(dt, climbData)
             ClimbQueue[targetId].startPos = nil
         end
     elseif endPos then
+        if not climbData.didDrainFatigue then
+            local didFail = handleMantleFatigue(climbData)
+            if didFail then
+                target:sendEvent('S3_ChimClimb_ClimbEnd')
+                ClimbQueue[targetId] = nil
+                return
+            end
+        end
+
         if not moveTargetTowards(target, endPos, dt) then
             target:teleport(target.cell, BufferedPosition(target), { onGround = true })
             ClimbQueue[targetId].endPos = nil
@@ -84,15 +126,11 @@ return {
         end,
     },
     eventHandlers = {
+        ---@param climbData ClimbData
         S3_ChimClimb_ClimbStart = function(climbData)
-            local queuedClimber = ClimbQueue[climbData.target]
-            if not queuedClimber then
-                local climberId = climbData.target.id
-                ClimbQueue[climberId] = {
-                    climber = climbData.target,
-                    startPos = climbData.startPos,
-                    endPos = climbData.endPos,
-                }
+            local climberId = climbData.target.id
+            if not ClimbQueue[climberId]then
+                ClimbQueue[climberId] = climbData
             end
         end,
         S3_ChimClimb_ClimbInterrupt = function(targetId)
