@@ -42,6 +42,13 @@ local ClimbState = {
     prevCamMode = nil,
 }
 
+
+function ClimbMod.switchControls(state)
+    I.Controls.overrideMovementControls(state)
+    I.Controls.overrideCombatControls(state)
+    I.Controls.overrideUiControls(state)
+end
+
 --- Engages the climbing mode by setting the climb state to active and
 --- storing the starting and ending positions of the climb.
 --- Both will be sent as inputs to a global function
@@ -49,9 +56,7 @@ local ClimbState = {
 --- @param risePos util.vector3 The starting position of the climb, typically a vector or coordinate.
 --- @param endPos util.vector3 The ending position of the climb, typically a vector or coordinate.
 function ClimbMod.engage(risePos, endPos)
-    I.Controls.overrideMovementControls(true)
-    I.Controls.overrideCombatControls(true)
-    I.Controls.overrideUiControls(true)
+    ClimbMod.switchControls(true)
 
     ClimbState = {
         climbEngaged = true,
@@ -79,9 +84,8 @@ end
 --- Usage:
 --- Call in an eventHandler when the player is no longer climbing
 function ClimbMod.disengage()
-    I.Controls.overrideMovementControls(false)
-    I.Controls.overrideCombatControls(false)
-    I.Controls.overrideUiControls(false)
+    ClimbMod.switchControls(false)
+
     camera.setMode(ClimbState.prevCamMode or camera.MODE.ThirdPerson)
 
     ClimbState = {
