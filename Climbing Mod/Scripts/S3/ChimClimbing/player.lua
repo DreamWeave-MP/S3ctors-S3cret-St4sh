@@ -1,9 +1,8 @@
----@module 'Scripts.S3.Doc.vector3.lua'
-
 local async = require('openmw.async')
 local camera = require('openmw.camera')
 local core = require('openmw.core')
 local input = require('openmw.input')
+---@type nearby
 local nearby = require('openmw.nearby')
 local self = require('openmw.self')
 local util = require('openmw.util')
@@ -47,6 +46,12 @@ function ClimbMod.engage(risePos, endPos)
     I.Controls.overrideUiControls(true)
     ClimbState.prevCamMode = camera.getMode()
     camera.setMode(camera.MODE.FirstPerson)
+
+    core.sendGlobalEvent('S3_ChimClimb_ClimbStart', {
+        target = self.object,
+        startPos = ClimbState.climbRisePos,
+        endPos = ClimbState.climbEndPos,
+    })
 end
 
 --- Disengages the climbing mode for the player.
@@ -81,106 +86,116 @@ function ClimbMod.climbRanges()
     return box.center.z, box.center.z + height
 end
 
+--- Perform a raycast to find the maximum climbable height.
+--- @param center util.vector3 The starting position of the raycast.
+--- @param scanPos util.vector3 The ending position of the raycast.
+--- @return RayCastingResult|nil The highest hit object or nil if no valid hit is found.
+local function findMaxClimbableHeight(center, scanPos)
+    local upwardHit
+    while true do
+        -- Increment Z position of both start and end points
+        center = center + util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
+        scanPos = scanPos + util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
+
+        -- Perform raycast at the new height
+        local currentHit = nearby.castRay(center, scanPos, { ignore = { self } })
+
+        if not currentHit.hit then
+            print("No hit detected at height:", center.z)
+            break
+        end
+
+        print("Hit detected at height:", center.z, "Object was:", currentHit.hitObject)
+        upwardHit = currentHit
+    end
+
+    return upwardHit
+end
+
+
+--- Validate if the hit object is climbable based on height constraints.
+--- @param upwardHit RayCastingResult The hit object from the raycast.
+--- @return boolean True if the object is climbable, false otherwise.
+local function isClimbable(upwardHit)
+    if not upwardHit or not upwardHit.hit then
+        print("No upward hit detected.")
+        return false
+    end
+
+    local climbMin, climbMax = ClimbMod.climbRanges()
+    print(upwardHit.hitPos.z, climbMin, climbMax) 
+
+    -- Check if the hit object is within climbable height range
+    if upwardHit.hitPos.z < climbMin or upwardHit.hitPos.z > climbMax then
+        print("Hit object is too high or too low to climb.")
+        return false
+    end
+
+    return true
+end
+
+--- Calculate the final destination for the climb.
+--- @param upwardHit table The highest hit object.
+--- @param zTransform table The player's Z rotation transform.
+--- @return util.vector3 The final destination position.
+local function calculateFinalDestination(upwardHit, zTransform)
+    -- Use the original position, bumped up a bit
+    local firstStopPoint = util.vector3(upwardHit.hitPos.x, upwardHit.hitPos.y, upwardHit.hitPos.z + 5)
+    print("Vertical destination is", upwardHit.hitObject, upwardHit.hitPos)
+
+    -- Determine the final destination after moving forward
+    local forwardVec = zTransform:apply(util.vector3(0, self:getBoundingBox().halfSize.y, 0))
+    local finalStopPoint = firstStopPoint + forwardVec
+
+    local finalHit = nearby.castRay(firstStopPoint, finalStopPoint, { ignore = { self } })
+
+    -- If no hit, move to the final position; otherwise, use the collision point
+    if finalHit.hit then
+        print("Hit detected at final destination:", finalHit.hitObject)
+        return finalHit.hitPos
+    else
+        print("No hit detected at final destination.")
+        return finalStopPoint
+    end
+end
+
 input.registerTriggerHandler(
     "Jump",
     async:callback(function()
         -- Transform encompassing player's current Z Rotation
         local zTransform = util.transform.rotateZ(self.rotation:getYaw())
         local center = self:getBoundingBox().center
-        -- Player's current position, rotated, CLIMB_ACTIVATE_RANGE units forward
         local scanPos = center + zTransform:apply(util.vector3(0, ClimbMod.CLIMB_ACTIVATE_RANGE, 0))
-        -- You have to hit, at least at the waist
-        -- If you hit at the waist, check to find the maximum height of the obstacle
-        -- If between waist and max, climb is valid!
 
-        local waistHit = nearby.castRay(
-            center,
-            scanPos,
-            { ignore = { self } }
-        )
-
+        local waistHit = nearby.castRay(center, scanPos, { ignore = { self } })
         if not waistHit.hit then
             print("No hit detected at waist level.")
             return
         elseif not waistHit.hitObject then
-                error("No hit object detected, but something was hit! Is the collisionType correct?")
+            error("No hit object detected, but something was hit! Is the collisionType correct?")
         end
 
         print('\n', "Center is:", center, '\n', 'scanPos is:', scanPos, '\n', 'zTransform is', zTransform, '\n\n\n')
 
-        local upwardHit
+        local upwardHit = findMaxClimbableHeight(center, scanPos)
 
-        print("Detected a hit! Object was: ", waistHit.hitObject)
-
-        while true do
-            -- Increment Z position of both start and end points
-            center = center + util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
-            scanPos = scanPos + util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
-
-            -- Perform raycast at the new height
-            local currentHit = nearby.castRay(
-                center,
-                scanPos,
-                { ignore = { self } }
-            )
-
-            if not currentHit.hit then
-                print("No hit detected at height:", center.z)
-                break
-            end
-
-            print("Hit detected at height:", center.z, "Object was:", currentHit.hitObject)
-            upwardHit = currentHit
+        if not upwardHit then
+            error('No upward hit detected.')
         end
 
-        if not upwardHit.hit then
-            print("No upward hit detected.")
+        if not isClimbable(upwardHit) then
+            print("Hit object is not climbable.")
             return
         end
 
-        local climbMin, climbMax = ClimbMod.climbRanges()
-
-        -- In order to climb something, it must be at least waist high
-        -- and within arm's length, eg a ledge
-        if upwardHit.hitPos.z < climbMin or upwardHit.hitPos.z > climbMax then
-            print("Hit object is too high or too low to climb.")
-            return
-        end
-
-        -- Use the original position, bumped up a bit
-        local firstStopPoint = util.vector3(upwardHit.hitPos.x, upwardHit.hitPos.y, upwardHit.hitPos.z + 5)
-        print("Vertical destination is", upwardHit.hitObject, upwardHit.hitPos)
-
-        -- Now, we have the first destination. We then need to determine the final destination, after moving forward once more
-        local forwardVec = zTransform:apply(util.vector3(0, self:getBoundingBox().halfSize.y, 0))
-        local finalStopPoint = firstStopPoint + forwardVec
-
-        local finalHit = nearby.castRay(
-            firstStopPoint,
-            finalStopPoint,
-            { ignore = { self } }
-        )
-
-        -- If we didn't actually hit anything, then just move to the final position
-        -- Otherwise, use the collision point as our destination
-        -- Mind the player's z pos refers to their feet
-        local finalDestination
-        if finalHit.hit then
-            finalDestination = finalHit.hitPos
-            print("No hit detected at final destination.")
-        else
-            finalDestination = finalStopPoint
-            print("Hit detected at final destination:", upwardHit.hitObject)
-        end
+        local finalDestination = calculateFinalDestination(upwardHit, zTransform)
 
         print("Final destination is", finalDestination)
-        ClimbMod.engage(firstStopPoint, finalDestination)
 
-        core.sendGlobalEvent('S3_ChimClimb_ClimbStart', {
-            target = self.object,
-            startPos = firstStopPoint,
-            endPos = finalDestination,
-        })
+        ClimbMod.engage(
+            upwardHit.hitPos,
+            finalDestination
+        )
     end)
 )
 
