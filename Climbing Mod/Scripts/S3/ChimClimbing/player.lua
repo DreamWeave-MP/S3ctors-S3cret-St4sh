@@ -98,7 +98,7 @@ end
 --- @param center util.vector3 The starting position of the raycast.
 --- @param scanPos util.vector3 The ending position of the raycast.
 --- @return RayCastingResult|nil The highest hit object or nil if no valid hit is found.
-local function findMaxClimbableHeight(center, scanPos)
+function ClimbMod.findMaxClimbableHeight(center, scanPos)
     local upwardHit
     while true do
         -- Increment Z position of both start and end points
@@ -120,11 +120,10 @@ local function findMaxClimbableHeight(center, scanPos)
     return upwardHit
 end
 
-
 --- Validate if the hit object is climbable based on height constraints.
 --- @param upwardHit RayCastingResult The hit object from the raycast.
 --- @return boolean True if the object is climbable, false otherwise.
-local function isClimbable(upwardHit)
+function ClimbMod.isClimbable(upwardHit)
     if not upwardHit or not upwardHit.hit then
         print("No upward hit detected.")
         return false
@@ -189,13 +188,13 @@ input.registerTriggerHandler(
 
         print('\n', "Center is:", center, '\n', 'scanPos is:', scanPos, '\n', 'zTransform is', zTransform, '\n\n\n')
 
-        local upwardHit = findMaxClimbableHeight(center, scanPos)
+        local upwardHit = ClimbMod.findMaxClimbableHeight(center, scanPos)
 
         if not upwardHit then
             error('No upward hit detected.')
         end
 
-        if not isClimbable(upwardHit) then
+        if not ClimbMod.isClimbable(upwardHit) then
             print("Hit object is not climbable.")
             return
         end
