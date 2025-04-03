@@ -1,7 +1,8 @@
 ---[[
 --- TODO: Scale climb speed based on movement speed
---- TODO: Implement fatigue drain
 --- TODO: Implement animations
+--- TODO: Increase reach (optionally??)
+--- TODO: Fix forward movement going too far
 ---]]
 
 local async = require('openmw.async')
@@ -14,6 +15,10 @@ local self = require('openmw.self')
 local util = require('openmw.util')
 
 local I = require('openmw.interfaces')
+
+local Stats = self.type.stats
+local DynamicStats = Stats.dynamic
+local Fatigue = DynamicStats.fatigue(self)
 
 --- @class ClimbMod
 --- @field CLIMB_ACTIVATE_RANGE number The maximum range (in units) within which climbing can be activated.
@@ -55,6 +60,7 @@ function ClimbMod.engage(risePos, endPos)
 
     core.sendGlobalEvent('S3_ChimClimb_ClimbStart', {
         endPos = ClimbState.climbEndPos,
+        fatigueDrain = ClimbMod.getFatigueDrain(),
         startPos = ClimbState.climbRisePos,
         target = self.object,
     })
@@ -79,6 +85,24 @@ function ClimbMod.disengage()
     ClimbState.prevCamMode = nil
 
     core.sendGlobalEvent('S3_ChimClimb_ClimbInterrupt', self.id)
+end
+
+--- Calculates the fatigue drain for climbing based on game settings and the player's encumbrance.
+--- 
+--- This function retrieves the base fatigue drain and the multiplier for fatigue drain from 
+--- game settings (GMST). It then calculates the normalized encumbrance of the player as a 
+--- ratio of their current encumbrance to their maximum capacity. The final fatigue drain 
+--- is computed as the sum of the base fatigue drain and the product of the multiplier with 
+--- the normalized encumbrance. 
+--- https://wiki.openmw.org/index.php?title=Research:Movement#On_jumping
+---
+--- @return number The calculated fatigue drain value.
+function ClimbMod.getFatigueDrain()
+    local fatigueJumpBase = core.getGMST('fFatigueJumpBase')
+    local fatigueJumpMult = core.getGMST('fFatigueJumpMult')
+    local normalizedEncumbrance = self.type.getEncumbrance(self) / self.type.getCapacity(self)
+
+    return fatigueJumpBase + (fatigueJumpMult * normalizedEncumbrance)
 end
 
 --- Calculates the climbing range for the player based on their bounding box.
@@ -233,6 +257,9 @@ return {
         end,
     },
     eventHandlers = {
-        S3_ChimClimb_ClimbEnd = ClimbMod.disengage
+        S3_ChimClimb_ClimbEnd = ClimbMod.disengage,
+        S3_ChimClimb_DrainFatigue = function(newFatigue)
+            Fatigue.current = newFatigue
+        end,
     },
 }
