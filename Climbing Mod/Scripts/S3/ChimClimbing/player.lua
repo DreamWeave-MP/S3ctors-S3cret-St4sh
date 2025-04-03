@@ -2,7 +2,6 @@
 --- TODO: Scale climb speed based on movement speed
 --- TODO: Implement fatigue drain
 --- TODO: Implement animations
---- TODO: Cancellable climbing (same control, call disengage, send a global event in it)
 ---]]
 
 local async = require('openmw.async')
@@ -78,6 +77,8 @@ function ClimbMod.disengage()
     I.Controls.overrideUiControls(false)
     camera.setMode(ClimbState.prevCamMode or camera.MODE.ThirdPerson)
     ClimbState.prevCamMode = nil
+
+    core.sendGlobalEvent('S3_ChimClimb_ClimbInterrupt', self.id)
 end
 
 --- Calculates the climbing range for the player based on their bounding box.
@@ -169,6 +170,10 @@ end
 input.registerTriggerHandler(
     "Jump",
     async:callback(function()
+        if ClimbState.climbEngaged then
+            return ClimbMod.disengage()
+        end
+
         -- Transform encompassing player's current Z Rotation
         local zTransform = util.transform.rotateZ(self.rotation:getYaw())
         local center = self:getBoundingBox().center
