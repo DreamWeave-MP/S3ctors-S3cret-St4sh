@@ -49,13 +49,17 @@ local ClimbState = {
 --- @param risePos util.vector3 The starting position of the climb, typically a vector or coordinate.
 --- @param endPos util.vector3 The ending position of the climb, typically a vector or coordinate.
 function ClimbMod.engage(risePos, endPos)
-    ClimbState.climbEngaged = true
-    ClimbState.climbRisePos = risePos
-    ClimbState.climbEndPos = endPos
     I.Controls.overrideMovementControls(true)
     I.Controls.overrideCombatControls(true)
     I.Controls.overrideUiControls(true)
-    ClimbState.prevCamMode = camera.getMode()
+
+    ClimbState = {
+        climbEngaged = true,
+        climbRisePos = risePos,
+        climbEndPos = endPos,
+        prevCamMode = camera.getMode(),
+    }
+
     camera.setMode(camera.MODE.FirstPerson)
 
     core.sendGlobalEvent('S3_ChimClimb_ClimbStart', {
@@ -75,14 +79,17 @@ end
 --- Usage:
 --- Call in an eventHandler when the player is no longer climbing
 function ClimbMod.disengage()
-    ClimbState.climbEngaged = false
-    ClimbState.climbRisePos = nil
-    ClimbState.climbEndPos = nil
     I.Controls.overrideMovementControls(false)
     I.Controls.overrideCombatControls(false)
     I.Controls.overrideUiControls(false)
     camera.setMode(ClimbState.prevCamMode or camera.MODE.ThirdPerson)
-    ClimbState.prevCamMode = nil
+
+    ClimbState = {
+        climbEngaged = false,
+        climbRisePos = nil,
+        climbEndPos = nil,
+        prevCamMode = nil,
+    }
 
     core.sendGlobalEvent('S3_ChimClimb_ClimbInterrupt', self.id)
 end
