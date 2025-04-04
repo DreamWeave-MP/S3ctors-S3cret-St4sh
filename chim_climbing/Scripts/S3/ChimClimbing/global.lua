@@ -7,7 +7,7 @@ local Fatigue = ActorType.stats.dynamic.fatigue
 local ClimbQueue = {}
 
 local ZHeightBuffer = 10
-local FatigueFailCost = -300
+local FatigueFailCost = -75
 
 ---@class ClimbData
 ---@field didDrainFatigue nil|boolean Indicates whether fatigue has been drained during the climb.
