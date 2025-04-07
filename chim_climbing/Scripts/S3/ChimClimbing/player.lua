@@ -270,7 +270,7 @@ input.registerTriggerHandler(
 
         print('\n', "Center is:", center, '\n', 'scanPos is:', scanPos, '\n', 'zTransform is', zTransform, '\n\n\n')
 
-        local upwardHit = ClimbMod.findMaxClimbableHeight(center, scanPos)
+        local upwardHit = ClimbMod.findMaxClimbableHeight(center, scanPos) or waistHit
 
         if not upwardHit then
             error('No upward hit detected.')
