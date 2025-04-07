@@ -170,7 +170,7 @@ end
 --- @return number topPoint Z position of player's center + 2X z halfSize. Objects higher than this can't be climbed.
 function ClimbMod.climbRanges()
     local box = self:getBoundingBox()
-    local height = box.halfSize.z * 2
+    local height = box.halfSize.z * 2.5
     return box.center.z, box.center.z + height
 end
 
@@ -178,7 +178,7 @@ local DefaultUpVector = util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
 --- Perform a raycast to find the maximum climbable height.
 --- @param center util.vector3 The starting position of the raycast.
 --- @param scanPos util.vector3 The ending position of the raycast.
---- @return RayCastingResult|nil The highest hit object or nil if no valid hit is found.
+--- @return RayCastingResult|nil The highest hit object or nil if no valid hit is found. 
 function ClimbMod.findMaxClimbableHeight(center, scanPos)
     local upwardHit
     while true do
