@@ -174,6 +174,7 @@ function ClimbMod.climbRanges()
     return box.center.z, box.center.z + height
 end
 
+local DefaultUpVector = util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
 --- Perform a raycast to find the maximum climbable height.
 --- @param center util.vector3 The starting position of the raycast.
 --- @param scanPos util.vector3 The ending position of the raycast.
@@ -182,8 +183,8 @@ function ClimbMod.findMaxClimbableHeight(center, scanPos)
     local upwardHit
     while true do
         -- Increment Z position of both start and end points
-        center = center + util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
-        scanPos = scanPos + util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
+        center = center + DefaultUpVector
+        scanPos = scanPos + DefaultUpVector
 
         -- Perform raycast at the new height
         local currentHit = nearby.castRay(center, scanPos, { ignore = { self } })
