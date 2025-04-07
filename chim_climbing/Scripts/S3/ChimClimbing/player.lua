@@ -178,7 +178,7 @@ local DefaultUpVector = util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
 --- Perform a raycast to find the maximum climbable height.
 --- @param center util.vector3 The starting position of the raycast.
 --- @param scanPos util.vector3 The ending position of the raycast.
---- @return RayCastingResult|nil The highest hit object or nil if no valid hit is found. 
+--- @return RayCastingResult|nil hitResult The highest hit object or nil if no valid hit is found. 
 function ClimbMod.findMaxClimbableHeight(center, scanPos)
     local upwardHit
     while true do
@@ -225,7 +225,7 @@ end
 --- Calculate the final destination for the climb.
 --- @param upwardHit table The highest hit object.
 --- @param zTransform table The player's Z rotation transform.
---- @return util.vector3 The final destination position.
+--- @return util.vector3 destination The final destination position.
 local function calculateFinalDestination(upwardHit, zTransform)
     -- Use the original position, bumped up a bit
     local firstStopPoint = util.vector3(upwardHit.hitPos.x, upwardHit.hitPos.y, upwardHit.hitPos.z + 5)
