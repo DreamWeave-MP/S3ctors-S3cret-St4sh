@@ -1,0 +1,17 @@
+tags:
+  - "ArmorTribunal"
+  - "PotionPoison"
+  - "WeaponTribunal"
+  - "WeaponWakizashi"
+  - "WeaponWakizashiUnique"
+
+applied_tags:
+  "silver dagger_droth_unique_a":
+    - "WeaponDaggerUnique"
+    - "WeaponTribunal"
+    - "WeaponUnique"
+  "stendarr_hammer_unique":
+    - "WeaponHammer"
+    - "WeaponTribunal"
+    - "WeaponUnique"
+    - "WeaponHammerUnique"
