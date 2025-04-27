@@ -25,6 +25,15 @@ It's a fairly common convention in Lua to use the keyword `self` in a table when
 
 Any api function which takes `self.object` as its first argument now implicitly passes the SelfObject as the first argument. If the SelfObject is the only argument, then you do not even need to bother with the function call. The userdata values returned by the API are cached where possible and all flattened into the `s3lf` object. To best get a grip on it, just try using it in the Lua console!
 
+Some specific notes on how fields are changed:
+
+- `self.type` is no longer accessible, as all fields inside of the `.type` field are flattened into `s3lf`
+- Attributes, skills, level, and dynamic stats are all directly accessible via `s3lf`
+- All fields of `self.type.stats.ai` are available under `s3lf`
+- All fields from the original `GameObject` type are available under `s3lf`
+- All fields of the animation module are available under `s3lf`
+- A new `.record` field is added to replace the `.record` function, which returns `self.type.records[self.recordId]`
+
 `s3lf` is exported as an interface and immediately usable: `s3lf = require('openmw.interfaces').s3lf`
 
 To use it in the lua console, make sure the script is installed and enabled, then use `luap` or `luas` and try the following:
