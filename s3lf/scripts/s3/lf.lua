@@ -65,106 +65,157 @@ local function getObjectType(object)
   return result:lower()
 end
 
+
 local GameObjectWrapper = {}
+
+local function nullHandler() end
+
+local GameObjectKeyHandlers = {
+  id = function(instance, gameObject, key)
+    local id = gameObject.id
+    rawset(instance, key, id)
+    return id
+  end,
+  object = function(_, gameObject, _)
+    return gameObject
+  end,
+  baseType = nullHandler,
+  stats = nullHandler,
+  type = nullHandler,
+}
+
+local function actorHandler(instance, actor, key)
+  local stats = actor.type.stats
+
+  if key == 'level' then
+    local level = stats.level(actor)
+    rawset(instance, key, level)
+    return level
+  end
+
+  local target = stats.dynamic[key] or stats.attributes[key] or (stats.skills and stats.skills[key]) or stats.ai[key]
+  if target then
+    assert(type(target) == 'function', 'Expected a function for key: ' .. key)
+    local result = target(actor)
+    rawset(instance, key, result)
+    return result
+  end
+end
 
 GameObjectWrapper._mt = {
   __index = function(instance, key)
+    local cached = rawget(instance, key)
+
+    if cached then
+      return cached
+    end
+
     local gameObject = rawget(instance, 'gameObject')
-    -- There's a name conflict between `gameObject.id` and `record.id`
-    -- since gameObject.recordId is a thing, gameObject.id always wins over record.id
-    if key == 'id' then
-      local id = gameObject.id
-      rawset(instance, key, id)
-      return id
-      -- Record function does whole-ass map lookups which are slow, so hardcode it out
-    elseif key == 'record' then
-      local record = gameObject.type.records[gameObject.recordId]
-      rawset(instance, key, record)
-      return record
-    elseif key == 'cell' then
-      return gameObject.cell
-    elseif key == 'object' then
-      return gameObject
-    elseif key == 'baseType' or key == 'type' or key == 'stats' then
-      return nil
+
+    local keyHandler = GameObjectKeyHandlers[key]
+    if keyHandler then
+      return keyHandler(instance, gameObject, key)
     end
 
-    local isActor = types.Actor.objectIsInstance(gameObject)
-    local isNPC = types.NPC.objectIsInstance(gameObject)
-    local record = rawget(instance, 'record')
-    if record == nil then
-      record = gameObject.type.records[gameObject.recordId]
-      rawset(instance, 'record', record)
-    end
-    local recordValue = record[key]
-    local stats = gameObject.type.stats
-
-    if gameObject.type[key] then
-      local value = gameObject.type[key]
-      if type(value) ~= "function" or noSelfInputFunctions[key] then
-        rawset(instance, key, value)
+    local typeValue = gameObject.type[key]
+    if typeValue then
+      if type(typeValue) ~= "function" or noSelfInputFunctions[key] then
+        rawset(instance, key, typeValue)
+        return typeValue
       else
-        rawset(instance, key, function(...) return value(gameObject, ...) end)
+        local typeHandler = function(...)
+          return typeValue(gameObject, ...)
+        end
+
+        rawset(instance, key, typeHandler)
+
+        return typeHandler
       end
-    elseif recordValue then
+    end
+
+    local recordValue = rawget(instance, 'record')[key]
+    if recordValue then
       rawset(instance, key, recordValue)
-    elseif isNPC and stats.skills[key] then
-      rawset(instance, key, stats.skills[key](gameObject))
-    elseif isActor and key == 'level' then
-      rawset(instance, key, stats.level(gameObject))
-    elseif isActor and stats.ai[key] then
-      rawset(instance, key, stats.ai[key](gameObject))
-    elseif isActor and stats.attributes[key] then
-      rawset(instance, key, stats.attributes[key](gameObject))
-    elseif isActor and stats.dynamic[key] then
-      rawset(instance, key, stats.dynamic[key](gameObject))
-    elseif isActor and animation[key] then
-      if type(animation[key]) == 'function' then
-        rawset(instance, key, function(...) return animation[key](gameObject, ...) end)
-      else
-        rawset(instance, key, animation[key])
-      end
-    elseif gameObject[key] then
-      rawset(instance, key, gameObject[key])
+      return recordValue
     end
-    return rawget(instance, key)
+
+    if types.Actor.objectIsInstance(gameObject) then
+      local actorValue = actorHandler(instance, gameObject, key)
+      if actorValue then return actorValue end
+    end
+
+    local animValue = animation[key]
+    if animValue then
+      if type(animValue) == 'function' then
+        local animHandler = function(...)
+          return animValue(gameObject, ...)
+        end
+
+        rawset(instance, key, animHandler)
+
+        return animHandler
+      else
+        rawset(instance, key, animValue)
+        return animValue
+      end
+    end
+
+    local objectValue = gameObject[key]
+    if objectValue then
+      rawset(instance, key, objectValue)
+      return objectValue
+    end
   end,
 }
 
-local function From(gameObject)
-  assert(gameObject.__type.name == 'MWLua::LObject', 'S3GameSelf.From expects a raw gameObject')
-  local instance = { gameObject = gameObject, From = From }
+local ObjectHelpers = {}
+
+function ObjectHelpers.From(gameObject)
+  local typeName = gameObject.__type.name
+
+  assert(typeName == 'MWLua::LObject',
+    'S3GameSelf.From is only compatible with Local GameObjects! You passed: ' .. typeName)
+
+  return ObjectHelpers.createInstance(gameObject)
+end
+
+function ObjectHelpers.distance(object1, object2)
+  return (object1.position - object2.position):length()
+end
+
+function ObjectHelpers.createInstance(gameObject)
+  local instance = {
+    gameObject = gameObject,
+    record = gameObject.type.records[gameObject.recordId],
+    From = ObjectHelpers.From,
+  }
+
+  function instance.distance(object2)
+    return ObjectHelpers.distance(gameObject, object2)
+  end
 
   instance.display = function()
     instanceDisplay(instance)
   end
 
   instance.objectType = function()
-    return getObjectType(instance.gameObject)
+    return getObjectType(gameObject)
   end
 
   setmetatable(instance, GameObjectWrapper._mt)
+
   return instance
 end
 
-local instance = { gameObject = gameSelf, From = From }
-instance.display = function()
-  instanceDisplay(instance)
-end
+local instance = ObjectHelpers.createInstance(gameSelf)
 
-instance.objectType = function()
-  return getObjectType(instance.gameObject)
-end
-
-setmetatable(instance, GameObjectWrapper._mt)
 
 local eventHandlers = {}
 
 if PlayerType.objectIsInstance(gameSelf) then
+  local ui = require('openmw.ui')
   eventHandlers.S3LFDisplay = function(resultString)
-    local ui = require('openmw.ui')
-    local SuccessColor = ui.CONSOLE_COLOR.Success
-    ui.printToConsole(resultString, SuccessColor)
+    ui.printToConsole(resultString, ui.CONSOLE_COLOR.Success)
   end
 end
 
