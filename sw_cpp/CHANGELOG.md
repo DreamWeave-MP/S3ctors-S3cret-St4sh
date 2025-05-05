@@ -35,3 +35,7 @@ Also, replace the Gamorrean Axe.
 
 # Version 1.31
 1. Include galactic basic font
+
+# Version 1.32
+1. Include fixed replacement textures for UI borders
+2. Include a silent copy and Low poly copy of Rickoff's upgraded bantha models, optimized by the awesome aliens mod and silenced by me
