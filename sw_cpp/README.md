@@ -23,7 +23,7 @@ Community Patch Project also now includes a replacement file for Lua scripts to 
         /Users/username/games/OpenMWMods/sw_cpp
 
 1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\sw_cpp"`)
-1. Add `content=Starwind Community Patch Project.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
+1. Add `content=Starwind Community Patch Project.omwaddon` and `content=Starwind Modernization Patches.omwscripts` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
 1. Add the following lines to your openmw.cfg to enable the Oxanium and Galactic Basic fonts:
 
 ``` toml
