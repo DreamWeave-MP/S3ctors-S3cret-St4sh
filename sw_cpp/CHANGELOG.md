@@ -30,12 +30,22 @@ Also, replace the Gamorrean Axe.
 1. Publish on S3St4sh
 
 # Version 1.3
+
 1. Fix meshes with non-orthogonal rotation matrices, whose collision boxes were not generated properly in openmw 0.49
 1. Include replacements for Lua modules and Oxanium font
 
 # Version 1.31
+
 1. Include galactic basic font
 
 # Version 1.32
+
 1. Include fixed replacement textures for UI borders
 2. Include a silent copy and Low poly copy of Rickoff's upgraded bantha models, optimized by the awesome aliens mod and silenced by me
+
+# Version 1.4
+
+1. Include a replacement for Meshes/Ig/SpCarRep.nif which prevents the navmeshtool from breaking by preventing generation of over 115 million unnecessary navmesh tiles
+1. Replace some more meshes with collisionless ones to further optimize ingame and navmesh performance
+1. Replace some meshes whose ingame collision boxes no longer worked in OpenMW 0.49
+1. Begin adding replacement scripts for some of Starwind's core mechanics in Lua, covering mounts and the player ship interactions, including travel
