@@ -19,7 +19,7 @@ ul.toc {
     list-style-image: url("/img/todd.png");
 }
 
-ul.toc > li {
+ul.toc>li {
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -104,6 +104,12 @@ a.modHeader,
 
 #luamics {
     background-image: linear-gradient(to bottom, red 60%, orange);
+    background-clip: text;
+    color: transparent;
+}
+
+#h3lp_yours3lf {
+    background-image: linear-gradient(to right, purple 60%, black);
     background-clip: text;
     color: transparent;
 }
