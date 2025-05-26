@@ -1,5 +1,7 @@
 # H3lp Yours3lf
 
+Sometimes, you just have to h3lp yours3lf.
+
 H3lp Yours3lf is a collection of scripting modules built for openmw. It contains multiple individual interfaces which authors can use to improve performance and ergonomics in their OpenMW-Lua scripts. Additionally, H3lp Yours3lf includes some helper functions for more exotic behaviors, such as detecting the context in which a given script is running.
 
 ## Modules
