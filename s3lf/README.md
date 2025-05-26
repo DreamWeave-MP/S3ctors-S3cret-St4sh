@@ -31,6 +31,7 @@ Some specific notes on how fields are changed:
 - Attributes, skills, level, and dynamic stats are all directly accessible via `s3lf`
 - All fields of `self.type.stats.ai` are available under `s3lf`
 - All fields from the original `GameObject` type are available under `s3lf`
+- All fields of the associated record are available under `s3lf`. Due to a name collision, the `.id` field of `s3lf` will always refer to `GameObject.id` and not the record's id. use `s3lf.recordId` to find the object's record name instead of the instance id.
 - All fields of the animation module are available under `s3lf`
 - A new `.record` field is added to replace the `.record` function, which returns `self.type.records[self.recordId]`
 
