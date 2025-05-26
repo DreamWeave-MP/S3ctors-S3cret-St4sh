@@ -15,7 +15,7 @@ local ScriptContext = {
 
 --- Describes the context in which the script is currently running using the attached enum
 ---@return ScriptContextTypes
-function ScriptContext.GetScriptContext()
+function ScriptContext.get()
     if isGlobal then
         return ScriptContext.Types.Global
     elseif isMenu then

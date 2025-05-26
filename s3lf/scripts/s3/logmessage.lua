@@ -1,10 +1,9 @@
-local storage = require('openmw.storage')
 local types = require('openmw.types')
 local Player = types.Player
 
 ---@type ScriptContext
-local ScriptContext = require('scripts.s3.getScriptContext')
-local CurrentContext = ScriptContext.GetScriptContext()
+local ScriptContext = require('scripts.s3.scriptContext')
+local CurrentContext = ScriptContext.get()
 
 local World, Self, ui, nearby
 
