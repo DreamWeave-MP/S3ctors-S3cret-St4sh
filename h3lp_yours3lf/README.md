@@ -10,6 +10,63 @@ H3lp Yours3lf is a collection of scripting modules built for openmw. It contains
 
  s3lf is a replacement for OpenMW's built-in `self` module. It contains all the same contents but saves some footguns in the API and makes certain calls more precise on your behalf, alongside being easier to introspect. This mod should be installed purely as a dependency of others, as it adds nothing on its own except an interface which other scripts may make use of. For scripters, read below to learn about how and why to make use of the `s3lf` interface.
 
+###### Using the S3lf Module
+
+It's a fairly common convention in Lua to use the keyword `self` in a table when it... needs to reference itself in some way. OpenMW-Lua subtly teaches you to use its own module `openmw.self` instead, which can break attempts to use the `self` keyword normally, induce subtle bugs, or just be plain weird. Additionally, the API overall is often considered too spread out or confusing to be easily used, with things like health being accessed like `self.type.stats.dynamic.health(self)`. The `s3lf` module will save you these painful indexes with hidden implementation footguns, *and* allow you to use the `self` keyword as you normally would. Compare the normal version to `s3lf.health.current`.
+
+Any api function which takes `self.object` as its first argument now implicitly passes the SelfObject as the first argument. If the SelfObject is the only argument, then you do not even need to bother with the function call. The userdata values returned by the API are cached where possible and all flattened into the `s3lf` object. To best get a grip on it, just try using it in the Lua console!
+
+Some specific notes on how fields are changed:
+
+- `self.type` is no longer accessible, as all fields inside of the `.type` field are flattened into `s3lf`
+- Attributes, skills, level, and dynamic stats are all directly accessible via `s3lf`
+- All fields of `self.type.stats.ai` are available under `s3lf`
+- All fields from the original `GameObject` type are available under `s3lf`
+- All fields of the associated record are available under `s3lf`. Due to a name collision, the `.id` field of `s3lf` will always refer to `GameObject.id` and not the record's id. use `s3lf.recordId` to find the object's record name instead of the instance id.
+- All fields of the animation module are available under `s3lf`
+- A new `.record` field is added to replace the `.record` function, which returns `self.type.records[self.recordId]`
+- An additional function, `ConsoleLog` is added which will display a given message in the `~` console from any context.
+
+`s3lf` is exported as an interface and immediately usable: `local s3lf = require('openmw.interfaces').s3lf`
+
+To use it in the lua console, make sure the script is installed and enabled, then use `luap` or `luas` and try the following:
+
+```lua
+            s3lf = I.s3lf
+            s3lf.record.hair
+            s3lf.health.base, s3lf.strength.base, s3lf.acrobatics.base, s3lf.speed.modified
+```
+
+`s3lf` objects may also construct other `s3lf` objects from normal `GameObject`s to gain the same benefits:
+
+```lua
+            local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+            local weaponType = s3lf.From(weapon).record.type
+
+Additionally, s3lf objects provide a couple more convenience features to ease debugging and type checking respectively. A new function, `objectType`, is added to all objects which can be represented as a `s3lf`. For example:
+            s3lf = I.s3lf
+            s3lf.objectType()
+            npc
+```
+
+All object types are represented as simple (lowercase) strings that you'd intuitively expect them to be, eg `npc`, `miscellaneous`, `weapon`, and so on.
+
+Every `s3lf` object also includes a `display()` method, which will show a neatly-formatted output of all fields and functions currently used by this `s3lf` object:
+
+```lua
+            luap
+            I.s3lf.display()
+            S3GameGameSelf {
+             Fields: {  },
+             Methods: { From, display, objectType },
+             UserData: { gameObject = openmw.self[object@0x1 (NPC, "player")], health = userdata: 0x702f9c0449e0, magicka = userdata: 0x702f81068130, record = ESM3_NPC["player"], shortblade = userdata: 0x702f62f9b350, speed = userdata: 0x702f62f40580 }
+            }
+```
+
+`s3lf` objects may call the display method anywhere they see fit, but the result will only be visible if a player is nearby (as it is printed to the console directly, using the `nearby` module to locate nearby players.)
+
+If your mod uses the `s3lf` interface and it is not available, it is recommended you link back to the [mod page](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf) in your error outputs so the user can get ahold of it themselves.
+
 ##### ProtectedTable
 
 A construct designed to make it easy to bind a game system, to an OpenMW settings group. This makes it easy, for example, to make a global setting group which scales actor health and reference it in all scripts with concise notation. For example:
@@ -82,57 +139,6 @@ Lua[sw_hungoxsteward] I.s3lf.ConsoleLog(('Hai from %s!'):format(I.s3lf.recordId)
 local LogMessage = require 'scripts.s3.logmessage'
 LogMessage(('Hai From %s'):format(I.s3lf.recordId))
 ```
-
-###### Using the S3lf Module
-
-It's a fairly common convention in Lua to use the keyword `self` in a table when it... needs to reference itself in some way. OpenMW-Lua subtly teaches you to use its own module `openmw.self` instead, which can break attempts to use the `self` keyword normally, induce subtle bugs, or just be plain weird. Additionally, the API overall is often considered too spread out or confusing to be easily used, with things like health being accessed like `self.type.stats.dynamic.health(self)`. The `s3lf` module will save you these painful indexes with hidden implementation footguns, *and* allow you to use the `self` keyword as you normally would. Compare the normal version to `s3lf.health.current`.
-
-Any api function which takes `self.object` as its first argument now implicitly passes the SelfObject as the first argument. If the SelfObject is the only argument, then you do not even need to bother with the function call. The userdata values returned by the API are cached where possible and all flattened into the `s3lf` object. To best get a grip on it, just try using it in the Lua console!
-
-Some specific notes on how fields are changed:
-
-- `self.type` is no longer accessible, as all fields inside of the `.type` field are flattened into `s3lf`
-- Attributes, skills, level, and dynamic stats are all directly accessible via `s3lf`
-- All fields of `self.type.stats.ai` are available under `s3lf`
-- All fields from the original `GameObject` type are available under `s3lf`
-- All fields of the associated record are available under `s3lf`. Due to a name collision, the `.id` field of `s3lf` will always refer to `GameObject.id` and not the record's id. use `s3lf.recordId` to find the object's record name instead of the instance id.
-- All fields of the animation module are available under `s3lf`
-- A new `.record` field is added to replace the `.record` function, which returns `self.type.records[self.recordId]`
-- An additional function, `ConsoleLog` is added which will display a given message in the `~` console from any context.
-
-`s3lf` is exported as an interface and immediately usable: `local s3lf = require('openmw.interfaces').s3lf`
-
-To use it in the lua console, make sure the script is installed and enabled, then use `luap` or `luas` and try the following:
-
-            s3lf = I.s3lf
-            s3lf.record.hair
-            s3lf.health.base, s3lf.strength.base, s3lf.acrobatics.base, s3lf.speed.modified
-
-`s3lf` objects may also construct other `s3lf` objects from normal `GameObject`s to gain the same benefits:
-
-            local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
-            local weaponType = s3lf.From(weapon).record.type
-
-Additionally, s3lf objects provide a couple more convenience features to ease debugging and type checking respectively. A new function, `objectType`, is added to all objects which can be represented as a `s3lf`. For example:
-            s3lf = I.s3lf
-            s3lf.objectType()
-            npc
-
-All object types are represented as simple (lowercase) strings that you'd intuitively expect them to be, eg `npc`, `miscellaneous`, `weapon`, and so on.
-
-Every `s3lf` object also includes a `display()` method, which will show a neatly-formatted output of all fields and functions currently used by this `s3lf` object:
-
-            luap
-            I.s3lf.display()
-            S3GameGameSelf {
-             Fields: {  },
-             Methods: { From, display, objectType },
-             UserData: { gameObject = openmw.self[object@0x1 (NPC, "player")], health = userdata: 0x702f9c0449e0, magicka = userdata: 0x702f81068130, record = ESM3_NPC["player"], shortblade = userdata: 0x702f62f9b350, speed = userdata: 0x702f62f40580 }
-            }
-
-`s3lf` objects may call the display method anywhere they see fit, but the result will only be visible if a player is nearby (as it is printed to the console directly, using the `nearby` module to locate nearby players.)
-
-If your mod uses the `s3lf` interface and it is not available, it is recommended you link back to the [mod page](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf) in your error outputs so the user can get ahold of it themselves.
 
 #### Installation
 
