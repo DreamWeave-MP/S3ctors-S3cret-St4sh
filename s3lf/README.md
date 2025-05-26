@@ -1,12 +1,92 @@
-# S3LF
+# H3lp Yours3lf
 
-s3lf is a replacement for OpenMW's built-in `self` module. It contains all the same contents but saves some footguns in the API and makes certain calls more precise on your behalf, alongside being easier to introspect. This mod should be installed purely as a dependency of others, as it adds nothing on its own except an interface which other scripts may make use of. For scripters, read below to learn about how and why to make use of the `s3lf` interface.
+H3lp Yours3lf is a collection of scripting modules built for openmw. It contains multiple individual interfaces which authors can use to improve performance and ergonomics in their OpenMW-Lua scripts. Additionally, H3lp Yours3lf includes some helper functions for more exotic behaviors, such as detecting the context in which a given script is running.
+
+## Modules
+
+### S3lf
+
+ s3lf is a replacement for OpenMW's built-in `self` module. It contains all the same contents but saves some footguns in the API and makes certain calls more precise on your behalf, alongside being easier to introspect. This mod should be installed purely as a dependency of others, as it adds nothing on its own except an interface which other scripts may make use of. For scripters, read below to learn about how and why to make use of the `s3lf` interface.
+
+### ProtectedTable
+
+A construct designed to make it easy to bind a game system, to an OpenMW settings group. This makes it easy, for example, to make a global setting group which scales actor health and reference it in all scripts with concise notation. For example:
+
+```lua
+---@class CameraManager:ProtectedTable
+---@field NoThirdPerson boolean
+---@field PitchLocked boolean
+---@field CursorCamPitch number configured pitch lock
+local CameraManager = I.S3ProtectedTable.new {
+  logPrefix = ModInfo.logPrefix,
+  inputGroupName = 'SettingsGlobal' .. ModInfo.name .. 'MoveTurnGroup',
+}
+
+---@param dt number deltaTime
+---@param Managers ManagementStore
+function CameraManager:onFrameEnd(dt, Managers)
+    CameraManager:updateDelta()
+
+    if self.NoThirdPerson and camera.getMode() == camera.MODE.FirstPerson then
+        camera.setMode(camera.MODE.ThirdPerson)
+    end
+end
+```
+
+ProtectedTables are usable in all contexts, except for `MENU`. Additionally, you may use `I.S3ProtectedTable.help` through the in-game (lua) console at any time for a detailed description of its usage. They will always be up-to-date with the settings group they're built on, as they contain a built-in subscribe function which will sync the values. If you wish, it is possible to override this subscribe function by using the `subscribeHandler` parameter of the constructor. subscribeHandler functions must match the `ShadowTableSubscriptionHandler` type definition.
+
+ProtectedTables additionally come with a __tostring method that will show the manager name and all functions and methods associated with it. When building a script around a ProtectedTable, you may add as many new functions as you wish, but you may not add non-function fields. Additionally, to prevent invalidating the setting values the table tracks, the script will actually throw an error if you attempt to write directly to the table. To counteract this, all ProtectedTables include a `state` table which you may write to, and overwrite completely. The reason for this design is to allow flexible access to settings and to override each available function in the ProtectedTable on a case-by-case basis. If you create a protectedTable and use it as an interface, downstream modders may override the individual functions at their leisure without having to override your entire Interface.
+
+Finally, due to their nature, please keep in mind that ProtectedTables only work with global setting groups, not player ones. This is to ensure that all possible gameObjects have access to the various values in each group.
+
+### ScriptContext
+
+Provides an enum describing script contexts and a function to return the current one. Used by the LogMessage Function. Handy for when you would like for a given script or function to be usable regardless of what script context it is being ran in. ScriptContext is not available through an interface and must be `require`d directly, since interfaces are naturally scopes anyway, and this is a somewhat niche usage.
+
+Example:
+
+```lua
+  local ScriptContext = require 'scripts.s3.scriptContext'
+  local currentContext = ScriptContext.get()
+
+  if currentContext == ScriptContext.Types.Player then
+        print("I'm a player script!")
+  elseif currentContext == ScriptContext.Types.Global then
+        print("I'm a global script!")
+  end
+```
+
+### LogMessage
+
+Emits a message to the `~` console from any context. Takes one argument. Re-exported through the `s3lf` module under the name `ConsoleLog`.
+
+Example:
+
+```lua
+-- S3lf interface
+Lua[Player] I.s3lf.ConsoleLog(('Hai from %s!'):format(I.s3lf.recordId))
+Hai from player!
+
+Lua[Player] exit()
+Lua mode OFF
+> luas
+Lua mode ON, use exit() to return, help() for more info
+Context: Local[object0x4001134 (NPC, "SW_HungoxSteward")]
+Lua[sw_hungoxsteward] I.s3lf.ConsoleLog(('Hai from %s!'):format(I.s3lf.recordId))
+```
+
+```lua
+-- standalone
+local LogMessage = require 'scripts.s3.logmessage'
+LogMessage(('Hai From %s'):format(I.s3lf.recordId))
+```
 
 ## Installation
 
 1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf)
 1. Extract the zip to a location of your choosing, examples below:
 
+```cfg
         # Windows
         C:\games\OpenMWMods\s3lf
 
@@ -15,6 +95,7 @@ s3lf is a replacement for OpenMW's built-in `self` module. It contains all the s
 
         # macOS
         /Users/username/games/OpenMWMods/s3lf
+```
 
 1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3lf"`)
 1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=s3lf.omwscripts`
