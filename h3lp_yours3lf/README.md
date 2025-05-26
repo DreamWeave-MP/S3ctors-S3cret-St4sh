@@ -147,13 +147,13 @@ LogMessage(('Hai From %s'):format(I.s3lf.recordId))
 
 ```cfg
         # Windows
-        C:\games\OpenMWMods\s3lf
+        C:\games\OpenMWMods\h3lp_yours3lf
 
         # Linux
-        /home/username/games/OpenMWMods/s3lf
+        /home/username/games/OpenMWMods/h3lp_yours3lf
 
         # macOS
-        /Users/username/games/OpenMWMods/s3lf
+        /Users/username/games/OpenMWMods/h3lp_yours3lf
 ```
 
 1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3lf"`)
