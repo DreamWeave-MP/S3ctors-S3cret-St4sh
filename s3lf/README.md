@@ -34,8 +34,9 @@ Some specific notes on how fields are changed:
 - All fields of the associated record are available under `s3lf`. Due to a name collision, the `.id` field of `s3lf` will always refer to `GameObject.id` and not the record's id. use `s3lf.recordId` to find the object's record name instead of the instance id.
 - All fields of the animation module are available under `s3lf`
 - A new `.record` field is added to replace the `.record` function, which returns `self.type.records[self.recordId]`
+- An additional function, `ConsoleLog` is added which will display a given message in the `~` console from any context.
 
-`s3lf` is exported as an interface and immediately usable: `s3lf = require('openmw.interfaces').s3lf`
+`s3lf` is exported as an interface and immediately usable: `local s3lf = require('openmw.interfaces').s3lf`
 
 To use it in the lua console, make sure the script is installed and enabled, then use `luap` or `luas` and try the following:
 
