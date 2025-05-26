@@ -1,8 +1,11 @@
 local animation = require('openmw.animation')
 local gameSelf = require('openmw.self')
 local types = require('openmw.types')
+local util = require 'openmw.util'
 
 local LogMessage = require 'scripts.s3.logmessage'
+
+local CombatTargetTracker = {}
 
 local noSelfInputFunctions = {
   ['createRecordDraft'] = true,
@@ -118,6 +121,14 @@ GameObjectWrapper._mt = {
 
     local gameObject = rawget(instance, 'gameObject')
 
+    if types.Player.objectIsInstance(gameObject) then
+      if key == 'combatTargets' then
+        return util.makeReadOnly(CombatTargetTracker.targetData)
+      elseif key == 'isInCombat' then
+        return CombatTargetTracker.hasCombatants()
+      end
+    end
+
     local keyHandler = GameObjectKeyHandlers[key]
     if keyHandler then
       return keyHandler(instance, gameObject, key)
@@ -217,15 +228,70 @@ local instance = ObjectHelpers.createInstance(gameSelf)
 
 
 local eventHandlers = {}
+local engineHandlers = {}
 
 if PlayerType.objectIsInstance(gameSelf) then
+  local storage = require 'openmw.storage'
+  CombatTargetTracker.targetData = {}
+
+  engineHandlers.onSave = function()
+    return {
+      targetData = CombatTargetTracker.targetData,
+    }
+  end
+
+  engineHandlers.onLoad = function(data)
+    if data and data.targetData then
+      CombatTargetTracker.targetData = data.targetData
+    end
+  end
+
+  function CombatTargetTracker:findCombatant(actor)
+    for index, combatantInfo in ipairs(self.targetData) do
+      if actor == combatantInfo.actor then return index, combatantInfo end
+    end
+  end
+
+  function CombatTargetTracker:updateCombatants(combatantInfo)
+    local shouldRemove = #combatantInfo.targets == 0
+
+    local combatantIndex = self:findCombatant(combatantInfo.actor)
+
+    if (shouldRemove and not combatantIndex) then return end
+    --- I think this case is probably bad as combat targets may actually change
+    if (not shouldRemove and combatantIndex) then return end
+
+    local eventName
+    if shouldRemove and combatantIndex then
+      table.remove(self.targetData, combatantIndex)
+      eventName = 'S3CombatTargetRemoved'
+    elseif not shouldRemove and not combatantIndex then
+      table.insert(self.targetData, #self.targetData + 1, combatantInfo)
+      eventName = 'S3CombatTargetAdded'
+    else
+      return
+    end
+
+    gameSelf:sendEvent(eventName, combatantInfo.actor)
+  end
+
+  function CombatTargetTracker.isInCombat()
+    return #CombatTargetTracker.targetData > 0
+  end
+
   local ui = require('openmw.ui')
+
   eventHandlers.S3LFDisplay = function(resultString)
     ui.printToConsole(resultString, ui.CONSOLE_COLOR.Success)
+  end
+
+  eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
+    CombatTargetTracker:updateCombatants(targetData)
   end
 end
 
 return {
+  engineHandlers = engineHandlers,
   eventHandlers = eventHandlers,
   interfaceName = 's3lf',
   interface = instance,

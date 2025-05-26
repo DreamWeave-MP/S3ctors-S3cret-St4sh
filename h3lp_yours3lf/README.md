@@ -42,7 +42,11 @@ To use it in the lua console, make sure the script is installed and enabled, the
 ```lua
             local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
             local weaponType = s3lf.From(weapon).record.type
+```
 
+`s3lf` also tracks combat targets on players, using the built-in openmw event, `OMWMusicCombatTargetsChanged`. All combat targets are stored in the table `s3lf.combatTargets`, and additionally the function `s3lf.isInCombat()` may be used to quickly determine whether a fight is currently happening. When a combat target is added or removed, either the event `S3CombatTargetAdded` or `S3CombatTargetRemoved` is sent to the player, with the actor whom is added or removed being the only argument provided to downstream eventHandlers.
+
+```lua
 Additionally, s3lf objects provide a couple more convenience features to ease debugging and type checking respectively. A new function, `objectType`, is added to all objects which can be represented as a `s3lf`. For example:
             s3lf = I.s3lf
             s3lf.objectType()
