@@ -146,7 +146,7 @@ LogMessage(('Hai From %s'):format(I.s3lf.recordId))
 
 #### Installation
 
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf)
+1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/h3lp_yours3lf)
 1. Extract the zip to a location of your choosing, examples below:
 
 ```cfg
