@@ -2,6 +2,8 @@ local animation = require('openmw.animation')
 local gameSelf = require('openmw.self')
 local types = require('openmw.types')
 
+local LogMessage = require 'scripts.s3.logmessage'
+
 local noSelfInputFunctions = {
   ['createRecordDraft'] = true,
 }
@@ -104,6 +106,10 @@ end
 
 GameObjectWrapper._mt = {
   __index = function(instance, key)
+    if key == 'ConsoleLog' then
+      return LogMessage
+    end
+
     local cached = rawget(instance, key)
 
     if cached then
