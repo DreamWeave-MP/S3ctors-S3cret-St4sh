@@ -109,7 +109,7 @@ a.modHeader,
 }
 
 #h3lp_yours3lf {
-    background-image: linear-gradient(to right, purple 60%, black);
+    background-image: linear-gradient(to top, purple 60%, gold);
     background-clip: text;
     color: transparent;
 }
