@@ -6,11 +6,11 @@ H3lp Yours3lf is a collection of scripting modules built for openmw. It contains
 
 #### Modules
 
-### S3lf
+##### S3lf
 
  s3lf is a replacement for OpenMW's built-in `self` module. It contains all the same contents but saves some footguns in the API and makes certain calls more precise on your behalf, alongside being easier to introspect. This mod should be installed purely as a dependency of others, as it adds nothing on its own except an interface which other scripts may make use of. For scripters, read below to learn about how and why to make use of the `s3lf` interface.
 
-### ProtectedTable
+##### ProtectedTable
 
 A construct designed to make it easy to bind a game system, to an OpenMW settings group. This makes it easy, for example, to make a global setting group which scales actor health and reference it in all scripts with concise notation. For example:
 
@@ -41,7 +41,7 @@ ProtectedTables additionally come with a __tostring method that will show the ma
 
 Finally, due to their nature, please keep in mind that ProtectedTables only work with global setting groups, not player ones. This is to ensure that all possible gameObjects have access to the various values in each group.
 
-### ScriptContext
+##### ScriptContext
 
 Provides an enum describing script contexts and a function to return the current one. Used by the LogMessage Function. Handy for when you would like for a given script or function to be usable regardless of what script context it is being ran in. ScriptContext is not available through an interface and must be `require`d directly, since interfaces are naturally scopes anyway, and this is a somewhat niche usage.
 
@@ -58,7 +58,7 @@ Example:
   end
 ```
 
-### LogMessage
+##### LogMessage
 
 Emits a message to the `~` console from any context. Takes one argument. Re-exported through the `s3lf` module under the name `ConsoleLog`.
 
@@ -83,26 +83,7 @@ local LogMessage = require 'scripts.s3.logmessage'
 LogMessage(('Hai From %s'):format(I.s3lf.recordId))
 ```
 
-## Installation
-
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf)
-1. Extract the zip to a location of your choosing, examples below:
-
-```cfg
-        # Windows
-        C:\games\OpenMWMods\s3lf
-
-        # Linux
-        /home/username/games/OpenMWMods/s3lf
-
-        # macOS
-        /Users/username/games/OpenMWMods/s3lf
-```
-
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3lf"`)
-1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=s3lf.omwscripts`
-
-## Using the Interface
+###### Using the S3lf Module
 
 It's a fairly common convention in Lua to use the keyword `self` in a table when it... needs to reference itself in some way. OpenMW-Lua subtly teaches you to use its own module `openmw.self` instead, which can break attempts to use the `self` keyword normally, induce subtle bugs, or just be plain weird. Additionally, the API overall is often considered too spread out or confusing to be easily used, with things like health being accessed like `self.type.stats.dynamic.health(self)`. The `s3lf` module will save you these painful indexes with hidden implementation footguns, *and* allow you to use the `self` keyword as you normally would. Compare the normal version to `s3lf.health.current`.
 
@@ -153,9 +134,28 @@ Every `s3lf` object also includes a `display()` method, which will show a neatly
 
 If your mod uses the `s3lf` interface and it is not available, it is recommended you link back to the [mod page](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf) in your error outputs so the user can get ahold of it themselves.
 
+#### Installation
+
+1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf)
+1. Extract the zip to a location of your choosing, examples below:
+
+```cfg
+        # Windows
+        C:\games\OpenMWMods\s3lf
+
+        # Linux
+        /home/username/games/OpenMWMods/s3lf
+
+        # macOS
+        /Users/username/games/OpenMWMods/s3lf
+```
+
+1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3lf"`)
+1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=s3lf.omwscripts`
+
 <div id="credits" style="text-align: center;">
 
-## Credits
+#### Credits
 
 Author: **S3ctor**
 
