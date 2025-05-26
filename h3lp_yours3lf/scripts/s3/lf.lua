@@ -231,19 +231,42 @@ local eventHandlers = {}
 local engineHandlers = {}
 
 if PlayerType.objectIsInstance(gameSelf) then
-  local storage = require 'openmw.storage'
+  local CellsVisited = {}
+
   CombatTargetTracker.targetData = {}
 
   engineHandlers.onSave = function()
     return {
       targetData = CombatTargetTracker.targetData,
+      cellsVisited = CellsVisited,
     }
   end
 
   engineHandlers.onLoad = function(data)
-    if data and data.targetData then
+    if not data then return end
+
+    if data.targetData then
       CombatTargetTracker.targetData = data.targetData
     end
+
+    if data.cellsVisited then
+      CellsVisited = data.cellsVisited
+    end
+  end
+
+  local I = require 'openmw.interfaces'
+  local prevCell = nil
+  engineHandlers.onFrame = function()
+    local currentCell = I.s3lf.cell
+    if not currentCell then return end
+
+    if currentCell ~= prevCell then
+      gameSelf:sendEvent('S3LFCellChanged', currentCell)
+
+      if not CellsVisited[currentCell.id] then CellsVisited[currentCell.id] = true end
+    end
+
+    prevCell = I.s3lf.cell
   end
 
   function CombatTargetTracker:findCombatant(actor)
