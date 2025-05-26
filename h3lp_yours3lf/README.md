@@ -156,8 +156,8 @@ LogMessage(('Hai From %s'):format(I.s3lf.recordId))
         /Users/username/games/OpenMWMods/h3lp_yours3lf
 ```
 
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3lf"`)
-1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=s3lf.omwscripts`
+1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\h3lp_yours3lf"`)
+1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=h3lp_yours3lf.omwscripts`
 
 <div id="credits" style="text-align: center;">
 
