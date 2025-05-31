@@ -1,0 +1,154 @@
+local async = require 'openmw.async'
+local storage = require 'openmw.storage'
+local vfs = require 'openmw.vfs'
+
+local I = require('openmw.interfaces')
+
+local PlaylistFileNames = {}
+for fileName in vfs.pathsWithPrefix('playlists/') do
+    if fileName:find('%.lua$') then
+        table.insert(PlaylistFileNames, fileName)
+    end
+end
+
+local playlistIds = { 'explore', 'battle', }
+for _, file in ipairs(PlaylistFileNames) do
+    local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
+    if ok and type(playlists) == "table" then
+        for _, playlist in ipairs(playlists) do
+            playlistIds[#playlistIds + 1] = playlist.id
+        end
+    end
+end
+
+
+
+I.Settings.registerPage({
+    key = 'S3Music',
+    l10n = 'S3Music',
+    name = 'Music',
+    description = 'settingsPageDescription',
+})
+
+I.Settings.registerGroup({
+    key = "SettingsS3Music",
+    page = 'S3Music',
+    l10n = 'S3Music',
+    name = 'musicSettings',
+    permanentStorage = true,
+    order = 0,
+    settings = {
+        {
+            key = 'DebugEnable',
+            renderer = 'checkbox',
+            name = 'DebugEnabled',
+            description = 'DebugEnabledDescription',
+            default = false,
+        },
+        {
+            key = 'MusicEnabled',
+            renderer = 'checkbox',
+            name = 'MusicEnabled',
+            description = 'MusicEnabledDescription',
+            default = true,
+        },
+        {
+            key = 'BattleActive',
+            renderer = 'checkbox',
+            name = 'CombatMusicEnabled',
+            description = 'CombatMusicEnabledDescription',
+            default = true,
+        },
+        {
+            key = 'ExploreActive',
+            renderer = 'checkbox',
+            name = 'ExploreMusicEnabled',
+            description = 'ExploreMusicEnabledDescription',
+            default = true,
+        },
+
+    },
+})
+
+I.Settings.registerGroup({
+    key = 'SettingsS3MusicPlaylistSelection',
+    page = 'S3Music',
+    l10n = 'S3Music',
+    name = 'PlaylistSelection',
+    permanentStorage = true,
+    order = 1,
+    settings = {
+        {
+            key = 'PlaylistActiveCurrentSelection',
+            renderer = 'select',
+            argument = { items = playlistIds, l10n = 'S3Music', },
+            name = 'Currently Selected Playlist',
+            description = 'Currently selected playlist to activate/deactivate',
+        },
+    }
+
+})
+
+local musicSettings = storage.playerSection('SettingsS3MusicPlaylistSelection')
+local activePlaylistSettings = storage.playerSection('SettingsS3MusicPlaylistActivity')
+local activePlaylistState = storage.playerSection('S3maphoreActivePlaylistSettings')
+
+musicSettings:subscribe(
+    async:callback(
+        function(_, key)
+            -- Use the not key branch to set the default activity state on all playlists
+            if not key then
+                for _, file in ipairs(PlaylistFileNames) do
+                    local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
+                    if ok and type(playlists) == "table" then
+                        for _, playlist in ipairs(playlists) do
+                            activePlaylistSettings:set('PlaylistActiveState', playlist.active or true)
+                        end
+                    end
+                end
+                return
+            end
+
+            local targetPlaylist = musicSettings:get('PlaylistActiveCurrentSelection')
+            if not targetPlaylist then return end
+
+            local currentState = activePlaylistState:get(targetPlaylist .. 'Active')
+            local noTracks = currentState == -1
+
+            activePlaylistSettings:set('PlaylistActiveState', noTracks and false or currentState)
+
+            I.Settings.updateRendererArgument('SettingsS3MusicPlaylistActivity', 'PlaylistActiveState',
+                { disabled = noTracks })
+        end
+    )
+)
+
+I.Settings.registerGroup({
+    key = 'SettingsS3MusicPlaylistActivity',
+    page = 'S3Music',
+    l10n = 'S3Music',
+    name = 'PlaylistActivity',
+    permanentStorage = true,
+    order = 2,
+    settings = {
+        {
+            key = 'PlaylistActiveState',
+            renderer = 'checkbox',
+            argument = {},
+            name = 'Playlist Active State',
+            description = 'Whether or not the current playlist is active'
+        }
+    }
+
+})
+
+activePlaylistSettings:subscribe(
+    async:callback(
+        function(_, key)
+            if not key then return end
+            local targetPlaylist = musicSettings:get('PlaylistActiveCurrentSelection')
+            local state = activePlaylistSettings:get('PlaylistActiveState')
+            activePlaylistState:set(targetPlaylist .. 'Active', state)
+        end
+    )
+)

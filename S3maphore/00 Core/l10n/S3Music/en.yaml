@@ -1,0 +1,11 @@
+Music: "Semaphore - MOMW Music"
+settingsPageDescription: "Semaphore music settings."
+
+musicSettings: "Music Configuration"
+
+CombatMusicEnabled: "Play Combat Music"
+CombatMusicEnabledDescription: "If enabled, the game switches to combat music if there are actors in combat. This uses the builtin combat playlist, with tracks from music/combat."
+
+ExploreMusicEnabled: "Play Exploration Music"
+ExploreMusicEnabledDescription: "If enabled, the game plays exploration music when no actors are in combat. This uses the builtin explore playlist, with tracks from music/explore."
+
