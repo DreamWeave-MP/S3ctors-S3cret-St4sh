@@ -18,3 +18,6 @@ PlaylistActivity: ""
 
 PlaylistActiveState: "Playlist State"
 PlaylistActiveStateDescription: "Whether or not the playlist will be selected for playback at all.\n\nWARNING: This does not mean the playlist will be played immediately, it simply means it *can* be played under the conditions it defines.\n\nNOTE: If this option is disabled, it means you have not loaded any tracks this playlist defines and it would never play anyway."
+
+BannerEnabled: "Show Track Info"
+BannerEnabledDescription: "Displays the current playlist and track name at the top of the screen, if localizations for the playlist are available."
