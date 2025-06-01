@@ -67,9 +67,7 @@ end
 ---@param cellNames IDPresenceMap
 ---@return boolean
 function PlaylistRules.cellNameExact(cellNames)
-    local cellName = PlaylistRules.state.cellName
-
-    return cellNames[cellName]
+    return cellNames[PlaylistRules.state.cellName]
 end
 
 --- Returns whether the player is currently in combat with any actor out of the input set
@@ -223,7 +221,7 @@ end
 ---
 --- Example usage:
 ---
---- playback.rules.staticContentFile { 'starwind enhanced.esm', }
+--- playback.rules.staticContentFile { ['starwind enhanced.esm'] = true, }
 function PlaylistRules.staticContentFile(contentFiles)
     local localStatics = PlaylistRules.state.staticList
     if not localStatics or next(localStatics) == nil then return end
@@ -271,9 +269,10 @@ end
 ---@return boolean
 function PlaylistRules.region(regionNames)
     local currentRegion = PlaylistRules.state.self.cell.region
-    if not currentRegion or currentRegion == '' then return false end
 
-    return regionNames[currentRegion]
+    return currentRegion ~= nil
+        and currentRegion ~= ''
+        and regionNames[currentRegion] or false
 end
 
 return PlaylistRules
