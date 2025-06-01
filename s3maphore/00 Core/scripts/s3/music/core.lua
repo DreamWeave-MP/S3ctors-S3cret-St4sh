@@ -48,9 +48,9 @@ local currentPlaylist = nil
 local battlePriority = 200
 local explorePriority = 1000
 
-local currentTrack = nil
-local MusicManager = {}
-local StaticList = {}
+---@type PlaylistRules
+local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState)
+
 
 ---@alias ValidPlaylistCallback fun(playback: Playback): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
 
