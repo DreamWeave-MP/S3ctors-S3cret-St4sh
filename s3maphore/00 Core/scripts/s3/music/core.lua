@@ -47,6 +47,24 @@ local currentPlaylist = nil
 
 local battlePriority = 200
 local explorePriority = 1000
+---@type table<string, function>
+local L10nCache = {}
+
+---@param playlistId string
+local function initPlaylistL10n(playlistId)
+    if L10nCache[playlistId] then return true end
+
+    local l10nContextName = ('S3maphoreTracks%s'):format(playlistId)
+
+    local ok, maybeTranslations = pcall(function() return core.l10n(l10nContextName) end)
+
+    if ok then
+        L10nCache[playlistId] = maybeTranslations
+        helpers.debugLog('Cached translations for playlist', playlistId)
+    end
+
+    return ok
+end
 
 ---@type PlaylistRules
 local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState)
@@ -71,6 +89,7 @@ local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState)
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
     helpers.initMissingPlaylistFields(playlist)
+    initPlaylistL10n(playlist.id)
 
     local existingOrder = playlistsTracksOrder[playlist.id]
 
@@ -131,19 +150,26 @@ function MusicManager.getCurrentTrack()
     return currentTrack
 end
 
-function MusicManager.getCurrentTrackName()
-    if not currentTrack then return end
+function MusicManager.getCurrentTrackInfo()
+    if not currentPlaylist or not currentTrack then return end
 
-    -- Extract the file name from the path, remove extension, and capitalize each word
-    local trackName = currentTrack:match("([^/]+)$")     -- Get file name
-    trackName = trackName:match("(.+)%..+") or trackName -- Remove extension
+    local playlistId = currentPlaylist.id
 
-    -- Capitalize the first letter of each word
-    trackName = trackName:gsub("(%a)([%w_']*)", function(first, rest)
-        return first:upper() .. rest
-    end)
+    if not L10nCache[playlistId] then return end
 
-    return trackName
+    local trackName = L10nCache[playlistId](currentTrack)
+
+    if trackName ~= currentTrack then
+        helpers.debugLog(
+            ('Found S3maphore track translation %s for track %s:'):format(trackName, currentTrack)
+        )
+
+        return L10nCache[playlistId](playlistId), trackName
+    else
+        helpers.debugLog(
+            ('No translations found for track %s'):format(currentTrack)
+        )
+    end
 end
 
 function MusicManager.getCurrentPlaylist()
