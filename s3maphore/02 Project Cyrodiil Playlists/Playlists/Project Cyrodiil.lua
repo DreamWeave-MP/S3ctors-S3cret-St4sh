@@ -168,7 +168,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 return {
     {
         id = 'Project Cyrodiil - Abecean Shores/Imperial Crypts',
-        priority = PlaylistPriority.CellMatch,
+        priority = PlaylistPriority.CellMatch - 1,
         randomize = true,
 
         tracks = {
@@ -246,7 +246,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Caves',
-        priority = PlaylistPriority.CellMatch,
+        priority = PlaylistPriority.CellMatch - 1,
         randomize = true,
 
         tracks = {
