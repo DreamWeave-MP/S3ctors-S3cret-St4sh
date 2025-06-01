@@ -486,6 +486,12 @@ return {
     interfaceName = 'S3maphore',
     interface = MusicManager,
     engineHandlers = {
+        onKeyPress = function(key)
+            if key.code == input.KEY.F8 then
+                self:sendEvent('S3maphoreSkipTrack')
+            elseif key.code == input.KEY.F4 then
+            end
+        end,
         onFrame = onFrame,
         onTeleported = function()
             StaticList = {}
