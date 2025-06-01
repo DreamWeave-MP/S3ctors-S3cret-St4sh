@@ -151,22 +151,26 @@ function PlaylistRules.staticExact(staticRules)
     local localStatics = PlaylistRules.state.staticList
     if not localStatics or next(localStatics) == nil then return end
 
+    local cellName = PlaylistRules.state.cellName
+
+    if S3maphoreGlobalCache[cellName] == nil then S3maphoreGlobalCache[cellName] = {} end
+
+    if S3maphoreGlobalCache[cellName][staticRules] ~= nil then
+        return S3maphoreGlobalCache[cellName][staticRules]
+    end
+
     local result = false
-    for _, static in ipairs(localStatics) do
-        if S3maphoreGlobalCache[static.recordId] == nil then S3maphoreGlobalCache[static.recordId] = {} end
 
-        if S3maphoreGlobalCache[static.recordId][staticRules] ~= nil then
-            return S3maphoreGlobalCache[static.recordId][staticRules]
-        end
-
-        local staticRule = staticRules[static.recordId]
+    for _, recordId in ipairs(localStatics.recordIds) do
+        local staticRule = staticRules[recordId]
 
         if staticRule ~= nil then
-            S3maphoreGlobalCache[static.recordId][staticRules] = staticRule
             result = staticRule
             break
         end
     end
+
+    S3maphoreGlobalCache[cellName][staticRules] = result
 
     return result
 end
@@ -184,25 +188,28 @@ function PlaylistRules.staticMatch(patterns)
     local localStatics = PlaylistRules.state.staticList
     if not localStatics or next(localStatics) == nil then return end
 
+    local cellName = PlaylistRules.state.cellName
+
+    if S3maphoreGlobalCache[cellName] == nil then S3maphoreGlobalCache[cellName] = {} end
+
+    if S3maphoreGlobalCache[cellName][patterns] ~= nil then
+        return S3maphoreGlobalCache[cellName][patterns]
+    end
+
     local result = false
-    for _, static in ipairs(localStatics) do
-        if S3maphoreGlobalCache[static.recordId] == nil then S3maphoreGlobalCache[static.recordId] = {} end
 
-        if S3maphoreGlobalCache[static.recordId][patterns] ~= nil then
-            return S3maphoreGlobalCache[static.recordId][patterns]
-        end
-
+    for _, static in ipairs(localStatics.recordIds) do
         for _, pattern in ipairs(patterns) do
             if static.recordId:find(pattern) then
                 result = true
-                break
+                goto matchBreak
             end
         end
-
-        S3maphoreGlobalCache[static.recordId][patterns] = result
-
-        if result then break end
     end
+
+    ::matchBreak::
+
+    S3maphoreGlobalCache[cellName][patterns] = result
 
     return result
 end
@@ -216,30 +223,24 @@ end
 function PlaylistRules.staticContentFile(contentFiles)
     local localStatics = PlaylistRules.state.staticList
     if not localStatics or next(localStatics) == nil then return end
+    local cellName = PlaylistRules.state.cellName
+
+    if S3maphoreGlobalCache[cellName] == nil then S3maphoreGlobalCache[cellName] = {} end
+
+    if S3maphoreGlobalCache[cellName][contentFiles] ~= nil then
+        return S3maphoreGlobalCache[cellName][contentFiles]
+    end
 
     local result = false
-    for _, static in ipairs(localStatics) do
-        if S3maphoreGlobalCache[static.id] == nil then S3maphoreGlobalCache[static.id] = {} end
 
-        if S3maphoreGlobalCache[static.id][contentFiles] ~= nil then
-            return S3maphoreGlobalCache[static.id][contentFiles]
+    for _, contentFile in ipairs(localStatics.contentFiles) do
+        if contentFiles[contentFile] ~= nil then
+            result = contentFiles[contentFile]
+            break
         end
-
-        local contentFile = static.contentFile:lower()
-
-        if contentFile and contentFile ~= '' then
-            for _, targetContentFile in ipairs(contentFiles) do
-                if contentFile == targetContentFile:lower() then
-                    result = true
-                    break
-                end
-            end
-        end
-
-        S3maphoreGlobalCache[static.id][contentFiles] = result
-
-        if result then break end
     end
+
+    S3maphoreGlobalCache[cellName][contentFiles] = result
 
     return result
 end
