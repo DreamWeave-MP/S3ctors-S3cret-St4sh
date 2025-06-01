@@ -280,48 +280,8 @@ local BarrowsStatics = {
     ['t_imp_dngcolbarrow_i_wall_11'] = true,
 }
 
----@type CellMatchPatterns
-local CavePatterns = {
-    allowed = {
-        "agi bay grotto",
-        "akna mine",
-        "ansedeus",
-        "aschar",
-        "atrene",
-        "axilas grotto",
-        "blackfish cave",
-        "broken shrine grotto",
-        "buralca",
-        "crow hall cave",
-        "einluk mine",
-        "emperor cassynder: grotto",
-        "eran grotto",
-        "fort heath, mine",
-        "gula cave",
-        "ikan grotto",
-        "joranta",
-        "kingfisher cave",
-        "land\'s end grotto",
-        "lazur grotto",
-        "lost stars hollow",
-        "melestrata",
-        "mirta grotto",
-        "mormolycea",
-        "nabor",
-        "norinia",
-        "ogima",
-        "pale bay cave",
-        "salvage mine",
-        "sorhuk",
-        "stonehead cave",
-        "thalur grotto",
-        "thesigir chasm",
-        "vallanytha grotto",
-        "vilenkin",
-    },
-
-    disallowed = {},
-}
+---@type IDPresenceMap
+local CaveStaticIds = require 'doc.caveStaticIds'
 
 ---@type IDPresenceMap
 local CryptStatics = {
@@ -476,7 +436,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Caves',
-        priority = PlaylistPriority.CellMatch - 1,
+        priority = PlaylistPriority.Tileset,
         randomize = true,
 
         tracks = {
@@ -491,7 +451,9 @@ return {
         },
 
         isValidCallback = function(playback)
-            return not playback.state.cellIsExterior and playback.rules.cellNameMatch(CavePatterns)
+            return not playback.state.cellIsExterior
+                and playback.rules.staticContentFile(CyrContentFiles)
+                and playback.rules.staticExact(CaveStaticIds)
         end,
     },
     {
