@@ -1,20 +1,24 @@
 local ambient = require('openmw.ambient')
 local async = require 'openmw.async'
 local core = require('openmw.core')
+local input = require 'openmw.input'
 local self = require('openmw.self')
 local storage = require('openmw.storage')
 local types = require('openmw.types')
 local util = require 'openmw.util'
+local vfs = require 'openmw.vfs'
 
 local I = require 'openmw.interfaces'
 
 local MusicBanner = require 'scripts.s3.music.banner'
-local TrackTranslations = core.l10n('SemaphoreTrackNames')
 
 local musicSettings = storage.playerSection('SettingsS3Music')
+
 local activePlaylistSettings = storage.playerSection('S3maphoreActivePlaylistSettings')
 activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
 
+--- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
+--- In other words, this is the bit that responds to changes from the settings menu
 activePlaylistSettings:subscribe(
     async:callback(
         function(_, key)
@@ -41,12 +45,18 @@ local playlistsTracksOrder = helpers.getStoredTracksOrder()
 
 ---@alias FightingActors table<string, boolean>
 local fightingActors = {}
+
+---@alias StaticList userdata[]
+local StaticList = {}
+
 local registrationOrder = 0
 
 local currentPlaylist = nil
+local currentTrack = nil
 
 local battlePriority = 200
 local explorePriority = 1000
+
 ---@type table<string, function>
 local L10nCache = {}
 
@@ -66,9 +76,65 @@ local function initPlaylistL10n(playlistId)
     return ok
 end
 
+
+local MusicManager = {
+    ---@enum S3maphoreStateChangeReason
+    STATE = util.makeReadOnly {
+        Died = 'DIED',
+        Disabled = 'DSBL',
+        NoPlaylist = 'NPLS',
+        SpecialTrackPlaying = 'SPTR',
+    },
+    --- Meant to be used in conjunction with the output of MusicManager.playlistTimeOfDay OR PlaylistState.playlistTimeOfDay
+    ---@enum TimeMap
+    TIME_MAP = util.makeReadOnly {
+        [0] = 'night',
+        [1] = 'morning',
+        [2] = 'afternoon',
+        [3] = 'evening',
+    }
+}
+
+---@class PlaylistState
+---@field self userdata the player actor
+---@field playlistTimeOfDay TimeMap the time of day for the current playlist
+---@field isInCombat boolean whether the player is in combat or not
+---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
+---@field cellName string lowercased name of the cell the player is in
+---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
+---@field staticList userdata[]? a read-only list of static objects in the cell, if the cell is not exterior. If the static list is not yet valid, is an empty table. Nil for "true" exteriors.
+local PlaylistState = {}
+
+--- Updates the playlist state for this frame, before it is actively used in playlist selection
+local function updatePlaylistState()
+    local shouldUseName = self.cell.name ~= nil and self.cell.name ~= ''
+
+    PlaylistState.self = self
+    PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
+    PlaylistState.isInCombat = helpers.isInCombat(fightingActors)
+    PlaylistState.cellIsExterior = self.cell.isExterior or self.cell:hasTag('QuasiExterior')
+    PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
+    PlaylistState.staticList = self.cell.isExterior and nil or StaticList
+    PlaylistState.combatTargets = util.makeReadOnly(fightingActors)
+end
+
 ---@type PlaylistRules
 local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState)
 
+---@class Playback
+---@field state PlaylistState
+---@field rules PlaylistRules
+local Playback = {
+    rules = PlaylistRules,
+    state = PlaylistState,
+}
+
+---@class QueuedEvent
+---@field name string the name of the event to send
+---@field data any the data to send with the event
+
+---@type QueuedEvent?
+local queuedEvent
 
 ---@alias ValidPlaylistCallback fun(playback: Playback): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
 
@@ -84,6 +150,11 @@ local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState)
 ---@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
 ---@field noInterrupt boolean? If true, playback is not interrupted when the playlist is invalid and will wait for the track to finish. Defaults to false
 ---@field isValidCallback ValidPlaylistCallback?
+
+---@class S3maphoreStateChangeEventData
+---@field playlistId string
+---@field trackName string VFS path of the track being played
+---@field reason S3maphoreStateChangeReason
 
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
@@ -113,19 +184,17 @@ function MusicManager.registerPlaylist(playlist)
     local playlistActiveKey = playlist.id .. 'Active'
 
     if activePlaylistSettings:get(playlistActiveKey) ~= nil then
-        if musicSettings:get('DebugEnable') then
-            print('loaded playlist state from settings:', playlist.id)
-        end
+        helpers.debugLog('loaded playlist state from settings:', playlist.id)
+
         playlist.active = activePlaylistSettings:get(playlistActiveKey)
     else
-        if musicSettings:get('DebugEnable') then
-            print('stored playlist state in settings:', playlist.id, storedState)
-        end
-        activePlaylistSettings:set(playlist.id .. 'Active', storedState)
+        helpers.debugLog('stored playlist state in settings:', playlist.id, storedState)
+
+        activePlaylistSettings:set(playlistActiveKey, storedState)
     end
 end
 
---- Decided whether or not a playlist will be used at all, regardless of whether its context is valid.
+--- Decides whether or not a playlist will be used at all, regardless of whether its context is valid.
 --- Typically should be used to forcefully disable a playlist, as they default to active.
 --- May also be used to reactivate a playlist that was deactivated by a script, or was inactive by default.
 ---@param id string the ID of the playlist to unregister
@@ -183,7 +252,7 @@ function MusicManager.getRegisteredPlaylists()
 end
 
 function MusicManager.listPlaylistFiles()
-    return PlaylistFileList
+    return util.makeReadOnly(PlaylistFileList)
 end
 
 --- Stops the currently playing track, if any.
@@ -252,6 +321,12 @@ function MusicManager.playSpecialTrack(trackPath, reason)
         })
 end
 
+---@return TimeMap
+function MusicManager.playlistTimeOfDay()
+    local dayPortion = math.floor(core.getGameTime() / 3600 % 24 / 6)
+    return MusicManager.TIME_MAP[dayPortion]
+end
+
 local function playlistCoroutineLoader()
     for _, file in ipairs(PlaylistFileList) do
         local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
@@ -268,6 +343,7 @@ end
 
 -- Create the coroutine
 local playlistLoaderCo = coroutine.create(playlistCoroutineLoader)
+local playlistCount = 3
 
 ---@return boolean? canPlayback if true, loading has finished and playback can start
 local function loadNextPlaylistStep()
@@ -276,12 +352,12 @@ local function loadNextPlaylistStep()
 
     local ok, playlist = coroutine.resume(playlistLoaderCo)
 
+    --- Explore, battle, special
     if ok and playlist then
-        if musicSettings:get('DebugEnable') then
-            print("Registered playlist:", playlist.id)
-        end
+        helpers.debugLog("Registered playlist:", playlist.id)
+        playlistCount = playlistCount + 1
     elseif coroutine.status(playlistLoaderCo) == "dead" then
-        print("All playlists loaded. Ready to play music!")
+        print(("[ S3MAPHORE ]: %d playlists loaded. Ready to play music!"):format(playlistCount))
         return true
     end
 end
@@ -342,52 +418,9 @@ local function switchPlaylist(newPlaylist)
     currentPlaylist = newPlaylist
 end
 
----@enum TimeMap
-local playlistsToTime = {
-    [0] = 'night',
-    [1] = 'dawn',
-    [2] = 'noon',
-    [3] = 'dusk',
-}
-
-local function playlistTimeOfDay()
-    local dayPortion = math.floor(core.getGameTime() / 3600 % 24 / 6)
-    return playlistsToTime[dayPortion]
-end
-
----@class PlaylistState
----@field self userdata the player actor
----@field playlistTimeOfDay TimeMap the time of day for the current playlist
----@field isInCombat boolean whether the player is in combat or not
----@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
----@field cellName string lowercased name of the cell the player is in
----@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
----@field staticList userdata[] a read-only list of static objects in the cell, if the cell is not exterior. If the static list is not yet valid, is an empty table.
-local PlaylistState = {}
-
----@return PlaylistState
-local function getPlaylistState()
-    local shouldUseName = self.cell.name ~= nil and self.cell.name ~= ''
-
-    PlaylistState.self = self
-    PlaylistState.playlistTimeOfDay = playlistTimeOfDay()
-    PlaylistState.isInCombat = helpers.isInCombat(fightingActors)
-    PlaylistState.cellIsExterior = self.cell.isExterior or self.cell:hasTag('QuasiExterior')
-    PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
-    PlaylistState.staticList = self.cell.isExterior and nil or StaticList
-    PlaylistState.combatTargets = util.makeReadOnly(fightingActors)
-
-    return PlaylistState
-end
-
----@class QueuedEvent
----@field name string the name of the event to send
----@field data any the data to send with the event
-
----@type QueuedEvent?
-local queuedEvent
-
 local function onFrame(dt)
+    if not self.cell then return end
+
     if queuedEvent then
         self:sendEvent(queuedEvent.name, queuedEvent.data)
         queuedEvent = nil
@@ -402,21 +435,19 @@ local function onFrame(dt)
         ambient.stopMusic()
         currentPlaylist = nil
         currentTrack = nil
-        queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = 'disabled' } }
+        queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = MusicManager.STATE.Disabled } }
         return
     end
 
     if types.Actor.isDead(self) and musicPlaying then return end
 
-    local startTime = core.getRealTime()
+    updatePlaylistState()
 
-    local newPlaylist = helpers.getActivePlaylistByPriority(registeredPlaylists, getPlaylistState())
-
-    -- print('playlist lookup duration was:', (core.getRealTime() - startTime), 'seconds')
+    local newPlaylist = helpers.getActivePlaylistByPriority(registeredPlaylists, Playback)
 
     if not newPlaylist then
         ambient.stopMusic()
-        queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = 'no active playlist' } }
+        queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = MusicManager.STATE.NoPlaylist } }
 
         if currentPlaylist ~= nil then
             currentPlaylist.deactivateAfterEnd = nil
@@ -442,19 +473,13 @@ local function onFrame(dt)
         return
     end
 
-    local currentPlaylistId, queuedEventName = currentPlaylist and currentPlaylist.id or nil, 'S3maphoreTrackChanged'
-
-    if currentPlaylistId ~= newPlaylist.id then
-        queuedEventName = 'S3maphorePlaylistChanged'
-    end
-
     switchPlaylist(newPlaylist)
 
-    queuedEvent = { name = queuedEventName, data = { playlistId = newPlaylist.id, trackName = MusicManager.getCurrentTrackName() } }
+    queuedEvent = { name = 'S3maphoreTrackChanged', data = { playlistId = newPlaylist.id, trackName = currentTrack } }
 end
 
 MusicManager.registerPlaylist {
-    id = "battle",
+    id = "Battle",
     priority = battlePriority,
     randomize = true,
 
@@ -464,7 +489,7 @@ MusicManager.registerPlaylist {
 }
 
 MusicManager.registerPlaylist {
-    id = "explore",
+    id = "Explore",
     priority = explorePriority,
     randomize = true,
 
@@ -472,6 +497,7 @@ MusicManager.registerPlaylist {
         return (activePlaylistSettings:get("ExploreActive") or true) and not playback.state.isInCombat
     end,
 }
+
 MusicManager.registerPlaylist {
     id = 'Special',
     priority = 50,
@@ -484,21 +510,28 @@ MusicManager.registerPlaylist {
 
 return {
     interfaceName = 'S3maphore',
+
     interface = MusicManager,
+
     engineHandlers = {
+
         onKeyPress = function(key)
             if key.code == input.KEY.F8 then
                 self:sendEvent('S3maphoreSkipTrack')
             elseif key.code == input.KEY.F4 then
             end
         end,
+
         onFrame = onFrame,
+
         onTeleported = function()
             StaticList = {}
             core.sendGlobalEvent('S3maphoreStaticUpdate', self)
         end,
+
         onSave = function()
             local playlistStates = {}
+
             for playlistId, playlist in pairs(registeredPlaylists) do
                 playlistStates[playlistId] = playlist.active
             end
@@ -508,10 +541,13 @@ return {
                 playlistStates = playlistStates,
             }
         end,
+
         onLoad = function(data)
             if not data then return end
 
-            StaticList = data.StaticList or {}
+            for k, v in pairs(data.staticList or {}) do
+                StaticList[k] = v
+            end
 
             for playlistId, playlistState in pairs(data.playlistStates or {}) do
                 activePlaylistSettings:set(playlistId .. 'Active', playlistState)
@@ -520,46 +556,49 @@ return {
     },
     eventHandlers = {
         Died = playerDied,
+
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
+
         S3maphoreToggleMusic = MusicManager.overrideMusicEnabled,
+
         S3maphoreSkipTrack = MusicManager.skipTrack,
 
         S3maphoreSpecialTrack = MusicManager.playSpecialTrack,
+
         S3maphoreSetPlaylistActive = function(eventData)
-            if musicSettings:get('DebugEnable') then
-                print(string.format('Setting playlist %s to %s', eventData.playlist, eventData.state))
-            end
-            MusicManager(eventData.playlist, eventData.state)
+            helpers.debugLog(
+                ('Setting playlist %s to %s'):format(eventData.playlist, eventData.state)
+            )
+
+            MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
         end,
+
+        ---@param eventData S3maphoreStateChangeEventData
         S3maphoreMusicStopped = function(eventData)
-            if musicSettings:get('DebugEnable') then
-                print("Music stopped:", eventData.reason)
-            end
+            helpers.debugLog("Music stopped:", eventData.reason)
+
+            MusicBanner.layout.props.visible = false
+            MusicBanner:update()
         end,
-        S3maphorePlaylistChanged = function(eventData)
-            if musicSettings:get('DebugEnable') then
-                print("Playlist changed:", eventData.playlistId, "Track:", eventData.trackName)
-            end
-        end,
+
+        ---@param eventData S3maphoreStateChangeEventData
         S3maphoreTrackChanged = function(eventData)
-            if musicSettings:get('DebugEnable') then
-                print("Track changed:", eventData.playlistId, "Track:", eventData.trackName)
-            end
+            helpers.debugLog("Track changed! Current playlist is:", eventData.playlistId, "Track:", eventData.trackName)
 
-            local trackName = MusicManager.getCurrentTrack()
-            print(TrackTranslations[trackName] or 'NOT FOUND')
-            trackName = TrackTranslations[trackName] or trackName
+            local playlist, track = MusicManager.getCurrentTrackInfo()
 
-            if trackName then
+            if playlist and track then
                 MusicBanner.layout.props.visible = true
-                MusicBanner.layout.content[1].props.text = trackName
+                MusicBanner.layout.content[1].props.text = ('%s\n\n%s'):format(playlist, track)
             else
                 MusicBanner.layout.props.visible = false
             end
+
             MusicBanner:update()
         end,
+
         S3maphoreStaticCollectionUpdated = function(staticList)
-            StaticList = staticList
+            StaticList = util.makeReadOnly(staticList)
         end,
     }
 }
