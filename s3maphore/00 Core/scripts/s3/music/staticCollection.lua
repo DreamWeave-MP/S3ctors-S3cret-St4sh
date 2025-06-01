@@ -5,18 +5,24 @@ return {
         S3maphoreStaticUpdate = function(sender)
             if sender.cell.isExterior then return end
 
-            local statics, addedStatics = {}, {}
+            local addedStatics, addedContentFiles = {}, {}
+
             local staticsInCell = sender.cell:getAll(types.Static)
 
             for _, static in ipairs(staticsInCell) do
                 if not addedStatics[static.recordId] then
-                    addedStatics[static.recordId] = true
+                    addedStatics[#addedStatics + 1] = static.recordId
+                end
 
-                    statics[#statics + 1] = static
+                if not addedContentFiles[static.contentFile] then
+                    if static.contentFile and static.contentFile ~= '' then
+                        addedContentFiles[#addedContentFiles + 1] = static.contentFile:lower()
+                    end
                 end
             end
 
-            sender:sendEvent('S3maphoreStaticCollectionUpdated', statics)
+            sender:sendEvent('S3maphoreStaticCollectionUpdated',
+                { contentFiles = addedContentFiles, recordIds = addedStatics, })
         end,
     }
 }
