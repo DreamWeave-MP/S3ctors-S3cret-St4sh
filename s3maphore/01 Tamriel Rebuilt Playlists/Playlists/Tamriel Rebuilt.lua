@@ -203,11 +203,11 @@ return {
         randomize = true,
 
         tracks = {
-            'Music/TR/region/Aanthirin/Aanthirin 1.mp3',
-            'Music/TR/region/Aanthirin/Aanthirin 2.mp3',
-            'Music/TR/region/Aanthirin/Thirr.mp3',
-            'Music/TR/region/Aanthirin/Thirr 1.mp3',
-            'Music/TR/region/Aanthirin/Thirr 2.mp3'
+            'Music/MS/region/Aanthirin/Aanthirin 1.mp3',
+            'Music/MS/region/Aanthirin/Aanthirin 2.mp3',
+            'Music/MS/region/Aanthirin/Thirr.mp3',
+            'Music/MS/region/Aanthirin/Thirr 1.mp3',
+            'Music/MS/region/Aanthirin/Thirr 2.mp3'
         },
 
         isValidCallback = function(playback)
