@@ -48,7 +48,7 @@
   # MANDATORY: Omits certain directories during the build process
   # Do not remove any of these, or you will start a big fire
   # But feel free to add new ones!
-  global_exclude_paths = "js|.git|web|img|css"
+  global_exclude_paths = "js|.git|web|img|css|.vscode|Survival|Empowered Races"
 
 [hooks.pre-process]
   profile = 'prod'
