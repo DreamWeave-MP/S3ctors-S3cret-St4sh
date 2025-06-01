@@ -39,7 +39,7 @@ end
 return {
     {
         id = 'MUSE - Redoran Settlement',
-        priority = 397,
+        priority = 400,
         randomize = true,
 
         tracks = {
@@ -55,7 +55,7 @@ return {
     },
     {
         id = 'MUSE - Redoran Enemies',
-        priority = 192,
+        priority = 190,
 
         tracks = {
             'Music/MS/combat/Redoran/combat1.mp3',

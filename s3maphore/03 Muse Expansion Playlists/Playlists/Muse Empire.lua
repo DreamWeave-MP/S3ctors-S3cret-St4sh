@@ -64,11 +64,14 @@ local EmpireCellMatches = {
 local function empireCellRule(playback)
     return playback.rules.cellNameMatch(EmpireCellMatches)
 end
+
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'MUSE - Empire Settlement',
-        priority = 399,
+        priority = PlaylistPriority.Faction,
         randomize = true,
 
         tracks = {
@@ -83,7 +86,7 @@ return {
     },
     {
         id = 'MUSE - Empire Enemies',
-        priority = 196,
+        priority = PlaylistPriority.BattleMod,
         randomize = true,
 
         tracks = {

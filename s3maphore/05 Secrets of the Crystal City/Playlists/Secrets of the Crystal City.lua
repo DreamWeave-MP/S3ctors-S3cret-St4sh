@@ -36,11 +36,13 @@ local function crystalCityRule(playback)
     return playback.rules.cellNameExact(CrystalCityCells)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'MOMW Patches - Secrets of the Crystal City',
-        priority = 695,
+        priority = PlaylistPriority.CellExact,
 
         tracks = {
             'music/aa22/tew_aa_3.mp3',

@@ -56,11 +56,13 @@ local function solstheimTownRule(playback)
     return playback.rules.cellNameMatch(TownMatches)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'Vindswept Solstheim - Lake',
-        priority = 696,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -72,7 +74,7 @@ return {
     {
         -- Make a nighttime variant of this playlist
         id = 'Vindsvept Solstheim - Town',
-        priority = 797,
+        priority = PlaylistPriority.City,
         randomize = true,
 
         tracks = {
@@ -86,7 +88,7 @@ return {
     },
     {
         id = 'Vindsvept Soltheim - Moesring',
-        priority = 939,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -101,7 +103,7 @@ return {
     },
     {
         id = 'Vindsvept Solstheim/Hirstaang',
-        priority = 938,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -116,7 +118,7 @@ return {
     },
     {
         id = 'Vindsvept Solstheim/Isinfier Plains',
-        priority = 937,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -131,7 +133,7 @@ return {
     },
     {
         id = 'Vindsvept Solstheim/Felsaad Coast',
-        priority = 943,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
