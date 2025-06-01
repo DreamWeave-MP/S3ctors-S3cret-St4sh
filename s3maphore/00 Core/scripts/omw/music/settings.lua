@@ -11,7 +11,7 @@ for fileName in vfs.pathsWithPrefix('playlists/') do
     end
 end
 
-local playlistIds = { 'explore', 'battle', }
+local playlistIds = { 'Explore', 'Battle', }
 for _, file in ipairs(PlaylistFileNames) do
     local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
     if ok and type(playlists) == "table" then
@@ -21,7 +21,31 @@ for _, file in ipairs(PlaylistFileNames) do
     end
 end
 
+local function getMaxLength(arr)
+    local max = 0
+    for _, str in ipairs(arr) do
+        if #str > max then max = #str end
+    end
+    return max + 8
+end
 
+local function padStrings(arr)
+    local maxLen = getMaxLength(arr)
+    local padded = {}
+    for i, str in ipairs(arr) do
+        local totalPad = maxLen - #str
+        local leftPad = math.floor(totalPad / 2)
+        local rightPad = totalPad - leftPad
+        padded[i] = string.rep(" ", leftPad) .. str .. string.rep(" ", rightPad)
+    end
+    return padded
+end
+
+local function stripWhitespace(str)
+    return str:match("^%s*(.-)%s*$")
+end
+
+local playlistIds = padStrings(playlistIds)
 
 I.Settings.registerPage({
     key = 'S3Music',
@@ -52,21 +76,6 @@ I.Settings.registerGroup({
             description = 'MusicEnabledDescription',
             default = true,
         },
-        {
-            key = 'BattleActive',
-            renderer = 'checkbox',
-            name = 'CombatMusicEnabled',
-            description = 'CombatMusicEnabledDescription',
-            default = true,
-        },
-        {
-            key = 'ExploreActive',
-            renderer = 'checkbox',
-            name = 'ExploreMusicEnabled',
-            description = 'ExploreMusicEnabledDescription',
-            default = true,
-        },
-
     },
 })
 
@@ -82,8 +91,9 @@ I.Settings.registerGroup({
             key = 'PlaylistActiveCurrentSelection',
             renderer = 'select',
             argument = { items = playlistIds, l10n = 'S3Music', },
-            name = 'Currently Selected Playlist',
-            description = 'Currently selected playlist to activate/deactivate',
+            name = 'CurrentPlaylistSelection',
+            description = 'CurrentPlaylistSelectionDescription',
+            default = 'Explore',
         },
     }
 
@@ -109,7 +119,10 @@ musicSettings:subscribe(
                 return
             end
 
-            local targetPlaylist = musicSettings:get('PlaylistActiveCurrentSelection')
+            local targetPlaylist = stripWhitespace(
+                musicSettings:get('PlaylistActiveCurrentSelection')
+            )
+
             if not targetPlaylist then return end
 
             local currentState = activePlaylistState:get(targetPlaylist .. 'Active')
@@ -135,8 +148,8 @@ I.Settings.registerGroup({
             key = 'PlaylistActiveState',
             renderer = 'checkbox',
             argument = {},
-            name = 'Playlist Active State',
-            description = 'Whether or not the current playlist is active'
+            name = 'PlaylistActiveState',
+            description = 'PlaylistActiveStateDescription'
         }
     }
 
@@ -146,7 +159,7 @@ activePlaylistSettings:subscribe(
     async:callback(
         function(_, key)
             if not key then return end
-            local targetPlaylist = musicSettings:get('PlaylistActiveCurrentSelection')
+            local targetPlaylist = stripWhitespace(musicSettings:get('PlaylistActiveCurrentSelection'))
             local state = activePlaylistSettings:get('PlaylistActiveState')
             activePlaylistState:set(targetPlaylist .. 'Active', state)
         end
