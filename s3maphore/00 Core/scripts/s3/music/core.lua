@@ -224,6 +224,34 @@ function MusicManager.listPlaylistsByPriority()
     return playlistsByName
 end
 
+---@param trackPath string VFS path of the track to play
+---@param reason S3maphoreStateChangeReason
+function MusicManager.playSpecialTrack(trackPath, reason)
+    if not vfs.fileExists(trackPath) then
+        return print(('Requested track %s does not exist!'):format(trackPath))
+    end
+
+    helpers.debugLog(
+        ('playing special track: %s'):format(trackPath)
+    )
+
+    registeredPlaylists.Special.tracks = { trackPath }
+    playlistsTracksOrder.Special = { 1 }
+
+    MusicManager.setPlaylistActive('Special', true)
+
+    local fadeOut = currentPlaylist and currentPlaylist.fadeOut ~= nil and currentPlaylist.fadeOut or 1.0
+
+    ambient.streamMusic(trackPath, fadeOut)
+
+    self:sendEvent('S3maphoreTrackChanged',
+        {
+            playlistId = 'Special',
+            trackName = trackPath,
+            reason = reason or MusicManager.TrackChangeReasons.SpecialTrackPlaying
+        })
+end
+
 local function playlistCoroutineLoader()
     for _, file in ipairs(PlaylistFileList) do
         local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
@@ -269,9 +297,7 @@ local function onCombatTargetsChanged(eventData)
 end
 
 local function playerDied()
-    currentTrack = "music/special/mw_death.mp3"
-    ambient.streamMusic(currentTrack)
-    -- send an event when tracks change
+    MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
 end
 
 local function switchPlaylist(newPlaylist)
@@ -446,6 +472,15 @@ MusicManager.registerPlaylist {
         return (activePlaylistSettings:get("ExploreActive") or true) and not playback.state.isInCombat
     end,
 }
+MusicManager.registerPlaylist {
+    id = 'Special',
+    priority = 50,
+    playOneTrack = true,
+    noInterrupt = true,
+    active = false,
+
+    tracks = {},
+}
 
 return {
     interfaceName = 'S3maphore',
@@ -482,6 +517,8 @@ return {
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
         S3maphoreToggleMusic = MusicManager.overrideMusicEnabled,
         S3maphoreSkipTrack = MusicManager.skipTrack,
+
+        S3maphoreSpecialTrack = MusicManager.playSpecialTrack,
         S3maphoreSetPlaylistActive = function(eventData)
             if musicSettings:get('DebugEnable') then
                 print(string.format('Setting playlist %s to %s', eventData.playlist, eventData.state))
