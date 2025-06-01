@@ -81,6 +81,8 @@ end
 ---@param validTargets IDPresenceMap
 ---@return boolean
 function PlaylistRules.combatTargetExact(validTargets)
+    if not PlaylistRules.state.isInCombat then return false end
+
     local combatTargets = PlaylistRules.state.combatTargets
 
     for _, actor in ipairs(nearby.actors) do
@@ -104,6 +106,8 @@ end
 ---@param validTargetPatterns string[]
 ---@return boolean
 function PlaylistRules.combatTargetMatch(validTargetPatterns)
+    if not PlaylistRules.state.isInCombat then return false end
+
     local combatTargets = PlaylistRules.state.combatTargets
 
     for _, actor in ipairs(nearby.actors) do
