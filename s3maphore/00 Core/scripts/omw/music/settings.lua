@@ -76,6 +76,13 @@ I.Settings.registerGroup({
             description = 'MusicEnabledDescription',
             default = true,
         },
+        {
+            key = 'BannerEnabled',
+            renderer = 'checkbox',
+            name = 'BannerEnabled',
+            description = 'BannerEnabledDescription',
+            default = false,
+        }
     },
 })
 
