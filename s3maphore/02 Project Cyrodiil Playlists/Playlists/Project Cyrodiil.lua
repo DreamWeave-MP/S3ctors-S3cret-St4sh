@@ -162,11 +162,13 @@ local TemplePatterns = {
     disallowed = {},
 }
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'Project Cyrodiil - Abecean Shores/Imperial Crypts',
-        priority = 924,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -186,7 +188,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Brennan Bluffs',
-        priority = 923,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -207,7 +209,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Divine Temples',
-        priority = 922,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -224,7 +226,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Colovian Barrows',
-        priority = 921,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -244,7 +246,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Caves',
-        priority = 920,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -264,7 +266,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Ayleid',
-        priority = 919,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -284,7 +286,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Kingdom of Sutch',
-        priority = 918,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -304,7 +306,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Kingdom of Anvil',
-        priority = 917,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -324,7 +326,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Strident Coast',
-        priority = 916,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -345,7 +347,7 @@ return {
     },
     {
         id = 'Project Cyrodiil - Abecean Shores/Stirk Isle',
-        priority = 915,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
