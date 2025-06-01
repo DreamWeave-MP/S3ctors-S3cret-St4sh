@@ -5,14 +5,18 @@ local vfs = require('openmw.vfs')
 local playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
 playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
 
-local PlaylistRules = require 'scripts.s3.music.playlistRules'
+local musicSettings = storage.playerSection('SettingsS3Music')
 
----@class Playback
----@field state PlaylistState
----@field rules PlaylistRules
-local Playback = {
-    rules = PlaylistRules
-}
+---@param ... any
+local function debugLog(...)
+    if not musicSettings:get('DebugEnable') then return end
+    local args = { ... }
+    for i = 1, #args do
+        args[i] = tostring(args[i])
+    end
+    local msg = table.concat(args, " ")
+    print(('[ S3MAPHORE ]: %s'):format(msg))
+end
 
 local function getTracksFromDirectory(path)
     local result = {}
@@ -106,12 +110,10 @@ local function isInCombat(fightingActors)
 end
 
 ---@param playlists S3maphorePlaylist[]
----@param playlistState PlaylistState
+---@param playback Playback
 ---@return S3maphorePlaylist|nil
-local function getActivePlaylistByPriority(playlists, playlistState)
+local function getActivePlaylistByPriority(playlists, playback)
     local newPlaylist = nil
-    PlaylistRules.state = playlistState
-    Playback.state = playlistState
 
     for _, playlist in pairs(playlists) do
         if isPlaylistActive(playlist) then
@@ -120,12 +122,11 @@ local function getActivePlaylistByPriority(playlists, playlistState)
 
                 -- the one found in this iteration has a higher priority
                 or playlist.priority < newPlaylist.priority
-
-                -- the one found in this iteration has the same priority but was registered earlier
+                -- the one found in this iteration has the same priority but was registered later
                 or (playlist.priority == newPlaylist.priority and playlist.registrationOrder > newPlaylist.registrationOrder) then
                 -- Allow playing the playlist if its valid callback passes, or the valid callback is not defined.
 
-                if (playlist.isValidCallback == nil or playlist.isValidCallback(Playback)) then
+                if (playlist.isValidCallback == nil or playlist.isValidCallback(playback)) then
                     newPlaylist = playlist
                 end
             end
@@ -136,6 +137,7 @@ local function getActivePlaylistByPriority(playlists, playlistState)
 end
 
 local functions = {
+    debugLog = debugLog,
     getActivePlaylistByPriority = getActivePlaylistByPriority,
     getPlaylistFilePaths = getPlaylistFilePaths,
     getStoredTracksOrder = getStoredTracksOrder,
