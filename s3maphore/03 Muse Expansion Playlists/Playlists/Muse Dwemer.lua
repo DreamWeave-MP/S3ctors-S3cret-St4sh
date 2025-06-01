@@ -378,11 +378,13 @@ local function dwemerStaticRule(playback)
     return playback.rules.staticExact(DwemerStaticIds)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'MUSE - Dwemer Ruins',
-        priority = 599,
+        priority = PlaylistPriority.Tileset,
 
         tracks = {
             "Music/MS/cell/Dwemer/exploration1.mp3",
@@ -396,7 +398,7 @@ return {
     },
     {
         id = 'MUSE - Dwemer Enemies',
-        priority = 193,
+        priority = PlaylistPriority.BattleMod,
         randomize = true,
 
 

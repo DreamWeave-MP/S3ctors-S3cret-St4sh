@@ -76,7 +76,7 @@ return {
     },
     {
         id = 'MUSE - Tomb Enemies',
-        priority = 197,
+        priority = 190,
         randomize = true,
 
         tracks = {

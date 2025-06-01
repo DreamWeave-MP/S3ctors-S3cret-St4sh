@@ -44,11 +44,13 @@ local function hlaaluCellRule(playback)
         and playback.rules.cellNameMatch(HlaaluCellNames)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'MUSE - Hlaalu Settlement',
-        priority = 398,
+        priority = PlaylistPriority.Faction,
         randomize = true,
 
         tracks = {
@@ -63,7 +65,7 @@ return {
     },
     {
         id = 'MUSE - Hlaalu Enemies',
-        priority = 194,
+        priority = PlaylistPriority.BattleMod,
 
         tracks = {
             'Music/MS/combat/Hlaalu/combat1.mp3',

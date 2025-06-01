@@ -148,7 +148,7 @@ return {
     },
     {
         id = 'MUSE - Sixth House Enemies',
-        priority = 198,
+        priority = 190,
         randomize = true,
 
         tracks = {

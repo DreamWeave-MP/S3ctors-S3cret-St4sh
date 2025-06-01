@@ -56,10 +56,12 @@ local function shotnRegionRule(playback)
         and playback.rules.region(ShotnRegions)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 return {
     {
         id = 'Songbook of the North - Cities',
-        priority = 800,
+        priority = PlaylistPriority.City,
         randomize = true,
 
         tracks = {
@@ -74,7 +76,7 @@ return {
     },
     {
         id = 'Songbook of the North - Regions',
-        priority = 950,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {

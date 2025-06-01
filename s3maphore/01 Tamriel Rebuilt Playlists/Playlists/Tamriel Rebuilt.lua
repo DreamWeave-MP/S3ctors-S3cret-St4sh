@@ -115,11 +115,13 @@ local UpperVelothisRegions = {
     ['uld vraech region'] = true,
 }
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'Tamriel Rebuilt - Aanthirin',
-        priority = 948,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -137,7 +139,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Armun Ashlands',
-        priority = 942,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -150,8 +152,8 @@ return {
         end,
     },
     {
-        id = 'tamriel rebuilt/lan orethan',
-        priority = 947,
+        id = 'Tamriel Rebuilt - Lan Orethan',
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -166,7 +168,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Dwemer Ruins',
-        priority = 698,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
         tracks = {
             'Music/TR/interior/Dwemer ruins/Dwemer ruins.mp3',
@@ -178,7 +180,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Mournhold',
-        priority = 946,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -194,7 +196,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Imperial',
-        priority = 699,
+        priority = PlaylistPriority.CellMatch,
 
         tracks = {
             'Music/MS/cell/ImperialCity/Beacon of Cyrodiil.mp3',
@@ -206,7 +208,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Indoril Setlement',
-        priority = 798,
+        priority = PlaylistPriority.City,
 
         tracks = {
             'Music/MS/cell/MournCity/Indoril Settlement.mp3',
@@ -218,7 +220,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Port Telvannis',
-        priority = 697,
+        priority = PlaylistPriority.CellMatch,
         randomize = true,
 
         tracks = {
@@ -232,7 +234,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Telvanni Settlement',
-        priority = 799,
+        priority = PlaylistPriority.City,
         randomize = true,
 
         tracks = {
@@ -245,7 +247,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Sacred Lands',
-        priority = 941,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -261,7 +263,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Seas',
-        priority = 944,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -274,7 +276,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Sundered Scar',
-        priority = 940,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -289,7 +291,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Telvannis Regions',
-        priority = 949,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
@@ -304,7 +306,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Upper Velothis',
-        priority = 945,
+        priority = PlaylistPriority.Region,
 
         tracks = {
             'Music/MS/region/Velothis Upper/Through The Mountains.mp3',

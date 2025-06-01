@@ -473,11 +473,13 @@ local function daedricTilesetRule(playback)
         and playback.rules.staticExact(DaedricStaticIds)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'MUSE - Daedric Ruins',
-        priority = 600,
+        priority = PlaylistPriority.Tileset,
         randomize = true,
 
         tracks = {
@@ -492,7 +494,7 @@ return {
     },
     {
         id = 'MUSE - Daedric Enemies',
-        priority = 195,
+        priority = PlaylistPriority.BattleMod,
         randomize = true,
 
         tracks = {

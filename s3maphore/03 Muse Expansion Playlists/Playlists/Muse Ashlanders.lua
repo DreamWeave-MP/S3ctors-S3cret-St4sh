@@ -143,11 +143,13 @@ local function ashlanderEnemyRule(playback)
         and playback.rules.combatTargetExact(MuseAshlanderEnemyNames)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
         id = 'MUSE - Ashlander Settlement',
-        priority = 396,
+        priority = PlaylistPriority.Faction,
         randomize = true,
 
         tracks = {
@@ -162,7 +164,7 @@ return {
     },
     {
         id = 'MUSE - Ashlander Enemies',
-        priority = 199,
+        priority = PlaylistPriority.BattleMod,
 
         tracks = {
             'Music/MS/combat/Ashlander/combat1.mp3',
