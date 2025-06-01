@@ -1,11 +1,20 @@
-Music: "Semaphore - MOMW Music"
-settingsPageDescription: "Semaphore music settings."
+Music: "S3maphore - MOMW Music"
+settingsPageDescription: "S3maphore music settings."
 
 musicSettings: "Music Configuration"
 
-CombatMusicEnabled: "Play Combat Music"
-CombatMusicEnabledDescription: "If enabled, the game switches to combat music if there are actors in combat. This uses the builtin combat playlist, with tracks from music/combat."
+DebugEnabled: "Enable Debug Messages"
+DebugEnabledDescription: "Whether to show debug messages in F10/openmw.log"
 
-ExploreMusicEnabled: "Play Exploration Music"
-ExploreMusicEnabledDescription: "If enabled, the game plays exploration music when no actors are in combat. This uses the builtin explore playlist, with tracks from music/explore."
+MusicEnabled: "Enable Music"
+MusicEnabledDescription: "Whether or not S3maphore will play any music.\nUseful when overriding its builtin behavior to allow something else to control music playback."
 
+PlaylistSelection: "Enable/Disable Playlists"
+
+CurrentPlaylistSelection: "Current Playlist"
+CurrentPlaylistSelectionDescription: "Playlist currently selected in the scroller.\nPlaylists are sorted alphabetically.\nResetting this group will cause all playlists to revert to their default active states."
+
+PlaylistActivity: ""
+
+PlaylistActiveState: "Playlist State"
+PlaylistActiveStateDescription: "Whether or not the playlist will be selected for playback at all.\n\nWARNING: This does not mean the playlist will be played immediately, it simply means it *can* be played under the conditions it defines.\n\nNOTE: If this option is disabled, it means you have not loaded any tracks this playlist defines and it would never play anyway."
