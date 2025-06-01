@@ -83,6 +83,8 @@ local DwemerStaticIds = {
     ['in_dwrv_wall_nchuleftingth1'] = true,
 }
 
+local CaveStaticIds = require 'doc.caveStaticIds'
+
 ---@type CellMatchPatterns
 local ImperialPatterns = {
     disallowed = {
@@ -93,6 +95,8 @@ local ImperialPatterns = {
     allowed = {
         'firewatch',
         'helnim',
+        'old ebonheart',
+        'teyn',
     },
 }
 
@@ -109,7 +113,17 @@ local IndorilPatterns = {
         'gorne',
         'roa dyr',
         'meralag',
-
+        'vhul',
+        'dondril',
+        'aimrah',
+        'felms ithul',
+        'saveri',
+        'eravan',
+        'selyn',
+        'velonith',
+        'rilsoan',
+        'darvonis',
+        'othrenis',
     },
     disallowed = {
         'sewer',
@@ -129,8 +143,19 @@ local TelvanniSettlementMatches = {
         'tel muthada',
         'tel oren',
         'tel ouada',
-        'telvanni library',
         'verulas pass',
+    },
+    disallowed = {
+        'dungeon',
+        'sewer',
+    }
+}
+
+---@type CellMatchPatterns
+local TempleSettlementMatches = {
+    allowed = {
+        'necrom',
+        'almas thirr',
     },
     disallowed = {
         'dungeon',
@@ -148,23 +173,16 @@ local PortTelvannisPatterns = {
 }
 
 ---@type IDPresenceMap
-local AanthirinRegions = {
-    ['aanthirin region'] = true,
-    ['thirr valley region'] = true,
-    ['othreleth woods region'] = true,
-}
-
----@type IDPresenceMap
-local LanOrethanRegions = {
+local OrethanRegions = {
+    ['alt orethan region'] = true,
     ['lan orethan region'] = true,
-    ['nedothril region'] = true,
 }
 
 ---@type IDPresenceMap
 local MournholdRegions = {
-    ['helnim fields region'] = true,
     ['mephalan vales region'] = true,
-    ['molag ruhn region'] = true,
+    ['sundered scar region'] = true,
+    ['nedothril region'] = true,
 }
 
 ---@type IDPresenceMap
@@ -175,15 +193,24 @@ local SeaRegions = {
 
 ---@type IDPresenceMap
 local TelvannisRegions = {
+    ['aranyon pass region'] = true,
+    ['boethiah\'s spine region'] = true,
+    ['dagon urul region'] = true,
     ['molagreahd region'] = true,
     ['sunad mora region'] = true,
-    ['boethiah\'s spine region'] = true,
-    ['aranyon pass region'] = true,
     ['telvanni isles region'] = true,
 }
 
 ---@type IDPresenceMap
+local ThirrRegions = {
+    ['roth roryn region'] = true,
+    ['thirr valley region'] = true,
+    ['othreleth woods region'] = true,
+}
+
+---@type IDPresenceMap
 local UpperVelothisRegions = {
+    ['clambering moor region'] = true,
     ['velothi mountains region'] = true,
     ['uld vraech region'] = true,
 }
@@ -193,7 +220,32 @@ local TContentFiles = {
     ['tr_mainland.esm'] = true,
 }
 
+---@type CellMatchPatterns
+local TombCellMatches = {
+    allowed = {
+        'ancestral tomb',
+        'barrow',
+        'burial',
+    },
+
+    disallowed = {},
+}
+
 local PlaylistPriority = require 'doc.playlistPriority'
+
+---@type ValidPlaylistCallback
+local function caveTRRule(playback)
+    return not playback.state.cellIsExterior
+        and playback.rules.staticContentFile(TContentFiles)
+        and playback.rules.staticExact(CaveStaticIds)
+end
+
+---@type ValidPlaylistCallback
+local function tombTRRule(playback)
+    return not playback.state.cellIsExterior
+        and playback.rules.staticContentFile(TContentFiles)
+        and playback.rules.cellNameMatch(TombCellMatches)
+end
 
 ---@type S3maphorePlaylist[]
 return {
@@ -203,6 +255,8 @@ return {
         randomize = true,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/region/Aanthirin/Aanthirin 1.mp3',
             'Music/MS/region/Aanthirin/Aanthirin 2.mp3',
             'Music/MS/region/Aanthirin/Thirr.mp3',
@@ -211,9 +265,25 @@ return {
         },
 
         isValidCallback = function(playback)
-            return playback.rules.region(AanthirinRegions)
+            return playback.state.self.cell.region == 'aanthirin region'
         end,
+    },
+    {
+        id = 'Tamriel Rebuilt - Thirr',
+        priority = PlaylistPriority.Region,
+        randomize = true,
 
+        tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
+            'Music/MS/region/Aanthirin/Thirr.mp3',
+            'Music/MS/region/Aanthirin/Thirr 1.mp3',
+            'Music/MS/region/Aanthirin/Thirr 2.mp3'
+        },
+
+        isValidCallback = function(playback)
+            return playback.rules.region(ThirrRegions)
+        end,
     },
     {
         id = 'Tamriel Rebuilt - Armun Ashlands',
@@ -221,8 +291,10 @@ return {
         randomize = true,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/region/Armun Ashlands Region/Ashlands.mp3',
-            'Music/MS/region/Grey Meadows Region/Grey Meadows 1.mp3',
+
         },
 
         isValidCallback = function(playback)
@@ -230,18 +302,36 @@ return {
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Lan Orethan',
+        id = 'Tamriel Rebuilt - Grey Meadows',
+        priority = 942,
+        randomize = true,
+
+        tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
+            'Music/MS/region/Grey Meadows Region/Grey Meadows 1.mp3',
+            'Music/MS/region/Grey Meadows Region/Grey Meadows 2.mp3',
+        },
+        isValidCallback = function(playback)
+            return playback.state.self.cell.region == 'grey meadows region'
+        end,
+    },
+    {
+        id = 'Tamriel Rebuilt - Orethan',
         priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
+            'Music/MS/region/Alt Orethan Region/Mournhold fields.mp3',
             'Music/MS/region/Lan Orethan/Lan Orethan.mp3',
             'Music/MS/region/Lan Orethan/Mournhold explore.mp3',
             'Music/MS/region/Lan Orethan/Road To Mournhold.mp3',
         },
 
         isValidCallback = function(playback)
-            return playback.rules.region(LanOrethanRegions)
+            return playback.rules.region(OrethanRegions)
         end,
     },
     {
@@ -249,6 +339,7 @@ return {
         priority = PlaylistPriority.Tileset - 1,
         randomize = true,
         tracks = {
+            'music/MS/general/TR Dungeon/Darkness.mp3',
             'Music/MS/interior/tr dwemer/Dwemer ruins.mp3',
             'Music/MS/interior/tr dwemer/Resonance.mp3',
         },
@@ -259,15 +350,42 @@ return {
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Mournhold',
+        id = 'Tamriel Rebuilt - Caves',
+        priority = PlaylistPriority.Tileset,
+        randomize = true,
+
+        tracks = {
+            'music/MS/general/TR Dungeon/Darkness.mp3',
+            'Music/MS/interior/TR cave/Cave 1.mp3',
+            'Music/MS/interior/TR cave/Cave 2.mp3',
+        },
+
+        isValidCallback = caveTRRule,
+    },
+    {
+        id = 'Tamriel Rebuilt - Tombs',
+        priority = PlaylistPriority.Tileset,
+        randomize = true,
+
+        tracks = {
+            'music/MS/general/TR Dungeon/Darkness.mp3',
+            'Music/MS/interior/TR tomb/Tombs.mp3',
+        },
+
+        isValidCallback = tombTRRule,
+    },
+    {
+        id = 'Tamriel Rebuilt - Indoril Regions',
         priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/region/Mournhold hills/Mournhold Athmospheres 1.mp3',
             'Music/MS/region/Mournhold hills/Mournhold Athmospheres 2.mp3',
-            'Music/MS/region/Mournhold hills/Mournhold Athmospheres 3.mp3',
-            'Music/MS/region/Mournhold hills/Mournhold Athmospheres 4.mp3',
+            'Music/MS/region/Mournhold hills/Mournhold explore.mp3',
+            'Music/MS/region/Mournhold hills/Mournhold fields.mp3',
         },
 
         isValidCallback = function(playback)
@@ -279,6 +397,8 @@ return {
         priority = PlaylistPriority.CellMatch,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/cell/ImperialCity/Beacon of Cyrodiil.mp3',
         },
 
@@ -291,6 +411,8 @@ return {
         priority = PlaylistPriority.City,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/cell/MournCity/Indoril Settlement.mp3',
         },
 
@@ -304,7 +426,8 @@ return {
         randomize = true,
 
         tracks = {
-            'Music/MS/region/Telvannis/Tellvannis 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
             'Music/MS/region/Telvanni Isles/Port Telvannis.mp3',
         },
 
@@ -318,11 +441,32 @@ return {
         randomize = true,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
             'Music/MS/cell/TelCity/Telvanni settlement.mp3',
+
         },
 
         isValidCallback = function(playback)
             return playback.rules.cellNameMatch(TelvanniSettlementMatches)
+        end,
+    },
+    {
+        id = 'Tamriel Rebuilt - Temple Settlement',
+        priority = PlaylistPriority.CellMatch,
+        randomize = true,
+
+        tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
+            'Music/MS/region/Sacred Lands Region/sacred lands 1.mp3',
+            'Music/MS/region/Sacred Lands Region/sacred lands 2.mp3',
+            'Music/MS/region/Sacred Lands Region/sacred lands 3.mp3',
+            'Music/MS/region/Sacred Lands Region/sacred lands 4.mp3',
+        },
+
+        isValidCallback = function(playback)
+            return playback.rules.cellNameMatch(TempleSettlementMatches)
         end,
     },
     {
@@ -331,6 +475,8 @@ return {
         randomize = true,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/region/Sacred Lands Region/sacred lands 1.mp3',
             'Music/MS/region/Sacred Lands Region/sacred lands 2.mp3',
             'Music/MS/region/Sacred Lands Region/sacred lands 3.mp3',
@@ -355,26 +501,13 @@ return {
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Sundered Scar',
-        priority = PlaylistPriority.Region,
-        randomize = true,
-
-        tracks = {
-            'Music/MS/region/Sundered Scar Region/Mournhold Athmospheres 1.mp3',
-            'Music/MS/region/Sundered Scar Region/Mournhold Athmospheres 2.mp3',
-            'Music/MS/region/Sundered Scar Region/Mournhold fields.mp3',
-        },
-
-        isValidCallback = function(playback)
-            return playback.state.self.cell.region == 'sundered scar region'
-        end,
-    },
-    {
         id = 'Tamriel Rebuilt - Telvannis Regions',
         priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/region/Telvannis/Tellvannis 1.mp3',
             'Music/MS/region/Telvannis/Tellvannis 2.mp3',
             'Music/MS/region/Telvannis/Telvannis fields.mp3',
@@ -389,6 +522,8 @@ return {
         priority = PlaylistPriority.Region,
 
         tracks = {
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
+            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
             'Music/MS/region/Velothis Upper/Through The Mountains.mp3',
         },
 
