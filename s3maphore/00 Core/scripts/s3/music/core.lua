@@ -31,7 +31,7 @@ activePlaylistSettings:subscribe(
             if not targetPlaylist then return end
 
             if targetPlaylist.active ~= playlistAssignedState then
-                targetPlaylist.active = playlistAssignedState
+                I.S3maphore.setPlaylistActive(playlistName, playlistAssignedState)
             end
         end
     )
@@ -248,7 +248,13 @@ function MusicManager.getCurrentPlaylist()
 end
 
 function MusicManager.getRegisteredPlaylists()
-    return util.makeReadOnly(registeredPlaylists)
+    local readOnlyPlaylists = {}
+
+    for k, v in pairs(registeredPlaylists) do
+        readOnlyPlaylists[k] = util.makeStrictReadOnly(v)
+    end
+
+    return util.makeReadOnly(readOnlyPlaylists)
 end
 
 function MusicManager.listPlaylistFiles()
@@ -598,7 +604,7 @@ return {
         end,
 
         S3maphoreStaticCollectionUpdated = function(staticList)
-            StaticList = util.makeReadOnly(staticList)
+            StaticList = staticList
         end,
     }
 }
