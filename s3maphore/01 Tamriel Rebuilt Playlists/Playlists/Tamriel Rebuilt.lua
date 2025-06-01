@@ -1,13 +1,86 @@
----@type CellMatchPatterns
-local DwemerPatterns = {
-    allowed = {
-        'rthzuncheft',
-        'rthungzark',
-    },
-    disallowed = {
-        'sewer',
-        'dungeon',
-    },
+---@type IDPresenceMap
+local DwemerStaticIds = {
+    ['in_dwe_archway00_end'] = true,
+    ['in_dwe_archway00_exp'] = true,
+    ['in_dwe_corr2_00_exp'] = true,
+    ['in_dwe_corr4_exp'] = true,
+    ['in_dwe_end00_exp'] = true,
+    ['in_dwe_hall00_exp'] = true,
+    ['in_dwe_hall_enter_00'] = true,
+    ['in_dwe_hall_wall00_bk'] = true,
+    ['in_dwe_hall_wall00_exp'] = true,
+    ['in_dwe_pillar00_exp'] = true,
+    ['in_dwe_pill_bk00'] = true,
+    ['in_dwe_pill_bk01'] = true,
+    ['in_dwe_pill_bk02'] = true,
+    ['in_dwe_pill_bk03'] = true,
+    ['in_dwe_pipe00_exp'] = true,
+    ['in_dwe_ramp00_exp'] = true,
+    ['in_dwe_rod00_exp'] = true,
+    ['in_dwe_rod01_exp'] = true,
+    ['in_dwe_rubble00'] = true,
+    ['in_dwe_rubble01'] = true,
+    ['in_dwe_rubble02'] = true,
+    ['in_dwe_slate00'] = true,
+    ['in_dwe_slate01'] = true,
+    ['in_dwe_slate02'] = true,
+    ['in_dwe_slate03'] = true,
+    ['in_dwe_slate04'] = true,
+    ['in_dwe_slate05'] = true,
+    ['in_dwe_slate06'] = true,
+    ['in_dwe_slate07'] = true,
+    ['in_dwe_slate08'] = true,
+    ['in_dwe_slate09'] = true,
+    ['in_dwe_slate10'] = true,
+    ['in_dwe_slate11'] = true,
+    ['in_dwe_turbine00_exp'] = true,
+    ['in_dwe_utilcorr00_exp'] = true,
+    ['in_dwe_utilcorr01_exp'] = true,
+    ['in_dwe_weathmach00_exp'] = true,
+    ['in_dwr_tower_int00'] = true,
+    ['in_dwr_tower_int000'] = true,
+    ['in_dwr_tower_int001'] = true,
+    ['in_dwrv_corr1_00'] = true,
+    ['in_dwrv_corr2_00'] = true,
+    ['in_dwrv_corr2_01'] = true,
+    ['in_dwrv_corr2_02'] = true,
+    ['in_dwrv_corr2_03'] = true,
+    ['in_dwrv_corr2_04'] = true,
+    ['in_dwrv_corr3_00'] = true,
+    ['in_dwrv_corr3_01'] = true,
+    ['in_dwrv_corr3_02'] = true,
+    ['in_dwrv_corr4_00'] = true,
+    ['in_dwrv_corr4_01'] = true,
+    ['in_dwrv_corr4_02'] = true,
+    ['in_dwrv_corr4_03'] = true,
+    ['in_dwrv_corr4_04'] = true,
+    ['in_dwrv_corr4_05'] = true,
+    ['in_dwrv_doorjam00'] = true,
+    ['in_dwrv_door_static00'] = true,
+    ['in_dwrv_enter00_dn'] = true,
+    ['in_dwrv_gear00'] = true,
+    ['in_dwrv_gear10'] = true,
+    ['in_dwrv_gear20'] = true,
+    ['in_dwrv_hall2_00'] = true,
+    ['in_dwrv_hall3_00'] = true,
+    ['in_dwrv_hall4_00'] = true,
+    ['in_dwrv_hall4_01'] = true,
+    ['in_dwrv_hall4_02'] = true,
+    ['in_dwrv_hall4_03'] = true,
+    ['in_dwrv_lift00'] = true,
+    ['in_dwrv_obsrv00'] = true,
+    ['in_dwrv_oilslick00'] = true,
+    ['in_dwrv_scope00'] = true,
+    ['in_dwrv_scope10'] = true,
+    ['in_dwrv_scope20'] = true,
+    ['in_dwrv_scope30'] = true,
+    ['in_dwrv_scope40'] = true,
+    ['in_dwrv_scope50'] = true,
+    ['in_dwrv_shaft00'] = true,
+    ['in_dwrv_shaft10'] = true,
+    ['in_dwrv_wall00'] = true,
+    ['in_dwrv_wall10'] = true,
+    ['in_dwrv_wall_nchuleftingth1'] = true,
 }
 
 ---@type CellMatchPatterns
@@ -115,6 +188,11 @@ local UpperVelothisRegions = {
     ['uld vraech region'] = true,
 }
 
+---@type IDPresenceMap
+local TContentFiles = {
+    ['tr_mainland.esm'] = true,
+}
+
 local PlaylistPriority = require 'doc.playlistPriority'
 
 ---@type S3maphorePlaylist[]
@@ -168,14 +246,16 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Dwemer Ruins',
-        priority = PlaylistPriority.CellMatch - 1,
+        priority = PlaylistPriority.Tileset - 1,
         randomize = true,
         tracks = {
             'Music/TR/interior/Dwemer ruins/Dwemer ruins.mp3',
             'Music/TR/interior/Dwemer ruins/Resonance.mp3',
         },
         isValidCallback = function(playback)
-            return playback.rules.cellNameMatch(DwemerPatterns)
+            return not playback.state.cellIsExterior
+                and playback.rules.staticContentFile(TContentFiles)
+                and playback.rules.staticExact(DwemerStaticIds)
         end,
     },
     {
