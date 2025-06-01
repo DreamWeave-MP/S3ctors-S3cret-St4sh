@@ -275,4 +275,11 @@ function PlaylistRules.region(regionNames)
         and regionNames[currentRegion] or false
 end
 
-return PlaylistRules
+---@param playlistState PlaylistState A long-living reference to the playlist state table. To aggressively minimize new allocations, this table is created once when the core initializes and is continually updated througout the lifetime of the script.
+return function(playlistState)
+    assert(playlistState)
+
+    PlaylistRules.state = playlistState
+
+    return PlaylistRules
+end
