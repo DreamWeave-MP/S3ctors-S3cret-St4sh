@@ -593,7 +593,7 @@ return {
 
             local playlist, track = MusicManager.getCurrentTrackInfo()
 
-            if playlist and track then
+            if playlist and track and musicSettings:get('BannerEnabled') then
                 MusicBanner.layout.props.visible = true
                 MusicBanner.layout.content[1].props.text = ('%s\n\n%s'):format(playlist, track)
             else
