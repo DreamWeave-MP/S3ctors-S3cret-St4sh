@@ -249,8 +249,8 @@ return {
         priority = PlaylistPriority.Tileset - 1,
         randomize = true,
         tracks = {
-            'Music/TR/interior/Dwemer ruins/Dwemer ruins.mp3',
-            'Music/TR/interior/Dwemer ruins/Resonance.mp3',
+            'Music/MS/interior/tr dwemer/Dwemer ruins.mp3',
+            'Music/MS/interior/tr dwemer/Resonance.mp3',
         },
         isValidCallback = function(playback)
             return not playback.state.cellIsExterior
