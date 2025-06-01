@@ -1,4 +1,4 @@
-# Mod Tag Mod
+# Tagger
 
 ## Version 0.1
 
