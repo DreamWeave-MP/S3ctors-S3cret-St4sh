@@ -168,7 +168,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Dwemer Ruins',
-        priority = PlaylistPriority.CellMatch,
+        priority = PlaylistPriority.CellMatch - 1,
         randomize = true,
         tracks = {
             'Music/TR/interior/Dwemer ruins/Dwemer ruins.mp3',
