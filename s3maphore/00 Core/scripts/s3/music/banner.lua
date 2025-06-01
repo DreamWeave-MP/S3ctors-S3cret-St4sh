@@ -27,8 +27,7 @@ local SongBanner = ui.create {
     props = {
         relativePosition = util.vector2(0.5, 0),
         anchor = util.vector2(0.5, 0),
-        -- visible = false,
-        visible = true,
+        visible = false,
     },
     content = ui.content {
         {
