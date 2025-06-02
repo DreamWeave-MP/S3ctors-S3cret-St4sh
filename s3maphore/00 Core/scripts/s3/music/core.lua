@@ -219,6 +219,8 @@ function MusicManager.getCurrentTrack()
     return currentTrack
 end
 
+--- Returns l10n-localized playlist and track names for the current playlist. If a localization for the track does not exist, return nil
+---@return string? playlistName, string? trackName
 function MusicManager.getCurrentTrackInfo()
     if not currentPlaylist or not currentTrack then return end
 
@@ -241,12 +243,15 @@ function MusicManager.getCurrentTrackInfo()
     end
 end
 
+--- Returns a read-only copy of the current playlist, or nil
+---@return userdata? readOnlyPlaylist
 function MusicManager.getCurrentPlaylist()
     if not currentPlaylist then return end
 
     return util.makeReadOnly(currentPlaylist)
 end
 
+--- Returns a read-only list of read-only playlist structs for introspection. To modify playlists in any way, use other functions.
 function MusicManager.getRegisteredPlaylists()
     local readOnlyPlaylists = {}
 
@@ -257,6 +262,8 @@ function MusicManager.getRegisteredPlaylists()
     return util.makeReadOnly(readOnlyPlaylists)
 end
 
+--- Returns a read-only array of all recognized playlist files (files with the .lua extension under the VFS directory, Playlists/ )
+---@return userdata playlistFiles
 function MusicManager.listPlaylistFiles()
     return util.makeReadOnly(PlaylistFileList)
 end
@@ -280,6 +287,9 @@ function MusicManager.overrideMusicEnabled(enabled)
     musicSettings:set("MusicEnabled", enabled)
 end
 
+--- Returns a string listing all the currently registered playlists, mapped to their (descending) priority.
+--- Mostly intended to be used via the `luap` console.
+---@return string
 function MusicManager.listPlaylistsByPriority()
     local sortedPlaylists = {}
     for _, playlist in pairs(registeredPlaylists) do
@@ -490,7 +500,7 @@ MusicManager.registerPlaylist {
     randomize = true,
 
     isValidCallback = function(playback)
-        return (activePlaylistSettings:get("BattleActive") or true) and playback.state.isInCombat
+        return activePlaylistSettings:get("BattleActive") and playback.state.isInCombat
     end,
 }
 
@@ -500,7 +510,7 @@ MusicManager.registerPlaylist {
     randomize = true,
 
     isValidCallback = function(playback)
-        return (activePlaylistSettings:get("ExploreActive") or true) and not playback.state.isInCombat
+        return activePlaylistSettings:get("ExploreActive") and not playback.state.isInCombat
     end,
 }
 
