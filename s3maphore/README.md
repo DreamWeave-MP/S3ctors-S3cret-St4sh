@@ -260,6 +260,10 @@ If you do run into performance bottlenecks with your playlists, please let me kn
 
 The `Special` playlist is, well, a special case - it comes with no tracks, and is the ONLY playlist which is allowed to do so intentionally. Playing a special track using either the below events or interfaces will play the specified track, once, and then fall back to whatever playback behavior is contextually appropriate. This can be useful for playing things like boss music, or the levelup sting.
 
+###### Playlist Localization
+
+*All* S3maphore playlists natively support being localized, thanks to OpenMW's use of the l10n system. To provide localizations for a playlist, make a folder adjacent to your playlists folder, called `l10n`. Inside of that, make another folder called, `S3maphoreTracks${PLAYLIST_ID}`. For example, the builtin music playlists are in `S3maphoreTracksExplore` and `S3maphoreTracksBattle`. You'll see localized versions of track and playlist names onscreen as they change, if you have the `BannerEnabled` setting enabled.
+
 ##### Events
 
 S3maphore includes a selection of `Player` events which indicate the changing of tracks and responds to some to modify its behavior.
