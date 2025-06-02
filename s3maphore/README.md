@@ -1,7 +1,12 @@
 # S3maphore
 
-<div style="text-align: center;">
-  <h2>Brought to You by the Love and Passion of Modding-OpenMW.com</h2>
+<div align="center">
+
+  <figure>
+    <img src="../img/S3maphoreBanner.png" alt="semaphore icon" width="512" height="608" />
+    <figcaption><h2>Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
+  </figure>
+
   <br>
   <br>
 </div>
@@ -369,5 +374,11 @@ All code was written by Dave Corley under the GPL3 license. Please enjoy my mod,
 I pour my entire heart, soul, and talend into this community. If you appreciate my work, please, [please consider supporting me on Ko-Fi.](https://ko-fi.com/magicaldave)
 
 I would do this full-time if I could only afford to.
+
+Thanks for listening <3
+
+<p align="center">
+  <img src="../img/S3maphoreIcon.png" alt="semaphore icon" />
+</p>
 
 </div>
