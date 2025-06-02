@@ -12,13 +12,10 @@ end
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Cavern of the Incarnate',
+        -- 'MUSE - Cavern of the Incarnate',
+        id = 'music/ms/cell/incarnate',
         priority = 50,
         noInterrupt = true,
-
-        tracks = {
-            'Music/MS/cell/Incarnate/incarnate.mp3',
-        },
 
         isValidCallback = incarnateCellRule,
     },
