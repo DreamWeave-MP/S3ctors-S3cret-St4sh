@@ -251,6 +251,10 @@ Use S3maphore's open ended nature to your advantage, but *please* keep in mind t
 
 If you do run into performance bottlenecks with your playlists, please let me know and I will do everything I can to help make your playlists functional. Later iterations of S3maphore are likely to rely on my helper library, [H3lp Yours3lf](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/h3lp_yours3lf), for additional optimizations!
 
+###### The Special Playlist
+
+The `Special` playlist is, well, a special case - it comes with no tracks, and is the ONLY playlist which is allowed to do so intentionally. Playing a special track using either the below events or interfaces will play the specified track, once, and then fall back to whatever playback behavior is contextually appropriate. This can be useful for playing things like boss music, or the levelup sting.
+
 ##### Events
 
 S3maphore includes a selection of `Player` events which indicate the changing of tracks and responds to some to modify its behavior.
