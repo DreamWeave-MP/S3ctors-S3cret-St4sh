@@ -114,7 +114,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 return {
     {
         -- 'Inns and Taverns - Vanilla',
-        id = 'music/ms/cell/tavern',
+        id = 'ms/cell/tavern',
         -- Uses faction priority to override TR playlists
         priority = PlaylistPriority.Faction - 1,
         randomize = true,
