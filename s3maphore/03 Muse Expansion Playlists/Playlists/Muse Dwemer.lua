@@ -375,7 +375,8 @@ local DwemerStaticIds = {
 
 ---@type ValidPlaylistCallback
 local function dwemerStaticRule(playback)
-    return playback.rules.staticExact(DwemerStaticIds)
+    return not playback.state.isInCombat
+        and playback.rules.staticExact(DwemerStaticIds)
 end
 
 local PlaylistPriority = require 'doc.playlistPriority'
@@ -383,31 +384,18 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Dwemer Ruins',
+        -- 'MUSE - Dwemer Ruins',
+        id = 'music/ms/cell/dwemer',
         priority = PlaylistPriority.Tileset,
-
-        tracks = {
-            "Music/MS/cell/Dwemer/exploration1.mp3",
-            "Music/MS/cell/Dwemer/exploration2.mp3",
-            "Music/MS/cell/Dwemer/exploration3.mp3",
-            "Music/MS/cell/Dwemer/exploration4.mp3",
-            "Music/MS/cell/Dwemer/exploration5.mp3",
-        },
+        randomize = true,
 
         isValidCallback = dwemerStaticRule,
     },
     {
-        id = 'MUSE - Dwemer Enemies',
+        -- 'MUSE - Dwemer Enemies',
+        id = 'music/ms/combat/dwemer',
         priority = PlaylistPriority.BattleMod,
         randomize = true,
-
-
-        tracks = {
-            "Music/MS/combat/Dwemer/combat1.mp3",
-            "Music/MS/combat/Dwemer/combat2.mp3",
-            "Music/MS/combat/Dwemer/combat3.mp3",
-            "Music/MS/combat/Dwemer/combat4.mp3",
-        },
 
         isValidCallback = dwarvenEnemyRule,
     },
