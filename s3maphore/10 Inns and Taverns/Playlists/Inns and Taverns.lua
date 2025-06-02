@@ -113,44 +113,23 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'Inns and Taverns - Vanilla',
-        priority = PlaylistPriority.CellExact,
+        -- 'Inns and Taverns - Vanilla',
+        id = 'music/ms/cell/tavern',
+        -- Uses faction priority to override TR playlists
+        priority = PlaylistPriority.Faction - 1,
         randomize = true,
-
-        tracks = {
-            'Music/MS/cell/tavern/SE2020Tavern01.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern02.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern03.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern04.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern05.mp3',
-        },
 
         isValidCallback = function(playback)
             return not playback.state.isInCombat
                 and not playback.state.cellIsExterior
                 and (
-                    playback.rules.cellNameExact(TavernNamesVanilla) or playback.rules.cellNameMatch(VanillaTavernMatches)
-                )
-        end,
-    },
-    {
-        id = 'Inns and Taverns - Tamriel Rebuilt',
-        priority = PlaylistPriority.CellExact,
-        randomize = true,
-
-        tracks = {
-            'Music/MS/cell/tavern/SE2020Tavern01.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern02.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern03.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern04.mp3',
-            'Music/MS/cell/tavern/SE2020Tavern05.mp3',
-        },
-
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and not playback.state.cellIsExterior
-                and (
-                    playback.rules.cellNameExact(TRTavernCells) or playback.rules.cellNameMatch(TRTavernMatches)
+                    (
+                        playback.rules.cellNameExact(TavernNamesVanilla) or playback.rules.cellNameExact(TRTavernCells)
+                    )
+                    or
+                    (
+                        playback.rules.cellNameMatch(TRTavernMatches) or playback.rules.cellNameMatch(VanillaTavernMatches)
+                    )
                 )
         end,
     }
