@@ -58,33 +58,23 @@ local function tombCellRule(playback)
     return playback.rules.cellNameMatch(TombCellMatches)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Tomb Cells',
-        priority = 700,
-
-        tracks = {
-            'Music/MS/cell/Tomb/exploration1.mp3',
-            'Music/MS/cell/Tomb/exploration2.mp3',
-            'Music/MS/cell/Tomb/exploration3.mp3',
-            'Music/MS/cell/Tomb/exploration4.mp3',
-            'Music/MS/cell/Tomb/exploration5.mp3',
-        },
+        -- 'MUSE - Tomb Cells',
+        id = 'music/ms/cell/tomb',
+        priority = PlaylistPriority.CellMatch,
+        randomize = true,
 
         isValidCallback = tombCellRule,
     },
     {
-        id = 'MUSE - Tomb Enemies',
-        priority = 190,
+        -- 'MUSE - Tomb Enemies',
+        id = 'music/ms/combat/tomb',
+        priority = PlaylistPriority.BattleMod,
         randomize = true,
-
-        tracks = {
-            "Music/MS/combat/Tomb/combat1.mp3",
-            "Music/MS/combat/Tomb/combat2.mp3",
-            "Music/MS/combat/Tomb/combat3.mp3",
-            "Music/MS/combat/Tomb/combat4.mp3",
-        },
 
         isValidCallback = tombEnemyRule,
     },

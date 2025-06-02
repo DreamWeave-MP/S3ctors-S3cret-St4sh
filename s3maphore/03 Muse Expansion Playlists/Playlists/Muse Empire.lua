@@ -52,11 +52,14 @@ local EmpireCellMatches = {
         'wolverine hall',
         'raven rock',
     },
+
     disallowed = {
         'mage\'s guild',
         'fighter\'s guild',
         'guild of mages',
         'guild of fighters',
+        'sewers',
+        'old ebonheart',
     },
 }
 
@@ -70,30 +73,18 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Empire Settlement',
+        -- 'MUSE - Empire Settlement',
+        id = 'ms/cell/empire',
         priority = PlaylistPriority.Faction,
         randomize = true,
-
-        tracks = {
-            "music/ms/cell/empire/exploration1.mp3",
-            "music/ms/cell/empire/exploration2.mp3",
-            "music/ms/cell/empire/exploration3.mp3",
-            "music/ms/cell/empire/exploration4.mp3",
-            "music/ms/cell/empire/exploration5.mp3",
-        },
 
         isValidCallback = empireCellRule
     },
     {
-        id = 'MUSE - Empire Enemies',
+        -- 'MUSE - Empire Enemies',
+        id = 'ms/combat/empire',
         priority = PlaylistPriority.BattleMod,
         randomize = true,
-
-        tracks = {
-            "Music/MS/combat/Empire/combat1.mp3",
-            "Music/MS/combat/Empire/combat2.mp3",
-            "Music/MS/combat/Empire/combat3.mp3",
-        },
 
         isValidCallback = empireEnemyRule
     },

@@ -478,31 +478,18 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Daedric Ruins',
+        -- 'MUSE - Daedric Ruins',
+        id = 'music/ms/cell/daedric',
         priority = PlaylistPriority.Tileset,
         randomize = true,
-
-        tracks = {
-            'Music/MS/cell/Daedric/exploration1.mp3',
-            'Music/MS/cell/Daedric/exploration2.mp3',
-            'Music/MS/cell/Daedric/exploration3.mp3',
-            'Music/MS/cell/Daedric/exploration4.mp3',
-            'Music/MS/cell/Daedric/exploration5.mp3',
-        },
 
         isValidCallback = daedricTilesetRule,
     },
     {
-        id = 'MUSE - Daedric Enemies',
+        -- 'MUSE - Daedric Enemies',
+        id = 'music/ms/combat/daedric',
         priority = PlaylistPriority.BattleMod,
         randomize = true,
-
-        tracks = {
-            "Music/MS/combat/Daedric/combat1.mp3",
-            "Music/MS/combat/Daedric/combat2.mp3",
-            "Music/MS/combat/Daedric/combat3.mp3",
-            "Music/MS/combat/Daedric/combat4.mp3",
-        },
 
         isValidCallback = daedricEnemyRule,
     }

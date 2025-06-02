@@ -24,9 +24,13 @@ local RedoranCellNames = {
         'ald velothi',
         'khuul',
         'indarys manor',
+        'gnisis',
     },
 
-    disallowed = {},
+    disallowed = {
+        'sewers',
+        'eggmine',
+    },
 }
 
 ---@type ValidPlaylistCallback
@@ -35,33 +39,23 @@ local function redoranCellRule(playback)
         and playback.rules.cellNameMatch(RedoranCellNames)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Redoran Settlement',
-        priority = 400,
+        -- 'MUSE - Redoran Settlement',
+        id = 'Music/MS/cell/Redoran',
+        priority = PlaylistPriority.Faction,
         randomize = true,
-
-        tracks = {
-            'Music/MS/cell/Redoran/exploration1.mp3',
-            'Music/MS/cell/Redoran/exploration2.mp3',
-            'Music/MS/cell/Redoran/exploration3.mp3',
-            'Music/MS/cell/Redoran/exploration4.mp3',
-            'Music/MS/cell/Redoran/exploration5.mp3',
-        },
 
         isValidCallback = redoranCellRule,
 
     },
     {
-        id = 'MUSE - Redoran Enemies',
-        priority = 190,
-
-        tracks = {
-            'Music/MS/combat/Redoran/combat1.mp3',
-            'Music/MS/combat/Redoran/combat2.mp3',
-            'Music/MS/combat/Redoran/combat3.mp3',
-        },
+        -- 'MUSE - Redoran Enemies',
+        id = 'Music/MS/combat/Redoran',
+        priority = PlaylistPriority.BattleMod,
 
         isValidCallback = redoranEnemyRule,
     }

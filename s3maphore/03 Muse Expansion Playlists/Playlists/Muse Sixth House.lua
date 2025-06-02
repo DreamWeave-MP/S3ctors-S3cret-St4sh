@@ -50,10 +50,28 @@ local SixthHouseEnemies = {
     ['dagoth uthol'] = true,
 }
 
+---@type IDPresenceMap
+local GenericDagoth = {
+    'dagoth',
+}
+
+---@type IDPresenceMap
+local DagothUr = {
+    ['dagoth ur'] = true,
+}
+
 ---@type ValidPlaylistCallback
 local function sixthHouseEnemyRule(playback)
     return playback.state.isInCombat
-        and playback.rules.combatTargetExact(SixthHouseEnemies)
+        and (
+            playback.rules.combatTargetExact(SixthHouseEnemies) or playback.rules.cellNameMatch(GenericDagoth)
+        )
+end
+
+---@type ValidPlaylistCallback
+local function theManHimselfRule(playback)
+    return playback.state.isInCombat
+        and playback.rules.combatTargetExact(DagothUr)
 end
 
 ---@type IDPresenceMap
@@ -129,34 +147,32 @@ local function sixthHouseCellRule(playback)
         and playback.rules.cellNameExact(SixthHouseCells)
 end
 
+local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Sixth House Dungeons',
-        priority = 400,
+        -- 'MUSE - Sixth House Dungeons',
+        id = 'ms/cell/6thhouse',
+        priority = PlaylistPriority.Faction,
         randomize = true,
-
-        tracks = {
-            'Music/MS/cell/6thHouse/exploration1.mp3',
-            'Music/MS/cell/6thHouse/exploration2.mp3',
-            'Music/MS/cell/6thHouse/exploration3.mp3',
-            'Music/MS/cell/6thHouse/exploration4.mp3',
-            'Music/MS/cell/6thHouse/exploration5.mp3',
-        },
 
         isValidCallback = sixthHouseCellRule,
     },
     {
-        id = 'MUSE - Sixth House Enemies',
-        priority = 190,
+        -- 'MUSE - Sixth House Enemies',
+        id = 'ms/combat/dagoth',
+        priority = PlaylistPriority.BattleMod,
         randomize = true,
 
-        tracks = {
-            "Music/MS/combat/Dagoth/combat1.mp3",
-            "Music/MS/combat/Dagoth/combat2.mp3",
-            "Music/MS/combat/Dagoth/combat3.mp3",
-            "Music/MS/combat/Dagoth/combat4.mp3",
-        },
+        isValidCallback = sixthHouseEnemyRule,
+    },
+    -- NOTE: Due to having higher registration order, Dagoth Ur playlist will beat out regular-dagoth playlist
+    {
+        -- 'MUSE - Sixth House Enemies',
+        id = 'ms/combat/dagoth ur',
+        priority = PlaylistPriority.BattleMod,
+        randomize = true,
 
         isValidCallback = sixthHouseEnemyRule,
     },

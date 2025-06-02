@@ -148,29 +148,18 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'MUSE - Ashlander Settlement',
+        -- 'MUSE - Ashlander Settlement',
+        id = 'Music/MS/cell/Ashlander',
         priority = PlaylistPriority.Faction,
         randomize = true,
-
-        tracks = {
-            'Music/MS/cell/Ashlander/exploration1.mp3',
-            'Music/MS/cell/Ashlander/exploration2.mp3',
-            'Music/MS/cell/Ashlander/exploration3.mp3',
-            'Music/MS/cell/Ashlander/exploration4.mp3',
-        },
 
         isValidCallback = ashlanderCellRule,
 
     },
     {
-        id = 'MUSE - Ashlander Enemies',
+        -- 'MUSE - Ashlander Enemies',
+        id = 'Music/MS/combat/Ashlander',
         priority = PlaylistPriority.BattleMod,
-
-        tracks = {
-            'Music/MS/combat/Ashlander/combat1.mp3',
-            'Music/MS/combat/Ashlander/combat2.mp3',
-            'Music/MS/combat/Ashlander/combat3.mp3',
-        },
 
         isValidCallback = ashlanderEnemyRule,
     }
