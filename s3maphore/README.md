@@ -47,6 +47,11 @@ If you just want to install the mod, stop here. For Lua scripters or playlist de
 1. Add the appropriate data path to your `openmw.cfg` file for any playlist definitions you wish to use (for most users, you can add the 01-06 directories without consequence)
 1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=s3maphore.omwscripts`
 
+### Compatibility With Other Music Mods
+
+Dynamic Music and MUSE soundbanks are not natively supported. However, you can convert either to a S3maphore playlist in minutes by using this document.
+Any mods which simply add to or replace music Morrowind already provides (EG, in the `Explore`, `Special`, or `Battle` folders) are natively compatible with zero extra work.
+
 ### Usage
 
 Make sure to install the playlist files *and* tracks for any S3maphore playlist arrays you install. In the settings menu, you can toggle S3maphore debug messages and the onscreen track/playlist name display.
