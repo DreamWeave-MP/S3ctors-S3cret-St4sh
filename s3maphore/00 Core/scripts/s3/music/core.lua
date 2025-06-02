@@ -17,6 +17,8 @@ local musicSettings = storage.playerSection('SettingsS3Music')
 local activePlaylistSettings = storage.playerSection('S3maphoreActivePlaylistSettings')
 activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
 
+local registeredPlaylists = {}
+
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
 --- In other words, this is the bit that responds to changes from the settings menu
 activePlaylistSettings:subscribe(
@@ -27,11 +29,13 @@ activePlaylistSettings:subscribe(
             local playlistName = key:gsub('Active$', '')
 
             if not I.S3maphore then return end
-            local targetPlaylist = I.S3maphore.getRegisteredPlaylists()[playlistName]
+
+            local targetPlaylist = registeredPlaylists[playlistName]
+
             if not targetPlaylist then return end
 
             if targetPlaylist.active ~= playlistAssignedState then
-                I.S3maphore.setPlaylistActive(playlistName, playlistAssignedState)
+                targetPlaylist.active = playlistAssignedState
             end
         end
     )
@@ -40,7 +44,6 @@ activePlaylistSettings:subscribe(
 local helpers = require('scripts.omw.music.helpers')
 local PlaylistFileList = helpers.getPlaylistFilePaths()
 
-local registeredPlaylists = {}
 local playlistsTracksOrder = helpers.getStoredTracksOrder()
 
 ---@alias FightingActors table<string, boolean>
