@@ -27,15 +27,32 @@ fi
 </style>
 "
 
+latest_tag=$(echo "$tags" | head -n 1)
+
+# Show "Latest" section for commits after the latest tag
+if [ -n "$latest_tag" ]; then
+  echo -e "<details open><summary><h4>Latest</h4></summary>"
+  git log --pretty=format:"%h %s" "$latest_tag"..HEAD -- "$tag_prefix" | while read -r commit_hash commit_message; do
+    echo "<a href=\"$GITLAB_REPO_URL/commit/$commit_hash\">$commit_hash - $commit_message</a><br><br>"
+  done
+  echo -e "</details>\n"
+fi
+
 # Iterate through the tags
 for tag in $tags; do
   if [ -n "$previous_tag" ]; then
+
     version=$(echo "$previous_tag" | cut -d '-' -f 2)
     echo -e "<details><summary><h4>Version $version:</h4></summary>"
-    git log --pretty=format:"%h %s" "$tag".."$previous_tag" | while read -r commit_hash commit_message; do
-    echo "- [$commit_hash - $commit_message]($GITLAB_REPO_URL/commit/$commit_hash)<br>"
+
+    git log --pretty=format:"%h %s" "$tag".."$previous_tag" -- "$tag_prefix" | while read -r commit_hash commit_message; do
+    echo "<a href=\"$GITLAB_REPO_URL/commit/$commit_hash\">$commit_hash - $commit_message</a><br><br>"
     done
+
     echo -e "</details>\n"
+
   fi
+
   previous_tag=$tag
+
 done
