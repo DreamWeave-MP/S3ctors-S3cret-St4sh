@@ -464,7 +464,7 @@ local function onFrame(dt)
 
     local newPlaylist = helpers.getActivePlaylistByPriority(registeredPlaylists, Playback)
 
-    if not newPlaylist then
+    if not newPlaylist and musicPlaying then
         ambient.stopMusic()
         queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = MusicManager.STATE.NoPlaylist } }
 
