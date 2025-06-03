@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -15,11 +15,6 @@ if [ -z "$tags" ]; then
   exit 0
 fi
 
-# Iterate through the tags
-for tag in $tags; do
-  if [ -n "$previous_tag" ]; then
-    version=$(echo "$previous_tag" | cut -d '-' -f 2)
-
     echo -e "
 <style>
   h4 {
@@ -32,9 +27,13 @@ for tag in $tags; do
 </style>
 "
 
+# Iterate through the tags
+for tag in $tags; do
+  if [ -n "$previous_tag" ]; then
+    version=$(echo "$previous_tag" | cut -d '-' -f 2)
     echo -e "<details><summary><h4>Version $version:</h4></summary>"
     git log --pretty=format:"%h %s" "$tag".."$previous_tag" | while read -r commit_hash commit_message; do
-      echo "- <a href="$GITLAB_REPO_URL/commit/$commit_hash">$commit_hash - $commit_message</a><br>"
+    echo "- [$commit_hash - $commit_message]($GITLAB_REPO_URL/commit/$commit_hash)<br>"
     done
     echo -e "</details>\n"
   fi
