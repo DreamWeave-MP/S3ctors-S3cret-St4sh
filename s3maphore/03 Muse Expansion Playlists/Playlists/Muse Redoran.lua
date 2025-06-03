@@ -45,7 +45,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 return {
     {
         -- 'MUSE - Redoran Settlement',
-        id = 'Music/MS/cell/Redoran',
+        id = 'ms/cell/redoran',
         priority = PlaylistPriority.Faction,
         randomize = true,
 
@@ -54,7 +54,7 @@ return {
     },
     {
         -- 'MUSE - Redoran Enemies',
-        id = 'Music/MS/combat/Redoran',
+        id = 'ms/combat/redoran',
         priority = PlaylistPriority.BattleMod,
 
         isValidCallback = redoranEnemyRule,
