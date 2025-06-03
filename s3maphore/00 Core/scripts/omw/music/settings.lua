@@ -102,8 +102,15 @@ I.Settings.registerGroup({
             description = 'CurrentPlaylistSelectionDescription',
             default = playlistIds[1],
         },
+        {
+            key = 'ResetAllPlaylists',
+            renderer = 'checkbox',
+            name = 'ResetAllPlaylists',
+            argument = { trueLabel = 'ResetButtonLabel', falseLabel = 'ResetButtonLabel', l10n = 'S3Music' },
+            description = 'ResetAllPlaylistsDescription',
+            default = false,
+        },
     }
-
 })
 
 local musicSettings = storage.playerSection('SettingsS3MusicPlaylistSelection')
@@ -113,12 +120,13 @@ local activePlaylistState = storage.playerSection('S3maphoreActivePlaylistSettin
 musicSettings:subscribe(
     async:callback(
         function(_, key)
-            -- Use the not key branch to set the default activity state on all playlists
-            if not key then
+            if not key or key == 'ResetAllPlaylists' then
                 for _, file in ipairs(PlaylistFileNames) do
                     local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
+
                     if ok and type(playlists) == "table" then
                         for _, playlist in ipairs(playlists) do
+                            activePlaylistState:set(playlist.id .. 'Active', playlist.active or true)
                             activePlaylistSettings:set('PlaylistActiveState', playlist.active or true)
                         end
                     end
