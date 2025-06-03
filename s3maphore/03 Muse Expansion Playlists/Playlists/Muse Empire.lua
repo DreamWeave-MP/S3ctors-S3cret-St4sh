@@ -81,6 +81,14 @@ return {
         isValidCallback = empireCellRule
     },
     {
+        -- 'MUSE - Empire Settlement',
+        id = 'ms/cell/imperial',
+        priority = PlaylistPriority.Faction - 1,
+        randomize = true,
+
+        isValidCallback = empireCellRule
+    },
+    {
         -- 'MUSE - Empire Enemies',
         id = 'ms/combat/empire',
         priority = PlaylistPriority.BattleMod,
