@@ -28,6 +28,30 @@ local EmpireEnemyNames = {
     ['sjorvar horse-mouth'] = true,
     ['carnius magius'] = true,
     ['falco galenus'] = true,
+    ['vycius pitio'] = true,
+    ['thromil rufus'] = true,
+    ['antonius rato'] = true,
+    ['rojanna jades'] = true,
+    ['servas capris'] = true,
+    ['ereven baryl'] = true,
+    ['maurrisha'] = true,
+    ['olfver steel-skin'] = true,
+    ['caecalia victrix'] = true,
+    ['madala ceno'] = true,
+    ['doure'] = true,
+    ['aquilinius'] = true,
+    ['destarmion'] = true,
+    ['idra uvalen'] = true,
+    ['kuvir shoal-flare'] = true,
+    ['potemus marolus'] = true,
+    ['kventus lucilius'] = true,
+    ['tibera rone'] = true,
+    ['lora avis'] = true,
+    ['zaren hammebenat'] = true,
+    ['rogatus cipius'] = true,
+    ['cano'] = true,
+    ['aetia nemesia'] = true,
+    ['cassynderia lys'] = true,
 }
 
 ---@type ValidPlaylistCallback
@@ -40,7 +64,6 @@ local EmpireCellMatches = {
     allowed = {
         'caldera',
         'ebonheart',
-        'ebon tower',
         'pelagiad',
         'seyda neen',
         'moonmoth',
@@ -51,6 +74,18 @@ local EmpireCellMatches = {
         'hawkmoth',
         'wolverine hall',
         'raven rock',
+        'old ebonheart',
+        'ebon tower',
+        'firewatch',
+        'helnim',
+        'nivalis',
+        'ancylis',
+        'umbermoth',
+        'windmoth',
+        'stormgate pass',
+        'septim\'s gate pass',
+        'dustmoth',
+        'servas',
     },
 
     disallowed = {
@@ -63,9 +98,29 @@ local EmpireCellMatches = {
     },
 }
 
+--- Yes, really, these *are* meant to be different playlists
+---@type CellMatchPatterns
+local ImperialCellMatches = {
+    allowed = {
+        'caldera',
+        'ebonheart',
+        'pelagiad',
+    },
+
+    disallowed = {
+        'sewers',
+        'old ebonheart',
+    },
+}
+
 ---@type ValidPlaylistCallback
 local function empireCellRule(playback)
     return playback.rules.cellNameMatch(EmpireCellMatches)
+end
+
+---@type ValidPlaylistCallback
+local function imperialCellRule(playback)
+    return playback.rules.cellNameMatch(ImperialCellMatches)
 end
 
 local PlaylistPriority = require 'doc.playlistPriority'
@@ -86,7 +141,7 @@ return {
         priority = PlaylistPriority.Faction - 1,
         randomize = true,
 
-        isValidCallback = empireCellRule
+        isValidCallback = imperialCellRule
     },
     {
         -- 'MUSE - Empire Enemies',
