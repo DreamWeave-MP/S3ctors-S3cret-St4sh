@@ -173,8 +173,32 @@ local TRTavernCells = {
 
 local PlaylistPriority = require 'doc.playlistPriority'
 
+local function tavernOrCellRule(playback)
+    return not playback.state.isInCombat
+        and not playback.state.cellIsExterior
+        and (
+            (
+                playback.rules.cellNameExact(TavernNamesVanilla) or playback.rules.cellNameExact(TRTavernCells)
+            )
+            or
+            (
+                playback.rules.cellNameMatch(TavernMatches)
+            )
+        )
+end
+
 ---@type S3maphorePlaylist[]
 return {
+    {
+        -- 'Inns and Taverns - Vanilla',
+        id = 'ms/cell/taverns',
+        -- Uses faction priority to override TR playlists
+        priority = PlaylistPriority.Faction - 2,
+        randomize = true,
+
+        isValidCallback = tavernOrCellRule,
+    },
+    -- The original CaptainCreepy pack uses `tavern`, but the DM compatibility pack uses `tavern`
     {
         -- 'Inns and Taverns - Vanilla',
         id = 'ms/cell/tavern',
@@ -182,18 +206,6 @@ return {
         priority = PlaylistPriority.Faction - 2,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and not playback.state.cellIsExterior
-                and (
-                    (
-                        playback.rules.cellNameExact(TavernNamesVanilla) or playback.rules.cellNameExact(TRTavernCells)
-                    )
-                    or
-                    (
-                        playback.rules.cellNameMatch(TavernMatches)
-                    )
-                )
-        end,
-    }
+        isValidCallback = tavernOrCellRule,
+    },
 }
