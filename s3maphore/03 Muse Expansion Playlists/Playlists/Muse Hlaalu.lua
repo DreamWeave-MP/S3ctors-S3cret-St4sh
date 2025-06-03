@@ -125,6 +125,7 @@ return {
         -- 'MUSE - Hlaalu Enemies',
         id = 'ms/combat/hlaalu',
         priority = PlaylistPriority.BattleMod,
+        randomize = true,
 
         isValidCallback = hlaaluEnemyRule,
     }

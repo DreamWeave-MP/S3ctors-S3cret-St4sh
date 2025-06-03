@@ -16,6 +16,7 @@ return {
         id = 'ms/cell/incarnate',
         priority = 50,
         noInterrupt = true,
+        randomize = true,
 
         isValidCallback = incarnateCellRule,
     },
