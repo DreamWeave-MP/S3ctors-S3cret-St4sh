@@ -77,6 +77,13 @@ I.Settings.registerGroup({
             default = true,
         },
         {
+            key = 'BattleEnabled',
+            renderer = 'checkbox',
+            name = 'BattleEnabled',
+            description = 'BattleEnabledDescription',
+            default = true,
+        },
+        {
             key = 'BannerEnabled',
             renderer = 'checkbox',
             name = 'BannerEnabled',
