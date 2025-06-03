@@ -22,8 +22,6 @@ return {
 
     eventHandlers = {
         S3maphoreStaticUpdate = function(sender)
-            if sender.cell.isExterior then return end
-
             local addedStatics, addedContentFiles = {}, {}
 
             local staticsInCell = sender.cell:getAll(types.Static)
