@@ -221,9 +221,11 @@ end
 --- Example usage:
 ---
 --- playback.rules.staticContentFile { ['starwind enhanced.esm'] = true, }
+---@param contentFiles  IDPresenceMap
+---@return boolean
 function PlaylistRules.staticContentFile(contentFiles)
     local localStatics = PlaylistRules.state.staticList
-    if not localStatics or next(localStatics) == nil then return end
+    if not localStatics or next(localStatics) == nil then return false end
     local cellName = PlaylistRules.state.cellName
 
     if S3maphoreGlobalCache[cellName] == nil then S3maphoreGlobalCache[cellName] = {} end
@@ -236,7 +238,7 @@ function PlaylistRules.staticContentFile(contentFiles)
 
     for _, contentFile in ipairs(localStatics.contentFiles) do
         if contentFiles[contentFile] ~= nil then
-            result = contentFiles[contentFile]
+            result = true
             break
         end
     end
