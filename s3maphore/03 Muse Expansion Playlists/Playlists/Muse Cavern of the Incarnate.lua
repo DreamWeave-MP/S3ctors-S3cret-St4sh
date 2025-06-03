@@ -13,7 +13,7 @@ end
 return {
     {
         -- 'MUSE - Cavern of the Incarnate',
-        id = 'music/ms/cell/incarnate',
+        id = 'ms/cell/incarnate',
         priority = 50,
         noInterrupt = true,
 
