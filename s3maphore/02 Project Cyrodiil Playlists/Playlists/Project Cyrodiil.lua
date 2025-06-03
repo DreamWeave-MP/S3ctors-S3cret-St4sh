@@ -407,7 +407,7 @@ return {
     },
     {
         -- 'Project Cyrodiil - Abecean Shores/Caves',
-        id = 'music/ms/interior/cyrodiil caves',
+        id = 'ms/interior/cyrodiil caves',
         priority = PlaylistPriority.Tileset,
         randomize = true,
 
@@ -419,7 +419,7 @@ return {
     },
     {
         -- 'Project Cyrodiil - Abecean Shores/Ayleid',
-        id = 'music/ms/interior/cyrodiil ayleid',
+        id = 'ms/interior/cyrodiil ayleid',
         priority = PlaylistPriority.Tileset,
         randomize = true,
 
@@ -431,7 +431,7 @@ return {
     },
     {
         -- 'Project Cyrodiil - Abecean Shores/Kingdom of Sutch',
-        id = 'music/ms/cell/cyrodiil sutch',
+        id = 'ms/cell/cyrodiil sutch',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
@@ -441,7 +441,7 @@ return {
     },
     {
         -- 'Project Cyrodiil - Abecean Shores/Kingdom of Anvil',
-        id = 'music/ms/cell/cyrodiil anvil',
+        id = 'ms/cell/cyrodiil anvil',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
