@@ -179,7 +179,7 @@ return {
         -- 'Inns and Taverns - Vanilla',
         id = 'ms/cell/tavern',
         -- Uses faction priority to override TR playlists
-        priority = PlaylistPriority.Faction - 1,
+        priority = PlaylistPriority.Faction - 2,
         randomize = true,
 
         isValidCallback = function(playback)
