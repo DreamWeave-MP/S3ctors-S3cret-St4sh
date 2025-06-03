@@ -83,13 +83,22 @@ function PlaylistRules.combatTargetExact(validTargets)
     local combatTargets = PlaylistRules.state.combatTargets
 
     for _, actor in ipairs(nearby.actors) do
+        if S3maphoreGlobalCache[actor.id] == nil then
+            S3maphoreGlobalCache[actor.id] = {}
+        elseif S3maphoreGlobalCache[actor.id][validTargets] ~= nil then
+            return S3maphoreGlobalCache[actor.id][validTargets]
+        end
+
         if combatTargets[actor.id] then
             local actorName = actor.type.records[actor.recordId].name:lower()
 
             if validTargets[actorName] then
+                S3maphoreGlobalCache[actor.id][validTargets] = true
                 return true
             end
         end
+
+        S3maphoreGlobalCache[actor.id][validTargets] = false
     end
 
     return false
