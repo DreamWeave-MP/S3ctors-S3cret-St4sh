@@ -21,3 +21,7 @@ PlaylistActiveStateDescription: "Whether or not the playlist will be selected fo
 
 BannerEnabled: "Show Track Info"
 BannerEnabledDescription: "Displays the current playlist and track name at the top of the screen, if localizations for the playlist are available."
+
+ResetAllPlaylists: "Reset All Playlists"
+ResetAllPlaylistsDescription: "Set all playlists back to their default active states."
+ResetButtonLabel: "Reset"
