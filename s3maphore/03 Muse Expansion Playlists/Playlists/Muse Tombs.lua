@@ -48,14 +48,22 @@ local TombCellMatches = {
         'abandoned crypt',
         'barrow',
         'burial',
+        'catacombs',
     },
 
     disallowed = {},
 }
 
+---@type IDPresenceMap
+local TombCellExclusions = {
+    ['narsis, catacombs: gateway'] = true,
+    ['narsis, catacombs: chamber of narsara'] = true,
+}
+
 ---@type ValidPlaylistCallback
 local function tombCellRule(playback)
-    return playback.rules.cellNameMatch(TombCellMatches)
+    return not playback.rules.cellNameExact(TombCellExclusions)
+        and playback.rules.cellNameMatch(TombCellMatches)
 end
 
 local PlaylistPriority = require 'doc.playlistPriority'
