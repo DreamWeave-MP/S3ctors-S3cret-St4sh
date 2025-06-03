@@ -33,6 +33,22 @@ local TombEnemyNames = {
     ['skeleton pirate'] = true,
     ['skeleton pirate captain'] = true,
     ['greater skeleton champion'] = true,
+    ['plaguebearer bonewalker'] = true,
+    ['greater plaguebearer bonewalker'] = true,
+    ['the fiery horror'] = true,
+    ['lord drolar'] = true,
+    ['nelgirion the venerable'] = true,
+    ['pharan the black'] = true,
+    ['mummy'] = true,
+    ['plaguebearer skeleton champion'] = true,
+    ['plaguebearer skeleton'] = true,
+    ['skeletal guardian'] = true,
+    ['eternal guardian'] = true,
+    ['plaguebearer bonelord'] = true,
+    ['bonelord warder'] = true,
+    ['procession bonewalker'] = true,
+    ['indoril nereval'] = true,
+    ['revered bonewalker'] = true,
 }
 
 ---@type ValidPlaylistCallback
