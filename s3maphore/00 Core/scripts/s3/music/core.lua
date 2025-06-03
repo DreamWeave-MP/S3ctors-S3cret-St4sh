@@ -494,7 +494,7 @@ local function onFrame(dt)
 
     switchPlaylist(newPlaylist)
 
-    queuedEvent = { name = 'S3maphoreTrackChanged', data = { playlistId = newPlaylist.id, trackName = currentTrack } }
+    queuedEvent = { name = 'S3maphoreTrackChanged', data = { playlistId = newPlaylist and newPlaylist.id, trackName = currentTrack } }
 end
 
 if activePlaylistSettings:get('BattleActive') == nil then activePlaylistSettings:set("BattleActive", true) end
