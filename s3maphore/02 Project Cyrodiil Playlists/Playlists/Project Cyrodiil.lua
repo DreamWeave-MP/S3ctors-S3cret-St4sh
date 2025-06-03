@@ -312,6 +312,7 @@ local StirkRegions = {
     ['dasek marsh region'] = true,
 }
 
+---@type CellMatchPatterns
 local SutchPatterns = {
     allowed = {
         "sutch",
@@ -353,20 +354,10 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'Project Cyrodiil - Abecean Shores/Imperial Crypts',
+        -- 'Project Cyrodiil - Abecean Shores/Imperial Crypts',
+        id = 'ms/interior/cyrodiil tombs imperial',
         priority = PlaylistPriority.Tileset,
         randomize = true,
-
-        tracks = {
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 1 (19).mp3',
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 2 (73).mp3',
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 3 (76).mp3',
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 4 (80).mp3',
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 5 (93).mp3',
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 6 (94).mp3',
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 7 (95).mp3',
-            'music/MS/interior/Cyrodiil Tombs Imperial/imperial crypt - 8 (96).mp3',
-        },
 
         isValidCallback = function(playback)
             return not playback.state.cellIsExterior
@@ -375,28 +366,18 @@ return {
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Brennan Bluffs',
+        -- 'Project Cyrodiil - Abecean Shores/Brennan Bluffs',
+        id = 'ms/region/cyrodiil brennan bluffs',
         priority = PlaylistPriority.Region,
         randomize = true,
-
-        tracks = {
-            'music/MS/region/Cyrodiil Brennan Bluffs/abecean - 1 (40).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 1 (41).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 2 (33).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 3 (43).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 4 (66).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 5 (69).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 6 (71).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 7 (102).mp3',
-            'music/MS/region/Cyrodiil Brennan Bluffs/gilded hills - 8 (104).mp3',
-        },
 
         isValidCallback = function(playback)
             return playback.state.self.cell.region == 'gilded hills region'
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Divine Temples',
+        -- 'Project Cyrodiil - Abecean Shores/Divine Temples',
+        id = 'ms/cell/nine divine temples',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
@@ -413,20 +394,10 @@ return {
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Colovian Barrows',
+        -- 'Project Cyrodiil - Abecean Shores/Colovian Barrows',
+        id = 'ms/interior/cyrodiil tombs colovian',
         priority = PlaylistPriority.Tileset,
         randomize = true,
-
-        tracks = {
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 1 (48).mp3',
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 2 (57).mp3',
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 3 (87).mp3',
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 4 (88).mp3',
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 5 (89).mp3',
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 6 (90).mp3',
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 7 (91).mp3',
-            'music/MS/interior/Cyrodiil Tombs Colovian/colovian barrow - 8 (92).mp3',
-        },
 
         isValidCallback = function(playback)
             return not playback.state.cellIsExterior
@@ -435,20 +406,10 @@ return {
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Caves',
+        -- 'Project Cyrodiil - Abecean Shores/Caves',
+        id = 'music/ms/interior/cyrodiil caves',
         priority = PlaylistPriority.Tileset,
         randomize = true,
-
-        tracks = {
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 1 (35).mp3',
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 2 (47).mp3',
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 3 (63).mp3',
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 4 (64).mp3',
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 5 (97).mp3',
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 6 (98).mp3',
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 7 (99).mp3',
-            'music/MS/interior/Cyrodiil Caves/cyrod caves - 8 (100).mp3',
-        },
 
         isValidCallback = function(playback)
             return not playback.state.cellIsExterior
@@ -457,20 +418,10 @@ return {
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Ayleid',
+        -- 'Project Cyrodiil - Abecean Shores/Ayleid',
+        id = 'music/ms/interior/cyrodiil ayleid',
         priority = PlaylistPriority.Tileset,
         randomize = true,
-
-        tracks = {
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 1 (52).mp3',
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 2 (58).mp3',
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 3 (59).mp3',
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 4 (77).mp3',
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 5 (84).mp3',
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 6 (85).mp3',
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 7 (109).mp3',
-            'music/MS/interior/Cyrodiil Ayleid/ayleid - 8 (110).mp3',
-        },
 
         isValidCallback = function(playback)
             return not playback.state.cellIsExterior
@@ -479,82 +430,40 @@ return {
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Kingdom of Sutch',
+        -- 'Project Cyrodiil - Abecean Shores/Kingdom of Sutch',
+        id = 'music/ms/cell/cyrodiil sutch',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
-
-        tracks = {
-            'music/MS/cell/Cyrodiil Sutch/sutch - 1 (78).mp3',
-            'music/MS/cell/Cyrodiil Sutch/sutch - 2 (79).mp3',
-            'music/MS/cell/Cyrodiil Sutch/sutch - 3 (81).mp3',
-            'music/MS/cell/Cyrodiil Sutch/sutch - 4 (82).mp3',
-            'music/MS/cell/Cyrodiil Sutch/sutch - 5 (83).mp3',
-            'music/MS/cell/Cyrodiil Sutch/sutch - 6 (103).mp3',
-            'music/MS/cell/Cyrodiil Sutch/sutch - 7 (105).mp3',
-            'music/MS/cell/Cyrodiil Sutch/sutch - 8 (106).mp3',
-        },
 
         isValidCallback = function(playback)
             return playback.rules.cellNameMatch(SutchPatterns)
         end
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Kingdom of Anvil',
+        -- 'Project Cyrodiil - Abecean Shores/Kingdom of Anvil',
+        id = 'music/ms/cell/cyrodiil anvil',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
-
-        tracks = {
-            'music/MS/cell/Cyrodiil Anvil/anvil - 1 (2).mp3',
-            'music/MS/cell/Cyrodiil Anvil/anvil - 2 (44).mp3',
-            'music/MS/cell/Cyrodiil Anvil/anvil - 3 (45).mp3',
-            'music/MS/cell/Cyrodiil Anvil/anvil - 4 (53).mp3',
-            'music/MS/cell/Cyrodiil Anvil/anvil - 5 (61).mp3',
-            'music/MS/cell/Cyrodiil Anvil/anvil - 6 (72).mp3',
-            'music/MS/cell/Cyrodiil Anvil/anvil - 7 (86).mp3',
-            'music/MS/cell/Cyrodiil Anvil/anvil - 8 (101).mp3',
-        },
 
         isValidCallback = function(playback)
             return playback.rules.cellNameMatch(AnvilPatterns)
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Strident Coast',
+        -- 'Project Cyrodiil - Abecean Shores/Strident Coast',
+        id = 'ms/region/cyrodiil strident coast',
         priority = PlaylistPriority.Region,
         randomize = true,
-
-        tracks = {
-            'music/MS/region/Cyrodiil Strident Coast/abecean - 1 (40).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 2 (42).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 3 (46).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 4 (49).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 5 (62).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 6 (9).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 7 (51).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 8 (56).mp3',
-            'music/MS/region/Cyrodiil Strident Coast/gold coast - 9 (65).mp3',
-        },
 
         isValidCallback = function(playback)
             return playback.state.self.cell.region == 'gold coast region'
         end,
     },
     {
-        id = 'Project Cyrodiil - Abecean Shores/Stirk Isle',
+        -- 'Project Cyrodiil - Abecean Shores/Stirk Isle',
+        id = 'ms/region/cyrodiil stirk isle',
         priority = PlaylistPriority.Region,
         randomize = true,
-
-        tracks = {
-            'music/MS/region/Cyrodiil Strident Coast/abecean - 1 (40).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 1 (34).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 2 (36).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 3 (37).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 4 (38).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 5 (74).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 6 (75).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 7 (107).mp3',
-            'music/MS/region/Cyrodiil Stirk Isle/stirk - 8 (108).mp3',
-        },
 
         isValidCallback = function(playback)
             return playback.rules.region(StirkRegions)
