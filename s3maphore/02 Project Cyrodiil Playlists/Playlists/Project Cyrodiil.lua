@@ -381,14 +381,6 @@ return {
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
-        tracks = {
-            'music/MS/cell/Nine Divine Temples/divines temple - 1 (4).mp3',
-            'music/MS/cell/Nine Divine Temples/divines temple - 2 (22).mp3',
-            'music/MS/cell/Nine Divine Temples/divines temple - 3 (31).mp3',
-            'music/MS/cell/Nine Divine Temples/divines temple - 4 (39).mp3',
-            'music/MS/cell/Nine Divine Temples/divines temple - 5 (50).mp3',
-        },
-
         isValidCallback = function(playback)
             return not playback.state.cellIsExterior and playback.rules.cellNameMatch(TemplePatterns)
         end,
