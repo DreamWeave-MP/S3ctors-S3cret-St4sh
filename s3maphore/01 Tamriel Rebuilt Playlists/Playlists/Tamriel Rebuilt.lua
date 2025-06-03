@@ -303,7 +303,7 @@ return {
     },
     {
         id = 'Tamriel Rebuilt - Grey Meadows',
-        priority = 942,
+        priority = PlaylistPriority.Region,
         randomize = true,
 
         tracks = {
