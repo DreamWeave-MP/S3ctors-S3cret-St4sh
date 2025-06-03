@@ -395,6 +395,7 @@ return {
     {
         id = 'Tamriel Rebuilt - Imperial',
         priority = PlaylistPriority.CellMatch,
+        randomize = true,
 
         tracks = {
             'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
@@ -409,6 +410,7 @@ return {
     {
         id = 'Tamriel Rebuilt - Indoril Setlement',
         priority = PlaylistPriority.City,
+        randomize = true,
 
         tracks = {
             'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
@@ -520,6 +522,7 @@ return {
     {
         id = 'Tamriel Rebuilt - Upper Velothis',
         priority = PlaylistPriority.Region,
+        randomize = true,
 
         tracks = {
             'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',

@@ -17,6 +17,7 @@ return {
     {
         id = 'ms/cell/vivec',
         priority = PlaylistPriority.CellMatch,
+        randomize = true,
 
         isValidCallback = function(playback)
             return not playback.state.isInCombat
