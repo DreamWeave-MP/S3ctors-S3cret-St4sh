@@ -1,4 +1,8 @@
-## S3ctor's S3cret St4sh Changelog
+# S3ctor's S3cret St4sh Changelog
+
+#### Version 1.1
+
+- Remember that there is a root-level changelog
 
 #### Version 1.0
 
