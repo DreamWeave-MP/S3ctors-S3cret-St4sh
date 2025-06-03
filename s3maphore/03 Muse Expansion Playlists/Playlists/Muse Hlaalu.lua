@@ -56,6 +56,7 @@ local function hlaaluEnemyRule(playback)
         and playback.rules.combatTargetExact(HlaaluEnemyNames)
 end
 
+---@type CellMatchPatterns
 local HlaaluCellNames = {
     allowed = {
         "balmora",
@@ -89,13 +90,23 @@ local HlaaluCellNames = {
     },
     disallowed = {
         "sewers",
+        "catacombs",
     },
+}
+
+---@type IDPresenceMap
+local HlaaluCatacombNames = {
+    ['narsis, catacombs: gateway'] = true,
+    ['narsis, catacombs: chamber of narsara'] = true,
 }
 
 ---@type ValidPlaylistCallback
 local function hlaaluCellRule(playback)
     return not playback.state.isInCombat
-        and playback.rules.cellNameMatch(HlaaluCellNames)
+        and (
+            playback.rules.cellNameExact(HlaaluCatacombNames)
+            or playback.rules.cellNameMatch(HlaaluCellNames)
+        )
 end
 
 local PlaylistPriority = require 'doc.playlistPriority'
