@@ -121,7 +121,7 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
 
         local result = false
         for _, pattern in ipairs(validTargetPatterns) do
-            if actorName:find(pattern) ~= nil then
+            if actorName:find(pattern, 1, true) ~= nil then
                 result = true
                 break
             end
