@@ -497,13 +497,16 @@ local function onFrame(dt)
     queuedEvent = { name = 'S3maphoreTrackChanged', data = { playlistId = newPlaylist.id, trackName = currentTrack } }
 end
 
+if activePlaylistSettings:get('BattleActive') == nil then activePlaylistSettings:set("BattleActive", true) end
+if activePlaylistSettings:get('ExploreActive') == nil then activePlaylistSettings:set("ExploreActive", true) end
+
 MusicManager.registerPlaylist {
     id = "Battle",
     priority = battlePriority,
     randomize = true,
 
     isValidCallback = function(playback)
-        return activePlaylistSettings:get("BattleActive") and playback.state.isInCombat
+        return playback.state.isInCombat and activePlaylistSettings:get("BattleActive")
     end,
 }
 
@@ -513,7 +516,7 @@ MusicManager.registerPlaylist {
     randomize = true,
 
     isValidCallback = function(playback)
-        return activePlaylistSettings:get("ExploreActive") and not playback.state.isInCombat
+        return not playback.state.isInCombat and activePlaylistSettings:get("ExploreActive")
     end,
 }
 
