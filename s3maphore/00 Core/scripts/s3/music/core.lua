@@ -19,6 +19,18 @@ activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
 
 local registeredPlaylists = {}
 
+local BattleEnabled = true
+
+musicSettings:subscribe(
+    async:callback(
+        function(_, key)
+            if not key or key == 'BattleEnabled' then
+                BattleEnabled = musicSettings:get('BattleEnabled')
+            end
+        end
+    )
+)
+
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
 --- In other words, this is the bit that responds to changes from the settings menu
 activePlaylistSettings:subscribe(
@@ -114,7 +126,7 @@ local function updatePlaylistState()
 
     PlaylistState.self = self
     PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
-    PlaylistState.isInCombat = helpers.isInCombat(fightingActors)
+    PlaylistState.isInCombat = BattleEnabled and helpers.isInCombat(fightingActors)
     PlaylistState.cellIsExterior = self.cell.isExterior or self.cell:hasTag('QuasiExterior')
     PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
     PlaylistState.staticList = self.cell.isExterior and nil or StaticList
