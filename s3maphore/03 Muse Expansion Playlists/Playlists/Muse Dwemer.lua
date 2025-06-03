@@ -376,6 +376,7 @@ local DwemerStaticIds = {
 ---@type ValidPlaylistCallback
 local function dwemerStaticRule(playback)
     return not playback.state.isInCombat
+        and not playback.state.cellIsExterior
         and playback.rules.staticExact(DwemerStaticIds)
 end
 
