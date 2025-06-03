@@ -60,32 +60,16 @@ local PlaylistPriority = require 'doc.playlistPriority'
 
 return {
     {
-        id = 'Songbook of the North - Cities',
+        id = 'shotn/city',
         priority = PlaylistPriority.City,
         randomize = true,
-
-        tracks = {
-            'Skyrim Pack/throat of the world.mp3',
-            'Skyrim Pack/warchants.mp3',
-            'Skyrim Pack/under the northern stars.mp3',
-            'Skyrim Pack/northern blood.mp3',
-            'Skyrim Pack/beneath the permafrost.mp3',
-        },
 
         isValidCallback = shotnCityRule,
     },
     {
-        id = 'Songbook of the North - Regions',
+        id = 'shotn/wilds',
         priority = PlaylistPriority.Region,
         randomize = true,
-
-        tracks = {
-            'Skyrim Pack/throat of the world.mp3',
-            'Skyrim Pack/warchants.mp3',
-            'Skyrim Pack/under the northern stars.mp3',
-            'Skyrim Pack/northern blood.mp3',
-            'Skyrim Pack/beneath the permafrost.mp3',
-        },
 
         isValidCallback = shotnRegionRule,
     }
