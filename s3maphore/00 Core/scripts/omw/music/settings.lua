@@ -100,7 +100,7 @@ I.Settings.registerGroup({
             argument = { items = playlistIds, l10n = 'S3Music', },
             name = 'CurrentPlaylistSelection',
             description = 'CurrentPlaylistSelectionDescription',
-            default = 'Explore',
+            default = playlistIds[1],
         },
     }
 
