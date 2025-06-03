@@ -1,6 +1,25 @@
 local types = require 'openmw.types'
+local world = require 'openmw.world'
 
 return {
+    interfaceName = 'S3maphoreG',
+    interface = {
+        findCellMatches = function(pattern)
+            local cellStr = ''
+
+            for _, cell in ipairs(world.cells) do
+                if cell.name
+                    and cell.name ~= ''
+                    and cell.name:lower():find(pattern)
+                then
+                    cellStr = ("%s['%s'] = true,\n"):format(cellStr, cell.name:lower())
+                end
+            end
+
+            return cellStr
+        end,
+    },
+
     eventHandlers = {
         S3maphoreStaticUpdate = function(sender)
             if sender.cell.isExterior then return end
@@ -24,5 +43,6 @@ return {
             sender:sendEvent('S3maphoreStaticCollectionUpdated',
                 { contentFiles = addedContentFiles, recordIds = addedStatics, })
         end,
-    }
+    },
+
 }
