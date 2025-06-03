@@ -385,9 +385,9 @@ local function onCombatTargetsChanged(eventData)
     if eventData.actor == nil then return end
 
     if next(eventData.targets) ~= nil then
-        fightingActors[eventData.actor] = true
+        fightingActors[eventData.actor.id] = eventData.actor
     else
-        fightingActors[eventData.actor] = nil
+        fightingActors[eventData.actor.id] = nil
     end
 end
 
