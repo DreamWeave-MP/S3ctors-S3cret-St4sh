@@ -80,25 +80,14 @@ end
 function PlaylistRules.combatTargetExact(validTargets)
     if not PlaylistRules.state.isInCombat then return false end
 
-    local combatTargets = PlaylistRules.state.combatTargets
+    local FightingActors = PlaylistRules.state.combatTargets
 
-    for _, actor in ipairs(nearby.actors) do
-        if S3maphoreGlobalCache[actor.id] == nil then
-            S3maphoreGlobalCache[actor.id] = {}
-        elseif S3maphoreGlobalCache[actor.id][validTargets] ~= nil then
-            return S3maphoreGlobalCache[actor.id][validTargets]
+    for actor, _ in pairs(FightingActors) do
+        local actorName = actor.type.records[actor.recordId].name:lower()
+
+        if validTargets[actorName] then
+            return true
         end
-
-        if combatTargets[actor.id] then
-            local actorName = actor.type.records[actor.recordId].name:lower()
-
-            if validTargets[actorName] then
-                S3maphoreGlobalCache[actor.id][validTargets] = true
-                return true
-            end
-        end
-
-        S3maphoreGlobalCache[actor.id][validTargets] = false
     end
 
     return false
@@ -116,9 +105,7 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
 
     local combatTargets = PlaylistRules.state.combatTargets
 
-    for _, actor in ipairs(nearby.actors) do
-        if combatTargets[actor.id] == nil then goto continue end
-
+    for actor, _ in pairs(combatTargets) do
         if S3maphoreGlobalCache[actor.id] == nil then S3maphoreGlobalCache[actor.id] = {} end
 
         local cachedResult = S3maphoreGlobalCache[actor.id][validTargetPatterns]
