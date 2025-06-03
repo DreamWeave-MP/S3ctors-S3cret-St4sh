@@ -79,7 +79,7 @@ local L10nCache = {}
 local function initPlaylistL10n(playlistId)
     if L10nCache[playlistId] then return true end
 
-    local l10nContextName = ('S3maphoreTracks%s'):format(playlistId)
+    local l10nContextName = ('S3maphoreTracks_%s'):format(playlistId:gsub('/', '_'))
 
     local ok, maybeTranslations = pcall(function() return core.l10n(l10nContextName) end)
 
@@ -620,6 +620,8 @@ return {
             helpers.debugLog("Track changed! Current playlist is:", eventData.playlistId, "Track:", eventData.trackName)
 
             local playlist, track = MusicManager.getCurrentTrackInfo()
+
+            print(playlist, track, musicSettings:get('BannerEnabled'))
 
             if playlist and track and musicSettings:get('BannerEnabled') then
                 MusicBanner.layout.props.visible = true
