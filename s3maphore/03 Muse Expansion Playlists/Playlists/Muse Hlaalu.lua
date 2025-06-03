@@ -104,7 +104,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 return {
     {
         -- 'MUSE - Hlaalu Settlement',
-        id = 'MS/cell/Hlaalu',
+        id = 'ms/cell/hlaalu',
         priority = PlaylistPriority.Faction,
         randomize = true,
 
@@ -112,7 +112,7 @@ return {
     },
     {
         -- 'MUSE - Hlaalu Enemies',
-        id = 'Music/MS/combat/Hlaalu',
+        id = 'ms/combat/hlaalu',
         priority = PlaylistPriority.BattleMod,
 
         isValidCallback = hlaaluEnemyRule,

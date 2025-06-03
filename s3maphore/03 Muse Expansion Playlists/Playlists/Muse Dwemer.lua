@@ -385,7 +385,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 return {
     {
         -- 'MUSE - Dwemer Ruins',
-        id = 'music/ms/cell/dwemer',
+        id = 'ms/cell/dwemer',
         priority = PlaylistPriority.Tileset,
         randomize = true,
 
@@ -393,7 +393,7 @@ return {
     },
     {
         -- 'MUSE - Dwemer Enemies',
-        id = 'music/ms/combat/dwemer',
+        id = 'ms/combat/dwemer',
         priority = PlaylistPriority.BattleMod,
         randomize = true,
 

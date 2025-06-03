@@ -64,7 +64,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 return {
     {
         -- 'MUSE - Tomb Cells',
-        id = 'music/ms/cell/tomb',
+        id = 'ms/cell/tomb',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
@@ -72,7 +72,7 @@ return {
     },
     {
         -- 'MUSE - Tomb Enemies',
-        id = 'music/ms/combat/tomb',
+        id = 'ms/combat/tomb',
         priority = PlaylistPriority.BattleMod,
         randomize = true,
 

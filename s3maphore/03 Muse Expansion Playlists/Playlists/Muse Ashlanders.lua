@@ -149,7 +149,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 return {
     {
         -- 'MUSE - Ashlander Settlement',
-        id = 'Music/MS/cell/Ashlander',
+        id = 'ms/cell/ashlander',
         priority = PlaylistPriority.Faction,
         randomize = true,
 
@@ -158,7 +158,7 @@ return {
     },
     {
         -- 'MUSE - Ashlander Enemies',
-        id = 'Music/MS/combat/Ashlander',
+        id = 'ms/combat/ashlander',
         priority = PlaylistPriority.BattleMod,
 
         isValidCallback = ashlanderEnemyRule,
