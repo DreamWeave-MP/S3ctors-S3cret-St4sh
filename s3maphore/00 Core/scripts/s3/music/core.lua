@@ -52,9 +52,6 @@ local playlistsTracksOrder = helpers.getStoredTracksOrder()
 ---@alias FightingActors table<string, boolean>
 local fightingActors = {}
 
----@alias StaticList userdata[]
-local StaticList = {}
-
 local registrationOrder = 0
 
 local currentPlaylist = nil
@@ -132,6 +129,7 @@ musicSettings:subscribe(
 local PlaylistState = {
     self = self,
     combatTargets = fightingActors,
+    staticList = {},
 }
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
@@ -610,7 +608,6 @@ return {
             end
 
             return {
-                StaticList = StaticList,
                 playlistStates = playlistStates,
             }
         end,
@@ -656,23 +653,21 @@ return {
             MusicManager.updateBanner()
         end,
 
+        ---@param hasCombatTargets boolean
         S3maphoreCombatTargetsUpdated = function(hasCombatTargets)
             PlaylistState.cellHasCombatTargets = hasCombatTargets
         end,
 
         S3maphoreCellDataUpdated = function(cellChangeData)
-            StaticList = cellChangeData.staticList
             PlaylistState.cellHasCombatTargets = cellChangeData.hasCombatTargets
+            PlaylistState.staticList = cellChangeData.staticList
 
             local shouldUseName = self.cell.name ~= nil and self.cell.name ~= ''
 
             PlaylistState.cellIsExterior = self.cell.isExterior or self.cell:hasTag('QuasiExterior')
             PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
-            PlaylistState.staticList = self.cell.isExterior and nil or StaticList
 
             awaitingUpdate = false
-
-            print('Cell data updated!')
         end,
     }
 }
