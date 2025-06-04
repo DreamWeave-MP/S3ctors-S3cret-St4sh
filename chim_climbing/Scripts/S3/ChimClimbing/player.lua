@@ -187,7 +187,8 @@ function ClimbMod.findMaxClimbableHeight(center, scanPos)
         scanPos = scanPos + DefaultUpVector
 
         -- Perform raycast at the new height
-        local currentHit = nearby.castRay(center, scanPos, { ignore = { self } })
+        local currentHit = nearby.castRay(center, scanPos,
+            { ignore = { self }, collisionType = nearby.COLLISION_TYPE.World })
 
         if not currentHit.hit then
             print("No hit detected at height:", center.z)
@@ -236,7 +237,8 @@ local function calculateFinalDestination(upwardHit, zTransform)
     local forwardVec = zTransform:apply(util.vector3(0, forwardStep, 0))
     local finalStopPoint = firstStopPoint + forwardVec
 
-    local finalHit = nearby.castRay(firstStopPoint, finalStopPoint, { ignore = { self } })
+    local finalHit = nearby.castRay(firstStopPoint, finalStopPoint,
+        { ignore = { self }, collisionType = nearby.COLLISION_TYPE.World })
 
     -- If no hit, move to the final position; otherwise, use the collision point
     if finalHit.hit then
@@ -260,7 +262,9 @@ input.registerTriggerHandler(
         local center = self:getBoundingBox().center
         local scanPos = center + zTransform:apply(util.vector3(0, ClimbMod.CLIMB_ACTIVATE_RANGE, 0))
 
-        local waistHit = nearby.castRay(center, scanPos, { ignore = { self } })
+        local waistHit = nearby.castRay(center, scanPos,
+            { ignore = { self }, collisionType = nearby.COLLISION_TYPE.World })
+
         if not waistHit.hit then
             print("No hit detected at waist level.")
             return
