@@ -32,7 +32,7 @@ return {
         end,
     },
     {
-        id = 'ms/region/azura\'s coast',
+        id = 'ms/region/azura\'s coast region',
         priority = PlaylistPriority.Region,
         randomize = true,
 
