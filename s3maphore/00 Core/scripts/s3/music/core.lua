@@ -136,7 +136,7 @@ local PlaylistState = {
 local function updatePlaylistState()
     PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
 
-    PlaylistState.isUnderwater = self.type.isSwimming and (
+    PlaylistState.isUnderwater = self.type.isSwimming(self) and (
         self.position.z + (self:getBoundingBox().halfSize.z * 2) < (self.cell.waterLevel or 0)
     )
 end
