@@ -28,18 +28,22 @@ local function cellHasCombatTargets(senderCell)
 end
 
 local function getStaticsInActorCell(actor)
+    local uniqueStaticIds, uniqueContentFiles = {}, {}
+
     local addedStatics, addedContentFiles = {}, {}
 
     local staticsInCell = actor.cell:getAll(types.Static)
 
     for _, static in ipairs(staticsInCell) do
-        if not addedStatics[static.recordId] then
+        if not uniqueStaticIds[static.recordId] then
             addedStatics[#addedStatics + 1] = static.recordId
+            uniqueStaticIds[static.recordId] = true
         end
 
-        if not addedContentFiles[static.contentFile] then
+        if not uniqueContentFiles[static.contentFile] then
             if static.contentFile and static.contentFile ~= '' then
                 addedContentFiles[#addedContentFiles + 1] = static.contentFile:lower()
+                uniqueContentFiles[static.contentFile] = true
             end
         end
     end
