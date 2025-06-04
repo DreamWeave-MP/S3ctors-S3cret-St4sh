@@ -29,12 +29,12 @@ for mod in $mods; do
 
     cd "$mod"/
 
-    if [ -f CHANGELOG.md ]; then
-        mv CHANGELOG.md orig_CHANGELOG.md
-        cat <(../changelog.sh "$mod") orig_CHANGELOG.md > CHANGELOG.md
-    else
-        ../changelog.sh "$mod" > CHANGELOG.md
-    fi
+    # if [ -f CHANGELOG.md ]; then
+    #     mv CHANGELOG.md orig_CHANGELOG.md
+    #     cat <(../changelog.sh "$mod") orig_CHANGELOG.md > CHANGELOG.md
+    # else
+    #     ../changelog.sh "$mod" > CHANGELOG.md
+    # fi
 
     zip --recurse-paths \
         ../"$mod".zip \
