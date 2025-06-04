@@ -76,7 +76,7 @@ return {
 
     eventHandlers = {
         S3maphoreCellChanged = function(sender)
-            local staticContentFiles, staticRecordIds = getStaticsInActorCell(sender)
+            local staticRecordIds, staticContentFiles = getStaticsInActorCell(sender)
 
             sender:sendEvent('S3maphoreCellDataUpdated', {
                 staticList = {
