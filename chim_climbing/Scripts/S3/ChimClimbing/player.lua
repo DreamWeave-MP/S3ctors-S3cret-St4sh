@@ -316,6 +316,8 @@ return {
                 climbEndPos = nil,
                 prevCamMode = nil,
             }
+
+            ClimbMod.disengage()
         end,
     },
     eventHandlers = {
