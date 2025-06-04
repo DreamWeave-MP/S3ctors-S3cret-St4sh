@@ -173,6 +173,7 @@ local TRTavernCells = {
 
 local PlaylistPriority = require 'doc.playlistPriority'
 
+---@type ValidPlaylistCallback
 local function tavernOrCellRule(playback)
     return not playback.state.isInCombat
         and not playback.state.cellIsExterior
