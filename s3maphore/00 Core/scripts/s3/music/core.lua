@@ -126,6 +126,7 @@ musicSettings:subscribe(
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
 ---@field cellName string lowercased name of the cell the player is in
 ---@field cellHasCombatTargets boolean
+---@field isUnderwater boolean
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
 ---@field staticList userdata[]? a read-only list of static objects in the cell, if the cell is not exterior. If the static list is not yet valid, is an empty table. Nil for "true" exteriors.
 local PlaylistState = {
@@ -136,6 +137,10 @@ local PlaylistState = {
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
 local function updatePlaylistState()
     PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
+
+    PlaylistState.isUnderwater = self.type.isSwimming and (
+        self.position.z + (self:getBoundingBox().halfSize.z * 2) < (self.cell.waterLevel or 0)
+    )
 end
 
 ---@type PlaylistRules
