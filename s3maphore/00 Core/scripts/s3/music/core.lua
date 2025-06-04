@@ -361,7 +361,7 @@ function MusicManager.playSpecialTrack(trackPath, reason)
         {
             playlistId = 'Special',
             trackName = trackPath,
-            reason = reason or MusicManager.TrackChangeReasons.SpecialTrackPlaying
+            reason = reason or MusicManager.STATE.SpecialTrackPlaying
         })
 end
 
