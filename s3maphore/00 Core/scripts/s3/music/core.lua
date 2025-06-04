@@ -125,21 +125,17 @@ musicSettings:subscribe(
 ---@field isInCombat boolean whether the player is in combat or not
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
 ---@field cellName string lowercased name of the cell the player is in
+---@field cellHasCombatTargets boolean
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
 ---@field staticList userdata[]? a read-only list of static objects in the cell, if the cell is not exterior. If the static list is not yet valid, is an empty table. Nil for "true" exteriors.
-local PlaylistState = {}
+local PlaylistState = {
+    self = self,
+    combatTargets = fightingActors,
+}
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
 local function updatePlaylistState()
-    local shouldUseName = self.cell.name ~= nil and self.cell.name ~= ''
-
-    PlaylistState.self = self
     PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
-    PlaylistState.isInCombat = BattleEnabled and helpers.isInCombat(fightingActors)
-    PlaylistState.cellIsExterior = self.cell.isExterior or self.cell:hasTag('QuasiExterior')
-    PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
-    PlaylistState.staticList = self.cell.isExterior and nil or StaticList
-    PlaylistState.combatTargets = util.makeReadOnly(fightingActors)
 end
 
 ---@type PlaylistRules
@@ -424,6 +420,10 @@ local function onCombatTargetsChanged(eventData)
     else
         fightingActors[eventData.actor.id] = nil
     end
+
+    core.sendGlobalEvent('S3maphoreUpdateCellHasCombatTargets', self)
+
+    PlaylistState.isInCombat = BattleEnabled and helpers.isInCombat(fightingActors)
 end
 
 local function playerDied()
@@ -472,6 +472,9 @@ local function switchPlaylist(newPlaylist)
     currentPlaylist = newPlaylist
 end
 
+local awaitingUpdate = false
+local previousCell
+
 local function onFrame(dt)
     if not self.cell then return end
 
@@ -480,7 +483,13 @@ local function onFrame(dt)
         queuedEvent = nil
     end
 
-    if not loadNextPlaylistStep() or not core.sound.isEnabled() then return end
+    if self.cell.id ~= previousCell then
+        core.sendGlobalEvent('S3maphoreCellChanged', self)
+        awaitingUpdate = true
+        previousCell = self.cell.id
+    end
+
+    if not loadNextPlaylistStep() or not core.sound.isEnabled() or awaitingUpdate then return end
 
     -- Do not allow to switch playlists when player is dead
     local musicPlaying = ambient.isMusicPlaying()
@@ -588,11 +597,6 @@ return {
 
         onFrame = onFrame,
 
-        onTeleported = function()
-            StaticList = {}
-            core.sendGlobalEvent('S3maphoreStaticUpdate', self)
-        end,
-
         onSave = function()
             local playlistStates = {}
 
@@ -608,10 +612,6 @@ return {
 
         onLoad = function(data)
             if not data then return end
-
-            for k, v in pairs(data.staticList or {}) do
-                StaticList[k] = v
-            end
 
             for playlistId, playlistState in pairs(data.playlistStates or {}) do
                 activePlaylistSettings:set(playlistId .. 'Active', playlistState)
@@ -651,8 +651,23 @@ return {
             MusicManager.updateBanner()
         end,
 
-        S3maphoreStaticCollectionUpdated = function(staticList)
-            StaticList = staticList
+        S3maphoreCombatTargetsUpdated = function(hasCombatTargets)
+            PlaylistState.cellHasCombatTargets = hasCombatTargets
+        end,
+
+        S3maphoreCellDataUpdated = function(cellChangeData)
+            StaticList = cellChangeData.staticList
+            PlaylistState.cellHasCombatTargets = cellChangeData.hasCombatTargets
+
+            local shouldUseName = self.cell.name ~= nil and self.cell.name ~= ''
+
+            PlaylistState.cellIsExterior = self.cell.isExterior or self.cell:hasTag('QuasiExterior')
+            PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
+            PlaylistState.staticList = self.cell.isExterior and nil or StaticList
+
+            awaitingUpdate = false
+
+            print('Cell data updated!')
         end,
     }
 }
