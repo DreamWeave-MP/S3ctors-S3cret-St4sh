@@ -80,6 +80,8 @@ local function initPlaylistL10n(playlistId)
 end
 
 
+---@class MusicManager
+---@field Rules PlaylistRules
 local MusicManager = {
     ---@enum S3maphoreStateChangeReason
     STATE = util.makeReadOnly {
@@ -144,6 +146,7 @@ end
 
 ---@type PlaylistRules
 local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState)
+MusicManager.Rules = util.makeReadOnly(PlaylistRules)
 
 ---@class Playback
 ---@field state PlaylistState
