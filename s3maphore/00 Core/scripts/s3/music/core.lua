@@ -20,16 +20,7 @@ activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
 local registeredPlaylists = {}
 
 local BattleEnabled = true
-
-musicSettings:subscribe(
-    async:callback(
-        function(_, key)
-            if not key or key == 'BattleEnabled' then
-                BattleEnabled = musicSettings:get('BattleEnabled')
-            end
-        end
-    )
-)
+local NoInterrupt = true
 
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
 --- In other words, this is the bit that responds to changes from the settings menu
@@ -110,6 +101,24 @@ local MusicManager = {
     }
 }
 
+musicSettings:subscribe(
+    async:callback(
+        function(_, key)
+            if not key or key == 'BattleEnabled' then
+                BattleEnabled = musicSettings:get('BattleEnabled')
+            end
+
+            if not key or key == 'NoInterrupt' then
+                NoInterrupt = musicSettings:get('NoInterrupt')
+            end
+
+            if not key or key == 'BannerEnabled' then
+                MusicManager.updateBanner()
+            end
+        end
+    )
+)
+
 ---@class PlaylistState
 ---@field self userdata the player actor
 ---@field playlistTimeOfDay TimeMap the time of day for the current playlist
@@ -164,6 +173,7 @@ local queuedEvent
 ---@field registrationOrder number? the order in which the playlist was registered, used for sorting playlists by priority. Do not provide in the playlist definition, it will be assigned automatically.
 ---@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
 ---@field noInterrupt boolean? If true, playback is not interrupted when the playlist is invalid and will wait for the track to finish. Defaults to false
+---@field force boolean? opposite of noInterrupt. Overrides the global noInterrupt setting and forces a given playlist to start
 ---@field isValidCallback ValidPlaylistCallback?
 
 ---@class S3maphoreStateChangeEventData
@@ -358,6 +368,19 @@ function MusicManager.playlistTimeOfDay()
     return MusicManager.TIME_MAP[dayPortion]
 end
 
+function MusicManager.updateBanner()
+    local playlist, track = MusicManager.getCurrentTrackInfo()
+
+    if playlist and track and musicSettings:get('BannerEnabled') then
+        MusicBanner.layout.props.visible = true
+        MusicBanner.layout.content[1].props.text = ('%s\n\n%s'):format(playlist, track)
+    else
+        MusicBanner.layout.props.visible = false
+    end
+
+    MusicBanner:update()
+end
+
 local function playlistCoroutineLoader()
     for _, file in ipairs(PlaylistFileList) do
         local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
@@ -489,11 +512,18 @@ local function onFrame(dt)
         return
     end
 
-    -- Bail on switch if the current playlist is the same as the current one, or the current one cannot be interrupted.
+    -- If there's already a track running
     if musicPlaying
         and (
+        --- And the playlist hasn't actually changed
             (newPlaylist == currentPlaylist)
-            or (currentPlaylist and currentPlaylist.noInterrupt)
+            or (
+            --- Or the current one specifies it may not be interrupted
+                (currentPlaylist and currentPlaylist.noInterrupt)
+                or
+                --- Or the global noInterrupt setting is enabled, and the new playlist can't force itself to run
+                NoInterrupt and not (newPlaylist ~= nil and newPlaylist.force)
+            )
         ) then
         return
     end
@@ -611,26 +641,14 @@ return {
         S3maphoreMusicStopped = function(eventData)
             helpers.debugLog("Music stopped:", eventData.reason)
 
-            MusicBanner.layout.props.visible = false
-            MusicBanner:update()
+            MusicManager.updateBanner()
         end,
 
         ---@param eventData S3maphoreStateChangeEventData
         S3maphoreTrackChanged = function(eventData)
             helpers.debugLog("Track changed! Current playlist is:", eventData.playlistId, "Track:", eventData.trackName)
 
-            local playlist, track = MusicManager.getCurrentTrackInfo()
-
-            print(playlist, track, musicSettings:get('BannerEnabled'))
-
-            if playlist and track and musicSettings:get('BannerEnabled') then
-                MusicBanner.layout.props.visible = true
-                MusicBanner.layout.content[1].props.text = ('%s\n\n%s'):format(playlist, track)
-            else
-                MusicBanner.layout.props.visible = false
-            end
-
-            MusicBanner:update()
+            MusicManager.updateBanner()
         end,
 
         S3maphoreStaticCollectionUpdated = function(staticList)
