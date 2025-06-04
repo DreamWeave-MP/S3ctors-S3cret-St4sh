@@ -272,11 +272,44 @@ function PlaylistRules.region(regionNames)
         and regionNames[currentRegion] or false
 end
 
+---@class NumericPresenceMapData
+---@field min integer
+---@field max integer
+
+---@alias NumericPresneceMap table<string, NumericPresenceMapData>
+
+local Quests
+
+--- Playlist rule for checking a specific journal state
+---
+--- Example usage:
+---
+--- playback.rules.journal { A1_V_VivecInformants = { min = 50, max = 55, }, }
+---@param journalDataMap NumericPresneceMap
+---@return boolean
+function PlaylistRules.journal(journalDataMap)
+    for questName, questRange in pairs(journalDataMap) do
+        local quest = Quests[questName]
+
+        if quest then
+            local questState = quest.stage
+
+            if questState <= questRange.max and questState >= questRange.min then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
 ---@param playlistState PlaylistState A long-living reference to the playlist state table. To aggressively minimize new allocations, this table is created once when the core initializes and is continually updated througout the lifetime of the script.
 return function(playlistState)
     assert(playlistState)
 
     PlaylistRules.state = playlistState
+
+    Quests = playlistState.self.type.quests(playlistState.self)
 
     return PlaylistRules
 end
