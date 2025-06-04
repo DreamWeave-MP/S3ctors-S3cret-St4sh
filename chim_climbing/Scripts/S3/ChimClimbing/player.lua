@@ -51,12 +51,12 @@ local ClimbState = {
 
 
 --- Toggles the override state for various control systems in the game.
---- 
---- This function enables or disables the override for movement, combat, 
+---
+--- This function enables or disables the override for movement, combat,
 --- and UI controls based on the provided state.
 ---
 --- @param state boolean
----   A boolean value indicating whether to enable (`true`) or disable (`false`) 
+---   A boolean value indicating whether to enable (`true`) or disable (`false`)
 ---   the override for the controls.
 function ClimbMod.switchControls(state)
     I.Controls.overrideMovementControls(state)
@@ -115,12 +115,12 @@ function ClimbMod.disengage()
 end
 
 --- Calculates the fatigue drain for climbing based on game settings and the player's encumbrance.
---- 
---- This function retrieves the base fatigue drain and the multiplier for fatigue drain from 
---- game settings (GMST). It then calculates the normalized encumbrance of the player as a 
---- ratio of their current encumbrance to their maximum capacity. The final fatigue drain 
---- is computed as the sum of the base fatigue drain and the product of the multiplier with 
---- the normalized encumbrance. 
+---
+--- This function retrieves the base fatigue drain and the multiplier for fatigue drain from
+--- game settings (GMST). It then calculates the normalized encumbrance of the player as a
+--- ratio of their current encumbrance to their maximum capacity. The final fatigue drain
+--- is computed as the sum of the base fatigue drain and the product of the multiplier with
+--- the normalized encumbrance.
 --- https://wiki.openmw.org/index.php?title=Research:Movement#On_jumping
 ---
 --- @return number The calculated fatigue drain value.
@@ -133,7 +133,7 @@ function ClimbMod.getFatigueDrain()
 end
 
 --- Calculates the flat value of a given stat, ensuring it does not exceed 100.
---- 
+---
 --- This function takes a stat object with a `modified` property and returns
 --- the lesser of the `modified` value or 100. It is useful for clamping
 --- stat values to a maximum threshold.
@@ -141,7 +141,7 @@ end
 --- @param stat userdata A table representing the stat, which must contain a `modified` field.
 --- @return number The clamped stat value, capped at 100.
 local function getStatMult(stat)
----@diagnostic disable-next-line: undefined-field
+    ---@diagnostic disable-next-line: undefined-field
     return math.min(stat.modified, 100) / 100
 end
 
@@ -155,7 +155,8 @@ function ClimbMod.getSpeedMult()
     local acrobaticsFactor = getStatMult(Acrobatics)
 
     -- Weighted formula for climbing speed multiplier
-    local multiplier = 1.0 + (0.4 * speedFactor) + (0.3 * athleticsFactor) + (0.1 * agilityFactor) + (0.2 * acrobaticsFactor)
+    local multiplier = 1.0 + (0.4 * speedFactor) + (0.3 * athleticsFactor) + (0.1 * agilityFactor) +
+        (0.2 * acrobaticsFactor)
 
     -- Clamp the multiplier to a reasonable range (e.g., 1.0 to 2.0)
     return math.min(math.max(multiplier, 1.0), 2.0)
@@ -178,7 +179,7 @@ local DefaultUpVector = util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
 --- Perform a raycast to find the maximum climbable height.
 --- @param center util.vector3 The starting position of the raycast.
 --- @param scanPos util.vector3 The ending position of the raycast.
---- @return RayCastingResult|nil hitResult The highest hit object or nil if no valid hit is found. 
+--- @return RayCastingResult|nil hitResult The highest hit object or nil if no valid hit is found.
 function ClimbMod.findMaxClimbableHeight(center, scanPos)
     local upwardHit
     while true do
@@ -212,7 +213,6 @@ function ClimbMod.isClimbable(upwardHit)
     end
 
     local climbMin, climbMax = ClimbMod.climbRanges()
-    print(upwardHit.hitPos.z, climbMin, climbMax) 
 
     -- Check if the hit object is within climbable height range
     if upwardHit.hitPos.z < climbMin or upwardHit.hitPos.z > climbMax then
