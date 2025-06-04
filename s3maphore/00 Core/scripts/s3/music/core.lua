@@ -126,6 +126,7 @@ musicSettings:subscribe(
 ---@field isUnderwater boolean
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
 ---@field staticList userdata[]? a read-only list of static objects in the cell, if the cell is not exterior. If the static list is not yet valid, is an empty table. Nil for "true" exteriors.
+---@field weather WeatherType
 local PlaylistState = {
     self = self,
     combatTargets = fightingActors,
@@ -668,6 +669,12 @@ return {
             PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
 
             awaitingUpdate = false
+        end,
+
+        S3maphoreWeatherChanged = function(weatherName)
+            helpers.debugLog(('weather changed to %s'):format(weatherName))
+
+            PlaylistState.weather = weatherName
         end,
     }
 }
