@@ -77,7 +77,7 @@ function ClimbMod.engage(risePos, endPos)
         climbEngaged = true,
         climbRisePos = risePos,
         climbEndPos = endPos,
-        prevCamMode = camera.getMode(),
+        prevCamMode = camera.getMode() ~= camera.MODE.Preview and camera.getMode() or camera.MODE.ThirdPerson,
     }
 
     camera.setMode(camera.MODE.FirstPerson)
