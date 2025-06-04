@@ -89,7 +89,14 @@ I.Settings.registerGroup({
             name = 'BannerEnabled',
             description = 'BannerEnabledDescription',
             default = false,
-        }
+        },
+        {
+            key = 'NoInterrupt',
+            renderer = 'checkbox',
+            name = 'NoInterrupt',
+            description = 'NoInterruptDescription',
+            default = true,
+        },
     },
 })
 
@@ -171,7 +178,8 @@ I.Settings.registerGroup({
             renderer = 'checkbox',
             argument = {},
             name = 'PlaylistActiveState',
-            description = 'PlaylistActiveStateDescription'
+            description = 'PlaylistActiveStateDescription',
+            default = true,
         }
     }
 
