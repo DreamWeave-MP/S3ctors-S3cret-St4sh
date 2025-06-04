@@ -19,7 +19,7 @@ local LightColor = util.color.rgb(
     Constants.normalColor.b * LightFactor
 )
 
-local BannerSize = ui.screenSize():emul(util.vector2(0.15, 0.075))
+local BannerSize = ui.layers[1].size:emul(util.vector2(0.15, 0.075))
 local SongBanner = ui.create {
     layer = 'HUD',
     name = 'S3maphore_TrackBanner',
