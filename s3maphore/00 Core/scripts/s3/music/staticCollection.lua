@@ -75,8 +75,10 @@ return {
             local staticContentFiles, staticRecordIds = getStaticsInActorCell(sender)
 
             sender:sendEvent('S3maphoreCellDataUpdated', {
-                contentFiles = staticContentFiles,
-                recordIds = staticRecordIds,
+                staticList = {
+                    contentFiles = staticContentFiles,
+                    recordIds = staticRecordIds,
+                },
                 hasCombatTargets = cellHasCombatTargets(sender.cell)
             })
         end,
