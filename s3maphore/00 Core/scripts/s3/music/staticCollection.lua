@@ -51,6 +51,22 @@ local function getStaticsInActorCell(actor)
     return addedStatics, addedContentFiles
 end
 
+local Globals = world.mwscript.getGlobalVariables()
+
+---@enum WeatherType
+local WeatherType = {
+    [0] = 'clear',
+    [1] = 'cloudy',
+    [2] = 'foggy',
+    [3] = 'overcast',
+    [4] = 'rain',
+    [5] = 'thunder',
+    [6] = 'ash',
+    [7] = 'blight',
+    [8] = 'snow',
+    [9] = 'blizzard',
+}
+
 return {
     interfaceName = 'S3maphoreG',
     interface = {
@@ -72,6 +88,22 @@ return {
         cellHasCombatTargets = cellHasCombatTargets,
 
         getStaticsInActorCell = getStaticsInActorCell,
+    },
+
+    engineHandlers = {
+
+        onUpdate = function()
+            if Globals.S3maphoreWeatherTracker ~= -1 then
+                local weatherName = WeatherType[Globals.S3maphoreWeatherTracker]
+
+                for _, player in ipairs(world.players) do
+                    player:sendEvent('S3maphoreWeatherChanged', weatherName)
+                end
+
+                Globals.S3maphoreWeatherTracker = -1
+            end
+        end,
+
     },
 
     eventHandlers = {
