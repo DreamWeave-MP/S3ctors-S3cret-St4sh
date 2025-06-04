@@ -28,3 +28,6 @@ ResetButtonLabel: "Reset"
 
 BattleEnabled: "Enable Battle Music"
 BattleEnabledDescription: "If false, all battle playlists will be skipped."
+
+NoInterrupt: "Finish Previous Track"
+NoInterruptDescription: "Allow finishing the previous song when the current playlist changes.\nCan be overridden if the playlist has the force parameter set to true."
