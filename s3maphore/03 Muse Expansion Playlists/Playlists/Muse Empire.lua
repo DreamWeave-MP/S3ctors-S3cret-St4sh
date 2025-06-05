@@ -94,7 +94,6 @@ local EmpireCellMatches = {
         'guild of mages',
         'guild of fighters',
         'sewers',
-        'old ebonheart',
     },
 }
 
