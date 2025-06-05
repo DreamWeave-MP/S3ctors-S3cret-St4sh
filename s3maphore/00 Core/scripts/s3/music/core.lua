@@ -175,8 +175,7 @@ local queuedEvent
 ---@field playOneTrack boolean? if true, the playlist will play only one track and then deactivate. Defaults to false
 ---@field registrationOrder number? the order in which the playlist was registered, used for sorting playlists by priority. Do not provide in the playlist definition, it will be assigned automatically.
 ---@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
----@field noInterrupt boolean? If true, playback is not interrupted when the playlist is invalid and will wait for the track to finish. Defaults to false
----@field force boolean? opposite of noInterrupt. Overrides the global noInterrupt setting and forces a given playlist to start
+---@field interruptMode InterruptMode? whether a given playlist should be interrupted by others or interrupt others. By default, Explore playlists can be interrupted, battle playlists will interrupt other playlists, and Special playlists will never be interrupted.
 ---@field isValidCallback ValidPlaylistCallback?
 
 ---@class S3maphoreStateChangeEventData
@@ -515,16 +514,19 @@ local function onFrame(dt)
 
     local newPlaylist = helpers.getActivePlaylistByPriority(registeredPlaylists, Playback)
 
-    if not newPlaylist and musicPlaying then
-        ambient.stopMusic()
-        queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = MusicManager.STATE.NoPlaylist } }
+    if not newPlaylist then
+        if musicPlaying then
+            ambient.stopMusic()
+            queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = MusicManager.STATE.NoPlaylist } }
 
-        if currentPlaylist ~= nil then
-            currentPlaylist.deactivateAfterEnd = nil
+            if currentPlaylist ~= nil then
+                currentPlaylist.deactivateAfterEnd = nil
+            end
+
+            currentPlaylist = nil
+            currentTrack = nil
         end
 
-        currentPlaylist = nil
-        currentTrack = nil
         return
     end
 
