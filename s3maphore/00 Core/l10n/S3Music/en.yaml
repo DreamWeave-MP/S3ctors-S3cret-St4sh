@@ -1,5 +1,5 @@
 Music: "S3maphore - MOMW Music"
-settingsPageDescription: "S3maphore music settings."
+settingsPageDescription: "Enable and disable playback, specific playlists, battle music, and playlist override behavior."
 
 musicSettings: "Music Configuration"
 
@@ -30,4 +30,16 @@ BattleEnabled: "Enable Battle Music"
 BattleEnabledDescription: "If false, all battle playlists will be skipped."
 
 NoInterrupt: "Finish Previous Track"
-NoInterruptDescription: "Allow finishing the previous song when the current playlist changes.\nCan be overridden if the playlist has the force parameter set to true."
+NoInterruptDescription: "Allow finishing the previous song when the current playlist changes.\n\nOnly affects playlists with the same interrupt priority, so entering a Dwemer dungeon while an Ashlands track is playing,\nwill mean the Dwemer track does not start, until the Ashland one has finished.\n\nGenerally playlists will interrupt one another in order of Explore -> Battle -> Special, if their interrupt modes are different."
+
+ForcePlaylistChangeOnOverworldTransition: "Allow Overworld Playlist Override"
+ForcePlaylistChangeOnOverworldTransitionDescription: "If enabled, overrides the finish previous track setting when outdoors.\n\nThis setting takes playlist priority into account, so that, if enabled, a city or faction-based playlist will override a region-based one, but not vice-versa."
+
+ForcePlaylistChangeOnHostileExteriorTransition: "Allow Dungeon Playlist Override"
+ForcePlaylistChangeOnHostileExteriorTransitionDescription: "If enabled, overrides the finish previous track setting when entering an interior with hostile targets.\n\nNote that this means overrides will not occur after a dungeon or cell has been cleared of enemies."
+
+ForcePlaylistChangeOnFriendlyExteriorTransition: "Allow Friendly Interior Playlist Override"
+ForcePlaylistChangeOnFriendlyExteriorTransitionDescription: "If enabled, overrides the finish previous track setting when entering an interior with no hostile targets."
+
+FadeOutDuration: "Default Fade Duration"
+FadeOutDurationDescription: "Fadeout time between tracks used if the current playlist doesn't define its own fadeout timer."

@@ -19,8 +19,27 @@ activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
 
 local registeredPlaylists = {}
 
-local BattleEnabled = true
-local NoInterrupt = true
+local forceSkip = false
+local BattleEnabled = musicSettings:get('BattleEnabled')
+local ForceFinishTrack = musicSettings:get('ForceFinishTrack')
+
+local ForcePlaylistChangeOnFriendlyExteriorTransition = musicSettings:get(
+    'ForcePlaylistChangeOnFriendlyExteriorTransition')
+
+local ForcePlaylistChangeOnHostileExteriorTransition = musicSettings:get(
+    'ForcePlaylistChangeOnHostileExteriorTransition')
+
+local OverworldSkip = musicSettings:get('ForcePlaylistChangeOnOverworldTransition')
+
+local FadeOutDuration = musicSettings:get('FadeOutDuration')
+
+local PlaylistSkipFormatStr = [[Track Skip:
+        Did Change Playlist: %s
+        Transitioned from interior to exterior: %s
+        Force transition for friendly cell: %s
+        Force Transition for hostile cell: %s
+        Force Overworld Transition: %s
+        Cell is hostile: %s]]
 
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
 --- In other words, this is the bit that responds to changes from the settings menu
@@ -97,7 +116,13 @@ local MusicManager = {
         [1] = 'morning',
         [2] = 'afternoon',
         [3] = 'evening',
-    }
+    },
+    ---@enum InterruptMode
+    INTERRUPT = util.makeReadOnly {
+        Me = 0,    -- Explore
+        Other = 1, -- Battle
+        Never = 2, -- Special
+    },
 }
 
 musicSettings:subscribe(
@@ -107,12 +132,30 @@ musicSettings:subscribe(
                 BattleEnabled = musicSettings:get('BattleEnabled')
             end
 
-            if not key or key == 'NoInterrupt' then
-                NoInterrupt = musicSettings:get('NoInterrupt')
+            if not key or key == 'ForceFinishTrack' then
+                ForceFinishTrack = musicSettings:get('ForceFinishTrack')
             end
 
             if not key or key == 'BannerEnabled' then
                 MusicManager.updateBanner()
+            end
+
+            if not key or key == 'FadeOutDuration' then
+                FadeOutDuration = musicSettings:get('FadeOutDuration')
+            end
+
+            if not key or key == 'ForcePlaylistChangeOnFriendlyExteriorTransition' then
+                ForcePlaylistChangeOnFriendlyExteriorTransition = musicSettings:get(
+                    'ForcePlaylistChangeOnFriendlyExteriorTransition')
+            end
+
+            if not key or key == 'ForcePlaylistChangeOnHostileExteriorTransition' then
+                ForcePlaylistChangeOnHostileExteriorTransition = musicSettings:get(
+                    'ForcePlaylistChangeOnHostileExteriorTransition')
+            end
+
+            if not key or key == 'ForcePlaylistChangeOnOverworldTransition' then
+                OverworldSkip = musicSettings:get('ForcePlaylistChangeOnOverworldTransition')
             end
         end
     )
@@ -133,6 +176,9 @@ local PlaylistState = {
     self = self,
     combatTargets = fightingActors,
     staticList = {},
+    cellIsExterior = (
+        self.cell.isExterior or self.cell:hasTag('QuasiExterior')
+    ),
 }
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
@@ -186,7 +232,7 @@ local queuedEvent
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
-    helpers.initMissingPlaylistFields(playlist)
+    helpers.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
     initPlaylistL10n(playlist.id)
 
     local existingOrder = playlistsTracksOrder[playlist.id]
@@ -298,11 +344,11 @@ end
 --- Stops the currently playing track, if any.
 --- The onFrame handler will naturally switch to the next track or playlist
 function MusicManager.skipTrack()
-    if ambient.isMusicPlaying() then
-        ambient.stopMusic()
-    end
+    forceSkip = forceSkip or ambient.isMusicPlaying()
 end
 
+--- Tells whether or not music playback is completely disabled
+---@return boolean canPlayMusic
 function MusicManager.getEnabled()
     return musicSettings:get("MusicEnabled")
 end
@@ -352,7 +398,7 @@ function MusicManager.playSpecialTrack(trackPath, reason)
 
     MusicManager.setPlaylistActive('Special', true)
 
-    local fadeOut = currentPlaylist and currentPlaylist.fadeOut ~= nil and currentPlaylist.fadeOut or 1.0
+    local fadeOut = currentPlaylist and currentPlaylist.fadeOut ~= nil and currentPlaylist.fadeOut or FadeOutDuration
 
     ambient.streamMusic(trackPath, fadeOut)
 
@@ -468,7 +514,7 @@ local function switchPlaylist(newPlaylist)
         error(string.format("Can not fetch track with index %s from playlist '%s'.", nextTrackIndex, newPlaylist.id))
     else
         currentTrack = trackPath
-        ambient.streamMusic(trackPath, newPlaylist.fadeOut)
+        ambient.streamMusic(trackPath, newPlaylist.fadeOut or FadeOutDuration)
 
         if newPlaylist.playOneTrack then
             newPlaylist.deactivateAfterEnd = true
@@ -478,7 +524,37 @@ local function switchPlaylist(newPlaylist)
     currentPlaylist = newPlaylist
 end
 
-local awaitingUpdate = false
+---@param oldPlaylist S3maphorePlaylist?
+---@param newPlaylist S3maphorePlaylist
+---@return boolean canSwitchPlaylist
+local function canSwitchPlaylist(oldPlaylist, newPlaylist)
+    if not oldPlaylist then                                                                 --- No playlist, eg no music playing, means we can switch
+        return true
+    elseif oldPlaylist.interruptMode == MusicManager.INTERRUPT.Never then                   --- But never interrupt a playlist that specifies it can't be interrupted
+        return false
+    elseif ForceFinishTrack and oldPlaylist.interruptMode == newPlaylist.interruptMode then --- And also allow battle and explore playlist to flow nicely between themselves
+        return false
+    elseif oldPlaylist.interruptMode <= MusicManager.INTERRUPT.Other then                   --- And otherwise, if the interrupt mode changes then allow the new playlist
+        return true
+    end
+
+    helpers.debugLog(
+        ('Playlist Interrupt Modes Fell Through!\nOld Playlist: %s Interrupt Mode: %s\nNew Playlist: %s InterruptMode: %s')
+        :format(
+            oldPlaylist.id,
+            oldPlaylist.interruptMode,
+            newPlaylist.id,
+            newPlaylist.interruptMode
+        )
+    )
+
+    return false
+end
+
+local awaitingUpdate, didChangePlaylist = false, false
+
+local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
+
 local previousCell
 
 local function onFrame(dt)
@@ -530,21 +606,69 @@ local function onFrame(dt)
         return
     end
 
+    didChangePlaylist = didChangePlaylist or
+        (
+            currentPlaylist ~= nil
+            and newPlaylist ~= nil
+            and currentPlaylist ~= newPlaylist
+        )
+
+    local didTransition = inExteriorBeforeCellChange ~= PlaylistState.cellIsExterior
+
+    forceSkip = forceSkip or didChangePlaylist
+        and (
+            didTransition and (
+                (
+                    (
+                        ForcePlaylistChangeOnFriendlyExteriorTransition
+                        and not PlaylistState.cellHasCombatTargets
+                    ) or (
+                        ForcePlaylistChangeOnHostileExteriorTransition
+                        and PlaylistState.cellHasCombatTargets
+                        and not self.cell.isExterior -- Only do this skip type for *real* interiors
+                    )
+                )
+            ) or (
+                OverworldSkip and inExteriorBeforeCellChange and PlaylistState.cellIsExterior
+                and (newPlaylist.priority < (currentPlaylist and currentPlaylist.priority or 1000))
+            )
+        )
+
+    if didTransition then
+        -- if forceSkip then
+        helpers.debugLog(
+            PlaylistSkipFormatStr:format(
+                didChangePlaylist,
+                didTransition,
+                ForcePlaylistChangeOnFriendlyExteriorTransition,
+                ForcePlaylistChangeOnHostileExteriorTransition,
+                OverworldSkip,
+                PlaylistState.cellHasCombatTargets
+            )
+        )
+        didChangePlaylist = false
+    end
+
+    --- Update this particular state value as it could change before other less-relevant ones are updated, making
+    --- skip detection *potentially* less accurate
+    inExteriorBeforeCellChange = PlaylistState.cellIsExterior
+
     -- If there's already a track running
     if musicPlaying
-        and (
-        --- And the playlist hasn't actually changed
-            (newPlaylist == currentPlaylist)
-            or (
-            --- Or the current one specifies it may not be interrupted
-                (currentPlaylist and currentPlaylist.noInterrupt)
-                or
-                --- Or the global noInterrupt setting is enabled, and the new playlist can't force itself to run
-                NoInterrupt and not (newPlaylist ~= nil and newPlaylist.force)
+        and ((
+            --- And the playlist hasn't actually changed
+                newPlaylist == currentPlaylist
+                --- or the interruptMode prevents changing playlists
+                or not canSwitchPlaylist(currentPlaylist, newPlaylist)
             )
+            --- but only if we didn't force a transition with F8, or the appropriate setting override
+            and not forceSkip
         ) then
         return
     end
+
+    forceSkip = false
+    didChangePlaylist = false
 
     if newPlaylist and newPlaylist.deactivateAfterEnd then
         newPlaylist.deactivateAfterEnd = nil
@@ -584,7 +708,6 @@ MusicManager.registerPlaylist {
     id = 'Special',
     priority = 50,
     playOneTrack = true,
-    noInterrupt = true,
     active = false,
 
     tracks = {},
@@ -599,7 +722,7 @@ return {
 
         onKeyPress = function(key)
             if key.code == input.KEY.F8 then
-                self:sendEvent('S3maphoreSkipTrack')
+                forceSkip = true
             elseif key.code == input.KEY.F4 then
             end
         end,
