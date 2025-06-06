@@ -1,5 +1,4 @@
 local core = require 'openmw.core'
-local nearby = require('openmw.nearby')
 
 --- Alias for defining S3maphore rules for object record ids allowing or disallowing playlist selection
 ---@alias IDPresenceMap table<string, boolean>
@@ -279,6 +278,13 @@ end
 ---@alias NumericPresneceMap table<string, NumericPresenceMapData>
 
 local Quests
+local S3maphoreJournalCache = {}
+
+---@private
+---Clear the journal cache when a player gets a journal update
+function PlaylistRules.clearJournalCache()
+    S3maphoreJournalCache = {}
+end
 
 --- Playlist rule for checking a specific journal state
 ---
@@ -288,6 +294,14 @@ local Quests
 ---@param journalDataMap NumericPresneceMap
 ---@return boolean
 function PlaylistRules.journal(journalDataMap)
+    local cachedResult = S3maphoreJournalCache[journalDataMap]
+
+    if cachedResult ~= nil then
+        return cachedResult
+    end
+
+    local result = false
+
     for questName, questRange in pairs(journalDataMap) do
         local quest = Quests[questName]
 
@@ -295,12 +309,15 @@ function PlaylistRules.journal(journalDataMap)
             local questState = quest.stage
 
             if questState <= questRange.max and questState >= questRange.min then
-                return true
+                result = true
+                break
             end
         end
     end
 
-    return false
+    S3maphoreGlobalCache[journalDataMap] = result
+
+    return result
 end
 
 ---@param playlistState PlaylistState A long-living reference to the playlist state table. To aggressively minimize new allocations, this table is created once when the core initializes and is continually updated througout the lifetime of the script.
@@ -310,6 +327,7 @@ return function(playlistState)
     PlaylistRules.state = playlistState
 
     Quests = playlistState.self.type.quests(playlistState.self)
+    assert(Quests)
 
     return PlaylistRules
 end
