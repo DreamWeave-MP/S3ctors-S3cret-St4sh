@@ -1,3 +1,6 @@
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
+
 ---@type CellMatchPatterns
 local ShotnCityPatterns = {
     allowed = {
@@ -32,9 +35,15 @@ local ShotnCityPatterns = {
 }
 
 ---@type ValidPlaylistCallback
-local function shotnCityRule(playback)
-    return not playback.state.isInCombat
-        and playback.rules.cellNameMatch(ShotnCityPatterns)
+local function shotnCityRule()
+    return not Playback.state.isInCombat
+        and Playback.rules.cellNameMatch(ShotnCityPatterns)
+end
+
+---@type ValidPlaylistCallback
+local function shotnCombatCityRule()
+    return Playback.state.isInCombat
+        and Playback.rules.cellNameMatch(ShotnCityPatterns)
 end
 
 ---@type IDPresenceMap
@@ -51,12 +60,16 @@ local ShotnRegions = {
 }
 
 ---@type ValidPlaylistCallback
-local function shotnRegionRule(playback)
-    return not playback.state.isInCombat
-        and playback.rules.region(ShotnRegions)
+local function shotnRegionRule()
+    return not Playback.state.isInCombat
+        and Playback.rules.region(ShotnRegions)
 end
 
-local PlaylistPriority = require 'doc.playlistPriority'
+---@type ValidPlaylistCallback
+local function shotnCombatRegionRule()
+    return Playback.state.isInCombat
+        and Playback.rules.region(ShotnRegions)
+end
 
 return {
     {
@@ -72,5 +85,19 @@ return {
         randomize = true,
 
         isValidCallback = shotnRegionRule,
-    }
+    },
+    {
+        id = 'shotn/combat-city',
+        priority = PlaylistPriority.BattleMod,
+        randomize = true,
+
+        isValidCallback = shotnCombatCityRule,
+    },
+    {
+        id = 'shotn/combat-wilds',
+        priority = PlaylistPriority.BattleMod,
+        randomize = true,
+
+        isValidCallback = shotnCombatRegionRule,
+    },
 }
