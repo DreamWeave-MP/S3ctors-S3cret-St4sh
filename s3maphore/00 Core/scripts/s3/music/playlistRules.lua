@@ -9,7 +9,10 @@ local core = require 'openmw.core'
 
 ---@class PlaylistRules helper functions for running playlist behaviors
 ---@field state PlaylistState
-local PlaylistRules = {}
+local PlaylistRules = {
+    ---@type S3maphoreCacheKey
+    combatTargetCacheKey = nil,
+}
 
 --- Lookup table for storing the results of location-based matches
 ---@alias S3maphoreMatchCache table<string, boolean>
@@ -79,15 +82,27 @@ end
 function PlaylistRules.combatTargetExact(validTargets)
     if not PlaylistRules.state.isInCombat then return false end
 
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[validTargets] ~= nil then
+        return currentCombatTargetsCache[validTargets]
+    end
+
     local FightingActors = PlaylistRules.state.combatTargets
 
+    local result = false
     for _, actor in pairs(FightingActors) do
         local actorName = actor.type.records[actor.recordId].name:lower()
 
         if validTargets[actorName] then
-            return true
+            result = true
+            break
         end
     end
+
+    currentCombatTargetsCache[validTargets] = result
 
     return false
 end
@@ -102,15 +117,27 @@ end
 function PlaylistRules.combatTargetMatch(validTargetPatterns)
     if not PlaylistRules.state.isInCombat then return false end
 
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[validTargetPatterns] ~= nil then
+        return currentCombatTargetsCache[validTargetPatterns]
+    end
+
     local combatTargets = PlaylistRules.state.combatTargets
 
-    for _, actor in pairs(combatTargets) do
-        if S3maphoreGlobalCache[actor.id] == nil then S3maphoreGlobalCache[actor.id] = {} end
+    local result = false
 
-        local cachedResult = S3maphoreGlobalCache[actor.id][validTargetPatterns]
+    for _, actor in pairs(combatTargets) do
+        if S3maphoreGlobalCache[actor.recordId] == nil then S3maphoreGlobalCache[actor.recordId] = {} end
+
+        local cachedResult = S3maphoreGlobalCache[actor.recordId][validTargetPatterns]
+
         if cachedResult ~= nil then
             if cachedResult then
-                return true
+                result = true
+                break
             else
                 goto continue
             end
@@ -126,14 +153,16 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
             end
         end
 
-        S3maphoreGlobalCache[actor.id][validTargetPatterns] = result
+        S3maphoreGlobalCache[actor.recordId][validTargetPatterns] = result
 
-        if result then return true end
+        if result then break end
 
         ::continue::
     end
 
-    return false
+    currentCombatTargetsCache[validTargetPatterns] = result
+
+    return result
 end
 
 --- Checks the current cell's static list for whether

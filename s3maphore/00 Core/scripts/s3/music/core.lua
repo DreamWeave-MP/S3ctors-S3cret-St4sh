@@ -506,6 +506,7 @@ local function loadNextPlaylistStep()
     end
 end
 
+local CombatTargetCacheKey
 local function onCombatTargetsChanged(eventData)
     if eventData.actor == nil then return end
 
@@ -518,6 +519,18 @@ local function onCombatTargetsChanged(eventData)
     core.sendGlobalEvent('S3maphoreUpdateCellHasCombatTargets', self)
 
     PlaylistState.isInCombat = BattleEnabled and helpers.isInCombat(fightingActors)
+
+    if PlaylistState.isInCombat then
+        CombatTargetCacheKey = tostring(fightingActors)
+
+        for targetId, _ in pairs(fightingActors) do
+            CombatTargetCacheKey = ('%s%s'):format(CombatTargetCacheKey, targetId)
+        end
+
+        PlaylistRules.combatTargetCacheKey = CombatTargetCacheKey
+    else
+        CombatTargetCacheKey, PlaylistRules.combatTargetCacheKey = nil, nil
+    end
 end
 
 local function playerDied()
@@ -675,7 +688,9 @@ local function onFrame(dt)
                 )
             ) or (
                 OverworldSkip and inExteriorBeforeCellChange and PlaylistState.cellIsExterior
-                and (newPlaylist.priority < (currentPlaylist and currentPlaylist.priority or 1000))
+                and (
+                    newPlaylist.priority < (currentPlaylist and currentPlaylist.priority or 1000)
+                )
             )
         )
 
