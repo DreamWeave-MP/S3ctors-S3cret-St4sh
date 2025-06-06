@@ -429,16 +429,58 @@ function MusicManager.updateBanner()
     MusicBanner:update()
 end
 
+local aux_util = require 'openmw_aux.util'
+
+---@class S3maphorePlaylistEnv
+local PlaylistEnvironment = {
+    playSpecialTrack = MusicManager.playSpecialTrack,
+    skipTrack = MusicManager.skipTrack,
+    setPlaylistActive = MusicManager.setPlaylistActive,
+    timeOfDay = MusicManager.playlistTimeOfDay,
+    INTERRUPT = MusicManager.INTERRUPT,
+    PlaylistPriority = require 'doc.playlistPriority',
+    Playback = Playback,
+    ---@type table <string, any>
+    I = I,
+    require = require,
+    math = math,
+    string = string,
+    --- Takes any number of paramaters and deep prints them, if debug logging is enabled
+    ---@param ... any
+    print = function(...)
+        helpers.debugLog(aux_util.deepToString({ ... }, 3))
+    end,
+}
+
 local function playlistCoroutineLoader()
+    local result, codeString
+
     for _, file in ipairs(PlaylistFileList) do
-        local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
-        if ok and type(playlists) == "table" then
-            for _, playlist in ipairs(playlists) do
-                MusicManager.registerPlaylist(playlist)
-                coroutine.yield(playlist)
-            end
+        helpers.debugLog('reading playlist file', file)
+        --- open the file
+        local ok, fileHandle = pcall(vfs.open, file)
+        if not ok then goto fail end
+        --- read all lines
+        codeString = fileHandle:read('*a')
+        --- util.loadCode it
+        ok, result = pcall(util.loadCode, codeString, PlaylistEnvironment)
+        if not ok or type(result) ~= 'function' then goto fail end
+        --- call the resulting function to get the inner playlist array
+        ok, result = pcall(result)
+        if type(result) ~= 'table' then goto fail end
+        helpers.debugLog(aux_util.deepToString(result, 3))
+
+
+        for _, playlist in ipairs(result) do
+            MusicManager.registerPlaylist(playlist)
+            coroutine.yield(playlist)
+        end
+
+        ::fail::
+        if not ok then
+            print(string.format("Failed to load playlist file: %s\nErr: %s", file, result))
         else
-            print(string.format("Failed to load playlist file: %s", file))
+            fileHandle:close()
         end
     end
 end
