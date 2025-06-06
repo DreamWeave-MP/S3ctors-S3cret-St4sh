@@ -11,6 +11,10 @@
 </style>
 
 <details open><summary><h4>Latest</h4></summary>
+</details>
+
+<details><summary><h4>Version 0.52:</h4></summary>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/f82bc8f">f82bc8f - S3MAPHORE: C H A N G E L O G</a><br><br>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/8bb62e6">8bb62e6 - FEAT: Implement Caching for Combat Targets</a><br><br>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/59d0500">59d0500 - FEAT: Add combat playlists to SHOTN and switch to the builtin environment</a><br><br>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/c3d4ca6">c3d4ca6 - FEAT: Implement caching for journal rules</a><br><br>
