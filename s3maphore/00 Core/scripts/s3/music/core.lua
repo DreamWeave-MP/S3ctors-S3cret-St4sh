@@ -765,6 +765,11 @@ return {
 
     engineHandlers = {
 
+        onQuestUpdate = function()
+            ---@diagnostic disable-next-line: invisible
+            PlaylistRules.clearJournalCache()
+        end,
+
         onKeyPress = function(key)
             if key.code == input.KEY.F8 then
                 forceSkip = true
