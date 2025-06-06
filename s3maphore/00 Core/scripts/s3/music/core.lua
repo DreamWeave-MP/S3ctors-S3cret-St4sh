@@ -618,11 +618,14 @@ local function onFrame(dt)
     -- Do not allow to switch playlists when player is dead
     local musicPlaying = ambient.isMusicPlaying()
 
-    if not MusicManager.getEnabled() and musicPlaying then
-        ambient.stopMusic()
-        currentPlaylist = nil
-        currentTrack = nil
-        queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = MusicManager.STATE.Disabled } }
+    if not MusicManager.getEnabled() then
+        if musicPlaying then
+            ambient.stopMusic()
+            currentPlaylist = nil
+            currentTrack = nil
+            queuedEvent = { name = 'S3maphoreMusicStopped', data = { reason = MusicManager.STATE.Disabled } }
+        end
+
         return
     end
 
