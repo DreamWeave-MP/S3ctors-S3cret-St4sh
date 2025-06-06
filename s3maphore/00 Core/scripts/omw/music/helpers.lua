@@ -2,6 +2,8 @@ local debug = require('openmw.debug')
 local storage = require('openmw.storage')
 local vfs = require('openmw.vfs')
 
+local I = require 'openmw.interfaces'
+
 local playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
 playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
 
@@ -38,7 +40,10 @@ local function getPlaylistFilePaths()
     return result
 end
 
-local function initMissingPlaylistFields(playlist)
+local PlaylistPriority = require 'doc.playlistPriority'
+
+---@param playlist S3maphorePlaylist
+local function initMissingPlaylistFields(playlist, INTERRUPT)
     if playlist.id == nil or playlist.priority == nil then
         error("Can not register playlist: 'id' and 'priority' are mandatory fields")
     end
@@ -61,6 +66,21 @@ local function initMissingPlaylistFields(playlist)
 
     if playlist.playOneTrack == nil then
         playlist.playOneTrack = false
+    end
+
+    if playlist.interruptMode == nil then
+        if playlist.priority <= PlaylistPriority.Special then
+            playlist.interruptMode = INTERRUPT.Never
+        elseif playlist.priority <= PlaylistPriority.BattleVanilla then
+            playlist.interruptMode = INTERRUPT.Other
+        elseif playlist.priority <= PlaylistPriority.Explore then
+            playlist.interruptMode = INTERRUPT.Me
+        else
+            debugLog(
+                ('Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!')
+                :format(playlist.priority, playlist.id)
+            )
+        end
     end
 end
 
