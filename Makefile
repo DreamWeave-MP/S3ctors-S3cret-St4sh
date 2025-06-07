@@ -1,10 +1,12 @@
 .DEFAULT_GOAL:= pkg
 
 clean:
-	rm -f *.zip *.sha*sum.txt version.txt
+	rm -rf *.zip *.txt VERSION packages/
 
 pkg: clean
-	./pkg.sh
+	web/build.sh --profile pkg --debug	
+	mkdir -p packages
+	mv *.zip *.txt VERSION packages/
 
 web-clean:
 	rm -rf web/sha256sums web/soupault-*-linux-x86_64.tar.gz
