@@ -18,38 +18,44 @@
   clean_urls = true
   plugin_discovery = true
   plugin_dirs = ["plugins"]
+  ignore_directories = [
+    "packages",
+    "plugins",
+    "templates",
+    "web",
+    ".git",
+    ".vscode",
+  ]
 
 [preprocessors]
   md = "cmark --unsafe --smart"
 
 # [BUILDER]
+# 1. Clear out any old files
+# 2. Copy relevant files into the site directory
+# 3. Generate fake changelogs where necessary
+# 4. Store used mod directories in global_data
+# As a startup hook, this stage occurs before anything else
 [hooks.startup]
   file = 'plugins/mod-info.lua'
   # This should be the GitLab account to which your site will be deployed
   org = "modding-openmw"
   # This is the name of your repository
   project = "s3ctors-s3cret-st4sh"
-  # Comment this out to skip any logging from the template
-  do_log = "true"
   # Disable this if you wish to only host one mod on your site.
-  multi_mod = "true"
-  # The next four fields are for the `Report a Problem` section of the Template.
-  # Optionally insert your contact info for each platform.
-  # For gitlab issues, just set to `true` to have a link to the issues page,
-  # or omit it completely to skip it.
-  # contact_irc = "s3kshun.8"
-  contact_discord = "s3kshun.8"
-  contact_email = "corleycomputerrepair@protonmail.ch"
-  contact_issues_page = 'true'
+  multi_mod = true
 
   # Include links to download file digests
   # for verification purposes
-  # use_digests = 'true'
+  use_digests = true
+
   # MANDATORY: Omits certain directories during the build process
   # Do not remove any of these, or you will start a big fire
   # But feel free to add new ones!
-  global_exclude_paths = "js|.git|web|img|css|.vscode|Survival|Empowered Races"
+  global_exclude_paths = "js|.git|web|img|css|.vscode|packages|Survival|Empowered Races"
 
+# During preprocessing, creates a file to signal prod mode to downstream plugins which can run in non-prod mode,
+# But whose behavior may change in prod mode.
 [hooks.pre-process]
   profile = 'prod'
   lua_source = """
@@ -105,10 +111,21 @@
   after = ["title-fixer"]
   widget = "header-insert"
 
+# Insert the contact form on all pages except the changelogs
+# NOTE: Not a builtin plugin, uses plugins/footer-insert.lua from MOMW's ModWeb-Lua
 [widgets.footer]
   after = 'header'
   widget = 'footer-insert'
   extra_exclude_dirs = "changelog"
+  # The next four fields are for the `Report a Problem` section of the Template.
+  # Optionally insert your contact info for each platform.
+  # For gitlab issues, just set to `true` to have a link to the issues page,
+  # or omit it completely to skip it.
+  # Add author tag, support link, and credits text
+  irc = "s3kshun8"
+  discord = "s3kshun.8"
+  email = "corleycomputerrepair@protonmail.ch"
+  issues_page = true
 
 [widgets.page-title]
   widget = "title"
