@@ -1,0 +1,78 @@
+<script>
+    function generateConfig() {
+        const modData = document.querySelector('modData');
+        if (!modData) {
+            alert('Mod data not found. Please ensure the webpage is loaded correctly.');
+            return;
+        }
+
+        const modHeader = document.querySelector('a.modHeader');
+        if (!modHeader) {
+            alert('Mod header not found. Please ensure the webpage is loaded correctly.');
+            return;
+        }
+
+        let configSection = document.getElementById('config-code');
+        if (!configSection) {
+            alert('Config section not found. Please ensure the webpage is loaded correctly.');
+            return;
+        }
+
+        const inputPath = document.getElementById('mod-install-path').value.trim();
+        if (!inputPath) {
+            alert('Please enter an installation path');
+            return;
+        }
+
+        // Detect path separator
+        const pathSep = inputPath.includes('\\') ? '\\' : '/';
+        const normalizedPath = inputPath.endsWith(pathSep) ? inputPath : inputPath + pathSep;
+
+        const trimmedName = modHeader.textContent.trim()
+
+        const contentFiles = modData.getAttribute('content-files');
+        const contentFileHeaderString = `# ${trimmedName} Content Files\n`;
+        const contentFileString = contentFiles ? contentFiles.split(';').map(file => {
+            return `content=${file.trim()}`;
+        }
+        ).join('\n') : null;
+
+        const dataDirectories = modData.getAttribute('data-paths');
+        const dataDirectoryHeaderString = `# ${trimmedName} Data Directories\n`;
+        const dataDirectoryString = dataDirectories ? dataDirectories.split(';').map(path => {
+            return `data=${normalizedPath}${path}`;
+        }
+        ).join('\n') : null;
+
+        console.debug(dataDirectoryHeaderString, dataDirectoryString);
+        console.debug(contentFileHeaderString, contentFileString);
+
+        configSection.textContent = `${dataDirectoryHeaderString}${dataDirectoryString ? dataDirectoryString + '\n\n' : ''}${contentFileHeaderString}${contentFileString ? contentFileString + '\n' : ''}`;
+
+    }
+</script>
+
+Use the following form to generate the openmw.cfg entries for this mod:
+<div style="
+        border: 1px solid #ccc;
+        padding: 1em;
+        margin: 1em 0;
+        text-align: center;
+    " class="install-box">
+    <p>
+        Where would you like to install this mod?
+    </p>
+    <div style="display: flex; gap: 0.5em; justify-content: center;">
+        <input style="
+        padding: 0.5em;
+        width: 80%;
+        border: 1px solid #999;
+    " placeholder="C:\games\OpenMWMods\" id="mod-install-path" type="text"><button style="
+        padding: 0.5em 1em;
+        background: #4a4a4a;
+        color: white;
+        border: none;
+        cursor: pointer;
+    " onclick="generateConfig()">Generate Config</button>
+    </div>
+</div>
