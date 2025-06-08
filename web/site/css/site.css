@@ -48,13 +48,23 @@ body {
 div#content>p {
     /* Center text placed before the table of contents, or other headings */
     text-align: center;
+    max-width: 60%;
+    margin: 0 20% 1.25em 20%;
 }
 
 div#content> :is(h1, h2, h3, h4, h5, h6, a)~p {
     text-align: justify;
+    max-width: 100%;
+    margin: 0 0 0.5em 0;
 }
 
+#credits-container,
 div#content>h2#credits,
 div#content>h2#credits~ :is(p, a, ol, ul, li) {
     text-align: center;
+}
+
+div#content>div#credits-container + * {
+    text-align: center;
+    line-height: 3;
 }
