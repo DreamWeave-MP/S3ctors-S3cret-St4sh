@@ -21,9 +21,7 @@
         inputPath = document.getElementById('mod-install-path').value.trim();
         inputPath = inputPath ? inputPath : "C:\\games\\OpenMWMods\\";
 
-        // Detect path separator
         const pathSep = inputPath.includes('\\') ? '\\' : '/';
-        console.log("Pathsep is:", pathSep);
         const normalizedPath = inputPath.endsWith(pathSep) ? inputPath : inputPath + pathSep;
 
         const trimmedName = modHeader.textContent.trim()
