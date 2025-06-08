@@ -1,4 +1,32 @@
 <script>
+    const DefaultInstallPath = "C:\\games\\OpenMWMods\\";
+    function normalizePath(path) {
+        if (!path) return DefaultInstallPath;
+
+        path = path.trim();
+
+        const pathSep = path.includes('\\') ? '\\' : '/';
+        const cleaned = path.replace(/\//g, pathSep).replace(/\\/g, pathSep).replace(/\\ /g, ' ')
+
+        return (cleaned + (cleaned.endsWith(pathSep) ? '' : pathSep));
+    }
+
+    function loadModInstallPath() {
+        const cachedPath = localStorage.getItem('modInstallPath');
+        if (cachedPath) {
+            let configSection = document.getElementById('config-code');
+
+            const pathSep = cachedPath.includes('\\') ? '\\' : '/';
+            const pathRegex = new RegExp(DefaultInstallPath.replace(/\\/g, '\\\\'), 'g');
+
+            configSection.textContent = normalizePath(
+                configSection.textContent.replace(pathRegex, cachedPath)
+            ).replace(/\\/g, pathSep);
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadModInstallPath)
+
     function generateConfig() {
         const modData = document.querySelector('modData');
         if (!modData) {
@@ -19,12 +47,17 @@
         }
 
         let inputPath = document.getElementById('mod-install-path').value.trim();
-        inputPath = inputPath ? inputPath : "C:\\games\\OpenMWMods\\";
-        inputPath = inputPath.replace(/\\ /g, ' '); // Remove any space escapes 
+        const userInputPath = inputPath !== '';
+
+        inputPath = normalizePath(inputPath);
+        console.log(`normalized: ${inputPath}`);
+
+        if (userInputPath) {
+            console.debug(`Caching path ${inputPath}`);
+            localStorage.setItem('modInstallPath', inputPath);
+        }
 
         const pathSep = inputPath.includes('\\') ? '\\' : '/';
-        const normalizedPath = inputPath.endsWith(pathSep) ? inputPath : inputPath + pathSep;
-
         const trimmedName = modHeader.textContent.trim()
 
         const contentFiles = modData.getAttribute('content-files');
@@ -37,7 +70,7 @@
         const dataDirectories = modData.getAttribute('data-paths');
         const dataDirectoryHeaderString = `# ${trimmedName} Data Directories\n`;
         const dataDirectoryString = dataDirectories ? dataDirectories.split(';').map(path => {
-            return `data=${normalizedPath}${path.replace('/', pathSep)}`;
+            return `data=${inputPath}${path.replace('/', pathSep)}`;
         }
         ).join('\n') : null;
 
@@ -45,13 +78,14 @@
         console.debug(contentFileHeaderString, contentFileString);
 
         configSection.textContent = `${dataDirectoryHeaderString}${dataDirectoryString ? dataDirectoryString + '\n' : ''}${contentFileHeaderString}${contentFileString ? contentFileString + '\n' : ''}`;
-
     }
 
     const unsecuredCopyToClipboard = (text) => { const textArea = document.createElement("textarea"); textArea.value = text; document.getElementById('install-box').appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy') } catch (err) { console.error('Unable to copy to clipboard', err) } document.getElementById('install-box').removeChild(textArea) };
     function copyConfigToClipboard() {
         const configSection = document.getElementById('config-code');
+
         console.debug('config section is:', configSection)
+
         if (!configSection) {
             alert('No config generated. That shouldn\'t happen!.');
         }
