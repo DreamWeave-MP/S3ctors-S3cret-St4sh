@@ -18,8 +18,9 @@
             return;
         }
 
-        inputPath = document.getElementById('mod-install-path').value.trim();
+        let inputPath = document.getElementById('mod-install-path').value.trim();
         inputPath = inputPath ? inputPath : "C:\\games\\OpenMWMods\\";
+        inputPath = inputPath.replace(/\\ /g, ' '); // Remove any space escapes 
 
         const pathSep = inputPath.includes('\\') ? '\\' : '/';
         const normalizedPath = inputPath.endsWith(pathSep) ? inputPath : inputPath + pathSep;
