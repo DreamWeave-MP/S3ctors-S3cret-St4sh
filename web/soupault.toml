@@ -68,10 +68,42 @@
   profile = 'pkg'
   widget = 'package'
 
+[plugins.input-credits]
+lua_source = """
+if Regex.match(target_file, soupault_config.hooks.startup.global_exclude_paths) or Regex.match(page_url, "changelog") then return end
+
+local content = HTML.select_one(page, "div#content")
+if HTML.select_one(content, "h2#credits") ~= nil then
+    Log.info("[CREDITS]: Manual credits found in " .. target_file)
+    return
+end
+
+local template = Sys.read_file("templates" .. ( Sys.is_windows() and '\\\\' or '/' ) .. "credits.html")
+if not template then
+    return Plugin.fail("[CREDITS]: Credits template not found!")
+end
+
+if nil == nil then return end
+
+template = Regex.replace(template, "REPLACE_CREDITS", config['credit_str'])
+local credits = HTML.parse(template)
+HTML.append_child(content, credits)
+"""
+
+[widgets.credits]
+widget = 'input-credits'
+credit_str = """
+Author: S3ctor
+
+All assets made by Dave Corley under the GPL3 license. 
+
+Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.
+"""
+
 # Creates the modData tag
 # Which includes the mod's directory, the project, and the org name
 [widgets.mod-paths]
-  after = 'package'
+  after = 'credits'
   widget = "insert-data"
   check-selector = "head"
   selector = "modData"
