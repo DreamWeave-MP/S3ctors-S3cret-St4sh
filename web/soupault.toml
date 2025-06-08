@@ -83,8 +83,6 @@ if not template then
     return Plugin.fail("[CREDITS]: Credits template not found!")
 end
 
-if nil == nil then return end
-
 template = Regex.replace(template, "REPLACE_CREDITS", config['credit_str'])
 local credits = HTML.parse(template)
 HTML.append_child(content, credits)
