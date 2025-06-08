@@ -184,7 +184,7 @@ Please enjoy my mod, hack away as you please, and respect the freedoms of your f
   """
   selector = ["div#content > h2"]
   action = "insert_before"
-  exclude_path_regex = '^(.*)changelog(.*)$'
+  exclude_path_regex = '^site/index\.md$|^(.*)changelog(.*)$'
 
 [widgets.table-of-contents]
   after = ["changelog-toc-html"]
@@ -199,7 +199,7 @@ Please enjoy my mod, hack away as you please, and respect the freedoms of your f
   use_heading_slug = true
   valid_html = true
   ignore_heading_selectors = ['.notoc']
-  exclude_path_regex = '^(.*)changelog(.*)$'
+  exclude_path_regex = '^site/index\.md$|^(.*)changelog(.*)$'
 
 [widgets.installation]
 after = "table-of-contents"
@@ -214,7 +214,7 @@ widget = "installInstructions"
   """
   selector = ["h2#credits", "div#content > h2", "div#content > h3", "div#content > h4", "div#content > h5", "div#content > h6"]
   wrap_all = true
-  exclude_path_regex = '^(.*)changelog(.*)$'
+  exclude_path_regex = '^site/index\.md$|^(.*)changelog(.*)$'
 
 [widgets.prod-mode]
   after = [
