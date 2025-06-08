@@ -18,10 +18,15 @@
 
             const pathSep = cachedPath.includes('\\') ? '\\' : '/';
             const pathRegex = new RegExp(DefaultInstallPath.replace(/\\/g, '\\\\'), 'g');
-
-            configSection.textContent = normalizePath(
+            let normalized = normalizePath(
                 configSection.textContent.replace(pathRegex, cachedPath)
             ).replace(/\\/g, pathSep);
+
+            if (normalized.endsWith(pathSep)) {
+                normalized = normalized.slice(0, -1);
+            }
+
+            configSection.textContent = normalized;
         }
     }
 
@@ -76,8 +81,13 @@
 
         console.debug(dataDirectoryHeaderString, dataDirectoryString);
         console.debug(contentFileHeaderString, contentFileString);
+        let outputText = `${dataDirectoryHeaderString}${dataDirectoryString}\n`;
 
-        configSection.textContent = `${dataDirectoryHeaderString}${dataDirectoryString ? dataDirectoryString + '\n' : ''}${contentFileHeaderString}${contentFileString ? contentFileString + '\n' : ''}`;
+        if (contentFileString) {
+            outputText += `\n${contentFileHeaderString}${contentFileString}\n`
+        }
+
+        configSection.textContent = outputText;
     }
 
     const unsecuredCopyToClipboard = (text) => { const textArea = document.createElement("textarea"); textArea.value = text; document.getElementById('install-box').appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy') } catch (err) { console.error('Unable to copy to clipboard', err) } document.getElementById('install-box').removeChild(textArea) };
