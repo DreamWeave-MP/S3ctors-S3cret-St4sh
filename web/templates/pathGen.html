@@ -18,14 +18,12 @@
             return;
         }
 
-        const inputPath = document.getElementById('mod-install-path').value.trim();
-        if (!inputPath) {
-            alert('Please enter an installation path');
-            return;
-        }
+        inputPath = document.getElementById('mod-install-path').value.trim();
+        inputPath = inputPath ? inputPath : "C:\\games\\OpenMWMods\\";
 
         // Detect path separator
         const pathSep = inputPath.includes('\\') ? '\\' : '/';
+        console.log("Pathsep is:", pathSep);
         const normalizedPath = inputPath.endsWith(pathSep) ? inputPath : inputPath + pathSep;
 
         const trimmedName = modHeader.textContent.trim()
@@ -40,14 +38,14 @@
         const dataDirectories = modData.getAttribute('data-paths');
         const dataDirectoryHeaderString = `# ${trimmedName} Data Directories\n`;
         const dataDirectoryString = dataDirectories ? dataDirectories.split(';').map(path => {
-            return `data=${normalizedPath}${path}`;
+            return `data=${normalizedPath}${path.replace('/', pathSep)}`;
         }
         ).join('\n') : null;
 
         console.debug(dataDirectoryHeaderString, dataDirectoryString);
         console.debug(contentFileHeaderString, contentFileString);
 
-        configSection.textContent = `${dataDirectoryHeaderString}${dataDirectoryString ? dataDirectoryString + '\n\n' : ''}${contentFileHeaderString}${contentFileString ? contentFileString + '\n' : ''}`;
+        configSection.textContent = `${dataDirectoryHeaderString}${dataDirectoryString ? dataDirectoryString + '\n' : ''}${contentFileHeaderString}${contentFileString ? contentFileString + '\n' : ''}`;
 
     }
 
