@@ -50,6 +50,21 @@
         configSection.textContent = `${dataDirectoryHeaderString}${dataDirectoryString ? dataDirectoryString + '\n\n' : ''}${contentFileHeaderString}${contentFileString ? contentFileString + '\n' : ''}`;
 
     }
+
+    const unsecuredCopyToClipboard = (text) => { const textArea = document.createElement("textarea"); textArea.value = text; document.getElementById('install-box').appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy') } catch (err) { console.error('Unable to copy to clipboard', err) } document.getElementById('install-box').removeChild(textArea) };
+    function copyConfigToClipboard() {
+        const configSection = document.getElementById('config-code');
+        console.debug('config section is:', configSection)
+        if (!configSection) {
+            alert('No config generated. That shouldn\'t happen!.');
+        }
+
+        if (window.isSecureContext && navigator.clipboard) {
+            navigator.clipboard.writeText(configSection.textContent);
+        } else {
+            unsecuredCopyToClipboard(configSection.textContent);
+        }
+    }
 </script>
 
 Use the following form to generate the openmw.cfg entries for this mod:
@@ -58,21 +73,47 @@ Use the following form to generate the openmw.cfg entries for this mod:
         padding: 1em;
         margin: 1em 0;
         text-align: center;
-    " class="install-box">
+    " class="install-box" id="install-box">
+
     <p>
         Where would you like to install this mod?
     </p>
-    <div style="display: flex; gap: 0.5em; justify-content: center;">
+
+    <div style="display: flex; gap: 0.5em; justify-content: center; align-items: center;">
+
         <input style="
         padding: 0.5em;
         width: 50%;
+        height: fit-content;
         border: 1px solid #999;
-    " placeholder="C:\games\OpenMWMods\" id="mod-install-path" type="text"><button style="
+    " placeholder="C:\games\OpenMWMods\" id="mod-install-path" type="text">
+
+        <div style="
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        gap: 0.5em;
+    ">
+
+            <button style="
         padding: 0.5em 1em;
         background: #4a4a4a;
         color: white;
         border: none;
         cursor: pointer;
-    " onclick="generateConfig()">Generate Config</button>
+    " onclick="generateConfig()">
+                Generate Config
+            </button>
+
+            <button style="
+        padding: 0.5em 1em;
+        background: #4a4a4a;
+        color: white;
+        border: none;
+        cursor: pointer;
+    " onclick="copyConfigToClipboard()">
+                Copy Config to Clipboard
+            </button>
+        </div>
+
     </div>
 </div>
