@@ -142,15 +142,15 @@
 [widgets.changelog-toc-html]
   widget = "insert_html"
   html = """
-  <h5 class="notoc"
+  <h2 class="notoc"
       style="text-align: center;"
-      id="contents">Contents</h3>
+      id="contents">Contents</h2>
   <div
     style="text-align: center;"
     id="toc">
   </div>
   """
-  selector = ["h4", "h5", "h6"]
+  selector = ["div#content > h2"]
   action = "insert_before"
   exclude_path_regex = '^(.*)changelog(.*)$'
 
@@ -158,22 +158,29 @@
   after = ["changelog-toc-html"]
   widget = "toc"
   selector = "div#toc"
-  min_level = 4
+  min_level = 2
+  max_level = 5
   numbered_list = false
   toc_list_class = "toc"
   toc_class_levels = false
+  # SUPER Important! This is why the headings are given ids which match their text. It's thus way easier to match them in selectors later on.
   use_heading_slug = true
   valid_html = true
   ignore_heading_selectors = ['.notoc']
   exclude_path_regex = '^(.*)changelog(.*)$'
 
+[widgets.installation]
+after = "table-of-contents"
+widget = "installInstructions"
+
+# Wrap headings in a link back to the TOC
 [widgets.wrap-toc]
-  after = ["table-of-contents"]
+  after = ["installation"]
   widget = "wrap"
   wrapper = """
-  <a id="backToToc" href="#contents">
+  <a id="backToToc" href="#contents"></a>
   """
-  selector = ["h3", "h4", "h5"]
+  selector = ["h2#credits", "div#content > h2", "div#content > h3", "div#content > h4", "div#content > h5", "div#content > h6"]
   wrap_all = true
   exclude_path_regex = '^(.*)changelog(.*)$'
 
