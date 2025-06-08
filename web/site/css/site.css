@@ -37,5 +37,24 @@ footer img {
 }
 
 div#links a#download:visited {
-  color: #e6e6e6;
+    color: #e6e6e6;
+}
+
+body {
+    margin: 0 5% 0 5%;
+    max-width: 100%;
+}
+
+div#content>p {
+    /* Center text placed before the table of contents, or other headings */
+    text-align: center;
+}
+
+div#content> :is(h1, h2, h3, h4, h5, h6, a)~p {
+    text-align: justify;
+}
+
+div#content>h2#credits,
+div#content>h2#credits~ :is(p, a, ol, ul, li) {
+    text-align: center;
 }
