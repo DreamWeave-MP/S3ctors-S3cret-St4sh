@@ -8,20 +8,28 @@ div#toc {
     display: grid;
     grid-template-columns: 1fr;
     grid-gap: 10px;
-    margin: 10px;
+    margin: 0 10px 2.5em 10px;
     justify-items: center;
+    padding-bottom: 2.5em;
 }
 
+/* ul.toc>li::marker {
+    color: rgb(117, 14, 117);
+} */
+
 ul.toc {
-    list-style-image: url("/img/s3-list-item.png");
+list-style-image: url("/img/s3-list-item.png");
+/* list-style-image: url("/img/todd.png"); */
 }
 
 ul.toc>li {
     margin-bottom: 10px;
     margin-left: 1.25em;
-    line-height: 1.2;
+    line-height: 1.75;
     width: inherit;
     margin: auto;
+    /* list-style: none; */
+    list-style-position: outside;
 }
 
 h3 {
@@ -123,28 +131,61 @@ ul.toc>li>a {
 
 div#content>a.backToToc:hover,
 ul.toc>li>a:hover {
-    border-bottom: 1px solid rgb(95, 95, 95);
-}
-
-div#content>a.backToToc:hover,
-ul.toc>li>a:hover {
-    color: rgb(95, 95, 95);
+    /* border-bottom: 1px solid rgb(95, 95, 95); */
+    /* color: rgb(95, 95, 95); */
+    /* border-bottom: 1px solid rgb(117, 14, 117); */
+    /* color: rgb(117, 14, 117); */
+    border-bottom: 1px solid #616;
+    color: #616;
 }
 
 div#content>div#credits-container>a.backToToc:hover {
-    color: #414;
+    color: #616;
 }
 
-a.backToToc > * {
+a.backToToc>* {
     margin: 0 0 0 0;
 }
 
-div#content>div#credits-container>a.backToToc {
+a#download.button:hover {
+    text-decoration: none;
+    /* Should be avoidable, but sakura sets a thicker bottom border when hovering links */
+    border-bottom: 1px solid #fff;
+    color: #fff;
+    background-color: #616;
+}
+
+a#download.button {
     transition: all 0.3s ease;
+}
+
+div#toc::after,
+a.modHeader::after,
+a#homeButton::after,
+div#content>div#credits-container>a.backToToc::after {
+    content: '';
+    display: block;
+    position: relative;
+    margin: 0 auto 0;
+    width: 0%;
+    height: 1px;
+    background-color: #616;
+    /* background-color: #656565; */
+    transition: width 0.3s ease;
 }
 
 a.modHeader:hover::after,
 a#homeButton:hover::after,
+div#content>div#credits-container>a.backToToc:hover::after {
+    width: 40%;
+}
+
+/* Don't underline links in the credits which will already be underlined */
+div#credits-container>p>a:hover {
+    text-decoration: none;
+    border-bottom: none;
+}
+
 div#content>div#credits-container>p:not(:last-child)::after {
     content: '';
     display: block;
