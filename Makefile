@@ -1,7 +1,7 @@
 .DEFAULT_GOAL:= pkg
 
 clean:
-	rm -rf *.zip *.txt VERSION packages/ web/build/
+	rm -rf *.zip *.txt VERSION packages/ web/build/ web/.pkg web/.prod
 
 pkg: clean
 	web/build.sh --profile pkg --debug	
