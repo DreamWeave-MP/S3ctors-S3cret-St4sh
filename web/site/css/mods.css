@@ -15,6 +15,8 @@ a.modHeader,
     margin: 10px;
     font-family: "Pelagiad", sans-serif;
     filter: drop-shadow(3px 1.5px #000);
+    width: fit-content;
+    margin: 5px auto 5px auto;
 }
 
 #kartoffel {
