@@ -243,11 +243,50 @@ widget = "installInstructions"
   after = ["installation"]
   widget = "wrap"
   wrapper = """
-  <a id="backToToc" href="#contents"></a>
+  <a class="backToToc" href="#contents"></a>
   """
   selector = ["#credits-container > #credits", "div#content > h2", "div#content > h3", "div#content > h4", "div#content > h5", "div#content > h6"]
   wrap_all = true
   exclude_path_regex = '^site/index\.md$|^(.*)changelog(.*)$'
+
+[plugins.contents-link]
+lua_source = """
+if Regex.match(target_file, soupault_config.hooks.startup.global_exclude_paths) or Regex.match(page_url, "changelog") then return end
+
+content = HTML.select_one(page, "div#content")
+if content == nil then
+    return Plugin.fail("[CONTENTS LINK]: Content div not found: " .. page_url)
+end
+
+contentsHeader = HTML.select_one(content, "h2#contents")
+if contentsHeader == nil then
+    return Log.warning("[CONTENTS LINK]: Contents header not found: " .. page_url)
+end
+
+parentLink = HTML.parent(contentsHeader)
+if parentLink == nil then
+    return Plugin.fail("[CONTENTS LINK]: No parent element found!")
+end
+
+Log.debug("[CONTENTS LINK] Debug dump of parent element: " .. HTML.to_string(parentLink))
+
+modHeader = HTML.select_one(page, "a.modHeader")
+if modHeader == nil then
+    return Log.warning("[CONTENTS LINK]: No modHeader found on " .. page_url)
+end
+
+modId = HTML.get_attribute(modHeader, "id")
+if modId == nil then
+    return Log.warning("[CONTENTS LINK]: modHeader has no ID on " .. page_url)
+end
+
+Log.debug("[CONTENTS LINK]: Found modHeader with id: " .. modId)
+HTML.set_attribute(parentLink, "href", "#" .. modId)
+"""
+
+[widgets.contents-link]
+after = ["wrap-toc"]
+widget = "contents-link"
 
 [widgets.prod-mode]
   after = [
