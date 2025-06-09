@@ -4,7 +4,7 @@
 
   <figure>
     <img src="../img/S3maphoreBanner.png" alt="semaphore icon" width="512" height="608" />
-    <figcaption><h2>Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
+    <figcaption><h2 class="notoc">Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
   </figure>
 
   <br>
@@ -29,23 +29,10 @@ If you just want to install the mod, stop here. For Lua scripters or playlist de
 
 ## Installation
 
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3maphore)
-1. Extract the zip to a location of your choosing, examples below:
+1. There are important installation instructions here. You MUST read them!!!
+1. Some other shit.
 
-```cfg
-        # Windows
-        C:\games\OpenMWMods\s3maphore
-
-        # Linux
-        /home/username/games/OpenMWMods/s3maphore
-
-        # macOS
-        /Users/username/games/OpenMWMods/s3maphore
-```
-
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3maphore"`)
-1. Add the appropriate data path to your `openmw.cfg` file for any playlist definitions you wish to use (for most users, you can add the 01-06 directories without consequence)
-1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=s3maphore.omwscripts`
+Additionally, do the other really important thing, and not this other really bad thing. Seriously.
 
 ### Compatibility With Other Music Mods
 
@@ -356,7 +343,7 @@ S3maphore.TIME_MAP = util.makeReadOnly {
 }
 ```
 
-##### Settings
+###### Settings
 
 S3maphore's main settings group is a `Player` scoped storage section called `SettingsS3Music`. It contains the following keys and values:
 
@@ -368,26 +355,14 @@ S3maphore's main settings group is a `Player` scoped storage section called `Set
 
 There also is another `Player` scoped storage section of note - `S3maphoreActivePlaylistSettings`. All playlists registered by S3maphore can have their active states set by other scripts by setting the key `${PLAYLISTNAME}Active` to `true` or `false`. S3maphore will then automatically respond to this change and disable/enable the playlist accordingly.
 
-<p align="center">
-  <img src="../img/Modathon2025.png" alt="Modathon 2025" />
-</p>
-
-<div id="credits" style="text-align: center;">
-
 ## Credits
 
-Author: **S3ctor**
+Author: **S3ctor**  
 
-All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.
+All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.  
 
-I pour my entire heart, soul, and talend into this community. If you appreciate my work, please, [please consider supporting me on Ko-Fi.](https://ko-fi.com/magicaldave)
+I pour my entire heart, soul, and talent into this community. If you appreciate my work, please, [please consider supporting me on Ko-Fi.](https://ko-fi.com/magicaldave)  
 
-I would do this full-time if I could only afford to.
+I would do this full-time if I could only afford to.  
 
-Thanks for listening <3
-
-<p align="center">
-  <img src="../img/S3maphoreIcon.png" alt="semaphore icon" />
-</p>
-
-</div>
+Thanks for listening <3  
