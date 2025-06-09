@@ -4,6 +4,10 @@ Sometimes, you just have to h3lp yours3lf.
 
 H3lp Yours3lf is a collection of scripting modules built for openmw. It contains multiple individual interfaces which authors can use to improve performance and ergonomics in their OpenMW-Lua scripts. Additionally, H3lp Yours3lf includes some helper functions for more exotic behaviors, such as detecting the context in which a given script is running.
 
+## Installation
+
+Nothing else is necessary! Hopefully, you have installed this mod as a dependency of another one that needs it.
+
 #### Modules
 
 ##### S3lf
@@ -143,34 +147,3 @@ Lua[sw_hungoxsteward] I.s3lf.ConsoleLog(('Hai from %s!'):format(I.s3lf.recordId)
 local LogMessage = require 'scripts.s3.logmessage'
 LogMessage(('Hai From %s'):format(I.s3lf.recordId))
 ```
-
-#### Installation
-
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/h3lp_yours3lf)
-1. Extract the zip to a location of your choosing, examples below:
-
-```cfg
-        # Windows
-        C:\games\OpenMWMods\h3lp_yours3lf
-
-        # Linux
-        /home/username/games/OpenMWMods/h3lp_yours3lf
-
-        # macOS
-        /Users/username/games/OpenMWMods/h3lp_yours3lf
-```
-
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\h3lp_yours3lf"`)
-1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=h3lp_yours3lf.omwscripts`
-
-<div id="credits" style="text-align: center;">
-
-#### Credits
-
-Author: **S3ctor**
-
-All assets was made by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.
-
-Perhaps this was a bad idea, but until then - wheeeeee!
-
-</div>

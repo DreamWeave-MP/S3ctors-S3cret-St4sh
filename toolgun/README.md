@@ -2,19 +2,11 @@
 
 Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose built for OpenMW. Fix floaters, rotate or scale objects to your liking, and then save them all back into a REAL mod you can share with the world after!
 
-#### Credits
-
-Author: **S3ctor & Epoch**
-
-All code was written by S3ctor, NIF assets were converted by Epoch. Facepunch owns the original Toolgun mesh, and the SFX are sourced from [Valve](https://developer.valvesoftware.com/wiki/Mod_Content_Usage) in accordance with their mod content policy for non-commercial products.
-
-#### Usage
-
-Please keep in mind that Toolgun requires OpenMW version 0.49, or at time of writing, a [development build](https://openmw.org/downloads/). Linux users may (probably) find development builds through their respective package managers, or failing all else, check out [JohnnyHostile's AppImages](https://modding-openmw.com/mods/openmw-appimage/) 
+## Installation
 
 With that out of the way...
 
-###### It's TOOL TIME!
+## It's TOOL TIME!
 
 Toolgun offers a series of built-in tool modes for manipulating the game world around you. The entire table of tool modes is exposed through the interface `toolTime`, and modders may add their own tool modes through the member `tools`. In `mode.lua`, modders can find the base tool object for making their own.
 
@@ -24,7 +16,12 @@ How hard was that?
 
 <!-- Insert gif here when I feel like it -->
 
-###### Controls
+## Usage
+
+Please keep in mind that Toolgun requires OpenMW version 0.49, or at time of writing, a [development build](https://openmw.org/downloads/).  
+Linux users may (probably) find development builds through their respective package managers, or failing all else, check out [JohnnyHostile's AppImages](https://modding-openmw.com/mods/openmw-appimage/).  
+
+### Controls
 
 Many controls in toolgun are mode-specific. However, there are a small handful of (hardcoded, I am not changing this until default keybinds are properly implemented) controls which apply to all modes:
 
@@ -50,25 +47,16 @@ Otherwise, just equip the toolgun and fire to activate it.
    - Point - In this submode, you can bind two objects together. First, shoot wherever you want your object to go. Then, shoot the object you want to move. The second object will snap to whatever the first point you shot was, and you can continue from there.
 5. Rotate - Just rotates objects around. Quite unwieldy when rotating on all three axes, so highly recommended to lock rotation to a specific axis.
 
-#### Installation
-
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/)
-1. Extract the zip to a location of your choosing, examples below:
-
-        # Windows
-        C:\games\OpenMWMods\toolgun
-
-        # Linux
-        /home/username/games/OpenMWMods/toolgun
-
-        # macOS
-        /Users/username/games/OpenMWMods/toolgun
-
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\toolgun"`)
-1. Add `content=toolgun.omwaddon` to your load order in `openmw.cfg` or enable them via OpenMW-Launcher
-
-<p align="center">
+<div align="center">
   <img src="../img/modathonbanner2024.png" alt="Modathon 2024" />
-</p>
+</div>
 
-<div id="modName" data-mod-name="toolgun"></div>
+## Credits
+
+Author: **S3ctor & Epoch**
+
+All code was written by S3ctor, NIF assets were converted by Epoch.  
+
+Facepunch owns the original Toolgun mesh.  
+
+SFX are sourced from [Valve](https://developer.valvesoftware.com/wiki/Mod_Content_Usage) in accordance with their mod content policy for non-commercial products.
