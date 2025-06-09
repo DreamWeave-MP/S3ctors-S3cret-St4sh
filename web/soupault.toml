@@ -210,10 +210,7 @@ Please enjoy my mod, hack away as you please, and respect the freedoms of your f
   <h2 class="notoc"
       style="text-align: center;"
       id="contents">Contents</h2>
-  <div
-    style="text-align: center;"
-    id="toc">
-  </div>
+  <div id="toc"></div>
   """
   selector = ["div#content > h2"]
   action = "insert_before"
@@ -224,7 +221,7 @@ Please enjoy my mod, hack away as you please, and respect the freedoms of your f
   widget = "toc"
   selector = "div#toc"
   min_level = 2
-  max_level = 5
+  max_level = 4
   numbered_list = false
   toc_list_class = "toc"
   toc_class_levels = false
