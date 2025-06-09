@@ -4,7 +4,7 @@ clean:
 	rm -rf *.zip *.txt VERSION packages/ web/build/ web/.pkg web/.prod
 
 pkg: clean
-	web/build.sh --profile pkg --debug	
+	web/build.sh --profile pkg --profile prod --debug	
 	mkdir -p packages
 	mv *.zip *.txt VERSION packages/
 
