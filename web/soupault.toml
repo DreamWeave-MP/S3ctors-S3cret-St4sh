@@ -72,39 +72,55 @@
 lua_source = """
 if Regex.match(target_file, soupault_config.hooks.startup.global_exclude_paths) or Regex.match(page_url, "changelog") then return end
 
-local content = HTML.select_one(page, "div#content")
+content = HTML.select_one(page, "div#content")
 if not content then
     return Plugin.fail("[CREDITS]: Content div not found!")
 end
 
+contentElements = HTML.children(content)
 existingCredits = nil
+creditsContainer = nil
+foundCredits = nil
 
-function FindCreditsHeader(header)
-    if HTML.inner_text(header) == "Credits" then
-        existingCredits = header
+function ProcessContentElement(element)
+    if not foundCredits and HTML.is_element(element) then
+        -- Check if it's a h2 with "Credits" text
+        if HTML.get_tag_name(element) == "h2" and HTML.inner_text(element) == "Credits" then
+            existingCredits = element
+            creditsContainer = HTML.create_element("div")
+            HTML.set_attribute(creditsContainer, "id", "credits-container")
+            HTML.wrap(existingCredits, creditsContainer)
+            foundCredits = 1
+            return
+        end
+    end
+    
+    if foundCredits ~= nil then
+        -- Check if we've hit another heading using regex
+        if HTML.is_element(element) and Regex.match(HTML.get_tag_name(element), "^h[1-6]$") then
+            foundCredits = nil
+            return
+        end
+        
+        if HTML.is_element(element) then
+            Log.warning("[CREDITS]: Adding element to credits container: " .. HTML.pretty_print(element))
+            HTML.append_child(creditsContainer, element)
+        end
     end
 end
 
-Table.iter_values_ordered(FindCreditsHeader, HTML.select_all_of(content, { "h2" }))
+Table.iter_values_ordered(ProcessContentElement, contentElements)
 
-if existingCredits ~= nil then
-    Log.info("[CREDITS]: Manual credits found in " .. target_file)
+if existingCredits == nil then
+    template = Sys.read_file("templates" .. ( Sys.is_windows() and '\\\\' or '/' ) .. "credits.html")
+    if not template then
+        return Plugin.fail("[CREDITS]: Credits template not found!")
+    end
 
-    local creditsContainer = HTML.create_element("div")
-    HTML.set_attribute(creditsContainer, "id", "credits-container")
-
-    HTML.wrap(existingCredits, creditsContainer)
-    return
+    template = Regex.replace(template, "REPLACE_CREDITS", config[ 'credit_str' ])
+    credits = HTML.parse(template)
+    HTML.append_child(content, credits)
 end
-
-local template = Sys.read_file("templates" .. ( Sys.is_windows() and '\\\\' or '/' ) .. "credits.html")
-if not template then
-    return Plugin.fail("[CREDITS]: Credits template not found!")
-end
-
-template = Regex.replace(template, "REPLACE_CREDITS", config[ 'credit_str' ])
-local credits = HTML.parse(template)
-HTML.append_child(content, credits)
 """
 
 [widgets.credits]
