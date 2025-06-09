@@ -103,6 +103,7 @@ div#content>div#credits-container>p:not(:last-child) {
 
 a.backToToc:hover,
 a.modHeader:hover,
+a#homeButton:hover,
 ul.toc>li>a:hover {
     text-decoration: none;
     border-bottom: none;
@@ -139,6 +140,7 @@ div#content>div#credits-container>a.backToToc {
 }
 
 a.modHeader:hover::after,
+a#homeButton:hover::after,
 div#content>div#credits-container>p:not(:last-child)::after {
     content: '';
     display: block;
