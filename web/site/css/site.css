@@ -58,13 +58,37 @@ div#content> :is(h1, h2, h3, h4, h5, h6, a)~p {
     margin: 0 0 0.5em 0;
 }
 
+#credits-container {
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    max-width: 60%;
+    padding: 1em;
+    background-color: #111;
+    /* background-color: #212; */
+    border: 1px solid #656565;
+}
+
 #credits-container,
 div#content>h2#credits,
 div#content>h2#credits~ :is(p, a, ol, ul, li) {
     text-align: center;
 }
 
-div#content>div#credits-container + * {
-    text-align: center;
-    line-height: 3;
+div#content>div#credits-container > p:not(:last-child) {
+    position: relative;
+    padding-bottom: 1em;
+}
+
+div#content>div#credits-container > p:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 1px;
+    background-color: #656565;
 }
