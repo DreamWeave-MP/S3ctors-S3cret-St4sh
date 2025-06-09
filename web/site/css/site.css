@@ -1,5 +1,24 @@
-a:hover {
-    border-bottom: 1px solid #656565;
+a.backToToc {
+    width: fit-content;
+    display: block;
+    margin: 0 auto 1.25em auto;
+}
+
+div#toc {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+    margin: 10px;
+    justify-items: center;
+}
+
+ul.toc {
+    list-style-image: url("/img/todd.png");
+}
+
+ul.toc>li {
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 h3 {
@@ -59,7 +78,7 @@ div#content> :is(h1, h2, h3, h4, h5, h6, a)~p {
 }
 
 #credits-container {
-    display:flex;
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -77,18 +96,55 @@ div#content>h2#credits~ :is(p, a, ol, ul, li) {
     text-align: center;
 }
 
-div#content>div#credits-container > p:not(:last-child) {
+div#content>div#credits-container>p:not(:last-child) {
     position: relative;
     padding-bottom: 1em;
 }
 
-div#content>div#credits-container > p:not(:last-child)::after {
+a.backToToc:hover,
+a.modHeader:hover,
+ul.toc>li>a:hover {
+    text-decoration: none;
+    border-bottom: none;
+}
+
+div#content>a.backToToc,
+ul.toc>li>a {
+    color: rgb(255, 255, 255);
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid transparent;
+}
+
+div#content>a.backToToc:hover,
+ul.toc>li>a:hover {
+    border-bottom: 1px solid rgb(95, 95, 95);
+}
+
+div#content>a.backToToc:hover,
+ul.toc>li>a:hover {
+    color: rgb(95, 95, 95);
+}
+
+div#content>div#credits-container>a.backToToc:hover {
+    color: #414;
+}
+
+a.backToToc > * {
+    margin: 0 0 0 0;
+}
+
+div#content>div#credits-container>a.backToToc {
+    transition: all 0.3s ease;
+}
+
+a.modHeader:hover::after,
+div#content>div#credits-container>p:not(:last-child)::after {
     content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
+    display: block;
+    position: relative;
+    margin: 0 auto 0;
+    width: 40%;
     height: 1px;
     background-color: #656565;
 }
