@@ -1,5 +1,5 @@
 Music: "S3maphore - MOMW Musik"
-settingsPageDescription: "Aktivera och avaktivera uppspelning, specifika spellistor, stridsmusik och beteende för åsidosättande av spellistor."
+settingsPageDescription: "Aktivera och inaktivera uppspelning, specifika spellistor, stridsmusik och beteende för åsidosättande av spellistor."
 
 musicSettings: "Musikinställningar"
 
@@ -7,39 +7,41 @@ DebugEnabled: "Aktivera felsökningsmeddelanden"
 DebugEnabledDescription: "Huruvida felsökningsmeddelanden visas eller inte i F10/openmw.log"
 
 MusicEnabled: "Aktivera musik"
-MusicEnabledDescription: "Whether or not S3maphore will play any music.\nUseful when overriding its builtin behavior to allow something else to control music playback."
+MusicEnabledDescription: "Huruvida S3maphore kommer spela någon musik eller inte.\nAnvändbart när man åsidosätter det inbyggda beteendet för att låta något annat styra musikuppspelningen."
 
-PlaylistSelection: "Enable/Disable Playlists"
+PlaylistSelection: "Aktivera/Inaktivera spellistor"
 
-CurrentPlaylistSelection: "Current Playlist"
-CurrentPlaylistSelectionDescription: "Playlist currently selected in the scroller.\nPlaylists are sorted alphabetically.\nResetting this group will cause all playlists to revert to their default active states."
+CurrentPlaylistSelection: "Aktuell spellista"
+CurrentPlaylistSelectionDescription: "Playlist currently selected in the scroller.\nPlaylists are sorted alphabetically.\nResetting this group will cause all playlists to revert to their default active states." # will return to this later, need to find a good word for "scroller"
 
 PlaylistActivity: ""
 
-PlaylistActiveState: "Playlist State"
-PlaylistActiveStateDescription: "Whether or not the playlist will be selected for playback at all.\n\nWARNING: This does not mean the playlist will be played immediately, it simply means it *can* be played under the conditions it defines.\n\nNOTE: If this option is disabled, it means you have not loaded any tracks this playlist defines and it would never play anyway."
+PlaylistActiveState: "Spellistans status" # could probably be translated better if I had more context.
+PlaylistActiveStateDescription: "Om spellistan överhuvudtaget ska väljas för uppspelning eller inte.\n\nVARNING: Detta betyder inte att spellistan kommer att spelas upp omedelbart, det betyder bara att den *kan* spelas upp under de villkor som den definierar.\n\nOBS: Om det här alternativet är inaktiverat betyder det att du inte har laddat några spår som den här spellistan definierar och att den aldrig skulle spelas upp ändå."
 
-BannerEnabled: "Show Track Info"
-BannerEnabledDescription: "Displays the current playlist and track name at the top of the screen, if localizations for the playlist are available."
+BannerEnabled: "Visa spårinfo"
+BannerEnabledDescription: "Visar aktuell spellista och spårnamn längst upp på skärmen, om språklokaliseringar för spellistan finns tillgängliga." # I assume "localizations" is reffering to i10n yaml-files?
 
-ResetAllPlaylists: "Reset All Playlists"
-ResetAllPlaylistsDescription: "Set all playlists back to their default active states."
-ResetButtonLabel: "Reset"
+ResetAllPlaylists: "Återställ alla spellistor"
+ResetAllPlaylistsDescription: "Återställ alla spellistor till deras förinställda aktiva tillstånd."
+ResetButtonLabel: "Återställ"
 
-BattleEnabled: "Enable Battle Music"
-BattleEnabledDescription: "If false, all battle playlists will be skipped."
+BattleEnabled: "Aktivera stridsmusik"
+BattleEnabledDescription: "Om inaktiv kommer alla stridsspellistor att hoppas över."
 
-NoInterrupt: "Finish Previous Track"
-NoInterruptDescription: "Allow finishing the previous song when the current playlist changes.\n\nOnly affects playlists with the same interrupt priority, so entering a Dwemer dungeon while an Ashlands track is playing,\nwill mean the Dwemer track does not start, until the Ashland one has finished.\n\nGenerally playlists will interrupt one another in order of Explore -> Battle -> Special, if their interrupt modes are different."
+NoInterrupt: "Avsluta föregående spår"
+NoInterruptDescription: "Gör att föregående spår avslutas när aktuell spellista ändras.\n\nPåverkar endast spellistor med samma avbrottsprioritet, så om du går in i en Dwemer-dungeon medan ett Ashlands-spår spelas upp \nkommer Dwemer-spåret inte att starta förrän Ashland-spåret har avslutats.\n\nGenerellt kommer spellistor att avbryta varandra i ordningen Utforska -> Strid -> Special, om deras avbrottslägen är olika."
 
-ForcePlaylistChangeOnOverworldTransition: "Allow Overworld Playlist Override"
-ForcePlaylistChangeOnOverworldTransitionDescription: "If enabled, overrides the finish previous track setting when outdoors.\n\nThis setting takes playlist priority into account, so that, if enabled, a city or faction-based playlist will override a region-based one, but not vice-versa."
+ForcePlaylistChangeOnOverworldTransition: "Tillåt direkt byte av spellista ovan jord"
+ForcePlaylistChangeOnOverworldTransitionDescription: "Om aktiverad åsidosätts inställningen 'avsluta föregående spår' när du är utomhus.\n\nDen här inställningen tar hänsyn till spellistans prioritet, så om den är aktiverad kommer en stads- eller fraktionsbaserad spellista att åsidosätta en regionbaserad, men inte tvärtom."
 
-ForcePlaylistChangeOnHostileExteriorTransition: "Allow Dungeon Playlist Override"
-ForcePlaylistChangeOnHostileExteriorTransitionDescription: "If enabled, overrides the finish previous track setting when entering an interior with hostile targets.\n\nNote that this means overrides will not occur after a dungeon or cell has been cleared of enemies."
+ForcePlaylistChangeOnHostileExteriorTransition: "Tillåt direkt byte av spellista i Dungeon"
+ForcePlaylistChangeOnHostileExteriorTransitionDescription: "Om aktiverad åsidosätts inställningen 'avsluta föregående spår' när du går in i en interiör med fientliga personer eller varelser.\n\nObservera att detta innebär att åsidosättningar inte kommer att ske efter att en dungeon eller cell har rensats från fiender."
 
-ForcePlaylistChangeOnFriendlyExteriorTransition: "Allow Friendly Interior Playlist Override"
-ForcePlaylistChangeOnFriendlyExteriorTransitionDescription: "If enabled, overrides the finish previous track setting when entering an interior with no hostile targets."
+ForcePlaylistChangeOnFriendlyExteriorTransition: "Tillåt direkt byte av spellista i fredliga interiörer"
+ForcePlaylistChangeOnFriendlyExteriorTransitionDescription: "Om aktiverad åsidosätts inställningen 'avsluta föregående spår' när du går in i en interiör utan fientliga personer eller varelser."
 
-FadeOutDuration: "Default Fade Duration"
-FadeOutDurationDescription: "Fadeout time between tracks used if the current playlist doesn't define its own fadeout timer."
+FadeOutDuration: "Förinställd fadeout-tid"
+FadeOutDurationDescription: "Fadeout-tiden mellan spår som används om aktuell spellista inte definierar sin egen fadeout-tid."
+
+# Note - I have not tested the mod yet, so some translations might be bad due to me misunderstanding the context. I hope to do another MR later once I've had the time to actually run the mod.
