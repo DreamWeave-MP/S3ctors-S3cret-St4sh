@@ -4,7 +4,7 @@
 
   <figure>
     <img src="../img/S3maphoreBanner.png" alt="semaphore icon" width="512" height="608" />
-    <figcaption><h2>Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
+    <figcaption><h2 class="notoc">Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
   </figure>
 
   <br>
@@ -29,30 +29,17 @@ If you just want to install the mod, stop here. For Lua scripters or playlist de
 
 ## Installation
 
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3maphore)
-1. Extract the zip to a location of your choosing, examples below:
+1. There are important installation instructions here. You MUST read them!!!
+1. Some other shit.
 
-```cfg
-        # Windows
-        C:\games\OpenMWMods\s3maphore
-
-        # Linux
-        /home/username/games/OpenMWMods/s3maphore
-
-        # macOS
-        /Users/username/games/OpenMWMods/s3maphore
-```
-
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\s3maphore"`)
-1. Add the appropriate data path to your `openmw.cfg` file for any playlist definitions you wish to use (for most users, you can add the 01-06 directories without consequence)
-1. Add the appropriate `content` entry to your `openmw.cfg` file: `content=s3maphore.omwscripts`
+Additionally, do the other really important thing, and not this other really bad thing. Seriously.
 
 ### Compatibility With Other Music Mods
 
 Dynamic Music and MUSE soundbanks are not natively supported. However, you can convert either to a S3maphore playlist in minutes by using this document.
 Any mods which simply add to or replace music Morrowind already provides (EG, in the `Explore`, `Special`, or `Battle` folders) are natively compatible with zero extra work.
 
-### Usage
+## Usage
 
 Make sure to install the playlist files *and* tracks for any S3maphore playlist arrays you install. In the settings menu, you can toggle S3maphore debug messages and the onscreen track/playlist name display.
 
@@ -64,15 +51,15 @@ TIP: If you can't toggle a playlist on or off, that means S3maphore couldn't fin
 
 Finally, pressing F8 will always skip the current track if one is playing.
 
-#### S3maphore for Modders
+### S3maphore for Modders
 
 As mentioned before, S3maphore is an open-ended system for playlist management. It is so open-ended, in fact, that you do not need to use S3maphore's built-in playlist management at all. Other playlist-related mods or plugins could easily be built on top of S3maphore's internal interface and provided events. This section of the docs will describe how to make your own playlists and interact with S3maphore's public methods and mechanisms.
 
-##### Playlist Creation
+#### Playlist Creation
 
 S3maphore's playlists are *similar*, but not identical, to existing solutions. There are some key differences, however:
 
-###### Playlist Specification
+##### Playlist Specification
 
 1. S3maphore playlist files are known as `Playlist Arrays`, because that's what they are. Every playlist file can return any number of playlists inside of table it sends back out. Every playlist must have both a string `id` and a `priority` field. `id` is the name of the playlist which is used as a table key, and `priority` is a number between 1 and 1000 indicating when the playlist should override others or be overridden by others. More on playlist priority below. Optional fields include:
    1. `tracks` - `string[]` - List of VFS paths to tracks to play. If using MUSE or Dynamic Music soundbanks as a base, the paths can be copied directly.
@@ -85,7 +72,7 @@ S3maphore's playlists are *similar*, but not identical, to existing solutions. T
 1. S3maphore replaces OpenMW's builtin music script almost in its entirety. This means that conflicts between the two are mostly-impossible and limitations such as needing to manually set/know the duration of specific tracks is no longer necessary.
 1. S3maphore playlists do *not* have strictly defined rules, instead relying on the `isValidCallback` to allow each playlist to define its own rules in a very open-ended way. Every `isValidCallback` is passed a `playback` struct, which is a table containing two more tables: `state`, and `rules`.
 
-###### PlaylistState Specification
+##### PlaylistState Specification
 
 ```lua
 ---@class PlaylistState
@@ -158,7 +145,7 @@ MusicManager.registerPlaylist {
 
 Above is S3maphore's version of Morrowind's built-in `Explore` playlist. No tracks are listed, because it just randomly picks from `Music/Explore`, since `Explore` is the playlist id.
 
-###### PlaylistRules Specification
+##### PlaylistRules Specification
 
 ```lua
 
@@ -261,15 +248,15 @@ Use S3maphore's open ended nature to your advantage, but *please* keep in mind t
 
 If you do run into performance bottlenecks with your playlists, please let me know and I will do everything I can to help make your playlists functional. Later iterations of S3maphore are likely to rely on my helper library, [H3lp Yours3lf](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/h3lp_yours3lf), for additional optimizations!
 
-###### The Special Playlist
+#### The Special Playlist
 
 The `Special` playlist is, well, a special case - it comes with no tracks, and is the ONLY playlist which is allowed to do so intentionally. Playing a special track using either the below events or interfaces will play the specified track, once, and then fall back to whatever playback behavior is contextually appropriate. This can be useful for playing things like boss music, or the levelup sting.
 
-###### Playlist Localization
+#### Playlist Localization
 
 *All* S3maphore playlists natively support being localized, thanks to OpenMW's use of the l10n system. To provide localizations for a playlist, make a folder adjacent to your playlists folder, called `l10n`. Inside of that, make another folder called, `S3maphoreTracks${PLAYLIST_ID}`. For example, the builtin music playlists are in `S3maphoreTracksExplore` and `S3maphoreTracksBattle`. You'll see localized versions of track and playlist names onscreen as they change, if you have the `BannerEnabled` setting enabled.
 
-##### Events
+#### Events
 
 S3maphore includes a selection of `Player` events which indicate the changing of tracks and responds to some to modify its behavior.
 
@@ -280,7 +267,7 @@ S3maphore includes a selection of `Player` events which indicate the changing of
 1. S3maphoreTrackChanged - `(S3maphoreStateChangeEventData)` - Emitted whenever the currently playing track changes, due to the previous one being skipped, or a new playlist starting, or a new track from the same playlist starting.
 1. S3maphoreMusicStopped - `({ reason: S3maphoreTrackChangeReason })` - Emitted when music stops, due to being disabled, no playlist being valid for this frame, or just the player dying.
 
-###### S3maphoreStateChangeEventData Specification
+##### S3maphoreStateChangeEventData Specification
 
 ```lua
 ---@class S3maphoreStateChangeEventData
@@ -356,7 +343,7 @@ S3maphore.TIME_MAP = util.makeReadOnly {
 }
 ```
 
-##### Settings
+#### Settings
 
 S3maphore's main settings group is a `Player` scoped storage section called `SettingsS3Music`. It contains the following keys and values:
 
@@ -368,26 +355,14 @@ S3maphore's main settings group is a `Player` scoped storage section called `Set
 
 There also is another `Player` scoped storage section of note - `S3maphoreActivePlaylistSettings`. All playlists registered by S3maphore can have their active states set by other scripts by setting the key `${PLAYLISTNAME}Active` to `true` or `false`. S3maphore will then automatically respond to this change and disable/enable the playlist accordingly.
 
-<p align="center">
-  <img src="../img/Modathon2025.png" alt="Modathon 2025" />
-</p>
-
-<div id="credits" style="text-align: center;">
-
 ## Credits
 
-Author: **S3ctor**
+Author: **S3ctor**  
 
-All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.
+All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.  
 
-I pour my entire heart, soul, and talend into this community. If you appreciate my work, please, [please consider supporting me on Ko-Fi.](https://ko-fi.com/magicaldave)
+I pour my entire heart, soul, and talent into this community. If you appreciate my work, please, [please consider supporting me on Ko-Fi.](https://ko-fi.com/magicaldave)  
 
-I would do this full-time if I could only afford to.
+I would do this full-time if I could only afford to.  
 
-Thanks for listening <3
-
-<p align="center">
-  <img src="../img/S3maphoreIcon.png" alt="semaphore icon" />
-</p>
-
-</div>
+Thanks for listening <3  

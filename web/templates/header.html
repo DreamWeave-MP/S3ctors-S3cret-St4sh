@@ -1,17 +1,131 @@
+<script>
+  /*
+    MIT License
+  
+    Copyright (c) 2022 modweb-js Authors
+  
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+  
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+  
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+  
+   */
+  function loadURL() {
+    const modData = document.getElementsByTagName("moddata")[0];
+    const modPath = modData.getAttribute("path");
+    const modOrg = modData.getAttribute("org");
+    const modProject = modData.getAttribute("project");
+
+    const gitlabBaseURL = "https://gitlab.com";
+    const gitlabAPIURL = `${gitlabBaseURL}/api/v4`;
+    const filesURL = `${gitlabAPIURL}/projects/${modOrg}%2F${modProject}/packages?package_name=${modProject}&sort=desc&per_page=100`;
+    const projectPath = `${gitlabBaseURL}/${modOrg}/${modProject}`;
+
+    const changelog = document.getElementById("changelog");
+    const dlLink = document.getElementById("download");
+    const devLink = document.getElementById("dev-download");
+    const devSha256 = document.getElementById("dev-sha256");
+    const devSha512 = document.getElementById("dev-sha512");
+    const errors = document.getElementById("errors");
+    const latestVersion = document.getElementById("latestVersion");
+    const sha256Link = document.getElementById("sha256");
+    const sha512Link = document.getElementById("sha512");
+    const blake2Link = document.getElementById("blake2");
+    const titleImage = document.getElementById("titleimage");
+
+    const req = new Request(filesURL);
+    fetch(req)
+      .then(function (response) {
+        if (!response.ok) {
+          errors.textContent = "There was an error fetching the download links!";
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+
+      .then(function (response) {
+        let latestPkg;
+
+        while ((latestPkg = response.shift()) !== undefined) {
+          if (latestPkg.version.startsWith(modPath)) {
+            break;
+          }
+        }
+
+        if (!latestPkg || !latestPkg.version.startsWith(modPath)) {
+          errors.textContent = "There was an error fetching the download links!";
+          throw new Error(
+            `No matching package found that starts with "${modPath}"`,
+          );
+        }
+
+        if (latestVersion) latestVersion.textContent = latestPkg.version;
+        const latestPkgID = `${latestPkg.id}`;
+        const pkgURL = `${gitlabAPIURL}/projects/${modOrg}%2F${modProject}/packages/${latestPkgID}/package_files`;
+        const req2 = new Request(pkgURL);
+
+        fetch(req2)
+          .then(function (response) {
+            if (!response.ok) {
+              errors.textContent =
+                "There was an error fetching the download links!";
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+
+          .then(function (response) {
+            dlLink.href = `${projectPath}/-/package_files/${response[0].id}/download`;
+            if (sha256Link && response[1])
+              sha256Link.href = `${projectPath}/-/package_files/${response[1].id}/download`;
+            if (sha512Link && response[2])
+              sha512Link.href = `${projectPath}/-/package_files/${response[2].id}/download`;
+            if (blake2Link && response[3])
+              blake2Link.href = `${projectPath}/-/package_files/${response[3].id}/download`;
+          });
+      });
+  }
+
+  window.addEventListener("DOMContentLoaded", loadURL);
+</script>
+
 <p class="center">Latest version: <span class="bold" id="latestVersion">...</span></p>
 
 <div id="links" class="bold center"></div>
 
 <div id="shas" class="bold center">
-  <a id="sha256" title="Verify the integrity of the file you downloaded">sha256</a>/
-  <a id="sha512" title="Verify the integrity of the file you downloaded">sha512</a>
+  <a id="sha256" title="Verify the integrity of the file you downloaded">sha256</a> /
+  <a id="sha512" title="Verify the integrity of the file you downloaded">sha512</a> /
+  <a id="blake2" title="Verify the integrity of the file you downloaded">blake2</a>
+</div>
+
+<!-- Only present if h1#BinaryTarget exists on the page -->
+<div id="platforms" class="bold center">
+  <a id="windows" title="Windows Release">Windows</a> /
+  <a id="linux" title="Linux Release">Linux</a> /
+  <a id="macos" title="macOS Release">macOS</a>
 </div>
 
 <div class="bold center" id="errors"></div>
 
 <div class="center" id="dev-build">
 
-  <a id="dev-download" href="https://gitlab.com/api/v4/projects/ORG%2FPROJECT/jobs/artifacts/master/raw/MOD.zip?job=make" title="Dev builds may have newer features, but they will be less tested">Dev Build</a>
+  <a id="dev-download"
+    href="https://gitlab.com/api/v4/projects/ORG%2FPROJECT/jobs/artifacts/master/raw/MOD.zip?job=make"
+    title="Dev builds may have newer features, but they will be less tested">Dev Build</a>
 </div>
 
 <nav class="center" id="nav">
