@@ -18,38 +18,44 @@
   clean_urls = true
   plugin_discovery = true
   plugin_dirs = ["plugins"]
+  ignore_directories = [
+    "packages",
+    "plugins",
+    "templates",
+    "web",
+    ".git",
+    ".vscode",
+  ]
 
 [preprocessors]
   md = "cmark --unsafe --smart"
 
 # [BUILDER]
+# 1. Clear out any old files
+# 2. Copy relevant files into the site directory
+# 3. Generate fake changelogs where necessary
+# 4. Store used mod directories in global_data
+# As a startup hook, this stage occurs before anything else
 [hooks.startup]
   file = 'plugins/mod-info.lua'
   # This should be the GitLab account to which your site will be deployed
   org = "modding-openmw"
   # This is the name of your repository
   project = "s3ctors-s3cret-st4sh"
-  # Comment this out to skip any logging from the template
-  do_log = "true"
   # Disable this if you wish to only host one mod on your site.
-  multi_mod = "true"
-  # The next four fields are for the `Report a Problem` section of the Template.
-  # Optionally insert your contact info for each platform.
-  # For gitlab issues, just set to `true` to have a link to the issues page,
-  # or omit it completely to skip it.
-  # contact_irc = "s3kshun.8"
-  contact_discord = "s3kshun.8"
-  contact_email = "corleycomputerrepair@protonmail.ch"
-  contact_issues_page = 'true'
+  multi_mod = true
 
   # Include links to download file digests
   # for verification purposes
-  # use_digests = 'true'
+  use_digests = true
+
   # MANDATORY: Omits certain directories during the build process
   # Do not remove any of these, or you will start a big fire
   # But feel free to add new ones!
-  global_exclude_paths = "js|.git|web|img|css|.vscode|Survival|Empowered Races"
+  global_exclude_paths = "js|.git|web|img|css|.vscode|packages|Survival|Empowered Races"
 
+# During preprocessing, creates a file to signal prod mode to downstream plugins which can run in non-prod mode,
+# But whose behavior may change in prod mode.
 [hooks.pre-process]
   profile = 'prod'
   lua_source = """
@@ -62,10 +68,75 @@
   profile = 'pkg'
   widget = 'package'
 
+[plugins.input-credits]
+lua_source = """
+if Regex.match(target_file, soupault_config.hooks.startup.global_exclude_paths) or Regex.match(page_url, "changelog") then return end
+
+content = HTML.select_one(page, "div#content")
+if not content then
+    return Plugin.fail("[CREDITS]: Content div not found!")
+end
+
+contentElements = HTML.children(content)
+existingCredits = nil
+creditsContainer = nil
+foundCredits = nil
+
+function ProcessContentElement(element)
+    if not foundCredits and HTML.is_element(element) then
+        -- Check if it's a h2 with "Credits" text
+        if HTML.get_tag_name(element) == "h2" and HTML.inner_text(element) == "Credits" then
+            existingCredits = element
+            creditsContainer = HTML.create_element("div")
+            HTML.set_attribute(creditsContainer, "id", "credits-container")
+            HTML.wrap(existingCredits, creditsContainer)
+            foundCredits = 1
+            return
+        end
+    end
+    
+    if foundCredits ~= nil then
+        -- Check if we've hit another heading using regex
+        if HTML.is_element(element) and Regex.match(HTML.get_tag_name(element), "^h[1-6]$") then
+            foundCredits = nil
+            return
+        end
+        
+        if HTML.is_element(element) then
+            Log.warning("[CREDITS]: Adding element to credits container: " .. HTML.pretty_print(element))
+            HTML.append_child(creditsContainer, element)
+        end
+    end
+end
+
+Table.iter_values_ordered(ProcessContentElement, contentElements)
+
+if existingCredits == nil then
+    template = Sys.read_file("templates" .. ( Sys.is_windows() and '\\\\' or '/' ) .. "credits.html")
+    if not template then
+        return Plugin.fail("[CREDITS]: Credits template not found!")
+    end
+
+    template = Regex.replace(template, "REPLACE_CREDITS", config[ 'credit_str' ])
+    credits = HTML.parse(template)
+    HTML.append_child(content, credits)
+end
+"""
+
+[widgets.credits]
+widget = 'input-credits'
+credit_str = """
+Author: S3ctor
+
+All assets made by Dave Corley under the GPL3 license. 
+
+Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.
+"""
+
 # Creates the modData tag
 # Which includes the mod's directory, the project, and the org name
 [widgets.mod-paths]
-  after = 'package'
+  after = 'credits'
   widget = "insert-data"
   check-selector = "head"
   selector = "modData"
@@ -105,10 +176,21 @@
   after = ["title-fixer"]
   widget = "header-insert"
 
+# Insert the contact form on all pages except the changelogs
+# NOTE: Not a builtin plugin, uses plugins/footer-insert.lua from MOMW's ModWeb-Lua
 [widgets.footer]
   after = 'header'
   widget = 'footer-insert'
   extra_exclude_dirs = "changelog"
+  # The next four fields are for the `Report a Problem` section of the Template.
+  # Optionally insert your contact info for each platform.
+  # For gitlab issues, just set to `true` to have a link to the issues page,
+  # or omit it completely to skip it.
+  # Add author tag, support link, and credits text
+  irc = "s3kshun8"
+  discord = "s3kshun.8"
+  email = "corleycomputerrepair@protonmail.ch"
+  issues_page = true
 
 [widgets.page-title]
   widget = "title"
@@ -125,40 +207,83 @@
 [widgets.changelog-toc-html]
   widget = "insert_html"
   html = """
-  <h5 class="notoc"
+  <h2 class="notoc"
       style="text-align: center;"
-      id="contents">Contents</h3>
-  <div
-    style="text-align: center;"
-    id="toc">
-  </div>
+      id="contents">Contents</h2>
+  <div id="toc"></div>
   """
-  selector = ["h4", "h5", "h6"]
+  selector = ["div#content > h2"]
   action = "insert_before"
-  exclude_path_regex = '^(.*)changelog(.*)$'
+  exclude_path_regex = '^site/index\.md$|^(.*)changelog(.*)$'
 
 [widgets.table-of-contents]
   after = ["changelog-toc-html"]
   widget = "toc"
   selector = "div#toc"
-  min_level = 4
+  min_level = 2
+  max_level = 4
   numbered_list = false
   toc_list_class = "toc"
   toc_class_levels = false
+  # SUPER Important! This is why the headings are given ids which match their text. It's thus way easier to match them in selectors later on.
   use_heading_slug = true
   valid_html = true
   ignore_heading_selectors = ['.notoc']
-  exclude_path_regex = '^(.*)changelog(.*)$'
+  exclude_path_regex = '^site/index\.md$|^(.*)changelog(.*)$'
 
+[widgets.installation]
+after = "table-of-contents"
+widget = "installInstructions"
+
+# Wrap headings in a link back to the TOC
 [widgets.wrap-toc]
-  after = ["table-of-contents"]
+  after = ["installation"]
   widget = "wrap"
   wrapper = """
-  <a id="backToToc" href="#contents">
+  <a class="backToToc" href="#contents"></a>
   """
-  selector = ["h3", "h4", "h5"]
+  selector = ["#credits-container > #credits", "div#content > h2", "div#content > h3", "div#content > h4", "div#content > h5", "div#content > h6"]
   wrap_all = true
-  exclude_path_regex = '^(.*)changelog(.*)$'
+  exclude_path_regex = '^site/index\.md$|^(.*)changelog(.*)$'
+
+[plugins.contents-link]
+lua_source = """
+if Regex.match(target_file, soupault_config.hooks.startup.global_exclude_paths) or Regex.match(page_url, "changelog") then return end
+
+content = HTML.select_one(page, "div#content")
+if content == nil then
+    return Plugin.fail("[CONTENTS LINK]: Content div not found: " .. page_url)
+end
+
+contentsHeader = HTML.select_one(content, "h2#contents")
+if contentsHeader == nil then
+    return Log.warning("[CONTENTS LINK]: Contents header not found: " .. page_url)
+end
+
+parentLink = HTML.parent(contentsHeader)
+if parentLink == nil then
+    return Plugin.fail("[CONTENTS LINK]: No parent element found!")
+end
+
+Log.debug("[CONTENTS LINK] Debug dump of parent element: " .. HTML.to_string(parentLink))
+
+modHeader = HTML.select_one(page, "a.modHeader")
+if modHeader == nil then
+    return Log.warning("[CONTENTS LINK]: No modHeader found on " .. page_url)
+end
+
+modId = HTML.get_attribute(modHeader, "id")
+if modId == nil then
+    return Log.warning("[CONTENTS LINK]: modHeader has no ID on " .. page_url)
+end
+
+Log.debug("[CONTENTS LINK]: Found modHeader with id: " .. modId)
+HTML.set_attribute(parentLink, "href", "#" .. modId)
+"""
+
+[widgets.contents-link]
+after = ["wrap-toc"]
+widget = "contents-link"
 
 [widgets.prod-mode]
   after = [
