@@ -18,7 +18,7 @@ div#toc {
 } */
 
 ul.toc {
-list-style-image: url("/img/s3-list-item.png");
+list-style-image: url("../img/s3-list-item.png");
 /* list-style-image: url("/img/todd.png"); */
 }
 
