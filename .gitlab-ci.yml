@@ -20,7 +20,7 @@ make:
   - git submodule update
   - make WITH_DOWNLOADS=1
   - mv web/build site
-  - zip site.zip site
+  - zip --recurse-paths site.zip site
   artifacts:
     paths:
       - "packages/*.zip"
