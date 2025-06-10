@@ -3,8 +3,10 @@
 clean:
 	rm -rf *.zip *.txt VERSION packages/ web/build/ web/.pkg web/.prod
 
+WITH_DOWNLOADS =
+DOWNLOADS_FLAG = $(if $(WITH_DOWNLOADS),--with-downloads,)
 pkg: clean
-	web/build.sh --profile pkg --profile prod --debug	
+	web/build.sh $(DOWNLOADS_FLAG) --profile pkg --profile prod --debug
 	mkdir -p packages
 	mv *.zip *.txt VERSION packages/
 
