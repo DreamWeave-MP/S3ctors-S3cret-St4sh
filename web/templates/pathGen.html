@@ -1,0 +1,160 @@
+<script>
+    const DefaultInstallPath = "C:\\games\\OpenMWMods\\";
+    function normalizePath(path) {
+        if (!path) return DefaultInstallPath;
+
+        path = path.trim();
+
+        const pathSep = path.includes('\\') ? '\\' : '/';
+        const cleaned = path.replace(/\//g, pathSep).replace(/\\/g, pathSep).replace(/\\ /g, ' ')
+
+        return (cleaned + (cleaned.endsWith(pathSep) ? '' : pathSep));
+    }
+
+    function loadModInstallPath() {
+        const cachedPath = localStorage.getItem('modInstallPath');
+        if (cachedPath) {
+            let configSection = document.getElementById('config-code');
+
+            const pathSep = cachedPath.includes('\\') ? '\\' : '/';
+            const pathRegex = new RegExp(DefaultInstallPath.replace(/\\/g, '\\\\'), 'g');
+            let normalized = normalizePath(
+                configSection.textContent.replace(pathRegex, cachedPath)
+            ).replace(/\\/g, pathSep);
+
+            if (normalized.endsWith(pathSep)) {
+                normalized = normalized.slice(0, -1);
+            }
+
+            configSection.textContent = normalized;
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadModInstallPath)
+
+    function generateConfig() {
+        const modData = document.querySelector('modData');
+        if (!modData) {
+            alert('Mod data not found. Please ensure the webpage is loaded correctly.');
+            return;
+        }
+
+        const modHeader = document.querySelector('a.modHeader');
+        if (!modHeader) {
+            alert('Mod header not found. Please ensure the webpage is loaded correctly.');
+            return;
+        }
+
+        let configSection = document.getElementById('config-code');
+        if (!configSection) {
+            alert('Config section not found. Please ensure the webpage is loaded correctly.');
+            return;
+        }
+
+        let inputPath = document.getElementById('mod-install-path').value.trim();
+        const userInputPath = inputPath !== '';
+
+        inputPath = normalizePath(inputPath);
+        console.log(`normalized: ${inputPath}`);
+
+        if (userInputPath) {
+            console.debug(`Caching path ${inputPath}`);
+            localStorage.setItem('modInstallPath', inputPath);
+        }
+
+        const pathSep = inputPath.includes('\\') ? '\\' : '/';
+        const trimmedName = modHeader.textContent.trim()
+
+        const contentFiles = modData.getAttribute('content-files');
+        const contentFileHeaderString = `# ${trimmedName} Content Files\n`;
+        const contentFileString = contentFiles ? contentFiles.split(';').map(file => {
+            return `content=${file.trim()}`;
+        }
+        ).join('\n') : null;
+
+        const dataDirectories = modData.getAttribute('data-paths');
+        const dataDirectoryHeaderString = `# ${trimmedName} Data Directories\n`;
+        const dataDirectoryString = dataDirectories ? dataDirectories.split(';').map(path => {
+            return `data=${inputPath}${path.replace('/', pathSep)}`;
+        }
+        ).join('\n') : null;
+
+        console.debug(dataDirectoryHeaderString, dataDirectoryString);
+        console.debug(contentFileHeaderString, contentFileString);
+        let outputText = `${dataDirectoryHeaderString}${dataDirectoryString}\n`;
+
+        if (contentFileString) {
+            outputText += `\n${contentFileHeaderString}${contentFileString}\n`
+        }
+
+        configSection.textContent = outputText;
+    }
+
+    const unsecuredCopyToClipboard = (text) => { const textArea = document.createElement("textarea"); textArea.value = text; document.getElementById('install-box').appendChild(textArea); textArea.focus(); textArea.select(); try { document.execCommand('copy') } catch (err) { console.error('Unable to copy to clipboard', err) } document.getElementById('install-box').removeChild(textArea) };
+    function copyConfigToClipboard() {
+        const configSection = document.getElementById('config-code');
+
+        console.debug('config section is:', configSection)
+
+        if (!configSection) {
+            alert('No config generated. That shouldn\'t happen!.');
+        }
+
+        if (window.isSecureContext && navigator.clipboard) {
+            navigator.clipboard.writeText(configSection.textContent);
+        } else {
+            unsecuredCopyToClipboard(configSection.textContent);
+        }
+    }
+</script>
+
+Use the following form to generate the openmw.cfg entries for this mod:
+<div style="
+        border: 1px solid #ccc;
+        padding: 1em;
+        margin: 1em 0;
+        text-align: center;
+    " class="install-box" id="install-box">
+
+    <p>
+        Where would you like to install this mod?
+    </p>
+
+    <div style="display: flex; gap: 0.5em; justify-content: center; align-items: center;">
+
+        <input style="
+        padding: 0.5em;
+        width: 50%;
+        height: fit-content;
+        border: 1px solid #999;
+    " placeholder="C:\games\OpenMWMods\" id="mod-install-path" type="text">
+
+        <div style="
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        gap: 0.5em;
+    ">
+
+            <button style="
+        padding: 0.5em 1em;
+        background: #4a4a4a;
+        color: white;
+        border: none;
+        cursor: pointer;
+    " onclick="generateConfig()">
+                Generate Config
+            </button>
+
+            <button style="
+        padding: 0.5em 1em;
+        background: #4a4a4a;
+        color: white;
+        border: none;
+        cursor: pointer;
+    " onclick="copyConfigToClipboard()">
+                Copy Config to Clipboard
+            </button>
+        </div>
+
+    </div>
+</div>
