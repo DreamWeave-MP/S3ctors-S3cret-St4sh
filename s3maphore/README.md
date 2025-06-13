@@ -29,15 +29,26 @@ If you just want to install the mod, stop here. For Lua scripters or playlist de
 
 ## Installation
 
-1. There are important installation instructions here. You MUST read them!!!
-1. Some other shit.
-
-Additionally, do the other really important thing, and not this other really bad thing. Seriously.
-
 ### Compatibility With Other Music Mods
 
 Dynamic Music and MUSE soundbanks are not natively supported. However, you can convert either to a S3maphore playlist in minutes by using this document.
 Any mods which simply add to or replace music Morrowind already provides (EG, in the `Explore`, `Special`, or `Battle` folders) are natively compatible with zero extra work.
+
+S3maphore ships a set of BAIN modules with Playlist Arrays which can be used in conjunction with tracks provided by other mods. Where appropriate, these modules are folder-based and will allow you to extend them yourself.
+
+- [01 Tamriel Rebuilt Playlists](https://www.nexusmods.com/morrowind/mods/47254)
+- [02 Project Cyrodiil Playlists]()
+- []()
+- []()
+- []()
+- []()
+- []()
+- []()
+- []()
+- []()
+- []()
+- []()
+- []()
 
 ## Usage
 
