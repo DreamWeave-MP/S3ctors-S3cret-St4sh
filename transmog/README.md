@@ -19,19 +19,6 @@ Follow the installation instructions below, and that should get you started! Tra
 
 #### Installation
 
-1. Download the mod from [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/transmog)
-1. Extract the zip to a location of your choosing, examples below:
-
-        # Windows
-        C:\games\OpenMWMods\transmog
-
-        # Linux
-        /home/username/games/OpenMWMods/transmog
-
-        # macOS
-        /Users/username/games/OpenMWMods/transmog
-
-1. Add the appropriate data path to your `opemw.cfg` file (e.g. `data="C:\games\OpenMWMods\transmog"`)
 1. This will be explained ingame when the mod is first installed, but it also bears mentioning here. At this time, OpenMW does not allow you to use its settings menu *and* automatically have working default keybinds. Thus, you have to set the key bindings yourself or this mod *will not work*. I recommend the following defaults:
 
         Rotate Right: Q
@@ -43,16 +30,12 @@ Follow the installation instructions below, and that should get you started! Tra
   <img src="../img/modathonbanner2024.png" alt="Modathon 2024" />
 </p>
 
-<div id="credits" style="text-align: center;">
+## Credits
 
-#### Credits
+Author: **S3ctor**  
 
-Author: **S3ctor**
+All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.  
 
-All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.
-
-Brought to you by:
+Brought to you by:  
 
 <a class="MWText" id="kartoffel" href="https://discord.com/channels/260439894298460160/1235260117566357535">Kartoffel's OpenMW Mod Bounties<a/>
-
-</div>
