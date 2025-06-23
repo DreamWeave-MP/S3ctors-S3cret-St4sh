@@ -1,0 +1,47 @@
+Music: "S3maphore - MOMW Musik"
+settingsPageDescription: "Aktivera och inaktivera uppspelning, specifika spellistor, stridsmusik och beteende för åsidosättande av spellistor."
+
+musicSettings: "Musikinställningar"
+
+DebugEnabled: "Aktivera felsökningsmeddelanden"
+DebugEnabledDescription: "Huruvida felsökningsmeddelanden visas eller inte i F10/openmw.log"
+
+MusicEnabled: "Aktivera musik"
+MusicEnabledDescription: "Huruvida S3maphore kommer spela någon musik eller inte.\nAnvändbart när man åsidosätter det inbyggda beteendet för att låta något annat styra musikuppspelningen."
+
+PlaylistSelection: "Aktivera/Inaktivera spellistor"
+
+CurrentPlaylistSelection: "Aktuell spellista"
+CurrentPlaylistSelectionDescription: "Playlist currently selected in the scroller.\nPlaylists are sorted alphabetically.\nResetting this group will cause all playlists to revert to their default active states." # will return to this later, need to find a good word for "scroller"
+
+PlaylistActivity: ""
+
+PlaylistActiveState: "Spellistans status" # could probably be translated better if I had more context.
+PlaylistActiveStateDescription: "Om spellistan överhuvudtaget ska väljas för uppspelning eller inte.\n\nVARNING: Detta betyder inte att spellistan kommer att spelas upp omedelbart, det betyder bara att den *kan* spelas upp under de villkor som den definierar.\n\nOBS: Om det här alternativet är inaktiverat betyder det att du inte har laddat några spår som den här spellistan definierar och att den aldrig skulle spelas upp ändå."
+
+BannerEnabled: "Visa spårinfo"
+BannerEnabledDescription: "Visar aktuell spellista och spårnamn längst upp på skärmen, om språklokaliseringar för spellistan finns tillgängliga." # I assume "localizations" is reffering to i10n yaml-files?
+
+ResetAllPlaylists: "Återställ alla spellistor"
+ResetAllPlaylistsDescription: "Återställ alla spellistor till deras förinställda aktiva tillstånd."
+ResetButtonLabel: "Återställ"
+
+BattleEnabled: "Aktivera stridsmusik"
+BattleEnabledDescription: "Om inaktiv kommer alla stridsspellistor att hoppas över."
+
+NoInterrupt: "Avsluta föregående spår"
+NoInterruptDescription: "Gör att föregående spår avslutas när aktuell spellista ändras.\n\nPåverkar endast spellistor med samma avbrottsprioritet, så om du går in i en Dwemer-dungeon medan ett Ashlands-spår spelas upp \nkommer Dwemer-spåret inte att starta förrän Ashland-spåret har avslutats.\n\nGenerellt kommer spellistor att avbryta varandra i ordningen Utforska -> Strid -> Special, om deras avbrottslägen är olika."
+
+ForcePlaylistChangeOnOverworldTransition: "Tillåt direkt byte av spellista ovan jord"
+ForcePlaylistChangeOnOverworldTransitionDescription: "Om aktiverad åsidosätts inställningen 'avsluta föregående spår' när du är utomhus.\n\nDen här inställningen tar hänsyn till spellistans prioritet, så om den är aktiverad kommer en stads- eller fraktionsbaserad spellista att åsidosätta en regionbaserad, men inte tvärtom."
+
+ForcePlaylistChangeOnHostileExteriorTransition: "Tillåt direkt byte av spellista i Dungeon"
+ForcePlaylistChangeOnHostileExteriorTransitionDescription: "Om aktiverad åsidosätts inställningen 'avsluta föregående spår' när du går in i en interiör med fientliga personer eller varelser.\n\nObservera att detta innebär att åsidosättningar inte kommer att ske efter att en dungeon eller cell har rensats från fiender."
+
+ForcePlaylistChangeOnFriendlyExteriorTransition: "Tillåt direkt byte av spellista i fredliga interiörer"
+ForcePlaylistChangeOnFriendlyExteriorTransitionDescription: "Om aktiverad åsidosätts inställningen 'avsluta föregående spår' när du går in i en interiör utan fientliga personer eller varelser."
+
+FadeOutDuration: "Förinställd fadeout-tid"
+FadeOutDurationDescription: "Fadeout-tiden mellan spår som används om aktuell spellista inte definierar sin egen fadeout-tid."
+
+# Note - I have not tested the mod yet, so some translations might be bad due to me misunderstanding the context. I hope to do another MR later once I've had the time to actually run the mod.
