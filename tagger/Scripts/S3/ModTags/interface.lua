@@ -1,10 +1,20 @@
-local core = require('openmw.core')
+local async = require 'openmw.async'
 local storage = require('openmw.storage')
 
 local TagSection = storage.globalSection('TaggerStorage')
 
 local AppliedTags = TagSection:get('AppliedTags')
 local TagList = TagSection:get('TagList')
+
+TagSection:subscribe(async:callback(
+    function(_, key)
+        if key == 'AppliedTags' then
+            AppliedTags = TagSection:get(key)
+        elseif key == 'TagList' then
+            TagList = TagSection:get(key)
+        end
+    end
+))
 
 local validObjectTypes = {
     ['MWLua::GObject'] = true,
