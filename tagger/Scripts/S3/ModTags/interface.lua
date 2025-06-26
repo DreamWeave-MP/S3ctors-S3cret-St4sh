@@ -54,8 +54,12 @@ local function validateArguments(object, tag, isInstance)
 end
 
 return {
-    TagList = TagList,
-    AppliedTags = AppliedTags,
+    tagList = function()
+        return TagList
+    end,
+    appliedTags = function()
+        return AppliedTags
+    end,
     objectHasTag = function(object, tag)
         validateArguments(object, tag)
 
