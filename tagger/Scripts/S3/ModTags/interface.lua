@@ -29,16 +29,16 @@ local validCellTypes = {
 
 local function getRecordId(object)
     local objectType = type(object)
-    local trueTypeName = object.__type.name
 
     if objectType == 'string' then
         return object:lower()
-    elseif objectType == 'userdata' and validObjectTypes[trueTypeName] then
+    elseif objectType == 'userdata' and validObjectTypes[object.__type.name] then
         return object.recordId
-    elseif objectType == 'userdata' and validCellTypes[trueTypeName] then
+    elseif objectType == 'userdata' and validCellTypes[object.__type.name] then
         return object.id
     else
-        error('Invalid object type: ' .. objectType .. ' ' .. trueTypeName)
+        local errorTypeName = object.__type and object.__type.name or objectType
+        error('Invalid object type: ' .. objectType .. ' ' .. errorTypeName)
     end
 end
 
