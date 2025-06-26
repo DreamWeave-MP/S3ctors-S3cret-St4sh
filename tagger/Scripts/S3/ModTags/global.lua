@@ -82,7 +82,7 @@ local function loadTagFiles()
 
     TagSection:set('TagList', TagList)
     TagSection:set('AppliedTags', AppliedTags)
-    
+  
     TagList = {}
     AppliedTags = {}
 
