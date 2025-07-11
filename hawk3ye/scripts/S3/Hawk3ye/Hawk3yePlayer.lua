@@ -17,7 +17,9 @@ local DefaultFOV = camera.getBaseFieldOfView()
 
 ---@type number Real FOV from RenderingManager
 local currentFOV = camera.getFieldOfView()
-local currentCameraMode
+
+---@type number preferred camera distance in third person. Used to prevent changing view distance when zoomed.
+local prevCamDistance = I.Camera.getTargetThirdPersonDistance()
 
 local settings = storage.playerSection("Settings" .. MOD_NAME)
 
@@ -25,6 +27,7 @@ local ToggleEventName = 'Hawk3yeToggle'
 local ToggleSettingName = 'enabled'
 local DurationSettingName = 'zoom_time'
 local FOVSettingName = 'zoom_fov_degrees'
+local CameraDisableTag = 'Hawk3yeCameraDisableTag'
 
 local ZoomDuration = settings:get(DurationSettingName)
 local ZoomEnabled = settings:get(ToggleSettingName)
@@ -112,7 +115,7 @@ return {
             return zoomActive
         end,
 
-        CanZoom = canZoom,
+        canZoom = canZoom,
 
         ZoomStates = ReadOnlyStates,
     },
@@ -132,25 +135,18 @@ return {
             zoomActive = zoomType == ZoomState.ENABLE
 
             if zoomActive then
-                currentCameraMode = camera.getMode()
-
-                if currentCameraMode ~= camera.MODE.FirstPerson then
-                    camera.setMode(camera.MODE.FirstPerson)
-                end
+                I.Camera.disableModeControl(CameraDisableTag)
             else
-                if currentCameraMode and currentCameraMode ~= camera.MODE.FirstPerson then
-                    camera.setMode(currentCameraMode)
-                    currentCameraMode = nil
-                end
+                I.Camera.enableModeControl(CameraDisableTag)
+            end
 
-                if zoomType == ZoomState.RESET then
-                    currentFOV = camera.getBaseFieldOfView()
-                    DefaultFOV = currentFOV
+            if zoomType == ZoomState.RESET then
+                currentFOV = camera.getBaseFieldOfView()
+                DefaultFOV = currentFOV
 
-                    camera.setFieldOfView(currentFOV)
+                camera.setFieldOfView(currentFOV)
 
-                    updateFOVRange()
-                end
+                updateFOVRange()
             end
         end,
     },
@@ -160,6 +156,13 @@ return {
             if not canZoom() then return end
 
             updateZoom(dt)
+
+            local currentCamDistance = I.Camera.getTargetThirdPersonDistance()
+            if zoomActive and prevCamDistance ~= currentCamDistance then
+                camera.setPreferredThirdPersonDistance(prevCamDistance)
+            else
+                prevCamDistance = currentCamDistance
+            end
         end,
 
         onKeyPress = function(key)
