@@ -569,7 +569,7 @@ local function switchPlaylist(newPlaylist)
         error(string.format("Can not fetch track with index %s from playlist '%s'.", nextTrackIndex, newPlaylist.id))
     else
         currentTrack = trackPath
-        ambient.streamMusic(trackPath, newPlaylist.fadeOut or FadeOutDuration)
+        ambient.streamMusic(trackPath, { fadeOut = newPlaylist.fadeOut or FadeOutDuration })
 
         if newPlaylist.playOneTrack then
             newPlaylist.deactivateAfterEnd = true
