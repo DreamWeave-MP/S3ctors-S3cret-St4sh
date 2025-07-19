@@ -83,7 +83,7 @@ return {
         isValidCallback = function(playback)
             return not playback.state.isInCombat
                 and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'sheogorad region'
+                and playback.state.self.cell.region == 'sheogorad'
         end,
     },
     {
