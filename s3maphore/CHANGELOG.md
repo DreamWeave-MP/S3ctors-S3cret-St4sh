@@ -11,6 +11,21 @@
 </style>
 
 <details open><summary><h4>Latest</h4></summary>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/cd61fb2">cd61fb2 - FIX: Correct sheogorad region name</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/44ef62c">44ef62c - FIX: Correct a bug where fadeOut wasn't assigned properly when switching tracks (Thanks Sikreci)</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/0e7964d">0e7964d - FIX: Always assign registrationOrder field, only increment if not already registered</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/bcc562a">bcc562a - Merge branch 'lysol-sv-250609' into 'master'</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/87b76f3">87b76f3 - CLEANUP: Wasn't supposed to commit that lol</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/10dbbdf">10dbbdf - Update file sv.yaml</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/a84b945">a84b945 - Merge branch s3ctors-s3cret-st4sh:master into lysol-sv-250609</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/b748327">b748327 - FEAT: Migrate Drizzy playlists into s3maphore</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/cded70f">cded70f - Update file sv.yaml</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/e0aec46">e0aec46 - CLEANUP: Reformat S3maphore document headings</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/c277fb6">c277fb6 - CLEANUP: Refactor all readmes for the new format</a><br><br>
+</details>
+
+<details><summary><h4>Version 0.53:</h4></summary>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/7a30cbe">7a30cbe - S3maphore changelog 0.53</a><br><br>
 </details>
 
 <details><summary><h4>Version 0.52:</h4></summary>
