@@ -245,8 +245,8 @@ function MusicManager.registerPlaylist(playlist)
         playlistsTracksOrder[playlist.id] = existingOrder
     end
 
+    playlist.registrationOrder = registrationOrder
     if registeredPlaylists[playlist.id] == nil then
-        playlist.registrationOrder = registrationOrder
         registrationOrder = registrationOrder + 1
     end
 
