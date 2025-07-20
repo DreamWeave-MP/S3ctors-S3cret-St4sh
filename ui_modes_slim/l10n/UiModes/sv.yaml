@@ -1,0 +1,16 @@
+UiModes: "Gränssnittslägen"
+UiModesDescription: "Skapare: ptmikheev"
+
+Settings: "Inställningar"
+
+uiModesShortcuts: "Gränssnittslägen - genvägar"
+uiModesShortcutsDescription: "Tangenterna 'I', 'M', 'C' öppnar lagret, kartan respektive stats separat från andra fönster"
+autoDrawWeapon: "Dra vapen automatiskt"
+autoDrawWeaponDescription: "Dra automatiskt det senast använda vapnet eller besvärjelsen när attackknappen används"
+rotateCameraInInventory: "Rotera kameran i lagret"
+rotateCameraInInventoryDescription: "Rotera kameran runt spelarfiguren när laget öppnas"
+rotateCameraInDialogs: "Rotera kameran vid dialog"
+rotateCameraInDialogsDescription: "Rotera kameran runt spelarfiguren vid dialog med en icke-spelbar figur"
+rotateCameraSpeed: "Kamerans rotationshastighet"
+rotateCameraSpeedDescription: "Grader per sekund"
+
