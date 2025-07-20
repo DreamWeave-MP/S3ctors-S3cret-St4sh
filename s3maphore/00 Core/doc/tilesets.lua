@@ -1,5 +1,9 @@
+---@type IDPresenceMap[]
+local Tilesets = {}
+
+
 ---@type IDPresenceMap
-CaveStaticIds = {
+Tilesets.Cave = {
     ['BM_IC_cavern_01'] = true,
     ['BM_IC_cavern_01_01'] = true,
     ['BM_IC_cavern_01_02'] = true,
@@ -3272,4 +3276,4 @@ CaveStaticIds = {
     ['T_Sky_TerrRockWR_CaveEntr_03'] = true,
 }
 
-return CaveStaticIds
+return Tilesets
