@@ -100,3 +100,9 @@ a.modHeader,
     background-clip: text;
     color: transparent;
 }
+
+#ui_modes_slim {
+    background-image: linear-gradient(to left, red 10%, teal);
+    background-clip: text;
+    color: transparent;
+}
