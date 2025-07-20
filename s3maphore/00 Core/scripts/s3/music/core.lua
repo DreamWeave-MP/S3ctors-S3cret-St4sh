@@ -439,6 +439,7 @@ local PlaylistEnvironment = {
     timeOfDay = MusicManager.playlistTimeOfDay,
     INTERRUPT = MusicManager.INTERRUPT,
     PlaylistPriority = require 'doc.playlistPriority',
+    Tilesets = require 'doc.tilesets',
     Playback = Playback,
     ---@type table <string, any>
     I = I,
