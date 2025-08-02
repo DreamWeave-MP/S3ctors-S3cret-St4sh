@@ -1,3 +1,6 @@
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
+
 ---@type IDPresenceMap
 local CrystalCityCells = {
     ['massama,'] = true,
@@ -35,8 +38,6 @@ local CrystalCityCells = {
 local function crystalCityRule(playback)
     return playback.rules.cellNameExact(CrystalCityCells)
 end
-
-local PlaylistPriority = require 'doc.playlistPriority'
 
 ---@type S3maphorePlaylist[]
 return {
