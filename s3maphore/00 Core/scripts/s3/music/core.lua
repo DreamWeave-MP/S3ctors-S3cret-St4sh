@@ -438,6 +438,7 @@ local PlaylistEnvironment = {
     setPlaylistActive = MusicManager.setPlaylistActive,
     timeOfDay = MusicManager.playlistTimeOfDay,
     INTERRUPT = MusicManager.INTERRUPT,
+    ---@type PlaylistPriority
     PlaylistPriority = require 'doc.playlistPriority',
     Tilesets = require 'doc.tilesets',
     Playback = Playback,
