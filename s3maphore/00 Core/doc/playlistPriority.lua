@@ -12,8 +12,10 @@
 --- 3. Remember to take advantage of the rules set forth by other playlists. Your position in the chain also implies what conditions have already been checked - for example, priority numbers below 200 can generally assume the player is in combat already.
 
 ---@class PlaylistPriority
---- Battle music. Below this tier, the player can generally be assumed to be in combat.
+--- Battle music. Below this tier, the player can generally be assumed to be in combat. This tier is reserved, and modders should prefer PlaylistPriority.BattleMod
 ---@field Battle integer
+--- Battle music. Below this tier, the player can generally be assumed to be in combat. This sub-level is intended for mods whom want to provide their own battle playlists.
+---@field BattleMod integer
 --- Exploration music, default for most situations. The exploration playlist's priority should generally be considered the upper limit of playlist priorities.
 ---@field Explore integer
 --- City music
