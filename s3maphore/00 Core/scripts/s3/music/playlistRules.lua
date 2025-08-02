@@ -304,7 +304,7 @@ end
 ---@field min integer
 ---@field max integer
 
----@alias NumericPresneceMap table<string, NumericPresenceMapData>
+---@alias NumericPresenceMap table<string, NumericPresenceMapData>
 
 local Quests
 local S3maphoreJournalCache = {}
@@ -320,7 +320,7 @@ end
 --- Example usage:
 ---
 --- playback.rules.journal { A1_V_VivecInformants = { min = 50, max = 55, }, }
----@param journalDataMap NumericPresneceMap
+---@param journalDataMap NumericPresenceMap
 ---@return boolean
 function PlaylistRules.journal(journalDataMap)
     local cachedResult = S3maphoreJournalCache[journalDataMap]
