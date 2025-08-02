@@ -88,13 +88,13 @@
           })
 
           .then(function (response) {
-            dlLink.href = `${projectPath}/-/package_files/packages/${response[0].id}/download`;
+            dlLink.href = `${projectPath}/-/package_files/${response[0].id}/download`;
             if (sha256Link && response[1])
-              sha256Link.href = `${projectPath}/-/package_files/packages/${response[1].id}/download`;
+              sha256Link.href = `${projectPath}/-/package_files/${response[1].id}/download`;
             if (sha512Link && response[2])
-              sha512Link.href = `${projectPath}/-/package_files/packages/${response[2].id}/download`;
+              sha512Link.href = `${projectPath}/-/package_files/${response[2].id}/download`;
             if (blake2Link && response[3])
-              blake2Link.href = `${projectPath}/-/package_files/packages/${response[3].id}/download`;
+              blake2Link.href = `${projectPath}/-/package_files/${response[3].id}/download`;
           });
       });
   }
