@@ -16,7 +16,7 @@ local InvalidTypeStr = 'Invalid type was provided: %s'
 
 local TICKS_TO_DELETE = 3
 
-local USE_GLOBAL_FUNCTIONS = true
+local USE_GLOBAL_FUNCTIONS = false
 
 ---@alias SzudzikCoord integer
 ---@alias GameObject userdata
@@ -76,6 +76,7 @@ local overrideRecords = {}
 ---@field log_name string? prefix to use when logging messages for a specific module
 ---@field replace_names string[]? array of cell names in which to replace objects
 ---@field exterior_cells ExteriorGrid[]? array of exterior grids in which to replace objects
+---@field replace_meshes table<string, string>? table of original mesh paths to the desired new ones. These paths may or may not contain the `meshes/` prefix as the script will prepend it automatically if not present.
 
 ---@type table<string, boolean>
 local disabledModules = {}
@@ -316,10 +317,18 @@ return {
     uninstallModule = uninstallModule,
   },
   interfaceName = "StaticSwitcher_G",
-  engineHandlers = {
-    onPlayerAdded = function()
-      if not USE_GLOBAL_FUNCTIONS then return end
+  eventHandlers = {
+    StaticSwitcherEnableGlobalFunctions = function(state)
+      USE_GLOBAL_FUNCTIONS = state
+    end,
+    StaticSwitcherRemoveModule = function(moduleName)
+      uninstallModule(moduleName)
 
+      for _, player in ipairs(world.players) do
+        player.type.sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', moduleName)
+      end
+    end,
+    StaticSwitcherRunGlobalFunctions = function()
       for _, cell in ipairs(world.cells) do
         if not cell.isExterior then goto SKIP end
 
@@ -336,6 +345,11 @@ return {
 
         ::SKIP::
       end
+    end,
+  },
+  engineHandlers = {
+    onPlayerAdded = function(player)
+      player.type.sendMenuEvent(player, 'StaticSwitcherRequestGlobalFunctions')
     end,
     onUpdate = function()
       local i = 1
