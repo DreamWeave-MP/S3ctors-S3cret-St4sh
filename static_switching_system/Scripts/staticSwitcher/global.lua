@@ -1,6 +1,7 @@
 local aux_util = require 'openmw_aux.util'
 local markup = require 'openmw.markup'
 local types = require 'openmw.types'
+local util = require 'openmw.util'
 local vfs = require 'openmw.vfs'
 local world = require 'openmw.world'
 
@@ -263,10 +264,10 @@ end
 return {
   interface = {
     overrideRecords = function()
-      deepLog(overrideRecords)
+      return util.makeReadOnly(overrideRecords)
     end,
     replacedObjectSet = function()
-      deepLog(replacedObjectSet)
+      return util.makeReadOnly(replacedObjectSet)
     end,
     uninstallModule = uninstallModule,
   },
