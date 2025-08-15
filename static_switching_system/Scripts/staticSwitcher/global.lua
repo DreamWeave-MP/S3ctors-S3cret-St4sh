@@ -18,25 +18,11 @@ local TICKS_TO_DELETE = 3
 
 local USE_GLOBAL_FUNCTIONS = false
 
----@alias SzudzikCoord integer
----@alias GameObject userdata
-
 ---@type table <string, string>
 local meshesToReplace = {}
 
----@type table <string, boolean>
-local ignoreList = {}
-
----@type table <string, boolean>
-local overrideList = {}
-
 ---@type table <SzudzikCoord, boolean>
 local globalCells = {}
-
----@class ObjectDeleteData
----@field object GameObject
----@field ticks integer number of frames before this object will be deleted
----@field removeOrDisable boolean whether or not the object will be permanently removed or just disabled. When replacing, the original objects are disabled, but when uninstalling a module the replacements are removed and the originals restored.
 
 ---@type ObjectDeleteData[]
 local objectDeleteQueue = {}
@@ -44,39 +30,14 @@ local objectDeleteQueue = {}
 ---@type table <string, boolean>
 local replaceNames = {}
 
----@class ReplacedObjectData
----@field originalObject GameObject
----@field sourceFile string
-
----@class SourceMapData
----@field logString string log prefix associated with this specific mesh replacement
----@field sourceFile string the basename of the yaml file which defined this replacement
-
----@alias MeshToSourceMap table<string, SourceMapData> Maps a new mesh to the source file which defined this replacement.
-
 ---@type MeshToSourceMap
 local newMeshesToSourceFiles = {}
 
 ---@type table <GameObject, ReplacedObjectData>
 local replacedObjectSet = {}
 
----@alias RecordId string
----@alias OriginalModel RecordId
----@alias ReplacedRecordId RecordId
----@alias ReplacementMap table < OriginalModel, ReplacedRecordId >
-
 ---@type ReplacementMap
 local overrideRecords = {}
-
----@class ExteriorGrid
----@field x integer X coordinate of an exterior cell in which to replace objects
----@field y integer Y coordinate of an exterior cell in which to replace objects
-
----@class ReplacementFileData
----@field log_name string? prefix to use when logging messages for a specific module
----@field replace_names string[]? array of cell names in which to replace objects
----@field exterior_cells ExteriorGrid[]? array of exterior grids in which to replace objects
----@field replace_meshes table<string, string>? table of original mesh paths to the desired new ones. These paths may or may not contain the `meshes/` prefix as the script will prepend it automatically if not present.
 
 ---@type table<string, boolean>
 local disabledModules = {}
@@ -117,7 +78,7 @@ local function deepLog(object)
 end
 
 ---@param object GameObject
----@return userdata Object record data
+---@return ActivatorRecord Object record data
 local function Record(object)
   return object.type.records[object.recordId]
 end
@@ -149,7 +110,7 @@ local function assertMeshExists(modelPath, originalModel, recordId)
   )
 end
 
----@param object userdata
+---@param object GameObject
 ---@return boolean? whether the object can be replaced or not
 local function canReplace(object)
   if not object.type then return end
@@ -217,8 +178,9 @@ local function addObjectToDeleteQueue(object, removeOrDisable)
   }
 end
 
----@param object userdata
+---@param object GameObject
 local function replaceObject(object)
+  ---@type ActivatorRecord
   local objectRecord = Record(object)
   if not objectRecord.model then return end
 
@@ -268,14 +230,6 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
       logString =
           meshReplacementsTable.log_name or LOG_PREFIX,
     }
-  end
-
-  for _, meshPath in ipairs(meshReplacementsTable.ignore_meshes or {}) do
-    ignoreList[normalizePath(getMeshPath(meshPath))] = true
-  end
-
-  for _, objectRef in ipairs(meshReplacementsTable.overrides or {}) do
-    overrideList[objectRef] = true
   end
 
   for _, cellGrid in ipairs(meshReplacementsTable.exterior_cells or {}) do
