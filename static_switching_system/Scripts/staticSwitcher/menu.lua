@@ -103,7 +103,9 @@ settingsGroup:subscribe(
 return {
     eventHandlers = {
         StaticSwitcherRequestGlobalFunctions = function()
-            core.sendGlobalEvent('StaticSwitcherRunGlobalFunctions', settingsGroup:get('StaticSwitcherEnableGlobal'))
+            if settingsGroup:get('StaticSwitcherEnableGlobal') then
+                core.sendGlobalEvent('StaticSwitcherRunGlobalFunctions')
+            end
         end,
         StaticSwitcherMenuRemoveModule = function(moduleName)
             if menu.getState() ~= menu.STATE.Running then return end
