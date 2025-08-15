@@ -23,7 +23,10 @@ local meshReplacementModules, meshReplacementModulesLen = {}, 0
 
 for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
     meshReplacementModulesLen = meshReplacementModulesLen + 1
-    meshReplacementModules[meshReplacementModulesLen] = getPathBaseName(meshReplacementsPath)
+    local baseName = getPathBaseName(meshReplacementsPath)
+    if baseName ~= 'example' then
+        meshReplacementModules[meshReplacementModulesLen] = baseName
+    end
 end
 
 I.Settings.registerPage {
