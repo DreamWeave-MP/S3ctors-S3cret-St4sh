@@ -362,17 +362,17 @@ return {
         local targetModules = getReplacementModuleForCell(cell)
         if not next(targetModules) then goto SKIPCELL end
 
-        Log(
-          ReplacingObjectsStr:format(cell)
-        )
+        -- Log(
+        --   ReplacingObjectsStr:format(cell)
+        -- )
 
         for _, object in ipairs(cell:getAll()) do
           local replacementModule, replacementMesh = getObjectReplacement(object, targetModules)
           if not replacementMesh or not replacementModule then goto SKIPOBJECT end
 
-          Log(
-            ReplacingIndividualObjectStr:format(object, replacementMesh, replacementModule)
-          )
+          -- Log(
+          --   ReplacingIndividualObjectStr:format(object, replacementMesh, replacementModule)
+          -- )
 
           replaceObject(object, replacementModule, replacementMesh)
 
