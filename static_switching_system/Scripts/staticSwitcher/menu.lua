@@ -102,6 +102,7 @@ settingsGroup:subscribe(
     )
 )
 
+local StaticSwitcherL10n = core.l10n('StaticSwitcher')
 return {
     eventHandlers = {
         StaticSwitcherRequestGlobalFunctions = function()
@@ -112,8 +113,11 @@ return {
         StaticSwitcherMenuRemoveModule = function(moduleName)
             if menu.getState() ~= menu.STATE.Running then return end
 
-            local description = ('Removed StaticSwitcher module: %s at %s'):format(moduleName, core.getRealTime())
-            menu.saveGame(description, 'Removed Static Switcher Module ' .. moduleName)
+            menu.saveGame(
+                StaticSwitcherL10n('StaticSwitcherSaveDesc', {
+                    moduleName = moduleName
+                })
+            )
             menu.quit()
         end
     }
