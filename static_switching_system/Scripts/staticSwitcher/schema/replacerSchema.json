@@ -1,0 +1,80 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Static Switcher Module",
+    "type": "object",
+    "properties": {
+        "log_name": {
+            "type": "string",
+            "description": "Optional name for logging purposes"
+        },
+        "replace_names": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "description": "List of cell names to replace objects within"
+        },
+        "exterior_cells": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "x": {
+                        "type": "integer"
+                    },
+                    "y": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "x",
+                    "y"
+                ],
+                "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "List of exterior cell coordinates to replace objects in"
+        },
+        "ignore_records": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "description": "List of records to ignore when replacing objects for this module"
+        },
+        "replace_meshes": {
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "type": "string"
+                }
+            },
+            "minProperties": 1,
+            "description": "Mapping of mesh paths to replace"
+        }
+    },
+    "allOf": [
+        {
+            "required": [
+                "replace_meshes"
+            ]
+        },
+        {
+            "anyOf": [
+                {
+                    "required": [
+                        "replace_names"
+                    ]
+                },
+                {
+                    "required": [
+                        "exterior_cells"
+                    ]
+                }
+            ]
+        }
+    ],
+    "additionalProperties": false
+}
