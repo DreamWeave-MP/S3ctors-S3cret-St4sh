@@ -17,14 +17,6 @@ local FatigueFailCost = -75
 ---@field speedMult number The speed multiplier for the climb.
 ---@field target GameObject The entity that is performing the climb.
 
----@class GameObject userdata
----@field position util.vector3
----@field getBoundingBox function(): userdata
----@field teleport function(cell: userdata, position: util.vector3, options: table)
----@field sendEvent function(eventName: string, eventData: any)
----@field id string The unique identifier for the object.
----@field cell userdata The cell in which the object is located.
-
 --- Calculates a buffered position for a given object by adjusting its Z-coordinate.
 --- The buffered position is determined by adding the half-size of the object's bounding box
 --- along the Z-axis to the object's current position.
