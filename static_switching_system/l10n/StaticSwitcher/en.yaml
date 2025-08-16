@@ -28,3 +28,6 @@ StaticSwitcherModuleSelectionDesc: |-
 
   WARNING:
   If you uninstall a module here, but do not actually uninstall the *files*, they will be restored the next time your save is loaded.
+
+StaticSwitcherSaveDesc: |-
+  Removed SSS Module {moduleName}
