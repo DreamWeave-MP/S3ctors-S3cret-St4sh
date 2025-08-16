@@ -12,36 +12,48 @@ local LOG_PREFIX = 'StaticSwitchingSystem'
 local LOG_FORMAT_STR = '%s %s'
 local MISSING_MESH_ERROR = [[
 Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]]
+local InvalidModuleNameStr = 'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.'
+local ReplacingObjectsStr = 'Replacing Objects in cell: %s'
+local ReplacingIndividualObjectStr = 'Replacing object %s with model %s provided by module %s'
 
 local InvalidTypeStr = 'Invalid type was provided: %s'
 
 local TICKS_TO_DELETE = 3
-
-local USE_GLOBAL_FUNCTIONS = false
-
----@type table <string, string>
-local meshesToReplace = {}
-
----@type table <SzudzikCoord, boolean>
-local globalCells = {}
+local moduleToRemove
 
 ---@type ObjectDeleteData[]
 local objectDeleteQueue = {}
 
----@type table <string, boolean>
-local replaceNames = {}
-
----@type MeshToSourceMap
-local newMeshesToSourceFiles = {}
-
 ---@type table <GameObject, ReplacedObjectData>
 local replacedObjectSet = {}
 
----@type ReplacementMap
+--- Maps module names to the record ids they manage
+---@type table<string, ReplacementMap>
 local overrideRecords = {}
 
----@type table<string, boolean>
-local disabledModules = {}
+---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
+local ComposedReplacements = {}
+
+---@param inputTarget table? Table into which values will be copied
+---@param source table? Table values will copy from
+---@return table target
+local function deepCopy(inputTarget, source)
+  local target = inputTarget or {}
+
+  if source and type(source) ~= 'table' then error('Source table was not even a table, it was: ' .. source) end
+
+  for k, v in pairs(source or {}) do
+    if type(v) == 'table' then
+      local newSubTable = {}
+      target[k] = newSubTable
+      deepCopy(newSubTable, v)
+    else
+      target[k] = v
+    end
+  end
+
+  return target
+end
 
 ---Function to normalize path separators in a string
 ---@param path string
@@ -53,6 +65,7 @@ end
 
 --- Helper function to generate a log message string, but without printing it for reusability.
 ---@param message string
+---@param prefix string?
 local function LogString(message, prefix)
   if not prefix then prefix = LOG_PREFIX end
 
@@ -64,9 +77,11 @@ end
 
 --- Actual log writing function, given whatever message
 ---@param message string
----@param prefix string
+---@param prefix string?
 local function Log(message, prefix)
-  print(LogString(message, prefix))
+  print(
+    LogString(message, prefix)
+  )
 end
 
 ---@param object any
@@ -100,60 +115,44 @@ end
 ---@param modelPath string
 ---@param originalModel string
 ---@param recordId string
+---@param moduleName string
 ---@return boolean? whether the mesh exists or not
-local function assertMeshExists(modelPath, originalModel, recordId)
+local function assertMeshExists(modelPath, originalModel, recordId, moduleName)
   if vfs.fileExists(modelPath) then return true end
-  local logData = newMeshesToSourceFiles[modelPath]
 
   Log(
-    MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, logData.sourceFile),
-    logData.logString
+    MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
+    ComposedReplacements[moduleName].logString or LOG_PREFIX
   )
 end
 
 ---@param object GameObject
----@return boolean? whether the object can be replaced or not
-local function canReplace(object)
-  if not object.type then return end
+---@param oldRecord ActivatorRecord
+---@param newModel string
+---@param replacementModule string
+local function createReplacementRecord(object, oldRecord, newModel, replacementModule)
+  local oldRecordId = object.recordId
 
-  --- Check if the object has a new mesh
-  local newMesh = meshesToReplace[Record(object).model]
-  if not newMesh then return end
-
-  -- And whether the new mesh is associated with a source file that has been disabled
-  local sourceFile = newMeshesToSourceFiles[newMesh].sourceFile
-  if disabledModules[sourceFile] then return end
-
-  local cell = object.cell
-  local isInReplaceableExterior = globalCells[szudzik.getIndex(cell.gridX, cell.gridY)]
-
-  local isInReplaceableNamedCell = false
-  for _, replaceString in ipairs(replaceNames) do
-    if cell.name:lower():match(replaceString) then
-      isInReplaceableNamedCell = true
-      break
-    end
-  end
-
-  return isInReplaceableExterior or isInReplaceableNamedCell or overrideList[object.id]
-end
-
-local function createReplacementRecord(object, oldModel, newModel)
-  if overrideRecords[oldModel] then return end
+  if not overrideRecords[replacementModule] then overrideRecords[replacementModule] = {} end
+  local moduleRecords = overrideRecords[replacementModule]
+  if moduleRecords[oldRecordId] then return end
 
   local newRecord = { model = newModel }
 
-  local oldRecord = Record(object)
   if not types.Static.objectIsInstance(object) and not types.Activator.objectIsInstance(object) then
     error(
       InvalidTypeStr:format(object.type)
     )
   end
 
+  local scriptId
   if oldRecord.name then newRecord.name = oldRecord.name end
-  if oldRecord.mwscript then newRecord.mwscript = oldRecord.mwscript end
+  if oldRecord.mwscript then
+    scriptId = oldRecord.mwscript
+    newRecord.mwscript = scriptId
+  end
 
-  overrideRecords[oldModel] = world.createRecord(types.Activator.createRecordDraft(newRecord)).id
+  moduleRecords[oldRecordId] = world.createRecord(types.Activator.createRecordDraft(newRecord)).id
 end
 
 ---@param path string Path to check for the `meshes/` prefix
@@ -179,86 +178,163 @@ local function addObjectToDeleteQueue(object, removeOrDisable)
   }
 end
 
+--- Given a particular gameObject, check whether this module can rightfully replace it.
+--- The function must be created on a per-module basis in order to refer to the current local value of `replacementTable`
 ---@param object GameObject
-local function replaceObject(object)
+---@return string? replacementObjectMesh
+local function getReplacementMeshForObject(meshMap, object)
+  --- Special handling for marker types which are statics but have no .type field on them
+  if not object.type then return end
+
+  local objectModel = Record(object).model
+  if not objectModel then return end
+
+  local replacementObjectMesh = meshMap[objectModel]
+
+  if replacementObjectMesh then return replacementObjectMesh end
+end
+
+---@param object GameObject
+---@param replacementModules table<string, SSSModule>
+---@return string? moduleName, string? replacementMesh the specific module name and model path which should be used to replace a particular gameObject
+local function getObjectReplacement(object, replacementModules)
+  for moduleName, moduleData in pairs(replacementModules) do
+    local replacementMesh = getReplacementMeshForObject(moduleData.meshMap, object)
+    if replacementMesh then return moduleName, replacementMesh end
+  end
+end
+
+---@param replacementTable SSSModule
+---@param cell GameCell
+---@return true? locationMatched whether or not a given cell is handled by this module
+local function replacementTableMatchesCell(replacementTable, cell)
+  if cell.isExterior then
+    local cellIndex = szudzik.getIndex(cell.gridX, cell.gridY)
+    if replacementTable.gridIndices[cellIndex] then
+      return true
+    end
+  end
+
+  local cellIdLower, cellNameLower = cell.id:lower(), cell.name:lower()
+  for _, cellName in ipairs(replacementTable.cellNameMatches) do
+    if cellName == cellIdLower
+        or cellName == cellNameLower
+        or cellNameLower:match(cellName)
+        or cellIdLower:match(cellName)
+    then
+      return true
+    end
+  end
+end
+
+---@param cell GameCell
+---@return table<string, SSSModule> modulesForThisCell subtable of valid modules for this cell
+local function getReplacementModuleForCell(cell)
+  local modulesForThisCell = {}
+
+  for moduleName, moduleData in pairs(ComposedReplacements) do
+    if replacementTableMatchesCell(moduleData, cell) then
+      modulesForThisCell[moduleName] = moduleData
+    end
+  end
+
+  return modulesForThisCell
+end
+
+---@param object GameObject
+---@param replacementModule string the module which is replacing this object
+---@param replacementMesh string the mesh which will be used in place of the original
+local function replaceObject(object, replacementModule, replacementMesh)
   ---@type ActivatorRecord
   local objectRecord = Record(object)
-  if not objectRecord.model then return end
-
+  local moduleData = ComposedReplacements[replacementModule]
+  if moduleData.ignoreRecords[object.recordId] then return end
   local oldModel = objectRecord.model
 
-  if not meshesToReplace[oldModel] or ignoreList[oldModel] then return end
+  if not oldModel or not assertMeshExists(replacementMesh, oldModel, objectRecord.id, replacementModule) then return end
 
-  local newModel = meshesToReplace[oldModel]
+  createReplacementRecord(object, objectRecord, replacementMesh, replacementModule)
 
-  if not assertMeshExists(newModel, oldModel, object.recordId) then return end
-
-  createReplacementRecord(object, oldModel, newModel)
-
-  local replacement = world.createObject(overrideRecords[oldModel])
+  local targetRecord = overrideRecords[replacementModule][objectRecord.id]
+  local replacement = world.createObject(targetRecord)
   replacement:setScale(object.scale)
   replacement:teleport(object.cell.name, object.position, object.rotation)
 
   addObjectToDeleteQueue(object, false)
 
-  replacedObjectSet[replacement] = {
-    originalObject = object,
-    sourceFile = newMeshesToSourceFiles[newModel].sourceFile
-  }
+  if not replacedObjectSet[replacementModule] then replacedObjectSet[replacementModule] = {} end
+  replacedObjectSet[replacementModule][replacement] = object
 end
 
-local replaceNameLength = 0
 for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
-  local meshReplacementBaseName = getPathBaseName(meshReplacementsPath)
+  local baseName = getPathBaseName(meshReplacementsPath)
+  if baseName == 'example' then goto SKIPMODULE end
 
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
   local meshReplacementsText = meshReplacementsFile:read('*all')
+
+  ---@type SSSModuleRaw
   local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
+  local replacementTable = {}
 
-  for _, replaceString in ipairs(meshReplacementsTable.replace_names or {}) do
-    replaceNameLength = replaceNameLength + 1
-    replaceNames[replaceNameLength] = replaceString
+  if meshReplacementsTable.log_name then
+    replacementTable.logString = meshReplacementsTable.log_name
   end
 
+  replacementTable.meshMap = {}
   for oldMesh, newMesh in pairs(meshReplacementsTable.replace_meshes or {}) do
-    local normalizedNewMesh = normalizePath(getMeshPath(newMesh))
-    meshesToReplace[normalizePath(getMeshPath(oldMesh))] = normalizedNewMesh
-
-    --- Store the mesh associated with the source file and relevant log string.
-    --- This is useful to emit errors from specific mods, and also to revert installations of specific modules.
-    newMeshesToSourceFiles[normalizedNewMesh] = {
-      sourceFile = meshReplacementBaseName,
-      logString =
-          meshReplacementsTable.log_name or LOG_PREFIX,
-    }
+    replacementTable.meshMap[normalizePath(getMeshPath(oldMesh))] = normalizePath(getMeshPath(newMesh))
   end
 
+  replacementTable.cellNameMatches = {}
+  for i, replaceString in ipairs(meshReplacementsTable.replace_names or {}) do
+    replacementTable.cellNameMatches[i] = replaceString:lower()
+  end
+
+  replacementTable.gridIndices = {}
   for _, cellGrid in ipairs(meshReplacementsTable.exterior_cells or {}) do
-    globalCells[szudzik.getIndex(cellGrid.x, cellGrid.y)] = true
+    replacementTable.gridIndices[szudzik.getIndex(cellGrid.x, cellGrid.y)] = true
   end
+
+  replacementTable.ignoreRecords = {}
+  for _, ignoreRecord in ipairs(meshReplacementsTable.ignore_records or {}) do
+    replacementTable.ignoreRecords[ignoreRecord] = true
+  end
+
+  ---@cast replacementTable SSSModule
+  ComposedReplacements[baseName] = replacementTable
 
   meshReplacementsFile:close()
+
+  ::SKIPMODULE::
 end
 
+--- Remove all objects which were replaced by a given module
+--- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
 local function uninstallModule(fileName)
   local objectsToRemove, objectsToRemoveLength = {}, 0
+  local localModuleReplacements = replacedObjectSet[fileName]
 
-  for newObject, oldObjectData in pairs(replacedObjectSet) do
-    if oldObjectData.sourceFile == fileName then
-      oldObjectData.originalObject.enabled = true
-      addObjectToDeleteQueue(newObject, true)
-    end
+  if not localModuleReplacements then
+    return Log(
+      InvalidModuleNameStr:format(fileName)
+    )
+  end
+
+  for newObject, oldObject in pairs(localModuleReplacements) do
+    oldObject.enabled = true
+    addObjectToDeleteQueue(newObject, true)
 
     objectsToRemoveLength = objectsToRemoveLength + 1
     objectsToRemove[objectsToRemoveLength] = newObject
   end
 
-  for i = 1, objectsToRemoveLength, 1 do
+  for i = 1, objectsToRemoveLength do
     local targetObject = objectsToRemove[i]
-    replacedObjectSet[targetObject] = nil
+    replacedObjectSet[fileName][targetObject] = nil
   end
 
-  disabledModules[fileName] = true
+  moduleToRemove = fileName
 end
 
 return {
@@ -273,32 +349,37 @@ return {
   },
   interfaceName = "StaticSwitcher_G",
   eventHandlers = {
-    StaticSwitcherEnableGlobalFunctions = function(state)
-      USE_GLOBAL_FUNCTIONS = state
-    end,
     StaticSwitcherRemoveModule = function(moduleName)
       uninstallModule(moduleName)
-
-      for _, player in ipairs(world.players) do
-        player.type.sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', moduleName)
-      end
     end,
+    -- Replace this with a toggle for a coroutine loader
     StaticSwitcherRunGlobalFunctions = function()
       for _, cell in ipairs(world.cells) do
-        if not cell.isExterior then goto SKIP end
+        --- Global functions only run in exteriors
+        if not cell.isExterior then goto SKIPCELL end
 
-        local cellIndex = szudzik.getIndex(cell.gridX, cell.gridY)
-        local szudzikTest = globalCells[cellIndex]
+        --- if targetModule is nil, then, this cell isn't handled by any modules and should NOT be loaded
+        local targetModules = getReplacementModuleForCell(cell)
+        if not next(targetModules) then goto SKIPCELL end
 
-        if not szudzikTest then goto SKIP end
+        Log(
+          ReplacingObjectsStr:format(cell)
+        )
 
         for _, object in ipairs(cell:getAll()) do
-          if canReplace(object) then
-            replaceObject(object)
-          end
+          local replacementModule, replacementMesh = getObjectReplacement(object, targetModules)
+          if not replacementMesh or not replacementModule then goto SKIPOBJECT end
+
+          Log(
+            ReplacingIndividualObjectStr:format(object, replacementMesh, replacementModule)
+          )
+
+          replaceObject(object, replacementModule, replacementMesh)
+
+          ::SKIPOBJECT::
         end
 
-        ::SKIP::
+        ::SKIPCELL::
       end
     end,
   },
@@ -307,13 +388,11 @@ return {
       player.type.sendMenuEvent(player, 'StaticSwitcherRequestGlobalFunctions')
     end,
     onUpdate = function()
-      local i = 1
-      while i <= #objectDeleteQueue do
+      for i = #objectDeleteQueue, 1, -1 do
         local objectInfo = objectDeleteQueue[i]
 
         if objectInfo.ticks > 0 then
           objectInfo.ticks = objectInfo.ticks - 1
-          i = i + 1
         else
           if objectInfo.removeOrDisable then
             if objectInfo.object.count > 0 and objectInfo.object:isValid() then
@@ -326,13 +405,25 @@ return {
           table.remove(objectDeleteQueue, i)
         end
       end
+
+      --- When a module is removed and all objects are removed
+      --- kick every player from the game and force them to save
+      if moduleToRemove and not next(objectDeleteQueue) then
+        for _, player in ipairs(world.players) do
+          player.type.sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', moduleToRemove)
+        end
+
+        moduleToRemove = nil
+      end
     end,
     onObjectActive = function(object)
-      if object.cell.isExterior and USE_GLOBAL_FUNCTIONS then
-        return
-      elseif canReplace(object) then
-        replaceObject(object)
-      end
+      local targetModules = getReplacementModuleForCell(object.cell)
+      if not next(targetModules) then return end
+
+      local replacementModule, replacementMesh = getObjectReplacement(object, targetModules)
+      if not replacementModule or replacementModule == moduleToRemove or not replacementMesh then return end
+
+      replaceObject(object, replacementModule, replacementMesh)
     end,
     onSave = function()
       return {
@@ -342,18 +433,14 @@ return {
       }
     end,
     onLoad = function(data)
-      if data then
-        for k, v in pairs(data.overrideRecords or {}) do
-          overrideRecords[k] = v
-        end
+      if not data then return end
 
-        for k, v in ipairs(data.objectDeleteQueue or {}) do
-          objectDeleteQueue[k] = v
-        end
-
-        for k, v in ipairs(data.replacedObjectSet or {}) do
-          replacedObjectSet[k] = v
-        end
+      for target, source in pairs {
+        [overrideRecords] = data.overrideRecords,
+        [objectDeleteQueue] = data.objectDeleteQueue,
+        [replacedObjectSet] = data.replacedObjectSet,
+      } do
+        deepCopy(target, source)
       end
     end,
   }
