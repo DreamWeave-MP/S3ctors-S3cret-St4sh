@@ -22,12 +22,6 @@
 ---@field x integer X coordinate of an exterior cell in which to replace objects
 ---@field y integer Y coordinate of an exterior cell in which to replace objects
 
----@class ReplacementFileData
----@field log_name string? prefix to use when logging messages for a specific module
----@field replace_names string[]? array of cell names in which to replace objects
----@field exterior_cells ExteriorGrid[]? array of exterior grids in which to replace objects
----@field replace_meshes table<string, string>? table of original mesh paths to the desired new ones. These paths may or may not contain the `meshes/` prefix as the script will prepend it automatically if not present.
-
 ---@class ActivatorRecord
 ---@field name string? human-readable name displayed for this objecdt
 ---@field mwscript string? recordId of the mwscript running on this object
@@ -53,7 +47,7 @@
 ---@field position util.vector3
 ---@field getBoundingBox fun(): userdata
 ---@field teleport fun(cell: GameCell, position: util.vector3, options: table)
----@field sendEvent fun(eventName: string, eventData: any)
+---@field sendEvent fun(self: GameObject, eventName: string, eventData: any)
 ---@field id string The unique identifier for the object.
 ---@field rotation integer Totally not an integer and totally not updating these docs lol
 
