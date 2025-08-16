@@ -22,12 +22,14 @@ end
 local meshReplacementModules, meshReplacementModulesLen = {}, 0
 
 for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
-    meshReplacementModulesLen = meshReplacementModulesLen + 1
     local baseName = getPathBaseName(meshReplacementsPath)
     if baseName ~= 'example' then
+        meshReplacementModulesLen = meshReplacementModulesLen + 1
         meshReplacementModules[meshReplacementModulesLen] = baseName
     end
 end
+
+if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
 
 I.Settings.registerPage {
     key = 'StaticSwitcherPage',
