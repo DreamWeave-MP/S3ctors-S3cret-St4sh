@@ -1,35 +1,25 @@
-local aux_util = require 'openmw_aux.util'
-local markup = require 'openmw.markup'
-local types = require 'openmw.types'
-local util = require 'openmw.util'
-local vfs = require 'openmw.vfs'
-local world = require 'openmw.world'
+local aux_util             = require 'openmw_aux.util'
+local markup               = require 'openmw.markup'
+local types                = require 'openmw.types'
+local util                 = require 'openmw.util'
+local vfs                  = require 'openmw.vfs'
+local world                = require 'openmw.world'
 
-local szudzik = require 'scripts.staticSwitcher.szudzik'
+local strings              = require 'scripts.staticSwitcher.staticStrings'
+local szudzik              = require 'scripts.staticSwitcher.szudzik'
 
-local PREFIX_FRAME = '[ %s ]:'
-local LOG_PREFIX = 'StaticSwitchingSystem'
-local LOG_FORMAT_STR = '%s %s'
-local MISSING_MESH_ERROR = [[
-Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]]
-local InvalidModuleNameStr = 'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.'
-local ReplacingObjectsStr = 'Replacing Objects in cell: %s'
-local ReplacingIndividualObjectStr = 'Replacing object %s with model %s provided by module %s'
-
-local InvalidTypeStr = 'Invalid type was provided: %s'
-
-local TICKS_TO_DELETE = 3
+local TICKS_TO_DELETE      = 3
 local moduleToRemove
 
 ---@type ObjectDeleteData[]
-local objectDeleteQueue = {}
+local objectDeleteQueue    = {}
 
 ---@type table <GameObject, ReplacedObjectData>
-local replacedObjectSet = {}
+local replacedObjectSet    = {}
 
 --- Maps module names to the record ids they manage
 ---@type table<string, ReplacementMap>
-local overrideRecords = {}
+local overrideRecords      = {}
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
 local ComposedReplacements = {}
@@ -67,10 +57,10 @@ end
 ---@param message string
 ---@param prefix string?
 local function LogString(message, prefix)
-  if not prefix then prefix = LOG_PREFIX end
+  if not prefix then prefix = strings.LOG_PREFIX end
 
-  return LOG_FORMAT_STR:format(
-    PREFIX_FRAME:format(prefix),
+  return strings.LOG_FORMAT_STR:format(
+    strings.PREFIX_FRAME:format(prefix),
     message
   )
 end
@@ -121,8 +111,8 @@ local function assertMeshExists(modelPath, originalModel, recordId, moduleName)
   if vfs.fileExists(modelPath) then return true end
 
   Log(
-    MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
-    ComposedReplacements[moduleName].logString or LOG_PREFIX
+    strings.MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
+    ComposedReplacements[moduleName].logString or strings.LOG_PREFIX
   )
 end
 
@@ -141,7 +131,7 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
 
   if not types.Static.objectIsInstance(object) and not types.Activator.objectIsInstance(object) then
     error(
-      InvalidTypeStr:format(object.type)
+      strings.InvalidTypeStr:format(object.type)
     )
   end
 
@@ -317,7 +307,7 @@ local function uninstallModule(fileName)
 
   if not localModuleReplacements then
     return Log(
-      InvalidModuleNameStr:format(fileName)
+      strings.InvalidModuleNameStr:format(fileName)
     )
   end
 
