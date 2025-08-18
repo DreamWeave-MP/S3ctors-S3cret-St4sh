@@ -5,6 +5,15 @@
 ---@alias RecordId string
 ---@alias SzudzikCoord integer
 
+--- Represents the uppermost bits to strip off of an object ID in order to determine its local reference number
+--- math.pow(2, 24)
+---@alias ContentFileBits
+---| 16777216
+
+---@class RangeTable
+---@field min integer? defaults to 1 if not present
+---@field max integer
+
 ---@class ObjectDeleteData
 ---@field object GameObject
 ---@field ticks integer number of frames before this object will be deleted
