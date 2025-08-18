@@ -41,6 +41,7 @@
 ---@field scale integer Object scale
 ---@field enabled boolean
 ---@field count integer
+---@field contentFile string? Content file which originally defined this object. Nil for dynamically created objects.
 ---@field cell GameCell
 ---@field isValid fun(self: GameObject): boolean whether or not the object is currently valid, eg teleporting or similar
 ---@field remove fun(self: GameObject, count: integer?) destroy the object completely
