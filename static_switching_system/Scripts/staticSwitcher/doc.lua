@@ -63,6 +63,11 @@
 --- Most fields are NOT optional, and a corresponding JsonSchema exists for them as well.
 ---@class SSSModuleRaw
 ---@field log_name string?
+
+---@class SSSModuleInstances: SSSModuleRaw
+---@field instances table<string, table> Set of gameobjectt record ids or refNums to muck with
+
+---@class SSSModuleStatic: SSSModuleRaw
 ---@field replace_names string[] array of cell names to match replacements for
 ---@field exterior_cells ExteriorGrid[] array of grid indices in which a particular module will replace objects
 ---@field replace_meshes table<string, string> map of old meshes to new ones
