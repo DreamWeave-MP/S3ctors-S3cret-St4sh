@@ -1,11 +1,12 @@
-local aux_util             = require 'openmw_aux.util'
 local markup               = require 'openmw.markup'
 local types                = require 'openmw.types'
 local util                 = require 'openmw.util'
 local vfs                  = require 'openmw.vfs'
 local world                = require 'openmw.world'
 
-local strings              = require 'scripts.staticSwitcher.staticStrings'
+local staticUtil           = require 'scripts.staticSwitcher.util'
+local strings              = staticUtil.strings
+
 local szudzik              = require 'scripts.staticSwitcher.szudzik'
 
 local TICKS_TO_DELETE      = 3
@@ -23,98 +24,6 @@ local overrideRecords      = {}
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
 local ComposedReplacements = {}
-
----@param inputTarget table? Table into which values will be copied
----@param source table? Table values will copy from
----@return table target
-local function deepCopy(inputTarget, source)
-  local target = inputTarget or {}
-
-  if source and type(source) ~= 'table' then error('Source table was not even a table, it was: ' .. source) end
-
-  for k, v in pairs(source or {}) do
-    if type(v) == 'table' then
-      local newSubTable = {}
-      target[k] = newSubTable
-      deepCopy(newSubTable, v)
-    else
-      target[k] = v
-    end
-  end
-
-  return target
-end
-
----Function to normalize path separators in a string
----@param path string
----@return string normalized path
-local function normalizePath(path)
-  local normalized, _ = path:gsub("\\", "/"):gsub("([^:])//+", "%1/")
-  return normalized:lower()
-end
-
---- Helper function to generate a log message string, but without printing it for reusability.
----@param message string
----@param prefix string?
-local function LogString(message, prefix)
-  if not prefix then prefix = strings.LOG_PREFIX end
-
-  return strings.LOG_FORMAT_STR:format(
-    strings.PREFIX_FRAME:format(prefix),
-    message
-  )
-end
-
---- Actual log writing function, given whatever message
----@param message string
----@param prefix string?
-local function Log(message, prefix)
-  print(
-    LogString(message, prefix)
-  )
-end
-
----@param object any
-local function deepLog(object)
-  print(
-    LogString(
-      aux_util.deepToString(object, 5)
-    )
-  )
-end
-
----@param object GameObject
----@return ActivatorRecord Object record data
-local function Record(object)
-  return object.type.records[object.recordId]
-end
-
----@param path string normalized VFS path referring to a mesh replacement map
-local function getPathBaseName(path)
-  ---@type string
-  local baseName
-  for part in string.gmatch(path, "([^/]+)") do
-    baseName = part
-  end
-
-  for split in baseName:gmatch('([^.]+)') do
-    return split
-  end
-end
-
----@param modelPath string
----@param originalModel string
----@param recordId string
----@param moduleName string
----@return boolean? whether the mesh exists or not
-local function assertMeshExists(modelPath, originalModel, recordId, moduleName)
-  if vfs.fileExists(modelPath) then return true end
-
-  Log(
-    strings.MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
-    ComposedReplacements[moduleName].logString or strings.LOG_PREFIX
-  )
-end
 
 ---@param object GameObject
 ---@param oldRecord ActivatorRecord
@@ -145,18 +54,6 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
   moduleRecords[oldRecordId] = world.createRecord(types.Activator.createRecordDraft(newRecord)).id
 end
 
----@param path string Path to check for the `meshes/` prefix
----@return string original path, but with `meshes/` prepended
-local function getMeshPath(path)
-  path = path:gsub("^[/\\]+", "")
-
-  if not path:match("^meshes/") then
-    path = "meshes/" .. path
-  end
-
-  return path
-end
-
 --- Adds an object to the delete queue, to be processed on another frame
 ---@param object GameObject
 local function addObjectToDeleteQueue(object, removeOrDisable)
@@ -166,32 +63,6 @@ local function addObjectToDeleteQueue(object, removeOrDisable)
     removeOrDisable =
         removeOrDisable
   }
-end
-
---- Given a particular gameObject, check whether this module can rightfully replace it.
---- The function must be created on a per-module basis in order to refer to the current local value of `replacementTable`
----@param object GameObject
----@return string? replacementObjectMesh
-local function getReplacementMeshForObject(meshMap, object)
-  --- Special handling for marker types which are statics but have no .type field on them
-  if not object.type then return end
-
-  local objectModel = Record(object).model
-  if not objectModel then return end
-
-  local replacementObjectMesh = meshMap[objectModel]
-
-  if replacementObjectMesh then return replacementObjectMesh end
-end
-
----@param object GameObject
----@param replacementModules table<string, SSSModule>
----@return string? moduleName, string? replacementMesh the specific module name and model path which should be used to replace a particular gameObject
-local function getObjectReplacement(object, replacementModules)
-  for moduleName, moduleData in pairs(replacementModules) do
-    local replacementMesh = getReplacementMeshForObject(moduleData.meshMap, object)
-    if replacementMesh then return moduleName, replacementMesh end
-  end
 end
 
 ---@param replacementTable SSSModule
@@ -236,12 +107,20 @@ end
 ---@param replacementMesh string the mesh which will be used in place of the original
 local function replaceObject(object, replacementModule, replacementMesh)
   ---@type ActivatorRecord
-  local objectRecord = Record(object)
+  local objectRecord = staticUtil.Record(object)
   local moduleData = ComposedReplacements[replacementModule]
   if moduleData.ignoreRecords[object.recordId] then return end
   local oldModel = objectRecord.model
 
-  if not oldModel or not assertMeshExists(replacementMesh, oldModel, objectRecord.id, replacementModule) then return end
+  if not oldModel or not staticUtil.assertMeshExists(
+        replacementMesh,
+        oldModel,
+        objectRecord.id,
+        replacementModule,
+        ComposedReplacements[replacementModule].logString or strings.LOG_PREFIX
+      ) then
+    return
+  end
 
   createReplacementRecord(object, objectRecord, replacementMesh, replacementModule)
 
@@ -257,7 +136,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
 end
 
 for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
-  local baseName = getPathBaseName(meshReplacementsPath)
+  local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
   if baseName == 'example' then goto SKIPMODULE end
 
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
@@ -273,7 +152,15 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
 
   replacementTable.meshMap = {}
   for oldMesh, newMesh in pairs(meshReplacementsTable.replace_meshes or {}) do
-    replacementTable.meshMap[normalizePath(getMeshPath(oldMesh))] = normalizePath(getMeshPath(newMesh))
+    replacementTable.meshMap[staticUtil.normalizePath(
+      staticUtil.getMeshPath(
+        oldMesh
+      )
+    )] = staticUtil.normalizePath(
+      staticUtil.getMeshPath(
+        newMesh
+      )
+    )
   end
 
   replacementTable.cellNameMatches = {}
@@ -306,7 +193,7 @@ local function uninstallModule(fileName)
   local localModuleReplacements = replacedObjectSet[fileName]
 
   if not localModuleReplacements then
-    return Log(
+    return staticUtil.Log(
       strings.InvalidModuleNameStr:format(fileName)
     )
   end
@@ -336,6 +223,7 @@ return {
       return util.makeReadOnly(replacedObjectSet)
     end,
     uninstallModule = uninstallModule,
+    verson = 2,
   },
   interfaceName = "StaticSwitcher_G",
   eventHandlers = {
@@ -357,7 +245,7 @@ return {
         -- )
 
         for _, object in ipairs(cell:getAll()) do
-          local replacementModule, replacementMesh = getObjectReplacement(object, targetModules)
+          local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
           if not replacementMesh or not replacementModule then goto SKIPOBJECT end
 
           -- Log(
@@ -410,7 +298,7 @@ return {
       local targetModules = getReplacementModuleForCell(object.cell)
       if not next(targetModules) then return end
 
-      local replacementModule, replacementMesh = getObjectReplacement(object, targetModules)
+      local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
       if not replacementModule or replacementModule == moduleToRemove or not replacementMesh then return end
 
       replaceObject(object, replacementModule, replacementMesh)
@@ -430,7 +318,7 @@ return {
         [objectDeleteQueue] = data.objectDeleteQueue,
         [replacedObjectSet] = data.replacedObjectSet,
       } do
-        deepCopy(target, source)
+        staticUtil.deepCopy(target, source)
       end
     end,
   }
