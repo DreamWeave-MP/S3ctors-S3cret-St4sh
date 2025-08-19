@@ -136,4 +136,49 @@ function staticUtil.Record(object)
     return object.type.records[object.recordId]
 end
 
+---@param t table
+local function is_table_array(t)
+    if type(t) ~= "table" then return false end
+
+    local max_index = 0
+    local count = 0
+
+    for k, _ in pairs(t) do
+        if type(k) ~= "number" or k < 1 or math.floor(k) ~= k then
+            return false
+        end
+
+        max_index = math.max(max_index, k)
+        count = count + 1
+    end
+
+    return max_index == count
+end
+
+--- Deep merges tables with special array handling
+-- @param target The table to merge into
+-- @param source The table to merge from
+-- @param is_array If true, treats tables as arrays (appends instead of overwrites)
+function staticUtil.mergeTables(target, source, is_array)
+    if type(target) ~= "table" or type(source) ~= "table" then
+        return target
+    end
+
+    if is_array or is_table_array(source) then
+        for _, value in ipairs(source) do
+            table.insert(target, value)
+        end
+    else
+        for key, value in pairs(source) do
+            if type(value) == "table" and type(target[key]) == "table" then
+                staticUtil.mergeTables(target[key], value, is_table_array(value))
+            else
+                target[key] = value
+            end
+        end
+    end
+
+    return target
+end
+
 return staticUtil
