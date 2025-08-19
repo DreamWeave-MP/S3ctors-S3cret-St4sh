@@ -275,12 +275,12 @@ return {
           if objectInfo.removeOrDisable then
             if objectInfo.object.count > 0 and objectInfo.object:isValid() then
               objectInfo.object:remove()
+              table.remove(objectDeleteQueue, i)
             end
           else
             objectInfo.object.enabled = false
+            table.remove(objectDeleteQueue, i)
           end
-
-          table.remove(objectDeleteQueue, i)
         end
       end
 
