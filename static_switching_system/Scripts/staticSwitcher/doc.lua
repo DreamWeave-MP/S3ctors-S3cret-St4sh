@@ -59,7 +59,7 @@
 ---@field teleport fun(cell: GameCell, position: util.vector3, options: table)
 ---@field sendEvent fun(self: GameObject, eventName: string, eventData: any)
 ---@field id string The unique identifier for the object.
----@field rotation integer Totally not an integer and totally not updating these docs lol
+---@field rotation userdata We'll have to document transform at some point
 
 ---@class SSSModule
 ---@field cellNameMatches string[] list of cell names which will be fuzzy-matched for a given module
