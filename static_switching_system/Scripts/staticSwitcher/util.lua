@@ -1,9 +1,13 @@
-local aux_util     = require 'openmw_aux.util'
-local vfs          = require 'openmw.vfs'
+local aux_util = require 'openmw_aux.util'
+local util     = require 'openmw.util'
+local vfs      = require 'openmw.vfs'
 
-local strings      = require 'scripts.staticSwitcher.staticStrings'
+
+---@class StaticUtil
 local staticUtil   = {}
-staticUtil.strings = strings
+
+---@type SSSStaticStrings
+staticUtil.strings = require 'scripts.staticSwitcher.staticStrings'
 
 ---@param modelPath string
 ---@param originalModel string
@@ -15,7 +19,7 @@ function staticUtil.assertMeshExists(modelPath, originalModel, recordId, moduleN
     if vfs.fileExists(modelPath) then return true end
 
     staticUtil.Log(
-        strings.MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
+        staticUtil.strings.MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
         logString
     )
 end
@@ -114,10 +118,10 @@ end
 ---@param message string
 ---@param prefix string?
 function staticUtil.LogString(message, prefix)
-    if not prefix then prefix = strings.LOG_PREFIX end
+    if not prefix then prefix = staticUtil.strings.LOG_PREFIX end
 
-    return strings.LOG_FORMAT_STR:format(
-        strings.PREFIX_FRAME:format(prefix),
+    return staticUtil.strings.LOG_FORMAT_STR:format(
+        staticUtil.strings.PREFIX_FRAME:format(prefix),
         message
     )
 end
