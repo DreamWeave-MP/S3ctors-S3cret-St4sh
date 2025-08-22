@@ -1,34 +1,38 @@
-local aux_util             = require 'openmw_aux.util'
-local markup               = require 'openmw.markup'
-local types                = require 'openmw.types'
-local util                 = require 'openmw.util'
-local vfs                  = require 'openmw.vfs'
-local world                = require 'openmw.world'
+local aux_util                = require 'openmw_aux.util'
+local markup                  = require 'openmw.markup'
+local types                   = require 'openmw.types'
+local util                    = require 'openmw.util'
+local vfs                     = require 'openmw.vfs'
+local world                   = require 'openmw.world'
 
+local randomGen               = require 'scripts.staticSwitcher.randomGen'
 ---@type StaticUtil
 local staticUtil              = require 'scripts.staticSwitcher.util'
 local strings                 = staticUtil.strings
 
-local szudzik              = require 'scripts.staticSwitcher.szudzik'
+local szudzik                 = require 'scripts.staticSwitcher.szudzik'
+local tableHash               = require 'scripts.staticSwitcher.tableHash'
 
-local TICKS_TO_DELETE      = 3
+local TICKS_TO_DELETE         = 3
 local moduleToRemove
 
 ---@type ObjectDeleteData[]
-local objectDeleteQueue    = {}
+local objectDeleteQueue       = {}
 
 ---@type table <GameObject, ReplacedObjectData>
-local replacedObjectSet    = {}
+local replacedObjectSet       = {}
 
 --- Maps module names to the record ids they manage
 ---@type table<string, ReplacementMap>
-local overrideRecords      = {}
+local overrideRecords         = {}
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
-local ComposedReplacements = {}
+local ComposedReplacements    = {}
 
----@type ContentFileBits
-local ContentFileBits      = 16777216
+--- Indexed first by module name, then an array of actions and conditions
+--- all values in said array will be strings, and, when each lookup is performed they can/should be cached
+--- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
+local objectModificationStore = {}
 
 ---@param object GameObject
 ---@param oldRecord ActivatorRecord
@@ -178,33 +182,79 @@ local function staticLoaderModuleHandler(meshReplacementsTable)
   return replacementTable
 end
 
-local function stringEndsWith(target, ending)
-  return ending == "" or target:sub(- #ending) == ending
-end
-
-local pluginExtensions = {
-  ".esm",
-  ".esp",
-  ".omwaddon",
-  ".omwgame"
-}
-
-local function isPerPluginReplacement(object_name)
-  for _, extension in ipairs(pluginExtensions) do
-    if stringEndsWith(object_name, extension) then return true end
-  end
-end
-
 local function safeCreateObject(objectId)
   return world.createObject(objectId)
 end
 
-local function sortActionByType(actionData)
-  if actionData.replace then
-    return 1
-  elseif actionData.transform then
-    return 2
+---@class ActionPriority
+local ACTIONPRIORITY = {
+  'replace',
+  'transform',
+}
+
+---@class ConditionPriority
+local CONDITIONPRIORITY = {
+  'content_file',
+  'ref_num',
+  --- Should always be last
+  'once',
+}
+
+local function sortConditionByType(conditionData)
+  for index, conditionName in ipairs(CONDITIONPRIORITY) do
+    if conditionData[conditionName] then return index end
   end
+end
+
+local function sortActionByType(actionData)
+  for index, actionName in ipairs(ACTIONPRIORITY) do
+    if actionData[actionName] then return index end
+  end
+end
+
+---@alias SSSConditionHandler fun(object: GameObject, matchData: any): boolean
+
+local someTable = {}
+---@type table<string, SSSConditionHandler>
+local conditionHandlers = {
+  content_file = function(object, contentFileName)
+    return object.contentFile == contentFileName:lower()
+  end,
+  once = function(object, targetCacheKey)
+    return someTable[targetCacheKey] == nil
+  end,
+  ref_num = function(object, targetRefNum)
+    local _, refNum = staticUtil.getRefNum(object)
+
+    return refNum == targetRefNum
+  end,
+}
+
+local function matchesAllConditions(object, conditions)
+  for _, conditionData in ipairs(conditions) do
+    for conditionName, conditionValue in pairs(conditionData) do
+      local conditionHandler = conditionHandlers[conditionName]
+      --- Debug log here if test fails
+      if not conditionHandler or not conditionHandler(object, conditionValue) then return false end
+    end
+  end
+
+  return true
+end
+
+local function getMatchingInstanceModules(object)
+  local matchingActions, actionIndex = {}, 1
+
+  for fileName, actionList in pairs(objectModificationStore) do
+    for _, actionData in ipairs(actionList) do
+      if not actionData.conditions or matchesAllConditions(object, actionData.conditions) then
+        matchingActions[actionIndex] = actionData.actions
+        print(tableHash { [fileName] = actionData })
+      end
+    end
+  end
+
+  return matchingActions
 end
 
 ---@alias Axis
@@ -262,11 +312,6 @@ local function getRotationValue(rotateDatum)
   return rootTransform
 end
 
-local instanceReplacementData = {
-  by_ref = {},
-  by_id = {},
-}
-
 local actionHandlers = {
   ['replace'] = function(object, replaceActionData)
     for replaceId, replaceChance in pairs(replaceActionData) do
@@ -293,30 +338,19 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
 
   ---@cast meshReplacementsTable SSSModuleInstances
   if meshReplacementsTable.instances then
-    for object_name, object_data in pairs(meshReplacementsTable.instances) do
-      object_name = object_name:lower()
+    local modStore = {}
 
-      if isPerPluginReplacement(object_name) then
-        local instanceReplacement = {}
-
-        for refNum, replaceInfo in pairs(object_data) do
-          assert(type(refNum) == 'number', strings.NotARefNumStr:format(refNum))
-          instanceReplacement[refNum] = staticUtil.deepCopy(replaceInfo)
-        end
-
-        local operationsByRef = instanceReplacementData.by_ref[object_name] or {}
-
-        operationsByRef = staticUtil.mergeTables(operationsByRef, instanceReplacement)
-
-        for refNum, perInstanceActions in pairs(operationsByRef) do
-          operationsByRef[refNum] = aux_util.mapFilterSort(perInstanceActions, sortActionByType)
-        end
-
-        instanceReplacementData.by_ref[object_name] = operationsByRef
-      else
-        staticUtil.Log('this is a per-record object replacement: ', object_name)
+    for index, instance_action in ipairs(meshReplacementsTable.instances) do
+      if instance_action.conditions then
+        instance_action.conditions = aux_util.mapFilterSort(instance_action.conditions, sortConditionByType)
       end
+
+      instance_action.actions = aux_util.mapFilterSort(instance_action.actions, sortActionByType)
+
+      modStore[index] = instance_action
     end
+
+    objectModificationStore[baseName] = modStore
   else
     ---@cast meshReplacementsTable SSSModuleStatic
     ComposedReplacements[baseName] = staticLoaderModuleHandler(meshReplacementsTable)
@@ -326,6 +360,8 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
 
   ::SKIPMODULE::
 end
+
+-- staticUtil.deepLog(objectModificationStore)
 
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
@@ -359,8 +395,8 @@ end
 return {
   interface = {
     getRefNum = staticUtil.getRefNum,
-    instanceReplacementData = function()
-      return util.makeReadOnly(instanceReplacementData)
+    objectModificationStore = function()
+      return util.makeReadOnly(objectModificationStore)
     end,
     overrideRecords = function()
       return util.makeReadOnly(overrideRecords)
@@ -451,75 +487,83 @@ return {
       end
     end,
     onObjectActive = function(object)
-      local instanceModificationData = getInstanceModificationData(object)
-      if instanceModificationData then
+      local instanceModificationList = getMatchingInstanceModules(object)
+      -- staticUtil.deepLog(instanceModificationList)
+
+      --- I don't like this.
+      --- Ideally we should have like, a special type that gets assigned to each module, or something
+      --- a more bespoke way to describe what *type* of module it is
+      if instanceModificationList then
         local modifyTarget = object
         --- Do replacements first, then transforms, then item additions/removals, then spells
 
         local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, 1.0
 
-        for _, actionData in ipairs(instanceModificationData) do
-          --- Should we allow only one successful replacement???
+        for _, instanceModification in ipairs(instanceModificationList) do
+          for _, actionData in ipairs(instanceModification) do
+            staticUtil.deepLog(actionData)
+            --- Should we allow only one successful replacement???
 
-          if actionData.replace and modifyTarget == object then
-            local foundReplacement = actionHandlers.replace(object, actionData.replace)
-            if foundReplacement then
-              modifyTarget.enabled = false
-              modifyTarget = foundReplacement
-            end
-          elseif actionData.transform then
-            local actionDetails = actionData.transform
-            staticUtil.deepLog(actionDetails)
+            if actionData.replace and modifyTarget == object then
+              local foundReplacement = actionHandlers.replace(object, actionData.replace)
+              if foundReplacement then
+                modifyTarget.enabled = false
+                modifyTarget = foundReplacement
+              end
+            elseif actionData.transform then
+              local actionDetails = actionData.transform
+              -- staticUtil.deepLog(actionDetails)
 
-            local useRelativeTransform = actionDetails.transform_type == nil or
-                actionDetails.transform_type == 'relative'
+              local useRelativeTransform = actionDetails.transform_type == nil or
+                  actionDetails.transform_type == 'relative'
 
-            if actionDetails.scale then
-              local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
-              local scaleType = type(actionDetails.scale)
+              if actionDetails.scale then
+                local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
+                local scaleType = type(actionDetails.scale)
 
-              if scaleType == 'number' then
-                targetScale = actionDetails.scale
-              elseif scaleType == 'table' then
-                targetScale = randomGen:range(actionDetails.scale.min or 1.0, actionDetails.scale.max)
-              else
-                error("Invalid type for scale parameter: " .. scaleType)
+                if scaleType == 'number' then
+                  targetScale = actionDetails.scale
+                elseif scaleType == 'table' then
+                  targetScale = randomGen:range(actionDetails.scale.min or 1.0, actionDetails.scale.max)
+                else
+                  error("Invalid type for scale parameter: " .. scaleType)
+                end
+
+                targetScale = referenceScale * targetScale
               end
 
-              targetScale = referenceScale * targetScale
-            end
+              if actionDetails.rotate then
+                newTransform = getRotationValue {
+                  object              = modifyTarget,
+                  isRelative          = useRelativeTransform,
+                  rotateActionDetails = actionDetails.rotate,
+                  currentTransform    = newTransform or modifyTarget.rotation,
+                }
 
-            if actionDetails.rotate then
-              newTransform = getRotationValue {
-                object              = modifyTarget,
-                isRelative          = useRelativeTransform,
-                rotateActionDetails = actionDetails.rotate,
-                currentTransform    = newTransform or modifyTarget.rotation,
-              }
+                print('transform after rotate action is:', newTransform)
+              end
 
-              print('transform after rotate action is:', newTransform)
-            end
+              if actionDetails.position then
+                local actionTargetPos = util.vector3(
+                  getRangeValue(actionDetails.position.x),
+                  getRangeValue(actionDetails.position.y),
+                  getRangeValue(actionDetails.position.z)
+                )
 
-            if actionDetails.position then
-              local actionTargetPos = util.vector3(
-                getRangeValue(actionDetails.position.x),
-                getRangeValue(actionDetails.position.y),
-                getRangeValue(actionDetails.position.z)
-              )
-
-              if useRelativeTransform then
-                newPos = newPos + actionTargetPos
-              else
-                newPos = actionTargetPos
+                if useRelativeTransform then
+                  newPos = newPos + actionTargetPos
+                else
+                  newPos = actionTargetPos
+                end
               end
             end
           end
         end
 
-        staticUtil.deepLog(newTransform)
-        staticUtil.deepLog(newCell)
-        staticUtil.deepLog(newPos)
-        print(modifyTarget)
+        -- staticUtil.deepLog(newTransform)
+        -- staticUtil.deepLog(newCell)
+        -- staticUtil.deepLog(newPos)
+        -- print(modifyTarget)
 
         modifyTarget:setScale(targetScale)
         modifyTarget:teleport(newCell, newPos, newTransform)
