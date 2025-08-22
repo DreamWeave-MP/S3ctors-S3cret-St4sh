@@ -5,9 +5,9 @@ local util                 = require 'openmw.util'
 local vfs                  = require 'openmw.vfs'
 local world                = require 'openmw.world'
 
-local randomGen            = require 'scripts.staticSwitcher.randomGen'
-local staticUtil           = require 'scripts.staticSwitcher.util'
-local strings              = staticUtil.strings
+---@type StaticUtil
+local staticUtil              = require 'scripts.staticSwitcher.util'
+local strings                 = staticUtil.strings
 
 local szudzik              = require 'scripts.staticSwitcher.szudzik'
 
@@ -356,44 +356,9 @@ local function uninstallModule(fileName)
   moduleToRemove = fileName
 end
 
---- Checks if an object has per-instance modifications and attempts to apply them if so
----@param object GameObject
----@return table? instanceModificationData
-local function getInstanceModificationData(object)
-  local objectId = tonumber(object.id)
-  --- Generated objects cannot have their ids converted to integers directly
-  --- Also, their `contentFile` field will be nil
-  if not objectId or not object.contentFile then return end
-
-  local byContentFileData = instanceReplacementData.by_ref[object.contentFile]
-  if not byContentFileData then return end
-
-  local objectRefNum = util.bitXor(objectId, ContentFileBits)
-  return byContentFileData[objectRefNum]
-end
-
---- Fetches the object index of a given gameObject, including generated objects
----@param object GameObject
----@return boolean, number
-local function getRefNum(object)
-  local objectId = tonumber(object.id)
-
-  if objectId then
-    return false, util.bitXor(objectId, ContentFileBits)
-  else
-    local generatedRef = tonumber(
-      object.id:sub(2, #object.id)
-    )
-
-    assert(generatedRef)
-
-    return true, generatedRef
-  end
-end
-
 return {
   interface = {
-    getRefNum = getRefNum,
+    getRefNum = staticUtil.getRefNum,
     instanceReplacementData = function()
       return util.makeReadOnly(instanceReplacementData)
     end,
@@ -410,7 +375,7 @@ return {
   interfaceName = "StaticSwitcher_G",
   eventHandlers = {
     StaticSwitcherGetRefNum = function(object)
-      local isGenerated, refNum = getRefNum(object)
+      local isGenerated, refNum = staticUtil.getRefNum(object)
 
       staticUtil.Log(
         strings.GET_REFNUM_STR:format(
