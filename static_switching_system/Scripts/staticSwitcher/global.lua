@@ -1,9 +1,11 @@
+local aux_util             = require 'openmw_aux.util'
 local markup               = require 'openmw.markup'
 local types                = require 'openmw.types'
 local util                 = require 'openmw.util'
 local vfs                  = require 'openmw.vfs'
 local world                = require 'openmw.world'
 
+local randomGen            = require 'scripts.staticSwitcher.randomGen'
 local staticUtil           = require 'scripts.staticSwitcher.util'
 local strings              = staticUtil.strings
 
@@ -24,6 +26,9 @@ local overrideRecords      = {}
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
 local ComposedReplacements = {}
+
+---@type ContentFileBits
+local ContentFileBits      = 16777216
 
 ---@param object GameObject
 ---@param oldRecord ActivatorRecord
@@ -135,15 +140,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
   replacedObjectSet[replacementModule][replacement] = object
 end
 
-for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
-  local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
-  if baseName == 'example' then goto SKIPMODULE end
-
-  local meshReplacementsFile = vfs.open(meshReplacementsPath)
-  local meshReplacementsText = meshReplacementsFile:read('*all')
-
-  ---@type SSSModuleRaw
-  local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
+local function staticLoaderModuleHandler(meshReplacementsTable)
   local replacementTable = {}
 
   if meshReplacementsTable.log_name then
@@ -178,8 +175,152 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
     replacementTable.ignoreRecords[ignoreRecord] = true
   end
 
-  ---@cast replacementTable SSSModule
-  ComposedReplacements[baseName] = replacementTable
+  return replacementTable
+end
+
+local function stringEndsWith(target, ending)
+  return ending == "" or target:sub(- #ending) == ending
+end
+
+local pluginExtensions = {
+  ".esm",
+  ".esp",
+  ".omwaddon",
+  ".omwgame"
+}
+
+local function isPerPluginReplacement(object_name)
+  for _, extension in ipairs(pluginExtensions) do
+    if stringEndsWith(object_name, extension) then return true end
+  end
+end
+
+local function safeCreateObject(objectId)
+  return world.createObject(objectId)
+end
+
+local function sortActionByType(actionData)
+  if actionData.replace then
+    return 1
+  elseif actionData.transform then
+    return 2
+  end
+end
+
+---@alias Axis
+---| 'x'
+---| 'y'
+---| 'z'
+
+---@class RotationParamInput
+---@field isRelative boolean
+---@field currentTransform userdata
+---@field rotateActionDetails table<Axis, integer> map of axes to rotations as degrees
+
+---@param numberOrTable number|table
+---@return number rangeOrValue
+local function getRangeValue(numberOrTable)
+  local actionDataType, rangeOrValue = type(numberOrTable)
+
+  if actionDataType == 'number' then
+    rangeOrValue = numberOrTable
+  elseif actionDataType == 'table' then
+    assert(numberOrTable.max, 'An upper bound is required when selecting a numeric range!')
+    rangeOrValue = randomGen:range(numberOrTable.min or 0, numberOrTable.max)
+  elseif actionDataType == 'nil' then
+    return 0
+  else
+    error('Incorrect type provided to getPerAxisRotation: ' .. actionDataType)
+  end
+
+  return rangeOrValue
+end
+
+---@param rotateDatum RotationParamInput
+---@return userdata transform
+local function getRotationValue(rotateDatum)
+  local rotateActionDetails = rotateDatum.rotateActionDetails
+  ---@type userdata
+  local rootTransform = util.transform.identity
+
+  if rotateDatum.isRelative then
+    rootTransform = rotateDatum.currentTransform * rootTransform
+  end
+
+  for _, axis in ipairs { 'z', 'y', 'x', } do
+    if rotateActionDetails[axis] then
+      rootTransform = util.transform['rotate' .. axis:upper()](
+        math.rad(
+          getRangeValue(
+            rotateActionDetails[axis]
+          )
+        )
+      ) * rootTransform
+    end
+  end
+
+  return rootTransform
+end
+
+local instanceReplacementData = {
+  by_ref = {},
+  by_id = {},
+}
+
+local actionHandlers = {
+  ['replace'] = function(object, replaceActionData)
+    for replaceId, replaceChance in pairs(replaceActionData) do
+      if math.random() > replaceChance then goto SKIPREPLACEMENT end
+
+      local result, replacement = pcall(safeCreateObject, replaceId)
+
+      if result then return replacement end
+
+      ::SKIPREPLACEMENT::
+    end
+  end,
+}
+
+for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
+  local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
+  if baseName == 'example' then goto SKIPMODULE end
+
+  local meshReplacementsFile = vfs.open(meshReplacementsPath)
+  local meshReplacementsText = meshReplacementsFile:read('*all')
+
+  ---@type SSSModuleRaw
+  local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
+
+  ---@cast meshReplacementsTable SSSModuleInstances
+  if meshReplacementsTable.instances then
+    for object_name, object_data in pairs(meshReplacementsTable.instances) do
+      object_name = object_name:lower()
+
+      if isPerPluginReplacement(object_name) then
+        local instanceReplacement = {}
+
+        for refNum, replaceInfo in pairs(object_data) do
+          assert(type(refNum) == 'number', strings.NotARefNumStr:format(refNum))
+          instanceReplacement[refNum] = staticUtil.deepCopy(replaceInfo)
+        end
+
+        local operationsByRef = instanceReplacementData.by_ref[object_name] or {}
+
+        operationsByRef = staticUtil.mergeTables(operationsByRef, instanceReplacement)
+
+        for refNum, perInstanceActions in pairs(operationsByRef) do
+          operationsByRef[refNum] = aux_util.mapFilterSort(perInstanceActions, sortActionByType)
+        end
+
+        instanceReplacementData.by_ref[object_name] = operationsByRef
+      else
+        staticUtil.Log('this is a per-record object replacement: ', object_name)
+      end
+    end
+  else
+    ---@cast meshReplacementsTable SSSModuleStatic
+    ComposedReplacements[baseName] = staticLoaderModuleHandler(meshReplacementsTable)
+  end
 
   meshReplacementsFile:close()
 
@@ -188,6 +329,7 @@ end
 
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
+---@param fileName string
 local function uninstallModule(fileName)
   local objectsToRemove, objectsToRemoveLength = {}, 0
   local localModuleReplacements = replacedObjectSet[fileName]
@@ -214,11 +356,51 @@ local function uninstallModule(fileName)
   moduleToRemove = fileName
 end
 
+--- Checks if an object has per-instance modifications and attempts to apply them if so
+---@param object GameObject
+---@return table? instanceModificationData
+local function getInstanceModificationData(object)
+  local objectId = tonumber(object.id)
+  --- Generated objects cannot have their ids converted to integers directly
+  --- Also, their `contentFile` field will be nil
+  if not objectId or not object.contentFile then return end
+
+  local byContentFileData = instanceReplacementData.by_ref[object.contentFile]
+  if not byContentFileData then return end
+
+  local objectRefNum = util.bitXor(objectId, ContentFileBits)
+  return byContentFileData[objectRefNum]
+end
+
+--- Fetches the object index of a given gameObject, including generated objects
+---@param object GameObject
+---@return boolean, number
+local function getRefNum(object)
+  local objectId = tonumber(object.id)
+
+  if objectId then
+    return false, util.bitXor(objectId, ContentFileBits)
+  else
+    local generatedRef = tonumber(
+      object.id:sub(2, #object.id)
+    )
+
+    assert(generatedRef)
+
+    return true, generatedRef
+  end
+end
+
 return {
   interface = {
+    getRefNum = getRefNum,
+    instanceReplacementData = function()
+      return util.makeReadOnly(instanceReplacementData)
+    end,
     overrideRecords = function()
       return util.makeReadOnly(overrideRecords)
     end,
+    randomGen = randomGen,
     replacedObjectSet = function()
       return util.makeReadOnly(replacedObjectSet)
     end,
@@ -227,6 +409,15 @@ return {
   },
   interfaceName = "StaticSwitcher_G",
   eventHandlers = {
+    StaticSwitcherGetRefNum = function(object)
+      local isGenerated, refNum = getRefNum(object)
+
+      staticUtil.Log(
+        strings.GET_REFNUM_STR:format(
+          isGenerated and 'Generated Object' or '' .. object.id, object.recordId, refNum
+        )
+      )
+    end,
     StaticSwitcherRemoveModule = function(moduleName)
       uninstallModule(moduleName)
     end,
@@ -295,13 +486,87 @@ return {
       end
     end,
     onObjectActive = function(object)
-      local targetModules = getReplacementModuleForCell(object.cell)
-      if not next(targetModules) then return end
+      local instanceModificationData = getInstanceModificationData(object)
+      if instanceModificationData then
+        local modifyTarget = object
+        --- Do replacements first, then transforms, then item additions/removals, then spells
 
-      local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
-      if not replacementModule or replacementModule == moduleToRemove or not replacementMesh then return end
+        local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, 1.0
 
-      replaceObject(object, replacementModule, replacementMesh)
+        for _, actionData in ipairs(instanceModificationData) do
+          --- Should we allow only one successful replacement???
+
+          if actionData.replace and modifyTarget == object then
+            local foundReplacement = actionHandlers.replace(object, actionData.replace)
+            if foundReplacement then
+              modifyTarget.enabled = false
+              modifyTarget = foundReplacement
+            end
+          elseif actionData.transform then
+            local actionDetails = actionData.transform
+            staticUtil.deepLog(actionDetails)
+
+            local useRelativeTransform = actionDetails.transform_type == nil or
+                actionDetails.transform_type == 'relative'
+
+            if actionDetails.scale then
+              local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
+              local scaleType = type(actionDetails.scale)
+
+              if scaleType == 'number' then
+                targetScale = actionDetails.scale
+              elseif scaleType == 'table' then
+                targetScale = randomGen:range(actionDetails.scale.min or 1.0, actionDetails.scale.max)
+              else
+                error("Invalid type for scale parameter: " .. scaleType)
+              end
+
+              targetScale = referenceScale * targetScale
+            end
+
+            if actionDetails.rotate then
+              newTransform = getRotationValue {
+                object              = modifyTarget,
+                isRelative          = useRelativeTransform,
+                rotateActionDetails = actionDetails.rotate,
+                currentTransform    = newTransform or modifyTarget.rotation,
+              }
+
+              print('transform after rotate action is:', newTransform)
+            end
+
+            if actionDetails.position then
+              local actionTargetPos = util.vector3(
+                getRangeValue(actionDetails.position.x),
+                getRangeValue(actionDetails.position.y),
+                getRangeValue(actionDetails.position.z)
+              )
+
+              if useRelativeTransform then
+                newPos = newPos + actionTargetPos
+              else
+                newPos = actionTargetPos
+              end
+            end
+          end
+        end
+
+        staticUtil.deepLog(newTransform)
+        staticUtil.deepLog(newCell)
+        staticUtil.deepLog(newPos)
+        print(modifyTarget)
+
+        modifyTarget:setScale(targetScale)
+        modifyTarget:teleport(newCell, newPos, newTransform)
+      else
+        local targetModules = getReplacementModuleForCell(object.cell)
+        if not next(targetModules) then return end
+
+        local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
+        if not replacementModule or replacementModule == moduleToRemove or not replacementMesh then return end
+
+        replaceObject(object, replacementModule, replacementMesh)
+      end
     end,
     onSave = function()
       return {
