@@ -136,6 +136,28 @@ function staticUtil.Record(object)
     return object.type.records[object.recordId]
 end
 
+---@type ContentFileBits
+local ContentFileBits = 16777216
+
+--- Fetches the object index of a given gameObject, including generated objects
+---@param object GameObject
+---@return boolean isGenerated, number refNum
+function staticUtil.getRefNum(object)
+    local objectId = tonumber(object.id)
+
+    if objectId then
+        return false, util.bitXor(objectId, ContentFileBits)
+    else
+        local generatedRef = tonumber(
+            object.id:sub(2, #object.id)
+        )
+
+        assert(generatedRef)
+
+        return true, generatedRef
+    end
+end
+
 ---@param t table
 local function is_table_array(t)
     if type(t) ~= "table" then return false end
