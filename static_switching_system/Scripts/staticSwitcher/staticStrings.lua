@@ -1,6 +1,6 @@
 --- Static strings reused across the SSS framework
----@type table<string, string>
-return {
+---@class SSSStaticStrings
+SSSStaticStrings = {
     PREFIX_FRAME = '[ %s ]:',
     LOG_PREFIX = 'StaticSwitchingSystem',
     LOG_FORMAT_STR = '%s %s',
@@ -14,3 +14,5 @@ return {
     ReplacingIndividualObjectStr = 'Replacing object %s with model %s provided by module %s',
     InvalidTypeStr = 'Invalid type was provided: %s',
 }
+
+return SSSStaticStrings
