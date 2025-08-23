@@ -361,8 +361,6 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
   ::SKIPMODULE::
 end
 
--- staticUtil.deepLog(objectModificationStore)
-
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
 ---@param fileName string
@@ -406,7 +404,7 @@ return {
       return util.makeReadOnly(replacedObjectSet)
     end,
     uninstallModule = uninstallModule,
-    verson = 2,
+    version = 2,
   },
   interfaceName = "StaticSwitcher_G",
   eventHandlers = {
