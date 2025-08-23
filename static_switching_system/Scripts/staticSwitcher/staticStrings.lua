@@ -2,6 +2,7 @@
 ---@class SSSStaticStrings
 SSSStaticStrings = {
     PREFIX_FRAME = '[ %s ]:',
+    ROTATE_FORMAT_STR = 'rotate%s',
     LOG_PREFIX = 'StaticSwitchingSystem',
     LOG_FORMAT_STR = '%s %s',
     GET_REFNUM_STR = '%s %s has refNum %d',

@@ -299,7 +299,7 @@ local function getRotationValue(rotateDatum)
 
   for _, axis in ipairs { 'z', 'y', 'x', } do
     if rotateActionDetails[axis] then
-      rootTransform = util.transform['rotate' .. axis:upper()](
+      rootTransform = util.transform[strings.ROTATE_FORMAT_STR:format(axis:upper())](
         math.rad(
           getRangeValue(
             rotateActionDetails[axis]
