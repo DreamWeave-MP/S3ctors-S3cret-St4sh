@@ -34,6 +34,9 @@ local ComposedReplacements    = {}
 --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
 local objectModificationStore = {}
 
+--- Indexed first by object string, then contains
+local actionLookupCache       = {}
+
 ---@param object GameObject
 ---@param oldRecord ActivatorRecord
 ---@param newModel string
@@ -239,12 +242,31 @@ end
 local function getMatchingInstanceModules(object)
   local matchingActions, actionIndex = {}, 1
 
-  for fileName, actionList in pairs(objectModificationStore) do
+  --- This is kind of terrible and appears to be a bug in the engine itself
+  --- but, for now, using the tostring version works alright-ish until... we find out it doesn't, somehow
+  --- like perhaps the ID changing due to load order fuckery (which is why we used the GO itself as a key in the first place)
+  local objectString = tostring(object)
+
+  for _, actionList in pairs(objectModificationStore) do
     for _, actionData in ipairs(actionList) do
-      if not actionData.conditions or matchesAllConditions(object, actionData.conditions) then
-        matchingActions[actionIndex] = actionData.actions
-        print(tableHash { [fileName] = actionData })
+      local actionTableHash = tableHash(actionData)
+      -- conditions defined, but not passed
+      if actionData.conditions and not matchesAllConditions(object, actionData.conditions) then goto SKIPACTION end
+
+      -- Action conditions have been evaluated already, and this action can only run once
+      if actionData.once and
+          actionLookupCache[objectString]
+          and actionLookupCache[objectString][actionTableHash] then
+        goto SKIPACTION
       end
+
+      matchingActions[actionIndex] = actionData.actions
+
+      if not actionLookupCache[objectString] then actionLookupCache[objectString] = {} end
+
+      actionLookupCache[objectString][actionTableHash] = true
+
+      ::SKIPACTION::
     end
   end
 
