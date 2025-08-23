@@ -315,7 +315,7 @@ end
 local actionHandlers = {
   ['replace'] = function(object, replaceActionData)
     for replaceId, replaceChance in pairs(replaceActionData) do
-      if math.random() > replaceChance then goto SKIPREPLACEMENT end
+      if randomGen:float() > replaceChance then goto SKIPREPLACEMENT end
 
       local result, replacement = pcall(safeCreateObject, replaceId)
 
