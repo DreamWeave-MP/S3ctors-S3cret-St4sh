@@ -212,16 +212,10 @@ local function sortActionByType(actionData)
   end
 end
 
----@alias SSSConditionHandler fun(object: GameObject, matchData: any): boolean
-
-local someTable = {}
 ---@type table<string, SSSConditionHandler>
 local conditionHandlers = {
   content_file = function(object, contentFileName)
     return object.contentFile == contentFileName:lower()
-  end,
-  once = function(object, targetCacheKey)
-    return someTable[targetCacheKey] == nil
   end,
   ref_num = function(object, targetRefNum)
     local _, refNum = staticUtil.getRefNum(object)

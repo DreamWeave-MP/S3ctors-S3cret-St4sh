@@ -4,6 +4,7 @@
 ---@alias ReplacementMap table < OriginalModel, ReplacedRecordId >
 ---@alias RecordId string
 ---@alias SzudzikCoord integer
+---@alias SSSConditionHandler fun(object: GameObject, matchData: any): boolean
 
 --- Represents the uppermost bits to strip off of an object ID in order to determine its local reference number
 --- math.pow(2, 24)
