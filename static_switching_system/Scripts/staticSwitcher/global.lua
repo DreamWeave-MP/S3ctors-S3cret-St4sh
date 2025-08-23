@@ -488,12 +488,12 @@ return {
     end,
     onObjectActive = function(object)
       local instanceModificationList = getMatchingInstanceModules(object)
-      -- staticUtil.deepLog(instanceModificationList)
 
       --- I don't like this.
       --- Ideally we should have like, a special type that gets assigned to each module, or something
       --- a more bespoke way to describe what *type* of module it is
       if instanceModificationList then
+        local wasModified = false
         local modifyTarget = object
         --- Do replacements first, then transforms, then item additions/removals, then spells
 
@@ -501,18 +501,16 @@ return {
 
         for _, instanceModification in ipairs(instanceModificationList) do
           for _, actionData in ipairs(instanceModification) do
-            staticUtil.deepLog(actionData)
             --- Should we allow only one successful replacement???
-
             if actionData.replace and modifyTarget == object then
               local foundReplacement = actionHandlers.replace(object, actionData.replace)
               if foundReplacement then
                 modifyTarget.enabled = false
                 modifyTarget = foundReplacement
+                wasModified = true
               end
             elseif actionData.transform then
               local actionDetails = actionData.transform
-              -- staticUtil.deepLog(actionDetails)
 
               local useRelativeTransform = actionDetails.transform_type == nil or
                   actionDetails.transform_type == 'relative'
@@ -530,6 +528,7 @@ return {
                 end
 
                 targetScale = referenceScale * targetScale
+                wasModified = true
               end
 
               if actionDetails.rotate then
@@ -540,7 +539,7 @@ return {
                   currentTransform    = newTransform or modifyTarget.rotation,
                 }
 
-                print('transform after rotate action is:', newTransform)
+                wasModified = true
               end
 
               if actionDetails.position then
@@ -555,15 +554,14 @@ return {
                 else
                   newPos = actionTargetPos
                 end
+
+                wasModified = true
               end
             end
           end
         end
 
-        -- staticUtil.deepLog(newTransform)
-        -- staticUtil.deepLog(newCell)
-        -- staticUtil.deepLog(newPos)
-        -- print(modifyTarget)
+        if not wasModified then return end
 
         modifyTarget:setScale(targetScale)
         modifyTarget:teleport(newCell, newPos, newTransform)
