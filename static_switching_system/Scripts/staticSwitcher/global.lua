@@ -218,7 +218,11 @@ end
 ---@type table<string, SSSConditionHandler>
 local conditionHandlers = {
   content_file = function(object, contentFileName)
-    return object.contentFile == contentFileName:lower()
+    return (
+      object.contentFile == contentFileName:lower()
+    ) or (
+      not object.contentFile and contentFileName:upper() == 'GENERATED'
+    )
   end,
   ref_num = function(object, targetRefNum)
     local _, refNum = staticUtil.getRefNum(object)
