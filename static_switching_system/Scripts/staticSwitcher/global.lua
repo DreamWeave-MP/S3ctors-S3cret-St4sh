@@ -352,7 +352,7 @@ local function getRotationValue(rotateDatum)
 end
 
 local actionHandlers = {
-  ['replace'] = function(object, replaceActionData)
+  ['replace'] = function(_, replaceActionData)
     for replaceId, replaceChance in pairs(replaceActionData) do
       if randomGen:float() > replaceChance then goto SKIPREPLACEMENT end
 
