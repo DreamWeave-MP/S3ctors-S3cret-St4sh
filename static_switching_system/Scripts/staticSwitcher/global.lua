@@ -283,6 +283,7 @@ local function getMatchingInstanceModules(object)
       end
 
       matchingActions[actionIndex] = actionData.actions
+      actionIndex = actionIndex + 1
 
       if not actionLookupCache[objectString] then actionLookupCache[objectString] = {} end
 
