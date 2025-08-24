@@ -52,27 +52,13 @@ local SixthHouseEnemies = {
 
 ---@type IDPresenceMap
 local GenericDagoth = {
-    'dagoth',
+    ['dagoth'] = true,
 }
 
 ---@type IDPresenceMap
 local DagothUr = {
     ['dagoth ur'] = true,
 }
-
----@type ValidPlaylistCallback
-local function sixthHouseEnemyRule(playback)
-    return playback.state.isInCombat
-        and (
-            playback.rules.combatTargetExact(SixthHouseEnemies) or playback.rules.cellNameMatch(GenericDagoth)
-        )
-end
-
----@type ValidPlaylistCallback
-local function theManHimselfRule(playback)
-    return playback.state.isInCombat
-        and playback.rules.combatTargetExact(DagothUr)
-end
 
 ---@type IDPresenceMap
 local SixthHouseCells = {
@@ -147,6 +133,20 @@ local function sixthHouseCellRule(playback)
         and playback.rules.cellNameExact(SixthHouseCells)
 end
 
+---@type ValidPlaylistCallback
+local function sixthHouseEnemyRule(playback)
+    return playback.state.isInCombat
+        and (
+            playback.rules.combatTargetExact(SixthHouseEnemies) or playback.rules.cellNameMatch(GenericDagoth)
+        )
+end
+
+---@type ValidPlaylistCallback
+local function theManHimselfRule(playback)
+    return playback.state.isInCombat
+        and playback.rules.combatTargetExact(DagothUr)
+end
+
 local PlaylistPriority = require 'doc.playlistPriority'
 
 ---@type S3maphorePlaylist[]
@@ -174,6 +174,6 @@ return {
         priority = PlaylistPriority.BattleMod,
         randomize = true,
 
-        isValidCallback = sixthHouseEnemyRule,
+        isValidCallback = theManHimselfRule,
     },
 }
