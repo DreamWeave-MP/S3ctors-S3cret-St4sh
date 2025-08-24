@@ -235,8 +235,26 @@ local function matchesAllConditions(object, conditions)
   for _, conditionData in ipairs(conditions) do
     for conditionName, conditionValue in pairs(conditionData) do
       local conditionHandler = conditionHandlers[conditionName]
-      --- Debug log here if test fails
-      if not conditionHandler or not conditionHandler(object, conditionValue) then return false end
+
+      assert(
+        type(conditionHandler) == 'function',
+        ('Condition %s is an invalid condition for the handler!'):format(conditionName)
+      )
+
+      if type(conditionValue) == 'table' then
+        local matchedAnyValue = false
+
+        for _, individualCondition in ipairs(conditionValue) do
+          if not matchedAnyValue and conditionHandler(object, individualCondition) then
+            matchedAnyValue = true
+            break
+          end
+        end
+
+        if not matchedAnyValue then return false end
+      else
+        if not conditionHandler(object, conditionValue) then return false end
+      end
     end
   end
 
