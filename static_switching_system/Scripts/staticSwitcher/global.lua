@@ -240,7 +240,7 @@ local conditionHandlers = {
         or objectRecord.name:match(targetName) ~= nil
   end,
   object_type = function(object, targetTypeName)
-    local capitalizedTypeName = staticUtil.capitalize(targetTypeName)
+    local capitalizedTypeName = (targetTypeName:lower() == 'npc' and 'NPC') or staticUtil.capitalize(targetTypeName)
     local targetType = types[capitalizedTypeName]
 
     assert(
