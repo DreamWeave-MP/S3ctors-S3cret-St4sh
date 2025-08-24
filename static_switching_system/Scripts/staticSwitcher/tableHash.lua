@@ -29,9 +29,9 @@ local function tableToHash(t, visited)
         local valueRep
         local valueType = type(value)
 
-        if type(value) == "table" then
+        if valueType == "table" then
             valueRep = tableToHash(value, visited)
-        elseif type(value) == "number" then
+        elseif valueType == "number" then
             valueRep = string.format("num:%.15g", value)
         elseif valueType == 'userdata' then
             if value.__type and value.__type.name then
