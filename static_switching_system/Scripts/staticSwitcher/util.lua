@@ -207,4 +207,18 @@ function staticUtil.mergeTables(target, source, is_array)
     return target
 end
 
+--- Takes a string as input and performs Title capitalization on it.
+--- Note that other characters are lowercased explicitly.
+---@param inputString string The string whose first letter should be capitalized
+---@return string capitalizedString The original string, with Title capitalizatio
+function staticUtil.capitalize(inputString)
+    local stringLength = #inputString
+    if stringLength <= 1 then return inputString:upper() end
+
+    return staticUtil.strings.TITLE_CAP_FORMAT_STR:format(
+        inputString:sub(1, 1):upper(),
+        inputString:sub(2, stringLength)
+    )
+end
+
 return staticUtil
