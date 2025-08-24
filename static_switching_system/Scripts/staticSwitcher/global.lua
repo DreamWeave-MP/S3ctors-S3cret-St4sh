@@ -198,9 +198,13 @@ local ACTIONPRIORITY = {
 ---@class ConditionPriority
 local CONDITIONPRIORITY = {
   'content_file',
+  'object_type',
+  --- Record ID comes before many other searches as it's likely to be cheap and common
+  --- This one doesn't have a separate match variant
+  'record_id',
   'ref_num',
-  --- Should always be last
-  'once',
+  --- Name matches should always be last as they're inevitably going to be the slowest
+  'name',
 }
 
 local function sortConditionByType(conditionData)
@@ -223,6 +227,33 @@ local conditionHandlers = {
     ) or (
       not object.contentFile and contentFileName:upper() == 'GENERATED'
     )
+  end,
+  name = function(object, targetName)
+    --- Statics may never have a name
+    if types.Static.objectIsInstance(object) or not object.type then return false end
+
+    local objectRecord = object.type.records[object.recordId]
+
+    if objectRecord.name == nil or objectRecord.name == '' then return false end
+
+    return objectRecord.name == targetName
+        or objectRecord.name:match(targetName) ~= nil
+  end,
+  object_type = function(object, targetTypeName)
+    local capitalizedTypeName = staticUtil.capitalize(targetTypeName)
+    local targetType = types[capitalizedTypeName]
+
+    assert(
+      targetType ~= nil,
+      strings.InvalidTypeStr:format(capitalizedTypeName)
+    )
+
+    return targetType.objectIsInstance(object)
+  end,
+  record_id = function(object, targetRecordId)
+    local originalId, lowerId = object.recordId, targetRecordId:lower()
+
+    return originalId == lowerId or originalId:match(lowerId)
   end,
   ref_num = function(object, targetRefNum)
     local _, refNum = staticUtil.getRefNum(object)
