@@ -281,7 +281,7 @@ end
 ---@param maxHour integer
 ---@return boolean
 function PlaylistRules.timeOfDay(minHour, maxHour)
-    local gameHour = math.floor(core.getGameTime() / 3600)
+    local gameHour = math.floor(core.getGameTime() / 3600) % 24
     return gameHour < maxHour and gameHour >= minHour
 end
 
