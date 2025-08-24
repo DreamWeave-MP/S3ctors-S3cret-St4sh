@@ -205,6 +205,7 @@ local CONDITIONPRIORITY = {
   'ref_num',
   --- Name matches should always be last as they're inevitably going to be the slowest
   'name',
+  'carrying',
 }
 
 local function sortConditionByType(conditionData)
@@ -221,6 +222,23 @@ end
 
 ---@type table<string, SSSConditionHandler>
 local conditionHandlers = {
+  carrying = function(object, itemId)
+    if not object.type then return false end
+
+    local objectHasInventory = object.type.inventory ~= nil
+    if not objectHasInventory then return false end
+
+    local objectInventory = object.type.inventory(object)
+
+    local itemType = type(itemId)
+    if itemType == 'string' then
+      return objectInventory:find(itemId) ~= nil
+    else
+      local itemName, itemCount = next(itemId)
+
+      return objectInventory:countOf(itemName) >= itemCount
+    end
+  end,
   content_file = function(object, contentFileName)
     return (
       object.contentFile == contentFileName:lower()
