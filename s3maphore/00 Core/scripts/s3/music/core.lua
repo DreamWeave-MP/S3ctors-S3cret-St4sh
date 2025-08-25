@@ -161,6 +161,10 @@ musicSettings:subscribe(
     )
 )
 
+---@class StaticList
+---@field recordIds string[] array of all unique static record ids in the current cell
+---@field contentFiles string[] array of all unique content files which placed statics in this cell
+
 ---@class PlaylistState
 ---@field self userdata the player actor
 ---@field playlistTimeOfDay TimeMap the time of day for the current playlist
@@ -170,15 +174,15 @@ musicSettings:subscribe(
 ---@field cellHasCombatTargets boolean
 ---@field isUnderwater boolean
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
----@field staticList userdata[]? a read-only list of static objects in the cell, if the cell is not exterior. If the static list is not yet valid, is an empty table. Nil for "true" exteriors.
+---@field staticList StaticList
 ---@field weather WeatherType
 local PlaylistState = {
     self = self,
     combatTargets = fightingActors,
-    staticList = {},
-    cellIsExterior = (
-        self.cell.isExterior or self.cell:hasTag('QuasiExterior')
-    ),
+    staticList = {
+        recordIds = {},
+        contentFiles = {},
+    },
 }
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
