@@ -23,7 +23,7 @@
 --- Fuzzy-matched cells
 ---@field CellMatch integer
 --- Faction-based rules such as great houses or guilds
----@field Factional integer
+---@field Faction integer
 --- Rules based on time of day
 ---@field TimeOfDay integer
 --- Exact cell names
