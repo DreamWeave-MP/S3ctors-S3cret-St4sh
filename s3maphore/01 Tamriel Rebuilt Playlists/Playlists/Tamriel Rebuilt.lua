@@ -1,89 +1,5 @@
----@type IDPresenceMap
-local DwemerStaticIds = {
-    ['in_dwe_archway00_end'] = true,
-    ['in_dwe_archway00_exp'] = true,
-    ['in_dwe_corr2_00_exp'] = true,
-    ['in_dwe_corr4_exp'] = true,
-    ['in_dwe_end00_exp'] = true,
-    ['in_dwe_hall00_exp'] = true,
-    ['in_dwe_hall_enter_00'] = true,
-    ['in_dwe_hall_wall00_bk'] = true,
-    ['in_dwe_hall_wall00_exp'] = true,
-    ['in_dwe_pillar00_exp'] = true,
-    ['in_dwe_pill_bk00'] = true,
-    ['in_dwe_pill_bk01'] = true,
-    ['in_dwe_pill_bk02'] = true,
-    ['in_dwe_pill_bk03'] = true,
-    ['in_dwe_pipe00_exp'] = true,
-    ['in_dwe_ramp00_exp'] = true,
-    ['in_dwe_rod00_exp'] = true,
-    ['in_dwe_rod01_exp'] = true,
-    ['in_dwe_rubble00'] = true,
-    ['in_dwe_rubble01'] = true,
-    ['in_dwe_rubble02'] = true,
-    ['in_dwe_slate00'] = true,
-    ['in_dwe_slate01'] = true,
-    ['in_dwe_slate02'] = true,
-    ['in_dwe_slate03'] = true,
-    ['in_dwe_slate04'] = true,
-    ['in_dwe_slate05'] = true,
-    ['in_dwe_slate06'] = true,
-    ['in_dwe_slate07'] = true,
-    ['in_dwe_slate08'] = true,
-    ['in_dwe_slate09'] = true,
-    ['in_dwe_slate10'] = true,
-    ['in_dwe_slate11'] = true,
-    ['in_dwe_turbine00_exp'] = true,
-    ['in_dwe_utilcorr00_exp'] = true,
-    ['in_dwe_utilcorr01_exp'] = true,
-    ['in_dwe_weathmach00_exp'] = true,
-    ['in_dwr_tower_int00'] = true,
-    ['in_dwr_tower_int000'] = true,
-    ['in_dwr_tower_int001'] = true,
-    ['in_dwrv_corr1_00'] = true,
-    ['in_dwrv_corr2_00'] = true,
-    ['in_dwrv_corr2_01'] = true,
-    ['in_dwrv_corr2_02'] = true,
-    ['in_dwrv_corr2_03'] = true,
-    ['in_dwrv_corr2_04'] = true,
-    ['in_dwrv_corr3_00'] = true,
-    ['in_dwrv_corr3_01'] = true,
-    ['in_dwrv_corr3_02'] = true,
-    ['in_dwrv_corr4_00'] = true,
-    ['in_dwrv_corr4_01'] = true,
-    ['in_dwrv_corr4_02'] = true,
-    ['in_dwrv_corr4_03'] = true,
-    ['in_dwrv_corr4_04'] = true,
-    ['in_dwrv_corr4_05'] = true,
-    ['in_dwrv_doorjam00'] = true,
-    ['in_dwrv_door_static00'] = true,
-    ['in_dwrv_enter00_dn'] = true,
-    ['in_dwrv_gear00'] = true,
-    ['in_dwrv_gear10'] = true,
-    ['in_dwrv_gear20'] = true,
-    ['in_dwrv_hall2_00'] = true,
-    ['in_dwrv_hall3_00'] = true,
-    ['in_dwrv_hall4_00'] = true,
-    ['in_dwrv_hall4_01'] = true,
-    ['in_dwrv_hall4_02'] = true,
-    ['in_dwrv_hall4_03'] = true,
-    ['in_dwrv_lift00'] = true,
-    ['in_dwrv_obsrv00'] = true,
-    ['in_dwrv_oilslick00'] = true,
-    ['in_dwrv_scope00'] = true,
-    ['in_dwrv_scope10'] = true,
-    ['in_dwrv_scope20'] = true,
-    ['in_dwrv_scope30'] = true,
-    ['in_dwrv_scope40'] = true,
-    ['in_dwrv_scope50'] = true,
-    ['in_dwrv_shaft00'] = true,
-    ['in_dwrv_shaft10'] = true,
-    ['in_dwrv_wall00'] = true,
-    ['in_dwrv_wall10'] = true,
-    ['in_dwrv_wall_nchuleftingth1'] = true,
-}
-
-local CaveStaticIds = require 'doc.caveStaticIds'
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
 
 ---@type CellMatchPatterns
 local ImperialPatterns = {
@@ -231,13 +147,11 @@ local TombCellMatches = {
     disallowed = {},
 }
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type ValidPlaylistCallback
 local function caveTRRule(playback)
     return not playback.state.cellIsExterior
         and playback.rules.staticContentFile(TContentFiles)
-        and playback.rules.staticExact(CaveStaticIds)
+        and playback.rules.staticExact(Tilesets.Cave)
 end
 
 ---@type ValidPlaylistCallback
@@ -264,8 +178,8 @@ return {
             'Music/MS/region/Aanthirin/Thirr 2.mp3'
         },
 
-        isValidCallback = function(playback)
-            return playback.state.self.cell.region == 'aanthirin region'
+        isValidCallback = function()
+            return Playback.state.self.cell.region == 'aanthirin region'
         end,
     },
     {
@@ -281,8 +195,8 @@ return {
             'Music/MS/region/Aanthirin/Thirr 2.mp3'
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.region(ThirrRegions)
+        isValidCallback = function()
+            return Playback.rules.region(ThirrRegions)
         end,
     },
     {
@@ -297,8 +211,8 @@ return {
 
         },
 
-        isValidCallback = function(playback)
-            return playback.state.self.cell.region == 'armun ashlands region'
+        isValidCallback = function()
+            return Playback.state.self.cell.region == 'armun ashlands region'
         end,
     },
     {
@@ -312,8 +226,8 @@ return {
             'Music/MS/region/Grey Meadows Region/Grey Meadows 1.mp3',
             'Music/MS/region/Grey Meadows Region/Grey Meadows 2.mp3',
         },
-        isValidCallback = function(playback)
-            return playback.state.self.cell.region == 'grey meadows region'
+        isValidCallback = function()
+            return Playback.state.self.cell.region == 'grey meadows region'
         end,
     },
     {
@@ -330,8 +244,8 @@ return {
             'Music/MS/region/Lan Orethan/Road To Mournhold.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.region(OrethanRegions)
+        isValidCallback = function()
+            return Playback.rules.region(OrethanRegions)
         end,
     },
     {
@@ -343,10 +257,10 @@ return {
             'Music/MS/interior/tr dwemer/Dwemer ruins.mp3',
             'Music/MS/interior/tr dwemer/Resonance.mp3',
         },
-        isValidCallback = function(playback)
-            return not playback.state.cellIsExterior
-                and playback.rules.staticContentFile(TContentFiles)
-                and playback.rules.staticExact(DwemerStaticIds)
+        isValidCallback = function()
+            return not Playback.state.cellIsExterior
+                and Playback.rules.staticContentFile(TContentFiles)
+                and Playback.rules.staticExact(Tilesets.Dwemer)
         end,
     },
     {
@@ -388,8 +302,8 @@ return {
             'Music/MS/region/Mournhold hills/Mournhold fields.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.region(MournholdRegions)
+        isValidCallback = function()
+            return Playback.rules.region(MournholdRegions)
         end,
     },
     {
@@ -403,8 +317,8 @@ return {
             'Music/MS/cell/ImperialCity/Beacon of Cyrodiil.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.cellNameMatch(ImperialPatterns)
+        isValidCallback = function()
+            return Playback.rules.cellNameMatch(ImperialPatterns)
         end,
     },
     {
@@ -418,8 +332,8 @@ return {
             'Music/MS/cell/MournCity/Indoril Settlement.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.cellNameMatch(IndorilPatterns)
+        isValidCallback = function()
+            return Playback.rules.cellNameMatch(IndorilPatterns)
         end,
     },
     {
@@ -433,8 +347,8 @@ return {
             'Music/MS/region/Telvanni Isles/Port Telvannis.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.cellNameMatch(PortTelvannisPatterns)
+        isValidCallback = function()
+            return Playback.rules.cellNameMatch(PortTelvannisPatterns)
         end,
     },
     {
@@ -449,8 +363,8 @@ return {
 
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.cellNameMatch(TelvanniSettlementMatches)
+        isValidCallback = function()
+            return Playback.rules.cellNameMatch(TelvanniSettlementMatches)
         end,
     },
     {
@@ -467,8 +381,8 @@ return {
             'Music/MS/region/Sacred Lands Region/sacred lands 4.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.cellNameMatch(TempleSettlementMatches)
+        isValidCallback = function()
+            return Playback.rules.cellNameMatch(TempleSettlementMatches)
         end,
     },
     {
@@ -485,8 +399,8 @@ return {
             'Music/MS/region/Sacred Lands Region/sacred lands 4.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.state.self.cell.region == 'sacred lands region'
+        isValidCallback = function()
+            return Playback.state.self.cell.region == 'sacred lands region'
         end,
     },
     {
@@ -498,8 +412,8 @@ return {
             'Music/MS/region/Seas/Dreamy athmospheres 1.mp3',
             'Music/MS/region/Seas/Dreamy athmospheres 2.mp3',
         },
-        isValidCallback = function(playback)
-            return playback.rules.region(SeaRegions)
+        isValidCallback = function()
+            return Playback.rules.region(SeaRegions)
         end,
     },
     {
@@ -515,8 +429,8 @@ return {
             'Music/MS/region/Telvannis/Telvannis fields.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.region(TelvannisRegions)
+        isValidCallback = function()
+            return Playback.rules.region(TelvannisRegions)
         end,
     },
     {
@@ -530,8 +444,8 @@ return {
             'Music/MS/region/Velothis Upper/Through The Mountains.mp3',
         },
 
-        isValidCallback = function(playback)
-            return playback.rules.region(UpperVelothisRegions)
+        isValidCallback = function()
+            return Playback.rules.region(UpperVelothisRegions)
         end
     }
 }
