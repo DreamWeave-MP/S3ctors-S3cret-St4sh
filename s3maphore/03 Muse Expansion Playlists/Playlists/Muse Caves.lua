@@ -1,5 +1,5 @@
----@type IDPresenceMap
-local CaveStaticIds = require 'doc.caveStaticIds'
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
 
 ---@type IDPresenceMap
 local NoTRPlugins = {
@@ -7,7 +7,11 @@ local NoTRPlugins = {
     ['tr_mainland.esm'] = true,
 }
 
-local PlaylistPriority = require 'doc.playlistPriority'
+local function museCaveRule()
+    return not Playback.state.cellIsExterior
+        and not Playback.rules.staticContentFile(NoTRPlugins)
+        and Playback.rules.staticExact(Tilesets.Cave)
+end
 
 ---@type S3maphorePlaylist[]
 return {
@@ -15,11 +19,6 @@ return {
         id = 'ms/cell/cave',
         priority = PlaylistPriority.Tileset,
         randomize = true,
-
-        isValidCallback = function(playback)
-            return not playback.state.cellIsExterior
-                and not playback.rules.staticContentFile(NoTRPlugins)
-                and playback.rules.staticExact(CaveStaticIds)
-        end,
+        isValidCallback = museCaveRule,
     }
 }
