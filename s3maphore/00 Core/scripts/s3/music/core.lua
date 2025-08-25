@@ -183,6 +183,7 @@ local PlaylistState = {
         recordIds = {},
         contentFiles = {},
     },
+    cellIsExterior = false,
 }
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
