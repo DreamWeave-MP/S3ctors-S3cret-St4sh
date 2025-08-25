@@ -109,6 +109,44 @@ function PlaylistRules.combatTargetExact(validTargets)
     return false
 end
 
+---@param factionRules NumericPresenceMap
+function PlaylistRules.combatTargetFaction(factionRules)
+    if not PlaylistRules.state.isInCombat then return false end
+
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[factionRules] ~= nil then
+        return currentCombatTargetsCache[factionRules]
+    end
+
+    local FightingActors = PlaylistRules.state.combatTargets
+
+    local result = false
+    for _, actor in pairs(FightingActors) do
+        local getFactionRank = actor.type.getFactionRank
+        if getFactionRank == nil then goto SKIPTARGET end
+
+        for factionName, rankRange in pairs(factionRules) do
+            local targetFactionRank = getFactionRank(actor, factionName)
+
+            if targetFactionRank <= (rankRange.max or HUGE) and targetFactionRank >= rankRange.min then
+                result = true
+                goto MATCHED
+            end
+        end
+
+        ::SKIPTARGET::
+    end
+
+    ::MATCHED::
+
+    currentCombatTargetsCache[factionRules] = result
+
+    return result
+end
+
 --- Finds any nearby combat target whose name matches any one string of a set
 ---
 --- Example usage:
