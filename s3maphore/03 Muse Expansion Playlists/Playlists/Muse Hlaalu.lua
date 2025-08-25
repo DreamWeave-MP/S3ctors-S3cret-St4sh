@@ -1,3 +1,6 @@
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
+
 local HlaaluEnemyNames = {
     ['hlaalu guard'] = true,
     ['duke vedam dren'] = true,
@@ -108,8 +111,6 @@ local function hlaaluCellRule(playback)
             or playback.rules.cellNameMatch(HlaaluCellNames)
         )
 end
-
-local PlaylistPriority = require 'doc.playlistPriority'
 
 ---@type S3maphorePlaylist[]
 return {
