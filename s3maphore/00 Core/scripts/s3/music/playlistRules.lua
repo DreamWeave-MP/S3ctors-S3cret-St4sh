@@ -225,7 +225,7 @@ function PlaylistRules.staticMatch(patterns)
 
     for _, static in ipairs(localStatics.recordIds) do
         for _, pattern in ipairs(patterns) do
-            if static.recordId:find(pattern) then
+            if static:find(pattern) then
                 result = true
                 goto matchBreak
             end
