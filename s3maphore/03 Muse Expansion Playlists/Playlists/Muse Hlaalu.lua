@@ -54,9 +54,9 @@ local HlaaluEnemyNames = {
 }
 
 ---@type ValidPlaylistCallback
-local function hlaaluEnemyRule(playback)
-    return playback.state.isInCombat
-        and playback.rules.combatTargetExact(HlaaluEnemyNames)
+local function hlaaluEnemyRule()
+    return Playback.state.isInCombat
+        and Playback.rules.combatTargetExact(HlaaluEnemyNames)
 end
 
 ---@type CellMatchPatterns
@@ -104,11 +104,11 @@ local HlaaluCatacombNames = {
 }
 
 ---@type ValidPlaylistCallback
-local function hlaaluCellRule(playback)
-    return not playback.state.isInCombat
+local function hlaaluCellRule()
+    return not Playback.state.isInCombat
         and (
-            playback.rules.cellNameExact(HlaaluCatacombNames)
-            or playback.rules.cellNameMatch(HlaaluCellNames)
+            Playback.rules.cellNameExact(HlaaluCatacombNames)
+            or Playback.rules.cellNameMatch(HlaaluCellNames)
         )
 end
 
