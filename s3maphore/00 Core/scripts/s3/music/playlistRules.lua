@@ -1,5 +1,7 @@
 local core = require 'openmw.core'
 
+local HUGE = math.huge
+
 --- Alias for defining S3maphore rules for object record ids allowing or disallowing playlist selection
 ---@alias IDPresenceMap table<string, boolean>
 
@@ -302,7 +304,7 @@ end
 
 ---@class NumericPresenceMapData
 ---@field min integer
----@field max integer
+---@field max integer? If omitted, then math.huge is used
 
 ---@alias NumericPresenceMap table<string, NumericPresenceMapData>
 
@@ -337,7 +339,7 @@ function PlaylistRules.journal(journalDataMap)
         if quest then
             local questState = quest.stage
 
-            if questState <= questRange.max and questState >= questRange.min then
+            if questState <= (questRange.max or HUGE) and questState >= questRange.min then
                 result = true
                 break
             end
