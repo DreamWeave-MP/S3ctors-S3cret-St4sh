@@ -275,6 +275,8 @@ function PlaylistRules.staticContentFile(contentFiles)
 end
 
 --- Checks whether the current gameHour matches a certain time of day or not
+--- Starts at the minHour, and ends at the maxHour.
+--- The below example using 8 and 12, will start at 8 am and end at 12 PM.
 ---
 --- Example usage:
 ---
