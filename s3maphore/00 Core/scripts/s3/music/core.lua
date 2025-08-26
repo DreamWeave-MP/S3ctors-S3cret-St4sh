@@ -249,6 +249,18 @@ function MusicManager.registerPlaylist(playlist)
     local existingOrder = playlistsTracksOrder[playlist.id]
 
     if not existingOrder or next(existingOrder) == nil or math.max(unpack(existingOrder)) > #playlist.tracks then
+        local fallback = playlist.fallback
+
+        if fallback then
+            local fallbackTracks = fallback.tracks
+
+            if fallbackTracks and #fallbackTracks > 0 then
+                for i = 1, #fallbackTracks do
+                    playlist.tracks[#playlist.tracks + 1] = 'music/' .. fallbackTracks[i]
+                end
+            end
+        end
+
         local newPlaylistOrder = helpers.initTracksOrder(playlist.tracks, playlist.randomize)
         playlistsTracksOrder[playlist.id] = newPlaylistOrder
         helpers.setStoredTracksOrder(playlist.id, newPlaylistOrder)
