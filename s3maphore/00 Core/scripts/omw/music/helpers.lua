@@ -9,6 +9,10 @@ playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
 
 local musicSettings = storage.playerSection('SettingsS3Music')
 
+local LogFormatStr = '[ S3MAPHORE ]: %s'
+local CantAutoAssignInterruptModeStr =
+'Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!'
+
 ---@param ... any
 local function debugLog(...)
     if not musicSettings:get('DebugEnable') then return end
@@ -17,7 +21,7 @@ local function debugLog(...)
         args[i] = tostring(args[i])
     end
     local msg = table.concat(args, " ")
-    print(('[ S3MAPHORE ]: %s'):format(msg))
+    print(LogFormatStr:format(msg))
 end
 
 local function getTracksFromDirectory(path)
@@ -77,8 +81,7 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
             playlist.interruptMode = INTERRUPT.Me
         else
             debugLog(
-                ('Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!')
-                :format(playlist.priority, playlist.id)
+                CantAutoAssignInterruptModeStr:format(playlist.priority, playlist.id)
             )
         end
     end
