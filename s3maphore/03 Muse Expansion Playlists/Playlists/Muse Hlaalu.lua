@@ -1,64 +1,6 @@
 ---@type S3maphorePlaylistEnv
 _ENV = _ENV
 
-local HlaaluEnemyNames = {
-    ['hlaalu guard'] = true,
-    ['duke vedam dren'] = true,
-    ['nevena ules'] = true,
-    ['crassius curio'] = true,
-    ['dram bero'] = true,
-    ['yngling half-troll'] = true,
-    ['ranes ienith'] = true,
-    ['navil ienith'] = true,
-    ['orvas dren'] = true,
-    ['madrale thirith'] = true,
-    ['marasa aren'] = true,
-    ['sovor trandel'] = true,
-    ['thanelen velas'] = true,
-    ['vadusa sathryon'] = true,
-    ['vurvyn othren'] = true,
-    ['telare evos'] = true,
-    ['mundrila rindu'] = true,
-    ['bothus drals'] = true,
-    ['mervis llarel'] = true,
-    ['atran oran'] = true,
-    ['tholer andas'] = true,
-    ['nalvyna balen'] = true,
-    ['dreynos helvi'] = true,
-    ['ulvys ules'] = true,
-    ['bol salvani'] = true,
-    ['feldril sathis'] = true,
-    ['alvynu llervas'] = true,
-    ['belron hlaalu'] = true,
-    ['diradeni raran'] = true,
-    ['edrano vedas'] = true,
-    ['ereven peronys'] = true,
-    ['releniah dren'] = true,
-    ['saritha hlaalu'] = true,
-    ['sodreru hlaalu'] = true,
-    ['tereldyn hlaalu'] = true,
-    ['ulvo hlaari'] = true,
-    ['idros rothrano'] = true,
-    ['artisa rethan'] = true,
-    ['llaros samalsi'] = true,
-    ['athires hlaalu'] = true,
-    ['duke fethas hlaalu'] = true,
-    ['llirala arys'] = true,
-    ['serali beralam'] = true,
-    ['nalvos omayn'] = true,
-    ['felrar berathi'] = true,
-    ['peleri hlaalu'] = true,
-    ['ulvys nerano'] = true,
-    ['milena farano'] = true,
-    ['llevas uvalor'] = true,
-}
-
----@type ValidPlaylistCallback
-local function hlaaluEnemyRule()
-    return Playback.state.isInCombat
-        and Playback.rules.combatTargetExact(HlaaluEnemyNames)
-end
-
 ---@type CellMatchPatterns
 local HlaaluCellNames = {
     allowed = {
@@ -112,6 +54,17 @@ local function hlaaluCellRule()
         )
 end
 
+---@type NumericPresenceMap
+local hlaaluFactionData = {
+    hlaalu = { min = 1 },
+}
+
+---@type ValidPlaylistCallback
+local function hlaaluFactionRule()
+    return Playback.state.isInCombat
+        and Playback.rules.combatTargetFaction(hlaaluFactionData)
+end
+
 ---@type S3maphorePlaylist[]
 return {
     {
@@ -128,6 +81,6 @@ return {
         priority = PlaylistPriority.BattleMod,
         randomize = true,
 
-        isValidCallback = hlaaluEnemyRule,
+        isValidCallback = hlaaluFactionRule,
     }
 }
