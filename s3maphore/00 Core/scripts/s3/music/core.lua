@@ -76,9 +76,6 @@ local registrationOrder = 0
 local currentPlaylist = nil
 local currentTrack = nil
 
-local battlePriority = 200
-local explorePriority = 1000
-
 ---@type table<string, function>
 local L10nCache = {}
 
@@ -753,7 +750,7 @@ if activePlaylistSettings:get('ExploreActive') == nil then activePlaylistSetting
 
 MusicManager.registerPlaylist {
     id = "Battle",
-    priority = battlePriority,
+    priority = PlaylistEnvironment.PlaylistPriority.BattleVanilla,
     randomize = true,
 
     isValidCallback = function(playback)
@@ -763,7 +760,7 @@ MusicManager.registerPlaylist {
 
 MusicManager.registerPlaylist {
     id = "Explore",
-    priority = explorePriority,
+    priority = PlaylistEnvironment.PlaylistPriority.Explore,
     randomize = true,
 
     isValidCallback = function(playback)
@@ -773,7 +770,7 @@ MusicManager.registerPlaylist {
 
 MusicManager.registerPlaylist {
     id = 'Special',
-    priority = 50,
+    priority = PlaylistEnvironment.PlaylistPriority.Special,
     playOneTrack = true,
     active = false,
 
