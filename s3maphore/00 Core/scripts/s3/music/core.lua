@@ -210,6 +210,12 @@ local Playback = {
 ---@field name string the name of the event to send
 ---@field data any the data to send with the event
 
+--- Data type used to bridge one playlist into another, or to extend
+---@class PlaylistFallback
+---@field playlistChance number? optional float between 1 and 0 indicating the chance for a fallback playlist to be selected. If not present, the cha
+---@field playlists string[]? array of fallback playlists from which to select tracks. No default values and not required.
+---@field tracks string[]? tracks to manually add to a given playlist. Used for folder-based playlists; not necessary for any others
+
 ---@type QueuedEvent?
 local queuedEvent
 
@@ -227,6 +233,7 @@ local queuedEvent
 ---@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
 ---@field interruptMode InterruptMode? whether a given playlist should be interrupted by others or interrupt others. By default, Explore playlists can be interrupted, battle playlists will interrupt other playlists, and Special playlists will never be interrupted.
 ---@field isValidCallback ValidPlaylistCallback?
+---@field fallback PlaylistFallback?
 
 ---@class S3maphoreStateChangeEventData
 ---@field playlistId string
@@ -545,43 +552,85 @@ local function playerDied()
     MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
 end
 
-local function switchPlaylist(newPlaylist)
-    local newPlaylistOrder = playlistsTracksOrder[newPlaylist.id]
-    local nextTrackIndex = table.remove(newPlaylistOrder)
+---@param newPlaylist S3maphorePlaylist
+local function getPlaylistIdForTrackSelection(newPlaylist)
+    local fallbackData = newPlaylist.fallback
+    if not fallbackData or not fallbackData.playlists then return newPlaylist.id end
+
+    local useOtherPlaylist = math.random() <= (fallbackData.playlistChance or 0.5)
+
+    if not useOtherPlaylist then return newPlaylist.id end
+
+    for i = #fallbackData.playlists, 1, -1 do
+        local playlistId = fallbackData.playlists[i]
+        if not registeredPlaylists[playlistId] then table.remove(fallbackData.playlists, i) end
+    end
+
+    local numBackupPlaylists = #fallbackData.playlists
+    local selectedPlaylistIndex = math.random(numBackupPlaylists)
+    local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
+
+    if not registeredPlaylists[selectedPlaylistId] then
+        helpers.debugLog(
+            Strings.FallbackPlaylistDoesntExist:format(newPlaylist.id, selectedPlaylistId)
+        )
+        return newPlaylist.id
+    end
+
+    return selectedPlaylistId
+end
+
+---@param playlistId string name of a playlist stored in registeredPlaylists table
+local function selectTrackFromPlaylist(playlistId)
+    local playlist = registeredPlaylists[playlistId]
+
+    assert(playlist, Strings.PlaylistNotRegistered:format(playlistId))
+
+    local playlistOrder = playlistsTracksOrder[playlist.id]
+    local nextTrackIndex = table.remove(playlistOrder)
 
     if nextTrackIndex == nil then
-        error("Can not fetch track: nextTrackIndex is nil")
+        error(Strings.NextTrackIndexNil)
     end
 
     -- If there are no tracks left, fill playlist again.
-    if next(newPlaylistOrder) == nil then
-        newPlaylistOrder = helpers.initTracksOrder(newPlaylist.tracks, newPlaylist.randomize)
+    if next(playlistOrder) == nil then
+        playlistOrder = helpers.initTracksOrder(playlist.tracks, playlist.randomize)
 
-        if not newPlaylist.cycleTracks then
-            newPlaylist.deactivateAfterEnd = true
+        if not playlist.cycleTracks then
+            playlist.deactivateAfterEnd = true
         end
 
         -- If next track for randomized playist will be the same as one we want to play, swap it with random track.
-        if newPlaylist.randomize and #newPlaylistOrder > 1 and newPlaylistOrder[1] == nextTrackIndex then
-            local index = math.random(2, #newPlaylistOrder)
-            newPlaylistOrder[1], newPlaylistOrder[index] = newPlaylistOrder[index], newPlaylistOrder[1]
+        if playlist.randomize and #playlistOrder > 1 and playlistOrder[1] == nextTrackIndex then
+            local index = math.random(2, #playlistOrder)
+            playlistOrder[1], playlistOrder[index] = playlistOrder[index], playlistOrder[1]
         end
 
-        playlistsTracksOrder[newPlaylist.id] = newPlaylistOrder
+        playlistsTracksOrder[playlist.id] = playlistOrder
     end
 
-    helpers.setStoredTracksOrder(newPlaylist.id, newPlaylistOrder)
+    helpers.setStoredTracksOrder(playlist.id, playlistOrder)
 
-    local trackPath = newPlaylist.tracks[nextTrackIndex]
-    if trackPath == nil then
-        error(string.format("Can not fetch track with index %s from playlist '%s'.", nextTrackIndex, newPlaylist.id))
-    else
-        currentTrack = trackPath
-        ambient.streamMusic(trackPath, { fadeOut = newPlaylist.fadeOut or FadeOutDuration })
+    local trackPath = playlist.tracks[nextTrackIndex]
 
-        if newPlaylist.playOneTrack then
-            newPlaylist.deactivateAfterEnd = true
-        end
+    assert(
+        trackPath,
+        Strings.NoTrackPath:format(nextTrackIndex, playlist.id)
+    )
+
+    return trackPath
+end
+
+local function switchPlaylist(newPlaylist)
+    currentTrack = selectTrackFromPlaylist(
+        getPlaylistIdForTrackSelection(newPlaylist)
+    )
+
+    ambient.streamMusic(currentTrack, { fadeOut = newPlaylist.fadeOut or FadeOutDuration })
+
+    if newPlaylist.playOneTrack then
+        newPlaylist.deactivateAfterEnd = true
     end
 
     currentPlaylist = newPlaylist
