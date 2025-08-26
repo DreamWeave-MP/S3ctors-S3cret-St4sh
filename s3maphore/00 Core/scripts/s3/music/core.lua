@@ -41,6 +41,8 @@ local PlaylistSkipFormatStr = [[Track Skip:
         Force Overworld Transition: %s
         Cell is hostile: %s]]
 
+local Strings = require 'scripts.s3.music.staticStrings'
+
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
 --- In other words, this is the bit that responds to changes from the settings menu
 activePlaylistSettings:subscribe(
@@ -482,7 +484,9 @@ local function playlistCoroutineLoader()
 
         ::fail::
         if not ok then
-            print(string.format("Failed to load playlist file: %s\nErr: %s", file, result))
+            print(
+                Strings.FailedToLoadPlaylist:format(file, result)
+            )
         else
             fileHandle:close()
         end
@@ -598,8 +602,7 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
     end
 
     helpers.debugLog(
-        ('Playlist Interrupt Modes Fell Through!\nOld Playlist: %s Interrupt Mode: %s\nNew Playlist: %s InterruptMode: %s')
-        :format(
+        Strings.InterruptModeFallthrough:format(
             oldPlaylist.id,
             oldPlaylist.interruptMode,
             newPlaylist.id,
@@ -831,7 +834,7 @@ return {
 
         S3maphoreSetPlaylistActive = function(eventData)
             helpers.debugLog(
-                ('Setting playlist %s to %s'):format(eventData.playlist, eventData.state)
+                Strings.ChangingPlaylist:format(eventData.playlist, eventData.state)
             )
 
             MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
@@ -839,14 +842,18 @@ return {
 
         ---@param eventData S3maphoreStateChangeEventData
         S3maphoreMusicStopped = function(eventData)
-            helpers.debugLog("Music stopped:", eventData.reason)
+            helpers.debugLog(
+                Strings.MusicStopped:format(eventData.reason)
+            )
 
             MusicManager.updateBanner()
         end,
 
         ---@param eventData S3maphoreStateChangeEventData
         S3maphoreTrackChanged = function(eventData)
-            helpers.debugLog("Track changed! Current playlist is:", eventData.playlistId, "Track:", eventData.trackName)
+            helpers.debugLog(
+                Strings.TrackChanged:format(eventData.playlistId, eventData.trackName)
+            )
 
             MusicManager.updateBanner()
         end,
@@ -869,7 +876,9 @@ return {
         end,
 
         S3maphoreWeatherChanged = function(weatherName)
-            helpers.debugLog(('weather changed to %s'):format(weatherName))
+            helpers.debugLog(
+                Strings.WeatherChanged:format(weatherName)
+            )
 
             PlaylistState.weather = weatherName
         end,
