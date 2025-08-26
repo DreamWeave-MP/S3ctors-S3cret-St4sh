@@ -53,7 +53,9 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
     end
 
     if playlist.tracks == nil then
-        playlist.tracks = getTracksFromDirectory(string.format("music/%s/", playlist.id))
+        playlist.tracks = getTracksFromDirectory(
+            ("music/%s/"):format(playlist.id)
+        )
     end
 
     if playlist.active == nil then
