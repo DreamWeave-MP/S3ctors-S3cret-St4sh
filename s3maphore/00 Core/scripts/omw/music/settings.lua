@@ -224,3 +224,134 @@ activePlaylistSettings:subscribe(
         end
     )
 )
+
+local HUGE = math.huge
+
+I.Settings.registerGroup {
+    key = 'SettingsS3MusicSilenceConfig',
+    page = 'S3Music',
+    l10n = 'S3Music',
+    name = 'SilcnceConfiguration',
+    permanentStorage = true,
+    order = 3,
+    settings = {
+        {
+            key = 'GlobalSilenceToggle',
+            renderer = 'checkbox',
+            argument = {},
+            name = 'GlobalSilenceToggle',
+            description = 'GlobalSilenceDesc',
+            default = true,
+        },
+        {
+            key = 'GlobalSilenceChanceMin',
+            renderer = 'number',
+            argument = { min = 0.0, max = 1.0, integer = false },
+            name = 'GlobalSilcenceChanceMinName',
+            description = 'GlobalSilcenceChanceMinDesc',
+            default = 0.15,
+        },
+        {
+            key = 'GlobalSilenceChanceMax',
+            renderer = 'number',
+            argument = { min = 0.0, max = 1.0, integer = false },
+            name = 'GlobalSilcenceChanceMaxName',
+            description = 'GlobalSilcenceChanceMaxDesc',
+            default = 0.25,
+        },
+        {
+            key = 'ExploreSilenceMin',
+            renderer = 'number',
+            argument = { min = 0, max = 119, integer = true, },
+            name = 'ExploreSilenceMinDuration',
+            description = 'ExploreSilenceMinDesc',
+            default = 0,
+        },
+        {
+            key = 'ExploreSilenceMax',
+            renderer = 'number',
+            argument = { min = 0, max = HUGE, integer = true, },
+            name = 'ExploreSilenceMaxDuration',
+            description = 'ExploreSilenceMaxDesc',
+            default = 120,
+        },
+        {
+            key = 'BattleSilenceMin',
+            renderer = 'number',
+            argument = { min = 0, max = HUGE, integer = true, },
+            name = 'BattleSilenceMinDuration',
+            description = 'BattleSilenceMinDesc',
+            default = 0,
+        },
+        {
+            key = 'BattleSilenceMax',
+            renderer = 'number',
+            argument = { min = 0, max = HUGE, integer = true, },
+            name = 'BattleSilenceMaxDuration',
+            description = 'BattleSilenceMaxDesc',
+            default = 120,
+        },
+    }
+}
+
+local SilenceGroup = storage.playerSection('SettingsS3MusicSilenceConfig')
+SilenceGroup:subscribe(
+    async:callback(
+        function(groupName, _)
+            local silenceMinChance, silenceMaxChance = SilenceGroup:get('GlobalSilenceChanceMin'),
+                SilenceGroup:get('GlobalSilenceChanceMax')
+
+            local exploreSilenceMin, exploreSilenceMax = SilenceGroup:get('ExploreSilenceMin'),
+                SilenceGroup:get('ExploreSilenceMax')
+
+            local battleSilenceMin, battleSilenceMax = SilenceGroup:get('BattleSilenceMin'),
+                SilenceGroup:get('BattleSilenceMax')
+
+            local disabled = not SilenceGroup:get('GlobalSilenceToggle')
+
+            print(groupName, exploreSilenceMin, exploreSilenceMax)
+
+            I.Settings.updateRendererArgument(groupName, 'GlobalSilenceChanceMin',
+                {
+                    max = silenceMaxChance - 0.01,
+                    disabled = disabled,
+                }
+            )
+
+            I.Settings.updateRendererArgument(groupName, 'GlobalSilenceChanceMax',
+                {
+                    min = silenceMinChance + 0.01,
+                    disabled = disabled,
+                }
+            )
+
+            I.Settings.updateRendererArgument(groupName, 'ExploreSilenceMin',
+                {
+                    max = exploreSilenceMax - 1,
+                    disabled = disabled,
+                }
+            )
+
+            I.Settings.updateRendererArgument(groupName, 'ExploreSilenceMax',
+                {
+                    min = exploreSilenceMin + 1,
+                    disabled = disabled,
+                }
+            )
+
+            I.Settings.updateRendererArgument(groupName, 'BattleSilenceMin',
+                {
+                    max = battleSilenceMax - 1,
+                    disabled = disabled,
+                }
+            )
+
+            I.Settings.updateRendererArgument(groupName, 'BattleSilenceMax',
+                {
+                    min = battleSilenceMin + 1,
+                    disabled = disabled,
+                }
+            )
+        end
+    )
+)
