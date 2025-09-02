@@ -106,7 +106,7 @@ function PlaylistRules.combatTargetExact(validTargets)
 
     currentCombatTargetsCache[validTargets] = result
 
-    return false
+    return result
 end
 
 ---@param factionRules NumericPresenceMap
