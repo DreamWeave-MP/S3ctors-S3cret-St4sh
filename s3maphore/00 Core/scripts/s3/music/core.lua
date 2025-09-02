@@ -87,6 +87,8 @@ local function initPlaylistL10n(playlistId)
 
     local l10nContextName = ('S3maphoreTracks_%s'):format(playlistId:gsub('/', '_'))
 
+    if not vfs.pathsWithPrefix('l10n/' .. l10nContextName)() then return end
+
     local ok, maybeTranslations = pcall(function() return core.l10n(l10nContextName) end)
 
     if ok then
