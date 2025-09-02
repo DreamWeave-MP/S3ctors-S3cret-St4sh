@@ -244,20 +244,12 @@ I.Settings.registerGroup {
             default = true,
         },
         {
-            key = 'GlobalSilenceChanceMin',
+            key = 'GlobalSilenceChance',
             renderer = 'number',
             argument = { min = 0.0, max = 1.0, integer = false },
-            name = 'GlobalSilcenceChanceMinName',
-            description = 'GlobalSilcenceChanceMinDesc',
+            name = 'GlobalSilcenceChanceName',
+            description = 'GlobalSilcenceChanceDesc',
             default = 0.15,
-        },
-        {
-            key = 'GlobalSilenceChanceMax',
-            renderer = 'number',
-            argument = { min = 0.0, max = 1.0, integer = false },
-            name = 'GlobalSilcenceChanceMaxName',
-            description = 'GlobalSilcenceChanceMaxDesc',
-            default = 0.25,
         },
         {
             key = 'ExploreSilenceMin',
@@ -298,9 +290,6 @@ local SilenceGroup = storage.playerSection('SettingsS3MusicSilenceConfig')
 SilenceGroup:subscribe(
     async:callback(
         function(groupName, _)
-            local silenceMinChance, silenceMaxChance = SilenceGroup:get('GlobalSilenceChanceMin'),
-                SilenceGroup:get('GlobalSilenceChanceMax')
-
             local exploreSilenceMin, exploreSilenceMax = SilenceGroup:get('ExploreSilenceMin'),
                 SilenceGroup:get('ExploreSilenceMax')
 
@@ -309,18 +298,8 @@ SilenceGroup:subscribe(
 
             local disabled = not SilenceGroup:get('GlobalSilenceToggle')
 
-            print(groupName, exploreSilenceMin, exploreSilenceMax)
-
-            I.Settings.updateRendererArgument(groupName, 'GlobalSilenceChanceMin',
+            I.Settings.updateRendererArgument(groupName, 'GlobalSilenceChance',
                 {
-                    max = silenceMaxChance - 0.01,
-                    disabled = disabled,
-                }
-            )
-
-            I.Settings.updateRendererArgument(groupName, 'GlobalSilenceChanceMax',
-                {
-                    min = silenceMinChance + 0.01,
                     disabled = disabled,
                 }
             )
