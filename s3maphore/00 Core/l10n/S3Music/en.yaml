@@ -43,3 +43,21 @@ ForcePlaylistChangeOnFriendlyExteriorTransitionDescription: "If enabled, overrid
 
 FadeOutDuration: "Default Fade Duration"
 FadeOutDurationDescription: "Fadeout time between tracks used if the current playlist doesn't define its own fadeout timer."
+
+GlobalSilenceToggle: Enable Silence Tracks
+GlobalSilenceToggleDesc: Whether or not there may be a period of silence between each song played.
+
+GlobalSilenceChance: Global Silence Chance
+GlobalSilenceChanceDesc: The chance that a playlist which does not define its own silence rules may not immediately play another song.
+
+ExploreSilenceMin: Minimum Explore Silence Duration
+ExploreSilenceMinDesc: The minimum possible duration for silence when an explore playlist is running.
+
+ExploreSilenceMax: Maximum Explore Silence Duration
+ExploreSilenceMaxDesc: The maxiumum possible duration for silence when an explore playlist is running.
+
+BattleSilenceMin: Minimum Battle Silence Duration
+BattleSilenceMinDesc: The minimum possible duration for silence when a battle playlist is running.
+
+BattleSilenceMax: Maximum Battle Silence Duration
+BattleSilenceMaxDesc: The maxiumum possible duration for silence when a battle playlist is running.
