@@ -811,8 +811,12 @@ local function onFrame(dt)
     queuedEvent = { name = 'S3maphoreTrackChanged', data = { playlistId = newPlaylist and newPlaylist.id, trackName = currentTrack } }
 end
 
-if activePlaylistSettings:get('BattleActive') == nil then activePlaylistSettings:set("BattleActive", true) end
-if activePlaylistSettings:get('ExploreActive') == nil then activePlaylistSettings:set("ExploreActive", true) end
+for _, playlistName in ipairs {
+    'BattleActive',
+    'ExploreActive',
+} do
+    if activePlaylistSettings:get(playlistName) == nil then activePlaylistSettings:set(playlistName, true) end
+end
 
 MusicManager.registerPlaylist {
     id = "Battle",
