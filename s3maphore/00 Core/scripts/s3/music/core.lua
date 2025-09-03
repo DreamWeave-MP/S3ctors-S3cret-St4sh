@@ -126,6 +126,8 @@ local MusicManager = {
     },
 }
 
+local silenceManager = require 'scripts.s3.music.silenceManager' (MusicManager.INTERRUPT, Strings)
+
 musicSettings:subscribe(
     async:callback(
         function(_, key)
@@ -223,6 +225,11 @@ local queuedEvent
 
 ---@alias ValidPlaylistCallback fun(playback: Playback): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
 
+---@class PlaylistSilenceParams
+---@field min integer minimum possible duration for this silence track
+---@field max integer maximum possible duration for this silence track
+---@field chance number probablility that this playlist will use silence between tracks
+
 ---@class S3maphorePlaylist
 ---@field id string name of the playlist
 ---@field priority number priority of the playlist, lower value means higher priority
@@ -236,6 +243,8 @@ local queuedEvent
 ---@field interruptMode InterruptMode? whether a given playlist should be interrupted by others or interrupt others. By default, Explore playlists can be interrupted, battle playlists will interrupt other playlists, and Special playlists will never be interrupted.
 ---@field isValidCallback ValidPlaylistCallback?
 ---@field fallback PlaylistFallback?
+---@field fadeOut number? Optional duration supplied by a playlist which indicates how long the fadeout between tracks should be. If not present then the global fadeOut setting is used.
+---@field silenceBetweenTracks PlaylistSilenceParams?
 
 ---@class S3maphoreStateChangeEventData
 ---@field playlistId string
@@ -376,6 +385,11 @@ end
 ---@return boolean canPlayMusic
 function MusicManager.getEnabled()
     return musicSettings:get("MusicEnabled")
+end
+
+---@return number duration of current silence track
+function MusicManager.silenceTime()
+    return silenceManager.time
 end
 
 ---@param enabled boolean
@@ -649,6 +663,8 @@ local function switchPlaylist(newPlaylist)
         newPlaylist.deactivateAfterEnd = true
     end
 
+    silenceManager.updateSilenceParams(newPlaylist)
+
     currentPlaylist = newPlaylist
 end
 
@@ -733,6 +749,11 @@ local function onFrame(dt)
             currentTrack = nil
         end
 
+        return
+    end
+
+    if not musicPlaying and silenceManager.time > 0 then
+        silenceManager.time = silenceManager.time - core.getRealFrameDuration()
         return
     end
 
