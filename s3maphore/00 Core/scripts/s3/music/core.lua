@@ -585,9 +585,11 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
     local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
 
     if not registeredPlaylists[selectedPlaylistId] then
-        helpers.debugLog(
-            Strings.FallbackPlaylistDoesntExist:format(newPlaylist.id, selectedPlaylistId)
-        )
+        if selectedPlaylistId then
+            helpers.debugLog(
+                Strings.FallbackPlaylistDoesntExist:format(newPlaylist.id, selectedPlaylistId)
+            )
+        end
         return newPlaylist.id
     end
 
