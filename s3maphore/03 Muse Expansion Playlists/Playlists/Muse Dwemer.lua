@@ -12,6 +12,9 @@ local DwemerEnemyNames = {
     ['imperfect'] = true,
     ['advanced steam centurion'] = true,
     ['centurion archer'] = true,
+    ['repair spider'] = true,
+    ['centurion spiderling'] = true,
+    ['luminarium spider'] = true,
 }
 
 ---@type ValidPlaylistCallback
