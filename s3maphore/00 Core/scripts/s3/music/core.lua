@@ -813,12 +813,26 @@ local function onFrame(dt)
     queuedEvent = { name = 'S3maphoreTrackChanged', data = { playlistId = newPlaylist and newPlaylist.id, trackName = currentTrack } }
 end
 
-for _, playlistName in ipairs {
+local defaultPlaylistStates, defaultPlaylistNames = {}, {
     'BattleActive',
-    'ExploreActive',
-} do
+    'ExploreActive'
+}
+
+-- Upon first installation, enable the default playlists, since these settings are handled slightly differently
+-- Although I forget why and where they're treated differently.
+for _, playlistName in ipairs(defaultPlaylistNames) do
     if activePlaylistSettings:get(playlistName) == nil then activePlaylistSettings:set(playlistName, true) end
 end
+
+local function updateDefaultPlaylistStates()
+    for _, playlistName in ipairs(defaultPlaylistNames) do
+        defaultPlaylistStates[playlistName] = activePlaylistSettings:get(playlistName)
+    end
+end
+
+updateDefaultPlaylistStates()
+
+activePlaylistSettings:subscribe(async:callback(updateDefaultPlaylistStates))
 
 MusicManager.registerPlaylist {
     id = "Battle",
@@ -826,7 +840,7 @@ MusicManager.registerPlaylist {
     randomize = true,
 
     isValidCallback = function(playback)
-        return playback.state.isInCombat and activePlaylistSettings:get("BattleActive")
+        return playback.state.isInCombat and defaultPlaylistStates.BattleActive
     end,
 }
 
@@ -836,7 +850,7 @@ MusicManager.registerPlaylist {
     randomize = true,
 
     isValidCallback = function(playback)
-        return not playback.state.isInCombat and activePlaylistSettings:get("ExploreActive")
+        return not playback.state.isInCombat and defaultPlaylistStates.BattleActive
     end,
 }
 
