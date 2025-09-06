@@ -41,7 +41,7 @@ function PlaylistRules.cellNameMatch(patterns)
     local result, found = false, false
 
     for _, pattern in ipairs(patterns.disallowed or {}) do
-        if cellName:find(pattern, 1, true) then
+        if cellName:match(pattern) then
             found = true
             break
         end
@@ -49,7 +49,7 @@ function PlaylistRules.cellNameMatch(patterns)
 
     if not found then
         for _, pattern in ipairs(patterns.allowed or {}) do
-            if cellName:find(pattern, 1, true) then
+            if cellName:match(pattern) then
                 result = true
                 break
             end
