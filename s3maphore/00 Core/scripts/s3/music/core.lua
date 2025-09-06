@@ -652,6 +652,7 @@ local function selectTrackFromPlaylist(playlistId)
     return trackPath
 end
 
+---@param newPlaylist S3maphorePlaylist
 local function switchPlaylist(newPlaylist)
     currentTrack = selectTrackFromPlaylist(
         getPlaylistIdForTrackSelection(newPlaylist)
