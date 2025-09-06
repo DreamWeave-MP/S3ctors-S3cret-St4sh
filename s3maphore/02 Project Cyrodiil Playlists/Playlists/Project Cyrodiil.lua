@@ -88,16 +88,6 @@ return {
         end,
     },
     {
-        -- 'Project Cyrodiil - Abecean Shores/Divine Temples',
-        id = 'ms/cell/nine divine temples',
-        priority = PlaylistPriority.CellMatch,
-        randomize = true,
-
-        isValidCallback = function()
-            return not Playback.state.cellIsExterior and Playback.rules.cellNameMatch(TemplePatterns)
-        end,
-    },
-    {
         -- 'Project Cyrodiil - Abecean Shores/Colovian Barrows',
         id = 'ms/interior/cyrodiil tombs colovian',
         priority = PlaylistPriority.Tileset,
@@ -172,5 +162,15 @@ return {
         isValidCallback = function()
             return Playback.rules.region(StirkRegions)
         end,
-    }
+    },
+    {
+        -- 'Project Cyrodiil - Abecean Shores/Divine Temples',
+        id = 'ms/cell/nine divine temples',
+        priority = PlaylistPriority.CellMatch,
+        randomize = true,
+
+        isValidCallback = function()
+            return not Playback.state.cellIsExterior and Playback.rules.cellNameMatch(TemplePatterns)
+        end,
+    },
 }
