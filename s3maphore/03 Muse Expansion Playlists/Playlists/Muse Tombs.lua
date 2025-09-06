@@ -1,3 +1,6 @@
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
+
 ---@type IDPresenceMap
 local TombEnemyNames = {
     ['ancestor ghost'] = true,
@@ -47,13 +50,13 @@ local TombEnemyNames = {
     ['plaguebearer bonelord'] = true,
     ['bonelord warder'] = true,
     ['procession bonewalker'] = true,
-    ['indoril nereval'] = true,
+    ['indoril nerevar'] = true,
     ['revered bonewalker'] = true,
 }
 
 ---@type ValidPlaylistCallback
-local function tombEnemyRule(playback)
-    return playback.rules.combatTargetExact(TombEnemyNames)
+local function tombEnemyRule()
+    return Playback.rules.combatTargetExact(TombEnemyNames)
 end
 
 ---@type CellMatchPatterns
@@ -77,12 +80,10 @@ local TombCellExclusions = {
 }
 
 ---@type ValidPlaylistCallback
-local function tombCellRule(playback)
-    return not playback.rules.cellNameExact(TombCellExclusions)
-        and playback.rules.cellNameMatch(TombCellMatches)
+local function tombCellRule()
+    return not Playback.rules.cellNameExact(TombCellExclusions)
+        and Playback.rules.cellNameMatch(TombCellMatches)
 end
-
-local PlaylistPriority = require 'doc.playlistPriority'
 
 ---@type S3maphorePlaylist[]
 return {
