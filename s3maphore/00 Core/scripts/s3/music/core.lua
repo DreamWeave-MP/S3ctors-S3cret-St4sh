@@ -387,6 +387,10 @@ function MusicManager.getEnabled()
     return musicSettings:get("MusicEnabled")
 end
 
+function MusicManager.getState()
+    return util.makeReadOnly(PlaylistState)
+end
+
 ---@return number duration of current silence track
 function MusicManager.silenceTime()
     return silenceManager.time
@@ -993,5 +997,10 @@ return {
 
             PlaylistState.weather = weatherName
         end,
+
+        S3maphoreClearTargetCache = function(targetId)
+            helpers.debugLog('clearing target cache for key', CombatTargetCacheKey)
+            PlaylistRules.clearGlobalCombatTargetCache()
+        end
     }
 }

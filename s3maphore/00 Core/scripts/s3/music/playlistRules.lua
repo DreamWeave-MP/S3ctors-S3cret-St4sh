@@ -35,11 +35,15 @@ function PlaylistRules.clearPerTargetCaches(removedTargetId)
     combatTargetLevelCache[removedTargetId] = nil
 end
 
+function PlaylistRules.clearGlobalCombatTargetCache()
+    S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = nil
+end
+
 --- When a target dies or is otherwised removed from the combat targets table, remove
 --- references to the old cache and any userdata objects cached for memory saving purposes
 ---@param removedTargetId string
 function PlaylistRules.clearCombatCaches(removedTargetId)
-    S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = nil
+    PlaylistRules.clearGlobalCombatTargetCache()
     PlaylistRules.clearPerTargetCaches(removedTargetId)
 end
 
