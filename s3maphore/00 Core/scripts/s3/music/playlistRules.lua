@@ -2,6 +2,9 @@ local core = require 'openmw.core'
 
 local HUGE = math.huge
 
+local Quests, MyLevel
+
+
 --- Alias for defining S3maphore rules for object record ids allowing or disallowing playlist selection
 ---@alias IDPresenceMap table<string, boolean>
 
@@ -348,7 +351,6 @@ end
 
 ---@alias NumericPresenceMap table<string, NumericPresenceMapData>
 
-local Quests
 local S3maphoreJournalCache = {}
 
 ---@private
@@ -392,12 +394,16 @@ function PlaylistRules.journal(journalDataMap)
 end
 
 ---@param playlistState PlaylistState A long-living reference to the playlist state table. To aggressively minimize new allocations, this table is created once when the core initializes and is continually updated througout the lifetime of the script.
-return function(playlistState)
+---@param staticStrings S3maphoreStaticStrings
+return function(playlistState, staticStrings)
     assert(playlistState)
+    assert(staticStrings)
 
     PlaylistRules.state = playlistState
 
     Quests = playlistState.self.type.quests(playlistState.self)
+    MyLevel = playlistState.self.type.stats.level(playlistState.self)
+    StaticStrings = staticStrings
     assert(Quests)
 
     return PlaylistRules

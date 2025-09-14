@@ -199,7 +199,7 @@ local function updatePlaylistState()
 end
 
 ---@type PlaylistRules
-local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState)
+local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState, Strings)
 MusicManager.Rules = util.makeReadOnly(PlaylistRules)
 
 ---@class Playback
