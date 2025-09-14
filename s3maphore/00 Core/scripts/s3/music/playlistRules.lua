@@ -150,6 +150,57 @@ function PlaylistRules.combatTargetFaction(factionRules)
     return result
 end
 
+--- Describes either the relative or absolute level difference between the player and a given target.
+--- Both fields are technically optional, but one of the two must exist.
+--- Negative level differences indicate the player is a higher level than the target,
+--- whereas a positive one indicates the target is a higher level than the player
+---@class LevelDifferenceMap
+---@field absolute NumericPresenceMapData?
+---@field relative NumericPresenceMapData?
+
+---@type table<string, userdata>
+local combatTargetLevelCache = {}
+
+---@param levelRule LevelDifferenceMap
+function PlaylistRules.combatTargetLevelDifference(levelRule)
+    if not PlaylistRules.state.isInCombat then return false end
+
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[levelRule] ~= nil then
+        return currentCombatTargetsCache[levelRule]
+    end
+
+    local result, levelDifference, levelScale = false, nil, nil
+    for _, actor in pairs(PlaylistRules.state.combatTargets) do
+        local targetLevel = combatTargetLevelCache[actor.id] or actor.type.stats.level(actor)
+        if not combatTargetLevelCache[actor.id] then combatTargetLevelCache[actor.id] = level end
+
+        if levelRule.absolute then
+            levelDifference = targetLevel.current - MyLevel.current
+            levelScale = levelRule.absolute
+        elseif levelRule.relative then
+            levelDifference = targetLevel.current / MyLevel.current
+            levelScale = levelRule.relative
+        else
+            error(
+                StaticStrings.InvalidLevelDifferenceRule:format(levelRule)
+            )
+        end
+
+        if levelDifference <= levelScale.max and levelDifference >= levelScale.min then
+            result = true
+            break
+        end
+    end
+
+    currentCombatTargetsCache[levelRule] = result
+
+    return result
+end
+
 --- Finds any nearby combat target whose name matches any one string of a set
 ---
 --- Example usage:
