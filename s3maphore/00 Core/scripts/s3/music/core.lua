@@ -549,7 +549,12 @@ local function loadNextPlaylistStep()
     end
 end
 
+---@class CombatTargetChangedData
+---@field actor GameObject? Don't think this should ever be nil, but the `actor` field represents whomever has entered or exited combat
+---@field targets GameObject[] List of targets whom this actor is in combat with. If the array is empty, the target has left combat for one or another reason.
+
 local CombatTargetCacheKey
+---@param eventData CombatTargetChangedData
 local function onCombatTargetsChanged(eventData)
     if eventData.actor == nil then return end
 
@@ -557,6 +562,7 @@ local function onCombatTargetsChanged(eventData)
         fightingActors[eventData.actor.id] = eventData.actor
     else
         fightingActors[eventData.actor.id] = nil
+        PlaylistRules.clearCombatCaches(eventData.actor.id)
     end
 
     core.sendGlobalEvent('S3maphoreUpdateCellHasCombatTargets', self)
