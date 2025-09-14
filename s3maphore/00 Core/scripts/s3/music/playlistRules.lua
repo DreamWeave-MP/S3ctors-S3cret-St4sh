@@ -28,12 +28,19 @@ local S3maphoreGlobalCache = {}
 ---@type table<string, userdata>
 local combatTargetLevelCache = {}
 
+--- Clear target-specific caches, used either when they exit combat or are hit
+---@param removedTargetId string
+function PlaylistRules.clearPerTargetCaches(removedTargetId)
+    S3maphoreGlobalCache[removedTargetId] = nil
+    combatTargetLevelCache[removedTargetId] = nil
+end
+
 --- When a target dies or is otherwised removed from the combat targets table, remove
 --- references to the old cache and any userdata objects cached for memory saving purposes
 ---@param removedTargetId string
 function PlaylistRules.clearCombatCaches(removedTargetId)
     S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = nil
-    combatTargetLevelCache[removedTargetId] = nil
+    PlaylistRules.clearPerTargetCaches(removedTargetId)
 end
 
 --- Player cell name/id mapped to the memory address of the table being looked up. Only used in the most expensive rulesets
