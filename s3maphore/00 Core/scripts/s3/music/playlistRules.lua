@@ -2,7 +2,7 @@ local core = require 'openmw.core'
 
 local HUGE = math.huge
 
-local Quests, MyLevel
+local MyLevel, Quests
 
 
 --- Alias for defining S3maphore rules for object record ids allowing or disallowing playlist selection
