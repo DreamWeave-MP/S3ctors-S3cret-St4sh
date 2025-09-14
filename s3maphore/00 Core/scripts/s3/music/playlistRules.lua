@@ -228,7 +228,7 @@ end
 
 ---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
 function PlaylistRules.dynamicStatThreshold(statThreshold)
-    if not PlaylistRules.state.isInCombat then return false end
+    if not PlaylistRules.state.isInCombat or core.API_REVISION < 95 then return false end
 
     if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
 
