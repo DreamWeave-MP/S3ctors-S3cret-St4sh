@@ -24,6 +24,18 @@ local PlaylistRules = {
 
 local S3maphoreGlobalCache = {}
 
+--- Table of IDs mapped to target levels
+---@type table<string, userdata>
+local combatTargetLevelCache = {}
+
+--- When a target dies or is otherwised removed from the combat targets table, remove
+--- references to the old cache and any userdata objects cached for memory saving purposes
+---@param removedTargetId string
+function PlaylistRules.clearCombatCaches(removedTargetId)
+    S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = nil
+    combatTargetLevelCache[removedTargetId] = nil
+end
+
 --- Player cell name/id mapped to the memory address of the table being looked up. Only used in the most expensive rulesets
 ---@alias S3maphoreCacheKey string
 
@@ -157,9 +169,6 @@ end
 ---@class LevelDifferenceMap
 ---@field absolute NumericPresenceMapData?
 ---@field relative NumericPresenceMapData?
-
----@type table<string, userdata>
-local combatTargetLevelCache = {}
 
 ---@param levelRule LevelDifferenceMap
 function PlaylistRules.combatTargetLevelDifference(levelRule)
