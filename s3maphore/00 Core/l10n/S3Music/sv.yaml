@@ -44,4 +44,22 @@ ForcePlaylistChangeOnFriendlyExteriorTransitionDescription: "Om aktiverad åsido
 FadeOutDuration: "Förinställd fadeout-tid"
 FadeOutDurationDescription: "Fadeout-tiden mellan spår som används om aktuell spellista inte definierar sin egen fadeout-tid."
 
+GlobalSilenceToggle: Aktivera tysta spår
+GlobalSilenceToggleDesc: Om det ska förekomma en paus mellan varje låt som spelas eller inte.
+
+GlobalSilenceChance: Chans för global tystnad
+GlobalSilenceChanceDesc: Chansen för att en spellista som inte definierar sina egna tystnadsregler inte omedelbart spelar upp en annan låt.
+
+ExploreSilenceMin: Kortaste tystnad under utforska
+ExploreSilenceMinDesc: Minsta möjliga varaktighet med tystnad när en utforska-spellista körs.
+
+ExploreSilenceMax: Längsta tystnad under utforska
+ExploreSilenceMaxDesc: Längsta möjliga varaktighet med tystnad när en utforska-spellista körs.
+
+BattleSilenceMin: Kortaste tystnad under strid
+BattleSilenceMinDesc: Minsta möjliga varaktighet med tystnad när en strid-spellista körs.
+
+BattleSilenceMax: Längsta tystnad under strid
+BattleSilenceMaxDesc: Längsta möjliga varaktighet med tystnad när en strid-spellista körs.
+
 # Note - I have not tested the mod yet, so some translations might be bad due to me misunderstanding the context. I hope to do another MR later once I've had the time to actually run the mod.
