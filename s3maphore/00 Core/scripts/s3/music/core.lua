@@ -909,7 +909,11 @@ return {
 
         onKeyPress = function(key)
             if key.code == input.KEY.F8 then
-                forceSkip = true
+                if key.withShift then
+                    self:sendEvent('S3maphoreToggleMusic')
+                else
+                    self:sendEvent('S3maphoreSkipTrack')
+                end
             elseif key.code == input.KEY.F4 then
             end
         end,
