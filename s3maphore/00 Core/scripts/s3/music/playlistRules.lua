@@ -210,6 +210,56 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
     return result
 end
 
+---@class StatThresholdMap
+---@field health NumericPresenceMapData?
+---@field magicka NumericPresenceMapData?
+---@field fatigue NumericPresenceMapData?
+
+---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
+function PlaylistRules.dynamicStatThreshold(statThreshold)
+    if not PlaylistRules.state.isInCombat then return false end
+
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[statThreshold] ~= nil then
+        return currentCombatTargetsCache[statThreshold]
+    end
+
+    --- Iterate every actor
+    --- Confirm all of them fall within the threshold
+    --- if any one of them does not pass, then, bail on the whole thing
+    local result = false
+    for _, actor in pairs(PlaylistRules.state.combatTargets) do
+        local actorStatCache = S3maphoreGlobalCache[actor.id] or {}
+        if not S3maphoreGlobalCache[actor.id] then S3maphoreGlobalCache[actor.id] = actorStatCache end
+
+        for _, statName in ipairs { 'fatigue', 'health', 'magicka', } do
+            local statRange = statThreshold[statName]
+            if statRange then
+                local stat = actorStatCache[statName] or actor.type.stats.dynamic[statName](actor)
+                if not actorStatCache[statName] then actorStatCache[statName] = stat end
+
+                local normalizedStat = stat.current / stat.base
+
+                if normalizedStat < (statRange.min or 0.0) or normalizedStat > (statRange.max or HUGE) then
+                    PlaylistRules.state.isInCombat = false
+                    goto FAILED
+                end
+            end
+        end
+    end
+
+    result = true
+
+    ::FAILED::
+
+    currentCombatTargetsCache[statThreshold] = result
+
+    return result
+end
+
 --- Finds any nearby combat target whose name matches any one string of a set
 ---
 --- Example usage:
