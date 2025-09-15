@@ -1,16 +1,11 @@
+require 'doc.s3maphoreTypes'
+
 local core = require 'openmw.core'
+local types = require 'openmw.types'
 
 local HUGE = math.huge
 
 local MyLevel, Quests
-
-
---- Alias for defining S3maphore rules for object record ids allowing or disallowing playlist selection
----@alias IDPresenceMap table<string, boolean>
-
----@class CellMatchPatterns
----@field disallowed string[]
----@field allowed string[]
 
 ---@class PlaylistRules helper functions for running playlist behaviors
 ---@field state PlaylistState
@@ -19,9 +14,11 @@ local PlaylistRules = {
     combatTargetCacheKey = nil,
 }
 
---- Lookup table for storing the results of location-based matches
----@alias S3maphoreMatchCache table<string, boolean>
-
+--- Stores playlist rule lookups according to whatever is most relevant for that particular type,
+--- allowing rules to only execute once per a given context.
+--- This cache has the same lifetime as the game session itself, so long sessions with no reloads
+--- could potentially see a relatively large cache build up over time.
+---@type table<string, any>
 local S3maphoreGlobalCache = {}
 
 --- Table of IDs mapped to target levels
@@ -46,9 +43,6 @@ function PlaylistRules.clearCombatCaches(removedTargetId)
     PlaylistRules.clearGlobalCombatTargetCache()
     PlaylistRules.clearPerTargetCaches(removedTargetId)
 end
-
---- Player cell name/id mapped to the memory address of the table being looked up. Only used in the most expensive rulesets
----@alias S3maphoreCacheKey string
 
 --- Returns whether the current cell name matches a pattern rule. Checks disallowed patterns first
 ---
@@ -217,14 +211,6 @@ function PlaylistRules.combatTargetFaction(factionRules)
     return result
 end
 
---- Describes either the relative or absolute level difference between the player and a given target.
---- Both fields are technically optional, but one of the two must exist.
---- Negative level differences indicate the player is a higher level than the target,
---- whereas a positive one indicates the target is a higher level than the player
----@class LevelDifferenceMap
----@field absolute NumericPresenceMapData?
----@field relative NumericPresenceMapData?
-
 ---@param levelRule LevelDifferenceMap
 function PlaylistRules.combatTargetLevelDifference(levelRule)
     if not PlaylistRules.state.isInCombat then return false end
@@ -264,11 +250,6 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
 
     return result
 end
-
----@class StatThresholdMap
----@field health NumericPresenceMapData?
----@field magicka NumericPresenceMapData?
----@field fatigue NumericPresenceMapData?
 
 ---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
 function PlaylistRules.dynamicStatThreshold(statThreshold)
@@ -509,12 +490,6 @@ function PlaylistRules.region(regionNames)
         and currentRegion ~= ''
         and regionNames[currentRegion] or false
 end
-
----@class NumericPresenceMapData
----@field min integer
----@field max integer? If omitted, then math.huge is used
-
----@alias NumericPresenceMap table<string, NumericPresenceMapData>
 
 local S3maphoreJournalCache = {}
 
