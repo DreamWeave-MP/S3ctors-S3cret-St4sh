@@ -1,3 +1,5 @@
+require 'doc.s3maphoreTypes'
+
 local ambient = require('openmw.ambient')
 local aux_util = require 'openmw_aux.util'
 local async = require 'openmw.async'
@@ -157,10 +159,6 @@ musicSettings:subscribe(
     )
 )
 
----@class StaticList
----@field recordIds string[] array of all unique static record ids in the current cell
----@field contentFiles string[] array of all unique content files which placed statics in this cell
-
 ---@class PlaylistState
 ---@field self userdata the player actor
 ---@field playlistTimeOfDay TimeMap the time of day for the current playlist
@@ -203,46 +201,8 @@ local Playback = {
     state = PlaylistState,
 }
 
----@class QueuedEvent
----@field name string the name of the event to send
----@field data any the data to send with the event
-
---- Data type used to bridge one playlist into another, or to extend
----@class PlaylistFallback
----@field playlistChance number? optional float between 1 and 0 indicating the chance for a fallback playlist to be selected. If not present, the cha
----@field playlists string[]? array of fallback playlists from which to select tracks. No default values and not required.
----@field tracks string[]? tracks to manually add to a given playlist. Used for folder-based playlists; not necessary for any others
-
 ---@type QueuedEvent?
 local queuedEvent
-
----@alias ValidPlaylistCallback fun(playback: Playback): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
-
----@class PlaylistSilenceParams
----@field min integer minimum possible duration for this silence track
----@field max integer maximum possible duration for this silence track
----@field chance number probablility that this playlist will use silence between tracks
-
----@class S3maphorePlaylist
----@field id string name of the playlist
----@field priority number priority of the playlist, lower value means higher priority
----@field tracks string[]? list of tracks in the playlist. If not provided, tracks will be loaded from the music/ subdirectory with the same name as the playlist ID.
----@field randomize boolean? if true, tracks will be played in random order. Defaults to false.
----@field active boolean? if true, the playlist is active and will be played. Defaults to false
----@field cycleTracks boolean? if true, the playlist will cycle through tracks. Defaults to true
----@field playOneTrack boolean? if true, the playlist will play only one track and then deactivate. Defaults to false
----@field registrationOrder number? the order in which the playlist was registered, used for sorting playlists by priority. Do not provide in the playlist definition, it will be assigned automatically.
----@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
----@field interruptMode InterruptMode? whether a given playlist should be interrupted by others or interrupt others. By default, Explore playlists can be interrupted, battle playlists will interrupt other playlists, and Special playlists will never be interrupted.
----@field isValidCallback ValidPlaylistCallback?
----@field fallback PlaylistFallback?
----@field fadeOut number? Optional duration supplied by a playlist which indicates how long the fadeout between tracks should be. If not present then the global fadeOut setting is used.
----@field silenceBetweenTracks PlaylistSilenceParams?
-
----@class S3maphoreStateChangeEventData
----@field playlistId string
----@field trackName string VFS path of the track being played
----@field reason S3maphoreStateChangeReason
 
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
@@ -465,8 +425,6 @@ function MusicManager.updateBanner()
     MusicBanner:update()
 end
 
-local aux_util = require 'openmw_aux.util'
-
 ---@class S3maphorePlaylistEnv
 local PlaylistEnvironment = {
     playSpecialTrack = MusicManager.playSpecialTrack,
@@ -545,10 +503,6 @@ local function loadNextPlaylistStep()
         return true
     end
 end
-
----@class CombatTargetChangedData
----@field actor GameObject? Don't think this should ever be nil, but the `actor` field represents whomever has entered or exited combat
----@field targets GameObject[] List of targets whom this actor is in combat with. If the array is empty, the target has left combat for one or another reason.
 
 local CombatTargetCacheKey
 ---@param eventData CombatTargetChangedData
