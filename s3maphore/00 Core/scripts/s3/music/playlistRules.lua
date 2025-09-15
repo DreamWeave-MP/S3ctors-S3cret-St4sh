@@ -271,18 +271,15 @@ function PlaylistRules.dynamicStatThreshold(statThreshold)
         local actorStatCache = S3maphoreGlobalCache[actor.id] or {}
         if not S3maphoreGlobalCache[actor.id] then S3maphoreGlobalCache[actor.id] = actorStatCache end
 
-        for _, statName in ipairs { 'fatigue', 'health', 'magicka', } do
-            local statRange = statThreshold[statName]
-            if statRange then
-                local stat = actorStatCache[statName] or actor.type.stats.dynamic[statName](actor)
-                if not actorStatCache[statName] then actorStatCache[statName] = stat end
+        for statName, range in pairs(statThreshold) do
+            local stat = actorStatCache[statName] or actor.type.stats.dynamic[statName](actor)
+            if not actorStatCache[statName] then actorStatCache[statName] = stat end
 
-                local normalizedStat = stat.current / stat.base
+            local normalizedStat = stat.current / stat.base
 
-                if normalizedStat < (statRange.min or 0.0) or normalizedStat > (statRange.max or HUGE) then
-                    PlaylistRules.state.isInCombat = false
-                    goto FAILED
-                end
+            if normalizedStat < (range.min or 0.0) or normalizedStat > (range.max or HUGE) then
+                PlaylistRules.state.isInCombat = false
+                goto FAILED
             end
         end
     end
