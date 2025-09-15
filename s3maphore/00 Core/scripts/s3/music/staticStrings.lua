@@ -17,6 +17,13 @@ local Strings = {
     NextTrackIndexNil = 'Can not fetch track: nextTrackIndex is nil',
     NoTrackPath = 'Can not fetch track with index %s from playlist \'%s\'.',
     PlaylistNotRegistered = 'Playlist %s has not been registered!',
+    PlaylistSkipFormatStr = [[Track Skip:
+        Did Change Playlist: %s
+        Transitioned from interior to exterior: %s
+        Force transition for friendly cell: %s
+        Force Transition for hostile cell: %s
+        Force Overworld Transition: %s
+        Cell is hostile: %s]],
     TrackChanged = 'Track changed! Current playlist is: %s Track: %s',
     WeatherChanged = 'Weather changed to %s',
 }
