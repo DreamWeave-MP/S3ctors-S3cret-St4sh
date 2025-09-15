@@ -34,14 +34,6 @@ local OverworldSkip = musicSettings:get('ForcePlaylistChangeOnOverworldTransitio
 
 local FadeOutDuration = musicSettings:get('FadeOutDuration')
 
-local PlaylistSkipFormatStr = [[Track Skip:
-        Did Change Playlist: %s
-        Transitioned from interior to exterior: %s
-        Force transition for friendly cell: %s
-        Force Transition for hostile cell: %s
-        Force Overworld Transition: %s
-        Cell is hostile: %s]]
-
 local Strings = require 'scripts.s3.music.staticStrings'
 
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
@@ -802,7 +794,7 @@ local function onFrame(dt)
     if didTransition then
         -- if forceSkip then
         helpers.debugLog(
-            PlaylistSkipFormatStr:format(
+            Strings.PlaylistSkipFormatStr:format(
                 didChangePlaylist,
                 didTransition,
                 ForcePlaylistChangeOnFriendlyExteriorTransition,
