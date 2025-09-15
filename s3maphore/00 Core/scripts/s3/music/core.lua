@@ -1,4 +1,5 @@
 local ambient = require('openmw.ambient')
+local aux_util = require 'openmw_aux.util'
 local async = require 'openmw.async'
 local core = require('openmw.core')
 local input = require 'openmw.input'
