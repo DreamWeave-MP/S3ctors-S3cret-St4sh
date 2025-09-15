@@ -1,3 +1,5 @@
+--- Log strings utilized across S3maphore
+--- These are not localized because I only speak English.
 ---@class S3maphoreStaticStrings
 local Strings = {
     ChangingPlaylist = 'Setting playlist %s to %s',
@@ -9,6 +11,8 @@ local Strings = {
     'Playlist Interrupt Modes Fell Through!\nOld Playlist: %s Interrupt Mode: %s\nNew Playlist: %s InterruptMode: %s',
     InterruptModeNotProvided =
     'Interrupt mode was not provided when constructing the silenceManager!',
+    InvalidLevelDifferenceRule =
+    'Table %s for combatTargetLevelDifference rule does not contain either the relative OR absolute fields! You broke it!',
     MusicStopped = 'Music stopped: %s',
     NextTrackIndexNil = 'Can not fetch track: nextTrackIndex is nil',
     NoTrackPath = 'Can not fetch track with index %s from playlist \'%s\'.',
