@@ -239,6 +239,13 @@ local conditionHandlers = {
       return objectInventory:countOf(itemName) >= itemCount
     end
   end,
+  cell = function(object, cellName)
+    return object.cell.name == cellName
+  end,
+  coords = function(object, cellCords)
+    if not object.cell.isExterior then return false end
+    return object.cell.gridX == cellCords.x and object.cell.gridY == cellCords.y
+  end,
   content_file = function(object, contentFileName)
     return (
       object.contentFile == contentFileName:lower()
