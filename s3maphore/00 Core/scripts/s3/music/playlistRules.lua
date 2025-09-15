@@ -135,6 +135,50 @@ function PlaylistRules.combatTargetExact(validTargets)
     return result
 end
 
+local validCreatureTypes = {
+    [0] = 'creatures',
+    [1] = 'daedra',
+    [2] = 'undead',
+    [3] = 'humanoid',
+}
+
+---@param targetTypeRules CombatTargetTypeMatches
+---@return boolean
+function PlaylistRules.combatTargetType(targetTypeRules)
+    if not PlaylistRules.state.isInCombat then return false end
+
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[targetTypeRules] ~= nil then
+        return currentCombatTargetsCache[targetTypeRules]
+    end
+
+    local result = false
+
+    for _, actor in pairs(PlaylistRules.state.combatTargets) do
+        local targetIsNPC = types.NPC.objectIsInstance(actor)
+        if targetIsNPC then
+            result = targetTypeRules.npc ~= nil
+
+            if not result then goto FAILED end
+        else
+            local creatureRecord = actor.type.records[actor.recordId]
+            local creatureType = validCreatureTypes[creatureRecord.type]
+            result = targetTypeRules[creatureType] ~= nil
+
+            if not result then goto FAILED end
+        end
+    end
+
+    ::FAILED::
+
+    currentCombatTargetsCache[targetTypeRules] = result
+
+    return result
+end
+
 ---@param factionRules NumericPresenceMap
 function PlaylistRules.combatTargetFaction(factionRules)
     if not PlaylistRules.state.isInCombat then return false end
