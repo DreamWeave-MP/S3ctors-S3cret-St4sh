@@ -139,6 +139,15 @@ local validCreatureTypes = {
     [3] = 'humanoid',
 }
 
+--- Rule for checking whether combat targets match a specific type. This can be for NPCs, or specific subtypes of creatures, such as undead, or daedric.
+--- Valid values are listed under the TargetType enum.
+--- NOTE: These are hashsets and only `true` is a valid value.
+--- Inputs must always be lowercased. Yes, really.
+--- 
+--- Example Usage:
+--- 
+--- playlistRules.combatTargetType { ['npc'] = true }
+--- playlistRules.combatTargetType { ['undead'] = true }
 ---@param targetTypeRules CombatTargetTypeMatches
 ---@return boolean
 function PlaylistRules.combatTargetType(targetTypeRules)
@@ -176,6 +185,12 @@ function PlaylistRules.combatTargetType(targetTypeRules)
     return result
 end
 
+--- Rule for checking the rank of a target in the specified faction.
+--- Like any rule utilizing a LevelDifferenceMap, either min or max are optional, but *one* of the two is required.
+---
+--- Example usage:
+---
+--- playlistRules.combatTargetFaction { hlaalu = { min = 1 } }
 ---@param factionRules NumericPresenceMap
 function PlaylistRules.combatTargetFaction(factionRules)
     if not PlaylistRules.state.isInCombat then return false end
@@ -214,6 +229,19 @@ function PlaylistRules.combatTargetFaction(factionRules)
     return result
 end
 
+--- Sets a relative or absolute limit on combat target levels for triggering combat music.
+---
+--- levelDifference rules may be relative or absolute, eg a multplier of the player's level or the actual difference in level.
+--- They may have a minimum and maximum threshold, although either is optional.
+--- Negative values indicate the player is stronger, whereas positive ones indicate the target is stronger.
+---
+--- Example usage:
+---
+--- This rule plays if the target's level is equal to or up to five levels bove the player's
+--- playlistRules.combatTargetLevelDifference { absolute = { min = 0, max = 5 } }
+---
+--- This rule is valid if the target's level is within half or twice the player's level. EG if you're level 20, and the target is level 10, this rule matches.
+--- playlistRules.combatTargetLevelDifference { relative = { min = 0.5, max = 2.0 } }
 ---@param levelRule LevelDifferenceMap
 function PlaylistRules.combatTargetLevelDifference(levelRule)
     if not PlaylistRules.state.isInCombat then return false end
@@ -289,7 +317,18 @@ function PlaylistRules.fightingVampires()
     return result
 end
 
+--- Checks whether or not an actor meets a specific threshold for any of the three dynamic stats - health, fatigue, or magicka.
+--- Any combination of the three will work, and one may use a maximum and/or a minimum threshold
+---
+--- Example usage:
+---
+--- Rule is valid if an actor has MORE than 25% health
+--- playlistRules.dynamicStatThreshold { health = { min = 0.25 } }
+---
+--- Rule is valid is an actor has LESS THAN 75% magicka.
+--- playlistRules.dynamicStatThreshold { magicka = { max = 0.75 } }
 ---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
+---@return boolean
 function PlaylistRules.dynamicStatThreshold(statThreshold)
     if not PlaylistRules.state.isInCombat or core.API_REVISION < onHitAPIRevision then return false end
 
