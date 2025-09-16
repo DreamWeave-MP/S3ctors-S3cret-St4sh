@@ -621,7 +621,9 @@ local function switchPlaylist(newPlaylist)
         newPlaylist.deactivateAfterEnd = true
     end
 
-    silenceManager.updateSilenceParams(newPlaylist)
+    if currentPlaylist and newPlaylist.id == currentPlaylist.id then
+        silenceManager.updateSilenceParams(newPlaylist)
+    end
 
     currentPlaylist = newPlaylist
 end
