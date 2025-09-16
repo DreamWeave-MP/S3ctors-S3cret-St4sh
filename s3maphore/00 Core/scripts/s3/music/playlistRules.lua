@@ -198,7 +198,7 @@ function PlaylistRules.combatTargetFaction(factionRules)
         for factionName, rankRange in pairs(factionRules) do
             local targetFactionRank = getFactionRank(actor, factionName)
 
-            if targetFactionRank <= (rankRange.max or HUGE) and targetFactionRank >= rankRange.min then
+            if targetFactionRank <= (rankRange.max or HUGE) and targetFactionRank >= (rankRange.min or 1) then
                 result = true
                 goto MATCHED
             end
