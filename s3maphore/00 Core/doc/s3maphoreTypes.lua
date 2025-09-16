@@ -8,7 +8,7 @@
 ---@field actor GameObject? Don't think this should ever be nil, but the `actor` field represents whomever has entered or exited combat
 ---@field targets GameObject[] List of targets whom this actor is in combat with. If the array is empty, the target has left combat for one or another reason.
 
----@alias CombatTargetTypeMatches table<TargetType, boolean>
+---@alias CombatTargetTypeMatches table<TargetType, true>
 
 --- Alias for defining S3maphore rules for object record ids allowing or disallowing playlist selection
 ---@alias IDPresenceMap table<string, boolean>
