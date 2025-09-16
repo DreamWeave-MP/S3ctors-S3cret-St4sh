@@ -254,17 +254,18 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
     return result
 end
 
----@param vampireTypes VampireTypes
+--- Rule for checking if the player is fighting vampires of any type, or clan.
+--- To check specific vampire clans, use the faction rule.
 ---@return boolean
-function PlaylistRules.vampireClanTarget(vampireTypes)
+function PlaylistRules.fightingVampires()
     if not PlaylistRules.state.isInCombat or core.API_REVISION < onHitAPIRevision then return false end
 
     if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
 
     local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
 
-    if currentCombatTargetsCache and currentCombatTargetsCache[vampireTypes] ~= nil then
-        return currentCombatTargetsCache[vampireTypes]
+    if currentCombatTargetsCache and currentCombatTargetsCache.vampires ~= nil then
+        return currentCombatTargetsCache.vampires
     end
 
     local result = false
@@ -272,20 +273,18 @@ function PlaylistRules.vampireClanTarget(vampireTypes)
         local actorStatCache = S3maphoreGlobalCache[actor.id] or {}
         if not S3maphoreGlobalCache[actor.id] then S3maphoreGlobalCache[actor.id] = actorStatCache end
 
-        for _, clanName in ipairs(vampireTypes) do
-            local activeSpells = actorStatCache.spells or actor.type.activeSpells(actor)
-            if not actorStatCache.spells then actorStatCache.spells = activeSpells end
+        local activeEffects = actorStatCache.effects or actor.type.activeEffects(actor)
+        if not actorStatCache.effects then actorStatCache.effects = activeEffects end
 
-            if activeSpells:isSpellActive(('vampire blood %s'):format(clanName)) then
-                result = true
-                goto MATCHED
-            end
+        if activeEffects:getEffect(core.magic.EFFECT_TYPE.Vampirism).magnitude > 0 then
+            result = true
+            goto MATCHED
         end
     end
 
     ::MATCHED::
 
-    currentCombatTargetsCache[vampireTypes] = result
+    currentCombatTargetsCache.vampires = result
 
     return result
 end
