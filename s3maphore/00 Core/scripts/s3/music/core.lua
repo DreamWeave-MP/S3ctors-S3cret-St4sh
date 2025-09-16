@@ -499,7 +499,9 @@ local function loadNextPlaylistStep()
         helpers.debugLog("Registered playlist:", playlist.id)
         playlistCount = playlistCount + 1
     elseif coroutine.status(playlistLoaderCo) == "dead" then
-        print(("[ S3MAPHORE ]: %d playlists loaded. Ready to play music!"):format(playlistCount))
+        print(
+            Strings.InitializationFinished:format(playlistCount)
+        )
         return true
     end
 end
