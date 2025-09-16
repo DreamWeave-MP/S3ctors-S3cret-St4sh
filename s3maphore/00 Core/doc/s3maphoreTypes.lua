@@ -86,3 +86,10 @@
 ---| 'creatues'
 
 ---@alias ValidPlaylistCallback fun(playback: Playback): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
+
+---@alias VampireType
+---| 'quarra'
+---| 'aundae'
+---| 'berne'
+
+---@alias VampireTypes VampireType[]
