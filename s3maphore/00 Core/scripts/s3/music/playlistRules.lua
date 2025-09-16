@@ -5,6 +5,9 @@ local types = require 'openmw.types'
 
 local HUGE = math.huge
 
+--- https://gitlab.com/OpenMW/openmw/-/merge_requests/4334
+--- https://gitlab.com/OpenMW/openmw/-/blob/96d0d1fa7cd83e41853061cca68f612b7eb9c834/CMakeLists.txt#L85
+local onHitAPIRevision = 85
 local MyLevel, Quests
 
 ---@class PlaylistRules helper functions for running playlist behaviors
@@ -251,9 +254,45 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
     return result
 end
 
+---@param vampireTypes VampireTypes
+---@return boolean
+function PlaylistRules.vampireClanTarget(vampireTypes)
+    if not PlaylistRules.state.isInCombat or core.API_REVISION < onHitAPIRevision then return false end
+
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[vampireTypes] ~= nil then
+        return currentCombatTargetsCache[vampireTypes]
+    end
+
+    local result = false
+    for _, actor in pairs(PlaylistRules.state.combatTargets) do
+        local actorStatCache = S3maphoreGlobalCache[actor.id] or {}
+        if not S3maphoreGlobalCache[actor.id] then S3maphoreGlobalCache[actor.id] = actorStatCache end
+
+        for _, clanName in ipairs(vampireTypes) do
+            local activeSpells = actorStatCache.spells or actor.type.activeSpells(actor)
+            if not actorStatCache.spells then actorStatCache.spells = activeSpells end
+
+            if activeSpells:isSpellActive(('vampire blood %s'):format(clanName)) then
+                result = true
+                goto MATCHED
+            end
+        end
+    end
+
+    ::MATCHED::
+
+    currentCombatTargetsCache[vampireTypes] = result
+
+    return result
+end
+
 ---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
 function PlaylistRules.dynamicStatThreshold(statThreshold)
-    if not PlaylistRules.state.isInCombat or core.API_REVISION < 95 then return false end
+    if not PlaylistRules.state.isInCombat or core.API_REVISION < onHitAPIRevision then return false end
 
     if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
 
