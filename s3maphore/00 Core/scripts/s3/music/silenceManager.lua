@@ -1,7 +1,7 @@
 local async = require 'openmw.async'
 local storage = require 'openmw.storage'
 
-local helpers = require 'scripts.omw.music.helpers'
+local helpers
 
 local INTERRUPT
 
@@ -86,9 +86,14 @@ function silenceData.updateSilenceParams(newPlaylist)
 end
 
 ---@param interrupt InterruptMode
-return function(interrupt, staticStrings)
+---@param staticStrings S3maphoreStaticStrings
+---@param playlistHelpers table<string, function>
+return function(interrupt, staticStrings, playlistHelpers)
     assert(interrupt, staticStrings.InterruptModeNotProvided)
+    assert(playlistHelpers)
+
     INTERRUPT = interrupt
+    helpers = playlistHelpers
 
     return silenceData
 end
