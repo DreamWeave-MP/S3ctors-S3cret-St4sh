@@ -161,22 +161,31 @@ local function tombTRRule(playback)
         and playback.rules.cellNameMatch(TombCellMatches)
 end
 
+---@type PlaylistFallback
+local TRFallbackData = {
+    tracks = {
+        'music/ms/general/trairdepths/dreamy athmospheres 1.mp3',
+        'music/ms/general/trairdepths/dreamy athmospheres 2.mp3',
+    },
+    playlistChance = 0.60,
+}
+
+---@type PlaylistFallback
+local TRDungeonFallback = {
+    tracks = {
+        'music/ms/general/tr dungeon/darkness.mp3',
+    },
+    playlistChance = 0.33,
+}
+
 ---@type S3maphorePlaylist[]
 return {
     {
-        id = 'Tamriel Rebuilt - Aanthirin',
+        id = 'ms/region/aanthirin',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Aanthirin/Aanthirin 1.mp3',
-            'Music/MS/region/Aanthirin/Aanthirin 2.mp3',
-            'Music/MS/region/Aanthirin/Thirr.mp3',
-            'Music/MS/region/Aanthirin/Thirr 1.mp3',
-            'Music/MS/region/Aanthirin/Thirr 2.mp3'
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.state.self.cell.region == 'aanthirin region'
@@ -188,60 +197,58 @@ return {
         randomize = true,
 
         tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Aanthirin/Thirr.mp3',
-            'Music/MS/region/Aanthirin/Thirr 1.mp3',
-            'Music/MS/region/Aanthirin/Thirr 2.mp3'
+            'music/ms/region/aanthirin/thirr.mp3',
+            'music/ms/region/aanthirin/thirr 1.mp3',
+            'music/ms/region/aanthirin/thirr 2.mp3'
         },
+
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.region(ThirrRegions)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Armun Ashlands',
+        id = 'ms/region/armun ashlands region',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Armun Ashlands Region/Ashlands.mp3',
-
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.state.self.cell.region == 'armun ashlands region'
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Grey Meadows',
+        id = 'ms/region/grey meadows region',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Grey Meadows Region/Grey Meadows 1.mp3',
-            'Music/MS/region/Grey Meadows Region/Grey Meadows 2.mp3',
-        },
+        fallback = TRFallbackData,
+
         isValidCallback = function()
             return Playback.state.self.cell.region == 'grey meadows region'
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Orethan',
+        id = 'ms/region/alt orethan region',
+        priority = PlaylistPriority.Never,
+        randomize = true,
+    },
+    {
+        id = 'ms/region/lan orethan',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Alt Orethan Region/Mournhold fields.mp3',
-            'Music/MS/region/Lan Orethan/Lan Orethan.mp3',
-            'Music/MS/region/Lan Orethan/Mournhold explore.mp3',
-            'Music/MS/region/Lan Orethan/Road To Mournhold.mp3',
+        fallback = {
+            playlists = {
+                'ms/region/alt orethan region',
+            },
+            tracks = {
+                'music/ms/general/trairdepths/dreamy athmospheres 1.mp3',
+                'music/ms/general/trairdepths/dreamy athmospheres 2.mp3',
+            },
+            playlistChance = 0.60,
         },
 
         isValidCallback = function()
@@ -249,14 +256,12 @@ return {
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Dwemer Ruins',
+        id = 'ms/interior/tr dwemer',
         priority = PlaylistPriority.Tileset - 1,
         randomize = true,
-        tracks = {
-            'music/MS/general/TR Dungeon/Darkness.mp3',
-            'Music/MS/interior/tr dwemer/Dwemer ruins.mp3',
-            'Music/MS/interior/tr dwemer/Resonance.mp3',
-        },
+
+        fallback = TRDungeonFallback,
+
         isValidCallback = function()
             return not Playback.state.cellIsExterior
                 and Playback.rules.staticContentFile(TContentFiles)
@@ -264,185 +269,126 @@ return {
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Caves',
+        id = 'ms/interior/tr cave',
         priority = PlaylistPriority.Tileset,
         randomize = true,
 
-        tracks = {
-            'music/MS/general/TR Dungeon/Darkness.mp3',
-            'Music/MS/interior/TR cave/Cave 1.mp3',
-            'Music/MS/interior/TR cave/Cave 2.mp3',
-        },
+        fallback = TRDungeonFallback,
 
         isValidCallback = caveTRRule,
     },
     {
-        id = 'Tamriel Rebuilt - Tombs',
+        id = 'ms/interior/tr tomb',
         priority = PlaylistPriority.Tileset,
         randomize = true,
 
-        tracks = {
-            'music/MS/general/TR Dungeon/Darkness.mp3',
-            'Music/MS/interior/TR tomb/Tombs.mp3',
-        },
+        fallback = TRDungeonFallback,
 
         isValidCallback = tombTRRule,
     },
     {
-        id = 'Tamriel Rebuilt - Indoril Regions',
+        id = 'ms/region/mournhold hills',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Mournhold hills/Mournhold Athmospheres 1.mp3',
-            'Music/MS/region/Mournhold hills/Mournhold Athmospheres 2.mp3',
-            'Music/MS/region/Mournhold hills/Mournhold explore.mp3',
-            'Music/MS/region/Mournhold hills/Mournhold fields.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.region(MournholdRegions)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Imperial',
+        id = 'ms/cell/imperialcity',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/cell/ImperialCity/Beacon of Cyrodiil.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.cellNameMatch(ImperialPatterns)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Indoril Setlement',
+        id = 'ms/cell/mourncity',
         priority = PlaylistPriority.City,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/cell/MournCity/Indoril Settlement.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.cellNameMatch(IndorilPatterns)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Port Telvannis',
+        id = 'ms/region/telvanni isles',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/region/Telvanni Isles/Port Telvannis.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.cellNameMatch(PortTelvannisPatterns)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Telvanni Settlement',
+        id = 'ms/cell/telcity',
         priority = PlaylistPriority.City,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/cell/TelCity/Telvanni settlement.mp3',
-
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.cellNameMatch(TelvanniSettlementMatches)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Temple Settlement',
+        id = 'ms/region/sacred lands region',
         priority = PlaylistPriority.CellMatch,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 1.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 2.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 3.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 4.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.cellNameMatch(TempleSettlementMatches)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Sacred Lands',
+        id = 'ms/region/sacred lands region',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 1.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 2.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 3.mp3',
-            'Music/MS/region/Sacred Lands Region/sacred lands 4.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.state.self.cell.region == 'sacred lands region'
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Seas',
+        id = 'ms/region/seas',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/region/Seas/Dreamy athmospheres 1.mp3',
-            'Music/MS/region/Seas/Dreamy athmospheres 2.mp3',
-        },
         isValidCallback = function()
             return Playback.rules.region(SeaRegions)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Telvannis Regions',
+        id = 'ms/region/telvannis',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Telvannis/Tellvannis 1.mp3',
-            'Music/MS/region/Telvannis/Tellvannis 2.mp3',
-            'Music/MS/region/Telvannis/Telvannis fields.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.region(TelvannisRegions)
         end,
     },
     {
-        id = 'Tamriel Rebuilt - Upper Velothis',
+        id = 'ms/region/velothis upper',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        tracks = {
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 1.mp3',
-            'Music/MS/general/TRairdepths/Dreamy athmospheres 2.mp3',
-            'Music/MS/region/Velothis Upper/Through The Mountains.mp3',
-        },
+        fallback = TRFallbackData,
 
         isValidCallback = function()
             return Playback.rules.region(UpperVelothisRegions)
