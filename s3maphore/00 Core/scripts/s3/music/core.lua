@@ -613,11 +613,17 @@ end
 
 ---@param newPlaylist S3maphorePlaylist
 local function switchPlaylist(newPlaylist)
-    currentTrack = selectTrackFromPlaylist(
+    local nextTrack = selectTrackFromPlaylist(
         getPlaylistIdForTrackSelection(newPlaylist)
     )
 
-    ambient.streamMusic(currentTrack, { fadeOut = newPlaylist.fadeOut or FadeOutDuration })
+    if nextTrack ~= currentTrack then
+        ambient.streamMusic(
+            nextTrack,
+            { fadeOut = newPlaylist.fadeOut or FadeOutDuration }
+        )
+        currentTrack = nextTrack
+    end
 
     if newPlaylist.playOneTrack then
         newPlaylist.deactivateAfterEnd = true
