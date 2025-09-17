@@ -37,6 +37,7 @@ local PlaylistPriority = {
     BattleVanilla = 200,
     BattleMod = 190,
     Special = 50,
+    Never = -1,
 }
 
 return PlaylistPriority
