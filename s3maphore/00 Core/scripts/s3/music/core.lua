@@ -121,7 +121,7 @@ local MusicManager = {
     },
 }
 
-local silenceManager = require 'scripts.s3.music.silenceManager' (MusicManager.INTERRUPT, Strings)
+local silenceManager = require 'scripts.s3.music.silenceManager' (MusicManager.INTERRUPT, Strings, helpers)
 
 musicSettings:subscribe(
     async:callback(
