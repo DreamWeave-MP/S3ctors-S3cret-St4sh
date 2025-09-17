@@ -6,7 +6,7 @@ local nearby = require("openmw.nearby")
 
 local AI = I.AI
 
-if core.API_REVISION >= 95 then
+if core.API_REVISION >= 91 then
     local Combat = I.Combat
     Combat.addOnHitHandler(
         function(attack)
