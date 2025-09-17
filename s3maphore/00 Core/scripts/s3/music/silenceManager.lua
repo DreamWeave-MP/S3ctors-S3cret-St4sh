@@ -1,9 +1,7 @@
 local async = require 'openmw.async'
 local storage = require 'openmw.storage'
 
-local helpers
-
-local INTERRUPT
+local helpers, INTERRUPT
 
 local silenceSettingNames, SilenceGroup = {
     'GlobalSilenceToggle',
