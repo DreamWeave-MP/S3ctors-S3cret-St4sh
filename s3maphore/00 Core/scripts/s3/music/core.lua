@@ -804,56 +804,6 @@ local function onFrame(dt)
     queuedEvent = { name = 'S3maphoreTrackChanged', data = { playlistId = newPlaylist and newPlaylist.id, trackName = currentTrack } }
 end
 
-local defaultPlaylistStates, defaultPlaylistNames = {}, {
-    'BattleActive',
-    'ExploreActive'
-}
-
--- Upon first installation, enable the default playlists, since these settings are handled slightly differently
--- Although I forget why and where they're treated differently.
-for _, playlistName in ipairs(defaultPlaylistNames) do
-    if activePlaylistSettings:get(playlistName) == nil then activePlaylistSettings:set(playlistName, true) end
-end
-
-local function updateDefaultPlaylistStates()
-    for _, playlistName in ipairs(defaultPlaylistNames) do
-        defaultPlaylistStates[playlistName] = activePlaylistSettings:get(playlistName)
-    end
-end
-
-updateDefaultPlaylistStates()
-
-activePlaylistSettings:subscribe(async:callback(updateDefaultPlaylistStates))
-
-MusicManager.registerPlaylist {
-    id = "Battle",
-    priority = PlaylistEnvironment.PlaylistPriority.BattleVanilla,
-    randomize = true,
-
-    isValidCallback = function(playback)
-        return playback.state.isInCombat and defaultPlaylistStates.BattleActive
-    end,
-}
-
-MusicManager.registerPlaylist {
-    id = "Explore",
-    priority = PlaylistEnvironment.PlaylistPriority.Explore,
-    randomize = true,
-
-    isValidCallback = function(playback)
-        return not playback.state.isInCombat and defaultPlaylistStates.BattleActive
-    end,
-}
-
-MusicManager.registerPlaylist {
-    id = 'Special',
-    priority = PlaylistEnvironment.PlaylistPriority.Special,
-    playOneTrack = true,
-    active = false,
-
-    tracks = {},
-}
-
 return {
     interfaceName = 'S3maphore',
 
