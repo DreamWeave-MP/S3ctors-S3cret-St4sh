@@ -441,6 +441,8 @@ local PlaylistEnvironment = {
     require = require,
     math = math,
     string = string,
+    ipairs = ipairs,
+    pairs = pairs,
     --- Takes any number of paramaters and deep prints them, if debug logging is enabled
     ---@param ... any
     print = function(...)
