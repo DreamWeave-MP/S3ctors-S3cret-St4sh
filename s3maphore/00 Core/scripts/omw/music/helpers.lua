@@ -2,26 +2,26 @@ local debug = require('openmw.debug')
 local storage = require('openmw.storage')
 local vfs = require('openmw.vfs')
 
-local I = require 'openmw.interfaces'
-
 local playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
 playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
 
 local musicSettings = storage.playerSection('SettingsS3Music')
 
-local LogFormatStr = '[ S3MAPHORE ]: %s'
-local CantAutoAssignInterruptModeStr =
-'Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!'
+---@type S3maphoreStaticStrings
+local Strings
 
 ---@param ... any
 local function debugLog(...)
     if not musicSettings:get('DebugEnable') then return end
+
     local args = { ... }
     for i = 1, #args do
         args[i] = tostring(args[i])
     end
     local msg = table.concat(args, " ")
-    print(LogFormatStr:format(msg))
+    print(
+        Strings.LogFormatStr:format(msg)
+    )
 end
 
 local function getTracksFromDirectory(path)
@@ -51,7 +51,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
     if playlist.id == nil or playlist.priority == nil then
-        error("Can not register playlist: 'id' and 'priority' are mandatory fields")
+        error(Strings.InvalidPlaylistFields)
     end
 
     if playlist.tracks == nil then
@@ -85,7 +85,7 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
             playlist.interruptMode = INTERRUPT.Me
         else
             debugLog(
-                CantAutoAssignInterruptModeStr:format(playlist.priority, playlist.id)
+                Strings.CantAutoAssignInterruptModeStr:format(playlist.priority, playlist.id)
             )
         end
     end
@@ -176,4 +176,10 @@ local functions = {
     setStoredTracksOrder = setStoredTracksOrder
 }
 
-return functions
+---@param staticStrings S3maphoreStaticStrings
+return function(staticStrings)
+    assert(staticStrings)
+    Strings = staticStrings
+
+    return functions
+end

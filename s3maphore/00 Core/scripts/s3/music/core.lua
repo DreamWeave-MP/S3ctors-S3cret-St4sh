@@ -37,6 +37,7 @@ local OverworldSkip = musicSettings:get('ForcePlaylistChangeOnOverworldTransitio
 local FadeOutDuration = musicSettings:get('FadeOutDuration')
 
 local Strings = require 'scripts.s3.music.staticStrings'
+local helpers = require 'scripts.omw.music.helpers' (Strings)
 
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
 --- In other words, this is the bit that responds to changes from the settings menu
@@ -60,7 +61,6 @@ activePlaylistSettings:subscribe(
     )
 )
 
-local helpers = require('scripts.omw.music.helpers')
 local PlaylistFileList = helpers.getPlaylistFilePaths()
 
 local playlistsTracksOrder = helpers.getStoredTracksOrder()
