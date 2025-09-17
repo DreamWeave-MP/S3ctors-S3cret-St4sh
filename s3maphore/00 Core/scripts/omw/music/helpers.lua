@@ -27,7 +27,9 @@ end
 local function getTracksFromDirectory(path)
     local result = {}
     for fileName in vfs.pathsWithPrefix(path) do
-        table.insert(result, fileName)
+        if not fileName:find('/.gitkeep') then
+            table.insert(result, fileName)
+        end
     end
 
     return result
