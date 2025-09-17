@@ -1,7 +1,9 @@
---- Log strings utilized across S3maphore
+--- Log strings utilized across S3maphore.
 --- These are not localized because I only speak English.
 ---@class S3maphoreStaticStrings
 local Strings = {
+    CantAutoAssignInterruptModeStr =
+    'Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!',
     ChangingPlaylist = 'Setting playlist %s to %s',
     CombatTargetCacheStr = '%s%s',
     FailedToLoadPlaylist = 'Failed to load playlist file: %s\nErr: %s',
@@ -14,6 +16,8 @@ local Strings = {
     'Interrupt mode was not provided when constructing the silenceManager!',
     InvalidLevelDifferenceRule =
     'Table %s for combatTargetLevelDifference rule does not contain either the relative OR absolute fields! You broke it!',
+    InvalidPlaylistFields = "Can not register playlist: 'id' and 'priority' are mandatory fields",
+    LogFormatStr = '[ S3MAPHORE ]: %s',
     MusicStopped = 'Music stopped: %s',
     NextTrackIndexNil = 'Can not fetch track: nextTrackIndex is nil',
     NoTrackPath = 'Can not fetch track with index %s from playlist \'%s\'.',
