@@ -541,6 +541,8 @@ local function playerDied()
     MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
 end
 
+--- If a set of fallback playlists is present, attempt to use them during track selection
+--- It should be noted that, for fallback playlists, their `active` parameter is ignored currently.
 ---@param newPlaylist S3maphorePlaylist
 local function getPlaylistIdForTrackSelection(newPlaylist)
     local fallbackData = newPlaylist.fallback
