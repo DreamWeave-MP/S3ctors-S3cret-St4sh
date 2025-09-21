@@ -56,7 +56,8 @@ local TombEnemyNames = {
 
 ---@type ValidPlaylistCallback
 local function tombEnemyRule()
-    return Playback.rules.combatTargetExact(TombEnemyNames)
+    return Playback.state.isInCombat
+        and Playback.rules.combatTargetExact(TombEnemyNames)
 end
 
 ---@type CellMatchPatterns
@@ -81,7 +82,8 @@ local TombCellExclusions = {
 
 ---@type ValidPlaylistCallback
 local function tombCellRule()
-    return not Playback.rules.cellNameExact(TombCellExclusions)
+    return not Playback.state.isInCombat
+        and not Playback.rules.cellNameExact(TombCellExclusions)
         and Playback.rules.cellNameMatch(TombCellMatches)
 end
 
