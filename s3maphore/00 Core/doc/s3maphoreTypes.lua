@@ -29,7 +29,7 @@
 
 --- Data type used to bridge one playlist into another, or to extend
 ---@class PlaylistFallback
----@field playlistChance number? optional float between 1 and 0 indicating the chance for a fallback playlist to be selected. If not present, the cha
+---@field playlistChance number? optional float between 1 and 0 indicating the chance for a fallback playlist to be selected. If not present, the chance is always 50%
 ---@field playlists string[]? array of fallback playlists from which to select tracks. No default values and not required.
 ---@field tracks string[]? tracks to manually add to a given playlist. Used for folder-based playlists; not necessary for any others
 
