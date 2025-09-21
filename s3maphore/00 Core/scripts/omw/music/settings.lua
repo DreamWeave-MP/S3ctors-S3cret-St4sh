@@ -231,7 +231,7 @@ I.Settings.registerGroup {
     key = 'SettingsS3MusicSilenceConfig',
     page = 'S3Music',
     l10n = 'S3Music',
-    name = 'SilcnceConfiguration',
+    name = 'SilenceConfiguration',
     permanentStorage = true,
     order = 3,
     settings = {
@@ -240,15 +240,15 @@ I.Settings.registerGroup {
             renderer = 'checkbox',
             argument = {},
             name = 'GlobalSilenceToggle',
-            description = 'GlobalSilenceDesc',
+            description = 'GlobalSilenceToggleDesc',
             default = true,
         },
         {
             key = 'GlobalSilenceChance',
             renderer = 'number',
             argument = { min = 0.0, max = 1.0, integer = false },
-            name = 'GlobalSilcenceChanceName',
-            description = 'GlobalSilcenceChanceDesc',
+            name = 'GlobalSilenceChanceName',
+            description = 'GlobalSilenceChanceDesc',
             default = 0.15,
         },
         {
