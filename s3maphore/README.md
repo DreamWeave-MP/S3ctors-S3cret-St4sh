@@ -60,7 +60,7 @@ Also in the settings menu, you can scroll through registered playlists and manua
 
 TIP: If you can't toggle a playlist on or off, that means S3maphore couldn't find any of the tracks this playlist has registered in your game.
 
-Finally, pressing F8 will always skip the current track if one is playing.
+Finally, pressing F8 will always skip the current track if one is playing - if the shift key is held when pressing F8, it will toggle music playback on or off entirely.
 
 ### S3maphore for Modders
 
@@ -78,14 +78,51 @@ S3maphore's playlists are *similar*, but not identical, to existing solutions. T
    1. `randomize` - `boolean` - Whether to play tracks from this playlist in the actual written order or randomly. Defaults to false.
    1. `cycleTracks` - `boolean` - Whether to continue repeating the playlist after it has finished. Defaults to true.
    1. `playOneTrack` - `boolean` - If true, the playlist will only play a single track and then deactivate itself. It must be reactivated using either the `setPlaylistActive` event or interface function in `I.S3maphore`. Defaults to false.
-   1. `noInterrupt` - `boolean` - If true, the songs defined by this playlist may not be stopped by the selection of another playlist for any reason and the track must be skipped somehow.
    1. `isValidCallback` - `function(playback: Playback): boolean` - If present, a function which returns bool to indicate whether or not a given playlist should run in this specific context.
-1. S3maphore replaces OpenMW's builtin music script almost in its entirety. This means that conflicts between the two are mostly-impossible and limitations such as needing to manually set/know the duration of specific tracks is no longer necessary.
-1. S3maphore playlists do *not* have strictly defined rules, instead relying on the `isValidCallback` to allow each playlist to define its own rules in a very open-ended way. Every `isValidCallback` is passed a `playback` struct, which is a table containing two more tables: `state`, and `rules`.
+   1. `fadeOut` - `number` - optional duration for the fadeOut time between tracks in a playlist.
+   1. `silenceBetweenTracks` - `PlaylistSilenceParams` - Parameters for determining how long, if at all, fake silence tracks are used in a playlist. See below for a more detailed description of the `PlaylistSilenceParams` type.
+   1. `interruptMode` - `InterruptMode` - This field determines whether or not a playlist may be interrupted by another, based on the archetypes used by vanilla playlists. Valid values are `INTERRUPT.Me`, `INTERRUPT.Other`, and `INTERRUPT.Never`.
+   1. `fallback` - `PlaylistFallback` - Selection of fallback tracks and playlists which can be used alongside this playlist. See below for details of the `PlaylistFallback` type.
+2. S3maphore replaces OpenMW's builtin music script almost in its entirety. This means that conflicts between the two are mostly-impossible and limitations such as needing to manually set/know the duration of specific tracks is no longer necessary.
+3. S3maphore playlists do *not* have strictly defined rules, instead relying on the `isValidCallback` to allow each playlist to define its own rules in a very open-ended way. Every `isValidCallback` is passed a `playback` struct, which is a table containing two more tables: `state`, and `rules`.
+
+```lua
+---@class PlaylistSilenceParams
+---@field min integer minimum possible duration for this silence track
+---@field max integer maximum possible duration for this silence track
+---@field chance number probablility that this playlist will use silence between tracks
+--- Example of how silenceparams may be used in a playlist
+silenceBetweenTracks = {
+    chance = 0.1,
+    max = 30,
+    min = 10,
+},
+
+--- Data type used to bridge one playlist into another, or to extend
+---@class PlaylistFallback
+---@field playlistChance number? optional float between 1 and 0 indicating the chance for a fallback playlist to be selected. If not present, the chance is always 50%
+---@field playlists string[]? array of fallback playlists from which to select tracks. No default values and not required.
+---@field tracks string[]? tracks to manually add to a given playlist. Used for folder-based playlists; not necessary for any others
+fallback = {
+    playlistChance = 0.25,
+    playlists = {
+        'Explore',
+        'Tamriel Rebuilt - Port Telvannis',
+    },
+    tracks = {
+        'explore/mx_explore_1.mp3',
+    },
+}
+
+```
 
 ##### PlaylistState Specification
 
 ```lua
+---@class StaticList
+---@field recordIds string[] array of all unique static record ids in the current cell
+---@field contentFiles string[] array of all unique content files which placed statics in this cell
+
 ---@class PlaylistState
 ---@field self userdata the player actor
 ---@field playlistTimeOfDay TimeMap the time of day for the current playlist
@@ -93,7 +130,8 @@ S3maphore's playlists are *similar*, but not identical, to existing solutions. T
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
 ---@field cellName string lowercased name of the cell the player is in
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
----@field staticList userdata[]? a read-only list of static objects in the cell, if the cell is not exterior. If the static list is not yet valid, is an empty table. Nil for "true" exteriors.
+---@field staticList StaticList a list of all recordIds and content files placing objects in this cell. This is used in staticContentFile, staticMatch, and staticExact rules for playlists.
+---@field weather WeatherType a string indicating the current weather name. Updated by an internal mwscript in 0.49-compatible versions.
 ```
 
 As usual, if there are more state values you'd like the PlaylistState to offer, please do share! A generic-enough use case can and absolutely will make the cut.
@@ -143,13 +181,13 @@ return {
 TIP: If you don't want to specify track names manually, just don't! If no tracks are listed for a playlist, its `id` field is used to determine a folder name in which a playlist's tracks will be looked for. See the builtin playlists for an easy example:
 
 ```lua
-MusicManager.registerPlaylist {
+{
     id = "Explore",
-    priority = explorePriority,
+    priority = PlaylistPriority.Explore,
     randomize = true,
 
-    isValidCallback = function(playback)
-        return activePlaylistSettings:get("ExploreActive") and not playback.state.isInCombat
+    isValidCallback = function()
+        return not Playback.state.isInCombat and defaultPlaylistStates.ExploreActive
     end,
 }
 ```
@@ -243,6 +281,73 @@ function PlaylistRules.timeOfDay(minHour, maxHour)
 ---@return boolean
 function PlaylistRules.region(regionNames)
 
+
+--- Rule for checking whether combat targets match a specific type. This can be for NPCs, or specific subtypes of creatures, such as undead, or daedric.
+--- Valid values are listed under the TargetType enum.
+--- NOTE: These are hashsets and only `true` is a valid value.
+--- Inputs must always be lowercased. Yes, really.
+--- 
+--- Example Usage:
+--- 
+--- playlistRules.combatTargetType { ['npc'] = true }
+--- playlistRules.combatTargetType { ['undead'] = true }
+---@param targetTypeRules CombatTargetTypeMatches
+---@return boolean
+function PlaylistRules.combatTargetType(targetTypeRules)
+
+--- Rule for checking if the player is fighting vampires of any type, or clan.
+--- To check specific vampire clans, use the faction rule.
+---@return boolean
+function PlaylistRules.fightingVampires()
+
+
+--- Sets a relative or absolute limit on combat target levels for triggering combat music.
+---
+--- levelDifference rules may be relative or absolute, eg a multplier of the player's level or the actual difference in level.
+--- They may have a minimum and maximum threshold, although either is optional.
+--- Negative values indicate the player is stronger, whereas positive ones indicate the target is stronger.
+---
+--- Example usage:
+---
+--- This rule plays if the target's level is equal to or up to five levels bove the player's
+--- playlistRules.combatTargetLevelDifference { absolute = { min = 0, max = 5 } }
+---
+--- This rule is valid if the target's level is within half or twice the player's level. EG if you're level 20, and the target is level 10, this rule matches.
+--- playlistRules.combatTargetLevelDifference { relative = { min = 0.5, max = 2.0 } }
+---@param levelRule LevelDifferenceMap
+function PlaylistRules.combatTargetLevelDifference(levelRule)
+
+--- Checks whether or not an actor meets a specific threshold for any of the three dynamic stats - health, fatigue, or magicka.
+--- Any combination of the three will work, and one may use a maximum and/or a minimum threshold
+---
+--- Example usage:
+---
+--- Rule is valid if an actor has MORE than 25% health
+--- playlistRules.dynamicStatThreshold { health = { min = 0.25 } }
+---
+--- Rule is valid is an actor has LESS THAN 75% magicka.
+--- playlistRules.dynamicStatThreshold { magicka = { max = 0.75 } }
+---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
+---@return boolean
+function PlaylistRules.dynamicStatThreshold(statThreshold)
+
+--- Rule for checking the rank of a target in the specified faction.
+--- Like any rule utilizing a LevelDifferenceMap, either min or max are optional, but *one* of the two is required.
+---
+--- Example usage:
+---
+--- playlistRules.combatTargetFaction { hlaalu = { min = 1 } }
+---@param factionRules NumericPresenceMap
+function PlaylistRules.combatTargetFaction(factionRules)
+
+--- Playlist rule for checking a specific journal state
+---
+--- Example usage:
+---
+--- playback.rules.journal { A1_V_VivecInformants = { min = 50, max = 55, }, }
+---@param journalDataMap NumericPresenceMap
+---@return boolean
+function PlaylistRules.journal(journalDataMap)
 ```
 
 All of these functions may be chained, used, ignored, or even reimplemented by you, as long as your playlist's `isValidCallback` returns true when it's supposed to play and false|nil when it isn't.
@@ -258,6 +363,90 @@ S3maphore works by calling every `isValidCallback`, for every playlist which is 
 Use S3maphore's open ended nature to your advantage, but *please* keep in mind that every playlist is running its callbacks every single frame. You are sharing not-a-lot of space with a lot of neighbors who are very much in a hurry.
 
 If you do run into performance bottlenecks with your playlists, please let me know and I will do everything I can to help make your playlists functional. Later iterations of S3maphore are likely to rely on my helper library, [H3lp Yours3lf](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/h3lp_yours3lf), for additional optimizations!
+
+##### Playlist Environment Specification
+
+Starting from version `0.54` and onward, S3maphore provides a builtin environment to playlists which can be used to simplify the creation of playlists.
+For example, a playlist which used to look like this:
+
+```lua
+local function crystalCityRule(playback)
+    return playback.rules.cellNameExact(CrystalCityCells)
+end
+
+local PlaylistPriority = require 'doc.playlistPriority'
+
+---@type S3maphorePlaylist[]
+return {
+    {
+        id = 'MOMW Patches - Secrets of the Crystal City',
+        priority = PlaylistPriority.CellExact,
+
+        tracks = {
+            'music/aa22/tew_aa_3.mp3',
+        },
+
+        isValidCallback = crystalCityRule,
+    },
+}
+```
+
+May now be:
+
+```lua
+local function crystalCityRule()
+    return Playback.rules.cellNameExact(CrystalCityCells)
+end
+
+local PlaylistPriority = require 'doc.playlistPriority'
+
+---@type S3maphorePlaylist[]
+return {
+    {
+        id = 'MOMW Patches - Secrets of the Crystal City',
+        priority = PlaylistPriority.CellExact,
+
+        tracks = {
+            'music/aa22/tew_aa_3.mp3',
+        },
+
+        isValidCallback = crystalCityRule,
+    },
+}
+```
+
+The idea is to provide a bunch of built-in variables and functions to playlists so that it is no longer necessary for every playlist to `require` the same things every other one does. S3maphore's built-in event handling functions and tilesets are provided through this environment, as well as `openmw.interfaces`, and many builtin lua functions you otherwise would not have access to.
+
+The environment is easily extensible through the core.lua which creates it, so please feel free to request new functions here.
+
+Full playlist environment specification:
+
+```lua
+---@class S3maphorePlaylistEnv
+local PlaylistEnvironment = {
+    playSpecialTrack = MusicManager.playSpecialTrack,
+    skipTrack = MusicManager.skipTrack,
+    setPlaylistActive = MusicManager.setPlaylistActive,
+    timeOfDay = MusicManager.playlistTimeOfDay,
+    INTERRUPT = MusicManager.INTERRUPT,
+    ---@type PlaylistPriority
+    PlaylistPriority = require 'doc.playlistPriority',
+    Tilesets = require 'doc.tilesets',
+    Playback = Playback,
+    ---@type table <string, any>
+    I = I,
+    require = require,
+    math = math,
+    string = string,
+    ipairs = ipairs,
+    pairs = pairs,
+    --- Takes any number of paramaters and deep prints them, if debug logging is enabled
+    ---@param ... any
+    print = function(...)
+        helpers.debugLog(aux_util.deepToString({ ... }, 3))
+    end,
+}
+```
 
 #### The Special Playlist
 
@@ -358,13 +547,37 @@ S3maphore.TIME_MAP = util.makeReadOnly {
 
 S3maphore's main settings group is a `Player` scoped storage section called `SettingsS3Music`. It contains the following keys and values:
 
-1.`DebugEnabled` - `Checkbox` - Whether or not to use verbose logging. Press F10 in-game or veiew openmw.log for more details. Every line with S3maphore log outputs will start with `[ S3MAPHORE ]:`
+1.`Enable Debug Messages` - `Checkbox` - Whether or not to use verbose logging. Press F10 in-game or veiew openmw.log for more details. Every line with S3maphore log outputs will start with `[ S3MAPHORE ]:`
 
-1. `MusicEnabled` - `Checkbox` - Whether or not S3maphore will play music *at all*, for the purposes of temporarily stopping playback to be managed by something else
+1. `Enable Music` - `Checkbox` - Whether or not S3maphore will play music *at all*, for the purposes of temporarily stopping playback to be managed by something else
 
-1. `BannerEnabled` - `Checkbox` - Whether or not the current playlist and track names will be shown when S3maphore changes songs.
+1. `Show Track Info` - `Checkbox` - Whether or not the current playlist and track names will be shown when S3maphore changes songs.
 
-There also is another `Player` scoped storage section of note - `S3maphoreActivePlaylistSettings`. All playlists registered by S3maphore can have their active states set by other scripts by setting the key `${PLAYLISTNAME}Active` to `true` or `false`. S3maphore will then automatically respond to this change and disable/enable the playlist accordingly.
+1. `Enable Combat Music` - `Checkbox` - If this is disabled, combat music will never play. Added by request.
+
+1. `Finish Previous Track` - `Checkbox` - Enabled by default, this setting prevents playlist changes with the same interrupt mode from interrupting music playback.
+
+1. `Allow Friendly Interior Playlist Override` - `Checkbox` - disabled by default, this setting allows overriding the finish previous track setting, when entering a friendly interior, such as a tavern.
+
+1. `Allow Dungeon Playlist Override` - `Checkbox`  - enabled by default, overrides the finish previous track setting when entering a dungeon.
+
+1. `Allow Overworld Playlist Override` - `Checkbox` - disabled by default, allows playlist changes while traversing exteriors to override one another. May be removed in a later version as this was the main reason `Finish Previous Track` was implemented in the first place.
+
+1. `Default Fade Duration` - `Number` - Global fadeOut duration used between tracks if a playlist doesn't specify its own.
+
+1. `Enable Silence Tracks` - `Checkbox` - Enabled by default, allows S3maphore to stop music playback for a specified amount of time between track changes in the same playlist.
+
+1. `Global Silence Chance` - `Number` - Defaults to `0.15`, this is the global chance for silence tracks to play. If a playlist specifies this value itself, that is used instead.
+
+1. `Explore Silence Min Duration` - `Number` - Minimum duration for playback to stop between tracks, during Explore playlists. Randomly selected between this and the maximum value.
+
+1. `Explore Silence Max Duration` - `Number` - Maximum duration for playback to stop between tracks, during Explore playlists. Randomly selected between this and the minimum value.
+
+1. `Battle Silence Min Duration` - `Number` - Minimum duration for playback to stop between tracks, during Battle playlists. Randomly selected between this and the maximum value.
+
+1. `Battle Silence Max Duration` - `Number` - Maximum duration for playback to stop between tracks, during Battle playlists. Randomly selected between this and the minimum value.
+
+There also is another `Player` scoped storage section of note - `S3maphoreActivePlaylistSettings`. All playlists registered by S3maphore can have their active states set by other scripts by setting the key `${PLAYLISTNAME}Active` to `true` or `false`. S3maphore will then automatically respond to this change and disable/enable the playlist accordingly. Every playlist can also be permanently toggled on or off in the settings menu manually.
 
 ## Credits
 
