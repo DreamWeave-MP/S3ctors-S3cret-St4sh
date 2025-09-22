@@ -234,6 +234,10 @@ return {
         id = 'ms/region/alt orethan region',
         priority = PlaylistPriority.Never,
         randomize = true,
+
+        isValidCallback = function()
+            return false
+        end,
     },
     {
         id = 'ms/region/lan orethan',
