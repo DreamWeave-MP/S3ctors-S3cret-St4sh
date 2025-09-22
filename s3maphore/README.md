@@ -358,6 +358,20 @@ function PlaylistRules.journal(journalDataMap)
 ---@param classes IDPresenceMap
 ---@return boolean
 function PlaylistRules.combatTargetClass(classes)
+
+--- Rule used to check if a nearby merchant does, or doesn't, offer a specific service.
+--- Works on all nearby actors, and bails and returns true for the first actor whom matches all provided rules.
+--- Works best in locations where a single merchant is present - for cells where multiple actors may potentially offer the same service, like The Abecette,
+--- a cellNameMatch or cellNameExact rule may be more appropriate.
+--- Only accepts a limited range of inputs as defined by the `ServicesOffered` type.
+---
+--- Example Usage:
+---
+--- local services = { ["Armor"] = true, ['Repair'] = true, }
+--- playlistRules.localMerchantType(services)
+---@param services ServicesOffered
+---@return boolean
+function PlaylistRules.localMerchantType(services)
 ```
 
 All of these functions may be chained, used, ignored, or even reimplemented by you, as long as your playlist's `isValidCallback` returns true when it's supposed to play and false|nil when it isn't.
