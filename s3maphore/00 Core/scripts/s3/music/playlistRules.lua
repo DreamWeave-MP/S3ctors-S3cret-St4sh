@@ -1,6 +1,7 @@
 require 'doc.s3maphoreTypes'
 
 local core = require 'openmw.core'
+local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 
 local HUGE = math.huge
@@ -143,9 +144,9 @@ local validCreatureTypes = {
 --- Valid values are listed under the TargetType enum.
 --- NOTE: These are hashsets and only `true` is a valid value.
 --- Inputs must always be lowercased. Yes, really.
---- 
+---
 --- Example Usage:
---- 
+---
 --- playlistRules.combatTargetType { ['npc'] = true }
 --- playlistRules.combatTargetType { ['undead'] = true }
 ---@param targetTypeRules CombatTargetTypeMatches
@@ -187,9 +188,9 @@ end
 
 --- Checks whether any combat target's classes matches one of a hashset
 --- ALWAYS LOWERCASE YOUR INPUTS!
---- 
+---
 --- Example Usage:
---- 
+---
 --- playlistRules.combatTargetClasses { ['guard'] = true, ['acrobat'] = true }
 ---@param classes IDPresenceMap
 ---@return boolean
@@ -220,6 +221,55 @@ function PlaylistRules.combatTargetClass(classes)
     end
 
     currentCombatTargetsCache[classes] = result
+
+    return result
+end
+
+--- Rule used to check if a nearby merchant does, or doesn't, offer a specific service.
+--- Works on all nearby actors, and bails and returns true for the first actor whom matches all provided rules.
+--- Works best in locations where a single merchant is present - for cells where multiple actors may potentially offer the same service, like The Abecette,
+--- a cellNameMatch or cellNameExact rule may be more appropriate.
+--- Only accepts a limited range of inputs as defined by the `ServicesOffered` type.
+---
+--- Example Usage:
+---
+--- local services = { ["Armor"] = true, ['Repair'] = true, }
+--- playlistRules.localMerchantType(services)
+---@param services ServicesOffered
+---@return boolean
+function PlaylistRules.localMerchantType(services)
+    if PlaylistRules.state.isInCombat then return false end
+
+    local cellName = PlaylistRules.state.cellName
+    if not S3maphoreGlobalCache[cellName] then S3maphoreGlobalCache[cellName] = {} end
+
+    local currentCellCache = S3maphoreGlobalCache[cellName]
+
+    if currentCellCache[services] ~= nil then
+        return currentCellCache[services]
+    end
+
+    local result = false
+
+    for _, actor in pairs(nearby.actors) do
+        local targetRecord = actor.type.records[actor.recordId]
+        local targetServices = targetRecord.servicesOffered
+
+        local maybeMatchedAll = true
+        for serviceName, offered in pairs(services) do
+            if targetServices[serviceName] ~= offered then
+                maybeMatchedAll = false
+                break
+            end
+        end
+
+        if maybeMatchedAll then
+            result = true
+            break
+        end
+    end
+
+    currentCellCache[services] = result
 
     return result
 end
