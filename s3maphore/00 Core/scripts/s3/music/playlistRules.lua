@@ -185,6 +185,45 @@ function PlaylistRules.combatTargetType(targetTypeRules)
     return result
 end
 
+--- Checks whether any combat target's classes matches one of a hashset
+--- ALWAYS LOWERCASE YOUR INPUTS!
+--- 
+--- Example Usage:
+--- 
+--- playlistRules.combatTargetClasses { ['guard'] = true, ['acrobat'] = true }
+---@param classes IDPresenceMap
+---@return boolean
+function PlaylistRules.combatTargetClass(classes)
+    if not PlaylistRules.state.isInCombat then return false end
+
+    if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
+
+    local currentCombatTargetsCache = S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey]
+
+    if currentCombatTargetsCache and currentCombatTargetsCache[classes] ~= nil then
+        return currentCombatTargetsCache[classes]
+    end
+
+    local result = false
+
+    for _, actor in pairs(PlaylistRules.state.combatTargets) do
+        local targetIsNPC = types.NPC.objectIsInstance(actor)
+        if not targetIsNPC then goto CONTINUE end
+        local targetRecord = actor.type.records[actor.recordId]
+
+        if classes[targetRecord.class] then
+            result = true
+            break
+        end
+
+        ::CONTINUE::
+    end
+
+    currentCombatTargetsCache[classes] = result
+
+    return result
+end
+
 --- Rule for checking the rank of a target in the specified faction.
 --- Like any rule utilizing a LevelDifferenceMap, either min or max are optional, but *one* of the two is required.
 ---
