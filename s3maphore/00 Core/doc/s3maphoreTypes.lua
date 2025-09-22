@@ -69,6 +69,30 @@
 ---@field trackName string VFS path of the track being played
 ---@field reason S3maphoreStateChangeReason
 
+---@alias ServicesOffered table<ServiceType, boolean>
+
+---@alias ServiceType
+---| 'Apparatus'
+---| 'Armor'
+---| 'Barter'
+---| 'Books'
+---| 'Clothing'
+---| 'Enchanting'
+---| 'Ingredients'
+---| 'Lights'
+---| 'Misc'
+---| 'MagicItems'
+---| 'Repair'
+---| 'RepairItem'
+---| 'Spellmaking'
+---| 'Spells'
+---| 'Training'
+---| 'Travel'
+---| 'Picks'
+---| 'Potions'
+---| 'Probes'
+---| 'Weapon'
+
 ---@class StaticList
 ---@field recordIds string[] array of all unique static record ids in the current cell
 ---@field contentFiles string[] array of all unique content files which placed statics in this cell
