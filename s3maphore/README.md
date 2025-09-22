@@ -348,6 +348,16 @@ function PlaylistRules.combatTargetFaction(factionRules)
 ---@param journalDataMap NumericPresenceMap
 ---@return boolean
 function PlaylistRules.journal(journalDataMap)
+
+--- Checks whether any combat target's classes matches one of a hashset
+--- ALWAYS LOWERCASE YOUR INPUTS!
+--- 
+--- Example Usage:
+--- 
+--- playlistRules.combatTargetClasses { ['guard'] = true, ['acrobat'] = true }
+---@param classes IDPresenceMap
+---@return boolean
+function PlaylistRules.combatTargetClass(classes)
 ```
 
 All of these functions may be chained, used, ignored, or even reimplemented by you, as long as your playlist's `isValidCallback` returns true when it's supposed to play and false|nil when it isn't.
