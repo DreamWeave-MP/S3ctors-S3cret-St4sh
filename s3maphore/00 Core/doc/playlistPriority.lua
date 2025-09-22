@@ -31,6 +31,8 @@ local PlaylistPriority = {
     -- Starwind playlists
 
     Faction = 400,
+    Class = 375,
+    MerchantType = 350,
     -- -- Times of day
     TimeOfDay = 300,
     -- Combat Playlists
