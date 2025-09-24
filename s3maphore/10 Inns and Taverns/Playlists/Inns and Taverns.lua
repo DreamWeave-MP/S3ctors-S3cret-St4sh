@@ -209,4 +209,13 @@ return {
 
         isValidCallback = tavernOrCellRule,
     },
+    --- Todd save us: Soule sounds uses a THIRD directory for inns ans taverns
+    {
+        id = 'ms/cell/special/taverns',
+        -- Uses faction priority to override TR playlists
+        priority = PlaylistPriority.Faction - 2,
+        randomize = true,
+
+        isValidCallback = tavernOrCellRule,
+    },
 }
