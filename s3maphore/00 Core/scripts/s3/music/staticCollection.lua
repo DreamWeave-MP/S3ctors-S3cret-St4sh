@@ -57,6 +57,29 @@ local function getStaticsInActorCell(cell)
     return addedStatics, addedContentFiles
 end
 
+--- Finds the nearest associated region to a cell, returning it if one is found.
+---@param cell GameCell
+---@return string? nearestRegion
+local function getNearestRegionForCell(cell)
+    if cell.region ~= '' then return cell.region end
+
+    local allDoors = cell:getAll(types.Door)
+
+    local nearestRegion
+    for _, door in ipairs(allDoors) do
+        if not door.type.isTeleport(door) then goto CONTINUE end
+
+        local targetCell = door.type.destCell(door)
+        if targetCell.region ~= '' then
+            nearestRegion = targetCell.region
+            break
+        end
+        ::CONTINUE::
+    end
+
+    return nearestRegion
+end
+
 local Globals = world.mwscript.getGlobalVariables()
 
 ---@enum WeatherType
@@ -123,6 +146,7 @@ return {
                     recordIds = staticRecordIds,
                 },
                 hasCombatTargets = cellHasCombatTargets(senderCell),
+                nearestRegion = getNearestRegionForCell(senderCell),
             })
         end,
 

@@ -170,6 +170,7 @@ musicSettings:subscribe(
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
 ---@field staticList StaticList
 ---@field weather WeatherType
+---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
 local PlaylistState = {
     self = self,
     combatTargets = fightingActors,
@@ -897,6 +898,7 @@ return {
         S3maphoreCellDataUpdated = function(cellChangeData)
             PlaylistState.cellHasCombatTargets = cellChangeData.hasCombatTargets
             PlaylistState.staticList = cellChangeData.staticList
+            if cellChangeData.nearestRegion then PlaylistState.nearestRegion = cellChangeData.nearestRegion end
 
             local shouldUseName = self.cell.name ~= nil and self.cell.name ~= ''
 
