@@ -165,6 +165,7 @@ musicSettings:subscribe(
 ---@field isInCombat boolean whether the player is in combat or not
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
 ---@field cellName string lowercased name of the cell the player is in
+---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field cellHasCombatTargets boolean
 ---@field isUnderwater boolean
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
@@ -900,10 +901,13 @@ return {
             PlaylistState.staticList = cellChangeData.staticList
             if cellChangeData.nearestRegion then PlaylistState.nearestRegion = cellChangeData.nearestRegion end
 
-            local shouldUseName = self.cell.name ~= nil and self.cell.name ~= ''
+            local thisCell = self.cell
 
-            PlaylistState.cellIsExterior = self.cell.isExterior or self.cell:hasTag('QuasiExterior')
-            PlaylistState.cellName = shouldUseName and self.cell.name:lower() or self.cell.id:lower()
+            local shouldUseName = thisCell.name ~= nil and thisCell.name ~= ''
+
+            PlaylistState.cellIsExterior = thisCell.isExterior or self.cell:hasTag('QuasiExterior')
+            PlaylistState.cellName = shouldUseName and thisCell.name:lower() or self.cell.id:lower()
+            PlaylistState.cellId = thisCell.id
 
             awaitingUpdate = false
         end,
