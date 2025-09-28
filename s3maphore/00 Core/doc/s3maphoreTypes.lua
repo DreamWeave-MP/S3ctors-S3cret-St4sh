@@ -45,6 +45,12 @@
 --- Player cell name/id mapped to the memory address of the table being looked up. Only used in the most expensive rulesets
 ---@alias S3maphoreCacheKey string
 
+--- Event data transmitted back to the player when they change cells.
+---@class S3maphoreCellChangeData
+---@field staticList StaticList
+---@field hasCombatTargets boolean
+---@field nearestRegion string? Defines the nearest (or current) region to the player's current cell. If one cannot be found, the previous region will be used.
+
 --- Lookup table for storing the results of location-based matches
 ---@alias S3maphoreMatchCache table<string, boolean>
 
