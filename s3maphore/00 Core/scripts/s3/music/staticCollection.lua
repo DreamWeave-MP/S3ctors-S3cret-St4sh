@@ -4,6 +4,9 @@ local world = require 'openmw.world'
 local NPCFightThreshold = 90
 local CreatureFightThreshold = 83
 
+--- Given a cell object, check the hostility ratings of all actors inside of it
+---@param senderCell GameCell
+---@return boolean hasLiveTargets whether or not the cell has active combat targets
 local function cellHasCombatTargets(senderCell)
     local objects = senderCell:getAll()
     local foundLiveHostiles = 0
@@ -27,12 +30,15 @@ local function cellHasCombatTargets(senderCell)
     return foundLiveHostiles > 0
 end
 
-local function getStaticsInActorCell(actor)
+--- Given a cell object, find all unique static Ids and content files which placed statics in the cell
+---@param cell GameCell
+---@return string[] addedStatics, string[] addedContentFiles
+local function getStaticsInActorCell(cell)
     local uniqueStaticIds, uniqueContentFiles = {}, {}
 
     local addedStatics, addedContentFiles = {}, {}
 
-    local staticsInCell = actor.cell:getAll(types.Static)
+    local staticsInCell = cell:getAll(types.Static)
 
     for _, static in ipairs(staticsInCell) do
         if not uniqueStaticIds[static.recordId] then
@@ -108,17 +114,21 @@ return {
 
     eventHandlers = {
         S3maphoreCellChanged = function(sender)
-            local staticRecordIds, staticContentFiles = getStaticsInActorCell(sender)
+            local senderCell = sender.cell
+            local staticRecordIds, staticContentFiles = getStaticsInActorCell(senderCell)
 
             sender:sendEvent('S3maphoreCellDataUpdated', {
                 staticList = {
                     contentFiles = staticContentFiles,
                     recordIds = staticRecordIds,
                 },
-                hasCombatTargets = cellHasCombatTargets(sender.cell)
+                hasCombatTargets = cellHasCombatTargets(senderCell),
             })
         end,
 
+        -- This function seems like it could have some issues.
+        -- It only determines if there are actors in the cell which are *likely* to engage the player, and doesn't take into account whether or not 
+        -- any are actively fighting the player. But it's a useful heauristic to determine whether or not the player is *in* a dungeon or not.
         S3maphoreUpdateCellHasCombatTargets = function(sender)
             sender:sendEvent('S3maphoreCombatTargetsUpdated', cellHasCombatTargets(sender.cell))
         end,
