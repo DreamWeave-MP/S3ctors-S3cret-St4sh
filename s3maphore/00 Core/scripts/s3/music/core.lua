@@ -893,6 +893,7 @@ return {
             PlaylistState.cellHasCombatTargets = hasCombatTargets
         end,
 
+        ---@param cellChangeData S3maphoreCellChangeData
         S3maphoreCellDataUpdated = function(cellChangeData)
             PlaylistState.cellHasCombatTargets = cellChangeData.hasCombatTargets
             PlaylistState.staticList = cellChangeData.staticList
