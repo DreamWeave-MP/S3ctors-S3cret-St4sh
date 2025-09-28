@@ -129,6 +129,7 @@ fallback = {
 ---@field isInCombat boolean whether the player is in combat or not
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
 ---@field cellName string lowercased name of the cell the player is in
+---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
 ---@field staticList StaticList a list of all recordIds and content files placing objects in this cell. This is used in staticContentFile, staticMatch, and staticExact rules for playlists.
 ---@field weather WeatherType a string indicating the current weather name. Updated by an internal mwscript in 0.49-compatible versions.
