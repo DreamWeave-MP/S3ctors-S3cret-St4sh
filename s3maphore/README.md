@@ -114,6 +114,24 @@ fallback = {
     },
 }
 
+--- Special class for handling exterior grids.
+--- Used for special circumstances in which playlists should only run in *particular* exterior cells
+---@class S3maphoreCellGrid
+---@field x integer
+---@field y integer
+grid = { x = -2, y = -2, }
+
+---@class S3maphorePlaylistExclusions
+---@field playlists string[]? list of subdirectories to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
+---@field tracks string[]? explicit list of tracks to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
+exclusions = {
+    tracks = {
+        'explore/nerevar_rising.mp3',
+    },
+    playlists = {
+        'expore/subdir/
+    },
+}
 ```
 
 ##### PlaylistState Specification
@@ -134,7 +152,8 @@ fallback = {
 ---@field staticList StaticList a list of all recordIds and content files placing objects in this cell. This is used in staticContentFile, staticMatch, and staticExact rules for playlists.
 ---@field weather WeatherType a string indicating the current weather name. Updated by an internal mwscript in 0.49-compatible versions.
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
----@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
+---@field currentGrid S3maphoreCellGrid? The current exterior cell grid. Nil if not in an actual exterior.
+---@field exclusions S3maphorePlaylistExclusions?
 ```
 
 As usual, if there are more state values you'd like the PlaylistState to offer, please do share! A generic-enough use case can and absolutely will make the cut.
