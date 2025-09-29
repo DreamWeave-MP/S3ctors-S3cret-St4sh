@@ -134,6 +134,7 @@ fallback = {
 ---@field staticList StaticList a list of all recordIds and content files placing objects in this cell. This is used in staticContentFile, staticMatch, and staticExact rules for playlists.
 ---@field weather WeatherType a string indicating the current weather name. Updated by an internal mwscript in 0.49-compatible versions.
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
+---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
 ```
 
 As usual, if there are more state values you'd like the PlaylistState to offer, please do share! A generic-enough use case can and absolutely will make the cut.
@@ -374,6 +375,14 @@ function PlaylistRules.combatTargetClass(classes)
 ---@param services ServicesOffered
 ---@return boolean
 function PlaylistRules.localMerchantType(services)
+
+--- Returns whether the current exterior cell is on a particular node of the grid
+---
+--- Example usage:
+---
+--- playlistRules.exteriorGrid { { x = -2, y = -3 } }
+---@param gridRules S3maphoreCellGrid[]
+function PlaylistRules.exteriorGrid(gridRules)
 ```
 
 All of these functions may be chained, used, ignored, or even reimplemented by you, as long as your playlist's `isValidCallback` returns true when it's supposed to play and false|nil when it isn't.

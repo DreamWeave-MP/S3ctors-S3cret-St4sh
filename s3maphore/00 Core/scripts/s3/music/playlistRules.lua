@@ -654,6 +654,34 @@ function PlaylistRules.region(regionNames)
         and regionNames[currentRegion] or false
 end
 
+--- Returns whether the current exterior cell is on a particular node of the grid
+---
+--- Example usage:
+---
+--- playlistRules.exteriorGrid { { x = -2, y = -3 } }
+---@param gridRules S3maphoreCellGrid[]
+function PlaylistRules.exteriorGrid(gridRules)
+    local currentGrid = PlaylistRules.state.currentGrid
+    if not currentGrid then return false end
+
+    local exteriorGridCache = S3maphoreGlobalCache[PlaylistRules.state.cellId]
+    if exteriorGridCache ~= nil then
+        return exteriorGridCache
+    end
+
+    local result = false
+    for _, gridRule in ipairs(gridRules) do
+        if gridRule.x == currentGrid.x and gridRule.y == currentGrid.y then
+            result = true
+            break
+        end
+    end
+
+    S3maphoreGlobalCache[PlaylistRules.state.cellId] = result
+
+    return result
+end
+
 local S3maphoreJournalCache = {}
 
 ---@private
