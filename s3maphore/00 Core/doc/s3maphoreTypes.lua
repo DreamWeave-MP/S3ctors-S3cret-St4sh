@@ -51,6 +51,12 @@
 ---@field hasCombatTargets boolean
 ---@field nearestRegion string? Defines the nearest (or current) region to the player's current cell. If one cannot be found, the previous region will be used.
 
+--- Special class for handling exterior grids.
+--- Used for special circumstances in which playlists should only run in *particular* exterior cells
+---@class S3maphoreCellGrid
+---@field x integer
+---@field y integer
+
 --- Lookup table for storing the results of location-based matches
 ---@alias S3maphoreMatchCache table<string, boolean>
 

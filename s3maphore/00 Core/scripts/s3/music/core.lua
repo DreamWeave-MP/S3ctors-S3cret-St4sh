@@ -36,6 +36,7 @@ local OverworldSkip = musicSettings:get('ForcePlaylistChangeOnOverworldTransitio
 
 local FadeOutDuration = musicSettings:get('FadeOutDuration')
 
+local exteriorGrid = require 'scripts.s3.music.exteriorGrid'
 local Strings = require 'scripts.s3.music.staticStrings'
 local helpers = require 'scripts.omw.music.helpers' (Strings)
 
@@ -172,6 +173,7 @@ musicSettings:subscribe(
 ---@field staticList StaticList
 ---@field weather WeatherType
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
+---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
 local PlaylistState = {
     self = self,
     combatTargets = fightingActors,
@@ -429,6 +431,7 @@ end
 
 ---@class S3maphorePlaylistEnv
 local PlaylistEnvironment = {
+    exteriorGrid = exteriorGrid,
     playSpecialTrack = MusicManager.playSpecialTrack,
     skipTrack = MusicManager.skipTrack,
     setPlaylistActive = MusicManager.setPlaylistActive,
@@ -908,6 +911,12 @@ return {
             PlaylistState.cellIsExterior = thisCell.isExterior or self.cell:hasTag('QuasiExterior')
             PlaylistState.cellName = shouldUseName and thisCell.name:lower() or self.cell.id:lower()
             PlaylistState.cellId = thisCell.id
+
+            if thisCell.isExterior then
+                PlaylistState.currentGrid = { x = thisCell.gridX, y = thisCell.gridY }
+            else
+                PlaylistState.currentGrid = nil
+            end
 
             awaitingUpdate = false
         end,
