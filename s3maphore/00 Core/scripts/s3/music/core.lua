@@ -36,7 +36,6 @@ local OverworldSkip = musicSettings:get('ForcePlaylistChangeOnOverworldTransitio
 
 local FadeOutDuration = musicSettings:get('FadeOutDuration')
 
-local exteriorGrid = require 'scripts.s3.music.exteriorGrid'
 local Strings = require 'scripts.s3.music.staticStrings'
 local helpers = require 'scripts.omw.music.helpers' (Strings)
 
@@ -431,7 +430,6 @@ end
 
 ---@class S3maphorePlaylistEnv
 local PlaylistEnvironment = {
-    exteriorGrid = exteriorGrid,
     playSpecialTrack = MusicManager.playSpecialTrack,
     skipTrack = MusicManager.skipTrack,
     setPlaylistActive = MusicManager.setPlaylistActive,
