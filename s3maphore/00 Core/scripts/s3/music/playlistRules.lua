@@ -647,7 +647,7 @@ end
 ---@param regionNames IDPresenceMap
 ---@return boolean
 function PlaylistRules.region(regionNames)
-    local currentRegion = PlaylistRules.state.self.cell.region
+    local currentRegion = PlaylistRules.state.nearestRegion
 
     return currentRegion ~= nil
         and currentRegion ~= ''
