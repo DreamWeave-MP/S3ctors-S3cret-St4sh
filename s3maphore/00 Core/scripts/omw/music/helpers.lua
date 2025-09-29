@@ -24,12 +24,30 @@ local function debugLog(...)
     )
 end
 
-local function getTracksFromDirectory(path)
+local function getTracksFromDirectory(path, exclusions)
     local result = {}
+
+    if not exclusions.tracks then exclusions.tracks = {} end
+    if not exclusions.playlists then exclusions.playlists = {} end
+
+    table.insert(exclusions.tracks, '/.gitkeep$')
+
     for fileName in vfs.pathsWithPrefix(path) do
-        if not fileName:find('/.gitkeep') then
-            table.insert(result, fileName)
+        --- Playlists must have a particular starting prefix in order to be excluded
+        for _, playlistName in ipairs(exclusions.playlists) do
+            playlistName = 'music/' .. playlistName:lower()
+            if fileName:sub(1, #playlistName) == playlistName then goto TRACKEXCLUDED end
         end
+
+        -- Whereas specific track names can match more loosely, although it is recommended to try to macth the path as closely as possible
+        for _, trackName in ipairs(exclusions.tracks) do
+            trackName = 'music/' .. trackName:lower()
+            if fileName:match(trackName) then goto TRACKEXCLUDED end
+        end
+
+        table.insert(result, fileName)
+
+        ::TRACKEXCLUDED::
     end
 
     return result
@@ -56,7 +74,8 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
 
     if playlist.tracks == nil then
         playlist.tracks = getTracksFromDirectory(
-            ("music/%s/"):format(playlist.id)
+            ("music/%s/"):format(playlist.id),
+            playlist.exclusions or {}
         )
     end
 
