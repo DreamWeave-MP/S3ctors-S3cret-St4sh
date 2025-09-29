@@ -75,6 +75,11 @@
 ---@field fallback PlaylistFallback?
 ---@field fadeOut number? Optional duration supplied by a playlist which indicates how long the fadeout between tracks should be. If not present then the global fadeOut setting is used.
 ---@field silenceBetweenTracks PlaylistSilenceParams?
+---@field exclusions S3maphorePlaylistExclusions?
+
+---@class S3maphorePlaylistExclusions
+---@field playlists string[]? list of subdirectories to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
+---@field tracks string[]? explicit list of tracks to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
 
 ---@class S3maphoreStateChangeEventData
 ---@field playlistId string
