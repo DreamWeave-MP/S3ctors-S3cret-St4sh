@@ -12,6 +12,7 @@
 --- 3. Remember to take advantage of the rules set forth by other playlists. Your position in the chain also implies what conditions have already been checked - for example, priority numbers below 200 can generally assume the player is in combat already.
 ---@class PlaylistPriority
 local PlaylistPriority = {
+    Never = math.huge,
     Explore = 1000,
     -- Reserve the upper 100 slots, so TR doesn't get all the first dibs - We need vanilla playlists, too!
 
@@ -39,7 +40,6 @@ local PlaylistPriority = {
     BattleVanilla = 200,
     BattleMod = 190,
     Special = 50,
-    Never = -1,
 }
 
 return PlaylistPriority
