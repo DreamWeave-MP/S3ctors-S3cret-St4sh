@@ -1,19 +1,15 @@
----@type IDPresenceMap
-local RedoranEnemyNames = {
-    ['redoran guard'] = true,
-    ['bolvyn venim'] = true,
-    ['minor arobar'] = true,
-    ['garisa llethri'] = true,
-    ['mistress brara morvayn'] = true,
-    ['hlaren ramoran'] = true,
-    ['athyn sarethi'] = true,
-    ['banden indarys'] = true,
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
+
+---@type NumericPresenceMap
+local redoranFactionRule = {
+    hlaalu = { min = 1 },
 }
 
 ---@type ValidPlaylistCallback
-local function redoranEnemyRule(playback)
-    return playback.state.isInCombat
-        and playback.rules.combatTargetExact(RedoranEnemyNames)
+local function redoranEnemyRule()
+    return Playback.state.isInCombat
+        and Playback.rules.combatTargetFaction(redoranFactionRule)
 end
 
 ---@type CellMatchPatterns
@@ -34,12 +30,10 @@ local RedoranCellNames = {
 }
 
 ---@type ValidPlaylistCallback
-local function redoranCellRule(playback)
-    return not playback.state.isInCombat
-        and playback.rules.cellNameMatch(RedoranCellNames)
+local function redoranCellRule()
+    return not Playback.state.isInCombat
+        and Playback.rules.cellNameMatch(RedoranCellNames)
 end
-
-local PlaylistPriority = require 'doc.playlistPriority'
 
 ---@type S3maphorePlaylist[]
 return {
