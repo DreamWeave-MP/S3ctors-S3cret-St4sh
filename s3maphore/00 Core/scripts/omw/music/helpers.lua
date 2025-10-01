@@ -170,9 +170,8 @@ local function getActivePlaylistByPriority(playlists, playback)
                 or playlist.priority < newPlaylist.priority
                 -- the one found in this iteration has the same priority but was registered later
                 or (playlist.priority == newPlaylist.priority and playlist.registrationOrder > newPlaylist.registrationOrder) then
-                -- Allow playing the playlist if its valid callback passes, or the valid callback is not defined.
-
-                if (playlist.isValidCallback == nil or playlist.isValidCallback(playback)) and playlist.priority ~= PlaylistPriority.Never then
+                -- Allow playing the playlist if its valid callback passes
+                if playlist.priority ~= PlaylistPriority.Never and playlist.isValidCallback(playback) then
                     newPlaylist = playlist
                 end
             end
