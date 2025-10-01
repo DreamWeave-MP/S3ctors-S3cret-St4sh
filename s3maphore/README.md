@@ -83,6 +83,7 @@ S3maphore's playlists are *similar*, but not identical, to existing solutions. T
    1. `silenceBetweenTracks` - `PlaylistSilenceParams` - Parameters for determining how long, if at all, fake silence tracks are used in a playlist. See below for a more detailed description of the `PlaylistSilenceParams` type.
    1. `interruptMode` - `InterruptMode` - This field determines whether or not a playlist may be interrupted by another, based on the archetypes used by vanilla playlists. Valid values are `INTERRUPT.Me`, `INTERRUPT.Other`, and `INTERRUPT.Never`.
    1. `fallback` - `PlaylistFallback` - Selection of fallback tracks and playlists which can be used alongside this playlist. See below for details of the `PlaylistFallback` type.
+   1. `exclusions` - `S3maphorePlaylistExclusions` - Selection of tracks and sub-directories which will NOT be played by this particular list
 2. S3maphore replaces OpenMW's builtin music script almost in its entirety. This means that conflicts between the two are mostly-impossible and limitations such as needing to manually set/know the duration of specific tracks is no longer necessary.
 3. S3maphore playlists do *not* have strictly defined rules, instead relying on the `isValidCallback` to allow each playlist to define its own rules in a very open-ended way. Every `isValidCallback` is passed a `playback` struct, which is a table containing two more tables: `state`, and `rules`.
 
@@ -153,7 +154,6 @@ exclusions = {
 ---@field weather WeatherType a string indicating the current weather name. Updated by an internal mwscript in 0.49-compatible versions.
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
 ---@field currentGrid S3maphoreCellGrid? The current exterior cell grid. Nil if not in an actual exterior.
----@field exclusions S3maphorePlaylistExclusions?
 ```
 
 As usual, if there are more state values you'd like the PlaylistState to offer, please do share! A generic-enough use case can and absolutely will make the cut.
