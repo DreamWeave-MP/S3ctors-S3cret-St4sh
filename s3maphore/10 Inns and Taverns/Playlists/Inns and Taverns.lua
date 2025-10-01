@@ -1,3 +1,6 @@
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
+
 ---@type IDPresenceMap
 local TavernNamesVanilla = {
     ['ald-ruhn, ald skar inn'] = true,
@@ -171,19 +174,17 @@ local TRTavernCells = {
     ['aimrah, communal tradehouse'] = true,
 }
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type ValidPlaylistCallback
-local function tavernOrCellRule(playback)
-    return not playback.state.isInCombat
-        and not playback.state.cellIsExterior
+local function tavernOrCellRule()
+    return not Playback.state.isInCombat
+        and not Playback.state.cellIsExterior
         and (
             (
-                playback.rules.cellNameExact(TavernNamesVanilla) or playback.rules.cellNameExact(TRTavernCells)
+                Playback.rules.cellNameExact(TavernNamesVanilla) or Playback.rules.cellNameExact(TRTavernCells)
             )
             or
             (
-                playback.rules.cellNameMatch(TavernMatches)
+                Playback.rules.cellNameMatch(TavernMatches)
             )
         )
 end
