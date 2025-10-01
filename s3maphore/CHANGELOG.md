@@ -14,6 +14,8 @@
 </details>
 
 <details><summary><h4>Version 0.61:</h4></summary>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/62bf05a">62bf05a - FIX: Better implementation of PlaylistPriority.Never, improve annotations for isValidCallback</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/d30a4b0">d30a4b0 - DOC: S3maphore changelog 0.61</a><br><br>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/18c3436">18c3436 - FIX: Never set playlists with `PlaylistPriority.never` as active</a><br><br>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/3dff91d">3dff91d - FIX: Correct value for PlaylistPriority.Never</a><br><br>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/c44e529">c44e529 - FIX: Actually exclude .gitkeep from tracklists</a><br><br>
