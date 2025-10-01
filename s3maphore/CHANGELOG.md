@@ -13,6 +13,15 @@
 <details open><summary><h4>Latest</h4></summary>
 </details>
 
+<details><summary><h4>Version 0.61:</h4></summary>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/18c3436">18c3436 - FIX: Never set playlists with `PlaylistPriority.never` as active</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/3dff91d">3dff91d - FIX: Correct value for PlaylistPriority.Never</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/c44e529">c44e529 - FIX: Actually exclude .gitkeep from tracklists</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/b9e383b">b9e383b - CLEANUP: Correct exclusions in docs</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/869a4d0">869a4d0 - CLEANUP: Update redoran playlist format, use faction rule</a><br><br>
+<a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/5f8345d">5f8345d - CLEANUP: Correct typo in redoran folder name</a><br><br>
+</details>
+
 <details><summary><h4>Version 0.6:</h4></summary>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/af8c197">af8c197 - FEAT: Add initial impl for soule sounds</a><br><br>
 <a href="https://gitlab.com/modding-openmw/s3ctors-s3cret-st4sh/commit/6e91ba1">6e91ba1 - CLEANUP: Make muse daedric use public tileset</a><br><br>
