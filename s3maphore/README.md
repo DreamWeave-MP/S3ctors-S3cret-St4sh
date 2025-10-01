@@ -78,7 +78,7 @@ S3maphore's playlists are *similar*, but not identical, to existing solutions. T
    1. `randomize` - `boolean` - Whether to play tracks from this playlist in the actual written order or randomly. Defaults to false.
    1. `cycleTracks` - `boolean` - Whether to continue repeating the playlist after it has finished. Defaults to true.
    1. `playOneTrack` - `boolean` - If true, the playlist will only play a single track and then deactivate itself. It must be reactivated using either the `setPlaylistActive` event or interface function in `I.S3maphore`. Defaults to false.
-   1. `isValidCallback` - `function(playback: Playback): boolean` - If present, a function which returns bool to indicate whether or not a given playlist should run in this specific context.
+   1. `isValidCallback` - `function(playback: Playback): boolean` - A function which returns true/false to indicate whether or not a given playlist should run in this specific context. Only optional when using `PlaylistPriority.Never`
    1. `fadeOut` - `number` - optional duration for the fadeOut time between tracks in a playlist.
    1. `silenceBetweenTracks` - `PlaylistSilenceParams` - Parameters for determining how long, if at all, fake silence tracks are used in a playlist. See below for a more detailed description of the `PlaylistSilenceParams` type.
    1. `interruptMode` - `InterruptMode` - This field determines whether or not a playlist may be interrupted by another, based on the archetypes used by vanilla playlists. Valid values are `INTERRUPT.Me`, `INTERRUPT.Other`, and `INTERRUPT.Never`.
