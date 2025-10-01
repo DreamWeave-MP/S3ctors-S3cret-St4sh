@@ -71,7 +71,7 @@
 ---@field registrationOrder number? the order in which the playlist was registered, used for sorting playlists by priority. Do not provide in the playlist definition, it will be assigned automatically.
 ---@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
 ---@field interruptMode InterruptMode? whether a given playlist should be interrupted by others or interrupt others. By default, Explore playlists can be interrupted, battle playlists will interrupt other playlists, and Special playlists will never be interrupted.
----@field isValidCallback ValidPlaylistCallback?
+---@field isValidCallback ValidPlaylistCallback? The function used to determine whether or not a playlist should execute on this particular frame. NOTE: This field is only optional in the event that the playlist's priority is NOT `PlaylistPriority.Never`
 ---@field fallback PlaylistFallback?
 ---@field fadeOut number? Optional duration supplied by a playlist which indicates how long the fadeout between tracks should be. If not present then the global fadeOut setting is used.
 ---@field silenceBetweenTracks PlaylistSilenceParams?
