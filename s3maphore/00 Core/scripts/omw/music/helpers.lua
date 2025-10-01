@@ -30,7 +30,7 @@ local function getTracksFromDirectory(path, exclusions)
     if not exclusions.tracks then exclusions.tracks = {} end
     if not exclusions.playlists then exclusions.playlists = {} end
 
-    table.insert(exclusions.tracks, '/.gitkeep$')
+    table.insert(exclusions.tracks, '.*/.gitkeep$')
 
     for fileName in vfs.pathsWithPrefix(path) do
         --- Playlists must have a particular starting prefix in order to be excluded
