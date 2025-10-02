@@ -3,7 +3,7 @@ _ENV = _ENV
 
 ---@type NumericPresenceMap
 local redoranFactionRule = {
-    hlaalu = { min = 1 },
+    redoran = { min = 1 },
 }
 
 ---@type ValidPlaylistCallback
