@@ -65,7 +65,7 @@ function PlaylistRules.cellNameMatch(patterns)
     local result, found = false, false
 
     for _, pattern in ipairs(patterns.disallowed or {}) do
-        if cellName:match(pattern) then
+        if cellName:find(pattern, 1, true) then
             found = true
             break
         end
@@ -73,7 +73,7 @@ function PlaylistRules.cellNameMatch(patterns)
 
     if not found then
         for _, pattern in ipairs(patterns.allowed or {}) do
-            if cellName:match(pattern) then
+            if cellName:find(pattern, 1, true) then
                 result = true
                 break
             end
@@ -577,7 +577,7 @@ function PlaylistRules.staticMatch(patterns)
 
     for _, static in ipairs(localStatics.recordIds) do
         for _, pattern in ipairs(patterns) do
-            if static:find(pattern) then
+            if static:find(pattern, 1, true) then
                 result = true
                 goto matchBreak
             end
