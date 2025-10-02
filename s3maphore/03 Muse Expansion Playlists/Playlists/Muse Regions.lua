@@ -1,11 +1,12 @@
+---@type S3maphorePlaylistEnv
+_ENV = _ENV
+
 ---@type IDPresenceMap
 local AshlandsRegions = {
     ['ashlands region'] = true,
     ['molag amur region'] = true,
     ['molag mar region'] = true,
 }
-
-local PlaylistPriority = require 'doc.playlistPriority'
 
 ---@type S3maphorePlaylist[]
 return {
@@ -14,10 +15,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.rules.region(AshlandsRegions)
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.rules.region(AshlandsRegions)
         end,
     },
     {
@@ -25,10 +26,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'ascadian isles region'
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.state.nearestRegion == 'ascadian isles region'
         end,
     },
     {
@@ -36,10 +37,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'azura\'s coast region'
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.state.nearestRegion == 'azura\'s coast region'
         end,
     },
     {
@@ -47,10 +48,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'bitter coast region'
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.state.nearestRegion == 'bitter coast region'
         end,
     },
     {
@@ -58,10 +59,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'grazelands region'
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.state.nearestRegion == 'grazelands region'
         end,
     },
     {
@@ -69,10 +70,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'red mountain region'
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.state.nearestRegion == 'red mountain region'
         end,
     },
     {
@@ -80,10 +81,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'sheogorad'
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.state.nearestRegion == 'sheogorad'
         end,
     },
     {
@@ -91,10 +92,10 @@ return {
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        isValidCallback = function(playback)
-            return not playback.state.isInCombat
-                and playback.state.cellIsExterior
-                and playback.state.self.cell.region == 'west gash region'
+        isValidCallback = function()
+            return not Playback.state.isInCombat
+                and Playback.state.cellIsExterior
+                and Playback.state.nearestRegion == 'west gash region'
         end,
     }
 }
