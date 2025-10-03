@@ -927,7 +927,7 @@ return {
             PlaylistState.weather = weatherName
         end,
 
-        S3maphoreClearTargetCache = function(targetId)
+        S3maphoreClearTargetCache = function()
             helpers.debugLog('clearing target cache for key', CombatTargetCacheKey)
             PlaylistRules.clearGlobalCombatTargetCache()
         end
