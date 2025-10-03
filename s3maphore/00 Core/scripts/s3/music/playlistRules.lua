@@ -37,6 +37,7 @@ function PlaylistRules.clearPerTargetCaches(removedTargetId)
 end
 
 function PlaylistRules.clearGlobalCombatTargetCache()
+    if not PlaylistRules.combatTargetCacheKey then return end
     S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = nil
 end
 
