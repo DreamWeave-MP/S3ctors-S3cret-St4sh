@@ -139,28 +139,50 @@ This table is not writable and values must be updated through its associated sto
     __tostring = function(_)
       local members = {}
       local methodParts = {}
+      local stateParts = {}
 
       for key, value in pairsByKeys(proxy.thisGroup:asTable()) do
         members[#members + 1] = string.format('        %s = %s', tostring(key), tostring(value))
+      end
+
+      for key, value in pairsByKeys(proxy.getState()) do
+        stateParts[#stateParts + 1] = string.format('        %s = %s', tostring(key), tostring(value))
       end
 
       for key, _ in pairsByKeys(methods) do
         methodParts[#methodParts + 1] = string.format('        %s', tostring(key))
       end
 
-      if #members == 0 then
-        members[1] = 'None'
+      for _, table in ipairs { members, methodParts, stateParts } do
+        if #table == 0 then table[1] = '        None' end
       end
 
-      if #methodParts == 0 then
-        methodParts[1] = 'None'
-      end
-
-      return string.format('%sManager {\n    Members:\n%s\n    Methods:\n%s\n  }',
-        managerString, table.concat(members, ',\n'), table.concat(methodParts, ',\n'))
+      return string.format(
+        '%sManager {\n    Members:\n%s\n    Methods:\n%s\n    State:\n%s\n    }',
+        managerString,
+        table.concat(members, ',\n'),
+        table.concat(methodParts, ',\n'),
+        table.concat(stateParts, ',\n')
+      )
     end,
-    __pairs = function()
-      return next, proxy.thisGroup:asTable(), nil
+    __call = function()
+      local settings = proxy.thisGroup:asTable()
+      local keys = {}
+
+      for key in pairs(settings) do
+        keys[#keys + 1] = key
+      end
+
+      table.sort(keys)
+
+      local i = 0
+
+      return function()
+        i = i + 1
+        local key = keys[i]
+
+        if key then return key, settings[key] end
+      end
     end,
   }
   setmetatable(proxy, meta)
