@@ -186,6 +186,7 @@ GameObjectWrapper._mt = {
 }
 
 local ObjectHelpers = {}
+local s3lfCache = {}
 
 function ObjectHelpers.From(gameObject)
   local typeName = gameObject.__type.name
@@ -193,7 +194,11 @@ function ObjectHelpers.From(gameObject)
   assert(typeName == 'MWLua::LObject',
     'S3GameSelf.From is only compatible with Local GameObjects! You passed: ' .. typeName)
 
-  return ObjectHelpers.createInstance(gameObject)
+  if not s3lfCache[gameObject.id] then
+    s3lfCache[gameObject.id] = ObjectHelpers.createInstance(gameObject)
+  end
+
+  return s3lfCache[gameObject.id]
 end
 
 function ObjectHelpers.distance(object1, object2)
@@ -226,8 +231,11 @@ end
 
 local instance = ObjectHelpers.createInstance(gameSelf)
 
-
-local eventHandlers = {}
+local eventHandlers = {
+  Died = function()
+    s3lfCache = {}
+  end,
+}
 local engineHandlers = {}
 
 if PlayerType.objectIsInstance(gameSelf) then
