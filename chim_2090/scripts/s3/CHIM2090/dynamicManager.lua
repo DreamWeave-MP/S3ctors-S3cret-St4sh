@@ -1,9 +1,11 @@
 local core = require('openmw.core')
 local storage = require('openmw.storage')
 
-local s3lf = require('scripts.s3.lf')
+local I = require 'openmw.interfaces'
+local s3lf = I.s3lf
+
 local modInfo = require('scripts.s3.CHIM2090.modInfo')
-local DynamicManager = require('scripts.s3.CHIM2090.protectedTable')('SettingsGlobal' .. modInfo.name .. 'Dynamic')
+local DynamicManager = I.S3ProtectedTable.new { inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic' }
 
 local Fatigue = s3lf.fatigue
 
@@ -156,11 +158,11 @@ function DynamicManager:sleepFatigueRecoveryPlayer(sleepData)
   s3lf.fatigue.current = self.calculateNewDynamic(s3lf.fatigue, multipliedFatigue, newTotal)
 
   self.debugLog('Player rested for'
-                , sleepData.time, 'hours. The player'
-                , sleepData.restOrWait and 'slept' or 'waited'
-                , 'and regenerated', totalFatigueRegen, 'fatigue.'
-                , 'The player has', s3lf.fatigue.current, 'fatigue out of', s3lf.fatigue.base
-                , '. Their multiplier was', multiplier)
+  , sleepData.time, 'hours. The player'
+  , sleepData.restOrWait and 'slept' or 'waited'
+  , 'and regenerated', totalFatigueRegen, 'fatigue.'
+  , 'The player has', s3lf.fatigue.current, 'fatigue out of', s3lf.fatigue.base
+  , '. Their multiplier was', multiplier)
 end
 
 function DynamicManager:sleepRecoveryActor(sleepData)
@@ -189,7 +191,7 @@ function DynamicManager:sleepRecoveryVanilla(sleepData)
         local magicMult = storage.globalSection("SettingsGlobal" .. modInfo.name .. 'Sleep'):get('RestMagicMult')
         local magickaPerHour = s3lf.intelligence.modified * magicMult
         s3lf.magicka.current = math.min(s3lf.magicka.base,
-                                        s3lf.magicka.current + (magickaPerHour * sleepData.time))
+          s3lf.magicka.current + (magickaPerHour * sleepData.time))
       end
     end
     return true
@@ -199,7 +201,7 @@ end
 
 function DynamicManager.sleepActorHandler(sleepData)
   assert(sleepData and sleepData.time and sleepData.restOrWait ~= nil
-         and sleepData.oldHealth, 's3ChimDynamic_SleepActor event requires a time value')
+    and sleepData.oldHealth, 's3ChimDynamic_SleepActor event requires a time value')
 
   if not DynamicManager:sleepRecoveryVanilla(sleepData) then
     DynamicManager:sleepRecoveryActor(sleepData)
@@ -208,8 +210,8 @@ end
 
 function DynamicManager.sleepPlayerHandler(sleepData)
   assert(sleepData and sleepData.time and sleepData.restOrWait ~= nil
-         and sleepData.oldHealth and sleepData.sleepMultiplier,
-         's3ChimDynamic_SleepPlayer event requires a time value and a sleep multiplier')
+    and sleepData.oldHealth and sleepData.sleepMultiplier,
+    's3ChimDynamic_SleepPlayer event requires a time value and a sleep multiplier')
 
   if not DynamicManager:sleepRecoveryVanilla(sleepData) then
     DynamicManager:sleepRecoveryPlayer(sleepData)
