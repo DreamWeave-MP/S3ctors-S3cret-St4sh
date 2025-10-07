@@ -269,7 +269,7 @@ if PlayerType.objectIsInstance(gameSelf) then
     if not currentCell then return end
 
     if currentCell ~= prevCell then
-      gameSelf:sendEvent('S3LFCellChanged', currentCell)
+      gameSelf:sendEvent('S3LFCellChanged', currentCell.id)
 
       if not CellsVisited[currentCell.id] then CellsVisited[currentCell.id] = true end
     end
