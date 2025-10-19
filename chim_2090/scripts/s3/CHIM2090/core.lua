@@ -29,9 +29,12 @@ local ChimCore = I.S3ProtectedTable.new { inputGroupName = groupName }
 
 local ActiveEffects = s3lf.activeEffects()
 
-local fortifyAttackMagnitude = 32000
-local currentFortifyAttackMagnitude = ActiveEffects:getEffect(core.magic.EFFECT_TYPE.FortifyAttack).magnitude
-ActiveEffects:modify(fortifyAttackMagnitude - currentFortifyAttackMagnitude, core.magic.EFFECT_TYPE.FortifyAttack)
+local TargetAttackMagnitude = 32000
+local function ensureFortifyAttack()
+    local currentFortifyAttackMagnitude = ActiveEffects:getEffect(core.magic.EFFECT_TYPE.FortifyAttack).magnitude
+    ActiveEffects:modify(TargetAttackMagnitude - currentFortifyAttackMagnitude, core.magic.EFFECT_TYPE.FortifyAttack)
+end
+ensureFortifyAttack()
 
 local fCombatInvisoMult = core.getGMST('fCombatInvisoMult')
 local fFatigueBase = core.getGMST('fFatigueBase')
@@ -182,5 +185,8 @@ return {
     interface = {
         version = modInfo.version,
         Manager = ChimCore,
+    },
+    eventHandlers = {
+        CHIMEnsureFortifyAttack = ensureFortifyAttack,
     },
 }
