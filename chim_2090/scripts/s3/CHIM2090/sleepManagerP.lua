@@ -165,7 +165,7 @@ function SleepManager.onUpdate(_dt)
 end
 
 return {
-  interfaceName = 's3ChimSleep',
+  interfaceName = 's3ChimSleepP',
   interface = {
     version = modInfo.version,
     Manager = SleepManager,
