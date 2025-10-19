@@ -11,12 +11,21 @@ end
 local I = require 'openmw.interfaces'
 local Combat = I.Combat
 
+local damageTypes = { 'health', 'fatigue', 'magicka' }
 local function CHIMHitHandler(attack)
-    assert(attack.successful)
+    if not attack.attacker then return end
 
-    local damageMult = I.s3ChimCore.Manager:getDamageBonus { attacker = attack.attacker, defender = self.object, attackInfo = attack }
+    if not attack.successful then
+        attack.attacker:sendEvent('CHIMEnsureFortifyAttack')
+    end
 
-    for _, damageType in ipairs { 'health', 'fatigue', 'magicka' } do
+    local damageMult = I.s3ChimCore.Manager:getDamageBonus {
+        attacker = attack.attacker,
+        defender = self.object,
+        attackInfo = attack
+    }
+
+    for _, damageType in ipairs(damageTypes) do
         if attack.damage[damageType] ~= nil then
             attack.damage[damageType] = attack.damage[damageType] * damageMult
         end
