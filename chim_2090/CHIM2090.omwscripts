@@ -1,5 +1,6 @@
-PLAYER, NPC, CREATURE: scripts/s3/CHIM2090/core.lua
-PLAYER, NPC: scripts/s3/CHIM2090/dynamicManager.lua
-PLAYER, NPC, CREATURE: scripts/s3/CHIM2090/onHitManager.lua
 MENU: scripts/s3/CHIM2090/settingsPage.lua
 GLOBAL: scripts/s3/CHIM2090/globalSettings.lua
+PLAYER, NPC, CREATURE: scripts/s3/CHIM2090/core.lua
+PLAYER, NPC, CREATURE: scripts/s3/CHIM2090/dynamicManager.lua
+PLAYER, NPC, CREATURE: scripts/s3/CHIM2090/onHitManager.lua
+PLAYER: scripts/s3/CHIM2090/blockPlayer.lua
