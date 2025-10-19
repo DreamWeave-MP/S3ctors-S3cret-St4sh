@@ -87,6 +87,12 @@ I.Settings.registerGroup {
                         "Fatigue Agility Multiplier", maxFatigueAgiMultDesc, 25),
                 setting('MaxFatigueEndMult', 'number', { integer = true, min = 0, max = 1000 },
                         "Fatigue Endurance Multiplier", maxFatigueEndMultDesc, 75),
+                setting('FortifyMagickaMultiplier', 'number', { integer = true, min = 0, max = 1000 },
+                        'Fortify Magicka Multiplier', 'NOT WRITTEN', 10),
+                setting('PCbaseMagickaMultiplier', 'number', { integer = false, min = 0., max = 1000., },
+                        'Player Base Magicka Multiplier', 'NOT WRITTEN', 1.),
+                setting('NPCbaseMagickaMultiplier', 'number', { integer = false, min = 0., max = 1000., },
+                        'NPC Base Magicka Multiplier', 'NOT WRITTEN', 2.),
         }
 }
 
