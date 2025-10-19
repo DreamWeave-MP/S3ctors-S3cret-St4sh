@@ -39,7 +39,7 @@ end
 ---@field state table a writable table to store arbitrary values in
 ---@field getState fun(): table return the entire inner state table
 ---@field notifyPlayer fun(any) shorthand to display all arguments as a table in a Morrowind MessageBox from a protectedTable. Only works on player scripts.
----@field debuglog fun(any) If debug logging setting is enabled, then prints the arguments to log, as a concatenated table
+---@field debugLog fun(...) If debug logging setting is enabled, then prints the arguments to log, as a concatenated table
 
 ---@alias ShadowSettingsTable table<string, any>
 ---@alias ShadowTableSubscriptionHandler fun(shadowSettings: ShadowSettingsTable, group: StorageSection, groupName: string, key: string)
@@ -154,7 +154,7 @@ This table is not writable and values must be updated through its associated sto
       end
 
       for _, table in ipairs { members, methodParts, stateParts } do
-        if #table == 0 then table[1] = '        None' end
+        if next(table) == nil then table[1] = '        None' end
       end
 
       return string.format(
@@ -192,7 +192,7 @@ end
 
 ---@class ProtectedTableInterface
 ---@field help nil hidden __index method to display help string in the in-game console
----@field new fun(ProtectedTableConstructor): ProtectedTable
+---@field new fun(ProtectedTableConstructor: ProtectedTableConstructor): ProtectedTable
 local ProtectedTableInterface = {
   interfaceName = 'S3ProtectedTable',
   interface = setmetatable({}, {
