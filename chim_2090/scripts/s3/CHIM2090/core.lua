@@ -65,33 +65,32 @@ end
 ---@param defender GameObject
 ---@return number defenseTerm Influence of the defending character's stats on an attack's chance to hit. Not actually used in CHIM, probably.
 function ChimCore:getAttackDefenseTerm(attacker, defender)
-    local defenseTerm = 0
-
-    if defender.fatigue.current > 0 then
-        local defenderEffects = defender.activeEffects()
-        --- A proper awareness check should happen here, but that isn't a thing
-        --- And I ain't tryna fuck with AI packages rinnow
-        local unaware = defender.stance == defender.STANCE.Nothing and types.Player.objectIsInstance(attacker.gameObject)
-        local isKnockedDown = defender.isPlaying('knockout')
-        local isParalyzed = defenderEffects:getEffect(ParalyzeEffect).magnitude > 0
-
-        if not (unaware or isKnockedDown or isParalyzed) then
-            local agilityDefenseInfluence = self.AgilityHitChancePct * defender.agility.modified
-            local luckDefenseInfluence = self.LuckHitChancePct * defender.luck.modified
-            local defenderFatigueTerm = getFatigueTerm(defender)
-            defenseTerm = (agilityDefenseInfluence + luckDefenseInfluence) * defenderFatigueTerm
-
-            local sanctuaryEffect = defenderEffects:getEffect(SanctuaryEffect).magnitude
-            sanctuaryEffect = math.min(100, sanctuaryEffect)
-            defenseTerm = defenseTerm + sanctuaryEffect
-        end
-
-        local chameleonEffect = math.min(100, fCombatInvisoMult * defenderEffects:getEffect(ChameleonEffect).magnitude)
-        local invisibilityEffect = math.min(100, fCombatInvisoMult * defenderEffects:getEffect(InvisibleEffect)
-            .magnitude)
-
-        defenseTerm = defenseTerm + chameleonEffect + invisibilityEffect
+    if defender.fatigue.current <= 0 then
+        return 0
     end
+
+    local defenseTerm = 0
+    local defenderEffects = defender.activeEffects()
+    local unaware = defender.stance == defender.STANCE.Nothing and types.Player.objectIsInstance(attacker.gameObject)
+    local isKnockedDown = defender.isPlaying('knockout')
+    local isParalyzed = defenderEffects:getEffect(ParalyzeEffect).magnitude > 0
+
+    if not (unaware or isKnockedDown or isParalyzed) then
+        local agilityDefenseInfluence = self.AgilityHitChancePct * defender.agility.modified
+        local luckDefenseInfluence = self.LuckHitChancePct * defender.luck.modified
+        local defenderFatigueTerm = getFatigueTerm(defender)
+        defenseTerm = (agilityDefenseInfluence + luckDefenseInfluence) * defenderFatigueTerm
+
+        local sanctuaryEffect = defenderEffects:getEffect(SanctuaryEffect).magnitude
+        sanctuaryEffect = math.min(100, sanctuaryEffect)
+        defenseTerm = defenseTerm + sanctuaryEffect
+    end
+
+    local chameleonEffect = math.min(100, fCombatInvisoMult * defenderEffects:getEffect(ChameleonEffect).magnitude)
+    local invisibilityEffect = math.min(100, fCombatInvisoMult * defenderEffects:getEffect(InvisibleEffect)
+        .magnitude)
+
+    defenseTerm = defenseTerm + chameleonEffect + invisibilityEffect
 
     return defenseTerm
 end
