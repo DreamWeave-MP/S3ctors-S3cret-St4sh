@@ -165,9 +165,10 @@ local blockAnimData = {
     },
     autoDisable = false,
     blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.Torso,
-    speed = getBlockSpeed(),
 }
+
 local function playBlockAnimation()
+    blockAnimData.speed = getBlockSpeed()
     I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
 end
 
