@@ -2,58 +2,57 @@
 -- Figure out blocks for other weapons
 --]]
 
-local anim = require('openmw.animation')
-local async = require('openmw.async')
-local core = require('openmw.core')
-local input = require('openmw.input')
-local self = require('openmw.self')
-local time = require('openmw_aux.time')
-local types = require('openmw.types')
-local ui = require('openmw.ui')
+local anim = require 'openmw.animation'
+local async = require 'openmw.async'
+local core = require 'openmw.core'
+local input = require 'openmw.input'
+local self = require 'openmw.self'
+local time = require 'openmw_aux.time'
+local types = require 'openmw.types'
+local util = require 'openmw.util'
+local ui = require 'openmw.ui'
 
 local BLOCK_ANIM = 'activeblock'
-local HUGE = 9999999
+local HUGE = math.huge
 
-local I = require('openmw.interfaces')
-local Controls = I.Controls
-
-local BlockButton = 3
-local BlockDelay = 0.
-local MaxBlockDelay = 1.5
-
--- local BulletTimeDuration = 3.0
--- local BulletTimeScale
+local I = require 'openmw.interfaces'
 
 -- Store references to stop functions here so they can be self-referential
 -- Mostly used to restore block after being hit, while holding Mouse 3
 local stopFns = {}
 
--- #JustBlockThings
-local isBlocking = false
-local myAttributes = self.type.stats.attributes
-local mySkills = self.type.stats.skills
-local myDynamicStats = self.type.stats.dynamic
-local myBlock = mySkills.block(self)
+-- Attributes
+local Attributes = self.type.stats.attributes
+local Strength = Attributes.strength(self)
+local Agility = Attributes.agility(self)
+local Luck = Attributes.luck(self)
+
+-- Skills
+local Skills = self.type.stats.skills
+local Block = Skills.block(self)
+
+-- Dynamic Stats
+local DynamicStats = self.type.stats.dynamic
+local health = DynamicStats.health(self)
+local Fatigue = DynamicStats.fatigue(self)
 
 -- Extra frames to not take melee damage after blocking
 -- This should maybe scale based on block skill?
 -- or some value related to the shield itself, like weight and speed
-local blockIsPressed = false
+-- State
 local hasIFrames = false
 local IFramesDuration = 2 * time.second
-local myEffects = self.type.activeEffects(self)
+local ActiveEffects = self.type.activeEffects(self)
 local SanctuaryStrength = 1000
 
--- Healing when hit during a block
+-- Can probably remove this now with onHit
 local prevHealth = 0
-local healthObj = self.type.stats.dynamic.health(self)
 
 -- Values for timed block bonus
 -- Right now it uses lightning shield but maybe could be better?
 local hasTimedBonus = false
-local CurrentParryDelay = 0.0
-local MaxParryDelay = 6.0
 local LightningShieldStrength = 0
+local BlockButton = 3
 
 local weaponTypes = types.Weapon.TYPE
 local oneHandedTypes = {
@@ -63,8 +62,35 @@ local oneHandedTypes = {
     [weaponTypes.BluntOneHand] = true,
 }
 
+local function isBlocking()
+    return anim.getActiveGroup(self, anim.BONE_GROUP.LeftArm) == BLOCK_ANIM
+end
+
+--- Checks if the actor is currently playing any one-handed attack animation.
+--- Slightly weak, since we're not accounting for the possibility of empty or two-handed blocks
+--- but since we have no relevant animations it probably doesn't matter at the moment.
+local function isAttacking()
+    return anim.getActiveGroup(self, anim.BONE_GROUP.RightArm):find('weapononehand')
+end
+
+local function inWeaponStance()
+    return self.type.getStance(self) == types.Actor.STANCE.Weapon
+end
+
+local function normalizedFatigue()
+    return util.clamp(Fatigue.current / Fatigue.base, 0.0, 1.0)
+end
+
+local function blockIsPressed()
+    return input.isMouseButtonPressed(BlockButton)
+end
+
+local function playingHitstun()
+    return anim.isPlaying(self, 'hitstun')
+end
+
 local function usingOneHanded()
-    local weapon = types.Actor.getEquipment(self, types.Actor.EQUIPMENT_SLOT.CarriedRight)
+    local weapon = types.Actor.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedRight)
     if not weapon then return false end
 
     local weaponRecord = types.Weapon.records[weapon.recordId]
@@ -83,10 +109,7 @@ local function usingShield()
     return true
 end
 
-local function inWeaponStance()
-    return types.Actor.getStance(self) == types.Actor.STANCE.Weapon
-end
-
+--- Get the weight of the shield
 local function getBlockingWeight()
     local equipment = self.type.getEquipment(self)
     local shield = equipment[self.type.EQUIPMENT_SLOT.CarriedLeft]
@@ -99,119 +122,91 @@ local function getBlockingWeight()
 end
 
 local function canBlock()
-    -- local shield = types.Actor.getEquipment(self, types.Actor.EQUIPMENT_SLOT.CarriedLeft)
-
     return
-    -- shield ~= nil
-    -- and shield.type == types.Armor
-    -- and
         inWeaponStance()
         and usingOneHanded()
         and usingShield()
-        and isBlocking == false
-        and I.UI.getMode() == nil
-        and not anim.isPlaying(self, 'hitstun')
-        and BlockDelay <= 0.
+        and not isBlocking()
+        and not I.UI.getMode()
+        and not playingHitstun()
+        and not isAttacking()
+        and self.type.isOnGround(self)
 end
 
+local blockSpeedConfig = {
+    LuckWeight = 0.15,
+    AgilityWeight = 0.3,
+    BaseSpeed = 0.75,
+}
+
+--- Determine how fast the block animation should play, based on a combinatino of luck, agility, and randomness.
+--- The modifier is also multiplied by normalized fatigue, so more tired characters will block more slowly.
+---@return number blockSpeed the speed at which the blocking animation should play.
 local function getBlockSpeed()
-    -- local baseSpeed = 1
-    -- local maxVariation = 0.25
-    local agility = myAttributes.agility(self).modified
-    local luck = myAttributes.luck(self).modified
-    local fatigueObj = myDynamicStats.fatigue(self)
+    local normalizedAgility = math.min(Agility.modified, 100) / 100.0
+    local normalizedLuck = math.min(Luck.modified, 100) / 100.0
 
-    local normalizedAgility = math.min(agility, 100) / 100.0
-    local normalizedLuck = math.min(luck, 100) / 100.0
+    local randomFactor = (math.random(25) - 5) / 100.0
 
-    local randomFactor = math.random(15) / 100.0
+    local speedModifier = (normalizedLuck * blockSpeedConfig.LuckWeight)
+        + (normalizedAgility * blockSpeedConfig.AgilityWeight)
+        + randomFactor
 
-    -- if math.random(2) == 1 then randomFactor = -randomFactor end
-
-    -- Combine random factor with agility influence
-    local speedModifier = (normalizedLuck * .15) + (normalizedAgility * .3) + randomFactor
-    -- local speedModifier = randomFactor * (1 - normalizedAgility)
-    -- + normalizedAgility * 0.5
-
-    -- Apply the modifier within our desired range
-    -- local finalSpeed = baseSpeed * speedModifier
-    -- local finalSpeed = baseSpeed + (speedModifier * maxVariation)
-
-    -- Normalize fatigue (0 = exhausted, 1 = full fatigue)
-    local normalizedFatigue = fatigueObj.current / fatigueObj.base
-
-    -- Apply inverse fatigue influence (lower fatigue = faster animation)
-    -- local fatigueMultiplier = 2 - normalizedFatigue -- This will range from 1 (full fatigue) to 2 (no fatigue)
-    local finalSpeed = 1 + speedModifier * normalizedFatigue
-
-    -- ui.showMessage("Final speed: " .. finalSpeed
-    --                .. " speed modifier: " .. speedModifier
-    --                .. " normalized agility: " .. normalizedAgility
-    --                .. " random factor: " .. randomFactor)
-
-    return finalSpeed
+    return blockSpeedConfig.BaseSpeed
+        + (speedModifier * normalizedFatigue())
 end
 
+local blockAnimData = {
+    startKey = 'start',
+    stopKey = 'stop',
+    priority = {
+        [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Weapon,
+        [anim.BONE_GROUP.Torso] = anim.PRIORITY.Weapon,
+    },
+    autoDisable = false,
+    blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.Torso,
+    speed = getBlockSpeed(),
+}
 local function playBlockAnimation()
-    I.AnimationController.playBlendedAnimation(BLOCK_ANIM, {
-        startKey = 'start',
-        stopKey = 'stop',
-        priority = {
-            -- [anim.BONE_GROUP.RightArm] = anim.PRIORITY.Default,
-            [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Weapon,
-            [anim.BONE_GROUP.Torso] = anim.PRIORITY.Weapon,
-            -- [anim.BONE_GROUP.LowerBody] = anim.PRIORITY.Default,
-        },
-        autoDisable = false,
-        blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.Torso,
-        speed = getBlockSpeed(),
-    })
+    I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
 end
 
+local idleAnimData = {
+    startKey = 'loop start',
+    stopKey = 'loop stop',
+    priority = {
+        [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Weapon,
+        [anim.BONE_GROUP.Torso] = anim.PRIORITY.Weapon,
+    },
+    autoDisable = true,
+}
 local function playIdleAnimation()
-    I.AnimationController.playBlendedAnimation('idle1',
-        {
-            startKey = 'loop start',
-            stopKey = 'loop stop',
-            -- priority = anim.PRIORITY.Scripted,
-            priority = {
-                -- [anim.BONE_GROUP.RightArm] = anim.PRIORITY.Default,
-                [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Weapon,
-                [anim.BONE_GROUP.Torso] = anim.PRIORITY.Weapon,
-                -- [anim.BONE_GROUP.LowerBody] = anim.PRIORITY.Default,
-            },
-            autoDisable = true,
-        })
+    I.AnimationController.playBlendedAnimation('idle1', idleAnimData)
 end
 
 local function disableTimedBlockBonus()
     if not hasTimedBonus then return end
 
-    myEffects:modify(-LightningShieldStrength, core.magic.EFFECT_TYPE.LightningShield)
-    print('Updated lightning shield value:', myEffects:getEffect(core.magic.EFFECT_TYPE.LightningShield).magnitude)
+    ActiveEffects:modify(-LightningShieldStrength, core.magic.EFFECT_TYPE.LightningShield)
+    print('Updated lightning shield value:', ActiveEffects:getEffect(core.magic.EFFECT_TYPE.LightningShield).magnitude)
     -- ui.showMessage("Removing lightning shield")
     hasTimedBonus = false
 end
 
 local function updateTimedBlockDamage()
-    local strength = myAttributes.strength(self).modified
     local itemWeight = getBlockingWeight()
 
     -- Base damage calculation
-    local baseDamage = (myBlock.base * 0.2) + (strength * 0.1) + (itemWeight * .1)
-
-    -- ui.showMessage("Base damage before flattening: " .. baseDamage)
+    local baseDamage = (Block.base * 0.2) + (Strength.modified * 0.1) + (itemWeight * .1)
 
     -- The shield does 10% magnitude as damage, so multiply intended damage by 10
     LightningShieldStrength = math.min(baseDamage, 50) * 10
 end
 
 local function applyTimedBlockBonus()
-    -- if CurrentParryDelay > 0. then return end
-
     updateTimedBlockDamage()
 
-    myEffects:modify(LightningShieldStrength, core.magic.EFFECT_TYPE.LightningShield)
+    ActiveEffects:modify(LightningShieldStrength, core.magic.EFFECT_TYPE.LightningShield)
     print('Updated lightning shield value:', LightningShieldStrength)
 
     -- ui.showMessage("Adding lightning shield")
@@ -219,7 +214,9 @@ local function applyTimedBlockBonus()
     hasTimedBonus = true
 end
 
-local function timedBlockHandler(_, key)
+local function timedBlockHandler(group, key)
+    -- print(group, key)
+
     if key == 'stop' then
         -- ui.showMessage("Disabling timed block bonus from handler")
         applyTimedBlockBonus()
@@ -236,17 +233,9 @@ end
 I.AnimationController.addTextKeyHandler(BLOCK_ANIM, timedBlockHandler)
 
 local function toggleBlock(enable)
-    if isBlocking == enable then return end
-
-    myBlock.modifier = myBlock.modifier + (enable and HUGE or -HUGE)
-    isBlocking = enable
-    Controls.overrideCombatControls(enable)
+    if isBlocking() == enable then return end
 
     if enable then
-        -- I'm not sure if I liked the idea of applying the bonus
-        -- before the stop key, or after
-        -- So we'll preserve this code just in case!
-        -- applyTimedBlockBonus()
         playBlockAnimation()
     else
         disableTimedBlockBonus()
@@ -255,38 +244,20 @@ local function toggleBlock(enable)
 end
 
 local function blockBegin(button)
-    if I.UI.getMode() then return end
-
-    if button == BlockButton and canBlock() then
-        toggleBlock(true)
-    end
+    if I.UI.getMode() or button ~= BlockButton or not canBlock() then return end
+    toggleBlock(true)
 end
 
 local function blockEnd(button)
-    -- if I.UI.getMode() then return end
-
-    if button == BlockButton and isBlocking then
-        toggleBlock(false)
-    end
-end
-
-local function updateMouse()
-    blockIsPressed = input.isMouseButtonPressed(BlockButton)
-    -- print(blockIsPressed)
-end
-
-local function blockIfPossible()
-    -- Restore the block if it was interrupted by something else
-    if blockIsPressed and canBlock() then
-        toggleBlock(true)
-    end
+    if button ~= BlockButton or not isBlocking() then return end
+    toggleBlock(false)
 end
 
 local function beginIFrames(currentLegs)
     if stopFns["iframes"] then return end
 
     ui.showMessage('Adding iFrames')
-    myEffects:modify(SanctuaryStrength, core.magic.EFFECT_TYPE.Sanctuary)
+    ActiveEffects:modify(SanctuaryStrength, core.magic.EFFECT_TYPE.Sanctuary)
     hasIFrames = true
 
     stopFns["iframes"] = time.runRepeatedly(function()
@@ -296,7 +267,7 @@ local function beginIFrames(currentLegs)
 
                 if hasIFrames then
                     ui.showMessage("Removing iFrames")
-                    myEffects:modify(-SanctuaryStrength, core.magic.EFFECT_TYPE.Sanctuary)
+                    ActiveEffects:modify(-SanctuaryStrength, core.magic.EFFECT_TYPE.Sanctuary)
                     hasIFrames = false
                 end
 
@@ -308,51 +279,63 @@ local function beginIFrames(currentLegs)
     end, 0.1)
 end
 
-time.runRepeatedly(blockIfPossible, 1)
+local function ensureNoBlock()
+    if Block.modifier == -HUGE then return end
+    Block.modifier = -HUGE
+end
 
+local function noBlockInMenus()
+    if not I.UI.getMode() then return end
+    toggleBlock(false)
+    return true
+end
+
+--- Restore the block if it was interrupted by something else
+local function blockIfPossible()
+    if not blockIsPressed() or not canBlock() then return end
+    toggleBlock(true)
+end
+
+local function interruptBlock()
+    if not isBlocking() then return end
+
+    local shouldInterrupt = input.getBooleanActionValue('Use') or
+        anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody):find('jump')
+
+    if not shouldInterrupt then return end
+
+    toggleBlock(false)
+end
+
+--- Implement logic for determining the parry window, and associated fatigue damage
+--- Also consider implementing iFrames. The current mechanic appears to be designed so as to give you a shitton of sanctuary effect 
+--- until the hit animation finishes.
 return {
+    interfaceName = 's3ChimBlock',
+    interface = {
+        canBlock = canBlock,
+        isBlocking = isBlocking,
+        toggleBlock = toggleBlock,
+    },
     engineHandlers = {
         onMouseButtonPress = blockBegin,
         onMouseButtonRelease = blockEnd,
-        -- onUpdate = function()
+        onFrame = function(dt)
+            ensureNoBlock()
+            if noBlockInMenus() then return end
 
-        -- end,
-        onFrame = function(_)
-            if I.UI.getMode() then
-                toggleBlock(false)
-                return
-            end
+            blockIfPossible()
 
-            updateMouse()
-
-            -- print(healthObj.current)
-
-            -- BlockDelay = math.max(0., BlockDelay - dt)
-
-            -- CurrentParryDelay = math.max(0., CurrentParryDelay - dt)
-
-            -- print("Block delay: " .. BlockDelay)
-
-            -- If a block delay got assigned, circle back around
-            -- And disable blocking state
-            -- if BlockDelay > 0. then
-            -- toggleBlock(false)
-            -- end
-
-            -- You can attack, but it interrupts the block
-            if isBlocking and input.getBooleanActionValue("Use") then
-                toggleBlock(false)
-            end
+            interruptBlock()
 
             -- local currentTorso = anim.getActiveGroup(self, anim.BONE_GROUP.Torso)
             local currentLegs = anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody)
             -- print("Current legs: " .. currentLegs .. " Current torso: " .. currentTorso)
 
             if (string.find(currentLegs, 'hit') or string.find(currentLegs, 'shield'))
-                -- and BlockDelay <= 0.
-                and isBlocking then
-                if healthObj.current < prevHealth then
-                    healthObj.current = prevHealth
+                and isBlocking() then
+                if health.current < prevHealth then
+                    health.current = prevHealth
                 end
 
                 if not hasTimedBonus then
@@ -363,17 +346,9 @@ return {
                     -- CurrentParryDelay = MaxParryDelay
                     -- ui.showMessage("Parry!")
                 end
-                -- BlockDelay = MaxBlockDelay
             end
 
-            -- Can't block if you're jumping
-            if string.find(currentLegs, 'jump') then
-                -- print("Disabling block")
-                toggleBlock(false)
-            end
-
-            prevHealth = healthObj.current
+            prevHealth = health.current
         end,
-        -- onInputAction = onInputAction,
     }
 }
