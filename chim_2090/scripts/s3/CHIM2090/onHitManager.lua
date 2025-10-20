@@ -34,9 +34,9 @@ local function CHIMHitHandler(attack)
         return attacker:sendEvent('CHIMEnsureFortifyAttack')
     end
 
-    if isPlayer and I.s3ChimBlock.parryReady() then
+    if isPlayer and I.s3ChimParry.Manager.ready() then
         local incomingDamage = attack.damage.health or attack.damage.fatigue
-        local outgoingDamage = I.s3ChimBlock.handleParryHit(incomingDamage)
+        local outgoingDamage = I.s3ChimParry.Manager.getDamage(incomingDamage)
 
         attacker:sendEvent('CHIMOnParry', {
             damage = outgoingDamage,
