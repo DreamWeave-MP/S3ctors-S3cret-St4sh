@@ -1,0 +1,29 @@
+BaseParryFramesName: Base Parry Frame Count
+BaseParryFramesDesc: |-
+  Starting number of parrying frames granted regardless of character skill or shield weight.
+
+BaseShieldFramesName: Base Shield Parry Frames
+BaseShieldFramesDesc: |-
+  When parrying, every shield grants N parry frames, which then has a fraction of the shield's weight subtracted from it.
+  For example, the default value of this setting is 8, and the Per Unit Shield Weight Penalty's Default value is 3. 
+  With default settings and a shield weighing 15 units, you would get 3 additional parry frames from your equipped shield.
+
+BlockFrameMultName: Block Skill Parry Frame Multiplier
+BlockFrameMultDesc: |-
+  When parrying, the character's block skill is capped to 100, and then flattened to a value between 0 and 1.
+  That is then multiplied by the number value of this setting, granting somewhere between 0-1 * N additional parry frames based on the block skill.
+
+MaxParryFramesName: Maximum Parry Frames
+MaxParryFramesDesc: |-
+  Maximum number of parry frames. Higher numbers mean parries will be easier, where lower is more punishing.
+
+MinParryFramesName: Minimum Parry Frames
+MinParryFramesDesc: |-
+  Minimum number of parry frames. Higher numbers mean parries will be easier, where lower is more punishing.
+
+ParryGroupName: Parry Configuration Settings
+
+PerUnitShieldWeightPenaltyName: Per Unit Shield Weight Penalty
+PerUnitShieldWeightPenaltyDesc: |-
+  Divisor on shield weight when calculating parry frames. 
+  At a value of 3, a shield weighing 9 units will subtract 3 from the base shield frames setting to determine the number of parry frames given by a particular shield.
