@@ -324,7 +324,6 @@ return {
             end
 
             prevHealth = health.current
-            I.s3ChimParry.Manager.tick(dt)
         end,
     }
 }

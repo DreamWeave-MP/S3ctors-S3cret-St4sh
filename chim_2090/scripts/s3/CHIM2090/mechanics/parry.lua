@@ -4,7 +4,6 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
-local LogMessage = require 'scripts.s3.logmessage'
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
 local function getShield()
@@ -147,6 +146,11 @@ function Parry.getDamage(incomingDamage)
 end
 
 local ParryInterface = {
+    engineHandlers = {
+        onFrame = function(dt)
+            Parry.tick(dt)
+        end,
+    },
     interfaceName = 's3ChimParry',
     interface = setmetatable(
         {},
