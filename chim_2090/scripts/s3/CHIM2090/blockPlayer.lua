@@ -60,72 +60,6 @@ local oneHandedTypes = {
     [weaponTypes.BluntOneHand] = true,
 }
 
----@class ParryManager
-local Parry = {
-    BASE_PARRY_FRAMES = 4,
-    BASE_SHIELD_FRAMES = 8,
-    BLOCK_FRAME_MULT = 3,
-    FRAME_DURATION = 1.0 / 60.0,
-    MIN_PARRY_FRAMES = 2,
-    MAX_PARRY_FRAMES = 16,
-    PER_UNIT_SHIELD_WEIGHT_PENALTY = 3,
-    remainingTime = 0,
-}
-
-function Parry.timeRemaining()
-    return Parry.remainingTime
-end
-
-function Parry.calculateParryFrames()
-    local blockSkill = math.min(Block.modified, 100) / 100            -- 0.0 to 1.0
-    local agilityBonus = (math.min(Agility.modified, 100) - 50) / 200 -- -0.25 to +0.25
-    local luckInfluence = (math.random(10) - 5) / 50                  -- -0.1 to +0.1 variance
-
-    local shield = self.type.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedLeft)
-    local shieldWeight = types.Armor.records[shield.recordId].weight
-
-    -- INVERSE relationship: lighter shields = more parry frames
-    -- Heaviest shields get minimal frames, lightest get bonus frames
-    local shieldFrames = math.max(0,
-        Parry.BASE_SHIELD_FRAMES -
-        math.floor(shieldWeight / Parry.PER_UNIT_SHIELD_WEIGHT_PENALTY)
-    )
-
-    local totalFrames = Parry.BASE_PARRY_FRAMES
-        + (blockSkill * Parry.BLOCK_FRAME_MULT) -- Skill adds 0-3 frames
-        + agilityBonus                          -- Agility adds ±2.5 frames
-        + luckInfluence                         -- Small random factor ±0.1 frames
-        + shieldFrames                          -- Equipment-based frames (inverse to weight)
-
-    return util.clamp(
-        math.floor(totalFrames + .5),
-        Parry.MIN_PARRY_FRAMES,
-        Parry.MAX_PARRY_FRAMES
-    )
-end
-
-function Parry.calculateParryFrameSeconds()
-    return Parry.calculateParryFrames() * Parry.FRAME_DURATION
-end
-
-function Parry.tick(dt)
-    if Parry.remainingTime <= 0 then return end
-    Parry.remainingTime = math.max(0.0, Parry.remainingTime - dt)
-end
-
-function Parry.start()
-    Parry.remainingTime = Parry.calculateParryFrameSeconds()
-end
-
----@return boolean parryReady whether or not a parry can currently happen
-function Parry.ready()
-    return Parry.remainingTime > 0
-end
-
-function Parry.getDamage()
-
-end
-
 local function isBlocking()
     return anim.getActiveGroup(self, anim.BONE_GROUP.LeftArm) == BLOCK_ANIM
 end
@@ -168,65 +102,11 @@ local function playBlockSound()
     core.sound.playSound3d(shieldSound, self)
 end
 
-local function getShield()
-    return self.type.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedLeft)
-end
-
 local function handleBlockHit()
     --- We also need to handle skill progression and degradation here!
     playBlockSound()
 end
 
----@class ParryDamageConfig
-local ParryDamageConfig = {
-    BASE_DAMAGE_MULTIPLIER = 0.5,
-    SHIELD_SIZE_INFLUENCE = 0.3,   -- How much shield size affects damage
-    STRENGTH_DAMAGE_BONUS = 0.002, -- 0.2% damage per strength point
-    BLOCK_SKILL_BONUS = 0.001,     -- 0.1% damage per block skill
-    MIN_DAMAGE_MULTIPLIER = 0.25,
-    MAX_DAMAGE_MULTIPLIER = 1.5,
-}
-
----@param incomingDamage number? optional health damage caused by the incoming strike
-local function handleParryHit(incomingDamage)
-    handleBlockHit()
-
-    if not incomingDamage or incomingDamage <= 0 then
-        return 0
-    end
-
-    -- Calculate base multiplier with attributes
-    local damageMult = ParryDamageConfig.BASE_DAMAGE_MULTIPLIER
-
-    -- Strength bonus (stronger characters hit harder on parry)
-    local strengthBonus = Strength.modified * ParryDamageConfig.STRENGTH_DAMAGE_BONUS
-    damageMult = damageMult + strengthBonus
-
-    -- Block skill bonus (skilled blockers know how to redirect force better)
-    local blockBonus = Block.modified * ParryDamageConfig.BLOCK_SKILL_BONUS
-    damageMult = damageMult + blockBonus
-
-    -- Shield size influence (larger shields can redirect more force)
-    local shieldBounds = (getShield():getBoundingBox().halfSize.xy * 2):length()
-    local shieldBonus = shieldBounds * ParryDamageConfig.SHIELD_SIZE_INFLUENCE
-    damageMult = damageMult + shieldBonus
-
-    -- Clamp to reasonable bounds
-    damageMult = util.clamp(damageMult, ParryDamageConfig.MIN_DAMAGE_MULTIPLIER, ParryDamageConfig.MAX_DAMAGE_MULTIPLIER)
-
-    -- Convert health damage to fatigue damage
-    local outgoingDamage = incomingDamage * damageMult
-
-    print(
-        ("Parry: %.1f health damage -> %.1f fatigue damage (mult: %.2f)"):format(
-            incomingDamage,
-            outgoingDamage,
-            damageMult
-        )
-    )
-
-    return outgoingDamage
-end
 
 local function usingOneHanded()
     local weapon = types.Actor.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedRight)
@@ -246,18 +126,6 @@ local function usingShield()
     if not shieldRecord then return false end
 
     return true
-end
-
---- Get the weight of the shield
-local function getBlockingWeight()
-    local equipment = self.type.getEquipment(self)
-    local shield = equipment[self.type.EQUIPMENT_SLOT.CarriedLeft]
-    local weapon = equipment[self.type.EQUIPMENT_SLOT.CarriedRight]
-
-    local shieldWeight = shield and types.Armor.records[shield.recordId].weight or 0
-    local weaponWeight = weapon and types.Weapon.records[weapon.recordId].weight or 0
-
-    return shield and shieldWeight or weaponWeight
 end
 
 local function canBlock()
@@ -315,11 +183,6 @@ local blockAnimData = {
     blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.Torso,
 }
 
-local function playBlockAnimation()
-    blockAnimData.speed = getBlockSpeed()
-    I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
-end
-
 local idleAnimData = {
     startKey = 'loop start',
     stopKey = 'loop stop',
@@ -329,13 +192,19 @@ local idleAnimData = {
     },
     autoDisable = true,
 }
+
+local function playBlockAnimation()
+    blockAnimData.speed = getBlockSpeed()
+    I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
+end
+
 local function playIdleAnimation()
     I.AnimationController.playBlendedAnimation('idle1', idleAnimData)
 end
 
 local function timedBlockHandler(group, key)
     if key == 'half' then
-        Parry.start()
+        I.s3ChimParry.Manager.start()
     end
 end
 
@@ -401,29 +270,25 @@ end
 local function interruptBlock()
     if not isBlocking() then return end
 
-    local shouldInterrupt = input.getBooleanActionValue('Use') or
-        anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody):find('jump')
+    local shouldInterrupt = input.getBooleanActionValue('Use')
+        or anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody):find('jump')
+        or I.UI.getMode()
+        or not inWeaponStance()
 
     if not shouldInterrupt then return end
 
     toggleBlock(false)
 end
 
---- Implement logic for determining the parry window, and associated fatigue damage
 --- Also consider implementing iFrames. The current mechanic appears to be designed so as to give you a shitton of sanctuary effect
 --- until the hit animation finishes.
 return {
     interfaceName = 's3ChimBlock',
     interface = {
-        calculateParryFrames = Parry.calculateParryFrames,
-        calculateParryFrameSeconds = Parry.calculateParryFrameSeconds,
         canBlock = canBlock,
         getBlockSpeed = getBlockSpeed,
         handleBlockHit = handleBlockHit,
-        handleParryHit = handleParryHit,
         isBlocking = isBlocking,
-        parryReady = Parry.ready,
-        parryTimeRemaining = Parry.timeRemaining,
         playBlockSound = playBlockSound,
         toggleBlock = toggleBlock,
     },
@@ -459,7 +324,7 @@ return {
             end
 
             prevHealth = health.current
-            Parry.tick(dt)
+            I.s3ChimParry.Manager.tick(dt)
         end,
     }
 }
