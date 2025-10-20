@@ -106,7 +106,7 @@ function Parry.ready()
     return Parry.state.remainingTime > 0
 end
 
----@param incomingDamage number? optional health damage caused by the incoming strike
+---@param incomingDamage number health damage caused by the incoming strike
 function Parry.getDamage(incomingDamage)
     I.s3ChimBlock.handleBlockHit()
 
