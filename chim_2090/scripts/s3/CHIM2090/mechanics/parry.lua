@@ -30,7 +30,7 @@ local FRAME_DURATION = 1.0 / 60.0
 ---@field BlockSkillBonus number
 ---@field MinDamageMultiplier number
 ---@field MaxDamageMultiplier number
-local Parry = ProtectedTable.new { inputGroupName = groupName, logPrefix = 'CHIMParry' }
+local Parry = ProtectedTable.new { inputGroupName = groupName, logPrefix = '[CHIMParry]:\n' }
 Parry.state = {
     remainingTime = 0,
 }
@@ -63,13 +63,12 @@ function Parry.calculateParryFrames()
     totalFrames = math.floor(totalFrames + .5)
 
     Parry.debugLog(
-        ([[
-                Agility bonus: %s
-                Luck Influence: %s
-                shield Frames: %s
-                Base Parry Frames: %s
-                block influence: %s
-                Total parry frames: %s
+        ([[Agility bonus: %s
+Luck Influence: %s
+shield Frames: %s
+Base Parry Frames: %s
+block influence: %s
+Total parry frames: %s
             ]]):format(
             agilityBonus,
             luckInfluence,
