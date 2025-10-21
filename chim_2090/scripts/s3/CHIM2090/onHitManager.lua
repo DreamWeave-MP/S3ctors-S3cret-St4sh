@@ -22,8 +22,8 @@ local Fatigue = self.type.stats.dynamic.fatigue(self)
 local damageTypes = { 'health', 'fatigue', 'magicka' }
 local function CHIMHitHandler(attack)
     local attacker = attack.attacker
-    local meleeOrRanged = attack.sourceType == Combat.ATTACK_SOURCE_TYPES.Melee or
-        attack.sourceType == Combat.ATTACK_SOURCE_TYPES.Ranged
+    local meleeOrRanged = attack.sourceType == Combat.ATTACK_SOURCE_TYPES.Melee
+        or attack.sourceType == Combat.ATTACK_SOURCE_TYPES.Ranged
 
     -- Since hits caused by parries will be sent here,
     -- potentially without an attacker?
@@ -34,16 +34,26 @@ local function CHIMHitHandler(attack)
         return attacker:sendEvent('CHIMEnsureFortifyAttack')
     end
 
-    if isPlayer and I.s3ChimParry.Manager.ready() then
-        local incomingDamage = attack.damage.health or attack.damage.fatigue
-        local outgoingDamage = I.s3ChimParry.Manager.getDamage(incomingDamage)
+    if isPlayer then
+        if I.s3ChimParry.Manager.ready() then
+            local incomingDamage = attack.damage.health or attack.damage.fatigue
+            local outgoingDamage = I.s3ChimParry.Manager.getDamage {
+                damage = incomingDamage,
+                hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
+            }
 
-        attacker:sendEvent('CHIMOnParry', {
-            damage = outgoingDamage,
-        })
+            attacker:sendEvent('CHIMOnParry', {
+                damage = outgoingDamage,
+            })
 
-        ui.showMessage('Attack parried!')
-        return false
+            ui.showMessage('Attack parried!')
+            return false
+        elseif I.s3ChimBlock.isBlocking() then
+            I.s3ChimBlock.handleBlockHit {
+                hitPos = attack.hitPos,
+                playVfx = true,
+            }
+        end
     end
 
     --- We should also have some way to determine if an attack fumbled or not
