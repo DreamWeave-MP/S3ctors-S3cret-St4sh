@@ -3,10 +3,13 @@ local core = require 'openmw.core'
 local self = require 'openmw.self'
 local types = require 'openmw.types'
 
+---@alias AttackType integer
+
 ---@class CHIMBlockData
 ---@field damage number
 ---@field hitPos util.vector3
 ---@field playVfx true?
+---@field type AttackType
 
 local isPlayer, ui = types.Player.objectIsInstance(self)
 if isPlayer then
@@ -44,6 +47,7 @@ local function CHIMHitHandler(attack)
         local blockData = {
             damage = attack.damage.health or attack.damage.fatigue,
             hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
+            type = attack.type or self.ATTACK_TYPE.Thrust,
         }
 
         if I.s3ChimParry.Manager.ready() then
