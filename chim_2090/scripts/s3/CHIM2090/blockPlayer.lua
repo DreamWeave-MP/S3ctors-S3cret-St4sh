@@ -68,7 +68,12 @@ end
 --- Slightly weak, since we're not accounting for the possibility of empty or two-handed blocks
 --- but since we have no relevant animations it probably doesn't matter at the moment.
 local function isAttacking()
-    return anim.getActiveGroup(self, anim.BONE_GROUP.RightArm):find('weapononehand')
+    return anim.getActiveGroup(self, anim.BONE_GROUP.RightArm):find('weapon') ~= nil
+        or input.getBooleanActionValue('Use')
+end
+
+local function isJumping()
+    return anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody):find('jump') ~= nil
 end
 
 local function inWeaponStance()
@@ -102,9 +107,16 @@ local function playBlockSound()
     core.sound.playSound3d(shieldSound, self)
 end
 
-local function handleBlockHit()
+local ShieldVFX = types.Static.records['vfx_shieldhit'].model
+local function handleBlockHit(blockData)
     --- We also need to handle skill progression and degradation here!
     playBlockSound()
+    if blockData.playVfx then
+        core.sendGlobalEvent('SpawnVfx', {
+            position = blockData.hitPos,
+            model = ShieldVFX
+        })
+    end
 end
 
 
@@ -131,13 +143,14 @@ end
 local function canBlock()
     return
         inWeaponStance()
+        and self.type.isOnGround(self)
         and usingOneHanded()
         and usingShield()
         and not isBlocking()
         and not I.UI.getMode()
         and not playingHitstun()
         and not isAttacking()
-        and self.type.isOnGround(self)
+        and not isJumping()
 end
 
 local blockSpeedConfig = {
@@ -190,7 +203,6 @@ local idleAnimData = {
         [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Weapon,
         [anim.BONE_GROUP.Torso] = anim.PRIORITY.Weapon,
     },
-    autoDisable = true,
 }
 
 local function playBlockAnimation()
@@ -270,8 +282,8 @@ end
 local function interruptBlock()
     if not isBlocking() then return end
 
-    local shouldInterrupt = input.getBooleanActionValue('Use')
-        or anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody):find('jump')
+    local shouldInterrupt = isAttacking()
+        or isJumping()
         or I.UI.getMode()
         or not inWeaponStance()
 
@@ -302,28 +314,6 @@ return {
             blockIfPossible()
 
             interruptBlock()
-
-            -- local currentTorso = anim.getActiveGroup(self, anim.BONE_GROUP.Torso)
-            local currentLegs = anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody)
-            -- print("Current legs: " .. currentLegs .. " Current torso: " .. currentTorso)
-
-            if (string.find(currentLegs, 'hit') or string.find(currentLegs, 'shield'))
-                and isBlocking() then
-                if health.current < prevHealth then
-                    health.current = prevHealth
-                end
-
-                if not hasTimedBonus then
-                    beginIFrames(currentLegs)
-
-                    -- ui.showMessage("Blocking hit")
-                else
-                    -- CurrentParryDelay = MaxParryDelay
-                    -- ui.showMessage("Parry!")
-                end
-            end
-
-            prevHealth = health.current
         end,
     }
 }
