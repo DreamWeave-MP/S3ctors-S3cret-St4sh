@@ -107,14 +107,31 @@ local function playBlockSound()
     core.sound.playSound3d(shieldSound, self)
 end
 
-local ShieldVFX = types.Static.records['vfx_shieldhit'].model
+local blockHitLegsData = {
+    priority = {
+        [anim.BONE_GROUP.LowerBody] = anim.PRIORITY.Scripted,
+    },
+    blendMask = anim.BLEND_MASK.LowerBody
+}
+
+local function getRandomHitGroup()
+    return ('hit%s'):format(math.random(1, 5))
+end
+
+local function playBlockHitLegs()
+    local randomGroup = getRandomHitGroup()
+    if anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody) == randomGroup then return end
+    I.AnimationController.playBlendedAnimation(randomGroup, blockHitLegsData)
+end
+
 local function handleBlockHit(blockData)
     --- We also need to handle skill progression and degradation here!
     playBlockSound()
+    playBlockHitLegs()
     if blockData.playVfx then
         core.sendGlobalEvent('SpawnVfx', {
             position = blockData.hitPos,
-            model = ShieldVFX
+            model = 'meshes/e/impact/parryspark.nif'
         })
     end
 end
