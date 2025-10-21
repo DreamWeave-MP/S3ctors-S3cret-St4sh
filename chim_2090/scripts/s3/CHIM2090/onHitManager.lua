@@ -3,6 +3,11 @@ local core = require 'openmw.core'
 local self = require 'openmw.self'
 local types = require 'openmw.types'
 
+---@class CHIMBlockData
+---@field damage number
+---@field hitPos util.vector3
+---@field playVfx true?
+
 local isPlayer, ui = types.Player.objectIsInstance(self)
 if isPlayer then
     ui = require 'openmw.ui'
@@ -35,25 +40,22 @@ local function CHIMHitHandler(attack)
     end
 
     if isPlayer then
-        local incomingDamage = attack.damage.health or attack.damage.fatigue
-        if I.s3ChimParry.Manager.ready() then
-            local outgoingDamage = I.s3ChimParry.Manager.getDamage {
-                damage = incomingDamage,
-                hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
-            }
+        ---@type CHIMBlockData
+        local blockData = {
+            damage = attack.damage.health or attack.damage.fatigue,
+            hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
+        }
 
+        if I.s3ChimParry.Manager.ready() then
             attacker:sendEvent('CHIMOnParry', {
-                damage = outgoingDamage,
+                damage = I.s3ChimParry.Manager.getDamage(blockData),
             })
 
             ui.showMessage('Attack parried!')
             return false
         elseif I.s3ChimBlock.isBlocking() then
-            I.s3ChimBlock.handleBlockHit {
-                damage = incomingDamage,
-                hitPos = attack.hitPos,
-                playVfx = true,
-            }
+            blockData.playVfx = true
+            I.s3ChimBlock.handleBlockHit(blockData)
         end
     end
 

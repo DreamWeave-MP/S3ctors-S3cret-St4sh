@@ -100,11 +100,12 @@ local function playBlockHitLegs()
     I.AnimationController.playBlendedAnimation(randomGroup, blockHitLegsData)
 end
 
+---@param blockData CHIMBlockData
 local function handleBlockHit(blockData)
     --- We also need to handle skill progression and degradation here!
     playBlockSound()
     playBlockHitLegs()
-    if blockData.playVfx then
+    if blockData.playVfx and blockData.hitPos then
         core.sendGlobalEvent('SpawnVfx', {
             position = blockData.hitPos,
             model = 'meshes/e/impact/parryspark.nif'
