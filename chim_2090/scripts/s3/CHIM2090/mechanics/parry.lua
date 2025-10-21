@@ -121,13 +121,19 @@ end
 
 ---@param hitData table<any, any> health damage caused by the incoming strike
 function Parry.getDamage(hitData)
-    I.s3ChimBlock.handleBlockHit { hitPos = hitData.hitPos, playVfx = false }
-    playBlockEndAnim()
-
     local incomingDamage = hitData.damage
+
     if not incomingDamage or incomingDamage <= 0 then
         return 0
     end
+
+    I.s3ChimBlock.handleBlockHit {
+        damage = incomingDamage,
+        hitPos = hitData.hitPos,
+        playVfx = false
+    }
+
+    playBlockEndAnim()
 
     -- Calculate base multiplier with attributes
     local damageMult = Parry.BaseDamageMultiplier
