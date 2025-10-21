@@ -126,7 +126,7 @@ function Parry.getShieldSize()
     return (shield:getBoundingBox().halfSize.xy * 2):length()
 end
 
----@param hitData table<any, any> health damage caused by the incoming strike
+---@param hitData CHIMBlockData
 function Parry.getDamage(hitData)
     local incomingDamage = hitData.damage
 
@@ -134,11 +134,7 @@ function Parry.getDamage(hitData)
         return 0
     end
 
-    I.s3ChimBlock.handleBlockHit {
-        damage = incomingDamage,
-        hitPos = hitData.hitPos,
-        playVfx = false
-    }
+    I.s3ChimBlock.handleBlockHit(hitData)
 
     playBlockEndAnim()
 
