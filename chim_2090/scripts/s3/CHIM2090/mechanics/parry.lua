@@ -1,3 +1,4 @@
+local anim = require 'openmw.animation'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -10,6 +11,20 @@ local function getShield()
     local carriedLeft = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
     if not carriedLeft or not types.Armor.records[carriedLeft.recordId] then return end
     return carriedLeft
+end
+
+local blockEndAnimData = {
+    startKey = 'block hit',
+    stopKey = 'block stop',
+    priority = {
+        [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Scripted,
+        [anim.BONE_GROUP.Torso] = anim.PRIORITY.Scripted,
+    },
+    blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.Torso,
+}
+
+local function playBlockEndAnim()
+    I.AnimationController.playBlendedAnimation('shield', blockEndAnimData)
 end
 
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'Parry'
@@ -104,10 +119,12 @@ function Parry.ready()
     return Parry.state.remainingTime > 0
 end
 
----@param incomingDamage number health damage caused by the incoming strike
-function Parry.getDamage(incomingDamage)
-    I.s3ChimBlock.handleBlockHit()
+---@param hitData table<any, any> health damage caused by the incoming strike
+function Parry.getDamage(hitData)
+    I.s3ChimBlock.handleBlockHit { hitPos = hitData.hitPos, playVfx = false }
+    playBlockEndAnim()
 
+    local incomingDamage = hitData.damage
     if not incomingDamage or incomingDamage <= 0 then
         return 0
     end
