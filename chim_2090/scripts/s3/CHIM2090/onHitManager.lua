@@ -35,8 +35,8 @@ local function CHIMHitHandler(attack)
     end
 
     if isPlayer then
+        local incomingDamage = attack.damage.health or attack.damage.fatigue
         if I.s3ChimParry.Manager.ready() then
-            local incomingDamage = attack.damage.health or attack.damage.fatigue
             local outgoingDamage = I.s3ChimParry.Manager.getDamage {
                 damage = incomingDamage,
                 hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
@@ -50,6 +50,7 @@ local function CHIMHitHandler(attack)
             return false
         elseif I.s3ChimBlock.isBlocking() then
             I.s3ChimBlock.handleBlockHit {
+                damage = incomingDamage,
                 hitPos = attack.hitPos,
                 playVfx = true,
             }
