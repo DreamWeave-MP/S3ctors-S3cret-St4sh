@@ -55,7 +55,7 @@ function Parry.timeRemaining()
 end
 
 function Parry.calculateParryFrames()
-    local blockSkill = math.min(s3lf.block.modified, 100) / 100            -- 0.0 to 1.0
+    local blockSkill = math.min(s3lf.block.base, 100) / 100                -- 0.0 to 1.0
     local agilityBonus = (math.min(s3lf.agility.modified, 100) - 50) / 200 -- -0.25 to +0.25
     local luckInfluence = (math.random(10) - 5) / 50                       -- -0.1 to +0.1 variance
 
