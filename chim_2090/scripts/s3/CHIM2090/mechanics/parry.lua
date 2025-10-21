@@ -119,6 +119,13 @@ function Parry.ready()
     return Parry.state.remainingTime > 0
 end
 
+---@return number shieldSize overall length of the equipped shield's front face in todd units
+function Parry.getShieldSize()
+    local shield = getShield()
+    if not shield then return 0 end
+    return (shield:getBoundingBox().halfSize.xy * 2):length()
+end
+
 ---@param hitData table<any, any> health damage caused by the incoming strike
 function Parry.getDamage(hitData)
     local incomingDamage = hitData.damage
@@ -147,8 +154,7 @@ function Parry.getDamage(hitData)
     damageMult = damageMult + blockBonus
 
     -- Shield size influence (larger shields can redirect more force)
-    local shieldBounds = (getShield():getBoundingBox().halfSize.xy * 2):length()
-    local shieldBonus = shieldBounds * Parry.ShieldSizeInfluence
+    local shieldBonus = Parry.getShieldSize() * Parry.ShieldSizeInfluence
     damageMult = damageMult + shieldBonus
 
     -- Clamp to reasonable bounds
@@ -187,11 +193,13 @@ Using these settings you may increase the parry windows for specific shields, ba
                     local shield = getShield()
                     if not shield then return 'No Shield equipped!' end
 
-                    return ('Parry time in seconds: %.2f, in frames: %.2f, with shield: %s'):format(
-                        Parry.calculateParryFrameSeconds(),
-                        Parry.calculateParryFrames(),
-                        shield.recordId
-                    )
+                    return ('Parry time in seconds: %.2f, in frames: %.2f, with shield: %s, whose size is %d units')
+                        :format(
+                            Parry.calculateParryFrameSeconds(),
+                            Parry.calculateParryFrames(),
+                            shield.recordId,
+                            Parry.getShieldSize()
+                        )
                 elseif key == 'Manager' then
                     return Parry
                 end
