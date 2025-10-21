@@ -3,11 +3,9 @@
 --]]
 
 local anim = require 'openmw.animation'
-local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
 local self = require 'openmw.self'
-local time = require 'openmw_aux.time'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -16,15 +14,10 @@ local HUGE = math.huge
 
 local I = require 'openmw.interfaces'
 
--- Store references to stop functions here so they can be self-referential
--- Mostly used to restore block after being hit, while holding Mouse 3
-local stopFns = {}
-
 -- Attributes
 local Attributes = self.type.stats.attributes
 local Agility = Attributes.agility(self)
 local Luck = Attributes.luck(self)
-local Strength = Attributes.strength(self)
 
 -- Skills
 local Skills = self.type.stats.skills
@@ -32,24 +25,7 @@ local Block = Skills.block(self)
 
 -- Dynamic Stats
 local DynamicStats = self.type.stats.dynamic
-local health = DynamicStats.health(self)
 local Fatigue = DynamicStats.fatigue(self)
-
--- Extra frames to not take melee damage after blocking
--- This should maybe scale based on block skill?
--- or some value related to the shield itself, like weight and speed
--- State
-local hasIFrames = false
-local IFramesDuration = 2 * time.second
-local ActiveEffects = self.type.activeEffects(self)
-local SanctuaryStrength = 1000
-
--- Can probably remove this now with onHit
-local prevHealth = 0
-
--- Values for timed block bonus
--- Right now it uses lightning shield but maybe could be better?
-local hasTimedBonus = false
 local BlockButton = 3
 
 local weaponTypes = types.Weapon.TYPE
@@ -253,30 +229,6 @@ end
 local function blockEnd(button)
     if button ~= BlockButton or not isBlocking() then return end
     toggleBlock(false)
-end
-
-local function beginIFrames(currentLegs)
-    if stopFns["iframes"] then return end
-
-    ActiveEffects:modify(SanctuaryStrength, core.magic.EFFECT_TYPE.Sanctuary)
-    hasIFrames = true
-
-    stopFns["iframes"] = time.runRepeatedly(function()
-        if anim.getCompletion(self, currentLegs) then
-            async:newUnsavableSimulationTimer(IFramesDuration, function()
-                if not stopFns["iframes"] then return end
-
-                if hasIFrames then
-                    ActiveEffects:modify(-SanctuaryStrength, core.magic.EFFECT_TYPE.Sanctuary)
-                    hasIFrames = false
-                end
-
-                stopFns["iframes"]()
-
-                stopFns["iframes"] = nil
-            end)
-        end
-    end, 0.1)
 end
 
 local function ensureNoBlock()
