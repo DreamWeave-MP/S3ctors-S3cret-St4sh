@@ -8,7 +8,16 @@ I.Settings.registerPage {
   description = "Manages actor fatigue, carry weight, hit chance, and strength in combat."
 }
 
-print(string.format("%s loaded version %s. Thank you for playing %s! <3",
-                    modInfo.logPrefix,
-                    modInfo.version,
-                    modInfo.name))
+I.Settings.registerPage {
+  key = modInfo.name .. 'Block & Parry',
+  l10n = modInfo.l10nName,
+  name = "CHIM 2090 - Block & Parry",
+  description = "Manages blocking and parrying effectiveness and formulae."
+}
+
+print(
+  ("%s loaded version %s. Thank you for playing %s! <3"):format(
+    modInfo.logPrefix,
+    modInfo.version,
+    modInfo.name)
+)
