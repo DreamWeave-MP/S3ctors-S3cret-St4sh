@@ -127,12 +127,6 @@ function ChimCore:getNativeHitChance(attackData)
 
     attackTerm = (attackTerm - blindMagnitude) / 100
 
-    print(
-        attacker.recordId,
-        attackTerm,
-        defender.recordId
-    )
-
     return attackTerm
 end
 
