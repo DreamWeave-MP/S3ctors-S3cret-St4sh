@@ -168,11 +168,10 @@ I.Settings.registerGroup {
 local ParryGroupName = 'SettingsGlobal' .. modInfo.name .. 'Parry'
 local MinParryFramesDefault, MaxParryFramesDefault = 2, 16
 local MinDamageMultDefault, MaxDamageMultDefault = 0.25, 1.5
-
 I.Settings.registerGroup {
         key = ParryGroupName,
-        page = modInfo.name,
-        order = 2,
+        page = modInfo.name .. 'Block & Parry',
+        order = 1,
         l10n = modInfo.l10nName,
         name = 'ParryGroupName',
         permanentStorage = true,
@@ -313,6 +312,145 @@ ParryGroup:subscribe(
                                         group,
                                         'MaxParryFrames',
                                         { min = settingValue + 1 }
+                                )
+                        end
+                end
+        )
+)
+
+local BlockGroupName = 'SettingsGlobal' .. modInfo.name .. 'Block'
+I.Settings.registerGroup {
+        key = BlockGroupName,
+        page = modInfo.name .. 'Block & Parry',
+        order = 0,
+        l10n = modInfo.l10nName,
+        name = 'BlockGroupName',
+        permanentStorage = true,
+        settings = {
+                setting(
+                        'DebugEnable',
+                        'checkbox',
+                        {},
+                        'Show Debug Messages',
+                        '',
+                        false
+                ),
+                setting(
+                        'BaseBlockMitigation',
+                        'number',
+                        { min = 0.0, max = 1.0, integer = false, },
+                        'BaseBlockMitigationName',
+                        'BaseBlockMitigationDesc',
+                        0.15
+                ),
+                setting(
+                        'SkillMitigationFactor',
+                        'number',
+                        { min = 0.0, max = 1.0, integer = false, },
+                        'SkillMitigationFactorName',
+                        'SkillMitigationFactorDesc',
+                        0.005
+                ),
+                setting(
+                        'AttributeMitigationFactor',
+                        'number',
+                        { min = 0.0, max = 1.0, integer = false, },
+                        'AttributeMitigationFactorName',
+                        'AttributeMitigationFactorDesc',
+                        0.002
+                ),
+                setting(
+                        'MinimumMitigation',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0 },
+                        'MinimumMitigationName',
+                        'MinimumMitigationDesc',
+                        0.1
+                ),
+                setting(
+                        'MaximumMitigation',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0 },
+                        'MaximumMitigationName',
+                        'MaximumMitigationDesc',
+                        0.95
+                ),
+                setting(
+                        'MaxArmorBonus',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'MaxArmorBonusName',
+                        'MaxArmorBonusDesc',
+                        0.18
+                ),
+                setting(
+                        'MaxWeightBonus',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0 },
+                        'MaxWeightBonusName',
+                        'MaxWeightBonusDesc',
+                        0.4
+                ),
+                setting(
+                        'BlockSpeedLuckWeight',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'BlockSpeedLuckWeightName',
+                        'BlockSpeedLuckWeightDesc',
+                        0.15
+                ),
+                setting(
+                        'BlockSpeedAgilityWeight',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'BlockSpeedAgilityWeightName',
+                        'BlockSpeedAgilityWeightDesc',
+                        0.3
+                ),
+                setting(
+                        'BlockSpeedBase',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0, },
+                        'BlockSpeedBaseName',
+                        'BlockSpeedBaseDesc',
+                        0.75
+                ),
+                setting(
+                        'ShieldWeightPenalty',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'ShieldWeightPenaltyName',
+                        'ShieldWeightPenaltyDesc',
+                        0.005
+                ),
+                setting(
+                        'ShieldWeightPenaltyLimit',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'ShieldWeightPenaltyLimitName',
+                        'ShieldWeightPenaltyLimitDesc',
+                        0.5
+                )
+        }
+}
+
+local BlockGroup = storage.globalSection(BlockGroupName)
+BlockGroup:subscribe(
+        async:callback(
+                function(group, key)
+                        local settingValue = BlockGroup:get(key)
+
+                        if key == 'MinimumMitigation' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MaximumMitigation',
+                                        { min = settingValue + 0.01 }
+                                )
+                        elseif key == 'MaximumMitigation' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MinimumMitigation',
+                                        { max = settingValue - 0.01 }
                                 )
                         end
                 end

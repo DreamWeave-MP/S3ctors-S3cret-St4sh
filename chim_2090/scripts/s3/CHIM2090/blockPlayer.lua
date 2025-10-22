@@ -1,11 +1,6 @@
--- [[
--- Figure out blocks for other weapons
---]]
-
 local anim = require 'openmw.animation'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
-local self = require 'openmw.self'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -13,19 +8,10 @@ local BLOCK_ANIM = 'activeblock'
 local HUGE = math.huge
 
 local I = require 'openmw.interfaces'
+local s3lf = I.s3lf
 
--- Attributes
-local Attributes = self.type.stats.attributes
-local Agility = Attributes.agility(self)
-local Luck = Attributes.luck(self)
+local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
--- Skills
-local Skills = self.type.stats.skills
-local Block = Skills.block(self)
-
--- Dynamic Stats
-local DynamicStats = self.type.stats.dynamic
-local Fatigue = DynamicStats.fatigue(self)
 local BlockButton = 3
 
 local weaponTypes = types.Weapon.TYPE
@@ -36,28 +22,24 @@ local oneHandedTypes = {
     [weaponTypes.BluntOneHand] = true,
 }
 
-local function isBlocking()
-    return anim.getActiveGroup(self, anim.BONE_GROUP.LeftArm) == BLOCK_ANIM
-end
-
 --- Checks if the actor is currently playing any one-handed attack animation.
 --- Slightly weak, since we're not accounting for the possibility of empty or two-handed blocks
 --- but since we have no relevant animations it probably doesn't matter at the moment.
 local function isAttacking()
-    return anim.getActiveGroup(self, anim.BONE_GROUP.RightArm):find('weapon') ~= nil
+    return s3lf.getActiveGroup(anim.BONE_GROUP.RightArm):find('weapon') ~= nil
         or input.getBooleanActionValue('Use')
 end
 
 local function isJumping()
-    return anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody):find('jump') ~= nil
+    return s3lf.getActiveGroup(anim.BONE_GROUP.LowerBody):find('jump') ~= nil
 end
 
 local function inWeaponStance()
-    return self.type.getStance(self) == types.Actor.STANCE.Weapon
+    return s3lf.getStance() == types.Actor.STANCE.Weapon
 end
 
 local function normalizedFatigue()
-    return util.clamp(Fatigue.current / Fatigue.base, 0.0, 1.0)
+    return util.clamp(s3lf.fatigue.current / s3lf.fatigue.base, 0.0, 1.0)
 end
 
 local function blockIsPressed()
@@ -65,22 +47,11 @@ local function blockIsPressed()
 end
 
 local function playingHitstun()
-    return anim.isPlaying(self, 'hitstun')
+    return s3lf.isPlaying('hitstun')
 end
 
-local blockSounds = {
-    lightarmor = 'light armor hit',
-    mediumarmor = 'medium armor hit',
-    heavyarmor = 'heavy armor hit',
-}
-local function playBlockSound()
-    local shield = self.type.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedLeft)
-    local shieldRecord = types.Armor.records[shield.recordId]
-    if not shieldRecord then return false end
-
-    local shieldSkill = I.Combat.getArmorSkill(shield)
-    local shieldSound = blockSounds[shieldSkill]
-    core.sound.playSound3d(shieldSound, self)
+local function getRandomHitGroup()
+    return ('hit%s'):format(math.random(1, 5))
 end
 
 local blockHitLegsData = {
@@ -89,95 +60,6 @@ local blockHitLegsData = {
     },
     blendMask = anim.BLEND_MASK.LowerBody
 }
-
-local function getRandomHitGroup()
-    return ('hit%s'):format(math.random(1, 5))
-end
-
-local function playBlockHitLegs()
-    local randomGroup = getRandomHitGroup()
-    if anim.getActiveGroup(self, anim.BONE_GROUP.LowerBody) == randomGroup then return end
-    I.AnimationController.playBlendedAnimation(randomGroup, blockHitLegsData)
-end
-
----@param blockData CHIMBlockData
-local function handleBlockHit(blockData)
-    --- We also need to handle skill progression and degradation here!
-    playBlockSound()
-    playBlockHitLegs()
-    if blockData.playVfx and blockData.hitPos then
-        core.sendGlobalEvent('SpawnVfx', {
-            position = blockData.hitPos,
-            model = 'meshes/e/impact/parryspark.nif'
-        })
-    end
-end
-
-
-local function usingOneHanded()
-    local weapon = types.Actor.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedRight)
-    if not weapon then return false end
-
-    local weaponRecord = types.Weapon.records[weapon.recordId]
-    if not weaponRecord then return false end
-
-    return oneHandedTypes[weaponRecord.type]
-end
-
-local function usingShield()
-    local carriedLeft = self.type.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedLeft)
-    if not carriedLeft then return false end
-
-    local shieldRecord = types.Armor.records[carriedLeft.recordId]
-    if not shieldRecord then return false end
-
-    return true
-end
-
-local function canBlock()
-    return
-        inWeaponStance()
-        and self.type.isOnGround(self)
-        and usingOneHanded()
-        and usingShield()
-        and not isBlocking()
-        and not I.UI.getMode()
-        and not playingHitstun()
-        and not isAttacking()
-        and not isJumping()
-end
-
-local blockSpeedConfig = {
-    LuckWeight = 0.15,
-    AgilityWeight = 0.3,
-    BaseSpeed = 0.75,
-    ShieldWeightPenalty = 0.005,
-    MaxShieldWeightSlow = 0.5,
-}
-
---- Determine how fast the block animation should play, based on a combinatino of luck, agility, and randomness.
---- The modifier is also multiplied by normalized fatigue, so more tired characters will block more slowly.
----@return number blockSpeed the speed at which the blocking animation should play.
-local function getBlockSpeed()
-    local normalizedAgility = math.min(Agility.modified, 100) / 100.0
-    local normalizedLuck = math.min(Luck.modified, 100) / 100.0
-
-    local randomFactor = (math.random(5) - 5) / 100.0
-
-    local speedModifier = (normalizedLuck * blockSpeedConfig.LuckWeight)
-        + (normalizedAgility * blockSpeedConfig.AgilityWeight)
-        + randomFactor
-
-    local shield = self.type.getEquipment(self, self.type.EQUIPMENT_SLOT.CarriedLeft)
-    local shieldWeight = shield and types.Armor.records[shield.recordId].weight or 0
-    local weightPenalty = math.min(
-        shieldWeight * blockSpeedConfig.ShieldWeightPenalty,
-        blockSpeedConfig.MaxShieldWeightSlow
-    )
-
-    return (blockSpeedConfig.BaseSpeed - weightPenalty)
-        + speedModifier * normalizedFatigue()
-end
 
 local blockAnimData = {
     startKey = 'start',
@@ -199,13 +81,203 @@ local idleAnimData = {
     },
 }
 
-local function playBlockAnimation()
-    blockAnimData.speed = getBlockSpeed()
+local groupName = 'SettingsGlobal' .. modInfo.name .. 'Block'
+---@type ProtectedTableInterface
+local ProtectedTable = I.S3ProtectedTable
+
+---@class BlockManager: ProtectedTable
+---@field BaseBlockMitigation number
+---@field SkillMitigationFactor number
+---@field AttributeMitigationFactor number
+---@field MinimumMitigation number
+---@field MaximumMitigation number
+---@field MaxArmorBonus number
+---@field MaxWeightBonus number
+---@field BlockSpeedLuckWeight number
+---@field BlockSpeedAgilityWeight number
+---@field ShieldWeightPenalty number
+---@field ShieldWeightPenaltyLimit number
+---@field BlockSpeedBase number
+local Block = ProtectedTable.new {
+    inputGroupName = groupName,
+    logPrefix = '[CHIMBlock]:\n',
+}
+
+function Block.playBlockAnimation()
+    blockAnimData.speed = Block.getSpeed()
     I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
 end
 
-local function playIdleAnimation()
+function Block.playIdleAnimation()
     I.AnimationController.playBlendedAnimation('idle1', idleAnimData)
+end
+
+function Block.playBlockHitLegs()
+    local randomGroup = getRandomHitGroup()
+    if s3lf.getActiveGroup(anim.BONE_GROUP.LowerBody) == randomGroup then return end
+    I.AnimationController.playBlendedAnimation(randomGroup, blockHitLegsData)
+end
+
+function Block.isBlocking()
+    return s3lf.getActiveGroup(anim.BONE_GROUP.LeftArm) == BLOCK_ANIM
+end
+
+function Block.getShieldAttribute(shield)
+    local shieldType = I.Combat.getArmorSkill(shield)
+    local shieldAttribute = core.stats.Skill.records[shieldType].attribute
+    return s3lf[shieldAttribute].modified
+end
+
+function Block.usingOneHanded()
+    local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+    if not weapon then return false end
+
+    local weaponRecord = types.Weapon.records[weapon.recordId]
+    if not weaponRecord then return false end
+
+    return oneHandedTypes[weaponRecord.type]
+end
+
+function Block.usingShield()
+    local carriedLeft = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
+    if not carriedLeft then return false end
+
+    local shieldRecord = types.Armor.records[carriedLeft.recordId]
+    if not shieldRecord then return false end
+
+    return true
+end
+
+local blockSounds = {
+    lightarmor = 'light armor hit',
+    mediumarmor = 'medium armor hit',
+    heavyarmor = 'heavy armor hit',
+}
+
+function Block.playBlockSound()
+    local shield = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
+    local shieldRecord = types.Armor.records[shield.recordId]
+    if not shieldRecord then return end
+
+    local shieldSkill = I.Combat.getArmorSkill(shield)
+    core.sound.playSound3d(blockSounds[shieldSkill], s3lf.object)
+end
+
+function Block.getShieldBaseEffectiveness(armor, weight)
+    -- MaxArmorBonus, MaxWeightBonus
+    print(Block.MaxArmorBonus, Block.MaxWeightBonus)
+    local armorComponent = util.remap(armor, 0, 75, 0.1, Block.MaxArmorBonus)
+    local weightComponent = util.remap(weight, 0, 50, 0.05, Block.MaxWeightBonus)
+    return armorComponent + weightComponent
+end
+
+---@return number damageMitigation Multiplier on damage based on shield skill, governing attribute, and shield quality
+function Block.calculateMitigation()
+    local shield = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
+    if not shield then return 0 end
+
+    local shieldRecord = types.Armor.records[shield.recordId]
+    if not shieldRecord then return 0 end
+
+    local shieldArmor = shieldRecord.baseArmor
+    local shieldWeight = shieldRecord.weight
+
+    -- Base mitigation from shield quality
+    local baseMitigation = Block.getShieldBaseEffectiveness(shieldArmor, shieldWeight)
+
+    -- Skill contribution (more skilled = better at angling shield)
+    local skillMultiplier = 0.5 + (s3lf.block.base * Block.SkillMitigationFactor)
+
+    local attributeBonus = Block.getShieldAttribute(shield) * Block.AttributeMitigationFactor
+
+    local totalMitigation = baseMitigation * skillMultiplier * normalizedFatigue()
+        + (attributeBonus + Block.BaseBlockMitigation)
+
+    -- Clamp to reasonable bounds
+    totalMitigation = util.clamp(
+        totalMitigation,
+        Block.MinimumMitigation,
+        Block.MaximumMitigation
+    )
+
+    Block.debugLog(
+        ([[Normalized fatigue: %.5f
+            Total Mitigation: %.5f
+            Base Mitigation: %.5f
+            Armor Rating: %d
+            Block Skill Multiplier: %.5f
+            Attribute Bonus: %.5f]])
+        :format(
+            normalizedFatigue(),
+            totalMitigation,
+            baseMitigation,
+            shieldArmor,
+            skillMultiplier,
+            attributeBonus
+        )
+    )
+
+    return totalMitigation
+end
+
+---@class CHIMBlockResult
+---@field damageMult number
+
+---@param blockData CHIMBlockData
+function Block.handleHit(blockData)
+    --- We also need to handle skill progression and degradation here!
+    Block.playBlockSound()
+    Block.playBlockHitLegs()
+
+    if blockData.playVfx and blockData.hitPos then
+        core.sendGlobalEvent('SpawnVfx', {
+            position = blockData.hitPos,
+            model = 'meshes/e/impact/parryspark.nif'
+        })
+    end
+
+    local damageMult = Block.calculateMitigation()
+
+    return {
+        damageMult = damageMult,
+    }
+end
+
+function Block.canBlock()
+    return
+        inWeaponStance()
+        and s3lf.isOnGround()
+        and Block.usingOneHanded()
+        and Block.usingShield()
+        and not Block.isBlocking()
+        and not I.UI.getMode()
+        and not playingHitstun()
+        and not isAttacking()
+        and not isJumping()
+end
+
+--- Determine how fast the block animation should play, based on a combinatino of luck, agility, and randomness.
+--- The modifier is also multiplied by normalized fatigue, so more tired characters will block more slowly.
+---@return number blockSpeed the speed at which the blocking animation should play.
+function Block.getSpeed()
+    local normalizedAgility = math.min(s3lf.agility.modified, 100) / 100.0
+    local normalizedLuck = math.min(s3lf.luck.modified, 100) / 100.0
+
+    local randomFactor = (math.random(5) - 5) / 100.0
+
+    local speedModifier = (normalizedLuck * Block.BlockSpeedLuckWeight)
+        + (normalizedAgility * Block.BlockSpeedAgilityWeight)
+        + randomFactor
+
+    local shield = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
+    local shieldWeight = shield and types.Armor.records[shield.recordId].weight or 0
+    local weightPenalty = math.min(
+        shieldWeight * Block.ShieldWeightPenalty,
+        Block.ShieldWeightPenaltyLimit
+    )
+
+    return (Block.BlockSpeedBase - weightPenalty)
+        + speedModifier * normalizedFatigue()
 end
 
 local function timedBlockHandler(group, key)
@@ -216,41 +288,41 @@ end
 
 I.AnimationController.addTextKeyHandler(BLOCK_ANIM, timedBlockHandler)
 
-local function toggleBlock(enable)
-    if isBlocking() == enable then return end
+function Block.toggleBlock(enable)
+    if Block.isBlocking() == enable then return end
 
-    (enable and playBlockAnimation or playIdleAnimation)()
+    Block[(enable and 'playBlockAnimation' or 'playIdleAnimation')]()
 end
 
 local function blockBegin(button)
-    if I.UI.getMode() or button ~= BlockButton or not canBlock() then return end
-    toggleBlock(true)
+    if I.UI.getMode() or button ~= BlockButton or not Block.canBlock() then return end
+    Block.toggleBlock(true)
 end
 
 local function blockEnd(button)
-    if button ~= BlockButton or not isBlocking() then return end
-    toggleBlock(false)
+    if button ~= BlockButton or not Block.isBlocking() then return end
+    Block.toggleBlock(false)
 end
 
 local function ensureNoBlock()
-    if Block.modifier == -HUGE then return end
-    Block.modifier = -HUGE
+    if s3lf.block.modifier == -HUGE then return end
+    s3lf.block.modifier = -HUGE
 end
 
 local function noBlockInMenus()
     if not I.UI.getMode() then return end
-    toggleBlock(false)
+    Block.toggleBlock(false)
     return true
 end
 
 --- Restore the block if it was interrupted by something else
 local function blockIfPossible()
-    if not blockIsPressed() or not canBlock() then return end
-    toggleBlock(true)
+    if not blockIsPressed() or not Block.canBlock() then return end
+    Block.toggleBlock(true)
 end
 
 local function interruptBlock()
-    if not isBlocking() then return end
+    if not Block.isBlocking() then return end
 
     local shouldInterrupt = isAttacking()
         or isJumping()
@@ -259,21 +331,65 @@ local function interruptBlock()
 
     if not shouldInterrupt then return end
 
-    toggleBlock(false)
+    Block.toggleBlock(false)
 end
+
+local keyHanders = {
+    blockSpeed = function()
+        return Block.getSpeed()
+    end,
+    canBlock = function()
+        return Block.canBlock()
+    end,
+    help = function()
+        return
+        [[The block interface exposes functions related to damage mitigation, animation speed and playback,  and parry handling.
+        To reach into all exposed functions, use the `Manager` field. Shorthand functions available directly through the interface include:
+        blockSpeed, canBlock, help, isBlocking, mitigation, playBlock, playBlockHitLegs, playIdle, usingOneHanded, and usingShield.]]
+    end,
+    isBlocking = function()
+        return Block.isBlocking()
+    end,
+    mitigation = function()
+        return Block.calculateMitigation()
+    end,
+    playBlock = function()
+        Block.playBlockAnimation()
+        return ''
+    end,
+    playBlockHitLegs = function()
+        Block.playBlockHitLegs()
+        return ''
+    end,
+    playIdle = function()
+        Block.playIdleAnimation()
+        return ''
+    end,
+    usingOneHanded = function()
+        return Block.usingOneHanded()
+    end,
+    usingShield = function()
+        return Block.usingShield()
+    end,
+}
 
 --- Also consider implementing iFrames. The current mechanic appears to be designed so as to give you a shitton of sanctuary effect
 --- until the hit animation finishes.
 return {
     interfaceName = 's3ChimBlock',
-    interface = {
-        canBlock = canBlock,
-        getBlockSpeed = getBlockSpeed,
-        handleBlockHit = handleBlockHit,
-        isBlocking = isBlocking,
-        playBlockSound = playBlockSound,
-        toggleBlock = toggleBlock,
-    },
+    interface = setmetatable(
+        {},
+        {
+            __index = function(_, key)
+                if keyHanders[key] then
+                    assert(type(keyHanders[key]) == 'function')
+                    return keyHanders[key]()
+                elseif key == 'Manager' then
+                    return Block
+                end
+            end,
+        }
+    ),
     engineHandlers = {
         onMouseButtonPress = blockBegin,
         onMouseButtonRelease = blockEnd,
