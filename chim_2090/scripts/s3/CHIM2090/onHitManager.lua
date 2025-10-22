@@ -102,12 +102,6 @@ end
 
 Combat.addOnHitHandler(CHIMHitHandler)
 
-I.AnimationController.addTextKeyHandler('', function(group, key)
-    if types.Player.objectIsInstance(self) then
-        print(self.recordId, group, key)
-    end
-end)
-
 return {
     eventHandlers = {
         CHIMOnParry = function(parryData)
