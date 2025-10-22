@@ -117,5 +117,13 @@ return {
                 )
             end
         end,
+        CHIMPoiseBreak = function()
+            I.AnimationController.playBlendedAnimation(
+                'knockdown',
+                {
+                    priority = animation.PRIORITY.Scripted,
+                }
+            )
+        end,
     }
 }
