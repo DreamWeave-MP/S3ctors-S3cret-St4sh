@@ -61,7 +61,7 @@ local function CHIMHitHandler(attack)
         elseif I.s3ChimBlock.isBlocking then
             blockData.playVfx = true
             local blockResult = I.s3ChimBlock.Manager.handleHit(blockData)
-            shieldMultiplier = shieldMultiplier - blockResult.damageMult
+            shieldMultiplier = blockResult.damageMult
         end
     end
 
