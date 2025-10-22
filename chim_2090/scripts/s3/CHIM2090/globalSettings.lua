@@ -1,9 +1,11 @@
 local async = require 'openmw.async'
+local core = require 'openmw.core'
 local storage = require 'openmw.storage'
 
 local I = require 'openmw.interfaces'
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
+local L = core.l10n(modInfo.l10nName)
 
 local agilityHitChancePctDesc =
 'Percentage of agility that is added to hit chance, vanilla is 20%. Related damage scaling is capped by the Max Strength Multiplier setting.'
@@ -326,6 +328,10 @@ ParryGroup:subscribe(
         )
 )
 
+local fFatigueBlockBase = core.getGMST('fFatigueBlockBase')
+local fFatigueBlockMult = core.getGMST('fFatigueBlockMult')
+local fWeaponFatigueBlockMult = core.getGMST('fWeaponFatigueBlockMult')
+
 local BlockGroupName = 'SettingsGlobal' .. modInfo.name .. 'Block'
 I.Settings.registerGroup {
         key = BlockGroupName,
@@ -438,7 +444,31 @@ I.Settings.registerGroup {
                         'ShieldWeightPenaltyLimitName',
                         'ShieldWeightPenaltyLimitDesc',
                         0.5
-                )
+                ),
+                setting(
+                        'FatigueBlockBase',
+                        'number',
+                        { integer = false, min = 0.0, max = 1000.0, },
+                        'FatigueBlockBaseName',
+                        L('FatigueBlockBaseDesc', { value = fFatigueBlockBase }),
+                        fFatigueBlockBase
+                ),
+                setting(
+                        'FatigueBlockMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 1000.0, },
+                        'FatigueBlockMultName',
+                        L('FatigueBlockMultDesc', { value = fFatigueBlockMult }),
+                        fFatigueBlockMult
+                ),
+                setting(
+                        'WeaponFatigueBlockMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 1000.0, },
+                        'WeaponFatigueBlockMultName',
+                        L('WeaponFatigueBlockMultDesc', { value = fWeaponFatigueBlockMult }),
+                        fWeaponFatigueBlockMult
+                ),
         }
 }
 

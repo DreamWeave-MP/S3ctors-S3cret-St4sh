@@ -42,6 +42,10 @@ local function normalizedFatigue()
     return util.clamp(s3lf.fatigue.current / s3lf.fatigue.base, 0.0, 1.0)
 end
 
+local function normalizedEncumbrance()
+    return s3lf.getEncumbrance() / s3lf.getCapacity()
+end
+
 local function blockIsPressed()
     return input.isMouseButtonPressed(BlockButton)
 end
@@ -107,6 +111,9 @@ local ProtectedTable = I.S3ProtectedTable
 ---@field ShieldWeightPenalty number
 ---@field ShieldWeightPenaltyLimit number
 ---@field BlockSpeedBase number
+---@field FatigueBlockBase number
+---@field FatigueBlockMult number
+---@field WeaponFatigueBlockMult number
 local Block = ProtectedTable.new {
     inputGroupName = groupName,
     logPrefix = '[CHIMBlock]:\n',
@@ -227,6 +234,18 @@ function Block.calculateMitigation()
     return (1.0 - totalMitigation)
 end
 
+---@param weapon GameObject
+---@param attackStrength number
+function Block.consumeFatigue(weapon, attackStrength)
+    local fatigueLoss = Block.FatigueBlockBase + normalizedEncumbrance() * Block.FatigueBlockMult
+    if weapon then
+        local weaponWeight = weapon.type.records[weapon.recordId].weight
+        fatigueLoss = fatigueLoss + (weaponWeight * attackStrength * Block.WeaponFatigueBlockMult)
+    end
+
+    s3lf.fatigue.current = s3lf.fatigue.current - fatigueLoss
+end
+
 ---@class CHIMBlockResult
 ---@field damageMult number
 
@@ -236,6 +255,7 @@ function Block.handleHit(blockData)
     --- We also need to handle skill progression and degradation here!
     Block.playBlockSound()
     Block.playBlockHitLegs()
+    Block.consumeFatigue(blockData.weapon, blockData.attackStrength)
     local damageMitigation = Block.calculateMitigation()
 
     -- From the OpenMW Wiki:
