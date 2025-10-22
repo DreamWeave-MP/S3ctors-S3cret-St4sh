@@ -111,9 +111,6 @@ local ProtectedTable = I.S3ProtectedTable
 ---@field ShieldWeightPenalty number
 ---@field ShieldWeightPenaltyLimit number
 ---@field BlockSpeedBase number
----@field FatigueBlockBase number
----@field FatigueBlockMult number
----@field WeaponFatigueBlockMult number
 local Block = ProtectedTable.new {
     inputGroupName = groupName,
     logPrefix = '[CHIMBlock]:\n',
@@ -237,10 +234,10 @@ end
 ---@param weapon GameObject
 ---@param attackStrength number
 function Block.consumeFatigue(weapon, attackStrength)
-    local fatigueLoss = Block.FatigueBlockBase + normalizedEncumbrance() * Block.FatigueBlockMult
+    local fatigueLoss = I.s3ChimDynamic.FatigueBlockBase + normalizedEncumbrance() * I.s3ChimDynamic.FatigueBlockMult
     if weapon then
         local weaponWeight = weapon.type.records[weapon.recordId].weight
-        fatigueLoss = fatigueLoss + (weaponWeight * attackStrength * Block.WeaponFatigueBlockMult)
+        fatigueLoss = fatigueLoss + (weaponWeight * attackStrength * I.s3ChimDynamic.WeaponFatigueBlockMult)
     end
 
     s3lf.fatigue.current = s3lf.fatigue.current - fatigueLoss
