@@ -68,35 +68,128 @@ local function setting(key, renderer, argument, name, description, default)
         }
 end
 
+
+local fFatigueBlockBase = core.getGMST('fFatigueBlockBase')
+local fFatigueBlockMult = core.getGMST('fFatigueBlockMult')
+local fWeaponFatigueBlockMult = core.getGMST('fWeaponFatigueBlockMult')
 I.Settings.registerGroup {
         key = 'SettingsGlobal' .. modInfo.name .. 'Dynamic',
-        page = modInfo.name,
+        page = modInfo.name .. 'Dynamic Stats',
         order = 0,
         l10n = modInfo.l10nName,
         name = 'Health, Fatigue, Magicka',
         permanentStorage = true,
         settings = {
-                setting('UseVanillaFatigueFormula', 'checkbox', {}, 'Use Vanilla Fatigue Formula', useVanillaFatigueDesc, false),
-                setting('FatiguePerSecond', 'number', { integer = true, min = -500, max = 500 },
-                        'Fatigue Per Second', fatiguePerSecondDesc, 3),
-                setting('FatigueReturnMult', 'number', { integer = false, min = 0.001, max = 10.0 },
-                        'Fatigue Endurance Multiplier', fatigueReturnMultDesc, 0.02),
-                setting('FatigueEndMult', 'number', { integer = false, min = 0.001, max = 10.0 },
-                        'Resting Endurance Multiplier', fatigueEndMultDesc, 0.04),
-                setting('MaxFatigueStrMult', 'number', { integer = true, min = 0, max = 1000 },
-                        'Fatigue Strength Multiplier', maxFatigueStrMultDesc, 125),
-                setting('MaxFatigueWilMult', 'number', { integer = true, min = 0, max = 1000 },
-                        'Fatigue Willpower Multiplier', maxFatigueWilMultDesc, 50),
-                setting('MaxFatigueAgiMult', 'number', { integer = true, min = 0, max = 1000 },
-                        'Fatigue Agility Multiplier', maxFatigueAgiMultDesc, 25),
-                setting('MaxFatigueEndMult', 'number', { integer = true, min = 0, max = 1000 },
-                        'Fatigue Endurance Multiplier', maxFatigueEndMultDesc, 75),
-                setting('FortifyMagickaMultiplier', 'number', { integer = true, min = 0, max = 1000 },
-                        'Fortify Magicka Multiplier', 'NOT WRITTEN', 10),
-                setting('PCbaseMagickaMultiplier', 'number', { integer = false, min = 0., max = 1000., },
-                        'Player Base Magicka Multiplier', 'NOT WRITTEN', 1.),
-                setting('NPCbaseMagickaMultiplier', 'number', { integer = false, min = 0., max = 1000., },
-                        'NPC Base Magicka Multiplier', 'NOT WRITTEN', 2.),
+                setting('UseVanillaFatigueFormula',
+                        'checkbox',
+                        {},
+                        'Use Vanilla Fatigue Formula',
+                        useVanillaFatigueDesc,
+                        false
+                ),
+                setting(
+                        'FatiguePerSecond',
+                        'number',
+                        { integer = true, min = -500, max = 500 },
+                        'Fatigue Per Second',
+                        fatiguePerSecondDesc,
+                        3
+                ),
+                setting(
+                        'FatigueReturnMult',
+                        'number',
+                        { integer = false, min = 0.001, max = 10.0 },
+                        'Fatigue Endurance Multiplier',
+                        fatigueReturnMultDesc,
+                        0.02
+                ),
+                setting(
+                        'FatigueEndMult',
+                        'number',
+                        { integer = false, min = 0.001, max = 10.0 },
+                        'Resting Endurance Multiplier',
+                        fatigueEndMultDesc,
+                        0.04
+                ),
+                setting(
+                        'MaxFatigueStrMult',
+                        'number',
+                        { integer = true, min = 0, max = 1000 },
+                        'Fatigue Strength Multiplier',
+                        maxFatigueStrMultDesc,
+                        125
+                ),
+                setting(
+                        'MaxFatigueWilMult',
+                        'number',
+                        { integer = true, min = 0, max = 1000 },
+                        'Fatigue Willpower Multiplier',
+                        maxFatigueWilMultDesc,
+                        50
+                ),
+                setting(
+                        'MaxFatigueAgiMult',
+                        'number',
+                        { integer = true, min = 0, max = 1000 },
+                        'Fatigue Agility Multiplier',
+                        maxFatigueAgiMultDesc,
+                        25
+                ),
+                setting(
+                        'MaxFatigueEndMult',
+                        'number',
+                        { integer = true, min = 0, max = 1000 },
+                        'Fatigue Endurance Multiplier',
+                        maxFatigueEndMultDesc,
+                        75),
+                setting(
+                        'FortifyMagickaMultiplier',
+                        'number',
+                        { integer = true, min = 0, max = 1000 },
+                        'Fortify Magicka Multiplier',
+                        'NOT WRITTEN',
+                        10
+                ),
+                setting(
+                        'PCbaseMagickaMultiplier',
+                        'number',
+                        { integer = false, min = 0., max = 1000., },
+                        'Player Base Magicka Multiplier',
+                        'NOT WRITTEN',
+                        1.
+                ),
+                setting(
+                        'NPCbaseMagickaMultiplier',
+                        'number',
+                        { integer = false, min = 0., max = 1000., },
+                        'NPC Base Magicka Multiplier',
+                        'NOT WRITTEN',
+                        2.
+                ),
+                setting(
+                        'FatigueBlockBase',
+                        'number',
+                        { integer = false, min = 0.0, max = 1000.0, },
+                        'FatigueBlockBaseName',
+                        L('FatigueBlockBaseDesc', { value = fFatigueBlockBase }),
+                        fFatigueBlockBase
+                ),
+                setting(
+                        'FatigueBlockMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 1000.0, },
+                        'FatigueBlockMultName',
+                        L('FatigueBlockMultDesc', { value = fFatigueBlockMult }),
+                        fFatigueBlockMult
+                ),
+                setting(
+                        'WeaponFatigueBlockMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 1000.0, },
+                        'WeaponFatigueBlockMultName',
+                        L('WeaponFatigueBlockMultDesc', { value = fWeaponFatigueBlockMult }),
+                        fWeaponFatigueBlockMult
+                ),
         }
 }
 
@@ -139,7 +232,7 @@ I.Settings.registerGroup {
 I.Settings.registerGroup {
         key = 'SettingsGlobal' .. modInfo.name .. 'Core',
         page = modInfo.name,
-        order = 1,
+        order = 0,
         l10n = modInfo.l10nName,
         name = 'Damage, Crit, and Fumble',
         permanentStorage = true,
@@ -181,7 +274,7 @@ local MinDamageMultDefault, MaxDamageMultDefault = 0.25, 1.5
 I.Settings.registerGroup {
         key = ParryGroupName,
         page = modInfo.name .. 'Block & Parry',
-        order = 1,
+        order = 0,
         l10n = modInfo.l10nName,
         name = 'ParryGroupName',
         permanentStorage = true,
@@ -328,10 +421,6 @@ ParryGroup:subscribe(
         )
 )
 
-local fFatigueBlockBase = core.getGMST('fFatigueBlockBase')
-local fFatigueBlockMult = core.getGMST('fFatigueBlockMult')
-local fWeaponFatigueBlockMult = core.getGMST('fWeaponFatigueBlockMult')
-
 local BlockGroupName = 'SettingsGlobal' .. modInfo.name .. 'Block'
 I.Settings.registerGroup {
         key = BlockGroupName,
@@ -444,30 +533,6 @@ I.Settings.registerGroup {
                         'ShieldWeightPenaltyLimitName',
                         'ShieldWeightPenaltyLimitDesc',
                         0.5
-                ),
-                setting(
-                        'FatigueBlockBase',
-                        'number',
-                        { integer = false, min = 0.0, max = 1000.0, },
-                        'FatigueBlockBaseName',
-                        L('FatigueBlockBaseDesc', { value = fFatigueBlockBase }),
-                        fFatigueBlockBase
-                ),
-                setting(
-                        'FatigueBlockMult',
-                        'number',
-                        { integer = false, min = 0.0, max = 1000.0, },
-                        'FatigueBlockMultName',
-                        L('FatigueBlockMultDesc', { value = fFatigueBlockMult }),
-                        fFatigueBlockMult
-                ),
-                setting(
-                        'WeaponFatigueBlockMult',
-                        'number',
-                        { integer = false, min = 0.0, max = 1000.0, },
-                        'WeaponFatigueBlockMultName',
-                        L('WeaponFatigueBlockMultDesc', { value = fWeaponFatigueBlockMult }),
-                        fWeaponFatigueBlockMult
                 ),
         }
 }
