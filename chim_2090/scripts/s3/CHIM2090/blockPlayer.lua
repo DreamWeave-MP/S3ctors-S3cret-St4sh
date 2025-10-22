@@ -258,14 +258,17 @@ function Block.handleHit(blockData)
     Block.consumeFatigue(blockData.weapon, blockData.attackStrength)
     local damageMitigation = Block.calculateMitigation()
 
-    -- From the OpenMW Wiki:
-    -- if a hit is blocked, the shield durability is reduced by incoming damage, no damage mitigation is applied
-    -- (We apply mtigation)
-    core.sendGlobalEvent('ModifyItemCondition', {
-        actor = s3lf.object,
-        item = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft),
-        amount = -(blockData.damage * damageMitigation),
-    })
+    -- Parries do not consume durability
+    if blockData.applyDurabilityDamage then
+        -- From the OpenMW Wiki:
+        -- if a hit is blocked, the shield durability is reduced by incoming damage, no damage mitigation is applied
+        -- (We apply mtigation)
+        core.sendGlobalEvent('ModifyItemCondition', {
+            actor = s3lf.object,
+            item = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft),
+            amount = -(blockData.damage * damageMitigation),
+        })
+    end
 
     if blockData.playVfx and blockData.hitPos then
         core.sendGlobalEvent('SpawnVfx', {
