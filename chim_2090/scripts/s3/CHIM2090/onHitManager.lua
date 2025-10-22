@@ -10,6 +10,8 @@ local types = require 'openmw.types'
 ---@field hitPos util.vector3
 ---@field playVfx true?
 ---@field type AttackType
+---@field weapon GameObject
+---@field attackStrength number
 
 local isPlayer, ui = types.Player.objectIsInstance(self)
 if isPlayer then
@@ -49,6 +51,8 @@ local function CHIMHitHandler(attack)
             damage = attack.damage.health or attack.damage.fatigue,
             hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
             type = attack.type or self.ATTACK_TYPE.Thrust,
+            weapon = attack.weapon,
+            attackStrength = attack.strength,
         }
 
         if I.s3ChimParry.Manager.ready() then
