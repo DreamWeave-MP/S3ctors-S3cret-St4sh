@@ -18,6 +18,9 @@ local MagickEffect = core.magic.EFFECT_TYPE
 ---@field FortifyMagickaMultiplier number
 ---@field PCbaseMagickaMultiplier number
 ---@field NPCbaseMagickaMultiplier number
+---@field FatigueBlockBase number
+---@field FatigueBlockMult number
+---@field WeaponFatigueBlockMult number
 local DynamicManager = I.S3ProtectedTable.new {
   inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic',
   logPrefix = 'ChimManagerDynamic'
