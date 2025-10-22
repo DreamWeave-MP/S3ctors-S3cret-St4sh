@@ -134,7 +134,7 @@ function Parry.getDamage(hitData)
         return 0
     end
 
-    I.s3ChimBlock.handleBlockHit(hitData)
+    I.s3ChimBlock.Manager.handleHit(hitData)
 
     playBlockEndAnim()
 

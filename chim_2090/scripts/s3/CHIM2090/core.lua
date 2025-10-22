@@ -25,6 +25,7 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 ---@field FumbleDamagePercent integer Percentage of damage done on a fumble, expressed as an integer between 0 and 100. Default 25
 ---@field FumbleBaseChance integer Base chance for a fumbling attack prior to taking stat calculations or chance scaling into account. Default 3
 ---@field FumbleChanceScale integer Scaling applied to fumble chance globally. Increases or decreases the overall chance for fumbles; Default 10
+---@field GlobalDamageScaling number Global multiplier applied to damage on physical strikes
 local ChimCore = I.S3ProtectedTable.new { inputGroupName = groupName }
 
 local ActiveEffects = s3lf.activeEffects()

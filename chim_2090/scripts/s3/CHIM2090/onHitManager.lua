@@ -24,6 +24,8 @@ if core.API_REVISION < onHitAPIRevision then
 end
 
 local I = require 'openmw.interfaces'
+---@type BlockManager
+local Block = I.s3ChimBlock.Manager
 local Combat = I.Combat
 
 local Fatigue = self.type.stats.dynamic.fatigue(self)
@@ -60,8 +62,8 @@ local function CHIMHitHandler(attack)
             return false
         elseif I.s3ChimBlock.isBlocking then
             blockData.playVfx = true
-            local blockResult = I.s3ChimBlock.Manager.handleHit(blockData)
-            shieldMultiplier = blockResult.damageMult
+            local blockResult = Block.handleHit(blockData)
+            shieldMultiplier = shieldMultiplier - blockResult.damageMult
         end
     end
 
@@ -78,6 +80,7 @@ local function CHIMHitHandler(attack)
             attack.damage[damageType] =
                 (attack.damage[damageType] * damageMult)
                 * shieldMultiplier
+                * I.s3ChimCore.Manager.GlobalDamageScaling
         end
     end
 end

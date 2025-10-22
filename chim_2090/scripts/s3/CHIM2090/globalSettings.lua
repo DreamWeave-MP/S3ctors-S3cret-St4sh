@@ -143,6 +143,14 @@ I.Settings.registerGroup {
         permanentStorage = true,
         settings = {
                 setting('DebugEnable', 'checkbox', {}, 'Show Debug Messages', '', false),
+                setting(
+                        'GlobalDamageScaling',
+                        'number',
+                        { integer = false, min = 0.0, max = 100.0, },
+                        'GlobalDamageScalingName',
+                        'GlobalDamageScalingDesc',
+                        1.0
+                ),
                 setting('AgilityHitChancePct', 'number', { integer = false, min = 0.001, max = 1.0 },
                         'Agility Hit Chance Influence', agilityHitChancePctDesc, 0.20),
                 setting('LuckHitChancePct', 'number', { integer = false, min = 0.001, max = 1.0 },
