@@ -51,7 +51,15 @@ local function playingHitstun()
 end
 
 local function getRandomHitGroup()
-    return ('hit%s'):format(math.random(1, 5))
+    local formatString, range
+
+    if s3lf.isSwimming() then
+        formatString, range = 'swimhit%d', 3
+    else
+        formatString, range = 'hit%d', 5
+    end
+
+    return formatString:format(math.random(1, range))
 end
 
 local blockHitLegsData = {
