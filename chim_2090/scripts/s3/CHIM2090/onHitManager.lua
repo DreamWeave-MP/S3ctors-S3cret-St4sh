@@ -12,6 +12,7 @@ local types = require 'openmw.types'
 ---@field type AttackType
 ---@field weapon GameObject
 ---@field attackStrength number
+---@field applyDurabilityDamage boolean
 
 local isPlayer, ui = types.Player.objectIsInstance(self)
 if isPlayer then
@@ -53,9 +54,11 @@ local function CHIMHitHandler(attack)
             type = attack.type or self.ATTACK_TYPE.Thrust,
             weapon = attack.weapon,
             attackStrength = attack.strength,
+            applyDurabilityDamage = true,
         }
 
         if I.s3ChimParry.Manager.ready() then
+            blockData.applyDurabilityDamage = false
             attacker:sendEvent('CHIMOnParry', {
                 damage = I.s3ChimParry.Manager.getDamage(blockData),
             })
