@@ -252,10 +252,15 @@ end
 ---@param blockData CHIMBlockData
 ---@return CHIMBlockResult
 function Block.handleHit(blockData)
-    --- We also need to handle skill progression and degradation here!
     Block.playBlockSound()
     Block.playBlockHitLegs()
     Block.consumeFatigue(blockData.weapon, blockData.attackStrength)
+    I.SkillProgression.skillUsed(core.stats.Skill.records.Block.id,
+        {
+            skillGain = 2.5, -- From testing successful blocks in-game, this seems to be the value used
+            useType = I.SkillProgression.SKILL_USE_TYPES.Block_Success,
+
+        })
     local damageMitigation = Block.calculateMitigation()
 
     -- Parries do not consume durability
