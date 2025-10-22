@@ -42,6 +42,7 @@ local function CHIMHitHandler(attack)
         return attacker:sendEvent('CHIMEnsureFortifyAttack')
     end
 
+    local shieldMultiplier = 1.0
     if isPlayer then
         ---@type CHIMBlockData
         local blockData = {
@@ -57,9 +58,10 @@ local function CHIMHitHandler(attack)
 
             ui.showMessage('Attack parried!')
             return false
-        elseif I.s3ChimBlock.isBlocking() then
+        elseif I.s3ChimBlock.isBlocking then
             blockData.playVfx = true
-            I.s3ChimBlock.handleBlockHit(blockData)
+            local blockResult = I.s3ChimBlock.Manager.handleHit(blockData)
+            shieldMultiplier = blockResult.damageMult
         end
     end
 
@@ -73,7 +75,9 @@ local function CHIMHitHandler(attack)
 
     for _, damageType in ipairs(damageTypes) do
         if attack.damage[damageType] ~= nil then
-            attack.damage[damageType] = attack.damage[damageType] * damageMult
+            attack.damage[damageType] =
+                (attack.damage[damageType] * damageMult)
+                * shieldMultiplier
         end
     end
 end
