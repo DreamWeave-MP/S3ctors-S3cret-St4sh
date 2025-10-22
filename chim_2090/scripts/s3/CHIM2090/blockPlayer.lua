@@ -165,8 +165,6 @@ function Block.playBlockSound()
 end
 
 function Block.getShieldBaseEffectiveness(armor, weight)
-    -- MaxArmorBonus, MaxWeightBonus
-    print(Block.MaxArmorBonus, Block.MaxWeightBonus)
     local armorComponent = util.remap(armor, 0, 75, 0.1, Block.MaxArmorBonus)
     local weightComponent = util.remap(weight, 0, 50, 0.05, Block.MaxWeightBonus)
     return armorComponent + weightComponent
