@@ -216,7 +216,7 @@ function Block.calculateMitigation()
         )
     )
 
-    return totalMitigation
+    return (1.0 - totalMitigation)
 end
 
 ---@class CHIMBlockResult
@@ -236,10 +236,8 @@ function Block.handleHit(blockData)
         })
     end
 
-    local damageMult = Block.calculateMitigation()
-
     return {
-        damageMult = damageMult,
+        damageMult = Block.calculateMitigation(),
     }
 end
 
