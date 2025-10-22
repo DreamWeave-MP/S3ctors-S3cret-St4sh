@@ -85,6 +85,7 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Block'
 ---@type ProtectedTableInterface
 local ProtectedTable = I.S3ProtectedTable
 
+--- CHIM System for handling block activation, animation, and damage mitigation
 ---@class BlockManager: ProtectedTable
 ---@field BaseBlockMitigation number
 ---@field SkillMitigationFactor number
@@ -224,6 +225,7 @@ end
 ---@field damageMult number
 
 ---@param blockData CHIMBlockData
+---@return CHIMBlockResult
 function Block.handleHit(blockData)
     --- We also need to handle skill progression and degradation here!
     Block.playBlockSound()
