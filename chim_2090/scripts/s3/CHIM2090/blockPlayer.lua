@@ -99,6 +99,7 @@ local ProtectedTable = I.S3ProtectedTable
 ---@field ShieldWeightPenalty number
 ---@field ShieldWeightPenaltyLimit number
 ---@field BlockSpeedBase number
+---@field StandingStillBonus number
 local Block = ProtectedTable.new {
     inputGroupName = groupName,
     logPrefix = '[CHIMBlock]:\n',
@@ -204,6 +205,10 @@ function Block.calculateMitigation()
     local totalMitigation = baseMitigation * skillMultiplier * normalizedFatigue()
         + (attributeBonus + Block.BaseBlockMitigation)
 
+    if s3lf.controls.movement == 0 and s3lf.controls.sideMovement == 0 then
+        totalMitigation = totalMitigation * Block.StandingStillBonus
+    end
+
     -- Clamp to reasonable bounds
     totalMitigation = util.clamp(
         totalMitigation,
@@ -217,14 +222,16 @@ function Block.calculateMitigation()
             Base Mitigation: %.5f
             Armor Rating: %d
             Block Skill Multiplier: %.5f
-            Attribute Bonus: %.5f]])
+            Attribute Bonus: %.5f
+            Standing Still Bonus: %.2f]])
         :format(
             normalizedFatigue(),
             totalMitigation,
             baseMitigation,
             shieldArmor,
             skillMultiplier,
-            attributeBonus
+            attributeBonus,
+            Block.StandingStillBonus
         )
     )
 

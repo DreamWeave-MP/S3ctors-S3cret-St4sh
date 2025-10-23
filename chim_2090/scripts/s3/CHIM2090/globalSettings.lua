@@ -447,6 +447,14 @@ I.Settings.registerGroup {
                         0.15
                 ),
                 setting(
+                        'StandingStillBonus',
+                        'number',
+                        { integer = false, min = 1.0, max = 10.0, },
+                        'StandingStillBonusName',
+                        'StandingStillBonusDesc',
+                        1.25
+                ),
+                setting(
                         'SkillMitigationFactor',
                         'number',
                         { min = 0.0, max = 1.0, integer = false, },
