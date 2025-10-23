@@ -726,12 +726,12 @@ PoiseGroup:subscribe(
                         if key == 'BasePoise' then
                                 I.Settings.updateRendererArgument(
                                         group,
-                                        'MaxTotalPoise,',
+                                        'MaxTotalPoise',
                                         { min = settingValue + 1 }
                                 )
                                 I.Settings.updateRendererArgument(
                                         group,
-                                        'MaxEquipmentPoise,',
+                                        'MaxEquipmentPoise',
                                         { min = settingValue + 1 }
                                 )
                         elseif key == 'MinRecoveryDuration' then
