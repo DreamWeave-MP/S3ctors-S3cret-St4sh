@@ -567,3 +567,186 @@ BlockGroup:subscribe(
                 end
         )
 )
+
+local PoiseGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise'
+local BasePoiseDefault = 20
+I.Settings.registerGroup {
+        key = PoiseGroupName,
+        page = modInfo.name .. 'Poise',
+        order = 0,
+        l10n = modInfo.l10nName,
+        name = 'PoiseGroupName',
+        permanentStorage = true,
+        settings = {
+                setting(
+                        'DebugEnable',
+                        'checkbox',
+                        {},
+                        'PoiseDebugEnableName',
+                        'PoiseDebugEnableDesc',
+                        false
+                ),
+                setting(
+                        'Enable',
+                        'checkbox',
+                        {},
+                        'PoiseEnableName',
+                        'PoiseEnableDesc',
+                        true
+                ),
+                setting(
+                        'BasePoise',
+                        'number',
+                        { integer = true, min = 0, max = 100, },
+                        'BasePoiseName',
+                        'BasePoiseDesc',
+                        BasePoiseDefault
+                ),
+                setting(
+                        'PoisePerWeight',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0 },
+                        'PoisePerWeightName',
+                        'PoisePerWeightDesc',
+                        0.8
+                ),
+                setting(
+                        'MaxEquipmentPoise',
+                        'number',
+                        { integer = true, min = BasePoiseDefault + 1, max = 1000 },
+                        'MaxEquipmentPoiseName',
+                        'MaxEquipmentPoiseDesc',
+                        80
+                ),
+                setting(
+                        'MaxTotalPoise',
+                        'number',
+                        { integer = true, min = BasePoiseDefault + 1, max = 1000, },
+                        'MaxTotalPoiseName',
+                        'MaxTotalPoiseDesc',
+                        120
+                ),
+                setting(
+                        'StrengthPoiseBonus',
+                        'number',
+                        { inteer = false, min = 0, 0, max = 10.0 },
+                        'StrengthPoiseBonusName',
+                        'StrengthPoiseBonusDesc',
+                        0.1
+                ),
+                setting(
+                        'EndurancePoiseBonus',
+                        'number',
+                        { inteer = false, min = 0, 0, max = 10.0 },
+                        'EndurancePoiseBonusName',
+                        'EndurancePoiseBonusDesc',
+                        0.15
+                ),
+                setting(
+                        'PoiseRecoveryDuration',
+                        'number',
+                        { integer = false, min = 0.1, max = 120.0, },
+                        'PoiseRecoveryDurationName',
+                        'PoiseRecoveryDurationDesc',
+                        5.0
+                ),
+                setting(
+                        'PoiseDamageMult',
+                        'number',
+                        { integer = false, min = 0.1, max = 10.0, },
+                        'PoiseDamageMultName',
+                        'PoiseDamageMultDesc',
+                        2.0
+                ),
+                setting(
+                        'MinPoiseDamage',
+                        'number',
+                        { integer = true, min = 0, max = 120 },
+                        'MinPoiseDamageName',
+                        'MinPoiseDamageDesc',
+                        5
+                ),
+                setting(
+                        'WeightPoiseFactor',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0 },
+                        'WeightPoiseFactorName',
+                        'WeightPoiseFactorDesc',
+                        0.15
+                ),
+                setting(
+                        'WeaponSkillPoiseFactor',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'WeaponSkillPoiseFactorName',
+                        'WeaponSkillPoiseFactorDesc',
+                        0.1
+                ),
+                setting(
+                        'WeaponPoiseMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0, },
+                        'WeaponPoiseMultName',
+                        'WeaponPoiseMultDesc',
+                        0.8
+                ),
+                setting(
+                        'TwoHandedMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0, },
+                        'TwoHandedMultName',
+                        'TwoHandedMultDesc',
+                        1.4
+                ),
+                setting(
+                        'EquipmentSlotTimeReduction',
+                        'number',
+                        { integer = false, min = 0.0, max = 0.07, },
+                        'EquipmentSlotTimeReductionName',
+                        'EquipmentSlotTimeReductionDesc',
+                        0.03
+                ),
+                setting(
+                        'MinRecoveryDuration',
+                        'number',
+                        { integer = false, min = 0.0, max = 120.0, },
+                        'MinRecoveryDurationName',
+                        'MinRecoveryDurationDesc',
+                        1.5
+                ),
+        },
+}
+
+local PoiseGroup = storage.globalSection(PoiseGroupName)
+PoiseGroup:subscribe(
+        async:callback(
+                function(group, key)
+                        local settingValue = PoiseGroup:get(key)
+
+                        if key == 'BasePoise' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MaxTotalPoise,',
+                                        { min = settingValue + 1 }
+                                )
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MaxEquipmentPoise,',
+                                        { min = settingValue + 1 }
+                                )
+                        elseif key == 'MinRecoveryDuration' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'PoiseRecoveryDuration',
+                                        { min = settingValue + 0.01, }
+                                )
+                        elseif key == 'PoiseRecoveryDuration' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MinRecoveryDuration',
+                                        { max = settingValue - 0.01, }
+                                )
+                        end
+                end
+        )
+)

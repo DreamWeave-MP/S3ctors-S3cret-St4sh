@@ -22,6 +22,13 @@ I.Settings.registerPage {
   description = 'DynamicStatPageDesc',
 }
 
+I.Settings.registerPage {
+  key = modInfo.name .. 'Poise',
+  l10n = modInfo.l10nName,
+  name = 'CHIM 2090 - Poise',
+  description = 'PoiseStatPageDesc',
+}
+
 print(
   ('%s loaded version %s. Thank you for playing %s! <3'):format(
     modInfo.logPrefix,

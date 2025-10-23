@@ -301,6 +301,7 @@ function Block.canBlock()
         and Block.usingShield()
         and not Block.isBlocking()
         and not I.UI.getMode()
+        and not I.s3ChimPoise.isBroken()
         and not playingHitstun()
         and not isAttacking()
         and not isJumping()
@@ -378,6 +379,7 @@ local function interruptBlock()
         or isJumping()
         or I.UI.getMode()
         or not inWeaponStance()
+        or I.s3ChimPoise.isBroken()
 
     if not shouldInterrupt then return end
 

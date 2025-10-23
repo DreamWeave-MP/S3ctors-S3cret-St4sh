@@ -80,11 +80,14 @@ local function CHIMHitHandler(attack)
         attackInfo = attack
     }
 
+    local poiseMult = I.s3ChimPoise.onHit(attack)
+
     for _, damageType in ipairs(damageTypes) do
         if attack.damage[damageType] ~= nil then
             attack.damage[damageType] =
                 (attack.damage[damageType] * damageMult)
                 * shieldMultiplier
+                * poiseMult
                 * I.s3ChimCore.Manager.GlobalDamageScaling
         end
     end
@@ -92,11 +95,13 @@ local function CHIMHitHandler(attack)
     I.s3ChimCore.Manager.debugLog(([[Health Damage: %.2f
     Fatigue Damage: %.2f
     shieldMultiplier: %.2f
-    Global Damage Scaling: %.2f]]):format(
+    Global Damage Scaling: %.2f
+    Poise Damage Bonuse: %.1f]]):format(
         attack.damage.health or 0,
         attack.damage.fatigue or 0,
         shieldMultiplier,
-        I.s3ChimCore.Manager.GlobalDamageScaling
+        I.s3ChimCore.Manager.GlobalDamageScaling,
+        poiseMult
     ))
 end
 
@@ -116,14 +121,6 @@ return {
                     }
                 )
             end
-        end,
-        CHIMPoiseBreak = function()
-            I.AnimationController.playBlendedAnimation(
-                'knockdown',
-                {
-                    priority = animation.PRIORITY.Scripted,
-                }
-            )
         end,
     }
 }
