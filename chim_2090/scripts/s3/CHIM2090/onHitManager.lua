@@ -114,7 +114,7 @@ return {
 
             if Fatigue.current > 0 then
                 I.AnimationController.playBlendedAnimation(
-                    I.s3ChimBlock.Manager.getRandomHitGroup(),
+                    I.s3ChimCore.getRandomHitGroup(),
                     {
                         priority = animation.PRIORITY.Scripted,
                         -- need a formula for determining the animation speed here too
