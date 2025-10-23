@@ -57,12 +57,51 @@ local weaponTypesToSkills = {
     [weaponTypes.MarksmanThrown] = 'marksman',
 }
 
+local twoHandedTypes = {
+    [weaponTypes.LongBladeTwoHand] = true,
+    [weaponTypes.BluntTwoClose] = true,
+    [weaponTypes.BluntTwoWide] = true,
+    [weaponTypes.SpearTwoWide] = true,
+    [weaponTypes.AxeTwoHand] = true,
+    --- Bows are technically also two-handed but we'll do this only for crossbows to simulate them hitting harder
+    [weaponTypes.MarksmanCrossbow] = true,
+}
+
 ---@param actor GameObject
 ---@return number fatigueTerm fatigue cost for this action??
 local function getFatigueTerm(actor)
     local normalizedFatigue = actor.fatigue.current / actor.fatigue.base
     local fatigueTerm = fFatigueBase - fFatigueMult * (1 - normalizedFatigue)
     return fatigueTerm
+end
+
+---@param weapon GameObject
+---@param attacker GameObject
+function ChimCore.getWeaponSkill(weapon, attacker)
+    local weaponType = weapon.type.records[weapon.recordId].type
+    local weaponSkill = weaponTypesToSkills[weaponType]
+    attacker = s3lf.From(attacker)
+    return attacker[weaponSkill].modified
+end
+
+---Given a weapon object return whether it is a two-handed type
+---@param weapon GameObject
+---@return boolean
+function ChimCore.weaponIsTwoHanded(weapon)
+    local weaponType = weapon.type.records[weapon.recordId].type
+    return twoHandedTypes[weaponType] or false
+end
+
+function ChimCore.getRandomHitGroup()
+    local formatString, range
+
+    if s3lf.isSwimming() then
+        formatString, range = 'swimhit%d', 3
+    else
+        formatString, range = 'hit%d', 5
+    end
+
+    return formatString:format(math.random(1, range))
 end
 
 ---@param attacker GameObject
@@ -177,10 +216,23 @@ end
 
 return {
     interfaceName = "s3ChimCore",
-    interface = {
-        version = modInfo.version,
-        Manager = ChimCore,
-    },
+    interface = setmetatable(
+        {},
+        {
+            __index = function(_, key)
+                local managerKey = ChimCore[key]
+
+                if key == 'help' then
+                    return [[
+                    ]]
+                elseif managerKey then
+                    return managerKey
+                elseif key == 'Manager' then
+                    return ChimCore
+                end
+            end,
+        }
+    ),
     eventHandlers = {
         CHIMEnsureFortifyAttack = ensureFortifyAttack,
     },
