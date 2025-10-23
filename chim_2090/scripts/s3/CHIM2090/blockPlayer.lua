@@ -105,18 +105,6 @@ local Block = ProtectedTable.new {
     logPrefix = '[CHIMBlock]:\n',
 }
 
-function Block.getRandomHitGroup()
-    local formatString, range
-
-    if s3lf.isSwimming() then
-        formatString, range = 'swimhit%d', 3
-    else
-        formatString, range = 'hit%d', 5
-    end
-
-    return formatString:format(math.random(1, range))
-end
-
 function Block.playBlockAnimation()
     blockAnimData.speed = Block.getSpeed()
     I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
@@ -127,7 +115,7 @@ function Block.playIdleAnimation()
 end
 
 function Block.playBlockHitLegs()
-    local randomGroup = Block.getRandomHitGroup()
+    local randomGroup = I.s3ChimCore.getRandomHitGroup()
     if s3lf.getActiveGroup(anim.BONE_GROUP.LowerBody) == randomGroup then return end
     I.AnimationController.playBlendedAnimation(randomGroup, blockHitLegsData)
 end
