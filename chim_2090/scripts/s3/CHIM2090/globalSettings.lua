@@ -830,6 +830,14 @@ I.Settings.registerGroup {
                         0.1
                 ),
                 setting(
+                        'StrengthPoiseDamageBonus',
+                        'number',
+                        { inteer = false, min = 0, 0, max = 10.0 },
+                        'StrengthPoiseBonusName',
+                        'StrengthPoiseBonusDesc',
+                        0.01
+                ),
+                setting(
                         'EndurancePoiseBonus',
                         'number',
                         { inteer = false, min = 0, 0, max = 10.0 },
