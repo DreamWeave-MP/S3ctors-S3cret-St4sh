@@ -30,6 +30,7 @@ local WeaponRecords = types.Weapon.records
 ---@field TwoHandedMult number
 ---@field EquipmentSlotTimeReduction number
 ---@field MinRecoveryDuration number
+---@field ShieldsMitigatePoiseDamage boolean
 local Poise = ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise',
     logPrefix = '[ CHIMPoise ]:\n',
@@ -145,6 +146,10 @@ end
 ---@param value integer
 ---@return true? poiseBroken
 function Poise.hitDamage(value)
+    if I.s3ChimBlock and Poise.ShieldsMitigatePoiseDamage then
+        value = value * I.s3ChimBlock.calculateMitigation()
+    end
+
     Poise.state.currentPoise = math.max(0, math.floor(Poise.get() - value))
     if Poise.get() ~= 0 or Poise.isBroken() then return end
 
