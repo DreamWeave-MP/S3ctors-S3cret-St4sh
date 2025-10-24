@@ -232,7 +232,7 @@ return {
                     'knockdown',
                     {
                         priority = animation.PRIORITY.Scripted,
-                        speed = 0.5,
+                        speed = I.s3ChimCore.getHitAnimationSpeed() / 2,
                     }
                 )
             end

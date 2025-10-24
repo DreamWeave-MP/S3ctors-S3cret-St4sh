@@ -26,6 +26,13 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 ---@field FumbleBaseChance integer Base chance for a fumbling attack prior to taking stat calculations or chance scaling into account. Default 3
 ---@field FumbleChanceScale integer Scaling applied to fumble chance globally. Increases or decreases the overall chance for fumbles; Default 10
 ---@field GlobalDamageScaling number Global multiplier applied to damage on physical strikes
+---@field LightAnimSpeedThreshold number
+---@field MediumAnimSpeedThreshold number
+---@field HeavyAnimSpeedThreshold number
+---@field LightAnimSpeed number
+---@field MediumAnimSpeed number
+---@field HeavyAnimSpeed number
+---@field OverloadedAnimSpeed number
 local ChimCore = I.S3ProtectedTable.new { inputGroupName = groupName }
 
 local ActiveEffects = s3lf.activeEffects()
@@ -212,6 +219,38 @@ Luck Mod: %s]]
     end
 
     return hitChance
+end
+
+function ChimCore.getTotalEquipmentWeight()
+    local totalEquippedWeight = 0
+    for _, item in ipairs(s3lf.getEquipment()) do
+        if not item then goto CONTINUE end
+
+        local countsAsEquipment = types.Armor.objectIsInstance(item) or types.Weapon.objectIsInstance(item)
+
+        if not countsAsEquipment then goto CONTINUE end
+
+        local itemRecord = item.type.records[item.recordId]
+        totalEquippedWeight = totalEquippedWeight + itemRecord.weight
+
+        ::CONTINUE::
+    end
+
+    return totalEquippedWeight
+end
+
+function ChimCore.getHitAnimationSpeed()
+    local equipmentWeight = ChimCore.getTotalEquipmentWeight()
+
+    if equipmentWeight <= ChimCore.LightAnimSpeedThreshold then
+        return ChimCore.LightAnimSpeed
+    elseif equipmentWeight <= ChimCore.MediumAnimSpeedThreshold then
+        return ChimCore.MediumAnimSpeed
+    elseif equipmentWeight <= ChimCore.HeavyAnimSpeedThreshold then
+        return ChimCore.OverloadedAnimSpeed
+    else
+        return ChimCore.OverloadedAnimSpeed
+    end
 end
 
 return {

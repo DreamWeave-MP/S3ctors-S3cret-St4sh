@@ -117,7 +117,7 @@ return {
                     I.s3ChimCore.getRandomHitGroup(),
                     {
                         priority = animation.PRIORITY.Scripted,
-                        -- need a formula for determining the animation speed here too
+                        speed = I.s3ChimCore.getHitAnimationSpeed()
                     }
                 )
             end
