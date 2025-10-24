@@ -86,7 +86,7 @@ local function new(constructorData)
   local managerString = constructorData.managerName or constructorData.inputGroupName
 
   function proxy.debugLog(...)
-    if gameSelf.type ~= types.Player or not proxy.DebugLog then return end
+    if not proxy.DebugLog then return end
     print(constructorData.logPrefix, table.concat({ ... }, ' '))
   end
 
