@@ -13,6 +13,14 @@ local ProtectedTable = I.S3ProtectedTable
 local ArmorRecords = types.Armor.records
 local WeaponRecords = types.Weapon.records
 
+local function toggleAllControls(state)
+    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Controls, state)
+    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Fighting, state)
+    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Jumping, state)
+    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Magic, state)
+    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.ViewMode, state)
+end
+
 ---@class PoiseManager: ProtectedTable
 ---@field Enable boolean
 ---@field BasePoise integer
@@ -147,7 +155,7 @@ end
 ---@return true? poiseBroken
 function Poise.hitDamage(value)
     if I.s3ChimBlock and Poise.ShieldsMitigatePoiseDamage then
-        value = value * I.s3ChimBlock.calculateMitigation()
+        value = value * I.s3ChimBlock.Manager.calculateMitigation()
     end
 
     Poise.state.currentPoise = math.max(0, math.floor(Poise.get() - value))
@@ -209,11 +217,13 @@ end
 --- Needs to also handle melee attacks and probably spells as well
 I.AnimationController.addTextKeyHandler('',
     function(group, key)
+        if group == 'knockout' and Poise.isBroken() then return s3lf.cancel(group) end
+
         if group == 'knockdown' and key == 'stop' and Poise.isBroken() then
             Poise.state.isBroken = false
 
             if types.Player.objectIsInstance(s3lf.gameObject) then
-                I.Controls.overrideMovementControls(false)
+                toggleAllControls(true)
             end
         end
 
@@ -253,7 +263,7 @@ return {
         CHIMPoiseBreak = function()
             if not Poise.Enable then return end
 
-            if s3lf.canMove() then
+            if s3lf.canMove() and s3lf.fatigue.current > 0 then
                 I.AnimationController.playBlendedAnimation(
                     'knockdown',
                     {
@@ -261,16 +271,16 @@ return {
                         speed = I.s3ChimCore.getHitAnimationSpeed() * 0.85,
                     }
                 )
+
+                if types.Player.objectIsInstance(s3lf.gameObject) then
+                    toggleAllControls(false)
+                end
             end
 
             Poise.state.isBroken = true
 
             -- Technically this is a dark souls *2* feature but for the sake of fun I think we should try it
             Poise.reset()
-
-            if types.Player.objectIsInstance(s3lf.gameObject) then
-                I.Controls.overrideMovementControls(true)
-            end
         end,
 
     },
