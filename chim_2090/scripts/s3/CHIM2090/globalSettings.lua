@@ -790,6 +790,14 @@ I.Settings.registerGroup {
                         true
                 ),
                 setting(
+                        'ShieldsMitigatePoiseDamage',
+                        'checkbox',
+                        {},
+                        'ShieldsMitigatePoiseDamageName',
+                        'ShieldsMitigatePoiseDamageDesc',
+                        true
+                ),
+                setting(
                         'BasePoise',
                         'number',
                         { integer = true, min = 0, max = 100, },
