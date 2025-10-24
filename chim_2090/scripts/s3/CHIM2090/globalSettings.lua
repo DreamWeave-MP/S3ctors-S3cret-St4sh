@@ -7,19 +7,6 @@ local I = require 'openmw.interfaces'
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 local L = core.l10n(modInfo.l10nName)
 
-local agilityHitChancePctDesc =
-'Percentage of agility that is added to hit chance, vanilla is 20%. Related damage scaling is capped by the Max Strength Multiplier setting.'
-local luckHitChancePctDesc =
-'Percentage of luck that is added to hit chance, vanilla is 10%. Related damage scaling is capped by the Max Strength Multiplier setting.'
-local useVanillaFatigueDesc =
-'Use the original fatigue regeneration formula instead of CHIM 2090\'s internal one. This still uses below regen settings, but omits advanced functionality related to fatigue.'
-local fatiguePerSecondDesc =
-'Fatigue restored per second when using either formula. Replaces the vanilla GMST (2.5) \'fFatigueReturnBase\''
-local fatigueReturnMultDesc =
-'Percentage of endurance regained as fatigue, per second, with either formula. Replaces the vanilla GMST (0.02) \'fFatigueReturnMult\''
-local fatigueEndMultDesc =
-'Percentage of endurance regained as fatigue, per second, with either formula, while sleeping. Replaces the vanilla GMST (0.04) \'fEndFatigueMult\''
-
 -- Sleep settings description(s)
 -- local pillowEnableDesc = 'Enable the pillow modifier. This adds a bonus to attributes restored while sleeping or waiting.'
 -- local pillowMultDesc = 'Restoration bonus from carrying a pillow while sleeping.'
@@ -34,22 +21,6 @@ local fatigueEndMultDesc =
 -- local outdoorSleepMultDesc = 'Multiplier for fatigue restored while sleeping outdoors, in a bed. Does not replace a vanilla GMST.'
 -- local outdoorWaitMultDesc = 'Multiplier for fatigue restored while sleeping on the ground or waiting, while outdoors. Does not replace a vanilla GMST.'
 -- local indoorWaitMultDesc = 'Multiplier for fatigue restored while waiting indoors. Does not replace a vanilla GMST.'
-local maxFatigueStrMultDesc = 'Percentage of strength factored into max fatigue. Vanilla is 100.'
-local maxFatigueWilMultDesc = 'Percentage of willpower factored into max fatigue. Vanilla is 100.'
-local maxFatigueAgiMultDesc = 'Percentage of agility factored into max fatigue. Vanilla is 100.'
-local maxFatigueEndMultDesc = 'Percentage of endurance factored into max fatigue. Vanilla is 100.'
--- Critical hit settings description(s)
-local critFumbleEnableDesc =
-'Enable the critical hit and fumble module. This module adds a chance to deal extra damage on a critical hit, and less on a fumble. Requires the strength module to work.'
-local critChancePercentDesc = 'Base chance of a critical hit'
-local critLuckPercentDesc = 'Influence of luck on critical hit chance and fumble as a percentage'
-local critMultDesc = 'Critical hit damage multiplier. Only applies in melee combat.'
-local fumbleChancePercentDesc = 'Base chance of a fumble. Increse this to fumble more with lower skill.'
-local fumbleChanceScaleDesc = 'Scale of fumble chance with skill. Increase this to fumble more regardless of skill.'
-local fumbleDamagePercentDesc = 'Percentage of damage dealt to the target on a fumble'
--- Strength settings description(s)
-local maxDamageMultDesc =
-'Limit for the amount of damage done, based on chance the vanilla hit chance formula. 1.5 means 150% maximum damage from agility, skill, and luck.'
 
 ---@param key string
 ---@param renderer DefaultSettingRenderer
@@ -68,7 +39,6 @@ local function setting(key, renderer, argument, name, description, default)
         }
 end
 
-
 local fFatigueBlockBase = core.getGMST('fFatigueBlockBase')
 local fFatigueBlockMult = core.getGMST('fFatigueBlockMult')
 local fWeaponFatigueBlockMult = core.getGMST('fWeaponFatigueBlockMult')
@@ -77,93 +47,95 @@ I.Settings.registerGroup {
         page = modInfo.name .. 'Dynamic Stats',
         order = 0,
         l10n = modInfo.l10nName,
-        name = 'Health, Fatigue, Magicka',
+        name = 'SettingsDynamicGroupName',
         permanentStorage = true,
         settings = {
                 setting('UseVanillaFatigueFormula',
                         'checkbox',
                         {},
-                        'Use Vanilla Fatigue Formula',
-                        useVanillaFatigueDesc,
+                        'UseVanillaFatigueName',
+                        'UseVanillaFatigueDesc',
                         false
                 ),
                 setting(
                         'FatiguePerSecond',
                         'number',
                         { integer = true, min = -500, max = 500 },
-                        'Fatigue Per Second',
-                        fatiguePerSecondDesc,
+                        'FatiguePerSecondName',
+                        'FatiguePerSecondDesc',
                         3
                 ),
                 setting(
                         'FatigueReturnMult',
                         'number',
                         { integer = false, min = 0.001, max = 10.0 },
-                        'Fatigue Endurance Multiplier',
-                        fatigueReturnMultDesc,
+                        'FatigueReturnMultName',
+                        'FatigueReturnMultDesc',
                         0.02
                 ),
-                setting(
-                        'FatigueEndMult',
-                        'number',
-                        { integer = false, min = 0.001, max = 10.0 },
-                        'Resting Endurance Multiplier',
-                        fatigueEndMultDesc,
-                        0.04
-                ),
+                -- This setting is only used for sleeping, which is disabled
+                -- setting(
+                --         'FatigueEndMult',
+                --         'number',
+                --         { integer = false, min = 0.001, max = 10.0 },
+                --         'Resting Endurance Multiplier',
+                --         fatigueEndMultDesc,
+                --         0.04
+                -- ),
                 setting(
                         'MaxFatigueStrMult',
                         'number',
                         { integer = true, min = 0, max = 1000 },
-                        'Fatigue Strength Multiplier',
-                        maxFatigueStrMultDesc,
+                        'MaxFatigueStrMultName',
+                        'MaxFatigueStrMultDesc',
                         125
                 ),
                 setting(
                         'MaxFatigueWilMult',
                         'number',
                         { integer = true, min = 0, max = 1000 },
-                        'Fatigue Willpower Multiplier',
-                        maxFatigueWilMultDesc,
+                        'MaxFatigueWilMultName',
+                        'MaxFatigueWilMultDesc',
                         50
                 ),
                 setting(
                         'MaxFatigueAgiMult',
                         'number',
                         { integer = true, min = 0, max = 1000 },
-                        'Fatigue Agility Multiplier',
-                        maxFatigueAgiMultDesc,
+                        'MaxFatigueAgiMultName',
+                        'MaxFatigueAgiMultDesc',
                         25
                 ),
                 setting(
                         'MaxFatigueEndMult',
                         'number',
                         { integer = true, min = 0, max = 1000 },
-                        'Fatigue Endurance Multiplier',
-                        maxFatigueEndMultDesc,
-                        75),
+                        'MaxFatigueEndMultName',
+                        'MaxFatigueEndMultDesc',
+                        75
+                ),
                 setting(
                         'FortifyMagickaMultiplier',
                         'number',
                         { integer = true, min = 0, max = 1000 },
-                        'Fortify Magicka Multiplier',
-                        'NOT WRITTEN',
+                        'FortifyMagickaMultiplierName',
+                        'FortifyMagickaMultiplierDesc',
                         10
                 ),
                 setting(
                         'PCbaseMagickaMultiplier',
                         'number',
                         { integer = false, min = 0., max = 1000., },
-                        'Player Base Magicka Multiplier',
-                        'NOT WRITTEN',
+                        'MagickaMultiplierPCbaseName',
+                        'MagickaMultiplierPCbaseDesc',
                         1.
                 ),
                 setting(
                         'NPCbaseMagickaMultiplier',
                         'number',
                         { integer = false, min = 0., max = 1000., },
-                        'NPC Base Magicka Multiplier',
-                        'NOT WRITTEN',
+                        'MagickaMultiplierNPCbaseName',
+                        'MagickaMultiplierNPCbaseDesc',
                         2.
                 ),
                 setting(
@@ -237,7 +209,7 @@ I.Settings.registerGroup {
         page = modInfo.name,
         order = 0,
         l10n = modInfo.l10nName,
-        name = 'Damage, Crit, and Fumble',
+        name = 'SettingsCoreGroupName',
         permanentStorage = true,
         settings = {
                 setting(
@@ -260,136 +232,136 @@ I.Settings.registerGroup {
                         'AgilityHitChancePct',
                         'number',
                         { integer = false, min = 0.001, max = 1.0 },
-                        'Agility Hit Chance Influence',
-                        agilityHitChancePctDesc,
+                        'AgilityHitChancePctName',
+                        'AgilityHitChancePctDesc',
                         0.20
                 ),
                 setting(
                         'LuckHitChancePct',
                         'number',
                         { integer = false, min = 0.001, max = 1.0 },
-                        'Luck Hit Chance Influence',
-                        luckHitChancePctDesc,
+                        'LuckHitChancePctName',
+                        'LuckHitChancePctDesc',
                         0.10
                 ),
                 setting(
                         'MaxDamageMultiplier',
                         'number',
                         { integer = false, min = 0.01, max = 10. },
-                        'Max Damage Multiplier',
-                        maxDamageMultDesc,
+                        'MaxDamageMultName',
+                        'MaxDamageMultDesc',
                         1.5
                 ),
                 setting(
                         'EnableCritFumble',
                         'checkbox',
                         {},
-                        'Enable Crit and Fumble Module',
-                        critFumbleEnableDesc,
+                        'CritFumbleEnableName',
+                        'CritFumbleEnableDesc',
                         true
                 ),
                 setting(
                         'CritChancePercent',
                         'number',
                         { integer = true, min = 0, max = 100 },
-                        'Base Critical Hit Chance',
-                        critChancePercentDesc,
+                        'CritChancePercentName',
+                        'CritChancePercentDesc',
                         4
                 ),
                 setting(
                         'CritLuckPercent',
                         'number',
                         { integer = true, min = 0, max = 1000 },
-                        'Critical Luck Influence',
-                        critLuckPercentDesc,
+                        'CritLuckPercentName',
+                        'CritLuckPercentDesc',
                         10
                 ),
                 setting(
                         'CritDamageMultiplier',
                         'number',
                         { integer = false, min = 1.0, max = 10.0 },
-                        'Melee Critical Damage Multiplier',
-                        critMultDesc,
+                        'CritMultName',
+                        'CritMultDesc',
                         4.0
                 ),
                 setting(
                         'FumbleBaseChance',
                         'number',
                         { integer = true, min = 0, max = 100 },
-                        'Base Fumble Chance',
-                        fumbleChancePercentDesc,
+                        'FumbleBaseChanceName',
+                        'FumbleBaseChanceDesc',
                         3
                 ),
                 setting(
                         'FumbleChanceScale',
                         'number',
                         { integer = true, min = 0, max = 100 },
-                        'Fumble Chance Scale',
-                        fumbleChanceScaleDesc,
+                        'FumbleChanceScaleName',
+                        'FumbleChanceScaleDesc',
                         10
                 ),
                 setting(
                         'FumbleDamagePercent',
                         'number',
                         { integer = true, min = 0, max = 100 },
-                        'Fumble Damage Percentage',
-                        fumbleDamagePercentDesc,
+                        'FumbleDamagePercentName',
+                        'FumbleDamagePercentDesc',
                         25
                 ),
                 setting(
                         'LightAnimSpeedThreshold',
                         'number',
                         { integer = false, min = 0.0, max = MediumAnimSpeedThreshold - 1, },
-                        'LightAnimSpeedThresholdName',
-                        'LightAnimSpeedThresholdDesc',
+                        'AnimSpeedLightThresholdName',
+                        'AnimSpeedLightThresholdDesc',
                         LightAnimSpeedThreshold
                 ),
                 setting(
                         'MediumAnimSpeedThreshold',
                         'number',
                         { integer = false, min = LightAnimSpeedThreshold + 1, max = HeavyAnimSpeedThreshold - 1, },
-                        'MediumAnimSpeedThresholdName',
-                        'MediumAnimSpeedThresholdDesc',
+                        'AnimSpeedMediumThresholdName',
+                        'AnimSpeedMediumThresholdDesc',
                         MediumAnimSpeedThreshold
                 ),
                 setting(
                         'HeavyAnimSpeedThreshold',
                         'number',
                         { integer = false, min = MediumAnimSpeedThreshold + 1, max = 1500.0, },
-                        'HeavyAnimSpeedThresholdName',
-                        'HeavyAnimSpeedThresholdDesc',
+                        'AnimSpeedHeavyThresholdName',
+                        'AnimSpeedHeavyThresholdDesc',
                         HeavyAnimSpeedThreshold
                 ),
                 setting(
                         'LightAnimSpeed',
                         'number',
                         { integer = false, min = MediumAnimSpeed + 0.1, max = 10.0, },
-                        'LilghtAnimSpeedName',
-                        'LightAnimSpeedDesc',
+                        'AnimSpeedLightName',
+                        'AnimSpeedLightDesc',
                         LightAnimSpeed
                 ),
                 setting(
                         'MediumAnimSpeed',
                         'number',
                         { integer = false, min = HeavyAnimSpeed + 0.1, max = LightAnimSpeed - 0.1, },
-                        'MediumAnimSpeedName',
-                        'MediumAnimSpeedDesc',
+                        'AnimSpeedMediumName',
+                        'AnimSpeedMediumDesc',
                         MediumAnimSpeed
                 ),
                 setting(
                         'HeavyAnimSpeed',
                         'number',
                         { integer = false, min = OverloadedAnimSpeed + 0.1, max = MediumAnimSpeed - 0.1, },
-                        'HeavyAnimSpeedName',
-                        'HeavyAnimSpeedDesc',
+                        'AnimSpeedHeavyName',
+                        'AnimSpeedHeavyDesc',
                         HeavyAnimSpeed
                 ),
                 setting(
                         'OverloadedAnimSpeed',
                         'number',
                         { integer = false, min = 0.0, max = HeavyAnimSpeed - 0.1, },
-                        'OverloadedAnimSpeedName',
-                        'OverloadedAnimSpeedDesc',
+                        'AnimSpeedOverloadedName',
+                        'AnimSpeedOverloadedDesc',
                         OverloadedAnimSpeed
                 ),
         },
@@ -471,7 +443,7 @@ I.Settings.registerGroup {
         page = modInfo.name .. 'Block & Parry',
         order = 0,
         l10n = modInfo.l10nName,
-        name = 'ParryGroupName',
+        name = 'SettingsParryGroupName',
         permanentStorage = true,
         settings = {
                 setting(
@@ -574,8 +546,8 @@ I.Settings.registerGroup {
                         'MaxDamageMultiplier',
                         'number',
                         { integer = false, min = MinDamageMultDefault - 0.1, max = 10., },
-                        'MaxDamageMultName',
-                        'MaxDamageMultDesc',
+                        'MaxParryDamageMultName',
+                        'MaxParryDamageMultDesc',
                         MaxDamageMultDefault
                 ),
         },
@@ -622,7 +594,7 @@ I.Settings.registerGroup {
         page = modInfo.name .. 'Block & Parry',
         order = 0,
         l10n = modInfo.l10nName,
-        name = 'BlockGroupName',
+        name = 'SettingsBlockGroupName',
         permanentStorage = true,
         settings = {
                 setting(
@@ -770,7 +742,7 @@ I.Settings.registerGroup {
         page = modInfo.name .. 'Poise',
         order = 0,
         l10n = modInfo.l10nName,
-        name = 'PoiseGroupName',
+        name = 'SettingsPoiseGroupName',
         permanentStorage = true,
         settings = {
                 setting(
