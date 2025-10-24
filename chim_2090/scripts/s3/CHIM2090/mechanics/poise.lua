@@ -226,13 +226,16 @@ return {
     eventHandlers = {
         CHIMPoiseBreak = function()
             if not Poise.Enable then return end
-            I.AnimationController.playBlendedAnimation(
-                'knockdown',
-                {
-                    priority = animation.PRIORITY.Scripted,
-                    speed = 0.5,
-                }
-            )
+
+            if s3lf.canMove() then
+                I.AnimationController.playBlendedAnimation(
+                    'knockdown',
+                    {
+                        priority = animation.PRIORITY.Scripted,
+                        speed = 0.5,
+                    }
+                )
+            end
 
             Poise.state.isBroken = true
 
