@@ -229,8 +229,11 @@ I.Settings.registerGroup {
 -- 	}
 -- }
 
+local LightAnimSpeedThreshold, MediumAnimSpeedThreshold, HeavyAnimSpeedThreshold = 20, 60, 90
+local LightAnimSpeed, MediumAnimSpeed, HeavyAnimSpeed, OverloadedAnimSpeed = 1.25, 0.9, 0.75, 0.6
+local CoreGroupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 I.Settings.registerGroup {
-        key = 'SettingsGlobal' .. modInfo.name .. 'Core',
+        key = CoreGroupName,
         page = modInfo.name,
         order = 0,
         l10n = modInfo.l10nName,
@@ -333,8 +336,132 @@ I.Settings.registerGroup {
                         fumbleDamagePercentDesc,
                         25
                 ),
+                setting(
+                        'LightAnimSpeedThreshold',
+                        'number',
+                        { integer = false, min = 0.0, max = MediumAnimSpeedThreshold - 1, },
+                        'LightAnimSpeedThresholdName',
+                        'LightAnimSpeedThresholdDesc',
+                        LightAnimSpeedThreshold
+                ),
+                setting(
+                        'MediumAnimSpeedThreshold',
+                        'number',
+                        { integer = false, min = LightAnimSpeedThreshold + 1, max = HeavyAnimSpeedThreshold - 1, },
+                        'MediumAnimSpeedThresholdName',
+                        'MediumAnimSpeedThresholdDesc',
+                        MediumAnimSpeedThreshold
+                ),
+                setting(
+                        'HeavyAnimSpeedThreshold',
+                        'number',
+                        { integer = false, min = MediumAnimSpeedThreshold + 1, max = 1500.0, },
+                        'HeavyAnimSpeedThresholdName',
+                        'HeavyAnimSpeedThresholdDesc',
+                        HeavyAnimSpeedThreshold
+                ),
+                setting(
+                        'LightAnimSpeed',
+                        'number',
+                        { integer = false, min = MediumAnimSpeed + 0.1, max = 10.0, },
+                        'LilghtAnimSpeedName',
+                        'LightAnimSpeedDesc',
+                        LightAnimSpeed
+                ),
+                setting(
+                        'MediumAnimSpeed',
+                        'number',
+                        { integer = false, min = HeavyAnimSpeed + 0.1, max = LightAnimSpeed - 0.1, },
+                        'MediumAnimSpeedName',
+                        'MediumAnimSpeedDesc',
+                        MediumAnimSpeed
+                ),
+                setting(
+                        'HeavyAnimSpeed',
+                        'number',
+                        { integer = false, min = OverloadedAnimSpeed + 0.1, max = MediumAnimSpeed - 0.1, },
+                        'HeavyAnimSpeedName',
+                        'HeavyAnimSpeedDesc',
+                        HeavyAnimSpeed
+                ),
+                setting(
+                        'OverloadedAnimSpeed',
+                        'number',
+                        { integer = false, min = 0.0, max = HeavyAnimSpeed - 0.1, },
+                        'OverloadedAnimSpeedName',
+                        'OverloadedAnimSpeedDesc',
+                        OverloadedAnimSpeed
+                ),
         },
 }
+
+local CoreGroup = storage.globalSection(CoreGroupName)
+CoreGroup:subscribe(
+        async:callback(
+                function(group, key)
+                        local settingValue = CoreGroup:get(key)
+
+                        if key == 'LightAnimSpeedThreshold' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MediumAnimSpeedThreshold',
+                                        { min = settingValue + 1 }
+                                )
+                        elseif key == 'MediumAnimSpeedThreshold' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'LightAnimSpeedThreshold',
+                                        { max = settingValue + 1 }
+                                )
+                                I.Setting.updateRendererArgument(
+                                        group,
+                                        'HeavyAnimSpeedThreshold',
+                                        { min = settingValue + 1 }
+                                )
+                        elseif key == 'HeavyAnimSpeedThreshold' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MediumAnimSpeedThreshold',
+                                        { max = settingValue - 1 }
+                                )
+                        elseif key == 'LightAnimSpeed' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MediumAnimSpeed',
+                                        { max = settingValue - 1 }
+                                )
+                        elseif key == 'MediumAnimSpeed' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'LightAnimSpeed',
+                                        { min = settingValue + 0.1 }
+                                )
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'HeavyAnimSpeed',
+                                        { max = settingValue - 0.1 }
+                                )
+                        elseif key == 'HeavyAnimSpeed' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'MediumAnimSpeed',
+                                        { min = settingValue + 0.1 }
+                                )
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'OverloadedAnimSpeed',
+                                        { max = settingValue - 0.1, }
+                                )
+                        elseif key == 'OverloadedAnimSpeed' then
+                                I.Settings.updateRendererArgument(
+                                        group,
+                                        'HeavyAnimSpeed',
+                                        { min = settingValue + 0.1 }
+                                )
+                        end
+                end
+        )
+)
 
 local ParryGroupName = 'SettingsGlobal' .. modInfo.name .. 'Parry'
 local MinParryFramesDefault, MaxParryFramesDefault = 2, 16
