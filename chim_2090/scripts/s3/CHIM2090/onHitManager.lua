@@ -81,14 +81,14 @@ local function CHIMHitHandler(attack)
     }
 
     local poiseMult = I.s3ChimPoise.onHit(attack)
+    local endMult = damageMult
+        * shieldMultiplier
+        * poiseMult
+        * I.s3ChimCore.Manager.GlobalDamageScaling
 
     for _, damageType in ipairs(damageTypes) do
         if attack.damage[damageType] ~= nil then
-            attack.damage[damageType] =
-                (attack.damage[damageType] * damageMult)
-                * shieldMultiplier
-                * poiseMult
-                * I.s3ChimCore.Manager.GlobalDamageScaling
+            attack.damage[damageType] = attack.damage[damageType] * endMult
         end
     end
 
