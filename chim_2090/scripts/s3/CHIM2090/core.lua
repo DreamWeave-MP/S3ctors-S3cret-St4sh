@@ -33,7 +33,7 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 ---@field MediumAnimSpeed number
 ---@field HeavyAnimSpeed number
 ---@field OverloadedAnimSpeed number
-local ChimCore = I.S3ProtectedTable.new { inputGroupName = groupName }
+local ChimCore = I.S3ProtectedTable.new { inputGroupName = groupName, logPrefix = '[ CHIMCore ]:' }
 
 local ActiveEffects = s3lf.activeEffects()
 
