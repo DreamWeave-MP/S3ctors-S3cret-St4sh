@@ -237,7 +237,14 @@ I.Settings.registerGroup {
         name = 'Damage, Crit, and Fumble',
         permanentStorage = true,
         settings = {
-                setting('DebugEnable', 'checkbox', {}, 'Show Debug Messages', '', false),
+                setting(
+                        'DebugEnable',
+                        'checkbox',
+                        {},
+                        'DebugEnableChimCoreName',
+                        'DebugEnableChimCoreDesc',
+                        false
+                ),
                 setting(
                         'GlobalDamageScaling',
                         'number',
@@ -246,25 +253,86 @@ I.Settings.registerGroup {
                         'GlobalDamageScalingDesc',
                         1.0
                 ),
-                setting('AgilityHitChancePct', 'number', { integer = false, min = 0.001, max = 1.0 },
-                        'Agility Hit Chance Influence', agilityHitChancePctDesc, 0.20),
-                setting('LuckHitChancePct', 'number', { integer = false, min = 0.001, max = 1.0 },
-                        'Luck Hit Chance Influence', luckHitChancePctDesc, 0.10),
-                setting('MaxDamageMultiplier', 'number', { integer = false, min = 0.01, max = 10. },
-                        'Max Damage Multiplier', maxDamageMultDesc, 1.5),
-                setting('EnableCritFumble', 'checkbox', {}, 'Enable Crit and Fumble Module', critFumbleEnableDesc, true),
-                setting('CritChancePercent', 'number', { integer = true, min = 0, max = 100 },
-                        'Base Critical Hit Chance', critChancePercentDesc, 4),
-                setting('CritLuckPercent', 'number', { integer = true, min = 0, max = 1000 },
-                        'Critical Luck Influence', critLuckPercentDesc, 10),
-                setting('CritDamageMultiplier', 'number', { integer = false, min = 1.0, max = 10.0 },
-                        'Melee Critical Damage Multiplier', critMultDesc, 4.0),
-                setting('FumbleBaseChance', 'number', { integer = true, min = 0, max = 100 },
-                        'Base Fumble Chance', fumbleChancePercentDesc, 3),
-                setting('FumbleChanceScale', 'number', { integer = true, min = 0, max = 100 },
-                        'Fumble Chance Scale', fumbleChanceScaleDesc, 10),
-                setting('FumbleDamagePercent', 'number', { integer = true, min = 0, max = 100 },
-                        'Fumble Damage Percentage', fumbleDamagePercentDesc, 25),
+                setting(
+                        'AgilityHitChancePct',
+                        'number',
+                        { integer = false, min = 0.001, max = 1.0 },
+                        'Agility Hit Chance Influence',
+                        agilityHitChancePctDesc,
+                        0.20
+                ),
+                setting(
+                        'LuckHitChancePct',
+                        'number',
+                        { integer = false, min = 0.001, max = 1.0 },
+                        'Luck Hit Chance Influence',
+                        luckHitChancePctDesc,
+                        0.10
+                ),
+                setting(
+                        'MaxDamageMultiplier',
+                        'number',
+                        { integer = false, min = 0.01, max = 10. },
+                        'Max Damage Multiplier',
+                        maxDamageMultDesc,
+                        1.5
+                ),
+                setting(
+                        'EnableCritFumble',
+                        'checkbox',
+                        {},
+                        'Enable Crit and Fumble Module',
+                        critFumbleEnableDesc,
+                        true
+                ),
+                setting(
+                        'CritChancePercent',
+                        'number',
+                        { integer = true, min = 0, max = 100 },
+                        'Base Critical Hit Chance',
+                        critChancePercentDesc,
+                        4
+                ),
+                setting(
+                        'CritLuckPercent',
+                        'number',
+                        { integer = true, min = 0, max = 1000 },
+                        'Critical Luck Influence',
+                        critLuckPercentDesc,
+                        10
+                ),
+                setting(
+                        'CritDamageMultiplier',
+                        'number',
+                        { integer = false, min = 1.0, max = 10.0 },
+                        'Melee Critical Damage Multiplier',
+                        critMultDesc,
+                        4.0
+                ),
+                setting(
+                        'FumbleBaseChance',
+                        'number',
+                        { integer = true, min = 0, max = 100 },
+                        'Base Fumble Chance',
+                        fumbleChancePercentDesc,
+                        3
+                ),
+                setting(
+                        'FumbleChanceScale',
+                        'number',
+                        { integer = true, min = 0, max = 100 },
+                        'Fumble Chance Scale',
+                        fumbleChanceScaleDesc,
+                        10
+                ),
+                setting(
+                        'FumbleDamagePercent',
+                        'number',
+                        { integer = true, min = 0, max = 100 },
+                        'Fumble Damage Percentage',
+                        fumbleDamagePercentDesc,
+                        25
+                ),
         },
 }
 
@@ -283,8 +351,8 @@ I.Settings.registerGroup {
                         'DebugEnable',
                         'checkbox',
                         {},
-                        'Show Debug Messages',
-                        '',
+                        'BlockDebugEnableName',
+                        'BlockDebugEnableDesc',
                         false
                 ),
                 setting(
