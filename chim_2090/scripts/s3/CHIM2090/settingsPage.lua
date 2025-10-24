@@ -1,32 +1,41 @@
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 local I = require 'openmw.interfaces'
 
-I.Settings.registerPage {
+---@class SettingsPageData
+---@field key string
+---@field l10n string
+---@field name string
+---@field description string
+
+---@type fun(settingsData: SettingsPageData)
+local RegisterPage = I.Settings.registerPage
+
+RegisterPage {
   key = modInfo.name,
   l10n = modInfo.l10nName,
-  name = 'CHIM 2090 - Damage, Crit, Fumble',
-  description = 'Manages actor fatigue, carry weight, hit chance, and strength in combat.'
+  name = 'PageCoreName',
+  description = 'PageCoreDesc'
 }
 
-I.Settings.registerPage {
+RegisterPage {
   key = modInfo.name .. 'Block & Parry',
   l10n = modInfo.l10nName,
-  name = 'CHIM 2090 - Block & Parry',
-  description = 'Manages blocking and parrying effectiveness and formulae.'
+  name = 'PageBlockAndParryName',
+  description = 'PageBlockAndParryDesc'
 }
 
-I.Settings.registerPage {
+RegisterPage {
   key = modInfo.name .. 'Dynamic Stats',
   l10n = modInfo.l10nName,
-  name = 'CHIM 2090 - Dynamic Stats',
-  description = 'DynamicStatPageDesc',
+  name = 'PageDynamicName',
+  description = 'PageDynamicDesc',
 }
 
-I.Settings.registerPage {
+RegisterPage {
   key = modInfo.name .. 'Poise',
   l10n = modInfo.l10nName,
-  name = 'CHIM 2090 - Poise',
-  description = 'PoiseStatPageDesc',
+  name = 'PagePoiseName',
+  description = 'PagePoiseDesc',
 }
 
 print(
