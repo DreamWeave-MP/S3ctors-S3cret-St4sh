@@ -20,6 +20,7 @@ local WeaponRecords = types.Weapon.records
 ---@field MaxEquipmentPoise integer
 ---@field MaxTotalPoise integer
 ---@field StrengthPoiseBonus number
+---@field StrengthPoiseDamageBonus number
 ---@field EndurancePoiseBonus number
 ---@field PoiseRecoveryDuration number
 ---@field PoiseDamageMult number
@@ -109,14 +110,34 @@ function Poise.weaponPoiseDamage(attackInfo)
     local skillPoise = weaponSkill * Poise.WeaponSkillPoiseFactor
 
     -- Strength bonus (stronger swings carry more force)
-    local strengthBonus = (weightPoise + skillPoise) * (attacker.strength.modified * Poise.StrengthPoiseBonus)
+    local strengthBonus = (weightPoise + skillPoise) * (attacker.strength.modified * Poise.StrengthPoiseDamageBonus)
 
     local totalPoise = (weightPoise + skillPoise + strengthBonus) * Poise.WeaponPoiseMult
 
     -- Two-handed weapons get bonus
-    if I.s3ChimCore.Manager.weaponIsTwoHanded(weapon) then
+    local usingTwoHanded = I.s3ChimCore.Manager.weaponIsTwoHanded(weapon)
+    if usingTwoHanded then
         totalPoise = totalPoise * Poise.TwoHandedMult
     end
+
+    Poise.debugLog(
+        ([[Weapon Id: %s
+        Attacker: %s
+        Weight Poise: %.2f
+        Skill Poise: %.2f
+        Strength Poise: %.2f
+        Two Handed Mult: %.2f (Using two handed: %s)
+        Total Poise: %.2f]]):format(
+            weapon.recordId,
+            attacker.recordId,
+            weightPoise,
+            skillPoise,
+            strengthBonus,
+            Poise.TwoHandedMult,
+            usingTwoHanded,
+            totalPoise
+        )
+    )
 
     return totalPoise * (attackInfo.attackStrength or 1.0)
 end
@@ -232,7 +253,7 @@ return {
                     'knockdown',
                     {
                         priority = animation.PRIORITY.Scripted,
-                        speed = I.s3ChimCore.getHitAnimationSpeed() / 2,
+                        speed = I.s3ChimCore.getHitAnimationSpeed() * 0.85,
                     }
                 )
             end
