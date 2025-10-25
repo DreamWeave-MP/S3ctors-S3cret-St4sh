@@ -738,6 +738,14 @@ I.Settings.registerGroup {
                         0.8
                 ),
                 setting(
+                        'PoiseBreakAnimSpeed',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'PoiseBreakAnimSpeedName',
+                        'PoiseBreakAnimSpeedDesc',
+                        0.85
+                ),
+                setting(
                         'MaxEquipmentPoise',
                         'number',
                         { integer = true, min = BasePoiseDefault + 1, max = 1000 },
