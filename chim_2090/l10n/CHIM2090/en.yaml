@@ -2,27 +2,16 @@ AgilityHitChancePctName: Agility Hit Damage Influence
 AgilityHitChancePctDesc: Percentage of agility that is added to hit chance, vanilla is 20%. Related damage scaling is capped by the Max Strength Multiplier setting.
 
 AnimSpeedHeavyName: Heavy Animation Speed
-AnimSpeedHeavyDesc: Animations played by CHIM when heavily encumbered will run at this speed.
-
-AnimSpeedHeavyThresholdName: Heavy Animation Speed Equipment Threshold
-AnimSpeedHeavyThresholdDesc: Having a total equipment weight at or below this threshold will play animations at the "Heavy" speed, which is the second-lowest.
+AnimSpeedHeavyDesc: Animations played by CHIM when heavily encumbered (50-75%) will run at this speed.
 
 AnimSpeedLightName: Light Animation Speed
-AnimSpeedLightDesc: Animations played by CHIM when slightly encumbered will run at this speed.
-
-AnimSpeedLightThresholdName: Light Animation Speed Equipment Threshold
-AnimSpeedLightThresholdDesc: Having a total equipment weight at or below this threshold will play animations at the "Light" speed, which is the highest.
+AnimSpeedLightDesc: Animations played by CHIM when slightly encumbered (0-25%) will run at this speed.
 
 AnimSpeedMediumName: Medium Animation Speed
-AnimSpeedMediumDesc: Animations played by CHIM when moderately encumbered will run at this speed.
-
-AnimSpeedMediumThresholdName: Medium Animation Speed Equipment Threshold
-AnimSpeedMediumThresholdDesc: Having a total equipment weight at or below this threshold will play animations at the "Medium" speed, which is the second-highest.
+AnimSpeedMediumDesc: Animations played by CHIM when moderately encumbered (25-50%) will run at this speed.
 
 AnimSpeedOverloadedName: Overloaded Animation Speed
-AnimSpeedOverloadedDesc: |-
-  Animations played by CHIM when wearing extremely heavy gear will run at this speed.
-  This setting has no threshold, as wearing an equipment weight above the "Heavy" threshold causes animations to play at this speed.
+AnimSpeedOverloadedDesc: Animations played by CHIM when wearing extremely heavy gear (75%-100% or more) will run at this speed.
 
 AttributeMitigationFactorName: Attribute Mitigation Factor
 AttributeMitigationFactorDesc: How much the shield's governing attribute contributes to damage reduction

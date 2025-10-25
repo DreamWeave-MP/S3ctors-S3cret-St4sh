@@ -1,5 +1,6 @@
 local core = require 'openmw.core'
 local types = require 'openmw.types'
+local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 
@@ -89,6 +90,33 @@ function ChimCore.getWeaponSkill(weapon, attacker)
     local weaponSkill = weaponTypesToSkills[weaponType]
     attacker = s3lf.From(attacker)
     return attacker[weaponSkill].modified
+end
+
+--- Returns the character's raw equipment capacity, derived from their endurance
+--- This is used as a factor when calculating animation speed
+--- The endurance is normalized, and used as a function of the actor's carrying capacity
+--- Allowing for anywhere between 20% and 50% of their carrying capacity to be used for equipment depending on endurance
+---@return number equipCapacity the total weight of equipment a character is potentially expected to wear
+function ChimCore.getEquipmentCapacity()
+    local normalizedEndurance = math.min(s3lf.endurance.modified, 100) / 100
+    return s3lf.getCapacity() * (0.2 + normalizedEndurance * 0.3)
+end
+
+--- Calculates total currently-used encumbrance points
+--- Primarily based on endurance, and normalized before returning, unless explicitly requested not to
+---@param noLimit boolean?
+function ChimCore.getEquipmentEncumbrance(noLimit)
+    local encumbrance = ChimCore.getTotalEquipmentWeight() / ChimCore.getEquipmentCapacity()
+
+    if noLimit then
+        return encumbrance
+    end
+
+    return util.clamp(
+        encumbrance,
+        0.0,
+        1.0
+    )
 end
 
 ---Given a weapon object return whether it is a two-handed type
@@ -236,18 +264,18 @@ function ChimCore.getTotalEquipmentWeight()
         ::CONTINUE::
     end
 
-    return totalEquippedWeight
+    return util.round(totalEquippedWeight)
 end
 
 function ChimCore.getHitAnimationSpeed()
-    local equipmentWeight = ChimCore.getTotalEquipmentWeight()
+    local equipmentEncumbrance = ChimCore.getEquipmentEncumbrance()
 
-    if equipmentWeight <= ChimCore.LightAnimSpeedThreshold then
+    if equipmentEncumbrance <= 0.25 then
         return ChimCore.LightAnimSpeed
-    elseif equipmentWeight <= ChimCore.MediumAnimSpeedThreshold then
+    elseif equipmentEncumbrance <= 0.5 then
         return ChimCore.MediumAnimSpeed
-    elseif equipmentWeight <= ChimCore.HeavyAnimSpeedThreshold then
-        return ChimCore.OverloadedAnimSpeed
+    elseif equipmentEncumbrance <= 0.75 then
+        return ChimCore.HeavyAnimSpeed
     else
         return ChimCore.OverloadedAnimSpeed
     end
