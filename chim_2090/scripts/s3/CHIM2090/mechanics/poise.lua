@@ -97,7 +97,7 @@ function Poise.recoveryTime()
     end
 
     Poise.debugLog(
-        ([[%s: Poise Recovery Time: %.3f]]):format(s3lf.recordId, recoveryTime)
+        ([[%s-%s: Poise Recovery Time: %.3f]]):format(s3lf.recordId, s3lf.id, recoveryTime)
     )
     return math.max(recoveryTime, Poise.MinRecoveryDuration)
 end
