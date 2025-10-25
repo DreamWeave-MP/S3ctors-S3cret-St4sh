@@ -201,6 +201,9 @@ PerUnitShieldWeightPenaltyDesc: |-
   Divisor on shield weight when calculating parry frames. 
   At a value of 3, a shield weighing 9 units will subtract 3 from the base shield frames setting to determine the number of parry frames given by a particular shield.
 
+PoiseBreakAnimSpeedName: Poise Break Animation Speed
+PoiseBreakAnimSpeedDesc: When one's poise is broken, their hit animation speed is scaled by this amount.
+
 PoiseDamageMultName: Poise Damage Multiplier
 PoiseDamageMultDesc: Damage multiplier applied when target's poise is broken
 
