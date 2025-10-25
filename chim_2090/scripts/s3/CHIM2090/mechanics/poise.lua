@@ -39,6 +39,7 @@ end
 ---@field EquipmentSlotTimeReduction number
 ---@field MinRecoveryDuration number
 ---@field ShieldsMitigatePoiseDamage boolean
+---@field PoiseBreakAnimSpeed number
 local Poise = ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise',
     logPrefix = '[ CHIMPoise ]:\n',
@@ -268,7 +269,7 @@ return {
                     'knockdown',
                     {
                         priority = animation.PRIORITY.Scripted,
-                        speed = I.s3ChimCore.getHitAnimationSpeed() * 0.85,
+                        speed = I.s3ChimCore.getHitAnimationSpeed() * Poise.PoiseBreakAnimSpeed,
                     }
                 )
 
