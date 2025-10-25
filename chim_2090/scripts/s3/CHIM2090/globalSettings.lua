@@ -201,8 +201,7 @@ I.Settings.registerGroup {
 -- 	}
 -- }
 
-local LightAnimSpeedThreshold, MediumAnimSpeedThreshold, HeavyAnimSpeedThreshold = 20, 60, 90
-local LightAnimSpeed, MediumAnimSpeed, HeavyAnimSpeed, OverloadedAnimSpeed = 1.25, 0.9, 0.75, 0.6
+local LightAnimSpeed, MediumAnimSpeed, HeavyAnimSpeed, OverloadedAnimSpeed = 1.25, 0.9, 0.65, 0.5
 local CoreGroupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 I.Settings.registerGroup {
         key = CoreGroupName,
@@ -309,30 +308,6 @@ I.Settings.registerGroup {
                         25
                 ),
                 setting(
-                        'LightAnimSpeedThreshold',
-                        'number',
-                        { integer = false, min = 0.0, max = MediumAnimSpeedThreshold - 1, },
-                        'AnimSpeedLightThresholdName',
-                        'AnimSpeedLightThresholdDesc',
-                        LightAnimSpeedThreshold
-                ),
-                setting(
-                        'MediumAnimSpeedThreshold',
-                        'number',
-                        { integer = false, min = LightAnimSpeedThreshold + 1, max = HeavyAnimSpeedThreshold - 1, },
-                        'AnimSpeedMediumThresholdName',
-                        'AnimSpeedMediumThresholdDesc',
-                        MediumAnimSpeedThreshold
-                ),
-                setting(
-                        'HeavyAnimSpeedThreshold',
-                        'number',
-                        { integer = false, min = MediumAnimSpeedThreshold + 1, max = 1500.0, },
-                        'AnimSpeedHeavyThresholdName',
-                        'AnimSpeedHeavyThresholdDesc',
-                        HeavyAnimSpeedThreshold
-                ),
-                setting(
                         'LightAnimSpeed',
                         'number',
                         { integer = false, min = MediumAnimSpeed + 0.1, max = 10.0, },
@@ -373,30 +348,7 @@ CoreGroup:subscribe(
                 function(group, key)
                         local settingValue = CoreGroup:get(key)
 
-                        if key == 'LightAnimSpeedThreshold' then
-                                I.Settings.updateRendererArgument(
-                                        group,
-                                        'MediumAnimSpeedThreshold',
-                                        { min = settingValue + 1 }
-                                )
-                        elseif key == 'MediumAnimSpeedThreshold' then
-                                I.Settings.updateRendererArgument(
-                                        group,
-                                        'LightAnimSpeedThreshold',
-                                        { max = settingValue + 1 }
-                                )
-                                I.Setting.updateRendererArgument(
-                                        group,
-                                        'HeavyAnimSpeedThreshold',
-                                        { min = settingValue + 1 }
-                                )
-                        elseif key == 'HeavyAnimSpeedThreshold' then
-                                I.Settings.updateRendererArgument(
-                                        group,
-                                        'MediumAnimSpeedThreshold',
-                                        { max = settingValue - 1 }
-                                )
-                        elseif key == 'LightAnimSpeed' then
+                        if key == 'LightAnimSpeed' then
                                 I.Settings.updateRendererArgument(
                                         group,
                                         'MediumAnimSpeed',
