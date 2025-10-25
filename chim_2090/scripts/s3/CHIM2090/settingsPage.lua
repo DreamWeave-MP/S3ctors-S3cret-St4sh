@@ -1,3 +1,12 @@
+local core = require 'openmw.core'
+
+--- https://gitlab.com/OpenMW/openmw/-/merge_requests/4334
+--- https://gitlab.com/OpenMW/openmw/-/blob/96d0d1fa7cd83e41853061cca68f612b7eb9c834/CMakeLists.txt#L85
+local onHitAPIRevision = 85
+if core.API_REVISION < onHitAPIRevision then
+  error 'CHIM-2090 requires openmw 0.50 and later! Sorry :('
+end
+
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 local I = require 'openmw.interfaces'
 
