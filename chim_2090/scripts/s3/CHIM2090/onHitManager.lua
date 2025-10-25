@@ -92,7 +92,7 @@ local function CHIMHitHandler(attack)
         end
     end
 
-    I.s3ChimCore.Manager.debugLog(([[Health Damage: %.2f
+    I.s3ChimCore.debugLog(([[Health Damage: %.2f
     Fatigue Damage: %.2f
     shieldMultiplier: %.2f
     Global Damage Scaling: %.2f
