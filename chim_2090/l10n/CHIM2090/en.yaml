@@ -73,6 +73,9 @@ CritMultDesc: Critical hit damage multiplier. Only applies in melee combat.
 DebugEnableChimCoreName: Enable Debug Messages
 DebugEnableChimCoreDesc: Emit informative messages to openmw.log from the CHIM Core (mostly about damage on hits)
 
+DynamicDebugEnableName: Enable Dynamic Stat Debug Messages
+DynamicDebugEnableDesc: Emit informative messages to openmw.log from the dynamic stat module, primarily when one is recalculated.
+
 EndurancePoiseBonusName: Endurance Poise Bonus
 EndurancePoiseBonusDesc: How much poise each point of Endurance provides
 
