@@ -849,6 +849,47 @@ I.Settings.registerGroup {
                         1.4
                 ),
                 setting(
+                        'HandToHandSkillPoiseFactor',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'HandToHandSkillPoiseFactorName',
+                        'HandToHandSkillPoiseFactorDesc',
+                        0.08
+                ),
+                setting(
+                        'AgilityPoiseBonus',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'AgilityPoiseBonusName',
+                        'AgilityPoiseBonusDesc',
+                        --- Grants 20 poise damage at 100 agility
+                        0.2
+                ),
+                setting(
+                        'HandToHandPoiseMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'HandToHandPoiseMultName',
+                        'HandToHandPoiseMultDesc',
+                        1.15
+                ),
+                setting(
+                        'CreatureBasePoiseDamage',
+                        'number',
+                        { integer = true, min = 0, max = 1000, },
+                        'CreatureBasePoiseDamageName',
+                        'CreatureBasePoiseDamageDesc',
+                        15
+                ),
+                setting(
+                        'CreatureStrengthPoiseFactor',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'CreatureStrengthPoiseFactorName',
+                        'CreatureStrengthPoiseFactorDesc',
+                        0.15
+                ),
+                setting(
                         'EquipmentSlotTimeReduction',
                         'number',
                         { integer = false, min = 0.0, max = 0.07, },
