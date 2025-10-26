@@ -293,7 +293,7 @@ function Poise.onHit(attackInfo)
 end
 
 function Poise.tick(dt)
-    if Poise.state.timeRemaining <= 0 then return end
+    if Poise.state.timeRemaining <= 0 or s3lf.isDead() then return end
     Poise.state.timeRemaining = math.max(0.0, Poise.state.timeRemaining - dt)
     if Poise.state.timeRemaining == 0.0 then Poise.state.currentPoise = Poise.calculateMaxPoise() end
 end
@@ -301,6 +301,17 @@ end
 function Poise.reset()
     Poise.state.currentPoise = Poise.calculateMaxPoise()
     Poise.state.timeRemaining = 0.
+end
+
+---@return true? knockdownInterrupted
+local function cancelKnockdownIfDead()
+    if
+        s3lf.isDead()
+        and Poise.isBroken()
+        and s3lf.isPlaying('knockdown')
+    then
+        s3lf.cancel('knockdown')
+    end
 end
 
 --- Needs to also handle melee attacks and probably spells as well
@@ -350,6 +361,7 @@ return {
         onUpdate = function(dt)
             if core.isWorldPaused() or not Poise.Enable then return end
 
+            cancelKnockdownIfDead()
             Poise.tick(dt)
         end,
     },
