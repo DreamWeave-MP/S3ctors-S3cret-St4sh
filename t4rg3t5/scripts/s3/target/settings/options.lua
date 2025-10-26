@@ -108,6 +108,14 @@ I.Settings.registerGroup {
             16
         ),
         Setting(
+            'DisableLockWhenSheathing',
+            'checkbox',
+            {},
+            'DisableLockWhenSheathingName',
+            'DisableLockWhenSheathingDesc',
+            false
+        ),
+        Setting(
             'TargetMinSize',
             'number',
             { min = 0, max = 64, integer = true },
