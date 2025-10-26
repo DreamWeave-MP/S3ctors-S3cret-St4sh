@@ -40,6 +40,11 @@ end
 ---@field MinRecoveryDuration number
 ---@field ShieldsMitigatePoiseDamage boolean
 ---@field PoiseBreakAnimSpeed number
+---@field HandToHandSkillPoiseFactor number
+---@field AgilityPoiseBonus number
+---@field HandToHandPoiseMult number
+---@field CreatureBasePoiseDamage number
+---@field CreatureStrengthPoiseFactor number
 local Poise = ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise',
     logPrefix = '[ CHIMPoise ]:\n',
@@ -104,6 +109,68 @@ end
 
 function Poise.startTimer()
     Poise.state.timeRemaining = Poise.recoveryTime()
+end
+
+function Poise.creaturePoiseDamage(attackInfo)
+    local attacker = s3lf.From(attackInfo.attacker)
+
+    -- Simple base + strength scaling
+    local basePoise = Poise.CreatureBasePoiseDamage
+    local strengthBonus = attacker.strength.modified * Poise.CreatureStrengthPoiseFactor
+
+    local totalPoise = basePoise + strengthBonus
+
+    Poise.debugLog(
+        ([[Creature Attack
+        Attacker: %s-%s
+        Base Creature Poise Damage: %d
+        Strength Bonus: %.2f
+        Total Poise Damage: %.2f]]):format(
+            attacker.recordId,
+            attacker.id,
+            basePoise,
+            strengthBonus,
+            totalPoise
+        )
+    )
+
+    return totalPoise * (attackInfo.attackStrength or 1.0)
+end
+
+---@param attackInfo AttackInfo
+---@return number poiseDamage total poise damage dealt by this (hand to hand) attack
+function Poise.handToHandPoiseDamage(attackInfo)
+    local attacker = s3lf.From(attackInfo.attacker)
+
+    -- Base from hand-to-hand skill (better technique = better force transfer)
+    local handToHandSkill = attacker.handtohand.modified
+    local skillPoise = handToHandSkill * Poise.HandToHandSkillPoiseFactor
+
+    -- Strength bonus (stronger punches carry more force)
+    local strengthBonus = skillPoise * (attacker.strength.modified * Poise.StrengthPoiseDamageBonus)
+
+    -- Weapons gain a bonus from their weight, whereas hand-to-hand combatants instead use their agility
+    local agilityBonus = skillPoise * (attacker.agility.modified * Poise.AgilityPoiseBonus)
+
+    local totalPoise = (skillPoise + strengthBonus + agilityBonus) * Poise.HandToHandPoiseMult
+
+    Poise.debugLog(
+        ([[Hand to Hand Attack
+        Attacker: %s-%s
+        Hand-To-Hand Poise: %.2f
+        Strength Bonus: %.2f
+        Agility Bonus: %.2f
+        Total Poise: %.2f]]):format(
+            attacker.recordId,
+            attacker.id,
+            skillPoise,
+            strengthBonus,
+            agilityBonus,
+            totalPoise
+        )
+    )
+
+    return totalPoise * (attackInfo.attackStrength or 1.0)
 end
 
 ---@param attackInfo AttackInfo
@@ -187,7 +254,7 @@ end
 ---@return number poiseDamageMult
 function Poise.onHit(attackInfo)
     local damage = attackInfo.damage.health or attackInfo.damage.fatigue
-    if not damage or damage == 0 or not Poise.Enable then return 1.0 end
+    if not attackInfo.attacker or not damage or damage == 0 or not Poise.Enable then return 1.0 end
     if Poise.isBroken() then return Poise.PoiseDamageMult end
 
     Poise.startTimer()
@@ -196,12 +263,20 @@ function Poise.onHit(attackInfo)
     if attackInfo.weapon then
         poiseDamage = Poise.weaponPoiseDamage(attackInfo)
     else
-        error('Hand to hand/creatures not yet supported!')
+        -- We'll assume that bipedal creatures are always using a weapon.
+        -- Maybe possibly this will bite us in the ass later but we'll scream test it.
+        if types.NPC.objectIsInstance(attackInfo.attacker) then
+            poiseDamage = Poise.handToHandPoiseDamage(attackInfo)
+        else
+            poiseDamage = Poise.creaturePoiseDamage(attackInfo)
+        end
     end
 
-    Poise.hitDamage(poiseDamage)
-
-    return 1.0
+    if Poise.hitDamage(poiseDamage) then
+        return Poise.PoiseDamageMult
+    else
+        return 1.0
+    end
 end
 
 function Poise.tick(dt)
@@ -218,7 +293,12 @@ end
 --- Needs to also handle melee attacks and probably spells as well
 I.AnimationController.addTextKeyHandler('',
     function(group, key)
-        if group == 'knockout' and Poise.isBroken() then return s3lf.cancel(group) end
+        if group == 'knockout' and Poise.isBroken() then
+            Poise.debugLog(
+                ('cancelling knockdown on %s'):format(s3lf.recordId)
+            )
+            return s3lf.cancel(group)
+        end
 
         if group == 'knockdown' and key == 'stop' and Poise.isBroken() then
             Poise.state.isBroken = false
