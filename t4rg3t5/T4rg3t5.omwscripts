@@ -1,3 +1,4 @@
 MENU: scripts/s3/target/settings/page.lua
 GLOBAL: scripts/s3/target/settings/options.lua
+CREATURE, NPC: scripts/s3/target/onHit.lua
 PLAYER: scripts/s3/target/lockOnManager.lua

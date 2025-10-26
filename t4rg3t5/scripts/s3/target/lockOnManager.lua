@@ -40,6 +40,8 @@ end
 ---@field TargetColorD util.color Color applied to the target icon when target has <= 0% health.
 ---@field EnableFlickSwitch boolean Whether or not to allow changing targets by quickly flicking the mouse
 ---@field FlickSwitchDistance number how far the mouse has to move to flick-switch targets
+---@field EnableHitBounce boolean Whether or not to dynamically increase the icon size when a target has been hit
+---@field HitBounceSize number How much the icon size should increase/decrease when bouncing
 local LockOnManager = I.S3ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. ModInfo.name .. 'LockOnGroup',
     logPrefix = ModInfo.logPrefix,
@@ -55,6 +57,9 @@ LockOnManager.state = {
     canDoLockOn = false,
     flickTriggered = false,
     cumulativeXMove = 0,
+    isBouncing = false,
+    bouncedSize = 0,
+    bounceUpOrDown = true,
 }
 
 ---@alias MarkerTransform util.vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
@@ -81,7 +86,7 @@ function LockOnManager:updateMarker(markerUpdateData)
     local element = self.getLockOnMarker()
     assert(element, 'LockOnManager: Failed to locate lock on marker to set its position!')
 
-    local elementSize = self:getIconSize(markerUpdateData.transform.z)
+    local elementSize = self:getIconSize(markerUpdateData.transform.z) + self.state.bouncedSize
     element.layout.props.size = util.vector2(elementSize, elementSize)
     element.layout.props.color = self:getIconColor()
     element.layout.props.relativePosition = markerUpdateData.transform.xy
@@ -227,6 +232,11 @@ end
 function LockOnManager.setMarkerVisibility(state)
     local marker = LockOnManager.getLockOnMarker()
     if not marker then return end
+
+    local markerState = LockOnManager.state
+    markerState.isBouncing = false
+    markerState.bouncedSize = 0
+    markerState.bounceUpOrDown = true
 
     marker.layout.props.visible = state
     marker:update()
@@ -407,6 +417,43 @@ function LockOnManager:onFrame()
     return LockOnManager.canLockOn()
 end
 
+--- Checks whether the lock-on icon is currently "bouncing" from a hit
+---@return boolean isBouncing whether or not a target has already been hit and started a "bounce"
+function LockOnManager.isBouncing()
+    return LockOnManager.state.isBouncing
+end
+
+function LockOnManager:startBounce()
+    if self.state.isBouncing or not self.getMarkerVisibility() then return end
+
+    self.state.isBouncing = true
+end
+
+function LockOnManager:bounce()
+    if not self.isBouncing() or not self.getMarkerVisibility() then return end
+
+    local state = LockOnManager.state
+
+    if state.bounceUpOrDown then
+        state.bouncedSize = state.bouncedSize + 1
+    else
+        state.bouncedSize = state.bouncedSize - 1
+    end
+
+    if state.bouncedSize == LockOnManager.HitBounceSize then
+        state.bounceUpOrDown = false
+    elseif state.bouncedSize == 0 then
+        state.isBouncing = false
+        state.bounceUpOrDown = true
+    end
+end
+
+--- Handle late-stage actions such as un-targeting when the weapon is sheathed,
+--- bouncing, and other stuff that depends on earlier frame interactions
+function LockOnManager:onFrameEnd()
+    self:bounce()
+end
+
 input.registerActionHandler('S3TargetLock', async:callback(LockOnManager.lockOnHandler))
 
 return {
@@ -414,6 +461,27 @@ return {
         onFrame = function()
             LockOnManager:onFrameBegin()
             LockOnManager:onFrame()
+            LockOnManager:onFrameEnd()
+        end,
+    },
+    eventHandlers = {
+        S3TargetLockHit = function(target)
+            if
+            --- Maybe we also want to bail if the marker isn't visible... ?
+                not LockOnManager.EnableHitBounce
+                or LockOnManager.isBouncing()
+            then
+                return
+            end
+
+            local targetObject = LockOnManager.getTargetObject()
+
+            --- Don't screw around and switch targets when we hit someone else on accident, but have a locked-on target already.
+            if targetObject and targetObject ~= target then
+                return
+            end
+
+            LockOnManager:startBounce()
         end,
     },
     interfaceName = 'S3LockOn',
