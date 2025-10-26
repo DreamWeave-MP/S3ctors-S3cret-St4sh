@@ -116,6 +116,14 @@ I.Settings.registerGroup {
             false
         ),
         Setting(
+            'LockOnCombatStart',
+            'checkbox',
+            {},
+            'LockOnCombatStartName',
+            'LockOnCombatStartDesc',
+            false
+        ),
+        Setting(
             'TargetMinSize',
             'number',
             { min = 0, max = 64, integer = true },

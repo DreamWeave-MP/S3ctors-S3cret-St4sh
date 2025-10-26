@@ -43,6 +43,7 @@ end
 ---@field EnableHitBounce boolean Whether or not to dynamically increase the icon size when a target has been hit
 ---@field HitBounceSize number How much the icon size should increase/decrease when bouncing
 ---@field DisableLockWhenSheathing boolean whether to un-set the locked target when sheathing your own weapon
+---@field LockOnCombatStart boolean whether or not to automatically lock onto whatever target started combat with you
 local LockOnManager = I.S3ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. ModInfo.name .. 'LockOnGroup',
     logPrefix = ModInfo.logPrefix,
@@ -463,6 +464,76 @@ function LockOnManager:onFrameEnd()
     end
 end
 
+---@class TargetChangeData
+---@field targets GameObject[]
+---@field actor GameObject
+
+---@param targetChangeData TargetChangeData
+function LockOnManager.lockOnCombatStart(targetChangeData)
+    if
+        not LockOnManager.LockOnCombatStart
+        or LockOnManager.getMarkerVisibility()
+        or next(targetChangeData.targets) == nil
+    then
+        return
+    end
+
+    local targetIsMe = false
+    for _, target in ipairs(targetChangeData.targets) do
+        if target.id == s3lf.id then
+            targetIsMe = true
+            break
+        end
+    end
+
+    local hasWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight) ~= nil
+    local hasSpell = s3lf.getSelectedEnchantedItem() ~= nil or s3lf.getSelectedSpell() ~= nil
+    if
+        not targetIsMe
+        or (not hasWeapon and not hasSpell)
+    then
+        return
+    end
+
+    if isWielding() then
+        LockOnManager.setTarget(targetChangeData.actor)
+    else
+        local stance = hasWeapon and s3lf.STANCE.Weapon or s3lf.STANCE.Spell
+
+        s3lf.setStance(stance)
+        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto', targetChangeData.actor)
+    end
+
+    local myYaw, theirYaw = s3lf.rotation:getYaw(), targetChangeData.actor.rotation:getYaw()
+
+    theirYaw = theirYaw - math.rad(180)
+    local difference = theirYaw - myYaw
+
+    s3lf.controls.yawChange = math.atan2(
+        math.sin(difference),
+        math.cos(difference)
+    )
+end
+
+function LockOnManager.bounceOnHit(target)
+    if
+    --- Maybe we also want to bail if the marker isn't visible... ?
+        not LockOnManager.EnableHitBounce
+        or LockOnManager.isBouncing()
+    then
+        return
+    end
+
+    local targetObject = LockOnManager.getTargetObject()
+
+    --- Don't screw around and switch targets when we hit someone else on accident, but have a locked-on target already.
+    if targetObject and targetObject ~= target then
+        return
+    end
+
+    LockOnManager:startBounce()
+end
+
 input.registerActionHandler('S3TargetLock', async:callback(LockOnManager.lockOnHandler))
 
 return {
@@ -474,24 +545,9 @@ return {
         end,
     },
     eventHandlers = {
-        S3TargetLockHit = function(target)
-            if
-            --- Maybe we also want to bail if the marker isn't visible... ?
-                not LockOnManager.EnableHitBounce
-                or LockOnManager.isBouncing()
-            then
-                return
-            end
-
-            local targetObject = LockOnManager.getTargetObject()
-
-            --- Don't screw around and switch targets when we hit someone else on accident, but have a locked-on target already.
-            if targetObject and targetObject ~= target then
-                return
-            end
-
-            LockOnManager:startBounce()
-        end,
+        OMWMusicCombatTargetsChanged = LockOnManager.lockOnCombatStart,
+        S3TargetLockOnto = LockOnManager.setTarget,
+        S3TargetLockHit = LockOnManager.bounceOnHit,
     },
     interfaceName = 'S3LockOn',
     interface = {
