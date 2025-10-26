@@ -50,6 +50,13 @@ I.Settings.registerGroup {
         name = 'SettingsDynamicGroupName',
         permanentStorage = true,
         settings = {
+                setting('DebugEnable',
+                        'checkbox',
+                        {},
+                        'DynamicDebugEnableName',
+                        'DynamicDebugEnableDesc',
+                        false
+                ),
                 setting('UseVanillaFatigueFormula',
                         'checkbox',
                         {},
