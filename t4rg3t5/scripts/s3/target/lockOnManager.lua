@@ -42,6 +42,7 @@ end
 ---@field FlickSwitchDistance number how far the mouse has to move to flick-switch targets
 ---@field EnableHitBounce boolean Whether or not to dynamically increase the icon size when a target has been hit
 ---@field HitBounceSize number How much the icon size should increase/decrease when bouncing
+---@field DisableLockWhenSheathing boolean whether to un-set the locked target when sheathing your own weapon
 local LockOnManager = I.S3ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. ModInfo.name .. 'LockOnGroup',
     logPrefix = ModInfo.logPrefix,
@@ -452,6 +453,14 @@ end
 --- bouncing, and other stuff that depends on earlier frame interactions
 function LockOnManager:onFrameEnd()
     self:bounce()
+
+    if
+        self.DisableLockWhenSheathing
+        and not isWielding()
+        and self.getTargetObject()
+    then
+        self.setTarget()
+    end
 end
 
 input.registerActionHandler('S3TargetLock', async:callback(LockOnManager.lockOnHandler))
