@@ -92,6 +92,22 @@ I.Settings.registerGroup {
             64
         ),
         Setting(
+            'EnableHitBounce',
+            'checkbox',
+            {},
+            'EnableHitBounceName',
+            'EnableHitBounceDesc',
+            true
+        ),
+        Setting(
+            'HitBounceSize',
+            'number',
+            { integer = true, min = 1, max = 32, },
+            'HitBounceSizeName',
+            'HitBounceSizeDesc',
+            16
+        ),
+        Setting(
             'TargetMinSize',
             'number',
             { min = 0, max = 64, integer = true },
