@@ -92,18 +92,31 @@ end
 function Poise.recoveryTime()
     local recoveryTime = Poise.PoiseRecoveryDuration
 
+    local equipmentSlotMult = 1 - Poise.EquipmentSlotTimeReduction
+
+    local equipCount = 0
     for _, item in pairs(s3lf.getEquipment()) do
-        if item and ArmorRecords[item.recordId] then
-            local weight = ArmorRecords[item.recordId].weight
-            if weight > 0 then
-                recoveryTime = recoveryTime * (1 - Poise.EquipmentSlotTimeReduction)
-            end
-        end
+        if not item or not ArmorRecords[item.recordId] then goto CONTINUE end
+        local itemRecord = ArmorRecords[item.recordId]
+
+        local weight = itemRecord.weight
+        if weight <= 0 then goto CONTINUE end
+
+        recoveryTime = recoveryTime * equipmentSlotMult
+        equipCount = equipCount + 1
+
+        ::CONTINUE::
     end
 
     Poise.debugLog(
-        ([[%s-%s: Poise Recovery Time: %.3f]]):format(s3lf.recordId, s3lf.id, recoveryTime)
+        ([[%s-%s: Poise Recovery Time: %.3f with %d pieces of equipment]])
+        :format(
+            s3lf.recordId,
+            s3lf.id,
+            recoveryTime,
+            equipCount)
     )
+
     return math.max(recoveryTime, Poise.MinRecoveryDuration)
 end
 
