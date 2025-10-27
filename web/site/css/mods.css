@@ -66,6 +66,7 @@ a.modHeader,
     background-image: linear-gradient(to bottom, #00ffff 60%, #ff00ff);
     background-clip: text;
     color: transparent;
+    font-size: 3.5rem;
 }
 
 #toolgun {
