@@ -70,6 +70,10 @@ Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (
 
 ## For Modders
 
+### Events
+
+Target locking always happens by way of sending an event. If you wish to modify this behavior somehow, you may create an eventHandler for the `S3TargetLockOnto` event. This will allow you to prevent target locking in some circumstances, change the target, do some specific behavior when a target is locked, etc. In the eventData is *only* the targeted actor, which is nil if the target lock has been broken for any reason.
+
 ### Making New Icons
 
 Making new Icons for T4rg3t5 is dead simple. The recommended way is to use GIMP, but any image editor should be able to handle this task.

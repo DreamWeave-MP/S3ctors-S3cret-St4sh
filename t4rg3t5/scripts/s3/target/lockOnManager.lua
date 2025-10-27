@@ -175,7 +175,7 @@ function LockOnManager:selectNearestTarget(goLeft)
 
     if not result then return end
 
-    LockOnManager.setTarget(result)
+    s3lf.gameObject:sendEvent('S3TargetLockOnto', result)
 
     return result
 end
@@ -220,7 +220,7 @@ function LockOnManager.lockOnHandler(state)
     if not state then return end
 
     if LockOnManager.getMarkerVisibility() then
-        LockOnManager.setTarget()
+        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
         LockOnManager.toggleLockOnMarkerDisplay()
         return
     end
@@ -254,7 +254,7 @@ function LockOnManager.checkForDeadTarget(targetIsActor)
     if not targetObject.type.isDead(targetObject) then return end
 
     if LockOnManager.setMarkerVisibility(false) then
-        LockOnManager.setTarget()
+        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
         return true
     end
 end
@@ -365,7 +365,7 @@ function LockOnManager:onFrame()
 
     if self.CheckLOS and targetObject then
         if not CamHelper.objectIsOnscreen(targetObject) then
-            LockOnManager.setTarget()
+            s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
         else
             local LOStest = nearby.castRay(
                 camera.getPosition(),
@@ -374,7 +374,7 @@ function LockOnManager:onFrame()
             )
 
             if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
-                LockOnManager.setTarget()
+                s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
             end
         end
     end
@@ -460,7 +460,7 @@ function LockOnManager:onFrameEnd()
         and not isWielding()
         and self.getTargetObject()
     then
-        self.setTarget()
+        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
     end
 end
 
@@ -495,14 +495,13 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
         return
     end
 
-    if isWielding() then
-        LockOnManager.setTarget(targetChangeData.actor)
-    else
+    if not isWielding() then
         local stance = hasWeapon and s3lf.STANCE.Weapon or s3lf.STANCE.Spell
 
         s3lf.setStance(stance)
-        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto', targetChangeData.actor)
     end
+
+    s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto', targetChangeData.actor)
 
     local myYaw, theirYaw = s3lf.rotation:getYaw(), targetChangeData.actor.rotation:getYaw()
 
