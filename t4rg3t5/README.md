@@ -3,13 +3,11 @@
 <div align="center">
   <figure>
     <img src="t4rg3t5.png" alt="targets icon" width="512" height="608" />
-    <figcaption><h2 class="notoc">Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
+    <figcaption><h2 class="notoc">Morrowind Lock-On Targeting System</h2></figcaption>
   </figure>
   <br>
   <br>
 </div>
-
-## Morrowind Lock-On Targeting System
 
 ## Installation
 
