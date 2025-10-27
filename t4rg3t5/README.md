@@ -14,6 +14,11 @@
 ## Overview
 
 T4rg3ts is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
+With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
+
+T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators. Additionally, it's very easy to create new target lock icons for T4rg3t5 for your own mods or personal use.
+
+Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (mostly) useless.
 
 ### Core Features
 
@@ -62,3 +67,16 @@ T4rg3ts is a comprehensive Dark Souls-style lock-on targeting system for OpenMW 
     - Breaks lock when targets move out of sight
 
     - Releases lock when sheathing weapons
+
+## For Modders
+
+### Making New Icons
+
+Making new Icons for T4rg3t5 is dead simple. The recommended way is to use GIMP, but any image editor should be able to handle this task.
+
+1. First, pick or create a source image.
+1. Open it in GIMP
+1. Use Colors -> Threshold to flatten all the colors to pure black/white. Make sure to adjust the values to find ones that fit your image.
+1. Either delete the black pixels, or lighten them, using Colors -> Levels to increase the white levels of these pixels, so that the script's coloration works better.
+1. Use Image -> Scale Image to resize the image to 128x128
+1. Export as DDS without mipmaps OR compression to a subfolder, `textures/s3/crosshair`
