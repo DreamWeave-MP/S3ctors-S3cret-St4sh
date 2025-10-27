@@ -11,9 +11,11 @@
 
 ## Requirements
 
-<img alt="OpenMW Required Badge" src="https://img.shields.io/badge/OpenMW%200.50-Required%20For%20Use-ff00ff?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD%2F%2F%2F%2Bl2Z%2FdAAAAAXRSTlMAQObYZgAAAGlJREFUKM%2BFUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u%2BLTS5OPel0pgc3OJr5%2BbQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fopenmw.org%2Fdownloads">
+<div align="center">
+  <img alt="OpenMW Required Badge" src="https://img.shields.io/badge/OpenMW%200.50-Required%20For%20Use-ff00ff?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD%2F%2F%2F%2Bl2Z%2FdAAAAAXRSTlMAQObYZgAAAGlJREFUKM%2BFUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u%2BLTS5OPel0pgc3OJr5%2BbQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fopenmw.org%2Fdownloads">
 
-<img alt="H3 Required" src="https://img.shields.io/badge/H3lp%20YourS3lf-OpenMW%20Helper%20Modules-00ca00?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD%2F%2F%2F%2Bl2Z%2FdAAAAAXRSTlMAQObYZgAAAGlJREFUKM%2BFUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u%2BLTS5OPel0pgc3OJr5%2BbQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fwww.nexusmods.com%2Fmorrowind%2Fmods%2F56417">
+  <img alt="H3 Required" src="https://img.shields.io/badge/H3lp%20YourS3lf-OpenMW%20Helper%20Modules-00ca00?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD%2F%2F%2F%2Bl2Z%2FdAAAAAXRSTlMAQObYZgAAAGlJREFUKM%2BFUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u%2BLTS5OPel0pgc3OJr5%2BbQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fwww.nexusmods.com%2Fmorrowind%2Fmods%2F56417">
+</div>
 
 ## Installation
 
