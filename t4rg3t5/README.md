@@ -16,7 +16,7 @@
 
 </div>
 
-[![Link to Mod Page](../img/h3Required.png)](https://www.nexusmods.com/morrowind/mods/56417)
+[![Link to Mod Page](../img/h3Required.svg)](https://www.nexusmods.com/morrowind/mods/56417)
 
 ## Installation
 
