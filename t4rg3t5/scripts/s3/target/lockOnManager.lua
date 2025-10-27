@@ -216,9 +216,7 @@ end
 
 --- Responds to the 'SW4_TargetLock' action, engaging or disengaging target locking as appropriate
 --- Toggle type action, but, maybe we could make it a hold??
-function LockOnManager.lockOnHandler(state)
-    if not state then return end
-
+function LockOnManager.lockOnHandler()
     if LockOnManager.getMarkerVisibility() then
         s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
         LockOnManager.toggleLockOnMarkerDisplay()
@@ -533,7 +531,7 @@ function LockOnManager.bounceOnHit(target)
     LockOnManager:startBounce()
 end
 
-input.registerActionHandler('S3TargetLock', async:callback(LockOnManager.lockOnHandler))
+input.registerTriggerHandler('S3TargetLock', async:callback(LockOnManager.lockOnHandler))
 
 return {
     engineHandlers = {

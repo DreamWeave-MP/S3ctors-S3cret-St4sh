@@ -10,11 +10,9 @@ I.Settings.registerPage {
     description = 'TargetLockPageDescription',
 }
 
-input.registerAction {
+input.registerTrigger {
     key = 'S3TargetLock',
-    type = input.ACTION_TYPE.Boolean,
     l10n = ModInfo.l10nName,
     name = 'TargetLockActionName',
     description = 'TargetLockActionDesc',
-    defaultValue = false,
 }

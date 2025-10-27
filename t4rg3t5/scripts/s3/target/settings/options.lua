@@ -45,7 +45,7 @@ I.Settings.registerGroup {
         Setting(
             'S3TargetLockBinding',
             'inputBinding',
-            { key = 'S3TargetLock', type = 'action' },
+            { key = 'S3TargetLock', type = 'trigger' },
             'S3TargetLockBindingName',
             'S3TargetLockBindingDesc',
             'z'
