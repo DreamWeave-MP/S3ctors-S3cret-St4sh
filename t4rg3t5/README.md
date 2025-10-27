@@ -2,7 +2,7 @@
 
 <div align="center">
   <figure>
-    <img src="../img/t4rg3t5.png" alt="targets icon" width="512" height="608" />
+    <img src="../img/t4rg3t5.png" alt="targets icon" width="512" height="512" />
     <figcaption><h2 class="notoc">Morrowind Lock-On Targeting System</h2></figcaption>
   </figure>
   <br>
