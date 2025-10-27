@@ -16,7 +16,5 @@ input.registerAction {
     l10n = ModInfo.l10nName,
     name = 'TargetLockActionName',
     description = 'TargetLockActionDesc',
-    -- name = 'Target Lock Toggle',
-    -- description = 'Manually engages target locking',
     defaultValue = false,
 }

@@ -46,8 +46,8 @@ I.Settings.registerGroup {
             'S3TargetLockBinding',
             'inputBinding',
             { key = 'S3TargetLock', type = 'action' },
-            'Target Lock Toggle',
-            'Keybind used to lock onto targets in combat.',
+            'S3TargetLockBindingName',
+            'S3TargetLockBindingDesc',
             'z'
         ),
 
@@ -55,24 +55,25 @@ I.Settings.registerGroup {
             'TargetLockToggle',
             'checkbox',
             {},
-            'Enabled',
-            'If set to false, target locking is completely disabled. Recommended to leave enabled.',
+            'TargetLockToggleName',
+            'TargetLockToggleDesc',
+
             true
         ),
         Setting(
             'SwitchOnDeadTarget',
             'checkbox',
             {},
-            'Auto-Switch on Dead Target',
-            'If the current target is dead, and this setting is true, a new one will be automatically selected once the dead target has been identified.',
+            'SwitchOnDeadTargetName',
+            'SwitchOnDeadTargetDesc',
             true
         ),
         Setting(
             'CheckLOS',
             'checkbox',
             {},
-            'Use Line-of-Sight Checks',
-            'If enabled, uses line of sight to break target locking if you can\'t see the enemy. DISabled by default to improve performance.',
+            'CheckLOSName',
+            'CheckLOSDesc',
             false
         ),
         Setting(
@@ -127,32 +128,32 @@ I.Settings.registerGroup {
             'TargetMinSize',
             'number',
             { min = 0, max = 64, integer = true },
-            'Minimum Target Size',
-            'Size of the targeting icon at minimum distance.',
+            'TargetMinSizeName',
+            'TargetMinSizeDesc',
             32
         ),
         Setting(
             'TargetMinDistance',
             'number',
             { min = 0, max = 512, integer = true },
-            'Minimum Target Distance',
-            'Distance from the locked target at which the icon will be at minimum size.',
+            'TargetMinDistanceName',
+            'TargetMinDistanceDesc',
             256
         ),
         Setting(
             'TargetMaxSize',
             'number',
             { min = 0, max = 128, integer = true },
-            'Maximum Target Size',
-            'Size of the targeting icon at maximum distance.',
+            'TargetMaxSizeName',
+            'TargetMaxSizeDesc',
             128
         ),
         Setting(
             'TargetMaxDistance',
             'number',
             { min = 512, max = 7128, integer = true },
-            'Maximum Target Distance',
-            'Distance from the locked target at which the icon will be at minimum size.',
+            'TargetMaxDistanceName',
+            'TargetMaxDistanceDesc',
             3564
         ),
         Setting(
@@ -160,56 +161,56 @@ I.Settings.registerGroup {
             'select',
             { items = iconNames,
                 l10n = ModInfo.l10nName },
-            'Target Lock Icon',
-            'Icon used for target locking.\nCustom icons can be added in the relative VFS dir textures/sw4/crosshair.\nFor health coloration to work, it is suggested to make all icons black/white.',
+            'TargetLockIconName',
+            'TargetLockIconDesc',
             'starburst'
         ),
         Setting(
             'TargetColorF',
             'color',
             {},
-            'Full Target Color',
-            'Target Icon color when the targeted actor is at 100% health',
+            'TargetColorFName',
+            'TargetColorFDesc',
             util.color.hex('0df8cc')
         ),
         Setting(
             'TargetColorVH',
             'color',
             {},
-            'Full Target Color',
-            'Target Icon color when the targeted actor is between 80-100% health',
+            'TargetColorVHName',
+            'TargetColorVHDesc',
             util.color.hex('069e00')
         ),
         Setting(
             'TargetColorH',
             'color',
             {},
-            'Very Healthy Target Color',
-            'Target Icon color when the targeted actor is between 60-80% health',
+            'TargetColorHName',
+            'TargetColorHDesc',
             util.color.hex('047a00')
         ),
         Setting(
             'TargetColorW',
             'color',
             {},
-            'Healthy Target Color',
-            'Target Icon color when the targeted actor is between 40-60% health',
+            'TargetColorWName',
+            'TargetColorWDesc',
             util.color.hex('9e7100')
         ),
         Setting(
             'TargetColorVW',
             'color',
             {},
-            'Wounded Target Color',
-            'Target Icon color when the targeted actor is between 20-40% health',
+            'TargetColorVWName',
+            'TargetColorVWDesc',
             util.color.hex('4c3700')
         ),
         Setting(
             'TargetColorD',
             'color',
             {},
-            'Dying Target Mix Color',
-            'Target Icon color when the targeted actor is at 0% health',
+            'TargetColorDName',
+            'TargetColorDDesc',
             util.color.hex('4c0000')
         ),
     },
