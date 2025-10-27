@@ -9,12 +9,20 @@
   <br>
 </div>
 
+## Requirements
+
+<img alt="OpenMW Required Badge" src="https://img.shields.io/badge/OpenMW%200.50-Required%20For%20Use-ff00ff?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD%2F%2F%2F%2Bl2Z%2FdAAAAAXRSTlMAQObYZgAAAGlJREFUKM%2BFUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u%2BLTS5OPel0pgc3OJr5%2BbQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fopenmw.org%2Fdownloads">
+
+<img alt="H3 Required" src="https://img.shields.io/badge/H3lp%20YourS3lf-OpenMW%20Helper%20Modules-00ca00?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD%2F%2F%2F%2Bl2Z%2FdAAAAAXRSTlMAQObYZgAAAGlJREFUKM%2BFUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u%2BLTS5OPel0pgc3OJr5%2BbQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fwww.nexusmods.com%2Fmorrowind%2Fmods%2F56417">
+
 ## Installation
 
 ## Overview
 
 T4rg3ts is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
 With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
+
+Target indicators also grow in size dynamically according to how far away your target is. Additionally, it is impossible to target enemies which are offscreen, and the mod does not use any raycasts unless the `CheckLOS` setting is enabled - what this means for you is no bad targets, and high performance (as much as can be expected from updating a UI element every frame, anyway).
 
 T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators. Additionally, it's very easy to create new target lock icons for T4rg3t5 for your own mods or personal use.
 
