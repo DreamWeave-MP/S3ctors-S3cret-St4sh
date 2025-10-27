@@ -12,11 +12,10 @@
 ## Requirements
 
 <div align="center">
-  <img alt="OpenMW Required Badge" src="https://img.shields.io/badge/OpenMW%200.50-Required%20For%20Use-ff00ff?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD%2F%2F%2F%2Bl2Z%2FdAAAAAXRSTlMAQObYZgAAAGlJREFUKM%2BFUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u%2BLTS5OPel0pgc3OJr5%2BbQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fopenmw.org%2Fdownloads">
-
+  <a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="Download OpenMW"></a>
+  <a href="https://openmw.org/downloads"><img src="../img/openmwRequired.svg" alt="H3lp Yours3lf"></a>
+  <br>
 </div>
-
-[![Link to Mod Page](../img/h3Required.svg)](https://www.nexusmods.com/morrowind/mods/56417)
 
 ## Installation
 
@@ -85,6 +84,20 @@ Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (
 
 Target locking always happens by way of sending an event. If you wish to modify this behavior somehow, you may create an eventHandler for the `S3TargetLockOnto` event. This will allow you to prevent target locking in some circumstances, change the target, do some specific behavior when a target is locked, etc. In the eventData is *only* the targeted actor, which is nil if the target lock has been broken for any reason.
 
+### Triggers
+
+You can also engage target locking manually from any `PLAYER` script by calling `input.activateTrigger('S3TargetLockOn')`. This will either disable or enable locking as appropriate.
+If you care to check whether a target is already selected or not, then use `I.S3LockOn.Manager.getMarkerVisibility()`.
+
+### ProtectedTable
+
+T4rg3t5 uses `H3lp Yours3lf`'s protected table interface, which offers many conveniences - such as displaying all the associated setting values by simply trying to print the table. Try the following the console and explore for yourself:
+
+```lua
+luap
+I.S3LockOn.Manager
+```
+
 ### Making New Icons
 
 Making new Icons for T4rg3t5 is dead simple. The recommended way is to use GIMP, but any image editor should be able to handle this task.
@@ -95,3 +108,5 @@ Making new Icons for T4rg3t5 is dead simple. The recommended way is to use GIMP,
 1. Either delete the black pixels, or lighten them, using Colors -> Levels to increase the white levels of these pixels, so that the script's coloration works better.
 1. Use Image -> Scale Image to resize the image to 128x128
 1. Export as DDS without mipmaps OR compression to a subfolder, `textures/s3/crosshair`
+
+<!-- data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD///+l2Z/dAAAAAXRSTlMAQObYZgAAAGlJREFUKM+FUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u+LTS5OPel0pgc3OJr5+bQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg== -->
