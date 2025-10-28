@@ -1,5 +1,4 @@
 local animation = require 'openmw.animation'
-local core = require 'openmw.core'
 local self = require 'openmw.self'
 local types = require 'openmw.types'
 
@@ -14,10 +13,7 @@ local types = require 'openmw.types'
 ---@field attackStrength number
 ---@field applyDurabilityDamage boolean
 
-local isPlayer, ui = types.Player.objectIsInstance(self)
-if isPlayer then
-    ui = require 'openmw.ui'
-end
+local isPlayer = types.Player.objectIsInstance(self)
 
 local I = require 'openmw.interfaces'
 local Combat = I.Combat
@@ -56,7 +52,8 @@ local function CHIMHitHandler(attack)
                 damage = I.s3ChimParry.Manager.getDamage(blockData),
             })
 
-            ui.showMessage('Attack parried!')
+            if I.S3LockOn then self:sendEvent('S3TargetLockHit', attacker) end
+
             return false
         elseif I.s3ChimBlock.isBlocking then
             blockData.playVfx = true
