@@ -22,6 +22,10 @@ BaseBlockMitigationDesc: Minimum damage reduction when blocking with any shield
 BaseDamageMultName: Parry Damage Redirection
 BaseDamageMultDesc: When parrying an attack, this multiplier is applied to incoming health damage and redirected back to the enemy as fatigue damage.
 
+BaseHealthName: Base Health
+BaseHealthDesc: |-
+  Base health for all actors before stat calculations kick in.
+
 BaseParryFramesName: Base Parry Frame Count
 BaseParryFramesDesc: Starting number of parrying frames granted regardless of character skill or shield weight.
 
@@ -119,6 +123,24 @@ FumbleDamagePercentDesc: Percentage of damage dealt to the target on a fumble
 
 GlobalDamageScalingName: Global Damage Multiplier
 GlobalDamageScalingDesc: Multiplier applied to ALL damage received by an onHit handler, on all characters/creatures.
+
+HealthDiminishingExponentName: Max Health Diminishing Exponent
+HealthDiminishingExponentDesc: |-
+  Maximum health calculations offer diminishing returns based on your endurance.
+  This setting controls the degree to which they diminish.
+  Suggested values:
+  1.1-1.3: mild diminishing returns, balanced
+  1.4-1.6: heavy diminishing returns, rewards medium endurance
+  0.9-1.0: almost linear, high endurance very valuable
+  0.7-0.8: Accelerating returns, rewards lower endurance values more
+
+HealthLinearMultName: Linear Health Multiplier
+HealthLinearMultDesc: Linear multiplier for endurance when calculating max health. Basically, this is how many hit points you get per point of endurance.
+
+HealthVitalityMultName: Health Vitality Multiplier
+HealthVitalityMultDesc: |-
+  Multiplier applied to the diminishing health exponent.
+  Alter this value to make endurance scaling more or less effective overall.
 
 LuckHitChancePctName: Luck Hit Chance Influence
 LuckHitChancePctDesc: |-
