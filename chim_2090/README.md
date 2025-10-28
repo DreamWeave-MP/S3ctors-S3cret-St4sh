@@ -32,6 +32,66 @@ At its core, CHIM is a highly advanced damage scaing mod, taking many factors in
 
 See each subsystem's respective section for details on what each one does and how to configure it. Each subsystem has its own settings page within the mod, all of which may be localized. In formulae shown in the documentation, every variable starting with a capital letter is a setting, such as `EnableCritFumble`.
 
+### Dynamic Stats
+
+CHIM alters the maximum capacity of all dynamic stats, and takes over fatigue regeneration completely. This is primarily to rebalance the combat experience and lower stat values out of the box. In most cases, vanilla formulae are reproduced and simply dehardcoded.
+
+#### Fatigue
+
+CHIM overrides the vanilla fatigue capacity and regeneration formulae, setting relevant GMSTs to 0. Those GMSTs are renamed and exposed as settings in the mod.
+
+##### Fatigue Regen
+
+```sh
+fatigueThisFrame = FatiguePerSecond
+
+if UseVanillaFatigueFormula:
+  fatigueThisFrame += FatigueReturnMult * endurance.modified
+
+# Multiply FatiguePerSecond by frameTime to ensure accurate timing
+fatigueThisFrame *= deltaTime
+```
+
+##### Fatigue Capacity
+
+```sh
+fatigueWil = willpower.modified * ( MaxFatigueWilMult / 100 )
+fatigueAgi = willpower.modified * ( MaxFatigueAgiMult / 100 )
+fatigueEnd = willpower.modified * ( MaxFatigueEndMult / 100 )
+fatigueStr = willpower.modified * ( MaxFatigueStrMult / 100 )
+
+fatigueCapacity = round( fatigueWil + fatigueAgi + fatigueEnd + fatigueStr )
+```
+
+#### Magicka
+
+CHIM Overrides the vanilla magicka capacity formula, but does not override its regeneration as this is well handled by other mods such as Pharis' Magicka Regen or Imperial Magicka Regen.
+
+##### Magicka Capacity
+
+```sh
+if actor is Player:
+  baseMagickaMult = PCbaseMagickaMultiplier
+else:
+  baseMagickaMult = NPCbaseMagickaMultiplier
+
+fortifyMagickaFactor = fortifyMagickaEffect.magnitude * FortifyMagickaMultiplier
+
+magickaMult = BaseMagickaMult + fortifyMagickaFactor
+
+maxMagicka = round(intelligence.modified * magickaMult)
+```
+
+#### Health Capacity
+
+```sh
+totalHealth = BaseHealth
+
+totalHealth += endurance.modified * HealthLinearMult
+
+totalHealth += endurance.modified ^ HealthDiminishingExponent * HealthVitalityMult
+```
+
 ### When A Hit Happens
 
 Every hit will always be successful, as CHIM applies a massive fortify attack bonus to all actors. Sometimes this buff may be removed if an actor is resurrected or something similar - in such cases, CHIM will reapply the fortify attack bonus for their next strike.
