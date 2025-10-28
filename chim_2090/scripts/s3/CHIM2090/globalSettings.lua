@@ -169,6 +169,38 @@ I.Settings.registerGroup {
                         L('WeaponFatigueBlockMultDesc', { value = fWeaponFatigueBlockMult }),
                         fWeaponFatigueBlockMult
                 ),
+                setting(
+                        'BaseHealth',
+                        'number',
+                        { integer = true, min = 10, max = 1000, },
+                        'BaseHealthName',
+                        'BaseHealthDesc',
+                        30
+                ),
+                setting(
+                        'HealthLinearMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0, },
+                        'HealthLinearMultName',
+                        'HealthLinearMultDesc',
+                        2.0
+                ),
+                setting(
+                        'HealthDiminishingExponent',
+                        'number',
+                        { integer = false, min = 0.6, max = 1.5, },
+                        'HealthDiminishingExponentName',
+                        'HealthDiminishingExponentDesc',
+                        1.2
+                ),
+                setting(
+                        'HealthVitalityMult',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0, },
+                        'HealthVitalityMultName',
+                        'HealthVitalityMultDesc',
+                        0.8
+                )
         }
 }
 
