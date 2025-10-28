@@ -21,6 +21,10 @@ local MagickEffect = core.magic.EFFECT_TYPE
 ---@field FatigueBlockBase number
 ---@field FatigueBlockMult number
 ---@field WeaponFatigueBlockMult number
+---@field BaseHealth integer
+---@field HealthLinearMult number
+---@field HealthDiminishingExponent number
+---@field HealthVitalityMult number
 local DynamicManager = I.S3ProtectedTable.new {
   inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic',
   logPrefix = 'ChimManagerDynamic'
@@ -101,7 +105,6 @@ end
 
 function DynamicManager:manageMagicka(dt)
   self:overrideNativeMagicka()
-  -- self:handleFatigueRegen(dt)
 end
 
 function DynamicManager.canRegenerateMagicka()
@@ -110,6 +113,30 @@ end
 
 function DynamicManager.canRegenerateHealth()
   return true
+end
+
+function DynamicManager:calculateMaxHealth()
+  local endurance = s3lf.endurance.modified
+  local base = self.BaseHealth
+  local linear = endurance * self.HealthLinearMult
+  local vitality = (endurance ^ self.HealthDiminishingExponent) * self.HealthVitalityMult
+
+  return base + linear + vitality
+end
+
+function DynamicManager:overrideNativeHealth()
+  local expectedMaxHealth = self:calculateMaxHealth()
+  if s3lf.health.base == expectedMaxHealth then return end
+
+  local oldHealth = s3lf.health.base
+  local normalizedHealth = s3lf.health.current / s3lf.health.base
+  s3lf.health.base = expectedMaxHealth
+  s3lf.health.current = normalizedHealth * s3lf.health.base
+  self.debugLog('HealthMgr: Health updated from', oldHealth, 'to', s3lf.health.base)
+end
+
+function DynamicManager:manageHealth(dt)
+  self:overrideNativeHealth()
 end
 
 return {
@@ -123,6 +150,7 @@ return {
       if core.isWorldPaused() then return end
       DynamicManager:manageMagicka(dt)
       DynamicManager:manageFatigue(dt)
+      DynamicManager:manageHealth(dt)
     end,
   },
 }
