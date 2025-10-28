@@ -229,12 +229,13 @@ end
 ---@param weapon GameObject
 ---@param attackStrength number
 function Block.consumeFatigue(weapon, attackStrength)
-    local fatigueLoss = I.s3ChimDynamic.Manager.FatigueBlockBase
-        + normalizedEncumbrance() * I.s3ChimDynamic.Manager.FatigueBlockMult
+    local Dynamic = I.s3ChimDynamic.Manager
+
+    local fatigueLoss = Dynamic.FatigueBlockBase + normalizedEncumbrance() * Dynamic.FatigueBlockMult
+
     if weapon then
         local weaponWeight = weapon.type.records[weapon.recordId].weight
-        fatigueLoss = fatigueLoss
-            + (weaponWeight * attackStrength * I.s3ChimDynamic.Manager.WeaponFatigueBlockMult)
+        fatigueLoss = fatigueLoss + (weaponWeight * attackStrength * Dynamic.WeaponFatigueBlockMult)
     end
 
     s3lf.fatigue.current = s3lf.fatigue.current - fatigueLoss
