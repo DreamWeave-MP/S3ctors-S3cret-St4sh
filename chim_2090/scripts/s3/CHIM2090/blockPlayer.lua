@@ -1,4 +1,5 @@
 local anim = require 'openmw.animation'
+local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
 local types = require 'openmw.types'
@@ -47,7 +48,7 @@ local function normalizedEncumbrance()
 end
 
 local function blockIsPressed()
-    return input.isMouseButtonPressed(BlockButton)
+    return input.getBooleanActionValue('CHIMBlockAction')
 end
 
 local function playingHitstun()
@@ -336,13 +337,13 @@ function Block.toggleBlock(enable)
     Block[(enable and 'playBlockAnimation' or 'playIdleAnimation')]()
 end
 
-local function blockBegin(button)
-    if I.UI.getMode() or button ~= BlockButton or not Block.canBlock() then return end
+local function blockBegin()
+    if I.UI.getMode() or not Block.canBlock() then return end
     Block.toggleBlock(true)
 end
 
-local function blockEnd(button)
-    if button ~= BlockButton or not Block.isBlocking() then return end
+local function blockEnd()
+    if not Block.isBlocking() then return end
     Block.toggleBlock(false)
 end
 
@@ -369,8 +370,9 @@ local function interruptBlock()
     local shouldInterrupt = isAttacking()
         or isJumping()
         or I.UI.getMode()
-        or not inWeaponStance()
         or I.s3ChimPoise.isBroken()
+        or not inWeaponStance()
+        or not blockIsPressed()
 
     if not shouldInterrupt then return end
 
@@ -416,6 +418,12 @@ local keyHanders = {
     end,
 }
 
+local function handleBlockInput(state)
+    (state and blockBegin or blockEnd)()
+end
+
+input.registerActionHandler('CHIMBlockAction', async:callback(handleBlockInput))
+
 --- Also consider implementing iFrames. The current mechanic appears to be designed so as to give you a shitton of sanctuary effect
 --- until the hit animation finishes.
 return {
@@ -434,8 +442,6 @@ return {
         }
     ),
     engineHandlers = {
-        onMouseButtonPress = blockBegin,
-        onMouseButtonRelease = blockEnd,
         onFrame = function(dt)
             ensureNoBlock()
             if noBlockInMenus() then return end

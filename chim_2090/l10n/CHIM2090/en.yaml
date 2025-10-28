@@ -38,6 +38,9 @@ BaseShieldFramesDesc: |-
   For example, the default value of this setting is 8, and the Per Unit Shield Weight Penalty's Default value is 3. 
   With default settings and a shield weighing 15 units, you would get 3 additional parry frames from your equipped shield.
 
+BlockActionName: ''
+BlockActionDesc: ''
+
 BlockDebugEnableName: Enable Block Debug Messages
 BlockDebugEnableDesc: Write informative messages about blocks to openmw.log.
 
@@ -45,6 +48,9 @@ BlockFrameMultName: Block Skill Parry Frame Multiplier
 BlockFrameMultDesc: |-
   When parrying, the character's block skill is capped to 100, and then flattened to a value between 0 and 1.
   That is then multiplied by the number value of this setting, granting somewhere between 0-1 * N additional parry frames based on the block skill.
+
+BlockKeybindName: Block Button
+BlockKeybindDesc: The bound key will be used for active blocks and parries.
 
 BlockSkillBonusName: Block Skill Parry Bonus
 BlockSkillBonusDesc: |-

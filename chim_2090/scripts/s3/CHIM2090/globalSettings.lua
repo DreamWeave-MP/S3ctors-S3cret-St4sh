@@ -446,6 +446,14 @@ I.Settings.registerGroup {
                         false
                 ),
                 setting(
+                        'BlockKeybind',
+                        'inputBinding',
+                        { key = 'CHIMBlockAction', type = 'action', },
+                        'BlockKeybindName',
+                        'BlockKeybindDesc',
+                        'mouse 2'
+                ),
+                setting(
                         'BaseParryFrames',
                         'number',
                         { integer = true, min = 0, max = 100, },

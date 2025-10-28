@@ -1,4 +1,5 @@
 local core = require 'openmw.core'
+local input = require 'openmw.input'
 
 --- https://gitlab.com/OpenMW/openmw/-/merge_requests/4334
 --- https://gitlab.com/OpenMW/openmw/-/blob/96d0d1fa7cd83e41853061cca68f612b7eb9c834/CMakeLists.txt#L85
@@ -45,6 +46,15 @@ RegisterPage {
   l10n = modInfo.l10nName,
   name = 'PagePoiseName',
   description = 'PagePoiseDesc',
+}
+
+input.registerAction {
+  key = 'CHIMBlockAction',
+  name = 'BlockActionName',
+  description = 'BlockActionDesc',
+  l10n = modInfo.l10nName,
+  defaultValue = false,
+  type = input.ACTION_TYPE.Boolean,
 }
 
 print(
