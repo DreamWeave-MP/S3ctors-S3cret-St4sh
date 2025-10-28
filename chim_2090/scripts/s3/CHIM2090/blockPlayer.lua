@@ -251,7 +251,8 @@ function Block.handleHit(blockData)
     Block.consumeFatigue(blockData.weapon, blockData.attackStrength)
     I.SkillProgression.skillUsed(core.stats.Skill.records.Block.id,
         {
-            skillGain = 2.5, -- From testing successful blocks in-game, this seems to be the value used
+            -- From testing successful blocks in-game, this seems to be the value used; but 2.5 is way too damn high
+            skillGain = .33333,
             useType = I.SkillProgression.SKILL_USE_TYPES.Block_Success,
 
         })
