@@ -30,19 +30,25 @@ T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators. Addit
 
 Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (mostly) useless.
 
-### Core Features
+## Core Features
 
-#### Smart Target Acquisition
+### Smart Target Acquisition
 
-1. Automatic Target Selection: Finds the nearest valid enemy in your field of view
+- Automatic Target Selection: Finds the nearest valid enemy in your field of view
+  
+![Target Switching](../img/t4rg3t5/targetSwitching.webp)
 
-1. Line-of-Sight Checking: Ensures targets are actually visible and not behind obstacles
+- Line-of-Sight Checking: Ensures targets are actually visible and not behind obstacles
 
-1. Flick Switching: Quickly change targets by flicking the mouse left or right
+- Flick Switching: Quickly change targets by flicking the mouse left or right
 
-1. Combat Auto-Lock: Automatically locks onto enemies who initiate combat with you
+![Flick Switching](../img/t4rg3t5/flickSwitching.webp)
 
-#### Visual Target Indicators
+Combat Auto-Lock: Automatically locks onto enemies who initiate combat with you
+  
+![Combat Auto-Lock](../img/t4rg3t5/autoTarget.webp)
+
+### Visual Target Indicators
 
 1. Dynamic Lock Icons: Customizable target markers that scale with distance
 
@@ -59,12 +65,16 @@ Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (
     - Very Wounded (20-40%): Critical condition warning
 
     - Dead/Dying (0-20%): Near death state
+  
+![Health Coloration](../img/t4rg3t5/healthColoration.webp)
 
 1. Hit Feedback: Icons "bounce" when you successfully hit locked targets
+  
+![Hit Bounce](../img/t4rg3t5/hitBounce.webp)
 
 1. Distance Scaling: Icons grow/shrink based on target distance
 
-#### Intelligent Automation
+### Intelligent Automation
 
 1. Auto-Facing: Character automatically turns to face locked targets
 
