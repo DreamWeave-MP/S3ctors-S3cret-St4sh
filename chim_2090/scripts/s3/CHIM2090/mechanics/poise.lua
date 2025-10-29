@@ -352,6 +352,7 @@ I.AnimationController.addTextKeyHandler('',
 
 --- Awkward hack to prevent NPCs from attacking whilst knocked down
 local function interruptAttacksIfPoiseBroken()
+    if not s3lf.hasAnimation() then return end
     local activeArm = s3lf.getActiveGroup(s3lf.BONE_GROUP.RightArm)
     if not activeArm:find('weapon') or not Poise.isBroken() then return end
     s3lf.setStance(s3lf.STANCE.Nothing)
