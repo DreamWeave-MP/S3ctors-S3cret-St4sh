@@ -77,8 +77,6 @@ local blockHitLegsData = {
 }
 
 local blockAnimData = {
-    startKey = 'start',
-    stopKey = 'stop',
     priority = {
         [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Weapon,
         [anim.BONE_GROUP.Torso] = anim.PRIORITY.Weapon,
