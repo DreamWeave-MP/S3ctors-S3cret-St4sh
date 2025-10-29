@@ -58,6 +58,12 @@ BlockFrameMultDesc: |-
 BlockKeybindName: Block Button
 BlockKeybindDesc: The bound key will be used for active blocks and parries.
 
+BlockLeftAngleName: Block Left Angle
+BlockLeftAngleDesc: When blocking, incoming attacks from greater than this many degrees to your left can be blocked. Replaces the vanilla GMST fCombatBlockLeftAngle, whose value is {value}.
+
+BlockRightAngleName: Block Right Angle
+BlockRightAngleDesc: When blocking, incoming attacks from less than this many degrees to your right can be blocked. Replaces the vanilla GMST fCombatBlockRightAngle, whose value is {value}.
+
 BlockSkillBonusName: Block Skill Parry Bonus
 BlockSkillBonusDesc: |-
   More skilled blockers can redirect more force.

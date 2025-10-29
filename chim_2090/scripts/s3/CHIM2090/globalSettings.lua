@@ -579,7 +579,9 @@ ParryGroup:subscribe(
         )
 )
 
-local BlockGroupName = 'SettingsGlobal' .. modInfo.name .. 'Block'
+local fCombatBlockLeftAngle  = core.getGMST('fCombatBlockLeftAngle')
+local fCombatBlockRightAngle = core.getGMST('fCombatBlockRightAngle')
+local BlockGroupName         = 'SettingsGlobal' .. modInfo.name .. 'Block'
 I.Settings.registerGroup {
         key = BlockGroupName,
         page = modInfo.name .. 'Block & Parry',
@@ -707,6 +709,22 @@ I.Settings.registerGroup {
                         'ShieldWeightPenaltyLimitName',
                         'ShieldWeightPenaltyLimitDesc',
                         0.5
+                ),
+                setting(
+                        'BlockRightAngle',
+                        'number',
+                        { integer = false, min = 0.0, max = 180, },
+                        'BlockRightAngleName',
+                        L('BlockRightAngleDesc', { value = fCombatBlockRightAngle, }),
+                        fCombatBlockRightAngle
+                ),
+                setting(
+                        'BlockLeftAngle',
+                        'number',
+                        { integer = false, min = 0.0, max = 180, },
+                        'BlockLeftAngleName',
+                        L('BlockLeftAngleDesc', { value = fCombatBlockLeftAngle, }),
+                        fCombatBlockLeftAngle
                 ),
         }
 }
