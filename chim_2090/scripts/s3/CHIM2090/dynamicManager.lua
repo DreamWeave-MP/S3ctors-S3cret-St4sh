@@ -1,4 +1,6 @@
+local async = require 'openmw.async'
 local core = require 'openmw.core'
+local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 
 local I = require 'openmw.interfaces'
@@ -7,6 +9,7 @@ local s3lf = I.s3lf
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 local MagickEffect = core.magic.EFFECT_TYPE
 
+local groupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic'
 ---@class DynamicManager: ProtectedTable
 ---@field MaxFatigueWilMult integer
 ---@field MaxFatigueAgiMult integer
@@ -26,8 +29,8 @@ local MagickEffect = core.magic.EFFECT_TYPE
 ---@field HealthDiminishingExponent number
 ---@field HealthVitalityMult number
 local DynamicManager = I.S3ProtectedTable.new {
-  inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic',
-  logPrefix = 'ChimManagerDynamic'
+  inputGroupName = groupName,
+  logPrefix = 'ChimManagerDynamic',
 }
 
 local Fatigue = s3lf.fatigue
@@ -55,12 +58,10 @@ end
 function DynamicManager:handleFatigueRegen(dt)
   if Fatigue.current >= Fatigue.base then return end
 
-  local fatigueThisFrame
+  local fatigueThisFrame = self.FatiguePerSecond
 
   if self.UseVanillaFatigueFormula then
-    fatigueThisFrame = self.FatiguePerSecond + (self.FatigueReturnMult * s3lf.endurance.modified)
-  else
-    fatigueThisFrame = self.FatiguePerSecond
+    fatigueThisFrame = fatigueThisFrame + (self.FatigueReturnMult * s3lf.endurance.modified)
   end
 
   fatigueThisFrame = Fatigue.current + (fatigueThisFrame * dt)
@@ -70,7 +71,6 @@ end
 
 function DynamicManager:manageFatigue(dt)
   self:overrideNativeFatigue()
-  self:handleFatigueRegen(dt)
 end
 
 function DynamicManager.canRegenerateFatigue()
@@ -121,7 +121,7 @@ function DynamicManager:calculateMaxHealth()
   local linear = endurance * self.HealthLinearMult
   local vitality = (endurance ^ self.HealthDiminishingExponent) * self.HealthVitalityMult
 
-  return base + linear + vitality
+  return math.floor(base + linear + vitality + 0.5)
 end
 
 function DynamicManager:overrideNativeHealth()
@@ -139,18 +139,35 @@ function DynamicManager:manageHealth(dt)
   self:overrideNativeHealth()
 end
 
+function DynamicManager.updateStats()
+  DynamicManager:manageMagicka()
+  DynamicManager:manageFatigue()
+  DynamicManager:manageHealth()
+end
+storage.globalSection(groupName):subscribe(async:callback(DynamicManager.updateStats))
+
+local engineHandlers, eventHandlers = {}, {}
+
+for _, handlerName in ipairs { 'onActive', 'onInactive', 'onSave', 'onLoad', 'onTeleported', } do
+  engineHandlers[handlerName] = DynamicManager.updateStats
+end
+
+function engineHandlers.onUpdate(dt)
+  DynamicManager:handleFatigueRegen(dt)
+end
+
+for _, handlerName in ipairs { 'ModifyStat', } do
+  eventHandlers[handlerName] = DynamicManager.updateStats
+end
+
+eventHandlers.CHIMEnsureStats = DynamicManager.updateStats
+
 return {
   interfaceName = 's3ChimDynamic',
   interface = {
     version = modInfo.version,
     Manager = DynamicManager,
   },
-  engineHandlers = {
-    onUpdate = function(dt)
-      if core.isWorldPaused() then return end
-      DynamicManager:manageMagicka(dt)
-      DynamicManager:manageFatigue(dt)
-      DynamicManager:manageHealth(dt)
-    end,
-  },
+  engineHandlers = engineHandlers,
+  eventHandlers = eventHandlers,
 }
