@@ -769,6 +769,14 @@ I.Settings.registerGroup {
                         true
                 ),
                 setting(
+                        'AlwaysScaleHitAnimSpeed',
+                        'checkbox',
+                        {},
+                        'AlwaysScaleHitAnimSpeedName',
+                        'AlwaysScaleHitAnimSpeedDesc',
+                        true
+                ),
+                setting(
                         'BasePoise',
                         'number',
                         { integer = true, min = 0, max = 100, },

@@ -45,6 +45,7 @@ end
 ---@field HandToHandPoiseMult number
 ---@field CreatureBasePoiseDamage number
 ---@field CreatureStrengthPoiseFactor number
+---@field AlwaysScaleHitAnimSpeed boolean
 local Poise = ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise',
     logPrefix = '[ CHIMPoise ]:\n',
@@ -314,29 +315,47 @@ local function cancelKnockdownIfDead()
     end
 end
 
+local textKeyHandlers = {
+    knockout = function(group, _)
+        if not Poise.isBroken() then return end
+
+        Poise.debugLog(
+            ('cancelling knockdown on %s'):format(s3lf.recordId)
+        )
+        s3lf.cancel(group)
+    end,
+    knockdown = function(_, key)
+        if key ~= 'stop' or not Poise.isBroken() then return end
+
+        Poise.state.isBroken = false
+
+        if types.Player.objectIsInstance(s3lf.gameObject) then
+            toggleAllControls(true)
+        end
+    end,
+}
+
 --- Needs to also handle melee attacks and probably spells as well
 I.AnimationController.addTextKeyHandler('',
     function(group, key)
-        if group == 'knockout' and Poise.isBroken() then
-            Poise.debugLog(
-                ('cancelling knockdown on %s'):format(s3lf.recordId)
-            )
-            return s3lf.cancel(group)
-        end
+        local keyHandler = textKeyHandlers[group]
+        if keyHandler then keyHandler(group, key) end
 
-        if group == 'knockdown' and key == 'stop' and Poise.isBroken() then
-            Poise.state.isBroken = false
-
-            if types.Player.objectIsInstance(s3lf.gameObject) then
-                toggleAllControls(true)
-            end
-        end
-
-        if Poise.isBroken() and group:find('weapon') then
-            s3lf.setStance(s3lf.STANCE.Nothing)
+        if
+            Poise.AlwaysScaleHitAnimSpeed
+            and (group == 'knockdown' or group:match('^hit'))
+        then
+            s3lf.setSpeed(group, I.s3ChimCore.getHitAnimationSpeed())
         end
     end
 )
+
+--- Awkward hack to prevent NPCs from attacking whilst knocked down
+local function interruptAttacksIfPoiseBroken()
+    local activeArm = s3lf.getActiveGroup(s3lf.BONE_GROUP.RightArm)
+    if not activeArm:find('weapon') or not Poise.isBroken() then return end
+    s3lf.setStance(s3lf.STANCE.Nothing)
+end
 
 return {
     interfaceName = 's3ChimPoise',
@@ -362,6 +381,7 @@ return {
             if core.isWorldPaused() or not Poise.Enable then return end
 
             cancelKnockdownIfDead()
+            interruptAttacksIfPoiseBroken()
             Poise.tick(dt)
         end,
     },
