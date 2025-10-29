@@ -6,6 +6,7 @@ local util = require 'openmw.util'
 local LogMessage = require 'scripts.s3.logmessage'
 
 local CombatTargetTracker = {}
+local CellsVisited = {}
 
 local noSelfInputFunctions = {
   ['createRecordDraft'] = true,
@@ -125,7 +126,9 @@ GameObjectWrapper._mt = {
       if key == 'combatTargets' then
         return util.makeReadOnly(CombatTargetTracker.targetData)
       elseif key == 'isInCombat' then
-        return CombatTargetTracker.hasCombatants()
+        return CombatTargetTracker.isInCombat()
+      elseif key == 'cellsVisited' then
+        return CellsVisited
       end
     end
 
@@ -239,8 +242,6 @@ local eventHandlers = {
 local engineHandlers = {}
 
 if PlayerType.objectIsInstance(gameSelf) then
-  local CellsVisited = {}
-
   CombatTargetTracker.targetData = {}
 
   engineHandlers.onSave = function()
@@ -277,37 +278,23 @@ if PlayerType.objectIsInstance(gameSelf) then
     prevCell = I.s3lf.cell
   end
 
-  function CombatTargetTracker:findCombatant(actor)
-    for index, combatantInfo in ipairs(self.targetData) do
-      if actor == combatantInfo.actor then return index, combatantInfo end
-    end
-  end
-
   function CombatTargetTracker:updateCombatants(combatantInfo)
-    local shouldRemove = #combatantInfo.targets == 0
-
-    local combatantIndex = self:findCombatant(combatantInfo.actor)
-
-    if (shouldRemove and not combatantIndex) then return end
-    --- I think this case is probably bad as combat targets may actually change
-    if (not shouldRemove and combatantIndex) then return end
+    local shouldRemove = next(combatantInfo.targets) == nil
 
     local eventName
-    if shouldRemove and combatantIndex then
-      table.remove(self.targetData, combatantIndex)
+    if shouldRemove then
+      self.targetData[combatantInfo.actor.id] = nil
       eventName = 'S3CombatTargetRemoved'
-    elseif not shouldRemove and not combatantIndex then
-      table.insert(self.targetData, #self.targetData + 1, combatantInfo)
-      eventName = 'S3CombatTargetAdded'
     else
-      return
+      self.targetData[combatantInfo.actor.id] = combatantInfo.actor
+      eventName = 'S3CombatTargetAdded'
     end
 
     gameSelf:sendEvent(eventName, combatantInfo.actor)
   end
 
   function CombatTargetTracker.isInCombat()
-    return #CombatTargetTracker.targetData > 0
+    return next(CombatTargetTracker.targetData) ~= nil
   end
 
   local ui = require('openmw.ui')
