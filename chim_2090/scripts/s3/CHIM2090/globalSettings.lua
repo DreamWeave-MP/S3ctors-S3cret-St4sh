@@ -446,14 +446,6 @@ I.Settings.registerGroup {
                         false
                 ),
                 setting(
-                        'BlockKeybind',
-                        'inputBinding',
-                        { key = 'CHIMBlockAction', type = 'action', },
-                        'BlockKeybindName',
-                        'BlockKeybindDesc',
-                        'mouse 2'
-                ),
-                setting(
                         'BaseParryFrames',
                         'number',
                         { integer = true, min = 0, max = 100, },
@@ -603,6 +595,14 @@ I.Settings.registerGroup {
                         'Show Debug Messages',
                         '',
                         false
+                ),
+                setting(
+                        'BlockKeybind',
+                        'inputBinding',
+                        { key = 'CHIMBlockAction', type = 'action', },
+                        'BlockKeybindName',
+                        'BlockKeybindDesc',
+                        'mouse 2'
                 ),
                 setting(
                         'BaseBlockMitigation',
