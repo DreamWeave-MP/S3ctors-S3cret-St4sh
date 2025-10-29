@@ -13,8 +13,6 @@ local s3lf = I.s3lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
-local BlockButton = 3
-
 local weaponTypes = types.Weapon.TYPE
 local oneHandedTypes = {
     [weaponTypes.AxeOneHand] = true,
@@ -52,7 +50,7 @@ local function blockIsPressed()
 end
 
 local function playingHitstun()
-    return s3lf.isPlaying('hitstun')
+    return s3lf.getActiveGroup(anim.BONE_GROUP.LowerBody):match('^hit') ~= nil
 end
 
 local blockHitLegsData = {
