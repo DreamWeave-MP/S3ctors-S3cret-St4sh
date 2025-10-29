@@ -404,7 +404,7 @@ local function interruptBlock()
     Block.toggleBlock(false)
 end
 
-local keyHanders = {
+local keyHandlers = {
     blockSpeed = function()
         return Block.getSpeed()
     end,
@@ -473,9 +473,11 @@ return {
         {},
         {
             __index = function(_, key)
-                if keyHanders[key] then
-                    assert(type(keyHanders[key]) == 'function')
-                    return keyHanders[key]()
+                local keyHandler = keyHandlers[key]
+
+                if keyHandler then
+                    assert(type(keyHandler) == 'function')
+                    return keyHandler()
                 elseif key == 'Manager' then
                     return Block
                 end
