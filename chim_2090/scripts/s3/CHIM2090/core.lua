@@ -128,15 +128,7 @@ function ChimCore.weaponIsTwoHanded(weapon)
 end
 
 function ChimCore.getRandomHitGroup()
-    local formatString, range
-
-    if s3lf.isSwimming() then
-        formatString, range = 'swimhit%d', 3
-    else
-        formatString, range = 'hit%d', 5
-    end
-
-    return formatString:format(math.random(1, range))
+    return ('hit%d'):format(math.random(1, 5))
 end
 
 ---@param attacker GameObject
