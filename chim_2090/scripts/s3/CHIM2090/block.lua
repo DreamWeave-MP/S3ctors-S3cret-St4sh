@@ -1,10 +1,11 @@
 local anim = require 'openmw.animation'
 local async = require 'openmw.async'
 local core = require 'openmw.core'
-local input = require 'openmw.input'
+local input
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
+--- We also need to make sure we early-out of the entire script for creatures which are not bipedal
 local BLOCK_ANIM = 'activeblock'
 local HUGE = math.huge
 
@@ -12,6 +13,11 @@ local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
+
+local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
+if isPlayer then
+    input = require 'openmw.input'
+end
 
 local weaponTypes = types.Weapon.TYPE
 local oneHandedTypes = {
@@ -25,8 +31,13 @@ local oneHandedTypes = {
 --- Slightly weak, since we're not accounting for the possibility of empty or two-handed blocks
 --- but since we have no relevant animations it probably doesn't matter at the moment.
 local function isAttacking()
-    return s3lf.getActiveGroup(anim.BONE_GROUP.RightArm):find('weapon') ~= nil
-        or input.getBooleanActionValue('Use')
+    local attackPlaying = s3lf.getActiveGroup(anim.BONE_GROUP.RightArm):find('weapon') ~= nil
+
+    if isPlayer then
+        attackPlaying = attackPlaying or input.getBooleanActionValue('Use')
+    end
+
+    return attackPlaying
 end
 
 local function isJumping()
@@ -46,7 +57,12 @@ local function normalizedEncumbrance()
 end
 
 local function blockIsPressed()
-    return input.getBooleanActionValue('CHIMBlockAction')
+    if isPlayer then
+        return input.getBooleanActionValue('CHIMBlockAction')
+    else
+        -- Maybe we should... throw here or something?
+        return false
+    end
 end
 
 local function playingHitstun()
@@ -290,7 +306,7 @@ function Block.canBlock()
         and Block.usingShield()
         and s3lf.canMove()
         and not Block.isBlocking()
-        and not I.UI.getMode()
+        and (isPlayer and not I.UI.getMode())
         and not I.s3ChimPoise.isBroken()
         and not playingHitstun()
         and not isAttacking()
@@ -336,7 +352,13 @@ function Block.toggleBlock(enable)
 end
 
 local function blockBegin()
-    if I.UI.getMode() or not Block.canBlock() then return end
+    if
+        (isPlayer and I.UI.getMode())
+        or not Block.canBlock()
+    then
+        return
+    end
+
     Block.toggleBlock(true)
 end
 
@@ -351,14 +373,21 @@ local function ensureNoBlock()
 end
 
 local function noBlockInMenus()
-    if not I.UI.getMode() then return end
+    if not isPlayer or not I.UI.getMode() then return end
     Block.toggleBlock(false)
     return true
 end
 
 --- Restore the block if it was interrupted by something else
 local function blockIfPossible()
-    if not blockIsPressed() or not Block.canBlock() then return end
+    if
+        (isPlayer and not blockIsPressed())
+        or not isPlayer
+        or not Block.canBlock()
+    then
+        return
+    end
+
     Block.toggleBlock(true)
 end
 
@@ -367,10 +396,10 @@ local function interruptBlock()
 
     local shouldInterrupt = isAttacking()
         or isJumping()
-        or I.UI.getMode()
+        or (isPlayer and I.UI.getMode())
         or I.s3ChimPoise.isBroken()
         or not inWeaponStance()
-        or not blockIsPressed()
+        or (isPlayer and not blockIsPressed())
 
     if not shouldInterrupt then return end
 
@@ -420,7 +449,23 @@ local function handleBlockInput(state)
     (state and blockBegin or blockEnd)()
 end
 
-input.registerActionHandler('CHIMBlockAction', async:callback(handleBlockInput))
+local function blockUpdate(dt)
+    ensureNoBlock()
+    if noBlockInMenus() then return end
+
+    blockIfPossible()
+
+    interruptBlock()
+end
+
+local engineHandlers = {}
+if isPlayer then
+    input.registerActionHandler('CHIMBlockAction', async:callback(handleBlockInput))
+    engineHandlers.onFrame = blockUpdate
+else
+    engineHandlers.onUpdate = blockUpdate
+end
+
 
 --- Also consider implementing iFrames. The current mechanic appears to be designed so as to give you a shitton of sanctuary effect
 --- until the hit animation finishes.
@@ -439,14 +484,5 @@ return {
             end,
         }
     ),
-    engineHandlers = {
-        onFrame = function(dt)
-            ensureNoBlock()
-            if noBlockInMenus() then return end
-
-            blockIfPossible()
-
-            interruptBlock()
-        end,
-    }
+    engineHandlers = engineHandlers,
 }
