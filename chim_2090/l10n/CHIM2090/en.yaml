@@ -1,6 +1,12 @@
 AgilityHitChancePctName: Agility Hit Damage Influence
 AgilityHitChancePctDesc: Percentage of agility that is added to hit chance, vanilla is 20%. Related damage scaling is capped by the Max Strength Multiplier setting.
 
+AgilityPoiseBonusName: Agility Poise Damage Factor
+AgilityPoiseBonusDesc: Overall effect of agility on poise damage, with hand to hand attacks (since there's no weapon to draw bonuses from)
+
+AlwaysScaleHitAnimSpeedName: Always Scale Hit Animation Speed
+AlwaysScaleHitAnimSpeedDesc: With this setting enabled, hit and knockdown animations always play at the speed CHIM defines, instead of *just* when CHIM executes them.
+
 AnimSpeedHeavyName: Heavy Animation Speed
 AnimSpeedHeavyDesc: Animations played by CHIM when heavily encumbered (50-75%) will run at this speed.
 
@@ -66,6 +72,12 @@ BlockSpeedBaseDesc: Base speed multiplier for block animations
 BlockSpeedLuckWeightName: Block Speed Luck Weight
 BlockSpeedLuckWeightDesc: How much Luck affects block animation speed
 
+CreatureBasePoiseDamageName: Creature Base Poise Damage
+CreatureBasePoiseDamageDesc: Base poise damage dealt by all unarmed creature attacks
+
+CreatureStrengthPoiseFactorName: Creature Strength Poise Factor
+CreatureStrengthPoiseFactorDesc: Multiplier on creature strength when calculating poise damage.
+
 CritChancePercentName: Crit Chance Percentage
 CritChancePercentDesc: Base chance of a critical hit
 
@@ -129,6 +141,12 @@ FumbleDamagePercentDesc: Percentage of damage dealt to the target on a fumble
 
 GlobalDamageScalingName: Global Damage Multiplier
 GlobalDamageScalingDesc: Multiplier applied to ALL damage received by an onHit handler, on all characters/creatures.
+
+HandToHandPoiseMultName: Hand to Hand Poise Damage Multiplier
+HandToHandPoiseMultDesc: Multipler on total poise damage dealt with hand to hand attacks, regardless of skill.
+
+HandToHandSkillPoiseFactorName: Hand To Hand Poise Damage Factor
+HandToHandSkillPoiseFactorDesc: Multiplier for hand to hand skill when calculating poise damage.
 
 HealthDiminishingExponentName: Max Health Diminishing Exponent
 HealthDiminishingExponentDesc: |-
