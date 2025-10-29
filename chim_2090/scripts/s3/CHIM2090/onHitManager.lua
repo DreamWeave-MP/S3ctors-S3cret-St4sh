@@ -5,6 +5,7 @@ local types = require 'openmw.types'
 ---@alias AttackType integer
 
 ---@class CHIMBlockData
+---@field attacker GameObject?
 ---@field damage number
 ---@field hitPos util.vector3
 ---@field playVfx true?
@@ -38,7 +39,7 @@ local function CHIMHitHandler(attack)
     end
 
     local shieldMultiplier = 1.0
-    if isPlayer then
+    if isPlayer and I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, self) then
         ---@type CHIMBlockData
         local blockData = {
             damage = attack.damage.health or attack.damage.fatigue,
@@ -47,6 +48,7 @@ local function CHIMHitHandler(attack)
             weapon = attack.weapon,
             attackStrength = attack.strength,
             applyDurabilityDamage = true,
+            attacker = attack.attacker,
         }
 
         if I.s3ChimParry.Manager.ready() then
