@@ -122,6 +122,10 @@ GameObjectWrapper._mt = {
 
     local gameObject = rawget(instance, 'gameObject')
 
+    if key == 'cell' then
+      return gameObject.cell
+    end
+
     if types.Player.objectIsInstance(gameObject) then
       if key == 'combatTargets' then
         return util.makeReadOnly(CombatTargetTracker.targetData)
@@ -275,7 +279,7 @@ if PlayerType.objectIsInstance(gameSelf) then
       if not CellsVisited[currentCell.id] then CellsVisited[currentCell.id] = true end
     end
 
-    prevCell = I.s3lf.cell
+    prevCell = currentCell
   end
 
   function CombatTargetTracker:updateCombatants(combatantInfo)
