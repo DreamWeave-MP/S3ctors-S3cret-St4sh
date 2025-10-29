@@ -38,6 +38,13 @@ a.modHeader,
     font-size: 48px;
 }
 
+#chim_2090 {
+    background-image: linear-gradient(to bottom, red 30%, orange);
+    background-clip: text;
+    color: transparent;
+    font-size: 10rem;
+}
+
 #crass_nav {
     color: #846f06;
     font-size: 8rem;
