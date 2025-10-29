@@ -39,7 +39,7 @@ local function CHIMHitHandler(attack)
     end
 
     local shieldMultiplier = 1.0
-    if isPlayer and I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, self) then
+    if I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, self) then
         ---@type CHIMBlockData
         local blockData = {
             damage = attack.damage.health or attack.damage.fatigue,
