@@ -183,7 +183,7 @@ I.Settings.registerGroup {
                         { integer = false, min = 0.0, max = 10.0, },
                         'HealthLinearMultName',
                         'HealthLinearMultDesc',
-                        2.0
+                        0.3
                 ),
                 setting(
                         'HealthDiminishingExponent',
@@ -191,7 +191,7 @@ I.Settings.registerGroup {
                         { integer = false, min = 0.6, max = 1.5, },
                         'HealthDiminishingExponentName',
                         'HealthDiminishingExponentDesc',
-                        1.2
+                        0.9
                 ),
                 setting(
                         'HealthVitalityMult',
@@ -199,7 +199,7 @@ I.Settings.registerGroup {
                         { integer = false, min = 0.0, max = 10.0, },
                         'HealthVitalityMultName',
                         'HealthVitalityMultDesc',
-                        0.8
+                        1.1
                 )
         }
 }
