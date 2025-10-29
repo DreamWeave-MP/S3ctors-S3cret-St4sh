@@ -69,6 +69,16 @@ local function playingHitstun()
     return s3lf.getActiveGroup(anim.BONE_GROUP.LowerBody):match('^hit') ~= nil
 end
 
+---@param vec1 util.vector3
+---@param vec2 util.vector3
+---@param normal util.vector3
+local function signedAngleRadians(vec1, vec2, normal)
+    return math.atan2(
+        normal * (vec1 ^ vec2),
+        vec1 * vec2
+    )
+end
+
 local blockHitLegsData = {
     priority = {
         [anim.BONE_GROUP.LowerBody] = anim.PRIORITY.Scripted,
@@ -113,6 +123,8 @@ local ProtectedTable = I.S3ProtectedTable
 ---@field ShieldWeightPenaltyLimit number
 ---@field BlockSpeedBase number
 ---@field StandingStillBonus number
+---@field BlockLeftAngle number
+---@field BlockRightAngle number
 local Block = ProtectedTable.new {
     inputGroupName = groupName,
     logPrefix = '[CHIMBlock]:\n',
@@ -252,6 +264,18 @@ function Block.consumeFatigue(weapon, attackStrength)
     end
 
     s3lf.fatigue.current = s3lf.fatigue.current - fatigueLoss
+end
+
+local Forward, Up = util.vector3(0, 1, 0), util.vector3(0, 0, 1)
+function Block.canBlockAtAngle(attacker, defender)
+    local diffVec = attacker.position - defender.position
+    local blockerForward = defender.rotation * Forward
+    local radianDiff = signedAngleRadians(diffVec, blockerForward, Up)
+    local degreeDiff = math.deg(radianDiff)
+
+    Block.debugLog('Angle Diff on Block:', degreeDiff, 'Attacker:', attacker.recordId, 'Defender:', defender.recordId)
+
+    return degreeDiff > Block.BlockLeftAngle and degreeDiff < Block.BlockRightAngle
 end
 
 ---@class CHIMBlockResult
