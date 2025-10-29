@@ -170,11 +170,7 @@ function Parry.getDamage(hitData)
 end
 
 local ParryInterface = {
-    engineHandlers = {
-        onFrame = function(dt)
-            Parry.tick(dt)
-        end,
-    },
+    engineHandlers = {},
     interfaceName = 's3ChimParry',
     interface = setmetatable(
         {},
@@ -203,5 +199,15 @@ Using these settings you may increase the parry windows for specific shields, ba
         }
     )
 }
+
+if types.Player.objectIsInstance(s3lf.gameObject) then
+    ParryInterface.engineHandlers.onFrame = function(dt)
+        Parry.tick(dt)
+    end
+else
+    ParryInterface.engineHandlers.onUpdate = function(dt)
+        Parry.tick(dt)
+    end
+end
 
 return ParryInterface
