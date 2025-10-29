@@ -29,6 +29,9 @@ local function CHIMHitHandler(attack)
     -- potentially without an attacker?
     -- maybe we don't actually want to do this
     if not attacker or not meleeOrRanged then return end
+    for _, target in ipairs { self, attacker } do
+        target:sendEvent('CHIMEnsureStats')
+    end
 
     if not attack.successful then
         return attacker:sendEvent('CHIMEnsureFortifyAttack')
