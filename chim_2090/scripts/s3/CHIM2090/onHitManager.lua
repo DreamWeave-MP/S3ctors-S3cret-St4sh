@@ -90,13 +90,17 @@ local function CHIMHitHandler(attack)
     I.s3ChimCore.debugLog(([[Health Damage: %.2f
     Fatigue Damage: %.2f
     Shield Multiplier: %.2f
+    Hit Chance Mult: %.2f
     Global Damage Scaling: %.2f
-    Poise Damage Bonus: %.1f]]):format(
+    Poise Damage Bonus: %.1f
+    Final Damage Mult: %.2f]]):format(
         attack.damage.health or 0,
         attack.damage.fatigue or 0,
         shieldMultiplier,
+        damageMult,
         I.s3ChimCore.Manager.GlobalDamageScaling,
-        poiseMult
+        poiseMult,
+        endMult
     ))
 end
 
