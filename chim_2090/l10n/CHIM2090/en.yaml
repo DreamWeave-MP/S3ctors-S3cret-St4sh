@@ -1,3 +1,18 @@
+ActorEnduranceBlockTimeName: Endurance Blocking Time 
+ActorEnduranceBlockTimeDesc: The closer to 100 an enemy's endurance is, the closer to this value will be added to their blocking duration.
+
+ActorFatigueBlockTimeName: Fatigue Blocking Time
+ActorFatigueBlockTimeDesc: The closer to max an enemy's fatigue is, the closer to this value will be added to their blocking duration.
+
+ActorSkillBlockTimeName: Skill Blocking Time 
+ActorSkillBlockTimeDesc: The closer to 100 an enemy's block skill is, the closer to this value will be added to their blocking duration.
+
+ActorMinBlockTimeName: Minimum Blocking Time
+ActorMinBlockTimeDesc: AI targets will never block for less than this amount of time.
+
+ActorMaxBlockTimeName: Maximum Blocking Time
+ActorMaxBlockTimeDesc: AI targets will never block for more than this amount of time.
+
 AgilityHitChancePctName: Agility Hit Damage Influence
 AgilityHitChancePctDesc: Percentage of agility that is added to hit chance, vanilla is 20%. Related damage scaling is capped by the Max Strength Multiplier setting.
 
@@ -25,12 +40,18 @@ AttributeMitigationFactorDesc: How much the shield's governing attribute contrib
 BaseBlockMitigationName: Base Block Mitigation
 BaseBlockMitigationDesc: Minimum damage reduction when blocking with any shield
 
+BaseBlockTimeName: Base Blocking Time
+BaseBlockTimeDesc: Every actor has a different block time. This is the base they all share.
+
 BaseDamageMultName: Parry Damage Redirection
 BaseDamageMultDesc: When parrying an attack, this multiplier is applied to incoming health damage and redirected back to the enemy as fatigue damage.
 
 BaseHealthName: Base Health
 BaseHealthDesc: |-
   Base health for all actors before stat calculations kick in.
+
+BaseMaxBlockCountName: Base Max Consecutive Blocks
+BaseMaxBlockCountDesc: Every enemy has a different number of blocks they may perform in successsion. This number is shared by all of them, regardless of skill.
 
 BaseParryFramesName: Base Parry Frame Count
 BaseParryFramesDesc: Starting number of parrying frames granted regardless of character skill or shield weight.
@@ -44,8 +65,8 @@ BaseShieldFramesDesc: |-
   For example, the default value of this setting is 8, and the Per Unit Shield Weight Penalty's Default value is 3. 
   With default settings and a shield weighing 15 units, you would get 3 additional parry frames from your equipped shield.
 
-BlockActionName: ''
-BlockActionDesc: ''
+BlockActionName: ""
+BlockActionDesc: ""
 
 BlockDebugEnableName: Enable Block Debug Messages
 BlockDebugEnableDesc: Write informative messages about blocks to openmw.log.
@@ -98,6 +119,9 @@ CritLuckPercentDesc: Influence of luck on critical hit chance and fumble as a pe
 CritMultName: Critical Damage Multiplier
 CritMultDesc: Critical hit damage multiplier. Only applies in melee combat.
 
+DebugEnableActorBlockName: Enable AI Block Debug Messages
+DebugEnableActorBlockDesc: Emit informative messages about AI blocks to openmw.log.
+
 DebugEnableChimCoreName: Enable Debug Messages
 DebugEnableChimCoreDesc: Emit informative messages to openmw.log from the CHIM Core (mostly about damage on hits)
 
@@ -122,6 +146,9 @@ FatigueBlockMultDesc: |-
   When blocking, an additional fatigue cost is imposed based on this * normalizedEncumbrance. 
   The closer you are to your maximum carrying capacity, the more it costs to block an attack based on this value.
   Replaces the vanilla GMST fFatigueBlockMult, whose value is {value}
+
+FatigueLossPercentName: Fatigue Loss Scaling
+FatigueLossPercentDesc: AI targets take use less fatigue when blocking. Change the multiplier with this setting.
 
 FatiguePerSecondName: Fatigue Recovery Per Second
 FatiguePerSecondDesc: |-
@@ -238,6 +265,9 @@ MinPoiseDamageDesc: |-
 
 MinRecoveryDurationName: Minimum Recovery Time
 MinRecoveryDurationDesc: Fastest possible poise recovery time in seconds
+
+NoBlockThresholdName: Fatigue Blocking Threshold
+NoBlockThresholdDesc: If an actor has less than this % of their total fatigue, they will never block.
 
 PageBlockAndParryName: CHIM 2090 - Block & Parry
 PageBlockAndParryDesc: Manages blocking and parrying effectiveness and formulae

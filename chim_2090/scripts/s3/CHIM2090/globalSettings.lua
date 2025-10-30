@@ -432,7 +432,7 @@ local MinDamageMultDefault, MaxDamageMultDefault = 0.25, 1.5
 I.Settings.registerGroup {
         key = ParryGroupName,
         page = modInfo.name .. 'Block & Parry',
-        order = 0,
+        order = 2,
         l10n = modInfo.l10nName,
         name = 'SettingsParryGroupName',
         permanentStorage = true,
@@ -751,6 +751,97 @@ BlockGroup:subscribe(
                 end
         )
 )
+
+I.Settings.registerGroup {
+        key = 'SettingsGlobal' .. modInfo.name .. 'BlockActor',
+        page = modInfo.name .. 'Block & Parry',
+        order = 1,
+        l10n = modInfo.l10nName,
+        name = 'SettingsBlockActorGroupName',
+        permanentStorage = true,
+        settings = {
+                setting(
+                        'DebugEnable',
+                        'checkbox',
+                        {},
+                        'DebugEnableActorBlockName',
+                        'DebugEnableActorBlockDesc',
+                        false
+                ),
+                setting(
+                        'NoBlockThreshold',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'NoBlockThresholdName',
+                        'NoBlockThresholdDesc',
+                        0.3
+                ),
+                setting(
+                        'FatigueLossPercent',
+                        'number',
+                        { integer = false, min = 0.0, max = 1.0, },
+                        'FatigueLossPercentName',
+                        'FatigueLossPercentDesc',
+                        0.5
+                ),
+                setting(
+                        'BaseMaxBlockCount',
+                        'number',
+                        { integer = true, min = 0, max = 4, },
+                        'BaseMaxBlockCountName',
+                        'BaseMaxBlockCountDesc',
+                        2
+                ),
+                setting(
+                        'BaseBlockTime',
+                        'number',
+                        { integer = false, min = 0.0, max = 5.0, },
+                        'BaseBlockTimeName',
+                        'BaseBlockTimeDesc',
+                        1.5
+                ),
+                setting(
+                        'ActorFatigueBlockTime',
+                        'number',
+                        { integer = false, min = 0.0, max = 2.0, },
+                        'ActorFatigueBlockTimeName',
+                        'ActorFatigueBlockTimeDesc',
+                        0.4
+                ),
+                setting(
+                        'ActorMinBlockTime',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0, },
+                        'ActorMinBlockTimeName',
+                        'ActorMinBlockTimeDesc',
+                        0.8
+                ),
+                setting(
+                        'ActorMaxBlockTime',
+                        'number',
+                        { integer = false, min = 0.0, max = 10.0, },
+                        'ActorMaxBlockTimeName',
+                        'ActorMaxBlockTimeDesc',
+                        2.3
+                ),
+                setting(
+                        'ActorEnduranceBlockTime',
+                        'number',
+                        { integer = false, min = 0.0, max = 2.0, },
+                        'ActorEnduranceBlockTimeName',
+                        'ActorEnduranceBlockTimeDesc',
+                        0.3
+                ),
+                setting(
+                        'ActorSkillBlockTime',
+                        'number',
+                        { integer = false, min = 0.0, max = 2.0, },
+                        'ActorSkillBlockTimeName',
+                        'ActorSkillBlockTimeDesc',
+                        0.5
+                ),
+        },
+}
 
 local PoiseGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise'
 local BasePoiseDefault = 20
