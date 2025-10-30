@@ -2,6 +2,7 @@ local anim = require 'openmw.animation'
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input
+local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -25,6 +26,20 @@ local oneHandedTypes = {
     [weaponTypes.ShortBladeOneHand] = true,
     [weaponTypes.LongBladeOneHand] = true,
     [weaponTypes.BluntOneHand] = true,
+}
+
+local attackGroups = {
+    ['weapontwohand'] = true,
+    ['weapontwowide'] = true,
+    ['weapononehand'] = true,
+    ['crossbow'] = true,
+    ['bowandarrow'] = true,
+    ['throwweapon'] = true,
+}
+
+local attackSignalKeys = {
+    ['min hit'] = true,
+    ['start'] = true,
 }
 
 --- Checks if the actor is currently playing any one-handed attack animation.
@@ -66,7 +81,11 @@ local function blockIsPressed()
 end
 
 local function playingHitstun()
-    return s3lf.getActiveGroup(anim.BONE_GROUP.LowerBody):match('^hit') ~= nil
+    local activeLegs = s3lf.getActiveGroup(anim.BONE_GROUP.LowerBody)
+
+    return activeLegs ~= 'knockdown'
+        and activeLegs ~= 'knockout'
+        and activeLegs:match('^hit') ~= nil
 end
 
 ---@param vec1 util.vector3
@@ -130,12 +149,168 @@ local Block = ProtectedTable.new {
     logPrefix = '[CHIMBlock]:\n',
 }
 
+---@class AIBlockManager: ProtectedTable
+---@field NoBlockThreshold number
+---@field FatigueLossPercent number
+---@field BaseMaxBlockCount integer
+---@field BaseBlockTime number
+---@field ActorFatigueBlockTime number
+---@field ActorMinBlockTime number
+---@field ActorMaxBlockTime number
+---@field ActorEnduranceBlockTime number
+---@field ActorSkillBlockTime number
+local BlockActor = ProtectedTable.new {
+    inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'BlockActor',
+    logPrefix = '[CHIMAI]:\n',
+}
+BlockActor.state = {
+    blockTimer = 0.0,
+    doTurtle = false,
+    repeatedBlocks = 0,
+}
+
+function BlockActor:tick(dt)
+    if isPlayer or self.state.blockTimer <= 0 then return end
+
+    self.state.blockTimer = math.max(0.0, self.state.blockTimer - dt)
+
+    if self.state.blockTimer ~= 0 then
+        if self.state.doTurtle then
+            s3lf.controls.movement = 0
+            s3lf.controls.sideMovement = 0
+        end
+
+        if not Block.isBlocking() then
+            Block.toggleBlock(true)
+        end
+
+        return
+    end
+
+    Block.toggleBlock(false)
+end
+
+function BlockActor:blockTimer()
+    if isPlayer then return end
+
+    local block, endurance = math.min(100, s3lf.block.base) / 100, math.min(100, s3lf.endurance.modified) / 100
+
+    -- Skill reduces block time (faster recovery)
+    local skillBonus = block * self.ActorSkillBlockTime
+
+    -- Endurance helps with stamina recovery for longer blocks
+    local enduranceBonus = endurance * self.ActorEnduranceBlockTime
+
+    -- Fatigue penalty - tired characters can't maintain blocks long
+    local fatiguePenalty = (1 - normalizedFatigue()) * self.ActorFatigueBlockTime
+
+    local totalTime = self.BaseBlockTime
+        + skillBonus
+        + enduranceBonus
+        - fatiguePenalty
+
+    return util.clamp(totalTime, self.ActorMinBlockTime, self.ActorMaxBlockTime)
+end
+
+function BlockActor:getMaxConsecutiveBlocks()
+    if isPlayer then return end
+    return self.BaseMaxBlockCount + util.round((s3lf.block.base * 0.02) + (s3lf.endurance.modified * 0.01))
+end
+
+function BlockActor:resetBlockTimer()
+    if isPlayer then return end
+    self.state.blockTimer = self:blockTimer()
+end
+
+function BlockActor:reset()
+    if isPlayer then return end
+    self.state.blockTimer = 0.0
+    self.state.doTurtle = false
+    self.state.repeatedBlocks = 0
+end
+
+---@return boolean? interruptBlock
+function BlockActor:AIBlockResponse()
+    if isPlayer then return end
+    local normalizedHealth = s3lf.health.current / s3lf.health.base
+
+    if normalizedHealth < 0.1 or not self:hasBlockFatigue() then
+        return true
+    end
+
+    local roll = math.random(100)
+    local skillBonus = math.min(100, s3lf.block.base * 0.5)
+    local result = roll + skillBonus
+
+    if result >= 120 then
+        if self.state.repeatedBlocks >= self:getMaxConsecutiveBlocks() then
+            return
+        end
+
+        self.state.repeatedBlocks = self.state.repeatedBlocks + 1
+        self:resetBlockTimer()
+    else
+        self.state.repeatedBlocks = 0
+
+        if result < 60 then
+            return true
+        end
+    end
+end
+
+function BlockActor:shouldTurtle()
+    if isPlayer then return end
+    local encumbrance = I.s3ChimCore.getEquipmentEncumbrance()
+
+    -- Base chance increases with encumbrance (heavy armor = more turtling)
+    local baseChance = util.remap(encumbrance, 0, 1, 0.2, 0.8)
+
+    -- Block skill makes turtling more strategic (skilled blockers turtle smarter)
+    local skillBonus = (s3lf.block.base / 100) * 0.2
+
+    -- Low stamina discourages turtling (can't maintain it)
+    local staminaPenalty = (1 - normalizedFatigue()) * 0.3
+
+    -- Health situation affects willingness to turtle
+    local healthRatio = s3lf.health.current / s3lf.health.base
+    local healthModifier = healthRatio < 0.7 and 0.1 or -0.2
+
+    local finalChance = baseChance
+        + skillBonus
+        + healthModifier
+        - staminaPenalty
+
+    return math.random() < util.clamp(finalChance, 0.1, 0.9)
+end
+
+function BlockActor:hasBlockFatigue()
+    if isPlayer then return true end
+    return normalizedFatigue() >= self.NoBlockThreshold
+end
+
+function BlockActor:shouldAttemptBlock()
+    if not self:hasBlockFatigue() or math.random() <= 0.05 then return false end
+
+    -- Base random chance - 50/50 most of the time
+    local baseChance = 0.5
+
+    local encumbranceBonus = I.s3ChimCore.getEquipmentEncumbrance() * 0.3
+
+    local healthPenalty = (1 - (s3lf.health.current / s3lf.health.base)) * 0.2 -- Low health = -20%
+
+    local finalChance = baseChance + encumbranceBonus - healthPenalty
+
+    return math.random() < util.clamp(finalChance, 0.2, 0.8)
+end
+
 function Block.playBlockAnimation()
+    if Block.isBlocking() then return end
     blockAnimData.speed = Block.getSpeed()
     I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
 end
 
 function Block.playIdleAnimation()
+    if not Block.isBlocking() then return end
     I.AnimationController.playBlendedAnimation('idle1', idleAnimData)
 end
 
@@ -263,10 +438,19 @@ function Block.consumeFatigue(weapon, attackStrength)
         fatigueLoss = fatigueLoss + (weaponWeight * attackStrength * Dynamic.WeaponFatigueBlockMult)
     end
 
+    if not isPlayer then
+        fatigueLoss = fatigueLoss * BlockActor.FatigueLossPercent
+    end
+
     s3lf.fatigue.current = s3lf.fatigue.current - fatigueLoss
 end
 
 local Forward, Up = util.vector3(0, 1, 0), util.vector3(0, 0, 1)
+--- Replicates Morrowind's internal blocking formula in lua
+--- Returns whether or not the target can block their opponent based on their respective orientations
+---@param attacker GameObject
+---@param defender GameObject
+---@return boolean canBlock
 function Block.canBlockAtAngle(attacker, defender)
     local diffVec = attacker.position - defender.position
     local blockerForward = defender.rotation * Forward
@@ -287,13 +471,17 @@ function Block.handleHit(blockData)
     Block.playBlockSound()
     Block.playBlockHitLegs()
     Block.consumeFatigue(blockData.weapon, blockData.attackStrength)
-    I.SkillProgression.skillUsed(core.stats.Skill.records.Block.id,
-        {
-            -- From testing successful blocks in-game, this seems to be the value used; but 2.5 is way too damn high
-            skillGain = .33333,
-            useType = I.SkillProgression.SKILL_USE_TYPES.Block_Success,
 
-        })
+    if isPlayer then
+        I.SkillProgression.skillUsed(core.stats.Skill.records.Block.id,
+            {
+                -- From testing successful blocks in-game, 2.5 seems to be the value used, but it's way too damn high
+                skillGain = .33333,
+                useType = I.SkillProgression.SKILL_USE_TYPES.Block_Success,
+
+            })
+    end
+
     local damageMitigation = Block.calculateMitigation()
 
     -- Parries do not consume durability
@@ -315,24 +503,34 @@ function Block.handleHit(blockData)
         })
     end
 
+    if BlockActor:AIBlockResponse() then
+        Block.toggleBlock(false)
+        Block.debugLog('Interrupted block', s3lf.recordId)
+    end
+
     return {
         damageMult = damageMitigation,
     }
 end
 
 function Block.canBlock()
-    return
-        inWeaponStance()
+    local canBlock = inWeaponStance()
         and s3lf.isOnGround()
         and Block.usingOneHanded()
         and Block.usingShield()
         and s3lf.canMove()
         and not Block.isBlocking()
-        and (isPlayer and not I.UI.getMode())
         and not I.s3ChimPoise.isBroken()
         and not playingHitstun()
-        and not isAttacking()
         and not isJumping()
+
+    if isPlayer then
+        canBlock = canBlock
+            and not I.UI.getMode()
+            and not isAttacking()
+    end
+
+    return canBlock
 end
 
 --- Determine how fast the block animation should play, based on a combinatino of luck, agility, and randomness.
@@ -371,6 +569,10 @@ function Block.toggleBlock(enable)
     if Block.isBlocking() == enable then return end
 
     Block[(enable and 'playBlockAnimation' or 'playIdleAnimation')]()
+
+    if not enable then
+        BlockActor:reset()
+    end
 end
 
 local function blockBegin()
@@ -478,14 +680,60 @@ local function blockUpdate(dt)
     blockIfPossible()
 
     interruptBlock()
+    BlockActor:tick(dt)
 end
 
-local engineHandlers = {}
+local function signalAttack()
+    for _, actor in ipairs(nearby.actors) do
+        if
+            actor.type.isDead(actor)
+            or actor.id == s3lf.id
+            or types.Player.objectIsInstance(actor)
+            or actor.type.getStance(actor) == s3lf.STANCE.Nothing
+            or not Block.canBlockAtAngle(s3lf.gameObject, actor)
+        then
+            goto CONTINUE
+        end
+
+        actor:sendEvent('CHIMBlockSignal', s3lf.gameObject)
+        ::CONTINUE::
+    end
+end
+
+--- Takes a string like "chop min attack" and returns everything after the first space -> "min attack"
+local function removeFirstWord(string)
+    local firstSpace = string:find(" ")
+
+    if firstSpace then
+        return string:sub(firstSpace + 1)
+    end
+
+    return string
+end
+
+I.AnimationController.addTextKeyHandler('',
+    function(group, key)
+        key = removeFirstWord(key)
+        if not attackGroups[group] or not attackSignalKeys[key] then return end
+
+        Block.debugLog(('%s-%s emitting attack signal %s: %s'):format(s3lf.id, s3lf.recordId, group, key))
+        signalAttack()
+    end
+)
+
+local engineHandlers, eventHandlers = {}, {}
 if isPlayer then
     input.registerActionHandler('CHIMBlockAction', async:callback(handleBlockInput))
     engineHandlers.onFrame = blockUpdate
 else
     engineHandlers.onUpdate = blockUpdate
+    eventHandlers.CHIMBlockSignal = function(attacker)
+        if not Block.canBlock() or not BlockActor:shouldAttemptBlock() then return end
+
+        Block.toggleBlock(true)
+        BlockActor:resetBlockTimer()
+        BlockActor.state.doTurtle = BlockActor:shouldTurtle()
+    end
 end
 
 
@@ -504,9 +752,12 @@ return {
                     return keyHandler()
                 elseif key == 'Manager' then
                     return Block
+                elseif key == 'Actor' and not isPlayer then
+                    return BlockActor
                 end
             end,
         }
     ),
     engineHandlers = engineHandlers,
+    eventHandlers = eventHandlers,
 }
