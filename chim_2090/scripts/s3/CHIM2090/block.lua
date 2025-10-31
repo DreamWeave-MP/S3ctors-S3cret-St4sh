@@ -457,6 +457,8 @@ local Forward, Up = util.vector3(0, 1, 0), util.vector3(0, 0, 1)
 ---@param defender GameObject
 ---@return boolean canBlock
 function Block.canBlockAtAngle(attacker, defender)
+    if types.Creature.objectIsInstance(defender) and not s3lf.From(defender).isBiped then return false end
+
     local diffVec = attacker.position - defender.position
     local blockerForward = defender.rotation * Forward
     local radianDiff = signedAngleRadians(diffVec, blockerForward, Up)
