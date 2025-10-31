@@ -592,6 +592,7 @@ local function blockEnd()
 end
 
 local function ensureNoBlock()
+    if not types.NPC.objectIsInstance(s3lf.gameObject) then return end
     if s3lf.block.modifier == -HUGE then return end
     s3lf.block.modifier = -HUGE
 end
