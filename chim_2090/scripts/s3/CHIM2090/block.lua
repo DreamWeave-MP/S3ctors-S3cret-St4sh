@@ -386,7 +386,12 @@ function Block.calculateMitigation()
     local baseMitigation = Block.getShieldBaseEffectiveness(shieldArmor, shieldWeight)
 
     -- Skill contribution (more skilled = better at angling shield)
-    local skillMultiplier = 0.5 + (s3lf.block.base * Block.SkillMitigationFactor)
+    local skillMultiplier
+    if types.NPC.objectIsInstance(s3lf.gameObject) then
+        skillMultiplier = 0.5 + (s3lf.block.base * Block.SkillMitigationFactor)
+    else
+        skillMultiplier = 0.5 + (s3lf.combatSkill * Block.SkillMitigationFactor)
+    end
 
     local attributeBonus = Block.getShieldAttribute(shield) * Block.AttributeMitigationFactor
 
