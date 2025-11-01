@@ -455,9 +455,9 @@ local Forward, Up = util.vector3(0, 1, 0), util.vector3(0, 0, 1)
 --- Returns whether or not the target can block their opponent based on their respective orientations
 ---@param attacker GameObject
 ---@param defender GameObject
----@return boolean canBlock
+---@return boolean canBlock, number closenessToBack Number between 0 and 1, representing how close the attacker is to the defender's back, with 1 meaning directly behind.
 function Block.canBlockAtAngle(attacker, defender)
-    if types.Creature.objectIsInstance(defender) and not s3lf.From(defender).isBiped then return false end
+    if types.Creature.objectIsInstance(defender) and not s3lf.From(defender).isBiped then return false, 0.0 end
 
     local diffVec = attacker.position - defender.position
     local blockerForward = defender.rotation * Forward
@@ -466,7 +466,10 @@ function Block.canBlockAtAngle(attacker, defender)
 
     Block.debugLog('Angle Diff on Block:', degreeDiff, 'Attacker:', attacker.recordId, 'Defender:', defender.recordId)
 
-    return degreeDiff > Block.BlockLeftAngle and degreeDiff < Block.BlockRightAngle
+    local normalizedDegreeDiff = util.clamp(math.abs(degreeDiff), 0, 180)
+    normalizedDegreeDiff = util.remap(normalizedDegreeDiff, 0, 180, 0.0, 1.0)
+
+    return degreeDiff > Block.BlockLeftAngle and degreeDiff < Block.BlockRightAngle, normalizedDegreeDiff
 end
 
 ---@class CHIMBlockResult
