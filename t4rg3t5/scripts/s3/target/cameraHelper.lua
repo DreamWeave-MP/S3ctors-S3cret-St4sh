@@ -35,7 +35,7 @@ function CamHelper.objectIsOnscreen(object, useCenter)
 
     local checkPos = useCenter and box.center or (object.position + util.vector3(0, 0, box.halfSize.z * 1.25))
     local viewportPos = camera.worldToViewportVector(checkPos)
-    local screenSize = ui.screenSize()
+    local screenSize = ui.layers[1].size
 
     local validX = viewportPos.x > 0 and viewportPos.x < screenSize.x
     local validY = viewportPos.y > 0 and viewportPos.y < screenSize.y
@@ -51,33 +51,35 @@ function CamHelper.objectIsOnscreen(object, useCenter)
     return util.vector3(normalizedX, normalizedY, viewportPos.z)
 end
 
-function CamHelper.trackTargetUsingViewport(targetObject, normalizedPos)
+local MaxRot = math.rad(12.0)
+local MaxPitchRot = math.rad(10.0)
+
+function CamHelper.trackTarget(targetObject)
     if not targetObject then return end
 
-    -- Desired screen position (center of the screen)
-    local desiredScreenPos = util.vector2(0.5, 0.5)
+    local playerPos = camera.getPosition()
+    local targetPos = targetObject:getBoundingBox().center
+    local toTarget = (targetPos - playerPos):normalize()
 
-    -- Convert the current and desired screen positions to world-space directions
-    local currentWorldDir = camera.viewportToWorldVector(normalizedPos.xy)
-    local desiredWorldDir = camera.viewportToWorldVector(desiredScreenPos)
+    local currentYaw = camera.getYaw()
+    local currentPitch = camera.getPitch()
 
-    -- Normalize the directions
-    currentWorldDir = currentWorldDir:normalize()
-    desiredWorldDir = desiredWorldDir:normalize()
+    local desiredYaw = math.atan2(toTarget.x, toTarget.y)
+    local desiredPitch = math.atan2(-toTarget.z, math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
 
-    -- Calculate the yaw and pitch differences
-    local yawDifference = math.atan2(currentWorldDir.x, currentWorldDir.y) -
-        math.atan2(desiredWorldDir.x, desiredWorldDir.y)
+    local yawDiff = util.normalizeAngle(desiredYaw - currentYaw)
+    local pitchDiff = util.normalizeAngle(desiredPitch - currentPitch)
 
-    local pitchDifference = math.asin(currentWorldDir.z) - math.asin(desiredWorldDir.z)
+    local finalYaw = util.clamp(yawDiff * 0.6, -MaxRot, MaxRot)
+    local finalPitch = util.clamp(pitchDiff * 0.4, -MaxPitchRot, MaxPitchRot)
 
-    camera.setYaw(util.normalizeAngle(camera.getYaw() + yawDifference))
-    camera.setPitch(util.normalizeAngle(camera.getPitch() - pitchDifference))
+    camera.setYaw(currentYaw + finalYaw)
+    camera.setPitch(currentPitch + finalPitch)
 
-    I.s3lf.controls.yawChange = yawDifference
-    I.s3lf.controls.pitchChange = -pitchDifference
+    I.s3lf.controls.yawChange = finalYaw
+    I.s3lf.controls.pitchChange = finalPitch
 
-    return yawDifference, pitchDifference
+    return finalYaw, finalPitch
 end
 
 return CamHelper

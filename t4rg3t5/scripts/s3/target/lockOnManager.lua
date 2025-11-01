@@ -62,6 +62,7 @@ LockOnManager.state = {
     isBouncing = false,
     bouncedSize = 0,
     bounceUpOrDown = true,
+    trackTarget = true,
 }
 
 ---@alias MarkerTransform util.vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
@@ -81,6 +82,15 @@ end
 function LockOnManager.setCanLockOn(state)
     assert(type(state) == 'boolean')
     LockOnManager.state.canDoLockOn = state
+end
+
+function LockOnManager.setTrackingState(state)
+    assert(type(state) == 'boolean')
+    LockOnManager.state.trackTarget = state
+end
+
+function LockOnManager.shouldTrack()
+    return LockOnManager.state.trackTarget
 end
 
 ---@param markerUpdateData MarkerUpdateInfo
@@ -232,6 +242,10 @@ end
 function LockOnManager.setMarkerVisibility(state)
     local marker = LockOnManager.getLockOnMarker()
     if not marker then return end
+
+    if state then
+        LockOnManager.state.trackTarget = true
+    end
 
     local markerState = LockOnManager.state
     markerState.isBouncing = false
@@ -397,7 +411,10 @@ function LockOnManager:onFrame()
         local normalizedPos = CamHelper.objectIsOnscreen(targetObject, not types.NPC.objectIsInstance(targetObject))
 
         if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
-            CamHelper.trackTargetUsingViewport(targetObject, normalizedPos)
+            if LockOnManager.shouldTrack() then
+                CamHelper.trackTarget(targetObject)
+            end
+
             LockOnManager:updateMarker {
                 transform = normalizedPos,
                 doUpdate = true,
