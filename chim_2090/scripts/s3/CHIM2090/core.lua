@@ -89,7 +89,15 @@ function ChimCore.getWeaponSkill(weapon, attacker)
     local weaponType = weapon.type.records[weapon.recordId].type
     local weaponSkill = weaponTypesToSkills[weaponType]
     attacker = s3lf.From(attacker)
-    return attacker[weaponSkill].modified
+
+    if types.NPC.objectIsInstance(attacker.gameObject) then
+        local weaponType = weapon.type.records[weapon.recordId].type
+        local weaponSkill = weaponTypesToSkills[weaponType]
+
+        return attacker[weaponSkill].modified
+    else
+        return attacker.combatSkill
+    end
 end
 
 --- Returns the character's raw equipment capacity, derived from their endurance
