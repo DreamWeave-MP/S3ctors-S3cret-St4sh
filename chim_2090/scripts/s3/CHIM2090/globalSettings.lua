@@ -58,6 +58,14 @@ I.Settings.registerGroup {
                         'DynamicDebugEnableDesc',
                         false
                 ),
+                setting(
+                        'EnableDynamicModule',
+                        'checkbox',
+                        {},
+                        'EnableDynamicModuleName',
+                        'EnableDynamicModuleDesc',
+                        false
+                ),
                 setting('UseVanillaFatigueFormula',
                         'checkbox',
                         {},
