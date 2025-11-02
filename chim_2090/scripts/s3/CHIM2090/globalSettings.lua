@@ -42,6 +42,7 @@ end
 local fFatigueBlockBase = core.getGMST('fFatigueBlockBase')
 local fFatigueBlockMult = core.getGMST('fFatigueBlockMult')
 local fWeaponFatigueBlockMult = core.getGMST('fWeaponFatigueBlockMult')
+local PCMagickaMult, NPCMagickaMult = core.getGMST('fPCbaseMagickaMult'), core.getGMST('fPCbaseMagickaMult')
 I.Settings.registerGroup {
         key = 'SettingsGlobal' .. modInfo.name .. 'Dynamic',
         page = modInfo.name .. 'Dynamic Stats',
@@ -124,26 +125,26 @@ I.Settings.registerGroup {
                 setting(
                         'FortifyMagickaMultiplier',
                         'number',
-                        { integer = true, min = 0, max = 1000 },
+                        { integer = true, min = 0., max = 10. },
                         'FortifyMagickaMultiplierName',
                         'FortifyMagickaMultiplierDesc',
-                        10
+                        .1
                 ),
                 setting(
                         'PCbaseMagickaMultiplier',
                         'number',
                         { integer = false, min = 0., max = 1000., },
                         'MagickaMultiplierPCbaseName',
-                        'MagickaMultiplierPCbaseDesc',
-                        1.
+                        L('MagickaMultiplierPCbaseDesc', { value = PCMagickaMult }),
+                        PCMagickaMult
                 ),
                 setting(
                         'NPCbaseMagickaMultiplier',
                         'number',
                         { integer = false, min = 0., max = 1000., },
                         'MagickaMultiplierNPCbaseName',
-                        'MagickaMultiplierNPCbaseDesc',
-                        2.
+                        L('MagickaMultiplierNPCbaseDesc', { value = NPCMagickaMult }),
+                        NPCMagickaMult
                 ),
                 setting(
                         'FatigueBlockBase',
