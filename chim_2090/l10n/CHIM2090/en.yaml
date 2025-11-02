@@ -205,10 +205,10 @@ LuckHitChancePctDesc: |-
   Related damage scaling is capped by the Max Strength Multiplier setting.
 
 MagickaMultiplierNPCbaseName: NPC Base Magicka Multiplier
-MagickaMultiplierNPCbaseDesc: Base magicka modifier for NPCs.
+MagickaMultiplierNPCbaseDesc: Base magicka modifier for NPCs. Replaces the vanilla GMST fNPCbaseMagickaMult, whose value is {value}.
 
 MagickaMultiplierPCbaseName: Player Base Magicka Multiplier
-MagickaMultiplierPCbaseDesc: Base magicka modifier for Players.
+MagickaMultiplierPCbaseDesc: Base magicka modifier for Players. Replaces the vanilla GMST fPCbaseMagickaMult, whose value is {value}.
 
 MaximumMitigationName: Maximum Mitigation
 MaximumMitigationDesc: Absolute maximum damage reduction when blocking
