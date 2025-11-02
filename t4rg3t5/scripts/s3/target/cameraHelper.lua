@@ -58,7 +58,8 @@ function CamHelper.trackTarget(targetObject)
     if not targetObject then return end
 
     local playerPos = camera.getPosition()
-    local targetPos = targetObject:getBoundingBox().center
+    local box = targetObject:getBoundingBox()
+    local targetPos = util.vector3(box.center.x, box.center.y, box.center.z + (box.halfSize.z / 2))
     local toTarget = (targetPos - playerPos):normalize()
 
     local currentYaw = camera.getYaw()
