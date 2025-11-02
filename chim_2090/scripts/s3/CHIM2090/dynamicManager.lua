@@ -80,7 +80,7 @@ end
 local FortifyMagickaEffect = MagickEffect.FortifyMagicka
 function DynamicManager:calculateMaxMagicka()
   local BaseMagickaMult
-  if types.Player.objectIsInstance(s3lf.object) then
+  if types.Player.objectIsInstance(s3lf.gameObject) then
     BaseMagickaMult = self.PCbaseMagickaMultiplier
   else
     BaseMagickaMult = self.NPCbaseMagickaMultiplier
