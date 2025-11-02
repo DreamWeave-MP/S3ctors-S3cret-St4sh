@@ -28,6 +28,7 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic'
 ---@field HealthLinearMult number
 ---@field HealthDiminishingExponent number
 ---@field HealthVitalityMult number
+---@field EnableDynamicModule boolean
 local DynamicManager = I.S3ProtectedTable.new {
   inputGroupName = groupName,
   logPrefix = 'ChimManagerDynamic',
@@ -45,6 +46,8 @@ function DynamicManager:calculateMaxFatigue()
 end
 
 function DynamicManager:overrideNativeFatigue()
+  if not self.EnableDynamicModule then return end
+
   local expectedMaxFatigue = self:calculateMaxFatigue()
   if Fatigue.base == expectedMaxFatigue then return end
 
@@ -93,6 +96,8 @@ function DynamicManager:calculateMaxMagicka()
 end
 
 function DynamicManager:overrideNativeMagicka()
+  if not self.EnableDynamicModule then return end
+
   local expectedMaxMagicka = self:calculateMaxMagicka()
   if Magicka.base == expectedMaxMagicka then return end
 
@@ -125,6 +130,8 @@ function DynamicManager:calculateMaxHealth()
 end
 
 function DynamicManager:overrideNativeHealth()
+  if not self.EnableDynamicModule then return end
+
   local expectedMaxHealth = self:calculateMaxHealth()
   if s3lf.health.base == expectedMaxHealth then return end
 
