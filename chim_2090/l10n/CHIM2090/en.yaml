@@ -128,6 +128,12 @@ DebugEnableChimCoreDesc: Emit informative messages to openmw.log from the CHIM C
 DynamicDebugEnableName: Enable Dynamic Stat Debug Messages
 DynamicDebugEnableDesc: Emit informative messages to openmw.log from the dynamic stat module, primarily when one is recalculated.
 
+EnableDynamicModuleName: Enable Dynamic Stats Module
+EnableDynamicModuleDesc: |-
+  By default, recalculating dynamic stats is disabled, due to potential mod conflicts. However, it is highly recommended.
+  Without this module enabled, other mods or the engine may take over max fatigue, health, and magicka.
+  However, be aware that CHIM's fatigue regeneration cannot be disabled.
+
 EndurancePoiseBonusName: Endurance Poise Bonus
 EndurancePoiseBonusDesc: How much poise each point of Endurance provides
 
