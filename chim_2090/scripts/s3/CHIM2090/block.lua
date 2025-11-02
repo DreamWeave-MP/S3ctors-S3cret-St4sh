@@ -457,7 +457,7 @@ local Forward, Up = util.vector3(0, 1, 0), util.vector3(0, 0, 1)
 ---@param defender GameObject
 ---@return boolean canBlock, number closenessToBack Number between 0 and 1, representing how close the attacker is to the defender's back, with 1 meaning directly behind.
 function Block.canBlockAtAngle(attacker, defender)
-    if types.Creature.objectIsInstance(defender) and not s3lf.From(defender).isBiped then return false, 0.0 end
+    if types.Creature.objectIsInstance(defender) and not s3lf.From(defender.object).isBiped then return false, 0.0 end
 
     local diffVec = attacker.position - defender.position
     local blockerForward = defender.rotation * Forward
