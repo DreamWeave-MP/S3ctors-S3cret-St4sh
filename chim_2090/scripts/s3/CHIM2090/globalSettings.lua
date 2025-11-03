@@ -276,6 +276,14 @@ I.Settings.registerGroup {
                         1.0
                 ),
                 setting(
+                        'EnableFlankDamage',
+                        'checkbox',
+                        {},
+                        'EnableFlankDamageName',
+                        'EnableFlankDamageDesc',
+                        true
+                ),
+                setting(
                         'AgilityHitChancePct',
                         'number',
                         { integer = false, min = 0.001, max = 1.0 },

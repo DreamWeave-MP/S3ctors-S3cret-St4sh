@@ -114,6 +114,7 @@ damage = damage
         * poiseMult 
         * globalDamageScaling 
         * hitChance
+        + flankMod
 ```
 
 For more details, see each individual subsystem's documentation below and linked above. Each system's section explains its internal formulae, where each named variable is a setting within the mod.
@@ -354,6 +355,16 @@ if EnableCritFumble:
 ```
 
 Luck plays an important factor in getting those critical hits, and in preventing fumbles. With default settings, a relatively skilled or lucky character generally shouldn't have to worry about fumbles - just massive incoming crits from enemy combatants.
+
+### Flanking Damage
+
+When blocking, the angle between the attacker and defender's perspective is calculated. The result will be somewhere between 0 and 180, which is then used to calculate flanking damage.
+
+The blocking angle is normalized from 0-180 to 0-1.0, and if it is greater than 0.333 (60 degrees), the attack was not blocked, and the defender is not knocked down, the normalized angle difference is *added* to the total multiplier for damaged dealt.
+
+Tl;dr, being behind an opponent does an additional 100% damage, whereas being directly in front of them deals no additional damage. This is enabled by default as *typically*, the main victim of flanking attacks is actually you.
+
+Flanking damage is enabled by default, but may be disabled in CHIM's Damage settings page.
 
 ### Equipment Capacity
 
