@@ -7,7 +7,7 @@ local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 --- We also need to make sure we early-out of the entire script for creatures which are not bipedal
-local BLOCK_ANIM = 'activeblock'
+local BLOCK_ANIM = 'activeblockshield'
 local HUGE = math.huge
 
 local I = require 'openmw.interfaces'
@@ -105,13 +105,11 @@ local blockHitLegsData = {
     blendMask = anim.BLEND_MASK.LowerBody
 }
 
-local blockAnimData = {
+local shieldBlockData = {
     priority = {
-        [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Weapon,
-        [anim.BONE_GROUP.Torso] = anim.PRIORITY.Weapon,
+        [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Scripted,
     },
-    autoDisable = false,
-    blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.Torso,
+    blendMask = anim.BLEND_MASK.LeftArm,
 }
 
 local idleAnimData = {
@@ -303,10 +301,28 @@ function BlockActor:shouldAttemptBlock()
     return math.random() < util.clamp(finalChance, 0.2, 0.8)
 end
 
-function Block.playBlockAnimation()
-    if Block.isBlocking() then return end
-    blockAnimData.speed = Block.getSpeed()
-    I.AnimationController.playBlendedAnimation(BLOCK_ANIM, blockAnimData)
+---@param enable boolean
+function Block.playBlockAnimation(enable)
+    local blockAnim = BLOCK_ANIM
+
+    local autoDisable, startKey, stopKey
+    if enable then
+        startKey = 'block start'
+        stopKey = 'block stop'
+        autoDisable = false
+    else
+        startKey = 'release start'
+        stopKey = 'release stop'
+        autoDisable = true
+        s3lf.cancel(blockAnim)
+    end
+
+    shieldBlockData.startKey = startKey
+    shieldBlockData.stopKey = stopKey
+    shieldBlockData.autoDisable = autoDisable
+
+    shieldBlockData.speed = Block.getSpeed()
+    I.AnimationController.playBlendedAnimation(blockAnim, shieldBlockData)
 end
 
 function Block.playIdleAnimation()
@@ -578,7 +594,7 @@ I.AnimationController.addTextKeyHandler(BLOCK_ANIM, timedBlockHandler)
 function Block.toggleBlock(enable)
     if Block.isBlocking() == enable then return end
 
-    Block[(enable and 'playBlockAnimation' or 'playIdleAnimation')]()
+    Block.playBlockAnimation(enable)
 
     if not enable then
         BlockActor:reset()
@@ -634,7 +650,7 @@ local function interruptBlock()
         or (isPlayer and I.UI.getMode())
         or I.s3ChimPoise.isBroken()
         or not inWeaponStance()
-        or (isPlayer and not blockIsPressed())
+    -- or (isPlayer and not blockIsPressed())
 
     if not shouldInterrupt then return end
 
@@ -661,7 +677,7 @@ local keyHandlers = {
         return Block.calculateMitigation()
     end,
     playBlock = function()
-        Block.playBlockAnimation()
+        Block.playBlockAnimation(true)
         return ''
     end,
     playBlockHitLegs = function()
@@ -669,7 +685,7 @@ local keyHandlers = {
         return ''
     end,
     playIdle = function()
-        Block.playIdleAnimation()
+        Block.playBlockAnimation(false)
         return ''
     end,
     usingOneHanded = function()
