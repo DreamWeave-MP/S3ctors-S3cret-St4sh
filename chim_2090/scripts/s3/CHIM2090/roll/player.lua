@@ -96,8 +96,19 @@ if isPlayer then
                     return updateState(currentTime, index)
                 end
 
-                local rollType = Roll.groups[index]
-                prevAnimGroup = rollType[Roll.TYPE.NORMAL]
+                local rollDirection = Roll.groups[index]
+
+                local equipmentEncumbrance, rollType = I.s3ChimCore.getEquipmentEncumbrance()
+
+                if equipmentEncumbrance <= 0.25 then
+                    rollType = Roll.TYPE.FAST
+                elseif equipmentEncumbrance <= 0.75 then
+                    rollType = Roll.TYPE.NORMAL
+                else
+                    rollType = Roll.TYPE.FAT
+                end
+
+                prevAnimGroup = rollDirection[rollType]
 
                 if not prevAnimGroup then return updateState(currentTime, index) end
 
