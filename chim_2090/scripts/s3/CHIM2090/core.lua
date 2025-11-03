@@ -35,6 +35,14 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 ---@field HeavyAnimSpeed number
 ---@field OverloadedAnimSpeed number
 local ChimCore = I.S3ProtectedTable.new { inputGroupName = groupName, logPrefix = '[ CHIMCore ]:' }
+ChimCore.state = {
+    Handedness = {
+        ONE = 1,
+        TWO = 2,
+        RANGED = 3,
+        THROWN = 4,
+    },
+}
 
 local ActiveEffects = s3lf.activeEffects()
 
@@ -71,9 +79,54 @@ local twoHandedTypes = {
     [weaponTypes.BluntTwoWide] = true,
     [weaponTypes.SpearTwoWide] = true,
     [weaponTypes.AxeTwoHand] = true,
-    --- Bows are technically also two-handed but we'll do this only for crossbows to simulate them hitting harder
-    [weaponTypes.MarksmanCrossbow] = true,
 }
+
+local rangedWeaponTypes = {
+    [weaponTypes.MarksmanBow] = true,
+    [weaponTypes.MarksmanCrossbow] = true,
+    [weaponTypes.MarksmanThrown] = true,
+}
+
+local oneHandedTypes = {
+    [weaponTypes.AxeOneHand] = true,
+    [weaponTypes.ShortBladeOneHand] = true,
+    [weaponTypes.LongBladeOneHand] = true,
+    [weaponTypes.BluntOneHand] = true,
+}
+
+---@param actorOrWeapon GameObject? an optional gameobject, being either a weapon or NPC gameObject
+function ChimCore.getWeaponHandedness(actorOrWeapon)
+    local weapon, actor
+    if not actorOrWeapon then
+        weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+    elseif not actorOrWeapon.type then -- lacking the .type field indicates a s3lf object
+        local objectType = actorOrWeapon.objectType()
+
+        if objectType == 'npc' then
+            weapon = actorOrWeapon.getEquipment(actorOrWeapon.EQUIPMENT_SLOT.CarriedRight)
+        elseif objectType == 'weapon' then
+            weapon = actorOrWeapon
+        end
+    elseif types.NPC.objectIsInstance(actorOrWeapon) then
+        weapon = actor.type.getEquipment(actor, actor.type.EQUIPMENT_SLOT.CarriedRight)
+    elseif types.Weapon.objectIsInstance(actorOrWeapon) then
+        weapon = actorOrWeapon
+    end
+
+    if not weapon then return end
+
+    local weaponType = weapon.type.records[weapon.recordId].type
+
+    if oneHandedTypes[weaponType] then
+        return ChimCore.state.Handedness.ONE
+    elseif twoHandedTypes[weaponType] then
+        return ChimCore.state.Handedness.TWO
+    elseif weaponType == weaponTypes.MarksmanThrown then
+        return ChimCore.state.Handedness.THROWN
+    else
+        return ChimCore.state.Handedness.RANGED
+    end
+end
 
 ---@param actor GameObject
 ---@return number fatigueTerm fatigue cost for this action??
@@ -285,7 +338,7 @@ return {
         {},
         {
             __index = function(_, key)
-                local managerKey = ChimCore[key]
+                local managerKey = ChimCore[key] or ChimCore.state[key]
 
                 if key == 'help' then
                     return [[
