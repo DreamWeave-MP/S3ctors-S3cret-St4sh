@@ -1,0 +1,5 @@
+blending_rules:
+  - from: "roll:*"
+    to: "*:*"
+    easing: "sineInOut"
+    duration: 2.0
