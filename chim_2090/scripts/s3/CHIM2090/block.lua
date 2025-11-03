@@ -20,14 +20,6 @@ if isPlayer then
     input = require 'openmw.input'
 end
 
-local weaponTypes = types.Weapon.TYPE
-local oneHandedTypes = {
-    [weaponTypes.AxeOneHand] = true,
-    [weaponTypes.ShortBladeOneHand] = true,
-    [weaponTypes.LongBladeOneHand] = true,
-    [weaponTypes.BluntOneHand] = true,
-}
-
 local attackGroups = {
     ['weapontwohand'] = true,
     ['weapontwowide'] = true,
@@ -347,13 +339,9 @@ function Block.getShieldAttribute(shield)
 end
 
 function Block.usingOneHanded()
-    local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
-    if not weapon then return false end
+    local Core = I.s3ChimCore
 
-    local weaponRecord = types.Weapon.records[weapon.recordId]
-    if not weaponRecord then return false end
-
-    return oneHandedTypes[weaponRecord.type]
+    return Core.getWeaponHandedness() == Core.Handedness.ONE
 end
 
 function Block.usingShield()
