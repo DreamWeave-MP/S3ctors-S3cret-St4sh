@@ -1,3 +1,4 @@
+local animation = require 'openmw.animation'
 local core = require 'openmw.core'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
@@ -201,6 +202,10 @@ end
 
 function ChimCore.getRandomHitGroup()
     return ('hit%d'):format(math.random(1, 5))
+end
+
+function ChimCore.isKnockedDown(actor)
+    return animation.isPlaying(actor, 'knockout')
 end
 
 ---@param attacker GameObject

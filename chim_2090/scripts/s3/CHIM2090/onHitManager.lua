@@ -1,6 +1,5 @@
 local animation = require 'openmw.animation'
 local self = require 'openmw.self'
-local types = require 'openmw.types'
 
 ---@alias AttackType integer
 
@@ -13,8 +12,6 @@ local types = require 'openmw.types'
 ---@field weapon GameObject
 ---@field attackStrength number
 ---@field applyDurabilityDamage boolean
-
-local isPlayer = types.Player.objectIsInstance(self)
 
 local I = require 'openmw.interfaces'
 local Combat = I.Combat
@@ -38,8 +35,10 @@ local function CHIMHitHandler(attack)
         return attacker:sendEvent('CHIMEnsureFortifyAttack')
     end
 
-    local shieldMultiplier = 1.0
-    if I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, self) then
+    local shieldMultiplier, didBlock = 1.0, false
+    local canBlock, flankMult = I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, self)
+
+    if canBlock then
         ---@type CHIMBlockData
         local blockData = {
             damage = attack.damage.health or attack.damage.fatigue,
@@ -65,6 +64,7 @@ local function CHIMHitHandler(attack)
             local blockResult = I.s3ChimBlock.Manager.handleHit(blockData)
             shieldMultiplier = blockResult.damageMult
             attack.hitPos = nil
+            didBlock = true
         end
     end
 
@@ -82,6 +82,15 @@ local function CHIMHitHandler(attack)
         * poiseMult
         * I.s3ChimCore.Manager.GlobalDamageScaling
 
+    if
+        I.s3ChimCore.EnableFlankDamage
+        and not didBlock
+        and flankMult >= 0.333333333333
+        and not I.s3ChimCore.isKnockedDown(self)
+    then
+        endMult = endMult + flankMult
+    end
+
     for _, damageType in ipairs(damageTypes) do
         if attack.damage[damageType] ~= nil then
             attack.damage[damageType] = attack.damage[damageType] * endMult
@@ -94,6 +103,7 @@ local function CHIMHitHandler(attack)
     Hit Chance Mult: %.2f
     Global Damage Scaling: %.2f
     Poise Damage Bonus: %.1f
+    Flank Mult: %.3f
     Final Damage Mult: %.2f]]):format(
         attack.damage.health or 0,
         attack.damage.fatigue or 0,
@@ -101,6 +111,7 @@ local function CHIMHitHandler(attack)
         damageMult,
         I.s3ChimCore.Manager.GlobalDamageScaling,
         poiseMult,
+        flankMult,
         endMult
     ))
 end
