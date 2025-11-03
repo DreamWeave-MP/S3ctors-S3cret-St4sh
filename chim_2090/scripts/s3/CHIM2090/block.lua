@@ -101,7 +101,6 @@ local shieldBlockData = {
     priority = {
         [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Scripted,
     },
-    blendMask = anim.BLEND_MASK.LeftArm,
 }
 
 local idleAnimData = {
@@ -299,18 +298,35 @@ end
 
 ---@param enable boolean
 function Block.playBlockAnimation(enable)
-    local blockAnim = BLOCK_ANIM
+    local blockAnim
+    local usingShield = Block.usingShield()
 
     local autoDisable, startKey, stopKey
     if enable then
         startKey = 'block start'
         stopKey = 'block stop'
         autoDisable = false
+        blockAnim = Block.getBlockType()
+
+        local equipmentSlot = (usingShield and s3lf.EQUIPMENT_SLOT.CarriedLeft or s3lf.EQUIPMENT_SLOT.CarriedRight)
+        Block.state.blockingItem = s3lf.getEquipment(equipmentSlot)
     else
         startKey = 'release start'
         stopKey = 'release stop'
         autoDisable = true
+
+        blockAnim = Block.getBlockType(Block.state.blockingItem)
+        Block.state.blockingItem = nil
+
         s3lf.cancel(blockAnim)
+    end
+
+    if not usingShield then
+        shieldBlockData.priority[anim.BONE_GROUP.RightArm] = anim.PRIORITY.Scripted
+        shieldBlockData.blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.RightArm
+    else
+        shieldBlockData.priority[anim.BONE_GROUP.RightArm] = nil
+        shieldBlockData.blendMask = anim.BLEND_MASK.LeftArm
     end
 
     shieldBlockData.startKey = startKey
@@ -596,6 +612,17 @@ function Block.toggleBlock(enable)
 
     if not enable then
         BlockActor:reset()
+    end
+end
+
+---@param weapon GameObject?
+function Block.getBlockType(weapon)
+    if I.s3ChimCore.getWeaponHandedness(weapon) == I.s3ChimCore.Handedness.TWO then
+        return 'activeblock2h'
+    elseif Block.usingShield() then
+        return 'activeblockshield'
+    else
+        return 'activeblock1h'
     end
 end
 
