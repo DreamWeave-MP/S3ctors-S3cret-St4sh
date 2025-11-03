@@ -818,10 +818,13 @@ return {
         {
             __index = function(_, key)
                 local keyHandler = keyHandlers[key]
+                local managerKey = Block[key]
 
                 if keyHandler then
                     assert(type(keyHandler) == 'function')
                     return keyHandler()
+                elseif managerKey then
+                    return managerKey
                 elseif key == 'Manager' then
                     return Block
                 elseif key == 'Actor' and not isPlayer then
