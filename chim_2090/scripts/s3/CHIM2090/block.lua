@@ -716,6 +716,17 @@ end
 
 --- Restore the block if it was interrupted by something else
 local function blockIfPossible()
+    local isBlocking = Block.isBlocking()
+    if isBlocking then
+        local blockType = Block.getBlockType(Block.state.blockingItem)
+        local isActuallyBlocking = s3lf.getActiveGroup(anim.BONE_GROUP.LeftArm) == blockType
+
+        if isBlocking and not isActuallyBlocking then
+            Block.state.isBlocking = false
+            return Block.toggleBlock(true)
+        end
+    end
+
     if
         (isPlayer and not blockIsPressed())
         or not isPlayer
