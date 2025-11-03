@@ -184,6 +184,7 @@ return {
     interfaceName = 's3ChimRoll',
     interface = {
         hasIFrames = hasIFrames,
+        isRolling = isRolling,
     },
     engineHandlers = engineHandlers,
     eventHandlers = eventHandlers,
