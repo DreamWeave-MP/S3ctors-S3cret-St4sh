@@ -140,6 +140,7 @@ local Block = ProtectedTable.new {
 Block.state = {
     blockingItem = nil,
     isBlocking = nil,
+    isParrying = false,
 }
 
 ---@class AIBlockManager: ProtectedTable
@@ -561,7 +562,7 @@ function Block.handleHit(blockData)
         })
     end
 
-    if blockData.playVfx and blockData.hitPos then
+    if blockData.hitPos then
         core.sendGlobalEvent('SpawnVfx', {
             position = blockData.hitPos,
             model = 'meshes/e/impact/parryspark.nif'
@@ -584,6 +585,10 @@ local function hasBlockingWeapon()
     return handedness == Core.Handedness.TWO or handedness == Core.Handedness.ONE
 end
 
+local function isParrying()
+    return Block.state.isParrying
+end
+
 function Block.canBlock()
     local canBlock = inWeaponStance()
         and s3lf.isOnGround()
@@ -593,6 +598,7 @@ function Block.canBlock()
         and not I.s3ChimPoise.isBroken()
         and not playingHitstun()
         and not isJumping()
+        and not isParrying()
 
     if isPlayer then
         canBlock = canBlock
@@ -628,10 +634,18 @@ function Block.getSpeed()
 end
 
 local function timedBlockHandler(_, key)
-    if key == 'block stop' then
+    if key == 'block start' then
+        Block.state.isParrying = false
+        Block.state.isBlocking = false
+    elseif key == 'block stop' then
         Block.state.isBlocking = true
     elseif key == 'release start' then
         Block.state.isBlocking = false
+    elseif key == 'parry start' then
+        Block.state.isParrying = true
+        Block.state.isBlocking = false
+    elseif key == 'parry stop' then
+        Block.state.isParrying = false
     elseif key == 'half' then
         I.s3ChimParry.Manager.start()
     end
