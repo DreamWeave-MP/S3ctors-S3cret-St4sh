@@ -138,6 +138,10 @@ local Block = ProtectedTable.new {
     inputGroupName = groupName,
     logPrefix = '[CHIMBlock]:\n',
 }
+Block.state = {
+    blockingItem = nil,
+    isBlocking = nil,
+}
 
 ---@class AIBlockManager: ProtectedTable
 ---@field NoBlockThreshold number
@@ -329,7 +333,7 @@ function Block.playBlockHitLegs()
 end
 
 function Block.isBlocking()
-    return s3lf.getActiveGroup(anim.BONE_GROUP.LeftArm) == BLOCK_ANIM
+    return Block.state.isBlocking
 end
 
 function Block.getShieldAttribute(shield)
@@ -571,13 +575,19 @@ function Block.getSpeed()
         + speedModifier * normalizedFatigue()
 end
 
-local function timedBlockHandler(group, key)
-    if key == 'half' then
+local function timedBlockHandler(_, key)
+    if key == 'block stop' then
+        Block.state.isBlocking = true
+    elseif key == 'release start' then
+        Block.state.isBlocking = false
+    elseif key == 'half' then
         I.s3ChimParry.Manager.start()
     end
 end
 
-I.AnimationController.addTextKeyHandler(BLOCK_ANIM, timedBlockHandler)
+for _, animGroup in ipairs { 'activeblockshield', 'activeblock1h', 'activeblock2h', } do
+    I.AnimationController.addTextKeyHandler(animGroup, timedBlockHandler)
+end
 
 function Block.toggleBlock(enable)
     if Block.isBlocking() == enable then return end
@@ -635,10 +645,11 @@ local function interruptBlock()
 
     local shouldInterrupt = isAttacking()
         or isJumping()
-        or (isPlayer and I.UI.getMode())
-        or I.s3ChimPoise.isBroken()
         or not inWeaponStance()
-    -- or (isPlayer and not blockIsPressed())
+        or I.s3ChimPoise.isBroken()
+        or (I.s3ChimRoll and I.s3ChimRoll.isRolling())
+        or (isPlayer and I.UI.getMode())
+        or (isPlayer and not blockIsPressed())
 
     if not shouldInterrupt then return end
 
