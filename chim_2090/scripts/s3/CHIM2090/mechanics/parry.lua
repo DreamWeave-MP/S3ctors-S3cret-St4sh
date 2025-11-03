@@ -8,18 +8,12 @@ local s3lf = I.s3lf
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
 local blockEndAnimData = {
-    startKey = 'block hit',
-    stopKey = 'block stop',
+    startKey = 'parry start',
+    stopKey = 'parry stop',
     priority = {
-        [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Scripted,
-        [anim.BONE_GROUP.Torso] = anim.PRIORITY.Scripted,
+        [anim.BONE_GROUP.LeftArm] = anim.PRIORITY.Scripted
     },
-    blendMask = anim.BLEND_MASK.LeftArm + anim.BLEND_MASK.Torso,
 }
-
-local function playBlockEndAnim()
-    I.AnimationController.playBlendedAnimation('shield', blockEndAnimData)
-end
 
 local function usingTwoHanded()
     local Core = I.s3ChimCore
@@ -48,6 +42,22 @@ local Parry = ProtectedTable.new { inputGroupName = groupName, logPrefix = '[CHI
 Parry.state = {
     remainingTime = 0,
 }
+
+function Parry.playParryAnim()
+    local animGroup = I.s3ChimBlock.getBlockType()
+    s3lf.cancel(animGroup)
+
+    local blendMask, weaponArmPriority = anim.BLEND_MASK.LeftArm, nil
+    if not I.s3ChimBlock.usingShield then
+        blendMask = blendMask + anim.BLEND_MASK.RightArm
+        weaponArmPriority = anim.PRIORITY.Scripted
+    end
+
+    blockEndAnimData.blendMask = blendMask
+    blockEndAnimData.priority[anim.BONE_GROUP.RightArm] = weaponArmPriority
+
+    I.AnimationController.playBlendedAnimation(animGroup, blockEndAnimData)
+end
 
 function Parry.timeRemaining()
     return Parry.state.remainingTime
@@ -142,7 +152,7 @@ function Parry.getDamage(hitData)
 
     I.s3ChimBlock.Manager.handleHit(hitData)
 
-    playBlockEndAnim()
+    Parry.playParryAnim()
 
     -- Calculate base multiplier with attributes
     local damageMult = Parry.BaseDamageMultiplier
