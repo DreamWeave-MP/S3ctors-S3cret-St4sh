@@ -86,8 +86,6 @@ end
 ---@param weapon GameObject
 ---@param attacker GameObject
 function ChimCore.getWeaponSkill(weapon, attacker)
-    local weaponType = weapon.type.records[weapon.recordId].type
-    local weaponSkill = weaponTypesToSkills[weaponType]
     attacker = s3lf.From(attacker)
 
     if types.NPC.objectIsInstance(attacker.gameObject) then
