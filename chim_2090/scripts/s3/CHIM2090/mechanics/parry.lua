@@ -7,12 +7,6 @@ local s3lf = I.s3lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
-local function getShield()
-    local carriedLeft = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
-    if not carriedLeft or not types.Armor.records[carriedLeft.recordId] then return end
-    return carriedLeft
-end
-
 local blockEndAnimData = {
     startKey = 'block hit',
     stopKey = 'block stop',
@@ -25,6 +19,11 @@ local blockEndAnimData = {
 
 local function playBlockEndAnim()
     I.AnimationController.playBlendedAnimation('shield', blockEndAnimData)
+end
+
+local function usingTwoHanded()
+    local Core = I.s3ChimCore
+    return Core.getWeaponHandedness() == Core.Handedness.TWO
 end
 
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'Parry'
@@ -59,8 +58,9 @@ function Parry.calculateParryFrames()
     local agilityBonus = (math.min(s3lf.agility.modified, 100) - 50) / 200 -- -0.25 to +0.25
     local luckInfluence = (math.random(10) - 5) / 50                       -- -0.1 to +0.1 variance
 
-    local shield = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
-    local shieldWeight = types.Armor.records[shield.recordId].weight
+    local shield = I.s3ChimBlock.getBlockingItem()
+    if not shield then return 0 end
+    local shieldWeight = shield.type.records[shield.recordId].weight
 
     -- INVERSE relationship: lighter shields = more parry frames
     -- Heaviest shields get minimal frames, lightest get bonus frames
@@ -106,22 +106,28 @@ function Parry.calculateParryFrameSeconds()
 end
 
 function Parry.tick(dt)
+    if usingTwoHanded() then return end
+
     if Parry.state.remainingTime <= 0 then return end
     Parry.state.remainingTime = math.max(0.0, Parry.state.remainingTime - dt)
 end
 
 function Parry.start()
+    if usingTwoHanded() then return end
+
     Parry.state.remainingTime = Parry.calculateParryFrameSeconds()
 end
 
 ---@return boolean parryReady whether or not a parry can currently happen
 function Parry.ready()
+    if usingTwoHanded() then return false end
+
     return Parry.state.remainingTime > 0
 end
 
 ---@return number shieldSize overall length of the equipped shield's front face in todd units
 function Parry.getShieldSize()
-    local shield = getShield()
+    local shield = I.s3ChimBlock.getBlockingItem()
     if not shield then return 0 end
     return (shield:getBoundingBox().halfSize.xy * 2):length()
 end
@@ -182,7 +188,7 @@ local ParryInterface = {
 Each parameter in said calculations is exposed via the `Parry` settings page, or the settings group 'SettingsGlobalCHIM-2090Parry'.
 Using these settings you may increase the parry windows for specific shields, based on character skill, or change the damage transferred back through a parry.]]
                 elseif key == 'getParryTimes' then
-                    local shield = getShield()
+                    local shield = I.s3ChimBlock.getBlockingItem()
                     if not shield then return 'No Shield equipped!' end
 
                     return ('Parry time in seconds: %.2f, in frames: %.2f, with shield: %s, whose size is %d units')
