@@ -374,6 +374,8 @@ function Block.usingOneHanded()
 end
 
 function Block.usingShield()
+    if I.s3ChimCore.getWeaponHandedness() ~= I.s3ChimCore.Handedness.ONE then return false end
+
     local carriedLeft = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
     if not carriedLeft then return false end
 
@@ -387,15 +389,25 @@ local blockSounds = {
     lightarmor = 'light armor hit',
     mediumarmor = 'medium armor hit',
     heavyarmor = 'heavy armor hit',
+    blunt = 'heavy armor hit',
+    longblade = 'medium armor hit',
+    shortblade = 'medium armor hit',
+    spear = 'heavy armor hit'
 }
 
 function Block.playBlockSound()
-    local shield = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
-    local shieldRecord = types.Armor.records[shield.recordId]
-    if not shieldRecord then return end
+    local blockingItem, blockSkill = Block.getBlockingItem()
 
-    local shieldSkill = I.Combat.getArmorSkill(shield)
-    core.sound.playSound3d(blockSounds[shieldSkill], s3lf.object)
+    if
+        I.s3ChimCore.getWeaponHandedness() == I.s3ChimCore.Handedness.ONE
+        and Block.usingShield()
+    then
+        blockSkill = I.Combat.getArmorSkill(blockingItem)
+    else
+        blockSkill = I.s3ChimCore.getWeaponSkillName(blockingItem)
+    end
+
+    core.sound.playSound3d(blockSounds[blockSkill], s3lf.object)
 end
 
 function Block.getShieldBaseEffectiveness(armor, weight)
@@ -404,27 +416,37 @@ function Block.getShieldBaseEffectiveness(armor, weight)
     return armorComponent + weightComponent
 end
 
+--- When calculating mitigation for weapons, they don't have an armor value, so we double the max weight bonus
+function Block.getWeaponBaseEffectiveness(weight)
+    return util.remap(weight, 0, 60, 0.3, Block.MaxWeightBonus * 2)
+end
+
 ---@return number damageMitigation Multiplier on damage based on shield skill, governing attribute, and shield quality
 function Block.calculateMitigation()
-    local shield = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
+    local shield = Block.getBlockingItem()
     if not shield then return 0 end
 
-    local shieldRecord = types.Armor.records[shield.recordId]
-    if not shieldRecord then return 0 end
-
-    local shieldArmor = shieldRecord.baseArmor
+    local shieldRecord = shield.type.records[shield.recordId]
+    local shieldArmor = shieldRecord.baseArmor or 0
     local shieldWeight = shieldRecord.weight
 
     -- Base mitigation from shield quality
-    local baseMitigation = Block.getShieldBaseEffectiveness(shieldArmor, shieldWeight)
+    local baseMitigation
+    if types.Weapon.objectIsInstance(shield) then
+        baseMitigation = Block.getWeaponBaseEffectiveness(shieldWeight)
+    else
+        baseMitigation = Block.getShieldBaseEffectiveness(shieldArmor, shieldWeight)
+    end
 
     -- Skill contribution (more skilled = better at angling shield)
-    local skillMultiplier
+    local blockSkill
     if types.NPC.objectIsInstance(s3lf.gameObject) then
-        skillMultiplier = 0.5 + (s3lf.block.base * Block.SkillMitigationFactor)
+        blockSkill = s3lf.block.base
     else
-        skillMultiplier = 0.5 + (s3lf.combatSkill * Block.SkillMitigationFactor)
+        blockSkill = s3lf.combatSkill
     end
+
+    local skillMultiplier = 0.5 + (blockSkill * Block.SkillMitigationFactor)
 
     local attributeBonus = Block.getShieldAttribute(shield) * Block.AttributeMitigationFactor
 
@@ -534,7 +556,7 @@ function Block.handleHit(blockData)
         -- (We apply mtigation)
         core.sendGlobalEvent('ModifyItemCondition', {
             actor = s3lf.object,
-            item = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft),
+            item = Block.getBlockingItem(),
             amount = -(blockData.damage * damageMitigation),
         })
     end
