@@ -1,10 +1,10 @@
-ActorEnduranceBlockTimeName: Endurance Blocking Time 
+ActorEnduranceBlockTimeName: Endurance Blocking Time
 ActorEnduranceBlockTimeDesc: The closer to 100 an enemy's endurance is, the closer to this value will be added to their blocking duration.
 
 ActorFatigueBlockTimeName: Fatigue Blocking Time
 ActorFatigueBlockTimeDesc: The closer to max an enemy's fatigue is, the closer to this value will be added to their blocking duration.
 
-ActorSkillBlockTimeName: Skill Blocking Time 
+ActorSkillBlockTimeName: Skill Blocking Time
 ActorSkillBlockTimeDesc: The closer to 100 an enemy's block skill is, the closer to this value will be added to their blocking duration.
 
 ActorMinBlockTimeName: Minimum Blocking Time
@@ -133,6 +133,12 @@ EnableDynamicModuleDesc: |-
   By default, recalculating dynamic stats is disabled, due to potential mod conflicts. However, it is highly recommended.
   Without this module enabled, other mods or the engine may take over max fatigue, health, and magicka.
   However, be aware that CHIM's fatigue regeneration cannot be disabled.
+
+EnableFlankDamageName: Enable Flanking Damage
+EnableFlankDamageDesc: |-
+  When blocking, the angle between the attacker and defender's perspective is calculated. The result will be somewhere between 0 and 180, which is then used to calculate flanking damage.
+  The blocking angle is normalized from 0-180 to 0-1.0, and if it is greater than 0.333 (60 degrees), the attack was not blocked, and the defender is not knocked down, the normalized angle difference is *added* to the total multiplier for damaged dealt.
+  Tl;dr, being behind an opponent does an additional 100% damage, whereas being directly in front of them deals no additional damage. This is enabled by default as *typically*, the main victim of flanking attacks is actually you.
 
 EndurancePoiseBonusName: Endurance Poise Bonus
 EndurancePoiseBonusDesc: How much poise each point of Endurance provides
