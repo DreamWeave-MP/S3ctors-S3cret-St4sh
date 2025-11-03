@@ -353,7 +353,16 @@ function Block.isBlocking()
 end
 
 function Block.getShieldAttribute(shield)
-    local shieldType = I.Combat.getArmorSkill(shield)
+    local shieldType
+
+    if types.Armor.objectIsInstance(shield) then
+        shieldType = I.Combat.getArmorSkill(shield)
+    elseif types.Weapon.objectIsInstance(shield) then
+        shieldType = I.s3ChimCore.getWeaponSkillName(shield)
+    else
+        error('getShieldAttribute passed invalid object type: ' .. shield)
+    end
+
     local shieldAttribute = core.stats.Skill.records[shieldType].attribute
     return s3lf[shieldAttribute].modified
 end
@@ -547,11 +556,16 @@ function Block.handleHit(blockData)
     }
 end
 
+local function hasBlockingWeapon()
+    local Core = I.s3ChimCore
+    local handedness = Core.getWeaponHandedness()
+    return handedness == Core.Handedness.TWO or handedness == Core.Handedness.ONE
+end
+
 function Block.canBlock()
     local canBlock = inWeaponStance()
         and s3lf.isOnGround()
-        and Block.usingOneHanded()
-        and Block.usingShield()
+        and hasBlockingWeapon()
         and s3lf.canMove()
         and not Block.isBlocking()
         and not I.s3ChimPoise.isBroken()
@@ -624,6 +638,11 @@ function Block.getBlockType(weapon)
     else
         return 'activeblock1h'
     end
+end
+
+function Block.getBlockingItem()
+    local slot = Block.usingShield() and s3lf.EQUIPMENT_SLOT.CarriedLeft or s3lf.EQUIPMENT_SLOT.CarriedRight
+    return s3lf.getEquipment(slot)
 end
 
 local function blockBegin()

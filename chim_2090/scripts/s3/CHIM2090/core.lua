@@ -137,9 +137,22 @@ local function getFatigueTerm(actor)
 end
 
 ---@param weapon GameObject
+---@return string skillName
+function ChimCore.getWeaponSkillName(weapon)
+    if not weapon.type then --- Lacking the .type field indicates we've receievd a s3lfObject
+        weapon = weapon.gameObject
+    end
+
+    local weaponType = weapon.type.records[weapon.recordId].type
+    return weaponTypesToSkills[weaponType]
+end
+
+---@param weapon GameObject
 ---@param attacker GameObject
 function ChimCore.getWeaponSkill(weapon, attacker)
-    attacker = s3lf.From(attacker)
+    if attacker.type then --- Lacking the .type field indicates we've receievd a s3lfObject
+        attacker = s3lf.From(attacker)
+    end
 
     if types.NPC.objectIsInstance(attacker.gameObject) then
         local weaponType = weapon.type.records[weapon.recordId].type
