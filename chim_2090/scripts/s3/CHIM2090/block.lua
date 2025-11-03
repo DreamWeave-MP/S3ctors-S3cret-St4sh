@@ -594,6 +594,7 @@ function Block.canBlock()
         and s3lf.isOnGround()
         and hasBlockingWeapon()
         and s3lf.canMove()
+        and Block.getBlockingItem() ~= nil
         and not Block.isBlocking()
         and not I.s3ChimPoise.isBroken()
         and not playingHitstun()
@@ -677,6 +678,10 @@ function Block.getBlockType(weapon)
 end
 
 function Block.getBlockingItem()
+    local Core = I.s3ChimCore
+    local handedness = Core.getWeaponHandedness()
+    if handedness == Core.Handedness.THROWN or handedness == Core.Handedness.RANGED then return end
+
     local slot = Block.usingShield() and s3lf.EQUIPMENT_SLOT.CarriedLeft or s3lf.EQUIPMENT_SLOT.CarriedRight
     return s3lf.getEquipment(slot)
 end
@@ -715,6 +720,7 @@ local function blockIfPossible()
         (isPlayer and not blockIsPressed())
         or not isPlayer
         or not Block.canBlock()
+        or (I.s3ChimRoll and I.s3ChimRoll.isRolling())
     then
         return
     end
