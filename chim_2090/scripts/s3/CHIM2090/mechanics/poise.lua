@@ -205,8 +205,11 @@ function Poise.weaponPoiseDamage(attackInfo)
 
     local totalPoise = (weightPoise + skillPoise + strengthBonus) * Poise.WeaponPoiseMult
 
-    -- Two-handed weapons get bonus
-    local usingTwoHanded = I.s3ChimCore.Manager.weaponIsTwoHanded(weapon)
+    -- Two-handed weapons get bonus, or crossbows
+    local handedness = I.s3ChimCore.getWeaponHandedness(weapon)
+    local usingTwoHanded = handedness == I.s3ChimCore.Handedness.TWO or
+        weaponRecord.type == weapon.type.TYPE.MarksmanCrossbow
+
     if usingTwoHanded then
         totalPoise = totalPoise * Poise.TwoHandedMult
     end
