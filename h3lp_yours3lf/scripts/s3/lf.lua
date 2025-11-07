@@ -86,6 +86,13 @@ local ignoredBaseKeys = {
 
 local uncacheableKeys = {
   cell = true,
+  count = true,
+  enabled = true,
+  owner = true,
+  parentContainer = true,
+  position = true,
+  rotation = true,
+  scale = true,
 }
 
 local GameObjectKeyHandlers = {
