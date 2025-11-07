@@ -710,12 +710,6 @@ local function blockEnd()
     Block.toggleBlock(false)
 end
 
-local function ensureNoBlock()
-    if not types.NPC.objectIsInstance(s3lf.gameObject) then return end
-    if s3lf.block.modifier == -HUGE then return end
-    s3lf.block.modifier = -HUGE
-end
-
 local function noBlockInMenus()
     if not isPlayer or not I.UI.getMode() then return end
     Block.toggleBlock(false)
@@ -811,7 +805,6 @@ local function handleBlockInput(state)
 end
 
 local function blockUpdate(dt)
-    ensureNoBlock()
     if noBlockInMenus() then return end
 
     blockIfPossible()
