@@ -18,7 +18,7 @@ end
 local Roll = require 'scripts.s3.CHIM2090.roll.data'
 
 local pressDelay = 0.2
-local lastPressedTime, prevAnimGroup, lastMoveType, prevStance = core.getRealTime()
+local lastPressedTime, prevAnimGroup, lastMoveType = core.getRealTime()
 local hasIFrames = false
 
 local function updateState(time, type)
