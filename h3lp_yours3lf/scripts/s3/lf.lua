@@ -67,6 +67,10 @@ local function instanceDisplay(instance)
 end
 
 local function getObjectType(object)
+  if PlayerType.objectIsInstance(object) then
+    return 'player'
+  end
+
   local result, _ = object.type.records[object.recordId].__type.name:gsub('ESM::', '')
   return result:lower()
 end
@@ -74,7 +78,15 @@ end
 
 local GameObjectWrapper = {}
 
-local function nullHandler() end
+local ignoredBaseKeys = {
+  baseType = true,
+  stats = true,
+  type = true,
+}
+
+local uncacheableKeys = {
+  cell = true,
+}
 
 local GameObjectKeyHandlers = {
   id = function(instance, gameObject, key)
@@ -85,9 +97,6 @@ local GameObjectKeyHandlers = {
   object = function(_, gameObject, _)
     return gameObject
   end,
-  baseType = nullHandler,
-  stats = nullHandler,
-  type = nullHandler,
 }
 
 local function actorHandler(instance, actor, key)
@@ -121,10 +130,6 @@ GameObjectWrapper._mt = {
     end
 
     local gameObject = rawget(instance, 'gameObject')
-
-    if key == 'cell' then
-      return gameObject.cell
-    end
 
     if types.Player.objectIsInstance(gameObject) then
       if key == 'combatTargets' then
@@ -185,21 +190,29 @@ GameObjectWrapper._mt = {
     end
 
     local objectValue = gameObject[key]
-    if objectValue then
+    if ignoredBaseKeys[key] or not objectValue then return end
+
+    if not uncacheableKeys[key] then
       rawset(instance, key, objectValue)
-      return objectValue
     end
+
+    return objectValue
   end,
 }
 
 local ObjectHelpers = {}
 local s3lfCache = {}
 
+local validObjectTypes = {
+  ['MWLua::LObject'] = true,
+  ['MWLua::SelfObject'] = true,
+}
+
 function ObjectHelpers.From(gameObject)
   local typeName = gameObject.__type.name
 
-  assert(typeName == 'MWLua::LObject',
-    'S3GameSelf.From is only compatible with Local GameObjects! You passed: ' .. typeName)
+  assert(validObjectTypes[typeName],
+    'S3GameSelf.From is only compatible with GameObjects! You passed: ' .. typeName)
 
   if not s3lfCache[gameObject.id] then
     s3lfCache[gameObject.id] = ObjectHelpers.createInstance(gameObject)
@@ -216,6 +229,7 @@ function ObjectHelpers.createInstance(gameObject)
   local instance = {
     gameObject = gameObject,
     record = gameObject.type.records[gameObject.recordId],
+    objectType = getObjectType(gameObject),
     From = ObjectHelpers.From,
   }
 
@@ -225,10 +239,6 @@ function ObjectHelpers.createInstance(gameObject)
 
   instance.display = function()
     instanceDisplay(instance)
-  end
-
-  instance.objectType = function()
-    return getObjectType(gameObject)
   end
 
   setmetatable(instance, GameObjectWrapper._mt)
