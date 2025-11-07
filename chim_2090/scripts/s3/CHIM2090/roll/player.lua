@@ -47,6 +47,13 @@ local keyHandlers = {
     end,
     ['max iframes'] = function(group)
         hasIFrames = false
+
+        local landSound = 'defaultland'
+        if s3lf.cell.hasWater and s3lf.position.z <= s3lf.cell.waterLevel then
+            landSound = landSound .. 'water'
+        end
+
+        core.sound.playSound3d(landSound, s3lf.gameObject, { pitch = 1 + math.random(-20, 20) / 100 })
     end,
 }
 
