@@ -7,7 +7,6 @@ local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 --- We also need to make sure we early-out of the entire script for creatures which are not bipedal
-local BLOCK_ANIM = 'activeblockshield'
 local HUGE = math.huge
 
 local I = require 'openmw.interfaces'
@@ -513,7 +512,16 @@ local Forward, Up = util.vector3(0, 1, 0), util.vector3(0, 0, 1)
 ---@param defender GameObject
 ---@return boolean canBlock, number closenessToBack Number between 0 and 1, representing how close the attacker is to the defender's back, with 1 meaning directly behind.
 function Block.canBlockAtAngle(attacker, defender)
-    if types.Creature.objectIsInstance(defender) and not s3lf.From(defender.object).isBiped then return false, 0.0 end
+    if types.Creature.objectIsInstance(defender) then
+        local isBiped
+        if defender.From then -- the presence or lack of a .From field indicates a s3lfObject
+            isBiped = defender.isBiped
+        else
+            isBiped = defender.type.records[defender.recordId].isBiped
+        end
+
+        if not isBiped then return false, 0.0 end
+    end
 
     local diffVec = attacker.position - defender.position
     local blockerForward = defender.rotation * Forward
@@ -747,8 +755,12 @@ local function interruptBlock()
         or not inWeaponStance()
         or I.s3ChimPoise.isBroken()
         or (I.s3ChimRoll and I.s3ChimRoll.isRolling())
-        or (isPlayer and I.UI.getMode())
-        or (isPlayer and not blockIsPressed())
+
+    if isPlayer then
+        shouldInterrupt = shouldInterrupt
+            or I.UI.getMode()
+            or not blockIsPressed()
+    end
 
     if not shouldInterrupt then return end
 
