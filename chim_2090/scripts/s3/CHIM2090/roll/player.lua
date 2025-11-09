@@ -182,6 +182,36 @@ for _, animGroup in ipairs(Roll.list) do
     I.AnimationController.addTextKeyHandler(animGroup, RollManager.keyHandler)
 end
 
+function RollManager:canRoll()
+    return s3lf.isOnGround()
+        and self.EnableRollModule
+        and not I.UI.getMode()
+        and not core.isWorldPaused()
+        and not s3lf.isSwimming()
+end
+
+---@param direction RollDirection
+---@return boolean whether or not a roll happened
+function RollManager:roll(direction)
+    if not RollManager:updateRollAnimation(direction) then return false end
+
+    RollManager:toggleControls(false)
+
+    if
+        I.S3LockOn
+        and I.S3LockOn.Manager.shouldTrack()
+        and camera.getMode() ~= camera.MODE.FirstPerson
+    then
+        I.S3LockOn.Manager.setTrackingState(false)
+    end
+
+    Animation.playBlendedAnimation(RollManager.state.prevAnimGroup, {
+        priority = animation.PRIORITY.Scripted,
+    })
+
+    return true
+end
+
 if isPlayer then
     for index, action in ipairs {
         'MoveForward',
@@ -192,13 +222,9 @@ if isPlayer then
         input.registerActionHandler(action, async:callback(
             function(state)
                 if
-                    not RollManager.EnableRollModule
-                    or not RollManager.DoubleTapRoll
+                    not RollManager.DoubleTapRoll
                     or state ~= 1
-                    or I.UI.getMode()
-                    or core.isWorldPaused()
-                    or not s3lf.isOnGround()
-                    or s3lf.isSwimming()
+                    or not RollManager:canRoll()
                 then
                     return
                 end
@@ -214,21 +240,7 @@ if isPlayer then
                     return RollManager:updateState(currentTime, index)
                 end
 
-                if not RollManager:updateRollAnimation(index) then return RollManager:updateState(currentTime, index) end
-
-                RollManager:toggleControls(false)
-
-                if
-                    I.S3LockOn
-                    and I.S3LockOn.Manager.shouldTrack()
-                    and camera.getMode() ~= camera.MODE.FirstPerson
-                then
-                    I.S3LockOn.Manager.setTrackingState(false)
-                end
-
-                Animation.playBlendedAnimation(RollManager.state.prevAnimGroup, {
-                    priority = animation.PRIORITY.Scripted,
-                })
+                if not RollManager:roll(index) then return RollManager:updateState(currentTime, index) end
 
                 RollManager:updateState(currentTime, index)
             end
