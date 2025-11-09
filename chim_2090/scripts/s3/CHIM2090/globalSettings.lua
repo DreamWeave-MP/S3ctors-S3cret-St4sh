@@ -1157,12 +1157,12 @@ I.Settings.registerGroup {
                         'space'
                 ),
                 setting(
-                        'PitchRange',
+                        'RollSoundPitchRange',
                         'number',
-                        { integer = true, min = 0, max = 1000 },
-                        'PitchRangeName',
-                        'PitchRangeDesc',
-                        20
+                        { integer = false, min = 0.0, max = 10.0 },
+                        'RollSoundPitchRangeName',
+                        'RollSoundPitchRangeDesc',
+                        .2
                 )
         },
 }
