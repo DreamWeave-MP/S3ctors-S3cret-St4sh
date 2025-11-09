@@ -24,7 +24,7 @@ end
 ---@field EnableRollModule boolean
 ---@field DoubleTapRoll boolean
 ---@field DoubleTapDelay number
----@field PitchRange number
+---@field RollSoundPitchRange number
 local Roll = I.S3ProtectedTable.new { inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Roll', logPrefix = '[CHIMROLL]:' }
 Roll.state = {
     lastPressedTime = core.getRealTime(),
@@ -54,7 +54,7 @@ function Roll:hasIFrames()
 end
 
 function Roll:getRandomPitch()
-    return 1 + math.random(-self.PitchRange, self.PitchRange) / 100
+    return 1 + I.RandomGen.range(-self.RollSoundPitchRange, self.RollSoundPitchRange)
 end
 
 ---@return RollType
@@ -149,7 +149,7 @@ local animationKeyHandlers = {
     ['min iframes'] = function(group)
         Roll:setIframeState(true)
 
-        local soundIndex = math.random(1, numRollSounds)
+        local soundIndex = I.RandomGen.range(numRollSounds, true)
         local pitch, sound = Roll:getRandomPitch(), rollSounds[soundIndex]
 
         core.sound.playSound3d(sound, s3lf.gameObject, { pitch = pitch })
@@ -357,7 +357,7 @@ eventHandlers.CHIMToggleRoll = function(rollDirection)
     if isPlayer then
         input.activateTrigger('CHIMRollAction')
     else
-        Roll:activate(rollDirection or math.random(1, 4))
+        Roll:activate(rollDirection or I.RandomGen.range(4, true))
     end
 end
 
