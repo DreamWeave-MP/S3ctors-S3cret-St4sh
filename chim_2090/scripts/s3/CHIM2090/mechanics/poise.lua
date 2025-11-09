@@ -338,6 +338,15 @@ local textKeyHandlers = {
     end,
 }
 
+local scalableSpeedGroups = {
+    hit1 = true,
+    hit2 = true,
+    hit3 = true,
+    hit4 = true,
+    hit5 = true,
+    knockdown = true,
+}
+
 --- Needs to also handle melee attacks and probably spells as well
 I.AnimationController.addTextKeyHandler('',
     function(group, key)
@@ -345,19 +354,30 @@ I.AnimationController.addTextKeyHandler('',
         if keyHandler then keyHandler(group, key) end
 
         if
-            Poise.AlwaysScaleHitAnimSpeed
-            and (group == 'knockdown' or group:match('^hit'))
+            scalableSpeedGroups[group]
+            and Poise.AlwaysScaleHitAnimSpeed
         then
             s3lf.setSpeed(group, I.s3ChimCore.getHitAnimationSpeed())
         end
     end
 )
 
+local weaponGroups = {
+    bowandarrow = true,
+    crossbow = true,
+    throwweapon = true,
+    weapononehand = true,
+    weapontwohand = true,
+    weapontwowide = true,
+}
+
 --- Awkward hack to prevent NPCs from attacking whilst knocked down
 local function interruptAttacksIfPoiseBroken()
-    if not s3lf.hasAnimation() then return end
+    if not s3lf.hasAnimation() or not Poise.isBroken() then return end
+
     local activeArm = s3lf.getActiveGroup(s3lf.BONE_GROUP.RightArm)
-    if not activeArm:find('weapon') or not Poise.isBroken() then return end
+    if not weaponGroups[activeArm] then return end
+
     s3lf.setStance(s3lf.STANCE.Nothing)
 end
 
