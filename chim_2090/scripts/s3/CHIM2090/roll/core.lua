@@ -327,16 +327,21 @@ local engineHandlers, eventHandlers = {}, {}
 if isPlayer then
     engineHandlers.onFrame = noActions
 
-    engineHandlers.onSave = function()
+    function engineHandlers.onSave()
         return {
             disabledControls = RollManager.state.disabledControls,
         }
     end
 
-    engineHandlers.onLoad = function(data)
+    function engineHandlers.onLoad(data)
         data = data or {}
 
         RollManager.state.disabledControls = data.disabledControls or {}
+        RollManager:toggleControls(true)
+    end
+
+    function eventHandlers.UiModeChanged()
+        if RollManager:isRolling() then return end
         RollManager:toggleControls(true)
     end
 else
