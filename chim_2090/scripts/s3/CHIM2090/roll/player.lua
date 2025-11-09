@@ -183,11 +183,17 @@ for _, animGroup in ipairs(Roll.list) do
 end
 
 function RollManager:canRoll()
-    return s3lf.isOnGround()
-        and self.EnableRollModule
-        and not I.UI.getMode()
+    local canRoll = self.EnableRollModule
+        and not self:isRolling()
+        and s3lf.isOnGround()
         and not core.isWorldPaused()
         and not s3lf.isSwimming()
+
+    if isPlayer then
+        canRoll = canRoll and not I.UI.getMode()
+    end
+
+    return canRoll
 end
 
 local oppositeDirections = {
@@ -208,7 +214,9 @@ end
 ---@param direction RollDirection
 ---@return boolean whether or not a roll happened
 function RollManager:roll(direction)
-    if not RollManager:updateRollAnimation(direction) then return false end
+    if not self:canRoll() or not RollManager:updateRollAnimation(direction) then
+        return false
+    end
 
     RollManager:toggleControls(false)
 
@@ -263,6 +271,27 @@ if isPlayer then
     end
 end
 
+---@return RollDirection
+function RollManager.getRollDirectionFromInput()
+    local controls = s3lf.controls
+    if controls.sideMovement < 0 then
+        return Roll.DIRECTION.LEFT
+    elseif controls.sideMovement > 0 then
+        return Roll.DIRECTION.RIGHT
+    elseif controls.movement > 0 then
+        return Roll.DIRECTION.FORWARD
+    elseif controls.movement < 0 then
+        return Roll.DIRECTION.BACK
+    end
+
+    return Roll.DIRECTION.BACK
+end
+
+input.registerTriggerHandler('CHIMRollAction', async:callback(function()
+    RollManager:roll(RollManager.getRollDirectionFromInput())
+end
+))
+
 local function noActions()
     if core.isWorldPaused() or not RollManager:isRolling() then return end
 
@@ -298,16 +327,31 @@ else
     engineHandlers.onUpdate = noActions
 end
 
+---@class RollState
+---@field type RollType
+---@field direction RollDirection
+
+---@param rollDirection RollDirection?
+eventHandlers.CHIMToggleRoll = function(rollDirection)
+    if isPlayer then
+        input.activateTrigger('CHIMRollAction')
+    else
+        RollManager:roll(rollDirection or math.random(1, 4))
+    end
+end
+
 local interfaceKeyHandlers = {
-    rollTypeName = function()
-        return RollManager.getRollTypeName()
-    end,
+    DIRECTION = Roll.DIRECTION,
     hasIFrames = function()
         return RollManager:hasIFrames()
     end,
     isRolling = function()
         return RollManager:isRolling()
     end,
+    rollTypeName = function()
+        return RollManager.getRollTypeName()
+    end,
+    TYPE = Roll.TYPE,
 }
 
 return {

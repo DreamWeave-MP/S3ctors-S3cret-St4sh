@@ -64,6 +64,13 @@ input.registerAction {
   type = input.ACTION_TYPE.Boolean,
 }
 
+input.registerTrigger {
+  key = 'CHIMRollAction',
+  name = 'RollActionName',
+  description = 'RollActionDesc',
+  l10n = modInfo.l10nName,
+}
+
 print(
   ('%s loaded version %s. Thank you for playing %s! <3'):format(
     modInfo.logPrefix,
