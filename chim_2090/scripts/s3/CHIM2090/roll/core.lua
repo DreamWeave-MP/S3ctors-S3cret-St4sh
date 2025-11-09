@@ -25,8 +25,8 @@ end
 ---@field DoubleTapRoll boolean
 ---@field DoubleTapDelay number
 ---@field PitchRange number
-local RollManager = I.S3ProtectedTable.new { inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Roll', logPrefix = '[CHIMROLL]:' }
-RollManager.state = {
+local Roll = I.S3ProtectedTable.new { inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Roll', logPrefix = '[CHIMROLL]:' }
+Roll.state = {
     lastPressedTime = core.getRealTime(),
     hasIFrames = false,
     prevAnimGroup = nil,
@@ -35,47 +35,47 @@ RollManager.state = {
 }
 
 ---@type RollInfo
-local Roll = require 'scripts.s3.CHIM2090.roll.data'
+local RollInfo = require 'scripts.s3.CHIM2090.roll.data'
 
-function RollManager:updateState(time, type)
+function Roll:updateState(time, type)
     local state = self.state
 
     state.lastPressedTime = time
     state.lastMoveType = type
 end
 
-function RollManager:setIframeState(state)
+function Roll:setIframeState(state)
     assert(type(state) == 'boolean')
     self.state.hasIFrames = state
 end
 
-function RollManager:hasIFrames()
+function Roll:hasIFrames()
     return self.state.hasIFrames
 end
 
-function RollManager:getRandomPitch()
+function Roll:getRandomPitch()
     return 1 + math.random(-self.PitchRange, self.PitchRange) / 100
 end
 
 ---@return RollType
-function RollManager.getRollType()
+function Roll.getRollType()
     local equipmentEncumbrance = I.s3ChimCore.getEquipmentEncumbrance()
 
     if equipmentEncumbrance <= 0.25 then
-        return Roll.TYPE.FAST
+        return RollInfo.TYPE.FAST
     elseif equipmentEncumbrance <= 0.75 then
-        return Roll.TYPE.NORMAL
+        return RollInfo.TYPE.NORMAL
     else
-        return Roll.TYPE.FAT
+        return RollInfo.TYPE.FAT
     end
 end
 
-function RollManager.getRollTypeName()
-    local rollType = RollManager.getRollType()
+function Roll.getRollTypeName()
+    local rollType = Roll.getRollType()
 
-    if rollType == Roll.TYPE.FAST then
+    if rollType == RollInfo.TYPE.FAST then
         return 'Fast'
-    elseif rollType == Roll.TYPE.Normal then
+    elseif rollType == RollInfo.TYPE.Normal then
         return 'Normal'
     else
         return 'Fat'
@@ -86,8 +86,8 @@ end
 --- Some weight classes don't have access to certain animations, so whether or not this value is nil tells us whether or not we can roll at all.
 ---@param direction RollDirection
 ---@return boolean wasUpdated
-function RollManager:updateRollAnimation(direction)
-    local rollDirection = Roll.groups[direction]
+function Roll:updateRollAnimation(direction)
+    local rollDirection = RollInfo.groups[direction]
     assert(rollDirection,
         'Invalid Roll direction provided: ' .. tostring(direction) .. ', movement direction values must be between 1-4')
 
@@ -100,7 +100,7 @@ local SWITCH = types.Player.CONTROL_SWITCH
 
 --- If ran on a player, enable or disable movement and combat controls while rolling
 ---@param state boolean
-function RollManager:toggleControls(state)
+function Roll:toggleControls(state)
     if not isPlayer then return end
     local disabledControls = self.state.disabledControls
 
@@ -136,7 +136,7 @@ local numRollSounds = #rollSounds
 local animationKeyHandlers = {
     ['stop'] = function(group)
         if isPlayer then
-            RollManager:toggleControls(true)
+            Roll:toggleControls(true)
         end
 
         if
@@ -147,42 +147,42 @@ local animationKeyHandlers = {
         end
     end,
     ['min iframes'] = function(group)
-        RollManager:setIframeState(true)
+        Roll:setIframeState(true)
 
         local soundIndex = math.random(1, numRollSounds)
-        local pitch, sound = RollManager:getRandomPitch(), rollSounds[soundIndex]
+        local pitch, sound = Roll:getRandomPitch(), rollSounds[soundIndex]
 
         core.sound.playSound3d(sound, s3lf.gameObject, { pitch = pitch })
     end,
     ['max iframes'] = function(group)
-        RollManager:setIframeState(false)
+        Roll:setIframeState(false)
 
         local landSound = 'defaultland'
         if s3lf.cell.hasWater and s3lf.position.z <= s3lf.cell.waterLevel then
             landSound = landSound .. 'water'
         end
 
-        core.sound.playSound3d(landSound, s3lf.gameObject, { pitch = RollManager:getRandomPitch() })
+        core.sound.playSound3d(landSound, s3lf.gameObject, { pitch = Roll:getRandomPitch() })
     end,
 }
 
-function RollManager.keyHandler(group, key)
+function Roll.keyHandler(group, key)
     local handler = animationKeyHandlers[key]
     if handler then handler(group) end
 end
 
-function RollManager:isRolling()
+function Roll:isRolling()
     local lastAnim = self.state.prevAnimGroup
     if not lastAnim then return false end
 
     return s3lf.isPlaying(lastAnim)
 end
 
-for _, animGroup in ipairs(Roll.list) do
-    I.AnimationController.addTextKeyHandler(animGroup, RollManager.keyHandler)
+for _, animGroup in ipairs(RollInfo.list) do
+    I.AnimationController.addTextKeyHandler(animGroup, Roll.keyHandler)
 end
 
-function RollManager:canRoll()
+function Roll:canRoll()
     local canRoll = self.EnableRollModule
         and not self:isRolling()
         and s3lf.isOnGround()
@@ -206,7 +206,7 @@ local oppositeDirections = {
 
 ---@param direction RollDirection
 ---@return RollDirection
-function RollManager.getOppositeDirection(direction)
+function Roll.getOppositeDirection(direction)
     local opposite = oppositeDirections[direction]
     assert(opposite)
     return opposite
@@ -214,12 +214,12 @@ end
 
 ---@param direction RollDirection
 ---@return boolean whether or not a roll happened
-function RollManager:roll(direction)
-    if not self:canRoll() or not RollManager:updateRollAnimation(direction) then
+function Roll:activate(direction)
+    if not self:canRoll() or not Roll:updateRollAnimation(direction) then
         return false
     end
 
-    RollManager:toggleControls(false)
+    Roll:toggleControls(false)
 
     if
         I.S3LockOn
@@ -229,7 +229,7 @@ function RollManager:roll(direction)
         I.S3LockOn.Manager.setTrackingState(false)
     end
 
-    Animation.playBlendedAnimation(RollManager.state.prevAnimGroup, {
+    Animation.playBlendedAnimation(Roll.state.prevAnimGroup, {
         priority = animation.PRIORITY.Scripted,
     })
 
@@ -237,34 +237,34 @@ function RollManager:roll(direction)
 end
 
 ---@return RollDirection
-function RollManager.getRollDirectionFromInput()
+function Roll.getRollDirectionFromInput()
     if not isPlayer then
         local controls = s3lf.controls
         if controls.sideMovement < 0 then
-            return Roll.DIRECTION.LEFT
+            return RollInfo.DIRECTION.LEFT
         elseif controls.sideMovement > 0 then
-            return Roll.DIRECTION.RIGHT
+            return RollInfo.DIRECTION.RIGHT
         elseif controls.movement > 0 then
-            return Roll.DIRECTION.FORWARD
+            return RollInfo.DIRECTION.FORWARD
         elseif controls.movement < 0 then
-            return Roll.DIRECTION.BACK
+            return RollInfo.DIRECTION.BACK
         end
     else
         local forwardDir = input.getRangeActionValue('MoveForward') - input.getRangeActionValue('MoveBackward')
         local horizontalDir = input.getRangeActionValue('MoveRight') - input.getRangeActionValue('MoveLeft')
 
         if horizontalDir > 0 then
-            return Roll.DIRECTION.RIGHT
+            return RollInfo.DIRECTION.RIGHT
         elseif horizontalDir < 0 then
-            return Roll.DIRECTION.LEFT
+            return RollInfo.DIRECTION.LEFT
         elseif forwardDir > 0 then
-            return Roll.DIRECTION.FORWARD
+            return RollInfo.DIRECTION.FORWARD
         elseif forwardDir < 0 then
-            return Roll.DIRECTION.BACK
+            return RollInfo.DIRECTION.BACK
         end
     end
 
-    return Roll.DIRECTION.BACK
+    return RollInfo.DIRECTION.BACK
 end
 
 if isPlayer then
@@ -277,9 +277,9 @@ if isPlayer then
         input.registerActionHandler(action, async:callback(
             function(state)
                 if
-                    not RollManager.DoubleTapRoll
+                    not Roll.DoubleTapRoll
                     or state ~= 1
-                    or not RollManager:canRoll()
+                    or not Roll:canRoll()
                 then
                     return
                 end
@@ -287,29 +287,29 @@ if isPlayer then
                 local currentTime = core.getRealTime()
 
                 if
-                    currentTime - RollManager.state.lastPressedTime >= RollManager.DoubleTapDelay
-                    or not RollManager.state.lastMoveType
-                    or RollManager.state.lastMoveType ~= index
-                    or (RollManager.state.prevAnimGroup and s3lf.isPlaying(RollManager.state.prevAnimGroup))
+                    currentTime - Roll.state.lastPressedTime >= Roll.DoubleTapDelay
+                    or not Roll.state.lastMoveType
+                    or Roll.state.lastMoveType ~= index
+                    or (Roll.state.prevAnimGroup and s3lf.isPlaying(Roll.state.prevAnimGroup))
                 then
-                    return RollManager:updateState(currentTime, index)
+                    return Roll:updateState(currentTime, index)
                 end
 
-                if not RollManager:roll(index) then return RollManager:updateState(currentTime, index) end
+                if not Roll:activate(index) then return Roll:updateState(currentTime, index) end
 
-                RollManager:updateState(currentTime, index)
+                Roll:updateState(currentTime, index)
             end
         ))
     end
 
     input.registerTriggerHandler('CHIMRollAction', async:callback(function()
-        RollManager:roll(RollManager.getRollDirectionFromInput())
+        Roll:activate(Roll.getRollDirectionFromInput())
     end
     ))
 end
 
 local function noActions()
-    if core.isWorldPaused() or not RollManager:isRolling() then return end
+    if core.isWorldPaused() or not Roll:isRolling() then return end
 
     if not isPlayer then
         s3lf.controls.use = 0
@@ -329,20 +329,20 @@ if isPlayer then
 
     function engineHandlers.onSave()
         return {
-            disabledControls = RollManager.state.disabledControls,
+            disabledControls = Roll.state.disabledControls,
         }
     end
 
     function engineHandlers.onLoad(data)
         data = data or {}
 
-        RollManager.state.disabledControls = data.disabledControls or {}
-        RollManager:toggleControls(true)
+        Roll.state.disabledControls = data.disabledControls or {}
+        Roll:toggleControls(true)
     end
 
     function eventHandlers.UiModeChanged()
-        if RollManager:isRolling() then return end
-        RollManager:toggleControls(true)
+        if Roll:isRolling() then return end
+        Roll:toggleControls(true)
     end
 else
     engineHandlers.onUpdate = noActions
@@ -357,22 +357,22 @@ eventHandlers.CHIMToggleRoll = function(rollDirection)
     if isPlayer then
         input.activateTrigger('CHIMRollAction')
     else
-        RollManager:roll(rollDirection or math.random(1, 4))
+        Roll:activate(rollDirection or math.random(1, 4))
     end
 end
 
 local interfaceKeyHandlers = {
-    DIRECTION = Roll.DIRECTION,
+    DIRECTION = RollInfo.DIRECTION,
     hasIFrames = function()
-        return RollManager:hasIFrames()
+        return Roll:hasIFrames()
     end,
     isRolling = function()
-        return RollManager:isRolling()
+        return Roll:isRolling()
     end,
     rollTypeName = function()
-        return RollManager.getRollTypeName()
+        return Roll.getRollTypeName()
     end,
-    TYPE = Roll.TYPE,
+    TYPE = RollInfo.TYPE,
 }
 
 return {
@@ -382,7 +382,7 @@ return {
         {
             __index = function(_, key)
                 local keyHandler = interfaceKeyHandlers[key]
-                local managerKey = RollManager[key]
+                local managerKey = Roll[key]
 
                 if keyHandler then
                     assert(type(keyHandler) == 'function')
@@ -390,7 +390,7 @@ return {
                 elseif managerKey then
                     return managerKey
                 elseif key == 'Manager' then
-                    return RollManager
+                    return Roll
                 end
             end,
         }
