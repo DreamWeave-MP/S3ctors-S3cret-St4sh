@@ -1,3 +1,4 @@
+---@enum RollDirection
 local RollDirection = {
     FORWARD = 1,
     RIGHT = 2,
@@ -5,12 +6,17 @@ local RollDirection = {
     LEFT = 4,
 }
 
+---@enum RollType
 local RollType = {
     FAT = 1,
     NORMAL = 2,
     FAST = 3,
 }
 
+---@alias RollMap table<RollType, string?>
+---@alias RollDirectionMap table<RollDirection, RollMap>
+
+---@type RollDirectionMap
 local RollInfo = {
     [RollDirection.FORWARD] = {
         [RollType.FAT] = 'rollof',
@@ -34,6 +40,7 @@ local RollInfo = {
     },
 }
 
+---@type string[]
 local RollList = {
     'dodgel',
     'dodger',
@@ -46,7 +53,12 @@ local RollList = {
     'rollof',
 }
 
-return {
+---@class RollInfo
+---@field TYPE table<string, RollType>
+---@field DIRECTION table<string, RollDirection>
+---@field groups RollDirectionMap
+---@field list string[]
+return require 'openmw.util'.makeStrictReadOnly {
     DIRECTION = RollDirection,
     TYPE = RollType,
     groups = RollInfo,
