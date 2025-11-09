@@ -190,6 +190,21 @@ function RollManager:canRoll()
         and not s3lf.isSwimming()
 end
 
+local oppositeDirections = {
+    [1] = 3, -- Forward -> Back
+    [2] = 4, -- Right -> Left
+    [3] = 1, -- Back -> Forward
+    [4] = 2  -- Left -> Right
+}
+
+---@param direction RollDirection
+---@return RollDirection
+function RollManager.getOppositeDirection(direction)
+    local opposite = oppositeDirections[direction]
+    assert(opposite)
+    return opposite
+end
+
 ---@param direction RollDirection
 ---@return boolean whether or not a roll happened
 function RollManager:roll(direction)
