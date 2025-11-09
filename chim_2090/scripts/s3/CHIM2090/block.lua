@@ -7,7 +7,12 @@ local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 --- We also need to make sure we early-out of the entire script for creatures which are not bipedal
-local HUGE = math.huge
+
+-- Directional Combat - backstabs, flank bonuses
+-- Combo System
+-- Difficulty scaling ( by way of settings presets)
+-- More visual feedback (parry timing indicators, poise meter element, better poise break feedback)
+-- Perks: blurpanda has recently made a perk framework I'd like to integrate with
 
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
@@ -835,7 +840,6 @@ local function signalAttack()
             or actor.id == s3lf.id
             or types.Player.objectIsInstance(actor)
             or actor.type.getStance(actor) == s3lf.STANCE.Nothing
-            or not Block.canBlockAtAngle(s3lf.gameObject, actor)
         then
             goto CONTINUE
         end
