@@ -385,8 +385,11 @@ return {
                 local managerKey = Roll[key]
 
                 if keyHandler then
-                    assert(type(keyHandler) == 'function')
-                    return keyHandler()
+                    if type(keyHandler) == 'function' then
+                        return keyHandler()
+                    else
+                        return keyHandler
+                    end
                 elseif managerKey then
                     return managerKey
                 elseif key == 'Manager' then
