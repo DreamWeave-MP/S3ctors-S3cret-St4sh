@@ -767,7 +767,7 @@ local function interruptBlock()
         or isJumping()
         or not inWeaponStance()
         or I.s3ChimPoise.isBroken()
-        or (I.s3ChimRoll and I.s3ChimRoll.isRolling())
+        or I.s3ChimRoll.isRolling
 
     if isPlayer then
         shouldInterrupt = shouldInterrupt
