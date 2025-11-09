@@ -1,5 +1,6 @@
 local anim = require 'openmw.animation'
 local async = require 'openmw.async'
+local aux_util = require 'openmw_aux.util'
 local core = require 'openmw.core'
 local input
 local nearby = require 'openmw.nearby'
@@ -833,19 +834,18 @@ local function blockUpdate(dt)
     BlockActor:tick(dt)
 end
 
-local function signalAttack()
-    for _, actor in ipairs(nearby.actors) do
-        if
-            actor.type.isDead(actor)
-            or actor.id == s3lf.id
-            or types.Player.objectIsInstance(actor)
-            or actor.type.getStance(actor) == s3lf.STANCE.Nothing
-        then
-            goto CONTINUE
-        end
+local function filterCombatants(actor)
+    return not actor.type.isDead(actor)
+        and actor.id ~= s3lf.id
+        and not types.Player.objectIsInstance(actor)
+        and actor.type.getStance(actor) ~= s3lf.STANCE.Nothing
+end
 
-        actor:sendEvent('CHIMBlockSignal', s3lf.gameObject)
-        ::CONTINUE::
+local function signalAttack()
+    local targets, _ = aux_util.mapFilter(nearby.actors, filterCombatants)
+
+    for _, actor in ipairs(targets) do
+        actor:sendEvent('CHIMAttackSignal', s3lf.gameObject)
     end
 end
 
@@ -866,7 +866,7 @@ if isPlayer then
     engineHandlers.onFrame = blockUpdate
 else
     engineHandlers.onUpdate = blockUpdate
-    eventHandlers.CHIMBlockSignal = function(attacker)
+    eventHandlers.CHIMAttackSignal = function(attacker)
         if not Block.canBlock() or not BlockActor:shouldAttemptBlock() then return end
 
         Block.toggleBlock(true)
