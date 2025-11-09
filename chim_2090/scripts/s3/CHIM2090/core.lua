@@ -1,5 +1,7 @@
 local animation = require 'openmw.animation'
+local aux_util = require 'openmw_aux.util'
 local core = require 'openmw.core'
+local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -348,6 +350,19 @@ function ChimCore.getHitAnimationSpeed()
     else
         return ChimCore.OverloadedAnimSpeed
     end
+end
+
+local function filterCombatant(actor)
+    return not actor.type.isDead(actor)
+        and actor.id ~= s3lf.id
+        and not types.Player.objectIsInstance(actor)
+        and actor.type.getStance(actor) ~= s3lf.STANCE.Nothing
+end
+
+function ChimCore.getCombatants()
+    local targets, _ = aux_util.mapFilter(nearby.actors, filterCombatant)
+
+    return targets
 end
 
 return {
