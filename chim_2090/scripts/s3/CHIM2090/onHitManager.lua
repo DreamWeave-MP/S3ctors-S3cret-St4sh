@@ -35,6 +35,10 @@ local function CHIMHitHandler(attack)
         return attacker:sendEvent('CHIMEnsureFortifyAttack')
     end
 
+    if I.s3ChimRoll and I.s3ChimRoll.hasIFrames then
+        return false
+    end
+
     local shieldMultiplier, didBlock = 1.0, false
     local canBlock, flankMult = I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, self)
 
