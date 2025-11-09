@@ -1,7 +1,8 @@
 local animation = require 'openmw.animation'
 local async = require 'openmw.async'
-local camera = require 'openmw.camera'
+local camera
 local core = require 'openmw.core'
+local input
 
 local I = require 'openmw.interfaces'
 local Animation = I.AnimationController
@@ -14,8 +15,8 @@ local modInfo = require 'scripts.s3.chim2090.modinfo'
 local types = require 'openmw.types'
 local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
 
-local input
 if isPlayer then
+    camera = require 'openmw.camera'
     input = require 'openmw.input'
 end
 
