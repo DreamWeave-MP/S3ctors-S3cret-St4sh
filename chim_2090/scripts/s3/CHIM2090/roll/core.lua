@@ -187,7 +187,7 @@ function RollManager:canRoll()
     local canRoll = self.EnableRollModule
         and not self:isRolling()
         and s3lf.isOnGround()
-        and not core.isWorldPaused()
+        -- and not core.isWorldPaused()
         and not s3lf.isSwimming()
 
     if isPlayer then
