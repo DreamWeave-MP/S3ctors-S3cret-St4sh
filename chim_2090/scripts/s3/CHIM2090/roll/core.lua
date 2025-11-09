@@ -238,15 +238,30 @@ end
 
 ---@return RollDirection
 function RollManager.getRollDirectionFromInput()
-    local controls = s3lf.controls
-    if controls.sideMovement < 0 then
-        return Roll.DIRECTION.LEFT
-    elseif controls.sideMovement > 0 then
-        return Roll.DIRECTION.RIGHT
-    elseif controls.movement > 0 then
-        return Roll.DIRECTION.FORWARD
-    elseif controls.movement < 0 then
-        return Roll.DIRECTION.BACK
+    if not isPlayer then
+        local controls = s3lf.controls
+        if controls.sideMovement < 0 then
+            return Roll.DIRECTION.LEFT
+        elseif controls.sideMovement > 0 then
+            return Roll.DIRECTION.RIGHT
+        elseif controls.movement > 0 then
+            return Roll.DIRECTION.FORWARD
+        elseif controls.movement < 0 then
+            return Roll.DIRECTION.BACK
+        end
+    else
+        local forwardDir = input.getRangeActionValue('MoveForward') - input.getRangeActionValue('MoveBackward')
+        local horizontalDir = input.getRangeActionValue('MoveRight') - input.getRangeActionValue('MoveLeft')
+
+        if horizontalDir > 0 then
+            return Roll.DIRECTION.RIGHT
+        elseif horizontalDir < 0 then
+            return Roll.DIRECTION.LEFT
+        elseif forwardDir > 0 then
+            return Roll.DIRECTION.FORWARD
+        elseif forwardDir < 0 then
+            return Roll.DIRECTION.BACK
+        end
     end
 
     return Roll.DIRECTION.BACK
