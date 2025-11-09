@@ -7,6 +7,10 @@ local I = require 'openmw.interfaces'
 local Animation = I.AnimationController
 local s3lf = I.s3lf
 
+local modInfo = require 'scripts.s3.chim2090.modinfo'
+
+--- Add AI support
+--- Maybe try that "latch" binding style ern mentioned
 local types = require 'openmw.types'
 local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
 
@@ -15,24 +19,116 @@ if isPlayer then
     input = require 'openmw.input'
 end
 
+---@class RollManager
+---@field EnableRollModule boolean
+---@field DoubleTapRoll boolean
+---@field DoubleTapDelay number
+---@field PitchRange number
+local RollManager = I.S3ProtectedTable.new { inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Roll', logPrefix = '[CHIMROLL]:' }
+RollManager.state = {
+    lastPressedTime = core.getRealTime(),
+    hasIFrames = false,
+    prevAnimGroup = nil,
+    lastMoveType = nil,
+    disabledControls = {},
+}
+
+---@type RollInfo
 local Roll = require 'scripts.s3.CHIM2090.roll.data'
 
-local pressDelay = 0.2
-local lastPressedTime, prevAnimGroup, lastMoveType = core.getRealTime()
-local hasIFrames = false
+function RollManager:updateState(time, type)
+    local state = self.state
 
-local function updateState(time, type)
-    lastPressedTime = time
-    lastMoveType = type
+    state.lastPressedTime = time
+    state.lastMoveType = type
 end
 
-local disabledControls = {}
+function RollManager:setIframeState(state)
+    assert(type(state) == 'boolean')
+    self.state.hasIFrames = state
+end
 
-local keyHandlers = {
-    ['stop'] = function(group)
+function RollManager:hasIFrames()
+    return self.state.hasIFrames
+end
+
+function RollManager:getRandomPitch()
+    return 1 + math.random(-self.PitchRange, self.PitchRange) / 100
+end
+
+---@return RollType
+function RollManager.getRollType()
+    local equipmentEncumbrance = I.s3ChimCore.getEquipmentEncumbrance()
+
+    if equipmentEncumbrance <= 0.25 then
+        return Roll.TYPE.FAST
+    elseif equipmentEncumbrance <= 0.75 then
+        return Roll.TYPE.NORMAL
+    else
+        return Roll.TYPE.FAT
+    end
+end
+
+function RollManager.getRollTypeName()
+    local rollType = RollManager.getRollType()
+
+    if rollType == Roll.TYPE.FAST then
+        return 'Fast'
+    elseif rollType == Roll.TYPE.Normal then
+        return 'Normal'
+    else
+        return 'Fat'
+    end
+end
+
+--- Updates the current roll animation, returning whether or not it's currently nil.
+--- Some weight classes don't have access to certain animations, so whether or not this value is nil tells us whether or not we can roll at all.
+---@param direction RollDirection
+---@return boolean wasUpdated
+function RollManager:updateRollAnimation(direction)
+    local rollDirection = Roll.groups[direction]
+    assert(rollDirection,
+        'Invalid Roll direction provided: ' .. tostring(direction) .. ', movement direction values must be between 1-4')
+
+    self.state.prevAnimGroup = rollDirection[self.getRollType()]
+
+    return self.state.prevAnimGroup ~= nil
+end
+
+local SWITCH = types.Player.CONTROL_SWITCH
+
+--- If ran on a player, enable or disable movement and combat controls while rolling
+---@param state boolean
+function RollManager:toggleControls(state)
+    if not isPlayer then return end
+    local disabledControls = self.state.disabledControls
+
+    if state then
         for _ = 1, #disabledControls do
             local control = table.remove(disabledControls)
             s3lf.setControlSwitch(control, true)
+        end
+    else
+        for _, control in ipairs {
+            SWITCH.Controls,
+            SWITCH.Fighting,
+            SWITCH.Jumping,
+            SWITCH.Magic,
+            SWITCH.VanityMode,
+            SWITCH.ViewMode
+        } do
+            if s3lf.getControlSwitch(control) then
+                disabledControls[#disabledControls + 1] = control
+                s3lf.setControlSwitch(control, false)
+            end
+        end
+    end
+end
+
+local animationKeyHandlers = {
+    ['stop'] = function(group)
+        if isPlayer then
+            RollManager:toggleControls(true)
         end
 
         if
@@ -43,37 +139,50 @@ local keyHandlers = {
         end
     end,
     ['min iframes'] = function(group)
-        hasIFrames = true
+        RollManager:setIframeState(true)
+
+        local pitch, sound = RollManager:getRandomPitch(), nil
+
+        local rand = math.random(1, 3)
+        if rand == 1 then
+            sound = 'swishm'
+        elseif rand == 2 then
+            sound = 'swishl'
+        elseif rand == 3 then
+            sound = 'swishs'
+        end
+
+        core.sound.playSound3d(sound, s3lf.gameObject, { pitch = pitch })
     end,
     ['max iframes'] = function(group)
-        hasIFrames = false
+        RollManager:setIframeState(false)
 
         local landSound = 'defaultland'
         if s3lf.cell.hasWater and s3lf.position.z <= s3lf.cell.waterLevel then
             landSound = landSound .. 'water'
         end
 
-        core.sound.playSound3d(landSound, s3lf.gameObject, { pitch = 1 + math.random(-20, 20) / 100 })
+        core.sound.playSound3d(landSound, s3lf.gameObject, { pitch = RollManager:getRandomPitch() })
     end,
 }
 
-local function keyHandlerGlobal(group, key)
-    local handler = keyHandlers[key]
+function RollManager.keyHandler(group, key)
+    local handler = animationKeyHandlers[key]
     if handler then handler(group) end
 end
 
-local function isRolling()
-    if not prevAnimGroup then return false end
+function RollManager:isRolling()
+    local lastAnim = self.state.prevAnimGroup
+    if not lastAnim then return false end
 
-    return s3lf.isPlaying(prevAnimGroup)
+    return s3lf.isPlaying(lastAnim)
 end
 
 for _, animGroup in ipairs(Roll.list) do
-    I.AnimationController.addTextKeyHandler(animGroup, keyHandlerGlobal)
+    I.AnimationController.addTextKeyHandler(animGroup, RollManager.keyHandler)
 end
 
 if isPlayer then
-    local SWITCH = types.Player.CONTROL_SWITCH
     for index, action in ipairs {
         'MoveForward',
         'MoveRight',
@@ -83,7 +192,9 @@ if isPlayer then
         input.registerActionHandler(action, async:callback(
             function(state)
                 if
-                    state ~= 1
+                    not RollManager.EnableRollModule
+                    or not RollManager.DoubleTapRoll
+                    or state ~= 1
                     or I.UI.getMode()
                     or core.isWorldPaused()
                     or not s3lf.isOnGround()
@@ -95,43 +206,17 @@ if isPlayer then
                 local currentTime = core.getRealTime()
 
                 if
-                    currentTime - lastPressedTime >= pressDelay
-                    or not lastMoveType
-                    or lastMoveType ~= index
-                    or (prevAnimGroup and s3lf.isPlaying(prevAnimGroup))
+                    currentTime - RollManager.state.lastPressedTime >= RollManager.DoubleTapDelay
+                    or not RollManager.state.lastMoveType
+                    or RollManager.state.lastMoveType ~= index
+                    or (RollManager.state.prevAnimGroup and s3lf.isPlaying(RollManager.state.prevAnimGroup))
                 then
-                    return updateState(currentTime, index)
+                    return RollManager:updateState(currentTime, index)
                 end
 
-                local rollDirection = Roll.groups[index]
+                if not RollManager:updateRollAnimation(index) then return RollManager:updateState(currentTime, index) end
 
-                local equipmentEncumbrance, rollType = I.s3ChimCore.getEquipmentEncumbrance()
-
-                if equipmentEncumbrance <= 0.25 then
-                    rollType = Roll.TYPE.FAST
-                elseif equipmentEncumbrance <= 0.75 then
-                    rollType = Roll.TYPE.NORMAL
-                else
-                    rollType = Roll.TYPE.FAT
-                end
-
-                prevAnimGroup = rollDirection[rollType]
-
-                if not prevAnimGroup then return updateState(currentTime, index) end
-
-                for _, control in ipairs {
-                    SWITCH.Controls,
-                    SWITCH.Fighting,
-                    SWITCH.Jumping,
-                    SWITCH.Magic,
-                    SWITCH.VanityMode,
-                    SWITCH.ViewMode
-                } do
-                    if s3lf.getControlSwitch(control) then
-                        disabledControls[#disabledControls + 1] = control
-                        s3lf.setControlSwitch(control, false)
-                    end
-                end
+                RollManager:toggleControls(false)
 
                 if
                     I.S3LockOn
@@ -141,18 +226,18 @@ if isPlayer then
                     I.S3LockOn.Manager.setTrackingState(false)
                 end
 
-                Animation.playBlendedAnimation(prevAnimGroup, {
+                Animation.playBlendedAnimation(RollManager.state.prevAnimGroup, {
                     priority = animation.PRIORITY.Scripted,
                 })
 
-                updateState(currentTime, index)
+                RollManager:updateState(currentTime, index)
             end
         ))
     end
 end
 
 local function noActions()
-    if core.isWorldPaused() or not isRolling() then return end
+    if core.isWorldPaused() or not RollManager:isRolling() then return end
 
     if not isPlayer then
         s3lf.controls.use = 0
@@ -172,27 +257,52 @@ if isPlayer then
 
     engineHandlers.onSave = function()
         return {
-            disabledControls = disabledControls,
+            disabledControls = RollManager.state.disabledControls,
         }
     end
 
     engineHandlers.onLoad = function(data)
         data = data or {}
 
-        for _, control in ipairs(data.disabledControls or {}) do
-            s3lf.setControlSwitch(control, true)
-        end
+        RollManager.state.disabledControls = data.disabledControls or {}
+        RollManager:toggleControls(true)
     end
 else
     engineHandlers.onUpdate = noActions
 end
 
+local interfaceKeyHandlers = {
+    rollTypeName = function()
+        return RollManager.getRollTypeName()
+    end,
+    hasIFrames = function()
+        return RollManager:hasIFrames()
+    end,
+    isRolling = function()
+        return RollManager:isRolling()
+    end,
+}
+
 return {
     interfaceName = 's3ChimRoll',
-    interface = {
-        hasIFrames = hasIFrames,
-        isRolling = isRolling,
-    },
+    interface = setmetatable(
+        {},
+        {
+            __index = function(_, key)
+                local keyHandler = interfaceKeyHandlers[key]
+                local managerKey = RollManager[key]
+
+                if keyHandler then
+                    assert(type(keyHandler) == 'function')
+                    return keyHandler()
+                elseif managerKey then
+                    return managerKey
+                elseif key == 'Manager' then
+                    return RollManager
+                end
+            end,
+        }
+    ),
     engineHandlers = engineHandlers,
     eventHandlers = eventHandlers,
 }

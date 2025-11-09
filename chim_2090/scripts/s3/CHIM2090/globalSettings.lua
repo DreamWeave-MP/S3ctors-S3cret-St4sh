@@ -1115,3 +1115,54 @@ PoiseGroup:subscribe(
                 end
         )
 )
+
+I.Settings.registerGroup {
+        key = 'SettingsGlobal' .. modInfo.name .. 'Roll',
+        page = modInfo.name .. 'Roll',
+        order = 0,
+        l10n = modInfo.l10nName,
+        name = 'SettingsRollGroupName',
+        permanentStorage = true,
+        settings = {
+                setting(
+                        'EnableRollModule',
+                        'checkbox',
+                        {},
+                        'EnableRollModuleName',
+                        'EnableRollModuleDesc',
+                        true
+                ),
+                setting(
+                        'DoubleTapRoll',
+                        'checkbox',
+                        {},
+                        'DoubleTapRollName',
+                        'DoubleTapRollDesc',
+                        true
+                ),
+                setting(
+                        'DoubleTapDelay',
+                        'number',
+                        { integer = false, min = 0.1, max = 1.0, },
+                        'DoubleTapDelayName',
+                        'DoubleTapDelayDesc',
+                        0.2
+                ),
+                setting(
+                        'RollBinding',
+                        'inputBinding',
+                        { key = 'CHIMRollAction', type = 'trigger', },
+                        'RollBindingName',
+                        'RollBindingDesc',
+                        'space'
+                ),
+                setting(
+                        'PitchRange',
+                        'number',
+                        { integer = true, min = 0, max = 1000 },
+                        'PitchRangeName',
+                        'PitchRangeDesc',
+                        20
+                )
+        },
+}

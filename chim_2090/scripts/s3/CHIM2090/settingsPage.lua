@@ -48,6 +48,13 @@ RegisterPage {
   description = 'PagePoiseDesc',
 }
 
+RegisterPage {
+  key = modInfo.name .. 'Roll',
+  l10n = modInfo.l10nName,
+  name = 'RollPageName',
+  description = 'RollPageDesc',
+}
+
 input.registerAction {
   key = 'CHIMBlockAction',
   name = 'BlockActionName',
