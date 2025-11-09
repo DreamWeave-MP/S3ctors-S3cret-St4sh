@@ -29,8 +29,23 @@ local attackGroups = {
 }
 
 local attackSignalKeys = {
-    ['min hit'] = true,
-    ['start'] = true,
+    --- Attack Start Keys
+    ['chop start'] = true,
+    ['shoot start'] = true,
+    ['slash start'] = true,
+    ['thrust start'] = true,
+
+    --- Min Hit Keys
+    -- ['slash min hit'] = true,
+    -- ['thrust min hit'] = true,
+    -- ['chop min hit'] = true,
+    -- ['shoot min hit'] = true,
+
+    --- Min Attack Keys
+    ['slash min attack'] = true,
+    ['thrust min attack'] = true,
+    ['chop min attack'] = true,
+    ['shoot min attack'] = true,
 }
 
 --- Checks if the actor is currently playing any one-handed attack animation.
@@ -730,10 +745,10 @@ local function blockIfPossible()
     end
 
     if
-        (isPlayer and not blockIsPressed())
-        or not isPlayer
+        not isPlayer
+        or not blockIsPressed()
         or not Block.canBlock()
-        or (I.s3ChimRoll and I.s3ChimRoll.isRolling())
+        or I.s3ChimRoll.isRolling()
     then
         return
     end
@@ -805,7 +820,7 @@ local function handleBlockInput(state)
 end
 
 local function blockUpdate(dt)
-    if noBlockInMenus() then return end
+    if noBlockInMenus() or s3lf.getStance() == s3lf.STANCE.Nothing then return end
 
     blockIfPossible()
 
@@ -830,26 +845,16 @@ local function signalAttack()
     end
 end
 
---- Takes a string like "chop min attack" and returns everything after the first space -> "min attack"
-local function removeFirstWord(string)
-    local firstSpace = string:find(" ")
+local function attackSignalHandler(group, key)
+    if not attackSignalKeys[key] then return end
 
-    if firstSpace then
-        return string:sub(firstSpace + 1)
-    end
-
-    return string
+    Block.debugLog(('%s-%s emitting attack signal %s: %s'):format(s3lf.id, s3lf.recordId, group, key))
+    signalAttack()
 end
 
-I.AnimationController.addTextKeyHandler('',
-    function(group, key)
-        key = removeFirstWord(key)
-        if not attackGroups[group] or not attackSignalKeys[key] then return end
-
-        Block.debugLog(('%s-%s emitting attack signal %s: %s'):format(s3lf.id, s3lf.recordId, group, key))
-        signalAttack()
-    end
-)
+for attackGroup in pairs(attackGroups) do
+    I.AnimationController.addTextKeyHandler(attackGroup, attackSignalHandler)
+end
 
 local engineHandlers, eventHandlers = {}, {}
 if isPlayer then
