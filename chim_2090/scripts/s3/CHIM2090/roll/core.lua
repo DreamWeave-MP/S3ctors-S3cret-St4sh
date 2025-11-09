@@ -126,6 +126,13 @@ function RollManager:toggleControls(state)
     end
 end
 
+local rollSounds = {
+    'swishl',
+    'swishm',
+    'swishs',
+}
+local numRollSounds = #rollSounds
+
 local animationKeyHandlers = {
     ['stop'] = function(group)
         if isPlayer then
@@ -142,16 +149,8 @@ local animationKeyHandlers = {
     ['min iframes'] = function(group)
         RollManager:setIframeState(true)
 
-        local pitch, sound = RollManager:getRandomPitch(), nil
-
-        local rand = math.random(1, 3)
-        if rand == 1 then
-            sound = 'swishm'
-        elseif rand == 2 then
-            sound = 'swishl'
-        elseif rand == 3 then
-            sound = 'swishs'
-        end
+        local soundIndex = math.random(1, numRollSounds)
+        local pitch, sound = RollManager:getRandomPitch(), rollSounds[soundIndex]
 
         core.sound.playSound3d(sound, s3lf.gameObject, { pitch = pitch })
     end,
