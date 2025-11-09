@@ -1,9 +1,7 @@
 local anim = require 'openmw.animation'
 local async = require 'openmw.async'
-local aux_util = require 'openmw_aux.util'
 local core = require 'openmw.core'
 local input
-local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -834,15 +832,8 @@ local function blockUpdate(dt)
     BlockActor:tick(dt)
 end
 
-local function filterCombatants(actor)
-    return not actor.type.isDead(actor)
-        and actor.id ~= s3lf.id
-        and not types.Player.objectIsInstance(actor)
-        and actor.type.getStance(actor) ~= s3lf.STANCE.Nothing
-end
-
 local function signalAttack()
-    local targets, _ = aux_util.mapFilter(nearby.actors, filterCombatants)
+    local targets = I.s3ChimCore.getCombatants()
 
     for _, actor in ipairs(targets) do
         actor:sendEvent('CHIMAttackSignal', s3lf.gameObject)
