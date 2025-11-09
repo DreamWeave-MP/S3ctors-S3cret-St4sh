@@ -867,7 +867,14 @@ if isPlayer then
 else
     engineHandlers.onUpdate = blockUpdate
     eventHandlers.CHIMAttackSignal = function(attacker)
-        if not Block.canBlock() or not BlockActor:shouldAttemptBlock() then return end
+        --- Also need to handle rolls here
+        if
+            not Block.canBlock()
+            or not Block.canBlockAtAngle(attacker, s3lf.gameObject)
+            or not BlockActor:shouldAttemptBlock()
+        then
+            return
+        end
 
         Block.toggleBlock(true)
         BlockActor:resetBlockTimer()
