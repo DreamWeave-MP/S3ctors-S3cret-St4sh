@@ -297,7 +297,7 @@ function Poise.onHit(attackInfo)
 end
 
 function Poise.tick(dt)
-    if Poise.state.timeRemaining <= 0 or s3lf.isDead() then return end
+    if Poise.state.timeRemaining <= 0 then return end
     Poise.state.timeRemaining = math.max(0.0, Poise.state.timeRemaining - dt)
     if Poise.state.timeRemaining == 0.0 then Poise.state.currentPoise = Poise.calculateMaxPoise() end
 end
@@ -307,11 +307,9 @@ function Poise.reset()
     Poise.state.timeRemaining = 0.
 end
 
----@return true? knockdownInterrupted
 local function cancelKnockdownIfDead()
     if
         s3lf.isDead()
-        and Poise.isBroken()
         and s3lf.isPlaying('knockdown')
     then
         s3lf.cancel('knockdown')
@@ -373,8 +371,6 @@ local weaponGroups = {
 
 --- Awkward hack to prevent NPCs from attacking whilst knocked down
 local function interruptAttacksIfPoiseBroken()
-    if not s3lf.hasAnimation() or not Poise.isBroken() then return end
-
     local activeArm = s3lf.getActiveGroup(s3lf.BONE_GROUP.RightArm)
     if not weaponGroups[activeArm] then return end
 
@@ -402,10 +398,20 @@ return {
     ),
     engineHandlers = {
         onUpdate = function(dt)
-            if core.isWorldPaused() or not Poise.Enable then return end
+            if
+                not Poise.Enable
+                or core.isWorldPaused()
+            then
+                return
+            elseif s3lf.getStance() == s3lf.STANCE.Nothing then
+                return Poise.tick(dt)
+            end
 
-            cancelKnockdownIfDead()
-            interruptAttacksIfPoiseBroken()
+            if Poise.isBroken() and s3lf.hasAnimation() then
+                interruptAttacksIfPoiseBroken()
+                cancelKnockdownIfDead()
+            end
+
             Poise.tick(dt)
         end,
     },
