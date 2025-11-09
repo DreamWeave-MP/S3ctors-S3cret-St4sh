@@ -236,6 +236,22 @@ function RollManager:roll(direction)
     return true
 end
 
+---@return RollDirection
+function RollManager.getRollDirectionFromInput()
+    local controls = s3lf.controls
+    if controls.sideMovement < 0 then
+        return Roll.DIRECTION.LEFT
+    elseif controls.sideMovement > 0 then
+        return Roll.DIRECTION.RIGHT
+    elseif controls.movement > 0 then
+        return Roll.DIRECTION.FORWARD
+    elseif controls.movement < 0 then
+        return Roll.DIRECTION.BACK
+    end
+
+    return Roll.DIRECTION.BACK
+end
+
 if isPlayer then
     for index, action in ipairs {
         'MoveForward',
@@ -270,28 +286,12 @@ if isPlayer then
             end
         ))
     end
-end
 
----@return RollDirection
-function RollManager.getRollDirectionFromInput()
-    local controls = s3lf.controls
-    if controls.sideMovement < 0 then
-        return Roll.DIRECTION.LEFT
-    elseif controls.sideMovement > 0 then
-        return Roll.DIRECTION.RIGHT
-    elseif controls.movement > 0 then
-        return Roll.DIRECTION.FORWARD
-    elseif controls.movement < 0 then
-        return Roll.DIRECTION.BACK
+    input.registerTriggerHandler('CHIMRollAction', async:callback(function()
+        RollManager:roll(RollManager.getRollDirectionFromInput())
     end
-
-    return Roll.DIRECTION.BACK
+    ))
 end
-
-input.registerTriggerHandler('CHIMRollAction', async:callback(function()
-    RollManager:roll(RollManager.getRollDirectionFromInput())
-end
-))
 
 local function noActions()
     if core.isWorldPaused() or not RollManager:isRolling() then return end
