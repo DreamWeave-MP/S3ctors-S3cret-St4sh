@@ -1,4 +1,5 @@
 local anim = require 'openmw.animation'
+local core = require 'openmw.core'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -116,9 +117,14 @@ function Parry.calculateParryFrameSeconds()
 end
 
 function Parry.tick(dt)
-    if usingTwoHanded() then return end
+    if
+        core.isWorldPaused()
+        or Parry.state.remainingTime <= 0
+        or usingTwoHanded()
+    then
+        return
+    end
 
-    if Parry.state.remainingTime <= 0 then return end
     Parry.state.remainingTime = math.max(0.0, Parry.state.remainingTime - dt)
 end
 
