@@ -35,19 +35,24 @@ end
 
 -- Handle both { min=X, max=Y } and direct args
 ---@param a integer|RangeTable
----@param b integer? optional max. If not provided, then a is assumed to be a RangeTable which provides the max
+---@param b integer|true? optional max. If not provided, a should either be a RangeTable which provides the max, or a will be interpreted as the max. If true, rounds the result to the nearest whole number.
 function Random:range(a, b)
     local min, max = a, b
 
     if type(a) == "table" then
         min, max = a.min or 1, a.max
         assert(max, "RangeTable requires a 'max'")
-    elseif type(a) == 'number' and not b then
+    elseif type(a) == 'number' and type(b) ~= 'number' then
         max = a
         min = 1
     end
 
-    return min + self:float() * (max - min)
+    local result = min + self:float() * (max - min)
+    if b == true then
+        return util.round(result)
+    else
+        return result
+    end
 end
 
 if scriptContext.get() ~= scriptContext.Types.Global then
