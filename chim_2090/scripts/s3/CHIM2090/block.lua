@@ -171,6 +171,9 @@ Block.state = {
 ---@field ActorMaxBlockTime number
 ---@field ActorEnduranceBlockTime number
 ---@field ActorSkillBlockTime number
+---@field blockTimer number
+---@field doTurtle boolean
+---@field repeatedBlocks number
 local BlockActor = ProtectedTable.new {
     inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'BlockActor',
     logPrefix = '[CHIMAI]:\n',
@@ -182,17 +185,17 @@ BlockActor.state = {
 }
 
 function BlockActor:tick(dt)
-    if isPlayer or self.state.blockTimer <= 0 then return end
+    if isPlayer or self.blockTimer <= 0 then return end
 
-    self.state.blockTimer = math.max(0.0, self.state.blockTimer - dt)
+    self.blockTimer = math.max(0.0, self.blockTimer - dt)
 
-    if self.state.blockTimer ~= 0 then
-        if self.state.doTurtle then
+    if self.blockTimer ~= 0 then
+        if self.doTurtle then
             s3lf.controls.movement = 0
             s3lf.controls.sideMovement = 0
         end
 
-        if not Block.isBlocking() then
+        if not Block.isBlocking then
             Block.toggleBlock(true)
         end
 
@@ -202,7 +205,7 @@ function BlockActor:tick(dt)
     Block.toggleBlock(false)
 end
 
-function BlockActor:blockTimer()
+function BlockActor:getBlockTimer()
     if isPlayer then return end
 
     local block, endurance = math.min(100, s3lf.block.base) / 100, math.min(100, s3lf.endurance.modified) / 100
@@ -231,14 +234,14 @@ end
 
 function BlockActor:resetBlockTimer()
     if isPlayer then return end
-    self.state.blockTimer = self:blockTimer()
+    self.blockTimer = self:getBlockTimer()
 end
 
 function BlockActor:reset()
     if isPlayer then return end
-    self.state.blockTimer = 0.0
-    self.state.doTurtle = false
-    self.state.repeatedBlocks = 0
+    self.blockTimer = 0.0
+    self.doTurtle = false
+    self.repeatedBlocks = 0
 end
 
 ---@return boolean? interruptBlock
@@ -255,14 +258,14 @@ function BlockActor:AIBlockResponse()
     local result = roll + skillBonus
 
     if result >= 120 then
-        if self.state.repeatedBlocks >= self:getMaxConsecutiveBlocks() then
+        if self.repeatedBlocks >= self:getMaxConsecutiveBlocks() then
             return
         end
 
-        self.state.repeatedBlocks = self.state.repeatedBlocks + 1
+        self.repeatedBlocks = self.repeatedBlocks + 1
         self:resetBlockTimer()
     else
-        self.state.repeatedBlocks = 0
+        self.repeatedBlocks = 0
 
         if result < 60 then
             return true
@@ -690,6 +693,9 @@ function Block.toggleBlock(enable)
 
     if not enable then
         BlockActor:reset()
+
+        Block.state.isBlocking = false
+        Block.state.isParrying = false
     end
 end
 
@@ -752,7 +758,7 @@ local function blockIfPossible()
         not isPlayer
         or not blockIsPressed()
         or not Block.canBlock()
-        or I.s3ChimRoll.isRolling()
+        or I.s3ChimRoll.isRolling
     then
         return
     end
@@ -766,6 +772,7 @@ local function interruptBlock()
     local shouldInterrupt = isAttacking()
         or isJumping()
         or not inWeaponStance()
+        or not s3lf.canMove()
         or I.s3ChimPoise.isBroken()
         or I.s3ChimRoll.isRolling
 
