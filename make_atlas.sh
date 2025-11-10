@@ -5,6 +5,7 @@
 # Usage: ./atlas.sh input_image output_image rows cols
 
 MASK=false
+MASK_WIDTH=false
 # Parse named arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -26,6 +27,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -m|--mask)
             MASK=true
+            shift 1
+            ;;
+        -w|--width)
+            MASK_WIDTH=true
             shift 1
             ;;
         *)
@@ -70,14 +75,26 @@ for ((i=0; i < TOTAL_TILES; i++)); do
         else
             percentage=$(( (i * 100) / (TOTAL_TILES - 1) ))
             echo "Converting $percentage% of white pixels to black"
-            
-            height=$(magick "$INPUT_IMAGE" -format "%h" info:)
-            crop_height=$(( (percentage * height) / 100 ))
-            
-            magick "$INPUT_IMAGE" \
-                \( +clone -crop x${crop_height}+0+0 -fill black -fuzz 0% -opaque white \) \
-                -geometry +0+0 -composite \
-                "$temp_tile"
+
+            if [[ "$MASK_WIDTH" == true ]]; then
+                # Horizontal masking using width
+                width=$(magick "$INPUT_IMAGE" -format "%w" info:)
+                crop_width=$(( (percentage * width) / 100 ))
+                
+                magick "$INPUT_IMAGE" \
+                    \( +clone -crop ${crop_width}x+0+0 -fill black -fuzz 0% -opaque white \) \
+                    -geometry +0+0 -composite \
+                    "$temp_tile"
+            else
+                # Vertical masking using height (default)
+                height=$(magick "$INPUT_IMAGE" -format "%h" info:)
+                crop_height=$(( (percentage * height) / 100 ))
+                
+                magick "$INPUT_IMAGE" \
+                    \( +clone -crop x${crop_height}+0+0 -fill black -fuzz 0% -opaque white \) \
+                    -geometry +0+0 -composite \
+                    "$temp_tile"
+            fi
         fi
     fi
     
