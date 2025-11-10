@@ -100,7 +100,7 @@ local function new(constructorData)
   end
 
   local meta = {
-    __metatable = ('%sManager'):format(managerString),
+    __metatable = 'S3ProtectedTable',
     __index = function(_, key)
       if key == 'DebugLog' then
         return storage.globalSection(constructorData.inputGroupName):get('DebugEnable') == true
@@ -116,6 +116,8 @@ local function new(constructorData)
 
       if methods[key] then return methods[key] end
 
+      if state[key] ~= nil then return state[key] end
+
       local savedValue = proxy.thisGroup:get(key)
       proxy.shadowSettings[key] = savedValue
 
@@ -124,11 +126,15 @@ local function new(constructorData)
     __newindex = function(_, key, value)
       if key == 'state' and type(value) == 'table' then
         state = value
+      elseif state[key] ~= nil and type(value) ~= 'function' then
+        state[key] = value
       elseif type(value) ~= 'function' or
           (type(value) ~= 'table' and key == 'state') then
         error(
-          string.format([[%s Unauthorized table access when updating '%s' to '%s'.
-This table is not writable and values must be updated through its associated storage group: '%s'.]],
+          (
+            [[%s Unauthorized table access when updating '%s' to '%s'.
+This table is not writable and values must be updated through its associated storage group: '%s'.]]
+          ):format(
             constructorData.logPrefix,
             tostring(key), tostring(value), constructorData.inputGroupName),
           2)
