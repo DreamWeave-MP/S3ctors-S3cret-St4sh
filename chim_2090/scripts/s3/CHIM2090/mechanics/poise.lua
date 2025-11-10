@@ -1,10 +1,28 @@
 local animation = require 'openmw.animation'
+local async = require 'openmw.async'
 local core = require 'openmw.core'
+local storage = require 'openmw.storage'
 local types = require 'openmw.types'
+local ui
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
+
+local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
+
+---@class PoiseIcon: ProtectedTable
+---@field PoiseHUDPos util.vector2
+---@field PoiseHUDColor util.color
+---@field PoiseIconSize integer
+---@field EnableIcon boolean
+---@field PoiseHUDUpdateDelay integer
+local PoiseIcon
+local SWITCH
+if isPlayer then
+    ui = require 'openmw.ui'
+    SWITCH = s3lf.CONTROL_SWITCH
+end
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 ---@type ProtectedTableInterface
@@ -14,11 +32,11 @@ local ArmorRecords = types.Armor.records
 local WeaponRecords = types.Weapon.records
 
 local function toggleAllControls(state)
-    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Controls, state)
-    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Fighting, state)
-    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Jumping, state)
-    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.Magic, state)
-    s3lf.setControlSwitch(s3lf.CONTROL_SWITCH.ViewMode, state)
+    s3lf.setControlSwitch(SWITCH.Controls, state)
+    s3lf.setControlSwitch(SWITCH.Fighting, state)
+    s3lf.setControlSwitch(SWITCH.Jumping, state)
+    s3lf.setControlSwitch(SWITCH.Magic, state)
+    s3lf.setControlSwitch(SWITCH.ViewMode, state)
 end
 
 ---@class PoiseManager: ProtectedTable
@@ -289,7 +307,11 @@ function Poise.onHit(attackInfo)
         end
     end
 
-    if Poise.hitDamage(poiseDamage) then
+    local poiseBroken = Poise.hitDamage(poiseDamage)
+
+    if isPlayer then PoiseIcon:playNextFrame() end
+
+    if poiseBroken then
         return Poise.PoiseDamageMult
     else
         return 1.0
@@ -298,13 +320,20 @@ end
 
 function Poise.tick(dt)
     if Poise.state.timeRemaining <= 0 then return end
+
     Poise.state.timeRemaining = math.max(0.0, Poise.state.timeRemaining - dt)
-    if Poise.state.timeRemaining == 0.0 then Poise.state.currentPoise = Poise.calculateMaxPoise() end
+    if Poise.state.timeRemaining ~= 0.0 then return end
+
+    Poise.state.currentPoise = Poise.calculateMaxPoise()
 end
 
 function Poise.reset()
     Poise.state.currentPoise = Poise.calculateMaxPoise()
     Poise.state.timeRemaining = 0.
+end
+
+function Poise.normalized()
+    return util.clamp(Poise.state.currentPoise / Poise.calculateMaxPoise(), 0.0, 1.0)
 end
 
 local function cancelKnockdownIfDead()
@@ -330,7 +359,7 @@ local textKeyHandlers = {
 
         Poise.state.isBroken = false
 
-        if types.Player.objectIsInstance(s3lf.gameObject) then
+        if isPlayer then
             toggleAllControls(true)
         end
     end,
@@ -377,6 +406,158 @@ local function interruptAttacksIfPoiseBroken()
     s3lf.setStance(s3lf.STANCE.Nothing)
 end
 
+if isPlayer then
+    local IconGroupName = 'SettingsGlobal' .. modInfo.name .. 'PoiseUI'
+
+    ---@type PoiseIcon
+    PoiseIcon = ProtectedTable.new {
+        inputGroupName = IconGroupName,
+        logPrefix = '[ PoiseIcon ]:\n',
+        subscribeHandler = false,
+    }
+
+    PoiseIcon.state = {
+        currentDelay = 0,
+        currentFrame = 1,
+        targetFrame = 1,
+        iconIndividualSize = util.vector2(256, 256),
+        iconPath = 'textures/s3/chim/poiseIcon.dds',
+        textureArray = {},
+    }
+
+    function PoiseIcon.getFrame()
+        local poiseNormalized = 1.0 - Poise.normalized()
+        local frame = math.floor(poiseNormalized * 20) + 1
+        return util.clamp(frame, 1, 20)
+    end
+
+    function PoiseIcon.updateTargetFrame()
+        local frame = PoiseIcon.getFrame()
+        PoiseIcon.state.targetFrame = frame
+
+        return PoiseIcon.state.currentFrame == PoiseIcon.state.targetFrame
+    end
+
+    function PoiseIcon.getCoordinates(frameNum)
+        frameNum = frameNum - 1
+        local row = frameNum % 4
+        local column = math.floor(frameNum / 4)
+        local baseSize = PoiseIcon.state.iconIndividualSize.x
+
+        return util.vector2(baseSize * row, baseSize * column)
+    end
+
+    function PoiseIcon:getCurrentTexture()
+        return self.state.textureArray[self.getFrame()]
+    end
+
+    ---@param nextOrPrev boolean
+    function PoiseIcon:cycleFrame(nextOrPrev)
+        local element = self.state.element
+        local props = element.layout.props
+
+        local currentFrame = self.state.currentFrame
+        if nextOrPrev then
+            if currentFrame == 20 then
+                currentFrame = 1
+            else
+                currentFrame = currentFrame + 1
+            end
+        else
+            if currentFrame == 1 then
+                currentFrame = 20
+            else
+                currentFrame = currentFrame - 1
+            end
+        end
+
+        props.resource = self.state.textureArray[currentFrame]
+        element:update()
+
+        self.state.currentFrame = currentFrame
+    end
+
+    ---@return boolean
+    function PoiseIcon:playNextFrame()
+        if PoiseIcon.updateTargetFrame() then return false end
+        local nextOrPrev = self.state.currentFrame < self.state.targetFrame
+        PoiseIcon:cycleFrame(nextOrPrev)
+        return true
+    end
+
+    function PoiseIcon:tick(dt)
+        if not self.EnableIcon then return end
+
+        local element = self.state.element
+        local props = element.layout.props
+        local shouldShow = s3lf.isInCombat or I.UI.getMode() == 'MainMenu'
+
+        local alphaUpdated = false
+        if shouldShow and props.alpha < 1.00 then
+            props.alpha = props.alpha + 0.01
+            alphaUpdated = true
+        elseif not shouldShow and props.alpha > 0.00 then
+            props.alpha = props.alpha - 0.01
+            alphaUpdated = true
+        end
+
+        local redrew = false
+        if self.currentDelay < self.PoiseHUDUpdateDelay then
+            self.currentDelay = self.currentDelay + dt
+        else
+            self.currentDelay = 0
+            redrew = self:playNextFrame()
+        end
+
+        if alphaUpdated and not redrew then
+            element:update()
+        end
+    end
+
+    for i = 1, 20 do
+        PoiseIcon.state.textureArray[i] = ui.texture {
+            path = PoiseIcon.state.iconPath,
+            offset = PoiseIcon.getCoordinates(i),
+            size = PoiseIcon.state.iconIndividualSize,
+        }
+    end
+
+    PoiseIcon.state.element = ui.create {
+        type = ui.TYPE.Image,
+        layer = 'HUD',
+        props = {
+            name = 'CHIMPoiseIndicator',
+            relativePosition = PoiseIcon.PoiseHUDPos,
+            resource = PoiseIcon:getCurrentTexture(),
+            color = PoiseIcon.PoiseHUDColor,
+            size = util.vector2(PoiseIcon.PoiseIconSize, PoiseIcon.PoiseIconSize),
+            anchor = util.vector2(.5, .5),
+            visible = Poise.Enable and PoiseIcon.EnableIcon,
+            alpha = 0.0,
+        }
+    }
+
+    local IconGroup = storage.globalSection(IconGroupName)
+    IconGroup:subscribe(
+        async:callback(
+            function()
+                local Pos, Color, Size, Enable = IconGroup:get('PoiseHUDPos'), IconGroup:get('PoiseHUDColor'),
+                    IconGroup:get('PoiseIconSize'), IconGroup:get('EnableIcon')
+
+                local element = PoiseIcon.state.element
+                local props = element.layout.props
+
+                props.relativePosition = Pos
+                props.color = Color
+                props.size = util.vector2(Size, Size)
+                props.visible = Poise.Enable and Enable
+
+                element:update()
+            end
+        )
+    )
+end
+
 return {
     interfaceName = 's3ChimPoise',
     interface = setmetatable(
@@ -392,27 +573,31 @@ return {
                     return managerKey
                 elseif key == 'Manager' then
                     return Poise
+                elseif key == 'Icon' and isPlayer then
+                    return PoiseIcon
                 end
             end,
         }
     ),
     engineHandlers = {
         onUpdate = function(dt)
-            if
-                not Poise.Enable
-                or core.isWorldPaused()
-            then
-                return
-            elseif s3lf.getStance() == s3lf.STANCE.Nothing then
-                return Poise.tick(dt)
+            if not Poise.Enable then return end
+
+            if not core.isWorldPaused() then
+                if
+                    Poise.isBroken()
+                    and s3lf.getStance() ~= s3lf.STANCE.Nothing
+                    and s3lf.hasAnimation() then
+                    interruptAttacksIfPoiseBroken()
+                    cancelKnockdownIfDead()
+                end
+
+                Poise.tick(dt)
             end
 
-            if Poise.isBroken() and s3lf.hasAnimation() then
-                interruptAttacksIfPoiseBroken()
-                cancelKnockdownIfDead()
+            if isPlayer then
+                PoiseIcon:tick(dt)
             end
-
-            Poise.tick(dt)
         end,
     },
     eventHandlers = {
