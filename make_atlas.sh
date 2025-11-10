@@ -4,6 +4,7 @@
 # For doing health bars and shit.
 # Usage: ./atlas.sh input_image output_image rows cols
 
+MASK=false
 # Parse named arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -22,6 +23,10 @@ while [[ $# -gt 0 ]]; do
         -c|--cols)
             COLS="$2"
             shift 2
+            ;;
+        -m|--mask)
+            MASK=true
+            shift 1
             ;;
         *)
             echo "Unknown option: $1"
@@ -57,19 +62,23 @@ files=()
 for ((i=0; i < TOTAL_TILES; i++)); do
     temp_tile="${TEMP_DIR}/tile_${i}.png"
     
-    if [[ $i -eq 0 ]]; then
+    if [[ "$MASK" == false ]]; then
         cp "$INPUT_IMAGE" "$temp_tile"
     else
-        percentage=$(( (i * 100) / (TOTAL_TILES - 1) ))
-        echo "Converting $percentage% of white pixels to black"
-        
-        height=$(magick "$INPUT_IMAGE" -format "%h" info:)
-        crop_height=$(( (percentage * height) / 100 ))
-        
-        magick "$INPUT_IMAGE" \
-            \( +clone -crop x${crop_height}+0+0 -fill black -fuzz 0% -opaque white \) \
-            -geometry +0+0 -composite \
-            "$temp_tile"
+        if [[ $i -eq 0 ]]; then
+            cp "$INPUT_IMAGE" "$temp_tile"
+        else
+            percentage=$(( (i * 100) / (TOTAL_TILES - 1) ))
+            echo "Converting $percentage% of white pixels to black"
+            
+            height=$(magick "$INPUT_IMAGE" -format "%h" info:)
+            crop_height=$(( (percentage * height) / 100 ))
+            
+            magick "$INPUT_IMAGE" \
+                \( +clone -crop x${crop_height}+0+0 -fill black -fuzz 0% -opaque white \) \
+                -geometry +0+0 -composite \
+                "$temp_tile"
+        fi
     fi
     
     files+=("$temp_tile")
