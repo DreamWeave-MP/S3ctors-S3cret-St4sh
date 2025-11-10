@@ -54,7 +54,17 @@ end
 local MaxRot = math.rad(12.0)
 local MaxPitchRot = math.rad(10.0)
 
-function CamHelper.trackTarget(targetObject)
+function CamHelper.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch)
+    local yawDiff = util.normalizeAngle(desiredYaw - currentYaw)
+    local pitchDiff = util.normalizeAngle(desiredPitch - currentPitch)
+
+    local finalYaw = util.clamp(yawDiff * 0.6, -MaxRot, MaxRot)
+    local finalPitch = util.clamp(pitchDiff * 0.4, -MaxPitchRot, MaxPitchRot)
+
+    return finalYaw, finalPitch
+end
+
+function CamHelper.trackTarget(targetObject, shouldTrack)
     if not targetObject then return end
 
     local playerPos = camera.getPosition()
@@ -68,19 +78,28 @@ function CamHelper.trackTarget(targetObject)
     local desiredYaw = math.atan2(toTarget.x, toTarget.y)
     local desiredPitch = math.atan2(-toTarget.z, math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
 
-    local yawDiff = util.normalizeAngle(desiredYaw - currentYaw)
-    local pitchDiff = util.normalizeAngle(desiredPitch - currentPitch)
+    local camYaw, camPitch = CamHelper.getAngleDiff(
+        desiredYaw,
+        desiredPitch,
+        currentYaw,
+        currentPitch
+    )
 
-    local finalYaw = util.clamp(yawDiff * 0.6, -MaxRot, MaxRot)
-    local finalPitch = util.clamp(pitchDiff * 0.4, -MaxPitchRot, MaxPitchRot)
+    camera.setYaw(currentYaw + camYaw)
+    camera.setPitch(currentPitch + camPitch)
 
-    camera.setYaw(currentYaw + finalYaw)
-    camera.setPitch(currentPitch + finalPitch)
+    if not shouldTrack then return end
 
-    I.s3lf.controls.yawChange = finalYaw
-    I.s3lf.controls.pitchChange = finalPitch
+    local rotation = I.s3lf.rotation
+    local playerYaw, playerPitch = CamHelper.getAngleDiff(
+        desiredYaw,
+        desiredPitch,
+        rotation:getYaw(),
+        rotation:getPitch()
+    )
 
-    return finalYaw, finalPitch
+    I.s3lf.controls.yawChange = playerYaw
+    I.s3lf.controls.pitchChange = playerPitch
 end
 
 return CamHelper
