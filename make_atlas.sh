@@ -6,6 +6,7 @@
 
 MASK=false
 MASK_WIDTH=false
+MASK_REMOVE=false
 # Parse named arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -33,6 +34,10 @@ while [[ $# -gt 0 ]]; do
             MASK_WIDTH=true
             shift 1
             ;;
+        -d|--delete)
+            MASK_REMOVE=true
+            shift 1
+            ;;
         *)
             echo "Unknown option: $1"
             echo "Usage: $0 -i input_image -o output_image -r rows -c cols"
@@ -57,10 +62,27 @@ if [[ ! -f "$INPUT_IMAGE" ]]; then
 fi
 
 echo "Creating ${ROWS}x${COLS} atlas from: ${INPUT_IMAGE}"
+if [[ "$MASK" == true ]]; then
+    if [[ "$MASK_REMOVE" == true ]]; then
+        echo "Pixel mode: REMOVE white pixels"
+    else
+        echo "Pixel mode: MASK white pixels with black"
+    fi
+    if [[ "$MASK_WIDTH" == true ]]; then
+        echo "Direction: HORIZONTAL (width)"
+    else
+        echo "Direction: VERTICAL (height)"
+    fi
+else
+    echo "Mode: SIMPLE duplication"
+fi
 
 # Create temporary directory for processed tiles
 TEMP_DIR=$(mktemp -d)
 echo "Using temporary directory: $TEMP_DIR"
+
+ORIG_WIDTH=$(magick "$INPUT_IMAGE" -format "%w" info:)
+ORIG_HEIGHT=$(magick "$INPUT_IMAGE" -format "%h" info:)
 
 # Process each tile with progressive white-to-black conversion
 files=()
@@ -74,26 +96,47 @@ for ((i=0; i < TOTAL_TILES; i++)); do
             cp "$INPUT_IMAGE" "$temp_tile"
         else
             percentage=$(( (i * 100) / (TOTAL_TILES - 1) ))
-            echo "Converting $percentage% of white pixels to black"
 
-            if [[ "$MASK_WIDTH" == true ]]; then
-                # Horizontal masking using width
-                width=$(magick "$INPUT_IMAGE" -format "%w" info:)
-                crop_width=$(( (percentage * width) / 100 ))
-                
-                magick "$INPUT_IMAGE" \
-                    \( +clone -crop ${crop_width}x+0+0 -fill black -fuzz 0% -opaque white \) \
-                    -geometry +0+0 -composite \
+            if [[ "$MASK_REMOVE" == true ]]; then
+                if [[ $i -eq $((TOTAL_TILES - 1)) ]]; then
+                magick -background transparent \
+                    -extent ${ORIG_WIDTH}x${ORIG_HEIGHT} \
                     "$temp_tile"
+                elif [[ "$MASK_WIDTH" == true ]]; then
+                    # Remove horizontal portion
+                    keep_width=$((ORIG_WIDTH - (percentage * ORIG_WIDTH / 100) ))
+                    magick "$INPUT_IMAGE" \
+                        -crop ${keep_width}x${ORIG_HEIGHT}+$((ORIG_WIDTH - keep_width))+0 \
+                        -background transparent \
+                        -gravity East \
+                        -extent ${ORIG_WIDTH}x${ORIG_HEIGHT} \
+                        "$temp_tile"
+                else
+                    # Remove vertical portion  
+                    keep_height=$((ORIG_HEIGHT - (percentage * ORIG_HEIGHT / 100) ))
+                    echo $keep_height
+                    magick "$INPUT_IMAGE" \
+                        -crop ${ORIG_WIDTH}x${keep_height}+0+$((ORIG_HEIGHT - keep_height)) +repage \
+                        -background transparent \
+                        -gravity South \
+                        -extent ${ORIG_WIDTH}x${ORIG_HEIGHT} \
+                        "$temp_tile"
+                fi
             else
-                # Vertical masking using height (default)
-                height=$(magick "$INPUT_IMAGE" -format "%h" info:)
-                crop_height=$(( (percentage * height) / 100 ))
-                
-                magick "$INPUT_IMAGE" \
-                    \( +clone -crop x${crop_height}+0+0 -fill black -fuzz 0% -opaque white \) \
-                    -geometry +0+0 -composite \
-                    "$temp_tile"
+                # Original masking behavior
+                if [[ "$MASK_WIDTH" == true ]]; then
+                    crop_width=$(( (percentage * ORIG_WIDTH) / 100 ))
+                    magick "$INPUT_IMAGE" \
+                        \( +clone -crop ${crop_width}x+0+0 -fill black -fuzz 0% -opaque white \) \
+                        -geometry +0+0 -composite \
+                        "$temp_tile"
+                else
+                    crop_height=$(( (percentage * ORIG_HEIGHT) / 100 ))
+                    magick "$INPUT_IMAGE" \
+                        \( +clone -crop x${crop_height}+0+0 -fill black -fuzz 0% -opaque white \) \
+                        -geometry +0+0 -composite \
+                        "$temp_tile"
+                fi
             fi
         fi
     fi
