@@ -51,8 +51,8 @@ RegisterPage {
 RegisterPage {
   key = modInfo.name .. 'Roll',
   l10n = modInfo.l10nName,
-  name = 'RollPageName',
-  description = 'RollPageDesc',
+  name = 'PageRollName',
+  description = 'PageRollDesc',
 }
 
 input.registerAction {

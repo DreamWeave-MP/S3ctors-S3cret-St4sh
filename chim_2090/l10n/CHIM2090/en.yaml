@@ -143,6 +143,11 @@ EnableFlankDamageDesc: |-
 EndurancePoiseBonusName: Endurance Poise Bonus
 EndurancePoiseBonusDesc: How much poise each point of Endurance provides
 
+EnablePoiseIconName: Enable Poise Indicator
+EnablePoiseIconDesc: |-
+  The poise indicator uses a texture atlas to display your currently-remaining poise.
+  If you don't wish to see your current poise, set this to false. Also responds to disabling poise entirely.
+
 EquipmentSlotTimeReductionName: Equipment Recovery Reduction
 EquipmentSlotTimeReductionDesc: Percentage reduction to recovery time per equipped armor piece
 
@@ -293,6 +298,9 @@ PageDynamicDesc: Manages fatigue, health, and magicka caps
 PagePoiseName: CHIM 2090 - Poise
 PagePoiseDesc: Manages poise, a hidden stat allowing knockdowns on any target
 
+PageRollName: CHIM 2090 - Rolling
+PageRollDesc: Manages input bindings & other settings for combat rolls
+
 PerUnitShieldWeightPenaltyName: Per Unit Shield Weight Penalty
 PerUnitShieldWeightPenaltyDesc: |-
   Divisor on shield weight when calculating parry frames. 
@@ -310,6 +318,24 @@ PoiseDebugEnableDesc: Write informative debug messages to the log from the Poise
 PoiseEnableName: Enable Poise System
 PoiseEnableDesc: Toggle the entire poise system on or off
 
+PoiseHUDColorName: HUD Color
+PoiseHUDColorDesc: ""
+
+PoiseHUDEnableName: Enable Poise Icon
+PoiseHUDEnableDesc: 
+  Also responds to disabling the poise mechanic entirely.
+
+PoiseHUDPosName: Poise HUD Position
+PoiseHUDPosDesc: ""
+
+PoiseHUDSizeName: Poise HUD Size
+PoiseHUDSizeDesc: ""
+
+PoiseHUDUpdateDelayName: Poise Icon Update Delay
+PoiseHUDUpdateDelayDesc: |-
+  Time delay between updates of the poise icon. Default value is 15FPS.
+  Upon being attacked, the first update always happens immediately, regardless of this setting's value.
+
 PoisePerWeightName: Poise per Weight Unit
 PoisePerWeightDesc: How much poise each unit of equipment weight provides
 
@@ -321,6 +347,7 @@ SettingsCoreGroupName: Core Settings
 SettingsDynamicGroupName: Health, Fatigue, Magicka Settings
 SettingsParryGroupName: Parry Settings
 SettingsPoiseGroupName: Poise Settings
+SettingsRollGroupName: Roll Settings
 
 ShieldsMitigatePoiseDamageName: Shields Mitigate Poise Damage
 ShieldsMitigatePoiseDamageDesc: |-
