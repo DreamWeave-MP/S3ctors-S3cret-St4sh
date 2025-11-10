@@ -89,7 +89,7 @@ local function CHIMHitHandler(attack)
         I.s3ChimCore.EnableFlankDamage
         and not didBlock
         and flankMult >= 0.333333333333
-        and not I.s3ChimCore.isKnockedDown(self)
+        and I.s3lf.canMove()
     then
         endMult = endMult + flankMult
     end
