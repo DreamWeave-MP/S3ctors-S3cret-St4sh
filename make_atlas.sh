@@ -4,15 +4,40 @@
 # For doing health bars and shit.
 # Usage: ./atlas.sh input_image output_image rows cols
 
-if [[ $# -lt 4 ]]; then
-    echo "Usage: $0 input_image output_image rows cols"
+# Parse named arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -i|--input)
+            INPUT_IMAGE="$2"
+            shift 2
+            ;;
+        -o|--output)
+            OUTPUT="$2"
+            shift 2
+            ;;
+        -r|--rows)
+            ROWS="$2"
+            shift 2
+            ;;
+        -c|--cols)
+            COLS="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 -i input_image -o output_image -r rows -c cols"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [[ -z "$INPUT_IMAGE" || -z "$OUTPUT" || -z "$ROWS" || -z "$COLS" ]]; then
+    echo "Error: Missing required arguments"
+    echo "Usage: $0 -i input_image -o output_image -r rows -c cols"
     exit 1
 fi
 
-INPUT_IMAGE="$1"
-OUTPUT="$2"
-ROWS=$3
-COLS=$4
 TOTAL_TILES=$((ROWS * COLS))
 
 # Verify input file exists
