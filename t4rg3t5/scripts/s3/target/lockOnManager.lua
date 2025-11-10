@@ -411,8 +411,8 @@ function LockOnManager:onFrame()
         local normalizedPos = CamHelper.objectIsOnscreen(targetObject, not types.NPC.objectIsInstance(targetObject))
 
         if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
-            if LockOnManager.shouldTrack() then
-                CamHelper.trackTarget(targetObject)
+            if I.s3lf.canMove() then
+                CamHelper.trackTarget(targetObject, LockOnManager.shouldTrack())
             end
 
             LockOnManager:updateMarker {
