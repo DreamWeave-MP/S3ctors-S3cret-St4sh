@@ -1,6 +1,7 @@
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local storage = require 'openmw.storage'
+local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 
@@ -860,12 +861,65 @@ I.Settings.registerGroup {
         },
 }
 
+local PoiseMenuGroupName = 'SettingsGlobal' .. modInfo.name .. 'PoiseUI'
+I.Settings.registerGroup {
+        key = PoiseMenuGroupName,
+        page = modInfo.name .. 'Poise',
+        order = 0,
+        l10n = modInfo.l10nName,
+        name = 'SettingsPoiseGroupName',
+        permanentStorage = true,
+        settings = {
+                setting(
+                        'EnableIcon',
+                        'checkbox',
+                        {},
+                        'PoiseHUDEnableName',
+                        'PoiseHUDEnableDesc',
+                        true
+                ),
+                setting(
+                        'PoiseHUDPos',
+                        ---@diagnostic disable-next-line: param-type-mismatch
+                        'ScreenPosition',
+                        {},
+                        'PoiseHUDPosName',
+                        'PoiseHUDPosDesc',
+                        util.vector2(0.04, 0.06)
+                ),
+                setting(
+                        'PoiseHUDColor',
+                        'color',
+                        {},
+                        'PoiseHUDColorName',
+                        'PoiseHUDColorDesc',
+                        util.color.hex('b4d455')
+                ),
+                setting(
+                        'PoiseIconSize',
+                        'number',
+                        { integer = true, min = 16, max = 512, },
+                        'PoiseHUDSizeName',
+                        'PoiseHUDSizeDesc',
+                        64
+                ),
+                setting(
+                        'PoiseHUDUpdateDelay',
+                        'number',
+                        { integer = false, min = 0.0, max = .5, },
+                        'PoiseHUDUpdateDelayName',
+                        'PoiseHUDUpdateDelayDesc',
+                        1 / 15
+                ),
+        },
+}
+
 local PoiseGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise'
 local BasePoiseDefault = 20
 I.Settings.registerGroup {
         key = PoiseGroupName,
         page = modInfo.name .. 'Poise',
-        order = 0,
+        order = 1,
         l10n = modInfo.l10nName,
         name = 'SettingsPoiseGroupName',
         permanentStorage = true,
@@ -1159,7 +1213,7 @@ I.Settings.registerGroup {
                 setting(
                         'RollSoundPitchRange',
                         'number',
-                        { integer = false, min = 0.0, max = 10.0 },
+                        { integer = false, min = 0.0, max = 1.0 },
                         'RollSoundPitchRangeName',
                         'RollSoundPitchRangeDesc',
                         .2
