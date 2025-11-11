@@ -391,10 +391,14 @@ function LockOnManager:onFrame()
         end
     end
 
+    local uiMode = I.UI.getMode()
+    local validMode = not uiMode or uiMode == 'MainMenu'
+
     LockOnManager.setCanLockOn(
         targetObject ~= nil and (
             (targetIsActor and isWielding())
         )
+        and validMode
     )
 
     local markerExists = LockOnManager.getLockOnMarker() ~= nil
@@ -408,7 +412,7 @@ function LockOnManager:onFrame()
             LockOnManager.setMarkerVisibility(true)
         end
 
-        local normalizedPos = CamHelper.objectIsOnscreen(targetObject, not types.NPC.objectIsInstance(targetObject))
+        local normalizedPos = CamHelper.objectIsOnscreen(targetObject)
 
         if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
             if I.s3lf.canMove() then
