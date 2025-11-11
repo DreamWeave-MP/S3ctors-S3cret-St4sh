@@ -133,20 +133,36 @@ local rollSounds = {
 }
 local numRollSounds = #rollSounds
 
+local function endRoll()
+    if not isPlayer then return end
+
+    Roll:toggleControls(true)
+
+    if
+        I.S3LockOn
+        and not I.S3LockOn.Manager.shouldTrack()
+    then
+        I.S3LockOn.Manager.setTrackingState(true)
+    end
+end
+
 local animationKeyHandlers = {
-    ['stop'] = function(group)
-        if isPlayer then
-            Roll:toggleControls(true)
+    ['stop'] = endRoll,
+    ['min iframes'] = function(_)
+        local fatigueCost = Roll.getFatigueCost()
+        s3lf.fatigue.current = s3lf.fatigue.current - fatigueCost
+
+        if isPlayer and s3lf.fatigue.current <= 0 then
+            s3lf.cancel(Roll.state.prevAnimGroup)
+
+            Animation.playBlendedAnimation('knockout', {
+                priority = animation.PRIORITY.Scripted,
+            })
+
+            endRoll()
+            return
         end
 
-        if
-            I.S3LockOn
-            and not I.S3LockOn.Manager.shouldTrack()
-        then
-            I.S3LockOn.Manager.setTrackingState(true)
-        end
-    end,
-    ['min iframes'] = function(group)
         Roll:setIframeState(true)
 
         local soundIndex = I.RandomGen.range(numRollSounds, true)
@@ -212,6 +228,12 @@ function Roll.getOppositeDirection(direction)
     return opposite
 end
 
+local fFatigueJumpBase, fFatigueJumpMult = core.getGMST('fFatigueJumpBase'), core.getGMST('fFatigueJumpMult')
+function Roll.getFatigueCost()
+    local normalizedEncumbrance = s3lf.getEncumbrance() / s3lf.getCapacity()
+    return fFatigueJumpBase + (normalizedEncumbrance * fFatigueJumpMult)
+end
+
 ---@param direction RollDirection
 ---@return boolean whether or not a roll happened
 function Roll:activate(direction)
@@ -228,6 +250,9 @@ function Roll:activate(direction)
     then
         I.S3LockOn.Manager.setTrackingState(false)
     end
+
+    local fatigueCost = self.getFatigueCost()
+    if not isPlayer and (s3lf.fatigue.current - fatigueCost < 0) then return false end
 
     Animation.playBlendedAnimation(Roll.state.prevAnimGroup, {
         priority = animation.PRIORITY.Scripted,
