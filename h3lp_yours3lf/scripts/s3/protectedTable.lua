@@ -5,6 +5,8 @@ local types = require 'openmw.types'
 
 local LogMessage = require 'scripts.s3.logmessage'
 
+local ValidatorStr = 'PROTECTEDTABLEVALIDATORVALUE'
+
 local function pairsByKeys(t, f)
   local a = {}
   for n in pairs(t) do table.insert(a, n) end
@@ -32,6 +34,7 @@ end
 ---@field asTable function
 ---@field subscribe function
 ---@field get function
+---@field set function
 
 ---@alias IndexFunction fun(key: string): any
 
@@ -70,6 +73,7 @@ local function new(constructorData)
   end
 
   assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
+  local groupIsWritable = pcall(function() requestedGroup:set(ValidatorStr, true) end)
 
   local proxy = {
     thisGroup = requestedGroup,
@@ -154,14 +158,19 @@ local function new(constructorData)
         state[key] = value
       elseif type(value) ~= 'function' or
           (type(value) ~= 'table' and key == 'state') then
-        error(
-          (
-            [[%s Unauthorized table access when updating '%s' to '%s'.
+        if groupIsWritable then
+          proxy.shadowSettings[key] = value
+          requestedGroup:set(key, value)
+        else
+          error(
+            (
+              [[%s Unauthorized table access when updating '%s' to '%s'.
 This table is not writable and values must be updated through its associated storage group: '%s'.]]
-          ):format(
-            constructorData.logPrefix,
-            tostring(key), tostring(value), constructorData.inputGroupName),
-          2)
+            ):format(
+              constructorData.logPrefix,
+              tostring(key), tostring(value), constructorData.inputGroupName),
+            2)
+        end
       else
         rawset(methods, key, value)
       end
