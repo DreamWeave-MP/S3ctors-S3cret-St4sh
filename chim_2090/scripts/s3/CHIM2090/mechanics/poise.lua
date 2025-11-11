@@ -560,25 +560,20 @@ end
 
 return {
     interfaceName = 's3ChimPoise',
-    interface = setmetatable(
-        {},
-        {
-            __index = function(_, key)
-                local managerKey = Poise[key]
+    interface = Poise.interface(function(key)
+        local managerKey = Poise[key]
 
-                if key == 'help' then
-                    return [[
+        if key == 'help' then
+            return [[
                     ]]
-                elseif managerKey then
-                    return managerKey
-                elseif key == 'Manager' then
-                    return Poise
-                elseif key == 'Icon' and isPlayer then
-                    return PoiseIcon
-                end
-            end,
-        }
-    ),
+        elseif managerKey then
+            return managerKey
+        elseif key == 'Manager' then
+            return Poise
+        elseif key == 'Icon' and isPlayer then
+            return PoiseIcon
+        end
+    end),
     engineHandlers = {
         onUpdate = function(dt)
             if not Poise.Enable then return end
