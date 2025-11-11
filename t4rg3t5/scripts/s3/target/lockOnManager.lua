@@ -12,11 +12,13 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
-local CamHelper = require 'scripts.s3.target.cameraHelper'
 local ModInfo = require 'scripts.s3.target.modinfo'
 
 local CenterVector2 = util.vector2(0.5, 0.5)
 local ZeroVector2 = util.vector2(0, 0)
+
+local MaxRot = math.rad(12.0)
+local MaxPitchRot = math.rad(10.0)
 
 local function isWielding()
     return s3lf.getStance() ~= s3lf.STANCE.Nothing
@@ -93,6 +95,65 @@ function LockOnManager.shouldTrack()
     return LockOnManager.state.trackTarget
 end
 
+function LockOnManager.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch)
+    local yawDiff = util.normalizeAngle(desiredYaw - currentYaw)
+    local pitchDiff = util.normalizeAngle(desiredPitch - currentPitch)
+
+    local finalYaw = util.clamp(yawDiff * 0.6, -MaxRot, MaxRot)
+    local finalPitch = util.clamp(pitchDiff * 0.4, -MaxPitchRot, MaxPitchRot)
+
+    return finalYaw, finalPitch
+end
+
+function LockOnManager.trackTarget(targetObject, shouldTrack)
+    if not targetObject then return end
+
+    local playerPos = camera.getPosition()
+    local targetPos = I.S3CamHelper.targetPosition(targetObject)
+    local toTarget = (targetPos - playerPos):normalize()
+
+    local currentYaw = camera.getYaw()
+    local currentPitch = camera.getPitch()
+
+    local desiredYaw = math.atan2(toTarget.x, toTarget.y)
+    local desiredPitch = math.atan2(-toTarget.z, math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
+
+    local camYaw, camPitch = LockOnManager.getAngleDiff(
+        desiredYaw,
+        desiredPitch,
+        currentYaw,
+        currentPitch
+    )
+
+    local eps = 0.001
+
+    if math.abs(camYaw) >= eps then
+        camera.setYaw(currentYaw + camYaw)
+    end
+
+    if math.abs(camPitch) >= eps then
+        camera.setPitch(currentPitch + camPitch)
+    end
+
+    if not shouldTrack then return end
+
+    local rotation = I.s3lf.rotation
+    local playerYaw, playerPitch = LockOnManager.getAngleDiff(
+        desiredYaw,
+        desiredPitch,
+        rotation:getYaw(),
+        rotation:getPitch()
+    )
+
+    if math.abs(playerYaw) >= eps then
+        I.s3lf.controls.yawChange = playerYaw
+    end
+
+    if math.abs(playerPitch) >= eps then
+        I.s3lf.controls.pitchChange = playerPitch
+    end
+end
+
 ---@param markerUpdateData MarkerUpdateInfo
 function LockOnManager:updateMarker(markerUpdateData)
     local element = self.getLockOnMarker()
@@ -155,7 +216,7 @@ function LockOnManager:selectNearestTarget(goLeft)
             return false
         end
 
-        local screenPos = CamHelper.objectIsOnscreen(actor)
+        local screenPos = I.S3CamHelper.objectIsOnscreen(actor)
 
         if not screenPos
             or screenPos.z > self.TargetMaxDistance
@@ -376,7 +437,7 @@ function LockOnManager:onFrame()
     local targetObject = LockOnManager.getTargetObject()
 
     if self.CheckLOS and targetObject then
-        if not CamHelper.objectIsOnscreen(targetObject) then
+        if not I.S3CamHelper.objectIsOnscreen(targetObject) then
             s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
         else
             local LOStest = nearby.castRay(
@@ -412,11 +473,11 @@ function LockOnManager:onFrame()
             LockOnManager.setMarkerVisibility(true)
         end
 
-        local normalizedPos = CamHelper.objectIsOnscreen(targetObject)
+        local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject)
 
         if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
             if I.s3lf.canMove() then
-                CamHelper.trackTarget(targetObject, LockOnManager.shouldTrack())
+                LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
             end
 
             LockOnManager:updateMarker {
