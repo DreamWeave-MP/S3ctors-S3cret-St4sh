@@ -28,7 +28,12 @@ local function defaultSubscribeHandler(shadowSettings, group, groupName, key)
   end
 end
 
----@alias StorageSection userdata
+---@class StorageSection
+---@field asTable function
+---@field subscribe function
+---@field get function
+
+---@alias IndexFunction fun(key: string): any
 
 --- Bridges onto a global storage section, providing easy access to the storage group with caching and logging methods
 --- All settings associated with the storage section provided in the constructor are accessible by simply indexing the table.
@@ -40,23 +45,31 @@ end
 ---@field getState fun(): table return the entire inner state table
 ---@field notifyPlayer fun(any) shorthand to display all arguments as a table in a Morrowind MessageBox from a protectedTable. Only works on player scripts.
 ---@field debugLog fun(...) If debug logging setting is enabled, then prints the arguments to log, as a concatenated table
+---@field interface fun(handler: IndexFunction) Helper function to provide more convenience when binding a protectedTable into an interface
 
 ---@alias ShadowSettingsTable table<string, any>
 ---@alias ShadowTableSubscriptionHandler fun(shadowSettings: ShadowSettingsTable, group: StorageSection, groupName: string, key: string)
 
 ---@class ProtectedTableConstructor
 ---@field logPrefix string
----@field inputGroupName string name of the *global* storage section to use. If no managerName is provided, also used in the __tostring method
+---@field storageSection StorageSection? instead of the *name* of a global section, protectedTables may provide a storgae section which the table uses
+---@field inputGroupName string? name of the *global* storage section to use. If no managerName is provided, also used in the __tostring method
 ---@field managerName string? optional name to override inputGroupName in the __tostring method
 ---@field subscribeHandler ShadowTableSubscriptionHandler|false? override function to use instead of the default subscription handler. Since global sections may not be written from local scripts, an explicit value of `false` can be used to indicate no subscription at all.
 
 ---@param constructorData ProtectedTableConstructor
 ---@return ProtectedTable
 local function new(constructorData)
-  local requestedGroup = storage.globalSection(constructorData.inputGroupName)
+  local requestedGroup
+  if constructorData.storageSection then
+    requestedGroup = constructorData.storageSection
+  elseif constructorData.inputGroupName then
+    requestedGroup = storage.globalSection(constructorData.inputGroupName)
+  else
+    error('No group or group name provded to protectedTable constructor!', 2)
+  end
 
-  assert(constructorData.inputGroupName ~= nil and requestedGroup ~= nil,
-    'An invalid setting group was provided!')
+  assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
 
   local proxy = {
     thisGroup = requestedGroup,
@@ -114,9 +127,9 @@ local function new(constructorData)
     __metatable = 'S3ProtectedTable',
     __index = function(_, key)
       if key == 'DebugLog' then
-        return storage.globalSection(constructorData.inputGroupName):get('DebugEnable') == true
+        return requestedGroup:get('DebugEnable')
       elseif key == 'MessageEnable' then
-        return storage.globalSection(constructorData.inputGroupName):get('MessageEnable') == true
+        return requestedGroup:get('MessageEnable')
       elseif key == 'debugLog' then
         return proxy.debugLog
       elseif key == 'state' then
