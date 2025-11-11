@@ -43,7 +43,7 @@ end
 function CamHelper.objectIsOnscreen(object)
     local checkPos = targetPosition(object)
     local viewportPos = camera.worldToViewportVector(checkPos)
-    local screenSize = ui.layers[1].size
+    local screenSize = ui.screenSize()
 
     local validX = viewportPos.x > 0 and viewportPos.x < screenSize.x
     local validY = viewportPos.y > 0 and viewportPos.y < screenSize.y
