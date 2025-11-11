@@ -20,7 +20,7 @@ if isPlayer then
     input = require 'openmw.input'
 end
 
----@class RollManager
+---@class RollManager: ProtectedTable
 ---@field EnableRollModule boolean
 ---@field DoubleTapRoll boolean
 ---@field DoubleTapDelay number
@@ -377,27 +377,22 @@ local interfaceKeyHandlers = {
 
 return {
     interfaceName = 's3ChimRoll',
-    interface = setmetatable(
-        {},
-        {
-            __index = function(_, key)
-                local keyHandler = interfaceKeyHandlers[key]
-                local managerKey = Roll[key]
+    interface = Roll.interface(function(key)
+        local keyHandler = interfaceKeyHandlers[key]
+        local managerKey = Roll[key]
 
-                if keyHandler then
-                    if type(keyHandler) == 'function' then
-                        return keyHandler()
-                    else
-                        return keyHandler
-                    end
-                elseif managerKey then
-                    return managerKey
-                elseif key == 'Manager' then
-                    return Roll
-                end
-            end,
-        }
-    ),
+        if keyHandler then
+            if type(keyHandler) == 'function' then
+                return keyHandler()
+            else
+                return keyHandler
+            end
+        elseif managerKey then
+            return managerKey
+        elseif key == 'Manager' then
+            return Roll
+        end
+    end),
     engineHandlers = engineHandlers,
     eventHandlers = eventHandlers,
 }
