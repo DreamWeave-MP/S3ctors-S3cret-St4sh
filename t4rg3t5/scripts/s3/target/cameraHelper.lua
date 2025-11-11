@@ -1,4 +1,5 @@
 local camera = require 'openmw.camera'
+local types = require 'openmw.types'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -26,14 +27,21 @@ function CamHelper.isObjectBehindCamera(object)
     return dotProduct < 0
 end
 
----@param object GameObject object whose position will be checked
----@param useCenter boolean? whether to use the object's origin or the center of its bbox for targeting. Defaults to true if not provided.
----@return util.vector3? viewportPos If the object is onscreen, the identified screenSize position is returned. If not, then nil. Viewpos is NOT normalized.
-function CamHelper.objectIsOnscreen(object, useCenter)
-    if useCenter == nil then useCenter = true end
+local OFFSET = 1.6
+local function targetPosition(object)
     local box = object:getBoundingBox()
 
-    local checkPos = useCenter and box.center or (object.position + util.vector3(0, 0, box.halfSize.z * 1.25))
+    if types.NPC.objectIsInstance(object) then
+        return object.position + util.vector3(0, 0, box.halfSize.z * OFFSET)
+    else
+        return box.center
+    end
+end
+
+---@param object GameObject object whose position will be checked
+---@return util.vector3? viewportPos If the object is onscreen, the identified screenSize position is returned. If not, then nil. Viewpos is NOT normalized.
+function CamHelper.objectIsOnscreen(object)
+    local checkPos = targetPosition(object)
     local viewportPos = camera.worldToViewportVector(checkPos)
     local screenSize = ui.layers[1].size
 
@@ -68,8 +76,7 @@ function CamHelper.trackTarget(targetObject, shouldTrack)
     if not targetObject then return end
 
     local playerPos = camera.getPosition()
-    local box = targetObject:getBoundingBox()
-    local targetPos = util.vector3(box.center.x, box.center.y, box.center.z + (box.halfSize.z / 2))
+    local targetPos = targetPosition(targetObject)
     local toTarget = (targetPos - playerPos):normalize()
 
     local currentYaw = camera.getYaw()
@@ -85,8 +92,15 @@ function CamHelper.trackTarget(targetObject, shouldTrack)
         currentPitch
     )
 
-    camera.setYaw(currentYaw + camYaw)
-    camera.setPitch(currentPitch + camPitch)
+    local eps = 0.001
+
+    if math.abs(camYaw) >= eps then
+        camera.setYaw(currentYaw + camYaw)
+    end
+
+    if math.abs(camPitch) >= eps then
+        camera.setPitch(currentPitch + camPitch)
+    end
 
     if not shouldTrack then return end
 
@@ -98,8 +112,13 @@ function CamHelper.trackTarget(targetObject, shouldTrack)
         rotation:getPitch()
     )
 
-    I.s3lf.controls.yawChange = playerYaw
-    I.s3lf.controls.pitchChange = playerPitch
+    if math.abs(playerYaw) >= eps then
+        I.s3lf.controls.yawChange = playerYaw
+    end
+
+    if math.abs(playerPitch) >= eps then
+        I.s3lf.controls.pitchChange = playerPitch
+    end
 end
 
 return CamHelper
