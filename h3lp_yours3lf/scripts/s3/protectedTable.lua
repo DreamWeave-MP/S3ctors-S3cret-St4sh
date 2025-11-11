@@ -99,6 +99,17 @@ local function new(constructorData)
     return state
   end
 
+  function proxy.interface(handlerFunction)
+    assert(type(handlerFunction) == 'function')
+
+    return setmetatable({},
+      {
+        __index = function(_, key)
+          return handlerFunction(key)
+        end
+      })
+  end
+
   local meta = {
     __metatable = 'S3ProtectedTable',
     __index = function(_, key)
