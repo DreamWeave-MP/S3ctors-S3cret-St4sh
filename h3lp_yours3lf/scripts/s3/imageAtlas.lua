@@ -9,6 +9,7 @@ local ImageAtlas = {
     tilesPerRow = 0,
     totalTiles = 0,
     currentTile = 1,
+    targetTile = 1,
 }
 
 ---@param frameNum integer
@@ -42,7 +43,7 @@ function ImageAtlas:getNextFrame(nextOrPrev)
     return currentTile
 end
 
-function ImageAtlas:cycleFrame(nextOrPrev, update)
+function ImageAtlas:cycleFrame(nextOrPrev)
     local element = self.element
     assert(element)
     local props = element.layout.props
