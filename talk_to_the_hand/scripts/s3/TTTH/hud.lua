@@ -8,7 +8,6 @@ local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
 local HudCore,
-WeaponIndicator,
 ThumbAtlas,
 MiddleAtlas,
 PinkyAtlas,
@@ -32,6 +31,9 @@ local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
     subscribeHandler = false,
+}
+H4ND.state = {
+    equippedWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight),
 }
 
 local function getSelectedWeaponIcon()
@@ -72,6 +74,16 @@ local function updateAtlas(atlasName, atlas)
     if atlas.currentTile == targetTile then return end
 
     atlas:cycleFrame(atlas.currentTile < targetTile)
+end
+
+local function normalizedWeaponHealth()
+    local weapon, mult = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight), 1.0
+
+    if weapon then
+        mult = weapon.type.itemData(weapon).condition / weapon.type.records[weapon.recordId].health
+    end
+
+    return mult
 end
 
 local screenSize = ui.screenSize()
@@ -186,6 +198,7 @@ PinkyAtlas:spawn {
     position = pinkyPos,
 }
 
+local BarSize = Attrs.ChanceBar()
 HudCore = ui.create {
     layer = 'HUD',
     name = 'H4ND',
@@ -218,7 +231,7 @@ HudCore = ui.create {
                     name = 'DurabilityBar',
                     props = {
                         resource = ui.texture { path = 'white' },
-                        size = Attrs.ChanceBar(),
+                        size = util.vector2(normalizedWeaponHealth() * BarSize.x, BarSize.y),
                         color = H4ND.DurabilityColor,
                     },
                 },
@@ -327,7 +340,10 @@ H4ndStorage:subscribe(
                     local weapon = namesToAtlases.WeaponIndicator
                     weapon.props.position = Attrs.Weapon()
                     weapon.content.WeaponIcon.props.size = Attrs.SubIcon()
-                    weapon.content.DurabilityBar.props.size = Attrs.ChanceBar()
+
+                    local durabilityBarSize = Attrs.ChanceBar()
+                    weapon.content.DurabilityBar.props.size = util.vector2(
+                        durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
                 elseif key == 'HUDPos' then
                     HudCore.layout.props.relativePosition = H4ndStorage:get('HUDPos')
                 end
@@ -378,6 +394,33 @@ H4ndStorage:subscribe(
     )
 )
 
+---@return boolean
+local function updateWeaponIcon()
+    local currentWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+    if H4ND.state.equippedWeapon == currentWeapon then return false end
+    H4ND.state.equippedWeapon = currentWeapon
+    s3lf.gameObject:sendEvent('H4NDUpdateWeapon')
+    return true
+end
+
+---@return boolean
+local function updateWeaponDurability()
+    local health = math.floor(normalizedWeaponHealth() * 100)
+    local width = HudCore.layout.content.WeaponIndicator.content.DurabilityBar.props.size.x
+
+    width = math.floor(width * 100)
+    if width == health then return false end
+
+    s3lf.gameObject:sendEvent('H4NDUpdateDurability')
+    return true
+end
+
+local function updateDurabilityBarSize()
+    local weaponIndicator = HudCore.layout.content.WeaponIndicator.content
+    local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar()
+    weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
+end
+
 CurrentDelay, TotalDelay = 0, 1 / H4ND.UIFramerate
 return {
     interfaceName = 'H4nd',
@@ -392,6 +435,16 @@ return {
             H4ND[atlasName .. 'Stat'] = stat
             namesToAtlases[atlasName].element:update()
         end,
+        H4NDUpdateWeapon = function()
+            local weaponIndicator = HudCore.layout.content.WeaponIndicator.content
+            weaponIndicator.WeaponIcon.props.resource = ui.texture { path = getSelectedWeaponIcon() }
+            updateDurabilityBarSize()
+            HudCore:update()
+        end,
+        H4NDUpdateDurability = function()
+            updateDurabilityBarSize()
+            HudCore:update()
+        end,
     },
     engineHandlers = {
         onFrame = function(dt)
@@ -400,6 +453,15 @@ return {
                 return
             else
                 CurrentDelay = 0
+            end
+
+            local updated = false
+            for _, updater in ipairs {
+                updateWeaponIcon,
+                updateWeaponDurability,
+            } do
+                updated = updater()
+                if updated then break end
             end
 
             updateStatFrames()
