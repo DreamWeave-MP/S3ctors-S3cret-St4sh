@@ -20,11 +20,8 @@ function ImageAtlas:getCoordinates(frameNum)
     return util.vector2(self.tileSize.x * row, self.tileSize.y * column)
 end
 
-function ImageAtlas:cycleFrame(nextOrPrev)
-    local element = self.element
-    assert(element)
-    local props = element.layout.props
-
+---@param nextOrPrev boolean
+function ImageAtlas:getNextFrame(nextOrPrev)
     local currentTile = self.currentTile
     if nextOrPrev then
         if currentTile == self.totalTiles then
@@ -40,10 +37,21 @@ function ImageAtlas:cycleFrame(nextOrPrev)
         end
     end
 
-    props.resource = self.textureArray[currentTile]
-    element:update()
-
     self.currentTile = currentTile
+
+    return currentTile
+end
+
+function ImageAtlas:cycleFrame(nextOrPrev, update)
+    local element = self.element
+    assert(element)
+    local props = element.layout.props
+
+    local currentTile = self:getNextFrame(nextOrPrev)
+
+    props.resource = self.textureArray[currentTile]
+
+    element:update()
 end
 
 ---@class AtlasSpawnerData
@@ -55,16 +63,20 @@ end
 ---@field alpha number?
 ---@field anchor util.vector2?
 ---@field size util.vector2?
+---@field position util.vector2?
+---@field relativeSize util.vector2?
 
 ---@param elementData AtlasSpawnerData
 function ImageAtlas:spawn(elementData)
     self.element = ui.create {
         type = ui.TYPE.Image,
         layer = elementData.layer,
+        name = elementData.name,
         props = {
             resource = self.textureArray[1],
-            name = elementData.name,
+            position = elementData.position,
             relativePosition = elementData.relativePosition,
+            relativeSize = elementData.relativeSize,
             size = elementData.size or self.tileSize,
             color = elementData.color,
             anchor = elementData.anchor,
