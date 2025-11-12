@@ -8,9 +8,7 @@ local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
 local HudCore,
-CastableIndicator,
 WeaponIndicator,
-EffectBar,
 ThumbAtlas,
 MiddleAtlas,
 PinkyAtlas,
@@ -188,75 +186,6 @@ PinkyAtlas:spawn {
     position = pinkyPos,
 }
 
-CastableIndicator = ui.create {
-    type = ui.TYPE.Flex,
-    name = 'Castable',
-    layer = 'HUD',
-    props = {
-        anchor = Vectors.TopRight,
-        relativePosition = Vectors.TopRight + util.vector2(-.02, .03),
-    },
-    content = ui.content {
-        {
-            type = ui.TYPE.Image,
-            name = 'CastableIcon',
-            props = {
-                resource = ui.texture { path = getSelectedWeaponIcon() },
-                size = Attrs.SubIcon(),
-            }
-        },
-        {
-            type = ui.TYPE.Image,
-            name = 'CastChanceBar',
-            props = {
-                resource = ui.texture { path = 'white' },
-                size = Attrs.ChanceBar(),
-                color = H4ND.CastChanceColor,
-            },
-        },
-    }
-}
-
-WeaponIndicator = ui.create {
-    type = ui.TYPE.Flex,
-    layer = 'HUD',
-    name = 'Weapon',
-    props = {
-        position = Attrs.Weapon(),
-    },
-    content = ui.content {
-        {
-            type = ui.TYPE.Image,
-            name = 'WeaponIcon',
-            props = {
-                resource = ui.texture { path = getSelectedWeaponIcon() },
-                size = Attrs.SubIcon(),
-            }
-        },
-        {
-            type = ui.TYPE.Image,
-            name = 'DurabilityBar',
-            props = {
-                resource = ui.texture { path = 'white' },
-                size = Attrs.ChanceBar(),
-                color = H4ND.DurabilityColor,
-            },
-        },
-    }
-}
-
-EffectBar = ui.create {
-    type = ui.TYPE.Image,
-    layer = 'HUD',
-    props = {
-        resource = ui.texture { path = 'white', },
-        size = Attrs.EffectBar(),
-        color = util.color.hex('ff0abb'),
-        anchor = Vectors.BottomLeft,
-        relativePosition = Vectors.BottomLeft,
-    }
-}
-
 HudCore = ui.create {
     layer = 'HUD',
     name = 'H4ND',
@@ -269,9 +198,70 @@ HudCore = ui.create {
         ThumbAtlas.element,
         MiddleAtlas.element,
         PinkyAtlas.element,
-        WeaponIndicator,
-        EffectBar,
-        CastableIndicator,
+        {
+            type = ui.TYPE.Flex,
+            name = 'WeaponIndicator',
+            props = {
+                position = Attrs.Weapon(),
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    name = 'WeaponIcon',
+                    props = {
+                        resource = ui.texture { path = getSelectedWeaponIcon() },
+                        size = Attrs.SubIcon(),
+                    }
+                },
+                {
+                    type = ui.TYPE.Image,
+                    name = 'DurabilityBar',
+                    props = {
+                        resource = ui.texture { path = 'white' },
+                        size = Attrs.ChanceBar(),
+                        color = H4ND.DurabilityColor,
+                    },
+                },
+            }
+        },
+        {
+            type = ui.TYPE.Image,
+            name = 'EffectBar',
+            props = {
+                resource = ui.texture { path = 'white', },
+                size = Attrs.EffectBar(),
+                color = util.color.hex('ff0abb'),
+                anchor = Vectors.BottomLeft,
+                relativePosition = Vectors.BottomLeft,
+            }
+        },
+        {
+            type = ui.TYPE.Flex,
+            name = 'CastableIndicator',
+            props = {
+                anchor = Vectors.TopRight,
+                relativePosition = Vectors.TopRight + util.vector2(-.02, .03),
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    name = 'CastableIcon',
+                    props = {
+                        resource = ui.texture { path = getSelectedWeaponIcon() },
+                        size = Attrs.SubIcon(),
+                    }
+                },
+                {
+                    type = ui.TYPE.Image,
+                    name = 'CastChanceBar',
+                    props = {
+                        resource = ui.texture { path = 'white' },
+                        size = Attrs.ChanceBar(),
+                        color = H4ND.CastChanceColor,
+                    },
+                },
+            }
+        }
     }
 }
 
@@ -291,6 +281,9 @@ local namesToAtlases, statsToAtlases = {
     Middle = MiddleAtlas,
     Pinky = PinkyAtlas,
     Thumb = ThumbAtlas,
+    EffectBar = HudCore.layout.content.EffectBar,
+    WeaponIndicator = HudCore.layout.content.WeaponIndicator,
+    CastableIndicator = HudCore.layout.content.CastableIndicator,
 }, {
     MiddleStat = MiddleAtlas,
     PinkyStat = PinkyAtlas,
@@ -315,20 +308,26 @@ H4ndStorage:subscribe(
                     handSize = ui.screenSize():emul(relativeSize)
                     HudCore.layout.props.size = handSize
 
-                    local ThumbProps = ThumbAtlas.element.layout.props
-                    ThumbProps.size, ThumbProps.position = Attrs.Thumb()
-                    ThumbAtlas.element:update()
+                    for attrFunc, resizeAtlas in pairs {
+                        [Attrs.Thumb] = ThumbAtlas,
+                        [Attrs.Middle] = MiddleAtlas,
+                        [Attrs.Pinky] = PinkyAtlas,
+                    } do
+                        local props = resizeAtlas.element.layout.props
+                        props.size, props.position = attrFunc()
+                        resizeAtlas.element:update()
+                    end
 
-                    local MiddleProps = MiddleAtlas.element.layout.props
-                    MiddleProps.size, MiddleProps.position = Attrs.Middle()
-                    MiddleAtlas.element:update()
+                    namesToAtlases.EffectBar.props.size = Attrs.EffectBar()
 
-                    local PinkyProps = PinkyAtlas.element.layout.props
-                    PinkyProps.size, PinkyProps.position = Attrs.Pinky()
-                    PinkyAtlas.element:update()
+                    local castable = namesToAtlases.CastableIndicator.content
+                    castable.CastableIcon.props.size = Attrs.SubIcon()
+                    castable.CastChanceBar.props.size = Attrs.ChanceBar()
 
-                    EffectBar.layout.props.size = Attrs.EffectBar()
-                    EffectBar:update()
+                    local weapon = namesToAtlases.WeaponIndicator
+                    weapon.props.position = Attrs.Weapon()
+                    weapon.content.WeaponIcon.props.size = Attrs.SubIcon()
+                    weapon.content.DurabilityBar.props.size = Attrs.ChanceBar()
                 elseif key == 'HUDPos' then
                     HudCore.layout.props.relativePosition = H4ndStorage:get('HUDPos')
                 end
@@ -343,11 +342,11 @@ H4ndStorage:subscribe(
                 atlas.element:update()
 
                 if key == 'PinkyStat' or key == 'MiddleStat' or key == 'ThumbStat' then
-                    local usedAttributes, statToUpdate = {
+                    local statToUpdate, usedAttributes = nil, {
                         magicka = true,
                         health = true,
                         fatigue = true,
-                    }, nil
+                    }
 
                     local thisAtlas = statsToAtlases[key]
 
@@ -392,7 +391,7 @@ return {
             local stat, atlasName = atlasData.stat, atlasData.atlasName
             H4ND[atlasName .. 'Stat'] = stat
             namesToAtlases[atlasName].element:update()
-        end
+        end,
     },
     engineHandlers = {
         onFrame = function(dt)
