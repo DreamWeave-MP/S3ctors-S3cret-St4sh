@@ -73,7 +73,17 @@ I.Settings.registerGroup {
             0.15
         ),
         setting(
+            'HUDAnchor',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'HUDAnchorName',
+            'HUDAnchorDesc',
+            util.vector2(0, 1)
+        ),
+        setting(
             'HUDPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
             'ScreenPosition',
             {},
             'HUDPosName',
