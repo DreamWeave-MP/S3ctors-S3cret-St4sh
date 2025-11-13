@@ -308,7 +308,7 @@ HudCore = ui.create {
     name = 'H4ND',
     props = {
         size = handSize,
-        anchor = Vectors.BottomLeft,
+        anchor = H4ND.HUDAnchor,
         relativePosition = H4ND.HUDPos,
     },
     content = ui.content {
@@ -405,6 +405,7 @@ local namesToAtlases, statsToAtlases = {
 H4ndStorage:subscribe(
     async:callback(
         function(_, key)
+            print(key)
             local atlasName, atlas
             if key == 'ThumbColor' or key == 'ThumbStat' then
                 atlasName, atlas = 'Thumb', ThumbAtlas
@@ -412,10 +413,10 @@ H4ndStorage:subscribe(
                 atlasName, atlas = 'Middle', MiddleAtlas
             elseif key == 'PinkyColor' or key == 'PinkyStat' then
                 atlasName, atlas = 'Pinky', PinkyAtlas
-            elseif key == 'HUDPos' or key == 'HUDWidth' then
+            elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
+                local value = H4ndStorage:get(key)
                 if key == 'HUDWidth' then
-                    local width = H4ndStorage:get('HUDWidth')
-                    local relativeSize = util.vector2(width, width * 2)
+                    local relativeSize = util.vector2(value, value * 2)
 
                     handSize = ui.screenSize():emul(relativeSize)
                     HudCore.layout.props.size = handSize
@@ -446,7 +447,9 @@ H4ndStorage:subscribe(
                     weapon.DurabilityBar.props.size = util.vector2(
                         durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
                 elseif key == 'HUDPos' then
-                    HudCore.layout.props.relativePosition = H4ndStorage:get('HUDPos')
+                    HudCore.layout.props.relativePosition = value
+                elseif key == 'HUDAnchor' then
+                    HudCore.layout.props.anchor = value
                 end
 
                 HudCore:update()
