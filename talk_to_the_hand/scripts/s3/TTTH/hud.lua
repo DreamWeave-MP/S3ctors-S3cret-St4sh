@@ -80,7 +80,7 @@ local function getCastableWidth()
     local selectedSpell = s3lf.getSelectedSpell()
     if not selectedSpell then return 0.0 end
 
-    local chance, _ = Magic:getSpellCastChance(s3lf.gameObject, selectedSpell, true, true)
+    local chance, _ = Magic:getSpellCastChance(selectedSpell, s3lf.gameObject, true, true)
 
     return chance / 100
 end
@@ -252,6 +252,55 @@ PinkyAtlas:spawn {
 }
 
 local BarSize = Attrs.ChanceBar()
+local CastableIndicator = ui.create {
+    type = ui.TYPE.Flex,
+    name = 'CastableIndicator',
+    props = {
+        anchor = Vectors.TopRight,
+        relativePosition = Vectors.TopRight + util.vector2(-.02, .03),
+    },
+    content = ui.content {
+        {
+            type = ui.TYPE.Image,
+            name = 'CastableIcon',
+            props = {
+                resource = ui.texture { path = getCastableIcon() or 'white' },
+                size = Attrs.SubIcon(),
+                visible = true,
+                color = getCastableIcon() == nil and util.color.hex('000000') or nil,
+                alpha = getCastableIcon() ~= nil and 1.0 or .5,
+            }
+        },
+        {
+            name = 'CastChanceContainer',
+            props = {
+                size = BarSize,
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    name = 'CastChanceBackground',
+                    props = {
+                        resource = ui.texture { path = 'white' },
+                        size = BarSize,
+                        color = util.color.hex('000000'),
+                        alpha = 0.5,
+                    },
+                },
+                {
+                    type = ui.TYPE.Image,
+                    name = 'CastChanceBar',
+                    props = {
+                        resource = ui.texture { path = 'white' },
+                        size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y),
+                        color = H4ND.CastChanceColor,
+                    },
+                },
+            }
+        },
+    }
+}
+
 HudCore = ui.create {
     layer = 'HUD',
     name = 'H4ND',
@@ -323,54 +372,7 @@ HudCore = ui.create {
                 relativePosition = Vectors.BottomLeft,
             }
         },
-        {
-            type = ui.TYPE.Flex,
-            name = 'CastableIndicator',
-            props = {
-                anchor = Vectors.TopRight,
-                relativePosition = Vectors.TopRight + util.vector2(-.02, .03),
-            },
-            content = ui.content {
-                {
-                    type = ui.TYPE.Image,
-                    name = 'CastableIcon',
-                    props = {
-                        resource = ui.texture { path = getCastableIcon() or 'white' },
-                        size = Attrs.SubIcon(),
-                        visible = true,
-                        color = getCastableIcon() == nil and util.color.hex('000000') or nil,
-                        alpha = getCastableIcon() ~= nil and 1.0 or .5,
-                    }
-                },
-                {
-                    name = 'CastChanceContainer',
-                    props = {
-                        size = BarSize,
-                    },
-                    content = ui.content {
-                        {
-                            type = ui.TYPE.Image,
-                            name = 'CastChanceBackground',
-                            props = {
-                                resource = ui.texture { path = 'white' },
-                                size = BarSize,
-                                color = util.color.hex('000000'),
-                                alpha = 0.5,
-                            },
-                        },
-                        {
-                            type = ui.TYPE.Image,
-                            name = 'CastChanceBar',
-                            props = {
-                                resource = ui.texture { path = 'white' },
-                                size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y),
-                                color = H4ND.CastChanceColor,
-                            },
-                        },
-                    }
-                },
-            }
-        }
+        CastableIndicator,
     }
 }
 
@@ -392,7 +394,7 @@ local namesToAtlases, statsToAtlases = {
     Thumb = ThumbAtlas,
     EffectBar = HudCore.layout.content.EffectBar,
     WeaponIndicator = HudCore.layout.content.WeaponIndicator,
-    CastableIndicator = HudCore.layout.content.CastableIndicator,
+    CastableIndicator = CastableIndicator,
 }, {
     MiddleStat = MiddleAtlas,
     PinkyStat = PinkyAtlas,
@@ -429,16 +431,18 @@ H4ndStorage:subscribe(
 
                     namesToAtlases.EffectBar.props.size = Attrs.EffectBar()
 
-                    local castable = namesToAtlases.CastableIndicator.content
+                    local castable = namesToAtlases.CastableIndicator.layout.content
                     castable.CastableIcon.props.size = Attrs.SubIcon()
-                    castable.CastChanceBar.props.size = Attrs.ChanceBar()
+                    castable.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar()
+                    namesToAtlases.CastableIndicator:update()
 
-                    local weapon = namesToAtlases.WeaponIndicator
-                    weapon.props.position = Attrs.Weapon()
-                    weapon.content.WeaponIcon.props.size = Attrs.SubIcon()
+                    local weapon = namesToAtlases.WeaponIndicator.content
+                    local iconBoxProps = weapon.WeaponIconBox.props
+                    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(), Attrs.SubIcon()
 
                     local durabilityBarSize = Attrs.ChanceBar()
-                    weapon.content.DurabilityBar.props.size = util.vector2(
+
+                    weapon.DurabilityBar.props.size = util.vector2(
                         durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
                 elseif key == 'HUDPos' then
                     HudCore.layout.props.relativePosition = H4ndStorage:get('HUDPos')
@@ -528,7 +532,7 @@ end
 local function updateCastableBar()
     local targetWidth = math.floor(BarSize.x * getCastableWidth())
 
-    local castableIndicator = HudCore.layout.content.CastableIndicator.content
+    local castableIndicator = CastableIndicator.layout.content
     local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
 
     local currentWidth = math.floor(chanceBarProps.size.x)
@@ -566,7 +570,7 @@ return {
         end,
         H4NDUpdateCastable = function()
             local icon = getCastableIcon()
-            local castableIndicator = HudCore.layout.content.CastableIndicator.content
+            local castableIndicator = CastableIndicator.layout.content
             local castIconProps = castableIndicator.CastableIcon.props
             local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
 
@@ -579,18 +583,21 @@ return {
                 castIconProps.color = nil
             end
 
-            chanceBarProps.size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y)
+            local barSize = Attrs.ChanceBar()
+            chanceBarProps.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
             chanceBarProps.visible = icon ~= nil
             castIconProps.resource = ui.texture { path = icon }
 
-            HudCore:update()
+            CastableIndicator:update()
         end,
         H4NDUpdateCastableBar = function()
-            local castableIndicator = HudCore.layout.content.CastableIndicator.content
-            local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
-            chanceBarProps.size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y)
+            local castableIndicator = CastableIndicator.layout.content
 
-            HudCore:update()
+            local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
+            local barSize = Attrs.ChanceBar()
+            chanceBarProps.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
+
+            CastableIndicator:update()
         end,
         H4NDUpdateDurability = function()
             updateDurabilityBarSize()
