@@ -207,9 +207,10 @@ end
 ---@param spell Spell
 ---@param checkMagicka boolean? whether to actually take caster magicka into account when determining success chance
 ---@param cap boolean? cap chance between 0-100
-function Magic:getSpellCastChance(actor, spell, checkMagicka, cap)
+function Magic:getSpellCastChance(spell, actor, checkMagicka, cap)
     ---@diagnostic disable-next-line: undefined-field
-    assert(spell and spell.__type.name == 'ESM::Spell', 'Invalid spell provided to Magic:getSpellCastChance!')
+    assert(spell and spell.__type.name == 'ESM::Spell', 'Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
+
     if checkMagicka == nil then checkMagicka = true end
 
     local baseChance, spellCost = self:getBaseCastChance(spell), self:getSpellCost(spell)
