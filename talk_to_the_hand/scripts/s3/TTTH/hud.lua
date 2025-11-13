@@ -140,7 +140,7 @@ end
 
 local screenSize = ui.screenSize()
 
-local Vectors = {
+local Vectors, Colors = {
     BottomLeft = util.vector2(0, 1),
     BottomRight = util.vector2(1, 1),
     Center = util.vector2(.5, .5),
@@ -153,6 +153,8 @@ local Vectors = {
         Thumb = util.vector2(278, 271),
     },
     TopRight = util.vector2(1, 0),
+}, {
+    Black = util.color.hex('000000'),
 }
 
 local handSize = screenSize:emul(Vectors.RelativeHandSize)
@@ -267,7 +269,7 @@ local CastableIndicator = ui.create {
                 resource = ui.texture { path = getCastableIcon() or 'white' },
                 size = Attrs.SubIcon(),
                 visible = true,
-                color = getCastableIcon() == nil and util.color.hex('000000') or nil,
+                color = getCastableIcon() == nil and Colors.Black or nil,
                 alpha = getCastableIcon() ~= nil and 1.0 or .5,
             }
         },
@@ -283,7 +285,7 @@ local CastableIndicator = ui.create {
                     props = {
                         resource = ui.texture { path = 'white' },
                         size = BarSize,
-                        color = util.color.hex('000000'),
+                        color = Colors.Black,
                         alpha = 0.5,
                     },
                 },
@@ -335,7 +337,6 @@ HudCore = ui.create {
                                     offset = util.vector2(2, 2),
                                     size = util.vector2(40, 40)
                                 },
-                                color = util.color.hex('000000'),
                                 relativeSize = Vectors.BottomRight,
                                 visible = weaponIsEnchanted(getWeapon())
                             }
@@ -577,7 +578,7 @@ return {
             if not icon then
                 icon = 'white'
                 castIconProps.alpha = .5
-                castIconProps.color = util.color.hex('000000')
+                castIconProps.color = Colors.Black
             else
                 castIconProps.alpha = 1.
                 castIconProps.color = nil
