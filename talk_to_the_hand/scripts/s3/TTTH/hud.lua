@@ -76,8 +76,21 @@ local function updateAtlas(atlasName, atlas)
     atlas:cycleFrame(atlas.currentTile < targetTile)
 end
 
+---@return GameObject? weapon
+local function getWeapon()
+    return s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+end
+
+---@param weapon GameObject?
+---@return boolean
+local function weaponIsEnchanted(weapon)
+    if not weapon then return false end
+    local weaponRecord = weapon.type.records[weapon.recordId]
+    return weaponRecord.enchant ~= nil
+end
+
 local function normalizedWeaponHealth()
-    local weapon, mult = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight), 1.0
+    local weapon, mult = getWeapon(), 1.0
 
     if weapon then
         mult = weapon.type.itemData(weapon).condition / weapon.type.records[weapon.recordId].health
@@ -90,6 +103,7 @@ local screenSize = ui.screenSize()
 
 local Vectors = {
     BottomLeft = util.vector2(0, 1),
+    BottomRight = util.vector2(1, 1),
     Center = util.vector2(.5, .5),
     LeftCenter = util.vector2(0, .5),
     RelativeHandSize = util.vector2(H4ND.HUDWidth, H4ND.HUDWidth * 2),
@@ -219,11 +233,33 @@ HudCore = ui.create {
             },
             content = ui.content {
                 {
-                    type = ui.TYPE.Image,
-                    name = 'WeaponIcon',
+                    name = 'WeaponIconBox',
                     props = {
-                        resource = ui.texture { path = getSelectedWeaponIcon() },
                         size = Attrs.SubIcon(),
+                    },
+                    content = ui.content {
+                        {
+                            type = ui.TYPE.Image,
+                            name = 'EnchantFrame',
+                            props = {
+                                resource = ui.texture {
+                                    path = 'textures/menu_icon_magic_equip.dds',
+                                    offset = util.vector2(2, 2),
+                                    size = util.vector2(40, 40)
+                                },
+                                color = util.color.hex('000000'),
+                                relativeSize = Vectors.BottomRight,
+                                visible = weaponIsEnchanted(getWeapon())
+                            }
+                        },
+                        {
+                            type = ui.TYPE.Image,
+                            name = 'WeaponIcon',
+                            props = {
+                                resource = ui.texture { path = getSelectedWeaponIcon() },
+                                relativeSize = Vectors.BottomRight,
+                            }
+                        },
                     }
                 },
                 {
@@ -436,7 +472,7 @@ return {
             namesToAtlases[atlasName].element:update()
         end,
         H4NDUpdateWeapon = function()
-            local weaponIndicator = HudCore.layout.content.WeaponIndicator.content
+            local weaponIndicator = HudCore.layout.content.WeaponIndicator.content[1].content
             weaponIndicator.WeaponIcon.props.resource = ui.texture { path = getSelectedWeaponIcon() }
             updateDurabilityBarSize()
             HudCore:update()
