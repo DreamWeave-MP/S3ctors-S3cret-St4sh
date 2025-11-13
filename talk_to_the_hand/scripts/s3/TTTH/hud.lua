@@ -7,6 +7,8 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
+local Magic = require 'scripts.s3.spellUtil'
+
 local HudCore,
 ThumbAtlas,
 MiddleAtlas,
@@ -34,7 +36,13 @@ local H4ND = I.S3ProtectedTable.new {
 }
 H4ND.state = {
     equippedWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight),
+    equippedCastable = s3lf.getSelectedSpell() or s3lf.getSelectedEnchantedItem(),
 }
+
+---@param item GameObject
+local function getItemIcon(item)
+    return item.type.records[item.recordId].icon
+end
 
 local function getSelectedWeaponIcon()
     local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
@@ -42,7 +50,39 @@ local function getSelectedWeaponIcon()
         return core.stats.Skill.records.handtohand.icon
     end
 
-    return weapon.type.records[weapon.recordId].icon
+    return getItemIcon(weapon)
+end
+
+---@return string? path to icon for the currently-selected castable
+local function getCastableIcon()
+    local enchantedItem = s3lf.getSelectedEnchantedItem()
+    if enchantedItem then return getItemIcon(enchantedItem) end
+
+    local selectedSpell = s3lf.getSelectedSpell()
+    if not selectedSpell then return end
+
+    return selectedSpell.effects[1].effect.icon
+end
+
+---@return number relative width of the castable item
+local function getCastableWidth()
+    local enchantedItem = s3lf.getSelectedEnchantedItem()
+    if enchantedItem then
+        local enchantId = enchantedItem.type.records[enchantedItem.recordId].enchant
+        local enchantRecord = core.magic.enchantments.records[enchantId]
+
+        local totalCharge = Magic.getEnchantmentCharge(enchantRecord)
+        local currentCharge = enchantedItem.type.itemData(enchantedItem).enchantmentCharge
+
+        return currentCharge / totalCharge
+    end
+
+    local selectedSpell = s3lf.getSelectedSpell()
+    if not selectedSpell then return 0.0 end
+
+    local chance, _ = Magic:getSpellCastChance(s3lf.gameObject, selectedSpell, true, true)
+
+    return chance / 100
 end
 
 ---@param statName string name of a dynamic stat
@@ -85,8 +125,7 @@ end
 ---@return boolean
 local function weaponIsEnchanted(weapon)
     if not weapon then return false end
-    local weaponRecord = weapon.type.records[weapon.recordId]
-    return weaponRecord.enchant ~= nil
+    return weapon.type.records[weapon.recordId].enchant ~= nil
 end
 
 local function normalizedWeaponHealth()
@@ -171,21 +210,21 @@ PinkyAtlas = I.S3AtlasConstructor.constructAtlas {
     tileSize = Vectors.Tiles.Pinky,
     tilesPerRow = 10,
     totalTiles = 100,
-    atlasPath = 'textures/s3/chim/tribunalpinky.dds'
+    atlasPath = 'textures/s3/ttth/tribunalpinky.dds'
 }
 
 MiddleAtlas = I.S3AtlasConstructor.constructAtlas {
     tileSize = Vectors.Tiles.Middle,
     tilesPerRow = 10,
     totalTiles = 100,
-    atlasPath = 'textures/s3/chim/tribunalmiddle.dds'
+    atlasPath = 'textures/s3/ttth/tribunalmiddle.dds'
 }
 
 ThumbAtlas = I.S3AtlasConstructor.constructAtlas {
     tileSize = Vectors.Tiles.Thumb,
     tilesPerRow = 10,
     totalTiles = 100,
-    atlasPath = 'textures/s3/chim/tribunalthumb.dds'
+    atlasPath = 'textures/s3/ttth/tribunalthumb.dds'
 }
 
 local ThumbSize, ThumbPos = Attrs.Thumb()
@@ -296,18 +335,39 @@ HudCore = ui.create {
                     type = ui.TYPE.Image,
                     name = 'CastableIcon',
                     props = {
-                        resource = ui.texture { path = getSelectedWeaponIcon() },
+                        resource = ui.texture { path = getCastableIcon() or 'white' },
                         size = Attrs.SubIcon(),
+                        visible = true,
+                        color = getCastableIcon() == nil and util.color.hex('000000') or nil,
+                        alpha = getCastableIcon() ~= nil and 1.0 or .5,
                     }
                 },
                 {
-                    type = ui.TYPE.Image,
-                    name = 'CastChanceBar',
+                    name = 'CastChanceContainer',
                     props = {
-                        resource = ui.texture { path = 'white' },
-                        size = Attrs.ChanceBar(),
-                        color = H4ND.CastChanceColor,
+                        size = BarSize,
                     },
+                    content = ui.content {
+                        {
+                            type = ui.TYPE.Image,
+                            name = 'CastChanceBackground',
+                            props = {
+                                resource = ui.texture { path = 'white' },
+                                size = BarSize,
+                                color = util.color.hex('000000'),
+                                alpha = 0.5,
+                            },
+                        },
+                        {
+                            type = ui.TYPE.Image,
+                            name = 'CastChanceBar',
+                            props = {
+                                resource = ui.texture { path = 'white' },
+                                size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y),
+                                color = H4ND.CastChanceColor,
+                            },
+                        },
+                    }
                 },
             }
         }
@@ -441,13 +501,40 @@ end
 
 ---@return boolean
 local function updateWeaponDurability()
-    local health = math.floor(normalizedWeaponHealth() * 100)
+    local health = math.floor(normalizedWeaponHealth() * BarSize.x)
     local width = HudCore.layout.content.WeaponIndicator.content.DurabilityBar.props.size.x
 
-    width = math.floor(width * 100)
+    width = math.floor(width)
     if width == health then return false end
 
     s3lf.gameObject:sendEvent('H4NDUpdateDurability')
+    return true
+end
+
+---@return boolean
+local function updateCastableIcon()
+    local currentCastable = Magic.getCastable(s3lf.gameObject)
+
+    local checkCastable = currentCastable and currentCastable.id or nil
+    local lastCastable = H4ND.state.equippedCastable and H4ND.state.equippedCastable.id or nil
+    if checkCastable == lastCastable then return false end
+
+    H4ND.state.equippedCastable = currentCastable
+    s3lf.gameObject:sendEvent('H4NDUpdateCastable')
+    return true
+end
+
+---@return boolean
+local function updateCastableBar()
+    local targetWidth = math.floor(BarSize.x * getCastableWidth())
+
+    local castableIndicator = HudCore.layout.content.CastableIndicator.content
+    local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
+
+    local currentWidth = math.floor(chanceBarProps.size.x)
+    if currentWidth == targetWidth then return false end
+
+    s3lf.gameObject:sendEvent('H4NDUpdateCastableBar')
     return true
 end
 
@@ -464,6 +551,12 @@ return {
         HUD = function()
             return HudCore
         end,
+        getCastChance = function(spell, actor)
+            return Magic:getSpellCastChance(spell, actor or s3lf.gameObject)
+        end,
+        getSpellCost = function(spell)
+            return Magic:getSpellCost(spell)
+        end,
     },
     eventHandlers = {
         H4NDCorrectSecondAttribute = function(atlasData)
@@ -471,14 +564,45 @@ return {
             H4ND[atlasName .. 'Stat'] = stat
             namesToAtlases[atlasName].element:update()
         end,
-        H4NDUpdateWeapon = function()
-            local weaponIndicator = HudCore.layout.content.WeaponIndicator.content[1].content
-            weaponIndicator.WeaponIcon.props.resource = ui.texture { path = getSelectedWeaponIcon() }
-            updateDurabilityBarSize()
+        H4NDUpdateCastable = function()
+            local icon = getCastableIcon()
+            local castableIndicator = HudCore.layout.content.CastableIndicator.content
+            local castIconProps = castableIndicator.CastableIcon.props
+            local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
+
+            if not icon then
+                icon = 'white'
+                castIconProps.alpha = .5
+                castIconProps.color = util.color.hex('000000')
+            else
+                castIconProps.alpha = 1.
+                castIconProps.color = nil
+            end
+
+            chanceBarProps.size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y)
+            chanceBarProps.visible = icon ~= nil
+            castIconProps.resource = ui.texture { path = icon }
+
+            HudCore:update()
+        end,
+        H4NDUpdateCastableBar = function()
+            local castableIndicator = HudCore.layout.content.CastableIndicator.content
+            local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
+            chanceBarProps.size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y)
+
             HudCore:update()
         end,
         H4NDUpdateDurability = function()
             updateDurabilityBarSize()
+            HudCore:update()
+        end,
+        H4NDUpdateWeapon = function()
+            local weaponIndicator = HudCore.layout.content.WeaponIndicator.content[1].content
+
+            weaponIndicator.WeaponIcon.props.resource = ui.texture { path = getSelectedWeaponIcon() }
+            weaponIndicator.EnchantFrame.props.visible = weaponIsEnchanted(getWeapon())
+            updateDurabilityBarSize()
+
             HudCore:update()
         end,
     },
@@ -492,12 +616,17 @@ return {
             end
 
             local updated = false
-            for _, updater in ipairs {
+            for i, updater in ipairs {
                 updateWeaponIcon,
                 updateWeaponDurability,
+                updateCastableIcon,
+                updateCastableBar,
             } do
                 updated = updater()
-                if updated then break end
+                if updated then
+                    print('bailing on updater ' .. i)
+                    break
+                end
             end
 
             updateStatFrames()
