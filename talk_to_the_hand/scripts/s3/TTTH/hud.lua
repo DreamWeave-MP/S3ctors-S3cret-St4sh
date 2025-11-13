@@ -7,6 +7,9 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
+local Constants = require 'scripts.s3.TTTH.constants'
+local Colors, Vectors = Constants.Colors, Constants.Vectors
+
 local Magic = require 'scripts.s3.spellUtil'
 
 local HudCore,
@@ -21,6 +24,7 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field UIFramerate integer
 ---@field HUDWidth number
 ---@field HUDPos util.vector2
+---@field HUDAnchor util.vector2
 ---@field ThumbStat string
 ---@field PinkyStat string
 ---@field MiddleStat string
@@ -140,24 +144,8 @@ end
 
 local screenSize = ui.screenSize()
 
-local Vectors, Colors = {
-    BottomLeft = util.vector2(0, 1),
-    BottomRight = util.vector2(1, 1),
-    Center = util.vector2(.5, .5),
-    LeftCenter = util.vector2(0, .5),
-    RelativeHandSize = util.vector2(H4ND.HUDWidth, H4ND.HUDWidth * 2),
-    Zero = util.vector2(0, 0),
-    Tiles = {
-        Pinky = util.vector2(128, 256),
-        Middle = util.vector2(256, 512),
-        Thumb = util.vector2(278, 271),
-    },
-    TopRight = util.vector2(1, 0),
-}, {
-    Black = util.color.hex('000000'),
-}
-
-local handSize = screenSize:emul(Vectors.RelativeHandSize)
+local RelativeHandSize = util.vector2(H4ND.HUDWidth, H4ND.HUDWidth * 2)
+local handSize = screenSize:emul(RelativeHandSize)
 
 --- Table mapping X pixel length to Y pixel length
 local Ratio = {
