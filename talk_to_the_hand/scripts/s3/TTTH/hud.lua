@@ -623,15 +623,13 @@ return {
                 CurrentDelay = 0
             end
 
-            local updated = false
             for i, updater in ipairs {
                 updateWeaponIcon,
                 updateWeaponDurability,
                 updateCastableIcon,
                 updateCastableBar,
             } do
-                updated = updater()
-                if updated then
+                if updater() then
                     print('bailing on updater ' .. i)
                     break
                 end
