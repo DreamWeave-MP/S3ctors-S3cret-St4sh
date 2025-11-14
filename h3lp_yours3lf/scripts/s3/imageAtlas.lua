@@ -49,6 +49,7 @@ function ImageAtlas:cycleFrame(nextOrPrev)
     local props = element.layout.props
 
     local currentTile = self:getNextFrame(nextOrPrev)
+    self.currentTile = currentTile
 
     props.resource = self.textureArray[currentTile]
 
