@@ -65,6 +65,30 @@ I.Settings.registerGroup {
             60
         ),
         setting(
+            'UseFade',
+            'checkbox',
+            {},
+            'UseFadeName',
+            'UseFadeDesc',
+            true
+        ),
+        setting(
+            'FadeTime',
+            'number',
+            { integer = false, min = 0.0, max = 1200.0 },
+            'FadeTimeName',
+            'FadeTimeDesc',
+            30.0
+        ),
+        setting(
+            'FadeStep',
+            'number',
+            { integer = false, min = 0.01, max = 1.0, },
+            'FadeStepName',
+            'FadeStepDesc',
+            0.02
+        ),
+        setting(
             'HUDWidth',
             'number',
             { integer = false, min = 0.01, max = 0.5 },
