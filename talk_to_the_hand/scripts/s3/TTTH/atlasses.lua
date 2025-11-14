@@ -30,13 +30,6 @@ return function(Constants, handSize, getColorForElement)
         atlasPath = 'textures/s3/ttth/tribunalthumb.dds'
     }
 
-    local CompassAtlas = I.S3AtlasConstructor.constructAtlas {
-        tileSize = Constants.Vectors.Tiles.Compass,
-        tilesPerRow = 30,
-        totalTiles = 360,
-        atlasPath = 'textures/s3/ttth/starCompass.dds'
-    }
-
     local ThumbSize, ThumbPos = Constants.Attrs.Thumb(handSize)
     ThumbAtlas:spawn {
         color = getColorForElement('Thumb'),
