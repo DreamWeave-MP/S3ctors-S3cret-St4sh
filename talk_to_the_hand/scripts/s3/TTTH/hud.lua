@@ -178,14 +178,80 @@ local function normalizedWeaponHealth()
     return mult
 end
 
+---@return boolean
+local function updateWeaponIcon()
+    local currentWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+    if H4ND.state.equippedWeapon == currentWeapon then return false end
+    H4ND.state.equippedWeapon = currentWeapon
+    s3lf.gameObject:sendEvent('H4NDUpdateWeapon')
+    return true
+end
+
+---@return boolean
+local function updateWeaponDurability()
+    local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
+    local health = math.floor(normalizedWeaponHealth() * baseWidth)
+    local width = HudCore.layout.content.WeaponIndicator.content.DurabilityBar.props.size.x
+
+    width = math.floor(width)
+    if width == health then return false end
+
+    s3lf.gameObject:sendEvent('H4NDUpdateDurability')
+    return true
+end
+
+---@return boolean
+local function updateCastableIcon()
+    local currentCastable = Magic.getCastable(s3lf.gameObject)
+
+    local checkCastable = currentCastable and currentCastable.id or nil
+    local lastCastable = H4ND.state.equippedCastable and H4ND.state.equippedCastable.id or nil
+    if checkCastable == lastCastable then return false end
+
+    H4ND.state.equippedCastable = currentCastable
+    s3lf.gameObject:sendEvent('H4NDUpdateCastable')
+    return true
+end
+
+---@return boolean
+local function updateCastableBar()
+    local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
+    local targetWidth = math.floor(baseWidth * getCastableWidth())
+
+    local castableIndicator = CastableIndicator.layout.content
+    local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
+
+    local currentWidth = math.floor(chanceBarProps.size.x)
+    if currentWidth == targetWidth then return false end
+
+    s3lf.gameObject:sendEvent('H4NDUpdateCastableBar')
+    return true
+end
+
+local function updateDurabilityBarSize()
+    local weaponIndicator = HudCore.layout.content.WeaponIndicator.content
+    local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
+    weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
+end
+
 local handSize = H4ND.getHandSize()
-ThumbAtlas,
-MiddleAtlas,
-PinkyAtlas = require 'scripts.s3.TTTH.atlasses' (
+ThumbAtlas, MiddleAtlas, PinkyAtlas = require 'scripts.s3.TTTH.atlasses' (
     Constants,
     handSize,
     getColorForElement
 )
+local atlasMap = {
+    Thumb = ThumbAtlas,
+    Middle = MiddleAtlas,
+    Pinky = PinkyAtlas,
+}
+local function updateStatFrames()
+    if not HudCore then return end
+
+    for elementName, atlas in pairs(atlasMap) do
+        updateAtlas(elementName, atlas)
+    end
+end
 
 local BarSize = Attrs.ChanceBar(handSize)
 
@@ -312,173 +378,106 @@ HudCore = ui.create {
     }
 }
 
-local function updateStatFrames()
-    if not HudCore then return end
+H4ndStorage:subscribe(
+    async:callback(
+        function(_, key)
+            local value, atlasName, atlas = H4ndStorage:get(key)
 
-    for elementName, atlas in pairs {
-        Thumb = ThumbAtlas,
-        Middle = MiddleAtlas,
-        Pinky = PinkyAtlas,
-    } do
-        updateAtlas(elementName, atlas)
-    end
-end
+            if key == 'ThumbColor' or key == 'ThumbStat' then
+                atlasName, atlas = 'Thumb', ThumbAtlas
+            elseif key == 'MiddleColor' or key == 'MiddleStat' then
+                atlasName, atlas = 'Middle', MiddleAtlas
+            elseif key == 'PinkyColor' or key == 'PinkyStat' then
+                atlasName, atlas = 'Pinky', PinkyAtlas
+            elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
+                if key == 'HUDWidth' then
+                    handSize = H4ND.getHandSize()
+                    HudCore.layout.props.size = handSize
 
-local namesToAtlases =
-
-    H4ndStorage:subscribe(
-        async:callback(
-            function(_, key)
-                -- print(key)
-                local value, atlasName, atlas = H4ndStorage:get(key)
-
-                if key == 'ThumbColor' or key == 'ThumbStat' then
-                    atlasName, atlas = 'Thumb', ThumbAtlas
-                elseif key == 'MiddleColor' or key == 'MiddleStat' then
-                    atlasName, atlas = 'Middle', MiddleAtlas
-                elseif key == 'PinkyColor' or key == 'PinkyStat' then
-                    atlasName, atlas = 'Pinky', PinkyAtlas
-                elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
-                    if key == 'HUDWidth' then
-                        handSize = H4ND.getHandSize()
-                        HudCore.layout.props.size = handSize
-
-                        for attrFunc, resizeAtlas in pairs {
-                            [Attrs.Thumb] = ThumbAtlas,
-                            [Attrs.Middle] = MiddleAtlas,
-                            [Attrs.Pinky] = PinkyAtlas,
-                        } do
-                            local props = resizeAtlas.element.layout.props
-                            props.size, props.position = attrFunc(handSize)
-                            resizeAtlas.element:update()
-                        end
-
-                        ---@diagnostic disable-next-line: undefined-field
-                        H4ND.getElementByName('EffectBar').props.size = Attrs.EffectBar(handSize)
-
-                        ---@diagnostic disable-next-line: undefined-field
-                        local castable = H4ND.getElementByName('CastableIndicator')
-                        local castableContent = castable.layout.content
-
-                        castableContent.CastableIcon.props.size = Attrs.SubIcon(handSize)
-                        castableContent.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar(handSize)
-                        castable:update()
-
-
-                        ---@diagnostic disable-next-line: undefined-field
-                        local weapon = H4ND.getElementByName('WeaponIndicator').content
-                        local iconBoxProps = weapon.WeaponIconBox.props
-                        iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
-
-                        local durabilityBarSize = Attrs.ChanceBar(handSize)
-
-                        weapon.DurabilityBar.props.size = util.vector2(
-                            durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
-                    elseif key == 'HUDPos' then
-                        HudCore.layout.props.relativePosition = value
-                    elseif key == 'HUDAnchor' then
-                        HudCore.layout.props.anchor = value
+                    for attrFunc, resizeAtlas in pairs {
+                        [Attrs.Thumb] = ThumbAtlas,
+                        [Attrs.Middle] = MiddleAtlas,
+                        [Attrs.Pinky] = PinkyAtlas,
+                    } do
+                        local props = resizeAtlas.element.layout.props
+                        props.size, props.position = attrFunc(handSize)
+                        resizeAtlas.element:update()
                     end
 
-                    HudCore:update()
-                elseif key == 'UIFramerate' then
-                    TotalDelay = 1 / H4ndStorage:get('UIFramerate')
+                    ---@diagnostic disable-next-line: undefined-field
+                    H4ND.getElementByName('EffectBar').props.size = Attrs.EffectBar(handSize)
+
+                    ---@diagnostic disable-next-line: undefined-field
+                    local castable = H4ND.getElementByName('CastableIndicator')
+                    assert(castable)
+                    ---@diagnostic disable-next-line: undefined-field
+                    local castableContent = castable.layout.content
+
+                    castableContent.CastableIcon.props.size = Attrs.SubIcon(handSize)
+                    castableContent.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar(handSize)
+                    ---@diagnostic disable-next-line: undefined-field
+                    castable:update()
+
+
+                    ---@diagnostic disable-next-line: undefined-field
+                    local weapon = H4ND.getElementByName('WeaponIndicator').content
+                    local iconBoxProps = weapon.WeaponIconBox.props
+                    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
+
+                    local durabilityBarSize = Attrs.ChanceBar(handSize)
+
+                    weapon.DurabilityBar.props.size = util.vector2(
+                        durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
+                elseif key == 'HUDPos' then
+                    HudCore.layout.props.relativePosition = value
+                elseif key == 'HUDAnchor' then
+                    HudCore.layout.props.anchor = value
                 end
 
-                if atlasName and atlas then
-                    atlas.element.layout.props.color = getColorForElement(atlasName)
-                    atlas.element:update()
+                HudCore:update()
+            elseif key == 'UIFramerate' then
+                TotalDelay = 1 / H4ndStorage:get('UIFramerate')
+            end
 
-                    if key == 'PinkyStat' or key == 'MiddleStat' or key == 'ThumbStat' then
-                        local statToUpdate, usedAttributes = nil, {
-                            magicka = true,
-                            health = true,
-                            fatigue = true,
-                        }
+            if atlasName and atlas then
+                atlas.element.layout.props.color = getColorForElement(atlasName)
+                atlas.element:update()
 
-                        local thisAtlas = H4ND.getStatAtlas(key)
+                if key == 'PinkyStat' or key == 'MiddleStat' or key == 'ThumbStat' then
+                    local statToUpdate, usedAttributes = nil, {
+                        magicka = true,
+                        health = true,
+                        fatigue = true,
+                    }
 
-                        local invalidStat = H4ndStorage:get(key)
+                    local thisAtlas = H4ND.getStatAtlas(key)
 
-                        for elementName, statName in pairs {
-                            Pinky = H4ND.PinkyStat,
-                            Thumb = H4ND.ThumbStat,
-                            Middle = H4ND.MiddleStat,
-                        } do
-                            usedAttributes[statName] = nil
+                    for elementName, statName in pairs {
+                        Pinky = H4ND.PinkyStat,
+                        Thumb = H4ND.ThumbStat,
+                        Middle = H4ND.MiddleStat,
+                    } do
+                        usedAttributes[statName] = nil
 
-                            if statName == invalidStat and H4ND.getStatAtlas(elementName) ~= thisAtlas then
-                                atlasName = elementName
-                            end
+                        if statName == value and H4ND.getElementByName(elementName) ~= thisAtlas then
+                            atlasName = elementName
                         end
-
-                        statToUpdate = next(usedAttributes)
-
-                        if not statToUpdate then return end
-
-                        s3lf.gameObject:sendEvent('H4NDCorrectSecondAttribute', {
-                            stat = statToUpdate,
-                            atlasName = atlasName,
-                        })
                     end
+
+                    statToUpdate = next(usedAttributes)
+
+                    if not statToUpdate then return end
+
+                    print(thisAtlas, atlasName, statToUpdate)
+                    s3lf.gameObject:sendEvent('H4NDCorrectSecondAttribute', {
+                        stat = statToUpdate,
+                        atlasName = atlasName,
+                    })
                 end
             end
-        )
+        end
     )
-
----@return boolean
-local function updateWeaponIcon()
-    local currentWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
-    if H4ND.state.equippedWeapon == currentWeapon then return false end
-    H4ND.state.equippedWeapon = currentWeapon
-    s3lf.gameObject:sendEvent('H4NDUpdateWeapon')
-    return true
-end
-
----@return boolean
-local function updateWeaponDurability()
-    local health = math.floor(normalizedWeaponHealth() * BarSize.x)
-    local width = HudCore.layout.content.WeaponIndicator.content.DurabilityBar.props.size.x
-
-    width = math.floor(width)
-    if width == health then return false end
-
-    s3lf.gameObject:sendEvent('H4NDUpdateDurability')
-    return true
-end
-
----@return boolean
-local function updateCastableIcon()
-    local currentCastable = Magic.getCastable(s3lf.gameObject)
-
-    local checkCastable = currentCastable and currentCastable.id or nil
-    local lastCastable = H4ND.state.equippedCastable and H4ND.state.equippedCastable.id or nil
-    if checkCastable == lastCastable then return false end
-
-    H4ND.state.equippedCastable = currentCastable
-    s3lf.gameObject:sendEvent('H4NDUpdateCastable')
-    return true
-end
-
----@return boolean
-local function updateCastableBar()
-    local targetWidth = math.floor(BarSize.x * getCastableWidth())
-
-    local castableIndicator = CastableIndicator.layout.content
-    local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
-
-    local currentWidth = math.floor(chanceBarProps.size.x)
-    if currentWidth == targetWidth then return false end
-
-    s3lf.gameObject:sendEvent('H4NDUpdateCastableBar')
-    return true
-end
-
-local function updateDurabilityBarSize()
-    local weaponIndicator = HudCore.layout.content.WeaponIndicator.content
-    local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
-    weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
-end
+)
 
 CurrentDelay, TotalDelay = 0, 1 / H4ND.UIFramerate
 local updateFunctions = {
@@ -504,7 +503,8 @@ return {
         H4NDCorrectSecondAttribute = function(atlasData)
             local stat, atlasName = atlasData.stat, atlasData.atlasName
             H4ND[atlasName .. 'Stat'] = stat
-            namesToAtlases[atlasName].element:update()
+            ---@diagnostic disable-next-line: undefined-field
+            H4ND.getElementByName(atlasName).element:update()
         end,
         H4NDUpdateCastable = function()
             local icon = getCastableIcon()
