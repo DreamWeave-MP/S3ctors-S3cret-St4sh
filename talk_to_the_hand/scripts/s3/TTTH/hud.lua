@@ -264,6 +264,16 @@ CastableIndicator = require 'scripts.s3.TTTH.components.castableIndicator' {
     Constants = Constants,
 }
 
+local WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
+    barSize = BarSize,
+    handSize = handSize,
+    weaponHealth = normalizedWeaponHealth(),
+    durabilityColor = H4ND.DurabilityColor,
+    enchantFrameVisible = weaponIsEnchanted(getWeapon()),
+    weaponIcon = getSelectedWeaponIcon(),
+    Constants = Constants,
+}
+
 HudCore = ui.create {
     layer = 'HUD',
     name = 'H4ND',
@@ -276,53 +286,7 @@ HudCore = ui.create {
         ThumbAtlas.element,
         MiddleAtlas.element,
         PinkyAtlas.element,
-        {
-            type = ui.TYPE.Flex,
-            name = 'WeaponIndicator',
-            props = {
-                position = Attrs.Weapon(handSize),
-            },
-            content = ui.content {
-                {
-                    name = 'WeaponIconBox',
-                    props = {
-                        size = Attrs.SubIcon(handSize),
-                    },
-                    content = ui.content {
-                        {
-                            type = ui.TYPE.Image,
-                            name = 'EnchantFrame',
-                            props = {
-                                resource = ui.texture {
-                                    path = 'textures/menu_icon_magic_equip.dds',
-                                    offset = util.vector2(2, 2),
-                                    size = util.vector2(40, 40)
-                                },
-                                relativeSize = Vectors.BottomRight,
-                                visible = weaponIsEnchanted(getWeapon())
-                            }
-                        },
-                        {
-                            type = ui.TYPE.Image,
-                            name = 'WeaponIcon',
-                            props = {
-                                resource = ui.texture { path = getSelectedWeaponIcon() },
-                                relativeSize = Vectors.BottomRight,
-                            }
-                        },
-                    }
-                },
-                {
-                    type = ui.TYPE.Image,
-                    name = 'DurabilityBar',
-                    props = {
-                        resource = ui.texture { path = 'white' },
-                        size = util.vector2(normalizedWeaponHealth() * BarSize.x, BarSize.y),
-                        color = H4ND.DurabilityColor,
-                    },
-                },
-            }
-        },
+        WeaponIndicator,
         {
             type = ui.TYPE.Image,
             name = 'EffectBar',
