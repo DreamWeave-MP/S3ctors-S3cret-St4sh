@@ -52,10 +52,18 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field CompassSize integer
 ---@field CompassPos util.vector2
 ---@field CompassStyle H4NDCompassStyle
+---@field UseFade boolean
+---@field FadeTime number
+---@field FadeStep number
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
     subscribeHandler = false,
+}
+H4ND.state = {
+    equippedWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight),
+    equippedCastable = s3lf.getSelectedSpell() or s3lf.getSelectedEnchantedItem(),
+    lastUpdateTime = core.getRealTime(),
 }
 
 function H4ND.getHandSize()
@@ -109,11 +117,6 @@ function H4ND.getElementByName(elementName)
         CastableIndicator = CastableIndicator,
     })[elementName]
 end
-
-H4ND.state = {
-    equippedWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight),
-    equippedCastable = s3lf.getSelectedSpell() or s3lf.getSelectedEnchantedItem(),
-}
 
 ---@param item GameObject
 local function getItemIcon(item)
@@ -183,6 +186,11 @@ local function getColorForElement(elementName)
     return H4ND[stat .. 'Color']
 end
 
+local function updateTime()
+    if not H4ND.UseFade then return end
+    H4ND.state.lastUpdateTime = core.getRealTime()
+end
+
 ---@param atlasName string
 ---@param atlas ImageAtlas
 local function updateAtlas(atlasName, atlas)
@@ -190,6 +198,7 @@ local function updateAtlas(atlasName, atlas)
     if atlas.currentTile == targetTile then return end
 
     atlas:cycleFrame(atlas.currentTile < targetTile)
+    updateTime()
 end
 
 ---@return GameObject? weapon
@@ -272,6 +281,29 @@ local function updateDurabilityBarSize()
     local weaponIndicator = WeaponIndicator.layout.content
     local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
     weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
+end
+
+local function handleFade()
+    if not H4ND.UseFade then return end
+    local HudProps = HudCore.layout.props
+    local fadeOut = core.getRealTime() - H4ND.state.lastUpdateTime >= H4ND.FadeTime
+    local fadeIn = HudProps.alpha ~= 1. and not fadeOut
+
+    if fadeOut and HudProps.alpha ~= .0 then
+        HudProps.alpha = math.max(HudProps.alpha - H4ND.FadeStep, .0)
+    elseif fadeIn and HudProps.alpha ~= 1. then
+        HudProps.alpha = math.min(1., HudProps.alpha + H4ND.FadeStep)
+
+        if HudProps.alpha == 1. then
+            updateTime()
+        end
+    else
+        return
+    end
+
+    print(fadeOut, fadeIn, HudProps.alpha)
+
+    HudCore:update()
 end
 
 local function adjustedYaw()
@@ -360,6 +392,7 @@ HudCore = ui.create {
         size = handSize,
         anchor = H4ND.HUDAnchor,
         relativePosition = H4ND.HUDPos,
+        alpha = 1.0,
     },
     content = ui.content {
         ThumbAtlas.element,
@@ -433,10 +466,20 @@ H4ndStorage:subscribe(
                 end
 
                 Compass:update()
+            elseif
+                key == 'UseFade'
+                or key == 'FadeTime'
+                or key == 'FadeStep'
+            then
+                if HudCore.layout.props.alpha ~= 1.0 then HudCore.layout.props.alpha = 1.0 end
+                HudCore:update()
+                H4ND.state.lastUpdateTime = core.getRealTime()
             elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
                 if key == 'HUDWidth' then
+                    updateTime()
                     handSize = H4ND.getHandSize()
                     HudCore.layout.props.size = handSize
+                    HudCore.layout.props.alpha = 1.0
 
                     for attrFunc, resizeAtlas in pairs {
                         [Attrs.Thumb] = ThumbAtlas,
@@ -554,6 +597,7 @@ return {
             H4ND[atlasName .. 'Stat'] = stat
             ---@diagnostic disable-next-line: undefined-field
             H4ND.getElementByName(atlasName).element:update()
+            updateTime()
         end,
         H4NDUpdateCastable = function()
             local icon = getCastableIcon()
@@ -576,6 +620,7 @@ return {
             castIconProps.resource = ui.texture { path = icon }
 
             CastableIndicator:update()
+            updateTime()
         end,
         H4NDUpdateCastableBar = function()
             local castableIndicator = CastableIndicator.layout.content
@@ -585,10 +630,12 @@ return {
             chanceBarProps.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
 
             CastableIndicator:update()
+            updateTime()
         end,
         H4NDUpdateDurability = function()
             updateDurabilityBarSize()
             WeaponIndicator:update()
+            updateTime()
         end,
         H4NDUpdateWeapon = function()
             local weaponIndicator = WeaponIndicator.layout.content.WeaponIconBox.content
@@ -598,6 +645,7 @@ return {
             updateDurabilityBarSize()
 
             WeaponIndicator:update()
+            updateTime()
         end,
     },
     engineHandlers = {
@@ -612,9 +660,9 @@ return {
             if not updateWeaponIcon() then updateWeaponDurability() end
             if not updateCastableIcon() then updateCastableBar() end
 
-            updateCompass()
-
             updateStatFrames()
+            updateCompass()
+            handleFade()
         end,
     }
 }
