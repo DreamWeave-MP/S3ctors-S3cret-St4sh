@@ -11,6 +11,11 @@ return {
     Attrs = {
         ---@param handSize util.vector2
         ---@return util.vector2
+        Castable = function(handSize)
+            return util.vector2(handSize.x * .7775, handSize.y * .235)
+        end,
+        ---@param handSize util.vector2
+        ---@return util.vector2
         ChanceBar = function(handSize)
             return util.vector2(handSize.x * .2, handSize.x * 0.02)
         end,
