@@ -7,8 +7,9 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
+---@type H4NDConstants
 local Constants = require 'scripts.s3.TTTH.constants'
-local Colors, Vectors = Constants.Colors, Constants.Vectors
+local Attrs, Colors, Vectors = Constants.Attrs, Constants.Colors, Constants.Vectors
 
 local Magic = require 'scripts.s3.spellUtil'
 
@@ -33,11 +34,22 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field healthColor util.color
 ---@field DurabilityColor util.color
 ---@field CastChanceColor util.color
+---@field size util.vector2 Absolute size of the hand HUD. This is part of the H4ND state table and not necessarily the original module
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
     subscribeHandler = false,
 }
+
+function H4ND.getHandSize()
+    return ui.screenSize():emul(
+        util.vector2(
+            H4ND.HUDWidth,
+            H4ND.HUDWidth * 2
+        )
+    )
+end
+
 H4ND.state = {
     equippedWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight),
     equippedCastable = s3lf.getSelectedSpell() or s3lf.getSelectedEnchantedItem(),
@@ -142,59 +154,6 @@ local function normalizedWeaponHealth()
     return mult
 end
 
-local screenSize = ui.screenSize()
-
-local RelativeHandSize = util.vector2(H4ND.HUDWidth, H4ND.HUDWidth * 2)
-local handSize = screenSize:emul(RelativeHandSize)
-
---- Table mapping X pixel length to Y pixel length
-local Ratio = {
-    UL = 1.3475177305,
-    UR = 1.37795275591,
-    Pinky = 2.0,
-    Middle = 1.37,
-    Thumb = 0.974820143885,
-}
-
-local Width = {
-    UL = 1 / 6,
-    Pinky = function()
-        return handSize.x * .275
-    end,
-    Middle = function()
-        return handSize.x * .55
-    end,
-    Thumb = function()
-        return handSize.x * .625
-    end,
-}
-
-local Attrs = {
-    ChanceBar = function()
-        return util.vector2(handSize.x * .2, handSize.x * 0.02)
-    end,
-    EffectBar = function()
-        return util.vector2(handSize.x, handSize.y * 0.1)
-    end,
-    Middle = function()
-        local width = Width.Middle()
-        return util.vector2(width, width * Ratio.Middle), util.vector2(handSize.x * .255, handSize.y * 0.015)
-    end,
-    Pinky = function()
-        local width = Width.Pinky()
-        return util.vector2(width, width * Ratio.Pinky), util.vector2(handSize.x * .64, handSize.y * .235)
-    end,
-    SubIcon = function()
-        return util.vector2(handSize.x * .2, handSize.x * .2)
-    end,
-    Thumb = function()
-        local width = Width.Thumb()
-        return util.vector2(width, width * Ratio.Thumb), util.vector2(handSize.x * .075, handSize.y * .35)
-    end,
-    Weapon = function()
-        return util.vector2(handSize.x * .025, handSize.y * .15)
-    end,
-}
 
 PinkyAtlas = I.S3AtlasConstructor.constructAtlas {
     tileSize = Vectors.Tiles.Pinky,
@@ -217,7 +176,7 @@ ThumbAtlas = I.S3AtlasConstructor.constructAtlas {
     atlasPath = 'textures/s3/ttth/tribunalthumb.dds'
 }
 
-local ThumbSize, ThumbPos = Attrs.Thumb()
+local ThumbSize, ThumbPos = Attrs.Thumb(H4ND.size)
 ThumbAtlas:spawn {
     color = getColorForElement('Thumb'),
     name = 'Thumb',
@@ -225,7 +184,7 @@ ThumbAtlas:spawn {
     position = ThumbPos,
 }
 
-local middleSize, middlePos = Attrs.Middle()
+local middleSize, middlePos = Attrs.Middle(H4ND.size)
 MiddleAtlas:spawn {
     color = getColorForElement('Middle'),
     name = 'Middle',
@@ -233,7 +192,7 @@ MiddleAtlas:spawn {
     position = middlePos,
 }
 
-local pinkySize, pinkyPos = Attrs.Pinky()
+local pinkySize, pinkyPos = Attrs.Pinky(H4ND.size)
 PinkyAtlas:spawn {
     color = getColorForElement('Pinky'),
     name = 'Pinky',
@@ -241,7 +200,7 @@ PinkyAtlas:spawn {
     position = pinkyPos,
 }
 
-local BarSize = Attrs.ChanceBar()
+local BarSize = Attrs.ChanceBar(H4ND.size)
 local CastableIndicator = ui.create {
     type = ui.TYPE.Flex,
     name = 'CastableIndicator',
@@ -255,7 +214,7 @@ local CastableIndicator = ui.create {
             name = 'CastableIcon',
             props = {
                 resource = ui.texture { path = getCastableIcon() or 'white' },
-                size = Attrs.SubIcon(),
+                size = Attrs.SubIcon(H4ND.size),
                 visible = true,
                 color = getCastableIcon() == nil and Colors.Black or nil,
                 alpha = getCastableIcon() ~= nil and 1.0 or .5,
@@ -295,7 +254,7 @@ HudCore = ui.create {
     layer = 'HUD',
     name = 'H4ND',
     props = {
-        size = handSize,
+        size = H4ND.getHandSize(),
         anchor = H4ND.HUDAnchor,
         relativePosition = H4ND.HUDPos,
     },
@@ -307,13 +266,13 @@ HudCore = ui.create {
             type = ui.TYPE.Flex,
             name = 'WeaponIndicator',
             props = {
-                position = Attrs.Weapon(),
+                position = Attrs.Weapon(H4ND.size),
             },
             content = ui.content {
                 {
                     name = 'WeaponIconBox',
                     props = {
-                        size = Attrs.SubIcon(),
+                        size = Attrs.SubIcon(H4ND.size),
                     },
                     content = ui.content {
                         {
@@ -355,7 +314,7 @@ HudCore = ui.create {
             name = 'EffectBar',
             props = {
                 resource = ui.texture { path = 'white', },
-                size = Attrs.EffectBar(),
+                size = Attrs.EffectBar(H4ND.size),
                 color = util.color.hex('ff0abb'),
                 anchor = Vectors.BottomLeft,
                 relativePosition = Vectors.BottomLeft,
@@ -404,9 +363,7 @@ H4ndStorage:subscribe(
             elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
                 local value = H4ndStorage:get(key)
                 if key == 'HUDWidth' then
-                    local relativeSize = util.vector2(value, value * 2)
-
-                    handSize = ui.screenSize():emul(relativeSize)
+                    local handSize = H4ND.getHandSize()
                     HudCore.layout.props.size = handSize
 
                     for attrFunc, resizeAtlas in pairs {
@@ -415,22 +372,22 @@ H4ndStorage:subscribe(
                         [Attrs.Pinky] = PinkyAtlas,
                     } do
                         local props = resizeAtlas.element.layout.props
-                        props.size, props.position = attrFunc()
+                        props.size, props.position = attrFunc(handSize)
                         resizeAtlas.element:update()
                     end
 
-                    namesToAtlases.EffectBar.props.size = Attrs.EffectBar()
+                    namesToAtlases.EffectBar.props.size = Attrs.EffectBar(handSize)
 
                     local castable = namesToAtlases.CastableIndicator.layout.content
-                    castable.CastableIcon.props.size = Attrs.SubIcon()
-                    castable.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar()
+                    castable.CastableIcon.props.size = Attrs.SubIcon(handSize)
+                    castable.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar(handSize)
                     namesToAtlases.CastableIndicator:update()
 
                     local weapon = namesToAtlases.WeaponIndicator.content
                     local iconBoxProps = weapon.WeaponIconBox.props
-                    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(), Attrs.SubIcon()
+                    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
 
-                    local durabilityBarSize = Attrs.ChanceBar()
+                    local durabilityBarSize = Attrs.ChanceBar(handSize)
 
                     weapon.DurabilityBar.props.size = util.vector2(
                         durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
@@ -536,7 +493,7 @@ end
 
 local function updateDurabilityBarSize()
     local weaponIndicator = HudCore.layout.content.WeaponIndicator.content
-    local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar()
+    local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
     weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
 end
 
@@ -575,7 +532,7 @@ return {
                 castIconProps.color = nil
             end
 
-            local barSize = Attrs.ChanceBar()
+            local barSize = Attrs.ChanceBar(H4ND.getHandSize())
             chanceBarProps.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
             chanceBarProps.visible = icon ~= nil
             castIconProps.resource = ui.texture { path = icon }
@@ -586,7 +543,7 @@ return {
             local castableIndicator = CastableIndicator.layout.content
 
             local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
-            local barSize = Attrs.ChanceBar()
+            local barSize = Attrs.ChanceBar(H4ND.getHandSize())
             chanceBarProps.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
 
             CastableIndicator:update()
