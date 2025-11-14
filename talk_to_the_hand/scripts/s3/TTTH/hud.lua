@@ -38,6 +38,9 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field healthColor util.color
 ---@field DurabilityColor util.color
 ---@field CastChanceColor util.color
+---@field CompassColor util.color
+---@field CompassSize integer
+---@field CompassPos util.vector2
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
@@ -326,9 +329,9 @@ Compass = ui.create {
     name = 'H4NDCompass',
     type = ui.TYPE.Image,
     props = {
-        relativePosition = Constants.Vectors.Center,
-        size = util.vector2(64, 64),
-        color = util.color.hex('8c8b4d'),
+        relativePosition = H4ND.CompassPos,
+        size = util.vector2(H4ND.CompassSize, H4ND.CompassSize),
+        color = H4ND.CompassColor,
         resource = CompassAtlas.textureArray[adjustedYaw()],
         anchor = util.vector2(.5, .515625)
     },
@@ -345,6 +348,18 @@ H4ndStorage:subscribe(
                 atlasName, atlas = 'Middle', MiddleAtlas
             elseif key == 'PinkyColor' or key == 'PinkyStat' then
                 atlasName, atlas = 'Pinky', PinkyAtlas
+            elseif key == 'CompassSize' or key == 'CompassPos' or key == 'CompassColor' then
+                local compassProps = Compass.layout.props
+
+                if key == 'CompassSize' then
+                    compassProps.size = util.vector2(value, value)
+                elseif key == 'CompassPos' then
+                    compassProps.relativePosition = value
+                elseif key == 'CompassColor' then
+                    compassProps.color = value
+                end
+
+                Compass:update()
             elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
                 if key == 'HUDWidth' then
                     handSize = H4ND.getHandSize()
