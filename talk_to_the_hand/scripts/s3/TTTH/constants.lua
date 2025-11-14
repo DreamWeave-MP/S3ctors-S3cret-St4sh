@@ -70,6 +70,7 @@ return {
             Middle = util.vector2(256, 512),
             Thumb = util.vector2(278, 271),
             Compass = util.vector2(64, 64),
+            MoonAndStarAdjust = util.vector2(0, .015625)
         },
         TopRight = util.vector2(1, 0),
 

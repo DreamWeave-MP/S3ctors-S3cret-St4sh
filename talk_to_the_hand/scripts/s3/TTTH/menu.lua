@@ -105,7 +105,7 @@ I.Settings.registerGroup {
             {},
             'CompassColorName',
             'CompassColorDesc',
-            util.color.hex('8c8b4d')
+            util.color.hex('ffffff')
         ),
         setting(
             'CompassSize',
@@ -113,7 +113,15 @@ I.Settings.registerGroup {
             { integer = true, min = 16, max = 128 },
             'CompassSizeName',
             'CompassSizeDesc',
-            24
+            48
+        ),
+        setting(
+            'CompassStyle',
+            'select',
+            { items = { 'Moon and Star', 'Redguard', 'Redguard Mono', }, l10n = ModName },
+            'CompassStyleName',
+            'CompassStyleDesc',
+            'Redguard'
         ),
         setting(
             'ThumbStat',
