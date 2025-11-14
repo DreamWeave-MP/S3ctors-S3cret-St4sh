@@ -253,25 +253,25 @@ local function updateStatFrames()
     end
 end
 
-local BarSize = Attrs.ChanceBar(handSize)
+local BarSize, castableIcon = Attrs.ChanceBar(handSize), getCastableIcon()
 
 CastableIndicator = ui.create {
     type = ui.TYPE.Flex,
     name = 'CastableIndicator',
     props = {
-        anchor = Vectors.TopRight,
-        relativePosition = Vectors.TopRight + util.vector2(-.02, .03),
+        anchor = Vectors.BottomLeft,
+        position = Attrs.Castable(handSize),
     },
     content = ui.content {
         {
             type = ui.TYPE.Image,
             name = 'CastableIcon',
             props = {
-                resource = ui.texture { path = getCastableIcon() or 'white' },
+                resource = ui.texture { path = castableIcon or 'white' },
                 size = Attrs.SubIcon(handSize),
                 visible = true,
-                color = getCastableIcon() == nil and Colors.Black or nil,
-                alpha = getCastableIcon() ~= nil and 1.0 or .5,
+                color = castableIcon == nil and Colors.Black or nil,
+                alpha = castableIcon ~= nil and 1.0 or .5,
             }
         },
         {
@@ -407,17 +407,23 @@ H4ndStorage:subscribe(
                     ---@diagnostic disable-next-line: undefined-field
                     H4ND.getElementByName('EffectBar').props.size = Attrs.EffectBar(handSize)
 
-                    ---@diagnostic disable-next-line: undefined-field
                     local castable = H4ND.getElementByName('CastableIndicator')
                     assert(castable)
+
+                    ---@diagnostic disable-next-line: undefined-field
+                    castable.layout.props.position = Attrs.Castable(handSize)
+
                     ---@diagnostic disable-next-line: undefined-field
                     local castableContent = castable.layout.content
 
                     castableContent.CastableIcon.props.size = Attrs.SubIcon(handSize)
-                    castableContent.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar(handSize)
+
+                    local container, barSize = castableContent.CastChanceContainer.content, Attrs.ChanceBar(handSize)
+                    container.CastChanceBackground.props.size = barSize
+                    container.CastChanceBar.props.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
+
                     ---@diagnostic disable-next-line: undefined-field
                     castable:update()
-
 
                     ---@diagnostic disable-next-line: undefined-field
                     local weapon = H4ND.getElementByName('WeaponIndicator').content
