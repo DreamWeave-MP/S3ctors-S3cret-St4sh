@@ -11,6 +11,11 @@ local s3lf = I.s3lf
 local Constants = require 'scripts.s3.TTTH.constants'
 local Attrs, Colors, Vectors = Constants.Attrs, Constants.Colors, Constants.Vectors
 
+--- Implement fade effects
+--- Hud enabled/disabled detection
+--- setting to disable compass entirely
+--- notifier box
+---
 local Magic = require 'scripts.s3.spellUtil'
 
 local HudCore,
@@ -23,6 +28,11 @@ CastableIndicator,
 WeaponIndicator,
 TotalDelay,
 CurrentDelay
+
+---@alias H4NDCompassStyle
+---| 'Moon and Star'
+---| 'Redguard'
+---| 'Redguard Mono'
 
 local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@class H4ND: ProtectedTable
@@ -41,6 +51,7 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field CompassColor util.color
 ---@field CompassSize integer
 ---@field CompassPos util.vector2
+---@field CompassStyle H4NDCompassStyle
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
@@ -64,6 +75,26 @@ function H4ND.getStatAtlas(statName)
         PinkyStat = PinkyAtlas,
         ThumbStat = ThumbAtlas
     })[statName]
+end
+
+---@alias DynamicStatName
+---| 'fatigue'
+---| 'health'
+---| 'magicka'
+
+---@param statName DynamicStatName
+---@return ImageAtlas atlas, string atlasName
+function H4ND.getAtlasByStatName(statName)
+    for atlasStat, atlas in pairs {
+        MiddleStat = { MiddleAtlas, 'Middle' },
+        PinkyStat = { PinkyAtlas, 'Pinky' },
+        ThumbStat = { ThumbAtlas, 'Thumb' },
+    } do
+        ---@diagnostic disable-next-line: redundant-return-value, return-type-mismatch
+        if H4ND[atlasStat] == statName then return table.unpack(atlas) end
+    end
+
+    error('Invalid atlas name provided: ' .. statName)
 end
 
 ---@param elementName string
@@ -183,6 +214,10 @@ local function normalizedWeaponHealth()
     return mult
 end
 
+function H4ND:getCompassPath()
+    return ('textures/s3/TTTH/compass/%s.dds'):format(self.CompassStyle)
+end
+
 ---@return boolean
 local function updateWeaponIcon()
     local currentWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
@@ -257,11 +292,33 @@ local function updateCompass()
 end
 
 local handSize = H4ND.getHandSize()
-ThumbAtlas, MiddleAtlas, PinkyAtlas, CompassAtlas = require 'scripts.s3.TTTH.atlasses' (
+
+---@return ImageAtlas
+local function respawnCompassAtlas()
+    return I.S3AtlasConstructor.constructAtlas {
+        tileSize = Constants.Vectors.Tiles.Compass,
+        tilesPerRow = 30,
+        totalTiles = 360,
+        atlasPath = H4ND:getCompassPath(),
+    }
+end
+
+local function getCompassAnchor()
+    local anchor = Constants.Vectors.Center
+
+    if H4ND.CompassStyle == 'Moon and Star' then
+        anchor = anchor + Constants.Vectors.Tiles.MoonAndStarAdjust
+    end
+
+    return anchor
+end
+
+CompassAtlas, ThumbAtlas, MiddleAtlas, PinkyAtlas = respawnCompassAtlas(), require 'scripts.s3.TTTH.atlasses' (
     Constants,
     handSize,
     getColorForElement
 )
+
 local atlasMap = {
     Thumb = ThumbAtlas,
     Middle = MiddleAtlas,
@@ -333,7 +390,7 @@ Compass = ui.create {
         size = util.vector2(H4ND.CompassSize, H4ND.CompassSize),
         color = H4ND.CompassColor,
         resource = CompassAtlas.textureArray[adjustedYaw()],
-        anchor = util.vector2(.5, .515625)
+        anchor = getCompassAnchor(),
     },
 }
 
@@ -342,13 +399,25 @@ H4ndStorage:subscribe(
         function(_, key)
             local value, atlasName, atlas = H4ndStorage:get(key)
 
-            if key == 'ThumbColor' or key == 'ThumbStat' then
+            if key == 'ThumbStat' then
                 atlasName, atlas = 'Thumb', ThumbAtlas
-            elseif key == 'MiddleColor' or key == 'MiddleStat' then
+            elseif key == 'MiddleStat' then
                 atlasName, atlas = 'Middle', MiddleAtlas
-            elseif key == 'PinkyColor' or key == 'PinkyStat' then
+            elseif key == 'PinkyStat' then
                 atlasName, atlas = 'Pinky', PinkyAtlas
-            elseif key == 'CompassSize' or key == 'CompassPos' or key == 'CompassColor' then
+            elseif
+                key == 'fatigueColor'
+                or key == 'healthColor'
+                or key == 'magickaColor'
+            then
+                local statName = key:gsub('Color$', '')
+                atlas, atlasName = H4ND.getAtlasByStatName(statName)
+                assert(atlas and atlasName)
+            elseif
+                key == 'CompassSize'
+                or key == 'CompassPos'
+                or key == 'CompassColor'
+                or key == 'CompassStyle' then
                 local compassProps = Compass.layout.props
 
                 if key == 'CompassSize' then
@@ -357,6 +426,10 @@ H4ndStorage:subscribe(
                     compassProps.relativePosition = value
                 elseif key == 'CompassColor' then
                     compassProps.color = value
+                elseif key == 'CompassStyle' then
+                    CompassAtlas = respawnCompassAtlas()
+                    compassProps.resource = CompassAtlas.textureArray[adjustedYaw()]
+                    compassProps.anchor = getCompassAnchor()
                 end
 
                 Compass:update()
