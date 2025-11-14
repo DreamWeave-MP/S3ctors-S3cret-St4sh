@@ -154,53 +154,17 @@ local function normalizedWeaponHealth()
     return mult
 end
 
+local handSize = H4ND.getHandSize()
+ThumbAtlas,
+MiddleAtlas,
+PinkyAtlas = require 'scripts.s3.TTTH.atlasses' (
+    Constants,
+    handSize,
+    getColorForElement
+)
 
-PinkyAtlas = I.S3AtlasConstructor.constructAtlas {
-    tileSize = Vectors.Tiles.Pinky,
-    tilesPerRow = 10,
-    totalTiles = 100,
-    atlasPath = 'textures/s3/ttth/tribunalpinky.dds'
-}
+local BarSize = Attrs.ChanceBar(handSize)
 
-MiddleAtlas = I.S3AtlasConstructor.constructAtlas {
-    tileSize = Vectors.Tiles.Middle,
-    tilesPerRow = 10,
-    totalTiles = 100,
-    atlasPath = 'textures/s3/ttth/tribunalmiddle.dds'
-}
-
-ThumbAtlas = I.S3AtlasConstructor.constructAtlas {
-    tileSize = Vectors.Tiles.Thumb,
-    tilesPerRow = 10,
-    totalTiles = 100,
-    atlasPath = 'textures/s3/ttth/tribunalthumb.dds'
-}
-
-local ThumbSize, ThumbPos = Attrs.Thumb(H4ND.size)
-ThumbAtlas:spawn {
-    color = getColorForElement('Thumb'),
-    name = 'Thumb',
-    size = ThumbSize,
-    position = ThumbPos,
-}
-
-local middleSize, middlePos = Attrs.Middle(H4ND.size)
-MiddleAtlas:spawn {
-    color = getColorForElement('Middle'),
-    name = 'Middle',
-    size = middleSize,
-    position = middlePos,
-}
-
-local pinkySize, pinkyPos = Attrs.Pinky(H4ND.size)
-PinkyAtlas:spawn {
-    color = getColorForElement('Pinky'),
-    name = 'Pinky',
-    size = pinkySize,
-    position = pinkyPos,
-}
-
-local BarSize = Attrs.ChanceBar(H4ND.size)
 local CastableIndicator = ui.create {
     type = ui.TYPE.Flex,
     name = 'CastableIndicator',
@@ -214,7 +178,7 @@ local CastableIndicator = ui.create {
             name = 'CastableIcon',
             props = {
                 resource = ui.texture { path = getCastableIcon() or 'white' },
-                size = Attrs.SubIcon(H4ND.size),
+                size = Attrs.SubIcon(handSize),
                 visible = true,
                 color = getCastableIcon() == nil and Colors.Black or nil,
                 alpha = getCastableIcon() ~= nil and 1.0 or .5,
@@ -254,7 +218,7 @@ HudCore = ui.create {
     layer = 'HUD',
     name = 'H4ND',
     props = {
-        size = H4ND.getHandSize(),
+        size = handSize,
         anchor = H4ND.HUDAnchor,
         relativePosition = H4ND.HUDPos,
     },
@@ -266,13 +230,13 @@ HudCore = ui.create {
             type = ui.TYPE.Flex,
             name = 'WeaponIndicator',
             props = {
-                position = Attrs.Weapon(H4ND.size),
+                position = Attrs.Weapon(handSize),
             },
             content = ui.content {
                 {
                     name = 'WeaponIconBox',
                     props = {
-                        size = Attrs.SubIcon(H4ND.size),
+                        size = Attrs.SubIcon(handSize),
                     },
                     content = ui.content {
                         {
@@ -314,7 +278,7 @@ HudCore = ui.create {
             name = 'EffectBar',
             props = {
                 resource = ui.texture { path = 'white', },
-                size = Attrs.EffectBar(H4ND.size),
+                size = Attrs.EffectBar(handSize),
                 color = util.color.hex('ff0abb'),
                 anchor = Vectors.BottomLeft,
                 relativePosition = Vectors.BottomLeft,
@@ -363,7 +327,7 @@ H4ndStorage:subscribe(
             elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
                 local value = H4ndStorage:get(key)
                 if key == 'HUDWidth' then
-                    local handSize = H4ND.getHandSize()
+                    handSize = H4ND.getHandSize()
                     HudCore.layout.props.size = handSize
 
                     for attrFunc, resizeAtlas in pairs {
