@@ -442,7 +442,7 @@ H4ndStorage:subscribe(
 
                 HudCore:update()
             elseif key == 'UIFramerate' then
-                TotalDelay = 1 / H4ndStorage:get('UIFramerate')
+                TotalDelay = 1 / value
             end
 
             if atlasName and atlas then
@@ -474,7 +474,6 @@ H4ndStorage:subscribe(
 
                     if not statToUpdate then return end
 
-                    print(thisAtlas, atlasName, statToUpdate)
                     s3lf.gameObject:sendEvent('H4NDCorrectSecondAttribute', {
                         stat = statToUpdate,
                         atlasName = atlasName,
