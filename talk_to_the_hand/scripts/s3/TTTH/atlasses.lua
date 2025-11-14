@@ -1,8 +1,11 @@
+local util = require 'openmw.util'
+
 local I = require 'openmw.interfaces'
 
 ---@param Constants H4NDConstants
 ---@param handSize util.vector2
 ---@param getColorForElement function
+---@return ImageAtlas, ImageAtlas, ImageAtlas, ImageAtlas
 return function(Constants, handSize, getColorForElement)
     print(Constants, handSize, getColorForElement)
 
@@ -25,6 +28,13 @@ return function(Constants, handSize, getColorForElement)
         tilesPerRow = 10,
         totalTiles = 100,
         atlasPath = 'textures/s3/ttth/tribunalthumb.dds'
+    }
+
+    local CompassAtlas = I.S3AtlasConstructor.constructAtlas {
+        tileSize = Constants.Vectors.Tiles.Compass,
+        tilesPerRow = 30,
+        totalTiles = 360,
+        atlasPath = 'textures/s3/ttth/starCompass.dds'
     }
 
     local ThumbSize, ThumbPos = Constants.Attrs.Thumb(handSize)
@@ -51,5 +61,5 @@ return function(Constants, handSize, getColorForElement)
         position = pinkyPos,
     }
 
-    return ThumbAtlas, MiddleAtlas, PinkyAtlas
+    return ThumbAtlas, MiddleAtlas, PinkyAtlas, CompassAtlas
 end

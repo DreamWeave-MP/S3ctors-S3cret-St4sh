@@ -14,9 +14,11 @@ local Attrs, Colors, Vectors = Constants.Attrs, Constants.Colors, Constants.Vect
 local Magic = require 'scripts.s3.spellUtil'
 
 local HudCore,
+Compass,
 ThumbAtlas,
 MiddleAtlas,
 PinkyAtlas,
+CompassAtlas,
 CastableIndicator,
 WeaponIndicator,
 TotalDelay,
@@ -62,7 +64,7 @@ function H4ND.getStatAtlas(statName)
 end
 
 ---@param elementName string
----@return userdata? handElement
+---@return userdata|ImageAtlas|nil handElement
 function H4ND.getElementByName(elementName)
     return ({
         Middle = MiddleAtlas,
@@ -234,8 +236,25 @@ local function updateDurabilityBarSize()
     weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
 end
 
+local function adjustedYaw()
+    local yaw = math.deg(s3lf.rotation:getYaw())
+
+    if yaw < 0 then yaw = util.remap(yaw, -180, 0, 181, 360) end
+
+    return util.clamp(util.round(yaw), 1, 360)
+end
+
+local function updateCompass()
+    local currentTile = adjustedYaw()
+    if currentTile == CompassAtlas.currentTile then return end
+
+    CompassAtlas.currentTile = currentTile
+    Compass.layout.props.resource = CompassAtlas.textureArray[currentTile]
+    Compass:update()
+end
+
 local handSize = H4ND.getHandSize()
-ThumbAtlas, MiddleAtlas, PinkyAtlas = require 'scripts.s3.TTTH.atlasses' (
+ThumbAtlas, MiddleAtlas, PinkyAtlas, CompassAtlas = require 'scripts.s3.TTTH.atlasses' (
     Constants,
     handSize,
     getColorForElement
@@ -302,6 +321,19 @@ HudCore = ui.create {
     }
 }
 
+Compass = ui.create {
+    layer = 'HUD',
+    name = 'H4NDCompass',
+    type = ui.TYPE.Image,
+    props = {
+        relativePosition = Constants.Vectors.Center,
+        size = util.vector2(64, 64),
+        color = util.color.hex('8c8b4d'),
+        resource = CompassAtlas.textureArray[adjustedYaw()],
+        anchor = util.vector2(.5, .515625)
+    },
+}
+
 H4ndStorage:subscribe(
     async:callback(
         function(_, key)
@@ -323,8 +355,11 @@ H4ndStorage:subscribe(
                         [Attrs.Middle] = MiddleAtlas,
                         [Attrs.Pinky] = PinkyAtlas,
                     } do
+                        ---@diagnostic disable-next-line: undefined-field
                         local props = resizeAtlas.element.layout.props
                         props.size, props.position = attrFunc(handSize)
+
+                        ---@diagnostic disable-next-line: undefined-field
                         resizeAtlas.element:update()
                     end
 
@@ -370,7 +405,10 @@ H4ndStorage:subscribe(
             end
 
             if atlasName and atlas then
+                ---@diagnostic disable-next-line: undefined-field
                 atlas.element.layout.props.color = getColorForElement(atlasName)
+
+                ---@diagnostic disable-next-line: undefined-field
                 atlas.element:update()
 
                 if key == 'PinkyStat' or key == 'MiddleStat' or key == 'ThumbStat' then
@@ -485,6 +523,8 @@ return {
 
             if not updateWeaponIcon() then updateWeaponDurability() end
             if not updateCastableIcon() then updateCastableBar() end
+
+            updateCompass()
 
             updateStatFrames()
         end,
