@@ -484,7 +484,7 @@ return {
             end
 
             if not updateWeaponIcon() then updateWeaponDurability() end
-            if not updateCastableBar() then updateWeaponDurability() end
+            if not updateCastableIcon() then updateCastableBar() end
 
             updateStatFrames()
         end,
