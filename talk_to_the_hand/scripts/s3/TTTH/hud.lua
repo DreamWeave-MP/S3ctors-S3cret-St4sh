@@ -255,53 +255,13 @@ end
 
 local BarSize, castableIcon = Attrs.ChanceBar(handSize), getCastableIcon()
 
-CastableIndicator = ui.create {
-    type = ui.TYPE.Flex,
-    name = 'CastableIndicator',
-    props = {
-        anchor = Vectors.BottomLeft,
-        position = Attrs.Castable(handSize),
-    },
-    content = ui.content {
-        {
-            type = ui.TYPE.Image,
-            name = 'CastableIcon',
-            props = {
-                resource = ui.texture { path = castableIcon or 'white' },
-                size = Attrs.SubIcon(handSize),
-                visible = true,
-                color = castableIcon == nil and Colors.Black or nil,
-                alpha = castableIcon ~= nil and 1.0 or .5,
-            }
-        },
-        {
-            name = 'CastChanceContainer',
-            props = {
-                size = BarSize,
-            },
-            content = ui.content {
-                {
-                    type = ui.TYPE.Image,
-                    name = 'CastChanceBackground',
-                    props = {
-                        resource = ui.texture { path = 'white' },
-                        size = BarSize,
-                        color = Colors.Black,
-                        alpha = 0.5,
-                    },
-                },
-                {
-                    type = ui.TYPE.Image,
-                    name = 'CastChanceBar',
-                    props = {
-                        resource = ui.texture { path = 'white' },
-                        size = util.vector2(BarSize.x * getCastableWidth(), BarSize.y),
-                        color = H4ND.CastChanceColor,
-                    },
-                },
-            }
-        },
-    }
+CastableIndicator = require 'scripts.s3.TTTH.components.castableIndicator' {
+    barSize = BarSize,
+    barColor = H4ND.CastChanceColor,
+    castableIcon = castableIcon,
+    castableWidth = getCastableWidth(),
+    handSize = handSize,
+    Constants = Constants,
 }
 
 HudCore = ui.create {
