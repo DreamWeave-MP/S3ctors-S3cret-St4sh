@@ -409,12 +409,6 @@ H4ndStorage:subscribe(
 )
 
 CurrentDelay, TotalDelay = 0, 1 / H4ND.UIFramerate
-local updateFunctions = {
-    updateWeaponIcon,
-    updateWeaponDurability,
-    updateCastableIcon,
-    updateCastableBar,
-}
 return {
     interfaceName = 'H4nd',
     interface = {
@@ -473,7 +467,6 @@ return {
         H4NDUpdateWeapon = function()
             local weaponIndicator = WeaponIndicator.layout.content.WeaponIconBox.content
 
-            print(getSelectedWeaponIcon())
             weaponIndicator.WeaponIcon.props.resource = ui.texture { path = getSelectedWeaponIcon() }
             weaponIndicator.EnchantFrame.props.visible = weaponIsEnchanted(getWeapon())
             updateDurabilityBarSize()
@@ -490,12 +483,8 @@ return {
                 CurrentDelay = 0
             end
 
-            for i, updater in ipairs(updateFunctions) do
-                if updater() then
-                    print('bailing on updater ' .. i)
-                    break
-                end
-            end
+            if not updateWeaponIcon() then updateWeaponDurability() end
+            if not updateCastableBar() then updateWeaponDurability() end
 
             updateStatFrames()
         end,
