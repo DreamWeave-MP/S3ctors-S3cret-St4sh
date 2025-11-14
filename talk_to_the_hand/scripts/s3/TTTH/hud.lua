@@ -17,6 +17,7 @@ local HudCore,
 ThumbAtlas,
 MiddleAtlas,
 PinkyAtlas,
+CastableIndicator,
 TotalDelay,
 CurrentDelay
 
@@ -48,6 +49,29 @@ function H4ND.getHandSize()
             H4ND.HUDWidth * 2
         )
     )
+end
+
+---@param statName string
+---@return ImageAtlas?
+function H4ND.getStatAtlas(statName)
+    return ({
+        MiddleStat = MiddleAtlas,
+        PinkyStat = PinkyAtlas,
+        ThumbStat = ThumbAtlas
+    })[statName]
+end
+
+---@param elementName string
+---@return userdata? handElement
+function H4ND.getElementByName(elementName)
+    return ({
+        Middle = MiddleAtlas,
+        Pinky = PinkyAtlas,
+        Thumb = ThumbAtlas,
+        EffectBar = HudCore.layout.content.EffectBar,
+        WeaponIndicator = HudCore.layout.content.WeaponIndicator,
+        CastableIndicator = CastableIndicator,
+    })[elementName]
 end
 
 H4ND.state = {
@@ -165,7 +189,7 @@ PinkyAtlas = require 'scripts.s3.TTTH.atlasses' (
 
 local BarSize = Attrs.ChanceBar(handSize)
 
-local CastableIndicator = ui.create {
+CastableIndicator = ui.create {
     type = ui.TYPE.Flex,
     name = 'CastableIndicator',
     props = {
@@ -300,112 +324,107 @@ local function updateStatFrames()
     end
 end
 
-local namesToAtlases, statsToAtlases = {
-    Middle = MiddleAtlas,
-    Pinky = PinkyAtlas,
-    Thumb = ThumbAtlas,
-    EffectBar = HudCore.layout.content.EffectBar,
-    WeaponIndicator = HudCore.layout.content.WeaponIndicator,
-    CastableIndicator = CastableIndicator,
-}, {
-    MiddleStat = MiddleAtlas,
-    PinkyStat = PinkyAtlas,
-    ThumbStat = ThumbAtlas
-}
+local namesToAtlases =
 
-H4ndStorage:subscribe(
-    async:callback(
-        function(_, key)
-            print(key)
-            local atlasName, atlas
-            if key == 'ThumbColor' or key == 'ThumbStat' then
-                atlasName, atlas = 'Thumb', ThumbAtlas
-            elseif key == 'MiddleColor' or key == 'MiddleStat' then
-                atlasName, atlas = 'Middle', MiddleAtlas
-            elseif key == 'PinkyColor' or key == 'PinkyStat' then
-                atlasName, atlas = 'Pinky', PinkyAtlas
-            elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
-                local value = H4ndStorage:get(key)
-                if key == 'HUDWidth' then
-                    handSize = H4ND.getHandSize()
-                    HudCore.layout.props.size = handSize
+    H4ndStorage:subscribe(
+        async:callback(
+            function(_, key)
+                -- print(key)
+                local value, atlasName, atlas = H4ndStorage:get(key)
 
-                    for attrFunc, resizeAtlas in pairs {
-                        [Attrs.Thumb] = ThumbAtlas,
-                        [Attrs.Middle] = MiddleAtlas,
-                        [Attrs.Pinky] = PinkyAtlas,
-                    } do
-                        local props = resizeAtlas.element.layout.props
-                        props.size, props.position = attrFunc(handSize)
-                        resizeAtlas.element:update()
-                    end
+                if key == 'ThumbColor' or key == 'ThumbStat' then
+                    atlasName, atlas = 'Thumb', ThumbAtlas
+                elseif key == 'MiddleColor' or key == 'MiddleStat' then
+                    atlasName, atlas = 'Middle', MiddleAtlas
+                elseif key == 'PinkyColor' or key == 'PinkyStat' then
+                    atlasName, atlas = 'Pinky', PinkyAtlas
+                elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
+                    if key == 'HUDWidth' then
+                        handSize = H4ND.getHandSize()
+                        HudCore.layout.props.size = handSize
 
-                    namesToAtlases.EffectBar.props.size = Attrs.EffectBar(handSize)
-
-                    local castable = namesToAtlases.CastableIndicator.layout.content
-                    castable.CastableIcon.props.size = Attrs.SubIcon(handSize)
-                    castable.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar(handSize)
-                    namesToAtlases.CastableIndicator:update()
-
-                    local weapon = namesToAtlases.WeaponIndicator.content
-                    local iconBoxProps = weapon.WeaponIconBox.props
-                    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
-
-                    local durabilityBarSize = Attrs.ChanceBar(handSize)
-
-                    weapon.DurabilityBar.props.size = util.vector2(
-                        durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
-                elseif key == 'HUDPos' then
-                    HudCore.layout.props.relativePosition = value
-                elseif key == 'HUDAnchor' then
-                    HudCore.layout.props.anchor = value
-                end
-
-                HudCore:update()
-            elseif key == 'UIFramerate' then
-                TotalDelay = 1 / H4ndStorage:get('UIFramerate')
-            end
-
-            if atlasName and atlas then
-                atlas.element.layout.props.color = getColorForElement(atlasName)
-                atlas.element:update()
-
-                if key == 'PinkyStat' or key == 'MiddleStat' or key == 'ThumbStat' then
-                    local statToUpdate, usedAttributes = nil, {
-                        magicka = true,
-                        health = true,
-                        fatigue = true,
-                    }
-
-                    local thisAtlas = statsToAtlases[key]
-
-                    local invalidStat = H4ndStorage:get(key)
-
-                    for elementName, statName in pairs {
-                        Pinky = H4ND.PinkyStat,
-                        Thumb = H4ND.ThumbStat,
-                        Middle = H4ND.MiddleStat,
-                    } do
-                        usedAttributes[statName] = nil
-
-                        if statName == invalidStat and namesToAtlases[elementName] ~= thisAtlas then
-                            atlasName = elementName
+                        for attrFunc, resizeAtlas in pairs {
+                            [Attrs.Thumb] = ThumbAtlas,
+                            [Attrs.Middle] = MiddleAtlas,
+                            [Attrs.Pinky] = PinkyAtlas,
+                        } do
+                            local props = resizeAtlas.element.layout.props
+                            props.size, props.position = attrFunc(handSize)
+                            resizeAtlas.element:update()
                         end
+
+                        ---@diagnostic disable-next-line: undefined-field
+                        H4ND.getElementByName('EffectBar').props.size = Attrs.EffectBar(handSize)
+
+                        ---@diagnostic disable-next-line: undefined-field
+                        local castable = H4ND.getElementByName('CastableIndicator')
+                        local castableContent = castable.layout.content
+
+                        castableContent.CastableIcon.props.size = Attrs.SubIcon(handSize)
+                        castableContent.CastChanceContainer.content.CastChanceBar.props.size = Attrs.ChanceBar(handSize)
+                        castable:update()
+
+
+                        ---@diagnostic disable-next-line: undefined-field
+                        local weapon = H4ND.getElementByName('WeaponIndicator').content
+                        local iconBoxProps = weapon.WeaponIconBox.props
+                        iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
+
+                        local durabilityBarSize = Attrs.ChanceBar(handSize)
+
+                        weapon.DurabilityBar.props.size = util.vector2(
+                            durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
+                    elseif key == 'HUDPos' then
+                        HudCore.layout.props.relativePosition = value
+                    elseif key == 'HUDAnchor' then
+                        HudCore.layout.props.anchor = value
                     end
 
-                    statToUpdate = next(usedAttributes)
+                    HudCore:update()
+                elseif key == 'UIFramerate' then
+                    TotalDelay = 1 / H4ndStorage:get('UIFramerate')
+                end
 
-                    if not statToUpdate then return end
+                if atlasName and atlas then
+                    atlas.element.layout.props.color = getColorForElement(atlasName)
+                    atlas.element:update()
 
-                    s3lf.gameObject:sendEvent('H4NDCorrectSecondAttribute', {
-                        stat = statToUpdate,
-                        atlasName = atlasName,
-                    })
+                    if key == 'PinkyStat' or key == 'MiddleStat' or key == 'ThumbStat' then
+                        local statToUpdate, usedAttributes = nil, {
+                            magicka = true,
+                            health = true,
+                            fatigue = true,
+                        }
+
+                        local thisAtlas = H4ND.getStatAtlas(key)
+
+                        local invalidStat = H4ndStorage:get(key)
+
+                        for elementName, statName in pairs {
+                            Pinky = H4ND.PinkyStat,
+                            Thumb = H4ND.ThumbStat,
+                            Middle = H4ND.MiddleStat,
+                        } do
+                            usedAttributes[statName] = nil
+
+                            if statName == invalidStat and H4ND.getStatAtlas(elementName) ~= thisAtlas then
+                                atlasName = elementName
+                            end
+                        end
+
+                        statToUpdate = next(usedAttributes)
+
+                        if not statToUpdate then return end
+
+                        s3lf.gameObject:sendEvent('H4NDCorrectSecondAttribute', {
+                            stat = statToUpdate,
+                            atlasName = atlasName,
+                        })
+                    end
                 end
             end
-        end
+        )
     )
-)
 
 ---@return boolean
 local function updateWeaponIcon()
@@ -462,6 +481,12 @@ local function updateDurabilityBarSize()
 end
 
 CurrentDelay, TotalDelay = 0, 1 / H4ND.UIFramerate
+local updateFunctions = {
+    updateWeaponIcon,
+    updateWeaponDurability,
+    updateCastableIcon,
+    updateCastableBar,
+}
 return {
     interfaceName = 'H4nd',
     interface = {
@@ -535,12 +560,7 @@ return {
                 CurrentDelay = 0
             end
 
-            for i, updater in ipairs {
-                updateWeaponIcon,
-                updateWeaponDurability,
-                updateCastableIcon,
-                updateCastableBar,
-            } do
+            for i, updater in ipairs(updateFunctions) do
                 if updater() then
                     print('bailing on updater ' .. i)
                     break
