@@ -18,6 +18,7 @@ ThumbAtlas,
 MiddleAtlas,
 PinkyAtlas,
 CastableIndicator,
+WeaponIndicator,
 TotalDelay,
 CurrentDelay
 
@@ -35,7 +36,6 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field healthColor util.color
 ---@field DurabilityColor util.color
 ---@field CastChanceColor util.color
----@field size util.vector2 Absolute size of the hand HUD. This is part of the H4ND state table and not necessarily the original module
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
@@ -69,7 +69,7 @@ function H4ND.getElementByName(elementName)
         Pinky = PinkyAtlas,
         Thumb = ThumbAtlas,
         EffectBar = HudCore.layout.content.EffectBar,
-        WeaponIndicator = HudCore.layout.content.WeaponIndicator,
+        WeaponIndicator = WeaponIndicator,
         CastableIndicator = CastableIndicator,
     })[elementName]
 end
@@ -169,7 +169,7 @@ local function weaponIsEnchanted(weapon)
 end
 
 local function normalizedWeaponHealth()
-    local weapon, mult = getWeapon(), 1.0
+    local weapon, mult = getWeapon(), 0.0
 
     if weapon then
         mult = weapon.type.itemData(weapon).condition / weapon.type.records[weapon.recordId].health
@@ -191,7 +191,7 @@ end
 local function updateWeaponDurability()
     local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
     local health = math.floor(normalizedWeaponHealth() * baseWidth)
-    local width = HudCore.layout.content.WeaponIndicator.content.DurabilityBar.props.size.x
+    local width = WeaponIndicator.layout.content.DurabilityBar.props.size.x
 
     width = math.floor(width)
     if width == health then return false end
@@ -229,7 +229,7 @@ local function updateCastableBar()
 end
 
 local function updateDurabilityBarSize()
-    local weaponIndicator = HudCore.layout.content.WeaponIndicator.content
+    local weaponIndicator = WeaponIndicator.layout.content
     local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
     weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
 end
@@ -264,7 +264,7 @@ CastableIndicator = require 'scripts.s3.TTTH.components.castableIndicator' {
     Constants = Constants,
 }
 
-local WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
+WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
     barSize = BarSize,
     handSize = handSize,
     weaponHealth = normalizedWeaponHealth(),
@@ -350,7 +350,7 @@ H4ndStorage:subscribe(
                     castable:update()
 
                     ---@diagnostic disable-next-line: undefined-field
-                    local weapon = H4ND.getElementByName('WeaponIndicator').content
+                    local weapon = H4ND.getElementByName('WeaponIndicator').layout.content
                     local iconBoxProps = weapon.WeaponIconBox.props
                     iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
 
@@ -468,16 +468,17 @@ return {
         end,
         H4NDUpdateDurability = function()
             updateDurabilityBarSize()
-            HudCore:update()
+            WeaponIndicator:update()
         end,
         H4NDUpdateWeapon = function()
-            local weaponIndicator = HudCore.layout.content.WeaponIndicator.content[1].content
+            local weaponIndicator = WeaponIndicator.layout.content.WeaponIconBox.content
 
+            print(getSelectedWeaponIcon())
             weaponIndicator.WeaponIcon.props.resource = ui.texture { path = getSelectedWeaponIcon() }
             weaponIndicator.EnchantFrame.props.visible = weaponIsEnchanted(getWeapon())
             updateDurabilityBarSize()
 
-            HudCore:update()
+            WeaponIndicator:update()
         end,
     },
     engineHandlers = {
