@@ -91,6 +91,31 @@ I.Settings.registerGroup {
             util.vector2(0, 1)
         ),
         setting(
+            'CompassPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'CompassPosName',
+            'CompassPosDesc',
+            util.vector2(.5, .5)
+        ),
+        setting(
+            'CompassColor',
+            'color',
+            {},
+            'CompassColorName',
+            'CompassColorDesc',
+            util.color.hex('8c8b4d')
+        ),
+        setting(
+            'CompassSize',
+            'number',
+            { integer = true, min = 16, max = 128 },
+            'CompassSizeName',
+            'CompassSizeDesc',
+            24
+        ),
+        setting(
             'ThumbStat',
             'select',
             { l10n = ModName, items = statNames },
