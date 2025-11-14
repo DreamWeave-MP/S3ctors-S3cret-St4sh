@@ -69,6 +69,7 @@ return {
             Pinky = util.vector2(128, 256),
             Middle = util.vector2(256, 512),
             Thumb = util.vector2(278, 271),
+            Compass = util.vector2(64, 64),
         },
         TopRight = util.vector2(1, 0),
 
