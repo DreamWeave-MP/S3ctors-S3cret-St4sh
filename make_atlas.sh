@@ -90,6 +90,7 @@ for ((i=0; i < TOTAL_TILES; i++)); do
     temp_tile="${TEMP_DIR}/tile_${i}.png"
     
     if [[ "$MASK" == false ]]; then
+        # magick "$INPUT_IMAGE" -distort SRT $i "$temp_tile"
         cp "$INPUT_IMAGE" "$temp_tile"
     else
         if [[ $i -eq 0 ]]; then
