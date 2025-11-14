@@ -126,15 +126,17 @@ for ((i=0; i < TOTAL_TILES; i++)); do
                 # Original masking behavior
                 if [[ "$MASK_WIDTH" == true ]]; then
                     crop_width=$(( (percentage * ORIG_WIDTH) / 100 ))
+
                     magick "$INPUT_IMAGE" \
-                        \( +clone -crop ${crop_width}x+0+0 -fill black -fuzz 0% -opaque white \) \
-                        -geometry +0+0 -composite \
+                        \( -clone 0 -crop ${crop_width}x${ORIG_HEIGHT}+0+0 -fill black -colorize 100% \) \
+                        -compose darken -composite \
                         "$temp_tile"
                 else
                     crop_height=$(( (percentage * ORIG_HEIGHT) / 100 ))
+
                     magick "$INPUT_IMAGE" \
-                        \( +clone -crop x${crop_height}+0+0 -fill black -fuzz 0% -opaque white \) \
-                        -geometry +0+0 -composite \
+                        \( -clone 0 -crop ${ORIG_WIDTH}x${crop_height}+0+0 -fill black -colorize 100% \) \
+                        -compose darken -composite \
                         "$temp_tile"
                 fi
             fi
