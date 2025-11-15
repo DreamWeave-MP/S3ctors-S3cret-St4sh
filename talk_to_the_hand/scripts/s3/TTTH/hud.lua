@@ -187,7 +187,6 @@ local function getColorForElement(elementName)
 end
 
 local function updateTime()
-    if not H4ND.UseFade then return end
     H4ND.state.lastUpdateTime = core.getRealTime()
 end
 
@@ -284,7 +283,6 @@ local function updateDurabilityBarSize()
 end
 
 local function handleFade()
-    if not H4ND.UseFade then return end
     local HudProps, CompassProps = HudCore.layout.props, Compass.layout.props
     local hudVisible = I.UI.isHudVisible()
     local hudIsStale = core.getRealTime() - H4ND.state.lastUpdateTime >= H4ND.FadeTime
@@ -300,11 +298,11 @@ local function handleFade()
         Compass:update()
     end
 
-    if (hudIsStale or not hudVisible) and HudProps.alpha ~= .0 then
+    if ((hudIsStale and H4ND.UseFade) or not hudVisible) and HudProps.alpha > .0 then
         step = math.max(HudProps.alpha - H4ND.FadeStep, .0)
 
         HudProps.alpha = step
-    elseif fadeIn and hudVisible then
+    elseif (fadeIn or hudVisible) and HudProps.alpha ~= 1. then
         step = math.min(1., HudProps.alpha + H4ND.FadeStep)
         HudProps.alpha = step
 
