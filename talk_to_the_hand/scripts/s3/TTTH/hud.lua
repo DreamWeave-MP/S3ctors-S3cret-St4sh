@@ -118,6 +118,11 @@ function H4ND.getElementByName(elementName)
     })[elementName]
 end
 
+function H4ND:getCompassPath()
+    return ('textures/s3/TTTH/compass/%s.dds'):format(self.CompassStyle)
+end
+
+
 ---@param item GameObject
 local function getItemIcon(item)
     return item.type.records[item.recordId].icon
@@ -220,10 +225,6 @@ local function normalizedWeaponHealth()
     end
 
     return mult
-end
-
-function H4ND:getCompassPath()
-    return ('textures/s3/TTTH/compass/%s.dds'):format(self.CompassStyle)
 end
 
 ---@return boolean
