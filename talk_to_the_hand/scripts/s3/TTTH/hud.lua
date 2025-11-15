@@ -649,9 +649,9 @@ return {
         end,
     },
     engineHandlers = {
-        onFrame = function(dt)
+        onFrame = function()
             if CurrentDelay < TotalDelay then
-                CurrentDelay = CurrentDelay + dt
+                CurrentDelay = CurrentDelay + core.getRealFrameDuration()
                 return
             else
                 CurrentDelay = 0
