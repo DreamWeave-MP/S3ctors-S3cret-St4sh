@@ -121,7 +121,7 @@ I.Settings.registerGroup {
             {},
             'CompassPosName',
             'CompassPosDesc',
-            util.vector2(.5, .5)
+            util.vector2(.02, .94)
         ),
         setting(
             'CompassColor',
