@@ -1,6 +1,8 @@
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local I = require 'openmw.interfaces'
+
 ---@class CastableConstructor
 ---@field barColor util.color
 ---@field barSize util.vector2
@@ -28,6 +30,7 @@ return function(constructor)
         content = ui.content {
             {
                 type = ui.TYPE.Image,
+                template = I.MWUI.templates.borders,
                 name = 'CastableIcon',
                 props = {
                     resource = ui.texture { path = constructor.castableIcon or 'white' },
@@ -39,6 +42,7 @@ return function(constructor)
             },
             {
                 name = 'CastChanceContainer',
+                template = I.MWUI.templates.borders,
                 props = {
                     size = constructor.barSize,
                 },
