@@ -661,7 +661,7 @@ H4ndStorage:subscribe(
                     end
 
                     ---@diagnostic disable-next-line: undefined-field
-                    H4ND.getElementByName('EffectBar').props.size = Attrs.EffectBar(handSize)
+                    H4ND.getElementByName('EffectBar').layout.props.size = Attrs.EffectBar(handSize)
 
                     local castable = H4ND.getElementByName('CastableIndicator')
                     assert(castable)
