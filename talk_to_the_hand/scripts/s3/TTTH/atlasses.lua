@@ -5,7 +5,7 @@ local I = require 'openmw.interfaces'
 ---@param Constants H4NDConstants
 ---@param handSize util.vector2
 ---@param getColorForElement function
----@return ImageAtlas, ImageAtlas, ImageAtlas, ImageAtlas
+---@return ImageAtlas, ImageAtlas, ImageAtlas
 return function(Constants, handSize, getColorForElement)
     print(Constants, handSize, getColorForElement)
 
@@ -54,5 +54,5 @@ return function(Constants, handSize, getColorForElement)
         position = pinkyPos,
     }
 
-    return ThumbAtlas, MiddleAtlas, PinkyAtlas, CompassAtlas
+    return ThumbAtlas, MiddleAtlas, PinkyAtlas
 end
