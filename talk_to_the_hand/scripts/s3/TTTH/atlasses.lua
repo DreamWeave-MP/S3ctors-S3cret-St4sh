@@ -7,8 +7,6 @@ local I = require 'openmw.interfaces'
 ---@param getColorForElement function
 ---@return ImageAtlas, ImageAtlas, ImageAtlas
 return function(Constants, handSize, getColorForElement)
-    print(Constants, handSize, getColorForElement)
-
     local PinkyAtlas = I.S3AtlasConstructor.constructAtlas {
         tileSize = Constants.Vectors.Tiles.Pinky,
         tilesPerRow = 10,
