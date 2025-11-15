@@ -17,12 +17,12 @@ return {
         ---@param handSize util.vector2
         ---@return util.vector2
         ChanceBar = function(handSize)
-            return util.vector2(handSize.x * .2, handSize.x * 0.02)
+            return util.vector2(handSize.x * .2, handSize.x * 0.03)
         end,
         ---@param handSize util.vector2
         ---@return util.vector2
         EffectBar = function(handSize)
-            return util.vector2(handSize.x, handSize.y * 0.1)
+            return util.vector2(handSize.x, handSize.y * 0.12)
         end,
         ---@param handSize util.vector2
         ---@return util.vector2, util.vector2
