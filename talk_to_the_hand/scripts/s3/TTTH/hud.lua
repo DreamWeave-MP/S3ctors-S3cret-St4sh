@@ -240,7 +240,7 @@ end
 local function updateWeaponDurability()
     local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
     local health = math.floor(normalizedWeaponHealth() * baseWidth)
-    local width = WeaponIndicator.layout.content.DurabilityBar.props.size.x
+    local width = WeaponIndicator.layout.content.DurabilityBarContainer.content.DurabilityBar.props.size.x
 
     width = math.floor(width)
     if width == health then return false end
@@ -280,7 +280,7 @@ end
 local function updateDurabilityBarSize()
     local weaponIndicator = WeaponIndicator.layout.content
     local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
-    weaponIndicator.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
+    weaponIndicator.DurabilityBarContainer.content.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
 end
 
 local function handleFade()
@@ -535,7 +535,7 @@ H4ndStorage:subscribe(
 
                     local durabilityBarSize = Attrs.ChanceBar(handSize)
 
-                    weapon.DurabilityBar.props.size = util.vector2(
+                    weapon.DurabilityBarContainer.content.DurabilityBar.props.size = util.vector2(
                         durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
                 elseif key == 'HUDPos' then
                     HudCore.layout.props.relativePosition = value

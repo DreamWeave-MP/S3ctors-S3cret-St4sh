@@ -1,6 +1,8 @@
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local I = require 'openmw.interfaces'
+
 ---@class WeaponIndicatorConstructor
 ---@field handSize util.vector2
 ---@field Constants H4NDConstants
@@ -23,10 +25,21 @@ return function(constructor)
         content = ui.content {
             {
                 name = 'WeaponIconBox',
+                template = I.MWUI.templates.borders,
                 props = {
                     size = Attrs.SubIcon(handSize),
                 },
                 content = ui.content {
+                    {
+                        type = ui.TYPE.Image,
+                        name = 'WeaponBackground',
+                        props = {
+                            resource = ui.texture { path = 'white' },
+                            relativeSize = constructor.Constants.Vectors.BottomRight,
+                            color = constructor.Constants.Colors.Black,
+                            alpha = 0.5,
+                        },
+                    },
                     {
                         type = ui.TYPE.Image,
                         name = 'EnchantFrame',
@@ -51,13 +64,32 @@ return function(constructor)
                 }
             },
             {
-                type = ui.TYPE.Image,
-                name = 'DurabilityBar',
+                name = 'DurabilityBarContainer',
+                template = I.MWUI.templates.borders,
                 props = {
-                    resource = ui.texture { path = 'white' },
-                    size = util.vector2(constructor.weaponHealth * constructor.barSize.x, constructor.barSize.y),
-                    color = constructor.durabilityColor,
+                    size = constructor.barSize,
                 },
+                content = ui.content {
+                    {
+                        type = ui.TYPE.Image,
+                        name = 'DurabilityBarBackground',
+                        props = {
+                            resource = ui.texture { path = 'white' },
+                            size = constructor.barSize,
+                            color = constructor.Constants.Colors.Black,
+                            alpha = 0.5,
+                        },
+                    },
+                    {
+                        type = ui.TYPE.Image,
+                        name = 'DurabilityBar',
+                        props = {
+                            resource = ui.texture { path = 'white' },
+                            size = util.vector2(constructor.weaponHealth * constructor.barSize.x, constructor.barSize.y),
+                            color = constructor.durabilityColor,
+                        },
+                    },
+                }
             },
         }
     }
