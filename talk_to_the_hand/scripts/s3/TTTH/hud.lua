@@ -111,7 +111,7 @@ function H4ND.getElementByName(elementName)
         Middle = MiddleAtlas,
         Pinky = PinkyAtlas,
         Thumb = ThumbAtlas,
-        EffectBar = HudCore.layout.content.EffectBar,
+        EffectBar = EffectBar,
         WeaponIndicator = WeaponIndicator,
         CastableIndicator = CastableIndicator,
     })[elementName]
@@ -138,41 +138,60 @@ do
     local totalEffectIndex = 1
     for _, effect in pairs(core.magic.effects.records) do
         EffectBarManager.effectIndices[effect.id] = totalEffectIndex
+        -- print(effect.id, totalEffectIndex)
         totalEffectIndex = totalEffectIndex + 1
     end
 end
 
+local aux_util = require 'openmw_aux.util'
+
 --- Used to sort arrays of magic effect ids
----@param effectA string
----@param effectB string
+---@param effectA MagicEffectWithParams
+---@param effectB MagicEffectWithParams
 ---@return boolean
 function EffectBarManager.effectSort(effectA, effectB)
     local magicEffects = core.magic.effects.records
-    local schoolA, schoolB = magicEffects[effectA].school, magicEffects[effectB].school
+    local schoolA, schoolB = magicEffects[effectA.id].school, magicEffects[effectB.id].school
     local schools, effects = EffectBarManager.schoolIndices, EffectBarManager.effectIndices
 
     if schoolA ~= schoolB then
         return schools[schoolA] < schools[schoolB]
     else
-        return effects[effectA] < effects[effectB]
+        return effects[effectA.id] < effects[effectB.id]
     end
 end
 
----@return table<string, string>
+---@return table<string, MagicEffectWithParams>
 function EffectBarManager:getActiveEffectIds()
-    local activeEffects, foundEffects, effectIndex = {}, {}, 1
+    local activeEffects, foundEffects = {}, {}
 
     for _, spell in pairs(s3lf.activeSpells()) do
         ---@cast spell Spell
         for _, effect in ipairs(spell.effects) do
-            if not foundEffects[effect.id] then
-                activeEffects[effectIndex] = effect.id
+            local storedEffect = foundEffects[effect.id]
 
-                foundEffects[effect.id] = true
+            if not storedEffect or (storedEffect.durationLeft or math.huge) > (effect.durationLeft or math.huge) then
+                -- print(
+                --     spell.id,
+                --     (storedEffect and storedEffect or { id = 'NIL' }).id,
+                --     effect.duration,
+                --     effect.durationLeft,
+                --     effect
+                -- )
 
-                effectIndex = effectIndex + 1
+                foundEffects[effect.id] = effect
             end
         end
+    end
+
+    local effectIndex = 1
+    for _, effect in pairs(foundEffects) do
+        activeEffects[effectIndex] = effect
+        effectIndex = effectIndex + 1
+    end
+
+    for key, effect in pairs(activeEffects) do
+        -- print(key, effect)
     end
 
     table.sort(activeEffects, self.effectSort)
@@ -182,25 +201,29 @@ end
 
 ---@param effectName string
 ---@param effectIcon string
-function EffectBarManager.getEffectImage(effectName, effectIcon)
-    return ui.create {
+function EffectBarManager.getEffectImage(effectName, effectIcon, alpha)
+    return {
         type = ui.TYPE.Image,
         name = effectName,
         template = I.MWUI.templates.borders,
         props = {
             relativeSize = util.vector2(.1, 1),
             anchor = Constants.Vectors.BottomRight,
-            resource = ui.texture { path = effectIcon }
+            resource = ui.texture { path = effectIcon },
+            alpha = alpha,
         },
     }
 end
 
+---@param rowNum number of currently-constructed row
+---@param totalRows number total number of rows, for calculating size
 function EffectBarManager.effectRow(rowNum, totalRows)
     return {
         type = ui.TYPE.Flex,
         name = 'EffectRow' .. tostring(rowNum),
         props = {
             horizontal = true,
+            align = ui.ALIGNMENT.Center,
             relativeSize = util.vector2(1, 1 / totalRows),
             autoSize = false,
         },
@@ -219,7 +242,7 @@ function EffectBarManager:constructEffectImages()
 
     local allRows, currentRow, rowEffects = {}, self.effectRow(currentRowNum, totalRows), 0
 
-    for _, effectName in ipairs(effects) do
+    for _, magicEffect in ipairs(effects) do
         if rowEffects == EFFECTS_PER_ROW then
             currentRow.content = ui.content(currentRow.content)
 
@@ -229,10 +252,11 @@ function EffectBarManager:constructEffectImages()
             currentRow = self.effectRow(currentRowNum, totalRows)
         end
 
-        local effectIcon = core.magic.effects.records[effectName].icon
+        local effectIcon = core.magic.effects.records[magicEffect.id].icon
+        local alpha = util.clamp((magicEffect.durationLeft or 1) / (magicEffect.duration or 1), .0, 1.)
 
         rowEffects = rowEffects + 1
-        currentRow.content[rowEffects] = self.getEffectImage(effectName, effectIcon)
+        currentRow.content[rowEffects] = self.getEffectImage(magicEffect.id, effectIcon, alpha)
     end
 
     if currentRow ~= {} then
@@ -240,18 +264,25 @@ function EffectBarManager:constructEffectImages()
         allRows[#allRows + 1] = currentRow
     end
 
-    return ui.create {
-        type = ui.TYPE.Flex,
-        name = 'EffectContainer',
-        layer = 'HUD',
-        props = {
-            autoSize = false,
-            size = Attrs.EffectBar(H4ND.getHandSize()),
-            anchor = Vectors.BottomLeft,
-            relativePosition = Vectors.BottomLeft,
-        },
-        content = ui.content(allRows),
-    }
+    local content = ui.content(allRows)
+
+    if EffectBar then
+        EffectBar.layout.content = content
+        EffectBar:update()
+    else
+        EffectBar = ui.create {
+            type = ui.TYPE.Flex,
+            name = 'EffectContainer',
+            -- layer = 'HUD',
+            props = {
+                autoSize = false,
+                size = Attrs.EffectBar(H4ND.getHandSize()),
+                anchor = Vectors.BottomLeft,
+                relativePosition = Vectors.BottomLeft,
+            },
+            content = content,
+        }
+    end
 end
 
 ---@param item GameObject
@@ -527,7 +558,7 @@ WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
     Constants = Constants,
 }
 
-EffectBar = EffectBarManager:constructEffectImages()
+EffectBarManager:constructEffectImages()
 
 HudCore = ui.create {
     layer = 'HUD',
@@ -543,8 +574,8 @@ HudCore = ui.create {
         MiddleAtlas.element,
         PinkyAtlas.element,
         WeaponIndicator,
-        EffectBar,
         CastableIndicator,
+        EffectBar,
     }
 }
 
@@ -797,6 +828,7 @@ return {
 
             updateStatFrames()
             updateCompass()
+            EffectBarManager:constructEffectImages()
             handleFade()
         end,
     }
