@@ -91,10 +91,10 @@ I.Settings.registerGroup {
         setting(
             'HUDWidth',
             'number',
-            { integer = true, min = 16, max = 4096 },
+            { integer = false, min = 0.01, max = 1. },
             'HUDWidthName',
             'HUDWidthDesc',
-            256
+            .15
         ),
         setting(
             'HUDAnchor',
