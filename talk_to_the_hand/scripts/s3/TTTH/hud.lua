@@ -73,49 +73,32 @@ function H4ND.resizeAll()
     HudCore.layout.props.size = handSize
     HudCore.layout.props.alpha = 1.0
 
-    for attrFunc, resizeAtlas in pairs {
-        [Attrs.Thumb] = ThumbAtlas,
-        [Attrs.Middle] = MiddleAtlas,
-        [Attrs.Pinky] = PinkyAtlas,
-    } do
-        ---@diagnostic disable-next-line: undefined-field
-        local props = resizeAtlas.element.layout.props
-        props.size, props.position = attrFunc(handSize)
-
-        ---@diagnostic disable-next-line: undefined-field
-        resizeAtlas.element:update()
-    end
+    CastableIndicator
+    ---@diagnostic disable-next-line: undefined-field
+    .layout
+    .content
+    .CastChanceContainer
+    .content
+    .CastChanceBar
+    .props
+    .relativeSize =
+        util.vector2(H4ND.getCastableWidth(), 1)
 
     ---@diagnostic disable-next-line: undefined-field
-    H4ND.getElementByName('EffectBar').layout.props.size = Attrs.EffectBar(handSize)
+    CastableIndicator:update()
 
-    local castable = H4ND.getElementByName('CastableIndicator')
-    assert(castable)
-
+    WeaponIndicator
     ---@diagnostic disable-next-line: undefined-field
-    castable.layout.props.position = Attrs.Castable(handSize)
+    .layout
+    .content
+    .DurabilityBarContainer
+    .content
+    .DurabilityBar
+    .props
+    .relativeSize =
+        util.vector2(H4ND.normalizedWeaponHealth(), 1)
 
-    ---@diagnostic disable-next-line: undefined-field
-    local castableContent = castable.layout.content
-
-    castableContent.CastableIcon.props.size = Attrs.SubIcon(handSize)
-
-    local container, barSize = castableContent.CastChanceContainer.content, Attrs.ChanceBar(handSize)
-    container.CastChanceBackground.props.size = barSize
-    container.CastChanceBar.props.size = util.vector2(barSize.x * H4ND.getCastableWidth(), barSize.y)
-
-    ---@diagnostic disable-next-line: undefined-field
-    castable:update()
-
-    ---@diagnostic disable-next-line: undefined-field
-    local weapon = H4ND.getElementByName('WeaponIndicator').layout.content
-    local iconBoxProps = weapon.WeaponIconBox.props
-    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
-
-    local durabilityBarSize = Attrs.ChanceBar(handSize)
-
-    weapon.DurabilityBarContainer.content.DurabilityBar.props.size = util.vector2(
-        durabilityBarSize.x * H4ND.normalizedWeaponHealth(), durabilityBarSize.y)
+    WeaponIndicator:update()
 end
 
 function H4ND.getUIScalingFactor()
@@ -457,10 +440,16 @@ end
 ---@return boolean
 local function updateWeaponDurability()
     local baseWidth = math.floor(H4ND.normalizedWeaponHealth() * 100)
-    local currentWidth = WeaponIndicator.layout.content.DurabilityBarContainer.content.DurabilityBar.props.relativeSize
-        .x
+    local currentWidth = math.floor(WeaponIndicator
+        .layout
+        .content
+        .DurabilityBarContainer
+        .content
+        .DurabilityBar
+        .props
+        .relativeSize
+        .x) * 100
 
-    currentWidth = math.floor(currentWidth * 100)
     if baseWidth == currentWidth then return false end
 
     s3lf.gameObject:sendEvent('H4NDUpdateDurability')
@@ -484,10 +473,16 @@ end
 local function updateCastableBar()
     local targetWidth = math.floor(100 * H4ND.getCastableWidth())
 
-    local castableIndicator = CastableIndicator.layout.content
-    local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
+    local currentWidth = math.floor(CastableIndicator
+        .layout
+        .content
+        .CastChanceContainer
+        .content
+        .CastChanceBar
+        .props
+        .relativeSize
+        .x) * 100
 
-    local currentWidth = math.floor(chanceBarProps.relativeSize.x * 100)
     if currentWidth == targetWidth then return false end
 
     s3lf.gameObject:sendEvent('H4NDUpdateCastableBar')
@@ -495,9 +490,15 @@ local function updateCastableBar()
 end
 
 local function updateDurabilityBarSize()
-    local weaponIndicator = WeaponIndicator.layout.content
-    local xMult, barSize = H4ND.normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
-    weaponIndicator.DurabilityBarContainer.content.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
+    WeaponIndicator
+    .layout
+    .content
+    .DurabilityBarContainer
+    .content
+    .DurabilityBar
+    .props
+    .relativeSize =
+        util.vector2(H4ND.normalizedWeaponHealth(), 1)
 end
 
 local function handleFade()
@@ -551,7 +552,7 @@ local function updateCompass()
     Compass:update()
 end
 
-local handSize = H4ND.getHandSize()
+handSize = H4ND.getHandSize()
 
 ---@return ImageAtlas
 local function respawnCompassAtlas()
@@ -575,7 +576,6 @@ end
 
 CompassAtlas, ThumbAtlas, MiddleAtlas, PinkyAtlas = respawnCompassAtlas(), require 'scripts.s3.TTTH.atlasses' (
     Constants,
-    H4ND.getHandSize():ediv(ui.screenSize()),
     getColorForElement
 )
 
@@ -786,8 +786,7 @@ return {
                 castIconProps.color = nil
             end
 
-            local barSize = Attrs.ChanceBar(H4ND.getHandSize())
-            chanceBarProps.size = util.vector2(barSize.x * H4ND.getCastableWidth(), barSize.y)
+            chanceBarProps.relativeSize = util.vector2(H4ND.getCastableWidth(), 1)
             chanceBarProps.visible = icon ~= nil
             castIconProps.resource = ui.texture { path = icon }
 
@@ -795,11 +794,15 @@ return {
             H4ND.updateTime()
         end,
         H4NDUpdateCastableBar = function()
-            local castableIndicator = CastableIndicator.layout.content
-
-            local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
-            local barSize = Attrs.ChanceBar(H4ND.getHandSize())
-            chanceBarProps.size = util.vector2(barSize.x * H4ND.getCastableWidth(), barSize.y)
+            CastableIndicator
+            .layout
+            .content
+            .CastChanceContainer
+            .content
+            .CastChanceBar
+            .props
+            .relativeSize =
+                util.vector2(H4ND.getCastableWidth(), 1)
 
             CastableIndicator:update()
             H4ND.updateTime()
