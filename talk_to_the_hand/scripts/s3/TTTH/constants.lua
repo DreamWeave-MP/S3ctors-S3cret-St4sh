@@ -39,11 +39,6 @@ return {
             local width = .275
             return util.vector2(width, width * 2.0), util.vector2(.63, .69)
         end,
-        ---@param handSize util.vector2
-        ---@return util.vector2
-        SubIcon = function(handSize)
-            return util.vector2(handSize.x * .2, handSize.x * .2)
-        end,
         ---@return util.vector2, util.vector2
         Thumb = function()
             local width = .6
