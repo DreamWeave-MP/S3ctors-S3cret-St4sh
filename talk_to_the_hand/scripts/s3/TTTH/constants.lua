@@ -1,6 +1,6 @@
 local util = require 'openmw.util'
 
----@alias ScaleFunction fun(size: util.vector2): util.vector2
+---@alias ScaleFunction fun(): util.vector2
 
 ---@class H4NDConstants
 ---@field Attrs table<string, ScaleFunction>
@@ -9,51 +9,49 @@ local util = require 'openmw.util'
 return {
     --- Size functions for hand images are aspect ratios
     Attrs = {
-        ---@param handSize util.vector2
         ---@return util.vector2
-        Castable = function(handSize)
-            return util.vector2(handSize.x * .7775, handSize.y * .235)
+        BarContainer = function()
+            return util.vector2(1, .15)
         end,
-        ---@param handSize util.vector2
         ---@return util.vector2
-        ChanceBar = function(handSize)
-            return util.vector2(handSize.x * .2, handSize.x * 0.03)
+        Castable = function()
+            return util.vector2(.7775, .15)
         end,
-        ---@param handSize util.vector2
         ---@return util.vector2
-        EffectBar = function(handSize)
-            return util.vector2(handSize.x, handSize.y * 0.12)
+        ChanceBar = function()
+            return util.vector2(.2, 0.03)
         end,
-        ---@param handSize util.vector2
+        ---@return util.vector2
+        EffectBar = function()
+            return util.vector2(1, 0.15)
+        end,
+        IndicatorSize = function()
+            return util.vector2(1, .85)
+        end,
         ---@return util.vector2, util.vector2
-        Middle = function(handSize)
-            local width = handSize.x * .55
+        Middle = function()
+            local width = .55
 
-            return util.vector2(width, width * 1.37), util.vector2(handSize.x * .255, handSize.y * 0.015)
+            return util.vector2(width, width * 1.15), util.vector2(.24, .625)
         end,
-        ---@param handSize util.vector2
         ---@return util.vector2, util.vector2
-        Pinky = function(handSize)
-            local width = handSize.x * .275
-
-            return util.vector2(width, width * 2.0), util.vector2(handSize.x * .64, handSize.y * .235)
+        Pinky = function()
+            local width = .275
+            return util.vector2(width, width * 2.0), util.vector2(.63, .69)
         end,
         ---@param handSize util.vector2
         ---@return util.vector2
         SubIcon = function(handSize)
             return util.vector2(handSize.x * .2, handSize.x * .2)
         end,
-        ---@param handSize util.vector2
         ---@return util.vector2, util.vector2
-        Thumb = function(handSize)
-            local width = handSize.x * .625
-
-            return util.vector2(width, width * 0.974820143885), util.vector2(handSize.x * .075, handSize.y * .35)
+        Thumb = function()
+            local width = .6
+            return util.vector2(width, width * 0.974820143885), util.vector2(.0825, .85)
         end,
-        ---@param handSize util.vector2
         ---@return util.vector2
-        Weapon = function(handSize)
-            return util.vector2(handSize.x * .025, handSize.y * .15)
+        Weapon = function()
+            return util.vector2(.125, .275)
         end,
     },
     Colors = {
@@ -73,6 +71,5 @@ return {
             MoonAndStarAdjust = util.vector2(0, .015625)
         },
         TopRight = util.vector2(1, 0),
-
     }
 }
