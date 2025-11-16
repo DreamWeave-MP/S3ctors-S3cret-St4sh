@@ -5,7 +5,7 @@ local I = require 'openmw.interfaces'
 
 local ModName = 'TalkToTheHand'
 
-local statNames = { 'fatigue', 'magicka', 'health' }
+local statNames, AlignmentNames = { 'fatigue', 'magicka', 'health' }, { 'Center', 'End', 'Start', }
 
 ---@param key string
 ---@param renderer DefaultSettingRenderer
@@ -210,6 +210,22 @@ I.Settings.registerGroup {
             'CastChanceColorName',
             'CastChanceColorDesc',
             colorFromGMST('FontColor_color_magic_fill')
+        ),
+        setting(
+            'EffectAlign',
+            'select',
+            { items = AlignmentNames, l10n = ModName },
+            'EffectAlignName',
+            'EffectAlignDesc',
+            'Center'
+        ),
+        setting(
+            'EffectBarSize',
+            'ScreenPosition',
+            {},
+            'EffectBarSizeName',
+            'EffectBarSizeDesc',
+            util.vector2(.25, .1)
         ),
     }
 }
