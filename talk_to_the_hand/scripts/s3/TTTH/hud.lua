@@ -56,6 +56,7 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field FadeTime number
 ---@field FadeStep number
 ---@field UIDebug boolean
+---@field EffectsPerRow integer
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
@@ -210,7 +211,7 @@ function EffectBarManager.getEffectImage(effectName, effectIcon, alpha)
         name = effectName,
         template = I.MWUI.templates.borders,
         props = {
-            relativeSize = util.vector2(.1, 1),
+            relativeSize = util.vector2(1 / H4ND.EffectsPerRow, 1),
             anchor = Constants.Vectors.BottomRight,
             resource = ui.texture { path = effectIcon },
             alpha = alpha,
@@ -237,16 +238,15 @@ function EffectBarManager.effectRow(rowNum, totalRows)
     }
 end
 
-local EFFECTS_PER_ROW = 10
 function EffectBarManager:constructEffectImages()
     local effects = self:getActiveEffectIds()
 
-    local currentRowNum, totalRows = 1, math.max(1, math.floor(#effects / EFFECTS_PER_ROW + .5))
+    local currentRowNum, totalRows = 1, math.max(1, math.floor(#effects / H4ND.EffectsPerRow + .5))
 
     local allRows, currentRow, rowEffects = {}, self.effectRow(currentRowNum, totalRows), 0
 
     for _, magicEffect in ipairs(effects) do
-        if rowEffects == EFFECTS_PER_ROW then
+        if rowEffects == H4ND.EffectsPerRow then
             currentRow.content = ui.content(currentRow.content)
 
             allRows[#allRows + 1] = currentRow
