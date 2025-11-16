@@ -8,7 +8,6 @@ local I = require 'openmw.interfaces'
 ---@field barSize util.vector2
 ---@field castableIcon string?
 ---@field castableWidth number
----@field handSize util.vector2
 ---@field Constants H4NDConstants
 
 ---@param constructor CastableConstructor
@@ -25,7 +24,9 @@ return function(constructor)
         name = 'CastableIndicator',
         props = {
             anchor = Vectors.BottomLeft,
-            position = Attrs.Castable(constructor.handSize),
+            relativePosition = Attrs.Castable(),
+            autoSize = false,
+            relativeSize = util.vector2(.15, .15),
         },
         content = ui.content {
             {
@@ -34,7 +35,7 @@ return function(constructor)
                 name = 'CastableIcon',
                 props = {
                     resource = ui.texture { path = constructor.castableIcon or 'white' },
-                    size = Attrs.SubIcon(constructor.handSize),
+                    relativeSize = constructor.Constants.Attrs.IndicatorSize(),
                     visible = true,
                     color = constructor.castableIcon == nil and Colors.Black or nil,
                     alpha = constructor.castableIcon ~= nil and 1.0 or .5,
@@ -44,7 +45,7 @@ return function(constructor)
                 name = 'CastChanceContainer',
                 template = I.MWUI.templates.borders,
                 props = {
-                    size = constructor.barSize,
+                    relativeSize = constructor.Constants.Attrs.BarContainer(),
                 },
                 content = ui.content {
                     {
@@ -52,7 +53,7 @@ return function(constructor)
                         name = 'CastChanceBackground',
                         props = {
                             resource = ui.texture { path = 'white' },
-                            size = constructor.barSize,
+                            relativeSize = constructor.Constants.Vectors.BottomRight,
                             color = Colors.Black,
                             alpha = 0.5,
                         },
@@ -62,7 +63,7 @@ return function(constructor)
                         name = 'CastChanceBar',
                         props = {
                             resource = ui.texture { path = 'white' },
-                            size = util.vector2(constructor.barSize.x * constructor.castableWidth, constructor.barSize.y),
+                            relativeSize = util.vector2(constructor.castableWidth, 1),
                             color = constructor.barColor,
                         },
                     },

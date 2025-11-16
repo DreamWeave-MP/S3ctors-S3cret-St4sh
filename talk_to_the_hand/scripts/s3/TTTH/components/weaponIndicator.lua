@@ -4,7 +4,6 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 
 ---@class WeaponIndicatorConstructor
----@field handSize util.vector2
 ---@field Constants H4NDConstants
 ---@field enchantFrameVisible boolean
 ---@field durabilityColor util.color
@@ -14,20 +13,23 @@ local I = require 'openmw.interfaces'
 
 ---@param constructor WeaponIndicatorConstructor
 return function(constructor)
-    local Attrs, Vectors, handSize = constructor.Constants.Attrs, constructor.Constants.Vectors, constructor.handSize
+    local Attrs, Vectors = constructor.Constants.Attrs, constructor.Constants.Vectors
 
     return ui.create {
         type = ui.TYPE.Flex,
         name = 'WeaponIndicator',
         props = {
-            position = Attrs.Weapon(handSize),
+            relativePosition = Attrs.Weapon(),
+            anchor = util.vector2(.5, 1),
+            autoSize = false,
+            relativeSize = util.vector2(.2, .2),
         },
         content = ui.content {
             {
                 name = 'WeaponIconBox',
                 template = I.MWUI.templates.borders,
                 props = {
-                    size = Attrs.SubIcon(handSize),
+                    relativeSize = constructor.Constants.Attrs.IndicatorSize(),
                 },
                 content = ui.content {
                     {
@@ -67,7 +69,7 @@ return function(constructor)
                 name = 'DurabilityBarContainer',
                 template = I.MWUI.templates.borders,
                 props = {
-                    size = constructor.barSize,
+                    relativeSize = constructor.Constants.Attrs.BarContainer(),
                 },
                 content = ui.content {
                     {
@@ -75,7 +77,7 @@ return function(constructor)
                         name = 'DurabilityBarBackground',
                         props = {
                             resource = ui.texture { path = 'white' },
-                            size = constructor.barSize,
+                            relativeSize = constructor.Constants.Vectors.BottomRight,
                             color = constructor.Constants.Colors.Black,
                             alpha = 0.5,
                         },
@@ -85,7 +87,7 @@ return function(constructor)
                         name = 'DurabilityBar',
                         props = {
                             resource = ui.texture { path = 'white' },
-                            size = util.vector2(constructor.weaponHealth * constructor.barSize.x, constructor.barSize.y),
+                            relativeSize = util.vector2(constructor.weaponHealth, 1),
                             color = constructor.durabilityColor,
                         },
                     },
