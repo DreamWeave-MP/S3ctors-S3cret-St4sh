@@ -6,7 +6,7 @@ local I = require 'openmw.interfaces'
 ---@param handSize util.vector2
 ---@param getColorForElement function
 ---@return ImageAtlas, ImageAtlas, ImageAtlas
-return function(Constants, handSize, getColorForElement)
+return function(Constants, getColorForElement)
     local PinkyAtlas = I.S3AtlasConstructor.constructAtlas {
         tileSize = Constants.Vectors.Tiles.Pinky,
         tilesPerRow = 10,
@@ -28,8 +28,7 @@ return function(Constants, handSize, getColorForElement)
         atlasPath = 'textures/s3/ttth/tribunalthumb.dds'
     }
 
-    local ThumbSize, ThumbPos = Constants.Attrs.Thumb(handSize)
-    ---@type ImageAtlas
+    local ThumbSize, ThumbPos = Constants.Attrs.Thumb()
     ThumbAtlas:spawn {
         color = getColorForElement('Thumb'),
         name = 'Thumb',
@@ -39,19 +38,17 @@ return function(Constants, handSize, getColorForElement)
         anchor = Constants.Vectors.BottomLeft,
     }
 
-    local middleSize, middlePos = Constants.Attrs.Middle(handSize)
-    print(middleSize, middlePos)
+    local middleSize, middlePos = Constants.Attrs.Middle()
     MiddleAtlas:spawn {
         color = getColorForElement('Middle'),
         name = 'Middle',
         relativeSize = middleSize,
         size = Constants.Vectors.Zero,
-        -- size = middleSize,
         relativePosition = middlePos,
         anchor = Constants.Vectors.BottomLeft,
     }
 
-    local pinkySize, pinkyPos = Constants.Attrs.Pinky(handSize)
+    local pinkySize, pinkyPos = Constants.Attrs.Pinky()
     PinkyAtlas:spawn {
         color = getColorForElement('Pinky'),
         name = 'Pinky',
