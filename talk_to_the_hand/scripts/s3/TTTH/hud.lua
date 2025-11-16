@@ -26,8 +26,7 @@ CastableIndicator,
 WeaponIndicator,
 EffectBar,
 TotalDelay,
-CurrentDelay,
-handSize
+CurrentDelay
 
 ---@alias H4NDCompassStyle
 ---| 'Moon and Star'
@@ -67,38 +66,10 @@ H4ND.state = {
     currentScreenSize = ui.screenSize(),
 }
 
-function H4ND.resizeAll()
+function H4ND.resize()
     H4ND.updateTime()
-    handSize = H4ND.getHandSize()
-    HudCore.layout.props.size = handSize
-    HudCore.layout.props.alpha = 1.0
-
-    CastableIndicator
-    ---@diagnostic disable-next-line: undefined-field
-    .layout
-    .content
-    .CastChanceContainer
-    .content
-    .CastChanceBar
-    .props
-    .relativeSize =
-        util.vector2(H4ND.getCastableWidth(), 1)
-
-    ---@diagnostic disable-next-line: undefined-field
-    CastableIndicator:update()
-
-    WeaponIndicator
-    ---@diagnostic disable-next-line: undefined-field
-    .layout
-    .content
-    .DurabilityBarContainer
-    .content
-    .DurabilityBar
-    .props
-    .relativeSize =
-        util.vector2(H4ND.normalizedWeaponHealth(), 1)
-
-    WeaponIndicator:update()
+    local hudProps = HudCore.layout.props
+    hudProps.relativeSize, hudProps.alpha = H4ND.getHandSize(), 1.
 end
 
 function H4ND.getUIScalingFactor()
@@ -107,11 +78,14 @@ function H4ND.getUIScalingFactor()
     return result.x
 end
 
+local HUD_RATIO = 1.125
 function H4ND.getHandSize()
-    return util.vector2(
-        H4ND.HUDWidth,
-        H4ND.HUDWidth * 1.125
-    )
+    local targetWidth, screenSize = H4ND.HUDWidth, ui.screenSize()
+    local xResolution = screenSize.x * targetWidth
+    local yResolution = xResolution * HUD_RATIO
+    local targetHeight = yResolution / screenSize.y
+
+    return util.vector2(targetWidth, targetHeight)
 end
 
 ---@param statName string
@@ -178,12 +152,9 @@ do
     local totalEffectIndex = 1
     for _, effect in pairs(core.magic.effects.records) do
         EffectBarManager.effectIndices[effect.id] = totalEffectIndex
-        -- print(effect.id, totalEffectIndex)
         totalEffectIndex = totalEffectIndex + 1
     end
 end
-
-local aux_util = require 'openmw_aux.util'
 
 --- Used to sort arrays of magic effect ids
 ---@param effectA MagicEffectWithParams
@@ -211,14 +182,6 @@ function EffectBarManager:getActiveEffectIds()
             local storedEffect = foundEffects[effect.id]
 
             if not storedEffect or (storedEffect.durationLeft or math.huge) > (effect.durationLeft or math.huge) then
-                -- print(
-                --     spell.id,
-                --     (storedEffect and storedEffect or { id = 'NIL' }).id,
-                --     effect.duration,
-                --     effect.durationLeft,
-                --     effect
-                -- )
-
                 foundEffects[effect.id] = effect
             end
         end
@@ -228,10 +191,6 @@ function EffectBarManager:getActiveEffectIds()
     for _, effect in pairs(foundEffects) do
         activeEffects[effectIndex] = effect
         effectIndex = effectIndex + 1
-    end
-
-    for key, effect in pairs(activeEffects) do
-        -- print(key, effect)
     end
 
     table.sort(activeEffects, self.effectSort)
@@ -552,8 +511,6 @@ local function updateCompass()
     Compass:update()
 end
 
-handSize = H4ND.getHandSize()
-
 ---@return ImageAtlas
 local function respawnCompassAtlas()
     return I.S3AtlasConstructor.constructAtlas {
@@ -617,7 +574,7 @@ HudCore = ui.create {
     layer = 'HUD',
     name = 'H4ND',
     props = {
-        size = handSize,
+        relativeSize = H4ND.getHandSize(),
         anchor = H4ND.HUDAnchor,
         relativePosition = H4ND.HUDPos,
         alpha = 1.0,
@@ -673,7 +630,7 @@ H4ndStorage:subscribe(
                 local compassProps = Compass.layout.props
 
                 if key == 'CompassSize' then
-                    -- compassProps.size = util.vector2(value, value)
+                    compassProps.size = util.vector2(value, value)
                 elseif key == 'CompassPos' then
                     compassProps.relativePosition = value
                 elseif key == 'CompassColor' then
@@ -695,7 +652,7 @@ H4ndStorage:subscribe(
                 H4ND.state.lastUpdateTime = core.getRealTime()
             elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
                 if key == 'HUDWidth' then
-                    H4ND.resizeAll()
+                    H4ND.resize()
                 elseif key == 'HUDPos' then
                     HudCore.layout.props.relativePosition = value
                 elseif key == 'HUDAnchor' then
@@ -753,15 +710,7 @@ CurrentDelay, TotalDelay = 0, 1 / H4ND.UIFramerate
 return {
     interfaceName = 'H4nd',
     interface = {
-        HUD = function()
-            return HudCore
-        end,
-        getCastChance = function(spell, actor)
-            return Magic:getSpellCastChance(spell, actor or s3lf.gameObject)
-        end,
-        getSpellCost = function(spell)
-            return Magic:getSpellCost(spell)
-        end,
+        getElementByName = H4ND.getElementByName,
     },
     eventHandlers = {
         H4NDCorrectSecondAttribute = function(atlasData)
@@ -823,9 +772,7 @@ return {
             H4ND.updateTime()
         end,
         H4NDResolutionChanged = function()
-            H4ND.resizeAll()
-            CastableIndicator:update()
-            WeaponIndicator:update()
+            H4ND.resize()
             HudCore:update()
         end,
     },
@@ -836,13 +783,6 @@ return {
                 return
             else
                 CurrentDelay = 0
-            end
-
-            local screenSize = ui.screenSize()
-            if screenSize ~= H4ND.state.currentScreenSize then
-                H4ND.state.currentScreenSize = screenSize
-                s3lf.gameObject:sendEvent('H4NDResolutionChanged')
-                return
             end
 
             if not updateWeaponIcon() then updateWeaponDurability() end
