@@ -267,22 +267,18 @@ function EffectBarManager:constructEffectImages()
         allRows[#allRows + 1] = currentRow
     end
 
-    local content
-    if not H4ND.UIDebug then
-        content = ui.content(allRows)
-    else
-        content = ui.content {
-            {
-                type = ui.TYPE.Image,
-                name = 'DebugContent',
-                props = {
-                    relativeSize = Constants.Vectors.BottomRight,
-                    color = util.color.hex('ffaa0b'),
-                    resource = ui.texture { path = 'white' },
-                },
-            }
+    if H4ND.UIDebug and EffectBar then
+        allRows[#allRows + 1] = {
+            type = ui.TYPE.Image,
+            name = 'DebugContent',
+            props = {
+                relativeSize = Constants.Vectors.BottomRight,
+                color = util.color.hex('ffaa0b'),
+                resource = ui.texture { path = 'white' },
+            },
         }
     end
+    local content = ui.content(allRows)
 
     if EffectBar then
         EffectBar.layout.content = content
@@ -295,8 +291,8 @@ function EffectBarManager:constructEffectImages()
             props = {
                 autoSize = false,
                 relativeSize = H4ND.EffectBarSize,
-                anchor = Vectors.BottomLeft,
-                relativePosition = Vectors.BottomLeft,
+                anchor = H4ND.EffectBarAnchor,
+                relativePosition = H4ND.EffectBarPos,
             },
             content = content,
             events = H4ND.dragEvents('EffectBar')
@@ -597,6 +593,8 @@ function H4ND.dragEvents(elementName)
 
             if element == HudCore then
                 H4ND.HUDAnchor = newAnchor
+            elseif element == EffectBar then
+                H4ND.EffectBarAnchor = newAnchor
             end
         end),
         mouseMove = async:callback(function(mouseEvent, layout)
@@ -671,6 +669,8 @@ function H4ND.dragEvents(elementName)
                     H4ND.HUDPos = newValue
                 elseif element == Compass then
                     H4ND.CompassPos = newValue
+                elseif element == EffectBar then
+                    H4ND.EffectBarPos = newValue
                 end
 
                 layout.props.relativePosition = newValue
