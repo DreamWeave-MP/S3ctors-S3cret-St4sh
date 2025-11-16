@@ -1,5 +1,6 @@
 local async = require 'openmw.async'
 local core = require 'openmw.core'
+local input = require 'openmw.input'
 local storage = require 'openmw.storage'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -122,6 +123,8 @@ end
 ---@return userdata|ImageAtlas|nil handElement
 function H4ND.getElementByName(elementName)
     return ({
+        Compass = Compass,
+        Core = HudCore,
         Middle = MiddleAtlas,
         Pinky = PinkyAtlas,
         Thumb = ThumbAtlas,
@@ -272,6 +275,7 @@ function EffectBarManager:constructEffectImages()
         EffectBar = ui.create {
             type = ui.TYPE.Flex,
             name = 'EffectContainer',
+            layer = 'Windows',
             props = {
                 autoSize = false,
                 relativeSize = util.vector2(1, .125),
@@ -279,6 +283,7 @@ function EffectBarManager:constructEffectImages()
                 relativePosition = Vectors.BottomLeft,
             },
             content = content,
+            events = H4ND.dragEvents('EffectBar')
         }
     end
 end
@@ -531,6 +536,70 @@ local function getCompassAnchor()
     return anchor
 end
 
+function H4ND.dragEvents(elementName)
+    return {
+        mousePress = async:callback(function(mouseEvent, layout)
+            if not layout.userdata then layout.userdata = {} end
+            layout.userdata.doDrag = true
+            layout.userdata.lastPos = mouseEvent.position
+        end),
+        mouseMove = async:callback(function(mouseEvent, layout)
+            if not layout.userdata or not layout.userdata.doDrag then return end
+
+            local element = H4ND.getElementByName(elementName)
+
+            local delta = layout.userdata.lastPos - mouseEvent.position
+            local relativeDelta = delta:ediv(ui.screenSize())
+
+            local moveOrScale, scalar = input.isShiftPressed()
+            if moveOrScale then
+                scalar = layout.props.relativeSize or layout.props.size
+                relativeDelta = util.vector2(-relativeDelta.x, relativeDelta.y)
+            else
+                scalar = layout.props.relativePosition
+                relativeDelta = relativeDelta * -1
+            end
+
+            local newX, newY =
+                util.clamp(scalar.x + relativeDelta.x, .0, 1.),
+                util.clamp(scalar.y + relativeDelta.y, .0, 1.)
+
+            local newValue = util.vector2(newX, newY)
+
+            if moveOrScale then
+                if element == HudCore then
+                    H4ND.HUDWidth = newX
+                    layout.props.relativeSize = H4ND.getHandSize()
+                elseif element == Compass then
+                    layout.props.size = layout.props.size + -(delta.xx)
+                else
+                    layout.props.relativeSize = newValue
+                end
+            else
+                if element == HudCore then
+                    H4ND.HUDPos = newValue
+                end
+
+                layout.props.relativePosition = newValue
+            end
+
+            assert(element, 'Element: ' .. elementName, ' could not be found!')
+            element:update()
+
+            layout.userdata.lastPos = mouseEvent.position
+        end),
+        mouseRelease = async:callback(function(mouseEvent, layout)
+            if not layout.userdata or not layout.userdata.doDrag then return end
+            layout.userdata.doDrag = false
+            layout.userdata.lastPos = mouseEvent.position
+        end),
+        focusLoss = async:callback(function(_, layout)
+            if not layout.userdata or not layout.userdata.doDrag then return end
+            layout.userdata.doDrag = false
+        end),
+    }
+end
+
 CompassAtlas, ThumbAtlas, MiddleAtlas, PinkyAtlas = respawnCompassAtlas(), require 'scripts.s3.TTTH.atlasses' (
     Constants,
     getColorForElement
@@ -571,7 +640,7 @@ WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
 EffectBarManager:constructEffectImages()
 
 HudCore = ui.create {
-    layer = 'HUD',
+    layer = 'Windows',
     name = 'H4ND',
     props = {
         relativeSize = H4ND.getHandSize(),
@@ -579,18 +648,28 @@ HudCore = ui.create {
         relativePosition = H4ND.HUDPos,
         alpha = 1.0,
     },
+    userdata = {},
     content = ui.content {
+        -- {
+        --     type = ui.TYPE.Image,
+        --     props = {
+        --         resource = ui.texture { path = 'white' },
+        --         relativeSize = Constants.Vectors.BottomRight,
+        --         color = util.color.hex('ff0000'),
+        --     }
+        -- },
         ThumbAtlas.element,
         MiddleAtlas.element,
         PinkyAtlas.element,
         WeaponIndicator,
         CastableIndicator,
-        EffectBar,
-    }
+        -- EffectBar,
+    },
+    events = H4ND.dragEvents('Core')
 }
 
 Compass = ui.create {
-    layer = 'HUD',
+    layer = 'Windows',
     name = 'H4NDCompass',
     type = ui.TYPE.Image,
     props = {
@@ -601,6 +680,7 @@ Compass = ui.create {
         anchor = getCompassAnchor(),
         alpha = 1.,
     },
+    events = H4ND.dragEvents('Compass'),
 }
 
 H4ndStorage:subscribe(
