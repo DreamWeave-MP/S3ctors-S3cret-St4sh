@@ -225,7 +225,7 @@ function EffectBarManager.effectRow(rowNum, totalRows)
         name = 'EffectRow' .. tostring(rowNum),
         props = {
             horizontal = true,
-            align = ui.ALIGNMENT.Center,
+            align = ui.ALIGNMENT[H4ND.EffectAlign],
             relativeSize = util.vector2(1, 1 / totalRows),
             autoSize = false,
         },
@@ -278,7 +278,7 @@ function EffectBarManager:constructEffectImages()
             layer = 'Windows',
             props = {
                 autoSize = false,
-                relativeSize = util.vector2(1, .125),
+                relativeSize = H4ND.EffectBarSize,
                 anchor = Vectors.BottomLeft,
                 relativePosition = Vectors.BottomLeft,
             },
@@ -536,6 +536,12 @@ local function getCompassAnchor()
     return anchor
 end
 
+local AlignmentCycle = {
+    Center = 'End',
+    End = 'Start',
+    Start = 'Center'
+}
+
 function H4ND.dragEvents(elementName)
     return {
         mousePress = async:callback(function(mouseEvent, layout)
@@ -571,13 +577,21 @@ function H4ND.dragEvents(elementName)
                     H4ND.HUDWidth = newX
                     layout.props.relativeSize = H4ND.getHandSize()
                 elseif element == Compass then
-                    layout.props.size = layout.props.size + -(delta.xx)
+                    local newSize = (layout.props.size + -(delta.xx))
+                    H4ND.CompassSize = newSize.x
+                    layout.props.size = newSize
                 else
+                    if element == EffectBar then
+                        H4ND.EffectBarSize = newValue
+                    end
+
                     layout.props.relativeSize = newValue
                 end
             else
                 if element == HudCore then
                     H4ND.HUDPos = newValue
+                elseif element == Compass then
+                    H4ND.CompassPos = newValue
                 end
 
                 layout.props.relativePosition = newValue
@@ -596,6 +610,15 @@ function H4ND.dragEvents(elementName)
         focusLoss = async:callback(function(_, layout)
             if not layout.userdata or not layout.userdata.doDrag then return end
             layout.userdata.doDrag = false
+        end),
+        mouseDoubleClick = async:callback(function(_, layout)
+            local element = H4ND.getElementByName(elementName)
+            if element ~= EffectBar then return end
+
+            local currentSetting = H4ND.EffectAlign
+            local newValue = AlignmentCycle[currentSetting]
+
+            H4ND.EffectAlign = newValue
         end),
     }
 end
