@@ -73,6 +73,14 @@ I.Settings.registerGroup {
             true
         ),
         setting(
+            'UIDebug',
+            'checkbox',
+            {},
+            'UIDebugName',
+            'UIDebugDesc',
+            false
+        ),
+        setting(
             'FadeTime',
             'number',
             { integer = false, min = 0.0, max = 1200.0 },
