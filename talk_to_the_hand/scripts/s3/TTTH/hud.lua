@@ -125,11 +125,9 @@ function H4ND.getUIScalingFactor()
 end
 
 function H4ND.getHandSize()
-    return ui.screenSize():emul(
-        util.vector2(
-            H4ND.HUDWidth,
-            H4ND.HUDWidth * 2
-        )
+    return util.vector2(
+        H4ND.HUDWidth,
+        H4ND.HUDWidth * 1.125
     )
 end
 
@@ -332,10 +330,9 @@ function EffectBarManager:constructEffectImages()
         EffectBar = ui.create {
             type = ui.TYPE.Flex,
             name = 'EffectContainer',
-            -- layer = 'HUD',
             props = {
                 autoSize = false,
-                size = Attrs.EffectBar(H4ND.getHandSize()),
+                relativeSize = util.vector2(1, .125),
                 anchor = Vectors.BottomLeft,
                 relativePosition = Vectors.BottomLeft,
             },
@@ -459,12 +456,12 @@ end
 
 ---@return boolean
 local function updateWeaponDurability()
-    local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
-    local health = math.floor(H4ND.normalizedWeaponHealth() * baseWidth)
-    local width = WeaponIndicator.layout.content.DurabilityBarContainer.content.DurabilityBar.props.size.x
+    local baseWidth = math.floor(H4ND.normalizedWeaponHealth() * 100)
+    local currentWidth = WeaponIndicator.layout.content.DurabilityBarContainer.content.DurabilityBar.props.relativeSize
+        .x
 
-    width = math.floor(width)
-    if width == health then return false end
+    currentWidth = math.floor(currentWidth * 100)
+    if baseWidth == currentWidth then return false end
 
     s3lf.gameObject:sendEvent('H4NDUpdateDurability')
     return true
@@ -485,13 +482,12 @@ end
 
 ---@return boolean
 local function updateCastableBar()
-    local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
-    local targetWidth = math.floor(baseWidth * H4ND.getCastableWidth())
+    local targetWidth = math.floor(100 * H4ND.getCastableWidth())
 
     local castableIndicator = CastableIndicator.layout.content
     local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
 
-    local currentWidth = math.floor(chanceBarProps.size.x)
+    local currentWidth = math.floor(chanceBarProps.relativeSize.x * 100)
     if currentWidth == targetWidth then return false end
 
     s3lf.gameObject:sendEvent('H4NDUpdateCastableBar')
@@ -579,7 +575,7 @@ end
 
 CompassAtlas, ThumbAtlas, MiddleAtlas, PinkyAtlas = respawnCompassAtlas(), require 'scripts.s3.TTTH.atlasses' (
     Constants,
-    H4ND.getHandSize(),
+    H4ND.getHandSize():ediv(ui.screenSize()),
     getColorForElement
 )
 
@@ -596,20 +592,18 @@ local function updateStatFrames()
     end
 end
 
-local BarSize, castableIcon = Attrs.ChanceBar(handSize), getCastableIcon()
+local BarSize, castableIcon = Attrs.ChanceBar(), getCastableIcon()
 
 CastableIndicator = require 'scripts.s3.TTTH.components.castableIndicator' {
     barSize = BarSize,
     barColor = H4ND.CastChanceColor,
     castableIcon = castableIcon,
     castableWidth = H4ND.getCastableWidth(),
-    handSize = handSize,
     Constants = Constants,
 }
 
 WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
     barSize = BarSize,
-    handSize = handSize,
     weaponHealth = H4ND.normalizedWeaponHealth(),
     durabilityColor = H4ND.DurabilityColor,
     enchantFrameVisible = weaponIsEnchanted(getWeapon()),
