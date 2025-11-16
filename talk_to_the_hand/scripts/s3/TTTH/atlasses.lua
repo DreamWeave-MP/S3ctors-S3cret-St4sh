@@ -29,27 +29,36 @@ return function(Constants, handSize, getColorForElement)
     }
 
     local ThumbSize, ThumbPos = Constants.Attrs.Thumb(handSize)
+    ---@type ImageAtlas
     ThumbAtlas:spawn {
         color = getColorForElement('Thumb'),
         name = 'Thumb',
-        size = ThumbSize,
-        position = ThumbPos,
+        size = Constants.Vectors.Zero,
+        relativeSize = ThumbSize,
+        relativePosition = ThumbPos,
+        anchor = Constants.Vectors.BottomLeft,
     }
 
     local middleSize, middlePos = Constants.Attrs.Middle(handSize)
+    print(middleSize, middlePos)
     MiddleAtlas:spawn {
         color = getColorForElement('Middle'),
         name = 'Middle',
-        size = middleSize,
-        position = middlePos,
+        relativeSize = middleSize,
+        size = Constants.Vectors.Zero,
+        -- size = middleSize,
+        relativePosition = middlePos,
+        anchor = Constants.Vectors.BottomLeft,
     }
 
     local pinkySize, pinkyPos = Constants.Attrs.Pinky(handSize)
     PinkyAtlas:spawn {
         color = getColorForElement('Pinky'),
         name = 'Pinky',
-        size = pinkySize,
-        position = pinkyPos,
+        relativeSize = pinkySize,
+        size = Constants.Vectors.Zero,
+        relativePosition = pinkyPos,
+        anchor = Constants.Vectors.BottomLeft,
     }
 
     return ThumbAtlas, MiddleAtlas, PinkyAtlas
