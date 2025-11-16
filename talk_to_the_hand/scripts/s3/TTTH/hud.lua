@@ -26,7 +26,8 @@ CastableIndicator,
 WeaponIndicator,
 EffectBar,
 TotalDelay,
-CurrentDelay
+CurrentDelay,
+handSize
 
 ---@alias H4NDCompassStyle
 ---| 'Moon and Star'
@@ -63,7 +64,65 @@ H4ND.state = {
     equippedWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight),
     equippedCastable = s3lf.getSelectedSpell() or s3lf.getSelectedEnchantedItem(),
     lastUpdateTime = core.getRealTime(),
+    currentScreenSize = ui.screenSize(),
 }
+
+function H4ND.resizeAll()
+    H4ND.updateTime()
+    handSize = H4ND.getHandSize()
+    HudCore.layout.props.size = handSize
+    HudCore.layout.props.alpha = 1.0
+
+    for attrFunc, resizeAtlas in pairs {
+        [Attrs.Thumb] = ThumbAtlas,
+        [Attrs.Middle] = MiddleAtlas,
+        [Attrs.Pinky] = PinkyAtlas,
+    } do
+        ---@diagnostic disable-next-line: undefined-field
+        local props = resizeAtlas.element.layout.props
+        props.size, props.position = attrFunc(handSize)
+
+        ---@diagnostic disable-next-line: undefined-field
+        resizeAtlas.element:update()
+    end
+
+    ---@diagnostic disable-next-line: undefined-field
+    H4ND.getElementByName('EffectBar').layout.props.size = Attrs.EffectBar(handSize)
+
+    local castable = H4ND.getElementByName('CastableIndicator')
+    assert(castable)
+
+    ---@diagnostic disable-next-line: undefined-field
+    castable.layout.props.position = Attrs.Castable(handSize)
+
+    ---@diagnostic disable-next-line: undefined-field
+    local castableContent = castable.layout.content
+
+    castableContent.CastableIcon.props.size = Attrs.SubIcon(handSize)
+
+    local container, barSize = castableContent.CastChanceContainer.content, Attrs.ChanceBar(handSize)
+    container.CastChanceBackground.props.size = barSize
+    container.CastChanceBar.props.size = util.vector2(barSize.x * H4ND.getCastableWidth(), barSize.y)
+
+    ---@diagnostic disable-next-line: undefined-field
+    castable:update()
+
+    ---@diagnostic disable-next-line: undefined-field
+    local weapon = H4ND.getElementByName('WeaponIndicator').layout.content
+    local iconBoxProps = weapon.WeaponIconBox.props
+    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
+
+    local durabilityBarSize = Attrs.ChanceBar(handSize)
+
+    weapon.DurabilityBarContainer.content.DurabilityBar.props.size = util.vector2(
+        durabilityBarSize.x * H4ND.normalizedWeaponHealth(), durabilityBarSize.y)
+end
+
+function H4ND.getUIScalingFactor()
+    local result = ui.screenSize():ediv(ui.layers[1].size)
+    assert(result.x == result.y)
+    return result.x
+end
 
 function H4ND.getHandSize()
     return ui.screenSize():emul(
@@ -311,7 +370,7 @@ local function getCastableIcon()
 end
 
 ---@return number relative width of the castable item
-local function getCastableWidth()
+function H4ND.getCastableWidth()
     local enchantedItem = s3lf.getSelectedEnchantedItem()
     if enchantedItem then
         local enchantId = enchantedItem.type.records[enchantedItem.recordId].enchant
@@ -353,7 +412,7 @@ local function getColorForElement(elementName)
     return H4ND[stat .. 'Color']
 end
 
-local function updateTime()
+function H4ND.updateTime()
     H4ND.state.lastUpdateTime = core.getRealTime()
 end
 
@@ -364,7 +423,7 @@ local function updateAtlas(atlasName, atlas)
     if atlas.currentTile == targetTile then return end
 
     atlas:cycleFrame(atlas.currentTile < targetTile)
-    updateTime()
+    H4ND.updateTime()
 end
 
 ---@return GameObject? weapon
@@ -379,7 +438,7 @@ local function weaponIsEnchanted(weapon)
     return weapon.type.records[weapon.recordId].enchant ~= nil
 end
 
-local function normalizedWeaponHealth()
+function H4ND.normalizedWeaponHealth()
     local weapon, mult = getWeapon(), 0.0
 
     if weapon then
@@ -401,7 +460,7 @@ end
 ---@return boolean
 local function updateWeaponDurability()
     local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
-    local health = math.floor(normalizedWeaponHealth() * baseWidth)
+    local health = math.floor(H4ND.normalizedWeaponHealth() * baseWidth)
     local width = WeaponIndicator.layout.content.DurabilityBarContainer.content.DurabilityBar.props.size.x
 
     width = math.floor(width)
@@ -427,7 +486,7 @@ end
 ---@return boolean
 local function updateCastableBar()
     local baseWidth = Attrs.ChanceBar(H4ND.getHandSize()).x
-    local targetWidth = math.floor(baseWidth * getCastableWidth())
+    local targetWidth = math.floor(baseWidth * H4ND.getCastableWidth())
 
     local castableIndicator = CastableIndicator.layout.content
     local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
@@ -441,7 +500,7 @@ end
 
 local function updateDurabilityBarSize()
     local weaponIndicator = WeaponIndicator.layout.content
-    local xMult, barSize = normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
+    local xMult, barSize = H4ND.normalizedWeaponHealth(), Attrs.ChanceBar(H4ND.getHandSize())
     weaponIndicator.DurabilityBarContainer.content.DurabilityBar.props.size = util.vector2(barSize.x * xMult, barSize.y)
 end
 
@@ -470,7 +529,7 @@ local function handleFade()
         HudProps.alpha = step
 
         if HudProps.alpha == 1. then
-            updateTime()
+            H4ND.updateTime()
         end
     else
         return
@@ -520,7 +579,7 @@ end
 
 CompassAtlas, ThumbAtlas, MiddleAtlas, PinkyAtlas = respawnCompassAtlas(), require 'scripts.s3.TTTH.atlasses' (
     Constants,
-    handSize,
+    H4ND.getHandSize(),
     getColorForElement
 )
 
@@ -543,7 +602,7 @@ CastableIndicator = require 'scripts.s3.TTTH.components.castableIndicator' {
     barSize = BarSize,
     barColor = H4ND.CastChanceColor,
     castableIcon = castableIcon,
-    castableWidth = getCastableWidth(),
+    castableWidth = H4ND.getCastableWidth(),
     handSize = handSize,
     Constants = Constants,
 }
@@ -551,7 +610,7 @@ CastableIndicator = require 'scripts.s3.TTTH.components.castableIndicator' {
 WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
     barSize = BarSize,
     handSize = handSize,
-    weaponHealth = normalizedWeaponHealth(),
+    weaponHealth = H4ND.normalizedWeaponHealth(),
     durabilityColor = H4ND.DurabilityColor,
     enchantFrameVisible = weaponIsEnchanted(getWeapon()),
     weaponIcon = getSelectedWeaponIcon(),
@@ -642,54 +701,7 @@ H4ndStorage:subscribe(
                 H4ND.state.lastUpdateTime = core.getRealTime()
             elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
                 if key == 'HUDWidth' then
-                    updateTime()
-                    handSize = H4ND.getHandSize()
-                    HudCore.layout.props.size = handSize
-                    HudCore.layout.props.alpha = 1.0
-
-                    for attrFunc, resizeAtlas in pairs {
-                        [Attrs.Thumb] = ThumbAtlas,
-                        [Attrs.Middle] = MiddleAtlas,
-                        [Attrs.Pinky] = PinkyAtlas,
-                    } do
-                        ---@diagnostic disable-next-line: undefined-field
-                        local props = resizeAtlas.element.layout.props
-                        props.size, props.position = attrFunc(handSize)
-
-                        ---@diagnostic disable-next-line: undefined-field
-                        resizeAtlas.element:update()
-                    end
-
-                    ---@diagnostic disable-next-line: undefined-field
-                    H4ND.getElementByName('EffectBar').layout.props.size = Attrs.EffectBar(handSize)
-
-                    local castable = H4ND.getElementByName('CastableIndicator')
-                    assert(castable)
-
-                    ---@diagnostic disable-next-line: undefined-field
-                    castable.layout.props.position = Attrs.Castable(handSize)
-
-                    ---@diagnostic disable-next-line: undefined-field
-                    local castableContent = castable.layout.content
-
-                    castableContent.CastableIcon.props.size = Attrs.SubIcon(handSize)
-
-                    local container, barSize = castableContent.CastChanceContainer.content, Attrs.ChanceBar(handSize)
-                    container.CastChanceBackground.props.size = barSize
-                    container.CastChanceBar.props.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
-
-                    ---@diagnostic disable-next-line: undefined-field
-                    castable:update()
-
-                    ---@diagnostic disable-next-line: undefined-field
-                    local weapon = H4ND.getElementByName('WeaponIndicator').layout.content
-                    local iconBoxProps = weapon.WeaponIconBox.props
-                    iconBoxProps.position, iconBoxProps.size = Attrs.Weapon(handSize), Attrs.SubIcon(handSize)
-
-                    local durabilityBarSize = Attrs.ChanceBar(handSize)
-
-                    weapon.DurabilityBarContainer.content.DurabilityBar.props.size = util.vector2(
-                        durabilityBarSize.x * normalizedWeaponHealth(), durabilityBarSize.y)
+                    H4ND.resizeAll()
                 elseif key == 'HUDPos' then
                     HudCore.layout.props.relativePosition = value
                 elseif key == 'HUDAnchor' then
@@ -763,7 +775,7 @@ return {
             H4ND[atlasName .. 'Stat'] = stat
             ---@diagnostic disable-next-line: undefined-field
             H4ND.getElementByName(atlasName).element:update()
-            updateTime()
+            H4ND.updateTime()
         end,
         H4NDUpdateCastable = function()
             local icon = getCastableIcon()
@@ -781,27 +793,27 @@ return {
             end
 
             local barSize = Attrs.ChanceBar(H4ND.getHandSize())
-            chanceBarProps.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
+            chanceBarProps.size = util.vector2(barSize.x * H4ND.getCastableWidth(), barSize.y)
             chanceBarProps.visible = icon ~= nil
             castIconProps.resource = ui.texture { path = icon }
 
             CastableIndicator:update()
-            updateTime()
+            H4ND.updateTime()
         end,
         H4NDUpdateCastableBar = function()
             local castableIndicator = CastableIndicator.layout.content
 
             local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
             local barSize = Attrs.ChanceBar(H4ND.getHandSize())
-            chanceBarProps.size = util.vector2(barSize.x * getCastableWidth(), barSize.y)
+            chanceBarProps.size = util.vector2(barSize.x * H4ND.getCastableWidth(), barSize.y)
 
             CastableIndicator:update()
-            updateTime()
+            H4ND.updateTime()
         end,
         H4NDUpdateDurability = function()
             updateDurabilityBarSize()
             WeaponIndicator:update()
-            updateTime()
+            H4ND.updateTime()
         end,
         H4NDUpdateWeapon = function()
             local weaponIndicator = WeaponIndicator.layout.content.WeaponIconBox.content
@@ -811,7 +823,13 @@ return {
             updateDurabilityBarSize()
 
             WeaponIndicator:update()
-            updateTime()
+            H4ND.updateTime()
+        end,
+        H4NDResolutionChanged = function()
+            H4ND.resizeAll()
+            CastableIndicator:update()
+            WeaponIndicator:update()
+            HudCore:update()
         end,
     },
     engineHandlers = {
@@ -821,6 +839,13 @@ return {
                 return
             else
                 CurrentDelay = 0
+            end
+
+            local screenSize = ui.screenSize()
+            if screenSize ~= H4ND.state.currentScreenSize then
+                H4ND.state.currentScreenSize = screenSize
+                s3lf.gameObject:sendEvent('H4NDResolutionChanged')
+                return
             end
 
             if not updateWeaponIcon() then updateWeaponDurability() end
