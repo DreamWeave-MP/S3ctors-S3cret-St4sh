@@ -185,6 +185,14 @@ I.Settings.registerGroup {
             'Center'
         ),
         setting(
+            'EffectsPerRow',
+            'number',
+            { integer = true, min = 1, max = 100, },
+            'EffectsPerRowName',
+            'EffectsPerRowDesc',
+            10
+        ),
+        setting(
             'EffectBarSize',
             ---@diagnostic disable-next-line: param-type-mismatch
             'ScreenPosition',
