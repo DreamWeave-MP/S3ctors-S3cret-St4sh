@@ -562,8 +562,38 @@ function H4ND.dragEvents(elementName)
     return {
         mousePress = async:callback(function(mouseEvent, layout)
             if not layout.userdata then layout.userdata = {} end
+            local element = H4ND.getElementByName(elementName)
             layout.userdata.doDrag = true
             layout.userdata.lastPos = mouseEvent.position
+
+            local props = layout.props
+            local elementTotalSize = props.size or props.relativeSize:emul(ui.screenSize())
+            local relativeSize = props.relativeSize or props.size:ediv(ui.screenSize())
+            local relativeClickPos = mouseEvent.offset:ediv(elementTotalSize)
+
+            local edgeThreshold = 0.025
+            local isLeftEdge = relativeClickPos.x < edgeThreshold
+            local isRightEdge = relativeClickPos.x > (1 - edgeThreshold)
+            local isTopEdge = relativeClickPos.y < edgeThreshold
+            local isBottomEdge = relativeClickPos.y > (1 - edgeThreshold)
+
+            local isOnEdge = isLeftEdge or isRightEdge or isTopEdge or isBottomEdge
+
+            if not isOnEdge and not input.isShiftPressed() then return end
+            layout.userdata.scaleDrag = true
+            if element == Compass then return end
+
+            local newAnchor = Constants.Vectors.BottomRight - relativeClickPos
+            local anchorDiff = newAnchor - layout.props.anchor
+
+            local newPosition = layout.props.relativePosition + anchorDiff:emul(relativeSize)
+
+            layout.props.anchor = newAnchor
+            layout.props.relativePosition = newPosition
+
+            if element == HudCore then
+                H4ND.HUDAnchor = newAnchor
+            end
         end),
         mouseMove = async:callback(function(mouseEvent, layout)
             if not layout.userdata or not layout.userdata.doDrag then return end
@@ -573,13 +603,16 @@ function H4ND.dragEvents(elementName)
             local delta = layout.userdata.lastPos - mouseEvent.position
             local relativeDelta = delta:ediv(ui.screenSize())
 
-            local moveOrScale, reanchor, scalar = input.isShiftPressed(), input.isCtrlPressed()
-            if moveOrScale then
+            local scalar
+            if layout.userdata.scaleDrag then
                 scalar = layout.props.relativeSize or layout.props.size
-                relativeDelta = util.vector2(-relativeDelta.x, relativeDelta.y)
-            elseif reanchor then
-                scalar = layout.props.anchor or Constants.Vectors.Zero
-                relativeDelta = util.vector2(relativeDelta.x, relativeDelta.y)
+
+                local goLeft = layout.props.anchor.x <= .5
+                local goDown = layout.props.anchor.y <= .5
+                local width = goLeft and -relativeDelta.x or relativeDelta.x
+                local height = goDown and -relativeDelta.y or relativeDelta.y
+
+                relativeDelta = util.vector2(width, height)
             else
                 scalar = layout.props.relativePosition
                 relativeDelta = relativeDelta * -1
@@ -591,7 +624,7 @@ function H4ND.dragEvents(elementName)
 
             local newValue = util.vector2(newX, newY)
 
-            if moveOrScale then
+            if layout.userdata.scaleDrag then
                 if element == HudCore then
                     H4ND.HUDWidth = newX
                     layout.props.relativeSize = H4ND.getHandSize()
@@ -606,8 +639,6 @@ function H4ND.dragEvents(elementName)
 
                     layout.props.relativeSize = newValue
                 end
-            elseif reanchor then
-                layout.props.anchor = newValue
             else
                 if element == HudCore then
                     H4ND.HUDPos = newValue
@@ -626,11 +657,13 @@ function H4ND.dragEvents(elementName)
         mouseRelease = async:callback(function(mouseEvent, layout)
             if not layout.userdata or not layout.userdata.doDrag then return end
             layout.userdata.doDrag = false
+            layout.userdata.scaleDrag = false
             layout.userdata.lastPos = mouseEvent.position
         end),
         focusLoss = async:callback(function(_, layout)
             if not layout.userdata or not layout.userdata.doDrag then return end
             layout.userdata.doDrag = false
+            layout.userdata.scaleDrag = false
         end),
         mouseDoubleClick = async:callback(function(_, layout)
             local element = H4ND.getElementByName(elementName)
