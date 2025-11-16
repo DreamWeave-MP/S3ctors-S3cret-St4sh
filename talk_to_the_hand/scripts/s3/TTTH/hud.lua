@@ -55,6 +55,7 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field UseFade boolean
 ---@field FadeTime number
 ---@field FadeStep number
+---@field UIDebug boolean
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
@@ -266,7 +267,22 @@ function EffectBarManager:constructEffectImages()
         allRows[#allRows + 1] = currentRow
     end
 
-    local content = ui.content(allRows)
+    local content
+    if not H4ND.UIDebug then
+        content = ui.content(allRows)
+    else
+        content = ui.content {
+            {
+                type = ui.TYPE.Image,
+                name = 'DebugContent',
+                props = {
+                    relativeSize = Constants.Vectors.BottomRight,
+                    color = util.color.hex('ffaa0b'),
+                    resource = ui.texture { path = 'white' },
+                },
+            }
+        }
+    end
 
     if EffectBar then
         EffectBar.layout.content = content
@@ -557,10 +573,13 @@ function H4ND.dragEvents(elementName)
             local delta = layout.userdata.lastPos - mouseEvent.position
             local relativeDelta = delta:ediv(ui.screenSize())
 
-            local moveOrScale, scalar = input.isShiftPressed()
+            local moveOrScale, reanchor, scalar = input.isShiftPressed(), input.isCtrlPressed()
             if moveOrScale then
                 scalar = layout.props.relativeSize or layout.props.size
                 relativeDelta = util.vector2(-relativeDelta.x, relativeDelta.y)
+            elseif reanchor then
+                scalar = layout.props.anchor or Constants.Vectors.Zero
+                relativeDelta = util.vector2(relativeDelta.x, relativeDelta.y)
             else
                 scalar = layout.props.relativePosition
                 relativeDelta = relativeDelta * -1
@@ -587,6 +606,8 @@ function H4ND.dragEvents(elementName)
 
                     layout.props.relativeSize = newValue
                 end
+            elseif reanchor then
+                layout.props.anchor = newValue
             else
                 if element == HudCore then
                     H4ND.HUDPos = newValue
@@ -673,14 +694,16 @@ HudCore = ui.create {
     },
     userdata = {},
     content = ui.content {
-        -- {
-        --     type = ui.TYPE.Image,
-        --     props = {
-        --         resource = ui.texture { path = 'white' },
-        --         relativeSize = Constants.Vectors.BottomRight,
-        --         color = util.color.hex('ff0000'),
-        --     }
-        -- },
+        {
+            type = ui.TYPE.Image,
+            name = 'DebugContent',
+            props = {
+                resource = ui.texture { path = 'white' },
+                relativeSize = Constants.Vectors.BottomRight,
+                color = util.color.hex('ff0000'),
+                visible = H4ND.UIDebug,
+            }
+        },
         ThumbAtlas.element,
         MiddleAtlas.element,
         PinkyAtlas.element,
@@ -765,6 +788,9 @@ H4ndStorage:subscribe(
                 HudCore:update()
             elseif key == 'UIFramerate' then
                 TotalDelay = 1 / value
+            elseif key == 'UIDebug' then
+                HudCore.layout.content.DebugContent.props.visible = value
+                HudCore:update()
             end
 
             if atlasName and atlas then
