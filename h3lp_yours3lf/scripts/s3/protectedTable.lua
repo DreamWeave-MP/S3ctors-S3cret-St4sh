@@ -73,7 +73,8 @@ local function new(constructorData)
   end
 
   assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
-  local groupIsWritable = pcall(function() requestedGroup:set(ValidatorStr, true) end)
+  local key, value = next(requestedGroup:asTable())
+  local groupIsWritable = pcall(function() requestedGroup:set(key, value) end)
 
   local proxy = {
     thisGroup = requestedGroup,
