@@ -552,6 +552,13 @@ local function getCompassAnchor()
     return anchor
 end
 
+local function getOppositeAnchor(offsetPos, layout)
+    local props = layout.props
+    local elementTotalSize = props.size or props.relativeSize:emul(ui.screenSize())
+    local relativeClickPos = offsetPos:ediv(elementTotalSize)
+    return Constants.Vectors.BottomRight - relativeClickPos, relativeClickPos
+end
+
 local AlignmentCycle = {
     Center = 'End',
     End = 'Start',
@@ -566,10 +573,8 @@ function H4ND.dragEvents(elementName)
             layout.userdata.doDrag = true
             layout.userdata.lastPos = mouseEvent.position
 
-            local props = layout.props
-            local elementTotalSize = props.size or props.relativeSize:emul(ui.screenSize())
-            local relativeSize = props.relativeSize or props.size:ediv(ui.screenSize())
-            local relativeClickPos = mouseEvent.offset:ediv(elementTotalSize)
+            local newAnchor, relativeClickPos = getOppositeAnchor(mouseEvent.offset, layout)
+            local relativeSize = layout.props.relativeSize or layout.props.size:ediv(ui.screenSize())
 
             local edgeThreshold = 0.025
             local isLeftEdge = relativeClickPos.x < edgeThreshold
@@ -583,7 +588,6 @@ function H4ND.dragEvents(elementName)
             layout.userdata.scaleDrag = true
             if element == Compass then return end
 
-            local newAnchor = Constants.Vectors.BottomRight - relativeClickPos
             local anchorDiff = newAnchor - layout.props.anchor
 
             local newPosition = layout.props.relativePosition + anchorDiff:emul(relativeSize)
@@ -640,6 +644,29 @@ function H4ND.dragEvents(elementName)
                     layout.props.relativeSize = newValue
                 end
             else
+                local screenSize = ui.screenSize()
+                local elementTotalSize = layout.props.size or layout.props.relativeSize:emul(screenSize)
+                local anchorPos = layout.props.relativePosition:emul(screenSize)
+                local topLeft = (anchorPos - (layout.props.anchor:emul(elementTotalSize))) + delta
+
+                local leftEdge = topLeft.x <= 0.
+                local rightEdge = (topLeft.x + elementTotalSize.x) > screenSize.x
+                local topEdge = topLeft.y <= 0.
+                local bottomEdge = (topLeft.y + elementTotalSize.y) > screenSize.y
+
+                local currentPos, epsilon = layout.props.relativePosition, 0.001
+                if leftEdge then
+                    newValue = util.vector2(currentPos.x + epsilon, currentPos.y)
+                elseif rightEdge then
+                    newValue = util.vector2(currentPos.x - epsilon, currentPos.y)
+                end
+
+                if topEdge then
+                    newValue = util.vector2(currentPos.x, currentPos.y + epsilon)
+                elseif bottomEdge then
+                    newValue = util.vector2(currentPos.x, currentPos.y - epsilon)
+                end
+
                 if element == HudCore then
                     H4ND.HUDPos = newValue
                 elseif element == Compass then
