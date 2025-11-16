@@ -169,7 +169,7 @@ local function new(constructorData)
 This table is not writable and values must be updated through its associated storage group: '%s'.]]
             ):format(
               constructorData.logPrefix,
-              tostring(key), tostring(value), constructorData.inputGroupName),
+              tostring(key), tostring(value), constructorData.inputGroupName or 'NO NAME PROVIDED'),
             2)
         end
       else
