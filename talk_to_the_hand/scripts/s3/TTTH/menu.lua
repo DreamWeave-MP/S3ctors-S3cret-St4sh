@@ -194,6 +194,24 @@ I.Settings.registerGroup {
             util.vector2(.25, .1)
         ),
         setting(
+            'EffectBarAnchor',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'EffectBarAnchorName',
+            'EffectBarAnchorDesc',
+            util.vector2(.25, .1)
+        ),
+        setting(
+            'EffectBarPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'EffectBarPosName',
+            'EffectBarPosDesc',
+            util.vector2(.25, .1)
+        ),
+        setting(
             'HUDWidth',
             'number',
             { integer = false, min = 0.01, max = 1. },
