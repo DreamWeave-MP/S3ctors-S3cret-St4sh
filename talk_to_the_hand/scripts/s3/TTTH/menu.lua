@@ -65,20 +65,20 @@ I.Settings.registerGroup {
             60
         ),
         setting(
-            'UseFade',
-            'checkbox',
-            {},
-            'UseFadeName',
-            'UseFadeDesc',
-            true
-        ),
-        setting(
             'UIDebug',
             'checkbox',
             {},
             'UIDebugName',
             'UIDebugDesc',
             false
+        ),
+        setting(
+            'UseFade',
+            'checkbox',
+            {},
+            'UseFadeName',
+            'UseFadeDesc',
+            true
         ),
         setting(
             'FadeTime',
@@ -97,55 +97,12 @@ I.Settings.registerGroup {
             0.02
         ),
         setting(
-            'HUDWidth',
-            'number',
-            { integer = false, min = 0.01, max = 1. },
-            'HUDWidthName',
-            'HUDWidthDesc',
-            .15
-        ),
-        setting(
-            'HUDAnchor',
-            ---@diagnostic disable-next-line: param-type-mismatch
-            'ScreenPosition',
-            {},
-            'HUDAnchorName',
-            'HUDAnchorDesc',
-            util.vector2(0, 1)
-        ),
-        setting(
-            'HUDPos',
-            ---@diagnostic disable-next-line: param-type-mismatch
-            'ScreenPosition',
-            {},
-            'HUDPosName',
-            'HUDPosDesc',
-            util.vector2(0, 1)
-        ),
-        setting(
-            'CompassPos',
-            ---@diagnostic disable-next-line: param-type-mismatch
-            'ScreenPosition',
-            {},
-            'CompassPosName',
-            'CompassPosDesc',
-            util.vector2(.02, .93)
-        ),
-        setting(
             'CompassColor',
             'color',
             {},
             'CompassColorName',
             'CompassColorDesc',
             util.color.hex('ffffff')
-        ),
-        setting(
-            'CompassSize',
-            'number',
-            { integer = true, min = 16, max = 128 },
-            'CompassSizeName',
-            'CompassSizeDesc',
-            48
         ),
         setting(
             'CompassStyle',
@@ -229,11 +186,55 @@ I.Settings.registerGroup {
         ),
         setting(
             'EffectBarSize',
+            ---@diagnostic disable-next-line: param-type-mismatch
             'ScreenPosition',
             {},
             'EffectBarSizeName',
             'EffectBarSizeDesc',
             util.vector2(.25, .1)
+        ),
+        setting(
+            'HUDWidth',
+            'number',
+            { integer = false, min = 0.01, max = 1. },
+            'HUDWidthName',
+            'HUDWidthDesc',
+            .15
+        ),
+        setting(
+            'HUDAnchor',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'HUDAnchorName',
+            'HUDAnchorDesc',
+            util.vector2(0, 1)
+        ),
+        setting(
+            'HUDPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'HUDPosName',
+            'HUDPosDesc',
+            util.vector2(0, 1)
+        ),
+        setting(
+            'CompassPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'CompassPosName',
+            'CompassPosDesc',
+            util.vector2(.02, .93)
+        ),
+        setting(
+            'CompassSize',
+            'number',
+            { integer = true, min = 16, max = 128 },
+            'CompassSizeName',
+            'CompassSizeDesc',
+            48
         ),
     }
 }
