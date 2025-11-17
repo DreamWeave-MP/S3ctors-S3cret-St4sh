@@ -5,10 +5,12 @@ local I = require 'openmw.interfaces'
 
 ---@class CastableConstructor
 ---@field barColor util.color
----@field barSize util.vector2
 ---@field castableIcon string?
 ---@field castableWidth number
 ---@field Constants H4NDConstants
+---@field useDebug boolean
+---@field dragEvents table<string, function>
+---@field H4ND H4ND
 
 ---@param constructor CastableConstructor
 return function(constructor)
@@ -19,26 +21,43 @@ return function(constructor)
         constructor.Constants.Colors,
         constructor.Constants.Vectors
 
+    local width = constructor.H4ND.CastableIndicatorSize
     return ui.create {
         type = ui.TYPE.Flex,
         name = 'CastableIndicator',
+        layer = 'Windows',
         props = {
-            anchor = Vectors.BottomLeft,
-            relativePosition = Attrs.Castable(),
             autoSize = false,
-            relativeSize = util.vector2(.15, .15),
+            anchor = constructor.H4ND.CastableIndicatorAnchor,
+            relativeSize = util.vector2(width, width * 1.125),
+            relativePosition = constructor.H4ND.CastableIndicatorPos,
         },
+        events = constructor.dragEvents,
         content = ui.content {
+            -- {
+            --     type = ui.TYPE.Image,
+            --     name = 'DebugContent',
+            --     props = {
+            --         resource = ui.texture { path = 'white', },
+            --         color = util.color.hex('00ffff'),
+            --         visible = constructor.useDebug,
+            --         relativeSize = Vectors.BottomRight,
+            --     },
+            -- },
             {
                 type = ui.TYPE.Image,
                 template = I.MWUI.templates.borders,
                 name = 'CastableIcon',
                 props = {
                     resource = ui.texture { path = constructor.castableIcon or 'white' },
-                    relativeSize = constructor.Constants.Attrs.IndicatorSize(),
+                    relativeSize = Attrs.IndicatorSize(),
                     visible = true,
                     color = constructor.castableIcon == nil and Colors.Black or nil,
                     alpha = constructor.castableIcon ~= nil and 1.0 or .5,
+                },
+                external = {
+                    grow = 1,
+                    stretch = 1,
                 }
             },
             {
@@ -53,7 +72,7 @@ return function(constructor)
                         name = 'CastChanceBackground',
                         props = {
                             resource = ui.texture { path = 'white' },
-                            relativeSize = constructor.Constants.Vectors.BottomRight,
+                            relativeSize = Vectors.BottomRight,
                             color = Colors.Black,
                             alpha = 0.5,
                         },
