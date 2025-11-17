@@ -10,26 +10,42 @@ local I = require 'openmw.interfaces'
 ---@field weaponIcon string
 ---@field weaponHealth number
 ---@field barSize util.vector2
+---@field dragEvents table<string, function>
+---@field useDebug boolean
+---@field H4ND H4ND
 
 ---@param constructor WeaponIndicatorConstructor
 return function(constructor)
     local Attrs, Vectors = constructor.Constants.Attrs, constructor.Constants.Vectors
 
+    local width = constructor.H4ND.WeaponIndicatorSize
     return ui.create {
         type = ui.TYPE.Flex,
         name = 'WeaponIndicator',
+        layer = 'Windows',
         props = {
-            relativePosition = Attrs.Weapon(),
-            anchor = util.vector2(.5, 1),
+            anchor = constructor.H4ND.WeaponIndicatorAnchor,
             autoSize = false,
-            relativeSize = util.vector2(.2, .2),
+            relativePosition = constructor.H4ND.WeaponIndicatorPos,
+            relativeSize = util.vector2(width, width),
         },
+        events = constructor.dragEvents,
         content = ui.content {
+            {
+                type = ui.TYPE.Image,
+                name = 'DebugContent',
+                props = {
+                    resource = ui.texture { path = 'white', },
+                    color = util.color.hex('8b008b'),
+                    visible = constructor.useDebug,
+                    relativeSize = Vectors.BottomRight,
+                }
+            },
             {
                 name = 'WeaponIconBox',
                 template = I.MWUI.templates.borders,
                 props = {
-                    relativeSize = constructor.Constants.Attrs.IndicatorSize(),
+                    relativeSize = Attrs.IndicatorSize(),
                 },
                 content = ui.content {
                     {
@@ -37,7 +53,7 @@ return function(constructor)
                         name = 'WeaponBackground',
                         props = {
                             resource = ui.texture { path = 'white' },
-                            relativeSize = constructor.Constants.Vectors.BottomRight,
+                            relativeSize = Vectors.BottomRight,
                             color = constructor.Constants.Colors.Black,
                             alpha = 0.5,
                         },
@@ -69,7 +85,7 @@ return function(constructor)
                 name = 'DurabilityBarContainer',
                 template = I.MWUI.templates.borders,
                 props = {
-                    relativeSize = constructor.Constants.Attrs.BarContainer(),
+                    relativeSize = Attrs.BarContainer(),
                 },
                 content = ui.content {
                     {
@@ -77,7 +93,7 @@ return function(constructor)
                         name = 'DurabilityBarBackground',
                         props = {
                             resource = ui.texture { path = 'white' },
-                            relativeSize = constructor.Constants.Vectors.BottomRight,
+                            relativeSize = Vectors.BottomRight,
                             color = constructor.Constants.Colors.Black,
                             alpha = 0.5,
                         },

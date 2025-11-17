@@ -37,9 +37,9 @@ CurrentDelay
 local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@class H4ND: ProtectedTable
 ---@field UIFramerate integer
----@field HUDWidth number
----@field HUDPos util.vector2
----@field HUDAnchor util.vector2
+---@field H4NDWidth number
+---@field H4NDPos util.vector2
+---@field H4NDAnchor util.vector2
 ---@field ThumbStat string
 ---@field PinkyStat string
 ---@field MiddleStat string
@@ -83,7 +83,7 @@ end
 
 local HUD_RATIO = 1.125
 function H4ND.getHandSize()
-    local targetWidth, screenSize = H4ND.HUDWidth, ui.screenSize()
+    local targetWidth, screenSize = H4ND.H4NDWidth, ui.screenSize()
     local xResolution = screenSize.x * targetWidth
     local yResolution = xResolution * HUD_RATIO
     local targetHeight = yResolution / screenSize.y
@@ -286,7 +286,7 @@ function EffectBarManager:constructEffectImages()
     else
         EffectBar = ui.create {
             type = ui.TYPE.Flex,
-            name = 'EffectContainer',
+            name = 'EffectBar',
             layer = 'Windows',
             props = {
                 autoSize = false,
@@ -548,11 +548,37 @@ local function getCompassAnchor()
     return anchor
 end
 
-local function getOppositeAnchor(offsetPos, layout)
+---@class UITil
+local Uitil = {}
+
+--- Given a mouseEvent.offset and the clicked layout, figure out the relative position based on the offset
+function Uitil.relativeClickPos(offsetPos, layout)
     local props = layout.props
     local elementTotalSize = props.size or props.relativeSize:emul(ui.screenSize())
-    local relativeClickPos = offsetPos:ediv(elementTotalSize)
+    return offsetPos:ediv(elementTotalSize)
+end
+
+--- Used for resizing elements. Resizing without making positions go
+--- all fucked off and cattywompus necessitates mirroring the anchor into the opposite position
+--- for convenience's sake, we also return the relativeClickPos here since it's needed
+function Uitil.getOppositeAnchor(offsetPos, layout)
+    local relativeClickPos = Uitil.relativeClickPos(offsetPos, layout)
     return Constants.Vectors.BottomRight - relativeClickPos, relativeClickPos
+end
+
+--- Determines if a click occurred on the edge of an element or not.
+--- Feed the params of a mousePress/Click event directly into `Uiti.relativeClickPos`, then into this.
+--- Usage: Uitil.didClickEdge(Uitil.relativeClickPos(mouseEvent.offset, layout))
+---@param relativeClickPos util.vector2
+---@return boolean
+function Uitil.didClickEdge(relativeClickPos)
+    local edgeThreshold = 0.025
+    local isLeftEdge = relativeClickPos.x < edgeThreshold
+    local isRightEdge = relativeClickPos.x > (1 - edgeThreshold)
+    local isTopEdge = relativeClickPos.y < edgeThreshold
+    local isBottomEdge = relativeClickPos.y > (1 - edgeThreshold)
+
+    return isLeftEdge or isRightEdge or isTopEdge or isBottomEdge
 end
 
 local AlignmentCycle = {
@@ -566,49 +592,40 @@ function H4ND.dragEvents(elementName)
         mousePress = async:callback(function(mouseEvent, layout)
             if not layout.userdata then layout.userdata = {} end
             local element = H4ND.getElementByName(elementName)
+            assert(element)
+
             layout.userdata.doDrag = true
             layout.userdata.lastPos = mouseEvent.position
 
-            local newAnchor, relativeClickPos = getOppositeAnchor(mouseEvent.offset, layout)
+            local newAnchor, relativeClickPos = Uitil.getOppositeAnchor(mouseEvent.offset, layout)
             local relativeSize = layout.props.relativeSize or layout.props.size:ediv(ui.screenSize())
 
-            local edgeThreshold = 0.025
-            local isLeftEdge = relativeClickPos.x < edgeThreshold
-            local isRightEdge = relativeClickPos.x > (1 - edgeThreshold)
-            local isTopEdge = relativeClickPos.y < edgeThreshold
-            local isBottomEdge = relativeClickPos.y > (1 - edgeThreshold)
+            if not Uitil.didClickEdge(relativeClickPos) and not input.isShiftPressed() then return end
 
-            local isOnEdge = isLeftEdge or isRightEdge or isTopEdge or isBottomEdge
-
-            if not isOnEdge and not input.isShiftPressed() then return end
             layout.userdata.scaleDrag = true
             if element == Compass then return end
 
             local anchorDiff = newAnchor - layout.props.anchor
+            local name = layout.name
 
-            local newPosition = layout.props.relativePosition + anchorDiff:emul(relativeSize)
-
-            layout.props.anchor = newAnchor
-            layout.props.relativePosition = newPosition
-
-            if element == HudCore then
-                H4ND.HUDAnchor = newAnchor
-            elseif element == EffectBar then
-                H4ND.EffectBarAnchor = newAnchor
-            end
+            H4ND[name .. 'Anchor'] = newAnchor
+            H4ND[name .. 'Pos'] = layout.props.relativePosition + anchorDiff:emul(relativeSize)
         end),
         mouseMove = async:callback(function(mouseEvent, layout)
             if not layout.userdata or not layout.userdata.doDrag then return end
 
-            local element = H4ND.getElementByName(elementName)
+            local element, screenSize = H4ND.getElementByName(elementName), ui.screenSize()
 
             local delta = layout.userdata.lastPos - mouseEvent.position
-            local relativeDelta = delta:ediv(ui.screenSize())
+            local relativeDelta = delta:ediv(screenSize)
 
             local scalar
             if layout.userdata.scaleDrag then
                 scalar = layout.props.relativeSize or layout.props.size
 
+                --- Mouse movements in either direction may not necessarily cause scaling to go in the direction we want,
+                --- if the anchor's in some weird place
+                --- So we have to invert the movement diretion depending on the orientation of the anchor
                 local goLeft = layout.props.anchor.x <= .5
                 local goDown = layout.props.anchor.y <= .5
                 local width = goLeft and -relativeDelta.x or relativeDelta.x
@@ -627,22 +644,20 @@ function H4ND.dragEvents(elementName)
             local newValue = util.vector2(newX, newY)
 
             if layout.userdata.scaleDrag then
-                if element == HudCore then
-                    H4ND.HUDWidth = newX
-                    layout.props.relativeSize = H4ND.getHandSize()
-                elseif element == Compass then
-                    local newSize = (layout.props.size + -(delta.xx))
-                    H4ND.CompassSize = newSize.x
-                    layout.props.size = newSize
-                else
-                    if element == EffectBar then
-                        H4ND.EffectBarSize = newValue
-                    end
+                local handler = H4ND.resizeHandlers[element]
 
-                    layout.props.relativeSize = newValue
-                end
+                assert(
+                    handler,
+                    ('Failed to find matching resize handler for element: %s %s'):format(elementName, element)
+                )
+
+                ---@type ResizeHandler
+                handler {
+                    layout = layout,
+                    absoluteDelta = delta,
+                    resolvedDelta = newValue,
+                }
             else
-                local screenSize = ui.screenSize()
                 local elementTotalSize = layout.props.size or layout.props.relativeSize:emul(screenSize)
                 local anchorPos = layout.props.relativePosition:emul(screenSize)
                 local topLeft = (anchorPos - (layout.props.anchor:emul(elementTotalSize))) + delta
@@ -665,19 +680,8 @@ function H4ND.dragEvents(elementName)
                     newValue = util.vector2(currentPos.x, currentPos.y - epsilon)
                 end
 
-                if element == HudCore then
-                    H4ND.HUDPos = newValue
-                elseif element == Compass then
-                    H4ND.CompassPos = newValue
-                elseif element == EffectBar then
-                    H4ND.EffectBarPos = newValue
-                end
-
-                layout.props.relativePosition = newValue
+                H4ND[layout.name .. 'Pos'] = newValue
             end
-
-            assert(element, 'Element: ' .. elementName, ' could not be found!')
-            element:update()
 
             layout.userdata.lastPos = mouseEvent.position
         end),
@@ -725,11 +729,13 @@ end
 local BarSize, castableIcon = Attrs.ChanceBar(), getCastableIcon()
 
 CastableIndicator = require 'scripts.s3.TTTH.components.castableIndicator' {
-    barSize = BarSize,
     barColor = H4ND.CastChanceColor,
     castableIcon = castableIcon,
     castableWidth = H4ND.getCastableWidth(),
     Constants = Constants,
+    dragEvents = H4ND.dragEvents('CastableIndicator'),
+    useDebug = H4ND.UIDebug,
+    H4ND = H4ND,
 }
 
 WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
@@ -739,6 +745,9 @@ WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
     enchantFrameVisible = weaponIsEnchanted(getWeapon()),
     weaponIcon = getSelectedWeaponIcon(),
     Constants = Constants,
+    dragEvents = H4ND.dragEvents('WeaponIndicator'),
+    useDebug = H4ND.UIDebug,
+    H4ND = H4ND,
 }
 
 EffectBarManager:constructEffectImages()
@@ -748,8 +757,8 @@ HudCore = ui.create {
     name = 'H4ND',
     props = {
         relativeSize = H4ND.getHandSize(),
-        anchor = H4ND.HUDAnchor,
-        relativePosition = H4ND.HUDPos,
+        anchor = H4ND.H4NDAnchor,
+        relativePosition = H4ND.H4NDPos,
         alpha = 1.0,
     },
     userdata = {},
@@ -767,16 +776,13 @@ HudCore = ui.create {
         ThumbAtlas.element,
         MiddleAtlas.element,
         PinkyAtlas.element,
-        WeaponIndicator,
-        CastableIndicator,
-        -- EffectBar,
     },
     events = H4ND.dragEvents('Core')
 }
 
 Compass = ui.create {
     layer = 'Windows',
-    name = 'H4NDCompass',
+    name = 'Compass',
     type = ui.TYPE.Image,
     props = {
         relativePosition = H4ND.CompassPos,
@@ -787,6 +793,65 @@ Compass = ui.create {
         alpha = 1.,
     },
     events = H4ND.dragEvents('Compass'),
+}
+
+---@class ResizeInfo
+---@field layout table<string, any>
+---@field absoluteDelta util.vector2
+---@field resolvedDelta util.vector2
+
+---@alias ResizeHandler fun(resizeInfo: ResizeInfo)
+---@alias ui.Element userdata
+
+---@type table<ui.Element, ResizeHandler>
+H4ND.state.resizeHandlers = {
+    [CastableIndicator] = function(resizeInfo)
+        H4ND.CastableIndicatorSize = resizeInfo.resolvedDelta.x
+    end,
+    [Compass] = function(resizeInfo)
+        local layout, absoluteDelta = resizeInfo.layout, resizeInfo.absoluteDelta
+        H4ND.CompassSize = (layout.props.size + -(absoluteDelta.xx)).x
+    end,
+    [EffectBar] = function(resizeInfo)
+        H4ND.EffectBarSize = resizeInfo.resolvedDelta
+    end,
+    [HudCore] = function(resizeInfo)
+        H4ND.H4NDWidth = resizeInfo.resolvedDelta.x
+    end,
+    [WeaponIndicator] = function(resizeInfo)
+        H4ND.WeaponIndicatorSize = resizeInfo.resolvedDelta.x
+    end,
+}
+
+local compassSettings, handSettings, statSettings, effectBarSettings, fadeSettings, weaponSettings, castableSettings = {
+    CompassSize = true,
+    CompassPos = true,
+    CompassColor = true,
+    CompassStyle = true,
+}, {
+    H4NDAnchor = true,
+    H4NDPos = true,
+    H4NDWidth = true,
+}, {
+    fatigueColor = true,
+    healthColor = true,
+    magickaColor = true,
+}, {
+    EffectBarAnchor = true,
+    EffectBarSize = true,
+    EffectBarPos = true,
+}, {
+    FadeStep = true,
+    FadeTime = true,
+    UseFade = true,
+}, {
+    WeaponIndicatorAnchor = true,
+    WeaponIndicatorSize = true,
+    WeaponIndicatorPos = true,
+}, {
+    CastableIndicatorAnchor = true,
+    CastableIndicatorSize = true,
+    CastableIndicatorPos = true,
 }
 
 H4ndStorage:subscribe(
@@ -800,19 +865,12 @@ H4ndStorage:subscribe(
                 atlasName, atlas = 'Middle', MiddleAtlas
             elseif key == 'PinkyStat' then
                 atlasName, atlas = 'Pinky', PinkyAtlas
-            elseif
-                key == 'fatigueColor'
-                or key == 'healthColor'
-                or key == 'magickaColor'
-            then
+            elseif statSettings[key] then
                 local statName = key:gsub('Color$', '')
                 atlas, atlasName = H4ND.getAtlasByStatName(statName)
+
                 assert(atlas and atlasName)
-            elseif
-                key == 'CompassSize'
-                or key == 'CompassPos'
-                or key == 'CompassColor'
-                or key == 'CompassStyle' then
+            elseif compassSettings[key] then
                 local compassProps = Compass.layout.props
 
                 if key == 'CompassSize' then
@@ -828,20 +886,50 @@ H4ndStorage:subscribe(
                 end
 
                 Compass:update()
-            elseif
-                key == 'UseFade'
-                or key == 'FadeTime'
-                or key == 'FadeStep'
-            then
+            elseif effectBarSettings[key] then
+                local props = EffectBar.layout.props
+
+                if key == 'EffectBarSize' then
+                    props.relativeSize = value
+                elseif key == 'EffectBarAnchor' then
+                    props.anchor = value
+                elseif key == 'EffectBarPos' then
+                    props.relativePosition = value
+                end
+            elseif weaponSettings[key] then
+                local props = WeaponIndicator.layout.props
+
+                if key == 'WeaponIndicatorAnchor' then
+                    props.anchor = value
+                elseif key == 'WeaponIndicatorPos' then
+                    props.relativePosition = value
+                elseif key == 'WeaponIndicatorSize' then
+                    props.relativeSize = util.vector2(value, value)
+                end
+
+                WeaponIndicator:update()
+            elseif castableSettings[key] then
+                local props = CastableIndicator.layout.props
+
+                if key == 'CastableIndicatorAnchor' then
+                    props.anchor = value
+                elseif key == 'CastableIndicatorPos' then
+                    props.relativePosition = value
+                elseif key == 'CastableIndicatorSize' then
+                    props.relativeSize = util.vector2(value, value)
+                end
+
+                CastableIndicator:update()
+            elseif fadeSettings[key] then
                 if HudCore.layout.props.alpha ~= 1.0 then HudCore.layout.props.alpha = 1.0 end
                 HudCore:update()
                 H4ND.state.lastUpdateTime = core.getRealTime()
-            elseif key == 'HUDPos' or key == 'HUDWidth' or key == 'HUDAnchor' then
-                if key == 'HUDWidth' then
+            elseif handSettings[key] then
+                if key == 'H4NDWidth' then
                     H4ND.resize()
-                elseif key == 'HUDPos' then
+                elseif key == 'H4NDPos' then
                     HudCore.layout.props.relativePosition = value
-                elseif key == 'HUDAnchor' then
+                elseif key == 'H4NDAnchor' then
                     HudCore.layout.props.anchor = value
                 end
 
@@ -851,6 +939,12 @@ H4ndStorage:subscribe(
             elseif key == 'UIDebug' then
                 HudCore.layout.content.DebugContent.props.visible = value
                 HudCore:update()
+
+                WeaponIndicator.layout.content.DebugContent.props.visible = value
+                WeaponIndicator:update()
+
+                CastableIndicator.layout.content.DebugContent.props.visible = value
+                CastableIndicator:update()
             end
 
             if atlasName and atlas then

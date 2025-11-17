@@ -220,7 +220,7 @@ I.Settings.registerGroup {
             util.vector2(.25, .1)
         ),
         setting(
-            'HUDWidth',
+            'H4NDWidth',
             'number',
             { integer = false, min = 0.01, max = 1. },
             'HUDWidthName',
@@ -228,7 +228,7 @@ I.Settings.registerGroup {
             .15
         ),
         setting(
-            'HUDAnchor',
+            'H4NDAnchor',
             ---@diagnostic disable-next-line: param-type-mismatch
             'ScreenPosition',
             {},
@@ -237,7 +237,7 @@ I.Settings.registerGroup {
             util.vector2(0, 1)
         ),
         setting(
-            'HUDPos',
+            'H4NDPos',
             ---@diagnostic disable-next-line: param-type-mismatch
             'ScreenPosition',
             {},
@@ -261,6 +261,58 @@ I.Settings.registerGroup {
             'CompassSizeName',
             'CompassSizeDesc',
             48
+        ),
+        setting(
+            'WeaponIndicatorSize',
+            'number',
+            { integer = false, min = 0.01, max = 1. },
+            'WeaponIndicatorSizeName',
+            'WeaponIndicatorSizeDesc',
+            .15
+        ),
+        setting(
+            'WeaponIndicatorAnchor',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'WeaponIndicatorAnchorName',
+            'WeaponIndicatorAnchorDesc',
+            util.vector2(0, 1)
+        ),
+        setting(
+            'WeaponIndicatorPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'WeaponIndicatorPosName',
+            'WeaponIndicatorPosDesc',
+            util.vector2(0, 1)
+        ),
+        setting(
+            'CastableIndicatorSize',
+            'number',
+            { integer = false, min = 0.01, max = 1. },
+            'CastableIndicatorSizeName',
+            'CastableIndicatorSizeDesc',
+            .15
+        ),
+        setting(
+            'CastableIndicatorAnchor',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'CastableIndicatorAnchorName',
+            'CastableIndicatorAnchorDesc',
+            util.vector2(0, 1)
+        ),
+        setting(
+            'CastableIndicatorPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'CastableIndicatorPosName',
+            'CastableIndicatorPosDesc',
+            util.vector2(0, 1)
         ),
     }
 }
