@@ -286,6 +286,7 @@ function EffectBarManager:constructEffectImages()
                 anchor = H4ND.EffectBarAnchor,
                 relativePosition = H4ND.EffectBarPos,
             },
+            events = H4ND.dragEvents('EffectBar'),
             content = ui.content {
                 {
                     type = ui.TYPE.Image,
