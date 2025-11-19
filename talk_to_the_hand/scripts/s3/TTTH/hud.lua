@@ -442,6 +442,8 @@ local function updateWeaponDurability()
     local currentWidth = math.floor(WeaponIndicator
         .layout
         .content
+        .WeaponIndicator
+        .content
         .DurabilityBarContainer
         .content
         .DurabilityBar
@@ -475,6 +477,8 @@ local function updateCastableBar()
     local currentWidth = math.floor(CastableIndicator
         .layout
         .content
+        .CastableIndicator
+        .content
         .CastChanceContainer
         .content
         .CastChanceBar
@@ -491,6 +495,8 @@ end
 local function updateDurabilityBarSize()
     WeaponIndicator
     .layout
+    .content
+    .WeaponIndicator
     .content
     .DurabilityBarContainer
     .content
@@ -864,7 +870,7 @@ return {
         end,
         H4NDUpdateCastable = function()
             local icon = getCastableIcon()
-            local castableIndicator = CastableIndicator.layout.content
+            local castableIndicator = CastableIndicator.layout.content.CastableIndicator.content
             local castIconProps = castableIndicator.CastableIcon.props
             local chanceBarProps = castableIndicator.CastChanceContainer.content.CastChanceBar.props
 
@@ -887,6 +893,8 @@ return {
         H4NDUpdateCastableBar = function()
             CastableIndicator
             .layout
+            .content
+            .CastableIndicator
             .content
             .CastChanceContainer
             .content
@@ -913,7 +921,7 @@ return {
             H4ND.updateTime()
         end,
         H4NDUpdateWeapon = function()
-            local weaponIndicator = WeaponIndicator.layout.content.WeaponIconBox.content
+            local weaponIndicator = WeaponIndicator.layout.content.WeaponIndicator.content.WeaponIconBox.content
 
             weaponIndicator.WeaponIcon.props.resource = ui.texture { path = getSelectedWeaponIcon() }
             weaponIndicator.EnchantFrame.props.visible = weaponIsEnchanted(getWeapon())

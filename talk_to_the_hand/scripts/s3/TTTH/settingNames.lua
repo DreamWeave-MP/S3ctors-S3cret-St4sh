@@ -166,8 +166,8 @@ local SettingNames = {
         WeaponIndicator.layout.content.DebugContent.props.visible = value
         WeaponIndicator:update()
 
-        -- CastableIndicator.layout.content.DebugContent.props.visible = value
-        -- CastableIndicator:update()
+        CastableIndicator.layout.content.DebugContent.props.visible = value
+        CastableIndicator:update()
     end,
     UIFramerate = function(_, _)
         H4ND.updateUIFramerate()
