@@ -191,7 +191,7 @@ function EffectBarManager:getActiveEffectIds()
         for _, effect in ipairs(spell.effects) do
             local storedEffect = foundEffects[effect.id]
 
-            if not storedEffect or (storedEffect.durationLeft or math.huge) > (effect.durationLeft or math.huge) then
+            if not storedEffect or (storedEffect.durationLeft or math.huge) < (effect.durationLeft or math.huge) then
                 foundEffects[effect.id] = effect
             end
         end
