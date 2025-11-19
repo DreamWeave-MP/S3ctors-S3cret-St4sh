@@ -10,7 +10,7 @@ local s3lf = I.s3lf
 
 ---@type H4NDConstants
 local Constants = require 'scripts.s3.TTTH.constants'
-local Attrs, Colors, Vectors = Constants.Attrs, Constants.Colors, Constants.Vectors
+local Attrs, Colors = Constants.Attrs, Constants.Colors
 
 --- setting to disable compass entirely
 --- notifier box
@@ -272,35 +272,42 @@ function EffectBarManager:constructEffectImages()
         allRows[#allRows + 1] = currentRow
     end
 
-    if H4ND.UIDebug and EffectBar then
-        allRows[#allRows + 1] = {
-            type = ui.TYPE.Image,
-            name = 'DebugContent',
-            props = {
-                relativeSize = Constants.Vectors.BottomRight,
-                color = util.color.hex('ffaa0b'),
-                resource = ui.texture { path = 'white' },
-            },
-        }
-    end
     local content = ui.content(allRows)
 
     if EffectBar then
-        EffectBar.layout.content = content
+        EffectBar.layout.content[2].content = content
         EffectBar:update()
     else
         EffectBar = ui.create {
-            type = ui.TYPE.Flex,
             name = 'EffectBar',
             layer = 'Windows',
             props = {
-                autoSize = false,
                 relativeSize = H4ND.EffectBarSize,
                 anchor = H4ND.EffectBarAnchor,
                 relativePosition = H4ND.EffectBarPos,
             },
-            content = content,
-            events = H4ND.dragEvents('EffectBar')
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    name = 'DebugContent',
+                    props = {
+                        relativeSize = Constants.Vectors.BottomRight,
+                        color = util.color.hex('ffaa0b'),
+                        resource = ui.texture { path = 'white' },
+                        alpha = .5,
+                    },
+                },
+                {
+                    type = ui.TYPE.Flex,
+                    name = 'EffectContainer',
+                    props = {
+                        autoSize = false,
+                        relativeSize = Constants.Vectors.BottomRight,
+                    },
+                    content = content,
+                    events = H4ND.dragEvents('EffectBar')
+                },
+            }
         }
     end
 end
