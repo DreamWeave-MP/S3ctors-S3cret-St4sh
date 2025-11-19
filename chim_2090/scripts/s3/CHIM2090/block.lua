@@ -881,30 +881,23 @@ else
 end
 
 
---- Also consider implementing iFrames. The current mechanic appears to be designed so as to give you a shitton of sanctuary effect
---- until the hit animation finishes.
 return {
     interfaceName = 's3ChimBlock',
-    interface = setmetatable(
-        {},
-        {
-            __index = function(_, key)
-                local keyHandler = keyHandlers[key]
-                local managerKey = Block[key]
+    interface = Block.interface(function(key)
+        local keyHandler = keyHandlers[key]
+        local managerKey = Block[key]
 
-                if keyHandler then
-                    assert(type(keyHandler) == 'function')
-                    return keyHandler()
-                elseif managerKey then
-                    return managerKey
-                elseif key == 'Manager' then
-                    return Block
-                elseif key == 'Actor' and not isPlayer then
-                    return BlockActor
-                end
-            end,
-        }
-    ),
+        if keyHandler then
+            assert(type(keyHandler) == 'function')
+            return keyHandler()
+        elseif managerKey then
+            return managerKey
+        elseif key == 'Manager' then
+            return Block
+        elseif key == 'Actor' and not isPlayer then
+            return BlockActor
+        end
+    end),
     engineHandlers = engineHandlers,
     eventHandlers = eventHandlers,
 }
