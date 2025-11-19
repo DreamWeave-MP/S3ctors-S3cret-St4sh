@@ -624,13 +624,12 @@ local function switchPlaylist(newPlaylist)
         getPlaylistIdForTrackSelection(newPlaylist)
     )
 
-    if nextTrack ~= currentTrack then
-        ambient.streamMusic(
-            nextTrack,
-            { fadeOut = newPlaylist.fadeOut or FadeOutDuration }
-        )
-        currentTrack = nextTrack
-    end
+    -- We shouldn't interrupt tracks if the playlist is different but the track is the same
+    ambient.streamMusic(
+        nextTrack,
+        { fadeOut = newPlaylist.fadeOut or FadeOutDuration }
+    )
+    currentTrack = nextTrack
 
     if newPlaylist.playOneTrack then
         newPlaylist.deactivateAfterEnd = true
