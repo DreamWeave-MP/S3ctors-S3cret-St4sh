@@ -15,14 +15,59 @@ Pinky,
 Thumb,
 WeaponIndicator
 
----@return string atlasName, ImageAtlas atlas
-local function colorUpdater(key, _)
+local statSettingNames = {
+    MiddleStat = true,
+    PinkyStat = true,
+    ThumbStat = true,
+}
+
+---@param atlasName string
+---@param atlas ImageAtlas
+---@param settingName string
+---@param settingValue string
+local function updateAtlas(atlasName, atlas, settingName, settingValue)
+    atlas.element.layout.props.color = H4ND.getColorForElement(atlasName)
+    atlas.element:update()
+
+    if not statSettingNames[settingName] then return end
+
+    local statToUpdate, usedAttributes = nil, {
+        magicka = true,
+        health = true,
+        fatigue = true,
+    }
+
+    local thisAtlas = H4ND.getStatAtlas(settingName)
+
+    for elementName, statName in pairs {
+        Pinky = H4ND.PinkyStat,
+        Thumb = H4ND.ThumbStat,
+        Middle = H4ND.MiddleStat,
+    } do
+        usedAttributes[statName] = nil
+
+        if statName == settingValue and H4ND.getElementByName(elementName) ~= thisAtlas then
+            atlasName = elementName
+        end
+    end
+
+    statToUpdate = next(usedAttributes)
+
+    if not statToUpdate then return end
+
+    self:sendEvent('H4NDCorrectSecondAttribute', {
+        stat = statToUpdate,
+        atlasName = atlasName,
+    })
+end
+
+local function colorUpdater(key, value)
     local statName, atlas, atlasName = key:gsub('Color$', '')
 
     atlas, atlasName = H4ND.getAtlasByStatName(statName)
     assert(atlas and atlasName)
 
-    return atlasName, atlas
+    updateAtlas(atlasName, atlas, key, value)
 end
 
 local function fadeUpdater(key, _)
@@ -33,177 +78,109 @@ end
 
 ---@class H4NDSettingNames
 local SettingNames = {
-    Compass = {
-        CompassSize = function(_, value)
-            Compass.layout.props.size = util.vector2(value, value)
-            Compass:update()
-        end,
-        CompassPos = function(_, value)
-            Compass.layout.props.relativePosition = value
-            Compass:update()
-        end,
-        CompassColor = function(_, value)
-            Compass.layout.props.color = value
-            Compass:update()
-        end,
-        CompassStyle = function(_, value)
-            self:sendEvent('H4NDUpdateCompassStyle')
-        end,
-    },
-    H4ND = {
-        H4NDAnchor = function(_, value)
-            Core.layout.props.anchor = value
-            Core:update()
-        end,
-        H4NDPos = function(_, value)
-            Core.layout.props.relativePosition = value
-            Core:update()
-        end,
-        H4NDWidth = function(_, value)
-            H4ND.resize()
-            Core:update()
-        end,
-    },
-    Color = {
-        fatigueColor = colorUpdater,
-        healthColor = colorUpdater,
-        magickaColor = colorUpdater,
-    },
-    EffectBar = {
-        EffectBarAnchor = function(_, value)
-            EffectBar.layout.props.anchor = value
-            EffectBar:update()
-        end,
-        EffectBarSize = function(_, value)
-            EffectBar.layout.props.relativeSize = value
-            EffectBar:update()
-        end,
-        EffectBarPos = function(_, value)
-            EffectBar.layout.props.relativePosition = value
-            EffectBar:update()
-        end,
-    },
-    Fade = {
-        FadeStep = fadeUpdater,
-        FadeTime = fadeUpdater,
-        UseFade = fadeUpdater,
-    },
-    WeaponIndicator = {
-        WeaponIndicatorAnchor = function(_, value)
-            WeaponIndicator.layout.props.anchor = value
-            WeaponIndicator:update()
-        end,
-        WeaponIndicatorSize = function(_, value)
-            WeaponIndicator.layout.props.relativeSize = util.vector2(value, value)
-            WeaponIndicator:update()
-        end,
-        WeaponIndicatorPos = function(_, value)
-            WeaponIndicator.layout.props.relativePosition = value
-            WeaponIndicator:update()
-        end,
-    },
-    CastableIndicator = {
-        CastableIndicatorAnchor = function(_, value)
-            CastableIndicator.layout.props.anchor = value
-            CastableIndicator:update()
-        end,
-        CastableIndicatorSize = function(_, value)
-            CastableIndicator.layout.props.relativeSize = util.vector2(value, value)
-            CastableIndicator:update()
-        end,
-        CastableIndicatorPos = function(_, value)
-            CastableIndicator.layout.props.relativePosition = value
-            CastableIndicator:update()
-        end,
-    },
-    Stats = {
-        MiddleStat = function()
-            return 'Middle', Middle
-        end,
-        PinkyStat = function()
-            return 'Pinky', Pinky
-        end,
-        ThumbStat = function()
-            return 'Thumb', Thumb
-        end,
-    },
-    Debug = {
-        UIDebug = function(_, value)
-            Core.layout.content.DebugContent.props.visible = value
-            Core:update()
+    CompassSize = function(_, value)
+        Compass.layout.props.size = util.vector2(value, value)
+        Compass:update()
+    end,
+    CompassPos = function(_, value)
+        Compass.layout.props.relativePosition = value
+        Compass:update()
+    end,
+    CompassColor = function(_, value)
+        Compass.layout.props.color = value
+        Compass:update()
+    end,
+    CompassStyle = function(_, _)
+        self:sendEvent('H4NDUpdateCompassStyle')
+    end,
+    H4NDAnchor = function(_, value)
+        Core.layout.props.anchor = value
+        Core:update()
+    end,
+    H4NDPos = function(_, value)
+        Core.layout.props.relativePosition = value
+        Core:update()
+    end,
+    H4NDWidth = function(_, _)
+        H4ND.resize()
+        Core:update()
+    end,
+    fatigueColor = colorUpdater,
+    healthColor = colorUpdater,
+    magickaColor = colorUpdater,
+    EffectBarAnchor = function(_, value)
+        EffectBar.layout.props.anchor = value
+        EffectBar:update()
+    end,
+    EffectBarSize = function(_, value)
+        EffectBar.layout.props.relativeSize = value
+        EffectBar:update()
+    end,
+    EffectBarPos = function(_, value)
+        EffectBar.layout.props.relativePosition = value
+        EffectBar:update()
+    end,
+    FadeStep = fadeUpdater,
+    FadeTime = fadeUpdater,
+    UseFade = fadeUpdater,
+    WeaponIndicatorAnchor = function(_, value)
+        WeaponIndicator.layout.props.anchor = value
+        WeaponIndicator:update()
+    end,
+    WeaponIndicatorSize = function(_, value)
+        WeaponIndicator.layout.props.relativeSize = util.vector2(value, value)
+        WeaponIndicator:update()
+    end,
+    WeaponIndicatorPos = function(_, value)
+        WeaponIndicator.layout.props.relativePosition = value
+        WeaponIndicator:update()
+    end,
+    CastableIndicatorAnchor = function(_, value)
+        CastableIndicator.layout.props.anchor = value
+        CastableIndicator:update()
+    end,
+    CastableIndicatorSize = function(_, value)
+        CastableIndicator.layout.props.relativeSize = util.vector2(value, value)
+        CastableIndicator:update()
+    end,
+    CastableIndicatorPos = function(_, value)
+        CastableIndicator.layout.props.relativePosition = value
+        CastableIndicator:update()
+    end,
+    MiddleStat = function(key, value)
+        updateAtlas('Middle', Middle, key, value)
+    end,
+    PinkyStat = function(key, value)
+        updateAtlas('Pinky', Pinky, key, value)
+    end,
+    ThumbStat = function(key, value)
+        updateAtlas('Thumb', Thumb, key, value)
+    end,
+    UIDebug = function(_, value)
+        Core.layout.content.DebugContent.props.visible = value
+        Core:update()
 
-            EffectBar.layout.content.DebugContent.props.visible = value
-            EffectBar:update()
+        EffectBar.layout.content.DebugContent.props.visible = value
+        EffectBar:update()
 
-            WeaponIndicator.layout.content.DebugContent.props.visible = value
-            WeaponIndicator:update()
+        WeaponIndicator.layout.content.DebugContent.props.visible = value
+        WeaponIndicator:update()
 
-            -- CastableIndicator.layout.content.DebugContent.props.visible = value
-            -- CastableIndicator:update()
-        end,
-        UIFramerate = function(_, _)
-            H4ND.updateUIFramerate()
-        end,
-    }
-}
-
-local statSettingNames = {
-    MiddleStat = true,
-    PinkyStat = true,
-    ThumbStat = true,
+        -- CastableIndicator.layout.content.DebugContent.props.visible = value
+        -- CastableIndicator:update()
+    end,
+    UIFramerate = function(_, _)
+        H4ND.updateUIFramerate()
+    end,
 }
 
 local function h4ndSubscriber(_, key)
-    local value, atlasName, atlas = H4ndStorage:get(key)
+    local value = H4ndStorage:get(key)
 
-    for _, settingNames in pairs(SettingNames) do
-        local settingHandler = settingNames[key]
-        if not settingHandler then goto CONTINUE end
+    local settingHandler = SettingNames[key]
+    if not settingHandler then return end
 
-        atlasName, atlas = settingHandler(key, value)
-        if atlasName and atlas then
-            ---@diagnostic disable-next-line: undefined-field
-            atlas.element.layout.props.color = H4ND.getColorForElement(atlasName)
-
-            ---@diagnostic disable-next-line: undefined-field
-            atlas.element:update()
-
-            if statSettingNames[key] then
-                local statToUpdate, usedAttributes = nil, {
-                    magicka = true,
-                    health = true,
-                    fatigue = true,
-                }
-
-                local thisAtlas = H4ND.getStatAtlas(key)
-
-                for elementName, statName in pairs {
-                    Pinky = H4ND.PinkyStat,
-                    Thumb = H4ND.ThumbStat,
-                    Middle = H4ND.MiddleStat,
-                } do
-                    usedAttributes[statName] = nil
-
-                    if statName == value and H4ND.getElementByName(elementName) ~= thisAtlas then
-                        atlasName = elementName
-                    end
-                end
-
-                statToUpdate = next(usedAttributes)
-
-                if not statToUpdate then return end
-
-                self:sendEvent('H4NDCorrectSecondAttribute', {
-                    stat = statToUpdate,
-                    atlasName = atlasName,
-                })
-            end
-
-            break
-        end
-
-        ::CONTINUE::
-    end
+    settingHandler(key, value)
 end
 
 ---@param h4nd H4ND
