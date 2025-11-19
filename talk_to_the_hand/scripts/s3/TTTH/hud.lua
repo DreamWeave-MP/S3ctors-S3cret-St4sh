@@ -96,14 +96,25 @@ function H4ND.getHandSize()
     return util.vector2(targetWidth, targetHeight)
 end
 
+local StatMap
+
 ---@param statName string
 ---@return ImageAtlas?
 function H4ND.getStatAtlas(statName)
-    return ({
-        MiddleStat = MiddleAtlas,
-        PinkyStat = PinkyAtlas,
-        ThumbStat = ThumbAtlas
-    })[statName]
+    if not StatMap then
+        assert(MiddleAtlas and PinkyAtlas and ThumbAtlas,
+            'GetStatAtlas should never be called prior to the atlasses actually being constructed!')
+        StatMap = {
+            MiddleStat = MiddleAtlas,
+            PinkyStat = PinkyAtlas,
+            ThumbStat = ThumbAtlas
+        }
+    end
+
+    local result = StatMap[statName]
+    assert(result)
+
+    return result
 end
 
 ---@alias DynamicStatName
