@@ -132,6 +132,9 @@ local SettingNames = {
             Core.layout.content.DebugContent.props.visible = value
             Core:update()
 
+            EffectBar.layout.content.DebugContent.props.visible = value
+            EffectBar:update()
+
             WeaponIndicator.layout.content.DebugContent.props.visible = value
             WeaponIndicator:update()
 
