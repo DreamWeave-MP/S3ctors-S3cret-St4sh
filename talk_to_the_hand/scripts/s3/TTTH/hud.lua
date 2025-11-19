@@ -317,7 +317,6 @@ function EffectBarManager:constructEffectImages()
                         relativeSize = Constants.Vectors.BottomRight,
                     },
                     content = content,
-                    events = H4ND.dragEvents('EffectBar')
                 },
             }
         }
