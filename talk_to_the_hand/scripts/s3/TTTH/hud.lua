@@ -69,10 +69,15 @@ H4ND.state = {
     currentScreenSize = ui.screenSize(),
 }
 
+function H4ND.updateUIFramerate()
+    TotalDelay = 1 / H4ND.UIFramerate
+end
+
 function H4ND.resize()
     H4ND.updateTime()
     local hudProps = HudCore.layout.props
     hudProps.relativeSize, hudProps.alpha = H4ND.getHandSize(), 1.
+    HudCore:update()
 end
 
 function H4ND.getUIScalingFactor()
@@ -361,7 +366,7 @@ local function getAtlasTargetTile(atlasName)
 end
 
 ---@param elementName string
-local function getColorForElement(elementName)
+function H4ND.getColorForElement(elementName)
     local settingName = elementName .. 'Stat'
     local stat = H4ND[settingName]
 
@@ -644,7 +649,7 @@ function H4ND.dragEvents(elementName)
             local newValue = util.vector2(newX, newY)
 
             if layout.userdata.scaleDrag then
-                local handler = H4ND.resizeHandlers[element]
+                local handler = H4ND.state.resizeHandlers[element]
 
                 assert(
                     handler,
@@ -710,7 +715,7 @@ end
 
 CompassAtlas, ThumbAtlas, MiddleAtlas, PinkyAtlas = respawnCompassAtlas(), require 'scripts.s3.TTTH.atlasses' (
     Constants,
-    getColorForElement
+    H4ND.getColorForElement
 )
 
 local atlasMap = {
@@ -795,6 +800,8 @@ Compass = ui.create {
     events = H4ND.dragEvents('Compass'),
 }
 
+require 'scripts.s3.ttth.settingNames' (H4ND, H4ndStorage)
+
 ---@class ResizeInfo
 ---@field layout table<string, any>
 ---@field absoluteDelta util.vector2
@@ -823,173 +830,7 @@ H4ND.state.resizeHandlers = {
     end,
 }
 
-local compassSettings, handSettings, statSettings, effectBarSettings, fadeSettings, weaponSettings, castableSettings = {
-    CompassSize = true,
-    CompassPos = true,
-    CompassColor = true,
-    CompassStyle = true,
-}, {
-    H4NDAnchor = true,
-    H4NDPos = true,
-    H4NDWidth = true,
-}, {
-    fatigueColor = true,
-    healthColor = true,
-    magickaColor = true,
-}, {
-    EffectBarAnchor = true,
-    EffectBarSize = true,
-    EffectBarPos = true,
-}, {
-    FadeStep = true,
-    FadeTime = true,
-    UseFade = true,
-}, {
-    WeaponIndicatorAnchor = true,
-    WeaponIndicatorSize = true,
-    WeaponIndicatorPos = true,
-}, {
-    CastableIndicatorAnchor = true,
-    CastableIndicatorSize = true,
-    CastableIndicatorPos = true,
-}
-
-H4ndStorage:subscribe(
-    async:callback(
-        function(_, key)
-            local value, atlasName, atlas = H4ndStorage:get(key)
-
-            if key == 'ThumbStat' then
-                atlasName, atlas = 'Thumb', ThumbAtlas
-            elseif key == 'MiddleStat' then
-                atlasName, atlas = 'Middle', MiddleAtlas
-            elseif key == 'PinkyStat' then
-                atlasName, atlas = 'Pinky', PinkyAtlas
-            elseif statSettings[key] then
-                local statName = key:gsub('Color$', '')
-                atlas, atlasName = H4ND.getAtlasByStatName(statName)
-
-                assert(atlas and atlasName)
-            elseif compassSettings[key] then
-                local compassProps = Compass.layout.props
-
-                if key == 'CompassSize' then
-                    compassProps.size = util.vector2(value, value)
-                elseif key == 'CompassPos' then
-                    compassProps.relativePosition = value
-                elseif key == 'CompassColor' then
-                    compassProps.color = value
-                elseif key == 'CompassStyle' then
-                    CompassAtlas = respawnCompassAtlas()
-                    compassProps.resource = CompassAtlas.textureArray[adjustedYaw()]
-                    compassProps.anchor = getCompassAnchor()
-                end
-
-                Compass:update()
-            elseif effectBarSettings[key] then
-                local props = EffectBar.layout.props
-
-                if key == 'EffectBarSize' then
-                    props.relativeSize = value
-                elseif key == 'EffectBarAnchor' then
-                    props.anchor = value
-                elseif key == 'EffectBarPos' then
-                    props.relativePosition = value
-                end
-            elseif weaponSettings[key] then
-                local props = WeaponIndicator.layout.props
-
-                if key == 'WeaponIndicatorAnchor' then
-                    props.anchor = value
-                elseif key == 'WeaponIndicatorPos' then
-                    props.relativePosition = value
-                elseif key == 'WeaponIndicatorSize' then
-                    props.relativeSize = util.vector2(value, value)
-                end
-
-                WeaponIndicator:update()
-            elseif castableSettings[key] then
-                local props = CastableIndicator.layout.props
-
-                if key == 'CastableIndicatorAnchor' then
-                    props.anchor = value
-                elseif key == 'CastableIndicatorPos' then
-                    props.relativePosition = value
-                elseif key == 'CastableIndicatorSize' then
-                    props.relativeSize = util.vector2(value, value)
-                end
-
-                CastableIndicator:update()
-            elseif fadeSettings[key] then
-                if HudCore.layout.props.alpha ~= 1.0 then HudCore.layout.props.alpha = 1.0 end
-                HudCore:update()
-                H4ND.state.lastUpdateTime = core.getRealTime()
-            elseif handSettings[key] then
-                if key == 'H4NDWidth' then
-                    H4ND.resize()
-                elseif key == 'H4NDPos' then
-                    HudCore.layout.props.relativePosition = value
-                elseif key == 'H4NDAnchor' then
-                    HudCore.layout.props.anchor = value
-                end
-
-                HudCore:update()
-            elseif key == 'UIFramerate' then
-                TotalDelay = 1 / value
-            elseif key == 'UIDebug' then
-                HudCore.layout.content.DebugContent.props.visible = value
-                HudCore:update()
-
-                WeaponIndicator.layout.content.DebugContent.props.visible = value
-                WeaponIndicator:update()
-
-                CastableIndicator.layout.content.DebugContent.props.visible = value
-                CastableIndicator:update()
-            end
-
-            if atlasName and atlas then
-                ---@diagnostic disable-next-line: undefined-field
-                atlas.element.layout.props.color = getColorForElement(atlasName)
-
-                ---@diagnostic disable-next-line: undefined-field
-                atlas.element:update()
-
-                if key == 'PinkyStat' or key == 'MiddleStat' or key == 'ThumbStat' then
-                    local statToUpdate, usedAttributes = nil, {
-                        magicka = true,
-                        health = true,
-                        fatigue = true,
-                    }
-
-                    local thisAtlas = H4ND.getStatAtlas(key)
-
-                    for elementName, statName in pairs {
-                        Pinky = H4ND.PinkyStat,
-                        Thumb = H4ND.ThumbStat,
-                        Middle = H4ND.MiddleStat,
-                    } do
-                        usedAttributes[statName] = nil
-
-                        if statName == value and H4ND.getElementByName(elementName) ~= thisAtlas then
-                            atlasName = elementName
-                        end
-                    end
-
-                    statToUpdate = next(usedAttributes)
-
-                    if not statToUpdate then return end
-
-                    s3lf.gameObject:sendEvent('H4NDCorrectSecondAttribute', {
-                        stat = statToUpdate,
-                        atlasName = atlasName,
-                    })
-                end
-            end
-        end
-    )
-)
-
-CurrentDelay, TotalDelay = 0, 1 / H4ND.UIFramerate
+CurrentDelay = 0
 return {
     interfaceName = 'H4nd',
     interface = {
@@ -1039,6 +880,15 @@ return {
             CastableIndicator:update()
             H4ND.updateTime()
         end,
+        H4NDUpdateCompassStyle = function()
+            CompassAtlas = respawnCompassAtlas()
+
+            local compassProps = Compass.layout.props
+            compassProps.resource = CompassAtlas.textureArray[adjustedYaw()]
+            compassProps.anchor = getCompassAnchor()
+
+            Compass:update()
+        end,
         H4NDUpdateDurability = function()
             updateDurabilityBarSize()
             WeaponIndicator:update()
@@ -1053,10 +903,6 @@ return {
 
             WeaponIndicator:update()
             H4ND.updateTime()
-        end,
-        H4NDResolutionChanged = function()
-            H4ND.resize()
-            HudCore:update()
         end,
     },
     engineHandlers = {
