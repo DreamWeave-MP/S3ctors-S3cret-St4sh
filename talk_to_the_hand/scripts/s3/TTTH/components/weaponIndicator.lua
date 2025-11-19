@@ -20,93 +20,119 @@ return function(constructor)
 
     local width = constructor.H4ND.WeaponIndicatorSize
     return ui.create {
-        type = ui.TYPE.Flex,
         name = 'WeaponIndicator',
         layer = 'Windows',
         props = {
             anchor = constructor.H4ND.WeaponIndicatorAnchor,
-            autoSize = false,
             relativePosition = constructor.H4ND.WeaponIndicatorPos,
             relativeSize = util.vector2(width, width),
         },
         events = constructor.dragEvents,
         content = ui.content {
             {
-                type = ui.TYPE.Image,
+                type = ui.TYPE.Flex,
+                name = 'WeaponIndicator',
+                props = {
+                    autoSize = false,
+                    relativeSize = constructor.Constants.Vectors.BottomRight,
+                },
+                content = ui.content {
+                    {
+                        name = 'WeaponIconBox',
+                        template = I.MWUI.templates.borders,
+                        props = {
+                            relativeSize = Attrs.IndicatorSize(),
+                        },
+                        content = ui.content {
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'WeaponBackground',
+                                props = {
+                                    resource = ui.texture { path = 'white' },
+                                    relativeSize = Vectors.BottomRight,
+                                    color = constructor.Constants.Colors.Black,
+                                    alpha = 0.5,
+                                },
+                            },
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'EnchantFrame',
+                                props = {
+                                    resource = ui.texture {
+                                        path = 'textures/menu_icon_magic_equip.dds',
+                                        offset = util.vector2(2, 2),
+                                        size = util.vector2(40, 40)
+                                    },
+                                    relativeSize = Vectors.BottomRight,
+                                    visible = constructor.enchantFrameVisible,
+                                }
+                            },
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'WeaponIcon',
+                                props = {
+                                    resource = ui.texture { path = constructor.weaponIcon },
+                                    relativeSize = Vectors.BottomRight,
+                                }
+                            },
+                        }
+                    },
+                    {
+                        name = 'DurabilityBarContainer',
+                        template = I.MWUI.templates.borders,
+                        props = {
+                            relativeSize = Attrs.BarContainer(),
+                        },
+                        content = ui.content {
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'DurabilityBarBackground',
+                                props = {
+                                    resource = ui.texture { path = 'white' },
+                                    relativeSize = Vectors.BottomRight,
+                                    color = constructor.Constants.Colors.Black,
+                                    alpha = 0.5,
+                                },
+                            },
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'DurabilityBar',
+                                props = {
+                                    resource = ui.texture { path = 'white' },
+                                    relativeSize = util.vector2(constructor.weaponHealth, 1),
+                                    color = constructor.durabilityColor,
+                                },
+                            },
+                        }
+                    },
+                }
+            },
+            {
                 name = 'DebugContent',
                 props = {
-                    resource = ui.texture { path = 'white', },
-                    color = util.color.hex('8b008b'),
                     visible = constructor.useDebug,
                     relativeSize = Vectors.BottomRight,
-                }
-            },
-            {
-                name = 'WeaponIconBox',
-                template = I.MWUI.templates.borders,
-                props = {
-                    relativeSize = Attrs.IndicatorSize(),
                 },
                 content = ui.content {
                     {
                         type = ui.TYPE.Image,
-                        name = 'WeaponBackground',
                         props = {
-                            resource = ui.texture { path = 'white' },
                             relativeSize = Vectors.BottomRight,
-                            color = constructor.Constants.Colors.Black,
-                            alpha = 0.5,
+                            alpha = .5,
+                            resource = ui.texture { path = 'white', },
+                            color = util.color.hex('8b008b'),
                         },
                     },
                     {
-                        type = ui.TYPE.Image,
-                        name = 'EnchantFrame',
+                        template = I.MWUI.templates.textHeader,
                         props = {
-                            resource = ui.texture {
-                                path = 'textures/menu_icon_magic_equip.dds',
-                                offset = util.vector2(2, 2),
-                                size = util.vector2(40, 40)
-                            },
-                            relativeSize = Vectors.BottomRight,
-                            visible = constructor.enchantFrameVisible,
-                        }
-                    },
-                    {
-                        type = ui.TYPE.Image,
-                        name = 'WeaponIcon',
-                        props = {
-                            resource = ui.texture { path = constructor.weaponIcon },
-                            relativeSize = Vectors.BottomRight,
-                        }
-                    },
-                }
-            },
-            {
-                name = 'DurabilityBarContainer',
-                template = I.MWUI.templates.borders,
-                props = {
-                    relativeSize = Attrs.BarContainer(),
-                },
-                content = ui.content {
-                    {
-                        type = ui.TYPE.Image,
-                        name = 'DurabilityBarBackground',
-                        props = {
-                            resource = ui.texture { path = 'white' },
-                            relativeSize = Vectors.BottomRight,
-                            color = constructor.Constants.Colors.Black,
-                            alpha = 0.5,
+                            anchor = Vectors.Center,
+                            relativePosition = Vectors.Center,
+                            textAlignH = ui.ALIGNMENT.Center,
+                            textAlignV = ui.ALIGNMENT.Center,
+                            text = 'Weapon Container',
                         },
-                    },
-                    {
-                        type = ui.TYPE.Image,
-                        name = 'DurabilityBar',
-                        props = {
-                            resource = ui.texture { path = 'white' },
-                            relativeSize = util.vector2(constructor.weaponHealth, 1),
-                            color = constructor.durabilityColor,
-                        },
-                    },
+                    }
                 }
             },
         }
