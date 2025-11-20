@@ -540,20 +540,20 @@ local function handleFade()
 
     if ((hudIsStale and H4ND.UseFade) or not hudVisible) and HudProps.alpha > .0 then
         step = math.max(HudProps.alpha - H4ND.FadeStep, .0)
-
-        HudProps.alpha = step
     elseif (fadeIn or hudVisible) and HudProps.alpha ~= 1. then
         step = math.min(1., HudProps.alpha + H4ND.FadeStep)
-        HudProps.alpha = step
 
-        if HudProps.alpha == 1. then
+        if step == 1. then
             H4ND.updateTime()
         end
     else
         return
     end
 
-    HudCore:update()
+    for _, element in ipairs { HudCore, EffectBar, CastableIndicator, WeaponIndicator, } do
+        element.layout.props.alpha = step
+        element:update()
+    end
 end
 
 local function adjustedYaw()
