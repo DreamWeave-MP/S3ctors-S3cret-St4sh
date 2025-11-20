@@ -147,7 +147,11 @@ function ChimCore.getWeaponSkillName(weapon)
     end
 
     local weaponType = weapon.type.records[weapon.recordId].type
-    return weaponTypesToSkills[weaponType]
+    local resultType = weaponTypesToSkills[weaponType]
+
+    assert(resultType ~= nil, 'Failed to find a result type for weapon:', weapon.recordId)
+
+    return resultType
 end
 
 ---@param weapon GameObject
