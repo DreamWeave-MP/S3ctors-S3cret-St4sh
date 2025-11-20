@@ -210,7 +210,7 @@ function BlockActor:getBlockTimer()
     if isPlayer then return end
 
     local block, endurance = math.min(100, not isCreature and s3lf.block.base or s3lf.combatSkill) / 100,
-    math.min(100, s3lf.endurance.modified) / 100
+        math.min(100, s3lf.endurance.modified) / 100
 
     -- Skill reduces block time (faster recovery)
     local skillBonus = block * self.ActorSkillBlockTime
@@ -306,7 +306,13 @@ function BlockActor:hasBlockFatigue()
 end
 
 function BlockActor:shouldAttemptBlock()
-    if not self:hasBlockFatigue() or math.random() <= 0.05 then return false end
+    if
+        s3lf.getStance() ~= s3lf.STANCE.Weapon
+        or not self:hasBlockFatigue()
+        or math.random() <= 0.05
+    then
+        return false
+    end
 
     -- Base random chance - 50/50 most of the time
     local baseChance = 0.5
