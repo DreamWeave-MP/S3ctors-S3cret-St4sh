@@ -5,8 +5,6 @@ local types = require 'openmw.types'
 
 local LogMessage = require 'scripts.s3.logmessage'
 
-local ValidatorStr = 'PROTECTEDTABLEVALIDATORVALUE'
-
 local function pairsByKeys(t, f)
   local a = {}
   for n in pairs(t) do table.insert(a, n) end
@@ -73,8 +71,8 @@ local function new(constructorData)
   end
 
   assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
-  local key, value = next(requestedGroup:asTable())
-  local groupIsWritable = pcall(function() requestedGroup:set(key, value) end)
+  local testKey, testValue = next(requestedGroup:asTable())
+  local groupIsWritable = pcall(function() requestedGroup:set(testKey, testValue) end)
 
   local proxy = {
     thisGroup = requestedGroup,
@@ -128,24 +126,32 @@ local function new(constructorData)
       })
   end
 
+  local handlers = {
+    debugLog = function()
+      return proxy.debugLog
+    end,
+    state = function()
+      return state
+    end,
+    DebugLog = function()
+      return requestedGroup:get('DebugEnable')
+    end,
+    MessageEnable = function()
+      return requestedGroup:get('MessageEnable')
+    end,
+  }
+
+  local lookupTable = { proxy.shadowSettings, methods, state }
+
   local meta = {
     __metatable = 'S3ProtectedTable',
     __index = function(_, key)
-      if key == 'DebugLog' then
-        return requestedGroup:get('DebugEnable')
-      elseif key == 'MessageEnable' then
-        return requestedGroup:get('MessageEnable')
-      elseif key == 'debugLog' then
-        return proxy.debugLog
-      elseif key == 'state' then
-        return state
+      local indexHandler = handlers[key]
+      if indexHandler then return indexHandler() end
+
+      for _, table in ipairs(lookupTable) do
+        if table[key] ~= nil then return table[key] end
       end
-
-      if proxy.shadowSettings[key] then return proxy.shadowSettings[key] end
-
-      if methods[key] then return methods[key] end
-
-      if state[key] ~= nil then return state[key] end
 
       local savedValue = proxy.thisGroup:get(key)
       proxy.shadowSettings[key] = savedValue
