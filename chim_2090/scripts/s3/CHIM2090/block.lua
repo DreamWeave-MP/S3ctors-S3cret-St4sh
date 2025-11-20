@@ -408,7 +408,9 @@ function Block.usingShield()
 end
 
 local blockSounds = {
+    axe = 'light armor hit',
     lightarmor = 'light armor hit',
+    marksman = 'light armor hit',
     mediumarmor = 'medium armor hit',
     heavyarmor = 'heavy armor hit',
     blunt = 'heavy armor hit',
