@@ -286,7 +286,7 @@ function EffectBarManager:constructEffectImages()
     local content = ui.content(allRows)
 
     if EffectBar then
-        EffectBar.layout.content[2].content = content
+        EffectBar.layout.content[1].content = content
         EffectBar:update()
     else
         EffectBar = ui.create {
@@ -300,16 +300,6 @@ function EffectBarManager:constructEffectImages()
             events = H4ND.dragEvents('EffectBar'),
             content = ui.content {
                 {
-                    type = ui.TYPE.Image,
-                    name = 'DebugContent',
-                    props = {
-                        relativeSize = Constants.Vectors.BottomRight,
-                        color = util.color.hex('ffaa0b'),
-                        resource = ui.texture { path = 'white' },
-                        alpha = .5,
-                    },
-                },
-                {
                     type = ui.TYPE.Flex,
                     name = 'EffectContainer',
                     props = {
@@ -317,6 +307,32 @@ function EffectBarManager:constructEffectImages()
                         relativeSize = Constants.Vectors.BottomRight,
                     },
                     content = content,
+                },
+                {
+                    name = 'DebugContent',
+                    props = {
+                        visible = H4ND.UIDebug,
+                        relativeSize = Constants.Vectors.BottomRight,
+                    },
+                    content = ui.content {
+                        {
+                            type = ui.TYPE.Image,
+                            props = {
+                                relativeSize = Constants.Vectors.BottomRight,
+                                alpha = .5,
+                                resource = ui.texture { path = 'white', },
+                                color = util.color.hex('ffaa0b'),
+                            },
+                        },
+                        {
+                            template = I.MWUI.templates.textHeader,
+                            props = {
+                                anchor = Constants.Vectors.Center,
+                                relativePosition = Constants.Vectors.Center,
+                                text = 'Effect Bar',
+                            },
+                        }
+                    }
                 },
             }
         }
@@ -831,6 +847,34 @@ Compass = ui.create {
         alpha = 1.,
     },
     events = H4ND.dragEvents('Compass'),
+    content = ui.content {
+        {
+            name = 'DebugContent',
+            props = {
+                visible = H4ND.UIDebug,
+                relativeSize = Constants.Vectors.BottomRight,
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = Constants.Vectors.BottomRight,
+                        alpha = .5,
+                        resource = ui.texture { path = 'white', },
+                        color = util.color.hex('00ff00'),
+                    },
+                },
+                {
+                    template = I.MWUI.templates.textHeader,
+                    props = {
+                        anchor = Constants.Vectors.Center,
+                        relativePosition = Constants.Vectors.Center,
+                        text = 'Compass',
+                    },
+                }
+            }
+        },
+    }
 }
 
 require 'scripts.s3.ttth.settingNames' (H4ND, H4ndStorage)
