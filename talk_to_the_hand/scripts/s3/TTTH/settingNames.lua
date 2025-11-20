@@ -157,19 +157,26 @@ local SettingNames = {
         updateAtlas('Thumb', Thumb, key, value)
     end,
     UIDebug = function(_, value)
+        local newLayer = value and 'Windows' or 'HUD'
+
         Core.layout.content.DebugContent.props.visible = value
+        Core.layout.layer = newLayer
         Core:update()
 
         EffectBar.layout.content.DebugContent.props.visible = value
+        EffectBar.layout.layer = newLayer
         EffectBar:update()
 
         WeaponIndicator.layout.content.DebugContent.props.visible = value
+        WeaponIndicator.layout.layer = newLayer
         WeaponIndicator:update()
 
         CastableIndicator.layout.content.DebugContent.props.visible = value
+        CastableIndicator.layout.layer = newLayer
         CastableIndicator:update()
 
         Compass.layout.content.DebugContent.props.visible = value
+        Compass.layout.layer = newLayer
         Compass:update()
     end,
     UIFramerate = function(_, _)
