@@ -291,7 +291,7 @@ function EffectBarManager:constructEffectImages()
     else
         EffectBar = ui.create {
             name = 'EffectBar',
-            layer = 'Windows',
+            layer = 'HUD',
             props = {
                 relativeSize = H4ND.EffectBarSize,
                 anchor = H4ND.EffectBarAnchor,
@@ -798,7 +798,7 @@ WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
 EffectBarManager:constructEffectImages()
 
 HudCore = ui.create {
-    layer = 'Windows',
+    layer = 'HUD',
     name = 'H4ND',
     props = {
         relativeSize = H4ND.getHandSize(),
@@ -835,7 +835,7 @@ HudCore = ui.create {
 }
 
 Compass = ui.create {
-    layer = 'Windows',
+    layer = 'HUD',
     name = 'Compass',
     type = ui.TYPE.Image,
     props = {
