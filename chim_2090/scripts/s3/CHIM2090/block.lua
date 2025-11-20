@@ -18,7 +18,8 @@ local s3lf = I.s3lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
-local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
+local isPlayer, isCreature = types.Player.objectIsInstance(s3lf.gameObject),
+    types.Creature.objectIsInstance(s3lf.gameObject)
 if isPlayer then
     input = require 'openmw.input'
 end
@@ -208,7 +209,8 @@ end
 function BlockActor:getBlockTimer()
     if isPlayer then return end
 
-    local block, endurance = math.min(100, s3lf.block.base) / 100, math.min(100, s3lf.endurance.modified) / 100
+    local block, endurance = math.min(100, not isCreature and s3lf.block.base or s3lf.combatSkill) / 100,
+    math.min(100, s3lf.endurance.modified) / 100
 
     -- Skill reduces block time (faster recovery)
     local skillBonus = block * self.ActorSkillBlockTime
