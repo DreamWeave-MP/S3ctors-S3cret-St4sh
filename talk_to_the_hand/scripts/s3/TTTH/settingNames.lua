@@ -168,6 +168,9 @@ local SettingNames = {
 
         CastableIndicator.layout.content.DebugContent.props.visible = value
         CastableIndicator:update()
+
+        Compass.layout.content.DebugContent.props.visible = value
+        Compass:update()
     end,
     UIFramerate = function(_, _)
         H4ND.updateUIFramerate()
