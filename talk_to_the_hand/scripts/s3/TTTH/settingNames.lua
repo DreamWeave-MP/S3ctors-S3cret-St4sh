@@ -3,6 +3,8 @@ local core = require 'openmw.core'
 local self = require 'openmw.self'
 local util = require 'openmw.util'
 
+local I = require 'openmw.interfaces'
+
 ---@type H4ND
 local H4ND,
 H4ndStorage,
@@ -158,6 +160,10 @@ local SettingNames = {
     end,
     UIDebug = function(_, value)
         local newLayer = value and 'Windows' or 'HUD'
+
+        if value and I.UI.getMode() then
+            self:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
+        end
 
         Core.layout.content.DebugContent.props.visible = value
         Core.layout.layer = newLayer

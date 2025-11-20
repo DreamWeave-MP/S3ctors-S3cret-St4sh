@@ -983,6 +983,10 @@ return {
             WeaponIndicator:update()
             H4ND.updateTime()
         end,
+        UiModeChanged = function(modeInfo)
+            if not H4ND.UIDebug or modeInfo.oldMode and modeInfo.oldMode ~= 'Interface' then return end
+            H4ND.UIDebug = false
+        end,
     },
     engineHandlers = {
         onFrame = function()
@@ -999,7 +1003,11 @@ return {
             updateStatFrames()
             updateCompass()
             EffectBarManager:constructEffectImages()
-            handleFade()
+
+            if not H4ND.UIDebug then
+                handleFade()
+                return
+            end
         end,
     }
 }
