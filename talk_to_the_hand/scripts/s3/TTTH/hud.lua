@@ -790,23 +790,32 @@ HudCore = ui.create {
         relativePosition = H4ND.H4NDPos,
         alpha = 1.0,
     },
+    events = H4ND.dragEvents('Core'),
     userdata = {},
     content = ui.content {
-        {
-            type = ui.TYPE.Image,
-            name = 'DebugContent',
-            props = {
-                resource = ui.texture { path = 'white' },
-                relativeSize = Constants.Vectors.BottomRight,
-                color = util.color.hex('ff0000'),
-                visible = H4ND.UIDebug,
-            }
-        },
         ThumbAtlas.element,
         MiddleAtlas.element,
         PinkyAtlas.element,
+        {
+            name = 'DebugContent',
+            props = {
+                visible = H4ND.UIDebug,
+                relativeSize = Constants.Vectors.BottomRight,
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = Constants.Vectors.BottomRight,
+                        alpha = .5,
+                        resource = ui.texture { path = 'white', },
+                        color = util.color.hex('ff0000'),
+                    },
+                },
+                { template = I.MWUI.templates.textHeader, props = { text = 'H4ND', }, }
+            }
+        },
     },
-    events = H4ND.dragEvents('Core')
 }
 
 Compass = ui.create {
