@@ -21,7 +21,7 @@ return function(constructor)
     local width = constructor.H4ND.WeaponIndicatorSize
     return ui.create {
         name = 'WeaponIndicator',
-        layer = 'Windows',
+        layer = 'HUD',
         props = {
             anchor = constructor.H4ND.WeaponIndicatorAnchor,
             relativePosition = constructor.H4ND.WeaponIndicatorPos,
