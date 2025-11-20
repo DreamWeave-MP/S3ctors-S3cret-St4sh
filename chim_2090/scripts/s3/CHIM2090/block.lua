@@ -429,7 +429,15 @@ function Block.playBlockSound()
         blockSkill = I.s3ChimCore.getWeaponSkillName(blockingItem)
     end
 
-    core.sound.playSound3d(blockSounds[blockSkill], s3lf.object)
+    blockSkill = blockSounds[blockSkill]
+    assert(blockSkill ~= nil,
+        'Failed to locate a block sound for block skill: '
+        .. blockSkill
+        .. ' for blocking item: '
+        .. blockingItem
+    )
+
+    core.sound.playSound3d(blockSkill, s3lf.object)
 end
 
 function Block.getShieldBaseEffectiveness(armor, weight)
