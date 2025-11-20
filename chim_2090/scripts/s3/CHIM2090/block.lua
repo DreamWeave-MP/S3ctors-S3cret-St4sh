@@ -663,8 +663,13 @@ function Block.getSpeed()
         + (normalizedAgility * Block.BlockSpeedAgilityWeight)
         + randomFactor
 
-    local shield = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedLeft)
-    local shieldWeight = shield and types.Armor.records[shield.recordId].weight or 0
+    local shieldWeight = 0
+
+    if Block.usingShield() then
+        local shield = Block.getBlockingItem()
+        shieldWeight = shield.type.records[shield.recordId].weight
+    end
+
     local weightPenalty = math.min(
         shieldWeight * Block.ShieldWeightPenalty,
         Block.ShieldWeightPenaltyLimit
