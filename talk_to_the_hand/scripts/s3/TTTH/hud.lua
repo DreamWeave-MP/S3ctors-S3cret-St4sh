@@ -60,7 +60,6 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
-    subscribeHandler = false,
 }
 H4ND.state = {
     equippedWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight),
@@ -68,6 +67,8 @@ H4ND.state = {
     lastUpdateTime = core.getRealTime(),
     currentScreenSize = ui.screenSize(),
 }
+
+local targetLayer = H4ND.UIDebug and 'Windows' or 'HUD'
 
 function H4ND.updateUIFramerate()
     TotalDelay = 1 / H4ND.UIFramerate
@@ -291,7 +292,7 @@ function EffectBarManager:constructEffectImages()
     else
         EffectBar = ui.create {
             name = 'EffectBar',
-            layer = 'HUD',
+            layer = targetLayer,
             props = {
                 relativeSize = H4ND.EffectBarSize,
                 anchor = H4ND.EffectBarAnchor,
@@ -798,7 +799,7 @@ WeaponIndicator = require 'scripts.s3.TTTH.components.weaponIndicator' {
 EffectBarManager:constructEffectImages()
 
 HudCore = ui.create {
-    layer = 'HUD',
+    layer = targetLayer,
     name = 'H4ND',
     props = {
         relativeSize = H4ND.getHandSize(),
@@ -835,7 +836,7 @@ HudCore = ui.create {
 }
 
 Compass = ui.create {
-    layer = 'HUD',
+    layer = targetLayer,
     name = 'Compass',
     type = ui.TYPE.Image,
     props = {
@@ -906,6 +907,10 @@ H4ND.state.resizeHandlers = {
         H4ND.WeaponIndicatorSize = resizeInfo.resolvedDelta.x
     end,
 }
+
+if H4ND.UIDebug then
+    s3lf.gameObject:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
+end
 
 CurrentDelay = 0
 return {
@@ -984,8 +989,9 @@ return {
             H4ND.updateTime()
         end,
         UiModeChanged = function(modeInfo)
-            if not H4ND.UIDebug or modeInfo.oldMode and modeInfo.oldMode ~= 'Interface' then return end
-            H4ND.UIDebug = false
+            if H4ND.UIDebug and (not modeInfo.newMode or modeInfo.newMode ~= 'Interface') then
+                H4ND.UIDebug = false
+            end
         end,
     },
     engineHandlers = {

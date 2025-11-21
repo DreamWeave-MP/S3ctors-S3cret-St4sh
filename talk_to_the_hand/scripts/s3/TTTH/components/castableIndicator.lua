@@ -24,7 +24,7 @@ return function(constructor)
     local width = constructor.H4ND.CastableIndicatorSize
     return ui.create {
         name = 'CastableIndicator',
-        layer = 'HUD',
+        layer = constructor.useDebug and 'Windows' or 'HUD',
         props = {
             anchor = constructor.H4ND.CastableIndicatorAnchor,
             relativeSize = util.vector2(width, width * 1.125),
