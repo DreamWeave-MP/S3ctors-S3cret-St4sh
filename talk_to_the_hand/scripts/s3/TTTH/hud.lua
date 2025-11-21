@@ -8,6 +8,79 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
+-- TODO: Fix default sizes/positions
+-- Add presets
+-- Find another compass?
+
+local overAtlas = I.S3AtlasConstructor.constructAtlas {
+    tileSize = util.vector2(213, 213),
+    tilesPerRow = 9,
+    totalTiles = 81,
+    atlasPath = 'textures/s3/ttth/orb_over_atlas.dds'
+}
+
+local orbHeight = .333
+local orbSize = .15
+local Orbs = ui.create {
+    name = 'OrbLayoutTest',
+    layer = 'HUD',
+    type = ui.TYPE.Image,
+    props = {
+        resource = ui.texture {
+            path = 'textures/s3/ttth/orb_background.dds',
+            size = util.vector2(213, 213),
+        },
+        relativeSize = util.vector2(orbSize, orbSize),
+        relativePosition = util.vector2(0., .5),
+    },
+    content = ui.content {
+        {
+            name = 'OrbFillContain',
+            props = {
+                relativePosition = util.vector2(0., 1),
+                relativeSize = util.vector2(1., orbHeight),
+                anchor = util.vector2(.0, 1.),
+            },
+            content = ui.content {
+                {
+                    name = 'OrbFill',
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = ui.texture {
+                            path = 'textures/s3/ttth/orb_fill.dds',
+                            size = util.vector2(213, 213),
+                        },
+                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        color = util.color.hex('00ff00'),
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(0, 1),
+                    },
+                },
+                {
+                    name = 'OrbOverlay',
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        resource = overAtlas.textureArray[1],
+                        alpha = .25,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(0, 1),
+                    },
+                },
+            }
+        },
+        {
+            name = 'OrbCap',
+            type = ui.TYPE.Image,
+            props = {
+                --- Size values are caculated from relationship between the background size and orb size in pixels
+                relativeSize = util.vector2(1, 1),
+                resource = ui.texture { path = 'textures/s3/ttth/orb_cap.dds' },
+            },
+        },
+    }
+}
+
 ---@type H4NDConstants
 local Constants = require 'scripts.s3.TTTH.constants'
 local Attrs, Colors = Constants.Attrs, Constants.Colors
@@ -912,6 +985,7 @@ if H4ND.UIDebug then
     s3lf.gameObject:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
 end
 
+local currentOrbFrame = 1
 CurrentDelay = 0
 return {
     interfaceName = 'H4nd',
@@ -1012,8 +1086,36 @@ return {
 
             if not H4ND.UIDebug then
                 handleFade()
-                return
             end
+
+            if currentOrbFrame == 81 then currentOrbFrame = 1 else currentOrbFrame = currentOrbFrame + 1 end
+
+            local orbContent = Orbs
+                .layout
+                .content
+                .OrbFillContain.content
+
+            orbContent
+            .OrbOverlay
+            .props
+            .resource = overAtlas.textureArray[currentOrbFrame]
+
+
+            local orbHeight = util.clamp(s3lf.fatigue.current / s3lf.fatigue.base, .0, 1.)
+            Orbs.layout.content.OrbFillContain.props.relativeSize = util.vector2(1, orbHeight)
+
+            orbContent
+            .OrbOverlay
+            .props
+            .relativeSize = util.vector2(1, 1 / orbHeight)
+
+            orbContent
+            .OrbFill
+            .props
+            .relativeSize = util.vector2(1, 1 / orbHeight)
+
+
+            Orbs:update()
         end,
     }
 }
