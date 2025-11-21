@@ -8,6 +8,259 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
+-- TODO: Fix default sizes/positions
+-- Add presets
+-- Find another compass?
+
+---@class ColorUtil
+local colorUtil = {}
+function colorUtil.multiply(base, blend)
+    local mix = base:asRgb():emul(blend:asRgb())
+
+    return util.color.rgb(mix.x, mix.y, mix.z)
+end
+
+function colorUtil.screen(base, blend)
+    local base_rgb = base:asRgb()
+    local blend_rgb = blend:asRgb()
+    local mix = util.vec3(
+        1 - (1 - base_rgb.x) * (1 - blend_rgb.x),
+        1 - (1 - base_rgb.y) * (1 - blend_rgb.y),
+        1 - (1 - base_rgb.z) * (1 - blend_rgb.z)
+    )
+    return util.color.rgb(mix.x, mix.y, mix.z)
+end
+
+function colorUtil.overlay(base, blend)
+    local base_rgb = base:asRgb()
+    local blend_rgb = blend:asRgb()
+    local mix = util.vec3(
+        base_rgb.x < 0.5 and (2 * base_rgb.x * blend_rgb.x) or (1 - 2 * (1 - base_rgb.x) * (1 - blend_rgb.x)),
+        base_rgb.y < 0.5 and (2 * base_rgb.y * blend_rgb.y) or (1 - 2 * (1 - base_rgb.y) * (1 - blend_rgb.y)),
+        base_rgb.z < 0.5 and (2 * base_rgb.z * blend_rgb.z) or (1 - 2 * (1 - base_rgb.z) * (1 - blend_rgb.z))
+    )
+    return util.color.rgb(mix.x, mix.y, mix.z)
+end
+
+function colorUtil.additive(base, blend)
+    local base_rgb = base:asRgb()
+    local blend_rgb = blend:asRgb()
+    local mix = util.vec3(
+        math.min(base_rgb.x + blend_rgb.x, 1),
+        math.min(base_rgb.y + blend_rgb.y, 1),
+        math.min(base_rgb.z + blend_rgb.z, 1)
+    )
+    return util.color.rgb(mix.x, mix.y, mix.z)
+end
+
+function colorUtil.softlight(base, blend)
+    local base_rgb = base:asRgb()
+    local blend_rgb = blend:asRgb()
+    local mix = util.vec3(
+        blend_rgb.x < 0.5 and (2 * base_rgb.x * blend_rgb.x + base_rgb.x * base_rgb.x * (1 - 2 * blend_rgb.x)) or
+        (2 * base_rgb.x * (1 - blend_rgb.x) + math.sqrt(base_rgb.x) * (2 * blend_rgb.x - 1)),
+        blend_rgb.y < 0.5 and (2 * base_rgb.y * blend_rgb.y + base_rgb.y * base_rgb.y * (1 - 2 * blend_rgb.y)) or
+        (2 * base_rgb.y * (1 - blend_rgb.y) + math.sqrt(base_rgb.y) * (2 * blend_rgb.y - 1)),
+        blend_rgb.z < 0.5 and (2 * base_rgb.z * blend_rgb.z + base_rgb.z * base_rgb.z * (1 - 2 * blend_rgb.z)) or
+        (2 * base_rgb.z * (1 - blend_rgb.z) + math.sqrt(base_rgb.z) * (2 * blend_rgb.z - 1))
+    )
+    return util.color.rgb(mix.x, mix.y, mix.z)
+end
+
+---@param r integer
+---@param g integer
+---@param b integer
+---@return integer, integer, integer
+function colorUtil.rgbToHsl(r, g, b)
+    local max = math.max(r, g, b)
+    local min = math.min(r, g, b)
+    local h, s, l = 0, 0, (max + min) / 2
+
+    if max ~= min then
+        local d = max - min
+        s = l > 0.5 and d / (2 - max - min) or d / (max + min)
+        if max == r then
+            h = (g - b) / d + (g < b and 6 or 0)
+        elseif max == g then
+            h = (b - r) / d + 2
+        else
+            h = (r - g) / d + 4
+        end
+        h = h / 6
+    end
+
+    return h, s, l
+end
+
+---@param p integer
+---@param q integer
+---@param t integer
+---@return integer p
+function colorUtil.hueToRgb(p, q, t)
+    if t < 0 then t = t + 1 end
+    if t > 1 then t = t - 1 end
+    if t < 1 / 6 then return p + (q - p) * 6 * t end
+    if t < 1 / 2 then return q end
+    if t < 2 / 3 then return p + (q - p) * (2 / 3 - t) * 6 end
+    return p
+end
+
+---@param h integer
+---@param s integer
+---@param l integer
+---@return integer, integer, integer
+function colorUtil.hslToRgb(h, s, l)
+    local r, g, b
+
+    if s == 0 then
+        r, g, b = l, l, l
+    else
+        local q = l < 0.5 and l * (1 + s) or l + s - l * s
+        local p = 2 * l - q
+        r = colorUtil.hueToRgb(p, q, h + 1 / 3)
+        g = colorUtil.hueToRgb(p, q, h)
+        b = colorUtil.hueToRgb(p, q, h - 1 / 3)
+    end
+
+    return r, g, b
+end
+
+---@param color util.color
+---@param degrees integer
+function colorUtil.hueShift(color, degrees)
+    local rgb = color:asRgb()
+    local h, s, l = colorUtil.rgbToHsl(rgb.x, rgb.y, rgb.z)
+    h = (h + degrees / 360) % 1.0
+    local r, g, b = colorUtil.hslToRgb(h, s, l)
+    return util.color.rgb(r, g, b)
+end
+
+---@param color util.color
+---@param amount number @0-1, where 0 = no change, 1 = fully grayscale
+---@return util.color
+function colorUtil.desaturate(color, amount)
+    local rgb = color:asRgb()
+    local h, s, l = colorUtil.rgbToHsl(rgb.x, rgb.y, rgb.z)
+    s = s * (1 - amount)
+    local r, g, b = colorUtil.hslToRgb(h, s, l)
+    return util.color.rgb(r, g, b)
+end
+
+local overAtlas = I.S3AtlasConstructor.constructAtlas {
+    tileSize = util.vector2(213, 213),
+    tilesPerRow = 10,
+    totalTiles = 100,
+    atlasPath = 'textures/s3/ttth/orb_over_atlas.dds'
+}
+
+local hubbleAtlas = I.S3AtlasConstructor.constructAtlas {
+    tileSize = util.vector2(213, 213),
+    tilesPerRow = 10,
+    totalTiles = 100,
+    atlasPath = 'textures/s3/ttth/hubble_over_atlas.dds'
+}
+
+local orbHeight = 1.
+local orbSize = .2
+local upOrDown = true
+
+local orbBase = util.color.hex('800020')
+
+local perlinColor = orbBase:asRgb() * 2
+perlinColor = util.color.rgb(perlinColor.x, perlinColor.y, perlinColor.z)
+
+local manifoldColor = orbBase:asRgb():emul(perlinColor:asRgb()) * 2
+manifoldColor = util.color.rgb(manifoldColor.x, manifoldColor.y, manifoldColor.z)
+
+local hubbleColor = orbBase:asRgb():emul(perlinColor:asRgb()):emul(manifoldColor:asRgb()) * 2
+hubbleColor = util.color.rgb(hubbleColor.x, hubbleColor.y, hubbleColor.z)
+hubbleColor = colorUtil.hueShift(hubbleColor, 45)
+
+local Orbs = ui.create {
+    name = 'OrbLayoutTest',
+    layer = 'HUD',
+    type = ui.TYPE.Image,
+    props = {
+        resource = ui.texture {
+            path = 'textures/s3/ttth/orb_background.dds',
+            size = util.vector2(213, 213),
+        },
+        relativeSize = util.vector2(orbSize, orbSize),
+        relativePosition = util.vector2(0., 1.),
+        anchor = util.vector2(0, 1.),
+    },
+    content = ui.content {
+        {
+            name = 'OrbFillContain',
+            props = {
+                relativePosition = util.vector2(0., 1),
+                relativeSize = util.vector2(1., orbHeight),
+                anchor = util.vector2(.0, 1.),
+            },
+            content = ui.content {
+                {
+                    name = 'OrbFill',
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = ui.texture {
+                            path = 'textures/s3/ttth/orb_fill.dds',
+                            size = util.vector2(213, 213),
+                        },
+                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        color = orbBase,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(0, 1),
+                    },
+                },
+                {
+                    name = 'OrbNoise',
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        resource = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
+                        color = perlinColor,
+                        alpha = .5,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(0, 1),
+                    },
+                },
+                {
+                    name = 'OrbHubble',
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        resource = hubbleAtlas.textureArray[1],
+                        color = hubbleColor,
+                        alpha = .25,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(0, 1),
+                    },
+                },
+                {
+                    name = 'OrbOverlay',
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        resource = overAtlas.textureArray[1],
+                        color = manifoldColor,
+                        alpha = .25,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(0, 1),
+                    },
+                },
+            }
+        },
+        {
+            name = 'OrbCap',
+            type = ui.TYPE.Image,
+            props = {
+                relativeSize = util.vector2(1, 1),
+                resource = ui.texture { path = 'textures/s3/ttth/orb_cap.dds' },
+            },
+        },
+    }
+}
+
 ---@type H4NDConstants
 local Constants = require 'scripts.s3.TTTH.constants'
 local Attrs, Colors = Constants.Attrs, Constants.Colors
@@ -912,6 +1165,7 @@ if H4ND.UIDebug then
     s3lf.gameObject:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
 end
 
+local currentOrbFrame = 1
 CurrentDelay = 0
 return {
     interfaceName = 'H4nd',
@@ -1012,8 +1266,57 @@ return {
 
             if not H4ND.UIDebug then
                 handleFade()
-                return
             end
+
+
+            if currentOrbFrame == 100 then
+                upOrDown = math.random() <= 0.1
+                currentOrbFrame = upOrDown and 1 or 99
+            elseif currentOrbFrame == 1 then
+                currentOrbFrame = upOrDown and 2 or 100
+            else
+                currentOrbFrame = currentOrbFrame + (upOrDown and 1 or -1)
+            end
+
+            local orbContent = Orbs
+                .layout
+                .content
+                .OrbFillContain.content
+
+            orbContent
+            .OrbOverlay
+            .props
+            .resource = overAtlas.textureArray[currentOrbFrame]
+
+            orbContent
+            .OrbHubble
+            .props
+            .resource = hubbleAtlas.textureArray[currentOrbFrame]
+
+            local orbHeight = util.clamp(s3lf.fatigue.current / s3lf.fatigue.base, .0, 1.)
+            Orbs.layout.content.OrbFillContain.props.relativeSize = util.vector2(1, orbHeight)
+
+            orbContent
+            .OrbOverlay
+            .props
+            .relativeSize = util.vector2(1, 1 / orbHeight)
+
+            orbContent
+            .OrbHubble
+            .props
+            .relativeSize = util.vector2(1, 1 / orbHeight)
+
+            orbContent
+            .OrbFill
+            .props
+            .relativeSize = util.vector2(1, 1 / orbHeight)
+
+            orbContent
+            .OrbNoise
+            .props
+            .relativeSize = util.vector2(1, 1 / orbHeight)
+
+            Orbs:update()
         end,
     }
 }
