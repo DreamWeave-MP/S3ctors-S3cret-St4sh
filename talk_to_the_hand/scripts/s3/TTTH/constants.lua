@@ -30,19 +30,19 @@ return {
         end,
         ---@return util.vector2, util.vector2
         Middle = function()
-            local width = .55
+            local width = .615
 
-            return util.vector2(width, width * 1.15), util.vector2(.24, .625)
+            return util.vector2(width, width * 1.15), util.vector2(.225, .705)
         end,
         ---@return util.vector2, util.vector2
         Pinky = function()
-            local width = .275
-            return util.vector2(width, width * 2.0), util.vector2(.63, .69)
+            local width = .3
+            return util.vector2(width, width * 2.0), util.vector2(.665, .78)
         end,
         ---@return util.vector2, util.vector2
         Thumb = function()
-            local width = .6
-            return util.vector2(width, width * 0.974820143885), util.vector2(.0825, .85)
+            local width = .75
+            return util.vector2(width, width * 0.974820143885), util.vector2(.0, 1.)
         end,
         ---@return util.vector2
         Weapon = function()
