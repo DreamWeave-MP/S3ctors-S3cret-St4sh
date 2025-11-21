@@ -23,9 +23,8 @@ end
 
 ---@type ShadowTableSubscriptionHandler
 local function defaultSubscribeHandler(shadowSettings, group, groupName, key)
-  for k, v in pairs(group:asTable()) do
-    shadowSettings[k] = v
-  end
+  shadowSettings[key] = group:get(key)
+  print('updating shadow settings', key, shadowSettings[key])
 end
 
 ---@class StorageSection
@@ -79,22 +78,23 @@ local function new(constructorData)
     shadowSettings = {},
   }
 
+  requestedGroup:subscribe(
+    async:callback(
+      function(group, key)
+        defaultSubscribeHandler(proxy.shadowSettings, requestedGroup, group, key)
+      end)
+  )
+
   if constructorData.subscribeHandler then
     assert(type(constructorData.subscribeHandler) == 'function')
-  end
 
-  ---@type ShadowTableSubscriptionHandler
-  local handler = constructorData.subscribeHandler ~= nil and constructorData.subscribeHandler or defaultSubscribeHandler
-
-  if not (type(constructorData.subscribeHandler) == 'boolean' and constructorData.subscribeHandler == false) then
-    requestedGroup:subscribe(async:callback(function(groupName, key)
-      handler(proxy.shadowSettings, requestedGroup, groupName, key)
-    end))
-  else
-    -- If the subscription is overridden entirely, nullify the cached settings when the group changes
-    requestedGroup:subscribe(async:callback(function()
-      proxy.shadowSettings = {}
-    end))
+    requestedGroup:subscribe(
+      async:callback(
+        function(group, key)
+          constructorData.subscribeHandler(proxy.shadowSettings, requestedGroup, group, key)
+        end
+      )
+    )
   end
 
   local state = {}
