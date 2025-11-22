@@ -160,7 +160,6 @@ local hubbleAtlas = I.S3AtlasConstructor.constructAtlas {
     atlasPath = 'textures/s3/ttth/hubble_over_atlas.dds'
 }
 
-local orbHeight = 1.
 local orbSize = .2
 local upOrDown = true
 
@@ -180,6 +179,7 @@ local OrbGen = {
     nebulaAlpha = .25,
     noiseAlpha = .5,
     noiseTexture = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
+    updateOrder = { 'vein', 'nebula', 'fill', 'noise', },
     veinAlpha = .25,
 }
 
@@ -239,7 +239,7 @@ function OrbGen:subElement(elementInfo)
     end
 
     return {
-        name = 'Orb' .. elementInfo.name,
+        name = elementInfo.name,
         type = ui.TYPE.Image,
         props = {
             relativeSize = util.vector2(width, 1),
@@ -258,7 +258,7 @@ end
 ---@return table<string, any> layout
 function OrbGen:fill(color, twoSided, rightSide)
     return self:subElement {
-        name = 'Fill',
+        name = 'fill',
         alpha = 1.,
         color = color,
         twoSided = twoSided,
@@ -273,7 +273,7 @@ end
 ---@return table<string, any> layout
 function OrbGen:noise(color, twoSided, rightSide)
     return self:subElement {
-        name = 'Noise',
+        name = 'noise',
         type = ui.TYPE.Image,
         alpha = self.noiseAlpha,
         resource = self.noiseTexture,
@@ -290,7 +290,7 @@ end
 ---@return table<string, any> nebulaOverlay
 function OrbGen:nebula(atlas, color, twoSided, rightSide)
     return self:subElement {
-        name = 'Nebula',
+        name = 'nebula',
         resource = atlas.textureArray[1],
         alpha = self.nebulaAlpha,
         color = color,
@@ -306,7 +306,7 @@ end
 ---@return table<string, any> veinOverlay
 function OrbGen:vein(atlas, color, twoSided, rightSide)
     return self:subElement {
-        name = 'Vein',
+        name = 'vein',
         resource = atlas.textureArray[1],
         alpha = self.veinAlpha,
         color = color,
@@ -330,10 +330,10 @@ function OrbGen:container(constructor)
         width = .5
 
         if constructor.rightSide then
-            name = 'OrbRightFillContain'
+            name = name .. 'R'
             xPos = .5
         else
-            name = 'OrbLeftFillContain'
+            name = name .. 'L'
         end
     end
 
@@ -1409,81 +1409,56 @@ return {
                 magickaOrbFrame = magickaOrbFrame + (upOrDown and -1 or 1)
             end
 
-            local orbContent = Orbs
-                .layout
-                .content
-                .OrbLeftFillContain.content
+            local orbBase = Orbs.layout.content
 
-            orbContent
-            .OrbVein
-            .props
-            .resource = overAtlas.textureArray[fatigueOrbFrame]
+            -- local orbContent = orbBase.OrbFillContainL.content
 
-            orbContent
-            .OrbNebula
-            .props
-            .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
+            -- orbContent
+            -- .vein
+            -- .props
+            -- .resource = overAtlas.textureArray[fatigueOrbFrame]
 
-            orbHeight = util.clamp(s3lf.fatigue.current / s3lf.fatigue.base, .0, 1.)
-            Orbs.layout.content.OrbLeftFillContain.props.relativeSize = util.vector2(.5, orbHeight)
+            -- orbContent
+            -- .nebula
+            -- .props
+            -- .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
 
-            orbContent
-            .OrbVein
-            .props
-            .relativeSize = util.vector2(2., 1 / orbHeight)
+            -- orbContent
+            -- .vein
+            -- .props
+            -- .resource = overAtlas.textureArray[fatigueOrbFrame]
 
-            orbContent
-            .OrbNebula
-            .props
-            .relativeSize = util.vector2(2., 1 / orbHeight)
+            -- orbContent
+            -- .nebula
+            -- .props
+            -- .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
 
-            orbContent
-            .OrbFill
-            .props
-            .relativeSize = util.vector2(2., 1 / orbHeight)
 
-            orbContent
-            .OrbNoise
-            .props
-            .relativeSize = util.vector2(2., 1 / orbHeight)
+            for _, layout in ipairs(orbBase) do
+                if not layout.userdata then goto CONTINUE end
 
-            orbContent = Orbs
-                .layout
-                .content
-                .OrbRightFillContain.content
+                local stat = layout.userdata.stat
+                local height, childWidth = util.clamp(s3lf[stat].current / s3lf[stat].base, .0, 1.)
+                childWidth = layout.content[1].props.relativeSize.x
 
-            orbContent
-            .OrbVein
-            .props
-            .resource = overAtlas.textureArray[fatigueOrbFrame]
+                local newHeightInt,
+                currentHeightInt = util.round(height * 100),
+                    util.round(layout.props.relativeSize.y * 100)
 
-            orbContent
-            .OrbNebula
-            .props
-            .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
+                if newHeightInt == currentHeightInt then goto CONTINUE end
 
-            orbHeight = util.clamp(s3lf.magicka.current / s3lf.magicka.base, .0, 1.)
-            Orbs.layout.content.OrbRightFillContain.props.relativeSize = util.vector2(.5, orbHeight)
+                local step = newHeightInt <= currentHeightInt and -1 or 1
+                height = (currentHeightInt + step) / 100
 
-            orbContent
-            .OrbVein
-            .props
-            .relativeSize = util.vector2(2, 1 / orbHeight)
+                local childSize = util.vector2(childWidth, 1 / height)
+                layout.props.relativeSize = util.vector2(layout.props.relativeSize.x, height)
 
-            orbContent
-            .OrbNebula
-            .props
-            .relativeSize = util.vector2(2, 1 / orbHeight)
+                for _, elementName in ipairs(OrbGen.updateOrder) do
+                    layout.content[elementName].props.relativeSize = childSize
+                end
 
-            orbContent
-            .OrbFill
-            .props
-            .relativeSize = util.vector2(2, 1 / orbHeight)
-
-            orbContent
-            .OrbNoise
-            .props
-            .relativeSize = util.vector2(2, 1 / orbHeight)
+                ::CONTINUE::
+            end
 
             Orbs:update()
         end,
