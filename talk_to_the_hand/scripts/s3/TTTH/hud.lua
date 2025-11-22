@@ -164,29 +164,53 @@ local orbHeight = 1.
 local orbSize = .2
 local upOrDown = true
 
-local leftOrbBase = util.color.hex('a7fc00')
+--- Functions for generating colors and layouts for diablo-style resource indicators
+---@class OrbGen
+local OrbGen = {
+    colorCoeff = 2.,
+}
 
-local leftPerlinColor = leftOrbBase:asRgb() * 2
-leftPerlinColor = util.color.rgb(leftPerlinColor.x, leftPerlinColor.y, leftPerlinColor.z)
+---@param vector util.vector3
+---@return util.color
+function OrbGen.vectorColor(vector)
+    return util.color.rgb(vector.x, vector.y, vector.z)
+end
 
-local leftManifoldColor = leftOrbBase:asRgb():emul(leftPerlinColor:asRgb()) * 2
-leftManifoldColor = util.color.rgb(leftManifoldColor.x, leftManifoldColor.y, leftManifoldColor.z)
+---@class OrbColors
+---@field base util.color
+---@field noise util.color
+---@field vein util.color
+---@field nebula util.color
 
-local leftHubbleColor = leftOrbBase:asRgb():emul(leftPerlinColor:asRgb()):emul(leftManifoldColor:asRgb()) * 2
-leftHubbleColor = util.color.rgb(leftHubbleColor.x, leftHubbleColor.y, leftHubbleColor.z)
-leftHubbleColor = colorUtil.hueShift(leftHubbleColor, 45)
+---@param inColor util.color
+---@return OrbColors
+function OrbGen:getColor(inColor)
+    local mult = self.colorCoeff
+    local current = inColor:asRgb() * mult
+    local layers = { base = inColor }
 
-local rightOrbBase = util.color.hex('00ff7f')
+    local order = {
+        { name = "noise",  hue = nil },
+        { name = "vein",   hue = nil },
+        { name = "nebula", hue = 45 }
+    }
 
-local rightPerlinColor = rightOrbBase:asRgb() * 2
-rightPerlinColor = util.color.rgb(rightPerlinColor.x, rightPerlinColor.y, rightPerlinColor.z)
+    for i, layer in ipairs(order) do
+        local color = self.vectorColor(current)
 
-local rightManifoldColor = rightOrbBase:asRgb():emul(rightPerlinColor:asRgb()) * 2
-rightManifoldColor = util.color.rgb(rightManifoldColor.x, rightManifoldColor.y, rightManifoldColor.z)
+        if layer.hue then
+            color = colorUtil.hueShift(color, layer.hue)
+        end
 
-local rightHubbleColor = rightOrbBase:asRgb():emul(rightPerlinColor:asRgb()):emul(rightManifoldColor:asRgb()) * 2
-rightHubbleColor = util.color.rgb(rightHubbleColor.x, rightHubbleColor.y, rightHubbleColor.z)
-rightHubbleColor = colorUtil.hueShift(rightHubbleColor, 45)
+        layers[layer.name] = color
+        current = current:emul(color:asRgb()) * mult
+    end
+
+    return layers
+end
+
+local ManaColors, FatigueColors =
+    OrbGen:getColor(util.color.hex('00ff7f')), OrbGen:getColor(util.color.hex('a7fc00'))
 
 local Orbs = ui.create {
     name = 'OrbLayoutTest',
@@ -220,7 +244,7 @@ local Orbs = ui.create {
                             size = util.vector2(213, 213),
                         },
                         relativeSize = util.vector2(2., 1. / orbHeight),
-                        color = leftOrbBase,
+                        color = FatigueColors.base,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
                     },
@@ -231,7 +255,7 @@ local Orbs = ui.create {
                     props = {
                         relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
-                        color = leftPerlinColor,
+                        color = FatigueColors.noise,
                         alpha = .5,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
@@ -243,7 +267,7 @@ local Orbs = ui.create {
                     props = {
                         relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = hubbleAtlas.textureArray[1],
-                        color = leftHubbleColor,
+                        color = FatigueColors.nebula,
                         alpha = .25,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
@@ -255,7 +279,7 @@ local Orbs = ui.create {
                     props = {
                         relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = overAtlas.textureArray[1],
-                        color = leftManifoldColor,
+                        color = FatigueColors.vein,
                         alpha = .25,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
@@ -280,7 +304,7 @@ local Orbs = ui.create {
                             size = util.vector2(213, 213),
                         },
                         relativeSize = util.vector2(2., 1. / orbHeight),
-                        color = rightOrbBase,
+                        color = ManaColors.base,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(-1, 1),
                     },
@@ -291,7 +315,7 @@ local Orbs = ui.create {
                     props = {
                         relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
-                        color = rightPerlinColor,
+                        color = ManaColors.noise,
                         alpha = .5,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(-1, 1),
@@ -303,7 +327,7 @@ local Orbs = ui.create {
                     props = {
                         relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = hubbleAtlas.textureArray[1],
-                        color = rightHubbleColor,
+                        color = ManaColors.nebula,
                         alpha = .25,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(-1, 1),
@@ -315,7 +339,7 @@ local Orbs = ui.create {
                     props = {
                         relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = overAtlas.textureArray[1],
-                        color = rightManifoldColor,
+                        color = ManaColors.vein,
                         alpha = .25,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(-1, 1),
