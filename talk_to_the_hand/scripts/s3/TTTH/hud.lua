@@ -167,6 +167,11 @@ local upOrDown = true
 --- Functions for generating colors and layouts for diablo-style resource indicators
 ---@class OrbGen
 local OrbGen = {
+    backgroundTexture = ui.texture {
+        path = 'textures/s3/ttth/orb_background.dds',
+        size = util.vector2(213, 213),
+    },
+    capTexture = ui.texture { path = 'textures/s3/ttth/orb_cap.dds' },
     colorCoeff = 2.,
     fillTexture = ui.texture {
         path = 'textures/s3/ttth/orb_fill.dds',
@@ -356,10 +361,7 @@ local Orbs = ui.create {
     layer = 'HUD',
     type = ui.TYPE.Image,
     props = {
-        resource = ui.texture {
-            path = 'textures/s3/ttth/orb_background.dds',
-            size = util.vector2(213, 213),
-        },
+        resource = OrbGen.backgroundTexture,
         relativeSize = util.vector2(orbSize, orbSize),
         relativePosition = util.vector2(0., 1.),
         anchor = util.vector2(0, 1.),
@@ -383,7 +385,7 @@ local Orbs = ui.create {
             props = {
                 -- relativePosition = util.vector2(-.02, 0.),
                 relativeSize = util.vector2(1.0, 1.015),
-                resource = ui.texture { path = 'textures/s3/ttth/orb_cap.dds' },
+                resource = OrbGen.capTexture,
             },
         },
     }
