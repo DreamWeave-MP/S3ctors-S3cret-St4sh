@@ -251,6 +251,21 @@ end
 ---@param twoSided boolean
 ---@param rightSide boolean?
 ---@return table<string, any> layout
+function OrbGen:fill(color, twoSided, rightSide)
+    return self:subElement {
+        name = 'Fill',
+        alpha = 1.,
+        color = color,
+        twoSided = twoSided,
+        rightSide = rightSide,
+        resource = self.fillTexture,
+    }
+end
+
+---@param color util.color
+---@param twoSided boolean
+---@param rightSide boolean?
+---@return table<string, any> layout
 function OrbGen:noise(color, twoSided, rightSide)
     return self:subElement {
         name = 'Noise',
@@ -320,31 +335,10 @@ local Orbs = ui.create {
                 anchor = util.vector2(.0, 1.),
             },
             content = ui.content {
-                {
-                    name = 'OrbLeftFill',
-                    type = ui.TYPE.Image,
-                    props = {
-                        resource = OrbGen.fillTexture,
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        color = FatigueColors.base,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(0, 1),
-                    },
-                },
-                OrbGen:noise(
-                    FatigueColors.noise,
-                    true
-                ),
-                OrbGen:nebula(
-                    hubbleAtlas,
-                    FatigueColors.nebula,
-                    true
-                ),
-                OrbGen:vein(
-                    overAtlas,
-                    FatigueColors.vein,
-                    true
-                ),
+                OrbGen:fill(FatigueColors.base, true),
+                OrbGen:noise(FatigueColors.noise, true),
+                OrbGen:nebula(hubbleAtlas, FatigueColors.nebula, true),
+                OrbGen:vein(overAtlas, FatigueColors.vein, true),
             }
         },
         {
@@ -355,37 +349,10 @@ local Orbs = ui.create {
                 anchor = util.vector2(.0, 1.),
             },
             content = ui.content {
-                {
-                    name = 'OrbRightFill',
-                    type = ui.TYPE.Image,
-                    props = {
-                        resource = ui.texture {
-                            path = 'textures/s3/ttth/orb_fill.dds',
-                            size = util.vector2(213, 213),
-                        },
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        color = ManaColors.base,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(-1, 1),
-                    },
-                },
-                OrbGen:noise(
-                    ManaColors.noise,
-                    true,
-                    true
-                ),
-                OrbGen:nebula(
-                    hubbleAtlas,
-                    ManaColors.nebula,
-                    true,
-                    true
-                ),
-                OrbGen:vein(
-                    overAtlas,
-                    ManaColors.vein,
-                    true,
-                    true
-                ),
+                OrbGen:fill(ManaColors.base, true, true),
+                OrbGen:noise(ManaColors.noise, true, true),
+                OrbGen:nebula(hubbleAtlas, ManaColors.nebula, true, true),
+                OrbGen:vein(overAtlas, ManaColors.vein, true, true),
             }
         },
         {
@@ -1447,7 +1414,7 @@ return {
             .relativeSize = util.vector2(2., 1 / orbHeight)
 
             orbContent
-            .OrbLeftFill
+            .OrbFill
             .props
             .relativeSize = util.vector2(2., 1 / orbHeight)
 
@@ -1485,7 +1452,7 @@ return {
             .relativeSize = util.vector2(2, 1 / orbHeight)
 
             orbContent
-            .OrbRightFill
+            .OrbFill
             .props
             .relativeSize = util.vector2(2, 1 / orbHeight)
 
