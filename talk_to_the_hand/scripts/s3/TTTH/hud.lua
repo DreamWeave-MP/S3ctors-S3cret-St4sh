@@ -195,7 +195,7 @@ function OrbGen:getColor(inColor)
         { name = "nebula", hue = 45 }
     }
 
-    for i, layer in ipairs(order) do
+    for _, layer in ipairs(order) do
         local color = self.vectorColor(current)
 
         if layer.hue then
@@ -207,6 +207,52 @@ function OrbGen:getColor(inColor)
     end
 
     return layers
+end
+
+---@class SubElementConstructor
+---@field alpha number
+---@field resource userdata
+---@field color util.color,
+---@field twoSided boolean
+---@field rightSide boolean?
+---@field name string
+
+---@param elementInfo  SubElementConstructor
+function OrbGen:subElement(elementInfo)
+    local width, xPos = elementInfo.twoSided and 2. or 1., 0
+
+    if elementInfo.twoSided and elementInfo.rightSide then
+        xPos = -1
+    end
+
+    return {
+        name = 'Orb' .. elementInfo.name,
+        type = ui.TYPE.Image,
+        props = {
+            relativeSize = util.vector2(width, 1),
+            resource = elementInfo.resource,
+            color = elementInfo.color,
+            alpha = elementInfo.alpha,
+            anchor = util.vector2(0, 1),
+            relativePosition = util.vector2(xPos, 1),
+        }
+    }
+end
+
+---@param atlas ImageAtlas
+---@param color util.color
+---@param twoSided boolean
+---@param rightSide boolean?
+---@return table<string, any> veinOverlay
+function OrbGen:vein(atlas, color, twoSided, rightSide)
+    return self:subElement {
+        name = 'Vein',
+        resource = atlas.textureArray[1],
+        alpha = .25,
+        color = color,
+        twoSided = twoSided,
+        rightSide = rightSide,
+    }
 end
 
 local ManaColors, FatigueColors =
@@ -273,18 +319,11 @@ local Orbs = ui.create {
                         relativePosition = util.vector2(0, 1),
                     },
                 },
-                {
-                    name = 'OrbLeftOverlay',
-                    type = ui.TYPE.Image,
-                    props = {
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        resource = overAtlas.textureArray[1],
-                        color = FatigueColors.vein,
-                        alpha = .25,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(0, 1),
-                    },
-                },
+                OrbGen:vein(
+                    overAtlas,
+                    FatigueColors.vein,
+                    true
+                ),
             }
         },
         {
@@ -333,18 +372,12 @@ local Orbs = ui.create {
                         relativePosition = util.vector2(-1, 1),
                     },
                 },
-                {
-                    name = 'OrbRightOverlay',
-                    type = ui.TYPE.Image,
-                    props = {
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        resource = overAtlas.textureArray[1],
-                        color = ManaColors.vein,
-                        alpha = .25,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(-1, 1),
-                    },
-                },
+                OrbGen:vein(
+                    overAtlas,
+                    ManaColors.vein,
+                    true,
+                    true
+                ),
             }
         },
         {
@@ -1383,7 +1416,7 @@ return {
                 .OrbLeftFillContain.content
 
             orbContent
-            .OrbLeftOverlay
+            .OrbVein
             .props
             .resource = overAtlas.textureArray[fatigueOrbFrame]
 
@@ -1396,7 +1429,7 @@ return {
             Orbs.layout.content.OrbLeftFillContain.props.relativeSize = util.vector2(.5, orbHeight)
 
             orbContent
-            .OrbLeftOverlay
+            .OrbVein
             .props
             .relativeSize = util.vector2(2., 1 / orbHeight)
 
@@ -1421,7 +1454,7 @@ return {
                 .OrbRightFillContain.content
 
             orbContent
-            .OrbRightOverlay
+            .OrbVein
             .props
             .resource = overAtlas.textureArray[fatigueOrbFrame]
 
@@ -1434,7 +1467,7 @@ return {
             Orbs.layout.content.OrbRightFillContain.props.relativeSize = util.vector2(.5, orbHeight)
 
             orbContent
-            .OrbRightOverlay
+            .OrbVein
             .props
             .relativeSize = util.vector2(2, 1 / orbHeight)
 
