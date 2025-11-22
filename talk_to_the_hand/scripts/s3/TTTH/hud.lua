@@ -146,22 +146,8 @@ function colorUtil.desaturate(color, amount)
     return util.color.rgb(r, g, b)
 end
 
-local overAtlas = I.S3AtlasConstructor.constructAtlas {
-    tileSize = util.vector2(213, 213),
-    tilesPerRow = 10,
-    totalTiles = 100,
-    atlasPath = 'textures/s3/ttth/orb_over_atlas.dds'
-}
-
-local hubbleAtlas = I.S3AtlasConstructor.constructAtlas {
-    tileSize = util.vector2(213, 213),
-    tilesPerRow = 10,
-    totalTiles = 100,
-    atlasPath = 'textures/s3/ttth/hubble_over_atlas.dds'
-}
-
 local orbSize = .2
-local upOrDown = true
+
 
 --- Functions for generating colors and layouts for diablo-style resource indicators
 ---@class OrbGen
@@ -176,10 +162,23 @@ local OrbGen = {
         path = 'textures/s3/ttth/orb_fill.dds',
         size = util.vector2(213, 213),
     },
+    hubbleAtlas = I.S3AtlasConstructor.constructAtlas {
+        tileSize = util.vector2(213, 213),
+        tilesPerRow = 10,
+        totalTiles = 100,
+        atlasPath = 'textures/s3/ttth/hubble_over_atlas.dds'
+    },
     nebulaAlpha = .25,
     noiseAlpha = .5,
     noiseTexture = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
+    overAtlas = I.S3AtlasConstructor.constructAtlas {
+        tileSize = util.vector2(213, 213),
+        tilesPerRow = 10,
+        totalTiles = 100,
+        atlasPath = 'textures/s3/ttth/orb_over_atlas.dds'
+    },
     updateOrder = { 'vein', 'nebula', 'fill', 'noise', },
+    upOrDown = true,
     veinAlpha = .25,
 }
 
@@ -298,7 +297,11 @@ function OrbGen:nebula(atlas, color, twoSided, rightSide)
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
-        userdata = { atlas = atlas, },
+        userdata = {
+            atlas = atlas,
+            upOrDown = true,
+            currentFrame = I.RandomGen.range({ min = 1, max = 100 }, true),
+        },
     }
 end
 
@@ -315,7 +318,11 @@ function OrbGen:vein(atlas, color, twoSided, rightSide)
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
-        userdata = { atlas = atlas },
+        userdata = {
+            atlas = atlas,
+            upOrDown = true,
+            currentFrame = I.RandomGen.range({ min = 1, max = 100 }, true),
+        },
     }
 end
 
@@ -351,8 +358,8 @@ function OrbGen:container(constructor)
         content = ui.content {
             OrbGen:fill(colors.base, constructor.twoSided, constructor.rightSide),
             OrbGen:noise(colors.noise, constructor.twoSided, constructor.rightSide),
-            OrbGen:nebula(hubbleAtlas, colors.nebula, constructor.twoSided, constructor.rightSide),
-            OrbGen:vein(overAtlas, colors.vein, constructor.twoSided, constructor.rightSide),
+            OrbGen:nebula(OrbGen.hubbleAtlas, colors.nebula, constructor.twoSided, constructor.rightSide),
+            OrbGen:vein(OrbGen.overAtlas, colors.vein, constructor.twoSided, constructor.rightSide),
         },
         userdata = {
             stat = constructor.stat,
@@ -1299,7 +1306,6 @@ if H4ND.UIDebug then
     s3lf.gameObject:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
 end
 
-local fatigueOrbFrame, magickaOrbFrame = 1
 CurrentDelay = 0
 return {
     interfaceName = 'H4nd',
@@ -1402,17 +1408,6 @@ return {
                 handleFade()
             end
 
-            if fatigueOrbFrame == 100 then
-                fatigueOrbFrame = upOrDown and 1 or 99
-                magickaOrbFrame = upOrDown and 99 or 1
-            elseif fatigueOrbFrame == 1 then
-                fatigueOrbFrame = upOrDown and 2 or 100
-                magickaOrbFrame = upOrDown and 100 or 2
-            else
-                fatigueOrbFrame = fatigueOrbFrame + (upOrDown and 1 or -1)
-                magickaOrbFrame = magickaOrbFrame + (upOrDown and -1 or 1)
-            end
-
             local orbBase = Orbs.layout.content
 
             for _, layout in ipairs(orbBase) do
@@ -1444,7 +1439,13 @@ return {
 
                     if childElement.userdata and childElement.userdata.atlas then
                         local data = childElement.userdata
-                        childElement.props.resource = data.atlas.textureArray[fatigueOrbFrame]
+
+                        local step = data.upOrDown and 1 or -1
+                        data.currentFrame = data.currentFrame + step
+
+                        if data.currentFrame == 0 then data.currentFrame = 100 elseif data.currentFrame == 101 then data.currentFrame = 1 end
+
+                        childElement.props.resource = data.atlas.textureArray[data.currentFrame]
                     end
                 end
 
