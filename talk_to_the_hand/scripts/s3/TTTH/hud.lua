@@ -367,6 +367,54 @@ function OrbGen:container(constructor)
     }
 end
 
+function OrbGen:update(orb)
+    local orbBase = orb.layout.content
+
+    for _, layout in ipairs(orbBase) do
+        if not layout.userdata then goto CONTINUE end
+
+        local stat = layout.userdata.stat
+        local height = util.clamp(s3lf[stat].current / s3lf[stat].base, .0, 1.)
+
+        local newHeightInt,
+        currentHeightInt = util.round(height * 100),
+            util.round(layout.props.relativeSize.y * 100)
+
+        local updateHeight, childSize = newHeightInt ~= currentHeightInt, nil
+        if updateHeight then
+            local step = newHeightInt <= currentHeightInt and -1 or 1
+            height = (currentHeightInt + step) / 100
+
+            local childWidth = layout.content[1].props.relativeSize.x
+            childSize = util.vector2(childWidth, 1 / height)
+            layout.props.relativeSize = util.vector2(layout.props.relativeSize.x, height)
+        end
+
+        for _, elementName in ipairs(OrbGen.updateOrder) do
+            local childElement = layout.content[elementName]
+
+            if updateHeight then
+                childElement.props.relativeSize = childSize
+            end
+
+            if childElement.userdata and childElement.userdata.atlas then
+                local data = childElement.userdata
+
+                local step = data.upOrDown and 1 or -1
+                data.currentFrame = data.currentFrame + step
+
+                if data.currentFrame == 0 then data.currentFrame = 100 elseif data.currentFrame == 101 then data.currentFrame = 1 end
+
+                childElement.props.resource = data.atlas.textureArray[data.currentFrame]
+            end
+        end
+
+        ::CONTINUE::
+    end
+
+    orb:update()
+end
+
 local Orbs = ui.create {
     name = 'OrbLayoutTest',
     layer = 'HUD',
@@ -1408,51 +1456,7 @@ return {
                 handleFade()
             end
 
-            local orbBase = Orbs.layout.content
-
-            for _, layout in ipairs(orbBase) do
-                if not layout.userdata then goto CONTINUE end
-
-                local stat = layout.userdata.stat
-                local height = util.clamp(s3lf[stat].current / s3lf[stat].base, .0, 1.)
-
-                local newHeightInt,
-                currentHeightInt = util.round(height * 100),
-                    util.round(layout.props.relativeSize.y * 100)
-
-                local updateHeight, childSize = newHeightInt ~= currentHeightInt, nil
-                if updateHeight then
-                    local step = newHeightInt <= currentHeightInt and -1 or 1
-                    height = (currentHeightInt + step) / 100
-
-                    local childWidth = layout.content[1].props.relativeSize.x
-                    childSize = util.vector2(childWidth, 1 / height)
-                    layout.props.relativeSize = util.vector2(layout.props.relativeSize.x, height)
-                end
-
-                for _, elementName in ipairs(OrbGen.updateOrder) do
-                    local childElement = layout.content[elementName]
-
-                    if updateHeight then
-                        childElement.props.relativeSize = childSize
-                    end
-
-                    if childElement.userdata and childElement.userdata.atlas then
-                        local data = childElement.userdata
-
-                        local step = data.upOrDown and 1 or -1
-                        data.currentFrame = data.currentFrame + step
-
-                        if data.currentFrame == 0 then data.currentFrame = 100 elseif data.currentFrame == 101 then data.currentFrame = 1 end
-
-                        childElement.props.resource = data.atlas.textureArray[data.currentFrame]
-                    end
-                end
-
-                ::CONTINUE::
-            end
-
-            Orbs:update()
+            OrbGen:update(Orbs)
         end,
     }
 }
