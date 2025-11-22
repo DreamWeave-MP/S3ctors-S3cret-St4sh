@@ -164,17 +164,29 @@ local orbHeight = 1.
 local orbSize = .2
 local upOrDown = true
 
-local orbBase = util.color.hex('800020')
+local leftOrbBase = util.color.hex('a7fc00')
 
-local perlinColor = orbBase:asRgb() * 2
-perlinColor = util.color.rgb(perlinColor.x, perlinColor.y, perlinColor.z)
+local leftPerlinColor = leftOrbBase:asRgb() * 2
+leftPerlinColor = util.color.rgb(leftPerlinColor.x, leftPerlinColor.y, leftPerlinColor.z)
 
-local manifoldColor = orbBase:asRgb():emul(perlinColor:asRgb()) * 2
-manifoldColor = util.color.rgb(manifoldColor.x, manifoldColor.y, manifoldColor.z)
+local leftManifoldColor = leftOrbBase:asRgb():emul(leftPerlinColor:asRgb()) * 2
+leftManifoldColor = util.color.rgb(leftManifoldColor.x, leftManifoldColor.y, leftManifoldColor.z)
 
-local hubbleColor = orbBase:asRgb():emul(perlinColor:asRgb()):emul(manifoldColor:asRgb()) * 2
-hubbleColor = util.color.rgb(hubbleColor.x, hubbleColor.y, hubbleColor.z)
-hubbleColor = colorUtil.hueShift(hubbleColor, 45)
+local leftHubbleColor = leftOrbBase:asRgb():emul(leftPerlinColor:asRgb()):emul(leftManifoldColor:asRgb()) * 2
+leftHubbleColor = util.color.rgb(leftHubbleColor.x, leftHubbleColor.y, leftHubbleColor.z)
+leftHubbleColor = colorUtil.hueShift(leftHubbleColor, 45)
+
+local rightOrbBase = util.color.hex('00ff7f')
+
+local rightPerlinColor = rightOrbBase:asRgb() * 2
+rightPerlinColor = util.color.rgb(rightPerlinColor.x, rightPerlinColor.y, rightPerlinColor.z)
+
+local rightManifoldColor = rightOrbBase:asRgb():emul(rightPerlinColor:asRgb()) * 2
+rightManifoldColor = util.color.rgb(rightManifoldColor.x, rightManifoldColor.y, rightManifoldColor.z)
+
+local rightHubbleColor = rightOrbBase:asRgb():emul(rightPerlinColor:asRgb()):emul(rightManifoldColor:asRgb()) * 2
+rightHubbleColor = util.color.rgb(rightHubbleColor.x, rightHubbleColor.y, rightHubbleColor.z)
+rightHubbleColor = colorUtil.hueShift(rightHubbleColor, 45)
 
 local Orbs = ui.create {
     name = 'OrbLayoutTest',
@@ -191,58 +203,59 @@ local Orbs = ui.create {
     },
     content = ui.content {
         {
-            name = 'OrbFillContain',
+            name = 'OrbLeftFillContain',
             props = {
-                relativePosition = util.vector2(0., 1),
-                relativeSize = util.vector2(1., orbHeight),
+                relativePosition = util.vector2(.0, 1),
+                relativeSize = util.vector2(.5, orbHeight),
                 anchor = util.vector2(.0, 1.),
+                -- visible = false,
             },
             content = ui.content {
                 {
-                    name = 'OrbFill',
+                    name = 'OrbLeftFill',
                     type = ui.TYPE.Image,
                     props = {
                         resource = ui.texture {
                             path = 'textures/s3/ttth/orb_fill.dds',
                             size = util.vector2(213, 213),
                         },
-                        relativeSize = util.vector2(1., 1. / orbHeight),
-                        color = orbBase,
+                        relativeSize = util.vector2(2., 1. / orbHeight),
+                        color = leftOrbBase,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
                     },
                 },
                 {
-                    name = 'OrbNoise',
+                    name = 'OrbLeftNoise',
                     type = ui.TYPE.Image,
                     props = {
-                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
-                        color = perlinColor,
+                        color = leftPerlinColor,
                         alpha = .5,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
                     },
                 },
                 {
-                    name = 'OrbHubble',
+                    name = 'OrbLeftHubble',
                     type = ui.TYPE.Image,
                     props = {
-                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = hubbleAtlas.textureArray[1],
-                        color = hubbleColor,
+                        color = leftHubbleColor,
                         alpha = .25,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
                     },
                 },
                 {
-                    name = 'OrbOverlay',
+                    name = 'OrbLeftOverlay',
                     type = ui.TYPE.Image,
                     props = {
-                        relativeSize = util.vector2(1., 1. / orbHeight),
+                        relativeSize = util.vector2(2., 1. / orbHeight),
                         resource = overAtlas.textureArray[1],
-                        color = manifoldColor,
+                        color = leftManifoldColor,
                         alpha = .25,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
@@ -251,10 +264,71 @@ local Orbs = ui.create {
             }
         },
         {
+            name = 'OrbRightFillContain',
+            props = {
+                relativePosition = util.vector2(.5, 1),
+                relativeSize = util.vector2(.5, orbHeight),
+                anchor = util.vector2(.0, 1.),
+            },
+            content = ui.content {
+                {
+                    name = 'OrbRightFill',
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = ui.texture {
+                            path = 'textures/s3/ttth/orb_fill.dds',
+                            size = util.vector2(213, 213),
+                        },
+                        relativeSize = util.vector2(2., 1. / orbHeight),
+                        color = rightOrbBase,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(-1, 1),
+                    },
+                },
+                {
+                    name = 'OrbRightNoise',
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(2., 1. / orbHeight),
+                        resource = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
+                        color = rightPerlinColor,
+                        alpha = .5,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(-1, 1),
+                    },
+                },
+                {
+                    name = 'OrbRightHubble',
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(2., 1. / orbHeight),
+                        resource = hubbleAtlas.textureArray[1],
+                        color = rightHubbleColor,
+                        alpha = .25,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(-1, 1),
+                    },
+                },
+                {
+                    name = 'OrbRightOverlay',
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(2., 1. / orbHeight),
+                        resource = overAtlas.textureArray[1],
+                        color = rightManifoldColor,
+                        alpha = .25,
+                        anchor = util.vector2(0, 1),
+                        relativePosition = util.vector2(-1, 1),
+                    },
+                },
+            }
+        },
+        {
             name = 'OrbCap',
             type = ui.TYPE.Image,
             props = {
-                relativeSize = util.vector2(1, 1),
+                -- relativePosition = util.vector2(-.02, 0.),
+                relativeSize = util.vector2(1.0, 1.015),
                 resource = ui.texture { path = 'textures/s3/ttth/orb_cap.dds' },
             },
         },
@@ -1165,7 +1239,7 @@ if H4ND.UIDebug then
     s3lf.gameObject:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
 end
 
-local currentOrbFrame = 1
+local fatigueOrbFrame, magickaOrbFrame = 1
 CurrentDelay = 0
 return {
     interfaceName = 'H4nd',
@@ -1268,53 +1342,92 @@ return {
                 handleFade()
             end
 
-
-            if currentOrbFrame == 100 then
-                upOrDown = math.random() <= 0.1
-                currentOrbFrame = upOrDown and 1 or 99
-            elseif currentOrbFrame == 1 then
-                currentOrbFrame = upOrDown and 2 or 100
+            if fatigueOrbFrame == 100 then
+                fatigueOrbFrame = upOrDown and 1 or 99
+                magickaOrbFrame = upOrDown and 99 or 1
+            elseif fatigueOrbFrame == 1 then
+                fatigueOrbFrame = upOrDown and 2 or 100
+                magickaOrbFrame = upOrDown and 100 or 2
             else
-                currentOrbFrame = currentOrbFrame + (upOrDown and 1 or -1)
+                fatigueOrbFrame = fatigueOrbFrame + (upOrDown and 1 or -1)
+                magickaOrbFrame = magickaOrbFrame + (upOrDown and -1 or 1)
             end
 
             local orbContent = Orbs
                 .layout
                 .content
-                .OrbFillContain.content
+                .OrbLeftFillContain.content
 
             orbContent
-            .OrbOverlay
+            .OrbLeftOverlay
             .props
-            .resource = overAtlas.textureArray[currentOrbFrame]
+            .resource = overAtlas.textureArray[fatigueOrbFrame]
 
             orbContent
-            .OrbHubble
+            .OrbLeftHubble
             .props
-            .resource = hubbleAtlas.textureArray[currentOrbFrame]
+            .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
 
-            local orbHeight = util.clamp(s3lf.fatigue.current / s3lf.fatigue.base, .0, 1.)
-            Orbs.layout.content.OrbFillContain.props.relativeSize = util.vector2(1, orbHeight)
-
-            orbContent
-            .OrbOverlay
-            .props
-            .relativeSize = util.vector2(1, 1 / orbHeight)
+            orbHeight = util.clamp(s3lf.fatigue.current / s3lf.fatigue.base, .0, 1.)
+            Orbs.layout.content.OrbLeftFillContain.props.relativeSize = util.vector2(.5, orbHeight)
 
             orbContent
-            .OrbHubble
+            .OrbLeftOverlay
             .props
-            .relativeSize = util.vector2(1, 1 / orbHeight)
+            .relativeSize = util.vector2(2., 1 / orbHeight)
 
             orbContent
-            .OrbFill
+            .OrbLeftHubble
             .props
-            .relativeSize = util.vector2(1, 1 / orbHeight)
+            .relativeSize = util.vector2(2., 1 / orbHeight)
 
             orbContent
-            .OrbNoise
+            .OrbLeftFill
             .props
-            .relativeSize = util.vector2(1, 1 / orbHeight)
+            .relativeSize = util.vector2(2., 1 / orbHeight)
+
+            orbContent
+            .OrbLeftNoise
+            .props
+            .relativeSize = util.vector2(2., 1 / orbHeight)
+
+            orbContent = Orbs
+                .layout
+                .content
+                .OrbRightFillContain.content
+
+            orbContent
+            .OrbRightOverlay
+            .props
+            .resource = overAtlas.textureArray[fatigueOrbFrame]
+
+            orbContent
+            .OrbRightHubble
+            .props
+            .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
+
+            orbHeight = util.clamp(s3lf.magicka.current / s3lf.magicka.base, .0, 1.)
+            Orbs.layout.content.OrbRightFillContain.props.relativeSize = util.vector2(.5, orbHeight)
+
+            orbContent
+            .OrbRightOverlay
+            .props
+            .relativeSize = util.vector2(2, 1 / orbHeight)
+
+            orbContent
+            .OrbRightHubble
+            .props
+            .relativeSize = util.vector2(2, 1 / orbHeight)
+
+            orbContent
+            .OrbRightFill
+            .props
+            .relativeSize = util.vector2(2, 1 / orbHeight)
+
+            orbContent
+            .OrbRightNoise
+            .props
+            .relativeSize = util.vector2(2, 1 / orbHeight)
 
             Orbs:update()
         end,
