@@ -168,6 +168,8 @@ local upOrDown = true
 ---@class OrbGen
 local OrbGen = {
     colorCoeff = 2.,
+    veinAlpha = .25,
+    nebulaAlpha = .25,
 }
 
 ---@param vector util.vector3
@@ -243,12 +245,28 @@ end
 ---@param color util.color
 ---@param twoSided boolean
 ---@param rightSide boolean?
+---@return table<string, any> nebulaOverlay
+function OrbGen:nebula(atlas, color, twoSided, rightSide)
+    return self:subElement {
+        name = 'Nebula',
+        resource = atlas.textureArray[1],
+        alpha = self.nebulaAlpha,
+        color = color,
+        twoSided = twoSided,
+        rightSide = rightSide,
+    }
+end
+
+---@param atlas ImageAtlas
+---@param color util.color
+---@param twoSided boolean
+---@param rightSide boolean?
 ---@return table<string, any> veinOverlay
 function OrbGen:vein(atlas, color, twoSided, rightSide)
     return self:subElement {
         name = 'Vein',
         resource = atlas.textureArray[1],
-        alpha = .25,
+        alpha = self.veinAlpha,
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
@@ -278,7 +296,6 @@ local Orbs = ui.create {
                 relativePosition = util.vector2(.0, 1),
                 relativeSize = util.vector2(.5, orbHeight),
                 anchor = util.vector2(.0, 1.),
-                -- visible = false,
             },
             content = ui.content {
                 {
@@ -307,18 +324,11 @@ local Orbs = ui.create {
                         relativePosition = util.vector2(0, 1),
                     },
                 },
-                {
-                    name = 'OrbLeftHubble',
-                    type = ui.TYPE.Image,
-                    props = {
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        resource = hubbleAtlas.textureArray[1],
-                        color = FatigueColors.nebula,
-                        alpha = .25,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(0, 1),
-                    },
-                },
+                OrbGen:nebula(
+                    hubbleAtlas,
+                    FatigueColors.nebula,
+                    true
+                ),
                 OrbGen:vein(
                     overAtlas,
                     FatigueColors.vein,
@@ -360,18 +370,12 @@ local Orbs = ui.create {
                         relativePosition = util.vector2(-1, 1),
                     },
                 },
-                {
-                    name = 'OrbRightHubble',
-                    type = ui.TYPE.Image,
-                    props = {
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        resource = hubbleAtlas.textureArray[1],
-                        color = ManaColors.nebula,
-                        alpha = .25,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(-1, 1),
-                    },
-                },
+                OrbGen:nebula(
+                    hubbleAtlas,
+                    ManaColors.nebula,
+                    true,
+                    true
+                ),
                 OrbGen:vein(
                     overAtlas,
                     ManaColors.vein,
@@ -1421,7 +1425,7 @@ return {
             .resource = overAtlas.textureArray[fatigueOrbFrame]
 
             orbContent
-            .OrbLeftHubble
+            .OrbNebula
             .props
             .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
 
@@ -1434,7 +1438,7 @@ return {
             .relativeSize = util.vector2(2., 1 / orbHeight)
 
             orbContent
-            .OrbLeftHubble
+            .OrbNebula
             .props
             .relativeSize = util.vector2(2., 1 / orbHeight)
 
@@ -1459,7 +1463,7 @@ return {
             .resource = overAtlas.textureArray[fatigueOrbFrame]
 
             orbContent
-            .OrbRightHubble
+            .OrbNebula
             .props
             .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
 
@@ -1472,7 +1476,7 @@ return {
             .relativeSize = util.vector2(2, 1 / orbHeight)
 
             orbContent
-            .OrbRightHubble
+            .OrbNebula
             .props
             .relativeSize = util.vector2(2, 1 / orbHeight)
 
