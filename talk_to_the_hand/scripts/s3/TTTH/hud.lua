@@ -310,8 +310,46 @@ function OrbGen:vein(atlas, color, twoSided, rightSide)
     }
 end
 
-local ManaColors, FatigueColors =
-    OrbGen:getColor(util.color.hex('00ff7f')), OrbGen:getColor(util.color.hex('a7fc00'))
+---@class OrbContainerConstructor
+---@field baseColor util.color
+---@field twoSided boolean
+---@field rightSide boolean
+---@field stat DynamicStatName
+
+---@param constructor OrbContainerConstructor
+function OrbGen:container(constructor)
+    local colors = self:getColor(constructor.baseColor)
+    local name, width, xPos = 'OrbFillContain', 1., 0.
+
+    if constructor.twoSided then
+        width = .5
+
+        if constructor.rightSide then
+            name = 'OrbRightFillContain'
+            xPos = .5
+        else
+            name = 'OrbLeftFillContain'
+        end
+    end
+
+    return {
+        name = name,
+        props = {
+            relativePosition = util.vector2(xPos, 1),
+            relativeSize = util.vector2(width, 1.),
+            anchor = util.vector2(.0, 1.),
+        },
+        content = ui.content {
+            OrbGen:fill(colors.base, constructor.twoSided, constructor.rightSide),
+            OrbGen:noise(colors.noise, constructor.twoSided, constructor.rightSide),
+            OrbGen:nebula(hubbleAtlas, colors.nebula, constructor.twoSided, constructor.rightSide),
+            OrbGen:vein(overAtlas, colors.vein, constructor.twoSided, constructor.rightSide),
+        },
+        userdata = {
+            stat = constructor.stat,
+        }
+    }
+end
 
 local Orbs = ui.create {
     name = 'OrbLayoutTest',
@@ -327,33 +365,17 @@ local Orbs = ui.create {
         anchor = util.vector2(0, 1.),
     },
     content = ui.content {
-        {
-            name = 'OrbLeftFillContain',
-            props = {
-                relativePosition = util.vector2(.0, 1),
-                relativeSize = util.vector2(.5, orbHeight),
-                anchor = util.vector2(.0, 1.),
-            },
-            content = ui.content {
-                OrbGen:fill(FatigueColors.base, true),
-                OrbGen:noise(FatigueColors.noise, true),
-                OrbGen:nebula(hubbleAtlas, FatigueColors.nebula, true),
-                OrbGen:vein(overAtlas, FatigueColors.vein, true),
-            }
+        OrbGen:container {
+            baseColor = util.color.hex('a7fc00'),
+            rightSide = false,
+            stat = 'fatigue',
+            twoSided = true,
         },
-        {
-            name = 'OrbRightFillContain',
-            props = {
-                relativePosition = util.vector2(.5, 1),
-                relativeSize = util.vector2(.5, orbHeight),
-                anchor = util.vector2(.0, 1.),
-            },
-            content = ui.content {
-                OrbGen:fill(ManaColors.base, true, true),
-                OrbGen:noise(ManaColors.noise, true, true),
-                OrbGen:nebula(hubbleAtlas, ManaColors.nebula, true, true),
-                OrbGen:vein(overAtlas, ManaColors.vein, true, true),
-            }
+        OrbGen:container {
+            baseColor = util.color.hex('00ff7f'),
+            rightSide = true,
+            stat = 'magicka',
+            twoSided = true,
         },
         {
             name = 'OrbCap',
