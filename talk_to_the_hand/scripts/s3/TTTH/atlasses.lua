@@ -1,9 +1,6 @@
-local util = require 'openmw.util'
-
 local I = require 'openmw.interfaces'
 
 ---@param Constants H4NDConstants
----@param handSize util.vector2
 ---@param getColorForElement function
 ---@return ImageAtlas, ImageAtlas, ImageAtlas
 return function(Constants, getColorForElement)
