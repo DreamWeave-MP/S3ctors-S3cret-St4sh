@@ -229,6 +229,7 @@ end
 ---@field twoSided boolean
 ---@field rightSide boolean?
 ---@field name string
+---@field userdata table<any, any>?
 
 ---@param elementInfo  SubElementConstructor
 function OrbGen:subElement(elementInfo)
@@ -248,7 +249,8 @@ function OrbGen:subElement(elementInfo)
             alpha = elementInfo.alpha,
             anchor = util.vector2(0, 1),
             relativePosition = util.vector2(xPos, 1),
-        }
+        },
+        userdata = elementInfo.userdata,
     }
 end
 
@@ -296,6 +298,7 @@ function OrbGen:nebula(atlas, color, twoSided, rightSide)
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
+        userdata = { atlas = atlas, },
     }
 end
 
@@ -312,6 +315,7 @@ function OrbGen:vein(atlas, color, twoSided, rightSide)
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
+        userdata = { atlas = atlas },
     }
 end
 
@@ -1411,50 +1415,37 @@ return {
 
             local orbBase = Orbs.layout.content
 
-            -- local orbContent = orbBase.OrbFillContainL.content
-
-            -- orbContent
-            -- .vein
-            -- .props
-            -- .resource = overAtlas.textureArray[fatigueOrbFrame]
-
-            -- orbContent
-            -- .nebula
-            -- .props
-            -- .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
-
-            -- orbContent
-            -- .vein
-            -- .props
-            -- .resource = overAtlas.textureArray[fatigueOrbFrame]
-
-            -- orbContent
-            -- .nebula
-            -- .props
-            -- .resource = hubbleAtlas.textureArray[fatigueOrbFrame]
-
-
             for _, layout in ipairs(orbBase) do
                 if not layout.userdata then goto CONTINUE end
 
                 local stat = layout.userdata.stat
-                local height, childWidth = util.clamp(s3lf[stat].current / s3lf[stat].base, .0, 1.)
-                childWidth = layout.content[1].props.relativeSize.x
+                local height = util.clamp(s3lf[stat].current / s3lf[stat].base, .0, 1.)
 
                 local newHeightInt,
                 currentHeightInt = util.round(height * 100),
                     util.round(layout.props.relativeSize.y * 100)
 
-                if newHeightInt == currentHeightInt then goto CONTINUE end
+                local updateHeight, childSize = newHeightInt ~= currentHeightInt, nil
+                if updateHeight then
+                    local step = newHeightInt <= currentHeightInt and -1 or 1
+                    height = (currentHeightInt + step) / 100
 
-                local step = newHeightInt <= currentHeightInt and -1 or 1
-                height = (currentHeightInt + step) / 100
-
-                local childSize = util.vector2(childWidth, 1 / height)
-                layout.props.relativeSize = util.vector2(layout.props.relativeSize.x, height)
+                    local childWidth = layout.content[1].props.relativeSize.x
+                    childSize = util.vector2(childWidth, 1 / height)
+                    layout.props.relativeSize = util.vector2(layout.props.relativeSize.x, height)
+                end
 
                 for _, elementName in ipairs(OrbGen.updateOrder) do
-                    layout.content[elementName].props.relativeSize = childSize
+                    local childElement = layout.content[elementName]
+
+                    if updateHeight then
+                        childElement.props.relativeSize = childSize
+                    end
+
+                    if childElement.userdata and childElement.userdata.atlas then
+                        local data = childElement.userdata
+                        childElement.props.resource = data.atlas.textureArray[fatigueOrbFrame]
+                    end
                 end
 
                 ::CONTINUE::
