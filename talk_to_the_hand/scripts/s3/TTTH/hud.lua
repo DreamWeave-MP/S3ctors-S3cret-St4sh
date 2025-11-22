@@ -168,8 +168,14 @@ local upOrDown = true
 ---@class OrbGen
 local OrbGen = {
     colorCoeff = 2.,
-    veinAlpha = .25,
+    fillTexture = ui.texture {
+        path = 'textures/s3/ttth/orb_fill.dds',
+        size = util.vector2(213, 213),
+    },
     nebulaAlpha = .25,
+    noiseAlpha = .5,
+    noiseTexture = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
+    veinAlpha = .25,
 }
 
 ---@param vector util.vector3
@@ -241,6 +247,22 @@ function OrbGen:subElement(elementInfo)
     }
 end
 
+---@param color util.color
+---@param twoSided boolean
+---@param rightSide boolean?
+---@return table<string, any> layout
+function OrbGen:noise(color, twoSided, rightSide)
+    return self:subElement {
+        name = 'Noise',
+        type = ui.TYPE.Image,
+        alpha = self.noiseAlpha,
+        resource = self.noiseTexture,
+        color = color,
+        twoSided = twoSided,
+        rightSide = rightSide,
+    }
+end
+
 ---@param atlas ImageAtlas
 ---@param color util.color
 ---@param twoSided boolean
@@ -302,28 +324,17 @@ local Orbs = ui.create {
                     name = 'OrbLeftFill',
                     type = ui.TYPE.Image,
                     props = {
-                        resource = ui.texture {
-                            path = 'textures/s3/ttth/orb_fill.dds',
-                            size = util.vector2(213, 213),
-                        },
+                        resource = OrbGen.fillTexture,
                         relativeSize = util.vector2(2., 1. / orbHeight),
                         color = FatigueColors.base,
                         anchor = util.vector2(0, 1),
                         relativePosition = util.vector2(0, 1),
                     },
                 },
-                {
-                    name = 'OrbLeftNoise',
-                    type = ui.TYPE.Image,
-                    props = {
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        resource = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
-                        color = FatigueColors.noise,
-                        alpha = .5,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(0, 1),
-                    },
-                },
+                OrbGen:noise(
+                    FatigueColors.noise,
+                    true
+                ),
                 OrbGen:nebula(
                     hubbleAtlas,
                     FatigueColors.nebula,
@@ -358,18 +369,11 @@ local Orbs = ui.create {
                         relativePosition = util.vector2(-1, 1),
                     },
                 },
-                {
-                    name = 'OrbRightNoise',
-                    type = ui.TYPE.Image,
-                    props = {
-                        relativeSize = util.vector2(2., 1. / orbHeight),
-                        resource = ui.texture { path = 'textures/s3/ttth/perlin.dds', },
-                        color = ManaColors.noise,
-                        alpha = .5,
-                        anchor = util.vector2(0, 1),
-                        relativePosition = util.vector2(-1, 1),
-                    },
-                },
+                OrbGen:noise(
+                    ManaColors.noise,
+                    true,
+                    true
+                ),
                 OrbGen:nebula(
                     hubbleAtlas,
                     ManaColors.nebula,
@@ -1448,7 +1452,7 @@ return {
             .relativeSize = util.vector2(2., 1 / orbHeight)
 
             orbContent
-            .OrbLeftNoise
+            .OrbNoise
             .props
             .relativeSize = util.vector2(2., 1 / orbHeight)
 
@@ -1486,7 +1490,7 @@ return {
             .relativeSize = util.vector2(2, 1 / orbHeight)
 
             orbContent
-            .OrbRightNoise
+            .OrbNoise
             .props
             .relativeSize = util.vector2(2, 1 / orbHeight)
 
