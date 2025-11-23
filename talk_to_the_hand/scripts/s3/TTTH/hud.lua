@@ -146,9 +146,6 @@ function colorUtil.desaturate(color, amount)
     return util.color.rgb(r, g, b)
 end
 
-local orbSize = .2
-
-
 --- Functions for generating colors and layouts for diablo-style resource indicators
 ---@class OrbGen
 local OrbGen = {
@@ -367,6 +364,60 @@ function OrbGen:container(constructor)
     }
 end
 
+---@class H4NDOrbConstructor
+---@field twoSided boolean
+---@field leftColor util.color
+---@field leftStat string
+---@field rightColor util.color?
+---@field rightStat string?
+---@field size number
+
+---@param orbInfo H4NDOrbConstructor
+function OrbGen:spawn(orbInfo)
+    local name = orbInfo.twoSided and 'OrbTwoSided' or 'OrbOneSided'
+
+    local content = {
+        self:container {
+            baseColor = orbInfo.leftColor,
+            rightSide = false,
+            stat = orbInfo.leftStat,
+            twoSided = orbInfo.twoSided
+        },
+        {
+            name = 'OrbCap',
+            type = ui.TYPE.Image,
+            props = {
+                relativeSize = util.vector2(1.0, 1.015),
+                resource = OrbGen.capTexture,
+            }
+        }
+    }
+
+    if orbInfo.twoSided then
+        assert(orbInfo.rightColor)
+
+        table.insert(content, 2, self:container {
+            baseColor = orbInfo.rightColor,
+            rightSide = true,
+            stat = orbInfo.rightStat,
+            twoSided = true,
+        })
+    end
+
+    return ui.create {
+        name = name,
+        layer = 'HUD',
+        type = ui.TYPE.Image,
+        props = {
+            resource = OrbGen.backgroundTexture,
+            relativeSize = util.vector2(orbInfo.size, orbInfo.size),
+            relativePosition = util.vector2(0., 1.),
+            anchor = util.vector2(0, 1.),
+        },
+        content = ui.content(content)
+    }
+end
+
 function OrbGen:update(orb)
     local orbBase = orb.layout.content
 
@@ -414,41 +465,6 @@ function OrbGen:update(orb)
 
     orb:update()
 end
-
-local Orbs = ui.create {
-    name = 'OrbLayoutTest',
-    layer = 'HUD',
-    type = ui.TYPE.Image,
-    props = {
-        resource = OrbGen.backgroundTexture,
-        relativeSize = util.vector2(orbSize, orbSize),
-        relativePosition = util.vector2(0., 1.),
-        anchor = util.vector2(0, 1.),
-    },
-    content = ui.content {
-        OrbGen:container {
-            baseColor = util.color.hex('a7fc00'),
-            rightSide = false,
-            stat = 'fatigue',
-            twoSided = true,
-        },
-        OrbGen:container {
-            baseColor = util.color.hex('00ff7f'),
-            rightSide = true,
-            stat = 'magicka',
-            twoSided = true,
-        },
-        {
-            name = 'OrbCap',
-            type = ui.TYPE.Image,
-            props = {
-                -- relativePosition = util.vector2(-.02, 0.),
-                relativeSize = util.vector2(1.0, 1.015),
-                resource = OrbGen.capTexture,
-            },
-        },
-    }
-}
 
 ---@type H4NDConstants
 local Constants = require 'scripts.s3.TTTH.constants'
@@ -509,6 +525,62 @@ H4ND.state = {
     lastUpdateTime = core.getRealTime(),
     currentScreenSize = ui.screenSize(),
 }
+
+local Orbs = OrbGen:spawn {
+    twoSided = true,
+    leftColor = util.color.hex('a7fc00'),
+    leftStat = 'fatigue',
+    rightStat = 'magicka',
+    rightColor = util.color.hex('00ff7f'),
+    size = H4ND.H4NDWidth,
+}
+
+-- local Orbs = ui.create {
+--     name = 'OrbLayoutTest',
+--     layer = 'HUD',
+--     type = ui.TYPE.Image,
+--     props = {
+--         resource = OrbGen.backgroundTexture,
+--         relativeSize = util.vector2(orbSize, orbSize),
+--         relativePosition = util.vector2(1., 1.),
+--         anchor = util.vector2(0, 1.),
+--     },
+--     content = ui.content {
+--         OrbGen:container {
+--             baseColor = util.color.hex('a7fc00'),
+--             rightSide = false,
+--             stat = 'fatigue',
+--             twoSided = true,
+--         },
+--         OrbGen:container {
+--             baseColor = util.color.hex('00ff7f'),
+--             rightSide = true,
+--             stat = 'magicka',
+--             twoSided = true,
+--         },
+--         {
+--             name = 'OrbCap',
+--             type = ui.TYPE.Image,
+--             props = {
+--                 -- relativePosition = util.vector2(-.02, 0.),
+--                 relativeSize = util.vector2(1.0, 1.015),
+--                 resource = OrbGen.capTexture,
+--             },
+--         },
+--     }
+-- }
+
+-- local Gumbo = ui.create {
+--     name = 'OrbDemon',
+--     layer = 'HUD',
+--     type = ui.TYPE.Image,
+--     props = {
+--         anchor = util.vector2(0, 1.),
+--         relativePosition = util.vector2(0, 1.),
+--         relativeSize = util.vector2(orbSize, orbSize),
+--         resource = ui.texture { path = 'textures/s3/ttth/demons/gumboleft.dds', },
+--     }
+-- }
 
 local targetLayer = H4ND.UIDebug and 'Windows' or 'HUD'
 
