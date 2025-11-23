@@ -435,6 +435,16 @@ function OrbGen:spawn(orbInfo)
             stat = orbInfo.rightStat,
             twoSided = true,
         })
+
+        table.insert(content, 2, {
+            type = ui.TYPE.Image,
+            props = {
+                relativeSize = util.vector2(0.005, 1),
+                resource = ui.texture { path = 'textures/s3/ttth/stoneborderv.dds', },
+                relativePosition = util.vector2(.5, 0),
+                anchor = util.vector2(.5, 0),
+            },
+        })
     end
 
     return ui.create {
