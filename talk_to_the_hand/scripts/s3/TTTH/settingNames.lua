@@ -15,7 +15,9 @@ EffectBar,
 Middle,
 Pinky,
 Thumb,
-WeaponIndicator
+WeaponIndicator,
+OrbOneSided,
+OrbTwoSided
 
 local statSettingNames = {
     MiddleStat = true,
@@ -149,6 +151,30 @@ local SettingNames = {
         CastableIndicator.layout.props.relativePosition = value
         CastableIndicator:update()
     end,
+    OrbOneSidedAnchor = function(_, value)
+        OrbOneSided.layout.props.anchor = value
+        OrbOneSided:update()
+    end,
+    OrbOneSidedSize = function(_, value)
+        OrbOneSided.layout.props.relativeSize = util.vector2(value, value)
+        OrbOneSided:update()
+    end,
+    OrbOneSidedPos = function(_, value)
+        OrbOneSided.layout.props.relativePosition = value
+        OrbOneSided:update()
+    end,
+    OrbTwoSidedAnchor = function(_, value)
+        OrbTwoSided.layout.props.anchor = value
+        OrbTwoSided:update()
+    end,
+    OrbTwoSidedSize = function(_, value)
+        OrbTwoSided.layout.props.relativeSize = util.vector2(value, value)
+        OrbTwoSided:update()
+    end,
+    OrbTwoSidedPos = function(_, value)
+        OrbTwoSided.layout.props.relativePosition = value
+        OrbTwoSided:update()
+    end,
     MiddleStat = function(key, value)
         updateAtlas('Middle', Middle, key, value)
     end,
@@ -168,6 +194,14 @@ local SettingNames = {
         Core.layout.content.DebugContent.props.visible = value
         Core.layout.layer = newLayer
         Core:update()
+
+        OrbOneSided.layout.content.DebugContent.props.visible = value
+        OrbOneSided.layout.layer = newLayer
+        OrbOneSided:update()
+
+        OrbTwoSided.layout.content.DebugContent.props.visible = value
+        OrbTwoSided.layout.layer = newLayer
+        OrbTwoSided:update()
 
         EffectBar.layout.content.DebugContent.props.visible = value
         EffectBar.layout.layer = newLayer
@@ -212,6 +246,8 @@ return function(h4nd, h4ndStorage)
     Pinky = H4ND.getElementByName('Pinky')
     Thumb = H4ND.getElementByName('Thumb')
     WeaponIndicator = H4ND.getElementByName('WeaponIndicator')
+    OrbTwoSided = H4ND.getElementByName('OrbTwoSided')
+    OrbOneSided = H4ND.getElementByName('OrbOneSided')
     H4ndStorage = h4ndStorage
 
     H4ndStorage:subscribe(async:callback(h4ndSubscriber))

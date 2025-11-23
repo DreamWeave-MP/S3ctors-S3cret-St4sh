@@ -371,6 +371,11 @@ end
 ---@field rightColor util.color?
 ---@field rightStat string?
 ---@field size number
+---@field position util.vector2
+---@field anchor util.vector2
+---@field useDebug boolean
+---@field events table<string, function>
+---@field layer string
 
 ---@param orbInfo H4NDOrbConstructor
 function OrbGen:spawn(orbInfo)
@@ -390,7 +395,35 @@ function OrbGen:spawn(orbInfo)
                 relativeSize = util.vector2(1.0, 1.015),
                 resource = OrbGen.capTexture,
             }
-        }
+        },
+        {
+            name = 'DebugContent',
+            props = {
+                visible = orbInfo.useDebug,
+                relativeSize = util.vector2(1, 1),
+            },
+            content = ui.content {
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        relativeSize = util.vector2(1, 1),
+                        alpha = .5,
+                        resource = ui.texture { path = 'white', },
+                        color = orbInfo.leftColor,
+                    },
+                },
+                {
+                    template = I.MWUI.templates.textHeader,
+                    props = {
+                        anchor = util.vector2(.5, .5),
+                        relativePosition = util.vector2(.5, .5),
+                        textAlignH = ui.ALIGNMENT.Center,
+                        textAlignV = ui.ALIGNMENT.Center,
+                        text = name,
+                    },
+                }
+            }
+        },
     }
 
     if orbInfo.twoSided then
@@ -406,13 +439,14 @@ function OrbGen:spawn(orbInfo)
 
     return ui.create {
         name = name,
-        layer = 'HUD',
+        layer = orbInfo.layer,
         type = ui.TYPE.Image,
+        events = orbInfo.events,
         props = {
             resource = OrbGen.backgroundTexture,
+            relativePosition = orbInfo.position,
+            anchor = orbInfo.anchor,
             relativeSize = util.vector2(orbInfo.size, orbInfo.size),
-            relativePosition = util.vector2(0., 1.),
-            anchor = util.vector2(0, 1.),
         },
         content = ui.content(content)
     }
@@ -484,6 +518,8 @@ CompassAtlas,
 CastableIndicator,
 WeaponIndicator,
 EffectBar,
+MagFatOrb,
+HealthOrb,
 TotalDelay,
 CurrentDelay
 
@@ -510,11 +546,20 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@field CompassSize integer
 ---@field CompassPos util.vector2
 ---@field CompassStyle H4NDCompassStyle
+---@field OrbOneSidedAnchor util.vector2
+---@field OrbOneSidedSize integer
+---@field OrbOneSidedPos util.vector2
+---@field OrbTwoSidedAnchor util.vector2
+---@field OrbTwoSidedSize integer
+---@field OrbTwoSidedPos util.vector2
 ---@field UseFade boolean
 ---@field FadeTime number
 ---@field FadeStep number
 ---@field UIDebug boolean
 ---@field EffectsPerRow integer
+---@field EffectBarAnchor util.vector2
+---@field EffectBarPos util.vector2
+---@field EffectBarSize util.vector2
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
@@ -525,62 +570,6 @@ H4ND.state = {
     lastUpdateTime = core.getRealTime(),
     currentScreenSize = ui.screenSize(),
 }
-
-local Orbs = OrbGen:spawn {
-    twoSided = true,
-    leftColor = util.color.hex('a7fc00'),
-    leftStat = 'fatigue',
-    rightStat = 'magicka',
-    rightColor = util.color.hex('00ff7f'),
-    size = H4ND.H4NDWidth,
-}
-
--- local Orbs = ui.create {
---     name = 'OrbLayoutTest',
---     layer = 'HUD',
---     type = ui.TYPE.Image,
---     props = {
---         resource = OrbGen.backgroundTexture,
---         relativeSize = util.vector2(orbSize, orbSize),
---         relativePosition = util.vector2(1., 1.),
---         anchor = util.vector2(0, 1.),
---     },
---     content = ui.content {
---         OrbGen:container {
---             baseColor = util.color.hex('a7fc00'),
---             rightSide = false,
---             stat = 'fatigue',
---             twoSided = true,
---         },
---         OrbGen:container {
---             baseColor = util.color.hex('00ff7f'),
---             rightSide = true,
---             stat = 'magicka',
---             twoSided = true,
---         },
---         {
---             name = 'OrbCap',
---             type = ui.TYPE.Image,
---             props = {
---                 -- relativePosition = util.vector2(-.02, 0.),
---                 relativeSize = util.vector2(1.0, 1.015),
---                 resource = OrbGen.capTexture,
---             },
---         },
---     }
--- }
-
--- local Gumbo = ui.create {
---     name = 'OrbDemon',
---     layer = 'HUD',
---     type = ui.TYPE.Image,
---     props = {
---         anchor = util.vector2(0, 1.),
---         relativePosition = util.vector2(0, 1.),
---         relativeSize = util.vector2(orbSize, orbSize),
---         resource = ui.texture { path = 'textures/s3/ttth/demons/gumboleft.dds', },
---     }
--- }
 
 local targetLayer = H4ND.UIDebug and 'Windows' or 'HUD'
 
@@ -664,6 +653,8 @@ function H4ND.getElementByName(elementName)
         EffectBar = EffectBar,
         WeaponIndicator = WeaponIndicator,
         CastableIndicator = CastableIndicator,
+        OrbOneSided = HealthOrb,
+        OrbTwoSided = MagFatOrb,
     })[elementName]
 end
 
@@ -1392,6 +1383,34 @@ Compass = ui.create {
     }
 }
 
+MagFatOrb = OrbGen:spawn {
+    twoSided = true,
+    leftColor = H4ND[H4ND.ThumbStat .. 'Color'],
+    leftStat = H4ND.ThumbStat,
+    rightStat = H4ND.PinkyStat,
+    rightColor = H4ND[H4ND.PinkyStat .. 'Color'],
+    size = H4ND.OrbTwoSidedSize,
+    anchor = H4ND.OrbTwoSidedAnchor,
+    position = H4ND.OrbTwoSidedPos,
+    useDebug = H4ND.UIDebug,
+    events = H4ND.dragEvents('OrbTwoSided'),
+    layer = targetLayer,
+}
+
+HealthOrb = OrbGen:spawn {
+    twoSided = false,
+    leftColor = H4ND[H4ND.MiddleStat .. 'Color'],
+    leftStat = H4ND.MiddleStat,
+    size = H4ND.OrbOneSidedSize,
+    anchor = H4ND.OrbOneSidedAnchor,
+    position = H4ND.OrbOneSidedPos,
+    useDebug = H4ND.UIDebug,
+    events = H4ND.dragEvents('OrbOneSided'),
+    layer = targetLayer,
+}
+
+local orbs = { HealthOrb, MagFatOrb, }
+
 require 'scripts.s3.ttth.settingNames' (H4ND, H4ndStorage)
 
 ---@class ResizeInfo
@@ -1419,6 +1438,12 @@ H4ND.state.resizeHandlers = {
     end,
     [WeaponIndicator] = function(resizeInfo)
         H4ND.WeaponIndicatorSize = resizeInfo.resolvedDelta.x
+    end,
+    [MagFatOrb] = function(resizeInfo)
+        H4ND.OrbTwoSidedSize = resizeInfo.resolvedDelta.x
+    end,
+    [HealthOrb] = function(resizeInfo)
+        H4ND.OrbOneSidedSize = resizeInfo.resolvedDelta.x
     end,
 }
 
@@ -1528,7 +1553,7 @@ return {
                 handleFade()
             end
 
-            OrbGen:update(Orbs)
+            for _, orb in ipairs(orbs) do OrbGen:update(orb) end
         end,
     }
 }
