@@ -90,8 +90,32 @@ for ((i=0; i < TOTAL_TILES; i++)); do
     temp_tile="${TEMP_DIR}/tile_${i}.png"
     
     if [[ "$MASK" == false ]]; then
+        scroll_amount=$(( (i * ORIG_WIDTH) / ( TOTAL_TILES - 1 ) ))
+
+        magick "$INPUT_IMAGE" -roll +0+${scroll_amount} "$temp_tile"
+
+        # Distort using spherical projection from blender
+        # magick "$temp_tile" \
+        #     sphereBake2.png \
+        #     -compose Displace -define compose:args=10x25 -composite \
+        #     "$temp_tile"
+
+        # Mask out pixels outside the background frame
+        # magick "${temp_tile}" \
+        #     \( "orb_background.dds" -alpha extract \) \
+        #     -compose copyopacity -composite \
+        #     "$temp_tile"
+
+        # Gradient pipeline - strips pixels from background image
+        # magick "$temp_tile" \
+        #     -write mpr:src \
+        #     \( "orb_background.dds" -alpha extract -threshold 50% \) \
+        #     -compose multiply -composite mpr:src \
+        #     -compose dst-in -composite \
+        #     "$temp_tile"
+
         # magick "$INPUT_IMAGE" -distort SRT $i "$temp_tile"
-        cp "$INPUT_IMAGE" "$temp_tile"
+        # cp "$INPUT_IMAGE" "$temp_tile"
     else
         if [[ $i -eq 0 ]]; then
             cp "$INPUT_IMAGE" "$temp_tile"
