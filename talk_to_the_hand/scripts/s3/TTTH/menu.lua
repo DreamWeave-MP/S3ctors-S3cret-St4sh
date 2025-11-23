@@ -314,5 +314,57 @@ I.Settings.registerGroup {
             'CastableIndicatorPosDesc',
             util.vector2(0, 1)
         ),
+        setting(
+            'OrbTwoSidedSize',
+            'number',
+            { integer = false, min = 0.01, max = 1. },
+            'OrbTwoSidedSizeName',
+            'OrbTwoSidedSizeDesc',
+            .15
+        ),
+        setting(
+            'OrbTwoSidedAnchor',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'OrbTwoSidedAnchorName',
+            'OrbTwoSidedAnchorDesc',
+            util.vector2(1, 1)
+        ),
+        setting(
+            'OrbTwoSidedPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'OrbTwoSidedPosName',
+            'OrbTwoSidedPosDesc',
+            util.vector2(1, 1)
+        ),
+        setting(
+            'OrbOneSidedSize',
+            'number',
+            { integer = false, min = 0.01, max = 1. },
+            'OrbOneSidedSizeName',
+            'OrbOneSidedSizeDesc',
+            .15
+        ),
+        setting(
+            'OrbOneSidedAnchor',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'OrbOneSidedAnchorName',
+            'OrbOneSidedAnchorDesc',
+            util.vector2(0, 1)
+        ),
+        setting(
+            'OrbOneSidedPos',
+            ---@diagnostic disable-next-line: param-type-mismatch
+            'ScreenPosition',
+            {},
+            'OrbOneSidedPosName',
+            'OrbOneSidedPosDesc',
+            util.vector2(0, 1)
+        ),
     }
 }
