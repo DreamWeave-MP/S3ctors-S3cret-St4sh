@@ -296,7 +296,7 @@ function OrbGen:nebula(atlas, color, twoSided, rightSide)
         rightSide = rightSide,
         userdata = {
             atlas = atlas,
-            upOrDown = true,
+            upOrDown = math.random() <= .5,
             currentFrame = I.RandomGen.range({ min = 1, max = 100 }, true),
         },
     }
@@ -317,7 +317,7 @@ function OrbGen:vein(atlas, color, twoSided, rightSide)
         rightSide = rightSide,
         userdata = {
             atlas = atlas,
-            upOrDown = true,
+            upOrDown = math.random() <= .5,
             currentFrame = I.RandomGen.range({ min = 1, max = 100 }, true),
         },
     }
