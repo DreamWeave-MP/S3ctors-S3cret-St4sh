@@ -153,6 +153,12 @@ local OrbGen = {
         path = 'textures/s3/ttth/orb_background.dds',
         size = util.vector2(213, 213),
     },
+    capAtlas = I.S3AtlasConstructor.constructAtlas {
+        tileSize = util.vector2(213, 213),
+        tilesPerRow = 10,
+        totalTiles = 100,
+        atlasPath = 'textures/s3/ttth/capAtlas.dds'
+    },
     capTexture = ui.texture { path = 'textures/s3/ttth/orb_cap.dds' },
     colorCoeff = 2.,
     fillTexture = ui.texture {
@@ -174,7 +180,7 @@ local OrbGen = {
         totalTiles = 100,
         atlasPath = 'textures/s3/ttth/orb_over_atlas.dds'
     },
-    updateOrder = { 'vein', 'nebula', 'fill', 'noise', },
+    updateOrder = { 'vein', 'nebula', 'fill', 'noise', 'lid', },
     upOrDown = true,
     veinAlpha = .25,
 }
@@ -190,6 +196,7 @@ end
 ---@field noise util.color
 ---@field vein util.color
 ---@field nebula util.color
+---@field lid util.color
 
 ---@param inColor util.color
 ---@return OrbColors
@@ -201,7 +208,8 @@ function OrbGen:getColor(inColor)
     local order = {
         { name = "noise",  hue = nil },
         { name = "vein",   hue = nil },
-        { name = "nebula", hue = 45 }
+        { name = "nebula", hue = 45 },
+        { name = 'lid',    hue = 15, },
     }
 
     for _, layer in ipairs(order) do
@@ -323,6 +331,24 @@ function OrbGen:vein(atlas, color, twoSided, rightSide)
     }
 end
 
+---@param color util.color
+---@param twoSided boolean
+---@param rightSide boolean
+function OrbGen:lid(color, twoSided, rightSide)
+    return self:subElement {
+        name = 'lid',
+        resource = self.capAtlas.textureArray[1],
+        alpha = .5,
+        color = color,
+        twoSided = twoSided,
+        rightSide = rightSide,
+        userdata = {
+            atlas = self.capAtlas,
+            currentFrame = 1,
+        },
+    }
+end
+
 ---@class OrbContainerConstructor
 ---@field baseColor util.color
 ---@field twoSided boolean
@@ -357,6 +383,7 @@ function OrbGen:container(constructor)
             OrbGen:noise(colors.noise, constructor.twoSided, constructor.rightSide),
             OrbGen:nebula(OrbGen.hubbleAtlas, colors.nebula, constructor.twoSided, constructor.rightSide),
             OrbGen:vein(OrbGen.overAtlas, colors.vein, constructor.twoSided, constructor.rightSide),
+            OrbGen:lid(colorUtil.hueShift(colors.noise, -25), constructor.twoSided, constructor.rightSide),
         },
         userdata = {
             stat = constructor.stat,
@@ -392,7 +419,9 @@ function OrbGen:spawn(orbInfo)
             name = 'OrbCap',
             type = ui.TYPE.Image,
             props = {
-                relativeSize = util.vector2(1.0, 1.015),
+                relativeSize = util.vector2(1.015, 1.015),
+                anchor = util.vector2(0, 1),
+                relativePosition = util.vector2(-0.0100, 1.005),
                 resource = OrbGen.capTexture,
             }
         },
@@ -439,7 +468,7 @@ function OrbGen:spawn(orbInfo)
         table.insert(content, 2, {
             type = ui.TYPE.Image,
             props = {
-                relativeSize = util.vector2(0.005, 1),
+                relativeSize = util.vector2(0.01, 1),
                 resource = ui.texture { path = 'textures/s3/ttth/stoneborderv.dds', },
                 relativePosition = util.vector2(.5, 0),
                 anchor = util.vector2(.5, 0),
@@ -500,7 +529,12 @@ function OrbGen:update(orb)
 
                 if data.currentFrame == 0 then data.currentFrame = 100 elseif data.currentFrame == 101 then data.currentFrame = 1 end
 
-                childElement.props.resource = data.atlas.textureArray[data.currentFrame]
+                if childElement.name == 'lid' then
+                    local lidStep = 100 - (currentHeightInt)
+                    childElement.props.resource = data.atlas.textureArray[lidStep]
+                else
+                    childElement.props.resource = data.atlas.textureArray[data.currentFrame]
+                end
             end
         end
 
