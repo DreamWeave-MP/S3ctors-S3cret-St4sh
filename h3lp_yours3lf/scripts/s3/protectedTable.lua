@@ -140,15 +140,13 @@ local function new(constructorData)
     end,
   }
 
-  local lookupTable = { proxy.shadowSettings, methods, state }
-
   local meta = {
     __metatable = 'S3ProtectedTable',
     __index = function(_, key)
       local indexHandler = handlers[key]
       if indexHandler then return indexHandler() end
 
-      for _, table in ipairs(lookupTable) do
+      for _, table in ipairs { proxy.shadowSettings, methods, proxy.state } do
         if table[key] ~= nil then return table[key] end
       end
 
