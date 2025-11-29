@@ -111,6 +111,7 @@ local SeaRegions = {
 local TelvannisRegions = {
     ['aranyon pass region'] = true,
     ['boethiah\'s spine region'] = true,
+    ['molag ruhn region'] = true,
     ['dagon urul region'] = true,
     ['molagreahd region'] = true,
     ['sunad mora region'] = true,
