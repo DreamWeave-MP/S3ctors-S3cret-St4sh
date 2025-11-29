@@ -24,7 +24,6 @@ end
 ---@type ShadowTableSubscriptionHandler
 local function defaultSubscribeHandler(shadowSettings, group, groupName, key)
   shadowSettings[key] = group:get(key)
-  print('updating shadow settings', key, shadowSettings[key])
 end
 
 ---@class StorageSection
