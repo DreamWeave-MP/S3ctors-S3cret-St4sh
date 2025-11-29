@@ -502,10 +502,10 @@ if isPlayer then
         end
 
         local redrew = false
-        if self.currentDelay < self.PoiseHUDUpdateDelay then
-            self.currentDelay = self.currentDelay + dt
+        if self.state.currentDelay < self.PoiseHUDUpdateDelay then
+            self.state.currentDelay = self.state.currentDelay + dt
         else
-            self.currentDelay = 0
+            self.state.currentDelay = 0
             redrew = self:playNextFrame()
         end
 
