@@ -23,7 +23,12 @@ local AnvilPatterns = {
 ---@type IDPresenceMap
 local StirkRegions = {
     ['stirk isle region'] = true,
+    ['abecean sea region'] = true,
+}
+
+local goldCoastRegions = {
     ['dasek marsh region'] = true,
+    ['gold coast region'] = true,
 }
 
 ---@type CellMatchPatterns
@@ -84,7 +89,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return Playback.state.self.cell.region == 'gilded hills region'
+            return Playback.state.nearestRegion == 'gilded hills region'
         end,
     },
     {
@@ -150,7 +155,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return Playback.state.self.cell.region == 'gold coast region'
+            return Playback.rules.region(goldCoastRegions)
         end,
     },
     {
