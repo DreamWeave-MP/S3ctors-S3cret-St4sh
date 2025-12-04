@@ -189,7 +189,7 @@ return {
         fallback = TRFallbackData,
 
         isValidCallback = function()
-            return Playback.state.self.cell.region == 'aanthirin region'
+            return Playback.state.nearestRegion == 'aanthirin region'
         end,
     },
     {
@@ -217,7 +217,7 @@ return {
         fallback = TRFallbackData,
 
         isValidCallback = function()
-            return Playback.state.self.cell.region == 'armun ashlands region'
+            return Playback.state.nearestRegion == 'armun ashlands region'
         end,
     },
     {
@@ -228,7 +228,7 @@ return {
         fallback = TRFallbackData,
 
         isValidCallback = function()
-            return Playback.state.self.cell.region == 'grey meadows region'
+            return Playback.state.nearestRegion == 'grey meadows region'
         end,
     },
     {
@@ -358,14 +358,19 @@ return {
         end,
     },
     {
-        id = 'ms/region/sacred lands region',
+        id = 'sacred lands region fallback',
         priority = PlaylistPriority.Region,
         randomize = true,
 
-        fallback = TRFallbackData,
+        fallback = {
+            playlists = {
+                'ms/region/sacred lands region',
+            },
+            playlistChance = 1.,
+        },
 
         isValidCallback = function()
-            return Playback.state.self.cell.region == 'sacred lands region'
+            return Playback.state.nearestRegion == 'sacred lands region'
         end,
     },
     {
