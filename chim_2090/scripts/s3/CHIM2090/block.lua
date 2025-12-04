@@ -429,6 +429,7 @@ local blockSounds = {
 
 function Block.playBlockSound()
     local blockingItem, blockSkill = Block.getBlockingItem()
+    assert(blockingItem)
 
     if
         I.s3ChimCore.getWeaponHandedness() == I.s3ChimCore.Handedness.ONE
@@ -444,7 +445,7 @@ function Block.playBlockSound()
         'Failed to locate a block sound for block skill: '
         .. blockSkill
         .. ' for blocking item: '
-        .. blockingItem
+        .. blockingItem.id
     )
 
     core.sound.playSound3d(blockSkill, s3lf.object)
