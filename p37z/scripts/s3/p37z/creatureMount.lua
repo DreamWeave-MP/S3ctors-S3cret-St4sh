@@ -51,7 +51,7 @@ end
 ---@type table<string, function>
 local UpdateFunctions = {
     sideMovement = function(value)
-        local animName = value < 0 and 'WalkLeft' or 'WalkRight'
+        local animName = value < 0 and 'walkleft' or 'walkright'
 
         if s3lf.hasGroup(animName) then
             s3lf.controls.sideMovement = value
