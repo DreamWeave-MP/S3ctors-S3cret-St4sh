@@ -314,8 +314,9 @@ if PlayerType.objectIsInstance(gameSelf) then
     gameSelf:sendEvent(eventName, combatantInfo.actor)
   end
 
+  local debug = require 'openmw.debug'
   function CombatTargetTracker.isInCombat()
-    return next(CombatTargetTracker.targetData) ~= nil
+    return next(CombatTargetTracker.targetData) ~= nil and debug.isAIEnabled()
   end
 
   local ui = require('openmw.ui')
