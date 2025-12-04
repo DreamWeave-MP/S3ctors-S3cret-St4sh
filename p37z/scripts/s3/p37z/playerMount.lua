@@ -1,9 +1,34 @@
+local async = require 'openmw.async'
+local camera = require 'openmw.camera'
 local input = require 'openmw.input'
+local storage = require 'openmw.storage'
+
+local OMWCameraSettings = storage.playerSection('SettingsOMWCameraThirdPerson')
+
+---@class MountState
+---@field MountTarget GameObject?
+---@field LastMount GameObject?
+local MountState = {
+    PreviewIfStandStill = OMWCameraSettings:get('previewIfStandStill'),
+    LastMount = nil,
+    MountTarget = nil,
+    previewStateSwitched = false,
+}
+
+OMWCameraSettings:subscribe(
+    async:callback(
+        function(_, key)
+            local value = OMWCameraSettings:get(key)
+
+            if key == 'previewIfStandStill' then
+                MountState.PreviewIfStandStill = value
+            end
+        end
+    )
+)
 
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
-
-local MountTarget
 
 ---@alias ActionName
 ---| 'movement'
@@ -80,13 +105,31 @@ end
 return {
     engineHandlers = {
         onFrame = function()
-            if not MountTarget or not updateInputInfo() then return end
-            MountTarget:sendEvent('P37ZControl', InputInfo)
+            if not MountState.MountTarget or not updateInputInfo() then return end
+            MountState.MountTarget:sendEvent('P37ZControl', InputInfo)
         end,
     },
     eventHandlers = {
         P37ZMountEnable = function(mount)
-            MountTarget = MountTarget == nil and mount or nil
+            MountState.MountTarget = MountState.MountTarget == nil and mount or nil
+
+            if not MountState.MountTarget then
+                MountState.LastMount = mount
+
+                if MountState.previewStateSwitched then
+                    OMWCameraSettings:set('previewIfStandStill', true)
+                end
+            else
+                if MountState.PreviewIfStandStill then
+                    print('disabling preview if stand still')
+                    OMWCameraSettings:set('previewIfStandStill', false)
+
+                    if camera.getMode() == camera.MODE.Preview then
+                        camera.setMode(camera.MODE.ThirdPerson)
+                    end
+                    MountState.previewStateSwitched = true
+                end
+            end
         end,
     },
 }
