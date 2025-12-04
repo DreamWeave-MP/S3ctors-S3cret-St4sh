@@ -108,6 +108,12 @@ return {
             if not MountState.MountTarget or not updateInputInfo() then return end
             MountState.MountTarget:sendEvent('P37ZControl', InputInfo)
         end,
+        onSave = function()
+            return MountState
+        end,
+        onLoad = function(data)
+            for k, v in pairs(data or {}) do MountState[k] = v end
+        end,
     },
     eventHandlers = {
         P37ZMountEnable = function(mount)
@@ -119,16 +125,14 @@ return {
                 if MountState.previewStateSwitched then
                     OMWCameraSettings:set('previewIfStandStill', true)
                 end
-            else
-                if MountState.PreviewIfStandStill then
-                    print('disabling preview if stand still')
-                    OMWCameraSettings:set('previewIfStandStill', false)
+            elseif MountState.PreviewIfStandStill then
+                OMWCameraSettings:set('previewIfStandStill', false)
 
-                    if camera.getMode() == camera.MODE.Preview then
-                        camera.setMode(camera.MODE.ThirdPerson)
-                    end
-                    MountState.previewStateSwitched = true
+                if camera.getMode() == camera.MODE.Preview then
+                    camera.setMode(camera.MODE.ThirdPerson)
                 end
+
+                MountState.previewStateSwitched = true
             end
         end,
     },
