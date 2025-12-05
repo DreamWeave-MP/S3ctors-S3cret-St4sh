@@ -24,6 +24,13 @@ OMWCameraSettings:subscribe(
 
             if key == 'previewIfStandStill' then
                 MountState.PreviewIfStandStill = value
+
+                local currentMode = camera.getMode()
+                if currentMode == camera.MODE.ThirdPerson and value then
+                    camera.setMode(camera.MODE.Preview)
+                elseif currentMode == camera.MODE.Preview and not value then
+                    camera.setMode(camera.MODE.ThirdPerson)
+                end
             end
         end
     )
@@ -63,7 +70,11 @@ local autoRun = false
 input.registerTriggerHandler('AutoMove', async:callback(
     function()
         if not MountState.MountTarget then return end
-        autoRun = not autoRun
+        if input.isShiftPressed() then
+            OMWCameraSettings:set('previewIfStandStill', not OMWCameraSettings:get('previewIfStandStill'))
+        else
+            autoRun = not autoRun
+        end
     end
 ))
 
@@ -73,45 +84,6 @@ input.registerTriggerHandler('AlwaysRun', async:callback(
         ControlSettings:set('alwaysRun', not ControlSettings:get('alwaysRun'))
     end
 ))
-
----@type InputFunction[]
-local InputFunctions = {
-    function()
-        local movement = input.getRangeActionValue('MoveForward') - input.getRangeActionValue('MoveBackward')
-
-        if movement ~= 0 then
-            autoRun = false
-        elseif autoRun then
-            movement = 1
-        end
-
-        return 'movement', movement
-    end,
-    function()
-        return 'sideMovement', input.getRangeActionValue('MoveRight') - input.getRangeActionValue('MoveLeft')
-    end,
-    function()
-        return 'yawChange', camera.getMode() == camera.MODE.FirstPerson and 0 or s3lf.controls.yawChange
-    end,
-    function()
-        return 'pitchChange', s3lf.controls.pitchChange
-    end,
-    function()
-        return 'run', input.getBooleanActionValue('Run')
-    end,
-    function()
-        return 'jump', s3lf.controls.jump
-    end,
-    function()
-        return 'firstOrThird', camera.getMode() == camera.MODE.FirstPerson
-    end,
-    function()
-        return 'sneak', input.getBooleanActionValue('Sneak')
-    end,
-    function()
-        return 'alwaysRun', AlwaysRun
-    end,
-}
 
 ---@class InputInfo
 ---@field movement number Forward/backward movement
@@ -136,30 +108,30 @@ local InputInfo = {
 --- Updates all appropriate movement info for the player, to be relayed to the mount.
 --- Returns bool to indicate whether or not to actually bother updating controls.
 --- Maybe this is bad...?
----@return boolean
+---@return InputInfo
 local function updateInputInfo()
-    local moved = false
+    local movement = input.getRangeActionValue('MoveForward') - input.getRangeActionValue('MoveBackward')
 
-    for _, inputFunction in ipairs(InputFunctions) do
-        local actionName, actionValue = inputFunction()
-        InputInfo[actionName] = actionValue
-
-        local actionType = type(actionValue)
-
-        if not s3lf.controls[actionName] then goto CONTINUE end
-
-        if (actionType == 'number' and actionValue ~= 0) then
-            s3lf.controls[actionName] = 0
-            moved = true
-        elseif (actionType == 'boolean' and actionValue) then
-            s3lf.controls[actionName] = false
-            moved = true
-        end
-
-        ::CONTINUE::
+    if movement ~= 0 then
+        autoRun = false
+    elseif autoRun then
+        movement = 1
     end
 
-    return moved
+    InputInfo.movement = movement
+    InputInfo.sideMovement = input.getRangeActionValue('MoveRight') - input.getRangeActionValue('MoveLeft')
+    InputInfo.run = input.getBooleanActionValue('Run')
+    InputInfo.jump = s3lf.controls.jump
+    InputInfo.firstOrThird = camera.getMode() == camera.MODE.FirstPerson
+    InputInfo.sneak = input.getBooleanActionValue('Sneak')
+    InputInfo.alwaysRun = AlwaysRun
+
+    InputInfo.yawChange = s3lf.controls.yawChange
+    if s3lf.controls.yawChange ~= 0. and not InputInfo.firstOrThird then
+        s3lf.controls.yawChange = 0.
+    end
+
+    return InputInfo
 end
 
 local function playLegAnimation()
@@ -175,8 +147,8 @@ end
 return {
     engineHandlers = {
         onFrame = function()
-            if core.isWorldPaused() or not MountState.MountTarget or not updateInputInfo() then return end
-            MountState.MountTarget:sendEvent('P37ZControl', InputInfo)
+            if core.isWorldPaused() or not MountState.MountTarget then return end
+            MountState.MountTarget:sendEvent('P37ZControl', updateInputInfo())
         end,
         onSave = function()
             return MountState
