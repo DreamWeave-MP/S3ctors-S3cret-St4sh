@@ -14,9 +14,10 @@ local MoveScript = world.mwscript.getGlobalScript('P37Z_PlayerMove', world.playe
 return {
     eventHandlers = {
         P37Z_PlayerPosSync = function(moveData)
-            MoveScript.moveX = moveData.x
-            MoveScript.moveY = moveData.y
-            MoveScript.moveZ = moveData.z
+            local movement = moveData.movement
+            MoveScript.moveX = movement.x
+            MoveScript.moveY = movement.y
+            MoveScript.moveZ = movement.z
             MoveScript.zRot = moveData.yaw
         end,
         P37Z_ToggleMount = function(mountEnableInfo)
