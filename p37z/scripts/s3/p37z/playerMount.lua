@@ -5,6 +5,9 @@ local core = require 'openmw.core'
 local input = require 'openmw.input'
 local storage = require 'openmw.storage'
 
+local I = require 'openmw.interfaces'
+local s3lf = I.s3lf
+
 local OMWCameraSettings = storage.playerSection('SettingsOMWCameraThirdPerson')
 
 ---@class MountState
@@ -30,14 +33,15 @@ OMWCameraSettings:subscribe(
                     camera.setMode(camera.MODE.Preview)
                 elseif currentMode == camera.MODE.Preview and not value then
                     camera.setMode(camera.MODE.ThirdPerson)
+                elseif currentMode == camera.MODE.FirstPerson and not value and MountState.MountTarget then
+                    MountState.MountTarget:sendEvent('P37ZYawSync',
+                         s3lf.rotation:getYaw() - MountState.MountTarget.rotation:getYaw()
+                    )
                 end
             end
         end
     )
 )
-
-local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
 
 ---@alias ActionName
 ---| 'movement'
@@ -95,6 +99,7 @@ input.registerTriggerHandler('AlwaysRun', async:callback(
 ---@field firstOrThird boolean
 ---@field sneak boolean
 ---@field alwaysRun boolean
+---@field previewIfStandStill boolean
 local InputInfo = {
     movement = 0,
     sideMovement = 0,
@@ -102,7 +107,8 @@ local InputInfo = {
     yawChange = 0,
     pitchChange = 0,
     firstOrThird = camera.getMode() == camera.MODE.FirstPerson,
-    alwaysRun = AlwaysRun
+    alwaysRun = AlwaysRun,
+    previewIfStandStill = MountState.PreviewIfStandStill or false,
 }
 
 --- Updates all appropriate movement info for the player, to be relayed to the mount.
@@ -125,6 +131,7 @@ local function updateInputInfo()
     InputInfo.firstOrThird = camera.getMode() == camera.MODE.FirstPerson
     InputInfo.sneak = input.getBooleanActionValue('Sneak')
     InputInfo.alwaysRun = AlwaysRun
+    InputInfo.previewIfStandStill = MountState.PreviewIfStandStill
 
     InputInfo.yawChange = s3lf.controls.yawChange
     if s3lf.controls.yawChange ~= 0. and not InputInfo.firstOrThird then

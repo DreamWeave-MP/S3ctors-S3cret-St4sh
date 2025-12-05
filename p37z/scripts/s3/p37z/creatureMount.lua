@@ -130,6 +130,10 @@ local UpdateFunctions = {
             s3lf.controls.yawChange = s3lf.controls.yawChange + math.rad(value)
         end
     end,
+    yawChange = function(inputInfo)
+        if inputInfo.previewIfStandStill then return end
+        s3lf.controls.yawChange = s3lf.controls.yawChange + inputInfo.yawChange
+    end,
 }
 
 return {
@@ -147,6 +151,9 @@ return {
                     s3lf.controls[actionName] = actionValue
                 end
             end
+        end,
+        P37ZYawSync = function(yawChange)
+            s3lf.controls.yawChange = yawChange
         end,
     },
     engineHandlers = {
