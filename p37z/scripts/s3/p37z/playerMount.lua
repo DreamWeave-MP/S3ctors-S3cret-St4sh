@@ -35,7 +35,7 @@ OMWCameraSettings:subscribe(
                     camera.setMode(camera.MODE.ThirdPerson)
                 elseif currentMode == camera.MODE.FirstPerson and not value and MountState.MountTarget then
                     MountState.MountTarget:sendEvent('P37ZYawSync',
-                         s3lf.rotation:getYaw() - MountState.MountTarget.rotation:getYaw()
+                        s3lf.rotation:getYaw() - MountState.MountTarget.rotation:getYaw()
                     )
                 end
             end
