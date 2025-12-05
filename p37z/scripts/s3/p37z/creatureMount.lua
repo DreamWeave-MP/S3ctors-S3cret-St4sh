@@ -1,4 +1,5 @@
 local core = require 'openmw.core'
+local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -80,15 +81,11 @@ local function syncPlayerPosition()
         )
     local playerPosDelta = playerTargetPos - MountTarget.position
 
-    playerPosDelta = playerPosDelta * 25
+    playerPosDelta = playerPosDelta * 45
 
     local targetYaw = 0.
     if not firstOrThird then
         if util.round(math.deg(myYaw)) ~= util.round(math.deg(MountTarget.rotation:getYaw())) then
-            if not core.isWorldPaused() then
-                print('updating player yaw', util.round(math.deg(myYaw)),
-                    util.round(math.deg(MountTarget.rotation:getYaw())))
-            end
             targetYaw = myYaw
         end
     end
@@ -101,26 +98,30 @@ local function syncPlayerPosition()
     })
 end
 
----@type table<string, function>
-local UpdateFunctions = {
-    firstOrThird = function(value)
-        firstOrThird = value
-    end,
-    pitchChange = function(value)
-    end,
-    run = function(value)
-        s3lf.controls.run = value
+---@alias CreatureInputFunction fun(inputInfo: InputInfo)
 
-        if s3lf.canFly and value and math.deg(s3lf.rotation:getPitch()) <= 89. then
+---@type table<string, CreatureInputFunction>
+local UpdateFunctions = {
+    firstOrThird = function(inputInfo)
+        firstOrThird = inputInfo.firstOrThird
+    end,
+    pitchChange = function(inputInfo)
+    end,
+    run = function(inputInfo)
+        s3lf.controls.run = inputInfo.run ~= inputInfo.alwaysRun
+
+        --- Engage the run action regardless of whether it's run, or always run,
+        --- but don't allow descending with flyers unless explicitly running
+        if s3lf.canFly and inputInfo.run and math.deg(s3lf.rotation:getPitch()) <= 89. then
             s3lf.controls.pitchChange = math.rad(1)
-            print(math.deg(s3lf.rotation:getPitch()))
         end
     end,
-    sneak = function(value)
-        if not s3lf.canFly or not value or util.round(math.deg(s3lf.rotation:getPitch())) <= -89. then return end
+    sneak = function(inputInfo)
+        if not s3lf.canFly or not inputInfo.sneak or util.round(math.deg(s3lf.rotation:getPitch())) <= -89. then return end
         s3lf.controls.pitchChange = math.rad(-1)
     end,
-    sideMovement = function(value)
+    sideMovement = function(inputInfo)
+        local value = inputInfo.sideMovement
         local animName = value < 0 and 'walkleft' or 'walkright'
 
         if s3lf.hasAnimation() and s3lf.hasGroup(animName) then
@@ -141,8 +142,8 @@ return {
             for actionName, actionValue in pairs(inputInfo) do
                 local updater = UpdateFunctions[actionName]
                 if updater then
-                    updater(actionValue)
-                elseif actionValue ~= 0 and actionValue then
+                    updater(inputInfo)
+                elseif actionValue ~= 0 and actionValue and s3lf.controls[actionName] then
                     s3lf.controls[actionName] = actionValue
                 end
             end
@@ -162,12 +163,15 @@ return {
             activator:sendEvent('P37ZMountEnable', s3lf.gameObject)
 
             local isMounted, position = MountTarget ~= nil, nil
+            local box = s3lf.gameObject:getBoundingBox()
 
             if isMounted then
-                position = s3lf.gameObject:getBoundingBox().center +
+                position = box.center +
                     util.transform.rotateZ(s3lf.rotation:getYaw()):apply(Offset)
             else
-                position = s3lf.position
+                position = nearby.findRandomPointAroundCircle(s3lf.position, box.halfSize.x * .1, {
+                    includeFlags = nearby.NAVIGATOR_FLAGS.Walk,
+                })
             end
 
             core.sendGlobalEvent('P37Z_ToggleMount', {
