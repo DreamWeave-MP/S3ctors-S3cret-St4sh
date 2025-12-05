@@ -59,7 +59,7 @@ local InputFunctions = {
         return 'pitchChange', s3lf.controls.pitchChange
     end,
     function()
-        return 'run', input.getBooleanActionValue('Run')
+        return 'run', s3lf.controls.run
     end,
     function()
         return 'jump', s3lf.controls.jump
@@ -151,6 +151,7 @@ return {
 
                 if MountState.previewStateSwitched then
                     OMWCameraSettings:set('previewIfStandStill', true)
+                    MountState.previewStateSwitched = false
                 end
 
                 s3lf.cancel('idlesneak')
