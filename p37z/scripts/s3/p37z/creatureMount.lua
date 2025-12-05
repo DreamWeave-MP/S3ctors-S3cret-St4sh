@@ -126,8 +126,8 @@ local UpdateFunctions = {
 
         if s3lf.hasAnimation() and s3lf.hasGroup(animName) then
             s3lf.controls.sideMovement = value
-        else
-            s3lf.controls.yawChange = math.rad(value)
+        elseif value ~= 0 then
+            s3lf.controls.yawChange = s3lf.controls.yawChange + math.rad(value)
         end
     end,
 }
