@@ -1,2 +1,3 @@
 CREATURE: scripts/s3/p37z/creatureMount.lua
 PLAYER: scripts/s3/p37z/playerMount.lua
+GLOBAL: scripts/s3/p37z/globalMount.lua
