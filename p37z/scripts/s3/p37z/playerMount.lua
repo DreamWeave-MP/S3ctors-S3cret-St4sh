@@ -41,8 +41,23 @@ local s3lf = I.s3lf
 ---| 'run'
 ---| 'firstOrThird'
 ---| 'sneak'
+---| 'alwaysRun'
 
 ---@alias InputFunction fun(): ActionName, number|boolean
+
+local ControlSettings = storage.playerSection('SettingsOMWControls')
+local AlwaysRun = ControlSettings:get('alwaysRun')
+ControlSettings:subscribe(
+    async:callback(
+        function(_, key)
+            local value = ControlSettings:get(key)
+
+            if key == 'alwaysRun' then
+                AlwaysRun = value
+            end
+        end
+    )
+)
 
 ---@type InputFunction[]
 local InputFunctions = {
@@ -59,7 +74,7 @@ local InputFunctions = {
         return 'pitchChange', s3lf.controls.pitchChange
     end,
     function()
-        return 'run', s3lf.controls.run
+        return 'run', input.getBooleanActionValue('Run')
     end,
     function()
         return 'jump', s3lf.controls.jump
@@ -68,7 +83,10 @@ local InputFunctions = {
         return 'firstOrThird', camera.getMode() == camera.MODE.FirstPerson
     end,
     function()
-        return 'sneak', s3lf.controls.sneak
+        return 'sneak', input.getBooleanActionValue('Sneak')
+    end,
+    function()
+        return 'alwaysRun', AlwaysRun
     end,
 }
 
@@ -81,6 +99,7 @@ local InputFunctions = {
 ---@field run boolean
 ---@field firstOrThird boolean
 ---@field sneak boolean
+---@field alwaysRun boolean
 local InputInfo = {
     movement = 0,
     sideMovement = 0,
@@ -88,6 +107,7 @@ local InputInfo = {
     yawChange = 0,
     pitchChange = 0,
     firstOrThird = camera.getMode() == camera.MODE.FirstPerson,
+    alwaysRun = AlwaysRun
 }
 
 --- Updates all appropriate movement info for the player, to be relayed to the mount.
