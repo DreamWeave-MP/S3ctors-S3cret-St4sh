@@ -59,10 +59,33 @@ ControlSettings:subscribe(
     )
 )
 
+local autoRun = false
+input.registerTriggerHandler('AutoMove', async:callback(
+    function()
+        if not MountState.MountTarget then return end
+        autoRun = not autoRun
+    end
+))
+
+input.registerTriggerHandler('AlwaysRun', async:callback(
+    function()
+        if not MountState.MountTarget then return end
+        ControlSettings:set('alwaysRun', not ControlSettings:get('alwaysRun'))
+    end
+))
+
 ---@type InputFunction[]
 local InputFunctions = {
     function()
-        return 'movement', input.getRangeActionValue('MoveForward') - input.getRangeActionValue('MoveBackward')
+        local movement = input.getRangeActionValue('MoveForward') - input.getRangeActionValue('MoveBackward')
+
+        if movement ~= 0 then
+            autoRun = false
+        elseif autoRun then
+            movement = 1
+        end
+
+        return 'movement', movement
     end,
     function()
         return 'sideMovement', input.getRangeActionValue('MoveRight') - input.getRangeActionValue('MoveLeft')
@@ -115,7 +138,7 @@ local InputInfo = {
 --- Maybe this is bad...?
 ---@return boolean
 local function updateInputInfo()
-    local moved = true
+    local moved = false
 
     for _, inputFunction in ipairs(InputFunctions) do
         local actionName, actionValue = inputFunction()
@@ -164,7 +187,10 @@ return {
     },
     eventHandlers = {
         P37ZMountEnable = function(mount)
-            MountState.MountTarget = MountState.MountTarget == nil and mount or nil
+            local isMountedAlready = MountState.MountTarget ~= nil
+            MountState.MountTarget = (not isMountedAlready and mount) or nil
+
+            I.Controls.overrideMovementControls(not isMountedAlready)
 
             if not MountState.MountTarget then
                 MountState.LastMount = mount
