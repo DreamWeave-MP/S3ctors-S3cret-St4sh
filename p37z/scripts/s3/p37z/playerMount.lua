@@ -1,5 +1,7 @@
+local animation = require 'openmw.animation'
 local async = require 'openmw.async'
 local camera = require 'openmw.camera'
+local core = require 'openmw.core'
 local input = require 'openmw.input'
 local storage = require 'openmw.storage'
 
@@ -37,6 +39,8 @@ local s3lf = I.s3lf
 ---| 'yawChange'
 ---| 'pitchChange'
 ---| 'run'
+---| 'firstOrThird'
+---| 'sneak'
 
 ---@alias InputFunction fun(): ActionName, number|boolean
 
@@ -49,16 +53,22 @@ local InputFunctions = {
         return 'sideMovement', input.getRangeActionValue('MoveRight') - input.getRangeActionValue('MoveLeft')
     end,
     function()
-        return 'yawChange', s3lf.controls.yawChange
+        return 'yawChange', camera.getMode() == camera.MODE.FirstPerson and 0 or s3lf.controls.yawChange
     end,
     function()
         return 'pitchChange', s3lf.controls.pitchChange
     end,
     function()
-        return 'run', s3lf.controls.run
+        return 'run', input.getBooleanActionValue('Run')
     end,
     function()
         return 'jump', s3lf.controls.jump
+    end,
+    function()
+        return 'firstOrThird', camera.getMode() == camera.MODE.FirstPerson
+    end,
+    function()
+        return 'sneak', s3lf.controls.sneak
     end,
 }
 
@@ -69,12 +79,15 @@ local InputFunctions = {
 ---@field pitchChange number
 ---@field jump boolean
 ---@field run boolean
+---@field firstOrThird boolean
+---@field sneak boolean
 local InputInfo = {
     movement = 0,
     sideMovement = 0,
     jump = false,
     yawChange = 0,
     pitchChange = 0,
+    firstOrThird = camera.getMode() == camera.MODE.FirstPerson,
 }
 
 --- Updates all appropriate movement info for the player, to be relayed to the mount.
@@ -82,13 +95,15 @@ local InputInfo = {
 --- Maybe this is bad...?
 ---@return boolean
 local function updateInputInfo()
-    local moved = false
+    local moved = true
 
     for _, inputFunction in ipairs(InputFunctions) do
         local actionName, actionValue = inputFunction()
         InputInfo[actionName] = actionValue
 
         local actionType = type(actionValue)
+
+        if not s3lf.controls[actionName] then goto CONTINUE end
 
         if (actionType == 'number' and actionValue ~= 0) then
             s3lf.controls[actionName] = 0
@@ -97,15 +112,27 @@ local function updateInputInfo()
             s3lf.controls[actionName] = false
             moved = true
         end
+
+        ::CONTINUE::
     end
 
     return moved
 end
 
+local function playLegAnimation()
+    I.AnimationController.playBlendedAnimation('idlesneak',
+        {
+            priority = animation.PRIORITY.Scripted,
+            blendMask = animation.BLEND_MASK.LowerBody,
+            autoDisable = false,
+        }
+    )
+end
+
 return {
     engineHandlers = {
         onFrame = function()
-            if not MountState.MountTarget or not updateInputInfo() then return end
+            if core.isWorldPaused() or not MountState.MountTarget or not updateInputInfo() then return end
             MountState.MountTarget:sendEvent('P37ZControl', InputInfo)
         end,
         onSave = function()
@@ -125,14 +152,20 @@ return {
                 if MountState.previewStateSwitched then
                     OMWCameraSettings:set('previewIfStandStill', true)
                 end
-            elseif MountState.PreviewIfStandStill then
-                OMWCameraSettings:set('previewIfStandStill', false)
 
-                if camera.getMode() == camera.MODE.Preview then
-                    camera.setMode(camera.MODE.ThirdPerson)
+                s3lf.cancel('idlesneak')
+            else
+                if MountState.PreviewIfStandStill then
+                    OMWCameraSettings:set('previewIfStandStill', false)
+
+                    if camera.getMode() == camera.MODE.Preview then
+                        camera.setMode(camera.MODE.ThirdPerson)
+                    end
+
+                    MountState.previewStateSwitched = true
                 end
 
-                MountState.previewStateSwitched = true
+                playLegAnimation()
             end
         end,
     },
