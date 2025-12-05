@@ -45,9 +45,10 @@ function UpdateFunctionManager:getUpdateFunctionIndex(inputFunction)
     for i, updateFunction in ipairs(self.queue) do if inputFunction == updateFunction then return i end end
 end
 
-function UpdateFunctionManager.update()
-    local realFrameTime = core.getRealFrameDuration()
-    for _, updateFunction in ipairs(UpdateFunctionManager.queue) do if updateFunction(realFrameTime) then break end end
+function UpdateFunctionManager.update(dt)
+    if core.isWorldPaused() then return end
+
+    for _, updateFunction in ipairs(UpdateFunctionManager.queue) do if updateFunction(dt) then break end end
 end
 
 local firstOrThird = false
@@ -55,7 +56,10 @@ local Offsets = {
     ['cliff racer'] = util.vector3(0, -50, 50),
     default = util.vector3(0, -50, -25),
     ['golden saint'] = util.vector3(0, -25, 45),
-    guar = util.vector3(0, -50, -25),
+    guar = util.vector3(0, -50, 20),
+    imperfect = util.vector3(0, -40, 175),
+    sw_spevensmugship02 = util.vector3(0, 0, 0),
+    sw_spevenpirategen = util.vector3(0, -250, -50),
 }
 
 --- Mount offsets are defined by the center of their box, plus some offset from the player per-mount
@@ -72,16 +76,13 @@ local function syncPlayerPosition()
     local center = s3lf.gameObject:getBoundingBox().center
 
     local doubleY = s3lf.controls.movement < 0
-
     local myYaw = s3lf.rotation:getYaw()
+
     local playerTargetPos = center +
         util.transform.rotateZ(myYaw)
         :apply(
             doubleY and BackOffset or Offset
         )
-    local playerPosDelta = playerTargetPos - MountTarget.position
-
-    playerPosDelta = playerPosDelta * 45
 
     local targetYaw = 0.
     if not firstOrThird then
@@ -91,9 +92,7 @@ local function syncPlayerPosition()
     end
 
     core.sendGlobalEvent('P37Z_PlayerPosSync', {
-        x = playerPosDelta.x,
-        y = playerPosDelta.y,
-        z = playerPosDelta.z,
+        movement = playerTargetPos,
         yaw = math.deg(targetYaw),
     })
 end
