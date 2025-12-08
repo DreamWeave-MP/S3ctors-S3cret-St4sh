@@ -576,7 +576,7 @@ return {
     end),
     engineHandlers = {
         onUpdate = function(dt)
-            if not Poise.Enable then return end
+            if not Poise.Enable or (not isPlayer and not s3lf.isInActorsProcessingRange()) then return end
 
             if not core.isWorldPaused() then
                 if
