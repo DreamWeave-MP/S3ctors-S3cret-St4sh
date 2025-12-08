@@ -104,106 +104,151 @@ local GameObjectKeyHandlers = {
   object = function(_, gameObject, _)
     return gameObject
   end,
+  --- Not sure if you actually work or not!
+  sendEvent = function(instance, gameObject, key)
+    rawset(instance, key, function(...)
+      return gameObject:sendEvent(...)
+    end)
+  end,
 }
 
-local function actorHandler(instance, actor, key)
-  local stats = actor.type.stats
+local knownKeys = {
+  ConsoleLog = function()
+    return LogMessage
+  end,
+  cellsVisited = function()
+    return CellsVisited
+  end,
+  combatTargets = function()
+    return util.makeReadOnly(CombatTargetTracker.targetData)
+  end,
+  isInCombat = function()
+    return CombatTargetTracker.isInCombat()
+  end,
+}
 
-  if key == 'level' then
-    local level = stats.level(actor)
-    rawset(instance, key, level)
-    return level
-  end
+local keyHandlers = {
 
-  local target = stats.dynamic[key] or stats.attributes[key] or (stats.skills and stats.skills[key]) or stats.ai[key]
-  if target then
+  --- Indexes fields already found, always runs first
+  function(instance, _, key)
+    local cached = rawget(instance, key)
+    if cached ~= nil then return cached end
+  end,
+
+  --- Indexes fields of GameObject which are special cased
+  function(instance, object, key)
+    local keyHandler = GameObjectKeyHandlers[key]
+
+    if not keyHandler then return end
+
+    return keyHandler(instance, object, key)
+  end,
+
+  --- Indexes fields of `type`, but not stats
+  function(instance, object, key)
+    local typeValue = object.type[key]
+
+    if not typeValue then return end
+
+    if type(typeValue) ~= "function" or noSelfInputFunctions[key] then
+      rawset(instance, key, typeValue)
+
+      return typeValue
+    else
+      local typeHandler = function(...)
+        return typeValue(object, ...)
+      end
+
+      rawset(instance, key, typeHandler)
+
+      return typeHandler
+    end
+  end,
+
+  --- Indexes record fields
+  function(instance, _, key)
+    local recordValue = rawget(instance, 'record')[key]
+
+    if not recordValue then return end
+
+    rawset(instance, key, recordValue)
+
+    return recordValue
+  end,
+
+  --- Indexes fields of ActorStats
+  function(instance, actor, key)
+    if not rawget(instance, 'isActor') then return end
+
+    local stats = actor.type.stats
+
+    local target = stats.dynamic[key]
+        or stats.attributes[key]
+        or (stats.skills and stats.skills[key])
+        or stats[key]
+        or stats.ai[key]
+
+    if not target then return end
+
     assert(type(target) == 'function', 'Expected a function for key: ' .. key)
     local result = target(actor)
     rawset(instance, key, result)
     return result
-  end
-end
+  end,
 
-GameObjectWrapper._mt = {
-  __index = function(instance, key)
-    if key == 'ConsoleLog' then
-      return LogMessage
-    end
+  --- Handle keys from the root gameObject, without special casing
+  function(instance, object, key)
+    local objectValue = object[key]
 
-    local cached = rawget(instance, key)
-
-    if cached then
-      return cached
-    end
-
-    local gameObject = rawget(instance, 'gameObject')
-
-    if types.Player.objectIsInstance(gameObject) then
-      if key == 'combatTargets' then
-        return util.makeReadOnly(CombatTargetTracker.targetData)
-      elseif key == 'isInCombat' then
-        return CombatTargetTracker.isInCombat()
-      elseif key == 'cellsVisited' then
-        return CellsVisited
-      end
-    end
-
-    local keyHandler = GameObjectKeyHandlers[key]
-    if keyHandler then
-      return keyHandler(instance, gameObject, key)
-    end
-
-    local typeValue = gameObject.type[key]
-    if typeValue then
-      if type(typeValue) ~= "function" or noSelfInputFunctions[key] then
-        rawset(instance, key, typeValue)
-        return typeValue
-      else
-        local typeHandler = function(...)
-          return typeValue(gameObject, ...)
-        end
-
-        rawset(instance, key, typeHandler)
-
-        return typeHandler
-      end
-    end
-
-    local recordValue = rawget(instance, 'record')[key]
-    if recordValue then
-      rawset(instance, key, recordValue)
-      return recordValue
-    end
-
-    if types.Actor.objectIsInstance(gameObject) then
-      local actorValue = actorHandler(instance, gameObject, key)
-      if actorValue then return actorValue end
-    end
-
-    local animValue = animation[key]
-    if animValue then
-      if type(animValue) == 'function' then
-        local animHandler = function(...)
-          return animValue(gameObject, ...)
-        end
-
-        rawset(instance, key, animHandler)
-
-        return animHandler
-      else
-        rawset(instance, key, animValue)
-        return animValue
-      end
-    end
-
-    local objectValue = gameObject[key]
-    if ignoredBaseKeys[key] or not objectValue then return end
+    if not objectValue then return end
 
     if not uncacheableKeys[key] then
       rawset(instance, key, objectValue)
     end
 
     return objectValue
+  end,
+
+  --- Handle keys from the animation module
+  function(instance, object, key)
+    local animValue = animation[key]
+
+    if not animValue then return end
+
+    local insertKey = animValue
+
+    if type(animValue) == 'function' then
+      insertKey = function(...)
+        return animValue(object, ...)
+      end
+    end
+
+    rawset(instance, key, insertKey)
+
+    return insertKey
+  end,
+
+  --- Handles 'known keys', hardcoded ones with utility functions etc that should always exist, but run last because they're relatively unlikely searches.
+  function(instance, _, key)
+    if not rawget(instance, 'isPlayer') then return end
+
+    local knownKey = knownKeys[key]
+
+    if knownKey then return knownKey() end
+  end,
+}
+
+GameObjectWrapper._mt = {
+  __index = function(instance, key)
+    if ignoredBaseKeys[key] then return end
+
+    local object = rawget(instance, 'gameObject')
+
+    for _, handler in ipairs(keyHandlers) do
+      local result = handler(instance, object, key)
+
+      if result ~= nil then return result end
+    end
   end,
 }
 
@@ -238,6 +283,8 @@ function ObjectHelpers.createInstance(gameObject)
     record = gameObject.type.records[gameObject.recordId],
     objectType = getObjectType(gameObject),
     From = ObjectHelpers.From,
+    isActor = types.Actor.objectIsInstance(gameObject),
+    isPlayer = types.Player.objectIsInstance(gameObject),
   }
 
   function instance.distance(object2)
