@@ -334,7 +334,7 @@ if isPlayer then
 end
 
 local function noActions()
-    if core.isWorldPaused() or not Roll:isRolling() then return end
+    if core.isWorldPaused() or (not isPlayer and not s3lf.isInActorsProcessingRange()) or not Roll:isRolling() then return end
 
     if not isPlayer then
         s3lf.controls.use = 0
