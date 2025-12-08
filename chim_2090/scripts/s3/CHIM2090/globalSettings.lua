@@ -1220,3 +1220,35 @@ I.Settings.registerGroup {
                 )
         },
 }
+
+local ChimActorScripts = {
+        'scripts/s3/chim2090/core.lua',
+        'scripts/s3/chim2090/dynamicManager.lua',
+        'scripts/s3/chim2090/mechanics/poise.lua',
+        'scripts/s3/chim2090/mechanics/parry.lua',
+        'scripts/s3/chim2090/roll/core.lua',
+        'scripts/s3/chim2090/block.lua',
+        'scripts/s3/chim2090/onHitManager.lua',
+}
+
+return {
+        eventHandlers = {
+                CHIMScriptToggle = function(stateInfo)
+                        local actor, state = stateInfo.actor, stateInfo.state
+
+                        for _, scriptPath in ipairs(ChimActorScripts) do
+                                local attachmentStateMatches = actor:hasScript(scriptPath) == state
+
+                                if attachmentStateMatches then
+                                        goto CONTINUE
+                                elseif state then
+                                        actor:addScript(scriptPath)
+                                else
+                                        actor:removeScript(scriptPath)
+                                end
+
+                                ::CONTINUE::
+                        end
+                end,
+        }
+}

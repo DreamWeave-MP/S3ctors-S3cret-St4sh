@@ -369,6 +369,20 @@ function ChimCore.getCombatants()
     return targets
 end
 
+local eventHandlers = {
+    CHIMEnsureFortifyAttack = ensureFortifyAttack,
+}
+
+if types.Player.objectIsInstance(s3lf.gameObject) then
+    eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
+        local addOrRemove = next(targetData.targets) ~= nil
+        core.sendGlobalEvent('CHIMScriptToggle', {
+            actor = targetData.actor,
+            state = addOrRemove,
+        })
+    end
+end
+
 return {
     interfaceName = "s3ChimCore",
     interface = setmetatable(
@@ -388,7 +402,5 @@ return {
             end,
         }
     ),
-    eventHandlers = {
-        CHIMEnsureFortifyAttack = ensureFortifyAttack,
-    },
+    eventHandlers = eventHandlers,
 }
