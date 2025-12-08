@@ -146,8 +146,10 @@ local function new(constructorData)
       local indexHandler = handlers[key]
       if indexHandler then return indexHandler() end
 
+      local result
       for _, table in ipairs { proxy.shadowSettings, methods, proxy.state } do
-        if table[key] ~= nil then return table[key] end
+        result = table[key]
+        if result ~= nil then return result end
       end
 
       local savedValue = proxy.thisGroup:get(key)
