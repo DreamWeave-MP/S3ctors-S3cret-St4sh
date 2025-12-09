@@ -52,37 +52,40 @@ function UpdateFunctionManager.update(dt)
 end
 
 local firstOrThird = false
+--- Describes relative offsets using the actor's current halfSizes
+--- Generally, should be 0 on X axis and between -2, 2 on Y/Z
+---@type table<string, util.vector3>
 local Offsets = {
-    ['cliff racer'] = util.vector3(0, -50, 50),
-    default = util.vector3(0, -50, -25),
-    ['golden saint'] = util.vector3(0, -25, 45),
-    guar = util.vector3(0, -50, 20),
-    imperfect = util.vector3(0, -40, 175),
-    sw_spevensmugship02 = util.vector3(0, 0, 0),
-    sw_spevenpirategen = util.vector3(0, -250, -50),
+    ['cliff racer'] = util.vector3(0, -.5, .5),
+    default = util.vector3(0, -.5, 2.),
+    ['golden saint'] = util.vector3(0, -.8, .5),
+    guar = util.vector3(0, -.5, 1),
+    imperfect = util.vector3(.05, -.195, .925),
+    -- rat = util.vector3(0, 0, 0),
+    -- sw_spevensmugship02 = util.vector3(0, 0, 0),
+    -- sw_spevenpirategen = util.vector3(0, -250, -50),
 }
 
---- Mount offsets are defined by the center of their box, plus some offset from the player per-mount
-local Offset = Offsets[s3lf.recordId] or Offsets.default
-local BackOffset
+local isBiped, Offset = s3lf.isBiped, Offsets[s3lf.recordId] or Offsets.default
+local BackMult = util.vector3(1, 3, 1)
+local function getTargetPosition(goingBackwards)
+    local box = s3lf.gameObject:getBoundingBox()
+    local center, halfSize = box.center, box.halfSize
 
-if s3lf.isBiped then
-    BackOffset = util.vector3(Offset.x, Offset.y * 3, Offset.z)
-else
-    BackOffset = Offset
+    local activeOffset = Offset:emul(halfSize)
+    if goingBackwards and isBiped then
+        activeOffset = activeOffset:emul(BackMult)
+    end
+
+    local myYaw = s3lf.rotation:getYaw()
+    return center + util.transform.rotateZ(myYaw):apply(activeOffset)
 end
 
 local function syncPlayerPosition()
-    local center = s3lf.gameObject:getBoundingBox().center
-
-    local doubleY = s3lf.controls.movement < 0
     local myYaw = s3lf.rotation:getYaw()
 
-    local playerTargetPos = center +
-        util.transform.rotateZ(myYaw)
-        :apply(
-            doubleY and BackOffset or Offset
-        )
+    local playerTargetPos = getTargetPosition(s3lf.controls.movement < 0)
+        - MountTarget:getBoundingBox().halfSize['00z']
 
     local targetYaw = 0.
     if not firstOrThird then
