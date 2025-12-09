@@ -141,14 +141,21 @@ local function updateInputInfo()
     return InputInfo
 end
 
-local function playLegAnimation()
-    I.AnimationController.playBlendedAnimation('idlesneak',
+local MOUNT_SIT_NAME = 's3mount'
+local function playLegAnimation(startKey)
+    I.AnimationController.playBlendedAnimation(MOUNT_SIT_NAME,
         {
             priority = animation.PRIORITY.Scripted,
             blendMask = animation.BLEND_MASK.LowerBody,
             autoDisable = false,
+            startKey = startKey,
         }
     )
+end
+
+local function ensureLegAnimation()
+    if s3lf.isPlaying(MOUNT_SIT_NAME) or camera.getMode() == camera.MODE.FirstPerson then return end
+    playLegAnimation('stop')
 end
 
 return {
@@ -156,12 +163,15 @@ return {
         onFrame = function()
             if core.isWorldPaused() or not MountState.MountTarget then return end
             MountState.MountTarget:sendEvent('P37ZControl', updateInputInfo())
+            ensureLegAnimation()
         end,
         onSave = function()
             return MountState
         end,
         onLoad = function(data)
-            for k, v in pairs(data or {}) do MountState[k] = v end
+            if not data then return end
+
+            for k, v in pairs(data) do MountState[k] = v end
         end,
     },
     eventHandlers = {
@@ -179,7 +189,11 @@ return {
                     MountState.previewStateSwitched = false
                 end
 
-                s3lf.cancel('idlesneak')
+                s3lf.cancel(MOUNT_SIT_NAME)
+
+                if camera.getMode() == camera.MODE.Preview then
+                    camera.setMode(camera.MODE.ThirdPerson)
+                end
             else
                 if MountState.PreviewIfStandStill then
                     OMWCameraSettings:set('previewIfStandStill', false)
