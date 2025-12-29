@@ -3,7 +3,7 @@
 # 3. Add settings.cfg handling
 
 # The URL the site will be built for
-base_url = "https://github.io/DreamWeave-MP/DreamWeave-Mod-Template"
+base_url = "https://DreamWeave-MP.github.io/DreamWeave-Mod-Template"
 
 
 # Do you want your site to break horribly?
