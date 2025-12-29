@@ -32,12 +32,16 @@
 
 {% for directory in data_directories -%}
 {% if loop.first %}# {{ page.title }} Data Directories{% endif %}
-{% if not directory is starting_with('#') %}data={{ default_data_dir }}/{{ page.title }}/{% endif %}{{ directory }}
+{% if not directory is starting_with('#') -%}data={{ default_data_dir }}/{{ page.title }}/{%- endif -%}
+
+{{- directory -}}
 {%- endfor %}
 
 {% for plugin in content_files -%}
 {% if loop.first %}# {{ page.title }} Content Files{% endif %}
-{% if not plugin is starting_with('#') %}content={% endif %}{{ plugin }}
+{% if not plugin is starting_with('#') -%} content= {%- endif -%}
+
+{{- plugin -}}
 {%- endfor %}
 
 {% for config in config -%}
