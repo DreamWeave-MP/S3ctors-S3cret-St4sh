@@ -136,10 +136,20 @@ Only the most important ill be described here.
 
 ## Setting up config.toml
 
+### The Stuff That Will Break If You Don't Do It
+
 First, set the `base_url`. The default one is `https://DreamWeave-MP.github.io/DreamWeave-Mod-Template`.
 It should look like this: `https://OWNER_USERNAME.github.io/REPO_NAME`, where `OWNER_USERNAME` is either the account or the organization that owns the repo.
 
-Now, scroll down to `[extra]` and set `github_username` and `github_project` appropriately. Go back to the top.
+Now, scroll down to `[extra]` and set `github_username` and `github_project` appropriately. Don't leave yet!
+
+`giscus` is used to set up comments for your page. This is optional if you use it, but you ***really*** need to change or delete it, because it will point to the mod template's comment section out of the box.
+
+`goatcounter_username` is mandatory to enable goatcounter. ***PLEASE*** also set this up for yourself or disable it entirely, since your page visits will be tracked by DreamWeave's goatcounter instance if you don't.
+
+Go back to the top.
+
+### The Fun Stuff
 
 Set an appropriate `title` and `logo_text` for your page title and home button, respectively.
 
@@ -149,10 +159,6 @@ You don't have to do anything except pick between `true` or `false` here.
 If you wish to use `taxonomies` to organize your pages better, now's a good time to do so. The template only includes one taxonomy, `tags`, for ease of use.
 
 If you want to host more than just mods here, such as a blog or something, look at `menu_items` and set up the relevant pages.
-
-`extra.giscus` is used to set up comments for your page. This is optional if you use it, but you ***really*** need to change or delete it, because it will point to the mod template's comment section out of the box.
-
-`extra.goatcounter_username` is mandatory to enable goatcounter. ***PLEASE*** also set this up for yourself or disable it entirely, since your page visits will be tracked by DreamWeave's goatcounter instance if you don't.
 
 ### Styling
 
