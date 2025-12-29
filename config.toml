@@ -1,7 +1,3 @@
-# 1. Finish fallback entries
-# 2. Support config=
-# 3. Add settings.cfg handling
-
 # The URL the site will be built for
 base_url = "https://DreamWeave-MP.github.io/DreamWeave-Mod-Template"
 
