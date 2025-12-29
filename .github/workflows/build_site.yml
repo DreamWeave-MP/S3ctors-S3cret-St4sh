@@ -1,6 +1,6 @@
 on:
-- workflow-dispatch:
-- push:
+  workflow-dispatch:
+  push:
 name: Build and deploy GH Pages
 jobs:
   build:
