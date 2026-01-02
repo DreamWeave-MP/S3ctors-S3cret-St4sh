@@ -3,7 +3,7 @@ on:
   push:
 name: Build and deploy GH Pages
 jobs:
-  build:
+  build-site:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -14,3 +14,26 @@ jobs:
         uses: shalzz/zola-deploy-action@v0.21.0
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release_cleanup:
+    uses: DreamWeave-MP/StroggForge/.github/workflows/createRelease.yml@v6
+    secrets: inherit
+
+  build-mods:
+    needs: release_cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Build Releases
+        run: ./buildSite
+
+      - name: Upload releases
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ inputs.github_token }}
+        with:
+          tag_name: ${{ needs.release_cleanup.outputs.release_name }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          files: dist/*.zip
