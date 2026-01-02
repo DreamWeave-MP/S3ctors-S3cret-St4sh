@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+
+# Global packaging script for all mods reliant on the DW Mod Template
+# This optionally accepts a tag as argument which indicates a specific
+# Mod to package.
+# If no arguments are given, then, all mods are packaged as LZMA zip
+import os
+import re
+import tomllib
+import yaml
+import zipfile
+
+from multiprocessing import Process
+from pathlib import Path
+from pprint import pp as pprint
+from sys import argv
+from typing import Optional
+
+def slugify(text: str) -> str:
+    """
+    Homebrewed slugify to minimize dependencies. 
+    The build script should work exclusively with the STL.
+    """
+    text = text.lower().strip()
+    text = re.sub(r'[\s_-]+', '-', text)  # Replace spaces/underscores with hyphens
+    text = re.sub(r'^-+|-+$', '', text)   # Trim hyphens from ends
+    return text
+
+def parse_front_matter(md_path: Path):
+    """
+    Parse front matter from markdown file.
+    Returns front_matter_dict or None on failure.
+    """
+    content = md_path.read_text()
+
+    if content.startswith('+++'):
+        parts = content.split('+++', 2)
+        if len(parts) == 3:
+            try:
+                front_matter = tomllib.loads(parts[1])
+                return front_matter
+            except tomllib.TOMLDecodeError:
+                pass
+
+    if content.startswith('---'):
+        parts = content.split('---', 2)
+        if len(parts) == 3:
+            try:
+                front_matter = yaml.safe_load(parts[1])
+                return front_matter
+            except yaml.YAMLError:
+                pass
+
+    return None
+
+def get_target_tag():
+    """
+    Argument 1 should refer to the mod title which we are packaging
+    It will be present on tagged releases and not on development releases
+    """
+    return len(argv) > 1 and argv[1] or None
+
+def get_exclude_dirs():
+    """
+    Load the site configuration and return excluded directories
+    """
+    configText = Path('config.toml').read_text()
+    return tomllib.loads(configText)['extra']['excluded_dirs']
+
+def ensure_dist_dir():
+    """
+    Make sure the dist/ folder exists to write into
+    """
+    outPath = Path('./dist')
+    if not outPath.exists():
+        outPath.mkdir()
+
+def package_mod(subDir: Path, targetTag: Optional[str]):
+    """
+    Given the mod subdirectory and the current git tag (maybe),
+    package a mod's contents in the appropriate subdirectory of dist/,
+    Where the appropriate subdirectory is a slugified version of the page title
+    """
+    # Set the subdir as the workdir so we don't include the subdir in output
+    os.chdir(subDir)
+
+    # Get the frontmatter so we can read the title
+    mod_frontmatter = parse_front_matter(CurrentDir / 'index.md')
+    title = slugify(mod_frontmatter['title'])
+
+    # If we've been given a tag, then only build that one
+    # We slugify the targetTag also, as it will have underscores,
+    # and maybe need lowercased
+    if targetTag and title != slugify(targetTag):
+        return
+
+    # Store all output archives in the dist folder, where the zip name is the title of the mod
+    archivePath = f'../../dist/{title}.zip'
+
+    # Create the zipfile context with LZMA
+    # Insert every file into the archive
+    with zipfile.ZipFile(
+        archivePath,
+        mode='w',
+        compression=zipfile.ZIP_LZMA,
+    ) as modArchive:
+        for (dirpath, _, filenames) in CurrentDir.walk():
+            for file in filenames:
+                modArchive.write(dirpath / file)
+
+if __name__ == '__main__':
+    targetTag = get_target_tag() 
+    excludeDirs = get_exclude_dirs()
+
+    # Loop over all subdirectories of content/
+    CurrentDir, ParentDir = Path('.'), Path('..') 
+    os.chdir(Path('content/'))
+
+    subDirs = [subDir for subDir in CurrentDir.iterdir() if subDir.is_dir()]
+
+    for subDir in subDirs:
+        # Is the string representation of this Path in excludeDirs?
+        if excludeDirs.count(str(subDir)) != 0:
+            continue
+
+        packageProcess = Process(target=package_mod, args=(subDir, targetTag))
+        packageProcess.start()
+        packageProcess.join()
