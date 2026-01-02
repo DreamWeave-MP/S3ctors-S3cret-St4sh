@@ -63,3 +63,7 @@ Now your site's up and running. You've got the basics down! There's a bit more f
 Check out `content/home/index.md` and `content/simplified/index.md`. Here you'll see examples of what your pages can look like (and also more documentation on how to use the mod template).
 You *need* to build frontmatter for every mod. That's the section between `---` or `+++`. `simplified/index.md` contains the most minimal frontmatter possible, whereas `home/index.md` contains all possible fields.
 Your frontmatter may be yaml, using `---`, or TOML, using `+++` before and after your frontmatter.
+
+For more info, and guides on expanding the site yourself, check out [Zola's Docs](https://www.getzola.org/documentation/getting-started/overview/).
+
+Thanks for checking out the DreamWeave Mod Template. Please consider sponsoring DreamWeave on [Ko-Fi](https://ko-fi.com/magicaldave)
