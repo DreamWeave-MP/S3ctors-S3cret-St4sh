@@ -30,7 +30,8 @@ jobs:
         run: |
           TAG=""
           if [ ${{ needs.release_cleanup.outputs.release_name }} != 'development' ]; then
-          TAG=$( echo ${{ needs.release_cleanup.outputs.release_name }} | cut -f 1 -d '-')
+            TAG=$( echo ${{ needs.release_cleanup.outputs.release_name }} | cut -f 1 -d '-')
+          fi
           ./buildSite $TAG
 
       - name: Upload releases
