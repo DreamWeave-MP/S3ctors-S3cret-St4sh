@@ -125,7 +125,6 @@ github_project = "DreamWeave-Mod-Template"
 # Such as your blog, etc.
 excluded_dirs = [
     'blog',
-    'simplified',
 ]
 
 
