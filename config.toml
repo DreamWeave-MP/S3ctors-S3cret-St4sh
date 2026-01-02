@@ -121,11 +121,11 @@ github_username = "DreamWeave-MP"
 github_project = "DreamWeave-Mod-Template"
 
 
-# By default, only the one subdirectory is used.
-# You can generate an almost entirely different website by adding more.
-# This is mandatory for the purpose of generating install instructions.
-mod_dirs = [
-"mod/My Mod Name"
+# Use this field to exclude specific subdirectories
+# Such as your blog, etc.
+excluded_dirs = [
+    'blog',
+    'simplified',
 ]
 
 
