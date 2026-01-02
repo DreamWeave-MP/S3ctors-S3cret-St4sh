@@ -109,6 +109,7 @@ def package_mod(subDir: Path, targetTag: Optional[str]):
                 modArchive.write(dirpath / file)
 
 if __name__ == '__main__':
+    ensure_dist_dir()
     targetTag = get_target_tag() 
     excludeDirs = get_exclude_dirs()
 
