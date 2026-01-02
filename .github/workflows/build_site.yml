@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Releases
-        run: ./buildSite
+        run: pwd && ./buildSite
 
       - name: Upload releases
         uses: softprops/action-gh-release@v2
