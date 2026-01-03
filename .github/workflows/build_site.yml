@@ -33,7 +33,7 @@ jobs:
       - name: Build Releases
         run: |
           # Changelog generator script needs to be able to read the repo url
-          ARGS="--repository ${{ github.repository }} --build"
+          ARGS="--repository ${{ github.repository }} --build "
 
           if [ ${{ needs.release_cleanup.outputs.release_name }} != 'development' ]; then
             # This is sensitive to having multiple hyphens in the tag name, so don't do it - use underscores instead
