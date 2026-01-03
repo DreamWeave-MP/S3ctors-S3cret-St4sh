@@ -4,8 +4,11 @@
 # This optionally accepts a tag as argument which indicates a specific
 # Mod to package.
 # If no arguments are given, then, all mods are packaged as LZMA zip
+import argparse
 import os
 import re
+import shutil
+import subprocess
 import tomllib
 import yaml
 import zipfile
@@ -13,17 +16,22 @@ import zipfile
 from multiprocessing import Process
 from pathlib import Path
 from pprint import pp as pprint
-from sys import argv
 from typing import Optional
 
-def slugify(text: str) -> str:
+CurrentDir, ParentDir = Path('.'), Path('..') 
+
+def slugify(text: str, preserve_underscores: Optional[bool]) -> str:
     """
     Homebrewed slugify to minimize dependencies. 
     The build script should work exclusively with the STL.
     """
     text = text.lower().strip()
-    text = re.sub(r'[\s_-]+', '-', text)  # Replace spaces/underscores with hyphens
-    text = re.sub(r'^-+|-+$', '', text)   # Trim hyphens from ends
+
+    if preserve_underscores:
+        text = re.sub(r'[\s\--]+', '_', text)  # Replace spaces/hypens with underscores
+    else:
+        text = re.sub(r'[\s_-]+', '-', text)  # Replace spaces/underscores with hyphens
+
     return text
 
 def parse_front_matter(md_path: Path):
@@ -53,25 +61,17 @@ def parse_front_matter(md_path: Path):
 
     return None
 
-def get_target_tag():
-    """
-    Argument 1 should refer to the mod title which we are packaging
-    It will be present on tagged releases and not on development releases
-    """
-    return len(argv) > 1 and argv[1] or None
-
-def get_exclude_dirs():
+def get_site_config() -> dict:
     """
     Load the site configuration and return excluded directories
     """
-    configText = Path('config.toml').read_text()
-    return tomllib.loads(configText)['extra']['excluded_dirs']
+    return tomllib.loads(Path('config.toml').read_text())
 
 def ensure_dist_dir():
     """
     Make sure the dist/ folder exists to write into
     """
-    outPath = Path('./dist')
+    outPath = Path(ParentDir / 'dist')
     if not outPath.exists():
         outPath.mkdir()
 
@@ -108,22 +108,147 @@ def package_mod(subDir: Path, targetTag: Optional[str]):
             for file in filenames:
                 modArchive.write(dirpath / file)
 
+def get_subdirectories() -> list[Path]:
+    """Returns subdirectories of the current working directory."""
+    return [subDir for subDir in CurrentDir.iterdir() if subDir.is_dir()]
+
+def get_latest_changelog(subDir: str, latest_tag: str, url: str) -> str:
+    """Return the formatted changelog for commits after the latest tag."""
+
+    latest_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{latest_tag}..HEAD', '--', '.', ]
+    commitListProcess = subprocess.run(latest_args, check=True, capture_output=True, text=True)
+
+    if commitListProcess.returncode != 0:
+        raise RuntimeError(f'Listing commits failed: {commitListProcess.stderr}')
+
+    intermediate_commits = commitListProcess.stdout.splitlines()
+    changelog_str = f'<details open><summary class="no-underline">Latest:</summary>'
+
+    for commit in intermediate_commits:
+        formatted = commit.split()
+        if len(formatted) < 2:
+            raise RuntimeError(f'Incorrect Commit format: {commit}')
+
+        commitHash, commitMessage = formatted[0].strip("'"), ' '.join(formatted[1:]).strip("'")
+        changelog_str += f'<a href="{url}/commit/{commitHash}">{commitHash} - {commitMessage}</a><br><br>\n'
+
+    changelog_str += '</details>\n'
+
+    return changelog_str
+
+def get_intermediate_changelog(subDir: str, url: str, all_tags: list[str]) -> str:
+    """Return the formatted changelog for commits after the latest tag."""
+
+    num_tags = len(all_tags)
+    previous_tag = all_tags[1]
+
+    changelog_str = ''
+
+    print('All tags:')
+    pprint(all_tags)
+    # print(commit_list_process)
+
+    for tag in all_tags:
+        print(f'Creating changelog for {subDir}, version: {tag}')
+        intermediate_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{previous_tag}..{tag}', '--', '.', ]
+        commit_list_process = subprocess.run(intermediate_args, check=True, capture_output=True, text=True)
+
+        if commit_list_process.returncode != 0:
+            raise RuntimeError(f'Listing commits failed: {commitListProcess.stderr}')
+
+        intermediate_commits = commit_list_process.stdout.splitlines()
+        print(f'Intermediate args: {intermediate_args}')
+        print(f'Intermediate commits: {intermediate_commits}')
+        tag_name = tag.split('-')[1]
+        changelog_str = f'<details><summary class="no-underline">Version {tag_name}:</summary>'
+
+        for commit in intermediate_commits:
+            formatted = commit.split()
+            if len(formatted) < 2:
+                raise RuntimeError(f'Incorrect Commit format: {commit}')
+
+            commitHash, commitMessage = formatted[0].strip("'"), ' '.join(formatted[1:]).strip("'")
+            changelog_str += f'<a href="{url}/commit/{commitHash}">{commitHash} - {commitMessage}</a><br><br>\n'
+
+        changelog_str += '</details>\n'
+
+        previous_tag = tag
+
+    return changelog_str
+
+BuildArgParser = argparse.ArgumentParser(
+    prog="DreamWeave Mod Template Build Tool",
+    description='Generator script for changelogs and archives for sites based on the DreamWeave Mod Template',
+    epilog='Don\'t forget to bring a towel.'
+)
+
+BuildArgParser.add_argument('-b', '--build', action='store_true')
+BuildArgParser.add_argument('-c', '--changelog', action='store_true')
+BuildArgParser.add_argument('-t', '--tag')
+BuildArgParser.add_argument('-r', '--repository')
+
 if __name__ == '__main__':
-    ensure_dist_dir()
-    targetTag = get_target_tag() 
-    excludeDirs = get_exclude_dirs()
+    inputArguments = BuildArgParser.parse_args()
 
-    # Loop over all subdirectories of content/
-    CurrentDir, ParentDir = Path('.'), Path('..') 
+    siteConfig = get_site_config()
+    excludeDirs = siteConfig['extra']['excluded_dirs']
+
     os.chdir(Path('content/'))
+    
+    # print(inputArguments)
 
-    subDirs = [subDir for subDir in CurrentDir.iterdir() if subDir.is_dir()]
+    for subDir in get_subdirectories():
+        dirStr = str(subDir)
 
-    for subDir in subDirs:
-        # Is the string representation of this Path in excludeDirs?
-        if excludeDirs.count(str(subDir)) != 0:
+        if dirStr in excludeDirs:
             continue
 
-        packageProcess = Process(target=package_mod, args=(subDir, targetTag))
-        packageProcess.start()
-        packageProcess.join()
+        if inputArguments.changelog:
+            if not inputArguments.repository:
+                raise RuntimeError('No repository was provided, so I cannot make a changelog! It should be in the format: username/repo')
+            url = f"https://github.com/{inputArguments.repository}"
+            # print(f'Repo is: {inputArguments.repository}, url is: {url}')
+            
+            # Read all titles from root index page frontmatters, slugified
+            # Use the title in the format $TITLE(un-slugified) Changelog
+            # Read all git tags for (slugified) title
+            frontmatter = parse_front_matter(CurrentDir / subDir / 'index.md')
+
+            changelog_str = f'---\ntitle: {frontmatter['title']} Changelog\n---\n'
+
+            if not shutil.which('git'):
+                raise RuntimeError('Git is not installed, so I cannot make a changelog!')
+
+            tagPrefix = slugify(frontmatter['title'], True)
+            tagListProcess = subprocess.run([
+                'git',
+                'tag',
+                '--list',
+                f'{tagPrefix}-*',
+                '--sort=-creatordate'
+            ], check=True, capture_output=True, text=True)
+
+            if tagListProcess.returncode != 0:
+                raise RuntimeError(f'Listing tags failed: {tagListProcess.stderr}')
+
+            modReleases = tagListProcess.stdout.splitlines()
+            # print(modReleases)
+            # pprint(tagListProcess)
+
+            num_releases = len(modReleases)
+            if num_releases > 0:
+                changelog_str += get_latest_changelog(dirStr, modReleases[0], url)
+            if num_releases > 1:
+                changelog_str += get_intermediate_changelog(dirStr, url, modReleases)
+
+            changelogPath = subDir / 'changelog.md' 
+            changelogPath.write_text(changelog_str)
+            print(f'Wrote changelog:\n{changelog_str}\nto: /content/{dirStr}/changelog.md')
+
+        if inputArguments.build:
+            # print(f'Packaging {dirStr}')
+            ensure_dist_dir()
+            packageProcess = Process(target=package_mod, args=(subDir, inputArguments.tag))
+            packageProcess.start()
+            packageProcess.join()
+
