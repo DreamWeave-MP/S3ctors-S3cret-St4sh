@@ -86,12 +86,12 @@ def package_mod(subDir: Path, targetTag: Optional[str]):
 
     # Get the frontmatter so we can read the title
     mod_frontmatter = parse_front_matter(CurrentDir / 'index.md')
-    title = slugify(mod_frontmatter['title'])
+    title = slugify(mod_frontmatter['title'], True)
 
     # If we've been given a tag, then only build that one
     # We slugify the targetTag also, as it will have underscores,
     # and maybe need lowercased
-    if targetTag and title != slugify(targetTag):
+    if targetTag and title != targetTag:
         return
 
     # Store all output archives in the dist folder, where the zip name is the title of the mod
@@ -144,12 +144,12 @@ def get_intermediate_changelog(subDir: str, url: str, all_tags: list[str]) -> st
 
     changelog_str = ''
 
-    print('All tags:')
-    pprint(all_tags)
+    # print('All tags:')
+    # pprint(all_tags)
     # print(commit_list_process)
 
     for tag in all_tags:
-        print(f'Creating changelog for {subDir}, version: {tag}')
+        # print(f'Creating changelog for {subDir}, version: {tag}')
         intermediate_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{previous_tag}..{tag}', '--', '.', ]
         commit_list_process = subprocess.run(intermediate_args, check=True, capture_output=True, text=True)
 
@@ -157,8 +157,8 @@ def get_intermediate_changelog(subDir: str, url: str, all_tags: list[str]) -> st
             raise RuntimeError(f'Listing commits failed: {commitListProcess.stderr}')
 
         intermediate_commits = commit_list_process.stdout.splitlines()
-        print(f'Intermediate args: {intermediate_args}')
-        print(f'Intermediate commits: {intermediate_commits}')
+        # print(f'Intermediate args: {intermediate_args}')
+        # print(f'Intermediate commits: {intermediate_commits}')
         tag_name = tag.split('-')[1]
         changelog_str = f'<details><summary class="no-underline">Version {tag_name}:</summary>'
 
