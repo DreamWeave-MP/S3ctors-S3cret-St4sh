@@ -10,6 +10,10 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
+      - name: Write Changelogs
+        run: |
+          ./buildSite --repository ${{ github.repository }} --changelog
+
       - name: build_and_deploy
         uses: shalzz/zola-deploy-action@v0.21.0
         env:
@@ -28,11 +32,16 @@ jobs:
 
       - name: Build Releases
         run: |
-          TAG=""
+          # Changelog generator script needs to be able to read the repo url
+          ARGS="--repository ${{ github.repository }} --build"
+
           if [ ${{ needs.release_cleanup.outputs.release_name }} != 'development' ]; then
-            TAG=$( echo ${{ needs.release_cleanup.outputs.release_name }} | cut -f 1 -d '-')
+            # This is sensitive to having multiple hyphens in the tag name, so don't do it - use underscores instead
+            # the format is $MODNAME-$VERSION for multi-page sites, or just $VERSION for single-page sites
+            ARGS+="--tag $( echo ${{ needs.release_cleanup.outputs.release_name }} | cut -f 1 -d '-') "
           fi
-          ./buildSite $TAG
+
+          ./buildSite $ARGS
 
       - name: Upload releases
         uses: softprops/action-gh-release@v2
