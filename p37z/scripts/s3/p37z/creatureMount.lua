@@ -53,11 +53,11 @@ end
 
 local firstOrThird = false
 --- Describes relative offsets using the actor's current halfSizes
---- Generally, should be 0 on X axis and between -2, 2 on Y/Z
+--- Generally, should be 0 on X axis and between -1, 1 on Y/Z
 ---@type table<string, util.vector3>
 local Offsets = {
     ['cliff racer'] = util.vector3(0, -.5, .5),
-    default = util.vector3(0, -.5, 2.),
+    default = util.vector3(0, -.5, 1.),
     ['golden saint'] = util.vector3(0, -.8, .5),
     guar = util.vector3(0, -.5, 1),
     imperfect = util.vector3(.05, -.195, .925),
