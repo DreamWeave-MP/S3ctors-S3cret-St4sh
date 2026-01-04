@@ -53,6 +53,10 @@ return {
         playOneTrack = true,
         active = false,
 
+        isValidCallback = function()
+            return false
+        end,
+
         tracks = {},
     },
 }
