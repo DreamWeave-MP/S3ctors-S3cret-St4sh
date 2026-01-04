@@ -30,7 +30,6 @@ function M.toggleMap()
     elseif isWindowAllowed(WINDOW.Map) then
         I.UI.setMode(MODE.Interface, { windows = { WINDOW.Map } })
         M.mode = 'map'
-        M.closeModeMenu()
     end
 end
 
@@ -41,7 +40,6 @@ function M.toggleMagic()
     elseif isWindowAllowed(WINDOW.Magic) then
         I.UI.setMode(MODE.Interface, { windows = { WINDOW.Magic } })
         M.mode = 'magic'
-        M.closeModeMenu()
     end
 end
 
@@ -52,7 +50,6 @@ function M.toggleStats()
     elseif isWindowAllowed(WINDOW.Inventory) or isWindowAllowed(WINDOW.Stats) then
         I.UI.setMode(MODE.Interface, { windows = { WINDOW.Stats } })
         M.mode = 'stats'
-        M.closeModeMenu()
     end
 end
 
@@ -63,7 +60,6 @@ function M.toggleInventory()
     elseif isWindowAllowed(WINDOW.Inventory) then
         I.UI.setMode(MODE.Interface, { windows = { WINDOW.Inventory } })
         M.mode = 'inventory'
-        M.closeModeMenu()
     end
 end
 
