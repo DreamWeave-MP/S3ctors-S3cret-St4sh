@@ -111,9 +111,6 @@ local InputInfo = {
     previewIfStandStill = MountState.PreviewIfStandStill or false,
 }
 
---- Updates all appropriate movement info for the player, to be relayed to the mount.
---- Returns bool to indicate whether or not to actually bother updating controls.
---- Maybe this is bad...?
 ---@return InputInfo
 local function updateInputInfo()
     local movement = input.getRangeActionValue('MoveForward') - input.getRangeActionValue('MoveBackward')
