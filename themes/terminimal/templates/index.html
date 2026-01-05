@@ -27,7 +27,7 @@
     {%- endif -%}
 
     {%- if config.extra.favicon %}
-        <link rel="shortcut icon" type="{{ config.extra.favicon_mimetype | default(value="image/x-icon") | safe }}" href="{{ config.extra.favicon | safe }}">
+        <link rel="shortcut icon" type="{{ config.extra.favicon_mimetype | default(value="image/x-icon") | safe }}" href="{{ get_url(path=config.extra.favicon, trailing_slash=false) | safe }}">
     {% endif -%}
 
     {%- block extra_head %}
