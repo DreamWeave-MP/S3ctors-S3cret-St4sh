@@ -1,0 +1,419 @@
+uniform_int uLumaStandard {
+    default = 0;
+    min = 0;
+    max = 2;
+    step = 1;
+    display_name = "#{S3Shaders:LumaStandardName}";
+    description = "#{S3Shaders:LumaStandardDesc}";
+    static = true;
+}
+
+uniform_int uDitherSize {
+    default = 1;
+    min = 0;
+    max = 2;
+    step = 1;
+    display_name = "#{S3Shaders:DitherSizeName}";
+    description = "#{S3Shaders:DitherSizeDesc}";
+    static = true;
+}
+
+uniform_int uDitherMode {
+    default = 0;
+    min = 0;
+    max = 7;
+    step = 1;
+    display_name = "#{S3Shaders:DitherModeName}";
+    description = "#{S3Shaders:DitherModeDesc}";
+    static = true; 
+}
+
+uniform_float uQuantizationLevels {
+    default = 2.0;
+    min = 1.0;
+    max = 8.0;
+    step = 0.1;
+    display_name = "#{S3Shaders:DitherQuantLevelsName}";
+    description = "#{S3Shaders:DitherQuantLevelsDesc}";
+    static = true;
+}
+
+uniform_float uTwoDarkR {
+    default = 0.0;
+    min = 0.0;
+    max = 1.0;
+    step = 0.01;
+    display_name = "#{S3Shaders:DitherTwoDarkRName}";
+    description = "#{S3Shaders:DitherTwoDarkRDesc}";
+    static = true;
+}
+
+uniform_float uTwoDarkG {
+    default = 0.0;
+    min = 0.0;
+    max = 1.0;
+    step = 0.01;
+    display_name = "#{S3Shaders:DitherTwoDarkGName}";
+    description = "#{S3Shaders:DitherTwoDarkGDesc}";
+    static = true;
+}
+
+uniform_float uTwoDarkB {
+    default = 0.0;
+    min = 0.0;
+    max = 1.0;
+    step = 0.01;
+    display_name = "#{S3Shaders:DitherTwoDarkBName}";
+    description = "#{S3Shaders:DitherTwoDarkBDesc}";
+    static = true;
+}
+
+uniform_float uTwoLightR {
+    default = 1.0;
+    min = 0.0;
+    max = 1.0;
+    step = 0.01;
+    display_name = "#{S3Shaders:DitherTwoLightRName}";
+    description = "#{S3Shaders:DitherTwoLightRDesc}";
+    static = true;
+}
+
+uniform_float uTwoLightG {
+    default = 1.0;
+    min = 0.0;
+    max = 1.0;
+    step = 0.01;
+    display_name = "#{S3Shaders:DitherTwoLightGName}";
+    description = "#{S3Shaders:DitherTwoLightGDesc}";
+    static = true;
+}
+
+uniform_float uTwoLightB {
+    default = 1.0;
+    min = 0.0;
+    max = 1.0;
+    step = 0.01;
+    display_name = "#{S3Shaders:DitherTwoLightBName}";
+    description = "#{S3Shaders:DitherTwoLightBDesc}";
+    static = true;
+}
+
+uniform_float uPSXColorCount {
+    default = 32.0;
+    min = 1.0;
+    max = 32.0;
+    step = 0.1;
+    display_name = "#{S3Shaders:DitherPSXColorCountName}";
+    description = "#{S3Shaders:DitherPSXColorCountBDesc}";
+    static = true;
+}
+
+uniform_float uBrightnessMult {
+    default = 1.0;
+    min = 0.0;
+    max = 10.0;
+    step = 0.1;
+    display_name = "#{S3Shaders:DitherBrightnessName}";
+    description = "#{S3Shaders:DitherBrightnessDesc}";
+    static = true;
+}
+
+fragment dither {
+    omw_In vec2 omw_TexCoord;
+
+    const int matrixSizes[3] = int[3] ( 2, 4, 8 );
+
+    const float bayerMatrix2[4] = float[4] ( 
+        0.0, 0.5,
+        0.75, 0.25
+    );
+
+    const float bayerMatrix4[16] = float[16] (
+        0.0625, 0.5625, 0.1875, 0.6875,
+        0.8125, 0.3125, 0.9375, 0.4375,
+        0.25,   0.75,   0.125,  0.625,
+        1.0,   0.5,   0.875, 0.375
+    );
+
+    const float bayerMatrix8[64] = float[64] (
+        0.0,     0.5,     0.125,   0.625,   0.03125, 0.53125, 0.15625, 0.65625,
+        0.75,    0.25,    0.875,   0.375,   0.78125, 0.28125, 0.90625, 0.40625,
+        0.1875,  0.6875,  0.0625,  0.5625,  0.21875, 0.71875, 0.09375, 0.59375,
+        0.9375,  0.4375,  0.8125,  0.3125,  0.96875, 0.46875, 0.84375, 0.34375,
+        0.046875, 0.546875, 0.171875, 0.671875, 0.015625, 0.515625, 0.140625, 0.640625,
+        0.796875, 0.296875, 0.921875, 0.421875, 0.765625, 0.265625, 0.890625, 0.390625,
+        0.234375, 0.734375, 0.109375, 0.609375, 0.203125, 0.703125, 0.078125, 0.578125,
+        0.984375, 0.484375, 0.859375, 0.359375, 0.953125, 0.453125, 0.828125, 0.328125
+    );
+
+    // Various luma coefficients from different standards
+    const vec3 lumaVariants[3] = vec3[3] (
+        // BT 709
+        vec3(0.2126, 0.7152, 0.0722),
+        // CCIR 601 (Classic NTSC)
+        vec3(0.299, 0.587, 0.114),
+        // SMPTE 240M
+        vec3(0.212, 0.701, 0.114)
+    );
+
+    float luma( vec4 color ) {
+        return dot( color.rgb, lumaVariants[uLumaStandard] );
+    }
+
+    float ditherBayer( vec2 position, float brightness ) {
+        int matrixSize = 2 << uDitherSize;
+        float matrixSizeFloat = float( matrixSize );
+
+        int x = clamp( int( mod( position.x, matrixSizeFloat) ), 0, matrixSize - 1 );
+        int y = clamp( int( mod( position.y, matrixSizeFloat) ), 0, matrixSize - 1 );
+
+        int index = x + y * matrixSize;
+        float limit;
+
+        switch ( uDitherSize ) {
+            case 0: limit = bayerMatrix2[index]; break;
+            case 1: limit = bayerMatrix4[index]; break;
+            case 2: limit = bayerMatrix8[index]; break;
+            default: limit = 0.0; break;
+        }
+
+        return brightness < limit ? 0.0 : 1.0;
+    }
+
+    // Pure greyscale dithering which overrides existing color values based on the brightness
+    vec4 ditherBW( vec2 position, vec4 color ) {
+        return vec4(
+            vec3( ditherBayer(position, luma ( color ) ) ), color.a
+        );
+    }
+
+    // Greyscale dithering which mixes the dithered color with the current one. Weird, and made-up.
+    vec4 ditherBW2( vec2 position, vec4 color ) {
+        float ditheredValue = ditherBayer(position, luma ( color ) );
+        return mix(color, vec4( ditheredValue ), 0.5);
+    }
+
+    // True bayer dithering in greyscale
+    vec4 ditherBW3(vec2 pos, float brightness) {
+        float rescaled = brightness * 8;
+        float fractional = fract(rescaled);
+
+        float dithered = floor(rescaled) + ditherBayer(pos, fractional);
+        return vec4( dithered / 8 );
+    }
+
+    // Customizable two-tone dither using a bayer matrix
+    vec4 ditherTwoTone(vec2 pos, float brightness) {
+        float rescaled = brightness * uQuantizationLevels;
+        float fractionalPart = fract( rescaled );
+        float ditherResult = ditherBayer(pos, fractionalPart);
+        float quantizedValue = floor(rescaled) + ditherResult; 
+        float scalar = quantizedValue / uQuantizationLevels;
+
+        vec3 finalColor = mix(
+            vec3(uTwoDarkR, uTwoDarkG, uTwoDarkB),
+            vec3(uTwoLightR, uTwoLightG, uTwoLightB),
+            scalar
+        );
+
+        return vec4(finalColor, 1.0);
+    }
+
+    // Color compression dithering
+    float quantizeWithDither(vec2 pos, float value) {
+        float rescaled = value * uQuantizationLevels;
+        float fractionalPart = fract( rescaled );
+        float ditherResult = ditherBayer( pos, fractionalPart );
+        return ( floor( rescaled ) + ditherResult ) / uQuantizationLevels;
+    }
+
+    // Color compression dithering
+    vec4 ditherColor(vec2 pos, vec4 color) {
+        vec3 quantized;
+        quantized.r = quantizeWithDither(pos, color.r);
+        quantized.g = quantizeWithDither(pos, color.g);
+        quantized.b = quantizeWithDither(pos, color.b);
+        return vec4(quantized, color.a);
+    }
+
+    // PSX Dither
+
+    // BT 709 SDTV coefficients
+    // https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
+    const vec3 bt709 = vec3(0.2126, 0.7152, 0.0722);
+    const vec2 bt709InverseReciprocal = vec2(1.0 / 1.8556, 1.0 / 1.5748);
+    const vec4 YUVtoRGBcoeffs = vec4(1.5748, 0.187324, 0.468124, 1.8556);
+
+    float channelError(float col, float colMin, float colMax) {
+        float range = abs(colMin - colMax);
+
+        // Could go branchless, but not necessarily faster, probably
+        if (range < 1e-5) {
+            return 0.0;
+        }
+
+        float aRange = abs(col - colMin);
+        return aRange / range;
+    }
+
+    vec3 RGBtoYUV(vec3 rgb) {
+        vec3 yuv;
+        yuv.r = dot(rgb, bt709);
+        
+        yuv.g = (rgb.b - yuv.r) * bt709InverseReciprocal.x;
+        yuv.b = (rgb.r - yuv.r) * bt709InverseReciprocal.y;
+
+        // Normalize UV from [-0.5, 0.5] to [0.0, 1.0] for GPU
+        yuv.gb += 0.5;
+
+        return yuv;
+    }
+
+    vec3 YUVtoRGB(vec3 yuv) {
+        yuv.gb -= 0.5;
+
+        return vec3(
+            yuv.r + yuv.b * YUVtoRGBcoeffs.r,
+            yuv.r - YUVtoRGBcoeffs.g * yuv.g - YUVtoRGBcoeffs.b * yuv.b,
+            yuv.r + yuv.g * YUVtoRGBcoeffs.a
+        );
+    }
+
+    vec4 ditherColorPSX(vec3 col, vec2 uv, vec2 resolution) {
+        vec3 yuv = RGBtoYUV(col);
+
+        vec3 col1 = floor(yuv * uPSXColorCount) / uPSXColorCount;
+        vec3 col2 = ceil(yuv * uPSXColorCount) / uPSXColorCount;
+
+        vec2 ditherBlockUV = uv * ( resolution / uDitherSize );
+
+        yuv.x = mix( col1.x, col2.x, ditherBayer( ditherBlockUV, channelError( yuv.x, col1.x, col2.x ) ) );
+        yuv.y = mix( col1.y, col2.y, ditherBayer( ditherBlockUV, channelError( yuv.y, col1.y, col2.y ) ) );
+        yuv.z = mix( col1.z, col2.z, ditherBayer( ditherBlockUV, channelError( yuv.z, col1.z, col2.z ) ) );
+
+        return vec4( ( YUVtoRGB( yuv ) ), 1.0 );
+    }
+
+    // EGA Dither
+    // We use either the true EGA palette, or an approximation where we simply quantize each channel individually
+    // But the latter form is less accurate and results in 64 instead of 16 colors
+    // EGA dither functions are currently hidden/unused as either I suck or the whole thing is a wash
+    // both?
+    const float egaLevels[4] = float[4](0.0, 0.3333333, 0.6666667, 1.0);
+    const vec3 egaPalette[16] = vec3[16](
+        vec3(0.0,        0.0,        0.0),        // 0: Black - #000000
+        vec3(0.0,        0.0,        0.6666667),  // 1: Blue - #0000AA (170/255 ≈ 0.6667)
+        vec3(0.0,        0.6666667,  0.0),        // 2: Green - #00AA00
+        vec3(0.0,        0.6666667,  0.6666667),  // 3: Cyan - #00AAAA
+        vec3(0.6666667,  0.0,        0.0),        // 4: Red - #AA0000
+        vec3(0.6666667,  0.0,        0.6666667),  // 5: Magenta - #AA00AA
+        vec3(0.6666667,  0.3333333,  0.0),        // 6: Brown - #AA5500 (170/255≈0.6667, 85/255≈0.3333)
+        vec3(0.6666667,  0.6666667,  0.6666667),  // 7: Light Gray - #AAAAAA
+        vec3(0.3333333,  0.3333333,  0.3333333),  // 8: Dark Gray - #555555 (85/255 ≈ 0.3333)
+        vec3(0.3333333,  0.3333333,  1.0),        // 9: Bright Blue - #5555FF
+        vec3(0.3333333,  1.0,        0.3333333),  // 10: Bright Green - #55FF55
+        vec3(0.3333333,  1.0,        1.0),        // 11: Bright Cyan - #55FFFF
+        vec3(1.0,        0.3333333,  0.3333333),  // 12: Bright Red - #FF5555
+        vec3(1.0,        0.3333333,  1.0),        // 13: Bright Magenta - #FF55FF
+        vec3(1.0,        1.0,        0.3333333),  // 14: Bright Yellow - #FFFF55
+        vec3(1.0,        1.0,        1.0)         // 15: Bright White - #FFFFFF
+    );
+
+    vec3 linearToSRGB(vec3 linear) {
+        return pow( linear, vec3( 1.0/2.2 ) );
+    }
+
+    int egaQuantize(float channel) {
+        int index = int(
+            floor(
+                channel * 3.0 + 0.5
+            )
+        );
+
+        return clamp(index, 0, 3);
+    }
+
+    int getEGAPaletteIndex(int r_idx, int g_idx, int b_idx) {
+        if ( (r_idx % 2) == 0 && (g_idx % 2) == 0 && (b_idx % 2) == 0) {
+            return 4 * ( r_idx / 2 ) + 2 * ( g_idx / 2 ) + ( b_idx / 2 );
+        }
+        else {
+            int bright_bits = 0;
+            if (r_idx == 3) bright_bits += 4;
+            if (g_idx == 3) bright_bits += 2;
+            if (b_idx == 3) bright_bits += 1;
+            return 8 + bright_bits;
+        }
+    }
+
+    vec4 findEGAColor(vec3 rgb) {
+        int r_index = egaQuantize(rgb.r);
+        int g_index = egaQuantize(rgb.g);
+        int b_index = egaQuantize(rgb.b);
+
+        return vec4(
+            egaLevels[r_index], 
+            egaLevels[g_index], 
+            egaLevels[b_index],
+            1.0
+        );
+    }
+
+    // VGA color compression + dither
+    // Still too white outdoors, and doesn't convert to SGRB before doing the work.
+    // Maybe would be better without rounding, when outdoors, and using rounding when indoors
+    // But I still blame lighting for not being able to sample pixels "properly"
+    const float vgaLevels[6] = float[6](0.0, 0.2, 0.4, 0.6, 0.8, 1.0);
+
+    vec4 findVGAColor(vec3 rgb, vec2 screenPos) {
+        int r_idx = int( floor( rgb.r * 5.0 + 0.5 ) );
+        int g_idx = int( floor( rgb.g * 5.0 + 0.5 ) );
+        int b_idx = int( floor( rgb.b * 5.0 + 0.5 ) );
+        
+        r_idx = clamp( r_idx, 0, 5 );
+        g_idx = clamp( g_idx, 0, 5 );
+        b_idx = clamp( b_idx, 0, 5 );
+
+        // Return the color from the uniform RGB cube
+        return vec4(
+            quantizeWithDither( screenPos, vgaLevels[r_idx] ), 
+            quantizeWithDither( screenPos, vgaLevels[g_idx] ), 
+            quantizeWithDither( screenPos, vgaLevels[b_idx] ), 
+            1.0
+        );
+    }
+
+    const float steps = 15.0;
+    vec4 valveDither(vec2 screenPos) {
+        vec3 vDither = vec3( dot( vec2( 131.0, 312.0 ), screenPos + omw.simulationTime ) );
+        vDither.rgb = fract( vDither / vec3( 103.0, 71.0, 97.0 ) ) - vec3( 0.5, 0.5, 0.5 );
+        vDither = ( vDither / steps ) * 0.375;
+        return vec4( vDither, 1.0 );
+    }
+
+    void main() {
+        vec4 color = omw_GetLastShader(omw_TexCoord);
+        vec2 screenPos = omw_TexCoord * omw.resolution;
+
+        switch ( uDitherMode ) {
+            case 0: omw_FragColor = ditherBW(screenPos, color ); break;
+            case 1: omw_FragColor = ditherBW2(screenPos, color ); break;
+            case 2: omw_FragColor = ditherBW3(screenPos, luma( color ) ); break;
+            case 3: omw_FragColor = ditherTwoTone(screenPos, luma( color ) ); break;
+            case 4: omw_FragColor = ditherColor(screenPos, color); break;
+            case 5: omw_FragColor = ditherColorPSX(color.rgb, omw_TexCoord, screenPos); break;
+            case 6: omw_FragColor = findVGAColor( color.rgb, screenPos ); break;
+            //case 7: omw_FragColor = valveDither(screenPos); break;
+            case 7: omw_FragColor = findEGAColor( color.rgb ); break;
+        }
+
+        omw_FragColor.rgb *= uBrightnessMult;
+    }
+}
+
+technique {
+    author = "S3ctor";
+    description = "Bayer Dithering Shader";
+    passes = dither;
+    version = "0.1";
+}

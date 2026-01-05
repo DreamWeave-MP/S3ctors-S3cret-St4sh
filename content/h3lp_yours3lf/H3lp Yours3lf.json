@@ -1,0 +1,120 @@
+[
+  {
+    "type": "Header",
+    "flags": "",
+    "version": 1.3,
+    "file_type": "Esp",
+    "author": "S3ctor",
+    "description": "Helper library for OpenMW-Lua scripts, for improved performance, access to settings menus, user interface components, and setting renderers.",
+    "num_objects": 1,
+    "masters": []
+  },
+  {
+    "type": "ScriptConfigList",
+    "scripts": [
+      {
+        "path": "scripts/s3/lf.lua",
+        "init_data": "AAAAAA==",
+        "flags": "PLAYER",
+        "types": [
+          "NPC_",
+          "CREA",
+          "CONT",
+          "BOOK",
+          "ACTI",
+          "ALCH",
+          "ARMO",
+          "WEAP",
+          "CLOT",
+          "DOOR",
+          "INGR",
+          "LIGH",
+          "MISC",
+          "APPA",
+          "LOCK",
+          "PROB",
+          "REPA"
+        ],
+        "records": [],
+        "instances": []
+      },
+      {
+        "path": "scripts/s3/protectedTable.lua",
+        "init_data": "AAAAAA==",
+        "flags": "PLAYER",
+        "types": [
+          "NPC_",
+          "CREA",
+          "CONT",
+          "BOOK",
+          "ACTI",
+          "ALCH",
+          "ARMO",
+          "WEAP",
+          "CLOT",
+          "DOOR",
+          "INGR",
+          "LIGH",
+          "MISC",
+          "APPA",
+          "LOCK",
+          "PROB",
+          "REPA"
+        ],
+        "records": [],
+        "instances": []
+      },
+      {
+        "path": "scripts/s3/renderers.lua",
+        "init_data": "AAAAAA==",
+        "flags": "MENU",
+        "types": [],
+        "records": [],
+        "instances": []
+      },
+      {
+        "path": "scripts/s3/randomGen.lua",
+        "init_data": "AAAAAA==",
+        "flags": "PLAYER",
+        "types": [
+          "NPC_",
+          "CREA",
+          "CONT",
+          "BOOK",
+          "ACTI",
+          "ALCH",
+          "ARMO",
+          "WEAP",
+          "CLOT",
+          "DOOR",
+          "INGR",
+          "LIGH",
+          "MISC",
+          "APPA",
+          "LOCK",
+          "PROB",
+          "REPA"
+        ],
+        "records": [],
+        "instances": []
+      },
+      {
+        "path": "scripts/s3/camHelper.lua",
+        "init_data": "AAAAAA==",
+        "flags": "PLAYER",
+        "types": [],
+        "records": [],
+        "instances": []
+      },
+      {
+        "path": "scripts/s3/imageAtlas.lua",
+        "init_data": "AAAAAA==",
+        "flags": "PLAYER",
+        "types": [],
+        "records": [],
+        "instances": []
+      }
+    ],
+    "flags": ""
+  }
+]
