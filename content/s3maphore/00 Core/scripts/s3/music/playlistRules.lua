@@ -347,7 +347,7 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
     local result, levelDifference, levelScale = false, nil, nil
     for _, actor in pairs(PlaylistRules.state.combatTargets) do
         local targetLevel = combatTargetLevelCache[actor.id] or actor.type.stats.level(actor)
-        if not combatTargetLevelCache[actor.id] then combatTargetLevelCache[actor.id] = level end
+        if not combatTargetLevelCache[actor.id] then combatTargetLevelCache[actor.id] = targetLevel end
 
         if levelRule.absolute then
             levelDifference = targetLevel.current - MyLevel.current

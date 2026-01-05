@@ -1,0 +1,13 @@
+{
+    "makefile.configureOnOpen": false,
+    "Lua.diagnostics.disable": [
+        "deprecated"
+    ],
+    "Lua.workspace.library": [
+        "../starwind-builder/src/Community Patch Project/Scripts/doc/",
+        "s3maphore/00 Core/scripts/*"
+    ],
+    "yaml.schemas": {
+        "./static_switching_system/Scripts/staticSwitcher/schema/replacerSchema.json": "*/scripts/staticSwitcher/data/*.yaml"
+    }
+}
