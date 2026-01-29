@@ -1,10 +1,16 @@
+---
+title: Monochrome User Interface Supplement
+description:  
+---
 # Monochrome UI Supplement
 
 Monochrome UI supplement is, well... a monochrome UI supplement.
 
 Specifically, this mod replaces some of the built-in textures openmw provides and changes the default text color of Lua widgets. When Monochrome UI first released, there were no Lua widgets and replacing these built-in textures required invasive (and unsafe) modifications to one's game. Now, we can replace both much more easily.
 
-This only supports OpenMW 0.48 and later.
+<!-- more -->
+
+This only supports OpenMW 0.48 to 0.50. It is INCOMPATIBLE! With OpenMW 0.51 and later.
 
 ## Before And After
 
@@ -13,9 +19,9 @@ This only supports OpenMW 0.48 and later.
     <img src="../img/monosupplement_after.png" alt="After Monochrome UI Supplement" />
 </div>
 
-## Installation
+{{ install_instructions(describe=true) }}
 
-The skill icons module which was previously part of this mod has now matured into [Beta Icons Restored and Reimagined](../birr/index.html).
+The skill icons module which was previously part of this mod has now matured into [Beta Icons Restored and Reimagined](../birr/).
 
 Alternatively, here's an example set of momw-configurator customizations for use with total-overhaul:
 

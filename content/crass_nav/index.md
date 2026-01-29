@@ -1,24 +1,41 @@
-# Crassified Navigation
+---
+title: Crassified Navigation
+description: Get Lost for OpenMW! Hide your map and feel the pain.
+date: 2024-01-24
 
-<style>
+taxonomies:
+  tags:
+    - User Interface
+    - Gameplay
 
-ul.toc {
-    list-style-image: url('/img/crassius.png');
-}
+extra:
+  install_info:
+    data_directories:
+      - .
+    content_files:
+      - Crassified Navigation.omwaddon
 
-</style>
-
-<div align="center"> <img src="../img/crassnav-map.png" alt="Crassius Curio is on the Map." /> </div>
-
-<h1 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Uncle Crassius Doesn't Need A Map. Why Should You?</h1>
+  version: 1.1    
+  nexus_id: 53756
+---
+# Uncle Crassius Doesn't Need A Map. Why Should You?
 
 Crassified Navigation is a simple mod, but meant to be as cursed as possible. It's effectively an OpenMW port of the mod `Get Lost`, spawned by a user request in MMC. But it comes with an extra cursed twist, being that as much of the operative Lua code as possible is embedded directly into the mod's omwaddon.
 
 Nevertheless, it works just as well and easily as anything else.
 
-## Installation
+<!-- more -->
 
-1. Add the following to your [settings.cfg](https://openmw.readthedocs.io/en/stable/reference/modding/paths.html)
+{{ image(src="/img/crassnav-map.png", alt="Crassius Curio is on the Map.", style="border-radius: 8px;") }}
 
-        [Windows]
-        map hidden = true
+{{ install_instructions(describe=true) }}
+
+Also, add the following to your [settings.cfg](https://openmw.readthedocs.io/en/stable/reference/modding/paths.html):
+
+```toml
+[Windows]
+map hidden = true
+```
+
+{% credits(default=true) %}
+{% end %}
