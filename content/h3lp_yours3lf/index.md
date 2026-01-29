@@ -1,20 +1,39 @@
-# H3lp Yours3lf
+---
+title: H3lp Yours3lf
+description: Various helper modules for OpenMW-Lua to improve performance and overall API ergonomics.
+date: 2025-04-27
 
+taxonomies:
+  tags:
+    - Libraries
+    - Dependencies
+    - Gameplay
+    - OpenMW-Lua
+
+extra:
+  install_info:
+    data_directories:
+      - .
+    content_files:
+      - H3lp Yours3lf.esp
+
+version: 0.5
+---
 Sometimes, you just have to h3lp yours3lf.
 
 H3lp Yours3lf is a collection of scripting modules built for openmw. It contains multiple individual interfaces which authors can use to improve performance and ergonomics in their OpenMW-Lua scripts. Additionally, H3lp Yours3lf includes some helper functions for more exotic behaviors, such as detecting the context in which a given script is running.
 
-## Installation
+<!-- more -->
 
-Nothing else is necessary! Hopefully, you have installed this mod as a dependency of another one that needs it.
+{{ install_instructions(describe=true) }}
 
-### Modules
+# Modules
 
-#### S3lf
+## S3lf
 
- s3lf is a replacement for OpenMW's built-in `self` module. It contains all the same contents but saves some footguns in the API and makes certain calls more precise on your behalf, alongside being easier to introspect. This mod should be installed purely as a dependency of others, as it adds nothing on its own except an interface which other scripts may make use of. For scripters, read below to learn about how and why to make use of the `s3lf` interface.
+s3lf is a replacement for OpenMW's built-in `self` module. It contains all the same contents but saves some footguns in the API and makes certain calls more precise on your behalf, alongside being easier to introspect. This mod should be installed purely as a dependency of others, as it adds nothing on its own except an interface which other scripts may make use of. For scripters, read below to learn about how and why to make use of the `s3lf` interface.
 
-##### Using the S3lf Module
+### Using the S3lf Module
 
 It's a fairly common convention in Lua to use the keyword `self` in a table when it... needs to reference itself in some way. OpenMW-Lua subtly teaches you to use its own module `openmw.self` instead, which can break attempts to use the `self` keyword normally, induce subtle bugs, or just be plain weird. Additionally, the API overall is often considered too spread out or confusing to be easily used, with things like health being accessed like `self.type.stats.dynamic.health(self)`. The `s3lf` module will save you these painful indexes with hidden implementation footguns, *and* allow you to use the `self` keyword as you normally would. Compare the normal version to `s3lf.health.current`.
 
@@ -75,7 +94,7 @@ Every `s3lf` object also includes a `display()` method, which will show a neatly
 
 If your mod uses the `s3lf` interface and it is not available, it is recommended you link back to the [mod page](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf) in your error outputs so the user can get ahold of it themselves.
 
-#### ProtectedTable
+## ProtectedTable
 
 A construct designed to make it easy to bind a game system, to a global OpenMW settings group. This makes it easy, for example, to make a setting group which scales actor health and reference it in all scripts with concise notation. For example:
 
@@ -106,7 +125,7 @@ ProtectedTables additionally come with a __tostring method that will show the ma
 
 Finally, due to their nature, please keep in mind that ProtectedTables only work with global setting groups, not player ones. This is to ensure that all possible gameObjects have access to the various values in each group.
 
-#### ScriptContext
+## ScriptContext
 
 Provides an enum describing script contexts and a function to return the current one. Used by the LogMessage Function. Handy for when you would like for a given script or function to be usable regardless of what script context it is being ran in. ScriptContext is not available through an interface and must be `require`d directly, since interfaces are naturally scopes anyway, and this is a somewhat niche usage.
 
@@ -123,7 +142,7 @@ Example:
   end
 ```
 
-#### LogMessage
+## LogMessage
 
 Emits a message to the `~` console from any context. Takes one argument. Re-exported through the `s3lf` module under the name `ConsoleLog`.
 
