@@ -441,7 +441,6 @@ local PlaylistEnvironment = {
     Playback = Playback,
     ---@type table <string, any>
     I = I,
-    require = require,
     math = math,
     string = string,
     ipairs = ipairs,
