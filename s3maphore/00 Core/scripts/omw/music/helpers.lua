@@ -1,11 +1,14 @@
-local debug = require('openmw.debug')
-local storage = require('openmw.storage')
-local vfs = require('openmw.vfs')
+local isOpenMW, debug = pcall(require, 'openmw.debug')
+local storage, vfs, playlistsSection, musicSettings
 
-local playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
-playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
+if isOpenMW then
+    storage = require('openmw.storage')
+    vfs = require('openmw.vfs')
 
-local musicSettings = storage.playerSection('SettingsS3Music')
+    playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
+    playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
+    musicSettings = storage.playerSection('SettingsS3Music')
+end
 
 ---@type S3maphoreStaticStrings
 local Strings
@@ -31,7 +34,10 @@ end
 
 ---@param ... any
 local function debugLog(...)
-    if not musicSettings:get('DebugEnable') then return end
+    if isOpenMW then
+        if not musicSettings:get('DebugEnable') then return end
+    else
+    end
 
     local args = { ... }
     for i = 1, #args do
@@ -43,6 +49,9 @@ local function debugLog(...)
     )
 end
 
+local pathsMatching = isOpenMW and vfs.pathsWithPrefix or error
+local fileExists = isOpenMW and vfs.fileExists or error
+
 local function getTracksFromDirectory(path, exclusions)
     local result = {}
 
@@ -51,7 +60,7 @@ local function getTracksFromDirectory(path, exclusions)
 
     table.insert(exclusions.tracks, '.*/.gitkeep$')
 
-    for fileName in vfs.pathsWithPrefix(path) do
+    for fileName in pathsMatching(path) do
         --- Playlists must have a particular starting prefix in order to be excluded
         for _, playlistName in ipairs(exclusions.playlists) do
             playlistName = 'music/' .. playlistName:lower()
@@ -74,7 +83,7 @@ end
 
 local function getPlaylistFilePaths()
     local result = {}
-    for fileName in vfs.pathsWithPrefix('playlists/') do
+    for fileName in pathsMatching('playlists/') do
         if fileName:find('%.lua$') then
             table.insert(result, fileName)
         end
@@ -83,7 +92,11 @@ local function getPlaylistFilePaths()
     return result
 end
 
-local PlaylistPriority = require 'doc.playlistPriority'
+local PlaylistPriority
+if isOpenMW then
+    PlaylistPriority = require 'doc.playlistPriority'
+else
+end
 
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
@@ -141,12 +154,12 @@ local function initTracksOrder(tracks, randomize)
     local tracksOrder = {}
 
     for i = #tracks, 1, -1 do
-        if not vfs.fileExists(tracks[i]) then
+        if not fileExists(tracks[i]) then
             table.remove(tracks, i)
         end
     end
 
-    for i, track in ipairs(tracks) do
+    for i in ipairs(tracks) do
         tracksOrder[i] = i
     end
 
@@ -161,16 +174,16 @@ local function isPlaylistActive(playlist)
     return playlist.active and next(playlist.tracks) ~= nil
 end
 
-local function getStoredTracksOrder()
+local function OMWGetStoredTracksOrder()
     -- We need a writeable playlists table here.
     return playlistsSection:asTable()
 end
 
-local function setStoredTracksOrder(playlistId, playlistTracksOrder)
+local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
     playlistsSection:set(playlistId, playlistTracksOrder)
 end
 
-local function isInCombat(fightingActors)
+local function OMWIsInCombat(fightingActors)
     return next(fightingActors) ~= nil and debug.isAIEnabled()
 end
 
@@ -205,13 +218,13 @@ local functions = {
     deepToString = deepToString,
     getActivePlaylistByPriority = getActivePlaylistByPriority,
     getPlaylistFilePaths = getPlaylistFilePaths,
-    getStoredTracksOrder = getStoredTracksOrder,
+    getStoredTracksOrder = isOpenMW and OMWGetStoredTracksOrder,
     getTracksFromDirectory = getTracksFromDirectory,
     initMissingPlaylistFields = initMissingPlaylistFields,
     initTracksOrder = initTracksOrder,
-    isInCombat = isInCombat,
+    isInCombat = isOpenMW and OMWIsInCombat,
     isPlaylistActive = isPlaylistActive,
-    setStoredTracksOrder = setStoredTracksOrder
+    setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
 }
 
 ---@param staticStrings S3maphoreStaticStrings
