@@ -497,7 +497,7 @@ local PlaylistEnvironment = {
     --- Takes any number of paramaters and deep prints them, if debug logging is enabled
     ---@param ... any
     print = function(...)
-        helpers.debugLog(aux_util.deepToString({ ... }, 3))
+        helpers.debugLog(helpers.deepToString({ ... }, 3))
     end,
 }
 ```

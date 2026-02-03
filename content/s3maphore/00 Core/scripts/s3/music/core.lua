@@ -448,7 +448,7 @@ local PlaylistEnvironment = {
     --- Takes any number of paramaters and deep prints them, if debug logging is enabled
     ---@param ... any
     print = function(...)
-        helpers.debugLog(aux_util.deepToString({ ... }, 3))
+        helpers.debugLog(helpers.deepToString({ ... }, 3))
     end,
 }
 
@@ -468,7 +468,7 @@ local function playlistCoroutineLoader()
         --- call the resulting function to get the inner playlist array
         ok, result = pcall(result)
         if type(result) ~= 'table' then goto fail end
-        helpers.debugLog(aux_util.deepToString(result, 3))
+        helpers.debugLog(helpers.deepToString(result, 3))
 
 
         for _, playlist in ipairs(result) do
