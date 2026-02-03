@@ -10,6 +10,25 @@ local musicSettings = storage.playerSection('SettingsS3Music')
 ---@type S3maphoreStaticStrings
 local Strings
 
+local function deepToString(val, level, prefix)
+    level = (level or 1) - 1
+
+    local ok, iter, t = pcall(function() return pairs(val) end)
+    if level < 0 or not ok then
+        return tostring(val)
+    end
+
+    local newPrefix = prefix .. '  '
+    local strs = { tostring(val) .. ' {\n' }
+
+    for k, v in iter, t do
+        strs[#strs + 1] = newPrefix .. tostring(k) .. ' = ' .. deepToString(v, level, newPrefix) .. ',\n'
+    end
+
+    strs[#strs + 1] = prefix .. '}'
+    return table.concat(strs)
+end
+
 ---@param ... any
 local function debugLog(...)
     if not musicSettings:get('DebugEnable') then return end
@@ -183,6 +202,7 @@ end
 
 local functions = {
     debugLog = debugLog,
+    deepToString = deepToString,
     getActivePlaylistByPriority = getActivePlaylistByPriority,
     getPlaylistFilePaths = getPlaylistFilePaths,
     getStoredTracksOrder = getStoredTracksOrder,
