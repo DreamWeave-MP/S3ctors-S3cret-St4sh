@@ -8,6 +8,9 @@ if isOpenMW then
     playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
     playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
     musicSettings = storage.playerSection('SettingsS3Music')
+else
+    playlistsSection = {}
+    musicSettings = require('s3maphore.mcm').get('SettingsS3Music')
 end
 
 ---@type S3maphoreStaticStrings
@@ -34,10 +37,7 @@ end
 
 ---@param ... any
 local function debugLog(...)
-    if isOpenMW then
-        if not musicSettings:get('DebugEnable') then return end
-    else
-    end
+    if not musicSettings:get('DebugEnable') then return end
 
     local args = { ... }
     for i = 1, #args do
@@ -49,8 +49,8 @@ local function debugLog(...)
     )
 end
 
-local pathsMatching = isOpenMW and vfs.pathsWithPrefix or error
-local fileExists = isOpenMW and vfs.fileExists or error
+local pathsMatching = isOpenMW and vfs.pathsWithPrefix or lfs.walkdir
+local fileExists = isOpenMW and vfs.fileExists or lfs.walkdir
 
 local function getTracksFromDirectory(path, exclusions)
     local result = {}
@@ -92,11 +92,7 @@ local function getPlaylistFilePaths()
     return result
 end
 
-local PlaylistPriority
-if isOpenMW then
-    PlaylistPriority = require 'doc.playlistPriority'
-else
-end
+local PlaylistPriority = isOpenMW and require('doc.playlistPriority') or require('playlistPriority') -- Safebox - MWSE might be able to use the existing file, will have to check
 
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
@@ -179,12 +175,24 @@ local function OMWGetStoredTracksOrder()
     return playlistsSection:asTable()
 end
 
+local function MWSEGetStoredTracksOrder()
+    return playlistsSection
+end
+
 local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
     playlistsSection:set(playlistId, playlistTracksOrder)
 end
 
+local function MWSESetStoredTracksOrder(playlistId, playlistTracksOrder)
+    playlistsSection[playlistId] = playlistTracksOrder
+end
+
 local function OMWIsInCombat(fightingActors)
     return next(fightingActors) ~= nil and debug.isAIEnabled()
+end
+
+local function MWSEIsInCombat(fightingActors)
+    return next(fightingActors) ~= nil and tes3.worldController.menuController.aiDisabled
 end
 
 ---@param playlists S3maphorePlaylist[]
@@ -218,13 +226,13 @@ local functions = {
     deepToString = deepToString,
     getActivePlaylistByPriority = getActivePlaylistByPriority,
     getPlaylistFilePaths = getPlaylistFilePaths,
-    getStoredTracksOrder = isOpenMW and OMWGetStoredTracksOrder,
+    getStoredTracksOrder = isOpenMW and OMWGetStoredTracksOrder or MWSEGetStoredTracksOrder,
     getTracksFromDirectory = getTracksFromDirectory,
     initMissingPlaylistFields = initMissingPlaylistFields,
     initTracksOrder = initTracksOrder,
-    isInCombat = isOpenMW and OMWIsInCombat,
+    isInCombat = isOpenMW and OMWIsInCombat or MWSEIsInCombat,
     isPlaylistActive = isPlaylistActive,
-    setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
+    setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder or MWSESetStoredTracksOrder,
 }
 
 ---@param staticStrings S3maphoreStaticStrings
