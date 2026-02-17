@@ -37,7 +37,11 @@ end
 
 ---@param ... any
 local function debugLog(...)
-    if not musicSettings:get('DebugEnable') then return end
+    if isOpenMW then
+        if not musicSettings:get('DebugEnable') then return end
+    else
+        if not musicSettings['DebugEnable'] then return end
+    end
 
     local args = { ... }
     for i = 1, #args do
@@ -50,7 +54,7 @@ local function debugLog(...)
 end
 
 local pathsMatching = isOpenMW and vfs.pathsWithPrefix or lfs.walkdir
-local fileExists = isOpenMW and vfs.fileExists or lfs.walkdir
+local fileExists = isOpenMW and vfs.fileExists or lfs.fileexists
 
 local function getTracksFromDirectory(path, exclusions)
     local result = {}
@@ -92,7 +96,7 @@ local function getPlaylistFilePaths()
     return result
 end
 
-local PlaylistPriority = isOpenMW and require('doc.playlistPriority') or require('playlistPriority') -- Safebox - MWSE might be able to use the existing file, will have to check
+local PlaylistPriority = isOpenMW and require('doc.playlistPriority') or require('playlistPriority')
 
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
@@ -192,7 +196,7 @@ local function OMWIsInCombat(fightingActors)
 end
 
 local function MWSEIsInCombat(fightingActors)
-    return next(fightingActors) ~= nil and tes3.worldController.menuController.aiDisabled
+    return next(fightingActors) ~= nil and not tes3.worldController.menuController.aiDisabled
 end
 
 ---@param playlists S3maphorePlaylist[]
