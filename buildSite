@@ -86,6 +86,9 @@ def package_mod(subDir: Path, targetTag: Optional[str]):
 
     # Get the frontmatter so we can read the title
     mod_frontmatter = parse_front_matter(CurrentDir / 'index.md')
+    if mod_frontmatter is None:
+        print(f'The mod {subDir} has no frontmatter, and cannot have a page generated!')
+        return
     title = slugify(mod_frontmatter['title'], True)
 
     # If we've been given a tag, then only build that one
