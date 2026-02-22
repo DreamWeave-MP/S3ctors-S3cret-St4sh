@@ -253,5 +253,4 @@ if __name__ == '__main__':
             ensure_dist_dir()
             packageProcess = Process(target=package_mod, args=(subDir, inputArguments.tag))
             packageProcess.start()
-            packageProcess.join()
 
