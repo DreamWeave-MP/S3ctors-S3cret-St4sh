@@ -693,6 +693,11 @@ do
     end
 end
 
+--- According to capo this is actually wrong and effects are sorted
+--- by application time, starting with the earliest application
+--- of each effect, where stacked effects on the left fade out and
+--- are then added to the right
+--- So this blows, basically
 --- Used to sort arrays of magic effect ids
 ---@param effectA MagicEffectWithParams
 ---@param effectB MagicEffectWithParams
