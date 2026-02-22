@@ -1,26 +1,5 @@
-*.zip
-*.zip.sha*sum.txt
-*sha*sum.txt
-version.txt
-web/build/
-web/site/*/
-!web/site/css
-!web/site/img
-!web/site/js
-web/site/*.md
-web/sha256sums
-web/soupault
-web/soupault-*-linux-x86_64*
-*.~undo-tree~
-*~
-sw_cpp/*
-!sw_cpp/Scripts
-!sw_cpp/Scripts/*
-!sw_cpp/*.omwscripts
-Empowered Races of Tamriel/*
-Survival/*
-mod_metadata_mod/*
-shremiren/frierenshrek_base.mp4
-shremiren/Memory Reboot ⧸ Hatsune Miku & Shrek \[ketQTGwA4Lo].webm
-.vscode/settings.json
-s3maphore/07 Starwind Playlists/music/rickoff/*
+public
+dist
+content/*/changelog.md
+unpublished
+
