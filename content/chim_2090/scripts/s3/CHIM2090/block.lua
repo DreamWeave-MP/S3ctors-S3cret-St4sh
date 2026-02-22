@@ -603,7 +603,7 @@ function Block.handleHit(blockData)
     if blockData.applyDurabilityDamage then
         -- From the OpenMW Wiki:
         -- if a hit is blocked, the shield durability is reduced by incoming damage, no damage mitigation is applied
-        -- (We apply mtigation)
+        -- (We apply mitigation)
         core.sendGlobalEvent('ModifyItemCondition', {
             actor = s3lf.object,
             item = Block.getBlockingItem(),
