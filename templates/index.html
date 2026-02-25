@@ -25,6 +25,7 @@
 
 {% block extra_body %}
 {%- if config.build_search_index -%}
+<pageInfo id="page-info" url="{{ config.base_url }}">
 <script type="text/javascript" src="{{ get_url(path="elasticlunr.min.js") }}"></script>
 <script type="text/javascript" src="{{ get_url(path="js/search.js") }}"></script>
 {%- endif -%}
