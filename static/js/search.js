@@ -146,7 +146,19 @@ function initSearch() {
   
   var initIndex = async function () {
     if (index === undefined) {
-      index = fetch("/search_index.en.json")
+      let indexPath = "/search_index.en.json";
+
+      if (window.location.hostname != "localhost" && window.location.hostname != "127.0.0.1") {
+        let baseUrl = document.getElementById('page-info').getAttribute('url');
+
+        if (baseUrl.endsWith('/')) {
+          baseUrl = baseUrl.substring(0, baseUrl.length - 1)
+        }
+
+        indexPath = baseUrl + indexPath;
+      };
+
+      index = fetch(indexPath)
         .then(
           async function(response) {
             return await elasticlunr.Index.load(await response.json());
