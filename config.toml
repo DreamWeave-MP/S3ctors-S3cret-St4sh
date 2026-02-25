@@ -103,8 +103,8 @@ enable_post_view_navigation = false
 #           Mimetype defaults to "image/x-icon".
 #           The URL should point at a file located
 #           in your site's "static" directory.
-# favicon = "/favicon.png"
-# favicon_mimetype = "image/png"
+favicon = "/img/s3_favicon.png"
+favicon_mimetype = "image/png"
 
 
 # From this point on, all config values are provided by the DreamWeave
