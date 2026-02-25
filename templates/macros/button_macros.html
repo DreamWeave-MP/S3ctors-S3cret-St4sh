@@ -53,8 +53,8 @@
 {%- set game_name = mod_macros::game_name() -%}
 <div id="download-button-stack" class="button-stack">
     <div style="display:flex;">
-        <a id="stable-download-button" class="{{ button_classes }}" href="{{ stable_url }}/{{ page.title }}.zip" title="{{ stable_title }}">Stable</a>
-        <a class="{{ button_classes }}" href="{{ dev_url }}/{{ page.title }}.zip" title="{{ dev_title }}">Dev</a>
+        <a id="stable-download-button" class="{{ button_classes }}" href="{{ stable_url }}/{{ page.title | lower | replace(from=" ", to="_") }}.zip" title="{{ stable_title }}">Stable</a>
+        <a class="{{ button_classes }}" href="{{ dev_url }}/{{ page.title | lower | replace(from=" ", to="_") }}.zip" title="{{ dev_title }}">Dev</a>
     </div>
     <!-- This could be spicy -->
     <!-- we don't properly url-encode the download links here -->
