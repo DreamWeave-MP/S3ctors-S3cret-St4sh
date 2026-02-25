@@ -99,12 +99,7 @@ enable_post_view_navigation = false
 #post_view_navigation_prompt = "Try another mod?"
 
 
-# Optional: Global favicon URL and mimetype.
-#           Mimetype defaults to "image/x-icon".
-#           The URL should point at a file located
-#           in your site's "static" directory.
 favicon = "/img/s3_favicon.png"
-favicon_mimetype = "image/png"
 
 
 # From this point on, all config values are provided by the DreamWeave
