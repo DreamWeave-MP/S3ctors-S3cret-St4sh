@@ -147,9 +147,10 @@ function initSearch() {
   var initIndex = async function () {
     if (index === undefined) {
       let indexPath = "/search_index.en.json";
+      const indexData = document.querySelector('meta[name="search-index-data"]')
 
       if (window.location.hostname != "localhost" && window.location.hostname != "127.0.0.1") {
-        let baseUrl = document.getElementById('page-info').getAttribute('url');
+        let baseUrl = indexData.getAttribute('url');
 
         if (baseUrl.endsWith('/')) {
           baseUrl = baseUrl.substring(0, baseUrl.length - 1)
@@ -157,6 +158,8 @@ function initSearch() {
 
         indexPath = baseUrl + indexPath;
       };
+
+      indexPath = indexPath + `?d=${indexData.getAttribute("build_date")}`;
 
       index = fetch(indexPath)
         .then(
