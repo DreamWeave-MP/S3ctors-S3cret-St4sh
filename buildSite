@@ -94,7 +94,7 @@ def package_mod(subDir: Path, targetTag: Optional[str]):
     # If we've been given a tag, then only build that one
     # We slugify the targetTag also, as it will have underscores,
     # and maybe need lowercased
-    if targetTag and title != targetTag:
+    if targetTag and title != targetTag.split('-')[0]:
         return
 
     # Store all output archives in the dist folder, where the zip name is the title of the mod
