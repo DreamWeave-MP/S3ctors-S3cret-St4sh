@@ -25,9 +25,14 @@
 
 {% block extra_body %}
 {%- if config.build_search_index -%}
-<meta name="search-index-data" url="{{ config.base_url }}" build_date="{{ now() }}">
-<script type="text/javascript" src="{{ get_url(path="elasticlunr.min.js") }}"></script>
-<script type="text/javascript" src="{{ get_url(path="js/search.js") }}"></script>
+  <meta name="search-index-data" url="{{ config.base_url }}" build_date="{{ now() }}">
+  {%- if config.search.index_format == "fuse_json" %}
+    <script type="text/javascript" src="{{ get_url(path="js/fuse.min.js") }}"></script>
+    <script type="text/javascript" src="{{ get_url(path="js/fuseSearch.js") }}"></script>
+  {%- elif config.search.index_format == "elasticlunr_json" %}
+    <script type="text/javascript" src="{{ get_url(path="elasticlunr.min.js") }}"></script>
+    <script type="text/javascript" src="{{ get_url(path="js/elasticSearch.js") }}"></script>
+  {%- endif -%}
 {%- endif -%}
 {% if page and not section %}<script src="{{ get_url(path='js/installModule.js') }}" defer></script>{% endif %}
 {% if page and page.toc and page.extra.use_toc | default(value=true) %}<script src="{{ get_url(path='js/backToToc.js') }}" defer></script>{% endif %}
@@ -58,6 +63,7 @@
         <div class="search-container">
             <input type="text" id="search" placeholder="Search mod pages . . .">
             <div class="search-results">
+                <div class="search-results__header"></div>
                 <div class="search-results__items"></div>
             </div>
         </div>

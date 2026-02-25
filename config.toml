@@ -32,7 +32,7 @@ generate_feeds = true
 feed_filenames = ["rss.xml", "atom.xml"]
 
 [search]
-index_format = "elasticlunr_json"
+index_format = "fuse_json"
 
 
 [markdown]
