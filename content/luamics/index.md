@@ -23,5 +23,4 @@ Luamics is a simple global script that adds a chance for any chest encountered i
 
 {{ install_instructions(describe=true) }}
 
-{% credits(default=true) %}
-{% end %}
+{{ credits(default=true) }}

@@ -14,21 +14,21 @@ extra:
 
   install_info:
     data_directories:
-        - # Required
+        - "# Required"
         - 00 Core
-        - # Recommended
+        - "# Recommended"
         - 01 Tamriel Rebuilt Playlists
         - 02 Project Cyrodiil Playlists
         - 03 Muse Expansion Playlists
         - 06 Songbook of the North
         - 10 Inns and Taverns
-        - # Starwind only!
+        - "# Starwind only!"
         - 07 Starwind Playlists
 
     content_files:
         - S3maphore.esp
 
-    version: 0.62
+  version: 0.62
 ---
 
 <div align="center">
@@ -68,18 +68,7 @@ Any mods which simply add to or replace music Morrowind already provides (EG, in
 S3maphore ships a set of BAIN modules with Playlist Arrays which can be used in conjunction with tracks provided by other mods. Where appropriate, these modules are folder-based and will allow you to extend them yourself.
 
 - [01 Tamriel Rebuilt Playlists](https://www.nexusmods.com/morrowind/mods/47254)
-- [02 Project Cyrodiil Playlists]()
-- []()
-- []()
-- []()
-- []()
-- []()
-- []()
-- []()
-- []()
-- []()
-- []()
-- []()
+- [02 Project Cyrodiil Playlists](https://www.nexusmods.com/morrowind/mods/55779)
 
 ## Usage
 

@@ -15,7 +15,7 @@ extra:
   content_files:
     - Chim_Climbing.omwscripts
 
-version: 0.5
+  version: 0.5
 ---
 CHIM Climbing is my own long-awaited attempt at porting the movement mechanics from the classic [CHIM](https://www.nexusmods.com/morrowind/mods/47378?BH=0) mod I worked on many years ago into OpenMW-Lua. The climbing module is strictly related to, well, climbing!
 This first version focuses exclusively on the concept of mantling, You can now climb and clamber over surfaces which you wouldn't have previously had access to.

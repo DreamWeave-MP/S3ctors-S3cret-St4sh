@@ -85,5 +85,4 @@ Hawk3ye's main settings group is a `Player` scoped storage section called `Setti
 
 1.`Hawk3yeHold` - `inputBinding` - Button/key used to hold zoom. Suggested default is `Mouse Wheel`.
 
-{% credits(default=true) %}
-{% end %}
+{{ credits(default=true) }}

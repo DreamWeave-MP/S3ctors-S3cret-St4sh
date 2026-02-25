@@ -16,7 +16,7 @@ extra:
     content_files:
       - Fargoth Assassins.omwaddon
 
-version: 1.0
+  version: 1.0
 ---
 Well, by now the jig is up.
 
@@ -28,5 +28,4 @@ Fargoth's assassins can be of any (vanilla) race or gender, and will copy any ra
 
 {{ install_instructions(describe=true) }}
 
-{% credits(default=true) %}
-{% end %}
+{{ credits(default=true) }}

@@ -16,7 +16,7 @@ extra:
     content_files:
       - uiModesSlim.esp
     config:
-      - # Instead of ^
+      - "# Instead of ^"
       - .
 
   version: 0.5

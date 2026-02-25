@@ -37,5 +37,4 @@ Also, add the following to your [settings.cfg](https://openmw.readthedocs.io/en/
 map hidden = true
 ```
 
-{% credits(default=true) %}
-{% end %}
+{{ credits(default=true) }}
