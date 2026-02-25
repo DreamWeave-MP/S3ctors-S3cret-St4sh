@@ -1,4 +1,26 @@
-# Starwind Community Patch Project
+---
+title: Starwind Community Patch Project
+description: Fixed assets and years of bug fixes and miscellaneous corrections for Starwind.
+date: 2023-07-19
+
+taxonomies:
+  tags:
+    - Starwind
+    - Patches
+    - TES3MP
+
+extra:
+  install_info:
+    data_directories:
+      - .
+    content_files:
+      - Starwind Community Patch Project.omwaddon
+    fallback:
+      Fonts_Font_0: oxanium-semibold
+      Fonts_Font_2: galactic-basic
+
+  version: 1.41
+---
 
 <h1 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Brought to you by the Starwind Team and all the players on <a href="https://discord.gg/wcMj2b2svh">The Starwind Initiative</a></h1>
 
@@ -8,14 +30,7 @@ Over time as The Starwind Initiative matured, we collected lots of minor bug fix
 
 Community Patch Project also now includes a replacement file for Lua scripts to make their default layout colors look better. This means better compatibility with fancy script mods for Morrowind, basically. Also, a new and improved font, `Oxanium-SemiBold` has been added. Starwind's UI should look better than ever with CPP! Additionally, the `galactic-basic` font has been added as a replacement for daedric fonts.
 
-## Installation
-
-1. Add the following lines to your openmw.cfg to enable the Oxanium and Galactic Basic fonts:
-
-``` toml
-fallback=Fonts_Font_0,oxanium-semibold
-fallback=Fonts_Font_2,galactic-basic
-```
+{{ install_instructions(describe=true) }}
 
 <div align="center"> <img src="../img/modathonbanner2024.png" alt="Modathon 2024" /> </div>
 

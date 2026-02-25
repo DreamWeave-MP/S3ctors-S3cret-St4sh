@@ -1,4 +1,35 @@
-# S3maphore
+---
+title: S3maphore
+description: Modern music management for OpenMW, inspired by MUSE and Dynamic Music.
+date: 2025-06-06
+
+taxonomies:
+  tags:
+    - Music
+    - OpenMW-Lua
+    - Frameworks
+
+extra:
+  nexus_id: 56836
+
+  install_info:
+    data_directories:
+        - # Required
+        - 00 Core
+        - # Recommended
+        - 01 Tamriel Rebuilt Playlists
+        - 02 Project Cyrodiil Playlists
+        - 03 Muse Expansion Playlists
+        - 06 Songbook of the North
+        - 10 Inns and Taverns
+        - # Starwind only!
+        - 07 Starwind Playlists
+
+    content_files:
+        - S3maphore.esp
+
+    version: 0.62
+---
 
 <div align="center">
 
@@ -27,7 +58,7 @@ S3maphore works through a system of playlists, similarly to Dynamic Music or MUS
 
 If you just want to install the mod, stop here. For Lua scripters or playlist developers, view the table of contents for more details.
 
-## Installation
+{{ install_instructions(describe=true) }}
 
 ### Compatibility With Other Music Mods
 

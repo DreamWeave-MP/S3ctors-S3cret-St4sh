@@ -1,4 +1,26 @@
-# UI Modes Slim
+---
+title: UI Modes Slim
+description: Streamlined version of UI Modes, focused on simplified menu interactions.
+date: 2025-03-19
+
+taxonomies:
+  tags:
+    - User Interface
+    - OpenMW-Lua
+    - Hotkeys
+
+extra:
+  install_info:
+    data_directories:
+      - .
+    content_files:
+      - uiModesSlim.esp
+    config:
+      - # Instead of ^
+      - .
+
+  version: 0.5
+---
 
 Streamlined version of UI Modes, focused on streamlined menu interactions
 
@@ -12,10 +34,10 @@ Features (each feature can be separately enabled or disabled in mod settings):
 - Attack button (left mouse click) automatically prepares the last used weapon/spell.
 - Ability to rotate 3rd person camera in inventory mode and during dialogs (controls: left/right arrow keys, controller right stick).
 
-## Installation
+{{ install_instructions(describe=true) }}
 
 Alternatively, you may simply (manually) add the following entry to your openmw.cfg:
-`config=C:\the\location\of\ui_modes_slim`  
+`config=C:/the/location/of/ui_modes_slim`  
 
 For example, if you have the `ui_modes_slim` folder in the same location as openmw.cfg, you can simply do this:
 `config=ui_modes_slim`  
@@ -40,7 +62,7 @@ stats x = 0.0296875
 stats y = 0.0703704
 ```
 
-## Credits
-
+{% credits(default=false) %}
 - Originally written by [Petr Mikheev](https://gitlab.com/ptmikheev)  
 - Stripped down by S3ctor  
+{% end %}

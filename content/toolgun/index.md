@@ -1,8 +1,26 @@
-# Toolgun
+---
+title: Toolgun
+description: Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose built for OpenMW.
+date: 2023-10-17
+
+taxonomies:
+   tags:
+      - Tools
+      - OpenMW-Lua
+      - Exporters
+
+extra:
+   install_info:
+      data_directories:
+         - .
+      content_files:
+         - toolgun.omwaddon
+   version: 0.5
+---
 
 Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose built for OpenMW. Fix floaters, rotate or scale objects to your liking, and then save them all back into a REAL mod you can share with the world after!
 
-## Installation
+{{ install_instructions(describe=true) }}
 
 With that out of the way...
 
@@ -53,9 +71,9 @@ Otherwise, just equip the toolgun and fire to activate it.
 
 ## Credits
 
-Author: **S3ctor & Epoch**
+Author: **S3ctor**
 
-All code was written by S3ctor, NIF assets were converted by Epoch.  
+All code was written by S3ctor.  
 
 Facepunch owns the original Toolgun mesh.  
 
