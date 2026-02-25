@@ -115,7 +115,7 @@ enable_post_view_navigation = false
 # Because the job relies heavily on DreamWeave GitHub Actions, it is not possible
 # To reuse this template on other Git forges.
 github_username = "DreamWeave-MP"
-github_project = "DreamWeave-Mod-Template"
+github_project = "S3ctors-S3cret-St4sh"
 
 
 # Use this field to exclude specific subdirectories
