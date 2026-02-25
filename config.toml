@@ -46,7 +46,7 @@ highlighting = { theme = "dracula-soft" }
 # Defaults to blue.
 # Append -light for light themes, e.g. blue-light
 # Or append -auto, e.g. blue-auto
-accent_color = "green"
+accent_color = "pink"
 
 
 # One of: blue, dark, green, orange, pink, red, light, auto
