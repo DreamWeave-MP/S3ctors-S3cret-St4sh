@@ -653,14 +653,9 @@ S3maphore's main settings group is a `Player` scoped storage section called `Set
 
 There also is another `Player` scoped storage section of note - `S3maphoreActivePlaylistSettings`. All playlists registered by S3maphore can have their active states set by other scripts by setting the key `${PLAYLISTNAME}Active` to `true` or `false`. S3maphore will then automatically respond to this change and disable/enable the playlist accordingly. Every playlist can also be permanently toggled on or off in the settings menu manually.
 
-## Credits
-
-Author: **S3ctor**  
-
+{% credits(default=true) %}
 All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.  
-
 I pour my entire heart, soul, and talent into this community. If you appreciate my work, please, [please consider supporting me on Ko-Fi.](https://ko-fi.com/magicaldave)  
-
 I would do this full-time if I could only afford to.  
-
-Thanks for listening <3  
+Thanks for listening <3 
+{% end %}
