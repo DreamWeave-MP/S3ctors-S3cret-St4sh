@@ -16,7 +16,7 @@ extra:
     content_files:
       - Baldurwind.omwaddon
 
-  version: 0.5
+  version: 0.1.2
 ---
 Baldurwind is a mechanical total conversion for OpenMW. More features are planned, but in essence, Baldurwind's goal is to convert Morrowind into turn-based, party RPG!
 
