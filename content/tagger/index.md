@@ -17,7 +17,7 @@ extra:
     content_files:
       - ModTags.omwscripts
 
-  version: 0.5
+  version: 0.61
 ---
 Tagger is an attempt to reimplement Skyrim's system of adding tags to records/objects in-game, in OpenMW.
 
