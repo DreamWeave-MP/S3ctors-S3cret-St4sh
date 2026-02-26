@@ -13,7 +13,7 @@ extra:
     data_directories:
       - .
 
-  version: 0.82
+  version: 0.83
 ---
 
 Beta Icons Restored and Reimagined provides an alternate glimpse into what might have been. It's based on the [Beta skill icons](https://tcrf.net/Prerelease:The_Elder_Scrolls_III:_Morrowind/Art_and_Textures), which you can find here for reference. However, the beta icons had problems of their own. For one, the rune backgrounds used obfuscated the art a lot for spell icons. Remember, these are displayed at 32x32px for the big spell icons and 16x16px for the small ones. Thus, I took the color palettes of the beta skill icons and extended them to the spell, attribute, and dynamic stat icons. The result is a full suite of character icon replacements (293 in total), best suited for use with [Monochrome UI](https://www.nexusmods.com/morrowind/mods/45174). See below for a preview of all the new icons!
