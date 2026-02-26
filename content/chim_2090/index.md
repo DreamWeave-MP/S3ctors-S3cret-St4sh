@@ -16,7 +16,7 @@ extra:
     content_files:
       - CHIM2090.esp
 
-  version: UNRELEASED
+  version: development
 ---
 
 # Overview
