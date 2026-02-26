@@ -16,7 +16,7 @@ extra:
     content_files:
      - transmog.omwscripts
 
-  version: 0.6
+  version: 0.61
 ---
 
 The Transmog Menu is originally derived from [Cosmetic Overrides for MWSE](https://www.nexusmods.com/morrowind/mods/47713). However, that mod does all its work in an MCM, and I wanted to go all-out here.
