@@ -118,7 +118,7 @@ def get_subdirectories() -> list[Path]:
 def get_latest_changelog(subDir: str, latest_tag: str, url: str) -> str:
     """Return the formatted changelog for commits after the latest tag."""
 
-    latest_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{latest_tag}..HEAD', '--', '.', ]
+    latest_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{latest_tag}...HEAD', '--', f'../*/{subDir}/*', ]
     commitListProcess = subprocess.run(latest_args, check=True, capture_output=True, text=True)
 
     if commitListProcess.returncode != 0:
@@ -143,39 +143,52 @@ def get_intermediate_changelog(subDir: str, url: str, all_tags: list[str]) -> st
     """Return the formatted changelog for commits after the latest tag."""
 
     num_tags = len(all_tags)
+    latest_tag = all_tags[0]
     previous_tag = all_tags[1]
 
     changelog_str = ''
 
-    # print('All tags:')
-    # pprint(all_tags)
-    # print(commit_list_process)
+    pprint(all_tags)
 
     for tag in all_tags:
-        # print(f'Creating changelog for {subDir}, version: {tag}')
-        intermediate_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{previous_tag}..{tag}', '--', '.', ]
-        commit_list_process = subprocess.run(intermediate_args, check=True, capture_output=True, text=True)
+        previous_tag = tag
 
+        if latest_tag == previous_tag:
+            continue
+
+        print(f'Generating changelog for commits between {previous_tag} and {latest_tag}')
+
+        intermediate_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{previous_tag}..{latest_tag}', '--', f'../{subDir}/*', ]
+
+        commit_list_process = subprocess.run(intermediate_args, check=True, capture_output=True, text=True)
         if commit_list_process.returncode != 0:
             raise RuntimeError(f'Listing commits failed: {commitListProcess.stderr}')
 
-        intermediate_commits = commit_list_process.stdout.splitlines()
-        # print(f'Intermediate args: {intermediate_args}')
-        # print(f'Intermediate commits: {intermediate_commits}')
-        tag_name = tag.split('-')[1]
-        changelog_str = f'<details><summary class="no-underline">Version {tag_name}:</summary>'
+        intermediate_commits = commit_list_process.stdout.splitlines()            
 
-        for commit in intermediate_commits:
-            formatted = commit.split()
-            if len(formatted) < 2:
-                raise RuntimeError(f'Incorrect Commit format: {commit}')
+        if len(intermediate_commits) == 0 and latest_tag != all_tags[0]:
+            latest_args = [ 'git', 'log', "--pretty=format:'%h %s'", f'{latest_tag}', '--', f'../{subDir}/*', ]
+            commit_list_process = subprocess.run(intermediate_args, check=True, capture_output=True, text=True)
 
-            commitHash, commitMessage = formatted[0].strip("'"), ' '.join(formatted[1:]).strip("'")
-            changelog_str += f'<a href="{url}/commit/{commitHash}">{commitHash} - {commitMessage}</a><br><br>\n'
+            if commit_list_process.returncode != 0:
+                raise RuntimeError(f'Listing commits failed: {commitListProcess.stderr}')
 
-        changelog_str += '</details>\n'
+            latest_commits = commit_list_process.stdout.splitlines()
 
-        previous_tag = tag
+        if len(intermediate_commits) > 0:
+            changelog_str += f'<details><summary class="no-underline">Version {latest_tag.split('-')[1]}:</summary>'
+
+            for commit in intermediate_commits:
+                formatted = commit.split()
+                if len(formatted) < 2:
+                    raise RuntimeError(f'Incorrect Commit format: {commit}')
+
+                commitHash, commitMessage = formatted[0].strip("'"), ' '.join(formatted[1:]).strip("'")
+                changelog_str += f'<a href="{url}/commit/{commitHash}">{commitHash} - {commitMessage}</a><br><br>\n'
+
+            changelog_str += '</details>\n'
+
+        latest_tag = previous_tag
 
     return changelog_str
 
@@ -197,8 +210,6 @@ if __name__ == '__main__':
     excludeDirs = siteConfig['extra']['excluded_dirs']
 
     os.chdir(Path('content/'))
-    
-    # print(inputArguments)
 
     for subDir in get_subdirectories():
         dirStr = str(subDir)
@@ -210,24 +221,27 @@ if __name__ == '__main__':
             if not inputArguments.repository:
                 raise RuntimeError('No repository was provided, so I cannot make a changelog! It should be in the format: username/repo')
             url = f"https://github.com/{inputArguments.repository}"
-            # print(f'Repo is: {inputArguments.repository}, url is: {url}')
             
             # Read all titles from root index page frontmatters, slugified
             # Use the title in the format $TITLE(un-slugified) Changelog
             # Read all git tags for (slugified) title
             frontmatter = parse_front_matter(CurrentDir / subDir / 'index.md')
 
-            changelog_str = f'---\ntitle: {frontmatter['title']} Changelog\n---\n'
+            changelog_str = f'''---
+title: {frontmatter['title']} Changelog
+slug: changelog
+version: {frontmatter['extra']['version']}
+---
+'''
 
             if not shutil.which('git'):
                 raise RuntimeError('Git is not installed, so I cannot make a changelog!')
 
-            tagPrefix = slugify(frontmatter['title'], True)
             tagListProcess = subprocess.run([
                 'git',
                 'tag',
                 '--list',
-                f'{tagPrefix}-*',
+                f'{dirStr}-*',
                 '--sort=-creatordate'
             ], check=True, capture_output=True, text=True)
 
@@ -235,8 +249,6 @@ if __name__ == '__main__':
                 raise RuntimeError(f'Listing tags failed: {tagListProcess.stderr}')
 
             modReleases = tagListProcess.stdout.splitlines()
-            # print(modReleases)
-            # pprint(tagListProcess)
 
             num_releases = len(modReleases)
             if num_releases > 0:
@@ -246,10 +258,9 @@ if __name__ == '__main__':
 
             changelogPath = subDir / 'changelog.md' 
             changelogPath.write_text(changelog_str)
-            print(f'Wrote changelog:\n{changelog_str}\nto: /content/{dirStr}/changelog.md')
+            print(f'Wrote changelog:\n{changelog_str}\nto: /content/{subDir}/changelog.md with tag prefix: {dirStr}')
 
         if inputArguments.build:
-            # print(f'Packaging {dirStr}')
             ensure_dist_dir()
             packageProcess = Process(target=package_mod, args=(subDir, inputArguments.tag))
             packageProcess.start()
