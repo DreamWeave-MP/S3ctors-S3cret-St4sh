@@ -15,7 +15,7 @@ extra:
     content_files:
       - T4rg3t5.esp
 
-  version: 0.5
+  version: 1.02
 ---
 
 With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
