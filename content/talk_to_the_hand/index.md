@@ -16,5 +16,5 @@ extra:
       - .
     content_files:
       - TTTH.omwscripts
-  version: unreleased
+  version: development
 ---
