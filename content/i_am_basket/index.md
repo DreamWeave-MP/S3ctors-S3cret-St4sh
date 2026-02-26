@@ -16,7 +16,7 @@ extra:
       - I Am Basket.omwaddon
       - I Am Basket.omwscripts
 
-  version: UNRELEASED
+  version: 0.5
 ---
 
 Whoops, didn't feel like writing this one!
