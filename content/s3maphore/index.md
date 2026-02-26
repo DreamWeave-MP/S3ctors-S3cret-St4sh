@@ -28,7 +28,7 @@ extra:
     content_files:
         - S3maphore.esp
 
-  version: 0.62
+  version: 0.63
 ---
 
 Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.
