@@ -38,6 +38,9 @@ index_format = "fuse_json"
 [markdown]
 highlighting = { theme = "dracula-soft" }
 
+[slugify]
+paths = "safe"
+
 [extra]
 # Put all your custom variables here
 
