@@ -15,5 +15,5 @@ extra:
     data_directories:
       - .
 
-  version: 0.5
+  version: 0.50
 ---
