@@ -18,6 +18,12 @@ extra:
   version: 0.5
 ---
 
+With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
+
+Target indicators also grow in size dynamically according to how far away your target is. Additionally, it is impossible to target enemies which are offscreen, and the mod does not use any raycasts unless the `CheckLOS` setting is enabled - what this means for you is no bad targets, and high performance (as much as can be expected from updating a UI element every frame, anyway).
+
+<!-- more -->
+
 <div align="center">
   <figure>
     <img src="../img/t4rg3t5.png" alt="targets icon" width="512" height="512" />
@@ -27,6 +33,10 @@ extra:
   <br>
 </div>
 
+T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators. Additionally, it's very easy to create new target lock icons for T4rg3t5 for your own mods or personal use.
+
+Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (mostly) useless.
+
 ## Requirements
 
 <div align="center">
@@ -34,16 +44,6 @@ extra:
   <a href="https://openmw.org/downloads"><img src="../img/openmwRequired.svg" alt="H3lp Yours3lf"></a>
   <br>
 </div>
-
-## Overview
-
-With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
-
-Target indicators also grow in size dynamically according to how far away your target is. Additionally, it is impossible to target enemies which are offscreen, and the mod does not use any raycasts unless the `CheckLOS` setting is enabled - what this means for you is no bad targets, and high performance (as much as can be expected from updating a UI element every frame, anyway).
-
-T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators. Additionally, it's very easy to create new target lock icons for T4rg3t5 for your own mods or personal use.
-
-Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (mostly) useless.
 
 ## Core Features
 

@@ -19,10 +19,13 @@ extra:
 
   version: 0.5
 ---
+Tagger is an attempt to reimplement Skyrim's system of adding tags to records/objects in-game, in OpenMW.
 
 While eventually Skyrim's literal format could be supported, this is most likely a long ways off and not necessarily practical for Morrowind modders. MTM attempts to bridge the gap, by making it easy to create and use tags for classifying objects - like, which cells are dungeons, or merchants, or distinguishing bandages from regular medical supplies, etc.
 
 End users will need this as a dependency of other mods (hopefully), but it doesn't do much of anything in itself. Read on past the installation guide for developer's notes.
+
+<!-- more -->
 
 ## Using Tags
 

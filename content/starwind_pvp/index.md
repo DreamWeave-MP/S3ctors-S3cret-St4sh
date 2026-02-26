@@ -18,6 +18,7 @@ extra:
 ---
 
 Presently contained in this archive are only the assets developed for it.
+<!-- more -->
 
 {% credits(default=true) %}
 Author: **TSI Team**

@@ -23,6 +23,8 @@ The Transmog Menu is originally derived from [Cosmetic Overrides for MWSE](https
 
 Transmog Menu is much closer to a full reimplementation of the Morrowind inventory menu. It does as much as the API is presently capable of in UI terms in as modular a way as possible, constituting just over three thousand lines of annotated code I hope can prove useful to someone else as well, covering subjects such as [the new Actions/Triggers API](https://openmw.readthedocs.io/en/latest/reference/lua-scripting/openmw_input.html), [loads and loads of from-scratch UI](https://openmw.readthedocs.io/en/latest/reference/lua-scripting/openmw_ui.html), and [OpenMW's native MCM](https://openmw.readthedocs.io/en/latest/reference/lua-scripting/interface_settings.html)
 
+<!-- more -->
+
 Transmog Menu isn't fully complete and I have broader goals for it, but right now I'm golfing it down as much as possible so that I can extend it more easily and hopefully make it more useful for other scripters on the way.
 
 ## Usage

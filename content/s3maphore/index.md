@@ -31,20 +31,19 @@ extra:
   version: 0.62
 ---
 
-<div align="center">
-
-  <figure>
-    <img src="../img/S3maphoreBanner.png" alt="semaphore icon" width="512" height="608" />
-    <figcaption><h2 class="notoc">Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
-  </figure>
-
-  <br>
-  <br>
-</div>
-
 Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.
 
 I simply decided existing music solutions were not good enough after OpenMW's music system was dehardcoded. The underlying playlist mechanism used by OpenMW is very powerful - but due to a disagreement about playlist conflict resolution, the public API for music playlists was removed. Since that time, version 0.49 has straightforwardly not been living up to its true potential.
+  
+<!-- more -->
+<div align="center">
+  <figure>
+    <img src="../img/S3maphoreBanner.png" alt="semaphore icon" style="width:100%;height:100%;" />
+    <figcaption><h2 class="notoc">Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
+  </figure>
+  <br>
+  <br>
+</div>
 
 S3maphore fixes that. Why call it S3maphore?
 

@@ -28,6 +28,8 @@ The Starwind Community patch project was born as a fix for crashes we found afte
 
 Over time as The Starwind Initiative matured, we collected lots of minor bug fixes we needed to implement for multiplayer and wanted to make sure they were available to all Starwind players. Everything built here is available in the [Starwind-Builder](https://gitlab.com/modding-openmw/Starwind-Builder) repo, which is also used for deploying all content patches for TSI.
 
+<!-- more -->
+
 Community Patch Project also now includes a replacement file for Lua scripts to make their default layout colors look better. This means better compatibility with fancy script mods for Morrowind, basically. Also, a new and improved font, `Oxanium-SemiBold` has been added. Starwind's UI should look better than ever with CPP! Additionally, the `galactic-basic` font has been added as a replacement for daedric fonts.
 
 {{ install_instructions(describe=true) }}

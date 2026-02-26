@@ -22,7 +22,9 @@ extra:
   version: 0.5
 ---
 
-Streamlined version of UI Modes, focused on streamlined menu interactions
+Streamlined version of UI Modes, focused on simplified menu interactions.
+
+<!-- more -->
 
 **Requires OpenMW 0.49 or newer!**
 

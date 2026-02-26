@@ -21,6 +21,8 @@ extra:
 
 The Starwind Merged Plugin Project began as an effort to consolidate the Starwind ESM files, to eventually make them entirely indepentent of Morrowind.esm and friends. At this time, the merged plugin project primarily focuses on the vanilla ESM files, with additional content stripped out.
 
+<!-- more -->
+
 {{ install_instructions(describe=true) }}
 
 NOTE: Only use one of the two plugins, either the Singleplayer version or the Multiplayer one. They are meaningfully different.  

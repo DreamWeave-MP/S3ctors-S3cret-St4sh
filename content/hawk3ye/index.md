@@ -18,7 +18,9 @@ extra:
   version: 0.51
   nexus_id: 57125
 ---
+OpenMW Zooming, with high degrees of interoperability.
 Hawk3ye was inspired by [Zoom To See](https://www.nexusmods.com/morrowind/mods/57046?tab=description). However, when eyeing it for my own personal setup, I found the mod was broken and wasn't really very satisfying overall. So, I refactored it for greater reliability and mod compatibility.
+<!-- more -->
 
 Two simple keybinds are added - `Toggle Zoom` and `Hold Zoom`. The recommended defaults are `Z` and `Mouse Wheel Click`, respectively. Zooming in uses a smooth, exponential curve to decrease/increase the camera FOV as needed.  
 
