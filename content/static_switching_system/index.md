@@ -14,5 +14,5 @@ extra:
       - .
     content_files:
       - Static Switching System.esp
-  version: 0.51
+  version: 0.50
 ---
