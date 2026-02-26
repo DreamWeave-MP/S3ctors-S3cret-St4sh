@@ -15,7 +15,7 @@ extra:
     content_files:
       - Hawk3ye.esp
 
-  version: 0.51
+  version: 0.53
   nexus_id: 57125
 ---
 OpenMW Zooming, with high degrees of interoperability.
