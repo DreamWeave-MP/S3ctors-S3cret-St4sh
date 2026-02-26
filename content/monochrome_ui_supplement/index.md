@@ -7,7 +7,7 @@ extra:
   install_info:
     data_directories:
       - .
-  version: 1.0
+  version: 1.1
 ---
 
 Monochrome UI supplement is, well... a monochrome UI supplement.
