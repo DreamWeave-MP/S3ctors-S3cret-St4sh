@@ -19,7 +19,7 @@ extra:
       - "# Instead of ^"
       - .
 
-  version: 0.5
+  version: 0.2
 ---
 
 Streamlined version of UI Modes, focused on simplified menu interactions.
