@@ -14,7 +14,7 @@ extra:
     data_directories:
       - .
 
-  version: 0.5
+  version: 0.50
 ---
 
 Presently contained in this archive are only the assets developed for it.
