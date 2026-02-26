@@ -55,6 +55,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ inputs.github_token }}
         with:
+          generate_release_notes: true
           tag_name: ${{ needs.release_cleanup.outputs.release_name }}
           prerelease: ${{ github.ref_type != 'tag' }}
           files: dist/*.zip
