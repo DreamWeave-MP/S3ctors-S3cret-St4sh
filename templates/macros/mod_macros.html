@@ -126,7 +126,8 @@ config="{{- mod_macros::config() -}}"
 {% macro stable_url() %}
 {% set repo_url = mod_macros::repo_url() %}
 {% set version = mod_macros::version() %}
-{{- repo_url ~ "/releases/download/" ~ version -}}
+{% set mod_name = page.title | lower | replace(from=" ", to="_") %}
+{{- repo_url ~ "/releases/download/" ~ mod_name ~ "-" ~ version -}}
 {% endmacro stable_url %}
 
 
