@@ -84,7 +84,7 @@ extra:
   #use_toc: false
 
   # Curently-available version of your mod/app. Required!
-  version: 4.2.0
+  version: 0.5
 ---
 
 Get started using the mod template by [forking the repository](https://github.com/DreamWeave-MP/DreamWeave-Mod-Template/fork) on GitHub.
