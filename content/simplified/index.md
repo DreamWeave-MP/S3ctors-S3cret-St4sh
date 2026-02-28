@@ -8,7 +8,7 @@ tags = [ "Different", "Tag", "Names"]
 [extra]
 hide_download_bar = true
 use_toc = false
-version = "0.51"
+version = "0.1"
 +++
 
 This is much better, isn't it?
