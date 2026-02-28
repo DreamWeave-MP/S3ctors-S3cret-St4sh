@@ -62,12 +62,12 @@ extra:
 
   # Use this field if you're hosting from another castle.
 # Both `owner` and `repo` are required, but `giscus` is not.
-  offsite_host:
-    owner: DreamWeave-MP
-    repo: S3LightFixes
-    giscus:
-      repo_id: R_kgDONYe6SQ
-      category_id: DIC_kwDONYe6Sc4C0Jkq
+  #offsite_host:
+    #owner: DreamWeave-MP
+    #repo: S3LightFixes
+    #giscus:
+      #repo_id: R_kgDONYe6SQ
+      #category_id: DIC_kwDONYe6Sc4C0Jkq
 
   # If true, only show the frontmatter description on index pages
   # If you want to hide the summary text completely
