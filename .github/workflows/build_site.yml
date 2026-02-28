@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Write Changelogs
         run: |
@@ -32,6 +34,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Build Releases
         run: |
