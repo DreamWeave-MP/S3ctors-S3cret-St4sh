@@ -1,0 +1,268 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Static Switcher Module",
+    "type": "object",
+    "properties": {
+        "log_name": {
+            "type": "string",
+            "description": "Optional name for logging purposes"
+        },
+        "replace_names": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "description": "List of cell names to replace objects within"
+        },
+        "exterior_cells": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "x": {
+                        "type": "integer"
+                    },
+                    "y": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "x",
+                    "y"
+                ],
+                "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "List of exterior cell coordinates to replace objects in"
+        },
+        "ignore_records": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "description": "List of records to ignore when replacing objects for this module"
+        },
+        "replace_meshes": {
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "type": "string"
+                }
+            },
+            "minProperties": 1,
+            "description": "Mapping of mesh paths to replace"
+        },
+        "instances": {
+            "type": "object",
+            "description": "set of specific gameObjects to attempt replacing or altering",
+            "patternProperties": {
+                "^.*\\.(esm|esp|esl|omwaddon|omwgame)$": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[0-9]+$": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "oneOf": [
+                                    {
+                                        "properties": {
+                                            "replace": {
+                                                "type": "object",
+                                                "patternProperties": {
+                                                    "^.*$": {
+                                                        "type": "number",
+                                                        "minimum": 0,
+                                                        "maximum": 1
+                                                    }
+                                                },
+                                                "additionalProperties": false
+                                            },
+                                            "once": {
+                                                "type": "boolean",
+                                                "description": "Whether to attempt replacing this object only once, or each time it spawns."
+                                            }
+                                        },
+                                        "required": [
+                                            "replace"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    {
+                                        "properties": {
+                                            "transform": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "scale": {
+                                                        "oneOf": [
+                                                            {
+                                                                "type": "number",
+                                                                "description": "Fixed scale value"
+                                                            },
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "min": {
+                                                                        "type": "number",
+                                                                        "description": "Minimum scale (optional)"
+                                                                    },
+                                                                    "max": {
+                                                                        "type": "number",
+                                                                        "description": "Maximum scale (required)"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "max"
+                                                                ],
+                                                                "additionalProperties": false,
+                                                                "description": "Random range for scale"
+                                                            }
+                                                        ],
+                                                        "description": "Either fixed value or {min?, max} range"
+                                                    },
+                                                    "rotate": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "x": {
+                                                                "type": "number"
+                                                            },
+                                                            "y": {
+                                                                "type": "number"
+                                                            },
+                                                            "z": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "anyOf": [
+                                                            {
+                                                                "required": [
+                                                                    "x"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "required": [
+                                                                    "y"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "required": [
+                                                                    "z"
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform_type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "relative",
+                                                            "absolute"
+                                                        ],
+                                                        "default": "relative",
+                                                        "description": "Whether transformations should be applied relative to existing values (default) or as absolute replacements"
+                                                    }
+                                                },
+                                                "additionalProperties": false
+                                            }
+                                        },
+                                        "required": [
+                                            "transform"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            },
+                            "minItems": 1
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false,
+            "examples": [
+                {
+                    "Morrowind.esm": {
+                        "67647": [
+                            {
+                                "replace": {
+                                    "dremora": 0.25,
+                                    "dremora_special_fyr": 0.01,
+                                    "dremora_gothren_guard2": 0.33
+                                }
+                            },
+                            {
+                                "transform": {
+                                    "scale": 1.5,
+                                    "rotate": [
+                                        0,
+                                        90,
+                                        0
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "oneOf": [
+        {
+            "allOf": [
+                {
+                    "required": [
+                        "instances"
+                    ],
+                    "not": {
+                        "anyOf": [
+                            {
+                                "required": [
+                                    "replace_names"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "exterior_cells"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "replace_meshes"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "allOf": [
+                {
+                    "required": [
+                        "replace_meshes"
+                    ]
+                },
+                {
+                    "anyOf": [
+                        {
+                            "required": [
+                                "replace_names"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "exterior_cells"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "not": {
+                "instances": "object"
+            }
+        }
+    ],
+    "additionalProperties": false
+}

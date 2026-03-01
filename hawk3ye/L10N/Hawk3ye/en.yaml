@@ -1,0 +1,24 @@
+Hawk3yeNAME: "Hawk3ye - Manual Zooming"
+Hawk3yePageDesc: "Control zoomed FOV and speed, or disable the mod entirely."
+Hawk3yeConfiguration: "Core Settings"
+
+Hawk3yeEnable: "Enable"
+Hawk3yeEnableDescription: "Disable the whole thing."
+
+Hawk3yeZoomFOV: "Zoomed FOV"
+Hawk3yeFOVDescription: "FOV when fully zoomed in. Default is 42."
+
+Hawk3yeZoomSpeed: "Zoom Speed"
+Hawk3yeZoomDescription: "Literal time taken to completely zoom in. Default is 0.75"
+
+Hawk3yeToggle: "Zoom Toggle Binding"
+Hawk3yeToggleDesc: "This binding will switch the zoom state regardless of whether it's currently enabled or not."
+
+Hawk3yeToggleSetting: ""
+Hawk3yeToggleSettingDesc: ""
+
+Hawk3yeHold: "Zoom Hold Binding"
+Hawk3yeHoldDesc: "This bind will enable or disable zoom as it is pressed and released. Either state is overridden by the toggle binding."
+
+Hawk3yeHoldSetting: ""
+Hawk3yeHoldSettingDesc: ""
