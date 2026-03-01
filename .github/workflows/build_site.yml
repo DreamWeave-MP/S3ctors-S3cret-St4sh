@@ -1,0 +1,60 @@
+on:
+  workflow_dispatch:
+  push:
+    tags: '*'
+    branches:
+      - main
+name: Build and deploy GH Pages
+jobs:
+  build-site:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Write Changelogs
+        run: |
+          ./buildSite --repository ${{ github.repository }} --changelog
+
+      - name: build_and_deploy
+        uses: shalzz/zola-deploy-action@v0.22.1
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release_cleanup:
+    uses: DreamWeave-MP/StroggForge/.github/workflows/createRelease.yml@v6
+    secrets: inherit
+
+  build-mods:
+    needs: release_cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build Releases
+        run: |
+          # Changelog generator script needs to be able to read the repo url
+          ARGS="--repository ${{ github.repository }} --build --changelog "
+
+          if [ ${{ needs.release_cleanup.outputs.release_name }} != 'development' ]; then
+            # This is sensitive to having multiple hyphens in the tag name, so don't do it - use underscores instead
+            # the format is $MODNAME-$VERSION for multi-page sites, or just $VERSION for single-page sites
+            ARGS+="--tag $( echo ${{ needs.release_cleanup.outputs.release_name }} | cut -f 1 -d '-') "
+          fi
+
+          ./buildSite $ARGS
+
+      - name: Upload releases
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ inputs.github_token }}
+        with:
+          tag_name: ${{ needs.release_cleanup.outputs.release_name }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          files: dist/*.zip
