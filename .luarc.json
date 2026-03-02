@@ -1,4 +1,9 @@
 {
+    "completion": {
+        "callSnippet": "Both",
+        "displayContext": 5,
+        "showWord": false
+    },
     "runtime": {
         "version": "LuaJIT",
         "pathStrict": false,
