@@ -1,8 +1,33 @@
 {
     "runtime": {
         "version": "LuaJIT",
+        "pathStrict": false,
         "path": [
-            "./content/?.lua"
+            "./content/baldurwind/?.lua",
+            "./content/birr/?.lua",
+            "./content/chim_2090/?.lua",
+            "./content/chim_climbing/?.lua",
+            "./content/crass_nav/?.lua",
+            "./content/fargoth_assassins/?.lua",
+            "./content/h3lp_yours3lf/?.lua",
+            "./content/hawk3ye/?.lua",
+            "./content/i_am_basket/?.lua",
+            "./content/luamics/?.lua",
+            "./content/monochrome_ui_supplement/01 Pre 0.51 Color Correction Script/?.lua",
+            "./content/p37z/?.lua",
+            "./content/s3maphore/00 Core/?.lua",
+            "./content/s3ui/?.lua",
+            "./content/sh4des/?.lua",
+            "./content/starwind_map_expansion/?.lua",
+            "./content/starwind_pvp/?.lua",
+            "./content/static_switching_system/?.lua",
+            "./content/sw_cpp/?.lua",
+            "./content/sw_merged/?.lua",
+            "./content/t4rg3t5/?.lua",
+            "./content/tagger/?.lua",
+            "./content/talk_to_the_hand/?.lua",
+            "./content/transmog/?.lua",
+            "./content/ui_modes_slim/?.lua"
         ]
     },
     "workspace.library": [
