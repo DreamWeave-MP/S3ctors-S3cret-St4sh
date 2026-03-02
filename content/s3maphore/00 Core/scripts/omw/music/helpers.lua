@@ -14,6 +14,7 @@ end
 local Strings
 
 local function deepToString(val, level, prefix)
+    prefix = prefix or ''
     level = (level or 1) - 1
 
     local ok, iter, t = pcall(function() return pairs(val) end)
