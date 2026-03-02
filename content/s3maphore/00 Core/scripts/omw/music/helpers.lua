@@ -49,6 +49,26 @@ local function debugLog(...)
     )
 end
 
+--- Takes a table as input and returns a read-only one.
+--- Commits seppuku if the input is not a table, so do be careful
+---@param inTable table<any, any>
+---@return table<any, any>
+local function makeReadOnly(inTable)
+    if type(inTable) ~= 'table' then
+        error(
+            ('Input value to makeReadOnly %s was not a table!'):format(inTable)
+        )
+    end
+
+    return setmetatable({}, {
+        __index = inTable,
+        __newindex = function()
+            error(debug.traceback(('Write attempt to read-only table %s'):format(inTable), 3))
+        end,
+        __metatable = false,
+    })
+end
+
 local pathsMatching = isOpenMW and vfs.pathsWithPrefix or error
 local fileExists = isOpenMW and vfs.fileExists or error
 
@@ -224,6 +244,7 @@ local functions = {
     initTracksOrder = initTracksOrder,
     isInCombat = isOpenMW and OMWIsInCombat,
     isPlaylistActive = isPlaylistActive,
+    makeReadOnly = makeReadOnly,
     setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
 }
 
