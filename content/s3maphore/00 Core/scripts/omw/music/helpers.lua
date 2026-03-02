@@ -2,8 +2,8 @@ local isOpenMW, debug = pcall(require, 'openmw.debug')
 local storage, vfs, playlistsSection, musicSettings
 
 if isOpenMW then
-    storage = require('openmw.storage')
-    vfs = require('openmw.vfs')
+    storage = require 'openmw.storage'
+    vfs = require 'openmw.vfs'
 
     playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
     playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
