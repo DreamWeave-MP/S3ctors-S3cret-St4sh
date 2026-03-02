@@ -1,12 +1,12 @@
 require 'doc.s3maphoreTypes'
 
-local ambient = require('openmw.ambient')
+local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
-local core = require('openmw.core')
+local core = require 'openmw.core'
 local input = require 'openmw.input'
-local self = require('openmw.self')
-local storage = require('openmw.storage')
-local types = require('openmw.types')
+local self = require 'openmw.self'
+local storage = require 'openmw.storage'
+local types = require 'openmw.types'
 local util = require 'openmw.util'
 local vfs = require 'openmw.vfs'
 
@@ -14,26 +14,26 @@ local I = require 'openmw.interfaces'
 
 local MusicBanner = require 'scripts.s3.music.banner'
 
-local musicSettings = storage.playerSection('SettingsS3Music')
+local musicSettings = storage.playerSection 'SettingsS3Music'
 
-local activePlaylistSettings = storage.playerSection('S3maphoreActivePlaylistSettings')
+local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
 activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
 
 local registeredPlaylists = {}
 
 local forceSkip = false
-local BattleEnabled = musicSettings:get('BattleEnabled')
-local ForceFinishTrack = musicSettings:get('ForceFinishTrack')
+local BattleEnabled = musicSettings:get 'BattleEnabled'
+local ForceFinishTrack = musicSettings:get 'ForceFinishTrack'
 
-local ForcePlaylistChangeOnFriendlyExteriorTransition = musicSettings:get(
-    'ForcePlaylistChangeOnFriendlyExteriorTransition')
+local ForcePlaylistChangeOnFriendlyExteriorTransition = musicSettings:get
+    'ForcePlaylistChangeOnFriendlyExteriorTransition'
 
-local ForcePlaylistChangeOnHostileExteriorTransition = musicSettings:get(
-    'ForcePlaylistChangeOnHostileExteriorTransition')
+local ForcePlaylistChangeOnHostileExteriorTransition = musicSettings:get
+    'ForcePlaylistChangeOnHostileExteriorTransition'
 
-local OverworldSkip = musicSettings:get('ForcePlaylistChangeOnOverworldTransition')
+local OverworldSkip = musicSettings:get 'ForcePlaylistChangeOnOverworldTransition'
 
-local FadeOutDuration = musicSettings:get('FadeOutDuration')
+local FadeOutDuration = musicSettings:get 'FadeOutDuration'
 
 local Strings = require 'scripts.s3.music.staticStrings'
 local helpers = require 'scripts.omw.music.helpers' (Strings)
