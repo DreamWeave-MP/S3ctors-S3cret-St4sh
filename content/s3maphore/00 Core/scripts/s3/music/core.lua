@@ -1,7 +1,6 @@
 require 'doc.s3maphoreTypes'
 
 local ambient = require('openmw.ambient')
-local aux_util = require 'openmw_aux.util'
 local async = require 'openmw.async'
 local core = require('openmw.core')
 local input = require 'openmw.input'
@@ -673,7 +672,7 @@ local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
 
 local previousCell
 
-local function onFrame(dt)
+local function onFrame(_)
     if not self.cell then return end
 
     if queuedEvent then
