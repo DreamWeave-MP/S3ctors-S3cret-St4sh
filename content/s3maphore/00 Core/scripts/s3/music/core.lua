@@ -488,7 +488,7 @@ end
 
 -- Create the coroutine
 local playlistLoaderCo = coroutine.create(playlistCoroutineLoader)
-local playlistCount = 3
+local playlistCount = 0
 
 ---@return boolean? canPlayback if true, loading has finished and playback can start
 local function loadNextPlaylistStep()
