@@ -1,69 +1,30 @@
-# Welcome to the DreamWeave Mod Template!
+# S3ctor's S3cret St4sh
 
-The Mod Template is designed to be an easy-to-use, batteries-included means for you to self-host your mods and applications.
-It's built on Zola, relying on its powerful templating and macros to provide a wide variety of community interaction and distribution features you won't find elsewhere.
+Collection of all mods OpenMW Mods developed by S3ctor, Lua and otherwise. From now to the end of time, you'll find everything I make for Morrowind here. That's a promise, Nexus. You can bookmark [this URL](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/) to keep up-to-date with all my solo and collaborative releases.
 
-## What it offers:
+If you just wanna download everything, you can do so from the above link. Follow these links for a description and individual download for each of my mods.
 
-- Optional Giscus integration for comments
-- Optional RSS/Atom feed generation for readers to subscribe
-- Optional Auto-generated install instructions (install_instructions shortcode)
-- Optional pre-formatted credits sections (credits shortcode)
-- Optional Search with elasticlunr.js
-- Optional page view counts provided by GoatCounter
-- Automatic packaging and uploading for all mods
-- Mod manager download buttons for [ModdingLinked MO2](https://www.nexusmods.com/site/mods/874) or [umo](https://modding-openmw.gitlab.io/umo/) using the modl:// spec
-- Various color palettes & styles
-- Unlimited taxonomy types to sort your site however you want.
+<div id="modMarker"></div>
 
-## Okay, How Do I Use It?
+## Credits
 
-First, decide if you want a single-page site or not. The template's optimized out of the box for single-page sites, but you can host everything on a single site if you want.
+Author: **S3 Nation**  
+I made this repository and website, but all my works are built upon the shoulders of giants.  
+I'm just a very persistent monkey with a compiler.  
 
-Then, fork this repository on GitHub. Clone it onto your computer, and open `config.toml`. This document contains all the global configuration values for your site, defining where it's hosted, whether to use feeds and search, etc.
-It's crucial you open this file and set the correct values for your site, or it will break - badly.
+- Special thanks to:
 
-### The Mandatory Stuff
-First, set the base_url. The default one is `https://DreamWeave-MP.github.io/DreamWeave-Mod-Template`. It should look like this: `https://OWNER_USERNAME.github.io/REPO_NAME`, where `OWNER_USERNAME` is either the account or the organization that owns the repo.
+[JohnnyHostile](https://gitlab.com/modding-openmw), owner of [modding-openmw.com](https://modding-openmw.com) for making the template this repo is based on, and welcoming me so graciously as part of the MOMW team.  
 
-Now, scroll down to `[extra]` and set github_username and github_project appropriately. Don't leave yet!
+[Settyness](https://anfinitinetwork.com/forum/), my newest partner in crime and an excellent shitposter. He's a true inspiration and a really funny dude.  
+The rest of the [MOMW](https://modding-openmw.com/about/) and [OpenMW](https://openmw.org/the-team/) team, all of whom I consider to be excellent colleagues and friends.  
 
-`giscus` is used to set up comments for your page. This is optional if you use it, but you ***really*** need to change or delete it, because it will point to the mod template's comment section out of the box.
+[Epoch](https://github.com/EpochWon), who's inspired my own (minor) interest in post-processing, contributed to some components of this repo, and directly inspired the creation of [Morrobroom](https://github.com/magicaldave/Morrobroom/releases/tag/Latest), my [Trenchbroom](https://trenchbroom.github.io) compiler for Morrowind.  
 
-`goatcounter_username` is mandatory to enable goatcounter. PLEASE also set this up for yourself or disable it entirely, since your page visits will be tracked by DreamWeave's goatcounter instance if you don't. Of course, you're more than welcome to let us track your page views if you want.
+[Ignatious](https://next.nexusmods.com/profile/IgnatiousS/), the creator of Starwind, my mentor, and very close friend.  
 
-Finally, if you want a multi-page site, set `segment_versions = true`. This will ensure your git releases have properly set versions for each different thing you publish.
+The rest of the [Morrowind community](https://discord.gg/pqkUvKfG3q), for whom this is a gift. I genuinely hope you all enjoy what I've put together for you here.  
 
-Then, open `content/_index.md`. It'll look like this:
-```markdown
-+++
+The [MWSE team](https://mwse.github.io/MWSE/#authors), who are all really cool folks that carried our community for years while OpenMW was waking itself up. You all constantly inspire me to break my own limits, and the engine's.  
 
-# For multi-page sites, simply delete or comment out this config option
-redirect_to = "home"
-sort_by = "title"
-
-+++
-```
-
-Delete this line: `redirect_to = "home"`. Now, your homepage will be browseable. You now have a multi-page site!
-
-Go back to the top.
-
-### The Fun Stuff
-
-Decide what you want your `title`, and `logo_text` to be. These will be shown on all pages. The `generate_feeds` option determines whether to generate RSS and atom feeds, and enabling `build_search_index` will make your site searchable.
-
-If you want to use additional *taxonomies*, for sorting your pages and posts, you may do so under the `taxonomies` section. By default, the only built-in taxonomy is `tags`, effectively for sorting mods by category.
-
-By default, the top bar is disabled, but you can re-enable it by uncommenting `menu_items` and adding your own entries to it.
-
-## The Rest
-
-Now your site's up and running. You've got the basics down! There's a bit more for you to learn, though.
-Check out `content/home/index.md` and `content/simplified/index.md`. Here you'll see examples of what your pages can look like (and also more documentation on how to use the mod template).
-You *need* to build frontmatter for every mod. That's the section between `---` or `+++`. `simplified/index.md` contains the most minimal frontmatter possible, whereas `home/index.md` contains all possible fields.
-Your frontmatter may be yaml, using `---`, or TOML, using `+++` before and after your frontmatter.
-
-For more info, and guides on expanding the site yourself, check out [Zola's Docs](https://www.getzola.org/documentation/getting-started/overview/).
-
-Thanks for checking out the DreamWeave Mod Template. Please consider sponsoring DreamWeave on [Ko-Fi](https://ko-fi.com/magicaldave)
+AltheaR, whose zealous moderation on Nexus inspired the creation of this repository. None of this would have happened without you.  
