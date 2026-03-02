@@ -1,0 +1,12 @@
+{
+    "runtime": {
+        "version": "LuaJIT",
+        "path": [
+            "./content/?.lua"
+        ]
+    },
+    "workspace.library": [
+        "../starwind-builder/src/Community Patch Project/Scripts/doc/?.lua",
+        "content/s3maphore/?.lua"
+    ]
+}
