@@ -1,5 +1,5 @@
 local isOpenMW, debug = pcall(require, 'openmw.debug')
-local fileExists, musicSettings, pathsMatching, playlistsSection, storage, vfs
+local async, fileExists, musicSettings, pathsMatching, playlistsSection, storage, vfs
 
 ---@type PlaylistPriority
 local PlaylistPriority = require 'doc.playlistPriority'
@@ -7,6 +7,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 local Strings = require 'scripts.s3.music.staticStrings'
 
 if isOpenMW then
+    async = require 'openmw.async'
     storage = require 'openmw.storage'
     vfs = require 'openmw.vfs'
 
@@ -249,6 +250,29 @@ local function OMWGetStoredTracksOrder()
     return playlistsSection:asTable()
 end
 
+---@param groupName string
+---@return UpdatingSettingTable
+local function OMWGetUpdatingSettingsTable(groupName)
+    local settingTable = {}
+    local storageSection = storage.playerSection(groupName)
+
+    local function updateTableSettings(_, updated)
+        if updated then
+            settingTable[updated] = storageSection:get(updated)
+        else
+            for key, value in ipairs(storageSection:asTable()) do
+                settingTable[key] = value
+            end
+        end
+    end
+
+    updateTableSettings()
+
+    storageSection:subscribe(async:callback(updateTableSettings))
+
+    return settingTable
+end
+
 local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
     playlistsSection:set(playlistId, playlistTracksOrder)
 end
@@ -265,6 +289,7 @@ local utilModule = {
     getPlaylistFilePaths = getPlaylistFilePaths,
     getStoredTracksOrder = isOpenMW and OMWGetStoredTracksOrder,
     getTracksFromDirectory = getTracksFromDirectory,
+    getUpdatingSettingsTable = isOpenMW and OMWGetUpdatingSettingsTable,
     initMissingPlaylistFields = initMissingPlaylistFields,
     initTracksOrder = initTracksOrder,
     isInCombat = isOpenMW and OMWIsInCombat,
