@@ -1,5 +1,7 @@
 ---@meta
 
+tes3 = tes3
+
 ---@alias ReadOnlyTable table<any, any> A table, but, one which may not be written to or have its metatable changed
 ---@alias StrictReadOnlyTable table<any, any> A table, but, one which may not be written to or have its metatable changed. This version will throw if one indexes the table with a key which doesn't exist.
 
