@@ -1,5 +1,4 @@
----@type S3maphorePlaylistEnv
-_ENV = _ENV
+---@module 'doc.playlistEnv'
 
 -- local async = require 'openmw.async'
 -- local activePlaylistSettings = require 'openmw.storage'.playerSection('S3maphoreActivePlaylistSettings')
