@@ -12,8 +12,6 @@ local Strings = {
     InitializationFinished = "[ S3MAPHORE ]: %d playlists loaded. Ready to play music!",
     InterruptModeFallthrough =
     'Playlist Interrupt Modes Fell Through!\nOld Playlist: %s Interrupt Mode: %s\nNew Playlist: %s InterruptMode: %s',
-    InterruptModeNotProvided =
-    'Interrupt mode was not provided when constructing the silenceManager!',
     InvalidLevelDifferenceRule =
     'Table %s for combatTargetLevelDifference rule does not contain either the relative OR absolute fields! You broke it!',
     InvalidPlaylistFields = "Can not register playlist: 'id' and 'priority' are mandatory fields",
