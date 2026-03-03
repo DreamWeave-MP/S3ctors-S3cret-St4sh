@@ -427,30 +427,6 @@ function MusicManager.updateBanner()
     MusicBanner:update()
 end
 
----@class S3maphorePlaylistEnv
-local PlaylistEnvironment = {
-    playSpecialTrack = MusicManager.playSpecialTrack,
-    skipTrack = MusicManager.skipTrack,
-    setPlaylistActive = MusicManager.setPlaylistActive,
-    timeOfDay = MusicManager.playlistTimeOfDay,
-    INTERRUPT = MusicManager.INTERRUPT,
-    ---@type PlaylistPriority
-    PlaylistPriority = require 'doc.playlistPriority',
-    Tilesets = require 'doc.tilesets',
-    Playback = Playback,
-    ---@type table <string, any>
-    I = I,
-    math = math,
-    string = string,
-    ipairs = ipairs,
-    pairs = pairs,
-    --- Takes any number of paramaters and deep prints them, if debug logging is enabled
-    ---@param ... any
-    print = function(...)
-        helpers.debugLog(helpers.deepToString({ ... }, 3))
-    end,
-}
-
 local function playlistCoroutineLoader()
     local result, codeString
 
