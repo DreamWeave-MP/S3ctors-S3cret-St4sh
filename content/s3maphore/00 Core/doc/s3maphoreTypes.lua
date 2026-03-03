@@ -1,5 +1,10 @@
 ---@meta
 
+---@alias ReadOnlyTable table<any, any> A table, but, one which may not be written to or have its metatable changed
+---@alias StrictReadOnlyTable table<any, any> A table, but, one which may not be written to or have its metatable changed. This version will throw if one indexes the table with a key which doesn't exist.
+
+---@class UpdatingSettingTable: table<any, any> A table which is constructed with an explicit association with a player storage section. Values inside this table automatically update according to changes in the storage group.
+
 ---@class CellMatchPatterns
 ---@field disallowed string[]
 ---@field allowed string[]

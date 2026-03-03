@@ -287,7 +287,7 @@ function MusicManager.getCurrentTrackInfo()
 end
 
 --- Returns a read-only copy of the current playlist, or nil
----@return userdata? readOnlyPlaylist
+---@return ReadOnlyTable? readOnlyPlaylist
 function MusicManager.getCurrentPlaylist()
     if not currentPlaylist then return end
 
@@ -305,10 +305,11 @@ function MusicManager.getRegisteredPlaylists()
     return musicUtil.makeReadOnly(readOnlyPlaylists)
 end
 
+local ReadOnlyPlaylistFileList = musicUtil.makeStrictReadOnly(PlaylistFileList)
 --- Returns a read-only array of all recognized playlist files (files with the .lua extension under the VFS directory, Playlists/ )
----@return userdata playlistFiles
+---@return ReadOnlyTable playlistFiles
 function MusicManager.listPlaylistFiles()
-    return musicUtil.makeReadOnly(PlaylistFileList)
+    return ReadOnlyPlaylistFileList
 end
 
 --- Stops the currently playing track, if any.
