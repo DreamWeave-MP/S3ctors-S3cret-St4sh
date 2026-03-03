@@ -1,5 +1,8 @@
 local isOpenMW, debug = pcall(require, 'openmw.debug')
-local storage, vfs, playlistsSection, musicSettings
+local fileExists, musicSettings, pathsMatching, playlistsSection, storage, vfs
+
+---@type PlaylistPriority
+local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphoreStaticStrings
 local Strings = require 'scripts.s3.music.staticStrings'
 
@@ -7,9 +10,28 @@ if isOpenMW then
     storage = require 'openmw.storage'
     vfs = require 'openmw.vfs'
 
+    fileExists = vfs.fileExists
+    musicSettings = storage.playerSection('SettingsS3Music')
+    pathsMatching = vfs.pathsWithPrefix
     playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
     playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
-    musicSettings = storage.playerSection('SettingsS3Music')
+end
+
+---@param ... any
+local function debugLog(...)
+    if isOpenMW then
+        if not musicSettings:get('DebugEnable') then return end
+    else
+    end
+
+    local args = { ... }
+    for i = 1, #args do
+        args[i] = tostring(args[i])
+    end
+    local msg = table.concat(args, " ")
+    print(
+        Strings.LogFormatStr:format(msg)
+    )
 end
 
 local function deepToString(val, level, prefix)
@@ -32,75 +54,16 @@ local function deepToString(val, level, prefix)
     return table.concat(strs)
 end
 
----@param ... any
-local function debugLog(...)
-    if isOpenMW then
-        if not musicSettings:get('DebugEnable') then return end
-    else
+local function getPlaylistFilePaths()
+    local result = {}
+    for fileName in pathsMatching('playlists/') do
+        if fileName:find('%.lua$') then
+            table.insert(result, fileName)
+        end
     end
 
-    local args = { ... }
-    for i = 1, #args do
-        args[i] = tostring(args[i])
-    end
-    local msg = table.concat(args, " ")
-    print(
-        Strings.LogFormatStr:format(msg)
-    )
+    return result
 end
-
---- Takes a table as input and returns a read-only one.
---- Commits seppuku if the input is not a table, so do be careful
----@param inTable table<any, any>
----@return table<any, any>
-local function makeStrictReadOnly(inTable)
-    if type(inTable) ~= 'table' then
-        error(
-            ('Input value to makeStrictReadOnly %s was not a table!'):format(inTable)
-        )
-    end
-
-    return setmetatable({}, {
-        __index = function(this, key)
-            local found = this[key]
-
-            if found ~= nil then
-                return found
-            else
-                error(
-                    ('Failed to locate key %s in table %s!'):format(key, this)
-                )
-            end
-        end,
-        __newindex = function()
-            error(('Write attempt to read-only table %s'):format(inTable))
-        end,
-        __metatable = false,
-    })
-end
-
---- Takes a table as input and returns a read-only one.
---- Commits seppuku if the input is not a table, so do be careful
----@param inTable table<any, any>
----@return table<any, any>
-local function makeReadOnly(inTable)
-    if type(inTable) ~= 'table' then
-        error(
-            ('Input value to makeReadOnly %s was not a table!'):format(inTable)
-        )
-    end
-
-    return setmetatable({}, {
-        __index = inTable,
-        __newindex = function()
-            error(('Write attempt to read-only table %s'):format(inTable))
-        end,
-        __metatable = false,
-    })
-end
-
-local pathsMatching = isOpenMW and vfs.pathsWithPrefix or error
-local fileExists = isOpenMW and vfs.fileExists or error
 
 local function getTracksFromDirectory(path, exclusions)
     local result = {}
@@ -129,23 +92,6 @@ local function getTracksFromDirectory(path, exclusions)
     end
 
     return result
-end
-
-local function getPlaylistFilePaths()
-    local result = {}
-    for fileName in pathsMatching('playlists/') do
-        if fileName:find('%.lua$') then
-            table.insert(result, fileName)
-        end
-    end
-
-    return result
-end
-
-local PlaylistPriority
-if isOpenMW then
-    PlaylistPriority = require 'doc.playlistPriority'
-else
 end
 
 ---@param playlist S3maphorePlaylist
@@ -224,19 +170,6 @@ local function isPlaylistActive(playlist)
     return playlist.active and next(playlist.tracks) ~= nil
 end
 
-local function OMWGetStoredTracksOrder()
-    -- We need a writeable playlists table here.
-    return playlistsSection:asTable()
-end
-
-local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
-    playlistsSection:set(playlistId, playlistTracksOrder)
-end
-
-local function OMWIsInCombat(fightingActors)
-    return next(fightingActors) ~= nil and debug.isAIEnabled()
-end
-
 ---@param playlists S3maphorePlaylist[]
 ---@param playback Playback
 ---@return S3maphorePlaylist|nil
@@ -261,6 +194,69 @@ local function getActivePlaylistByPriority(playlists, playback)
     end
 
     return newPlaylist
+end
+
+--- Takes a table as input and returns a read-only one.
+--- Commits seppuku if the input is not a table, so do be careful
+---@param inTable table<any, any>
+---@return table<any, any>
+local function makeReadOnly(inTable)
+    if type(inTable) ~= 'table' then
+        error(
+            ('Input value to makeReadOnly %s was not a table!'):format(inTable)
+        )
+    end
+
+    return setmetatable({}, {
+        __index = inTable,
+        __newindex = function()
+            error(('Write attempt to read-only table %s'):format(inTable))
+        end,
+        __metatable = false,
+    })
+end
+
+--- Takes a table as input and returns a read-only one.
+--- Commits seppuku if the input is not a table, so do be careful
+---@param inTable table<any, any>
+---@return table<any, any>
+local function makeStrictReadOnly(inTable)
+    if type(inTable) ~= 'table' then
+        error(
+            ('Input value to makeStrictReadOnly %s was not a table!'):format(inTable)
+        )
+    end
+
+    return setmetatable({}, {
+        __index = function(this, key)
+            local found = this[key]
+
+            if found ~= nil then
+                return found
+            else
+                error(
+                    ('Failed to locate key %s in table %s!'):format(key, this)
+                )
+            end
+        end,
+        __newindex = function()
+            error(('Write attempt to read-only table %s'):format(inTable))
+        end,
+        __metatable = false,
+    })
+end
+
+local function OMWGetStoredTracksOrder()
+    -- We need a writeable playlists table here.
+    return playlistsSection:asTable()
+end
+
+local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
+    playlistsSection:set(playlistId, playlistTracksOrder)
+end
+
+local function OMWIsInCombat(fightingActors)
+    return next(fightingActors) ~= nil and debug.isAIEnabled()
 end
 
 ---@class S3maphoreHelperModule
