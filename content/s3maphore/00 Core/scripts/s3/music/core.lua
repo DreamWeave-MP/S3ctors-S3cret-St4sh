@@ -36,7 +36,7 @@ local OverworldSkip = musicSettings:get 'ForcePlaylistChangeOnOverworldTransitio
 local FadeOutDuration = musicSettings:get 'FadeOutDuration'
 
 local Strings = require 'scripts.s3.music.staticStrings'
-local helpers = require 'scripts.s3.music.util'
+local musicUtil = require 'scripts.s3.music.util'
 
 --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
 --- In other words, this is the bit that responds to changes from the settings menu
@@ -60,9 +60,9 @@ activePlaylistSettings:subscribe(
     )
 )
 
-local PlaylistFileList = helpers.getPlaylistFilePaths()
+local PlaylistFileList = musicUtil.getPlaylistFilePaths()
 
-local playlistsTracksOrder = helpers.getStoredTracksOrder()
+local playlistsTracksOrder = musicUtil.getStoredTracksOrder()
 
 ---@alias FightingActors table<string, boolean>
 local fightingActors = {}
@@ -87,7 +87,7 @@ local function initPlaylistL10n(playlistId)
 
     if ok then
         L10nCache[playlistId] = maybeTranslations
-        helpers.debugLog('Cached translations for playlist', playlistId)
+        musicUtil.debugLog('Cached translations for playlist', playlistId)
     end
 
     return ok
@@ -98,7 +98,7 @@ end
 ---@field Rules PlaylistRules
 local MusicManager = {
     ---@enum S3maphoreStateChangeReason
-    STATE = util.makeReadOnly {
+    STATE = musicUtil.makeReadOnly {
         Died = 'DIED',
         Disabled = 'DSBL',
         NoPlaylist = 'NPLS',
@@ -106,21 +106,21 @@ local MusicManager = {
     },
     --- Meant to be used in conjunction with the output of MusicManager.playlistTimeOfDay OR PlaylistState.playlistTimeOfDay
     ---@enum TimeMap
-    TIME_MAP = util.makeReadOnly {
+    TIME_MAP = musicUtil.makeReadOnly {
         [0] = 'night',
         [1] = 'morning',
         [2] = 'afternoon',
         [3] = 'evening',
     },
     ---@enum InterruptMode
-    INTERRUPT = util.makeReadOnly {
+    INTERRUPT = musicUtil.makeReadOnly {
         Me = 0,    -- Explore
         Other = 1, -- Battle
         Never = 2, -- Special
     },
 }
 
-local silenceManager = require 'scripts.s3.music.silenceManager' (MusicManager.INTERRUPT, Strings, helpers)
+local silenceManager = require 'scripts.s3.music.silenceManager' (MusicManager.INTERRUPT, Strings, musicUtil)
 
 musicSettings:subscribe(
     async:callback(
@@ -193,7 +193,7 @@ end
 
 ---@type PlaylistRules
 local PlaylistRules = require 'scripts.s3.music.playlistRules' (PlaylistState, Strings)
-MusicManager.Rules = util.makeReadOnly(PlaylistRules)
+MusicManager.Rules = musicUtil.makeReadOnly(PlaylistRules)
 
 ---@class Playback
 ---@field state PlaylistState
@@ -209,7 +209,7 @@ local queuedEvent
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
-    helpers.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
+    musicUtil.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
     initPlaylistL10n(playlist.id)
 
     local existingOrder = playlistsTracksOrder[playlist.id]
@@ -227,9 +227,9 @@ function MusicManager.registerPlaylist(playlist)
             end
         end
 
-        local newPlaylistOrder = helpers.initTracksOrder(playlist.tracks, playlist.randomize)
+        local newPlaylistOrder = musicUtil.initTracksOrder(playlist.tracks, playlist.randomize)
         playlistsTracksOrder[playlist.id] = newPlaylistOrder
-        helpers.setStoredTracksOrder(playlist.id, newPlaylistOrder)
+        musicUtil.setStoredTracksOrder(playlist.id, newPlaylistOrder)
     else
         playlistsTracksOrder[playlist.id] = existingOrder
     end
@@ -246,11 +246,11 @@ function MusicManager.registerPlaylist(playlist)
     local playlistActiveKey = playlist.id .. 'Active'
 
     if activePlaylistSettings:get(playlistActiveKey) ~= nil then
-        helpers.debugLog('loaded playlist state from settings:', playlist.id)
+        musicUtil.debugLog('loaded playlist state from settings:', playlist.id)
 
         playlist.active = activePlaylistSettings:get(playlistActiveKey)
     else
-        helpers.debugLog('stored playlist state in settings:', playlist.id, storedState)
+        musicUtil.debugLog('stored playlist state in settings:', playlist.id, storedState)
 
         activePlaylistSettings:set(playlistActiveKey, storedState)
     end
@@ -293,13 +293,13 @@ function MusicManager.getCurrentTrackInfo()
     local trackName = L10nCache[playlistId](currentTrack)
 
     if trackName ~= currentTrack then
-        helpers.debugLog(
+        musicUtil.debugLog(
             ('Found S3maphore track translation %s for track %s:'):format(trackName, currentTrack)
         )
 
         return L10nCache[playlistId](playlistId), trackName
     else
-        helpers.debugLog(
+        musicUtil.debugLog(
             ('No translations found for track %s'):format(currentTrack)
         )
     end
@@ -310,7 +310,7 @@ end
 function MusicManager.getCurrentPlaylist()
     if not currentPlaylist then return end
 
-    return util.makeReadOnly(currentPlaylist)
+    return musicUtil.makeReadOnly(currentPlaylist)
 end
 
 --- Returns a read-only list of read-only playlist structs for introspection. To modify playlists in any way, use other functions.
@@ -321,13 +321,13 @@ function MusicManager.getRegisteredPlaylists()
         readOnlyPlaylists[k] = util.makeStrictReadOnly(v)
     end
 
-    return util.makeReadOnly(readOnlyPlaylists)
+    return musicUtil.makeReadOnly(readOnlyPlaylists)
 end
 
 --- Returns a read-only array of all recognized playlist files (files with the .lua extension under the VFS directory, Playlists/ )
 ---@return userdata playlistFiles
 function MusicManager.listPlaylistFiles()
-    return util.makeReadOnly(PlaylistFileList)
+    return musicUtil.makeReadOnly(PlaylistFileList)
 end
 
 --- Stops the currently playing track, if any.
@@ -343,7 +343,7 @@ function MusicManager.getEnabled()
 end
 
 function MusicManager.getState()
-    return util.makeReadOnly(PlaylistState)
+    return musicUtil.makeReadOnly(PlaylistState)
 end
 
 ---@return number duration of current silence track
@@ -387,7 +387,7 @@ function MusicManager.playSpecialTrack(trackPath, reason)
         return print(('Requested track %s does not exist!'):format(trackPath))
     end
 
-    helpers.debugLog(
+    musicUtil.debugLog(
         ('playing special track: %s'):format(trackPath)
     )
 
@@ -455,7 +455,7 @@ local function playlistCoroutineLoader()
     local result, codeString
 
     for _, file in ipairs(PlaylistFileList) do
-        helpers.debugLog('reading playlist file', file)
+        musicUtil.debugLog('reading playlist file', file)
         --- open the file
         local ok, fileHandle = pcall(vfs.open, file)
         if not ok then goto fail end
@@ -467,7 +467,7 @@ local function playlistCoroutineLoader()
         --- call the resulting function to get the inner playlist array
         ok, result = pcall(result)
         if type(result) ~= 'table' then goto fail end
-        helpers.debugLog(helpers.deepToString(result, 3))
+        musicUtil.debugLog(musicUtil.deepToString(result, 3))
 
 
         for _, playlist in ipairs(result) do
@@ -499,7 +499,7 @@ local function loadNextPlaylistStep()
 
     --- Explore, battle, special
     if ok and playlist then
-        helpers.debugLog("Registered playlist:", playlist.id)
+        musicUtil.debugLog("Registered playlist:", playlist.id)
         playlistCount = playlistCount + 1
     elseif coroutine.status(playlistLoaderCo) == "dead" then
         print(
@@ -523,7 +523,7 @@ local function onCombatTargetsChanged(eventData)
 
     core.sendGlobalEvent('S3maphoreUpdateCellHasCombatTargets', self)
 
-    PlaylistState.isInCombat = BattleEnabled and helpers.isInCombat(fightingActors)
+    PlaylistState.isInCombat = BattleEnabled and musicUtil.isInCombat(fightingActors)
 
     if PlaylistState.isInCombat then
         CombatTargetCacheKey = tostring(fightingActors)
@@ -564,7 +564,7 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
 
     if not registeredPlaylists[selectedPlaylistId] then
         if selectedPlaylistId then
-            helpers.debugLog(
+            musicUtil.debugLog(
                 Strings.FallbackPlaylistDoesntExist:format(newPlaylist.id, selectedPlaylistId)
             )
         end
@@ -589,7 +589,7 @@ local function selectTrackFromPlaylist(playlistId)
 
     -- If there are no tracks left, fill playlist again.
     if next(playlistOrder) == nil then
-        playlistOrder = helpers.initTracksOrder(playlist.tracks, playlist.randomize)
+        playlistOrder = musicUtil.initTracksOrder(playlist.tracks, playlist.randomize)
 
         if not playlist.cycleTracks then
             playlist.deactivateAfterEnd = true
@@ -604,7 +604,7 @@ local function selectTrackFromPlaylist(playlistId)
         playlistsTracksOrder[playlist.id] = playlistOrder
     end
 
-    helpers.setStoredTracksOrder(playlist.id, playlistOrder)
+    musicUtil.setStoredTracksOrder(playlist.id, playlistOrder)
 
     local trackPath = playlist.tracks[nextTrackIndex]
 
@@ -654,7 +654,7 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
         return true
     end
 
-    helpers.debugLog(
+    musicUtil.debugLog(
         Strings.InterruptModeFallthrough:format(
             oldPlaylist.id,
             oldPlaylist.interruptMode,
@@ -706,7 +706,7 @@ local function onFrame(_)
 
     updatePlaylistState()
 
-    local newPlaylist = helpers.getActivePlaylistByPriority(registeredPlaylists, Playback)
+    local newPlaylist = musicUtil.getActivePlaylistByPriority(registeredPlaylists, Playback)
 
     if not newPlaylist then
         if musicPlaying then
@@ -761,7 +761,7 @@ local function onFrame(_)
 
     if didTransition then
         -- if forceSkip then
-        helpers.debugLog(
+        musicUtil.debugLog(
             Strings.PlaylistSkipFormatStr:format(
                 didChangePlaylist,
                 didTransition,
@@ -863,7 +863,7 @@ return {
         S3maphoreSpecialTrack = MusicManager.playSpecialTrack,
 
         S3maphoreSetPlaylistActive = function(eventData)
-            helpers.debugLog(
+            musicUtil.debugLog(
                 Strings.ChangingPlaylist:format(eventData.playlist, eventData.state)
             )
 
@@ -872,7 +872,7 @@ return {
 
         ---@param eventData S3maphoreStateChangeEventData
         S3maphoreMusicStopped = function(eventData)
-            helpers.debugLog(
+            musicUtil.debugLog(
                 Strings.MusicStopped:format(eventData.reason)
             )
 
@@ -881,7 +881,7 @@ return {
 
         ---@param eventData S3maphoreStateChangeEventData
         S3maphoreTrackChanged = function(eventData)
-            helpers.debugLog(
+            musicUtil.debugLog(
                 Strings.TrackChanged:format(eventData.playlistId, eventData.trackName)
             )
 
@@ -917,7 +917,7 @@ return {
         end,
 
         S3maphoreWeatherChanged = function(weatherName)
-            helpers.debugLog(
+            musicUtil.debugLog(
                 Strings.WeatherChanged:format(weatherName)
             )
 
@@ -925,7 +925,7 @@ return {
         end,
 
         S3maphoreClearTargetCache = function()
-            helpers.debugLog('clearing target cache for key', CombatTargetCacheKey)
+            musicUtil.debugLog('clearing target cache for key', CombatTargetCacheKey)
             PlaylistRules.clearGlobalCombatTargetCache()
         end
     }
