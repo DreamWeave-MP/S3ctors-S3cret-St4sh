@@ -53,6 +53,36 @@ end
 --- Commits seppuku if the input is not a table, so do be careful
 ---@param inTable table<any, any>
 ---@return table<any, any>
+local function makeStrictReadOnly(inTable)
+    if type(inTable) ~= 'table' then
+        error(
+            ('Input value to makeStrictReadOnly %s was not a table!'):format(inTable)
+        )
+    end
+
+    return setmetatable({}, {
+        __index = function(this, key)
+            local found = this[key]
+
+            if found ~= nil then
+                return found
+            else
+                error(
+                    ('Failed to locate key %s in table %s!'):format(key, this)
+                )
+            end
+        end,
+        __newindex = function()
+            error(('Write attempt to read-only table %s'):format(inTable))
+        end,
+        __metatable = false,
+    })
+end
+
+--- Takes a table as input and returns a read-only one.
+--- Commits seppuku if the input is not a table, so do be careful
+---@param inTable table<any, any>
+---@return table<any, any>
 local function makeReadOnly(inTable)
     if type(inTable) ~= 'table' then
         error(
@@ -63,7 +93,7 @@ local function makeReadOnly(inTable)
     return setmetatable({}, {
         __index = inTable,
         __newindex = function()
-            error(debug.traceback(('Write attempt to read-only table %s'):format(inTable), 3))
+            error(('Write attempt to read-only table %s'):format(inTable))
         end,
         __metatable = false,
     })
@@ -246,6 +276,7 @@ local utilModule = {
     isInCombat = isOpenMW and OMWIsInCombat,
     isPlaylistActive = isPlaylistActive,
     makeReadOnly = makeReadOnly,
+    makeStrictReadOnly = makeStrictReadOnly,
     setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
 }
 
