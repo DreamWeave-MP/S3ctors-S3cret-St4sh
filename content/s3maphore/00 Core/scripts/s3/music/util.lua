@@ -198,9 +198,10 @@ end
 
 ---@param groupName string
 ---@param mcmPath string?
+---@param originalTable table?
 ---@return UpdatingSettingTable
-local function getUpdatingSettingsTable(groupName, mcmPath)
-    local settingTable = {}
+local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
+    local settingTable = originalTable or {}
 
     local settingGroup
     if isOpenMW then
