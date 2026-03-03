@@ -138,14 +138,6 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
     end
 end
 
-local function shuffle(data)
-    for i = #data, 1, -1 do
-        local j = math.random(i)
-        data[i], data[j] = data[j], data[i]
-    end
-    return data
-end
-
 local function initTracksOrder(tracks, randomize)
     local tracksOrder = {}
 
@@ -160,7 +152,13 @@ local function initTracksOrder(tracks, randomize)
     end
 
     if randomize then
-        shuffle(tracksOrder)
+        --- This used to be the `shuffle` function but it annoyed me
+        --- as it was an unnecessary call that wasn't part of the library and fucked up
+        --- my alphabetization
+        for i = #tracksOrder, 1, -1 do
+            local j = math.random(i)
+            tracksOrder[i], tracksOrder[j] = tracksOrder[j], tracksOrder[i]
+        end
     end
 
     return tracksOrder
