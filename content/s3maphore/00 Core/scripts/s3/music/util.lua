@@ -196,6 +196,44 @@ local function getActivePlaylistByPriority(playlists, playback)
     return newPlaylist
 end
 
+---@param groupName string
+---@param mcmPath string?
+---@return UpdatingSettingTable
+local function getUpdatingSettingsTable(groupName, mcmPath)
+    local settingTable = {}
+
+    local settingGroup
+    if isOpenMW then
+        settingGroup = storage.playerSection(groupName)
+    else
+        assert(mcmPath)
+        settingGroup = require(mcmPath).get(groupName)
+    end
+
+    local function updateSettings(_, updated)
+        if updated then
+            settingTable[updated] = settingGroup:get(updated)
+        else
+            local settingsAsTable = isOpenMW and settingGroup:asTable() or settingGroup
+
+            for key, value in pairs(settingsAsTable) do
+                settingTable[key] = value
+            end
+        end
+    end
+
+    updateSettings()
+
+    if isOpenMW then
+        settingGroup:subscribe(async:callback(updateSettings))
+    else
+        ---@diagnostic disable-next-line: undefined-field
+        table.subscribe(settingGroup, updateSettings)
+    end
+
+    return settingTable
+end
+
 --- Takes a table as input and returns a read-only one.
 --- Commits seppuku if the input is not a table, so do be careful
 ---@param inTable table<any, any>
@@ -251,29 +289,6 @@ local function OMWGetStoredTracksOrder()
     return playlistsSection:asTable()
 end
 
----@param groupName string
----@return UpdatingSettingTable
-local function OMWGetUpdatingSettingsTable(groupName)
-    local settingTable = {}
-    local storageSection = storage.playerSection(groupName)
-
-    local function updateTableSettings(_, updated)
-        if updated then
-            settingTable[updated] = storageSection:get(updated)
-        else
-            for key, value in ipairs(storageSection:asTable()) do
-                settingTable[key] = value
-            end
-        end
-    end
-
-    updateTableSettings()
-
-    storageSection:subscribe(async:callback(updateTableSettings))
-
-    return settingTable
-end
-
 local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
     playlistsSection:set(playlistId, playlistTracksOrder)
 end
@@ -290,7 +305,7 @@ local utilModule = {
     getPlaylistFilePaths = getPlaylistFilePaths,
     getStoredTracksOrder = isOpenMW and OMWGetStoredTracksOrder,
     getTracksFromDirectory = getTracksFromDirectory,
-    getUpdatingSettingsTable = isOpenMW and OMWGetUpdatingSettingsTable,
+    getUpdatingSettingsTable = getUpdatingSettingsTable,
     initMissingPlaylistFields = initMissingPlaylistFields,
     initTracksOrder = initTracksOrder,
     isInCombat = isOpenMW and OMWIsInCombat,
