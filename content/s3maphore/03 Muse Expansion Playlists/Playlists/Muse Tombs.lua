@@ -1,5 +1,4 @@
----@type S3maphorePlaylistEnv
-_ENV = _ENV
+---@module 'doc.playlistEnv'
 
 ---@type IDPresenceMap
 local TombEnemyNames = {
