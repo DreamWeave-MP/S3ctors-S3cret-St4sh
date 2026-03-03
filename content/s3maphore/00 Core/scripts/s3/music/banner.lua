@@ -4,21 +4,6 @@ local Constants = require 'scripts.omw.mwui.constants'
 
 local I = require 'openmw.interfaces'
 
-local DarkFactor = 0.8
-local LightFactor = 1.25
-
-local DarkColor = util.color.rgb(
-    Constants.normalColor.r * DarkFactor,
-    Constants.normalColor.g * DarkFactor,
-    Constants.normalColor.b * DarkFactor
-)
-
-local LightColor = util.color.rgb(
-    Constants.normalColor.r * LightFactor,
-    Constants.normalColor.g * LightFactor,
-    Constants.normalColor.b * LightFactor
-)
-
 local bannerSizePct = util.vector2(0.15, 0.08)
 local BannerSize = ui.screenSize():emul(bannerSizePct)
 local SongBanner = ui.create {
