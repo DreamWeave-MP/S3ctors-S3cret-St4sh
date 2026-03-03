@@ -4,9 +4,9 @@
 local musicUtil = require 'scripts.s3.music.util'
 local INTERRUPT = require 'scripts.s3.music.enum.interruptMode'
 
-local isOpenMW, async = pcall(require, 'openmw.async')
+local isOpenMW = require 'scripts.s3.isOpenMW'
 
----@class SilenceData
+---@class SilenceData: UpdatingSettingTable
 ---@field GlobalSilenceToggle boolean whether or not silence "tracks" are used
 ---@field GlobalSilenceChance number player-configured chance for a silence track to play between each track
 ---@field ExploreSilenceMin integer minimum duration of silence tracks for explore playlists
@@ -14,27 +14,11 @@ local isOpenMW, async = pcall(require, 'openmw.async')
 ---@field BattleSilenceMin integer minimum duration of silence tracks for battle playlists
 ---@field BattleSilenceMax integer maximum duration of silence tracks for battle playlists
 ---@field time number current remaining duration for silence
-local SilenceData = {
-    time = 0
-}
+local SilenceData = {}
 
 if isOpenMW then
-    local storage = require 'openmw.storage'
-    local SilenceGroup = storage.playerSection 'SettingsS3MusicSilenceConfig'
-
-    local function updateSilenceSettings(_, updated)
-        if updated then
-            SilenceData[updated] = SilenceGroup:get(updated)
-        else
-            for key, value in ipairs(SilenceGroup:asTable()) do
-                SilenceData[key] = value
-            end
-        end
-    end
-
-    updateSilenceSettings()
-
-    SilenceGroup:subscribe(async:callback(updateSilenceSettings))
+    SilenceData = musicUtil.getUpdatingSettingsTable('SettingsS3MusicSilenceConfig')
+    SilenceData.time = 0
 else
 end
 

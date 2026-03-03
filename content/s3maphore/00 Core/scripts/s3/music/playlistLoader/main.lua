@@ -9,7 +9,7 @@ local Strings = require 'scripts.s3.music.staticStrings'
 local function playlistCoroutineLoader()
   local result, codeString
 
-  for _, file in ipairs(PlaylistFileList) do
+  for _, file in ipairs(musicUtil.getPlaylistFilePaths()) do
     musicUtil.debugLog('reading playlist file', file)
 
     --- open the file
