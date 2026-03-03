@@ -1,4 +1,4 @@
-require 'doc.s3maphoreTypes'
+---@module 'doc.s3maphoreTypes'
 
 local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
