@@ -4,8 +4,6 @@
 local musicUtil = require 'scripts.s3.music.util'
 local INTERRUPT = require 'scripts.s3.music.enum.interruptMode'
 
-local isOpenMW = require 'scripts.s3.isOpenMW'
-
 ---@class SilenceData: UpdatingSettingTable
 ---@field GlobalSilenceToggle boolean whether or not silence "tracks" are used
 ---@field GlobalSilenceChance number player-configured chance for a silence track to play between each track
@@ -14,13 +12,8 @@ local isOpenMW = require 'scripts.s3.isOpenMW'
 ---@field BattleSilenceMin integer minimum duration of silence tracks for battle playlists
 ---@field BattleSilenceMax integer maximum duration of silence tracks for battle playlists
 ---@field time number current remaining duration for silence
-local SilenceData = {}
-
-if isOpenMW then
-    SilenceData = musicUtil.getUpdatingSettingsTable('SettingsS3MusicSilenceConfig')
-    SilenceData.time = 0
-else
-end
+local SilenceData = musicUtil.getUpdatingSettingsTable('SettingsS3MusicSilenceConfig')
+SilenceData.time = 0
 
 --- Given the currently-running playlist and settings,
 --- determine whether there should be a silence played
