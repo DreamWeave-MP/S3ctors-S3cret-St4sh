@@ -1,5 +1,5 @@
-local isOpenMW, debug = pcall(require, 'openmw.debug')
-local async, fileExists, musicSettings, pathsMatching, playlistsSection, storage, vfs
+local isOpenMW = require 'scripts.s3.isOpenMW'
+local async, debug, fileExists, musicSettings, pathsMatching, playlistsSection, storage, vfs
 
 ---@type PlaylistPriority
 local PlaylistPriority = require 'doc.playlistPriority'
@@ -8,6 +8,7 @@ local Strings = require 'scripts.s3.music.staticStrings'
 
 if isOpenMW then
     async = require 'openmw.async'
+    debug = require 'openmw.debug'
     storage = require 'openmw.storage'
     vfs = require 'openmw.vfs'
 
