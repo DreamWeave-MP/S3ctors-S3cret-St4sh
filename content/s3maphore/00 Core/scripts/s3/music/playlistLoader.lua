@@ -3,8 +3,34 @@ local vfs = require 'openmw.vfs'
 
 local musicUtil = require 'scripts.s3.music.util'
 
-local PlaylistEnvironment = require 'scripts.s3.music.playlistLoader.environment'
 local Strings = require 'scripts.s3.music.staticStrings'
+
+---@class S3maphorePlaylistEnv
+local PlaylistEnvironment = {
+  playSpecialTrack = MusicManager.playSpecialTrack,
+  skipTrack = MusicManager.skipTrack,
+  setPlaylistActive = MusicManager.setPlaylistActive,
+  timeOfDay = MusicManager.playlistTimeOfDay,
+  INTERRUPT = MusicManager.INTERRUPT,
+  ---@type PlaylistPriority
+  PlaylistPriority = require 'doc.playlistPriority',
+  Tilesets = require 'doc.tilesets',
+  Playback = Playback,
+  --- Don't interfaces HAVE to be tables?
+  ---@type table <string, any>
+  I = require 'openmw.interfaces',
+  math = math,
+  string = string,
+  ipairs = ipairs,
+  pairs = pairs,
+  --- Takes any number of paramaters and deep prints them, if debug logging is enabled
+  ---@param ... any
+  print = function(...)
+    musicUtil.debugLog(
+      musicUtil.deepToString({ ... }, 3)
+    )
+  end,
+}
 
 local function playlistCoroutineLoader()
   local result, codeString
