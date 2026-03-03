@@ -93,31 +93,12 @@ local function initPlaylistL10n(playlistId)
     return ok
 end
 
-
 ---@class MusicManager
 ---@field Rules PlaylistRules
 local MusicManager = {
-    ---@enum S3maphoreStateChangeReason
-    STATE = musicUtil.makeReadOnly {
-        Died = 'DIED',
-        Disabled = 'DSBL',
-        NoPlaylist = 'NPLS',
-        SpecialTrackPlaying = 'SPTR',
-    },
-    --- Meant to be used in conjunction with the output of MusicManager.playlistTimeOfDay OR PlaylistState.playlistTimeOfDay
-    ---@enum TimeMap
-    TIME_MAP = musicUtil.makeReadOnly {
-        [0] = 'night',
-        [1] = 'morning',
-        [2] = 'afternoon',
-        [3] = 'evening',
-    },
-    ---@enum InterruptMode
-    INTERRUPT = musicUtil.makeReadOnly {
-        Me = 0,    -- Explore
-        Other = 1, -- Battle
-        Never = 2, -- Special
-    },
+    STATE = require 'scripts.s3.music.enum.stateChangeReason',
+    TIME_MAP = require 'scripts.s3.music.enum.timeMap',
+    INTERRUPT = require 'scripts.s3.music.enum.interruptMode',
 }
 
 local silenceManager = require 'scripts.s3.music.silenceManager' (MusicManager.INTERRUPT, Strings, musicUtil)
