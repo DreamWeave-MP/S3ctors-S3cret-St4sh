@@ -12,7 +12,7 @@ local INTERRUPT = require 'scripts.s3.music.enum.interruptMode'
 ---@field BattleSilenceMin integer minimum duration of silence tracks for battle playlists
 ---@field BattleSilenceMax integer maximum duration of silence tracks for battle playlists
 ---@field time number current remaining duration for silence
-local SilenceData = musicUtil.getUpdatingSettingsTable('SettingsS3MusicSilenceConfig', nil, { time = 0 })
+local SilenceData = musicUtil.getUpdatingSettingsTable('SettingsS3MusicSilenceConfig', 'S3maphore.s3.mcm', { time = 0 })
 
 --- Given the currently-running playlist and settings,
 --- determine whether there should be a silence played
