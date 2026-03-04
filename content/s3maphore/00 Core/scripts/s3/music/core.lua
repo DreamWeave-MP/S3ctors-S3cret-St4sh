@@ -108,11 +108,12 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
     local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
 
     if not MusicManager.registeredPlaylists[selectedPlaylistId] then
-        if selectedPlaylistId then
+        if selectedPlaylistId and MusicSettings.DebugEnable then
             musicUtil.debugLog(
                 Strings.FallbackPlaylistDoesntExist:format(newPlaylist.id, selectedPlaylistId)
             )
         end
+
         return newPlaylist.id
     end
 
@@ -200,14 +201,16 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
         return true
     end
 
-    musicUtil.debugLog(
-        Strings.InterruptModeFallthrough:format(
-            oldPlaylist.id,
-            oldPlaylist.interruptMode,
-            newPlaylist.id,
-            newPlaylist.interruptMode
+    if MusicSettings.DebugEnable then
+        musicUtil.debugLog(
+            Strings.InterruptModeFallthrough:format(
+                oldPlaylist.id,
+                oldPlaylist.interruptMode,
+                newPlaylist.id,
+                newPlaylist.interruptMode
+            )
         )
-    )
+    end
 
     return false
 end
@@ -320,16 +323,19 @@ local function handlePlayback(_)
 
     if didTransition then
         -- if forceSkip then
-        musicUtil.debugLog(
-            Strings.PlaylistSkipFormatStr:format(
-                didChangePlaylist,
-                didTransition,
-                MusicSettings.ForcePlaylistChangeOnFriendlyExteriorTransition,
-                MusicSettings.ForcePlaylistChangeOnHostileExteriorTransition,
-                MusicSettings.ForcePlaylistChangeOnOverworldTransition,
-                PlaylistState.cellHasCombatTargets
+        if MusicSettings.DebugEnable then
+            musicUtil.debugLog(
+                Strings.PlaylistSkipFormatStr:format(
+                    didChangePlaylist,
+                    didTransition,
+                    MusicSettings.ForcePlaylistChangeOnFriendlyExteriorTransition,
+                    MusicSettings.ForcePlaylistChangeOnHostileExteriorTransition,
+                    MusicSettings.ForcePlaylistChangeOnOverworldTransition,
+                    PlaylistState.cellHasCombatTargets
+                )
             )
-        )
+        end
+
         didChangePlaylist = false
     end
 
@@ -435,27 +441,33 @@ return {
         S3maphoreSpecialTrack = MusicManager.playSpecialTrack,
 
         S3maphoreSetPlaylistActive = function(eventData)
-            musicUtil.debugLog(
-                Strings.ChangingPlaylist:format(eventData.playlist, eventData.state)
-            )
+            if MusicSettings.DebugEnable then
+                musicUtil.debugLog(
+                    Strings.ChangingPlaylist:format(eventData.playlist, eventData.state)
+                )
+            end
 
             MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
         end,
 
         ---@param eventData S3maphoreStateChangeEventData
         S3maphoreMusicStopped = function(eventData)
-            musicUtil.debugLog(
-                Strings.MusicStopped:format(eventData.reason)
-            )
+            if MusicSettings.DebugEnable then
+                musicUtil.debugLog(
+                    Strings.MusicStopped:format(eventData.reason)
+                )
+            end
 
             MusicManager.updateBanner()
         end,
 
         ---@param eventData S3maphoreStateChangeEventData
         S3maphoreTrackChanged = function(eventData)
-            musicUtil.debugLog(
-                Strings.TrackChanged:format(eventData.playlistId, eventData.trackName)
-            )
+            if MusicSettings.DebugEnable then
+                musicUtil.debugLog(
+                    Strings.TrackChanged:format(eventData.playlistId, eventData.trackName)
+                )
+            end
 
             MusicManager.updateBanner()
         end,
@@ -493,15 +505,19 @@ return {
         end,
 
         S3maphoreWeatherChanged = function(weatherName)
-            musicUtil.debugLog(
-                Strings.WeatherChanged:format(weatherName)
-            )
+            if MusicSettings.DebugEnable then
+                musicUtil.debugLog(
+                    Strings.WeatherChanged:format(weatherName)
+                )
+            end
 
             PlaylistState.weather = weatherName
         end,
 
         S3maphoreClearTargetCache = function()
-            musicUtil.debugLog('clearing target cache for key', CombatTargetCacheKey)
+            if MusicSettings.DebugEnable then
+                musicUtil.debugLog('clearing target cache for key', CombatTargetCacheKey)
+            end
             PlaylistRules.clearGlobalCombatTargetCache()
         end
     }
