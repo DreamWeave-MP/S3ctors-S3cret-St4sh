@@ -239,7 +239,7 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
                     if value ~= nil then return value end
                 end,
                 __newindex = function(t, k, v)
-                    if settingTable[k] ~= nil then
+                    if rawget(settingTable, k) ~= nil then
                         if settingGroup:asTable()[k] ~= nil then
                             settingGroup:set(k, v)
                         else
