@@ -45,7 +45,7 @@ tes3 = tes3
 ---@field chance number probablility that this playlist will use silence between tracks
 
 ---@class QueuedEvent
----@field name string the name of the event to send
+---@field name string? the name of the event to send. If nil, no event will be sent.
 ---@field data any the data to send with the event
 
 --- Player cell name/id mapped to the memory address of the table being looked up. Only used in the most expensive rulesets
