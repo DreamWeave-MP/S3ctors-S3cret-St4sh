@@ -3,6 +3,7 @@ local musicUtil = require 'scripts.s3.music.util'
 ---@class S3maphoreCoreSettings: UpdatingSettingTable
 ---@field BannerEnabled boolean
 ---@field BattleEnabled boolean
+---@field DebugEnable boolean
 ---@field ForceFinishTrack boolean
 ---@field ForcePlaylistChangeOnFriendlyExteriorTransition boolean
 ---@field ForcePlaylistChangeOnHostileExteriorTransition boolean
