@@ -96,6 +96,9 @@ local WeatherType = {
     [9] = 'blizzard',
 }
 
+---@type table<string, string>
+local PreviousPlayerCells = {}
+
 return {
     interfaceName = 'S3maphoreG',
     interface = {
@@ -131,6 +134,16 @@ return {
 
                 Globals.S3maphoreWeatherTracker = -1
             end
+
+            for _, player in ipairs(world.players) do
+                local playerId, currentCell = player.id, player.cell.id
+                local prevCell = PreviousPlayerCells[playerId]
+
+                if not prevCell or prevCell ~= currentCell then
+                    player:sendEvent('S3maphoreRequestCellUpdate')
+                    PreviousPlayerCells[player.id] = currentCell
+                end
+            end
         end,
 
     },
@@ -151,7 +164,7 @@ return {
         end,
 
         -- This function seems like it could have some issues.
-        -- It only determines if there are actors in the cell which are *likely* to engage the player, and doesn't take into account whether or not 
+        -- It only determines if there are actors in the cell which are *likely* to engage the player, and doesn't take into account whether or not
         -- any are actively fighting the player. But it's a useful heauristic to determine whether or not the player is *in* a dungeon or not.
         S3maphoreUpdateCellHasCombatTargets = function(sender)
             sender:sendEvent('S3maphoreCombatTargetsUpdated', cellHasCombatTargets(sender.cell))
