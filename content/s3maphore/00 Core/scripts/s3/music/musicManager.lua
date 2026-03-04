@@ -298,7 +298,7 @@ function MusicManager.playSpecialTrack(trackPath, reason)
 
   --- I guess it's not necessarily guaranteed anymore that the Special playlist exists!
   MusicManager.registeredPlaylists.Special.tracks = specialTrackInfo.tracks
-  playlistsTracksOrder.Special = specialTrackInfo.trackOrder
+  MusicManager.playlistsTracksOrder.Special = specialTrackInfo.trackOrder
 
   MusicManager.setPlaylistActive('Special', true)
 
