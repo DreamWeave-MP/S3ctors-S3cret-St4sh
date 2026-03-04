@@ -11,7 +11,7 @@ for fileName in vfs.pathsWithPrefix('playlists/') do
     end
 end
 
-local playlistIds = { 'Explore', 'Battle', }
+local playlistIds = {}
 for _, file in ipairs(PlaylistFileNames) do
     local ok, playlists = pcall(require, file:gsub("%.lua$", ""))
     if ok and type(playlists) == "table" then
