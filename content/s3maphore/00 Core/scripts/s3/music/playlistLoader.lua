@@ -5,6 +5,13 @@ local musicUtil = require 'scripts.s3.music.util'
 
 local Strings = require 'scripts.s3.music.staticStrings'
 
+--- Takes any number of paramaters and deep prints them, if debug logging is enabled
+local function printOverride(...)
+  musicUtil.debugLog(
+    musicUtil.deepToString({ ... }, 3)
+  )
+end
+
 ---@class S3maphorePlaylistEnv
 local PlaylistEnvironment = {
   playSpecialTrack = MusicManager.playSpecialTrack,
@@ -23,13 +30,7 @@ local PlaylistEnvironment = {
   string = string,
   ipairs = ipairs,
   pairs = pairs,
-  --- Takes any number of paramaters and deep prints them, if debug logging is enabled
-  ---@param ... any
-  print = function(...)
-    musicUtil.debugLog(
-      musicUtil.deepToString({ ... }, 3)
-    )
-  end,
+  print = printOverride,
 }
 
 local function playlistCoroutineLoader()
