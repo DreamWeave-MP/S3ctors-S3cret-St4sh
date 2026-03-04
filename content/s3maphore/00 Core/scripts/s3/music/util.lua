@@ -236,7 +236,7 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
 
     updateSettings()
 
-    local newIndexFunction, newSettingTable
+    local newIndexFunction
     local shadowTable = {}
     if isOpenMW then
         settingGroup:subscribe(async:callback(updateSettings))
@@ -261,7 +261,7 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
         end
     end
 
-    newSettingTable = setmetatable({},
+    return setmetatable({},
         {
             __index = function(_, k)
                 local value = rawget(settingTable, k)
@@ -273,8 +273,6 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
             __newindex = newIndexFunction,
         }
     )
-
-    return newSettingTable
 end
 
 --- Takes a table as input and returns a read-only one.
