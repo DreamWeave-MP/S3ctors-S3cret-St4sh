@@ -43,6 +43,10 @@ storage.playerSection('SettingsS3Music'):subscribe(
                     musicUtil.debugLog('Music state changed to', MusicSettings.MusicEnabled)
                 end
 
+                MusicManager.forceSkip = false
+                queuedEvent.name = nil
+                clearQueuedData()
+
                 if MusicSettings.MusicEnabled then
                     currentFrameHandler = handlePlayback
                 else
@@ -53,7 +57,6 @@ storage.playerSection('SettingsS3Music'):subscribe(
                         MusicManager.currentPlaylist = nil
                         MusicManager.currentTrack = nil
 
-                        clearQueuedData()
                         queuedEvent.data.reason = MusicManager.STATE.Disabled
                         self:sendEvent('S3maphoreMusicStopped', queuedEvent.data)
                     end
