@@ -83,7 +83,6 @@ return function()
 
   local ok, playlist = coroutine.resume(playlistLoaderCo)
 
-  --- Explore, battle, special
   if ok and playlist then
     musicUtil.debugLog("Registered playlist:", playlist.id)
     playlistCount = playlistCount + 1
