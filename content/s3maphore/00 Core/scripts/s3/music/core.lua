@@ -253,18 +253,22 @@ local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
 
 local previousCell
 
+local function confirmCellChange(_)
+    if self.cell.id ~= previousCell then
+        core.sendGlobalEvent('S3maphoreCellChanged', self)
+        previousCell = self.cell.id
+        currentFrameHandler = nullFunction
+    else
+        print('resuming playback . . .')
+        currentFrameHandler = handlePlayback
+    end
+end
+
 handlePlayback = function(_)
     if queuedEvent.name then
         self:sendEvent(queuedEvent.name, queuedEvent.data)
         queuedEvent.name = nil
         clearQueuedData()
-    end
-
-    if self.cell.id ~= previousCell then
-        core.sendGlobalEvent('S3maphoreCellChanged', self)
-        previousCell = self.cell.id
-        currentFrameHandler = nullFunction
-        return
     end
 
     if not core.sound.isEnabled() then return end
@@ -383,13 +387,15 @@ end
 
 local CachedCellGrid = { x = 0, y = 0, }
 
-currentFrameHandler = function(_)
+local function initializePlaylists(_)
     if PlaylistLoader and PlaylistLoader() then PlaylistLoader = nil else return end
 
     if not self.cell then return end
 
-    currentFrameHandler = handlePlayback
+    currentFrameHandler = confirmCellChange
 end
+
+currentFrameHandler = initializePlaylists
 
 return {
     interfaceName = 'S3maphore',
@@ -510,7 +516,11 @@ return {
                 PlaylistState.currentGrid = nil
             end
 
-            currentFrameHandler = handlePlayback
+            --- Really we should check if the cell has changed, and then assign the currentFrameHandler
+            --- accordingly, BUT, edge cases might happen, and also, we want to do that check anyway
+            --- because if it is the same, we'll later do playlist resolution at this point in time
+            currentFrameHandler = confirmCellChange
+            print('Cell change received, passing control back to cell change confirmation handler')
         end,
 
         S3maphoreWeatherChanged = function(weatherName)
@@ -528,6 +538,12 @@ return {
                 musicUtil.debugLog('clearing target cache for key', CombatTargetCacheKey)
             end
             PlaylistRules.clearGlobalCombatTargetCache()
-        end
+        end,
+
+        S3maphoreRequestCellUpdate = function()
+            if currentFrameHandler == initializePlaylists then return end
+
+            currentFrameHandler = confirmCellChange
+        end,
     }
 }
