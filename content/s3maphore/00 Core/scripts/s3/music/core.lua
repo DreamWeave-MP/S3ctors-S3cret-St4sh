@@ -10,6 +10,7 @@ local types = require 'openmw.types'
 
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
+---@type function?
 local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
 local PlaylistState = require 'scripts.s3.music.playlistState'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
@@ -18,15 +19,46 @@ local Strings = require 'scripts.s3.music.staticStrings'
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicUtil = require 'scripts.s3.music.util'
 local nullFunction = function() end
+local handlePlayback = nullFunction
 
 ---@type fun(dt: number)
 local currentFrameHandler = nullFunction
 
+---@type QueuedEvent
+local queuedEvent = { name = nil, data = {} }
+local function clearQueuedData()
+    local key = next(queuedEvent.data)
+    while key do
+        queuedEvent.data[key] = nil
+        key = next(queuedEvent.data)
+    end
+end
+
 storage.playerSection('SettingsS3Music'):subscribe(
     async:callback(
         function(_, key)
-            if not key or key == 'BannerEnabled' then
+            if key == 'BannerEnabled' then
                 MusicManager.updateBanner()
+            elseif key == 'MusicEnabled' then
+                if MusicSettings.DebugEnable then
+                    musicUtil.debugLog('Music state changed to', MusicSettings.MusicEnabled)
+                end
+
+                if MusicSettings.MusicEnabled then
+                    currentFrameHandler = handlePlayback
+                else
+                    currentFrameHandler = nullFunction
+
+                    if ambient.isMusicPlaying() then
+                        ambient.stopMusic()
+                        MusicManager.currentPlaylist = nil
+                        MusicManager.currentTrack = nil
+
+                        clearQueuedData()
+                        queuedEvent.data.reason = MusicManager.STATE.Disabled
+                        self:sendEvent('S3maphoreMusicStopped', queuedEvent.data)
+                    end
+                end
             end
         end
     )
@@ -85,6 +117,7 @@ end
 
 local function playerDied()
     MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
+    currentFrameHandler = nullFunction
 end
 
 --- If a set of fallback playlists is present, attempt to use them during track selection
@@ -221,17 +254,7 @@ local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
 
 local previousCell
 
----@type QueuedEvent
-local queuedEvent = { name = nil, data = {} }
-local function clearQueuedData()
-    local key = next(queuedEvent.data)
-    while key do
-        queuedEvent.data[key] = nil
-        key = next(queuedEvent.data)
-    end
-end
-
-local function handlePlayback(_)
+handlePlayback = function(_)
     if queuedEvent.name then
         self:sendEvent(queuedEvent.name, queuedEvent.data)
         queuedEvent.name = nil
@@ -248,19 +271,6 @@ local function handlePlayback(_)
 
     -- Do not allow to switch playlists when player is dead
     local musicPlaying = ambient.isMusicPlaying()
-
-    if not MusicManager.getEnabled() then
-        if musicPlaying then
-            ambient.stopMusic()
-            MusicManager.currentPlaylist = nil
-            MusicManager.currentTrack = nil
-            clearQueuedData()
-            queuedEvent.name = 'S3maphoreMusicStopped'
-            queuedEvent.data.reason = MusicManager.STATE.Disabled
-        end
-
-        return
-    end
 
     if types.Actor.isDead(self) and musicPlaying then return end
 
@@ -377,9 +387,11 @@ end
 local CachedCellGrid = { x = 0, y = 0, }
 
 currentFrameHandler = function(_)
+    if PlaylistLoader and PlaylistLoader() then PlaylistLoader = nil else return end
+
     if not self.cell then return end
 
-    if PlaylistLoader() then currentFrameHandler = handlePlayback end
+    currentFrameHandler = handlePlayback
 end
 
 return {
