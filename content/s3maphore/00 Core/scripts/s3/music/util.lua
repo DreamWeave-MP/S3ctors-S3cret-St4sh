@@ -274,7 +274,7 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
         }
     )
 
-    return newSettingTable or settingTable
+    return newSettingTable
 end
 
 --- Takes a table as input and returns a read-only one.
