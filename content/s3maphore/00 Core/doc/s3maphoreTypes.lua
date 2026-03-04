@@ -88,9 +88,10 @@ tes3 = tes3
 ---@field tracks string[]? explicit list of tracks to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
 
 ---@class S3maphoreStateChangeEventData
+---@field fadeOut number?
 ---@field playlistId string
----@field trackName string VFS path of the track being played
 ---@field reason S3maphoreStateChangeReason
+---@field trackName string VFS path of the track being played
 
 ---@alias ServicesOffered table<ServiceType, boolean>
 

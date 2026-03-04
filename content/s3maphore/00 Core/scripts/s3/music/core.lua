@@ -203,11 +203,6 @@ local function switchPlaylist(newPlaylist)
     local nextPlaylist = getPlaylistIdForTrackSelection(newPlaylist)
     local nextTrack = selectTrackFromPlaylist(nextPlaylist)
 
-    MusicParams.fadeOut = newPlaylist.fadeOut or MusicSettings.FadeOutDuration
-    -- We shouldn't interrupt tracks if the playlist is different but the track is the same
-    ambient.streamMusic(nextTrack, MusicParams)
-    MusicManager.currentTrack = nextTrack
-
     if newPlaylist.playOneTrack then
         newPlaylist.deactivateAfterEnd = true
     end
@@ -217,6 +212,8 @@ local function switchPlaylist(newPlaylist)
     end
 
     MusicManager.currentPlaylist = newPlaylist
+    MusicManager.currentTrack = nextTrack
+    MusicParams.fadeOut = newPlaylist.fadeOut or MusicSettings.FadeOutDuration
 end
 
 ---@param oldPlaylist S3maphorePlaylist?
@@ -381,6 +378,7 @@ handlePlayback = function(_)
 
     clearQueuedData()
     queuedEvent.name = 'S3maphoreTrackChanged'
+    queuedEvent.data.fadeOut = MusicParams.fadeOut
     queuedEvent.data.playlistId = newPlaylist and newPlaylist.id
     queuedEvent.data.trackName = MusicManager.currentTrack
 end
@@ -484,6 +482,8 @@ return {
                 )
             end
 
+            MusicParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
+            ambient.streamMusic(eventData.trackName, MusicParams)
             MusicManager.updateBanner()
         end,
 
