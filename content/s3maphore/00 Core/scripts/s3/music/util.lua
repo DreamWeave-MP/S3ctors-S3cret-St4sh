@@ -282,8 +282,8 @@ local function makeStrictReadOnly(inTable)
     end
 
     return setmetatable({}, {
-        __index = function(this, key)
-            local found = this[key]
+        __index = function(_, key)
+            local found = inTable[key]
 
             if found ~= nil then
                 return found
