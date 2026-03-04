@@ -228,12 +228,23 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
     if isOpenMW then
         settingGroup:subscribe(async:callback(updateSettings))
 
+        local shadowTable = {}
         settingTable = setmetatable({},
             {
-                __index = settingTable,
+                __index = function(_, k)
+                    local value = rawget(settingTable, k)
+                    if value ~= nil then return value end
+
+                    value = rawget(shadowTable, k)
+                    if value ~= nil then return value end
+                end,
                 __newindex = function(t, k, v)
                     if settingTable[k] ~= nil then
-                        settingGroup:set(k, v)
+                        if settingGroup:asTable()[k] ~= nil then
+                            settingGroup:set(k, v)
+                        else
+                            rawset(shadowTable, k, v)
+                        end
                     else
                         print(
                             ('The key %s does not exist in the settings table %s to assign a value to!'):format(k, t)
