@@ -22,9 +22,6 @@ local nullFunction = function() end
 ---@type fun(dt: number)
 local currentFrameHandler = nullFunction
 
----@alias FightingActors table<string, LObject>
-local fightingActors = {}
-
 storage.playerSection('SettingsS3Music'):subscribe(
     async:callback(
         function(_, key)
@@ -64,20 +61,19 @@ local function onCombatTargetsChanged(eventData)
     if eventData.actor == nil then return end
 
     if next(eventData.targets) ~= nil then
-        fightingActors[eventData.actor.id] = eventData.actor
+        PlaylistState.combatTargets[eventData.actor.id] = eventData.actor
     else
-        fightingActors[eventData.actor.id] = nil
+        PlaylistState.combatTargets[eventData.actor.id] = nil
         PlaylistRules.clearCombatCaches(eventData.actor.id)
     end
 
     core.sendGlobalEvent('S3maphoreUpdateCellHasCombatTargets', self)
-
-    PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(fightingActors)
+    PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
 
     if PlaylistState.isInCombat then
-        CombatTargetCacheKey = tostring(fightingActors)
+        CombatTargetCacheKey = tostring(PlaylistState.combatTargets)
 
-        for targetId, _ in pairs(fightingActors) do
+        for targetId, _ in pairs(PlaylistState.combatTargets) do
             CombatTargetCacheKey = ('%s%s'):format(CombatTargetCacheKey, targetId)
         end
 
