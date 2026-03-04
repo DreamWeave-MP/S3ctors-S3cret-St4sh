@@ -1,21 +1,27 @@
-require 'doc.s3maphoreTypes'
+---@module 'doc.s3maphoreTypes'
 
 local core = require 'openmw.core'
+local gameSelf = require 'openmw.self'
 local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
+
+local musicUtil = require 'scripts.s3.music.util'
 
 local HUGE = math.huge
 
 --- https://gitlab.com/OpenMW/openmw/-/merge_requests/4334
 --- https://gitlab.com/OpenMW/openmw/-/blob/96d0d1fa7cd83e41853061cca68f612b7eb9c834/CMakeLists.txt#L85
-local onHitAPIRevision = 85
-local MyLevel, Quests
+local OnHitAPIRevision = 85
+local Quests = gameSelf.type.quests(gameSelf)
+local MyLevel = gameSelf.type.stats.level(gameSelf)
+local StaticStrings = require 'scripts.s3.music.staticStrings'
 
----@class PlaylistRules helper functions for running playlist behaviors
+---@class PlaylistRules: StrictReadOnlyTable helper functions for running playlist behaviors
+---@field combatTargetCacheKey S3maphoreCacheKey? Serialized string containing the ids of all combatants, used as a key for combat-related rule lookups
 ---@field state PlaylistState
 local PlaylistRules = {
-    ---@type S3maphoreCacheKey
     combatTargetCacheKey = nil,
+    state = require 'scripts.s3.music.playlistState',
 }
 
 --- Stores playlist rule lookups according to whatever is most relevant for that particular type,
@@ -376,7 +382,7 @@ end
 --- To check specific vampire clans, use the faction rule.
 ---@return boolean
 function PlaylistRules.fightingVampires()
-    if not PlaylistRules.state.isInCombat or core.API_REVISION < onHitAPIRevision then return false end
+    if not PlaylistRules.state.isInCombat or core.API_REVISION < OnHitAPIRevision then return false end
 
     if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
 
@@ -420,7 +426,7 @@ end
 ---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
 ---@return boolean
 function PlaylistRules.dynamicStatThreshold(statThreshold)
-    if not PlaylistRules.state.isInCombat or core.API_REVISION < onHitAPIRevision then return false end
+    if not PlaylistRules.state.isInCombat or core.API_REVISION < OnHitAPIRevision then return false end
 
     if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
 
@@ -725,18 +731,16 @@ function PlaylistRules.journal(journalDataMap)
     return result
 end
 
----@param playlistState PlaylistState A long-living reference to the playlist state table. To aggressively minimize new allocations, this table is created once when the core initializes and is continually updated througout the lifetime of the script.
----@param staticStrings S3maphoreStaticStrings
-return function(playlistState, staticStrings)
-    assert(playlistState)
-    assert(staticStrings)
+---@param key S3maphoreCacheKey?
+function PlaylistRules.setCombatTargetCacheKey(key)
+    if key and type(key) ~= 'string' then
+        error(
+            'Invalid cache key provided!',
+            2
+        )
+    end
 
-    PlaylistRules.state = playlistState
-
-    Quests = playlistState.self.type.quests(playlistState.self)
-    MyLevel = playlistState.self.type.stats.level(playlistState.self)
-    StaticStrings = staticStrings
-    assert(Quests)
-
-    return PlaylistRules
+    PlaylistRules.combatTargetCacheKey = key
 end
+
+return musicUtil.makeStrictReadOnly(PlaylistRules)
