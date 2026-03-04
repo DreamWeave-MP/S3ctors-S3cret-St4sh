@@ -211,14 +211,25 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
         settingGroup = require(mcmPath).get(groupName)
     end
 
-    local function updateSettings(_, updated)
-        if updated then
-            settingTable[updated] = settingGroup:get(updated)
-        else
-            local settingsAsTable = isOpenMW and settingGroup:asTable() or settingGroup
-
-            for key, value in pairs(settingsAsTable) do
-                settingTable[key] = value
+    local updateSettings
+    if isOpenMW then
+        updateSettings = function(_, updated)
+            if updated then
+                settingTable[updated] = settingGroup:get(updated)
+            else
+                for key, value in pairs(settingGroup:asTable()) do
+                    rawset(settingTable, key, value)
+                end
+            end
+        end
+    else
+        updateSettings = function(_, updated)
+            if updated then
+                settingTable[updated] = rawget(settingGroup, updated)
+            else
+                for key, value in pairs(settingGroup) do
+                    rawset(settingTable, key, value)
+                end
             end
         end
     end
