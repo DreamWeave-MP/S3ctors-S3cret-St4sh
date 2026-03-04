@@ -225,11 +225,12 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
 
     updateSettings()
 
+    local newSettingTable
     if isOpenMW then
         settingGroup:subscribe(async:callback(updateSettings))
 
         local shadowTable = {}
-        settingTable = setmetatable({},
+        newSettingTable = setmetatable({},
             {
                 __index = function(_, k)
                     local value = rawget(settingTable, k)
@@ -238,17 +239,11 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
                     value = rawget(shadowTable, k)
                     if value ~= nil then return value end
                 end,
-                __newindex = function(t, k, v)
-                    if rawget(settingTable, k) ~= nil then
-                        if settingGroup:asTable()[k] ~= nil then
-                            settingGroup:set(k, v)
-                        else
-                            rawset(shadowTable, k, v)
-                        end
+                __newindex = function(_, k, v)
+                    if rawget(settingGroup:asTable(), k) ~= nil then
+                        settingGroup:set(k, v)
                     else
-                        print(
-                            ('The key %s does not exist in the settings table %s to assign a value to!'):format(k, t)
-                        )
+                        rawset(shadowTable, k, v)
                     end
                 end,
             }
@@ -258,7 +253,7 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
         table.subscribe(settingGroup, updateSettings)
     end
 
-    return settingTable
+    return newSettingTable or settingTable
 end
 
 --- Takes a table as input and returns a read-only one.
