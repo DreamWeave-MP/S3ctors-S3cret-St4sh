@@ -269,6 +269,7 @@ handlePlayback = function(_)
         self:sendEvent(queuedEvent.name, queuedEvent.data)
         queuedEvent.name = nil
         clearQueuedData()
+        return
     end
 
     if not core.sound.isEnabled() then return end
