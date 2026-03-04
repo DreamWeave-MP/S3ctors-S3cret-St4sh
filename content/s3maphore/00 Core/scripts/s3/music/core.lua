@@ -6,7 +6,6 @@ local core = require 'openmw.core'
 local input = require 'openmw.input'
 local self = require 'openmw.self'
 local storage = require 'openmw.storage'
-local types = require 'openmw.types'
 
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
@@ -269,10 +268,7 @@ handlePlayback = function(_)
 
     if not core.sound.isEnabled() then return end
 
-    -- Do not allow to switch playlists when player is dead
     local musicPlaying = ambient.isMusicPlaying()
-
-    if types.Actor.isDead(self) and musicPlaying then return end
 
     updatePlaylistState()
 
