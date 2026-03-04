@@ -3,6 +3,7 @@ local vfs = require 'openmw.vfs'
 
 local musicUtil = require 'scripts.s3.music.util'
 
+local MusicManager = require 'scripts.s3.music.musicManager'
 local Strings = require 'scripts.s3.music.staticStrings'
 
 --- Takes any number of paramaters and deep prints them, if debug logging is enabled
@@ -22,7 +23,10 @@ local PlaylistEnvironment = {
   ---@type PlaylistPriority
   PlaylistPriority = require 'doc.playlistPriority',
   Tilesets = require 'doc.tilesets',
-  Playback = Playback,
+  Playback = {
+    rules = require 'scripts.s3.music.playlistRules',
+    state = require 'scripts.s3.music.playlistState',
+  },
   --- Don't interfaces HAVE to be tables?
   ---@type table <string, any>
   I = require 'openmw.interfaces',
