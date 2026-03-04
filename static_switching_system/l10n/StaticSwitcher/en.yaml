@@ -1,0 +1,33 @@
+StaticSwitchingSystemDesc: |-
+  Framework for easily replacing static or activator records ingame with identical objects that have different models.
+
+StaticSwitcherEnableGlobalDesc: |-
+  Choose whether to do replacements globally in exteriors.
+  This means that distant land will be correct, but at the cost of early save bloat.
+  It's recommended to change this setting while on the main menu.
+
+StaticSwitcherEnableGlobalReplacementsName: Enable Global Replacements
+
+StaticSwitcherSettings: Static Switcher Settings
+
+StaticSwitcherFalseLabel: Disable
+StaticSwitcherTrueLabel: Enable
+
+StaticSwitcherModuleDisableButton: Uninstall Module
+StaticSwitcherModuleDisableDesc: |-
+  Select this option to uninstall whichever Static Switching System module you have selected above. 
+  This process is reversible!
+  Please make sure to heed the warning above as well.
+
+StaticSwitcherModuleSelection: Select A Module To Disable
+StaticSwitcherModuleSelectionDesc: |-
+  With this option, you may select an installed module to disable.
+  Uninstall the module by selecting it with this option, then toggling the option below.
+  Afterwards, your game will save and exit automatically. 
+  Go uninstall whatever mod you just tried to uninstall.
+
+  WARNING:
+  If you uninstall a module here, but do not actually uninstall the *files*, they will be restored the next time your save is loaded.
+
+StaticSwitcherSaveDesc: |-
+  Removed SSS Module {moduleName}
