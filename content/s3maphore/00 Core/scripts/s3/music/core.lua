@@ -351,19 +351,16 @@ handlePlayback = function(_)
     --- skip detection *potentially* less accurate
     inExteriorBeforeCellChange = PlaylistState.cellIsExterior
 
-    -- If there's already a track running
-    if musicPlaying
-        and ((
-            --- And the playlist hasn't actually changed
-                newPlaylist == MusicManager.currentPlaylist
-                --- or the interruptMode prevents changing playlists
-                or not canSwitchPlaylist(MusicManager.currentPlaylist, newPlaylist)
-            )
-            --- but only if we didn't force a transition with F8, or the appropriate setting override
-            and not MusicManager.forceSkip
-        ) then
-        return
+    --- Only pick a new track, if no music is playing, or we've asked for a forced skip
+    local pickNewTrack = not musicPlaying or MusicManager.forceSkip
+    if musicPlaying and not MusicManager.forceSkip then
+        --- In special cases, we can force a new track to be picked,
+        --- if the playlist has changed, and we're allowed to do so (by the new playlist's interrupt mode overriding the old one)
+        pickNewTrack = newPlaylist ~= MusicManager.currentPlaylist and
+            canSwitchPlaylist(MusicManager.currentPlaylist, newPlaylist)
     end
+
+    if not pickNewTrack then return end
 
     MusicManager.forceSkip = false
     didChangePlaylist = false
