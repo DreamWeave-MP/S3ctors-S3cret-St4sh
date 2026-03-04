@@ -289,7 +289,8 @@ local function makeStrictReadOnly(inTable)
                 return found
             else
                 error(
-                    ('Failed to locate key %s in table %s!'):format(key, this)
+                    ('Failed to locate key %s in table %s!'):format(key, inTable),
+                    2
                 )
             end
         end,
