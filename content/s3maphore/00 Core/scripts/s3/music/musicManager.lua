@@ -12,6 +12,7 @@ local MusicSettings = require 'scripts.s3.music.musicSettings'
 -- These are both still api-specific
 local PlaylistFileList = musicUtil.getPlaylistFilePaths()
 
+local PlaylistPriority = require 'doc.playlistPriority'
 local PlaylistState = require 'scripts.s3.music.playlistState'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 
@@ -343,5 +344,16 @@ function MusicManager.updateBanner()
 end
 
 MusicManager.playlistTimeOfDay = IsOpenMW and OMWPlaylistTimeOfDay or MWSEPlaylistTimeOfDay
+
+MusicManager.registerPlaylist {
+  active = false,
+  id = 'Special',
+  isValidCallback = function()
+    return false
+  end,
+  playOneTrack = true,
+  priority = PlaylistPriority.Special,
+  tracks = {},
+}
 
 return MusicManager
