@@ -227,6 +227,21 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
 
     if isOpenMW then
         settingGroup:subscribe(async:callback(updateSettings))
+
+        settingTable = setmetatable({},
+            {
+                __index = settingTable,
+                __newindex = function(t, k, v)
+                    if settingTable[k] ~= nil then
+                        settingGroup:set(k, v)
+                    else
+                        print(
+                            ('The key %s does not exist in the settings table %s to assign a value to!'):format(k, t)
+                        )
+                    end
+                end,
+            }
+        )
     else
         ---@diagnostic disable-next-line: undefined-field
         table.subscribe(settingGroup, updateSettings)
