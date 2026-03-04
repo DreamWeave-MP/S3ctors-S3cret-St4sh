@@ -26,7 +26,7 @@ local SilenceManager = require 'scripts.s3.music.silenceManager'
 ---@field forceSkip boolean
 ---@field playlistTracksOrder table<string, string[]>
 ---@field registrationOrder integer
----@field registeredPlaylists S3maphorePlaylist[]
+---@field registeredPlaylists table<string, S3maphorePlaylist>
 local MusicManager = {
   STATE = require 'scripts.s3.music.enum.stateChangeReason',
   TIME_MAP = require 'scripts.s3.music.enum.timeMap',
@@ -36,7 +36,18 @@ local MusicManager = {
   forceSkip = false,
   playlistsTracksOrder = musicUtil.getStoredTracksOrder(),
   registrationOrder = 0,
-  registeredPlaylists = {},
+  registeredPlaylists = {
+    Special = {
+      active = false,
+      id = 'Special',
+      isValidCallback = function()
+        return false
+      end,
+      playOneTrack = true,
+      priority = PlaylistPriority.Special,
+      tracks = {},
+    }
+  },
 }
 
 if IsOpenMW then
@@ -298,7 +309,6 @@ function MusicManager.playSpecialTrack(trackPath, reason)
 
   specialTrackInfo.tracks[1] = trackPath
 
-  --- I guess it's not necessarily guaranteed anymore that the Special playlist exists!
   MusicManager.registeredPlaylists.Special.tracks = specialTrackInfo.tracks
   MusicManager.playlistsTracksOrder.Special = specialTrackInfo.trackOrder
 
@@ -344,16 +354,5 @@ function MusicManager.updateBanner()
 end
 
 MusicManager.playlistTimeOfDay = IsOpenMW and OMWPlaylistTimeOfDay or MWSEPlaylistTimeOfDay
-
-MusicManager.registerPlaylist {
-  active = false,
-  id = 'Special',
-  isValidCallback = function()
-    return false
-  end,
-  playOneTrack = true,
-  priority = PlaylistPriority.Special,
-  tracks = {},
-}
 
 return MusicManager
