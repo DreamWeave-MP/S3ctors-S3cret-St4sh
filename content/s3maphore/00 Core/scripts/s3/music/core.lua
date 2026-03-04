@@ -257,6 +257,7 @@ handlePlayback = function(_)
     if queuedEvent.name then
         self:sendEvent(queuedEvent.name, queuedEvent.data)
         queuedEvent.name = nil
+        clearQueuedData()
     end
 
     if self.cell.id ~= previousCell then
