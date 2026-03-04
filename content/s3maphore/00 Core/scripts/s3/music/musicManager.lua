@@ -280,6 +280,7 @@ local specialTrackInfo = {
     playlistId = 'Special',
     trackName = '',
     reason = MusicManager.STATE.SpecialTrackPlaying,
+    fadeOut = MusicSettings.FadeOutDuration,
   },
   trackOrder = { 1 },
 }
@@ -310,10 +311,9 @@ function MusicManager.playSpecialTrack(trackPath, reason)
     fadeOut = MusicSettings.FadeOutDuration
   end
 
-  ambient.streamMusic(trackPath, fadeOut)
-
-  specialTrackInfo.trackChangeInfo.trackName = trackPath
+  specialTrackInfo.trackChangeInfo.fadeOut = fadeOut
   specialTrackInfo.trackChangeInfo.reason = reason or MusicManager.STATE.SpecialTrackPlaying
+  specialTrackInfo.trackChangeInfo.trackName = trackPath
 
   gameSelf:sendEvent('S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
 end
