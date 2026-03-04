@@ -252,8 +252,8 @@ end
 
 --- Takes a table as input and returns a read-only one.
 --- Commits seppuku if the input is not a table, so do be careful
----@param inTable table<any, any>
----@return table<any, any>
+---@param inTable table
+---@return ReadOnlyTable
 local function makeReadOnly(inTable)
     if type(inTable) ~= 'table' then
         error(
@@ -272,8 +272,8 @@ end
 
 --- Takes a table as input and returns a read-only one.
 --- Commits seppuku if the input is not a table, so do be careful
----@param inTable table<any, any>
----@return table<any, any>
+---@param inTable table
+---@return StrictReadOnlyTable
 local function makeStrictReadOnly(inTable)
     if type(inTable) ~= 'table' then
         error(
