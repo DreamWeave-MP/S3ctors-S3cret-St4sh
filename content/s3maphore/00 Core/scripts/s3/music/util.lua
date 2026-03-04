@@ -225,33 +225,43 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
 
     updateSettings()
 
-    local newSettingTable
+    local newIndexFunction, newSettingTable
+    local shadowTable = {}
     if isOpenMW then
         settingGroup:subscribe(async:callback(updateSettings))
 
-        local shadowTable = {}
-        newSettingTable = setmetatable({},
-            {
-                __index = function(_, k)
-                    local value = rawget(settingTable, k)
-                    if value ~= nil then return value end
-
-                    value = rawget(shadowTable, k)
-                    if value ~= nil then return value end
-                end,
-                __newindex = function(_, k, v)
-                    if rawget(settingGroup:asTable(), k) ~= nil then
-                        settingGroup:set(k, v)
-                    else
-                        rawset(shadowTable, k, v)
-                    end
-                end,
-            }
-        )
+        newIndexFunction = function(_, k, v)
+            if rawget(settingGroup:asTable(), k) ~= nil then
+                settingGroup:set(k, v)
+            else
+                rawset(shadowTable, k, v)
+            end
+        end
     else
         ---@diagnostic disable-next-line: undefined-field
         table.subscribe(settingGroup, updateSettings)
+
+        newIndexFunction = function(_, k, v)
+            if rawget(settingGroup, k) ~= nil then
+                rawset(settingGroup, k, v)
+            else
+                rawset(shadowTable, k, v)
+            end
+        end
     end
+
+    newSettingTable = setmetatable({},
+        {
+            __index = function(_, k)
+                local value = rawget(settingTable, k)
+                if value ~= nil then return value end
+
+                value = rawget(shadowTable, k)
+                if value ~= nil then return value end
+            end,
+            __newindex = newIndexFunction,
+        }
+    )
 
     return newSettingTable or settingTable
 end
