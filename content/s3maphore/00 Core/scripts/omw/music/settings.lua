@@ -84,6 +84,13 @@ I.Settings.registerGroup({
             default = true,
         },
         {
+            key = 'ExploreEnabled',
+            renderer = 'checkbox',
+            name = 'ExploreEnabled',
+            description = 'ExploreEnabledDescription',
+            default = true,
+        },
+        {
             key = 'BannerEnabled',
             renderer = 'checkbox',
             name = 'BannerEnabled',

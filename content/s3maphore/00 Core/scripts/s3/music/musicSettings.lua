@@ -4,6 +4,7 @@ local musicUtil = require 'scripts.s3.music.util'
 ---@field BannerEnabled boolean
 ---@field BattleEnabled boolean
 ---@field DebugEnable boolean
+---@field ExploreEnabled boolean
 ---@field ForceFinishTrack boolean
 ---@field ForcePlaylistChangeOnFriendlyExteriorTransition boolean
 ---@field ForcePlaylistChangeOnHostileExteriorTransition boolean

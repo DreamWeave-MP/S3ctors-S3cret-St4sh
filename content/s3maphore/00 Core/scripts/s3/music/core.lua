@@ -103,6 +103,7 @@ local function onCombatTargetsChanged(eventData)
 
     core.sendGlobalEvent('S3maphoreUpdateCellHasCombatTargets', self)
     PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
+    PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
 
     if PlaylistState.isInCombat then
         CombatTargetCacheKey = tostring(PlaylistState.combatTargets)

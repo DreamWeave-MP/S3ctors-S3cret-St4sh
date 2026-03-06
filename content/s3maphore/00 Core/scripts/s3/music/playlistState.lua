@@ -7,6 +7,7 @@
 ---@field cellWaterLevel number? If the current cell has water, then, it is copied here
 ---@field combatTargets table<string, GameObject> a read-only table of combat targets, where keys are actor IDs and values are the actors themselves
 ---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
+---@field isExploring boolean whether the player is currently exploring or not. Distinct from isInCombat as settings may control it.
 ---@field isInCombat boolean whether the player is in combat or not
 ---@field isUnderwater boolean
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
@@ -22,6 +23,8 @@ local PlaylistState = {
   cellWaterLevel = nil,
   combatTargets = {},
   currentGrid = nil,
+  isExploring = true,
+  isInCombat = false,
   isUnderwater = false,
   staticList = {
     recordIds = {},
