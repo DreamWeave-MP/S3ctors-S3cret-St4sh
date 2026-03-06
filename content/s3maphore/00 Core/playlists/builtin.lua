@@ -1,31 +1,5 @@
 ---@module 'doc.playlistEnv'
 
--- local async = require 'openmw.async'
--- local activePlaylistSettings = require 'openmw.storage'.playerSection('S3maphoreActivePlaylistSettings')
---
--- local defaultPlaylistStates, defaultPlaylistNames = {}, {
---     'BattleActive',
---     'ExploreActive'
--- }
---
--- for _, playlistName in ipairs(defaultPlaylistNames) do
---     if activePlaylistSettings:get(playlistName) == nil then activePlaylistSettings:set(playlistName, true) end
--- end
---
--- local function updateDefaultPlaylistStates()
---     for _, playlistName in ipairs(defaultPlaylistNames) do
---         defaultPlaylistStates[playlistName] = activePlaylistSettings:get(playlistName)
---     end
--- end
---
--- updateDefaultPlaylistStates()
---
--- activePlaylistSettings:subscribe(
---     async:callback(
---         updateDefaultPlaylistStates
---     )
--- )
-
 ---@type S3maphorePlaylist[]
 return {
     {
@@ -34,7 +8,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return not Playback.state.isInCombat and defaultPlaylistStates.ExploreActive
+            return Playback.state.isExploring
         end,
     },
     {
@@ -43,19 +17,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return Playback.state.isInCombat and defaultPlaylistStates.BattleActive
+            return Playback.state.isInCombat
         end,
-    },
-    {
-        id = 'Special',
-        priority = PlaylistPriority.Special,
-        playOneTrack = true,
-        active = false,
-
-        isValidCallback = function()
-            return false
-        end,
-
-        tracks = {},
     },
 }
