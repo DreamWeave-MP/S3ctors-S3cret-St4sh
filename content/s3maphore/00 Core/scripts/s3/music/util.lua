@@ -36,6 +36,23 @@ local function debugLog(...)
     )
 end
 
+---@param root table
+---@return table outTable
+local function deepCopy(root, copies)
+    copies = copies or {}
+    if copies[root] then return copies[root] end
+
+    local new = {}
+    copies[root] = new
+    for k, v in pairs(root) do
+        local key = type(k) == "table" and deepCopy(k, copies) or k
+        local val = type(v) == "table" and deepCopy(v, copies) or v
+        new[key] = val
+    end
+
+    return setmetatable(new, getmetatable(root))
+end
+
 local function deepToString(val, level, prefix)
     prefix = prefix or ''
     level = (level or 1) - 1
@@ -342,6 +359,7 @@ end
 ---@class S3maphoreHelperModule
 local utilModule = {
     debugLog = debugLog,
+    deepCopy = deepCopy,
     deepToString = deepToString,
     getActivePlaylistByPriority = getActivePlaylistByPriority,
     getPlaylistFilePaths = getPlaylistFilePaths,
