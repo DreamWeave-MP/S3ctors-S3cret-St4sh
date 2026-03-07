@@ -375,9 +375,10 @@ end
 local CachedCellGrid = { x = 0, y = 0, }
 
 local function initializePlaylists(_)
-    if PlaylistLoader and PlaylistLoader() then PlaylistLoader = nil else return end
-
-    currentFrameHandler = handlePlayback
+    if PlaylistLoader and PlaylistLoader() then
+        PlaylistLoader = nil
+        currentFrameHandler = handlePlayback
+    end
 end
 
 currentFrameHandler = initializePlaylists
