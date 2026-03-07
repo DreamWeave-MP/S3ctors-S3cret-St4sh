@@ -6,6 +6,34 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphoreStaticStrings
 local Strings = require 'scripts.s3.music.staticStrings'
 
+local ReadOnlyMT = {
+    __newindex = function(t)
+        error(('Write attempt to read-only table %s'):format(t))
+    end,
+    __metatable = false,
+}
+
+local StrictReadOnlyMT = {
+    {
+        __index = function(inTable, key)
+            local found = inTable[key]
+
+            if found ~= nil then
+                return found
+            else
+                error(
+                    ('Failed to locate key %s in table %s!'):format(key, inTable),
+                    2
+                )
+            end
+        end,
+        __newindex = function(inTable)
+            error(('Write attempt to read-only table %s'):format(inTable))
+        end,
+        __metatable = false,
+    }
+}
+
 if isOpenMW then
     async = require 'openmw.async'
     debug = require 'openmw.debug'
@@ -295,52 +323,53 @@ end
 --- Takes a table as input and returns a read-only one.
 --- Commits seppuku if the input is not a table, so do be careful
 ---@param inTable table
+---@param copy boolean? Whether to copy the table or make the original read-only
+---@param strict boolean? Whether to make the table throw when indexing keys that don't exist
+---@param visited table<table, table>?
 ---@return ReadOnlyTable
-local function makeReadOnly(inTable)
-    if type(inTable) ~= 'table' then
-        error(
-            ('Input value to makeReadOnly %s was not a table!'):format(inTable)
-        )
+local function makeReadOnly(inTable, copy, strict, visited)
+    if type(inTable) ~= "table" then
+        error(("makeReadOnly: expected table, got %s"):format(type(inTable)), 2)
     end
+    visited = visited or {}
 
-    return setmetatable({}, {
-        __index = inTable,
-        __newindex = function()
-            error(('Write attempt to read-only table %s'):format(inTable))
-        end,
-        __metatable = false,
-    })
-end
+    -- Return already processed result if seen
+    if visited[inTable] then return visited[inTable] end
 
---- Takes a table as input and returns a read-only one.
---- Commits seppuku if the input is not a table, so do be careful
----@param inTable table
----@return StrictReadOnlyTable
-local function makeStrictReadOnly(inTable)
-    if type(inTable) ~= 'table' then
-        error(
-            ('Input value to makeStrictReadOnly %s was not a table!'):format(inTable)
-        )
-    end
-
-    return setmetatable({}, {
-        __index = function(_, key)
-            local found = inTable[key]
-
-            if found ~= nil then
-                return found
-            else
-                error(
-                    ('Failed to locate key %s in table %s!'):format(key, inTable),
-                    2
-                )
+    local res
+    if copy then
+        res = {}
+        visited[inTable] = res
+        for k, v in pairs(inTable) do
+            local newk = (type(k) == "table") and makeReadOnly(k, copy, strict, visited) or k
+            local newv = (type(v) == "table") and makeReadOnly(v, copy, strict, visited) or v
+            res[newk] = newv
+        end
+    else
+        res = inTable
+        visited[inTable] = res
+        -- Process all values
+        for _, v in pairs(inTable) do
+            if type(v) == "table" then
+                makeReadOnly(v, copy, strict, visited) -- modifies in place
             end
-        end,
-        __newindex = function()
-            error(('Write attempt to read-only table %s'):format(inTable))
-        end,
-        __metatable = false,
-    })
+        end
+
+        -- Process all table keys (must be done after values to avoid iteration issues)
+        local tableKeys = {}
+        for k in pairs(inTable) do
+            if type(k) == "table" then
+                tableKeys[#tableKeys + 1] = k
+            end
+        end
+
+        for _, tk in ipairs(tableKeys) do
+            makeReadOnly(tk, copy, strict, visited)
+        end
+    end
+
+    local MT = strict and StrictReadOnlyMT or ReadOnlyMT
+    return setmetatable(res, MT)
 end
 
 local function OMWGetStoredTracksOrder()
@@ -371,7 +400,6 @@ local utilModule = {
     isInCombat = isOpenMW and OMWIsInCombat,
     isPlaylistActive = isPlaylistActive,
     makeReadOnly = makeReadOnly,
-    makeStrictReadOnly = makeStrictReadOnly,
     setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
 }
 

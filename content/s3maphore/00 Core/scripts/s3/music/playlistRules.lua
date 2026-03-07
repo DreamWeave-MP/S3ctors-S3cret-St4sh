@@ -743,4 +743,4 @@ function PlaylistRules.setCombatTargetCacheKey(key)
     PlaylistRules.combatTargetCacheKey = key
 end
 
-return musicUtil.makeStrictReadOnly(PlaylistRules)
+return musicUtil.makeReadOnly(PlaylistRules, false, true)

@@ -16,4 +16,4 @@ local StateChangeReason = {
   SpecialTrackPlaying = 'SPTR',
 }
 
-return require 'scripts.s3.music.util'.makeStrictReadOnly(StateChangeReason)
+return require 'scripts.s3.music.util'.makeReadOnly(StateChangeReason, false, true)
