@@ -21,7 +21,7 @@ local nullFunction = function() end
 local handlePlayback = nullFunction
 
 ---@type fun(dt: number)
-local currentFrameHandler = nullFunction
+local currentUpdateHandler = nullFunction
 
 ---@type QueuedEvent
 local queuedEvent = { name = nil, data = {} }
@@ -48,9 +48,9 @@ storage.playerSection('SettingsS3Music'):subscribe(
                 clearQueuedData()
 
                 if MusicSettings.MusicEnabled then
-                    currentFrameHandler = handlePlayback
+                    currentUpdateHandler = handlePlayback
                 else
-                    currentFrameHandler = nullFunction
+                    currentUpdateHandler = nullFunction
 
                     if ambient.isMusicPlaying() then
                         ambient.stopMusic()
@@ -120,7 +120,7 @@ end
 
 local function playerDied()
     MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
-    currentFrameHandler = nullFunction
+    currentUpdateHandler = nullFunction
 end
 
 --- If a set of fallback playlists is present, attempt to use them during track selection
@@ -377,11 +377,11 @@ local CachedCellGrid = { x = 0, y = 0, }
 local function initializePlaylists(_)
     if PlaylistLoader and PlaylistLoader() then
         PlaylistLoader = nil
-        currentFrameHandler = handlePlayback
+        currentUpdateHandler = handlePlayback
     end
 end
 
-currentFrameHandler = initializePlaylists
+currentUpdateHandler = initializePlaylists
 
 return {
     interfaceName = 'S3maphore',
@@ -406,8 +406,8 @@ return {
             end
         end,
 
-        onFrame = function(dt)
-            currentFrameHandler(dt)
+        onUpdate = function(dt)
+            currentUpdateHandler(dt)
         end,
 
         onSave = function()
@@ -507,8 +507,8 @@ return {
             --- Really we should check if the cell has changed, and then assign the currentFrameHandler
             --- accordingly, BUT, edge cases might happen, and also, we want to do that check anyway
             --- because if it is the same, we'll later do playlist resolution at this point in time
-            if currentFrameHandler ~= initializePlaylists then
-                currentFrameHandler = handlePlayback
+            if currentUpdateHandler ~= initializePlaylists then
+                currentUpdateHandler = handlePlayback
             end
         end,
 
