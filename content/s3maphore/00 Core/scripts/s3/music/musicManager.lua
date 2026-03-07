@@ -221,13 +221,13 @@ function MusicManager.getRegisteredPlaylists()
   local readOnlyPlaylists = {}
 
   for k, v in pairs(MusicManager.registeredPlaylists) do
-    readOnlyPlaylists[k] = musicUtil.makeStrictReadOnly(v)
+    readOnlyPlaylists[k] = musicUtil.makeReadOnly(v, true, true)
   end
 
   return musicUtil.makeReadOnly(readOnlyPlaylists)
 end
 
-local ReadOnlyPlaylistFileList = musicUtil.makeStrictReadOnly(PlaylistFileList)
+local ReadOnlyPlaylistFileList = musicUtil.makeReadOnly(PlaylistFileList, true, true)
 --- Returns a read-only array of all recognized playlist files (files with the .lua extension under the VFS directory, Playlists/ )
 ---@return ReadOnlyTable playlistFiles
 function MusicManager.listPlaylistFiles()
@@ -246,9 +246,8 @@ function MusicManager.getEnabled()
   return MusicSettings.MusicEnabled
 end
 
-local ReadOnlyState = musicUtil.makeReadOnly(PlaylistState)
 function MusicManager.getState()
-  return ReadOnlyState
+  return musicUtil.makeReadOnly(PlaylistState, true, true)
 end
 
 ---@return number duration of current silence track
