@@ -1,6 +1,15 @@
 local types = require 'openmw.types'
 local world = require 'openmw.world'
 
+local StaticCellChangeData = {
+    staticList = {
+        contentFiles = {},
+        recordIds = {},
+    },
+    hasCombatTargets = false,
+    nearestRegion = '',
+}
+
 local NPCFightThreshold = 90
 local CreatureFightThreshold = 83
 
@@ -136,12 +145,18 @@ return {
             end
 
             for _, player in ipairs(world.players) do
-                local playerId, currentCell = player.id, player.cell.id
+                local playerCell = player.cell
+                local playerId, currentCell = player.id, playerCell.id
                 local prevCell = PreviousPlayerCells[playerId]
 
                 if not prevCell or prevCell ~= currentCell then
-                    player:sendEvent('S3maphoreRequestCellUpdate')
-                    PreviousPlayerCells[player.id] = currentCell
+                    StaticCellChangeData.staticList.recordIds, StaticCellChangeData.staticList.contentFiles =
+                        getStaticsInActorCell(playerCell)
+                    StaticCellChangeData.nearestRegion = getNearestRegionForCell(playerCell)
+                    StaticCellChangeData.hasCombatTargets = cellHasCombatTargets(playerCell)
+
+                    player:sendEvent('S3maphoreCellChanged', StaticCellChangeData)
+                    PreviousPlayerCells[playerId] = currentCell
                 end
             end
         end,
@@ -149,19 +164,19 @@ return {
     },
 
     eventHandlers = {
-        S3maphoreCellChanged = function(sender)
-            local senderCell = sender.cell
-            local staticRecordIds, staticContentFiles = getStaticsInActorCell(senderCell)
-
-            sender:sendEvent('S3maphoreCellDataUpdated', {
-                staticList = {
-                    contentFiles = staticContentFiles,
-                    recordIds = staticRecordIds,
-                },
-                hasCombatTargets = cellHasCombatTargets(senderCell),
-                nearestRegion = getNearestRegionForCell(senderCell),
-            })
-        end,
+        -- S3maphoreCellChanged = function(sender)
+        --     local senderCell = sender.cell
+        --     local staticRecordIds, staticContentFiles = getStaticsInActorCell(senderCell)
+        --
+        --     sender:sendEvent('S3maphoreCellDataUpdated', {
+        --         staticList = {
+        --             contentFiles = staticContentFiles,
+        --             recordIds = staticRecordIds,
+        --         },
+        --         hasCombatTargets = cellHasCombatTargets(senderCell),
+        --         nearestRegion = getNearestRegionForCell(senderCell),
+        --     })
+        -- end,
 
         -- This function seems like it could have some issues.
         -- It only determines if there are actors in the cell which are *likely* to engage the player, and doesn't take into account whether or not
