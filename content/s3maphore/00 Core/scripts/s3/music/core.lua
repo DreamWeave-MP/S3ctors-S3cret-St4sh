@@ -19,6 +19,7 @@ local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSet
 local musicUtil = require 'scripts.s3.music.util'
 local nullFunction = function() end
 local handlePlayback = nullFunction
+local onSoundEnabledChanged = nullFunction
 
 ---@type fun(dt: number)
 local currentUpdateHandler = nullFunction
@@ -48,7 +49,7 @@ storage.playerSection('SettingsS3Music'):subscribe(
                 clearQueuedData()
 
                 if MusicSettings.MusicEnabled then
-                    currentUpdateHandler = handlePlayback
+                    currentUpdateHandler = onSoundEnabledChanged
                 else
                     currentUpdateHandler = nullFunction
 
@@ -260,8 +261,6 @@ handlePlayback = function(_)
         return
     end
 
-    if not core.sound.isEnabled() then return end
-
     local musicPlaying = ambient.isMusicPlaying()
 
     updatePlaylistState()
@@ -372,13 +371,20 @@ handlePlayback = function(_)
     queuedEvent.data.trackName = MusicManager.currentTrack
 end
 
+local isSoundEnabled = core.sound.isEnabled
+onSoundEnabledChanged = function()
+    if not isSoundEnabled() then return end
+
+    currentUpdateHandler = handlePlayback
+end
+
 local CachedCellGrid = { x = 0, y = 0, }
 
 local function initializePlaylists(_)
-    if PlaylistLoader and PlaylistLoader() then
-        PlaylistLoader = nil
-        currentUpdateHandler = handlePlayback
-    end
+    if not PlaylistLoader() then return end
+
+    PlaylistLoader = nil
+    currentUpdateHandler = onSoundEnabledChanged
 end
 
 currentUpdateHandler = initializePlaylists
@@ -508,7 +514,7 @@ return {
             --- accordingly, BUT, edge cases might happen, and also, we want to do that check anyway
             --- because if it is the same, we'll later do playlist resolution at this point in time
             if currentUpdateHandler ~= initializePlaylists then
-                currentUpdateHandler = handlePlayback
+                currentUpdateHandler = onSoundEnabledChanged
             end
         end,
 
