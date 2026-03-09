@@ -54,7 +54,6 @@ tes3 = tes3
 --- Event data transmitted back to the player when they change cells.
 ---@class S3maphoreCellChangeData
 ---@field staticList StaticList
----@field hasCombatTargets boolean
 ---@field nearestRegion string? Defines the nearest (or current) region to the player's current cell. If one cannot be found, the previous region will be used.
 
 --- Special class for handling exterior grids.

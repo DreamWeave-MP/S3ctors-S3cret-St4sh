@@ -6,12 +6,8 @@ local StaticCellChangeData = {
         contentFiles = {},
         recordIds = {},
     },
-    hasCombatTargets = false,
     nearestRegion = '',
 }
-
-local NPCFightThreshold = 90
-local CreatureFightThreshold = 83
 
 local FieldNames = { 'recordIds', 'contentFiles', }
 
@@ -29,22 +25,10 @@ local function updateCellInfo(senderCell)
     local addedStatics, addedContentFiles = StaticCellChangeData.staticList.recordIds,
         StaticCellChangeData.staticList.contentFiles
 
-    local foundLiveHostiles = 0
-
     local nearestRegion = senderCell.region
 
     for _, object in ipairs(senderCell:getAll()) do
-        local isNPC = types.NPC.objectIsInstance(object)
-        local isCreature = types.Creature.objectIsInstance(object)
-
-        if isNPC or isCreature then
-            local fightStat = object.type.stats.ai.fight(object)
-            local fightLimit = isNPC and NPCFightThreshold or CreatureFightThreshold
-
-            if fightStat.modified >= fightLimit and not object.type.isDead(object) then
-                foundLiveHostiles = foundLiveHostiles + 1
-            end
-        elseif types.Static.objectIsInstance(object) then
+        if types.Static.objectIsInstance(object) then
             if not uniqueStaticIds[object.recordId] then
                 addedStatics[#addedStatics + 1] = object.recordId
                 uniqueStaticIds[object.recordId] = true
@@ -67,8 +51,6 @@ local function updateCellInfo(senderCell)
     if nearestRegion then
         StaticCellChangeData.nearestRegion = nearestRegion
     end
-
-    StaticCellChangeData.hasCombatTargets = foundLiveHostiles > 0
 end
 
 local Globals = world.mwscript.getGlobalVariables()
@@ -137,12 +119,5 @@ return {
 
     },
 
-    eventHandlers = {
-        -- This function seems like it could have some issues.
-        -- It only determines if there are actors in the cell which are *likely* to engage the player, and doesn't take into account whether or not
-        -- any are actively fighting the player. But it's a useful heauristic to determine whether or not the player is *in* a dungeon or not.
-        S3maphoreUpdateCellHasCombatTargets = function(sender)
-            sender:sendEvent('S3maphoreCombatTargetsUpdated', updateCellHasCombatTargets(sender.cell))
-        end,
-    },
+    eventHandlers = {},
 }
