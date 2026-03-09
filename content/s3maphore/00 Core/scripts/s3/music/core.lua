@@ -100,8 +100,8 @@ local function updateCellHasCombatTargets()
     local nearbyCombatTargets = false
 
     for _, actor in ipairs(nearby.actors) do
-        local isNPC = types.NPC.actorIsInstance(actor)
-        local isCreature = types.Creature.actorIsInstance(actor)
+        local isNPC = types.NPC.objectIsInstance(actor)
+        local isCreature = types.Creature.objectIsInstance(actor)
 
         if isNPC or isCreature then
             local fightStat = actor.type.stats.ai.fight(actor)
