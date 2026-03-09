@@ -137,10 +137,6 @@ return {
 
             return cellStr
         end,
-
-        updateCellHasCombatTargets = updateCellHasCombatTargets,
-
-        updateStaticsInActorCell = updateStaticsInActorCell,
     },
 
     engineHandlers = {
