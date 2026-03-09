@@ -4,8 +4,10 @@ local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
+local nearby = require 'openmw.nearby'
 local self = require 'openmw.self'
 local storage = require 'openmw.storage'
+local types = require 'openmw.types'
 
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
@@ -17,6 +19,10 @@ local Strings = require 'scripts.s3.music.staticStrings'
 
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicUtil = require 'scripts.s3.music.util'
+
+local NPCFightThreshold = 90
+local CreatureFightThreshold = 83
+
 local nullFunction = function() end
 local handlePlayback = nullFunction
 local onSoundEnabledChanged = nullFunction
@@ -90,6 +96,27 @@ local Playback = {
     state = PlaylistState,
 }
 
+local function updateCellHasCombatTargets()
+    local nearbyCombatTargets = false
+
+    for _, actor in ipairs(nearby.actors) do
+        local isNPC = types.NPC.actorIsInstance(actor)
+        local isCreature = types.Creature.actorIsInstance(actor)
+
+        if isNPC or isCreature then
+            local fightStat = actor.type.stats.ai.fight(actor)
+            local fightLimit = isNPC and NPCFightThreshold or CreatureFightThreshold
+
+            if fightStat.modified >= fightLimit and not actor.type.isDead(actor) then
+                nearbyCombatTargets = true
+                break
+            end
+        end
+    end
+
+    PlaylistState.cellHasCombatTargets = nearbyCombatTargets
+end
+
 local CombatTargetCacheKey
 ---@param eventData CombatTargetChangedData
 local function onCombatTargetsChanged(eventData)
@@ -102,7 +129,7 @@ local function onCombatTargetsChanged(eventData)
         PlaylistRules.clearCombatCaches(eventData.actor.id)
     end
 
-    core.sendGlobalEvent('S3maphoreUpdateCellHasCombatTargets', self)
+    updateCellHasCombatTargets()
     PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
     PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
 
@@ -488,7 +515,8 @@ return {
 
         ---@param cellChangeData S3maphoreCellChangeData
         S3maphoreCellChanged = function(cellChangeData)
-            PlaylistState.cellHasCombatTargets = cellChangeData.hasCombatTargets
+            updateCellHasCombatTargets()
+
             PlaylistState.staticList = cellChangeData.staticList
             if cellChangeData.nearestRegion then PlaylistState.nearestRegion = cellChangeData.nearestRegion end
 
