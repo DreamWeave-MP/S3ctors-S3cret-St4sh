@@ -68,15 +68,6 @@ local function instanceDisplay(instance)
   end
 end
 
-local function getObjectType(object)
-  if PlayerType.objectIsInstance(object) then
-    return 'player'
-  end
-
-  local result, _ = object.type.records[object.recordId].__type.name:gsub('ESM::', '')
-  return result:lower()
-end
-
 
 local GameObjectWrapper = {}
 
@@ -283,7 +274,6 @@ function ObjectHelpers.createInstance(gameObject)
   local instance = {
     gameObject = gameObject,
     record = gameObject.type.records[gameObject.recordId],
-    objectType = getObjectType(gameObject),
     From = ObjectHelpers.From,
     isActor = types.Actor.objectIsInstance(gameObject),
     isPlayer = types.Player.objectIsInstance(gameObject),
