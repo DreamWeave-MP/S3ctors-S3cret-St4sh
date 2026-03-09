@@ -90,10 +90,8 @@ end
 
 local function instanceDisplay(instance)
   local resultString = alphabeticalParts(instance.__instance)
-  for _, actor in ipairs(nearby.actors) do
-    if PlayerType.objectIsInstance(actor) then
-      actor:sendEvent('S3LFDisplay', resultString)
-    end
+  for _, player in ipairs(nearby.players) do
+    player:sendEvent('S3LFDisplay', resultString)
   end
 end
 
