@@ -10,10 +10,24 @@ local StaticCellChangeData = {
 }
 
 local FieldNames = { 'recordIds', 'contentFiles', }
+local NearestDoor = nil
+local NullFunction = function() end
+local liveCheckForRegion = NullFunction
+
+local DoorType = types.Door
+local SquaredLen = require 'openmw.util'.vector3(0, 0, 0).length2
+local function checkForRegion(object, target)
+    if not DoorType.objectIsInstance(object) or not DoorType.isTeleport(object) then return end
+
+    local targetPos, objectPos = target.position, object.position
+    if not NearestDoor or SquaredLen(targetPos - objectPos) < SquaredLen(targetPos - NearestDoor.position) then
+        NearestDoor = object
+    end
+end
 
 --- Given a cell object, check the hostility ratings of all actors inside of it
 ---@param senderCell GameCell
-local function updateCellInfo(senderCell)
+local function updateCellInfo(sender, senderCell)
     for _, fieldName in ipairs(FieldNames) do
         for k in pairs(StaticCellChangeData.staticList[fieldName]) do
             StaticCellChangeData.staticList[fieldName][k] = nil
@@ -26,6 +40,10 @@ local function updateCellInfo(senderCell)
         StaticCellChangeData.staticList.contentFiles
 
     local nearestRegion = senderCell.region
+    if not nearestRegion then
+        NearestDoor = nil
+        liveCheckForRegion = checkForRegion
+    end
 
     for _, object in ipairs(senderCell:getAll()) do
         if types.Static.objectIsInstance(object) then
@@ -40,13 +58,23 @@ local function updateCellInfo(senderCell)
                     uniqueContentFiles[object.contentFile] = true
                 end
             end
-        elseif not nearestRegion and types.Door.objectIsInstance(object) and object.type.isTeleport(object) then
-            local targetCell = object.type.destCell(object)
-            if targetCell.region then
-                nearestRegion = targetCell.region
-            end
         end
+
+        liveCheckForRegion(object, sender)
     end
+
+    if NearestDoor then
+        -- Teleport doors *should* always have a target cell
+        local region = DoorType.destCell(NearestDoor).region
+
+        if region then
+            nearestRegion = region
+        end
+
+        NearestDoor = nil
+    end
+
+    liveCheckForRegion = NullFunction
 
     if nearestRegion then
         StaticCellChangeData.nearestRegion = nearestRegion
@@ -110,7 +138,7 @@ return {
                 local prevCell = PreviousPlayerCells[playerId]
 
                 if not prevCell or prevCell ~= currentCell then
-                    updateCellInfo(playerCell)
+                    updateCellInfo(player, playerCell)
                     player:sendEvent('S3maphoreCellChanged', StaticCellChangeData)
                     PreviousPlayerCells[playerId] = currentCell
                 end
