@@ -262,8 +262,9 @@ local validObjectTypes = {
 function ObjectHelpers.From(gameObject)
   local typeName = gameObject.__type.name
 
-  assert(validObjectTypes[typeName],
-    'S3GameSelf.From is only compatible with GameObjects! You passed: ' .. typeName)
+  if not validObjectTypes[typeName] then
+    error('S3GameSelf.From is only compatible with GameObjects! You passed: ' .. typeName, 2)
+  end
 
   local objectId = gameObject.id
   if not s3lfCache[objectId] then
