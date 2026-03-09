@@ -108,12 +108,10 @@ local ignoredBaseKeys = {
 }
 
 local uncacheableKeys = {
-  cell = true,
   count = true,
   enabled = true,
   owner = true,
   parentContainer = true,
-  position = true,
   rotation = true,
   scale = true,
 }
@@ -300,15 +298,33 @@ function ObjectHelpers.distance(object1, object2)
 end
 
 function ObjectHelpers.createInstance(gameObject)
+  local objectCell = gameObject.cell
   ---@class S3lfObject
   local instance = {
-    gameObject = gameObject,
-    record = gameObject.type.records[gameObject.recordId],
-    From = ObjectHelpers.From,
-    isActor = types.Actor.objectIsInstance(gameObject),
-    isPlayer = types.Player.objectIsInstance(gameObject),
+    cell = gameObject.cell,
+    --- Table class designed to duplicate data out of OpenMW's userdata objects for faster indexing
+    ---@class CellInfo
+    cellInfo = {
+      displayName = objectCell.displayName or '',
+      gridX = objectCell.isExterior and objectCell.gridX or nil,
+      gridY = objectCell.isExterior and objectCell.gridY or nil,
+      hasSky = objectCell.hasSky,
+      hasWater = objectCell.hasWater,
+      id = objectCell.id,
+      isExterior = objectCell.isExterior,
+      isFakeExterior = objectCell:hasTag('QuasiExterior'),
+      name = objectCell.name,
+      region = objectCell.region,
+      waterLevel = objectCell.waterLevel,
+    },
     display = instanceDisplay,
     distance = instanceDistance,
+    gameObject = gameObject,
+    isActor = types.Actor.objectIsInstance(gameObject),
+    isPlayer = types.Player.objectIsInstance(gameObject),
+    position = gameObject.position,
+    record = gameObject.type.records[gameObject.recordId],
+    From = ObjectHelpers.From,
   }
 
   --- The outer s3lf interface that is exposed to users is a userdata, edited to not really be the original thing
@@ -356,18 +372,34 @@ if PlayerType.objectIsInstance(gameSelf) then
     end
   end
 
-  local prevCell
-
   engineHandlers.onUpdate = function()
-    local currentCell = gameSelf.cell.id
+    local currentPosition = gameSelf.position
+    if rawget(instance, 'position') ~= currentPosition then rawset(instance, 'position', currentPosition) end
 
-    if currentCell ~= prevCell then
-      gameSelf:sendEvent('S3LFCellChanged', currentCell)
+    local currentCell = gameSelf.cell
+    if currentCell == rawget(instance, 'cell') then return end
 
-      if not CellsVisited[currentCell] then CellsVisited[currentCell] = true end
-    end
+    local currentCellId = currentCell.id
 
-    prevCell = currentCell
+    if not CellsVisited[currentCellId] then CellsVisited[currentCellId] = true end
+
+    rawset(instance, 'cell', currentCell)
+
+    local cellInfo = assert(rawget(instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
+
+    cellInfo.displayName = currentCell.displayName
+    cellInfo.gridX = currentCell.isExterior and currentCell.gridX
+    cellInfo.gridY = currentCell.isExterior and currentCell.gridY
+    cellInfo.hasSky = currentCell.hasSky
+    cellInfo.hasWater = currentCell.hasWater
+    cellInfo.id = currentCell.id
+    cellInfo.isExterior = currentCell.isExterior
+    cellInfo.isFakeExterior = currentCell:hasTag('QuasiExterior')
+    cellInfo.name = currentCell.name
+    cellInfo.region = currentCell.region
+    cellInfo.waterLevel = currentCell.waterLevel
+
+    gameSelf:sendEvent('S3LFCellChanged', currentCellId)
   end
 
   function CombatTargetTracker:updateCombatants(combatantInfo)
