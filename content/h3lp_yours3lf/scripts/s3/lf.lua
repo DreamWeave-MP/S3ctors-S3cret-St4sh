@@ -3,27 +3,46 @@ if isGlobal then
   error('S3lf is not compatible with global scripts! Sorry!', 2)
 end
 
-local animation = require('openmw.animation')
-local gameSelf = require('openmw.self')
-local types = require('openmw.types')
+local animation = require 'openmw.animation'
+local debug
+local gameSelf = require 'openmw.self'
+local nearby = require 'openmw.nearby'
+local types = require 'openmw.types'
+local ui
 local util = require 'openmw.util'
 
-local next = next
+local concat, error, insert, ipairs, next, pairs, rawget, rawset, sort, tostring, type
+= table.concat, error, table.insert, ipairs, next, pairs, rawget, rawset, table.sort, tostring, type
 
 local LogMessage = require 'scripts.s3.logmessage'
+local PlayerType = types.Player
 
-local CombatTargetTracker = {}
+if PlayerType.objectIsInstance(gameSelf) then
+  debug = require 'openmw.debug'
+  ui = require 'openmw.ui'
+end
+
 local CellsVisited = {}
+local CombatTargetTracker = {}
+local ObjectHelpers = {}
+local S3lfCache = {}
 
-local noSelfInputFunctions = {
+local NoSelfInputFunctions = {
   ['createRecordDraft'] = true,
+}
+
+local ValidObjectTypes = {
+  ['MWLua::LObject'] = true,
+  ['MWLua::SelfObject'] = true,
 }
 
 local function pairsByKeys(t, f)
   local a = {}
-  for n in pairs(t) do table.insert(a, n) end
-  table.sort(a, f)
+  for n in pairs(t) do insert(a, n) end
+
+  sort(a, f)
   local i = 0
+
   local iter = function()
     i = i + 1
     if a[i] == nil then
@@ -36,36 +55,41 @@ local function pairsByKeys(t, f)
 end
 
 local function alphabeticalParts(input)
-  assert(type(input) == 'table', 'Cannot sort something that isn\'t a table!')
+  local inputType = type(input)
+  if inputType ~= 'table' then
+    error('Cannot sort something that isn\'t a table! ' .. type(input), 2)
+  end
+
   local parts = {}
   local methodParts = {}
   local userDataParts = {}
 
   for key, value in pairsByKeys(input) do
     if type(value) == 'function' then
-      methodParts[#methodParts + 1] = string.format('%s'
-      , tostring(key))
+      methodParts[#methodParts + 1] = ('%s'):format(tostring(key))
     elseif type(value) == 'userdata' then
-      userDataParts[#userDataParts + 1] = string.format('%s = %s'
-      , tostring(key)
-      , tostring(value))
+      userDataParts[#userDataParts + 1] = ('%s = %s'):format(
+        tostring(key),
+        tostring(value)
+      )
     else
-      parts[#parts + 1] = string.format('%s = %s'
-      , tostring(key)
-      , tostring(value))
+      parts[#parts + 1] = ('%s = %s'):format(
+        tostring(key),
+        tostring(value)
+      )
     end
   end
 
-  return string.format('S3GameGameSelf {\n Fields: { %s },\n Methods: { %s },\n UserData: { %s }\n}'
-  , table.concat(parts, ', ')
-  , table.concat(methodParts, ', ')
-  , table.concat(userDataParts, ', '))
+  return (
+    'S3GameGameSelf {\n Fields: { %s },\n Methods: { %s },\n UserData: { %s }\n}'):format(
+    concat(parts, ', '),
+    concat(methodParts, ', '),
+    concat(userDataParts, ', ')
+  )
 end
 
-local nearby = require('openmw.nearby')
-local PlayerType = types.Player
 local function instanceDisplay(instance)
-  local resultString = alphabeticalParts(instance)
+  local resultString = alphabeticalParts(instance.__instance)
   for _, actor in ipairs(nearby.actors) do
     if PlayerType.objectIsInstance(actor) then
       actor:sendEvent('S3LFDisplay', resultString)
@@ -73,6 +97,9 @@ local function instanceDisplay(instance)
   end
 end
 
+local function instanceDistance(instance, other)
+  return (instance.gameObject.position - other.position):length()
+end
 
 local GameObjectWrapper = {}
 
@@ -153,7 +180,7 @@ local keyHandlers = {
 
     if not typeValue then return end
 
-    if type(typeValue) ~= "function" or noSelfInputFunctions[key] then
+    if type(typeValue) ~= "function" or NoSelfInputFunctions[key] then
       rawset(instance, key, typeValue)
 
       return typeValue
@@ -193,9 +220,13 @@ local keyHandlers = {
 
     if not target then return end
 
-    assert(type(target) == 'function', 'Expected a function for key: ' .. key)
+    if type(target) ~= 'function' then
+      error('Expected a function for stats key: ' .. key)
+    end
+
     local result = target(actor)
     rawset(instance, key, result)
+
     return result
   end,
 
@@ -251,27 +282,19 @@ GameObjectWrapper._mt = {
   end,
 }
 
-local ObjectHelpers = {}
-local s3lfCache = {}
-
-local validObjectTypes = {
-  ['MWLua::LObject'] = true,
-  ['MWLua::SelfObject'] = true,
-}
-
 function ObjectHelpers.From(gameObject)
   local typeName = gameObject.__type.name
 
-  if not validObjectTypes[typeName] then
+  if not ValidObjectTypes[typeName] then
     error('S3GameSelf.From is only compatible with GameObjects! You passed: ' .. typeName, 2)
   end
 
   local objectId = gameObject.id
-  if not s3lfCache[objectId] then
-    s3lfCache[objectId] = ObjectHelpers.createInstance(gameObject)
+  if not S3lfCache[objectId] then
+    S3lfCache[objectId] = ObjectHelpers.createInstance(gameObject)
   end
 
-  return s3lfCache[objectId]
+  return S3lfCache[objectId]
 end
 
 function ObjectHelpers.distance(object1, object2)
@@ -279,21 +302,19 @@ function ObjectHelpers.distance(object1, object2)
 end
 
 function ObjectHelpers.createInstance(gameObject)
+  ---@class S3lfObject
   local instance = {
     gameObject = gameObject,
     record = gameObject.type.records[gameObject.recordId],
     From = ObjectHelpers.From,
     isActor = types.Actor.objectIsInstance(gameObject),
     isPlayer = types.Player.objectIsInstance(gameObject),
+    display = instanceDisplay,
+    distance = instanceDistance,
   }
 
-  function instance.distance(object2)
-    return ObjectHelpers.distance(gameObject, object2)
-  end
-
-  instance.display = function()
-    instanceDisplay(instance)
-  end
+  ---@private
+  instance.__instance = instance
 
   setmetatable(instance, GameObjectWrapper._mt)
 
@@ -304,7 +325,7 @@ local instance = ObjectHelpers.createInstance(gameSelf)
 
 local eventHandlers = {
   Died = function()
-    s3lfCache = {}
+    S3lfCache = {}
   end,
 }
 local engineHandlers = {}
@@ -360,12 +381,9 @@ if PlayerType.objectIsInstance(gameSelf) then
     gameSelf:sendEvent(eventName, combatantInfo.actor)
   end
 
-  local debug = require 'openmw.debug'
   function CombatTargetTracker.isInCombat()
     return next(CombatTargetTracker.targetData) ~= nil and debug.isAIEnabled()
   end
-
-  local ui = require('openmw.ui')
 
   eventHandlers.S3LFDisplay = function(resultString)
     ui.printToConsole(resultString, ui.CONSOLE_COLOR.Success)
