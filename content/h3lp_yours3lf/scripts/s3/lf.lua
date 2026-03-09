@@ -122,6 +122,11 @@ local knownKeys = {
 
 local keyHandlers = {
 
+  --- Handle uncacheable keys from the root gameObject, which later are skipped
+  function(_, object, key)
+    if uncacheableKeys[key] then return object[key] end
+  end,
+
   --- Indexes fields already found, always runs first
   function(instance, _, key)
     local cached = rawget(instance, key)
@@ -192,13 +197,9 @@ local keyHandlers = {
   --- Handle keys from the root gameObject, without special casing
   function(instance, object, key)
     local objectValue = object[key]
+    if objectValue == nil then return end
 
-    if not objectValue then return end
-
-    if not uncacheableKeys[key] then
-      rawset(instance, key, objectValue)
-    end
-
+    rawset(instance, key, objectValue)
     return objectValue
   end,
 
