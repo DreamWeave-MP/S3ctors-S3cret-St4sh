@@ -72,7 +72,7 @@ local function alphabeticalParts(input)
         tostring(key),
         tostring(value)
       )
-    else
+    elseif key ~= '__instance' then
       parts[#parts + 1] = ('%s = %s'):format(
         tostring(key),
         tostring(value)
