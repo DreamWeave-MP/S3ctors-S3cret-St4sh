@@ -260,11 +260,12 @@ function ObjectHelpers.From(gameObject)
   assert(validObjectTypes[typeName],
     'S3GameSelf.From is only compatible with GameObjects! You passed: ' .. typeName)
 
-  if not s3lfCache[gameObject.id] then
-    s3lfCache[gameObject.id] = ObjectHelpers.createInstance(gameObject)
+  local objectId = gameObject.id
+  if not s3lfCache[objectId] then
+    s3lfCache[objectId] = ObjectHelpers.createInstance(gameObject)
   end
 
-  return s3lfCache[gameObject.id]
+  return s3lfCache[objectId]
 end
 
 function ObjectHelpers.distance(object1, object2)
