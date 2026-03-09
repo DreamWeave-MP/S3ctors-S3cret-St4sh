@@ -1,3 +1,8 @@
+local isGlobal = pcall(require, 'openmw.world')
+if isGlobal then
+  error('S3lf is not compatible with global scripts! Sorry!', 2)
+end
+
 local animation = require('openmw.animation')
 local gameSelf = require('openmw.self')
 local types = require('openmw.types')
