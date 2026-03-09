@@ -3,6 +3,8 @@ local gameSelf = require('openmw.self')
 local types = require('openmw.types')
 local util = require 'openmw.util'
 
+local next = next
+
 local LogMessage = require 'scripts.s3.logmessage'
 
 local CombatTargetTracker = {}
@@ -59,7 +61,7 @@ local nearby = require('openmw.nearby')
 local PlayerType = types.Player
 local function instanceDisplay(instance)
   local resultString = alphabeticalParts(instance)
-  for _, actor in pairs(nearby.actors) do
+  for _, actor in ipairs(nearby.actors) do
     if PlayerType.objectIsInstance(actor) then
       actor:sendEvent('S3LFDisplay', resultString)
     end
@@ -331,16 +333,15 @@ if PlayerType.objectIsInstance(gameSelf) then
     end
   end
 
-  local I = require 'openmw.interfaces'
-  local prevCell = nil
-  engineHandlers.onFrame = function()
-    local currentCell = I.s3lf.cell
-    if not currentCell then return end
+  local prevCell
+
+  engineHandlers.onUpdate = function()
+    local currentCell = gameSelf.cell.id
 
     if currentCell ~= prevCell then
-      gameSelf:sendEvent('S3LFCellChanged', currentCell.id)
+      gameSelf:sendEvent('S3LFCellChanged', currentCell)
 
-      if not CellsVisited[currentCell.id] then CellsVisited[currentCell.id] = true end
+      if not CellsVisited[currentCell] then CellsVisited[currentCell] = true end
     end
 
     prevCell = currentCell
