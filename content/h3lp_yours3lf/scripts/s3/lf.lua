@@ -311,6 +311,12 @@ function ObjectHelpers.createInstance(gameObject)
     distance = instanceDistance,
   }
 
+  --- The outer s3lf interface that is exposed to users is a userdata, edited to not really be the original thing
+  --- Thus we keep a reference to the original instance inside of the instance so that when you use `:` notation for the respective functions they can pass the original instance
+  --- table into the desired functions, instead of the read-only userdata exposed through the interface.
+  --- It fixes things, I promise.
+  --- Alternatively we could expose a metatable which *returns* the `instance` in its __index, but I don't know if I prefer that or not.
+  --- Both options suck, I think.
   ---@private
   instance.__instance = instance
 
