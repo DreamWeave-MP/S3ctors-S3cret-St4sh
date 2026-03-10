@@ -348,12 +348,7 @@ function ObjectHelpers.createInstance(gameObject)
 end
 
 local Instance = ObjectHelpers.createInstance(gameSelf)
-
-local eventHandlers = {
-  Died = function()
-    S3lfCache = {}
-  end,
-}
+local eventHandlers = {}
 local engineHandlers = {}
 
 if isPlayer then
