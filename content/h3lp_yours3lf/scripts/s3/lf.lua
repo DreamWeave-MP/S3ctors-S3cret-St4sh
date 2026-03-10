@@ -388,17 +388,17 @@ if isPlayer then
 
     local cellInfo = assert(rawget(Instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
 
-    cellInfo.displayName = currentCell.displayName
-    cellInfo.gridX = currentCell.isExterior and currentCell.gridX
-    cellInfo.gridY = currentCell.isExterior and currentCell.gridY
-    cellInfo.hasSky = currentCell.hasSky
-    cellInfo.hasWater = currentCell.hasWater
-    cellInfo.id = currentCell.id
-    cellInfo.isExterior = currentCell.isExterior
-    cellInfo.isFakeExterior = currentCell:hasTag('QuasiExterior')
-    cellInfo.name = currentCell.name
-    cellInfo.region = currentCell.region
-    cellInfo.waterLevel = currentCell.waterLevel
+    rawset(cellInfo, 'displayName', currentCell.displayName)
+    rawset(cellInfo, 'gridX', currentCell.gridX)
+    rawset(cellInfo, 'gridY', currentCell.gridY)
+    rawset(cellInfo, 'hasSky', currentCell.hasSky)
+    rawset(cellInfo, 'hasWater', currentCell.hasWater)
+    rawset(cellInfo, 'id', currentCell.id)
+    rawset(cellInfo, 'isTrueExterior', currentCell.isExterior)
+    rawset(cellInfo, 'isFakeExterior', currentCell:hasTag('QuasiExterior'))
+    rawset(cellInfo, 'name', currentCell.name)
+    rawset(cellInfo, 'region', currentCell.region)
+    rawset(cellInfo, 'waterLevel', currentCell.waterLevel)
 
     gameSelf:sendEvent('S3LFCellChanged', currentCellId)
   end
