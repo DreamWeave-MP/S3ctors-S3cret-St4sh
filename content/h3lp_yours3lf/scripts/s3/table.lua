@@ -836,10 +836,18 @@ local function makeReadOnly(inTable, copy, strict, visited)
   return setmetatable(res, MT)
 end
 
+--- Clears all values from a table. Don't feed it a fake userdata table.
+---@param input table
+local function clear(input)
+  if type(input) ~= 'table' then error('Invalid input to table.clear: ' .. tostring(input), 2) end
+  for k in next, input do input[k] = nil end
+end
+
 return {
   binInsert = binInsert,
   binSearch = binSearch,
   choice = choice,
+  clear = clear,
   concat = concat,
   contains = contains,
   copyMissing = copyMissing,
