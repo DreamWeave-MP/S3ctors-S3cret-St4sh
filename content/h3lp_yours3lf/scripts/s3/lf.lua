@@ -270,7 +270,11 @@ local GameObjectMeta = {
 }
 
 local function sendObjectEvent(instance, eventName, eventData)
-  rawget(instance, 'object'):sendEvent(eventName, eventData)
+  rawget(instance.__instance, 'object'):sendEvent(eventName, eventData)
+end
+
+local function getBoundingBox(instance)
+  return rawget(instance.__instance, 'object'):getBoundingBox()
 end
 
 function ObjectHelpers.createInstance(gameObject)
@@ -296,6 +300,7 @@ function ObjectHelpers.createInstance(gameObject)
     consoleLog = LogMessage,
     display = instanceDisplay,
     distance = instanceDistance,
+    getBoundingBox = getBoundingBox,
     ---@private
     id = gameObject.id,
     isActor = isActor,
