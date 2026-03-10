@@ -248,11 +248,13 @@ local GameObjectMeta = {
 
     local object = rawget(instance, 'object')
 
-    if rawget(uncacheableKeys, key) then
-      return object[key]
-    else
+    local keyIsUncacheable = rawget(uncacheableKeys, key)
+
+    if not keyIsUncacheable then
       local cached = rawget(instance, key)
       if cached ~= nil then return cached end
+    else
+      return object[key]
     end
 
     local impliedField = rawget(FunctionsAsFields, key)
