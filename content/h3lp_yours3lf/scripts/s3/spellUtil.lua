@@ -209,7 +209,8 @@ end
 ---@param cap boolean? cap chance between 0-100
 function Magic:getSpellCastChance(spell, actor, checkMagicka, cap)
     ---@diagnostic disable-next-line: undefined-field
-    assert(spell and spell.__type.name == 'ESM::Spell', 'Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
+    assert(spell and spell.__type.name == 'ESM::Spell',
+        'Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
 
     if checkMagicka == nil then checkMagicka = true end
 
