@@ -246,9 +246,6 @@ local GameObjectMeta = {
   __index = function(instance, key)
     if rawget(ignoredBaseKeys, key) then return end
 
-    local impliedField = rawget(FunctionsAsFields, key)
-    if impliedField then return impliedField() end
-
     local object = rawget(instance, 'object')
 
     if rawget(uncacheableKeys, key) then
@@ -257,6 +254,9 @@ local GameObjectMeta = {
       local cached = rawget(instance, key)
       if cached ~= nil then return cached end
     end
+
+    local impliedField = rawget(FunctionsAsFields, key)
+    if impliedField then return impliedField() end
 
     for _, handler in ipairs(keyHandlers) do
       local result = handler(instance, object, key)
