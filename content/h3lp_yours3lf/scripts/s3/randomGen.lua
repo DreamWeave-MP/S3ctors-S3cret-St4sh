@@ -1,13 +1,35 @@
-local core = require 'openmw.core'
-local util = require 'openmw.util'
+local scriptContext
 
-local scriptContext = require 'scripts.s3.scriptContext'
+local isOpenMW = require 'scripts.s3.isOpenMW'
+local math = require 'scripts.s3.math'
+
+local bitXor, bitAnd, realTime
+if isOpenMW then
+    realTime = require 'openmw.core'.getRealTime
+    scriptContext = require 'scripts.s3.scriptContext'
+
+    do
+        local util = require 'openmw.util'
+        bitXor = util.bitXor
+        bitAnd = util.bitAnd
+    end
+else
+    realTime = os.time
+
+    do
+        local bit = require 'bit'
+        bitXor = bit.bxor
+        bitAnd = bit.band
+    end
+end
 
 local TwoPow5, TwoPow13, TwoPow17, TwoPow32 = math.pow(2, 5), math.pow(2, 13), math.pow(2, 17), math.pow(2, 32)
 
+local assert, type = assert, type
+
 --- Current real time, in MS, plus a secret hash
 local function newSeed()
-    return math.floor(core.getRealTime() * 1000) + 1003
+    return math.floor(realTime * 1000) + 1003
 end
 
 ---@class Rand
@@ -17,10 +39,10 @@ local Random = {
 
 function Random:int()
     local x = self.seed
-    x = util.bitXor(x, x * TwoPow13)
-    x = util.bitXor(x, x / TwoPow17)
-    x = util.bitXor(x, x * TwoPow5)
-    self.seed = util.bitAnd(x, 0xFFFFFFFF)
+    x = bitXor(x, x * TwoPow13)
+    x = bitXor(x, x / TwoPow17)
+    x = bitXor(x, x * TwoPow5)
+    self.seed = bitAnd(x, 0xFFFFFFFF)
     return self.seed
 end
 
@@ -49,13 +71,13 @@ function Random:range(a, b)
 
     local result = min + self:float() * (max - min)
     if b == true then
-        return util.round(result)
+        return math.round(result)
     else
         return result
     end
 end
 
-if scriptContext.get() ~= scriptContext.Types.Global then
+if isOpenMW and scriptContext.get() ~= scriptContext.Types.Global then
     return {
         interfaceName = 'RandomGen',
         interface = {
