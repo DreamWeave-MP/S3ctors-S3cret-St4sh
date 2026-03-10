@@ -120,7 +120,7 @@ local uncacheableKeys = {
   scale = true,
 }
 
-local knownKeys = {
+local KnownKeys = {
   ConsoleLog = function()
     return LogMessage
   end,
@@ -207,16 +207,18 @@ local keyHandlers = {
 
     return insertKey
   end,
+}
 
+if isPlayer then
   --- Handles 'known keys', hardcoded ones with utility functions etc that should always exist, but run last because they're relatively unlikely searches.
-  function(instance, _, key)
+  table.insert(keyHandlers, function(instance, _, key)
     if not rawget(instance, 'isPlayer') then return end
 
-    local knownKey = knownKeys[key]
+    local knownKey = KnownKeys[key]
 
     if knownKey then return knownKey() end
-  end,
-}
+  end)
+end
 
 function ObjectHelpers.From(gameObject)
   local typeName = gameObject.__type.name
