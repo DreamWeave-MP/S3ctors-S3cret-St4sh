@@ -408,7 +408,7 @@ end
 local CachedCellGrid = { x = 0, y = 0, }
 
 local function initializePlaylists(_)
-    if not PlaylistLoader() then return end
+    if not PlaylistLoader or not PlaylistLoader() then return end
 
     PlaylistLoader = nil
     currentUpdateHandler = onSoundEnabledChanged
