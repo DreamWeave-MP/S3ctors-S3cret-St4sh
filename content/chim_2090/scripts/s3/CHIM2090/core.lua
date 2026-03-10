@@ -161,7 +161,7 @@ function ChimCore.getWeaponSkill(weapon, attacker)
         attacker = s3lf.From(attacker)
     end
 
-    if types.NPC.objectIsInstance(attacker.gameObject) then
+    if attacker.isNPC then
         local weaponType = weapon.type.records[weapon.recordId].type
         local weaponSkill = weaponTypesToSkills[weaponType]
 
@@ -224,7 +224,7 @@ function ChimCore:getAttackDefenseTerm(attacker, defender)
 
     local defenseTerm = 0
     local defenderEffects = defender.activeEffects()
-    local unaware = defender.stance == defender.STANCE.Nothing and types.Player.objectIsInstance(attacker.gameObject)
+    local unaware = defender.stance == defender.STANCE.Nothing and attacker.isPlayer
     local isKnockedDown = defender.isPlaying('knockout')
     local isParalyzed = defenderEffects:getEffect(ParalyzeEffect).magnitude > 0
 
@@ -258,7 +258,7 @@ function ChimCore:getNativeHitChance(attackData)
     local weapon = attacker.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
 
     local skillValue
-    if types.Creature.objectIsInstance(attacker.gameObject) then
+    if attacker.isCreature then
         skillValue = attacker.combatSkill
     elseif not weapon then
         skillValue = attacker.handtohand.modified
@@ -373,7 +373,7 @@ local eventHandlers = {
     CHIMEnsureFortifyAttack = ensureFortifyAttack,
 }
 
-if types.Player.objectIsInstance(s3lf.gameObject) then
+if s3lf.isPlayer then
     eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
         local addOrRemove = next(targetData.targets) ~= nil
         core.sendGlobalEvent('CHIMScriptToggle', {

@@ -1,13 +1,11 @@
 local core = require 'openmw.core'
-local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 local s3lf = I.s3lf
 
 local debug
-local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
-if isPlayer then
+if s3lf.isPlayer then
     debug = require 'openmw.debug'
 end
 
@@ -220,7 +218,7 @@ function Magic:getSpellCastChance(spell, actor, checkMagicka, cap)
         return actor.type.spells(actor):canUsePower(spell) and 100 or 0
     end
 
-    if isPlayer and debug.isGodMode() then
+    if s3lf.isPlayer and debug.isGodMode() then
         return 100
     end
 

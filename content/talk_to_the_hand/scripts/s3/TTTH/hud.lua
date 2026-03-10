@@ -935,7 +935,7 @@ function H4ND.getCastableWidth()
     local selectedSpell = s3lf.getSelectedSpell()
     if not selectedSpell then return 0.0 end
 
-    local chance, _ = Magic:getSpellCastChance(selectedSpell, s3lf.gameObject, true, true)
+    local chance, _ = Magic:getSpellCastChance(selectedSpell, s3lf.object, true, true)
 
     return chance / 100
 end
@@ -1003,7 +1003,7 @@ local function updateWeaponIcon()
     local currentWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
     if H4ND.state.equippedWeapon == currentWeapon then return false end
     H4ND.state.equippedWeapon = currentWeapon
-    s3lf.gameObject:sendEvent('H4NDUpdateWeapon')
+    s3lf:sendEvent('H4NDUpdateWeapon')
     return true
 end
 
@@ -1024,20 +1024,20 @@ local function updateWeaponDurability()
 
     if baseWidth == currentWidth then return false end
 
-    s3lf.gameObject:sendEvent('H4NDUpdateDurability')
+    s3lf:sendEvent('H4NDUpdateDurability')
     return true
 end
 
 ---@return boolean
 local function updateCastableIcon()
-    local currentCastable = Magic.getCastable(s3lf.gameObject)
+    local currentCastable = Magic.getCastable(s3lf.object)
 
     local checkCastable = currentCastable and currentCastable.id or nil
     local lastCastable = H4ND.state.equippedCastable and H4ND.state.equippedCastable.id or nil
     if checkCastable == lastCastable then return false end
 
     H4ND.state.equippedCastable = currentCastable
-    s3lf.gameObject:sendEvent('H4NDUpdateCastable')
+    s3lf:sendEvent('H4NDUpdateCastable')
     return true
 end
 
@@ -1059,7 +1059,7 @@ local function updateCastableBar()
 
     if currentWidth == targetWidth then return false end
 
-    s3lf.gameObject:sendEvent('H4NDUpdateCastableBar')
+    s3lf:sendEvent('H4NDUpdateCastableBar')
     return true
 end
 
@@ -1497,7 +1497,7 @@ H4ND.state.resizeHandlers = {
 }
 
 if H4ND.UIDebug then
-    s3lf.gameObject:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
+    s3lf:sendEvent('SetUiMode', { mode = 'Interface', windows = {}, })
 end
 
 CurrentDelay = 0

@@ -83,7 +83,7 @@ end
 local FortifyMagickaEffect = MagickEffect.FortifyMagicka
 function DynamicManager:calculateMaxMagicka()
   local BaseMagickaMult
-  if types.Player.objectIsInstance(s3lf.gameObject) then
+  if s3lf.isPlayer then
     BaseMagickaMult = self.PCbaseMagickaMultiplier
   else
     BaseMagickaMult = self.NPCbaseMagickaMultiplier
@@ -151,6 +151,7 @@ function DynamicManager.updateStats()
   DynamicManager:manageFatigue()
   DynamicManager:manageHealth()
 end
+
 storage.globalSection(groupName):subscribe(async:callback(DynamicManager.updateStats))
 
 local engineHandlers, eventHandlers = {}, {}

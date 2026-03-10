@@ -222,7 +222,7 @@ Using these settings you may increase the parry windows for specific shields, ba
     )
 }
 
-if types.Player.objectIsInstance(s3lf.gameObject) then
+if s3lf.isPlayer then
     ParryInterface.engineHandlers.onFrame = function(dt)
         Parry.tick(dt)
     end
