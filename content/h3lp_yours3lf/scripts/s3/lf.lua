@@ -120,21 +120,6 @@ local uncacheableKeys = {
   scale = true,
 }
 
-local KnownKeys = {
-  ConsoleLog = function()
-    return LogMessage
-  end,
-  cellsVisited = function()
-    return CellsVisited
-  end,
-  combatTargets = function()
-    return util.makeReadOnly(CombatTargetTracker.targetData)
-  end,
-  isInCombat = function()
-    return CombatTargetTracker.isInCombat()
-  end,
-}
-
 local keyHandlers = {
 
   --- Indexes fields of `type`, but not stats
@@ -197,15 +182,6 @@ local keyHandlers = {
     return insertKey
   end,
 }
-
-if isPlayer then
-  --- Handles 'known keys', hardcoded ones with utility functions etc that should always exist, but run last because they're relatively unlikely searches.
-  table.insert(keyHandlers, function(_, _, key)
-    local knownKey = KnownKeys[key]
-
-    if knownKey then return knownKey() end
-  end)
-end
 
 function ObjectHelpers.From(gameObject)
   local typeName = gameObject.__type.name
@@ -309,6 +285,13 @@ function ObjectHelpers.createInstance(gameObject)
         end
       end
     end
+  end
+
+  if isPlayer then
+    instance.consoleLog = LogMessage
+    instance.cellsVisited = CellsVisited
+    instance.combatTargets = CombatTargetTracker.targetData
+    instance.isInCombat = CombatTargetTracker.isInCombat()
   end
 
   --- The outer s3lf interface that is exposed to users is a userdata, edited to not really be the original thing
