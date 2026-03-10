@@ -31,18 +31,19 @@ local CellsVisited = {}
 local CombatTargetTracker
 do
   if isPlayer then
+    local targetData = {}
     CombatTargetTracker = {}
-    CombatTargetTracker.targetData = {}
+    CombatTargetTracker.targetData = targetData
 
     function CombatTargetTracker:updateCombatants(combatantInfo)
       local shouldRemove = next(combatantInfo.targets) == nil
 
       local eventName
       if shouldRemove then
-        self.targetData[combatantInfo.actor.id] = nil
+        targetData[combatantInfo.actor.id] = nil
         eventName = 'S3CombatTargetRemoved'
       else
-        self.targetData[combatantInfo.actor.id] = combatantInfo.actor
+        targetData[combatantInfo.actor.id] = combatantInfo.actor
         eventName = 'S3CombatTargetAdded'
       end
 
@@ -50,7 +51,7 @@ do
     end
 
     function CombatTargetTracker.isInCombat()
-      return next(CombatTargetTracker.targetData) ~= nil and debug.isAIEnabled()
+      return next(targetData) ~= nil and debug.isAIEnabled()
     end
   end
 end
@@ -358,7 +359,7 @@ local engineHandlers = {}
 if isPlayer then
   engineHandlers.onSave = function()
     return {
-      targetData = CombatTargetTracker.targetData,
+      targetData = rawget(CombatTargetTracker, 'targetData'),
       cellsVisited = CellsVisited,
     }
   end
@@ -366,12 +367,14 @@ if isPlayer then
   engineHandlers.onLoad = function(data)
     if not data then return end
 
-    if data.targetData then
-      CombatTargetTracker.targetData = data.targetData
+    local targetData = rawget(data, 'targetData')
+    if targetData then
+      rawset(CombatTargetTracker, 'targetData', targetData)
     end
 
-    if data.cellsVisited then
-      CellsVisited = data.cellsVisited
+    local cellsVisited = rawget(data, 'cellsVisited')
+    if cellsVisited then
+      CellsVisited = cellsVisited
     end
   end
 
