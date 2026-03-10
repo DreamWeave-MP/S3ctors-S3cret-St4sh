@@ -303,6 +303,7 @@ function ObjectHelpers.createInstance(gameObject)
     isNPC = isNPC,
     isPlayer = isPlayer,
     object = gameObject,
+    lObject = gameObject.object,
     position = gameObject.position,
     record = gameObject.type.records[gameObject.recordId],
     sendEvent = sendObjectEvent,
