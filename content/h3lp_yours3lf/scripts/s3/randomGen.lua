@@ -61,9 +61,9 @@ end
 function Random:range(a, b)
     local min, max = a, b
 
-    if type(a) == "table" then
+    if type(a) == 'table' then
         min, max = a.min or 1, a.max
-        assert(max, "RangeTable requires a 'max'")
+        assert(max, 'RangeTable requires a \'max\'')
     elseif type(a) == 'number' and type(b) ~= 'number' then
         max = a
         min = 1
