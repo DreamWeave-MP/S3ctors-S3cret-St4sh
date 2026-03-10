@@ -110,10 +110,12 @@ local ignoredBaseKeys = {
 }
 
 local uncacheableKeys = {
+  cell = true,
   count = true,
   enabled = true,
   owner = true,
   parentContainer = true,
+  position = true,
   rotation = true,
   scale = true,
 }
@@ -152,15 +154,15 @@ local knownKeys = {
 
 local keyHandlers = {
 
-  --- Handle uncacheable keys from the root gameObject, which later are skipped
-  function(_, object, key)
-    if uncacheableKeys[key] then return object[key] end
-  end,
-
   --- Indexes fields already found, always runs first
   function(instance, _, key)
     local cached = rawget(instance, key)
     if cached ~= nil then return cached end
+  end,
+
+  --- Handle uncacheable keys from the root gameObject, which later are skipped
+  function(_, object, key)
+    if uncacheableKeys[key] then return object[key] end
   end,
 
   --- Indexes fields of GameObject which are special cased
