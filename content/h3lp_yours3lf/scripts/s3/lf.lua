@@ -384,7 +384,8 @@ if isPlayer then
 
     local currentCellId = currentCell.id
 
-    if not CellsVisited[currentCellId] then CellsVisited[currentCellId] = true end
+    local cellVisited = rawget(CellsVisited, currentCellId)
+    if not cellVisited then rawset(CellsVisited, currentCellId, true) end
 
     rawset(Instance, 'cell', currentCell)
 
