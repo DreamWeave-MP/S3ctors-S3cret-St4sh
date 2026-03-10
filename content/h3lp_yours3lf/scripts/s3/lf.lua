@@ -205,9 +205,7 @@ local keyHandlers = {
 
 if isPlayer then
   --- Handles 'known keys', hardcoded ones with utility functions etc that should always exist, but run last because they're relatively unlikely searches.
-  table.insert(keyHandlers, function(instance, _, key)
-    if not rawget(instance, 'isPlayer') then return end
-
+  table.insert(keyHandlers, function(_, _, key)
     local knownKey = KnownKeys[key]
 
     if knownKey then return knownKey() end
