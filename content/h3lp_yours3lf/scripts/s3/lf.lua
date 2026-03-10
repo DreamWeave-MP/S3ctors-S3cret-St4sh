@@ -283,9 +283,9 @@ function ObjectHelpers.createInstance(gameObject)
     --- Table class designed to duplicate data out of OpenMW's userdata objects for faster indexing
     ---@class CellInfo
     cellInfo = {
-      displayName = objectCell.displayName or '',
-      gridX = objectCell.isExterior and objectCell.gridX or nil,
-      gridY = objectCell.isExterior and objectCell.gridY or nil,
+      displayName = objectCell.displayName,
+      gridX = objectCell.gridX,
+      gridY = objectCell.gridY,
       hasSky = objectCell.hasSky,
       hasWater = objectCell.hasWater,
       id = objectCell.id,
