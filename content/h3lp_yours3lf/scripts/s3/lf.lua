@@ -137,11 +137,6 @@ local KnownKeys = {
 
 local keyHandlers = {
 
-  --- Handle uncacheable keys from the root gameObject, which later are skipped
-  function(_, object, key)
-    if rawget(uncacheableKeys, key) then return object[key] end
-  end,
-
   --- Indexes fields of `type`, but not stats
   function(instance, object, key)
     local typeValue = object.type[key]
@@ -235,10 +230,14 @@ local GameObjectMeta = {
   __index = function(instance, key)
     if rawget(ignoredBaseKeys, key) then return end
 
-    local cached = rawget(instance, key)
-    if cached ~= nil then return cached end
+    local object = rawget(instance, 'object')
 
-    local object = rawget(instance, 'gameObject')
+    if rawget(uncacheableKeys, key) then
+      return object[key]
+    else
+      local cached = rawget(instance, key)
+      if cached ~= nil then return cached end
+    end
 
     for _, handler in ipairs(keyHandlers) do
       local result = handler(instance, object, key)
