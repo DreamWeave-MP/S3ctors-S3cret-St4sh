@@ -25,7 +25,7 @@ end
 
 local TwoPow5, TwoPow13, TwoPow17, TwoPow32 = math.pow(2, 5), math.pow(2, 13), math.pow(2, 17), math.pow(2, 32)
 
-local assert, type = assert, type
+local assert, pairs, type = assert, pairs, type
 
 --- Current real time, in MS, plus a secret hash
 local function newSeed()
