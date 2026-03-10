@@ -18,8 +18,8 @@ local s3lf = I.s3lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
-local isPlayer, isCreature = types.Player.objectIsInstance(s3lf.gameObject),
-    types.Creature.objectIsInstance(s3lf.gameObject)
+local isPlayer, isCreature = s3lf.isPlayer, s3lf.isCreature
+
 if isPlayer then
     input = require 'openmw.input'
 end
@@ -481,7 +481,7 @@ function Block.calculateMitigation()
 
     -- Skill contribution (more skilled = better at angling shield)
     local blockSkill
-    if types.NPC.objectIsInstance(s3lf.gameObject) then
+    if s3lf.isNPC then
         blockSkill = s3lf.block.base
     else
         blockSkill = s3lf.combatSkill
@@ -867,7 +867,7 @@ local function signalAttack()
     local targets = I.s3ChimCore.getCombatants()
 
     for _, actor in ipairs(targets) do
-        actor:sendEvent('CHIMAttackSignal', s3lf.gameObject)
+        actor:sendEvent('CHIMAttackSignal', s3lf.object)
     end
 end
 
@@ -892,7 +892,7 @@ else
         --- Also need to handle rolls here
         if
             not Block.canBlock()
-            or not Block.canBlockAtAngle(attacker, s3lf.gameObject)
+            or not Block.canBlockAtAngle(attacker, s3lf.object)
             or not BlockActor:shouldAttemptBlock()
         then
             return

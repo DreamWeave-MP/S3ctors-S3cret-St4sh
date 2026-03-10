@@ -69,7 +69,7 @@ local Offsets = {
 local isBiped, Offset = s3lf.isBiped, Offsets[s3lf.recordId] or Offsets.default
 local BackMult = util.vector3(1, 3, 1)
 local function getTargetPosition(goingBackwards)
-    local box = s3lf.gameObject:getBoundingBox()
+    local box = s3lf.object:getBoundingBox()
     local center, halfSize = box.center, box.halfSize
 
     local activeOffset = Offset:emul(halfSize)
@@ -169,10 +169,10 @@ return {
 
             MountTarget = MountTarget == nil and activator or nil
 
-            activator:sendEvent('P37ZMountEnable', s3lf.gameObject)
+            activator:sendEvent('P37ZMountEnable', s3lf.object)
 
             local isMounted, position = MountTarget ~= nil, nil
-            local box = s3lf.gameObject:getBoundingBox()
+            local box = s3lf:getBoundingBox()
 
             if isMounted then
                 position = box.center +
@@ -186,7 +186,7 @@ return {
             core.sendGlobalEvent('P37Z_ToggleMount', {
                 isMounted = isMounted,
                 owner = activator,
-                mount = s3lf.gameObject,
+                mount = s3lf.object,
                 position = position,
             })
 

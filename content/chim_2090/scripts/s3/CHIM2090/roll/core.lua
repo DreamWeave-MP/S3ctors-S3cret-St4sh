@@ -13,7 +13,7 @@ local modInfo = require 'scripts.s3.chim2090.modinfo'
 --- Add AI support
 --- Maybe try that "latch" binding style ern mentioned
 local types = require 'openmw.types'
-local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
+local isPlayer = s3lf.isPlayer
 
 if isPlayer then
     camera = require 'openmw.camera'
@@ -168,7 +168,7 @@ local animationKeyHandlers = {
         local soundIndex = I.RandomGen.range(numRollSounds, true)
         local pitch, sound = Roll:getRandomPitch(), rollSounds[soundIndex]
 
-        core.sound.playSound3d(sound, s3lf.gameObject, { pitch = pitch })
+        core.sound.playSound3d(sound, s3lf.object, { pitch = pitch })
     end,
     ['max iframes'] = function(group)
         Roll:setIframeState(false)
@@ -178,7 +178,7 @@ local animationKeyHandlers = {
             landSound = landSound .. 'water'
         end
 
-        core.sound.playSound3d(landSound, s3lf.gameObject, { pitch = Roll:getRandomPitch() })
+        core.sound.playSound3d(landSound, s3lf.object, { pitch = Roll:getRandomPitch() })
     end,
 }
 
