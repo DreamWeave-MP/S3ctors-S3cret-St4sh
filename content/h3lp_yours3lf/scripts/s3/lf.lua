@@ -269,7 +269,7 @@ local GameObjectMeta = {
 }
 
 local function sendObjectEvent(instance, eventName, eventData)
-  instance.object:sendEvent(eventName, eventData)
+  rawget(instance, 'object'):sendEvent(eventName, eventData)
 end
 
 function ObjectHelpers.createInstance(gameObject)
