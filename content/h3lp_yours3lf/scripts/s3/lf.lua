@@ -1,7 +1,6 @@
-local isGlobal = pcall(require, 'openmw.world')
-if isGlobal then
-  error('S3lf is not compatible with global scripts! Sorry!', 2)
-end
+local concat, error, insert, ipairs, next, pairs, pcall, rawget, rawset, require, setmetatable, sort, tostring, type =
+    table.concat, error, table.insert, ipairs, next, pairs, pcall, rawget, rawset, require, setmetatable, table.sort,
+    tostring, type
 
 local animation = require 'openmw.animation'
 local debug
@@ -11,13 +10,18 @@ local types = require 'openmw.types'
 local ui
 local util = require 'openmw.util'
 
-local concat, error, insert, ipairs, next, pairs, rawget, rawset, sort, tostring, type
-= table.concat, error, table.insert, ipairs, next, pairs, rawget, rawset, table.sort, tostring, type
+local isGlobal = pcall(require, 'openmw.world')
+if isGlobal then
+  error('S3lf is not compatible with global scripts! Sorry!', 2)
+end
 
 local LogMessage = require 'scripts.s3.logmessage'
-local PlayerType = types.Player
 
-if PlayerType.objectIsInstance(gameSelf) then
+local isActor, isCreature, isNPC, isPlayer =
+    types.Actor.objectIsInstance(gameSelf), types.Creature.objectIsInstance(gameSelf),
+    types.NPC.objectIsInstance(gameSelf), types.Player.objectIsInstance(gameSelf)
+
+if isPlayer then
   debug = require 'openmw.debug'
   ui = require 'openmw.ui'
 end
@@ -98,8 +102,6 @@ end
 local function instanceDistance(instance, other)
   return (instance.gameObject.position - other.position):length()
 end
-
-local GameObjectWrapper = {}
 
 local ignoredBaseKeys = {
   baseType = true,
@@ -202,30 +204,6 @@ local keyHandlers = {
     return recordValue
   end,
 
-  --- Indexes fields of ActorStats
-  function(instance, actor, key)
-    if not rawget(instance, 'isActor') then return end
-
-    local stats = actor.type.stats
-
-    local target = stats.dynamic[key]
-        or stats.attributes[key]
-        or (stats.skills and stats.skills[key])
-        or stats[key]
-        or stats.ai[key]
-
-    if not target then return end
-
-    if type(target) ~= 'function' then
-      error('Expected a function for stats key: ' .. key)
-    end
-
-    local result = target(actor)
-    rawset(instance, key, result)
-
-    return result
-  end,
-
   --- Handle keys from the root gameObject, without special casing
   function(instance, object, key)
     local objectValue = object[key]
@@ -264,20 +242,6 @@ local keyHandlers = {
   end,
 }
 
-GameObjectWrapper._mt = {
-  __index = function(instance, key)
-    if ignoredBaseKeys[key] then return end
-
-    local object = rawget(instance, 'gameObject')
-
-    for _, handler in ipairs(keyHandlers) do
-      local result = handler(instance, object, key)
-
-      if result ~= nil then return result end
-    end
-  end,
-}
-
 function ObjectHelpers.From(gameObject)
   local typeName = gameObject.__type.name
 
@@ -296,6 +260,20 @@ end
 function ObjectHelpers.distance(object1, object2)
   return (object1.position - object2.position):length()
 end
+
+local GameObjectMeta = {
+  __index = function(instance, key)
+    if ignoredBaseKeys[key] then return end
+
+    local object = rawget(instance, 'gameObject')
+
+    for _, handler in ipairs(keyHandlers) do
+      local result = handler(instance, object, key)
+
+      if result ~= nil then return result end
+    end
+  end,
+}
 
 function ObjectHelpers.createInstance(gameObject)
   local objectCell = gameObject.cell
@@ -319,13 +297,41 @@ function ObjectHelpers.createInstance(gameObject)
     },
     display = instanceDisplay,
     distance = instanceDistance,
+    ---@private
     gameObject = gameObject,
-    isActor = types.Actor.objectIsInstance(gameObject),
-    isPlayer = types.Player.objectIsInstance(gameObject),
+    isActor = isActor,
+    isCreature = isCreature,
+    isNPC = isNPC,
+    isPlayer = isPlayer,
     position = gameObject.position,
     record = gameObject.type.records[gameObject.recordId],
     From = ObjectHelpers.From,
   }
+
+  if isActor then
+    instance.level = gameSelf.type.stats.level(gameSelf)
+
+    if not isNPC and not isCreature then
+      error('How am I not neither an NPC nor creature??????? ' .. tostring(gameSelf))
+    end
+
+    do
+      local MyStats = gameSelf.type.stats
+      local StatFields = { 'ai', 'attributes', 'dynamic', }
+
+      if isNPC then
+        table.insert(StatFields, 'skills')
+      end
+
+      for _, subTable in ipairs(StatFields) do
+        local statFunctions = MyStats[subTable]
+
+        for statName, statFunction in pairs(statFunctions) do
+          instance[statName] = statFunction(gameSelf)
+        end
+      end
+    end
+  end
 
   --- The outer s3lf interface that is exposed to users is a userdata, edited to not really be the original thing
   --- Thus we keep a reference to the original instance inside of the instance so that when you use `:` notation for the respective functions they can pass the original instance
@@ -336,7 +342,7 @@ function ObjectHelpers.createInstance(gameObject)
   ---@private
   instance.__instance = instance
 
-  setmetatable(instance, GameObjectWrapper._mt)
+  setmetatable(instance, GameObjectMeta)
 
   return instance
 end
@@ -350,7 +356,7 @@ local eventHandlers = {
 }
 local engineHandlers = {}
 
-if PlayerType.objectIsInstance(gameSelf) then
+if isPlayer then
   CombatTargetTracker.targetData = {}
 
   engineHandlers.onSave = function()
