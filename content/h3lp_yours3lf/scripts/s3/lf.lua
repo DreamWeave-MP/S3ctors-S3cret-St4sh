@@ -100,7 +100,7 @@ local function instanceDisplay(instance)
 end
 
 local function instanceDistance(instance, other)
-  return (instance.gameObject.position - other.position):length()
+  return (instance.object.position - other.position):length()
 end
 
 local ignoredBaseKeys = {
@@ -118,17 +118,6 @@ local uncacheableKeys = {
   position = true,
   rotation = true,
   scale = true,
-}
-
-local GameObjectKeyHandlers = {
-  id = function(instance, gameObject, key)
-    local id = gameObject.id
-    rawset(instance, key, id)
-    return id
-  end,
-  object = function(_, gameObject, _)
-    return gameObject
-  end,
 }
 
 local knownKeys = {
@@ -156,16 +145,7 @@ local keyHandlers = {
 
   --- Handle uncacheable keys from the root gameObject, which later are skipped
   function(_, object, key)
-    if uncacheableKeys[key] then return object[key] end
-  end,
-
-  --- Indexes fields of GameObject which are special cased
-  function(instance, object, key)
-    local keyHandler = GameObjectKeyHandlers[key]
-
-    if not keyHandler then return end
-
-    return keyHandler(instance, object, key)
+    if rawget(uncacheableKeys, key) then return object[key] end
   end,
 
   --- Indexes fields of `type`, but not stats
@@ -272,7 +252,7 @@ local GameObjectMeta = {
 }
 
 local function sendObjectEvent(instance, eventName, eventData)
-  instance.gameObject:sendEvent(eventName, eventData)
+  instance.object:sendEvent(eventName, eventData)
 end
 
 function ObjectHelpers.createInstance(gameObject)
@@ -298,11 +278,12 @@ function ObjectHelpers.createInstance(gameObject)
     display = instanceDisplay,
     distance = instanceDistance,
     ---@private
-    gameObject = gameObject,
+    id = gameObject.id,
     isActor = isActor,
     isCreature = isCreature,
     isNPC = isNPC,
     isPlayer = isPlayer,
+    object = gameObject,
     position = gameObject.position,
     record = gameObject.type.records[gameObject.recordId],
     sendEvent = sendObjectEvent,
