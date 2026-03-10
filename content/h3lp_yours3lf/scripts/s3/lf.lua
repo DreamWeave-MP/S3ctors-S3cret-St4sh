@@ -27,7 +27,34 @@ if isPlayer then
 end
 
 local CellsVisited = {}
-local CombatTargetTracker = {}
+
+local CombatTargetTracker
+do
+  if isPlayer then
+    CombatTargetTracker = {}
+    CombatTargetTracker.targetData = {}
+
+    function CombatTargetTracker:updateCombatants(combatantInfo)
+      local shouldRemove = next(combatantInfo.targets) == nil
+
+      local eventName
+      if shouldRemove then
+        self.targetData[combatantInfo.actor.id] = nil
+        eventName = 'S3CombatTargetRemoved'
+      else
+        self.targetData[combatantInfo.actor.id] = combatantInfo.actor
+        eventName = 'S3CombatTargetAdded'
+      end
+
+      gameSelf:sendEvent(eventName, combatantInfo.actor)
+    end
+
+    function CombatTargetTracker.isInCombat()
+      return next(CombatTargetTracker.targetData) ~= nil and debug.isAIEnabled()
+    end
+  end
+end
+
 local ObjectHelpers = {}
 local S3lfCache = {}
 
@@ -202,9 +229,25 @@ function ObjectHelpers.distance(object1, object2)
   return (object1.position - object2.position):length()
 end
 
+---@type table<string, function>
+local FunctionsAsFields = {}
+
+if isPlayer then
+  FunctionsAsFields.isInCombat = function()
+    return CombatTargetTracker.isInCombat()
+  end
+
+  FunctionsAsFields.targetData = function()
+    return util.makeReadOnly(CombatTargetTracker.targetData)
+  end
+end
+
 local GameObjectMeta = {
   __index = function(instance, key)
     if rawget(ignoredBaseKeys, key) then return end
+
+    local impliedField = rawget(FunctionsAsFields, key)
+    if impliedField then return impliedField() end
 
     local object = rawget(instance, 'object')
 
@@ -247,6 +290,7 @@ function ObjectHelpers.createInstance(gameObject)
       region = objectCell.region,
       waterLevel = objectCell.waterLevel,
     },
+    consoleLog = LogMessage,
     display = instanceDisplay,
     distance = instanceDistance,
     ---@private
@@ -288,10 +332,7 @@ function ObjectHelpers.createInstance(gameObject)
   end
 
   if isPlayer then
-    instance.consoleLog = LogMessage
     instance.cellsVisited = CellsVisited
-    instance.combatTargets = CombatTargetTracker.targetData
-    instance.isInCombat = CombatTargetTracker.isInCombat()
   end
 
   --- The outer s3lf interface that is exposed to users is a userdata, edited to not really be the original thing
@@ -313,8 +354,6 @@ local eventHandlers = {}
 local engineHandlers = {}
 
 if isPlayer then
-  CombatTargetTracker.targetData = {}
-
   engineHandlers.onSave = function()
     return {
       targetData = CombatTargetTracker.targetData,
@@ -362,25 +401,6 @@ if isPlayer then
     rawset(cellInfo, 'waterLevel', currentCell.waterLevel)
 
     gameSelf:sendEvent('S3LFCellChanged', currentCellId)
-  end
-
-  function CombatTargetTracker:updateCombatants(combatantInfo)
-    local shouldRemove = next(combatantInfo.targets) == nil
-
-    local eventName
-    if shouldRemove then
-      self.targetData[combatantInfo.actor.id] = nil
-      eventName = 'S3CombatTargetRemoved'
-    else
-      self.targetData[combatantInfo.actor.id] = combatantInfo.actor
-      eventName = 'S3CombatTargetAdded'
-    end
-
-    gameSelf:sendEvent(eventName, combatantInfo.actor)
-  end
-
-  function CombatTargetTracker.isInCombat()
-    return next(CombatTargetTracker.targetData) ~= nil and debug.isAIEnabled()
   end
 
   eventHandlers.S3LFDisplay = function(resultString)
