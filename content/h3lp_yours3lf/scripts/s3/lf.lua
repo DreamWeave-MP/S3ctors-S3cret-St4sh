@@ -347,7 +347,7 @@ function ObjectHelpers.createInstance(gameObject)
   return instance
 end
 
-local instance = ObjectHelpers.createInstance(gameSelf)
+local Instance = ObjectHelpers.createInstance(gameSelf)
 
 local eventHandlers = {
   Died = function()
@@ -380,18 +380,18 @@ if isPlayer then
 
   engineHandlers.onUpdate = function()
     local currentPosition = gameSelf.position
-    if rawget(instance, 'position') ~= currentPosition then rawset(instance, 'position', currentPosition) end
+    if rawget(Instance, 'position') ~= currentPosition then rawset(Instance, 'position', currentPosition) end
 
     local currentCell = gameSelf.cell
-    if currentCell == rawget(instance, 'cell') then return end
+    if currentCell == rawget(Instance, 'cell') then return end
 
     local currentCellId = currentCell.id
 
     if not CellsVisited[currentCellId] then CellsVisited[currentCellId] = true end
 
-    rawset(instance, 'cell', currentCell)
+    rawset(Instance, 'cell', currentCell)
 
-    local cellInfo = assert(rawget(instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
+    local cellInfo = assert(rawget(Instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
 
     cellInfo.displayName = currentCell.displayName
     cellInfo.gridX = currentCell.isExterior and currentCell.gridX
@@ -440,5 +440,5 @@ return {
   engineHandlers = engineHandlers,
   eventHandlers = eventHandlers,
   interfaceName = 's3lf',
-  interface = instance,
+  interface = Instance,
 }
