@@ -137,12 +137,6 @@ local KnownKeys = {
 
 local keyHandlers = {
 
-  --- Indexes fields already found, always runs first
-  function(instance, _, key)
-    local cached = rawget(instance, key)
-    if cached ~= nil then return cached end
-  end,
-
   --- Handle uncacheable keys from the root gameObject, which later are skipped
   function(_, object, key)
     if rawget(uncacheableKeys, key) then return object[key] end
@@ -242,6 +236,9 @@ end
 local GameObjectMeta = {
   __index = function(instance, key)
     if rawget(ignoredBaseKeys, key) then return end
+
+    local cached = rawget(instance, key)
+    if cached ~= nil then return cached end
 
     local object = rawget(instance, 'gameObject')
 
