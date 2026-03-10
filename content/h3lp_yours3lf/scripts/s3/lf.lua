@@ -241,7 +241,7 @@ end
 
 local GameObjectMeta = {
   __index = function(instance, key)
-    if ignoredBaseKeys[key] then return end
+    if rawget(ignoredBaseKeys, key) then return end
 
     local object = rawget(instance, 'gameObject')
 
