@@ -29,7 +29,7 @@ local assert, pairs, type = assert, pairs, type
 
 --- Current real time, in MS, plus a secret hash
 local function newSeed()
-    return math.floor(realTime * 1000) + 1003
+    return math.floor(realTime() * 1000) + 1003
 end
 
 ---@class Rand
