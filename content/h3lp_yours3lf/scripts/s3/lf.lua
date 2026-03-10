@@ -238,7 +238,7 @@ if isPlayer then
   end
 
   FunctionsAsFields.targetData = function()
-    return util.makeReadOnly(CombatTargetTracker.targetData)
+    return util.makeReadOnly(rawget(CombatTargetTracker, 'targetData'))
   end
 end
 
