@@ -716,8 +716,7 @@ local function observableTable(groupName, mcmPath, originalTable)
   if isOpenMW then
     settingGroup = storage.playerSection(groupName)
   else
-    assert(mcmPath)
-    settingGroup = require(mcmPath).get(groupName)
+    settingGroup = require(assert(mcmPath)).get(groupName)
   end
 
   local updateSettings
