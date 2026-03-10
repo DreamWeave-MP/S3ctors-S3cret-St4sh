@@ -267,6 +267,8 @@ local GameObjectMeta = {
       if result ~= nil then return result end
     end
   end,
+  __name = 'S3LFOBJECT',
+  __metatable = 'S3LFOBJECT',
 }
 
 local function sendObjectEvent(instance, eventName, eventData)
