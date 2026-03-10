@@ -129,12 +129,6 @@ local GameObjectKeyHandlers = {
   object = function(_, gameObject, _)
     return gameObject
   end,
-  --- Not sure if you actually work or not!
-  sendEvent = function(instance, gameObject, key)
-    rawset(instance, key, function(...)
-      return gameObject:sendEvent(...)
-    end)
-  end,
 }
 
 local knownKeys = {
@@ -277,6 +271,10 @@ local GameObjectMeta = {
   end,
 }
 
+local function sendObjectEvent(instance, eventName, eventData)
+  instance.gameObject:sendEvent(eventName, eventData)
+end
+
 function ObjectHelpers.createInstance(gameObject)
   local objectCell = gameObject.cell
   ---@class S3lfObject
@@ -307,6 +305,7 @@ function ObjectHelpers.createInstance(gameObject)
     isPlayer = isPlayer,
     position = gameObject.position,
     record = gameObject.type.records[gameObject.recordId],
+    sendEvent = sendObjectEvent,
     From = ObjectHelpers.From,
   }
 
