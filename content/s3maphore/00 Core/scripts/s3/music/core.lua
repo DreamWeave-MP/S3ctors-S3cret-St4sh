@@ -19,16 +19,19 @@ local Strings = require 'scripts.s3.music.staticStrings'
 
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicUtil = require 'scripts.s3.music.util'
+local tableUtil = require 'scripts.s3.table'
 
 local NPCFightThreshold = 90
 local CreatureFightThreshold = 83
 
-local nullFunction = function() end
+local nullFunction = require 'scripts.s3.nullFunction'
 local handlePlayback = nullFunction
 local onSoundEnabledChanged = nullFunction
 
 ---@type fun(dt: number)
 local currentUpdateHandler = nullFunction
+
+local EventData = {}
 
 ---@type QueuedEvent
 local queuedEvent = { name = nil, data = {} }
@@ -391,7 +394,7 @@ handlePlayback = function(_)
 
     switchPlaylist(newPlaylist)
 
-    clearQueuedData()
+    tableUtil.clear(EventData)
     queuedEvent.name = 'S3maphoreTrackChanged'
     queuedEvent.data.fadeOut = MusicParams.fadeOut
     queuedEvent.data.playlistId = newPlaylist and newPlaylist.id
