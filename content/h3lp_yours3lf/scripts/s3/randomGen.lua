@@ -1,12 +1,13 @@
-local scriptContext
+local bitXor, bitAnd, floor, realTime, round
 
-local isOpenMW = require 'scripts.s3.isOpenMW'
-local math = require 'scripts.s3.math'
+do
+    local math = require 'scripts.s3.math'
+    floor = math.floor
+    round = math.round
+end
 
-local bitXor, bitAnd, realTime
-if isOpenMW then
+if require 'scripts.s3.isOpenMW' then
     realTime = require 'openmw.core'.getRealTime
-    scriptContext = require 'scripts.s3.scriptContext'
 
     do
         local util = require 'openmw.util'
@@ -23,42 +24,39 @@ else
     end
 end
 
-local TwoPow5, TwoPow13, TwoPow17, TwoPow32 = math.pow(2, 5), math.pow(2, 13), math.pow(2, 17), math.pow(2, 32)
-
-local assert, pairs, type = assert, pairs, type
-
 --- Current real time, in MS, plus a secret hash
 local function newSeed()
-    return math.floor(realTime() * 1000) + 1003
+    return floor(realTime() * 1000) + 1003
 end
 
----@class Rand
-local Random = {
-    seed = newSeed()
-}
+local seed = newSeed()
 
-function Random:int()
-    local x = self.seed
-    x = bitXor(x, x * TwoPow13)
-    x = bitXor(x, x / TwoPow17)
-    x = bitXor(x, x * TwoPow5)
-    self.seed = bitAnd(x, 0xFFFFFFFF)
-    return self.seed
+--- The magic numbers in this, and float, are 2^13, 2^17, 2^5, 2^32
+--- https://en.wikipedia.org/wiki/Xorshift
+local function int()
+    local x = seed
+    x = bitXor(x, x * 8192)
+    x = bitXor(x, x / 131072)
+    x = bitXor(x, x * 32)
+    seed = bitAnd(x, 0xFFFFFFFF)
+    return seed
 end
 
 --- Float between [0, 1)
 ---@return number random floating point between 1 and 0
-function Random:float()
-    local unsigned = self:int()
+local function float()
+    local unsigned = int()
+
     -- Convert to unsigned explicitly
-    if unsigned < 0 then unsigned = unsigned + TwoPow32 end
-    return unsigned / TwoPow32 -- Always in [0, 1)
+    if unsigned < 0 then unsigned = unsigned + 4294967296 end
+
+    return unsigned / 4294967296 -- Always in [0, 1)
 end
 
 -- Handle both { min=X, max=Y } and direct args
 ---@param a integer|RangeTable
----@param b integer|true? optional max. If not provided, a should either be a RangeTable which provides the max, or a will be interpreted as the max. If true, rounds the result to the nearest whole number.
-function Random:range(a, b)
+---@param b integer|boolean? optional max. If not provided, `a` should either be a RangeTable which provides the max, or a will be interpreted as the max. If true, rounds the result to the nearest whole number.
+local function range(a, b)
     local min, max = a, b
 
     if type(a) == 'table' then
@@ -69,40 +67,17 @@ function Random:range(a, b)
         min = 1
     end
 
-    local result = min + self:float() * (max - min)
+    local result = min + float() * (max - min)
     if b == true then
-        return math.round(result)
+        return round(result)
     else
         return result
     end
 end
 
-if isOpenMW and scriptContext.get() ~= scriptContext.Types.Global then
-    return {
-        interfaceName = 'RandomGen',
-        interface = {
-            new = function()
-                local copy = {}
-
-                for k, v in pairs(Random) do
-                    copy[k] = v
-                end
-
-                copy.seed = newSeed()
-
-                return copy
-            end,
-            float = function()
-                return Random:float()
-            end,
-            int = function()
-                return Random:int()
-            end,
-            range = function(a, b)
-                return Random:range(a, b)
-            end
-        },
-    }
-else
-    return Random
-end
+---@class Rand
+return {
+    float = float,
+    int = int,
+    range = range,
+}
