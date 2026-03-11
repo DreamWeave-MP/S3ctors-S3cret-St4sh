@@ -843,9 +843,118 @@ local function clear(input)
   for k in next, input do input[k] = nil end
 end
 
+---
+--- Finds the element in the array given the lowest score by `scoreFn`.
+--- @param array any[] Any array
+--- @param scoreFn fun(x: any): number? Function that returns either nil/false or a number for each element of the array
+--- @return any element element given the lowest score
+--- @return number score The score given to the chosen element by `scoreFn`
+--- @return number index The index of the chosen element in the array
+--- @usage Find the nearest NPC
+--- local nearestNPC, distToNPC = aux_util.findMinScore(
+---     nearby.actors,
+---     function(actor)
+---         return actor.type == types.NPC and (self.position - actor.position):length()
+---     end)
+local function findMinScore(array, scoreFn)
+  local bestValue, bestScore, bestIndex
+  for i = 1, #array do
+    local v = array[i]
+    local score = scoreFn(v)
+    if score and (not bestScore or bestScore > score) then
+      bestValue, bestScore, bestIndex = v, score, i
+    end
+  end
+
+  return bestValue, bestScore, bestIndex
+end
+
+--- Computes `scoreFn` for each element of `array` and filters out elements with false and nil results.
+---@param array table Any array
+---@param  scoreFn fun(x: any): number? Filter function
+---@return table Output Output array
+---@return table withScores Array of the same size with corresponding scores
+---@usage
+--- -- Find all NPCs in `nearby.actors`
+--- local NPCs = aux_util.mapFilter(
+---     nearby.actors,
+---     function(actor) return actor.type == types.NPC end
+--- )
+local function mapFilter(array, scoreFn)
+  local res = {}
+  local scores = {}
+  for i = 1, #array do
+    local v = array[i]
+    local f = scoreFn(v)
+    if f then
+      scores[#res + 1] = f
+      res[#res + 1] = v
+    end
+  end
+  return res, scores
+end
+
+---Filters and sorts `array` by the scores calculated by `scoreFn`. The same as `aux_util.mapFilter`, but the result is sorted.
+---@param array table Any array
+---@param scoreFn fun(x: any): number? Filter function
+---@return table Output array
+---@return table withScores Array of the same size with corresponding scores
+---@usage
+----- Find all NPCs in `nearby.actors` and sort them by distances
+--- local NPCs, distances = aux_util.mapFilterSort(
+---     nearby.actors,
+---     function(actor)
+---         return actor.type == types.NPC and (self.position - actor.position):length()
+---     end)
+local function mapFilterSort(array, scoreFn)
+  local mapValues, scores = mapFilter(array, scoreFn)
+  local size = #mapValues
+  local ids = {}
+  for i = 1, size do ids[i] = i end
+  table.sort(ids, function(i, j) return scores[i] < scores[j] end)
+  local sortedValues = {}
+  local sortedScores = {}
+  for i = 1, size do
+    sortedValues[i] = mapValues[ids[i]]
+    sortedScores[i] = scores[ids[i]]
+  end
+  return sortedValues, sortedScores
+end
+
+
+--- Iterates over an array of event handlers, calling each in turn until one returns false.
+---@param handlers fun(...): boolean?[] An optional array of handlers to invoke
+---@param ... any Arguments to pass to each event handler
+---@return boolean eventHandled True if no further handlers should be called
+local function callEventHandlers(handlers, ...)
+  for i = #handlers, 1, -1 do
+    if handlers[i](...) == false then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Iterates over an array of event handler arrays, passing each to `aux_util.callEventHandlers` until the event is handled.
+---@param handlers fun(...): boolean?[][] An optional array of handlers to invoke
+---@param ... any Arguments to pass to each event handler
+---@return boolean eventHandled True if no further handlers should be called
+local function callMultipleEventHandlers(handlers, ...)
+  for i = 1, #handlers do
+    if callEventHandlers(handlers[i], ...) then
+      return true
+    end
+  end
+
+  return false
+end
+
 return {
   binInsert = binInsert,
   binSearch = binSearch,
+  callEventHandlers = callEventHandlers,
+  callMultipleEventHandlers = callMultipleEventHandlers,
   choice = choice,
   clear = clear,
   concat = concat,
@@ -856,6 +965,7 @@ return {
   filter = filter,
   filterArray = filterArray,
   find = find,
+  findMinScore = findMinScore,
   get = get,
   getOrSet = getOrSet,
   getPrintableTable = getPrintableTable,
@@ -869,6 +979,8 @@ return {
   keys = keys,
   makeReadOnly = makeReadOnly,
   map = map,
+  mapFilter = mapFilter,
+  mapFilterSort = mapFilterSort,
   maxn = maxn,
   move = move,
   observableTable = observableTable,
