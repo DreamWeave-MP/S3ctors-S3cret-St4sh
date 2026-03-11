@@ -283,6 +283,14 @@ local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
 
     local newIndexFunction
     local shadowTable = {}
+
+    if originalTable then
+        for k, v in next, originalTable do
+            rawset(originalTable, k, nil)
+            rawset(shadowTable, k, v)
+        end
+    end
+
     if isOpenMW then
         settingGroup:subscribe(async:callback(updateSettings))
 
