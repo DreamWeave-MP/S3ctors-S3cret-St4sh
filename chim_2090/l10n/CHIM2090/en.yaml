@@ -1,0 +1,402 @@
+ActorEnduranceBlockTimeName: Endurance Blocking Time
+ActorEnduranceBlockTimeDesc: The closer to 100 an enemy's endurance is, the closer to this value will be added to their blocking duration.
+
+ActorFatigueBlockTimeName: Fatigue Blocking Time
+ActorFatigueBlockTimeDesc: The closer to max an enemy's fatigue is, the closer to this value will be added to their blocking duration.
+
+ActorSkillBlockTimeName: Skill Blocking Time
+ActorSkillBlockTimeDesc: The closer to 100 an enemy's block skill is, the closer to this value will be added to their blocking duration.
+
+ActorMinBlockTimeName: Minimum Blocking Time
+ActorMinBlockTimeDesc: AI targets will never block for less than this amount of time.
+
+ActorMaxBlockTimeName: Maximum Blocking Time
+ActorMaxBlockTimeDesc: AI targets will never block for more than this amount of time.
+
+AgilityHitChancePctName: Agility Hit Damage Influence
+AgilityHitChancePctDesc: Percentage of agility that is added to hit chance, vanilla is 20%. Related damage scaling is capped by the Max Strength Multiplier setting.
+
+AgilityPoiseBonusName: Agility Poise Damage Factor
+AgilityPoiseBonusDesc: Overall effect of agility on poise damage, with hand to hand attacks (since there's no weapon to draw bonuses from)
+
+AlwaysScaleHitAnimSpeedName: Always Scale Hit Animation Speed
+AlwaysScaleHitAnimSpeedDesc: With this setting enabled, hit and knockdown animations always play at the speed CHIM defines, instead of *just* when CHIM executes them.
+
+AnimSpeedHeavyName: Heavy Animation Speed
+AnimSpeedHeavyDesc: Animations played by CHIM when heavily encumbered (50-75%) will run at this speed.
+
+AnimSpeedLightName: Light Animation Speed
+AnimSpeedLightDesc: Animations played by CHIM when slightly encumbered (0-25%) will run at this speed.
+
+AnimSpeedMediumName: Medium Animation Speed
+AnimSpeedMediumDesc: Animations played by CHIM when moderately encumbered (25-50%) will run at this speed.
+
+AnimSpeedOverloadedName: Overloaded Animation Speed
+AnimSpeedOverloadedDesc: Animations played by CHIM when wearing extremely heavy gear (75%-100% or more) will run at this speed.
+
+AttributeMitigationFactorName: Attribute Mitigation Factor
+AttributeMitigationFactorDesc: How much the shield's governing attribute contributes to damage reduction
+
+BaseBlockMitigationName: Base Block Mitigation
+BaseBlockMitigationDesc: Minimum damage reduction when blocking with any shield
+
+BaseBlockTimeName: Base Blocking Time
+BaseBlockTimeDesc: Every actor has a different block time. This is the base they all share.
+
+BaseDamageMultName: Parry Damage Redirection
+BaseDamageMultDesc: When parrying an attack, this multiplier is applied to incoming health damage and redirected back to the enemy as fatigue damage.
+
+BaseHealthName: Base Health
+BaseHealthDesc: |-
+  Base health for all actors before stat calculations kick in.
+
+BaseMaxBlockCountName: Base Max Consecutive Blocks
+BaseMaxBlockCountDesc: Every enemy has a different number of blocks they may perform in successsion. This number is shared by all of them, regardless of skill.
+
+BaseParryFramesName: Base Parry Frame Count
+BaseParryFramesDesc: Starting number of parrying frames granted regardless of character skill or shield weight.
+
+BasePoiseName: Base Poise
+BasePoiseDesc: Minimum poise value all characters start with
+
+BaseShieldFramesName: Base Shield Parry Frames
+BaseShieldFramesDesc: |-
+  When parrying, every shield grants N parry frames, which then has a fraction of the shield's weight subtracted from it.
+  For example, the default value of this setting is 8, and the Per Unit Shield Weight Penalty's Default value is 3. 
+  With default settings and a shield weighing 15 units, you would get 3 additional parry frames from your equipped shield.
+
+BlockActionName: ""
+BlockActionDesc: ""
+
+BlockDebugEnableName: Enable Block Debug Messages
+BlockDebugEnableDesc: Write informative messages about blocks to openmw.log.
+
+BlockFrameMultName: Block Skill Parry Frame Multiplier
+BlockFrameMultDesc: |-
+  When parrying, the character's block skill is capped to 100, and then flattened to a value between 0 and 1.
+  That is then multiplied by the number value of this setting, granting somewhere between 0-1 * N additional parry frames based on the block skill.
+
+BlockKeybindName: Block Button
+BlockKeybindDesc: The bound key will be used for active blocks and parries.
+
+BlockLeftAngleName: Block Left Angle
+BlockLeftAngleDesc: When blocking, incoming attacks from greater than this many degrees to your left can be blocked. Replaces the vanilla GMST fCombatBlockLeftAngle, whose value is {value}.
+
+BlockRightAngleName: Block Right Angle
+BlockRightAngleDesc: When blocking, incoming attacks from less than this many degrees to your right can be blocked. Replaces the vanilla GMST fCombatBlockRightAngle, whose value is {value}.
+
+BlockSkillBonusName: Block Skill Parry Bonus
+BlockSkillBonusDesc: |-
+  More skilled blockers can redirect more force.
+  This setting increases damage redirected during a parry based on the defender's block skill.
+
+BlockSpeedAgilityWeightName: Block Speed Agility Weight
+BlockSpeedAgilityWeightDesc: How much Agility affects block animation speed
+
+BlockSpeedBaseName: Block Speed Base
+BlockSpeedBaseDesc: Base speed multiplier for block animations
+
+BlockSpeedLuckWeightName: Block Speed Luck Weight
+BlockSpeedLuckWeightDesc: How much Luck affects block animation speed
+
+CreatureBasePoiseDamageName: Creature Base Poise Damage
+CreatureBasePoiseDamageDesc: Base poise damage dealt by all unarmed creature attacks
+
+CreatureStrengthPoiseFactorName: Creature Strength Poise Factor
+CreatureStrengthPoiseFactorDesc: Multiplier on creature strength when calculating poise damage.
+
+CritChancePercentName: Crit Chance Percentage
+CritChancePercentDesc: Base chance of a critical hit
+
+CritFumbleEnableName: Enable Crit & Fumble Module
+CritFumbleEnableDesc: |-
+  Enable the critical hit and fumble module.
+  This module adds a chance to deal extra damage on a critical hit, and less on a fumble.
+
+CritLuckPercentName: Crit Luck Influence
+CritLuckPercentDesc: Influence of luck on critical hit chance and fumble as a percentage
+
+CritMultName: Critical Damage Multiplier
+CritMultDesc: Critical hit damage multiplier. Only applies in melee combat.
+
+DebugEnableActorBlockName: Enable AI Block Debug Messages
+DebugEnableActorBlockDesc: Emit informative messages about AI blocks to openmw.log.
+
+DebugEnableChimCoreName: Enable Debug Messages
+DebugEnableChimCoreDesc: Emit informative messages to openmw.log from the CHIM Core (mostly about damage on hits)
+
+DynamicDebugEnableName: Enable Dynamic Stat Debug Messages
+DynamicDebugEnableDesc: Emit informative messages to openmw.log from the dynamic stat module, primarily when one is recalculated.
+
+EnableDynamicModuleName: Enable Dynamic Stats Module
+EnableDynamicModuleDesc: |-
+  By default, recalculating dynamic stats is disabled, due to potential mod conflicts. However, it is highly recommended.
+  Without this module enabled, other mods or the engine may take over max fatigue, health, and magicka.
+  However, be aware that CHIM's fatigue regeneration cannot be disabled.
+
+EnableFlankDamageName: Enable Flanking Damage
+EnableFlankDamageDesc: |-
+  When blocking, the angle between the attacker and defender's perspective is calculated. The result will be somewhere between 0 and 180, which is then used to calculate flanking damage.
+  The blocking angle is normalized from 0-180 to 0-1.0, and if it is greater than 0.333 (60 degrees), the attack was not blocked, and the defender is not knocked down, the normalized angle difference is *added* to the total multiplier for damaged dealt.
+  Tl;dr, being behind an opponent does an additional 100% damage, whereas being directly in front of them deals no additional damage. This is enabled by default as *typically*, the main victim of flanking attacks is actually you.
+
+EndurancePoiseBonusName: Endurance Poise Bonus
+EndurancePoiseBonusDesc: How much poise each point of Endurance provides
+
+EnablePoiseIconName: Enable Poise Indicator
+EnablePoiseIconDesc: |-
+  The poise indicator uses a texture atlas to display your currently-remaining poise.
+  If you don't wish to see your current poise, set this to false. Also responds to disabling poise entirely.
+
+EquipmentSlotTimeReductionName: Equipment Recovery Reduction
+EquipmentSlotTimeReductionDesc: Percentage reduction to recovery time per equipped armor piece
+
+# FatigueEndMultDesc: Percentage of endurance regained as fatigue, per second, with either formula, while sleeping. Replaces the vanilla GMST fEndFatigueMult
+
+FatigueBlockBaseName: Base Blocking Fatigue
+FatigueBlockBaseDesc: |-
+  Base fatigue cost for blocking attacks.
+  Replaces the vanilla GMST fFatigueBlockBase, whose value is {value}
+
+FatigueBlockMultName: Blocking Encumbrance/Fatigue Factor
+FatigueBlockMultDesc: |-
+  When blocking, an additional fatigue cost is imposed based on this * normalizedEncumbrance. 
+  The closer you are to your maximum carrying capacity, the more it costs to block an attack based on this value.
+  Replaces the vanilla GMST fFatigueBlockMult, whose value is {value}
+
+FatigueLossPercentName: Fatigue Loss Scaling
+FatigueLossPercentDesc: AI targets take use less fatigue when blocking. Change the multiplier with this setting.
+
+FatiguePerSecondName: Fatigue Recovery Per Second
+FatiguePerSecondDesc: |-
+  Fatigue restored per second when using either formula. 
+  Replaces the vanilla GMST fFatigueReturnBase
+
+FatigueReturnMultName: Endurance Fatigue Recovery Multiplier
+FatigueReturnMultDesc: |-
+  Percentage of endurance regained as fatigue, per second, with either formula. 
+  Replaces the vanilla GMST fFatigueReturnMult
+
+FortifyMagickaMultiplierName: Fortify Magicka Bonus
+FortifyMagickaMultiplierDesc: Percentage of Fortify Magicka magnitude which is added to the total magicka pool.
+
+FumbleBaseChanceName: Base Fumble Chance
+FumbleBaseChanceDesc: Base chance of a fumble. Increse this to fumble more with lower skill.
+
+FumbleChanceScaleName: Fumble Chance Scale
+FumbleChanceScaleDesc: Scale of fumble chance with skill. Increase this to fumble more regardless of skill.
+
+FumbleDamagePercentName: Fumble Damage Percentage
+FumbleDamagePercentDesc: Percentage of damage dealt to the target on a fumble
+
+GlobalDamageScalingName: Global Damage Multiplier
+GlobalDamageScalingDesc: Multiplier applied to ALL damage received by an onHit handler, on all characters/creatures.
+
+HandToHandPoiseMultName: Hand to Hand Poise Damage Multiplier
+HandToHandPoiseMultDesc: Multipler on total poise damage dealt with hand to hand attacks, regardless of skill.
+
+HandToHandSkillPoiseFactorName: Hand To Hand Poise Damage Factor
+HandToHandSkillPoiseFactorDesc: Multiplier for hand to hand skill when calculating poise damage.
+
+HealthDiminishingExponentName: Max Health Diminishing Exponent
+HealthDiminishingExponentDesc: |-
+  Maximum health calculations offer diminishing returns based on your endurance.
+  This setting controls the degree to which they diminish.
+  Suggested values:
+  1.1-1.3: mild diminishing returns, balanced
+  1.4-1.6: heavy diminishing returns, rewards medium endurance
+  0.9-1.0: almost linear, high endurance very valuable
+  0.7-0.8: Accelerating returns, rewards lower endurance values more
+
+HealthLinearMultName: Linear Health Multiplier
+HealthLinearMultDesc: Linear multiplier for endurance when calculating max health. Basically, this is how many hit points you get per point of endurance.
+
+HealthVitalityMultName: Health Vitality Multiplier
+HealthVitalityMultDesc: |-
+  Multiplier applied to the diminishing health exponent.
+  Alter this value to make endurance scaling more or less effective overall.
+
+LuckHitChancePctName: Luck Hit Chance Influence
+LuckHitChancePctDesc: |-
+  Percentage of luck that is added to hit chance, vanilla is 10%. 
+  Related damage scaling is capped by the Max Strength Multiplier setting.
+
+MagickaMultiplierNPCbaseName: NPC Base Magicka Multiplier
+MagickaMultiplierNPCbaseDesc: Base magicka modifier for NPCs. Replaces the vanilla GMST fNPCbaseMagickaMult, whose value is {value}.
+
+MagickaMultiplierPCbaseName: Player Base Magicka Multiplier
+MagickaMultiplierPCbaseDesc: Base magicka modifier for Players. Replaces the vanilla GMST fPCbaseMagickaMult, whose value is {value}.
+
+MaximumMitigationName: Maximum Mitigation
+MaximumMitigationDesc: Absolute maximum damage reduction when blocking
+
+MaxArmorBonusName: Max Armor Bonus
+MaxArmorBonusDesc: Maximum damage reduction bonus from shield armor rating
+
+MaxDamageMultName: Base Hit Damage Max Multiplier
+MaxDamageMultDesc: Limit for the amount of damage done, based on chance the vanilla hit chance formula. 1.5 means 150% maximum damage from agility, skill, and luck.
+
+MaxEquipmentPoiseName: Max Equipment Poise
+MaxEquipmentPoiseDesc: Maximum poise that can be gained from equipment alone
+
+MaxFatigueAgiMultName: Agility Fatigue Percentage
+MaxFatigueAgiMultDesc: Percentage of agility factored into max fatigue. Vanilla is 100.
+
+MaxFatigueEndMultName: Endurance Fatigue Percentage
+MaxFatigueEndMultDesc: Percentage of endurance factored into max fatigue. Vanilla is 100.
+
+MaxFatigueStrMultName: Strength Fatigue Percentage
+MaxFatigueStrMultDesc: Percentage of strength factored into max fatigue. Vanilla is 100.
+
+MaxFatigueWilMultName: Willpower Fatigue Percentage
+MaxFatigueWilMultDesc: Percentage of willpower factored into max fatigue. Vanilla is 100.
+
+MaxParryDamageMultName: Maximum Parry Damage Redirection
+MaxParryDamageMultDesc: |-
+  Parries will redirect no more than this much damage from an incoming attack.
+
+MaxParryFramesName: Maximum Parry Frames
+MaxParryFramesDesc: |-
+  Maximum number of parry frames. Higher numbers mean parries will be easier, where lower is more punishing.
+
+MaxTotalPoiseName: Max Total Poise
+MaxTotalPoiseDesc: Absolute maximum poise including attributes and equipment
+
+MaxWeightBonusName: Max Weight Bonus
+MaxWeightBonusDesc: Maximum damage reduction bonus from shield weight
+
+MinDamageMultName: Minimum Parry Damage Redirection
+MinDamageMultDesc: |-
+  Parries will redirect no less than this much damage from an incoming attack.
+
+MinimumMitigationName: Minimum Mitigation
+MinimumMitigationDesc: Minimum damage reduction when blocking with any shield
+
+MinParryFramesName: Minimum Parry Frames
+MinParryFramesDesc: |-
+  Minimum number of parry frames. Higher numbers mean parries will be easier, where lower is more punishing.
+
+MinPoiseDamageName: Minimum Poise Damage
+MinPoiseDamageDesc: |-
+  Attacks will do no less than this much damage to enemy poise.
+
+MinRecoveryDurationName: Minimum Recovery Time
+MinRecoveryDurationDesc: Fastest possible poise recovery time in seconds
+
+NoBlockThresholdName: Fatigue Blocking Threshold
+NoBlockThresholdDesc: If an actor has less than this % of their total fatigue, they will never block.
+
+PageBlockAndParryName: CHIM 2090 - Block & Parry
+PageBlockAndParryDesc: Manages blocking and parrying effectiveness and formulae
+
+PageCoreName: CHIM 2090 - Damage, Crit, Fumble
+PageCoreDesc: Manages animation speed and damage scaling in combat
+
+PageDynamicName: CHIM 2090 - Dynamic Stats
+PageDynamicDesc: Manages fatigue, health, and magicka caps
+
+PagePoiseName: CHIM 2090 - Poise
+PagePoiseDesc: Manages poise, a hidden stat allowing knockdowns on any target
+
+PageRollName: CHIM 2090 - Rolling
+PageRollDesc: Manages input bindings & other settings for combat rolls
+
+PerUnitShieldWeightPenaltyName: Per Unit Shield Weight Penalty
+PerUnitShieldWeightPenaltyDesc: |-
+  Divisor on shield weight when calculating parry frames. 
+  At a value of 3, a shield weighing 9 units will subtract 3 from the base shield frames setting to determine the number of parry frames given by a particular shield.
+
+PoiseBreakAnimSpeedName: Poise Break Animation Speed
+PoiseBreakAnimSpeedDesc: When one's poise is broken, their hit animation speed is scaled by this amount.
+
+PoiseDamageMultName: Poise Damage Multiplier
+PoiseDamageMultDesc: Damage multiplier applied when target's poise is broken
+
+PoiseDebugEnableName: Enable Poise Debug Messages
+PoiseDebugEnableDesc: Write informative debug messages to the log from the Poise subsystem.
+
+PoiseEnableName: Enable Poise System
+PoiseEnableDesc: Toggle the entire poise system on or off
+
+PoiseHUDColorName: HUD Color
+PoiseHUDColorDesc: ""
+
+PoiseHUDEnableName: Enable Poise Icon
+PoiseHUDEnableDesc: 
+  Also responds to disabling the poise mechanic entirely.
+
+PoiseHUDPosName: Poise HUD Position
+PoiseHUDPosDesc: ""
+
+PoiseHUDSizeName: Poise HUD Size
+PoiseHUDSizeDesc: ""
+
+PoiseHUDUpdateDelayName: Poise Icon Update Delay
+PoiseHUDUpdateDelayDesc: |-
+  Time delay between updates of the poise icon. Default value is 15FPS.
+  Upon being attacked, the first update always happens immediately, regardless of this setting's value.
+
+PoisePerWeightName: Poise per Weight Unit
+PoisePerWeightDesc: How much poise each unit of equipment weight provides
+
+PoiseRecoveryDurationName: Base Recovery Time
+PoiseRecoveryDurationDesc: Base time in seconds before poise starts regenerating
+
+SettingsBlockGroupName: Block Settings
+SettingsCoreGroupName: Core Settings
+SettingsDynamicGroupName: Health, Fatigue, Magicka Settings
+SettingsParryGroupName: Parry Settings
+SettingsPoiseGroupName: Poise Settings
+SettingsRollGroupName: Roll Settings
+
+ShieldsMitigatePoiseDamageName: Shields Mitigate Poise Damage
+ShieldsMitigatePoiseDamageDesc: |-
+  If enabled, this setting allows blocking to absorb damage caused to poise by incoming attacks.
+
+ShieldSizeInfluenceName: Shield Size Infuence
+ShieldSizeInfluenceDesc: |-
+  Parrying attacks with a larger shield is more effective.
+  This setting is a percentage of the frontal surface area of your shield, 
+  which is converted back into fatigue damage against the enemy upon a successful parry.
+
+ShieldWeightPenaltyName: Shield Weight Penalty
+ShieldWeightPenaltyDesc: How much shield weight slows block animation speed per unit of weight
+
+ShieldWeightPenaltyLimitName: Shield Weight Penalty Limit
+ShieldWeightPenaltyLimitDesc: Maximum slowdown from shield weight
+
+SkillMitigationFactorName: Skill Mitigation Factor
+SkillMitigationFactorDesc: How much Block skill affects damage reduction
+
+StandingStillBonusName: Standing Still Bonus
+StandingStillBonusDesc: Additional damage reduction multiplier when blocking while standing completely still
+
+StrengthDamageBonusName: Parry Damage Strength Influence
+StrengthDamageBonusDesc: |-
+  Stronger characters are slightly more effective at parrying.
+  This setting adds a small portion of your strength stat onto damage redirected from parries.
+
+StrengthPoiseBonusName: Strength Poise Bonus
+StrengthPoiseBonusDesc: How much poise each point of Strength provides
+
+TwoHandedMultName: Two-Handed Multiplier
+TwoHandedMultDesc: Poise damage multiplier for two-handed weapons
+
+UseVanillaFatigueName: Use Vanilla Fatigue Recovery Formula
+UseVanillaFatigueDesc: |-
+  Use the original fatigue regeneration formula instead of CHIM 2090's internal one. 
+  This still uses other regen settings, but omits advanced functionality related to fatigue.
+
+WeaponFatigueBlockMultName: Block Weapon Fatigue Cost
+WeaponFatigueBlockMultDesc: |-
+  Multiplier for fatigue cost when blocking attacks against a weapon.
+  Replaces the vanilla GMST fWeaponFatigueBlockMult, whose value is {value}
+
+WeaponPoiseMultName: Weapon Poise Multiplier
+WeaponPoiseMultDesc: Global multiplier for all weapon poise damage
+
+WeaponSkillPoiseFactorName: Weapon Skill Poise Factor
+WeaponSkillPoiseFactorDesc: How much weapon skill contributes to poise damage.
+
+WeightPoiseFactorName: Weapon Weight Poise Factor
+WeightPoiseFactorDesc: How much weapon weight contributes to poise damage

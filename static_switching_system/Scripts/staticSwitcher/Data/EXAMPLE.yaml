@@ -1,0 +1,14 @@
+log_name: "an example file"
+
+replace_names:
+  - "dagoth ur"
+
+exterior_cells:
+  - x: 0
+    y: 0
+  - x: 0
+    y: -1
+
+replace_meshes:
+  "totallyFake1.nif": "some_real/file1.nif"
+  "totallyFake2.nif": "some_real/file2.nif"

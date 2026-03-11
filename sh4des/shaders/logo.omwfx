@@ -1,0 +1,43 @@
+sampler_2d logoTex {
+    source = "textures/s3/ttth/logo.dds";
+}
+
+fragment logoPass {
+    omw_In vec2 omw_TexCoord;
+
+    void main() {
+        vec4 sceneTex = omw_GetLastShader(omw_TexCoord);
+
+        // normalized size of the image
+        //vec2 logo_size = vec2( 128.0 / omw.resolution.x, 128.0 / omw.resolution.y );
+        //vec2 logo_size = vec2( 887.0 / omw.resolution.x, 137.0 / omw.resolution.y );
+        vec2 logo_size = vec2( 1223.0 / omw.resolution.x, 98.0 / omw.resolution.y );
+
+        // normalized position
+        vec2 logo_pos = vec2(0.0, 1.0 - logo_size.y);
+
+        vec3 dark = vec3( 0.15, 0.15, 0.15 );
+
+        // For `all`, we're determining if every element of the vector matches the given condition
+        // So every coordinate must be greater than, or equal to, the border
+        if ( all( greaterThanEqual( omw_TexCoord, logo_pos ) ) 
+            && all( lessThanEqual( omw_TexCoord, logo_pos + logo_size ) ) ) {
+            vec4 s3 = omw_Texture2D( logoTex,  (omw_TexCoord - logo_pos) / logo_size );
+
+            //if ( all( greaterThanEqual( s3.xyz, dark ) ) ) {
+                omw_FragColor = mix( sceneTex, s3, s3.a );
+            //} else {
+                //omw_FragColor = sceneTex;
+            //}
+        } else {
+            omw_FragColor = sceneTex;
+        }
+    }
+}
+
+technique {
+    author = "S3ctor";
+    description = "My Str34m3r W4t3rm4rk";
+    passes = logoPass;
+    version = "0.1";
+}

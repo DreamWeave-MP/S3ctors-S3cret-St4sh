@@ -1,0 +1,15 @@
+UiModes: "UI Modes - Slimline"
+UiModesDescription: "Author: ptmikheev & S3ctor"
+
+Settings: "Settings"
+
+uiModesShortcuts: "UI modes shortcuts"
+uiModesShortcutsDescription: "Keys 'I', 'M', 'C' open inventory, map, or stats separately from other windows"
+autoDrawWeapon: "Auto draw weapon"
+autoDrawWeaponDescription: "Automatically prepare last used weapon or spell when attack button is pressed"
+rotateCameraInInventory: "Rotate camera in inventory"
+rotateCameraInInventoryDescription: "Move camera around the player when inventory is opened"
+rotateCameraInDialogs: "Rotate camera in dialogs"
+rotateCameraInDialogsDescription: "Move camera around the player when speaking with NPC"
+rotateCameraSpeed: "Camera rotation speed"
+rotateCameraSpeedDescription: "Degrees per second"
