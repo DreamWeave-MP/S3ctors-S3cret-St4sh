@@ -1,5 +1,8 @@
 local activePlaylistSettings, ambient, core, gameSelf, vfs
 
+--- FIXME: This isn't API-agnostic, but, I don't care ATM
+local aux_util = require 'openmw_aux.util'
+
 local musicUtil = require 'scripts.s3.music.util'
 
 ---@type table<string, function>
@@ -16,6 +19,10 @@ local PlaylistPriority = require 'doc.playlistPriority'
 local PlaylistState = require 'scripts.s3.music.playlistState'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 
+---@alias TrackChangedHandler fun(eventData: S3maphoreStateChangeEventData): boolean?
+---@type TrackChangedHandler[]
+local TrackChangeHandlers = {}
+
 ---@class MusicManager
 ---@field Rules PlaylistRules
 ---@field STATE StateChangeReasons
@@ -31,6 +38,14 @@ local MusicManager = {
   STATE = require 'scripts.s3.music.enum.stateChangeReason',
   TIME_MAP = require 'scripts.s3.music.enum.timeMap',
   INTERRUPT = require 'scripts.s3.music.enum.interruptMode',
+  ---@param handler TrackChangedHandler
+  addTrackChangedHandler = function(handler)
+    TrackChangeHandlers[#TrackChangeHandlers + 1] = handler
+  end,
+  ---@param eventData S3maphoreStateChangeEventData
+  callTrackChangedHandlers = function(eventData)
+    aux_util.callEventHandlers(TrackChangeHandlers, eventData)
+  end,
   currentPlaylist = nil,
   currentTrack = nil,
   forceSkip = false,

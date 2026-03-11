@@ -2,6 +2,7 @@
 
 local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
+local aux_util = require 'openmw_aux.util'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
 local nearby = require 'openmw.nearby'
@@ -31,7 +32,13 @@ local onSoundEnabledChanged = nullFunction
 ---@type fun(dt: number)
 local currentUpdateHandler = nullFunction
 
-local EventData = {}
+---@type S3maphoreStateChangeEventData
+local TrackChangeData = {
+    fadeOut = MusicSettings.FadeOutDuration,
+    playlistId = '',
+    reason = MusicManager.STATE.TrackChanged,
+    trackName = '',
+}
 
 ---@type QueuedEvent
 local queuedEvent = { name = nil, data = {} }
@@ -394,11 +401,12 @@ handlePlayback = function(_)
 
     switchPlaylist(newPlaylist)
 
-    tableUtil.clear(EventData)
-    queuedEvent.name = 'S3maphoreTrackChanged'
-    queuedEvent.data.fadeOut = MusicParams.fadeOut
-    queuedEvent.data.playlistId = newPlaylist and newPlaylist.id
-    queuedEvent.data.trackName = MusicManager.currentTrack
+    tableUtil.clear(TrackChangeData)
+    TrackChangeData.fadeOut = MusicParams.fadeOut
+    TrackChangeData.playlistId = newPlaylist and newPlaylist.id
+    TrackChangeData.trackName = MusicManager.currentTrack
+    TrackChangeData.reason = MusicManager.STATE.TrackChanged
+    MusicManager.callTrackChangedHandlers(TrackChangeData)
 end
 
 local isSoundEnabled = core.sound.isEnabled
@@ -418,6 +426,21 @@ local function initializePlaylists(_)
 end
 
 currentUpdateHandler = initializePlaylists
+
+MusicManager.addTrackChangedHandler(
+---@param eventData S3maphoreStateChangeEventData
+    function(eventData)
+        if MusicSettings.DebugEnable then
+            musicUtil.debugLog(
+                Strings.TrackChanged:format(eventData.playlistId, eventData.trackName)
+            )
+        end
+
+        MusicParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
+        ambient.streamMusic(eventData.trackName, MusicParams)
+        MusicManager.updateBanner()
+    end
+)
 
 return {
     interfaceName = 'S3maphore',
@@ -495,19 +518,6 @@ return {
                 )
             end
 
-            MusicManager.updateBanner()
-        end,
-
-        ---@param eventData S3maphoreStateChangeEventData
-        S3maphoreTrackChanged = function(eventData)
-            if MusicSettings.DebugEnable then
-                musicUtil.debugLog(
-                    Strings.TrackChanged:format(eventData.playlistId, eventData.trackName)
-                )
-            end
-
-            MusicParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
-            ambient.streamMusic(eventData.trackName, MusicParams)
             MusicManager.updateBanner()
         end,
 
