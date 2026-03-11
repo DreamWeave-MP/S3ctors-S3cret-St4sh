@@ -252,7 +252,7 @@ end
 --- Stops the currently playing track, if any.
 --- The onFrame handler will naturally switch to the next track or playlist
 function MusicManager.skipTrack()
-  MusicManager.forceSkip = MusicManager.forceSkip or ambient.isMusicPlaying()
+  if ambient.isMusicPlaying() then ambient.stopMusic() end
 end
 
 --- Tells whether or not music playback is completely disabled
