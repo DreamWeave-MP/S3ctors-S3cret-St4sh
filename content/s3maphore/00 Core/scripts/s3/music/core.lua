@@ -2,7 +2,6 @@
 
 local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
-local aux_util = require 'openmw_aux.util'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
 local nearby = require 'openmw.nearby'
@@ -22,15 +21,33 @@ local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSet
 local musicUtil = require 'scripts.s3.music.util'
 local tableUtil = require 'scripts.s3.table'
 
+local CachedCellGrid = { x = 0, y = 0, }
+
 local NPCFightThreshold = 90
 local CreatureFightThreshold = 83
 
 local nullFunction = require 'scripts.s3.nullFunction'
-local handlePlayback = nullFunction
-local onSoundEnabledChanged = nullFunction
 
 ---@type fun(dt: number)
-local currentUpdateHandler = nullFunction
+local currentUpdateHandler
+
+local handlePlayback = nullFunction
+
+local isSoundEnabled = core.sound.isEnabled
+local function onSoundEnabledChanged()
+    if not isSoundEnabled() then return end
+
+    currentUpdateHandler = handlePlayback
+end
+
+---@type fun(_: number)
+currentUpdateHandler = function(_)
+    assert(PlaylistLoader)
+    if not PlaylistLoader() then return end
+
+    PlaylistLoader = nil
+    currentUpdateHandler = onSoundEnabledChanged
+end
 
 ---@type S3maphoreStateChangeEventData
 local TrackChangeData = {
@@ -409,24 +426,6 @@ handlePlayback = function(_)
     MusicManager.callTrackChangedHandlers(TrackChangeData)
 end
 
-local isSoundEnabled = core.sound.isEnabled
-onSoundEnabledChanged = function()
-    if not isSoundEnabled() then return end
-
-    currentUpdateHandler = handlePlayback
-end
-
-local CachedCellGrid = { x = 0, y = 0, }
-
-local function initializePlaylists(_)
-    if not PlaylistLoader or not PlaylistLoader() then return end
-
-    PlaylistLoader = nil
-    currentUpdateHandler = onSoundEnabledChanged
-end
-
-currentUpdateHandler = initializePlaylists
-
 MusicManager.addTrackChangedHandler(
 ---@param eventData S3maphoreStateChangeEventData
     function(eventData)
@@ -535,13 +534,12 @@ return {
 
             local thisCell = self.cell
 
-            --- We probably only need to do one of these?
-            local shouldUseName = thisCell.name ~= nil and thisCell.name ~= ''
+            local shouldUseName = thisCell.name ~= ''
 
             PlaylistState.cellHasWater = thisCell.hasWater
             PlaylistState.cellWaterLevel = thisCell.waterLevel
-            PlaylistState.cellIsExterior = thisCell.isExterior or self.cell:hasTag('QuasiExterior')
-            PlaylistState.cellName = shouldUseName and thisCell.name:lower() or self.cell.id:lower()
+            PlaylistState.cellIsExterior = thisCell.isExterior or thisCell:hasTag('QuasiExterior')
+            PlaylistState.cellName = (shouldUseName and thisCell.name or thisCell.id):lower()
             PlaylistState.cellId = thisCell.id
 
             if thisCell.isExterior then
@@ -554,7 +552,7 @@ return {
             --- Really we should check if the cell has changed, and then assign the currentFrameHandler
             --- accordingly, BUT, edge cases might happen, and also, we want to do that check anyway
             --- because if it is the same, we'll later do playlist resolution at this point in time
-            if currentUpdateHandler ~= initializePlaylists then
+            if not PlaylistLoader then
                 currentUpdateHandler = onSoundEnabledChanged
             end
         end,
