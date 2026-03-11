@@ -33,11 +33,17 @@ local currentUpdateHandler
 
 local handlePlayback = nullFunction
 
+local function checkSilenceManager()
+    if not SilenceManager:silenceActive() then
+        currentUpdateHandler = handlePlayback
+    end
+end
+
 local isSoundEnabled = core.sound.isEnabled
 local function onSoundEnabledChanged()
     if not isSoundEnabled() then return end
 
-    currentUpdateHandler = handlePlayback
+    currentUpdateHandler = checkSilenceManager
 end
 
 ---@type fun(_: number)
@@ -267,7 +273,7 @@ local function switchPlaylist(newPlaylist)
     end
 
     if MusicManager.currentPlaylist and newPlaylist.id == MusicManager.currentPlaylist.id then
-        SilenceManager.updateSilenceParams(newPlaylist)
+        SilenceManager:updateSilenceParams(newPlaylist)
     end
 
     MusicManager.currentPlaylist = newPlaylist
@@ -336,11 +342,6 @@ handlePlayback = function(_)
             MusicManager.currentTrack = nil
         end
 
-        return
-    end
-
-    if not musicPlaying and SilenceManager.time > 0 then
-        SilenceManager.time = SilenceManager.time - core.getRealFrameDuration()
         return
     end
 
@@ -495,7 +496,10 @@ return {
 
         S3maphoreToggleMusic = MusicManager.overrideMusicEnabled,
 
-        S3maphoreSkipTrack = MusicManager.skipTrack,
+        S3maphoreSkipTrack = function()
+            currentUpdateHandler = onSoundEnabledChanged
+            MusicManager.skipTrack()
+        end,
 
         S3maphoreSpecialTrack = MusicManager.playSpecialTrack,
 
