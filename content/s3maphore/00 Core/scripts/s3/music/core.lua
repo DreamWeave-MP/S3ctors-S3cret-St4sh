@@ -123,18 +123,18 @@ local Playback = {
     state = PlaylistState,
 }
 
+local AIFight, isDead, isNPC, MyId
+= types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance, self.id
+
 local function updateCellHasCombatTargets()
     local nearbyCombatTargets = false
 
     for _, actor in ipairs(nearby.actors) do
-        local isNPC = types.NPC.objectIsInstance(actor)
-        local isCreature = types.Creature.objectIsInstance(actor)
+        if actor.id ~= MyId then
+            local fightStat = AIFight(actor)
+            local fightLimit = isNPC(actor) and NPCFightThreshold or CreatureFightThreshold
 
-        if isNPC or isCreature then
-            local fightStat = actor.type.stats.ai.fight(actor)
-            local fightLimit = isNPC and NPCFightThreshold or CreatureFightThreshold
-
-            if fightStat.modified >= fightLimit and not actor.type.isDead(actor) then
+            if fightStat.modified >= fightLimit and not isDead(actor) then
                 nearbyCombatTargets = true
                 break
             end
