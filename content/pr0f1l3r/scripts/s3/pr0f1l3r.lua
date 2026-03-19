@@ -1,6 +1,11 @@
 local input = require 'openmw.input'
 local ui = require 'openmw.ui'
 
+local TOP_N = 35
+
+local function nullfunction() end
+local tick = nullfunction
+
 local debug, io, jit_v, jit_dump, tmpPath, tmpFile
 do
   ---@diagnostic disable-next-line: param-type-mismatch
@@ -48,17 +53,33 @@ local function stopCallCounter()
   for k, v in pairs(callCounts) do sorted[#sorted + 1] = { k, v } end
   table.sort(sorted, function(a, b) return a[2] > b[2] end)
 
-  for _, pair in ipairs(sorted) do
-    print(('[JIT calls] %6d  %s'):format(pair[2], pair[1]))
+  local limit = math.min(TOP_N, #sorted)
+  for i = 1, limit do
+    print(('[JIT calls] %6d  %s'):format(sorted[i][2], sorted[i][1]))
+  end
+  if #sorted > limit then
+    print(('[JIT calls] ... %d more entries omitted'):format(#sorted - limit))
   end
 
   callCounts = {}
 end
 
+local function closeTmpFile()
+  if tmpFile then
+    tmpFile:close()
+    tmpFile = nil
+  end
+end
+
+-- Keybinds:
+--   F4:       full pipeline (jit.v → jit.dump → call counter)
+--   F3:       standalone call counter only (300 frames)
+--   Shift+F4: stop whatever is running early
+
 -- Frame counter driving all profiling phases:
---   frames  1– 100: jit.v on,  warming up handlePlayback
---   frames 101– 200: jit.dump on for one more warm pass
---   frames 201– 500: call counter sampling live onUpdate
+--   frames  1 – 100: jit.v on,  warming up
+--   frames 101 – 200: jit.dump on for one more warm pass
+--   frames 201 – 500: call counter sampling live onUpdate
 --   frame  500:      all results dumped, profiling done
 
 local profilingFrame = 0
@@ -85,27 +106,42 @@ local function tickProfiler()
     startCallCounter()
   elseif profilingFrame == 500 then
     stopCallCounter()
+    closeTmpFile()
+    tick = nullfunction
   end
 end
-
-local function nullfunction() end
-local tick = nullfunction
 
 return {
   engineHandlers = {
     onKeyPress = function(key)
-      if key.code ~= input.KEY.F4 then return end
-
-      if key.withShift then
-        stopCallCounter()
-        tick = nullfunction
-      elseif tick ~= nullfunction then
-        ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
-      else
-        startCallCounter()
+      if key.code == input.KEY.F3 then
+        if tick ~= nullfunction then
+          ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
+          return
+        end
 
         profilingFrame = 0
-        tick = tickProfiler
+        startCallCounter()
+
+        tick = function()
+          profilingFrame = profilingFrame + 1
+          if profilingFrame == 300 then
+            stopCallCounter()
+            tick = nullfunction
+          end
+        end
+
+      elseif key.code == input.KEY.F4 then
+        if key.withShift then
+          stopCallCounter()
+          closeTmpFile()
+          tick = nullfunction
+        elseif tick ~= nullfunction then
+          ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
+        else
+          profilingFrame = 0
+          tick = tickProfiler
+        end
       end
     end,
     onUpdate = function(_)
