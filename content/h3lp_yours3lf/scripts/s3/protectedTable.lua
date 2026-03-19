@@ -5,10 +5,10 @@ local types = require 'openmw.types'
 
 local LogMessage = require 'scripts.s3.logmessage'
 
-local rawset, type = rawset, type
+local assert, rawset, pairs, type = assert, rawset, pairs, type
 
-local isPlayer, ui = types.Player.objectIsInstance(gameSelf)
-if isPlayer then do ui = require 'openmw.ui' end end
+local isPlayer = types.Player.objectIsInstance(gameSelf)
+local ui = isPlayer and require 'openmw.ui'
 
 local function pairsByKeys(t, f)
   local a = {}
@@ -46,7 +46,6 @@ end
 ---@field private shadowSettings ShadowSettingsTable Cached copies of setting values returned by the index method. Do NOT work with this directly.
 ---@field private thisGroup StorageSection Storage section this ProtectedTable owns. Do not work with this directly, instead iterate over or index the ProtectedTable.
 ---@field state table a writable table to store arbitrary values in
----@field getState fun(): table return the entire inner state table
 ---@field notifyPlayer fun(any) shorthand to display all arguments as a table in a Morrowind MessageBox from a protectedTable. Only works on player scripts.
 ---@field debugLog fun(...) If debug logging setting is enabled, then prints the arguments to log, as a concatenated table
 ---@field interface fun(handler: IndexFunction) Helper function to provide more convenience when binding a protectedTable into an interface
@@ -77,14 +76,7 @@ local function new(constructorData)
   local testKey, testValue = next(requestedGroup:asTable())
   local groupIsWritable = pcall(requestedGroup.set, requestedGroup, testKey, testValue)
 
-  local methods, shadowSettings, state = {}, {}, {}
-
-  local proxy = {
-    methods = methods,
-    shadowSettings = shadowSettings,
-    state = state,
-    thisGroup = requestedGroup,
-  }
+  local methods, proxy, shadowSettings, state = {}, {}, {}, {}
 
   requestedGroup:subscribe(
     async:callback(
@@ -108,16 +100,20 @@ local function new(constructorData)
   local managerString = constructorData.managerName or constructorData.inputGroupName
 
   function methods.debugLog(...)
-    if not proxy.DebugEnable then return end
+    if not shadowSettings.DebugEnable then return end
+
     print(constructorData.logPrefix, table.concat({ ... }, ' '))
   end
 
-  function methods.notifyPlayer(...)
-    if not isPlayer or not proxy.MessageEnable then return end
-    ui.showMessage(constructorData.logPrefix .. ' ' .. table.concat({ ... }, ' '))
+  if isPlayer then
+    function methods.notifyPlayer(...)
+      if not shadowSettings.MessageEnable then return end
+
+      ui.showMessage(constructorData.logPrefix .. ' ' .. table.concat({ ... }, ' '))
+    end
   end
 
-  function proxy.interface(handlerFunction)
+  function methods.interface(handlerFunction)
     assert(type(handlerFunction) == 'function')
 
     return setmetatable({},
@@ -149,7 +145,8 @@ local function new(constructorData)
     end,
     __newindex = function(_, key, value)
       if key == 'state' and type(value) == 'table' then
-        state = value
+        for k in pairs(state) do state[k] = nil end
+        for k, v in pairs(value) do state[k] = v end
       elseif state[key] ~= nil and type(value) ~= 'function' then
         state[key] = value
       elseif type(value) ~= 'function' or
@@ -177,10 +174,10 @@ This table is not writable and values must be updated through its associated sto
       local stateParts = {}
 
       for key, value in pairsByKeys(requestedGroup:asTable()) do
-        members[#members + 1] = string.format('        %s = %s'):format(tostring(key), tostring(value))
+        members[#members + 1] = string.format('        %s = %s', tostring(key), tostring(value))
       end
 
-      for key, value in pairsByKeys(proxy.getState()) do
+      for key, value in pairsByKeys(state) do
         stateParts[#stateParts + 1] = string.format('        %s = %s', tostring(key), tostring(value))
       end
 
