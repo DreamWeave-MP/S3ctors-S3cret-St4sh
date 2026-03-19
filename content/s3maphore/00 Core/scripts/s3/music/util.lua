@@ -85,7 +85,7 @@ local function deepToString(val, level, prefix)
     prefix = prefix or ''
     level = (level or 1) - 1
 
-    local ok, iter, t = pcall(function() return pairs(val) end)
+    local ok, iter, t = pcall(pairs, val)
     if level < 0 or not ok then
         return tostring(val)
     end
