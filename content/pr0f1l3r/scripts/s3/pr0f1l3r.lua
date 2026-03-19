@@ -1,7 +1,7 @@
 local input = require 'openmw.input'
 local ui = require 'openmw.ui'
 
-local TOP_N = 35
+local TOP_N = 100
 
 local function nullfunction() end
 local tick = nullfunction
@@ -36,7 +36,13 @@ local function countingHook()
   local info = debug.getinfo(2, 'nfS')
   local name = (info.name and info.name ~= '') and info.name or tostring(info.func)
   local source = info.short_src or '?'
-  local key = ('%s:%s %s'):format(source, info.linedefined or '?', name)
+
+  local caller = debug.getinfo(3, 'nS')
+  local callerDesc = caller
+    and ('%s:%s'):format(caller.short_src or '?', caller.linedefined or '?')
+    or '?'
+
+  local key = ('%s:%s %s  ← %s'):format(source, info.linedefined or '?', name, callerDesc)
   callCounts[key] = (callCounts[key] or 0) + 1
 end
 
