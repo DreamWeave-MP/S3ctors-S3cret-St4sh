@@ -97,7 +97,7 @@ local function timingHook(event)
     local info = debug.getinfo(2, 'nfS')
     local name = (info.name and info.name ~= '') and info.name or tostring(info.func)
     local source = info.short_src or '?'
-    local key = ('%s:%s %s'):format(source, info.linedefined or '?', name)
+    local key = ('%s:%s %s %s'):format(source, info.linedefined or '?', name, info.namewhat)
     timings[key] = (timings[key] or 0) + elapsed
   end
 end
