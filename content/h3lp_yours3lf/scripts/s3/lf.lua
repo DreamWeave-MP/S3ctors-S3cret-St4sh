@@ -285,10 +285,7 @@ local function createS3lfInstance(gameObject)
 
       local object = rawget(this, 'object')
 
-      if not rawget(uncacheableKeys(), key) then
-        local cached = rawget(this, key)
-        if cached ~= nil then return cached end
-      else
+      if rawget(uncacheableKeys(), key) then
         return object[key]
       end
 
