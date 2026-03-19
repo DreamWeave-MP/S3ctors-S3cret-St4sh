@@ -1,4 +1,5 @@
 local input = require 'openmw.input'
+local ui = require 'openmw.ui'
 
 local debug, io, jit_v, jit_dump, tmpPath, tmpFile
 do
@@ -98,6 +99,8 @@ return {
       if key.withShift then
         stopCallCounter()
         tick = nullfunction
+      elseif tick ~= nullfunction then
+        ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
       else
         startCallCounter()
 
