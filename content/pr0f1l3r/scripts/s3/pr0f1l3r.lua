@@ -52,11 +52,15 @@ local function startCallCounter()
   debug.sethook(countingHook, 'c')
 end
 
-local function stopCallCounter()
+local function stopCallCounter(filter)
   debug.sethook()
-  print '[JIT] ══════════════ call counter: RESULTS ══════════'
+  print('[JIT] ══════════════ call counter: RESULTS' .. (filter and (' [filter: %s]'):format(filter) or '') .. ' ══════════')
   local sorted = {}
-  for k, v in pairs(callCounts) do sorted[#sorted + 1] = { k, v } end
+  for k, v in pairs(callCounts) do
+    if not filter or k:find(filter, 1, true) then
+      sorted[#sorted + 1] = { k, v }
+    end
+  end
   table.sort(sorted, function(a, b) return a[2] > b[2] end)
 
   local limit = math.min(TOP_N, #sorted)
@@ -124,6 +128,21 @@ return {
       stopCallCounter()
       profilingFrame = 0
       tick = tickProfiler
+    end,
+    bench = function(path)
+      if tick ~= nullfunction then
+        ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
+        return
+      end
+      profilingFrame = 0
+      startCallCounter()
+      tick = function()
+        profilingFrame = profilingFrame + 1
+        if profilingFrame == 300 then
+          stopCallCounter(path)
+          tick = nullfunction
+        end
+      end
     end,
   },
   engineHandlers = {
