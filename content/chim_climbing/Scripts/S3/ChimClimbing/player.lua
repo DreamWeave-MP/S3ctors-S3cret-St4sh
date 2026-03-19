@@ -318,7 +318,7 @@ return {
                 prevCamMode = nil,
             }
 
-            ClimbMod.disengage()
+            if ClimbState.climbEngaged then ClimbMod.disengage() end
         end,
     },
     eventHandlers = {
