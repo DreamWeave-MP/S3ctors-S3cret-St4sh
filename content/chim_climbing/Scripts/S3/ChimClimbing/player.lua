@@ -182,7 +182,8 @@ local DefaultUpVector = util.vector3(0, 0, ClimbMod.CLIMB_SEARCH_STEP_RANGE)
 --- @return RayCastingResult|nil hitResult The highest hit object or nil if no valid hit is found.
 function ClimbMod.findMaxClimbableHeight(center, scanPos)
     local upwardHit
-    while true do
+    local MAX_STEPS = 500
+    for _ = 1, MAX_STEPS do
         -- Increment Z position of both start and end points
         center = center + DefaultUpVector
         scanPos = scanPos + DefaultUpVector
