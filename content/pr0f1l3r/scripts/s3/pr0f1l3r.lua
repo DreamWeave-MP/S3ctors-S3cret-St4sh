@@ -1,6 +1,6 @@
 local input = require 'openmw.input'
 
-local debug, jit_v, jit_dump
+local debug, io, jit_v, jit_dump, tmpPath, tmpFile
 do
   ---@diagnostic disable-next-line: param-type-mismatch
   local S              = select 'sandbox.bypass'
@@ -8,15 +8,29 @@ do
   require              = S.require
   S.package.loaded.jit = S.jit
   debug                = S.debug
+  io                   = S.io
   jit_v                = require 'jit.v'
   jit_dump             = require 'jit.dump'
+  tmpPath              = S.os.tmpname()
+  tmpFile              = S.io.open(tmpPath, 'w')
   require              = OMWRequire
+end
+
+local function readAndPrintFile(path, prefix)
+  local f = io.open(path, 'r')
+  if not f then return end
+  for line in f:lines() do
+    print(prefix .. line)
+  end
+  f:close()
 end
 
 local callCounts = {}
 local function countingHook()
-  local info      = debug.getinfo(2, 'nf')
-  local key       = (info.name and info.name ~= '') and info.name or tostring(info.func)
+  local info = debug.getinfo(2, 'nfS')
+  local name = (info.name and info.name ~= '') and info.name or tostring(info.func)
+  local source = info.short_src or '?'
+  local key = ('%s:%s %s'):format(source, info.linedefined or '?', name)
   callCounts[key] = (callCounts[key] or 0) + 1
 end
 
@@ -52,13 +66,21 @@ local function tickProfiler()
 
   if profilingFrame == 1 then
     print '[JIT] ══════════════════ trace log (jit.v) ═════════'
-    jit_v.on()
+    tmpFile:flush()
+    tmpFile:seek('set', 0)
+    jit_v.on(tmpPath)
   elseif profilingFrame == 100 then
     jit_v.off()
+    tmpFile:flush()
+    readAndPrintFile(tmpPath, '[JIT Trace] ')
     print '[JIT] ══════════════════ IR dump (jit.dump) ══════════'
-    jit_dump.on('tbisrX')
+    tmpFile:seek('set', 0)
+    jit_dump.on('tbisrXT', tmpPath)
   elseif profilingFrame == 200 then
     jit_dump.off()
+    tmpFile:flush()
+    readAndPrintFile(tmpPath, '[JIT Dump] ')
+    tmpFile:seek('set', 0)
     startCallCounter()
   elseif profilingFrame == 500 then
     stopCallCounter()
