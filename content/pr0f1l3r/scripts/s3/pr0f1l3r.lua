@@ -118,6 +118,14 @@ local function tickProfiler()
 end
 
 return {
+  interfaceName = 'pr0f1l3r',
+  interface = {
+    benchAll = function()
+      stopCallCounter()
+      profilingFrame = 0
+      tick = tickProfiler
+    end,
+  },
   engineHandlers = {
     onKeyPress = function(key)
       if key.code == input.KEY.F3 then
