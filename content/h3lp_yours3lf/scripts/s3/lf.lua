@@ -1,78 +1,11 @@
-local concat, error, insert, ipairs, next, pairs, pcall, rawget, rawset, require, setmetatable, sort, tostring, type =
-    table.concat, error, table.insert, ipairs, next, pairs, pcall, rawget, rawset, require, setmetatable, table.sort,
-    tostring, type
-
-local animation = require 'openmw.animation'
-local debug
 local gameSelf = require 'openmw.self'
-local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
-local ui
-local util = require 'openmw.util'
-
-local isGlobal = pcall(require, 'openmw.world')
-if isGlobal then
-  error('S3lf is not compatible with global scripts! Sorry!', 2)
-end
-
-local LogMessage = require 'scripts.s3.logmessage'
-
-local isActor, isCreature, isNPC, isPlayer =
-    types.Actor.objectIsInstance(gameSelf), types.Creature.objectIsInstance(gameSelf),
-    types.NPC.objectIsInstance(gameSelf), types.Player.objectIsInstance(gameSelf)
-
-if isPlayer then
-  debug = require 'openmw.debug'
-  ui = require 'openmw.ui'
-end
-
-local CellsVisited = {}
-
-local CombatTargetTracker
-do
-  if isPlayer then
-    local targetData = {}
-    CombatTargetTracker = {}
-    CombatTargetTracker.targetData = targetData
-
-    function CombatTargetTracker:updateCombatants(combatantInfo)
-      local shouldRemove = next(combatantInfo.targets) == nil
-
-      local eventName
-      if shouldRemove then
-        targetData[combatantInfo.actor.id] = nil
-        eventName = 'S3CombatTargetRemoved'
-      else
-        targetData[combatantInfo.actor.id] = combatantInfo.actor
-        eventName = 'S3CombatTargetAdded'
-      end
-
-      gameSelf:sendEvent(eventName, combatantInfo.actor)
-    end
-
-    function CombatTargetTracker.isInCombat()
-      return next(targetData) ~= nil and debug.isAIEnabled()
-    end
-  end
-end
-
-local ObjectHelpers = {}
-local S3lfCache = {}
-
-local NoSelfInputFunctions = {
-  ['createRecordDraft'] = true,
-}
-
-local ValidObjectTypes = {
-  ['MWLua::LObject'] = true,
-  ['MWLua::SelfObject'] = true,
-}
 
 local function pairsByKeys(t, f)
   local a = {}
-  for n in pairs(t) do insert(a, n) end
+  for n in pairs(t) do table.insert(a, n) end
 
-  sort(a, f)
+  table.sort(a, f)
   local i = 0
 
   local iter = function()
@@ -114,13 +47,15 @@ local function alphabeticalParts(input)
 
   return (
     'S3GameGameSelf {\n Fields: { %s },\n Methods: { %s },\n UserData: { %s }\n}'):format(
-    concat(parts, ', '),
-    concat(methodParts, ', '),
-    concat(userDataParts, ', ')
+    table.concat(parts, ', '),
+    table.concat(methodParts, ', '),
+    table.concat(userDataParts, ', ')
   )
 end
 
 local function instanceDisplay(instance)
+  local nearby = require 'openmw.nearby'
+
   local resultString = alphabeticalParts(instance.__instance)
   for _, player in ipairs(nearby.players) do
     player:sendEvent('S3LFDisplay', resultString)
@@ -131,162 +66,167 @@ local function instanceDistance(instance, other)
   return (instance.object.position - other.position):length()
 end
 
-local ignoredBaseKeys = {
-  baseType = true,
-  stats = true,
-  type = true,
-}
+local IgnoredBaseKeys
+local function ignoredBaseKeys()
+  IgnoredBaseKeys = IgnoredBaseKeys or {
+    baseType = true,
+    stats = true,
+    type = true,
+  }
 
-local uncacheableKeys = {
-  cell = true,
-  count = true,
-  enabled = true,
-  owner = true,
-  parentContainer = true,
-  position = true,
-  rotation = true,
-  scale = true,
-}
-
-local keyHandlers = {
-
-  --- Indexes fields of `type`, but not stats
-  function(instance, object, key)
-    local typeValue = object.type[key]
-
-    if not typeValue then return end
-
-    if type(typeValue) ~= "function" or NoSelfInputFunctions[key] then
-      rawset(instance, key, typeValue)
-
-      return typeValue
-    else
-      local typeHandler = function(...)
-        return typeValue(object, ...)
-      end
-
-      rawset(instance, key, typeHandler)
-
-      return typeHandler
-    end
-  end,
-
-  --- Indexes record fields
-  function(instance, _, key)
-    local recordValue = rawget(instance, 'record')[key]
-
-    if not recordValue then return end
-
-    rawset(instance, key, recordValue)
-
-    return recordValue
-  end,
-
-  --- Handle keys from the root gameObject, without special casing
-  function(instance, object, key)
-    local objectValue = object[key]
-    if objectValue == nil then return end
-
-    rawset(instance, key, objectValue)
-    return objectValue
-  end,
-
-  --- Handle keys from the animation module
-  function(instance, object, key)
-    local animValue = animation[key]
-
-    if not animValue then return end
-
-    local insertKey = animValue
-
-    if type(animValue) == 'function' then
-      insertKey = function(...)
-        return animValue(object, ...)
-      end
-    end
-
-    rawset(instance, key, insertKey)
-
-    return insertKey
-  end,
-}
-
-function ObjectHelpers.From(gameObject)
-  local typeName = gameObject.__type.name
-
-  if not ValidObjectTypes[typeName] then
-    error('S3GameSelf.From is only compatible with GameObjects! You passed: ' .. typeName, 2)
-  end
-
-  local objectId = gameObject.id
-  if not S3lfCache[objectId] then
-    S3lfCache[objectId] = ObjectHelpers.createInstance(gameObject)
-  end
-
-  return S3lfCache[objectId]
+  return IgnoredBaseKeys
 end
 
-function ObjectHelpers.distance(object1, object2)
-  return (object1.position - object2.position):length()
+local UncacheableKeys
+local function uncacheableKeys()
+  UncacheableKeys = UncacheableKeys or {
+    cell = true,
+    count = true,
+    enabled = true,
+    id = true,
+    owner = true,
+    parentContainer = true,
+    position = true,
+    recordId = true,
+    rotation = true,
+    scale = true,
+  }
+
+  return UncacheableKeys
 end
 
----@type table<string, function>
-local FunctionsAsFields = {}
+--- Indexes fields of `type`, but not stats
+local function indexTypeFields(instance, object, key)
+  local typeValue = object.type[key]
 
-if isPlayer then
-  FunctionsAsFields.isInCombat = function()
-    return CombatTargetTracker.isInCombat()
-  end
+  if not typeValue then return end
 
-  FunctionsAsFields.targetData = function()
-    return util.makeReadOnly(rawget(CombatTargetTracker, 'targetData'))
+  if type(typeValue) ~= "function" or key == 'createRecordDraft' then
+    rawset(instance, key, typeValue)
+
+    return typeValue
+  else
+    local typeHandler = function(...)
+      return typeValue(object, ...)
+    end
+
+    rawset(instance, key, typeHandler)
+
+    return typeHandler
   end
 end
 
-local GameObjectMeta = {
-  __index = function(instance, key)
-    if rawget(ignoredBaseKeys, key) then return end
+--- Indexes record fields
+local function indexRecordFields(instance, _, key)
+  local record = rawget(instance, 'record')
 
-    local object = rawget(instance, 'object')
-
-    local keyIsUncacheable = rawget(uncacheableKeys, key)
-
-    if not keyIsUncacheable then
-      local cached = rawget(instance, key)
-      if cached ~= nil then return cached end
-    else
-      return object[key]
+  if not record then
+    do
+      local object = rawget(instance, 'object')
+      record = object.type.records[object.recordId]
+      rawset(instance, 'record', record)
     end
+  end
 
-    local impliedField = rawget(FunctionsAsFields, key)
-    if impliedField then return impliedField() end
+  local recordValue = record[key]
 
-    for _, handler in ipairs(keyHandlers) do
-      local result = handler(instance, object, key)
+  if not recordValue then return end
 
-      if result ~= nil then return result end
-    end
-  end,
-  __name = 'S3LFOBJECT',
-  __metatable = 'S3LFOBJECT',
-}
+  rawset(instance, key, recordValue)
 
-local function sendObjectEvent(instance, eventName, eventData)
-  rawget(instance.__instance, 'object'):sendEvent(eventName, eventData)
+  return recordValue
 end
 
-local function getBoundingBox(instance)
-  return rawget(instance.__instance, 'object'):getBoundingBox()
+--- Handle keys from the root gameObject, without special casing
+local function indexObjectFields(instance, object, key)
+  local objectValue = object[key]
+  if objectValue == nil then return end
+
+  rawset(instance, key, objectValue)
+  return objectValue
 end
 
-function ObjectHelpers.createInstance(gameObject)
+--- Handle keys from the animation module
+local function indexAnimationFields(instance, object, key)
+  local animValue = require 'openmw.animation'[key]
+
+  if not animValue then return end
+
+  local insertKey = animValue
+
+  if type(animValue) == 'function' then
+    insertKey = function(...)
+      return animValue(object, ...)
+    end
+  end
+
+  rawset(instance, key, insertKey)
+
+  return insertKey
+end
+
+local KeyHandlers
+local function keyHandlers()
+  KeyHandlers = KeyHandlers or {
+    indexTypeFields,
+    indexRecordFields,
+    indexObjectFields,
+    indexAnimationFields,
+  }
+
+  return KeyHandlers
+end
+
+local function getBoundingBox()
+  return gameSelf:getBoundingBox()
+end
+
+local function sendObjectEvent(_, eventName, eventData)
+  gameSelf:sendEvent(eventName, eventData)
+end
+
+---@type table<string, function>?
+local FunctionsAsFields
+local function functionsAsFields()
+  if not FunctionsAsFields and not types.Player.objectIsInstance(gameSelf) then
+    FunctionsAsFields = {
+      bounds = getBoundingBox,
+    }
+  end
+
+  return FunctionsAsFields
+end
+
+local function createS3lfInstance(gameObject)
+  print('constructing new instance of s3lf for', tostring(gameObject))
+
+  local isActor, isCreature, isNPC, isPlayer =
+      types.Actor.objectIsInstance(gameSelf), types.Creature.objectIsInstance(gameSelf),
+      types.NPC.objectIsInstance(gameSelf), types.Player.objectIsInstance(gameSelf)
+
   local objectCell = gameObject.cell
+
   ---@class S3lfObject
   local instance = {
-    cell = gameObject.cell,
+    consoleLog = require 'scripts.s3.logmessage',
+    display = instanceDisplay,
+    distance = instanceDistance,
+    getBoundingBox = getBoundingBox,
+    isActor = isActor,
+    isCreature = isCreature,
+    isNPC = isNPC,
+    isPlayer = isPlayer,
+    object = gameObject,
+    lObject = gameObject.object,
+    sendEvent = sendObjectEvent,
+  }
+
+  if isActor then
     --- Table class designed to duplicate data out of OpenMW's userdata objects for faster indexing
+    --- Only used on actor classes for performance reasons as mostly they're the only ones whom move and/or
+    --- Are worth caching this stuff for due to sheer heat
     ---@class CellInfo
-    cellInfo = {
+    instance.cellInfo = {
       displayName = objectCell.displayName,
       gridX = objectCell.gridX,
       gridY = objectCell.gridY,
@@ -298,26 +238,8 @@ function ObjectHelpers.createInstance(gameObject)
       name = objectCell.name,
       region = objectCell.region,
       waterLevel = objectCell.waterLevel,
-    },
-    consoleLog = LogMessage,
-    display = instanceDisplay,
-    distance = instanceDistance,
-    getBoundingBox = getBoundingBox,
-    ---@private
-    id = gameObject.id,
-    isActor = isActor,
-    isCreature = isCreature,
-    isNPC = isNPC,
-    isPlayer = isPlayer,
-    object = gameObject,
-    lObject = gameObject.object,
-    position = gameObject.position,
-    record = gameObject.type.records[gameObject.recordId],
-    sendEvent = sendObjectEvent,
-    From = ObjectHelpers.From,
-  }
+    }
 
-  if isActor then
     instance.level = gameSelf.type.stats.level(gameSelf)
 
     if not isNPC and not isCreature then
@@ -343,7 +265,9 @@ function ObjectHelpers.createInstance(gameObject)
   end
 
   if isPlayer then
-    instance.cellsVisited = CellsVisited
+    rawset(instance, 'cellsVisited', {})
+    rawset(instance, 'cell', gameObject.cell)
+    rawset(instance, 'position', gameObject.position)
   end
 
   --- The outer s3lf interface that is exposed to users is a userdata, edited to not really be the original thing
@@ -355,20 +279,80 @@ function ObjectHelpers.createInstance(gameObject)
   ---@private
   instance.__instance = instance
 
-  setmetatable(instance, GameObjectMeta)
+  setmetatable(instance, {
+    __index = function(this, key)
+      if rawget(ignoredBaseKeys(), key) then return end
+
+      local object = rawget(this, 'object')
+
+      if not rawget(uncacheableKeys(), key) then
+        local cached = rawget(this, key)
+        if cached ~= nil then return cached end
+      else
+        return object[key]
+      end
+
+      local impliedField = rawget(functionsAsFields(), key)
+      if impliedField then return impliedField() end
+
+      for _, handler in ipairs(keyHandlers()) do
+        local result = handler(this, object, key)
+
+        if result ~= nil then return result end
+      end
+    end,
+    __name = 'S3LFOBJECT',
+    __metatable = 'S3LFOBJECT',
+  })
 
   return instance
 end
 
-local Instance = ObjectHelpers.createInstance(gameSelf)
-local eventHandlers = {}
-local engineHandlers = {}
+local instance, Index, engineHandlers, eventHandlers
 
-if isPlayer then
+if types.Player.objectIsInstance(gameSelf) then
+  eventHandlers, engineHandlers = {}, {}
+
+  instance = createS3lfInstance(gameSelf)
+
+  local CombatTargetTracker = {
+    targetData = {},
+    updateCombatants = function(self, combatantInfo)
+      local shouldRemove = next(combatantInfo.targets) == nil
+
+      local targetData, eventName = self.targetData, nil
+
+      if shouldRemove then
+        targetData[combatantInfo.actor.id] = nil
+        eventName = 'S3CombatTargetRemoved'
+      else
+        targetData[combatantInfo.actor.id] = combatantInfo.actor
+        eventName = 'S3CombatTargetAdded'
+      end
+
+      gameSelf:sendEvent(eventName, combatantInfo.actor)
+    end,
+
+    isInCombat = function(self)
+      return next(self.targetData) ~= nil and require 'openmw.debug'.isAIEnabled()
+    end,
+  }
+
+  FunctionsAsFields = {
+    bounds = getBoundingBox,
+    isInCombat = function()
+      return CombatTargetTracker:isInCombat()
+    end,
+    targetData = function()
+      --- FIXME: Use tableUtil's makeReadOnly function
+      return rawget(CombatTargetTracker, 'targetData')
+    end,
+  }
+
   engineHandlers.onSave = function()
     return {
       targetData = rawget(CombatTargetTracker, 'targetData'),
-      cellsVisited = CellsVisited,
+      cellsVisited = rawget(instance, 'cellsVisited'),
     }
   end
 
@@ -382,25 +366,26 @@ if isPlayer then
 
     local cellsVisited = rawget(data, 'cellsVisited')
     if cellsVisited then
-      CellsVisited = cellsVisited
+      rawset(instance, 'cellsVisited', cellsVisited)
     end
   end
 
   engineHandlers.onUpdate = function()
     local currentPosition = gameSelf.position
-    if rawget(Instance, 'position') ~= currentPosition then rawset(Instance, 'position', currentPosition) end
+    if rawget(instance, 'position') ~= currentPosition then rawset(instance, 'position', currentPosition) end
 
     local currentCell = gameSelf.cell
-    if currentCell == rawget(Instance, 'cell') then return end
+    if currentCell == rawget(instance, 'cell') then return end
 
     local currentCellId = currentCell.id
 
-    local cellVisited = rawget(CellsVisited, currentCellId)
-    if not cellVisited then rawset(CellsVisited, currentCellId, true) end
+    local cellsVisited = rawget(instance, 'cellsVisited')
+    local cellWasVisited = rawget(cellsVisited, currentCellId)
+    if not cellWasVisited then rawset(cellsVisited, currentCellId, true) end
 
-    rawset(Instance, 'cell', currentCell)
+    rawset(instance, 'cell', currentCell)
 
-    local cellInfo = assert(rawget(Instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
+    local cellInfo = assert(rawget(instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
 
     rawset(cellInfo, 'displayName', currentCell.displayName)
     rawset(cellInfo, 'gridX', currentCell.gridX)
@@ -418,11 +403,24 @@ if isPlayer then
   end
 
   eventHandlers.S3LFDisplay = function(resultString)
+    local ui = require 'openmw.ui'
     ui.printToConsole(resultString, ui.CONSOLE_COLOR.Success)
   end
 
   eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
     CombatTargetTracker:updateCombatants(targetData)
+  end
+
+  Index = instance
+else
+  Index = function(this, k)
+    local s3lf = rawget(this, 's3lf')
+
+    if not s3lf then
+      s3lf = createS3lfInstance(gameSelf)
+    end
+
+    return s3lf[k]
   end
 end
 
@@ -430,5 +428,6 @@ return {
   engineHandlers = engineHandlers,
   eventHandlers = eventHandlers,
   interfaceName = 's3lf',
-  interface = Instance,
+  interface = setmetatable({}, { __index = Index, }
+  ),
 }
