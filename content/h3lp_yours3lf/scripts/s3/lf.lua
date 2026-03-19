@@ -62,8 +62,8 @@ local function instanceDisplay(instance)
   end
 end
 
-local function instanceDistance(instance, other)
-  return (instance.object.position - other.position):length()
+local function instanceDistance(_, other)
+  return (gameSelf.position - other.position):length()
 end
 
 local IgnoredBaseKeys, UncacheableKeys
@@ -261,19 +261,15 @@ local function createS3lfInstance(gameObject)
 
   setmetatable(instance, {
     __index = function(this, key)
-      if rawget(IgnoredBaseKeys, key) then return end
+      if IgnoredBaseKeys[key] then return end
 
-      local object = rawget(this, 'object')
-
-      if rawget(UncacheableKeys, key) then
-        return object[key]
-      end
+      if UncacheableKeys[key] then return gameSelf[key] end
 
       local impliedField = rawget(functionsAsFields(), key)
       if impliedField then return impliedField() end
 
       for _, handler in ipairs(keyHandlers()) do
-        local result = handler(this, object, key)
+        local result = handler(this, gameSelf, key)
 
         if result ~= nil then return result end
       end
