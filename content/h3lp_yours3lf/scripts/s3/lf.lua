@@ -66,33 +66,13 @@ local function instanceDistance(instance, other)
   return (instance.object.position - other.position):length()
 end
 
-local IgnoredBaseKeys
-local function ignoredBaseKeys()
-  IgnoredBaseKeys = IgnoredBaseKeys or {
-    baseType = true,
-    stats = true,
-    type = true,
-  }
+local IgnoredBaseKeys, UncacheableKeys
+do
+  local storage = require 'openmw.storage'
+  local S3S = storage.globalSection 'S3lfColdStorage'
 
-  return IgnoredBaseKeys
-end
-
-local UncacheableKeys
-local function uncacheableKeys()
-  UncacheableKeys = UncacheableKeys or {
-    cell = true,
-    count = true,
-    enabled = true,
-    id = true,
-    owner = true,
-    parentContainer = true,
-    position = true,
-    recordId = true,
-    rotation = true,
-    scale = true,
-  }
-
-  return UncacheableKeys
+  IgnoredBaseKeys = S3S:get 'IgnoredBaseKeys'
+  UncacheableKeys = S3S:get 'UncacheableKeys'
 end
 
 --- Indexes fields of `type`, but not stats
@@ -281,11 +261,11 @@ local function createS3lfInstance(gameObject)
 
   setmetatable(instance, {
     __index = function(this, key)
-      if rawget(ignoredBaseKeys(), key) then return end
+      if rawget(IgnoredBaseKeys, key) then return end
 
       local object = rawget(this, 'object')
 
-      if rawget(uncacheableKeys(), key) then
+      if rawget(UncacheableKeys, key) then
         return object[key]
       end
 
