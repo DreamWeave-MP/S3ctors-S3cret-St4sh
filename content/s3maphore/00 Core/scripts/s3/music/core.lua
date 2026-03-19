@@ -1,37 +1,37 @@
 ---@module 'doc.s3maphoreTypes'
 
-local ambient = require 'openmw.ambient'
-local async = require 'openmw.async'
-local core = require 'openmw.core'
-local input = require 'openmw.input'
-local nearby = require 'openmw.nearby'
-local self = require 'openmw.self'
-local storage = require 'openmw.storage'
-local types = require 'openmw.types'
+local ambient                = require 'openmw.ambient'
+local async                  = require 'openmw.async'
+local core                   = require 'openmw.core'
+local input                  = require 'openmw.input'
+local nearby                 = require 'openmw.nearby'
+local self                   = require 'openmw.self'
+local storage                = require 'openmw.storage'
+local types                  = require 'openmw.types'
 
-local MusicManager = require 'scripts.s3.music.musicManager'
-local MusicSettings = require 'scripts.s3.music.musicSettings'
+local MusicManager           = require 'scripts.s3.music.musicManager'
+local MusicSettings          = require 'scripts.s3.music.musicSettings'
 ---@type function?
-local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
-local PlaylistState = require 'scripts.s3.music.playlistState'
-local SilenceManager = require 'scripts.s3.music.silenceManager'
-local Strings = require 'scripts.s3.music.staticStrings'
+local PlaylistLoader         = require 'scripts.s3.music.playlistLoader'
+local PlaylistState          = require 'scripts.s3.music.playlistState'
+local SilenceManager         = require 'scripts.s3.music.silenceManager'
+local Strings                = require 'scripts.s3.music.staticStrings'
 
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
-local musicUtil = require 'scripts.s3.music.util'
-local tableUtil = require 'scripts.s3.table'
+local musicUtil              = require 'scripts.s3.music.util'
+local tableUtil              = require 'scripts.s3.table'
 
-local CachedCellGrid = { x = 0, y = 0, }
+local nullFunction           = require 'scripts.s3.nullFunction'
 
-local NPCFightThreshold = 90
+local CachedCellGrid         = { x = 0, y = 0, }
+
+local NPCFightThreshold      = 90
 local CreatureFightThreshold = 83
-
-local nullFunction = require 'scripts.s3.nullFunction'
 
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback = nullFunction
+local handlePlayback         = nullFunction
 
 local function checkSilenceManager()
     if not SilenceManager:silenceActive() then
