@@ -1,20 +1,24 @@
 local S3S = require 'openmw.storage'.globalSection 'S3lfColdStorage'
 
-S3S:set('IgnoredBaseKeys', {
-  baseType = true,
-  stats = true,
-  type = true,
-})
+---@alias KeyBehavior
+---| 0 # Ignored
+---| 1 # Uncacheable
 
-S3S:set('UncacheableKeys', {
-  cell = true,
-  count = true,
-  enabled = true,
-  id = true,
-  owner = true,
-  parentContainer = true,
-  position = true,
-  recordId = true,
-  rotation = true,
-  scale = true,
-})
+---@class KeyBehaviors
+local KeyBehavior = {
+  baseType = 0,
+  stats = 0,
+  type = 0,
+  cell = 1,
+  count = 1,
+  enabled = 1,
+  id = 1,
+  owner = 1,
+  parentContainer = 1,
+  position = 1,
+  recordId = 1,
+  rotation = 1,
+  scale = 1,
+}
+
+S3S:set('KeyBehavior', KeyBehavior)

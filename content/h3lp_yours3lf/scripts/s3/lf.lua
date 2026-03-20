@@ -1,6 +1,12 @@
 local gameSelf = require 'openmw.self'
 local types = require 'openmw.types'
 
+---@alias ActorType
+---| 0 # Player
+---| 1 # NPC
+---| 2 # Creature
+---| 3 # None
+
 local function pairsByKeys(t, f)
   local a = {}
   for n in pairs(t) do table.insert(a, n) end
@@ -66,14 +72,8 @@ local function instanceDistance(_, other)
   return (gameSelf.position - other.position):length()
 end
 
-local IgnoredBaseKeys, UncacheableKeys
-do
-  local storage = require 'openmw.storage'
-  local S3S = storage.globalSection 'S3lfColdStorage'
-
-  IgnoredBaseKeys = S3S:get 'IgnoredBaseKeys'
-  UncacheableKeys = S3S:get 'UncacheableKeys'
-end
+---@type KeyBehaviors
+local KeyBehavior = require 'openmw.storage'.globalSection 'S3lfColdStorage':get 'KeyBehavior'
 
 --- Indexes fields of `type`, but not stats
 local function indexTypeFields(instance, object, key)
@@ -180,28 +180,34 @@ end
 local function createS3lfInstance(gameObject)
   print('constructing new instance of s3lf for', tostring(gameObject))
 
-  local isActor, isCreature, isNPC, isPlayer =
-      types.Actor.objectIsInstance(gameSelf), types.Creature.objectIsInstance(gameSelf),
-      types.NPC.objectIsInstance(gameSelf), types.Player.objectIsInstance(gameSelf)
+  local actorType, myType = nil, gameSelf.type
+  if not types.Actor.objectIsInstance(gameSelf) then
+    actorType = 3
+  elseif myType == types.Creature then
+    actorType = 2
+  elseif myType == types.NPC then
+    actorType = 1
+  elseif myType == types.Player then
+    actorType = 0
+  else
+    error('Invalid actor type!!!!')
+  end
 
   local objectCell = gameObject.cell
 
   ---@class S3lfObject
   local instance = {
+    actorType = actorType,
     consoleLog = require 'scripts.s3.logmessage',
     display = instanceDisplay,
     distance = instanceDistance,
     getBoundingBox = getBoundingBox,
-    isActor = isActor,
-    isCreature = isCreature,
-    isNPC = isNPC,
-    isPlayer = isPlayer,
     object = gameObject,
     lObject = gameObject.object,
     sendEvent = sendObjectEvent,
   }
 
-  if isActor then
+  if actorType < 3 then
     --- Table class designed to duplicate data out of OpenMW's userdata objects for faster indexing
     --- Only used on actor classes for performance reasons as mostly they're the only ones whom move and/or
     --- Are worth caching this stuff for due to sheer heat
@@ -222,15 +228,11 @@ local function createS3lfInstance(gameObject)
 
     instance.level = gameSelf.type.stats.level(gameSelf)
 
-    if not isNPC and not isCreature then
-      error('How am I not neither an NPC nor creature??????? ' .. tostring(gameSelf))
-    end
-
     do
       local MyStats = gameSelf.type.stats
       local StatFields = { 'ai', 'attributes', 'dynamic', }
 
-      if isNPC then
+      if actorType < 2 then
         table.insert(StatFields, 'skills')
       end
 
@@ -244,7 +246,7 @@ local function createS3lfInstance(gameObject)
     end
   end
 
-  if isPlayer then
+  if actorType == 0 then
     rawset(instance, 'cellsVisited', {})
     rawset(instance, 'cell', gameObject.cell)
     rawset(instance, 'position', gameObject.position)
@@ -259,11 +261,17 @@ local function createS3lfInstance(gameObject)
   ---@private
   instance.__instance = instance
 
+  local IGNORED_KEY, UNCACHEABLE_KEY = 0, 1
   setmetatable(instance, {
     __index = function(this, key)
-      if IgnoredBaseKeys[key] then return end
+      ---@type KeyBehavior?
+      local behavior = KeyBehavior[key]
 
-      if UncacheableKeys[key] then return gameSelf[key] end
+      if behavior == IGNORED_KEY then
+        return
+      elseif behavior == UNCACHEABLE_KEY then
+        return gameSelf[key]
+      end
 
       local impliedField = rawget(functionsAsFields(), key)
       if impliedField then return impliedField() end
