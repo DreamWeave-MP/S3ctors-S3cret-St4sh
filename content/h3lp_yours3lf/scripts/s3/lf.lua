@@ -7,22 +7,17 @@ local types = require 'openmw.types'
 ---| 2 # Creature
 ---| 3 # None
 
-local function pairsByKeys(t, f)
+local function sortedPairs(t, f)
   local a = {}
   for n in pairs(t) do table.insert(a, n) end
 
   table.sort(a, f)
   local i = 0
 
-  local iter = function()
+  return function()
     i = i + 1
-    if a[i] == nil then
-      return nil
-    else
-      return a[i], t[a[i]]
-    end
+    return a[i], t[a[i]]
   end
-  return iter
 end
 
 local function alphabeticalParts(input)
@@ -35,7 +30,7 @@ local function alphabeticalParts(input)
   local methodParts = {}
   local userDataParts = {}
 
-  for key, value in pairsByKeys(input) do
+  for key, value in sortedPairs(input) do
     if type(value) == 'function' then
       methodParts[#methodParts + 1] = ('%s'):format(tostring(key))
     elseif type(value) == 'userdata' then
@@ -43,7 +38,7 @@ local function alphabeticalParts(input)
         tostring(key),
         tostring(value)
       )
-    elseif key ~= '__instance' then
+    else
       parts[#parts + 1] = ('%s = %s'):format(
         tostring(key),
         tostring(value)
@@ -177,9 +172,7 @@ local function functionsAsFields()
   return FunctionsAsFields
 end
 
-local function createS3lfInstance(gameObject)
-  print('constructing new instance of s3lf for', tostring(gameObject))
-
+do
   local actorType, myType = nil, gameSelf.type
   if not types.Actor.objectIsInstance(gameSelf) then
     actorType = 3
@@ -193,7 +186,7 @@ local function createS3lfInstance(gameObject)
     error('Invalid actor type!!!!')
   end
 
-  local objectCell = gameObject.cell
+  local objectCell = gameSelf.cell
 
   ---@class S3lfObject
   local instance = {
@@ -202,8 +195,6 @@ local function createS3lfInstance(gameObject)
     display = instanceDisplay,
     distance = instanceDistance,
     getBoundingBox = getBoundingBox,
-    object = gameObject,
-    lObject = gameObject.object,
     sendEvent = sendObjectEvent,
   }
 
@@ -244,18 +235,9 @@ local function createS3lfInstance(gameObject)
 
   if actorType == 0 then
     rawset(instance, 'cellsVisited', {})
-    rawset(instance, 'cell', gameObject.cell)
-    rawset(instance, 'position', gameObject.position)
+    rawset(instance, 'cell', gameSelf.cell)
+    rawset(instance, 'position', gameSelf.position)
   end
-
-  --- The outer s3lf interface that is exposed to users is a userdata, edited to not really be the original thing
-  --- Thus we keep a reference to the original instance inside of the instance so that when you use `:` notation for the respective functions they can pass the original instance
-  --- table into the desired functions, instead of the read-only userdata exposed through the interface.
-  --- It fixes things, I promise.
-  --- Alternatively we could expose a metatable which *returns* the `instance` in its __index, but I don't know if I prefer that or not.
-  --- Both options suck, I think.
-  ---@private
-  instance.__instance = instance
 
   local IGNORED_KEY, UNCACHEABLE_KEY = 0, 1
   setmetatable(instance, {
@@ -281,11 +263,8 @@ local function createS3lfInstance(gameObject)
     __name = 'S3LFOBJECT',
     __metatable = 'S3LFOBJECT',
   })
-
-  return instance
 end
 
-local instance = createS3lfInstance(gameSelf)
 
 if instance.actorType == 0 then
   local CombatTargetTracker = {
