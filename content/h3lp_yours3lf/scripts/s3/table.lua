@@ -460,6 +460,24 @@ local function invert(t)
   return inverted
 end
 
+--- Sorts a table using an optional comparator function and returns an iterator over a sorted copy
+---@generic K, V
+---@param tbl table<K, V>
+---@param comparator? fun(a: K, b: K): boolean
+---@return fun(): K, V
+local function sortedPairs(tbl, comparator)
+  local tableKeys = {}
+  for key in pairs(tbl) do insert(tableKeys, key) end
+
+  sort(tableKeys, comparator)
+  local i = 0
+
+  return function()
+    i = i + 1
+    return tableKeys[i], tbl[tableKeys[i]]
+  end
+end
+
 --- @generic keyType
 --- @generic valueType
 --- @param t { [keyType]: valueType }
@@ -991,6 +1009,7 @@ return {
   shallowCopy = shallowCopy,
   shuffle = shuffle,
   sort = sort,
+  sortedPairs = sortedPairs,
   swap = swap,
   traverse = traverse,
   unpack = unpack,
