@@ -213,17 +213,13 @@ local function createS3lfInstance(gameObject)
     --- Are worth caching this stuff for due to sheer heat
     ---@class CellInfo
     instance.cellInfo = {
-      displayName = objectCell.displayName,
       gridX = objectCell.gridX,
       gridY = objectCell.gridY,
-      hasSky = objectCell.hasSky,
-      hasWater = objectCell.hasWater,
       id = objectCell.id,
       isExterior = objectCell.isExterior,
       isFakeExterior = objectCell:hasTag('QuasiExterior'),
       name = objectCell.name,
       region = objectCell.region,
-      waterLevel = objectCell.waterLevel,
     }
 
     instance.level = gameSelf.type.stats.level(gameSelf)
@@ -289,13 +285,9 @@ local function createS3lfInstance(gameObject)
   return instance
 end
 
-local instance, Index, engineHandlers, eventHandlers
+local instance = createS3lfInstance(gameSelf)
 
-if types.Player.objectIsInstance(gameSelf) then
-  eventHandlers, engineHandlers = {}, {}
-
-  instance = createS3lfInstance(gameSelf)
-
+if instance.actorType == 0 then
   local CombatTargetTracker = {
     targetData = {},
     updateCombatants = function(self, combatantInfo)
@@ -319,96 +311,86 @@ if types.Player.objectIsInstance(gameSelf) then
     end,
   }
 
-  FunctionsAsFields = {
-    bounds = getBoundingBox,
-    isInCombat = function()
-      return CombatTargetTracker:isInCombat()
-    end,
-    targetData = function()
-      --- FIXME: Use tableUtil's makeReadOnly function
-      return rawget(CombatTargetTracker, 'targetData')
-    end,
-  }
 
-  engineHandlers.onSave = function()
-    return {
-      targetData = rawget(CombatTargetTracker, 'targetData'),
-      cellsVisited = rawget(instance, 'cellsVisited'),
+  return {
+    engineHandlers = {
+      onLoad = function(data)
+        if not data then return end
+
+        local targetData = rawget(data, 'targetData')
+        if targetData then
+          rawset(CombatTargetTracker, 'targetData', targetData)
+        end
+
+        local cellsVisited = rawget(data, 'cellsVisited')
+        if cellsVisited then
+          rawset(instance, 'cellsVisited', cellsVisited)
+        end
+      end,
+      onSave = function()
+        return {
+          targetData = rawget(CombatTargetTracker, 'targetData'),
+          cellsVisited = rawget(instance, 'cellsVisited'),
+        }
+      end,
+      onUpdate = function()
+        rawset(instance, 'position', gameSelf.position)
+
+        local currentCell = gameSelf.cell
+        if currentCell == rawget(instance, 'cell') then return end
+
+        local currentCellId = currentCell.id
+
+        local cellsVisited = rawget(instance, 'cellsVisited')
+        if not cellsVisited[currentCellId] then cellsVisited[currentCellId] = true end
+
+        rawset(instance, 'cell', currentCell)
+
+        local cellInfo = assert(rawget(instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
+
+        cellInfo.gridX = currentCell.gridX
+        cellInfo.gridY = currentCell.gridY
+        cellInfo.id = currentCell.id
+        cellInfo.isExterior = currentCell.isExterior
+        cellInfo.isFakeExterior = currentCell:hasTag 'QuasiExterior'
+        cellInfo.name = currentCell.name
+        cellInfo.region = currentCell.region
+
+        gameSelf:sendEvent('S3LFCellChanged', currentCellId)
+      end,
+    },
+    eventHandlers = {
+      OMWMusicCombatTargetsChanged = function(targetData)
+        CombatTargetTracker:updateCombatants(targetData)
+      end,
+      S3LFDisplay = function(resultString)
+        local ui = require 'openmw.ui'
+        ui.printToConsole(resultString, ui.CONSOLE_COLOR.Success)
+      end,
+    },
+    interfaceName = 's3',
+    interface = {
+      lf = instance,
     }
-  end
-
-  engineHandlers.onLoad = function(data)
-    if not data then return end
-
-    local targetData = rawget(data, 'targetData')
-    if targetData then
-      rawset(CombatTargetTracker, 'targetData', targetData)
-    end
-
-    local cellsVisited = rawget(data, 'cellsVisited')
-    if cellsVisited then
-      rawset(instance, 'cellsVisited', cellsVisited)
-    end
-  end
-
-  engineHandlers.onUpdate = function()
-    local currentPosition = gameSelf.position
-    if rawget(instance, 'position') ~= currentPosition then rawset(instance, 'position', currentPosition) end
-
-    local currentCell = gameSelf.cell
-    if currentCell == rawget(instance, 'cell') then return end
-
-    local currentCellId = currentCell.id
-
-    local cellsVisited = rawget(instance, 'cellsVisited')
-    local cellWasVisited = rawget(cellsVisited, currentCellId)
-    if not cellWasVisited then rawset(cellsVisited, currentCellId, true) end
-
-    rawset(instance, 'cell', currentCell)
-
-    local cellInfo = assert(rawget(instance, 'cellInfo'), 'Failed to find cellInfo table in S3lf Instance!!!')
-
-    rawset(cellInfo, 'displayName', currentCell.displayName)
-    rawset(cellInfo, 'gridX', currentCell.gridX)
-    rawset(cellInfo, 'gridY', currentCell.gridY)
-    rawset(cellInfo, 'hasSky', currentCell.hasSky)
-    rawset(cellInfo, 'hasWater', currentCell.hasWater)
-    rawset(cellInfo, 'id', currentCell.id)
-    rawset(cellInfo, 'isTrueExterior', currentCell.isExterior)
-    rawset(cellInfo, 'isFakeExterior', currentCell:hasTag('QuasiExterior'))
-    rawset(cellInfo, 'name', currentCell.name)
-    rawset(cellInfo, 'region', currentCell.region)
-    rawset(cellInfo, 'waterLevel', currentCell.waterLevel)
-
-    gameSelf:sendEvent('S3LFCellChanged', currentCellId)
-  end
-
-  eventHandlers.S3LFDisplay = function(resultString)
-    local ui = require 'openmw.ui'
-    ui.printToConsole(resultString, ui.CONSOLE_COLOR.Success)
-  end
-
-  eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
-    CombatTargetTracker:updateCombatants(targetData)
-  end
-
-  Index = instance
+  }
 else
-  Index = function(this, k)
-    local s3lf = rawget(this, 's3lf')
-
-    if not s3lf then
-      s3lf = createS3lfInstance(gameSelf)
-    end
-
-    return s3lf[k]
-  end
+  return {
+    engineHandlers = {},
+    eventHandlers = {},
+    interfaceName = 's3',
+    interface = {
+      lf = instance,
+    }
+  }
 end
 
-return {
-  engineHandlers = engineHandlers,
-  eventHandlers = eventHandlers,
-  interfaceName = 's3lf',
-  interface = setmetatable({}, { __index = Index, }
-  ),
-}
+--   FunctionsAsFields = {
+--     bounds = getBoundingBox,
+--     isInCombat = function()
+--       return CombatTargetTracker:isInCombat()
+--     end,
+--     targetData = function()
+--       --- FIXME: Use tableUtil's makeReadOnly function
+--       return rawget(CombatTargetTracker, 'targetData')
+--     end,
+--   }
