@@ -4,7 +4,6 @@
 ---| 2 # Creature
 ---| 3 # None
 
-local animation = require 'openmw.animation'
 local gameSelf = require 'openmw.self'
 local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
@@ -12,7 +11,7 @@ local util = require 'openmw.util'
 
 local localPlayers = nearby.players
 
-local rawget, rawset, type = rawget, rawset, type
+local next, rawget, rawset, type = next, rawget, rawset, type
 
 ---@type KeyBehaviors
 local KeyBehavior = require 'openmw.storage'.globalSection 'S3lfColdStorage':get 'KeyBehavior'
@@ -26,27 +25,24 @@ local instance = {
 local sortedPairs = require 'scripts.s3.table'.sortedPairs
 
 local function alphabeticalParts()
-  local inputType = type(instance)
-  if inputType ~= 'table' then
-    error('Cannot sort something that isn\'t a table! ' .. type(instance), 2)
-  end
-
   local parts = {}
   local methodParts = {}
   local userDataParts = {}
 
   for key, value in sortedPairs(instance) do
-    if type(value) == 'function' then
-      methodParts[#methodParts + 1] = ('%s'):format(tostring(key))
-    elseif type(value) == 'userdata' then
+    local valueType = type(value)
+
+    if valueType == 'function' then
+      methodParts[#methodParts + 1] = key
+    elseif valueType == 'userdata' then
       userDataParts[#userDataParts + 1] = ('%s = %s'):format(
-        tostring(key),
-        tostring(value)
+        key,
+        value
       )
     else
       parts[#parts + 1] = ('%s = %s'):format(
-        tostring(key),
-        tostring(value)
+        key,
+        value
       )
     end
   end
@@ -75,150 +71,151 @@ function instance.sendObjectEvent(eventName, eventData)
   gameSelf:sendEvent(eventName, eventData)
 end
 
---- Indexes fields of `type`, but not stats
-local function indexTypeFields(key)
-  local typeValue = gameSelf.type[key]
-
-  if not typeValue then return end
-
-  if type(typeValue) ~= "function" or key == 'createRecordDraft' then
-    rawset(instance, key, typeValue)
-
-    return typeValue
-  else
-    local typeHandler = function(...)
-      return typeValue(gameSelf, ...)
-    end
-
-    rawset(instance, key, typeHandler)
-
-    return typeHandler
-  end
-end
-
---- Indexes record fields
-local function indexRecordFields(key)
-  local record = rawget(instance, 'record')
-
-  if not record then
-    do
-      record = gameSelf.type.records[gameSelf.recordId]
-      rawset(instance, 'record', record)
-    end
-  end
-
-  local recordValue = record[key]
-
-  if not recordValue then return end
-
-  rawset(instance, key, recordValue)
-
-  return recordValue
-end
-
---- Handle keys from the root gameObject, without special casing
-local function indexObjectFields(key)
-  local objectValue = gameSelf[key]
-  if objectValue == nil then return end
-
-  rawset(instance, key, objectValue)
-  return objectValue
-end
-
---- Handle keys from the animation module
-local function indexAnimationFields(key)
-  local animValue = animation[key]
-
-  if animValue == nil then return end
-
-  local insertKey = animValue
-
-  if type(animValue) == 'function' then
-    insertKey = function(...)
-      return animValue(gameSelf, ...)
-    end
-  end
-
-  rawset(instance, key, insertKey)
-
-  return insertKey
-end
-
-local KeyHandlers
-local function keyHandlers()
-  KeyHandlers = KeyHandlers or {
-    indexTypeFields,
-    indexRecordFields,
-    indexObjectFields,
-    indexAnimationFields,
-  }
-
-  return KeyHandlers
-end
+local cellsVisited
 
 do
-  local actorType, myType = nil, gameSelf.type
+  local animation = require 'openmw.animation'
+
+  local ActorType, AI, Attributes, Dynamic, Level, Skills, Stats
+  local MyType = gameSelf.type
+
   if not types.Actor.objectIsInstance(gameSelf) then
-    instance.actorType = 3
-  elseif myType == types.Creature then
-    instance.actorType = 2
-  elseif myType == types.NPC then
-    instance.actorType = 1
-  elseif myType == types.Player then
-    instance.actorType = 0
+    ActorType = 3
+  elseif MyType == types.Creature then
+    ActorType = 2
+  elseif MyType == types.NPC then
+    ActorType = 1
+  elseif MyType == types.Player then
+    ActorType = 0
   else
     error('Invalid actor type!!!!')
   end
 
-
-  if actorType < 3 then
-    instance.level = gameSelf.type.stats.level(gameSelf)
-
-    do
-      local MyStats = gameSelf.type.stats
-      local StatFields = { 'ai', 'attributes', 'dynamic', }
-
-      if actorType < 2 then
-        table.insert(StatFields, 'skills')
-      end
-
-      for _, subTable in ipairs(StatFields) do
-        local statFunctions = MyStats[subTable]
-
-        for statName, statFunction in pairs(statFunctions) do
-          instance[statName] = statFunction(gameSelf)
-        end
-      end
-    end
+  if ActorType < 3 then
+    Stats = MyType.stats
+    AI, Attributes, Dynamic, Level, Skills = Stats.ai, Stats.attributes, Stats.dynamic, Stats.level, Stats.skills
   end
 
-  if actorType == 0 then
-    rawset(instance, 'cellsVisited', {})
+  if ActorType == 0 then
+    cellsVisited = {}
+    rawset(instance, 'cellsVisited', cellsVisited)
     rawset(instance, 'cell', gameSelf.cell)
   end
 
-  local IGNORED_KEY, UNCACHEABLE_KEY = 0, 1
   setmetatable(instance, {
     __index = function(_, key)
       ---@type KeyBehavior?
       local behavior = KeyBehavior[key]
 
-      if behavior == IGNORED_KEY then
+      if behavior == 0 then     -- Ignored
         return
-      elseif behavior == UNCACHEABLE_KEY then
+      elseif behavior == 1 then -- Uncacheable
         return gameSelf[key]
+      end
+
+      local typeValue = MyType[key]
+
+      if typeValue ~= nil then
+        if type(typeValue) ~= "function" or key == 'createRecordDraft' then
+          rawset(instance, key, typeValue)
+
+          return typeValue
+        else
+          local typeHandler = function(...)
+            return typeValue(gameSelf, ...)
+          end
+
+          rawset(instance, key, typeHandler)
+
+          return typeHandler
+        end
+      end
+
+      if ActorType < 3 then
+        local dynamicStat = Dynamic[key]
+        if dynamicStat then
+          local result = dynamicStat(gameSelf)
+
+          rawset(instance, key, result)
+
+          return result
+        end
+
+        local attribute = Attributes[key]
+        if attribute then
+          local result = attribute(gameSelf)
+
+          rawset(instance, key, result)
+
+          return result
+        end
+
+        if ActorType < 2 then
+          local skill = Skills[key]
+
+          if skill then
+            local result = skill(gameSelf)
+
+            rawset(instance, key, result)
+
+            return result
+          end
+        end
+
+        if key == 'level' then
+          local level = Level(gameSelf)
+          rawset(instance, key, level)
+          return level
+        end
+
+        local aiStat = AI[key]
+        if aiStat ~= nil then
+          local stat = aiStat(gameSelf)
+          rawset(instance, key, stat)
+          return stat
+        end
+      end
+
+      local record = rawget(instance, 'record')
+
+      if not record then
+        record = gameSelf.type.records[gameSelf.recordId]
+        rawset(instance, 'record', record)
+      end
+
+      local recordValue = record[key]
+      if recordValue ~= nil then
+        rawset(instance, key, recordValue)
+        return recordValue
+      end
+
+      local objectValue = gameSelf[key]
+      if objectValue ~= nil then
+        rawset(instance, key, objectValue)
+        return objectValue
+      end
+
+      --- Values from animation, pretty cold path
+      local animValue = animation[key]
+      if animValue ~= nil then
+        local insertValue
+        if type(animValue) == 'function' then
+          insertValue = function(...)
+            return animValue(gameSelf, ...)
+          end
+        else
+          insertValue = animValue
+        end
+
+        rawset(instance, key, insertValue)
+
+        return insertValue
       end
 
       if key == 'bounds' then
         return gameSelf:getBoundingBox()
       elseif key == 'display' then
         return instanceDisplay()
-      end
-
-      for _, handler in ipairs(keyHandlers()) do
-        local result = handler(key)
-
-        if result ~= nil then return result end
       end
     end,
     __name = 'S3LFOBJECT',
@@ -227,14 +224,18 @@ do
 end
 
 if instance.actorType == 0 then
+  local debug = require 'openmw.debug'
+  local ui = require 'openmw.ui'
+
   local staticTargetData = {}
+  local staticTargetDataView = util.makeReadOnly(staticTargetData)
 
   function instance.isInCombat()
-    return next(staticTargetData) ~= nil and require 'openmw.debug'.isAIEnabled()
+    return next(staticTargetData) ~= nil and debug.isAIEnabled()
   end
 
   function instance.targetData()
-    return util.makeReadOnly(staticTargetData)
+    return staticTargetDataView
   end
 
   return {
@@ -242,13 +243,19 @@ if instance.actorType == 0 then
       onLoad = function(data)
         if not data then return end
 
-        if data.staticTargetData then staticTargetData = data.staticTargetData end
-        if data.cellsVisited then rawset(instance, 'cellsVisited', data.cellsVisited) end
+        if data.staticTargetData then
+          staticTargetData = data.staticTargetData
+          staticTargetDataView = util.makeReadOnly(staticTargetData)
+        end
+        if data.cellsVisited then
+          cellsVisited = data.cellsVisited
+          rawset(instance, 'cellsVisited', cellsVisited)
+        end
       end,
       onSave = function()
         return {
           staticTargetData = staticTargetData,
-          cellsVisited = rawget(instance, 'cellsVisited'),
+          cellsVisited = cellsVisited,
         }
       end,
       onUpdate = function()
@@ -259,7 +266,6 @@ if instance.actorType == 0 then
 
         local currentCellId = currentCell.id
 
-        local cellsVisited = rawget(instance, 'cellsVisited')
         if not cellsVisited[currentCellId] then cellsVisited[currentCellId] = true end
 
         rawset(instance, 'cell', currentCell)
@@ -284,7 +290,6 @@ if instance.actorType == 0 then
         gameSelf:sendEvent(eventName, incomingTargetData.actor)
       end,
       S3LFDisplay = function(resultString)
-        local ui = require 'openmw.ui'
         ui.printToConsole(resultString, ui.CONSOLE_COLOR.Success)
       end,
     },
