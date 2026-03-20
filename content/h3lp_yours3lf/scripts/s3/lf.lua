@@ -1,22 +1,29 @@
 local gameSelf = require 'openmw.self'
 local types = require 'openmw.types'
 
+local tinsert = table.insert
+local tsort = table.sort
+
 ---@alias ActorType
 ---| 0 # Player
 ---| 1 # NPC
 ---| 2 # Creature
 ---| 3 # None
 
-local function sortedPairs(t, f)
-  local a = {}
-  for n in pairs(t) do table.insert(a, n) end
+---@generic K, V
+---@param tbl table<K, V>
+---@param comparator? fun(a: K, b: K): boolean
+---@return fun(): K, V
+local function sortedPairs(tbl, comparator)
+  local keys = {}
+  for key in pairs(tbl) do tinsert(keys, key) end
 
-  table.sort(a, f)
+  tsort(keys, comparator)
   local i = 0
 
   return function()
     i = i + 1
-    return a[i], t[a[i]]
+    return keys[i], tbl[keys[i]]
   end
 end
 
