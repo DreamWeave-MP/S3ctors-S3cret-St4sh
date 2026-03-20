@@ -4,7 +4,7 @@ local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
@@ -222,7 +222,7 @@ Using these settings you may increase the parry windows for specific shields, ba
     )
 }
 
-if s3lf.isPlayer then
+if s3lf.actorType == 0 then
     ParryInterface.engineHandlers.onFrame = function(dt)
         Parry.tick(dt)
     end

@@ -4,7 +4,7 @@ local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 local MagickEffect = core.magic.EFFECT_TYPE
@@ -83,7 +83,7 @@ end
 local FortifyMagickaEffect = MagickEffect.FortifyMagicka
 function DynamicManager:calculateMaxMagicka()
   local BaseMagickaMult
-  if s3lf.isPlayer then
+  if s3lf.actorType == 0 then
     BaseMagickaMult = self.PCbaseMagickaMultiplier
   else
     BaseMagickaMult = self.NPCbaseMagickaMultiplier

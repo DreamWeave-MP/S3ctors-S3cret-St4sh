@@ -1,5 +1,4 @@
 local animation = require 'openmw.animation'
-local self = require 'openmw.self'
 
 ---@alias AttackType integer
 
@@ -13,11 +12,13 @@ local self = require 'openmw.self'
 ---@field attackStrength number
 ---@field applyDurabilityDamage boolean
 
+local gameSelf = require 'openmw.self'
 local I = require 'openmw.interfaces'
-local Combat = I.Combat
 
-local Fatigue = self.type.stats.dynamic.fatigue(self)
-local damageTypes = { 'health', 'fatigue', 'magicka' }
+local s3lf, Combat, Core = I.s3.lf, I.Combat, I.s3ChimCore; local Fatigue = s3lf.fatigue
+
+local DefaultAttack = s3lf.ATTACK_TYPE.Thrust
+
 local function CHIMHitHandler(attack)
     local attacker = attack.attacker
     local meleeOrRanged = attack.sourceType == Combat.ATTACK_SOURCE_TYPES.Melee
@@ -27,9 +28,9 @@ local function CHIMHitHandler(attack)
     -- potentially without an attacker?
     -- maybe we don't actually want to do this
     if not attacker or not meleeOrRanged then return end
-    for _, target in ipairs { self, attacker } do
-        target:sendEvent('CHIMEnsureStats')
-    end
+
+    s3lf:sendEvent('CHIMEnsureStats')
+    attacker:sendEvent('CHIMEnsureStats')
 
     if not attack.successful then
         return attacker:sendEvent('CHIMEnsureFortifyAttack')
@@ -40,14 +41,14 @@ local function CHIMHitHandler(attack)
     end
 
     local shieldMultiplier, didBlock = 1.0, false
-    local canBlock, flankMult = I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, self)
+    local canBlock, flankMult = I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, gameSelf)
 
     if canBlock then
         ---@type CHIMBlockData
         local blockData = {
             damage = attack.damage.health or attack.damage.fatigue,
             hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
-            type = attack.type or self.ATTACK_TYPE.Thrust,
+            type = attack.type or DefaultAttack,
             weapon = attack.weapon,
             attackStrength = attack.strength,
             applyDurabilityDamage = true,
@@ -60,7 +61,7 @@ local function CHIMHitHandler(attack)
                 damage = I.s3ChimParry.Manager.getDamage(blockData),
             })
 
-            if I.S3LockOn then self:sendEvent('S3TargetLockHit', attacker) end
+            if I.S3LockOn then s3lf:sendEvent('S3TargetLockHit', attacker) end
 
             return false
         elseif I.s3ChimBlock.isBlocking then
@@ -73,9 +74,9 @@ local function CHIMHitHandler(attack)
 
     --- We should also have some way to determine if an attack fumbled or not
     --- and use that data to remove enchantments when appropriate
-    local damageMult = I.s3ChimCore.Manager:getDamageBonus {
+    local damageMult = Core.Manager:getDamageBonus {
         attacker = attack.attacker,
-        defender = self.object,
+        defender = gameSelf.object,
         attackInfo = attack
     }
 
@@ -89,34 +90,46 @@ local function CHIMHitHandler(attack)
         I.s3ChimCore.EnableFlankDamage
         and not didBlock
         and flankMult >= 0.333333333333
-        and I.s3lf.canMove()
+        and s3lf.canMove()
     then
         endMult = endMult + flankMult
     end
 
-    for _, damageType in ipairs(damageTypes) do
-        if attack.damage[damageType] ~= nil then
-            attack.damage[damageType] = attack.damage[damageType] * endMult
-        end
+    if attack.damage.health ~= nil then
+        attack.damage.health = attack.damage.health * endMult
     end
 
-    I.s3ChimCore.debugLog(([[Health Damage: %.2f
+    if attack.damage.magicka ~= nil then
+        attack.damage.magicka = attack.damage.magicka * endMult
+    end
+
+    if attack.damage.fatigue ~= nil then
+        attack.damage.fatigue = attack.damage.fatigue * endMult
+    end
+
+    if Core.DebugEnable then
+        Core.debugLog(
+            (
+                [[Health Damage: %.2f
     Fatigue Damage: %.2f
     Shield Multiplier: %.2f
     Hit Chance Mult: %.2f
     Global Damage Scaling: %.2f
     Poise Damage Bonus: %.1f
     Flank Mult: %.3f
-    Final Damage Mult: %.2f]]):format(
-        attack.damage.health or 0,
-        attack.damage.fatigue or 0,
-        shieldMultiplier,
-        damageMult,
-        I.s3ChimCore.Manager.GlobalDamageScaling,
-        poiseMult,
-        flankMult,
-        endMult
-    ))
+    Final Damage Mult: %.2f]]
+            ):format(
+                attack.damage.health or 0,
+                attack.damage.fatigue or 0,
+                shieldMultiplier,
+                damageMult,
+                I.s3ChimCore.Manager.GlobalDamageScaling,
+                poiseMult,
+                flankMult,
+                endMult
+            )
+        )
+    end
 end
 
 Combat.addOnHitHandler(CHIMHitHandler)

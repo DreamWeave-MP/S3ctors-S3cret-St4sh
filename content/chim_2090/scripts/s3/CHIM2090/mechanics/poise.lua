@@ -7,7 +7,7 @@ local ui
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 ---@class PoiseIcon: ProtectedTable
 ---@field PoiseHUDPos util.vector2
@@ -17,7 +17,8 @@ local s3lf = I.s3lf
 ---@field PoiseHUDUpdateDelay integer
 local PoiseIcon
 local SWITCH
-if s3lf.isPlayer then
+local isPlayer = s3lf.actorType == 0
+if isPlayer then
     ui = require 'openmw.ui'
     SWITCH = s3lf.CONTROL_SWITCH
 end
@@ -307,7 +308,7 @@ function Poise.onHit(attackInfo)
 
     local poiseBroken = Poise.hitDamage(poiseDamage)
 
-    if s3lf.isPlayer then PoiseIcon:playNextFrame() end
+    if isPlayer then PoiseIcon:playNextFrame() end
 
     if poiseBroken then
         return Poise.PoiseDamageMult
@@ -357,7 +358,7 @@ local textKeyHandlers = {
 
         Poise.state.isBroken = false
 
-        if s3lf.isPlayer then
+        if isPlayer then
             toggleAllControls(true)
         end
     end,
@@ -404,7 +405,7 @@ local function interruptAttacksIfPoiseBroken()
     s3lf.setStance(s3lf.STANCE.Nothing)
 end
 
-if s3lf.isPlayer then
+if isPlayer then
     local IconGroupName = 'SettingsGlobal' .. modInfo.name .. 'PoiseUI'
 
     ---@type PoiseIcon
@@ -488,7 +489,7 @@ if s3lf.isPlayer then
 
         local element = self.state.element
         local props = element.layout.props
-        local shouldShow = s3lf.isInCombat or I.UI.getMode() == 'MainMenu'
+        local shouldShow = s3lf.isInCombat() or I.UI.getMode() == 'MainMenu'
 
         local alphaUpdated = false
         if shouldShow and props.alpha < 1.00 then
@@ -568,13 +569,13 @@ return {
             return managerKey
         elseif key == 'Manager' then
             return Poise
-        elseif key == 'Icon' and s3lf.isPlayer then
+        elseif key == 'Icon' and isPlayer then
             return PoiseIcon
         end
     end),
     engineHandlers = {
         onUpdate = function(dt)
-            if not Poise.Enable or (not s3lf.isPlayer and not s3lf.isInActorsProcessingRange()) then return end
+            if not Poise.Enable or (not isPlayer and not s3lf.isInActorsProcessingRange()) then return end
 
             if not core.isWorldPaused() then
                 if
@@ -588,7 +589,7 @@ return {
                 Poise.tick(dt)
             end
 
-            if s3lf.isPlayer then
+            if isPlayer then
                 PoiseIcon:tick(dt)
             end
         end,
@@ -606,7 +607,7 @@ return {
                     }
                 )
 
-                if s3lf.isPlayer then
+                if isPlayer then
                     toggleAllControls(false)
                 end
             end
