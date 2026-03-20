@@ -6,14 +6,14 @@ local input
 
 local I = require 'openmw.interfaces'
 local Animation = I.AnimationController
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local modInfo = require 'scripts.s3.chim2090.modinfo'
 
 --- Add AI support
 --- Maybe try that "latch" binding style ern mentioned
 local types = require 'openmw.types'
-local isPlayer = s3lf.isPlayer
+local isPlayer = s3lf.actorType == 0
 
 if isPlayer then
     camera = require 'openmw.camera'

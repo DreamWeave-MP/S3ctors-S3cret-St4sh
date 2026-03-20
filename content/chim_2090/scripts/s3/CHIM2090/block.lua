@@ -14,11 +14,11 @@ local util = require 'openmw.util'
 -- Perks: blurpanda has recently made a perk framework I'd like to integrate with
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
-local isPlayer, isCreature = s3lf.isPlayer, s3lf.isCreature
+local isPlayer, isCreature = s3lf.actorType == 0, s3lf.actorType == 2
 
 if isPlayer then
     input = require 'openmw.input'

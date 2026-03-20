@@ -199,6 +199,7 @@ do
       local animValue = animation[key]
       if animValue ~= nil then
         local insertValue
+
         if type(animValue) == 'function' then
           insertValue = function(...)
             return animValue(gameSelf, ...)

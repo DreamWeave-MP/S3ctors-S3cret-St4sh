@@ -19,7 +19,7 @@ Combat.addOnHitHandler(
             return
         end
 
-        assert(I.s3lf.object, ErrorMessage)
-        attackInfo.attacker:sendEvent('S3TargetLockHit', I.s3lf.object)
+        assert(I.s3.lf.object, ErrorMessage)
+        attackInfo.attacker:sendEvent('S3TargetLockHit', I.s3.lf.object)
     end
 )

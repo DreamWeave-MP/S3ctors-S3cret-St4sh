@@ -10,7 +10,7 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local ModInfo = require 'scripts.s3.target.modinfo'
 
@@ -137,7 +137,7 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
 
     if not shouldTrack then return end
 
-    local rotation = I.s3lf.rotation
+    local rotation = s3lf.rotation
     local playerYaw, playerPitch = LockOnManager.getAngleDiff(
         desiredYaw,
         desiredPitch,
@@ -146,11 +146,11 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
     )
 
     if math.abs(playerYaw) >= eps then
-        I.s3lf.controls.yawChange = playerYaw
+        s3lf.controls.yawChange = playerYaw
     end
 
     if math.abs(playerPitch) >= eps then
-        I.s3lf.controls.pitchChange = playerPitch
+        s3lf.controls.pitchChange = playerPitch
     end
 end
 
@@ -476,7 +476,7 @@ function LockOnManager:onFrame()
         local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject)
 
         if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
-            if I.s3lf.canMove() then
+            if s3lf.canMove() then
                 LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
             end
 

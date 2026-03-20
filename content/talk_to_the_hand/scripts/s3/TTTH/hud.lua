@@ -6,7 +6,7 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 -- TODO: Fix default sizes/positions
 -- Add presets
@@ -942,7 +942,7 @@ end
 
 ---@param statName string name of a dynamic stat
 local function getStatFrame(statName)
-    local stat = I.s3lf[statName]
+    local stat = s3lf[statName]
     local normalized = util.clamp(stat.current / stat.base, 0.0, 1.0)
     local difference = 1.0 - normalized
     return math.max(1, math.floor(difference * 100))

@@ -55,7 +55,7 @@ Some specific notes on how fields are changed:
 To use it in the lua console, make sure the script is installed and enabled, then use `luap` or `luas` and try the following:
 
 ```lua
-            s3lf = I.s3lf
+            s3lf = I.s3.lf
             s3lf.record.hair
             s3lf.health.base, s3lf.strength.base, s3lf.acrobatics.base, s3lf.speed.modified
 ```
@@ -71,7 +71,7 @@ To use it in the lua console, make sure the script is installed and enabled, the
 
 ```lua
 Additionally, s3lf objects provide a couple more convenience features to ease debugging and type checking respectively. A new function, `objectType`, is added to all objects which can be represented as a `s3lf`. For example:
-            s3lf = I.s3lf
+            s3lf = I.s3.lf
             s3lf.objectType()
             npc
 ```
@@ -82,7 +82,7 @@ Every `s3lf` object also includes a `display()` method, which will show a neatly
 
 ```lua
             luap
-            I.s3lf.display()
+            I.s3.lf.display()
             S3GameGameSelf {
              Fields: {  },
              Methods: { From, display, objectType },
@@ -150,7 +150,7 @@ Example:
 
 ```lua
 -- S3lf interface
-Lua[Player] I.s3lf.ConsoleLog(('Hai from %s!'):format(I.s3lf.recordId))
+Lua[Player] I.s3.lf.ConsoleLog(('Hai from %s!'):format(I.s3.lf.recordId))
 Hai from player!
 
 Lua[Player] exit()
@@ -158,11 +158,11 @@ Lua mode OFF
 > luas
 Lua mode ON, use exit() to return, help() for more info
 Context: Local[object0x4001134 (NPC, "SW_HungoxSteward")]
-Lua[sw_hungoxsteward] I.s3lf.ConsoleLog(('Hai from %s!'):format(I.s3lf.recordId))
+Lua[sw_hungoxsteward] I.s3.lf.ConsoleLog(('Hai from %s!'):format(I.s3.lf.recordId))
 ```
 
 ```lua
 -- standalone
 local LogMessage = require 'scripts.s3.logmessage'
-LogMessage(('Hai From %s'):format(I.s3lf.recordId))
+LogMessage(('Hai From %s'):format(I.s3.lf.recordId))
 ```

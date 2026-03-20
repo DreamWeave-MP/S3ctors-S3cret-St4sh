@@ -1,7 +1,7 @@
 local storage = require 'openmw.storage'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 

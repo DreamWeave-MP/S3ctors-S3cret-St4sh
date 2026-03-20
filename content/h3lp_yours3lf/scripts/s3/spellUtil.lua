@@ -2,10 +2,11 @@ local core = require 'openmw.core'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
+local isPlayer = s3lf.actorType == 0
 
 local debug
-if s3lf.isPlayer then
+if isPlayer then
     debug = require 'openmw.debug'
 end
 
@@ -218,7 +219,7 @@ function Magic:getSpellCastChance(spell, actor, checkMagicka, cap)
         return actor.type.spells(actor):canUsePower(spell) and 100 or 0
     end
 
-    if s3lf.isPlayer and debug.isGodMode() then
+    if isPlayer and debug.isGodMode() then
         return 100
     end
 

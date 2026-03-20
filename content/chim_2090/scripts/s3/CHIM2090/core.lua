@@ -14,7 +14,7 @@ local InvisibleEffect = core.magic.EFFECT_TYPE.Invisibility
 local ParalyzeEffect = core.magic.EFFECT_TYPE.Paralyze
 local SanctuaryEffect = core.magic.EFFECT_TYPE.Sanctuary
 
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 
@@ -224,6 +224,7 @@ function ChimCore:getAttackDefenseTerm(attacker, defender)
 
     local defenseTerm = 0
     local defenderEffects = defender.activeEffects()
+    --- FIXME: isPlayer field has been removed
     local unaware = defender.stance == defender.STANCE.Nothing and attacker.isPlayer
     local isKnockedDown = defender.isPlaying('knockout')
     local isParalyzed = defenderEffects:getEffect(ParalyzeEffect).magnitude > 0
@@ -286,8 +287,8 @@ end
 
 ---@param attackData CHIMAttackData
 function ChimCore:getDamageBonus(attackData)
-    attackData.attacker = I.s3lf.From(attackData.attacker)
-    attackData.defender = I.s3lf.From(attackData.defender)
+    attackData.attacker = I.s3.lf.From(attackData.attacker)
+    attackData.defender = I.s3.lf.From(attackData.defender)
 
     local roll = math.random()
     local luckMod = (math.min(attackData.attacker.luck.modified, 100) / 100.0) * self.CritLuckPercent
@@ -373,7 +374,7 @@ local eventHandlers = {
     CHIMEnsureFortifyAttack = ensureFortifyAttack,
 }
 
-if s3lf.isPlayer then
+if s3lf.actorType == 0 then
     eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
         local addOrRemove = next(targetData.targets) ~= nil
         core.sendGlobalEvent('CHIMScriptToggle', {
