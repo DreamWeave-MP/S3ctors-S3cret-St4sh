@@ -660,4 +660,4 @@ I would do this full-time if I could only afford to.
 Thanks for listening <3 
 {% end %}
 
-You see S3maphore and your brain fills in the vowel without thinking. You just completed the S3 Plan. You believed. And it worked.
+You see S3maphore and your brain fills in the vowel without thinking.
