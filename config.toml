@@ -45,7 +45,7 @@ paths = "safe"
 # Put all your custom variables here
 
 
-# One of: blue, green, orange, pink, red.
+# One of: blue, green, orange, pink, purple, red.
 # Defaults to blue.
 # Append -light for light themes, e.g. blue-light
 # Or append -auto, e.g. blue-auto
