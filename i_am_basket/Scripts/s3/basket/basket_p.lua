@@ -1,0 +1,555 @@
+local async = require("openmw.async")
+local camera = require("openmw.camera")
+local core = require("openmw.core")
+local input = require("openmw.input")
+local nearby = require("openmw.nearby")
+local self = require("openmw.self")
+local storage = require("openmw.storage")
+local ui = require("openmw.ui")
+local util = require("openmw.util")
+
+local I = require("openmw.interfaces")
+
+local movementSettings = storage.playerSection("SettingsOMWControls")
+
+local BasketData = require("scripts.s3.basket.basketData")
+
+local Inventory = self.type.inventory(self)
+
+local RobeSlot = self.type.EQUIPMENT_SLOT.Robe
+
+local BasketFuncs = {}
+
+local HARD_MODE_ALLOWED_SLOTS = {
+  [self.type.EQUIPMENT_SLOT.Ammunition] = true,
+  [self.type.EQUIPMENT_SLOT.Amulet] = true,
+  [self.type.EQUIPMENT_SLOT.Belt] = true,
+  [self.type.EQUIPMENT_SLOT.CarriedLeft] = true,
+  [self.type.EQUIPMENT_SLOT.CarriedRight] = true,
+  [self.type.EQUIPMENT_SLOT.LeftGauntlet] = true,
+  [self.type.EQUIPMENT_SLOT.RightGauntlet] = true,
+  [self.type.EQUIPMENT_SLOT.RightRing] = true,
+  [self.type.EQUIPMENT_SLOT.LeftRing] = true,
+  [self.type.EQUIPMENT_SLOT.Helmet] = true,
+  [self.type.EQUIPMENT_SLOT.Robe] = true,
+}
+
+local TransformStates = {
+  ["Start"] = 1,
+  ["Transforming"] = 2,
+  ["Normal"] = 3,
+  ["Basket"] = 4,
+  ["End"] = 5,
+}
+
+local CurrentTransformState = TransformStates.Normal
+local DoTest = false
+
+local prevHudState
+local prevCamMode
+local myBasket
+
+BasketFuncs.toggleBasket = function()
+  if CurrentTransformState ~= TransformStates.Start and CurrentTransformState ~= TransformStates.End then
+    return
+  end
+
+  if I.UI.getMode() then
+    return
+  end
+
+  local groundPos = CurrentTransformState == TransformStates.End and BasketFuncs.getGroundPos() or nil
+
+  core.sendGlobalEvent(
+    "S3_BasketMode_BasketTransform",
+    { target = self.object, basket = myBasket, state = CurrentTransformState, groundPos = groundPos }
+  )
+
+  -- local overrideControls = myBasket == nil
+  -- I.Controls.overrideCombatControls(overrideControls)
+  -- I.Controls.overrideUiControls(overrideControls)
+  -- I.Controls.overrideMovementControls(overrideControls)
+
+  -- Dangerous?
+  if CurrentTransformState == TransformStates.Start then
+    prevHudState = I.UI.isHudVisible()
+    I.UI.setHudVisibility(false)
+    prevCamMode = camera.getMode()
+    -- Get rotation too?
+    local camPos = camera.getPosition()
+    camera.setMode(camera.MODE.Static)
+    camera.setStaticPosition(camPos)
+  elseif CurrentTransformState == TransformStates.End then
+    -- myBasket = nil
+    camera.setMode(prevCamMode)
+    I.UI.setHudVisibility(prevHudState)
+  end
+  CurrentTransformState = TransformStates.Transforming
+end
+
+local function CollisionTestFunction()
+  if CurrentTransformState == TransformStates.Normal then
+    CurrentTransformState = TransformStates.Start
+  elseif CurrentTransformState == TransformStates.Basket then
+    CurrentTransformState = TransformStates.End
+  end
+end
+
+-- Testing function to reproduce bad/weird drops
+local time = require("openmw_aux.time")
+if DoTest then
+  time.runRepeatedly(CollisionTestFunction, 0.666 * time.second, { initialDelay = 0.5 * time.second })
+end
+
+input.registerActionHandler(
+  "Sneak",
+  async:callback(function(sneak)
+    if not sneak then
+      return
+    end
+
+    if CurrentTransformState == TransformStates.Normal then
+      CurrentTransformState = TransformStates.Start
+      -- self.type.setTeleportingEnabled(self, true)
+    elseif CurrentTransformState == TransformStates.Basket then
+      CurrentTransformState = TransformStates.End
+      -- self.type.setTeleportingEnabled(self, false)
+    end
+  end)
+)
+
+local isJumping = false
+local canJump = false
+input.registerTriggerHandler(
+  "Jump",
+  async:callback(function()
+    if canJump then
+      isJumping = true
+    end
+  end)
+)
+
+local MoveUnitsPerSecond = DoTest and 1024 or 128
+local HorizontalMovementMultiplier = 0.75
+
+local Skills = self.type.stats.skills
+local Illusion = Skills.illusion(self)
+local Athletics = Skills.athletics(self)
+
+BasketFuncs.getPerFrameMoveUnits = function(dt, movement, horizontal)
+  local illusionTerm = math.min(0.75, Illusion.modified / 100)
+  local speedTerm = math.min(0.25, Athletics.modified / 100)
+
+  local moveTerm = MoveUnitsPerSecond * (1 + illusionTerm + speedTerm)
+
+  local units = (dt * moveTerm)
+
+  if horizontal then
+    units = units * HorizontalMovementMultiplier
+  end
+
+  return units * movement
+end
+
+BasketFuncs.getPerFrameMovement = function(dt, sideMovementControl, forwardMovementControl)
+  local horizontalMovementThisFrame = BasketFuncs.getPerFrameMoveUnits(dt, sideMovementControl, true)
+  local forwardMovementThisFrame = BasketFuncs.getPerFrameMoveUnits(dt, forwardMovementControl, false)
+
+  -- Get the Z rotation of the player inside the basket
+  local zRot = self.rotation:getYaw()
+  -- Construct a transform composed of only this rotation
+  local zAdjustedTransform = util.transform.identity * util.transform.rotateZ(zRot)
+  -- Get corresponding forward + side vectors
+  local forwardVector = zAdjustedTransform:apply(util.vector3(0, 1, 0))
+  local sideVector = zAdjustedTransform:apply(util.vector3(1, 0, 0))
+
+  -- Apply the distances to each rotation vector
+  return (sideVector * horizontalMovementThisFrame) + (forwardVector * forwardMovementThisFrame)
+end
+
+BasketFuncs.handleCameraMove = function(moveThisFrame)
+  local playerRotZ, _, _ = self.rotation:getAnglesZYX()
+  local cameraOffset = util.transform.rotateZ(playerRotZ):apply(util.vector3(0, -96, 64))
+  local newCameraPos = self.position + moveThisFrame + cameraOffset
+  camera.setStaticPosition(newCameraPos)
+  camera.setYaw(playerRotZ)
+end
+
+local ForwardRadsPerSecond = 2.5
+local RollTimeStep = 1.0 / 60.0
+---@param movement integer movement on a given axis between -1 and 1
+---@return integer axisTransform Transformation for a given axis relative to the movement provided
+function BasketFuncs.getPerFrameRoll(movement)
+  return (RollTimeStep * ForwardRadsPerSecond) * movement
+end
+
+function BasketFuncs.getPerFrameRollTransform(sideMovement, forwardMovement, basketRotation)
+  if sideMovement == 0 and forwardMovement == 0 then
+    return nil
+  end
+
+  local side = input.isShiftPressed() and 0 or BasketFuncs.getPerFrameRoll(sideMovement)
+  local forward = input.isAltPressed() and 0 or BasketFuncs.getPerFrameRoll(forwardMovement)
+
+  local xTransform = util.transform.rotateX(-forward)
+  local yTransform = util.transform.rotateY(-side)
+  return basketRotation * yTransform * xTransform
+end
+
+function BasketFuncs.basketIsColliding(moveThisFrame, rollThisFrame)
+  local basketBounds = myBasket:getBoundingBox()
+
+  if not rollThisFrame then
+    rollThisFrame = util.transform.identity
+  end
+
+  local moveDir = moveThisFrame:normalize()
+  local useX = math.abs(moveDir.x) > math.abs(moveDir.y)
+  local offset = useX and basketBounds.halfSize.x or basketBounds.halfSize.y
+
+  local basketIgnoreTable = {
+    collideType = nearby.COLLISION_TYPE.Default,
+    ignore = myBasket,
+  }
+
+  local center = basketBounds.center
+  local centerRay = nearby.castRay(center, center + moveThisFrame + (moveDir * offset), basketIgnoreTable)
+
+  if centerRay.hit then
+    return centerRay.hitNormal
+  end
+
+  for _, vertex in ipairs(basketBounds.vertices) do
+    local vertexRay = nearby.castRay(vertex, vertex + rollThisFrame:apply(moveThisFrame), {
+      ignore = myBasket,
+    })
+    if vertexRay.hit then
+      return vertexRay.hitNormal
+    end
+  end
+end
+
+local function getLowestVertex(object)
+  local box = object:getBoundingBox()
+  local vertex
+
+  for _, boxVertex in ipairs(box.vertices) do
+    if not vertex or boxVertex.z < vertex.z then
+      vertex = boxVertex
+    end
+  end
+
+  assert(vertex ~= nil, "Failed to find the lowest vertex of the bounding box!")
+
+  return vertex
+end
+
+function BasketFuncs.getVerticalVertex(basket, down)
+  assert(basket, "")
+  local viewDistance = camera.getViewDistance()
+  local rangeLow = down and 1 or 5
+  local rangeHigh = down and 4 or 8
+
+  local box = basket:getBoundingBox()
+  local startPos = util.vector3(box.center.x, box.center.y, box.center.z - box.halfSize.z)
+  local downCast = nearby.castRay(
+    startPos,
+    util.vector3(box.center.x, box.center.y, box.center.z + (down and -viewDistance or viewDistance)),
+    { ignore = basket }
+  )
+
+  if downCast.hit then
+    return box.center, downCast
+  end
+
+  -- The lower 4 verts are the minimums of the box
+  local vertices = box.vertices
+  for i = rangeLow, rangeHigh do
+    local vertex = vertices[i]
+    downCast = nearby.castRay(
+      vertex,
+      util.vector3(vertex.x, vertex.y, vertex.z + (down and -viewDistance or viewDistance)),
+      { ignore = basket }
+    )
+
+    if downCast.hit then
+      return vertex, downCast
+    end
+  end
+end
+
+local GravityForce = 98.1 * 2
+local MinDistanceToGround = 10
+local DTMult = 8
+
+local jumpDist = 0
+local JumpTargetDistance = 120
+local JumpPerSecond = 800
+
+local DeadZone = 2
+BasketFuncs.getPerFrameGravity = function(dt)
+  if isJumping then
+    local jumpThisFrame = JumpPerSecond * dt
+    jumpDist = jumpDist + jumpThisFrame
+
+    if jumpDist <= JumpTargetDistance then
+      return jumpThisFrame
+    else
+      isJumping = false
+      jumpDist = 0
+    end
+  end
+
+  local fallAcceleration = GravityForce * dt
+
+  local startPos = getLowestVertex(myBasket)
+  local _, groundResult = BasketFuncs.getVerticalVertex(myBasket, true)
+
+  if not groundResult or not groundResult.hitPos then
+    local _, upResult = BasketFuncs.getVerticalVertex(myBasket, false)
+
+    if upResult and upResult.hit and upResult.hitPos then
+      return (upResult.hitPos.z - startPos.z) * dt * DTMult
+    else
+      -- If they get stuck, then, they're stuck, so apply a little gravity and allow jumping
+      canJump = true
+      return -0.01 * dt
+    end
+  end
+
+  local distanceToGround = math.floor(getLowestVertex(myBasket).z - groundResult.hitPos.z)
+
+  if distanceToGround < MinDistanceToGround then
+    -- Basket is too close to the ground; nudge it up smoothly
+
+    canJump = true
+    local targetHeight = MinDistanceToGround - distanceToGround
+    local nudgeFactor = math.min(1, targetHeight / MinDistanceToGround)
+    return targetHeight * nudgeFactor
+  elseif distanceToGround > MinDistanceToGround + DeadZone then
+    -- Basket is too far from the ground; apply gravity smoothly
+
+    canJump = false
+    return -math.min(distanceToGround, fallAcceleration)
+  else
+    -- Basket is within the dead zone; no adjustment needed
+
+    canJump = true
+    return 0
+  end
+end
+
+BasketFuncs.handleBasketCollision = function(movementVector, collisionNormal)
+  collisionNormal = collisionNormal:normalize()
+
+  local dotProduct = movementVector:dot(collisionNormal)
+
+  -- I'm not actually sure why this would happen.
+  if dotProduct == 0 then
+    return
+  end
+
+  -- For collisions which are not especially significant in either direction
+  -- just process the move
+  if math.abs(dotProduct) < 0.5 then
+    return movementVector
+  end
+
+  -- Most collisions return negative values, greater than 0.5
+  -- So those are the ones we ignore
+  -- Past this, are collisions which are severe enough to need adjustment, but
+  -- not so severe as to be completely invalid
+  if dotProduct < 0 and math.abs(dotProduct) > 0.5 then
+    return
+  end
+
+  -- Subtract the "into the surface" component from the movement vector
+  -- This leaves us with a vector that's parallel to the surface
+  local slideVector = movementVector - (collisionNormal * dotProduct)
+
+  -- Adjust friction based on the collision angle
+  -- Steeper angles (higher dotProduct) result in less friction
+  local friction = 1 - (dotProduct * 0.5) -- Adjust the multiplier as needed
+
+  slideVector = slideVector * friction
+
+  return slideVector
+end
+
+local MovementLocked = false
+-- local TestMove = math.random(-1, 1)
+-- local TestSideMove = math.random(-1, 1)
+
+local TestMove = 1
+local TestSideMove = -1
+
+BasketFuncs.handleBasketMove = function(dt)
+  if self.controls.sneak then
+    self.controls.sneak = false
+  end
+
+  if not myBasket then
+    return
+  end
+
+  local movement
+  local sideMovement
+  if DoTest then
+    movement = TestMove
+    sideMovement = TestSideMove
+  else
+    movement = input.getRangeActionValue("MoveForward") - input.getRangeActionValue("MoveBackward")
+    sideMovement = input.getRangeActionValue("MoveRight") - input.getRangeActionValue("MoveLeft")
+  end
+
+  -- local run = input.getBooleanActionValue("Run") ~= movementSettings:get("alwaysRun")
+
+  local xyMoveThisFrame = BasketFuncs.getPerFrameMovement(dt, sideMovement, movement)
+
+  local rollThisFrame = BasketFuncs.getPerFrameRollTransform(sideMovement, movement, myBasket.rotation)
+
+  -- Don't process z movement during collision handling, since the script will try to correct your position
+  local basketCollisionNormal = BasketFuncs.basketIsColliding(xyMoveThisFrame, rollThisFrame)
+  if basketCollisionNormal then
+    local slideVector = BasketFuncs.handleBasketCollision(xyMoveThisFrame, basketCollisionNormal)
+    if slideVector then
+      xyMoveThisFrame = slideVector
+    else
+      xyMoveThisFrame = util.vector3(0, 0, 0)
+    end
+  end
+
+  local gravityMove = BasketFuncs.getPerFrameGravity(dt)
+
+  local moveThisFrame =
+      util.vector3(MovementLocked and 0 or xyMoveThisFrame.x, MovementLocked and 0 or xyMoveThisFrame.y, gravityMove)
+
+  BasketFuncs.handleCameraMove(moveThisFrame)
+
+  core.sendGlobalEvent("S3_BasketMode_BasketMove", {
+    rollThisFrame = rollThisFrame,
+    basket = myBasket,
+    moveThisFrame = moveThisFrame,
+    target = self.object,
+  })
+end
+
+---@return #core.gameObject|nil
+BasketFuncs.getBasket = function()
+  local equippedRobe = self.type.getEquipment(self, RobeSlot)
+
+  if equippedRobe and equippedRobe.recordId == BasketData.DefaultRobeId then
+    return equippedRobe
+  end
+end
+
+BasketFuncs.getGroundPos = function()
+  local height = self:getBoundingBox().halfSize.z * 2
+  local pos = self.position
+
+  local rayStart = util.vector3(pos.x, pos.y, pos.z + height)
+  local rayEnd = util.vector3(pos.x, pos.y, pos.z - camera.getViewDistance())
+
+  local rayHit = nearby.castRay(rayStart, rayEnd, {
+    collisionType = nearby.COLLISION_TYPE.AnyPhysical,
+    ignore = self.object,
+  })
+
+  if rayHit.hit and rayHit.hitPos then
+    return rayHit.hitPos
+  end
+end
+
+local HardMode = true
+BasketFuncs.equipBasket = function()
+  local currentEquipment = self.type.getEquipment(self)
+
+  if not HardMode then
+    if not BasketFuncs.getBasket() then
+      currentEquipment[RobeSlot] = BasketData.DefaultRobeId
+
+      self.type.setEquipment(self, currentEquipment)
+    end
+  else
+    local allowedEquipment = {}
+
+    for slot, item in pairs(currentEquipment) do
+      if HARD_MODE_ALLOWED_SLOTS[slot] then
+        allowedEquipment[slot] = item
+      end
+    end
+
+    allowedEquipment[RobeSlot] = BasketData.DefaultRobeId
+
+    self.type.setEquipment(self, allowedEquipment)
+  end
+
+  if not BasketFuncs.getBasket() then
+    local UIMode = I.UI.getMode()
+    if UIMode and UIMode == "Interface" then
+      I.UI.setMode()
+      ui.showMessage("You have become one with the basket. It may not be removed . . .")
+    end
+  end
+end
+
+BasketFuncs.forceHasBasket = function()
+  local basketCount = Inventory:countOf(BasketData.DefaultRobeId)
+
+  if basketCount >= 1 then
+    return
+  end
+
+  core.sendGlobalEvent("S3_BasketMode_AddBasket", self.object)
+end
+
+BasketFuncs.isBasket = function()
+  return CurrentTransformState == TransformStates.Basket
+end
+
+BasketFuncs.basketOnFrame = function(dt)
+  BasketFuncs.forceHasBasket()
+  BasketFuncs.equipBasket()
+
+  -- print(TransformStarted, IsTransforming)
+  if CurrentTransformState == TransformStates.Start or CurrentTransformState == TransformStates.End then
+    -- print("processing transformation . . .")
+    BasketFuncs.toggleBasket()
+  elseif CurrentTransformState == TransformStates.Basket then
+    BasketFuncs.handleBasketMove(dt)
+  end
+end
+
+return {
+  eventHandlers = {
+    S3_BasketMode_BasketToPlayer = function(basket)
+      assert(basket, "Received basket assignment event with no basket!")
+      myBasket = basket
+      I.Controls.overrideCombatControls(true)
+      I.Controls.overrideUiControls(true)
+      I.Controls.overrideMovementControls(true)
+      CurrentTransformState = TransformStates.Basket
+    end,
+    S3_BasketMode_BasketOff = function()
+      print("BasketOff Event:", self.cell, self.position)
+      I.Controls.overrideCombatControls(false)
+      I.Controls.overrideUiControls(false)
+      I.Controls.overrideMovementControls(false)
+      -- self.type.setTeleportingEnabled(self, true)
+      CurrentTransformState = TransformStates.Normal
+      myBasket = nil
+    end,
+  },
+  engineHandlers = {
+    onFrame = BasketFuncs.basketOnFrame,
+    onKeyPress = function(key)
+      if not BasketFuncs.isBasket() then
+        return
+      end
+
+      if key.code == input.KEY.Tab then
+        MovementLocked = not MovementLocked
+      end
+    end,
+  },
+}

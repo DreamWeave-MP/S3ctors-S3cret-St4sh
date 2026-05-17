@@ -1,0 +1,140 @@
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local I = require 'openmw.interfaces'
+
+---@class WeaponIndicatorConstructor
+---@field Constants H4NDConstants
+---@field enchantFrameVisible boolean
+---@field durabilityColor util.color
+---@field weaponIcon string
+---@field weaponHealth number
+---@field barSize util.vector2
+---@field dragEvents table<string, function>
+---@field useDebug boolean
+---@field H4ND H4ND
+
+---@param constructor WeaponIndicatorConstructor
+return function(constructor)
+    local Attrs, Vectors = constructor.Constants.Attrs, constructor.Constants.Vectors
+
+    local width = constructor.H4ND.WeaponIndicatorSize
+    return ui.create {
+        name = 'WeaponIndicator',
+        layer = constructor.useDebug and 'Windows' or 'HUD',
+        props = {
+            anchor = constructor.H4ND.WeaponIndicatorAnchor,
+            relativePosition = constructor.H4ND.WeaponIndicatorPos,
+            relativeSize = util.vector2(width, width),
+        },
+        events = constructor.dragEvents,
+        content = ui.content {
+            {
+                type = ui.TYPE.Flex,
+                name = 'WeaponIndicator',
+                props = {
+                    autoSize = false,
+                    relativeSize = constructor.Constants.Vectors.BottomRight,
+                },
+                content = ui.content {
+                    {
+                        name = 'WeaponIconBox',
+                        template = I.MWUI.templates.borders,
+                        props = {
+                            relativeSize = Attrs.IndicatorSize(),
+                        },
+                        content = ui.content {
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'WeaponBackground',
+                                props = {
+                                    resource = ui.texture { path = 'white' },
+                                    relativeSize = Vectors.BottomRight,
+                                    color = constructor.Constants.Colors.Black,
+                                    alpha = 0.5,
+                                },
+                            },
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'EnchantFrame',
+                                props = {
+                                    resource = ui.texture {
+                                        path = 'textures/menu_icon_magic_equip.dds',
+                                        offset = util.vector2(2, 2),
+                                        size = util.vector2(40, 40)
+                                    },
+                                    relativeSize = Vectors.BottomRight,
+                                    visible = constructor.enchantFrameVisible,
+                                }
+                            },
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'WeaponIcon',
+                                props = {
+                                    resource = ui.texture { path = constructor.weaponIcon },
+                                    relativeSize = Vectors.BottomRight,
+                                }
+                            },
+                        }
+                    },
+                    {
+                        name = 'DurabilityBarContainer',
+                        template = I.MWUI.templates.borders,
+                        props = {
+                            relativeSize = Attrs.BarContainer(),
+                        },
+                        content = ui.content {
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'DurabilityBarBackground',
+                                props = {
+                                    resource = ui.texture { path = 'white' },
+                                    relativeSize = Vectors.BottomRight,
+                                    color = constructor.Constants.Colors.Black,
+                                    alpha = 0.5,
+                                },
+                            },
+                            {
+                                type = ui.TYPE.Image,
+                                name = 'DurabilityBar',
+                                props = {
+                                    resource = ui.texture { path = 'white' },
+                                    relativeSize = util.vector2(constructor.weaponHealth, 1),
+                                    color = constructor.durabilityColor,
+                                },
+                            },
+                        }
+                    },
+                }
+            },
+            {
+                name = 'DebugContent',
+                props = {
+                    visible = constructor.useDebug,
+                    relativeSize = Vectors.BottomRight,
+                },
+                content = ui.content {
+                    {
+                        type = ui.TYPE.Image,
+                        props = {
+                            relativeSize = Vectors.BottomRight,
+                            alpha = .5,
+                            resource = ui.texture { path = 'white', },
+                            color = util.color.hex('8b008b'),
+                        },
+                    },
+                    {
+                        template = I.MWUI.templates.textHeader,
+                        props = {
+                            anchor = Vectors.Center,
+                            relativePosition = Vectors.Center,
+                            textAlignH = ui.ALIGNMENT.Center,
+                            textAlignV = ui.ALIGNMENT.Center,
+                            text = 'Weapon Container',
+                        },
+                    }
+                }
+            },
+        }
+    }
+end

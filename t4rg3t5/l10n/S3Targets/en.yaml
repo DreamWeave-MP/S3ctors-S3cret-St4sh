@@ -1,0 +1,75 @@
+CheckLOSName: Use Line-of-Sight Checks
+CheckLOSDesc: If enabled, uses line of sight to break target locking if you can\t see the enemy. DISabled by default to improve performance.
+
+DisableLockWhenSheathingName: Remove Target When Sheathing
+DisableLockWhenSheathingDesc: If enabled, your currently locked target will be unset when you sheath your weapon.
+
+EnableFlickSwitchName: Enable Flick Targeting
+EnableFlickSwitchDesc: When a target has already been locked, you can quickly switch between targets by moving mouse left or right if this setting is enabled.
+
+EnableHitBounceName: Enable Hit Indicators
+EnableHitBounceDesc: When enabled, the target lock icon will grow and shrink somewhat when you hit the locked target.
+
+FlickSwitchDistanceName: Flick Switch Distance
+FlickSwitchDistanceDesc: The overall horizontal distance your cursor (mouse) should move to change targets to the left, or right. You'll switch targets according to which direction your mouse moves in.
+
+HitBounceSizeName: Hit Indicator Growth
+HitBounceSizeDesc: This is how much the lock icon grows and shrinks when a target is hit.
+
+LockOnCombatStartName: Lock on Combat Start
+LockOnCombatStartDesc: When enabled, you will automatically lock onto, draw your weapon, and face any target whom starts combat with you if you're not already locked onto someone.
+
+MainPageName: Target Lock Core
+
+S3TargetLockBindingName: Target Lock Toggle
+S3TargetLockBindingDesc: Keybind used to lock onto targets in combat.
+
+SwitchOnDeadTargetName: Auto-Switch on Dead Target
+SwitchOnDeadTargetDesc: If the current target is dead, and this setting is true, a new one will be automatically selected once the dead target has been identified.
+
+TargetColorDName: Dying Target Color
+TargetColorDDesc: Target icon color when the target is between 0-20% health
+
+TargetColorFName: Full Target Color
+TargetColorFDesc: Target icon color when the target is at or above 100% health
+
+TargetColorHName: Healthy Target Color
+TargetColorHDesc: Target icon color when the target is between 60-80% health
+
+TargetColorVHName: Very Healthy Target Color
+TargetColorVHDesc: Target icon color when the target is between 80-100% health
+
+TargetColorVWName: Very Wounded Target Color
+TargetColorVWDesc: Target icon color when the target is between 20-40% health
+
+TargetColorWName: Wounded Target Color
+TargetColorWDesc: Target icon color when the target is between 40-60% health
+
+TargetLockActionName: ""
+TargetLockActionDesc: ""
+
+TargetLockIconName: Target Lock Icon
+TargetLockIconDesc: |-
+  Icon used for target locking.
+  Custom icons can be added in the relative VFS dir textures/s3/crosshair.
+  For health coloration to work, it is suggested to make all icons black/white.
+
+TargetLockPageName: T4rg3t5
+TargetLockPageDescription: |-
+  Controls target locking behavior, including when (if at all) to automatically select targets,
+  icon colors and animations, icon size, and key bindings.
+
+TargetLockToggleName: Enabled
+TargetLockToggleDesc: If set to false, target locking is completely disabled. Recommended to leave enabled.
+
+TargetMaxDistanceName: Maximum Target Distance
+TargetMaxDistanceDesc: Distance from the locked target at which the icon will be at minimum size.
+
+TargetMaxSizeName: Maximum Target Size
+TargetMaxSizeDesc: Distance from the locked target at which the icon will be at maximum size.
+
+TargetMinDistanceName: Minimum Target Distance
+TargetMinDistanceDesc: Distance from the locked target at which the icon will be at minimum size.
+
+TargetMinSizeName: Minimum Target Size
+TargetMinSizeDesc: Size of the targeting icon at minimum distance.

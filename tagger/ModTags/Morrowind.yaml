@@ -1,0 +1,20 @@
+tags:
+  - "ArmorDwarven"
+  - "ArmorUnique"
+  - "CellDungeon"
+  - "CellMerchant"
+  - "WeaponDwarven"
+  - "WeaponIron"
+  - "WeaponIronUnique"
+  - "WeaponUnique"
+  - "WeaponDagger"
+  - "WeaponDaggerUnique"
+
+applied_tags:
+  "dwe_jinksword_curse_unique":
+      - "WeaponDwarven"
+      - "WeaponUnique"
+  "stormkiss":
+    - "WeaponUnique"
+  "Seyda Neen, Arrille's Tradehouse":
+    - "CellMerchant"
