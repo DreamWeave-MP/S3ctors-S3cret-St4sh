@@ -8,8 +8,6 @@ local mgMatches = {
     disallowed = {},
 }
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type ValidPlaylistCallback
 local function mgOrCellRule(playback)
     return not playback.state.isInCombat

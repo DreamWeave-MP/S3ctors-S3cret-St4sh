@@ -20,8 +20,6 @@ local SolstheimRegions = {
     ['solstheim, lake fjalding'] = true,
 }
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type S3maphorePlaylist[]
 return {
     {

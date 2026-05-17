@@ -43,8 +43,6 @@ local NLSolstheimRegionNames = {
     ['thirsk region'] = true,
 }
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type S3maphorePlaylist[]
 return {
     {

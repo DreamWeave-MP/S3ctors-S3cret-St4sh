@@ -56,8 +56,6 @@ local function solstheimTownRule(playback)
     return playback.rules.cellNameMatch(TownMatches)
 end
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type S3maphorePlaylist[]
 return {
     {

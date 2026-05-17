@@ -1,5 +1,3 @@
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type CellMatchPatterns
 local VivecMatches = {
     allowed = {
