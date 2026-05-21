@@ -1,24 +1,27 @@
 ---
 --- OpenMW Lua Language Server Plugin
---- Enforces module availability based on script context annotations.
+--- Enforces script context annotations and module availability.
 ---
 --- Usage
 --- ------
 --- 1. Add to your LuaLS settings:
----      "runtime.plugin": "./content/annotations/omw_context_plugin.lua"
+---      "runtime.plugin": "./content/cod3x/omw_context_plugin.lua"
 ---
 --- 2. Near the top of each script file, declare its context:
 ---      ---@omw-context global
----    Valid values: global | local | player | menu | load
+---    Valid values: global | local | player | menu | load | none
+---    Use "none" for API-agnostic Lua files that intentionally avoid openmw.*.
 ---
 --- How it works
 --- ------------
 --- When LLS processes a file, this plugin:
 ---   a) caches the file text and parsed context via OnSetText
 ---   b) scans for ---@omw-context <ctx> in that text
----   c) poisons offending require('openmw.*') calls with an undefined global,
+---   c) ignores ---@meta files and plugin/tooling files under /cod3x/
+---   d) poisons missing/invalid context annotations with an undefined global,
+---   e) poisons offending require('openmw.*') calls with an undefined global,
 ---      which makes LuaLS emit its built-in undefined-global diagnostic
----   d) blocks LuaLS module resolution for the same offending modules via
+---   f) blocks LuaLS module resolution for the same offending modules via
 ---      ResolveRequire returning {}
 ---
 --- Context semantics (matches OpenMW docs @context convention)
@@ -28,6 +31,7 @@
 ---   player  : player-specific scripts (superset of local; adds camera, input, ui, …)
 ---   menu    : main menu scripts (no in-world access)
 ---   load    : content file scripts (pre-game data loading)
+---   none    : API-agnostic Lua files that intentionally require no openmw.* modules
 ---
 --- NOTE on LLS plugin API compatibility
 --- -------------------------------------
@@ -94,7 +98,10 @@ local AVAILABILITY = {
     ["openmw.menu"]           = { menu = true },
 }
 
-local VALID_CONTEXTS = { global = true, ["local"] = true, player = true, menu = true, load = true }
+local VALID_CONTEXTS = { global = true, ["local"] = true, player = true, menu = true, load = true, none = true }
+
+local MISSING_CONTEXT_POISON = "__OMW_CONTEXT_ERROR_missing_omw_context_add_none_if_api_agnostic__"
+local INVALID_CONTEXT_POISON = "__OMW_CONTEXT_ERROR_invalid_omw_context__"
 
 local fileCache = {}
 
@@ -108,6 +115,24 @@ local fileCache = {}
 ---@return string?
 local function parseContext(text)
     return text:match("%-%-%-%s*@omw%-context%s+(%S+)")
+end
+
+--- Return true if a file is a LuaLS doc/meta annotation file.
+---@param text string
+---@return boolean
+local function hasMetaAnnotation(text)
+    return text:match("%-%-%-%s*@meta%f[%W]") ~= nil
+end
+
+--- Return true if context annotations should be enforced for this URI.
+---@param uri string?
+---@return boolean
+local function isContextRequiredForUri(uri)
+    if not uri or not uri:match("%.lua$") then
+        return false
+    end
+
+    return uri:find("/cod3x/", 1, true) == nil
 end
 
 --- Return the line prefix before a Lua line comment, ignoring -- inside strings.
@@ -171,6 +196,21 @@ local function poisonName(ctx, moduleName)
     return "__OMW_CONTEXT_ERROR_" .. contextPart .. "_cannot_require_" .. modulePart .. "__"
 end
 
+--- Insert an undefined global for a missing or invalid context annotation.
+---@param diffs table[]
+---@param ctx string?
+local function insertContextPoisonDiff(diffs, ctx)
+    if ctx and VALID_CONTEXTS[ctx] then
+        return
+    end
+
+    table.insert(diffs, {
+        start = 1,
+        finish = 0,
+        text = "local _ = " .. (ctx and INVALID_CONTEXT_POISON or MISSING_CONTEXT_POISON) .. "\n",
+    })
+end
+
 --- Return true if a require should be blocked/poisoned in this source context.
 ---@param ctx string?
 ---@param moduleName string
@@ -181,6 +221,10 @@ local function shouldReject(ctx, moduleName)
     end
 
     if not ctx or not VALID_CONTEXTS[ctx] then
+        return true
+    end
+
+    if ctx == "none" then
         return true
     end
 
@@ -311,14 +355,23 @@ end
 ---@param text string
 ---@return table[]?   -- nil = don't modify the text
 function OnSetText(uri, text)
-    if uri:match("%.lua$") then
+    if isContextRequiredForUri(uri) then
         local ctx = parseContext(text)
-        fileCache[uri] = { context = ctx }
+        local isMeta = hasMetaAnnotation(text)
+        fileCache[uri] = { context = ctx, meta = isMeta }
+
+        if isMeta then
+            return nil
+        end
 
         local diffs = makePoisonDiffs(text, ctx)
+        insertContextPoisonDiff(diffs, ctx)
+
         if #diffs > 0 then
             return diffs
         end
+    elseif uri and uri:match("%.lua$") then
+        fileCache[uri] = nil
     end
 
     return nil
@@ -335,8 +388,16 @@ function ResolveRequire(rootUri, moduleName, sourceUri)
         return nil
     end
 
+    if sourceUri and not isContextRequiredForUri(sourceUri) then
+        return nil
+    end
+
     local cached = sourceUri and fileCache[sourceUri]
     if not cached then
+        return nil
+    end
+
+    if cached.meta then
         return nil
     end
 
