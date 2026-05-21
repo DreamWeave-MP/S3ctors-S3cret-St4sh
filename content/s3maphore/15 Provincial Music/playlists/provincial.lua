@@ -1,4 +1,5 @@
 ---@module 'doc.playlistEnv'
+---@module 'doc.s3maphoreTypes'
 
 local mainlandRegions = {
     ['shipal-shin region'] = true,
@@ -60,7 +61,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return not Playback.state.isInCombat and cyrodiilRegions[Playback.state.self.cell.region]
+            return not Playback.state.isInCombat and cyrodiilRegions[Playback.state.nearestRegion]
         end,
     },
     {
@@ -69,7 +70,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return not Playback.state.isInCombat and skyrimRegions[Playback.state.self.cell.region]
+            return not Playback.state.isInCombat and skyrimRegions[Playback.state.nearestRegion]
         end,
     },
     {
@@ -78,7 +79,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return not Playback.state.isInCombat and mainlandRegions[Playback.state.self.cell.region]
+            return not Playback.state.isInCombat and mainlandRegions[Playback.state.nearestRegion]
         end,
     },
     {
@@ -87,7 +88,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return not Playback.state.isInCombat and solstheimRegions[Playback.state.self.cell.region]
+            return not Playback.state.isInCombat and solstheimRegions[Playback.state.nearestRegion]
         end,
     },
     {
@@ -96,7 +97,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return Playback.state.isInCombat and cyrodiilRegions[Playback.state.self.cell.region]
+            return Playback.state.isInCombat and cyrodiilRegions[Playback.state.nearestRegion]
         end,
     },
     {
@@ -105,7 +106,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return Playback.state.isInCombat and skyrimRegions[Playback.state.self.cell.region]
+            return Playback.state.isInCombat and skyrimRegions[Playback.state.nearestRegion]
         end,
     },
     {
@@ -114,7 +115,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return Playback.state.isInCombat and mainlandRegions[Playback.state.self.cell.region]
+            return Playback.state.isInCombat and mainlandRegions[Playback.state.nearestRegion]
         end,
     },
     {
@@ -123,7 +124,7 @@ return {
         randomize = true,
 
         isValidCallback = function()
-            return Playback.state.isInCombat and solstheimRegions[Playback.state.self.cell.region]
+            return Playback.state.isInCombat and solstheimRegions[Playback.state.nearestRegion]
         end,
     },
 }

@@ -1,3 +1,5 @@
+---@module 'doc.playlistEnv'
+
 ---@type IDPresenceMap
 local FelsaadRegions = {
     ['felsaad coast region'] = true,
@@ -26,18 +28,18 @@ local TownMatches = {
 }
 
 ---@type ValidPlaylistCallback
-local function felsaadRegionRule(playback)
-    return playback.rules.region(FelsaadRegions)
+local function felsaadRegionRule()
+    return Playback.rules.region(FelsaadRegions)
 end
 
 ---@type ValidPlaylistCallback
-local function hirstaangRegionRule(playback)
-    return playback.state.self.cell.region == 'hirstaang forest region'
+local function hirstaangRegionRule()
+    return Playback.state.nearestRegion == 'hirstaang forest region'
 end
 
 ---@type ValidPlaylistCallback
-local function isinfierRegionRule(playback)
-    return playback.state.self.cell.region == 'isinfier plains region'
+local function isinfierRegionRule()
+    return Playback.state.nearestRegion == 'isinfier plains region'
 end
 
 ---@type ValidPlaylistCallback
@@ -48,7 +50,7 @@ end
 
 ---@type ValidPlaylistCallback
 local function moesringRegionRule(playback)
-    return playback.state.self.cell.region == 'moesring mountains region'
+    return playback.state.nearestRegion == 'moesring mountains region'
 end
 
 ---@type ValidPlaylistCallback
