@@ -7,6 +7,7 @@
     "runtime": {
         "version": "LuaJIT",
         "pathStrict": false,
+        "plugin": "./content/annotations/omw_context_plugin.lua",
         "path": [
             "./content/baldurwind/?.lua",
             "./content/birr/?.lua",
@@ -36,7 +37,7 @@
         ]
     },
     "workspace.library": [
-        "../starwind-builder/src/Community Patch Project/Scripts/doc/?.lua",
+        "./content/annotations/",
         "content/s3maphore/?.lua"
     ]
 }
