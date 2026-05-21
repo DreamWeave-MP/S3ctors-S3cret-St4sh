@@ -1,4 +1,5 @@
 ---@module 'doc.s3maphoreTypes'
+---@omw-context player
 
 local core = require 'openmw.core'
 local gameSelf = require 'openmw.self'

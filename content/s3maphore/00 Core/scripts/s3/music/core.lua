@@ -1,4 +1,5 @@
 ---@module 'doc.s3maphoreTypes'
+---@omw-context player
 
 local ambient                = require 'openmw.ambient'
 local async                  = require 'openmw.async'

@@ -1,3 +1,5 @@
+---@omw-context none
+
 ---@alias S3maphoreStateChangeReason
 ---| 'DIED'
 ---| 'DSBL'

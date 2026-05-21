@@ -1,3 +1,5 @@
+---@omw-context none
+
 ---@class PlaylistState
 ---@field cellHasWater boolean whether the current cell has water or not
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)

@@ -1,3 +1,5 @@
+---@omw-context player
+
 --- This is a little wacky as we violate normal import order rules here but it's
 --- more convenient to import things which will work across engines and then pull in other things
 --- in an API-specific manner

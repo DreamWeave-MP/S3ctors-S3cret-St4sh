@@ -1,3 +1,5 @@
+---@omw-context player
+
 local activePlaylistSettings, ambient, core, gameSelf, vfs
 
 --- FIXME: This isn't API-agnostic, but, I don't care ATM

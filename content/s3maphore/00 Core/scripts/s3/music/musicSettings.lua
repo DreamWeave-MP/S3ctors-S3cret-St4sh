@@ -1,3 +1,5 @@
+---@omw-context player
+
 local musicUtil = require 'scripts.s3.music.util'
 
 ---@class S3maphoreCoreSettings: UpdatingSettingTable
