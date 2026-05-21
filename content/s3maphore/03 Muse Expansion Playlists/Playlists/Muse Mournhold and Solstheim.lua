@@ -1,3 +1,5 @@
+---@module 'doc.playlistEnv'
+
 ---@type CellMatchPatterns
 local MournholdMatches = {
     allowed = {
@@ -29,9 +31,9 @@ return {
 
         --- For *actual* mournhold by Bethesda, you will never be in a true exterior, but a quasi-exterior
         --- However the PlaybackState indicates true for real and fake exteriors
-        isValidCallback = function(playback)
-            return not playback.state.self.cell.isExterior
-                and playback.rules.cellNameMatch(MournholdMatches)
+        isValidCallback = function()
+            return not Playback.state.cellIsExterior
+                and Playback.rules.cellNameMatch(MournholdMatches)
         end,
     },
     {

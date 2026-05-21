@@ -163,7 +163,6 @@ exclusions = {
 ---@field contentFiles string[] array of all unique content files which placed statics in this cell
 
 ---@class PlaylistState
----@field self userdata the player actor
 ---@field playlistTimeOfDay TimeMap the time of day for the current playlist
 ---@field isInCombat boolean whether the player is in combat or not
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
@@ -214,7 +213,7 @@ return {
         randomize = true,
 
         isValidCallback = function(playback)
-            return playback.state.self.cell.id == 'nar shaddaa, club arkngthand'
+            return playback.state.cellId == 'nar shaddaa, club arkngthand'
         end,
     }
 }
