@@ -1,3 +1,5 @@
+---@omw-context player
+
 local util = require 'openmw.util'
 local vfs = require 'openmw.vfs'
 

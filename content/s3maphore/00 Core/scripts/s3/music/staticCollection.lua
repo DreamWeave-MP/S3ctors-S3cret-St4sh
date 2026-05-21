@@ -1,3 +1,5 @@
+---@omw-context global
+
 local types = require 'openmw.types'
 local world = require 'openmw.world'
 

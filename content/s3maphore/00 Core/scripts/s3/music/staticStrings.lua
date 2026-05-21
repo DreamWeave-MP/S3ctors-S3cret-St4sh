@@ -1,3 +1,5 @@
+---@omw-context none
+
 --- Log strings utilized across S3maphore.
 --- These are not localized because I only speak English.
 ---@class S3maphoreStaticStrings
