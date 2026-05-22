@@ -7,9 +7,7 @@ local ui
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
-
-local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
+local s3lf = I.s3.lf
 
 ---@class PoiseIcon: ProtectedTable
 ---@field PoiseHUDPos util.vector2
@@ -19,6 +17,7 @@ local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
 ---@field PoiseHUDUpdateDelay integer
 local PoiseIcon
 local SWITCH
+local isPlayer = s3lf.actorType == 0
 if isPlayer then
     ui = require 'openmw.ui'
     SWITCH = s3lf.CONTROL_SWITCH
@@ -264,7 +263,7 @@ function Poise.hitDamage(value)
     Poise.state.currentPoise = math.max(0, math.floor(Poise.get() - value))
     if Poise.get() ~= 0 or Poise.isBroken() then return end
 
-    s3lf.gameObject:sendEvent('CHIMPoiseBreak')
+    s3lf:sendEvent('CHIMPoiseBreak')
     return true
 end
 
@@ -490,7 +489,7 @@ if isPlayer then
 
         local element = self.state.element
         local props = element.layout.props
-        local shouldShow = s3lf.isInCombat or I.UI.getMode() == 'MainMenu'
+        local shouldShow = s3lf.isInCombat() or I.UI.getMode() == 'MainMenu'
 
         local alphaUpdated = false
         if shouldShow and props.alpha < 1.00 then
@@ -608,7 +607,7 @@ return {
                     }
                 )
 
-                if types.Player.objectIsInstance(s3lf.gameObject) then
+                if isPlayer then
                     toggleAllControls(false)
                 end
             end

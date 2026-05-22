@@ -5,6 +5,11 @@ local types = require 'openmw.types'
 
 local LogMessage = require 'scripts.s3.logmessage'
 
+local assert, rawset, pairs, type = assert, rawset, pairs, type
+
+local isPlayer = types.Player.objectIsInstance(gameSelf)
+local ui = isPlayer and require 'openmw.ui'
+
 local function pairsByKeys(t, f)
   local a = {}
   for n in pairs(t) do table.insert(a, n) end
@@ -22,7 +27,7 @@ local function pairsByKeys(t, f)
 end
 
 ---@type ShadowTableSubscriptionHandler
-local function defaultSubscribeHandler(shadowSettings, group, groupName, key)
+local function defaultSubscribeHandler(shadowSettings, group, _, key)
   shadowSettings[key] = group:get(key)
 end
 
@@ -41,7 +46,6 @@ end
 ---@field private shadowSettings ShadowSettingsTable Cached copies of setting values returned by the index method. Do NOT work with this directly.
 ---@field private thisGroup StorageSection Storage section this ProtectedTable owns. Do not work with this directly, instead iterate over or index the ProtectedTable.
 ---@field state table a writable table to store arbitrary values in
----@field getState fun(): table return the entire inner state table
 ---@field notifyPlayer fun(any) shorthand to display all arguments as a table in a Morrowind MessageBox from a protectedTable. Only works on player scripts.
 ---@field debugLog fun(...) If debug logging setting is enabled, then prints the arguments to log, as a concatenated table
 ---@field interface fun(handler: IndexFunction) Helper function to provide more convenience when binding a protectedTable into an interface
@@ -70,17 +74,14 @@ local function new(constructorData)
 
   assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
   local testKey, testValue = next(requestedGroup:asTable())
-  local groupIsWritable = pcall(function() requestedGroup:set(testKey, testValue) end)
+  local groupIsWritable = pcall(requestedGroup.set, requestedGroup, testKey, testValue)
 
-  local proxy = {
-    thisGroup = requestedGroup,
-    shadowSettings = {},
-  }
+  local methods, proxy, shadowSettings, state = {}, {}, {}, {}
 
   requestedGroup:subscribe(
     async:callback(
       function(group, key)
-        defaultSubscribeHandler(proxy.shadowSettings, requestedGroup, group, key)
+        defaultSubscribeHandler(shadowSettings, requestedGroup, group, key)
       end)
   )
 
@@ -90,31 +91,29 @@ local function new(constructorData)
     requestedGroup:subscribe(
       async:callback(
         function(group, key)
-          constructorData.subscribeHandler(proxy.shadowSettings, requestedGroup, group, key)
+          constructorData.subscribeHandler(shadowSettings, requestedGroup, group, key)
         end
       )
     )
   end
 
-  local state = {}
-  local methods = {}
   local managerString = constructorData.managerName or constructorData.inputGroupName
 
-  function proxy.debugLog(...)
-    if not proxy.DebugLog then return end
+  function methods.debugLog(...)
+    if not shadowSettings.DebugEnable then return end
+
     print(constructorData.logPrefix, table.concat({ ... }, ' '))
   end
 
-  function proxy.notifyPlayer(...)
-    if gameSelf.type ~= types.Player or not proxy.MessageEnable then return end
-    require('openmw.ui').showMessage(constructorData.logPrefix .. ' ' .. table.concat({ ... }, ' '))
+  if isPlayer then
+    function methods.notifyPlayer(...)
+      if not shadowSettings.MessageEnable then return end
+
+      ui.showMessage(constructorData.logPrefix .. ' ' .. table.concat({ ... }, ' '))
+    end
   end
 
-  function proxy.getState()
-    return state
-  end
-
-  function proxy.interface(handlerFunction)
+  function methods.interface(handlerFunction)
     assert(type(handlerFunction) == 'function')
 
     return setmetatable({},
@@ -125,47 +124,35 @@ local function new(constructorData)
       })
   end
 
-  local handlers = {
-    debugLog = function()
-      return proxy.debugLog
-    end,
-    state = function()
-      return state
-    end,
-    DebugLog = function()
-      return requestedGroup:get('DebugEnable')
-    end,
-    MessageEnable = function()
-      return requestedGroup:get('MessageEnable')
-    end,
-  }
-
   local meta = {
     __metatable = 'S3ProtectedTable',
     __index = function(_, key)
-      local indexHandler = handlers[key]
-      if indexHandler then return indexHandler() end
+      if key == 'state' then return state end
 
-      local result
-      for _, table in ipairs { proxy.shadowSettings, methods, proxy.state } do
-        result = table[key]
-        if result ~= nil then return result end
-      end
+      local result = shadowSettings[key]
+      if result ~= nil then return result end
 
-      local savedValue = proxy.thisGroup:get(key)
-      proxy.shadowSettings[key] = savedValue
+      result = methods[key]
+      if result ~= nil then return result end
+
+      result = state[key]
+      if result ~= nil then return result end
+
+      local savedValue = requestedGroup:get(key)
+      shadowSettings[key] = savedValue
 
       return savedValue
     end,
     __newindex = function(_, key, value)
       if key == 'state' and type(value) == 'table' then
-        state = value
+        for k in pairs(state) do state[k] = nil end
+        for k, v in pairs(value) do state[k] = v end
       elseif state[key] ~= nil and type(value) ~= 'function' then
         state[key] = value
       elseif type(value) ~= 'function' or
           (type(value) ~= 'table' and key == 'state') then
         if groupIsWritable then
-          proxy.shadowSettings[key] = value
+          shadowSettings[key] = value
           requestedGroup:set(key, value)
         else
           error(
@@ -186,11 +173,11 @@ This table is not writable and values must be updated through its associated sto
       local methodParts = {}
       local stateParts = {}
 
-      for key, value in pairsByKeys(proxy.thisGroup:asTable()) do
+      for key, value in pairsByKeys(requestedGroup:asTable()) do
         members[#members + 1] = string.format('        %s = %s', tostring(key), tostring(value))
       end
 
-      for key, value in pairsByKeys(proxy.getState()) do
+      for key, value in pairsByKeys(state) do
         stateParts[#stateParts + 1] = string.format('        %s = %s', tostring(key), tostring(value))
       end
 
@@ -211,7 +198,7 @@ This table is not writable and values must be updated through its associated sto
       )
     end,
     __call = function()
-      local settings = proxy.thisGroup:asTable()
+      local settings = requestedGroup:asTable()
       local keys = {}
 
       for key in pairs(settings) do
@@ -230,6 +217,7 @@ This table is not writable and values must be updated through its associated sto
       end
     end,
   }
+
   setmetatable(proxy, meta)
 
   return proxy
@@ -240,10 +228,14 @@ end
 ---@field new fun(ProtectedTableConstructor: ProtectedTableConstructor): ProtectedTable
 local ProtectedTableInterface = {
   interfaceName = 'S3ProtectedTable',
-  interface = setmetatable({}, {
-    __index = function(table, key)
-      if key == 'help' then
-        LogMessage [[
+  interface = setmetatable(
+    {
+      new = new,
+    },
+    {
+      __index = function(_, key)
+        if key == 'help' then
+          LogMessage [[
         The ProtectedTable constructor takes three required arguments:
         logPrefix: string applied as a prefix when using the built-in debugLog function
         inputGroupName: A settings group to which this table will attached
@@ -254,12 +246,11 @@ local ProtectedTableInterface = {
 
         To make a new ProtectedTable bound to a settings group, simply call the interface: I.S3ProtectedTable.new { logPrefix = '[ SW4Mounts ]', inputGroupName = 'SettingsGlobalSW4Mounts' }
         ]]
-        return ''
-      elseif key == 'new' then
-        return new
-      end
-    end,
-  })
+          return ''
+        end
+      end,
+    }
+  )
 }
 
 return ProtectedTableInterface
