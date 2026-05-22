@@ -1,5 +1,11 @@
 ---@meta
 
+tes3 = tes3
+
+---@class ReadOnlyTable: table A table, but, one which may not be written to or have its metatable changed
+---@class StrictReadOnlyTable: table A table, but, one which may not be written to or have its metatable changed. This version will throw if one indexes the table with a key which doesn't exist.
+---@class UpdatingSettingTable: table<any, any> A table which is constructed with an explicit association with a player storage section. Values inside this table automatically update according to changes in the storage group.
+
 ---@class CellMatchPatterns
 ---@field disallowed string[]
 ---@field allowed string[]
@@ -39,7 +45,7 @@
 ---@field chance number probablility that this playlist will use silence between tracks
 
 ---@class QueuedEvent
----@field name string the name of the event to send
+---@field name string? the name of the event to send. If nil, no event will be sent.
 ---@field data any the data to send with the event
 
 --- Player cell name/id mapped to the memory address of the table being looked up. Only used in the most expensive rulesets
@@ -48,7 +54,6 @@
 --- Event data transmitted back to the player when they change cells.
 ---@class S3maphoreCellChangeData
 ---@field staticList StaticList
----@field hasCombatTargets boolean
 ---@field nearestRegion string? Defines the nearest (or current) region to the player's current cell. If one cannot be found, the previous region will be used.
 
 --- Special class for handling exterior grids.
@@ -82,9 +87,10 @@
 ---@field tracks string[]? explicit list of tracks to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
 
 ---@class S3maphoreStateChangeEventData
+---@field fadeOut number?
 ---@field playlistId string
----@field trackName string VFS path of the track being played
 ---@field reason S3maphoreStateChangeReason
+---@field trackName string VFS path of the track being played
 
 ---@alias ServicesOffered table<ServiceType, boolean>
 

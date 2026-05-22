@@ -1,83 +1,84 @@
 local types = require 'openmw.types'
 local world = require 'openmw.world'
 
-local NPCFightThreshold = 90
-local CreatureFightThreshold = 83
+local StaticCellChangeData = {
+    staticList = {
+        contentFiles = {},
+        recordIds = {},
+    },
+    nearestRegion = '',
+}
+
+local FieldNames = { 'recordIds', 'contentFiles', }
+local NearestDoor = nil
+local NullFunction = function() end
+local liveCheckForRegion = NullFunction
+
+local DoorType = types.Door
+local SquaredLen = require 'openmw.util'.vector3(0, 0, 0).length2
+local function checkForRegion(object, target)
+    if not DoorType.objectIsInstance(object) or not DoorType.isTeleport(object) then return end
+
+    local targetPos, objectPos = target.position, object.position
+    if not NearestDoor or SquaredLen(targetPos - objectPos) < SquaredLen(targetPos - NearestDoor.position) then
+        NearestDoor = object
+    end
+end
 
 --- Given a cell object, check the hostility ratings of all actors inside of it
 ---@param senderCell GameCell
----@return boolean hasLiveTargets whether or not the cell has active combat targets
-local function cellHasCombatTargets(senderCell)
-    local objects = senderCell:getAll()
-    local foundLiveHostiles = 0
-
-    for _, object in ipairs(objects) do
-        local isNPC = types.NPC.objectIsInstance(object)
-        local isCreature = types.Creature.objectIsInstance(object)
-
-        if not isNPC and not isCreature then goto continue end
-
-        local fightStat = object.type.stats.ai.fight(object)
-        local fightLimit = isNPC and NPCFightThreshold or CreatureFightThreshold
-
-        if fightStat.modified >= fightLimit and not object.type.isDead(object) then
-            foundLiveHostiles = foundLiveHostiles + 1
+local function updateCellInfo(sender, senderCell)
+    for _, fieldName in ipairs(FieldNames) do
+        for k in pairs(StaticCellChangeData.staticList[fieldName]) do
+            StaticCellChangeData.staticList[fieldName][k] = nil
         end
-
-        ::continue::
     end
 
-    return foundLiveHostiles > 0
-end
-
---- Given a cell object, find all unique static Ids and content files which placed statics in the cell
----@param cell GameCell
----@return string[] addedStatics, string[] addedContentFiles
-local function getStaticsInActorCell(cell)
     local uniqueStaticIds, uniqueContentFiles = {}, {}
 
-    local addedStatics, addedContentFiles = {}, {}
+    local addedStatics, addedContentFiles = StaticCellChangeData.staticList.recordIds,
+        StaticCellChangeData.staticList.contentFiles
 
-    local staticsInCell = cell:getAll(types.Static)
+    local nearestRegion = senderCell.region
+    if not nearestRegion then
+        NearestDoor = nil
+        liveCheckForRegion = checkForRegion
+    end
 
-    for _, static in ipairs(staticsInCell) do
-        if not uniqueStaticIds[static.recordId] then
-            addedStatics[#addedStatics + 1] = static.recordId
-            uniqueStaticIds[static.recordId] = true
-        end
+    for _, object in ipairs(senderCell:getAll()) do
+        if types.Static.objectIsInstance(object) then
+            if not uniqueStaticIds[object.recordId] then
+                addedStatics[#addedStatics + 1] = object.recordId
+                uniqueStaticIds[object.recordId] = true
+            end
 
-        if not uniqueContentFiles[static.contentFile] then
-            if static.contentFile and static.contentFile ~= '' then
-                addedContentFiles[#addedContentFiles + 1] = static.contentFile:lower()
-                uniqueContentFiles[static.contentFile] = true
+            if not uniqueContentFiles[object.contentFile] then
+                if object.contentFile and object.contentFile ~= '' then
+                    addedContentFiles[#addedContentFiles + 1] = object.contentFile:lower()
+                    uniqueContentFiles[object.contentFile] = true
+                end
             end
         end
+
+        liveCheckForRegion(object, sender)
     end
 
-    return addedStatics, addedContentFiles
-end
+    if NearestDoor then
+        -- Teleport doors *should* always have a target cell
+        local region = DoorType.destCell(NearestDoor).region
 
---- Finds the nearest associated region to a cell, returning it if one is found.
----@param cell GameCell
----@return string? nearestRegion
-local function getNearestRegionForCell(cell)
-    if cell.region ~= '' then return cell.region end
-
-    local allDoors = cell:getAll(types.Door)
-
-    local nearestRegion
-    for _, door in ipairs(allDoors) do
-        if not door.type.isTeleport(door) then goto CONTINUE end
-
-        local targetCell = door.type.destCell(door)
-        if targetCell.region ~= '' then
-            nearestRegion = targetCell.region
-            break
+        if region then
+            nearestRegion = region
         end
-        ::CONTINUE::
+
+        NearestDoor = nil
     end
 
-    return nearestRegion
+    liveCheckForRegion = NullFunction
+
+    if nearestRegion then
+        StaticCellChangeData.nearestRegion = nearestRegion
+    end
 end
 
 local Globals = world.mwscript.getGlobalVariables()
@@ -96,6 +97,9 @@ local WeatherType = {
     [9] = 'blizzard',
 }
 
+---@type table<string, string>
+local PreviousPlayerCells = {}
+
 return {
     interfaceName = 'S3maphoreG',
     interface = {
@@ -113,10 +117,6 @@ return {
 
             return cellStr
         end,
-
-        cellHasCombatTargets = cellHasCombatTargets,
-
-        getStaticsInActorCell = getStaticsInActorCell,
     },
 
     engineHandlers = {
@@ -131,30 +131,21 @@ return {
 
                 Globals.S3maphoreWeatherTracker = -1
             end
+
+            for _, player in ipairs(world.players) do
+                local playerCell = player.cell
+                local playerId, currentCell = player.id, playerCell.id
+                local prevCell = PreviousPlayerCells[playerId]
+
+                if not prevCell or prevCell ~= currentCell then
+                    updateCellInfo(player, playerCell)
+                    player:sendEvent('S3maphoreCellChanged', StaticCellChangeData)
+                    PreviousPlayerCells[playerId] = currentCell
+                end
+            end
         end,
 
     },
 
-    eventHandlers = {
-        S3maphoreCellChanged = function(sender)
-            local senderCell = sender.cell
-            local staticRecordIds, staticContentFiles = getStaticsInActorCell(senderCell)
-
-            sender:sendEvent('S3maphoreCellDataUpdated', {
-                staticList = {
-                    contentFiles = staticContentFiles,
-                    recordIds = staticRecordIds,
-                },
-                hasCombatTargets = cellHasCombatTargets(senderCell),
-                nearestRegion = getNearestRegionForCell(senderCell),
-            })
-        end,
-
-        -- This function seems like it could have some issues.
-        -- It only determines if there are actors in the cell which are *likely* to engage the player, and doesn't take into account whether or not 
-        -- any are actively fighting the player. But it's a useful heauristic to determine whether or not the player is *in* a dungeon or not.
-        S3maphoreUpdateCellHasCombatTargets = function(sender)
-            sender:sendEvent('S3maphoreCombatTargetsUpdated', cellHasCombatTargets(sender.cell))
-        end,
-    },
+    eventHandlers = {},
 }

@@ -6,7 +6,7 @@ local input = require 'openmw.input'
 local storage = require 'openmw.storage'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local OMWCameraSettings = storage.playerSection('SettingsOMWCameraThirdPerson')
 

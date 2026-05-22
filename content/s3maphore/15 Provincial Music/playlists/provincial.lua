@@ -1,5 +1,4 @@
----@type S3maphorePlaylistEnv
-_ENV = _ENV
+---@module 'doc.playlistEnv'
 
 local mainlandRegions = {
     ['shipal-shin region'] = true,

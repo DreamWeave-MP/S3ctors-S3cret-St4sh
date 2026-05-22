@@ -1,12 +1,11 @@
 local core = require 'openmw.core'
-local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
+local isPlayer = s3lf.actorType == 0
 
 local debug
-local isPlayer = types.Player.objectIsInstance(s3lf.gameObject)
 if isPlayer then
     debug = require 'openmw.debug'
 end
@@ -209,7 +208,8 @@ end
 ---@param cap boolean? cap chance between 0-100
 function Magic:getSpellCastChance(spell, actor, checkMagicka, cap)
     ---@diagnostic disable-next-line: undefined-field
-    assert(spell and spell.__type.name == 'ESM::Spell', 'Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
+    assert(spell and spell.__type.name == 'ESM::Spell',
+        'Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
 
     if checkMagicka == nil then checkMagicka = true end
 

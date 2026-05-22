@@ -143,8 +143,6 @@ local function ashlanderEnemyRule(playback)
         and playback.rules.combatTargetExact(MuseAshlanderEnemyNames)
 end
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type S3maphorePlaylist[]
 return {
     {

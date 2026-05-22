@@ -10,7 +10,7 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3lf
+local s3lf = I.s3.lf
 
 local ModInfo = require 'scripts.s3.target.modinfo'
 
@@ -137,7 +137,7 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
 
     if not shouldTrack then return end
 
-    local rotation = I.s3lf.rotation
+    local rotation = s3lf.rotation
     local playerYaw, playerPitch = LockOnManager.getAngleDiff(
         desiredYaw,
         desiredPitch,
@@ -146,11 +146,11 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
     )
 
     if math.abs(playerYaw) >= eps then
-        I.s3lf.controls.yawChange = playerYaw
+        s3lf.controls.yawChange = playerYaw
     end
 
     if math.abs(playerPitch) >= eps then
-        I.s3lf.controls.pitchChange = playerPitch
+        s3lf.controls.pitchChange = playerPitch
     end
 end
 
@@ -246,7 +246,7 @@ function LockOnManager:selectNearestTarget(goLeft)
 
     if not result then return end
 
-    s3lf.gameObject:sendEvent('S3TargetLockOnto', result)
+    s3lf:sendEvent('S3TargetLockOnto', result)
 
     return result
 end
@@ -289,7 +289,7 @@ end
 --- Toggle type action, but, maybe we could make it a hold??
 function LockOnManager.lockOnHandler()
     if LockOnManager.getMarkerVisibility() then
-        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
+        s3lf:sendEvent 'S3TargetLockOnto'
         LockOnManager.toggleLockOnMarkerDisplay()
         return
     end
@@ -327,7 +327,7 @@ function LockOnManager.checkForDeadTarget(targetIsActor)
     if not targetObject.type.isDead(targetObject) then return end
 
     if LockOnManager.setMarkerVisibility(false) then
-        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
+        s3lf:sendEvent 'S3TargetLockOnto'
         return true
     end
 end
@@ -438,7 +438,7 @@ function LockOnManager:onFrame()
 
     if self.CheckLOS and targetObject then
         if not I.S3CamHelper.objectIsOnscreen(targetObject) then
-            s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
+            s3lf:sendEvent 'S3TargetLockOnto'
         else
             local LOStest = nearby.castRay(
                 camera.getPosition(),
@@ -447,7 +447,7 @@ function LockOnManager:onFrame()
             )
 
             if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
-                s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
+                s3lf:sendEvent 'S3TargetLockOnto'
             end
         end
     end
@@ -476,7 +476,7 @@ function LockOnManager:onFrame()
         local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject)
 
         if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
-            if I.s3lf.canMove() then
+            if s3lf.canMove() then
                 LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
             end
 
@@ -540,7 +540,7 @@ function LockOnManager:onFrameEnd()
         and not isWielding()
         and self.getTargetObject()
     then
-        s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto')
+        s3lf:sendEvent 'S3TargetLockOnto'
     end
 end
 
@@ -581,7 +581,7 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
         s3lf.setStance(stance)
     end
 
-    s3lf.sendEvent(s3lf.gameObject, 'S3TargetLockOnto', targetChangeData.actor)
+    s3lf:sendEvent('S3TargetLockOnto', targetChangeData.actor)
 
     local myYaw, theirYaw = s3lf.rotation:getYaw(), targetChangeData.actor.rotation:getYaw()
 

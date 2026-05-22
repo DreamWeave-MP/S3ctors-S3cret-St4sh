@@ -7,7 +7,8 @@ local types     = require 'openmw.types'
 local ui        = require 'openmw.ui'
 local util      = require 'openmw.util'
 
-local I         = require('openmw.interfaces')
+local I         = require 'openmw.interfaces'
+local s3lf      = I.s3.lf
 
 local Actor     = types.Actor
 local Player    = types.Player
@@ -236,7 +237,7 @@ input.registerTriggerHandler('ToggleWeapon',
 
             if currentStance ~= self.type.STANCE.Weapon then
                 self.type.setStance(self, self.type.STANCE.Weapon)
-                lastSwingTime = I.s3lf.isInCombat and math.huge or core.getRealTime()
+                lastSwingTime = s3lf.isInCombat() and math.huge or core.getRealTime()
             else
                 self.controls.use = 1
             end
@@ -290,7 +291,7 @@ local function onFrame()
     currentStance = self.type.getStance(self)
 
     if currentStance == self.type.STANCE.Weapon
-        and not I.s3lf.isInCombat
+        and not s3lf.isInCombat()
         and (core.getRealTime() - lastSwingTime) >= totalNoAttackDuration
     then
         self.type.setStance(self, self.type.STANCE.Nothing)
@@ -318,7 +319,7 @@ return {
             if
                 not settings.autoSheathWeaponOnCombatEnd()
                 or self.type.getStance(self) == self.type.STANCE.Nothing
-                or I.s3lf.isInCombat
+                or s3lf.isInCombat()
             then
                 return
             end

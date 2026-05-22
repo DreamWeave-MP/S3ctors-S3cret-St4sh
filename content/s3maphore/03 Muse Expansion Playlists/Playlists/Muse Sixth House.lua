@@ -147,8 +147,6 @@ local function theManHimselfRule(playback)
         and playback.rules.combatTargetExact(DagothUr)
 end
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type S3maphorePlaylist[]
 return {
     {

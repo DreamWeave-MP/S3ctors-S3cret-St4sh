@@ -122,8 +122,6 @@ local function imperialCellRule(playback)
     return playback.rules.cellNameMatch(ImperialCellMatches)
 end
 
-local PlaylistPriority = require 'doc.playlistPriority'
-
 ---@type S3maphorePlaylist[]
 return {
     {
