@@ -42,7 +42,7 @@
         ]
     },
     "workspace.library": [
-        "./content/annotations/",
+        "./content/cod3x/",
         "content/s3maphore/?.lua"
     ]
 }
