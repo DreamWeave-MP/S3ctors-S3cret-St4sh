@@ -61,23 +61,23 @@ function MWScriptFunctions.getGlobalScript(recordId, player) end
 
 ---Loads a named cell
 ---@param cellName string
----@return openmw.core.Cell
+---@return openmw.core.GCell
 function world.getCellByName(cellName) end
 
 ---Loads a cell by ID provided
 ---@param cellId string
----@return openmw.core.Cell
+---@return openmw.core.GCell
 function world.getCellById(cellId) end
 
 ---Loads an exterior cell by grid indices
 ---@param gridX number
 ---@param gridY number
 ---@param cellOrName? any (optional) other cell or cell name in the same exterior world space
----@return openmw.core.Cell
+---@return openmw.core.GCell
 function world.getExteriorCell(gridX, gridY, cellOrName) end
 
 ---List of all cells
----@type openmw.core.Cell[]
+---@type openmw.core.GCell[]
 world.cells = nil
 
 ---Simulation time in seconds.

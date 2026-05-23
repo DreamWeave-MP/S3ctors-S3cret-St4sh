@@ -28,11 +28,11 @@ local ObjectList = {}
 ---@field position openmw.util.Vector3 Object position.
 ---@field scale number Object scale.
 ---@field rotation openmw.util.Transform Object rotation.
----@field startingCell openmw.core.Cell The object's original cell. Returns nil if `cell` of the object is nil.
+---@field startingCell openmw.core.Cell? The object's original cell. Returns nil if `cell` of the object is nil.
 ---@field startingPosition openmw.util.Vector3 The object original position
 ---@field startingRotation openmw.util.Transform The object original rotation
 ---@field owner openmw.ObjectOwner Ownership information
----@field cell openmw.core.Cell The cell where the object currently is. During loading a game and for objects in an inventory or a container `cell` is nil.
+---@field cell openmw.core.Cell? The cell where the object currently is. During loading a game and for objects in an inventory or a container `cell` is nil.
 ---@field parentContainer openmw.Object Container or actor that contains (or has in inventory) this object. It is nil if the object is in a cell.
 ---@field type any Type of the object (one of the tables from the package openmw.types.types).
 ---@field count number Count (>1 means a stack of objects).
@@ -42,10 +42,14 @@ local Object = {}
 
 ---A read-only object handle available from local scripts for nearby objects.
 ---@class openmw.LObject: openmw.Object
+---@field startingCell openmw.core.LCell? The object's original cell. Returns nil if `cell` of the object is nil.
+---@field cell openmw.core.LCell? The cell where the object currently is. During loading a game and for objects in an inventory or a container `cell` is nil.
 local LObject = {}
 
 ---A mutable object handle available from global scripts.
 ---@class openmw.GObject: openmw.Object
+---@field startingCell openmw.core.GCell? The object's original cell. Returns nil if `cell` of the object is nil.
+---@field cell openmw.core.GCell? The cell where the object currently is. During loading a game and for objects in an inventory or a container `cell` is nil.
 ---@field enabled boolean Whether the object is enabled or disabled. Global scripts can set the value. Items in containers or inventories can't be disabled.
 local GObject = {}
 

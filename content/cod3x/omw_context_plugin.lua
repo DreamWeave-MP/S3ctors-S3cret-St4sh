@@ -8,32 +8,40 @@
 ---      "runtime.plugin": "./content/cod3x/omw_context_plugin.lua"
 ---
 --- 2. Near the top of each script file, declare its context:
----      ---@omw-context global
----    Valid values: global | local | player | menu | load | any | none
----    Use "any" for portable Lua files limited to common openmw.* modules.
+---      ---@omw-context global | local
+---    Valid values: global | local | player | menu | load | runtime | all | none
+---    Use "all" for portable Lua files limited to modules available in every script context.
+---    Use "runtime" for portable Lua files limited to runtime script contexts.
 ---    Use "none" for API-agnostic Lua files that intentionally avoid openmw.*.
 ---
 --- How it works
 --- ------------
 --- When LLS processes a file, this plugin:
 ---   a) caches the file text and parsed context via OnSetText
----   b) scans for ---@omw-context <ctx> in that text
+---   b) scans for ---@omw-context <ctx> or <ctx> | <ctx> in that text
 ---   c) ignores ---@meta files and plugin/tooling files under /cod3x/
 ---   d) poisons missing/invalid context annotations with an undefined global,
 ---   e) poisons offending require('openmw.*') calls with an undefined global,
+---   f) poisons offending openmw.core top-level member access with an undefined global,
 ---      which makes LuaLS emit its built-in undefined-global diagnostic
----   f) blocks LuaLS module resolution for the same offending modules via
+---   g) blocks LuaLS module resolution for the same offending modules via
 ---      ResolveRequire returning {}
 ---
 --- Context semantics (matches OpenMW docs @context convention)
 --- -----------------------------------------------------------
 ---   global  : global scripts (one per game world)
----   local   : local scripts attached to any object (excludes player extras)
+---   local   : local scripts attached to an object (excludes player extras)
 ---   player  : player-specific scripts (superset of local; adds camera, input, ui, …)
 ---   menu    : main menu scripts (no in-world access)
 ---   load    : content file scripts (pre-game data loading)
----   any     : portable scripts using only the common OpenMW API subset
+---   runtime : global | local | player | menu
+---   all     : portable scripts using only modules available in every script context
 ---   none    : API-agnostic Lua files that intentionally require no openmw.* modules
+---
+--- Context sets use intersection semantics: a module is allowed only if it is
+--- available in every concrete context in the set. "runtime" expands to
+--- global | local | player | menu. "all" expands to global | local | player |
+--- menu | load. "none" cannot be combined.
 ---
 --- NOTE on LLS plugin API compatibility
 --- -------------------------------------
@@ -46,6 +54,9 @@
 ---   * Instead of the hardcoded AVAILABILITY table, derive it at startup
 ---     by reading the @context annotations from the openmw/*.lua stubs,
 ---     so the map stays in sync automatically as new modules are added.
+---   * Extend member-level restrictions beyond openmw.core top-level members,
+---     including receiver/type rules such as Cell:getAll, Inventory:resolve,
+---     and local self restrictions for nested members such as core.sound.playSound3d.
 ---   * If future LuaLS versions expose more plugin hooks, consider adding
 ---     editor actions for inserting or correcting ---@omw-context annotations.
 ---
@@ -100,17 +111,38 @@ local AVAILABILITY = {
     ["openmw.menu"]           = { menu = true },
 }
 
-local ANY_CONTEXT_MODULES = {
-    ["openmw.async"] = true,
-    ["openmw.core"] = true,
-    ["openmw.interfaces"] = true,
-    ["openmw.markup"] = true,
-    ["openmw.storage"] = true,
-    ["openmw.util"] = true,
-    ["openmw.vfs"] = true,
-}
+local CONCRETE_CONTEXTS = { "global", "local", "player", "menu", "load" }
+local RUNTIME_CONTEXTS = { "global", "local", "player", "menu" }
+local VALID_CONTEXTS = { global = true, ["local"] = true, player = true, menu = true, load = true, runtime = true, all = true, none = true }
 
-local VALID_CONTEXTS = { global = true, ["local"] = true, player = true, menu = true, load = true, any = true, none = true }
+local CORE_MEMBER_AVAILABILITY = {
+    API_REVISION = { global = true, ["local"] = true, player = true, menu = true, load = true },
+    contentFiles = { global = true, ["local"] = true, player = true, menu = true, load = true },
+    getFormId = { global = true, ["local"] = true, player = true, menu = true, load = true },
+    getGameDifficulty = { global = true, ["local"] = true, player = true, menu = true, load = true },
+    l10n = { global = true, ["local"] = true, player = true, menu = true, load = true },
+
+    dialogue = { global = true, ["local"] = true, player = true, menu = true },
+    factions = { global = true, ["local"] = true, player = true, menu = true },
+    getGMST = { global = true, ["local"] = true, player = true, menu = true },
+    getGameTime = { global = true, ["local"] = true, player = true, menu = true },
+    getGameTimeScale = { global = true, ["local"] = true, player = true, menu = true },
+    getRealTime = { global = true, ["local"] = true, player = true, menu = true },
+    getSimulationTime = { global = true, ["local"] = true, player = true, menu = true },
+    getSimulationTimeScale = { global = true, ["local"] = true, player = true, menu = true },
+    isWorldPaused = { global = true, ["local"] = true, player = true, menu = true },
+    land = { global = true, ["local"] = true, player = true, menu = true },
+    magic = { global = true, ["local"] = true, player = true, menu = true },
+    mwscripts = { global = true, ["local"] = true, player = true, menu = true },
+    quit = { global = true, ["local"] = true, player = true, menu = true },
+    regions = { global = true, ["local"] = true, player = true, menu = true },
+    sendGlobalEvent = { global = true, ["local"] = true, player = true, menu = true },
+    sound = { global = true, ["local"] = true, player = true, menu = true },
+    stats = { global = true, ["local"] = true, player = true, menu = true },
+    weather = { global = true, ["local"] = true, player = true, menu = true },
+
+    getRealFrameDuration = { ["local"] = true, player = true, menu = true },
+}
 
 local MISSING_CONTEXT_POISON = "__OMW_CONTEXT_ERROR_missing_omw_context_add_none_if_api_agnostic__"
 local INVALID_CONTEXT_POISON = "__OMW_CONTEXT_ERROR_invalid_omw_context__"
@@ -121,12 +153,56 @@ local fileCache = {}
 -- Internal helpers
 -- ---------------------------------------------------------------------------
 
---- Extract the ---@omw-context value from a file's text.
+--- Extract and parse the ---@omw-context value from a file's text.
 --- Returns nil if the annotation is absent.
 ---@param text string
----@return string?
-local function parseContext(text)
-    return text:match("%-%-%-%s*@omw%-context%s+(%S+)")
+---@return table?
+local function parseContextSet(text)
+    local raw = text:match("%-%-%-%s*@omw%-context%s+([^\r\n]+)")
+    if not raw then
+        return nil
+    end
+
+    raw = raw:match("^%s*(.-)%s*$")
+    local parsed = { raw = raw, invalid = false, none = false, set = {} }
+    local count = 0
+    local pos = 1
+
+    while true do
+        local pipeStart, pipeFinish = raw:find("|", pos, true)
+        local token = (pipeStart and raw:sub(pos, pipeStart - 1) or raw:sub(pos)):match("^%s*(.-)%s*$")
+
+        if token == "" or not VALID_CONTEXTS[token] then
+            parsed.invalid = true
+            return parsed
+        end
+
+        count = count + 1
+        if token == "none" then
+            parsed.none = true
+        elseif token == "all" then
+            for _, context in ipairs(CONCRETE_CONTEXTS) do
+                parsed.set[context] = true
+            end
+        elseif token == "runtime" then
+            for _, context in ipairs(RUNTIME_CONTEXTS) do
+                parsed.set[context] = true
+            end
+        else
+            parsed.set[token] = true
+        end
+
+        if not pipeStart then
+            break
+        end
+        pos = pipeFinish + 1
+    end
+
+    if parsed.none and count > 1 then
+        parsed.invalid = true
+    end
+
+    return parsed
 end
 
 --- Return true if a file is a LuaLS doc/meta annotation file.
@@ -191,28 +267,45 @@ local function isOpenMwModule(moduleName)
 end
 
 --- Build a readable undefined global name for LuaLS to diagnose.
----@param ctx string?
+---@param ctx table?
 ---@param moduleName string
 ---@return string
 local function poisonName(ctx, moduleName)
     local contextPart
     if not ctx then
         contextPart = "missing_context"
-    elseif VALID_CONTEXTS[ctx] then
-        contextPart = ctx
+    elseif not ctx.invalid then
+        contextPart = ctx.raw:gsub("%W", "_")
     else
-        contextPart = "unknown_context_" .. ctx:gsub("%W", "_")
+        contextPart = "unknown_context_" .. ctx.raw:gsub("%W", "_")
     end
 
     local modulePart = moduleName:gsub("%W", "_")
     return "__OMW_CONTEXT_ERROR_" .. contextPart .. "_cannot_require_" .. modulePart .. "__"
 end
 
+--- Build a readable undefined global name for disallowed openmw.core members.
+---@param ctx table?
+---@param memberName string
+---@return string
+local function memberPoisonName(ctx, memberName)
+    local contextPart
+    if not ctx then
+        contextPart = "missing_context"
+    elseif not ctx.invalid then
+        contextPart = ctx.raw:gsub("%W", "_")
+    else
+        contextPart = "unknown_context_" .. ctx.raw:gsub("%W", "_")
+    end
+
+    return "__OMW_CONTEXT_ERROR_" .. contextPart .. "_cannot_use_openmw_core_" .. memberName .. "__"
+end
+
 --- Insert an undefined global for a missing or invalid context annotation.
 ---@param diffs table[]
----@param ctx string?
+---@param ctx table?
 local function insertContextPoisonDiff(diffs, ctx)
-    if ctx and VALID_CONTEXTS[ctx] then
+    if ctx and not ctx.invalid then
         return
     end
 
@@ -224,7 +317,7 @@ local function insertContextPoisonDiff(diffs, ctx)
 end
 
 --- Return true if a require should be blocked/poisoned in this source context.
----@param ctx string?
+---@param ctx table?
 ---@param moduleName string
 ---@return boolean
 local function shouldReject(ctx, moduleName)
@@ -232,16 +325,12 @@ local function shouldReject(ctx, moduleName)
         return false
     end
 
-    if not ctx or not VALID_CONTEXTS[ctx] then
+    if not ctx or ctx.invalid then
         return true
     end
 
-    if ctx == "none" then
+    if ctx.none then
         return true
-    end
-
-    if ctx == "any" then
-        return not ANY_CONTEXT_MODULES[moduleName]
     end
 
     local moduleCtxs = AVAILABILITY[moduleName]
@@ -249,7 +338,59 @@ local function shouldReject(ctx, moduleName)
         return false
     end
 
-    return not moduleCtxs[ctx]
+    for _, context in ipairs(CONCRETE_CONTEXTS) do
+        if ctx.set[context] and not moduleCtxs[context] then
+            return true
+        end
+    end
+
+    return false
+end
+
+--- Return true if an openmw.core top-level member should be blocked/poisoned.
+---@param ctx table?
+---@param memberName string
+---@return boolean
+local function shouldRejectCoreMember(ctx, memberName)
+    if not ctx or ctx.invalid or ctx.none then
+        return true
+    end
+
+    local memberCtxs = CORE_MEMBER_AVAILABILITY[memberName]
+    if not memberCtxs then
+        return false
+    end
+
+    for _, context in ipairs(CONCRETE_CONTEXTS) do
+        if ctx.set[context] and not memberCtxs[context] then
+            return true
+        end
+    end
+
+    return false
+end
+
+--- Return the narrowest intersection-safe openmw.core surface for this context set.
+---@param ctx table?
+---@return string?
+local function coreSurfaceForContext(ctx)
+    if not ctx or ctx.invalid or ctx.none then
+        return nil
+    end
+
+    if ctx.set.load then
+        return "All"
+    end
+
+    if ctx.set.global then
+        return "Runtime"
+    end
+
+    if ctx.set["local"] or ctx.set.player or ctx.set.menu then
+        return "FrameRuntime"
+    end
+
+    return nil
 end
 
 --- Match a require call starting at `pos` in `line`.
@@ -311,18 +452,189 @@ local function matchRequireAt(line, pos)
     return nil
 end
 
+--- Match require('openmw.core').member or require 'openmw.core'.member at `pos`.
+---@param line string
+---@param pos integer
+---@return table?
+local function matchCoreRequireMemberAt(line, pos)
+    local before = pos > 1 and line:sub(pos - 1, pos - 1) or ""
+    if before:match("[%w_%.:]") then
+        return nil
+    end
+
+    local rest = line:sub(pos)
+    local afterKeyword = rest:sub(8, 8)
+    if afterKeyword:match("[%w_]") then
+        return nil
+    end
+
+    local memberName, memberFinish = rest:match('^require%s*%(%s*"openmw%.core"%s*%)%s*%.%s*([%a_][%w_]*)()')
+    if memberName then
+        return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
+    end
+
+    memberName, memberFinish = rest:match("^require%s*%(%s*'openmw%.core'%s*%)%s*%.%s*([%a_][%w_]*)()")
+    if memberName then
+        return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
+    end
+
+    memberName, memberFinish = rest:match('^require%s+"openmw%.core"%s*%.%s*([%a_][%w_]*)()')
+    if memberName then
+        return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
+    end
+
+    memberName, memberFinish = rest:match("^require%s+'openmw%.core'%s*%.%s*([%a_][%w_]*)()")
+    if memberName then
+        return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
+    end
+
+    return nil
+end
+
+--- Return true for `require('openmw.core')` and `require 'openmw.core'` RHS forms.
+---@param code string
+---@param rhsStart integer
+---@return boolean
+local function isCoreRequireRhs(code, rhsStart)
+    local req = matchRequireAt(code, rhsStart)
+    return req ~= nil and req.module == "openmw.core"
+end
+
+--- Record `local alias = require('openmw.core')` style aliases from one line.
+---@param code string
+---@param aliases table
+local function recordCoreAliases(code, aliases)
+    local searchStart = 1
+    while true do
+        local _, _, alias, rhsStart = code:find("local%s+([%a_][%w_]*)%s*=%s*()", searchStart)
+        if not alias then
+            break
+        end
+
+        if isCoreRequireRhs(code, rhsStart) then
+            aliases[alias] = true
+        end
+
+        searchStart = rhsStart + 1
+    end
+end
+
+--- Match `local alias = require('openmw.core')` style alias declarations on one line.
+---@param code string
+---@return boolean
+local function isCoreAliasLine(code)
+    local _, _, _, rhsStart = code:find("^%s*local%s+([%a_][%w_]*)%s*=%s*()")
+    if not rhsStart then
+        return false
+    end
+
+    return isCoreRequireRhs(code, rhsStart)
+end
+
+--- Add type annotations before openmw.core local require aliases.
+---@param diffs table[]
+---@param code string
+---@param lineText string
+---@param previousLineText string?
+---@param lineStart integer
+---@param ctx table?
+local function addCoreAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, ctx)
+    local surface = coreSurfaceForContext(ctx)
+    if not surface or not isCoreAliasLine(code) then
+        return
+    end
+
+    if previousLineText and previousLineText:match("^%s*%-%-%-%s*@type%s+openmw%.core%.") then
+        return
+    end
+
+    local indent = lineText:match("^(%s*)") or ""
+    table.insert(diffs, {
+        start = lineStart,
+        finish = lineStart - 1,
+        text = indent .. "---@type openmw.core." .. surface .. "\n",
+    })
+end
+
+--- Add poison edits for disallowed direct require('openmw.core').member uses.
+---@param diffs table[]
+---@param code string
+---@param lineStart integer
+---@param ctx table?
+local function addDirectCoreMemberDiffs(diffs, code, lineStart, ctx)
+    local searchStart = 1
+    while true do
+        local requireStart = code:find("require", searchStart, true)
+        if not requireStart then
+            break
+        end
+
+        local memberUse = matchCoreRequireMemberAt(code, requireStart)
+        if memberUse and shouldRejectCoreMember(ctx, memberUse.member) then
+            table.insert(diffs, {
+                start = lineStart + memberUse.start - 1,
+                finish = lineStart + memberUse.finish - 1,
+                text = memberPoisonName(ctx, memberUse.member),
+            })
+            searchStart = memberUse.finish + 1
+        else
+            searchStart = requireStart + 7
+        end
+    end
+end
+
+--- Add poison edits for disallowed alias.member uses.
+---@param diffs table[]
+---@param code string
+---@param lineStart integer
+---@param ctx table?
+---@param aliases table
+local function addAliasCoreMemberDiffs(diffs, code, lineStart, ctx, aliases)
+    for alias in pairs(aliases) do
+        local searchStart = 1
+        while true do
+            local exprStart, _, memberName, memberFinish = code:find(alias .. "%s*%.%s*([%a_][%w_]*)()", searchStart)
+            if not exprStart then
+                break
+            end
+
+            local before = exprStart > 1 and code:sub(exprStart - 1, exprStart - 1) or ""
+            if not before:match("[%w_%.:]") and shouldRejectCoreMember(ctx, memberName) then
+                table.insert(diffs, {
+                    start = lineStart + exprStart - 1,
+                    finish = lineStart + memberFinish - 2,
+                    text = memberPoisonName(ctx, memberName),
+                })
+            end
+
+            searchStart = memberFinish
+        end
+    end
+end
+
 --- Scan `text` for require('openmw.*') calls and build poison edits.
 ---@param text string
----@param ctx string?
+---@param ctx table?
 ---@return table[]
 local function makePoisonDiffs(text, ctx)
     local diffs = {}
+    local coreAliases = {}
+    local scanCoreMembers = not shouldReject(ctx, "openmw.core")
     local lineStart = 1
+    local previousLineText = nil
 
     for lineText in (text .. "\n"):gmatch("([^\n]*)\n") do
         if not lineText:match("^%s*%-%-") then
             local code = stripLineComment(lineText)
             local searchStart = 1
+
+            addCoreAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, ctx)
+
+            if scanCoreMembers then
+                recordCoreAliases(code, coreAliases)
+                addDirectCoreMemberDiffs(diffs, code, lineStart, ctx)
+                addAliasCoreMemberDiffs(diffs, code, lineStart, ctx, coreAliases)
+            end
 
             while true do
                 local requireStart = code:find("require", searchStart, true)
@@ -350,6 +662,7 @@ local function makePoisonDiffs(text, ctx)
         end
 
         lineStart = lineStart + #lineText + 1
+        previousLineText = lineText
     end
 
     return diffs
@@ -372,7 +685,7 @@ end
 ---@return table[]?   -- nil = don't modify the text
 function OnSetText(uri, text)
     if isContextRequiredForUri(uri) then
-        local ctx = parseContext(text)
+        local ctx = parseContextSet(text)
         local isMeta = hasMetaAnnotation(text)
         fileCache[uri] = { context = ctx, meta = isMeta }
 
