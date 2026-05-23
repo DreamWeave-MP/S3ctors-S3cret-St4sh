@@ -9,7 +9,8 @@
 ---
 --- 2. Near the top of each script file, declare its context:
 ---      ---@omw-context global
----    Valid values: global | local | player | menu | load | none
+---    Valid values: global | local | player | menu | load | any | none
+---    Use "any" for portable Lua files limited to common openmw.* modules.
 ---    Use "none" for API-agnostic Lua files that intentionally avoid openmw.*.
 ---
 --- How it works
@@ -31,6 +32,7 @@
 ---   player  : player-specific scripts (superset of local; adds camera, input, ui, …)
 ---   menu    : main menu scripts (no in-world access)
 ---   load    : content file scripts (pre-game data loading)
+---   any     : portable scripts using only the common OpenMW API subset
 ---   none    : API-agnostic Lua files that intentionally require no openmw.* modules
 ---
 --- NOTE on LLS plugin API compatibility
@@ -98,7 +100,17 @@ local AVAILABILITY = {
     ["openmw.menu"]           = { menu = true },
 }
 
-local VALID_CONTEXTS = { global = true, ["local"] = true, player = true, menu = true, load = true, none = true }
+local ANY_CONTEXT_MODULES = {
+    ["openmw.async"] = true,
+    ["openmw.core"] = true,
+    ["openmw.interfaces"] = true,
+    ["openmw.markup"] = true,
+    ["openmw.storage"] = true,
+    ["openmw.util"] = true,
+    ["openmw.vfs"] = true,
+}
+
+local VALID_CONTEXTS = { global = true, ["local"] = true, player = true, menu = true, load = true, any = true, none = true }
 
 local MISSING_CONTEXT_POISON = "__OMW_CONTEXT_ERROR_missing_omw_context_add_none_if_api_agnostic__"
 local INVALID_CONTEXT_POISON = "__OMW_CONTEXT_ERROR_invalid_omw_context__"
@@ -226,6 +238,10 @@ local function shouldReject(ctx, moduleName)
 
     if ctx == "none" then
         return true
+    end
+
+    if ctx == "any" then
+        return not ANY_CONTEXT_MODULES[moduleName]
     end
 
     local moduleCtxs = AVAILABILITY[moduleName]
