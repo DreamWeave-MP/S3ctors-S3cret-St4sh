@@ -12,7 +12,7 @@
     "runtime": {
         "version": "LuaJIT",
         "pathStrict": false,
-        "plugin": "./content/annotations/omw_context_plugin.lua",
+        "plugin": "./content/cod3x/omw_context_plugin.lua",
         "path": [
             "./content/baldurwind/?.lua",
             "./content/birr/?.lua",
