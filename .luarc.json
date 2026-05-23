@@ -4,6 +4,11 @@
         "displayContext": 5,
         "showWord": false
     },
+    "diagnostics": {
+        "unusedLocalExclude": [
+            "_*"
+        ]
+    },
     "runtime": {
         "version": "LuaJIT",
         "pathStrict": false,
