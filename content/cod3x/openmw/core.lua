@@ -8,6 +8,42 @@
 ---@class openmw.core
 local core = {}
 
+---@class openmw.core.All
+---@field API_REVISION number
+---@field contentFiles openmw.core.ContentFiles
+---@field getFormId fun(contentFile: string, index: number): string
+---@field getGameDifficulty fun(): number
+---@field l10n fun(context: string, fallbackLocale?: string): fun(...): any
+
+---@class openmw.core.Runtime: openmw.core.All
+---@field dialogue openmw.core.Dialogue
+---@field factions openmw.core.Factions
+---@field getGMST fun(setting: string): any
+---@field getGameTime fun(): number
+---@field getGameTimeScale fun(): number
+---@field getRealTime fun(): number
+---@field getSimulationTime fun(): number
+---@field getSimulationTimeScale fun(): number
+---@field isWorldPaused fun(): boolean
+---@field land openmw.core.Land
+---@field magic openmw.core.Magic
+---@field mwscripts openmw.core.MWScripts
+---@field quit fun()
+---@field regions openmw.core.Regions
+---@field sendGlobalEvent fun(eventName: string, eventData: any)
+---@field sound openmw.core.Sound
+---@field stats openmw.core.Stats
+---@field weather openmw.core.Weather
+
+---@class openmw.core.FrameRuntime: openmw.core.Runtime
+---@field getRealFrameDuration fun(): number
+
+---@class openmw.core.Load: openmw.core.All
+---@class openmw.core.Global: openmw.core.Runtime
+---@class openmw.core.Local: openmw.core.FrameRuntime
+---@class openmw.core.Player: openmw.core.FrameRuntime
+---@class openmw.core.Menu: openmw.core.FrameRuntime
+
 ---@class openmw.core.Dialogue
 local Dialogue = {}
 
@@ -69,6 +105,12 @@ local ContentFiles = {}
 ---@field hasSky boolean True if in this cell sky should be rendered.
 ---@field pathGrid openmw.core.PathGrid The cell's PathGrid if it has one.
 local Cell = {}
+
+---@class openmw.core.LCell: openmw.core.Cell
+local LCell = {}
+
+---@class openmw.core.GCell: openmw.core.Cell
+local GCell = {}
 
 ---A cell's path grid marking traversable paths.
 ---@class openmw.core.PathGrid
@@ -749,13 +791,13 @@ function Cell:hasTag(tag) end
 ---@return boolean
 function Cell:isInSameSpace(object) end
 
----Get all objects of given type from the cell; Only available from global scripts.
+---Get all objects of given type from the cell.
 ---local type = require('openmw.types')
 ---local all = cell:getAll()
 ---local weapons = cell:getAll(types.Weapon)
 ---@param type? any (optional) object type (see openmw.types.types)
 ---@return openmw.ObjectList<openmw.GObject>
-function Cell:getAll(type) end
+function GCell:getAll(type) end
 
 ---Get all points in this path grid.
 ---@return openmw.core.PathGridPoint[] A list of PathGridPoints.
