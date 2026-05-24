@@ -1,3 +1,4 @@
+---@omw-context player
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -58,15 +59,15 @@ end
 
 ---@class AtlasSpawnerData
 ---@field layer string
----@field relativePosition util.vector2?
+---@field relativePosition openmw.util.Vector2?
 ---@field name string?
----@field color util.color?
+---@field color openmw.util.Color?
 ---@field visible boolean?
 ---@field alpha number?
----@field anchor util.vector2?
----@field size util.vector2?
----@field position util.vector2?
----@field relativeSize util.vector2?
+---@field anchor openmw.util.Vector2?
+---@field size openmw.util.Vector2?
+---@field position openmw.util.Vector2?
+---@field relativeSize openmw.util.Vector2?
 
 ---@param elementData AtlasSpawnerData
 function ImageAtlas:spawn(elementData)
@@ -96,7 +97,7 @@ end
 ---@field totalTiles integer
 ---@field tilesPerRow integer
 ---@field atlasPath string
----@field tileSize util.vector2
+---@field tileSize openmw.util.Vector2
 ---@field create boolean
 ---@field layer string?
 ---@field name string?
