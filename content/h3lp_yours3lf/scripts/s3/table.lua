@@ -1,3 +1,4 @@
+---@omw-context all
 local FCompDefault = function(a, b) return a < b end
 
 local async, storage

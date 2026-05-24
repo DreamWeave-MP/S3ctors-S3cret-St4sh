@@ -1,3 +1,4 @@
+---@omw-context runtime
 local bitXor, bitAnd, floor, realTime, round
 
 do

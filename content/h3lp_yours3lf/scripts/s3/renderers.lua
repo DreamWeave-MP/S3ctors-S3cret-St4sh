@@ -1,11 +1,13 @@
-local async = require('openmw.async')
-local core = require('openmw.core')
-local ui = require('openmw.ui')
-local util = require('openmw.util')
+---@omw-context menu
 
-local I = require('openmw.interfaces')
+local async = require 'openmw.async'
+local core = require 'openmw.core'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
 
-local markTexture = ui.texture({ path = 'textures/menu_map_smark.dds' })
+local I = require 'openmw.interfaces'
+
+local markTexture = ui.texture { path = 'textures/menu_map_smark.dds' }
 
 I.Settings.registerRenderer('ScreenPosition', function(value, set)
     local buttonSize = util.vector2(20, 20)
