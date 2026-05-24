@@ -1,3 +1,5 @@
+---@omw-context none
+
 local abs, acos, asin, atan, atan2, ceil,
 cos, cosh, deg, exp, floor, fmod,
 frexp, ldexp, log, log10, max, min, modf,

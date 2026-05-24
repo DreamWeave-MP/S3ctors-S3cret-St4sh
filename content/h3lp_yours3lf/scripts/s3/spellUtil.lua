@@ -1,3 +1,4 @@
+---@omw-context runtime
 local core = require 'openmw.core'
 local util = require 'openmw.util'
 
@@ -6,9 +7,11 @@ local s3lf = I.s3.lf
 local isPlayer = s3lf.actorType == 0
 
 local debug
+---@omw-context-begin player
 if isPlayer then
     debug = require 'openmw.debug'
 end
+---@omw-context-end player
 
 ---@enum EffectCostMethod
 local EffectCostMethod = {
@@ -41,13 +44,13 @@ iMagicItemChargeUse =
     core.getGMST('iMagicItemChargeUse')
 
 --- Returns whatever a particular actor's currently selected castable is
----@return GameObject|Spell|nil
+---@return openmw.LObject|openmw.core.Spell|nil
 function Magic.getCastable(actor)
     return actor.type.getSelectedEnchantedItem(actor) or actor.type.getSelectedSpell(actor)
 end
 
----@param spellEffect MagicEffectWithParams
----@param baseEffect MagicEffect?
+---@param spellEffect openmw.core.MagicEffectWithParams
+---@param baseEffect openmw.core.MagicEffect?
 ---@param costMethod EffectCostMethod
 ---@return number effectCost
 function Magic.getEffectCost(spellEffect, baseEffect, costMethod)
@@ -92,7 +95,7 @@ function Magic.getEffectCost(spellEffect, baseEffect, costMethod)
     return x * costMult
 end
 
----@param effectList MagicEffectWithParams[]
+---@param effectList openmw.core.MagicEffectWithParams[]
 ---@param costMethod EffectCostMethod?
 ---@return number effectListCost
 function Magic:getEffectListCost(effectList, costMethod)
@@ -113,7 +116,7 @@ function Magic:getEffectListCost(effectList, costMethod)
     return cost
 end
 
----@param spell Spell
+---@param spell openmw.core.Spell
 ---@return number totalCost
 function Magic:getSpellCost(spell)
     if not spell.autocalcFlag then
@@ -123,7 +126,7 @@ function Magic:getSpellCost(spell)
     return util.round(self:getEffectListCost(spell.effects))
 end
 
----@param spell Spell
+---@param spell openmw.core.Spell
 ---@return number baseCost, string magicSchool spell cost before accounting for factors such as god mode, always succeed, and powers. Also magic school for a given spell
 function Magic:getBaseCastChance(spell)
     local y, lowestSkill, magicSchool = math.huge, 0, nil
@@ -164,23 +167,25 @@ function Magic:getBaseCastChance(spell)
     return castChance, magicSchool
 end
 
----@param spell Spell
+---@param spell openmw.core.Spell
+---@return string?
 function Magic:getSpellSchool(spell)
     local _, school = self:getBaseCastChance(spell)
-    return core.stats.Skill.records[school]
+    local schoolSkill = core.stats.Skill.records[school]
+    return schoolSkill and schoolSkill.id
 end
 
 ---@param spellId string
 ---@return string? spellSchool
 function Magic:getSpellIdSchool(spellId)
-    ---@type Spell?
-    local spell = core.spells.records[spellId]
+    ---@type openmw.core.Spell?
+    local spell = core.magic.spells.records[spellId]
     if not spell then return end
 
     return self:getSpellSchool(spell)
 end
 
----@param spell Spell
+---@param spell openmw.core.Spell
 ---@return boolean doesIncrease
 function Magic.spellIncreasesSkill(spell)
     return spell.type == core.magic.SPELL_TYPE.Spell and not spell.alwaysSucceedFlag
@@ -188,7 +193,7 @@ end
 
 ---@param spellId string
 function Magic.spellIdIncreasesSkill(spellId)
-    local spell = core.spells.records[spellId]
+    local spell = core.magic.spells.records[spellId]
     if not spell then return end
 
     return Magic.spellIncreasesSkill(spell)
@@ -203,13 +208,15 @@ function Magic.getFatigueTerm()
 end
 
 ---@param actor GameObject
----@param spell Spell
+---@param spell openmw.core.Spell
 ---@param checkMagicka boolean? whether to actually take caster magicka into account when determining success chance
 ---@param cap boolean? cap chance between 0-100
 function Magic:getSpellCastChance(spell, actor, checkMagicka, cap)
     ---@diagnostic disable-next-line: undefined-field
-    assert(spell and spell.__type.name == 'ESM::Spell',
-        'Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
+    if not spell or spell.__type.name ~= 'ESM::Spell' then
+        ---@diagnostic disable-next-line: undefined-field
+        error('Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
+    end
 
     if checkMagicka == nil then checkMagicka = true end
 
@@ -253,7 +260,7 @@ end
 
 --- Given an enchantment record, return its total charge *capacity*.
 --- This is *not* how much charge is used on a cast or usage of an enchantment.
----@param enchantment Enchantment
+---@param enchantment openmw.core.Enchantment
 ---@return number totalCharge
 function Magic.getEnchantmentCharge(enchantment)
     if not enchantment.autocalcFlag then
@@ -289,7 +296,7 @@ function Magic.getCastableIcon(actor)
 end
 
 ---@param castCost number
----@param actor GameObject
+---@param actor openmw.LObject | openmw.GObject
 function Magic.getEnchantmentBaseCost(castCost, actor)
     local enchantSkill = s3lf.From(actor).enchant.modified
 
@@ -298,8 +305,8 @@ function Magic.getEnchantmentBaseCost(castCost, actor)
     return result < 1 and 1 or result
 end
 
----@param enchantment Enchantment
----@param actor GameObject
+---@param enchantment openmw.core.Enchantment
+---@param actor openmw.LObject | openmw.GObject
 ---@return number enchantEffectiveCost
 function Magic.getEffectiveEnchantCost(enchantment, actor)
     local castCost = enchantment.cost

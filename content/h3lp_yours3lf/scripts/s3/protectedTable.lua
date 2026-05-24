@@ -1,14 +1,24 @@
+---@omw-context local | player
+
 local async = require 'openmw.async'
 local gameSelf = require 'openmw.self'
 local storage = require 'openmw.storage'
-local types = require 'openmw.types'
 
 local LogMessage = require 'scripts.s3.logmessage'
 
 local assert, rawset, pairs, type = assert, rawset, pairs, type
 
-local isPlayer = types.Player.objectIsInstance(gameSelf)
-local ui = isPlayer and require 'openmw.ui'
+local isPlayer, ui
+do
+  local types = require 'openmw.types'
+  isPlayer = types.Player.objectIsInstance(gameSelf)
+
+  ---@omw-context-begin player
+  if isPlayer then
+    ui = require 'openmw.ui'
+  end
+  ---@omw-context-end player
+end
 
 local function pairsByKeys(t, f)
   local a = {}
@@ -31,12 +41,6 @@ local function defaultSubscribeHandler(shadowSettings, group, _, key)
   shadowSettings[key] = group:get(key)
 end
 
----@class StorageSection
----@field asTable function
----@field subscribe function
----@field get function
----@field set function
-
 ---@alias IndexFunction fun(key: string): any
 
 --- Bridges onto a global storage section, providing easy access to the storage group with caching and logging methods
@@ -44,18 +48,18 @@ end
 --- They will always be up-to-date thanks to the provided subscription function, but that sub function may be overridden during construction.
 ---@class ProtectedTable:table table Semi-Read-only table which allows insertion of functions and hooks to a global storage section
 ---@field private shadowSettings ShadowSettingsTable Cached copies of setting values returned by the index method. Do NOT work with this directly.
----@field private thisGroup StorageSection Storage section this ProtectedTable owns. Do not work with this directly, instead iterate over or index the ProtectedTable.
+---@field private thisGroup openmw.storage.StorageSection Storage section this ProtectedTable owns. Do not work with this directly, instead iterate over or index the ProtectedTable.
 ---@field state table a writable table to store arbitrary values in
 ---@field notifyPlayer fun(any) shorthand to display all arguments as a table in a Morrowind MessageBox from a protectedTable. Only works on player scripts.
 ---@field debugLog fun(...) If debug logging setting is enabled, then prints the arguments to log, as a concatenated table
 ---@field interface fun(handler: IndexFunction) Helper function to provide more convenience when binding a protectedTable into an interface
 
 ---@alias ShadowSettingsTable table<string, any>
----@alias ShadowTableSubscriptionHandler fun(shadowSettings: ShadowSettingsTable, group: StorageSection, groupName: string, key: string)
+---@alias ShadowTableSubscriptionHandler fun(shadowSettings: ShadowSettingsTable, group: openmw.storage.StorageSection, groupName: string, key: string)
 
 ---@class ProtectedTableConstructor
 ---@field logPrefix string
----@field storageSection StorageSection? instead of the *name* of a global section, protectedTables may provide a storgae section which the table uses
+---@field storageSection openmw.storage.StorageSection? instead of the *name* of a global section, protectedTables may provide a storgae section which the table uses
 ---@field inputGroupName string? name of the *global* storage section to use. If no managerName is provided, also used in the __tostring method
 ---@field managerName string? optional name to override inputGroupName in the __tostring method
 ---@field subscribeHandler ShadowTableSubscriptionHandler|false? override function to use instead of the default subscription handler. Since global sections may not be written from local scripts, an explicit value of `false` can be used to indicate no subscription at all.
@@ -74,6 +78,7 @@ local function new(constructorData)
 
   assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
   local testKey, testValue = next(requestedGroup:asTable())
+  ---@diagnostic disable-next-line: undefined-field
   local groupIsWritable = pcall(requestedGroup.set, requestedGroup, testKey, testValue)
 
   local methods, proxy, shadowSettings, state = {}, {}, {}, {}
@@ -105,6 +110,7 @@ local function new(constructorData)
     print(constructorData.logPrefix, table.concat({ ... }, ' '))
   end
 
+  ---@omw-context-begin player
   if isPlayer then
     function methods.notifyPlayer(...)
       if not shadowSettings.MessageEnable then return end
@@ -112,6 +118,7 @@ local function new(constructorData)
       ui.showMessage(constructorData.logPrefix .. ' ' .. table.concat({ ... }, ' '))
     end
   end
+  ---@omw-context-end player
 
   function methods.interface(handlerFunction)
     assert(type(handlerFunction) == 'function')
@@ -153,6 +160,7 @@ local function new(constructorData)
           (type(value) ~= 'table' and key == 'state') then
         if groupIsWritable then
           shadowSettings[key] = value
+          ---@cast requestedGroup openmw.storage.MutableStorageSection
           requestedGroup:set(key, value)
         else
           error(
