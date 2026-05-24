@@ -33,6 +33,7 @@ local PlaylistEnvironment = {
   ---@type table <string, any>
   I = require 'openmw.interfaces',
   math = math,
+  require = require,
   string = string,
   table = table,
   ipairs = ipairs,
