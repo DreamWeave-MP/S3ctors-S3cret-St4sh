@@ -1,5 +1,7 @@
 ---@omw-context runtime
+
 local core = require 'openmw.core'
+local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
@@ -298,7 +300,14 @@ end
 ---@param castCost number
 ---@param actor openmw.LObject | openmw.GObject
 function Magic.getEnchantmentBaseCost(castCost, actor)
-    local enchantSkill = s3lf.From(actor).enchant.modified
+    if not types.NPC.objectIsInstance(actor) then
+        error(('Non-NPC types may not cast enchantments: %s !'):format(actor.type))
+    end
+
+    ---@type openmw.types.NPC
+    local actorType = actor.type
+
+    local enchantSkill = actorType.stats.skills.enchant(actor).modified
 
     local result = castCost - (castCost / 100) * (enchantSkill - 10)
 
