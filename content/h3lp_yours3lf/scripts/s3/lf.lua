@@ -1,3 +1,5 @@
+---@omw-context local | player
+
 ---@alias ActorType
 ---| 0 # Player
 ---| 1 # NPC
@@ -224,6 +226,7 @@ do
   })
 end
 
+---@omw-context-begin player
 if instance.actorType == 0 then
   local debug = require 'openmw.debug'
   local ui = require 'openmw.ui'
@@ -265,6 +268,8 @@ if instance.actorType == 0 then
         local currentCell = gameSelf.cell
         if currentCell == rawget(instance, 'cell') then return end
 
+        --- Even players actually will not have a nil cell in onUpdate
+        ---@diagnostic disable-next-line: need-check-nil
         local currentCellId = currentCell.id
 
         if not cellsVisited[currentCellId] then cellsVisited[currentCellId] = true end
@@ -299,6 +304,8 @@ if instance.actorType == 0 then
       lf = instance,
     }
   }
+  ---@omw-context-end player
+  ---@omw-context-begin local
 else
   return {
     engineHandlers = {},
@@ -309,3 +316,4 @@ else
     }
   }
 end
+---@omw-context-end local
