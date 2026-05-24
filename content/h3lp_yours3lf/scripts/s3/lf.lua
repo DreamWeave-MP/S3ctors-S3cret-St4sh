@@ -27,8 +27,10 @@
 ---| openmw.types.StaticRecord
 ---| openmw.types.LevelledCreatureRecord
 
+local async = require 'openmw.async'
 local gameSelf = require 'openmw.self'
 local nearby = require 'openmw.nearby'
+local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
@@ -36,8 +38,15 @@ local localPlayers = nearby.players
 
 local next, rawget, rawset, type = next, rawget, rawset, type
 
+local S3S = storage.globalSection 'S3lfColdStorage'
 ---@type KeyBehaviors
-local KeyBehavior = require 'openmw.storage'.globalSection 'S3lfColdStorage':get 'KeyBehavior'
+local KeyBehavior = S3S:get 'KeyBehavior'
+
+S3S:subscribe(async:callback(function(_, key)
+  if not key or key == 'KeyBehavior' then
+    KeyBehavior = S3S:get 'KeyBehavior'
+  end
+end))
 
 ---Dynamic convenience facade for the current object.
 ---Fields are resolved lazily from openmw.self, the object's type module,
@@ -333,6 +342,8 @@ do
 
   setmetatable(instance, {
     __index = function(_, key)
+      if not KeyBehavior then return end
+
       ---@type KeyBehavior?
       local behavior = KeyBehavior[key]
 
