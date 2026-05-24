@@ -1,3 +1,5 @@
+---@omw-context player
+
 local camera = require 'openmw.camera'
 local types = require 'openmw.types'
 local ui = require 'openmw.ui'
@@ -35,7 +37,7 @@ local function targetPosition(object)
 end
 
 ---@param object GameObject object whose position will be checked
----@return util.vector3? viewportPos If the object is onscreen, the identified screenSize position is returned. If not, then nil. Viewpos is NOT normalized.
+---@return openmw.util.Vector3? viewportPos If the object is onscreen, the identified screenSize position is returned. If not, then nil. Viewpos is NOT normalized.
 local function objectIsOnscreen(object)
     local checkPos = targetPosition(object)
     local viewportPos = camera.worldToViewportVector(checkPos)
