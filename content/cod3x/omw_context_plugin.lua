@@ -13,12 +13,25 @@
 ---    Use "all" for portable Lua files limited to modules available in every script context.
 ---    Use "runtime" for portable Lua files limited to runtime script contexts.
 ---    Use "none" for API-agnostic Lua files that intentionally avoid openmw.*.
+---    File-level contexts are the baseline intersection context for the file.
+---
+--- 3. Assert narrower scoped contexts only where needed:
+---      ---@omw-context-next player
+---      local ui = require('openmw.ui')
+---
+---      ---@omw-context-begin player
+---      local debug = require('openmw.debug')
+---      ---@omw-context-end
+---    These pragmas are author assertions.  The plugin does not attempt to prove
+---    that runtime branch guards match the asserted context.
 ---
 --- How it works
 --- ------------
 --- When LLS processes a file, this plugin:
 ---   a) caches the file text and parsed context via OnSetText
----   b) scans for ---@omw-context <ctx> or <ctx> | <ctx> in that text
+---   b) scans for ---@omw-context <ctx> or <ctx> | <ctx> in that text,
+---      plus scoped override pragmas ---@omw-context-next,
+---      ---@omw-context-begin, and ---@omw-context-end
 ---   c) ignores ---@meta files and plugin/tooling files under /cod3x/
 ---   d) poisons missing/invalid context annotations with an undefined global,
 ---   e) poisons offending require('openmw.*') calls with an undefined global,
@@ -153,16 +166,10 @@ local fileCache = {}
 -- Internal helpers
 -- ---------------------------------------------------------------------------
 
---- Extract and parse the ---@omw-context value from a file's text.
---- Returns nil if the annotation is absent.
----@param text string
----@return table?
-local function parseContextSet(text)
-    local raw = text:match("%-%-%-%s*@omw%-context%s+([^\r\n]+)")
-    if not raw then
-        return nil
-    end
-
+--- Parse an OpenMW context expression.
+---@param raw string
+---@return table
+local function parseContextExpression(raw)
     raw = raw:match("^%s*(.-)%s*$")
     local parsed = { raw = raw, invalid = false, none = false, set = {} }
     local count = 0
@@ -203,6 +210,19 @@ local function parseContextSet(text)
     end
 
     return parsed
+end
+
+--- Extract and parse the ---@omw-context value from a file's text.
+--- Returns nil if the annotation is absent.
+---@param text string
+---@return table?
+local function parseContextSet(text)
+    local raw = text:match("%-%-%-%s*@omw%-context%s+([^\r\n]+)")
+    if not raw then
+        return nil
+    end
+
+    return parseContextExpression(raw)
 end
 
 --- Return true if a file is a LuaLS doc/meta annotation file.
@@ -250,6 +270,27 @@ local function stripLineComment(line)
     end
 
     return line
+end
+
+--- Parse a scoped context pragma from a comment-only line.
+---@param line string
+---@return string?, table?
+local function parseScopedContextPragma(line)
+    local raw = line:match("^%s*%-%-%-%s*@omw%-context%-next%s+([^\r\n]+)")
+    if raw then
+        return "next", parseContextExpression(raw)
+    end
+
+    raw = line:match("^%s*%-%-%-%s*@omw%-context%-begin%s+([^\r\n]+)")
+    if raw then
+        return "begin", parseContextExpression(raw)
+    end
+
+    if line:match("^%s*%-%-%-%s*@omw%-context%-end%s*$") then
+        return "end", nil
+    end
+
+    return nil, nil
 end
 
 --- Normalize a module name passed by LuaLS.
@@ -615,48 +656,66 @@ end
 --- Scan `text` for require('openmw.*') calls and build poison edits.
 ---@param text string
 ---@param ctx table?
----@return table[]
+---@return table[], table
 local function makePoisonDiffs(text, ctx)
     local diffs = {}
     local coreAliases = {}
-    local scanCoreMembers = not shouldReject(ctx, "openmw.core")
+    local scopedAllowedModules = {}
+    local overrideStack = {}
+    local pendingNextOverride = nil
     local lineStart = 1
     local previousLineText = nil
 
     for lineText in (text .. "\n"):gmatch("([^\n]*)\n") do
-        if not lineText:match("^%s*%-%-") then
-            local code = stripLineComment(lineText)
-            local searchStart = 1
-
-            addCoreAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, ctx)
-
-            if scanCoreMembers then
-                recordCoreAliases(code, coreAliases)
-                addDirectCoreMemberDiffs(diffs, code, lineStart, ctx)
-                addAliasCoreMemberDiffs(diffs, code, lineStart, ctx, coreAliases)
+        if lineText:match("^%s*%-%-") then
+            local pragma, pragmaCtx = parseScopedContextPragma(lineText)
+            if pragma == "next" then
+                pendingNextOverride = pragmaCtx
+            elseif pragma == "begin" then
+                table.insert(overrideStack, pragmaCtx)
+            elseif pragma == "end" and #overrideStack > 0 then
+                table.remove(overrideStack)
             end
+        else
+            local code = stripLineComment(lineText)
+            if code:match("%S") then
+                local effectiveCtx = pendingNextOverride or overrideStack[#overrideStack] or ctx
+                pendingNextOverride = nil
+                local searchStart = 1
 
-            while true do
-                local requireStart = code:find("require", searchStart, true)
-                if not requireStart then
-                    break
+                addCoreAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, effectiveCtx)
+
+                if not shouldReject(effectiveCtx, "openmw.core") then
+                    recordCoreAliases(code, coreAliases)
+                    addDirectCoreMemberDiffs(diffs, code, lineStart, effectiveCtx)
+                    addAliasCoreMemberDiffs(diffs, code, lineStart, effectiveCtx, coreAliases)
                 end
 
-                local req = matchRequireAt(code, requireStart)
-                if req and shouldReject(ctx, req.module) then
-                    local replacement = poisonName(ctx, req.module)
-                    if not req.paren then
-                        replacement = "(" .. replacement .. ")"
+                while true do
+                    local requireStart = code:find("require", searchStart, true)
+                    if not requireStart then
+                        break
                     end
 
-                    table.insert(diffs, {
-                        start = lineStart + req.start - 1,
-                        finish = lineStart + req.finish - 1,
-                        text = replacement,
-                    })
-                    searchStart = req.finish + 1
-                else
-                    searchStart = requireStart + 7
+                    local req = matchRequireAt(code, requireStart)
+                    if req and shouldReject(effectiveCtx, req.module) then
+                        local replacement = poisonName(effectiveCtx, req.module)
+                        if not req.paren then
+                            replacement = "(" .. replacement .. ")"
+                        end
+
+                        table.insert(diffs, {
+                            start = lineStart + req.start - 1,
+                            finish = lineStart + req.finish - 1,
+                            text = replacement,
+                        })
+                        searchStart = req.finish + 1
+                    else
+                        if req and shouldReject(ctx, req.module) then
+                            scopedAllowedModules[normalizeModuleName(req.module)] = true
+                        end
+                        searchStart = requireStart + 7
+                    end
                 end
             end
         end
@@ -665,7 +724,7 @@ local function makePoisonDiffs(text, ctx)
         previousLineText = lineText
     end
 
-    return diffs
+    return diffs, scopedAllowedModules
 end
 
 -- ---------------------------------------------------------------------------
@@ -687,13 +746,14 @@ function OnSetText(uri, text)
     if isContextRequiredForUri(uri) then
         local ctx = parseContextSet(text)
         local isMeta = hasMetaAnnotation(text)
-        fileCache[uri] = { context = ctx, meta = isMeta }
 
         if isMeta then
+            fileCache[uri] = { context = ctx, meta = isMeta, scopedAllowedModules = {} }
             return nil
         end
 
-        local diffs = makePoisonDiffs(text, ctx)
+        local diffs, scopedAllowedModules = makePoisonDiffs(text, ctx)
+        fileCache[uri] = { context = ctx, meta = isMeta, scopedAllowedModules = scopedAllowedModules }
         insertContextPoisonDiff(diffs, ctx)
 
         if #diffs > 0 then
@@ -730,7 +790,7 @@ function ResolveRequire(rootUri, moduleName, sourceUri)
         return nil
     end
 
-    if shouldReject(cached.context, moduleName) then
+    if shouldReject(cached.context, moduleName) and not (cached.scopedAllowedModules and cached.scopedAllowedModules[moduleName]) then
         return {}
     end
 
