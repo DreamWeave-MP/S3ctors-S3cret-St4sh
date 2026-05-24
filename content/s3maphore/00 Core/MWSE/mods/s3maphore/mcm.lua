@@ -76,35 +76,10 @@ local musicSettings = mwse.loadConfig("S3maphore", {
         ExploreSilenceMax = 120,
         BattleSilenceMin = 0,
         BattleSilenceMax = 120
-    },
-    S3maphoreActivePlaylistSettings = {}
+    }
 })
 
-local playlistSettings = musicSettings["SettingsS3MusicPlaylistSelection"]
 local activePlaylistSettings = musicSettings["SettingsS3MusicPlaylistActivity"]
-local activePlaylistState = musicSettings["S3maphoreActivePlaylistSettings"]
-
-table.subscribe(playlistSettings,
-    function(_, key)
-        local targetPlaylist = playlistSettings["PlaylistActiveCurrentSelection"]
-
-        if (not targetPlaylist) then return end
-
-        local currentState = activePlaylistState[targetPlaylist.label .. "Active"]
-        local noTracks = currentState == -1
-
-        activePlaylistSettings["PlaylistActiveState"] = noTracks and false or currentState
-    end
-)
-
-table.subscribe(activePlaylistSettings,
-    function(_, key)
-        if (not key) then return end
-        local targetPlaylist = playlistSettings["PlaylistActiveCurrentSelection"]
-        local state = activePlaylistSettings["PlaylistActiveState"]
-        activePlaylistState[targetPlaylist.label .. "Active"] = state
-    end
-)
 
 --- @param e modConfigReadyEventData
 local function modConfigReadyCallback(e)
@@ -208,7 +183,7 @@ local function modConfigReadyCallback(e)
 
                 if (ok and type(playlists) == "table") then
                     for _, playlist in ipairs(playlists) do
-                        activePlaylistState[playlist.id .. "Active"] = playlist.active or true
+                        tes3.player.tempData['S3maphoreActivePlaylistSettings'][playlist.id .. "Active"] = playlist.active or true
                         activePlaylistSettings["PlaylistActiveState"] = playlist.active or true
                     end
                 end
@@ -364,5 +339,31 @@ return
 {
     get = function(key)
         return musicSettings[key]
+    end,
+    initGameSessionData = function()
+        local playlistSettings = musicSettings["SettingsS3MusicPlaylistSelection"]
+        local activePlaylistState = tes3.player.tempData["S3maphoreActivePlaylistSettings"]
+
+        table.subscribe(playlistSettings,
+            function(_, key)
+                local targetPlaylist = playlistSettings["PlaylistActiveCurrentSelection"]
+
+                if (not targetPlaylist) then return end
+
+                local currentState = activePlaylistState[targetPlaylist .. "Active"]
+                local noTracks = currentState == -1
+
+                activePlaylistSettings["PlaylistActiveState"] = noTracks and false or currentState
+            end
+        )
+
+        table.subscribe(activePlaylistSettings,
+            function(_, key)
+                if (not key) then return end
+                local targetPlaylist = playlistSettings["PlaylistActiveCurrentSelection"]
+                local state = activePlaylistSettings["PlaylistActiveState"]
+                activePlaylistState[targetPlaylist .. "Active"] = state
+            end
+        )
     end
 }
