@@ -167,6 +167,7 @@ local KeyBehavior = require 'openmw.storage'.globalSection 'S3lfColdStorage':get
 ---@class S3lfActorObject: S3lfObject
 ---@field actorType 0|1|2
 ---@field record openmw.types.NpcRecord|openmw.types.CreatureRecord
+
 ---OpenMW NPC type APIs include Player.
 ---@class S3lfNpcLikeObject: S3lfActorObject
 ---@field actorType 0|1
@@ -174,22 +175,27 @@ local KeyBehavior = require 'openmw.storage'.globalSection 'S3lfColdStorage':get
 ---@class S3lfNpcObject: S3lfNpcLikeObject
 ---@field actorType 1
 ---@field record openmw.types.NpcRecord
+
 ---@class S3lfPlayerObject: S3lfNpcLikeObject
 ---@field actorType 0
 ---@field record openmw.types.NpcRecord
 ---@field cellsVisited table<string, boolean>
 ---@field isInCombat fun(): boolean
 ---@field targetData fun(): table<string, openmw.LObject>
+
 ---@class S3lfCreatureObject: S3lfActorObject
 ---@field actorType 2
 ---@field record openmw.types.CreatureRecord
 ---@field isCreature boolean
 ---@field combatSkill number
+
 ---@class S3lfNonActorObject: S3lfObject
 ---@field actorType 3
 ---@field record? S3lfRecord
+
 ---@class openmw.interfaces.s3
 ---@field lf S3lfObject
+
 ---@class openmw.interfaces
 ---@field s3? openmw.interfaces.s3
 local instance = {
