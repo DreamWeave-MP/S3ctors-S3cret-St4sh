@@ -45,6 +45,13 @@ if isOpenMW then
     pathsMatching = vfs.pathsWithPrefix
     playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
     playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
+else
+    fileExists = tes3.getFileExists
+    musicSettings = require 's3maphore.mcm'.get('SettingsS3Music')
+    pathsMatching = function(prefix)
+        return lfs.walkdir('Data Files\\' .. prefix)
+    end
+    playlistsSection = tes3.player.tempData['S3MusicPlaylistsTrackOrder']
 end
 
 ---@param ... any
@@ -52,6 +59,7 @@ local function debugLog(...)
     if isOpenMW then
         if not musicSettings:get('DebugEnable') then return end
     else
+        if not musicSettings.DebugEnable then return end
     end
 
     local args = { ... }
