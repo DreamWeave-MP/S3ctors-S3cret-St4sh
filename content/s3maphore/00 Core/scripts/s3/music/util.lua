@@ -1,4 +1,4 @@
----@omw-context none
+---@omw-context player
 
 local isOpenMW = require 'scripts.s3.isOpenMW'
 local async, debug, fileExists, musicSettings, pathsMatching, playlistsSection, storage, vfs
