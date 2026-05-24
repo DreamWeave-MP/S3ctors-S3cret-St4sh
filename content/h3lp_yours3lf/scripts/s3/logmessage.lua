@@ -1,28 +1,38 @@
-local types = require('openmw.types')
+---@omw-context all
+
+local types = require 'openmw.types'
 local Player = types.Player
 
 ---@type ScriptContext
-local ScriptContext = require('scripts.s3.scriptContext')
+local ScriptContext = require 'scripts.s3.scriptContext'
 local CurrentContext = ScriptContext.get()
 
 local World, Self, ui, nearby
 
 if CurrentContext == ScriptContext.Types.Global then
-    World = require('openmw.world')
+    ---@omw-context-begin global
+    World = require 'openmw.world'
+    ---@omw-context-end global
 elseif CurrentContext ~= ScriptContext.Types.Menu then
-    Self = require('openmw.self')
+    ---@omw-context-begin local
+    Self = require 'openmw.self'
 
     if Player.objectIsInstance(Self) then
-        ui = require('openmw.ui')
+        ---@omw-context-begin player
+        ui = require 'openmw.ui'
+        ---@omw-context-end player
     else
-        nearby = require('openmw.nearby')
+        nearby = require 'openmw.nearby'
     end
+    ---@omw-context-end local
 end
 
 --- Prints a message to the console, directly using the console OR to nearby players if the attached object isn't a player
 ---@param messageString string The message to print to the console
 local function LogMessage(messageString)
-    if CurrentContext == ScriptContext.Types.Global then
+    if CurrentContext == ScriptContext.Types.Load then
+        print(messageString)
+    elseif CurrentContext == ScriptContext.Types.Global then
         assert(World, "World is not available")
 
         for _, player in pairs(World.players) do

@@ -1,6 +1,7 @@
-local isNotMenu, types = pcall(function() return require('openmw.types') end)
-local isGlobal, _ = pcall(function() require('openmw.world') end)
-local isMenu, _ = pcall(function() require('openmw.menu') end)
+local isNotMenu, types = pcall(require, 'openmw.types')
+local isGlobal, _ = pcall(require, 'openmw.world')
+local isMenu, _ = pcall(require, 'openmw.menu')
+local isLoad, _ = pcall(require, 'openmw.content')
 
 ---@class ScriptContext
 local ScriptContext = {
@@ -10,6 +11,7 @@ local ScriptContext = {
         Global = 2,
         Player = 3,
         Menu = 4,
+        Load = 5,
     },
 }
 
