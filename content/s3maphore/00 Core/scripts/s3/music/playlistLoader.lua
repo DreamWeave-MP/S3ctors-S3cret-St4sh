@@ -34,6 +34,7 @@ local PlaylistEnvironment = {
   I = require 'openmw.interfaces',
   math = math,
   string = string,
+  table = table,
   ipairs = ipairs,
   pairs = pairs,
   print = printOverride,
