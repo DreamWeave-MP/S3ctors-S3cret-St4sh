@@ -21,6 +21,19 @@ local function lerp(v0, v1, t)
   return (1 - t) * v0 + t * v1;
 end
 
+---Moves `current` toward `target` by at most `step`, without overshooting.
+---@param current number
+---@param target number
+---@param step number Must be positive; negative values are not validated and move away from target.
+---@return number result
+local function approach(current, target, step)
+  local delta = target - current
+  if abs(delta) <= step then
+    return target
+  end
+  return current + (delta > 0 and step or -step)
+end
+
 
 --- @param value number
 --- @param low number
@@ -42,6 +55,20 @@ end
 --- @return number result
 local function remap(value, lowIn, highIn, lowOut, highOut)
   return lowOut + (value - lowIn) * (highOut - lowOut) / (highIn - lowIn)
+end
+
+---Remaps a value from one range to another, then clamps to the output range.
+---@param value number
+---@param inMin number
+---@param inMax number Must differ from inMin; this function does not validate it.
+---@param outMin number
+---@param outMax number
+---@return number result
+local function remapClamped(value, inMin, inMax, outMin, outMax)
+  local result = remap(value, inMin, inMax, outMin, outMax)
+  local lo = outMin < outMax and outMin or outMax
+  local hi = outMin < outMax and outMax or outMin
+  return math.max(lo, math.min(hi, result))
 end
 
 
@@ -90,11 +117,71 @@ local function normalizeAngle(angle)
   return (fullTurns - floor(fullTurns) - 0.5) * (TwoPi)
 end
 
+---Exponential interpolation between two positive values.
+---@param a number Must be positive; this function does not validate it.
+---@param b number Must be positive; this function does not validate it.
+---@param t number Interpolation factor; not clamped, so values outside 0..1 extrapolate.
+---@return number result
+local function eerp(a, b, t)
+  return a * (b / a) ^ t
+end
+
+---Bounces a phase value back and forth between min and max.
+---@param phase number Monotonically increasing phase/counter.
+---@param inMin number Lower bound.
+---@param inMax number Upper bound; must differ from inMin. This function does not validate it.
+---@return number result
+local function oscillate(phase, inMin, inMax)
+  local range = inMax - inMin
+  -- Normalize phase into [0, 2*range) and fold.
+  local t = (phase - inMin) % (2 * range)
+  if t > range then t = 2 * range - t end
+  return inMin + t
+end
+
+---@param x number
+---@return number
+local function _clamp01(x)
+  return x < 0 and 0 or (x > 1 and 1 or x)
+end
+
+---Returns smooth cubic interpolation over edge0..edge1.
+---@param edge0 number
+---@param edge1 number Must differ from edge0; reversed edges invert the ramp.
+---@param x number
+---@return number result
+local function smoothstep(edge0, edge1, x)
+  assert(edge0 ~= edge1, 'smoothstep: edge0 and edge1 must differ')
+  x = _clamp01((x - edge0) / (edge1 - edge0))
+  return x * x * (3 - 2 * x)
+end
+
+---Returns smoother quintic interpolation over edge0..edge1.
+---@param edge0 number
+---@param edge1 number Must differ from edge0; reversed edges invert the ramp.
+---@param x number
+---@return number result
+local function smootherstep(edge0, edge1, x)
+  assert(edge0 ~= edge1, 'smootherstep: edge0 and edge1 must differ')
+  x = _clamp01((x - edge0) / (edge1 - edge0))
+  return x * x * x * (x * (x * 6 - 15) + 10)
+end
+
+---Rounds `value` to the nearest multiple of positive `step`.
+---Half steps round toward positive infinity, including negative halves.
+---@param value number
+---@param step number Positive step is expected; this function does not validate it.
+---@return number result
+local function snap(value, step)
+  return floor(value / step + 0.5) * step
+end
+
 
 ---@class H3MathLib
 return {
   abs = abs,
   acos = acos,
+  approach = approach,
   asin = asin,
   atan = atan,
   atan2 = atan2,
@@ -103,6 +190,7 @@ return {
   cos = cos,
   cosh = cosh,
   deg = deg,
+  eerp = eerp,
   epsilon = Epsilon,
   exp = exp,
   floor = floor,
@@ -119,14 +207,19 @@ return {
   modf = modf,
   nextPowerOfTwo = nextPowerOfTwo,
   normalizeAngle = normalizeAngle,
+  oscillate = oscillate,
   pi = pi,
   pow = pow,
   rad = rad,
   random = random,
   remap = remap,
+  remapClamped = remapClamped,
   round = round,
   sin = sin,
   sinh = sinh,
+  smoothstep = smoothstep,
+  smootherstep = smootherstep,
+  snap = snap,
   sqrt = sqrt,
   tan = tan,
   tanh = tanh,
