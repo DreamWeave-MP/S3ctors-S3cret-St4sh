@@ -35,7 +35,7 @@
 ---   c) ignores ---@meta files and plugin/tooling files under /cod3x/
 ---   d) poisons missing/invalid context annotations with an undefined global,
 ---   e) poisons offending require('openmw.*') calls with an undefined global,
----   f) poisons offending openmw.core top-level member access with an undefined global,
+---   f) poisons offending openmw.core/openmw.storage top-level member access with an undefined global,
 ---      which makes LuaLS emit its built-in undefined-global diagnostic
 ---   g) blocks LuaLS module resolution for the same offending modules via
 ---      ResolveRequire returning {}
@@ -67,7 +67,7 @@
 ---   * Instead of the hardcoded AVAILABILITY table, derive it at startup
 ---     by reading the @context annotations from the openmw/*.lua stubs,
 ---     so the map stays in sync automatically as new modules are added.
----   * Extend member-level restrictions beyond openmw.core top-level members,
+---   * Extend member-level restrictions beyond top-level module members,
 ---     including receiver/type rules such as Cell:getAll, Inventory:resolve,
 ---     and local self restrictions for nested members such as core.sound.playSound3d.
 ---   * If future LuaLS versions expose more plugin hooks, consider adding
@@ -155,6 +155,19 @@ local CORE_MEMBER_AVAILABILITY = {
     weather = { global = true, ["local"] = true, player = true, menu = true },
 
     getRealFrameDuration = { ["local"] = true, player = true, menu = true },
+}
+
+local STORAGE_MEMBER_AVAILABILITY = {
+    LIFE_TIME = { global = true, ["local"] = true, player = true, menu = true, load = true },
+    globalSection = { global = true, ["local"] = true, player = true, menu = true, load = true },
+    playerSection = { player = true, menu = true },
+    allPlayerSections = { player = true, menu = true },
+    allGlobalSections = { global = true },
+}
+
+local MEMBER_AVAILABILITY = {
+    ["openmw.core"] = CORE_MEMBER_AVAILABILITY,
+    ["openmw.storage"] = STORAGE_MEMBER_AVAILABILITY,
 }
 
 local MISSING_CONTEXT_POISON = "__OMW_CONTEXT_ERROR_missing_omw_context_add_none_if_api_agnostic__"
@@ -325,11 +338,12 @@ local function poisonName(ctx, moduleName)
     return "__OMW_CONTEXT_ERROR_" .. contextPart .. "_cannot_require_" .. modulePart .. "__"
 end
 
---- Build a readable undefined global name for disallowed openmw.core members.
+--- Build a readable undefined global name for disallowed top-level module members.
 ---@param ctx table?
+---@param moduleName string
 ---@param memberName string
 ---@return string
-local function memberPoisonName(ctx, memberName)
+local function memberPoisonName(ctx, moduleName, memberName)
     local contextPart
     if not ctx then
         contextPart = "missing_context"
@@ -339,7 +353,7 @@ local function memberPoisonName(ctx, memberName)
         contextPart = "unknown_context_" .. ctx.raw:gsub("%W", "_")
     end
 
-    return "__OMW_CONTEXT_ERROR_" .. contextPart .. "_cannot_use_openmw_core_" .. memberName .. "__"
+    return "__OMW_CONTEXT_ERROR_" .. contextPart .. "_cannot_use_" .. moduleName:gsub("%W", "_") .. "_" .. memberName .. "__"
 end
 
 --- Insert an undefined global for a missing or invalid context annotation.
@@ -388,16 +402,22 @@ local function shouldReject(ctx, moduleName)
     return false
 end
 
---- Return true if an openmw.core top-level member should be blocked/poisoned.
+--- Return true if a top-level module member should be blocked/poisoned.
 ---@param ctx table?
+---@param moduleName string
 ---@param memberName string
 ---@return boolean
-local function shouldRejectCoreMember(ctx, memberName)
+local function shouldRejectModuleMember(ctx, moduleName, memberName)
     if not ctx or ctx.invalid or ctx.none then
         return true
     end
 
-    local memberCtxs = CORE_MEMBER_AVAILABILITY[memberName]
+    local memberAvailability = MEMBER_AVAILABILITY[moduleName]
+    if not memberAvailability then
+        return false
+    end
+
+    local memberCtxs = memberAvailability[memberName]
     if not memberCtxs then
         return false
     end
@@ -432,6 +452,58 @@ local function coreSurfaceForContext(ctx)
     end
 
     return nil
+end
+
+--- Return the narrowest intersection-safe openmw.storage surface for this context set.
+---@param ctx table?
+---@return string?
+local function storageSurfaceForContext(ctx)
+    if not ctx or ctx.invalid or ctx.none then
+        return nil
+    end
+
+    if ctx.set.global and not ctx.set["local"] and not ctx.set.player and not ctx.set.menu and not ctx.set.load then
+        return "Global"
+    end
+
+    if (ctx.set.player or ctx.set.menu) and not ctx.set.global and not ctx.set["local"] and not ctx.set.load then
+        return "PlayerMenu"
+    end
+
+    return "All"
+end
+
+--- Return the type to inject for a local require alias in the effective context.
+---@param ctx table?
+---@param moduleName string
+---@return string?
+local function moduleAliasTypeForContext(ctx, moduleName)
+    if shouldReject(ctx, moduleName) then
+        return nil
+    end
+
+    if moduleName == "openmw.core" then
+        local surface = coreSurfaceForContext(ctx)
+        return surface and "openmw.core." .. surface or nil
+    end
+
+    if moduleName == "openmw.storage" then
+        local surface = storageSurfaceForContext(ctx)
+        return surface and "openmw.storage." .. surface or nil
+    end
+
+    if isOpenMwModule(moduleName) then
+        return moduleName
+    end
+
+    return nil
+end
+
+--- Escape a literal string for Lua patterns.
+---@param value string
+---@return string
+local function escapePattern(value)
+    return (value:gsub("([^%w])", "%%%1"))
 end
 
 --- Match a require call starting at `pos` in `line`.
@@ -493,11 +565,12 @@ local function matchRequireAt(line, pos)
     return nil
 end
 
---- Match require('openmw.core').member or require 'openmw.core'.member at `pos`.
+--- Match require('module').member or require 'module'.member at `pos`.
 ---@param line string
 ---@param pos integer
+---@param moduleName string
 ---@return table?
-local function matchCoreRequireMemberAt(line, pos)
+local function matchRequireMemberAt(line, pos, moduleName)
     local before = pos > 1 and line:sub(pos - 1, pos - 1) or ""
     if before:match("[%w_%.:]") then
         return nil
@@ -509,22 +582,23 @@ local function matchCoreRequireMemberAt(line, pos)
         return nil
     end
 
-    local memberName, memberFinish = rest:match('^require%s*%(%s*"openmw%.core"%s*%)%s*%.%s*([%a_][%w_]*)()')
+    local modulePattern = escapePattern(moduleName)
+    local memberName, memberFinish = rest:match('^require%s*%(%s*"' .. modulePattern .. '"%s*%)%s*%.%s*([%a_][%w_]*)()')
     if memberName then
         return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
     end
 
-    memberName, memberFinish = rest:match("^require%s*%(%s*'openmw%.core'%s*%)%s*%.%s*([%a_][%w_]*)()")
+    memberName, memberFinish = rest:match("^require%s*%(%s*'" .. modulePattern .. "'%s*%)%s*%.%s*([%a_][%w_]*)()")
     if memberName then
         return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
     end
 
-    memberName, memberFinish = rest:match('^require%s+"openmw%.core"%s*%.%s*([%a_][%w_]*)()')
+    memberName, memberFinish = rest:match('^require%s+"' .. modulePattern .. '"%s*%.%s*([%a_][%w_]*)()')
     if memberName then
         return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
     end
 
-    memberName, memberFinish = rest:match("^require%s+'openmw%.core'%s*%.%s*([%a_][%w_]*)()")
+    memberName, memberFinish = rest:match("^require%s+'" .. modulePattern .. "'%s*%.%s*([%a_][%w_]*)()")
     if memberName then
         return { member = memberName, start = pos, finish = pos + memberFinish - 2 }
     end
@@ -532,19 +606,24 @@ local function matchCoreRequireMemberAt(line, pos)
     return nil
 end
 
---- Return true for `require('openmw.core')` and `require 'openmw.core'` RHS forms.
+--- Return the module name for `require('openmw.*')` and `require 'openmw.*'` RHS forms.
 ---@param code string
 ---@param rhsStart integer
----@return boolean
-local function isCoreRequireRhs(code, rhsStart)
+---@return string?
+local function openMwRequireRhsModule(code, rhsStart)
     local req = matchRequireAt(code, rhsStart)
-    return req ~= nil and req.module == "openmw.core"
+    if req and isOpenMwModule(req.module) then
+        return normalizeModuleName(req.module)
+    end
+
+    return nil
 end
 
---- Record `local alias = require('openmw.core')` style aliases from one line.
+--- Record `local alias = require('module')` style aliases from one line.
 ---@param code string
 ---@param aliases table
-local function recordCoreAliases(code, aliases)
+---@param moduleName string
+local function recordModuleAliases(code, aliases, moduleName)
     local searchStart = 1
     while true do
         local _, _, alias, rhsStart = code:find("local%s+([%a_][%w_]*)%s*=%s*()", searchStart)
@@ -552,7 +631,7 @@ local function recordCoreAliases(code, aliases)
             break
         end
 
-        if isCoreRequireRhs(code, rhsStart) then
+        if openMwRequireRhsModule(code, rhsStart) == moduleName then
             aliases[alias] = true
         end
 
@@ -560,32 +639,37 @@ local function recordCoreAliases(code, aliases)
     end
 end
 
---- Match `local alias = require('openmw.core')` style alias declarations on one line.
+--- Match `local alias = require('openmw.*')` style alias declarations on one line.
 ---@param code string
----@return boolean
-local function isCoreAliasLine(code)
+---@return string?
+local function localRequireAliasModule(code)
     local _, _, _, rhsStart = code:find("^%s*local%s+([%a_][%w_]*)%s*=%s*()")
     if not rhsStart then
-        return false
+        return nil
     end
 
-    return isCoreRequireRhs(code, rhsStart)
+    return openMwRequireRhsModule(code, rhsStart)
 end
 
---- Add type annotations before openmw.core local require aliases.
+--- Add type annotations before openmw.* local require aliases.
 ---@param diffs table[]
 ---@param code string
 ---@param lineText string
 ---@param previousLineText string?
 ---@param lineStart integer
 ---@param ctx table?
-local function addCoreAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, ctx)
-    local surface = coreSurfaceForContext(ctx)
-    if not surface or not isCoreAliasLine(code) then
+local function addModuleAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, ctx)
+    local moduleName = localRequireAliasModule(code)
+    if not moduleName then
         return
     end
 
-    if previousLineText and previousLineText:match("^%s*%-%-%-%s*@type%s+openmw%.core%.") then
+    local typeName = moduleAliasTypeForContext(ctx, moduleName)
+    if not typeName then
+        return
+    end
+
+    if previousLineText and previousLineText:match("^%s*%-%-%-%s*@type%f[%W]") then
         return
     end
 
@@ -593,16 +677,17 @@ local function addCoreAliasTypeDiff(diffs, code, lineText, previousLineText, lin
     table.insert(diffs, {
         start = lineStart,
         finish = lineStart - 1,
-        text = indent .. "---@type openmw.core." .. surface .. "\n",
+        text = indent .. "---@type " .. typeName .. "\n",
     })
 end
 
---- Add poison edits for disallowed direct require('openmw.core').member uses.
+--- Add poison edits for disallowed direct require('module').member uses.
 ---@param diffs table[]
 ---@param code string
 ---@param lineStart integer
 ---@param ctx table?
-local function addDirectCoreMemberDiffs(diffs, code, lineStart, ctx)
+---@param moduleName string
+local function addDirectModuleMemberDiffs(diffs, code, lineStart, ctx, moduleName)
     local searchStart = 1
     while true do
         local requireStart = code:find("require", searchStart, true)
@@ -610,12 +695,12 @@ local function addDirectCoreMemberDiffs(diffs, code, lineStart, ctx)
             break
         end
 
-        local memberUse = matchCoreRequireMemberAt(code, requireStart)
-        if memberUse and shouldRejectCoreMember(ctx, memberUse.member) then
+        local memberUse = matchRequireMemberAt(code, requireStart, moduleName)
+        if memberUse and shouldRejectModuleMember(ctx, moduleName, memberUse.member) then
             table.insert(diffs, {
                 start = lineStart + memberUse.start - 1,
                 finish = lineStart + memberUse.finish - 1,
-                text = memberPoisonName(ctx, memberUse.member),
+                text = memberPoisonName(ctx, moduleName, memberUse.member),
             })
             searchStart = memberUse.finish + 1
         else
@@ -630,7 +715,8 @@ end
 ---@param lineStart integer
 ---@param ctx table?
 ---@param aliases table
-local function addAliasCoreMemberDiffs(diffs, code, lineStart, ctx, aliases)
+---@param moduleName string
+local function addAliasModuleMemberDiffs(diffs, code, lineStart, ctx, aliases, moduleName)
     for alias in pairs(aliases) do
         local searchStart = 1
         while true do
@@ -640,11 +726,11 @@ local function addAliasCoreMemberDiffs(diffs, code, lineStart, ctx, aliases)
             end
 
             local before = exprStart > 1 and code:sub(exprStart - 1, exprStart - 1) or ""
-            if not before:match("[%w_%.:]") and shouldRejectCoreMember(ctx, memberName) then
+            if not before:match("[%w_%.:]") and shouldRejectModuleMember(ctx, moduleName, memberName) then
                 table.insert(diffs, {
                     start = lineStart + exprStart - 1,
                     finish = lineStart + memberFinish - 2,
-                    text = memberPoisonName(ctx, memberName),
+                    text = memberPoisonName(ctx, moduleName, memberName),
                 })
             end
 
@@ -660,6 +746,7 @@ end
 local function makePoisonDiffs(text, ctx)
     local diffs = {}
     local coreAliases = {}
+    local storageAliases = {}
     local scopedAllowedModules = {}
     local overrideStack = {}
     local pendingNextOverride = nil
@@ -683,12 +770,18 @@ local function makePoisonDiffs(text, ctx)
                 pendingNextOverride = nil
                 local searchStart = 1
 
-                addCoreAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, effectiveCtx)
+                addModuleAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, effectiveCtx)
 
                 if not shouldReject(effectiveCtx, "openmw.core") then
-                    recordCoreAliases(code, coreAliases)
-                    addDirectCoreMemberDiffs(diffs, code, lineStart, effectiveCtx)
-                    addAliasCoreMemberDiffs(diffs, code, lineStart, effectiveCtx, coreAliases)
+                    recordModuleAliases(code, coreAliases, "openmw.core")
+                    addDirectModuleMemberDiffs(diffs, code, lineStart, effectiveCtx, "openmw.core")
+                    addAliasModuleMemberDiffs(diffs, code, lineStart, effectiveCtx, coreAliases, "openmw.core")
+                end
+
+                if not shouldReject(effectiveCtx, "openmw.storage") then
+                    recordModuleAliases(code, storageAliases, "openmw.storage")
+                    addDirectModuleMemberDiffs(diffs, code, lineStart, effectiveCtx, "openmw.storage")
+                    addAliasModuleMemberDiffs(diffs, code, lineStart, effectiveCtx, storageAliases, "openmw.storage")
                 end
 
                 while true do
