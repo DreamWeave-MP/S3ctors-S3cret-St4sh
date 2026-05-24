@@ -117,8 +117,8 @@ local TextureResource = {}
 ---Table with arguments passed to ui.texture.
 ---@class openmw.ui.TextureResourceOptions
 ---@field path string Path to the texture file. Required
----@field offset openmw.util.Vector2 Offset of this resource in the texture. (0, 0) by default
----@field size openmw.util.Vector2 Size of the resource in the texture. (0, 0) by default. 0 means the whole texture size is used.
+---@field offset? openmw.util.Vector2 Offset of this resource in the texture. (0, 0) by default
+---@field size? openmw.util.Vector2 Size of the resource in the texture. (0, 0) by default. 0 means the whole texture size is used.
 local TextureResourceOptions = {}
 
 ---Widget types
