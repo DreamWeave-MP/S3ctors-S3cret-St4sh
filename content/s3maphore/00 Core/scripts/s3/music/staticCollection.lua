@@ -16,7 +16,7 @@ local liveCheckForRegion = NullFunction
 
 local DoorType = types.Door
 local SquaredLen = require 'openmw.util'.vector3(0, 0, 0).length2
-local function checkForRegion(object, target)
+local function checkForRegionOMW(object, target)
     if not DoorType.objectIsInstance(object) or not DoorType.isTeleport(object) then return end
 
     local targetPos, objectPos = target.position, object.position
@@ -25,9 +25,19 @@ local function checkForRegion(object, target)
     end
 end
 
+--- @param ref tes3reference
+local function checkForRegionMWSE(ref)
+    if not ref.objectType == tes3.objectType.door or not ref.destination then return end
+
+    local targetPos, objectPos = tes3.player.position, ref.position
+    if not NearestDoor or (targetPos - objectPos):length() < (targetPos - NearestDoor.position):length() then
+        NearestDoor = ref
+    end
+end
+
 --- Given a cell object, check the hostility ratings of all actors inside of it
 ---@param senderCell GameCell
-local function updateCellInfo(sender, senderCell)
+local function updateCellInfoOMW(sender, senderCell)
     for _, fieldName in ipairs(FieldNames) do
         for k in pairs(StaticCellChangeData.staticList[fieldName]) do
             StaticCellChangeData.staticList[fieldName][k] = nil
@@ -42,7 +52,7 @@ local function updateCellInfo(sender, senderCell)
     local nearestRegion = senderCell.region
     if not nearestRegion then
         NearestDoor = nil
-        liveCheckForRegion = checkForRegion
+        liveCheckForRegion = checkForRegionOMW
     end
 
     for _, object in ipairs(senderCell:getAll()) do
@@ -61,6 +71,60 @@ local function updateCellInfo(sender, senderCell)
         end
 
         liveCheckForRegion(object, sender)
+    end
+
+    if NearestDoor then
+        -- Teleport doors *should* always have a target cell
+        local region = DoorType.destCell(NearestDoor).region
+
+        if region then
+            nearestRegion = region
+        end
+
+        NearestDoor = nil
+    end
+
+    liveCheckForRegion = NullFunction
+
+    if nearestRegion then
+        StaticCellChangeData.nearestRegion = nearestRegion
+    end
+end
+
+---@param cell tes3cell
+local function updateCellInfoMWSE(cell)
+    ---TODO Replicate in MWSE
+    for _, fieldName in ipairs(FieldNames) do
+        for k in pairs(StaticCellChangeData.staticList[fieldName]) do
+            StaticCellChangeData.staticList[fieldName][k] = nil
+        end
+    end
+
+    local uniqueStaticIds, uniqueContentFiles = {}, {}
+
+    local addedStatics, addedContentFiles = StaticCellChangeData.staticList.recordIds,
+        StaticCellChangeData.staticList.contentFiles
+
+    local nearestRegion = cell.region
+    if not nearestRegion then
+        NearestDoor = nil
+        liveCheckForRegion = checkForRegionMWSE
+    end
+
+    for reference in cell:iterateReferences() do
+        if not uniqueStaticIds[reference.baseObject.id] then
+            addedStatics[#addedStatics + 1] = reference.baseObject.id
+            uniqueStaticIds[reference.baseObject.id] = true
+        end
+
+        if not uniqueContentFiles[reference.baseObject.sourceMod] then
+            if reference.baseObject.sourceMod and reference.baseObject.sourceMod ~= '' then
+                addedContentFiles[#addedContentFiles + 1] = reference.baseObject.sourceMod:lower()
+                uniqueContentFiles[reference.baseObject.sourceMod] = true
+            end
+        end
+
+        liveCheckForRegion(reference)
     end
 
     if NearestDoor then
@@ -138,7 +202,7 @@ return {
                 local prevCell = PreviousPlayerCells[playerId]
 
                 if not prevCell or prevCell ~= currentCell then
-                    updateCellInfo(player, playerCell)
+                    updateCellInfoOMW(player, playerCell)
                     player:sendEvent('S3maphoreCellChanged', StaticCellChangeData)
                     PreviousPlayerCells[playerId] = currentCell
                 end
@@ -148,4 +212,22 @@ return {
     },
 
     eventHandlers = {},
+
+    mwse = {
+        weatherChanged = function(e)
+            local weatherTracker = tes3.getGlobal('S3maphoreWeatherTracker')
+            if weatherTracker ~= -1 then
+                local weatherName = WeatherType[weatherTracker]
+                event.trigger('S3maphoreWeatherChanged', {weatherName = weatherName})
+                weatherTracker = -1
+            end
+        end,
+        --- @param e cellChangedEventData
+        cellChanged = function(e)
+            if not e.previousCell or e.previousCell.id ~= e.cell.id then
+                updateCellInfoMWSE(e.cell)
+                event.trigger('S3maphoreCellChanged', StaticCellChangeData)
+            end
+        end
+    }
 }
