@@ -431,15 +431,6 @@ local function shouldRejectModuleMember(ctx, moduleName, memberName)
     return false
 end
 
---- Return true if a mapped module member is unknown to this plugin.
----@param moduleName string
----@param memberName string
----@return boolean
-local function isUnknownMappedModuleMember(moduleName, memberName)
-    local memberAvailability = MEMBER_AVAILABILITY[moduleName]
-    return memberAvailability ~= nil and memberAvailability[memberName] == nil
-end
-
 --- Return the narrowest intersection-safe openmw.core surface for this context set.
 ---@param ctx table?
 ---@return string?
@@ -787,7 +778,7 @@ local function addDirectModuleMemberDiffs(diffs, code, lineStart, ctx, moduleNam
         end
 
         local memberUse = matchRequireMemberAt(code, requireStart, moduleName)
-        if memberUse and (shouldRejectModuleMember(ctx, moduleName, memberUse.member) or isUnknownMappedModuleMember(moduleName, memberUse.member)) then
+        if memberUse and shouldRejectModuleMember(ctx, moduleName, memberUse.member) then
             table.insert(diffs, {
                 start = lineStart + memberUse.start - 1,
                 finish = lineStart + memberUse.finish - 1,
@@ -817,7 +808,7 @@ local function addAliasModuleMemberDiffs(diffs, code, lineStart, ctx, aliases, m
             end
 
             local before = exprStart > 1 and code:sub(exprStart - 1, exprStart - 1) or ""
-            if not before:match("[%w_%.:]") and (shouldRejectModuleMember(ctx, moduleName, memberName) or isUnknownMappedModuleMember(moduleName, memberName)) then
+            if not before:match("[%w_%.:]") and shouldRejectModuleMember(ctx, moduleName, memberName) then
                 table.insert(diffs, {
                     start = lineStart + exprStart - 1,
                     finish = lineStart + memberFinish - 2,
