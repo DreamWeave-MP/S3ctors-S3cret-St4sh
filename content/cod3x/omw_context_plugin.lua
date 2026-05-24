@@ -431,6 +431,15 @@ local function shouldRejectModuleMember(ctx, moduleName, memberName)
     return false
 end
 
+--- Return true if a mapped module member is unknown to this plugin.
+---@param moduleName string
+---@param memberName string
+---@return boolean
+local function isUnknownMappedModuleMember(moduleName, memberName)
+    local memberAvailability = MEMBER_AVAILABILITY[moduleName]
+    return memberAvailability ~= nil and memberAvailability[memberName] == nil
+end
+
 --- Return the narrowest intersection-safe openmw.core surface for this context set.
 ---@param ctx table?
 ---@return string?
@@ -471,6 +480,31 @@ local function storageSurfaceForContext(ctx)
     end
 
     return "All"
+end
+
+--- Return the storage section type for a storage section constructor in this context.
+---@param ctx table?
+---@param memberName string
+---@return string?
+local function storageSectionReturnTypeForContext(ctx, memberName)
+    if shouldRejectModuleMember(ctx, "openmw.storage", memberName) then
+        return nil
+    end
+
+    if memberName == "globalSection" then
+        if ctx and not ctx.invalid and not ctx.none and ctx.set.global
+            and not ctx.set["local"] and not ctx.set.player and not ctx.set.menu and not ctx.set.load then
+            return "openmw.storage.MutableStorageSection"
+        end
+
+        return "openmw.storage.StorageSection"
+    end
+
+    if memberName == "playerSection" then
+        return "openmw.storage.MutableStorageSection"
+    end
+
+    return nil
 end
 
 --- Return the type to inject for a local require alias in the effective context.
@@ -522,22 +556,24 @@ local function matchRequireAt(line, pos)
         return nil
     end
 
-    local argStart, moduleName, argFinish = rest:match('^require%s*%(%s*()"([^"]+)"()%s*%)')
+    local argStart, moduleName, argFinish, callFinish = rest:match('^require%s*%(%s*()"([^"]+)"()%s*%)()')
     if moduleName then
         return {
             module = moduleName,
             start = pos + argStart - 1,
             finish = pos + argFinish - 2,
+            callFinish = pos + callFinish - 2,
             paren = true,
         }
     end
 
-    argStart, moduleName, argFinish = rest:match("^require%s*%(%s*()'([^']+)'()%s*%)")
+    argStart, moduleName, argFinish, callFinish = rest:match("^require%s*%(%s*()'([^']+)'()%s*%)()")
     if moduleName then
         return {
             module = moduleName,
             start = pos + argStart - 1,
             finish = pos + argFinish - 2,
+            callFinish = pos + callFinish - 2,
             paren = true,
         }
     end
@@ -548,6 +584,7 @@ local function matchRequireAt(line, pos)
             module = moduleName,
             start = pos + argStart - 1,
             finish = pos + argFinish - 2,
+            callFinish = pos + argFinish - 2,
             paren = false,
         }
     end
@@ -558,6 +595,7 @@ local function matchRequireAt(line, pos)
             module = moduleName,
             start = pos + argStart - 1,
             finish = pos + argFinish - 2,
+            callFinish = pos + argFinish - 2,
             paren = false,
         }
     end
@@ -606,14 +644,37 @@ local function matchRequireMemberAt(line, pos, moduleName)
     return nil
 end
 
---- Return the module name for `require('openmw.*')` and `require 'openmw.*'` RHS forms.
+--- Return the module name only when the RHS is exactly require('openmw.*').
 ---@param code string
 ---@param rhsStart integer
 ---@return string?
-local function openMwRequireRhsModule(code, rhsStart)
+local function exactOpenMwRequireRhsModule(code, rhsStart)
     local req = matchRequireAt(code, rhsStart)
-    if req and isOpenMwModule(req.module) then
+    if not req or not isOpenMwModule(req.module) then
+        return nil
+    end
+
+    if code:sub(req.callFinish + 1):match("^%s*$") then
         return normalizeModuleName(req.module)
+    end
+
+    return nil
+end
+
+--- Match `local alias = require('openmw.*').member ...` style declarations on one line.
+---@param code string
+---@return table?
+local function localRequireMemberAlias(code)
+    local _, _, alias, rhsStart = code:find("^%s*local%s+([%a_][%w_]*)%s*=%s*()")
+    if not alias then
+        return nil
+    end
+
+    for moduleName in pairs(MEMBER_AVAILABILITY) do
+        local memberUse = matchRequireMemberAt(code, rhsStart, moduleName)
+        if memberUse then
+            return { alias = alias, module = moduleName, member = memberUse.member }
+        end
     end
 
     return nil
@@ -631,7 +692,7 @@ local function recordModuleAliases(code, aliases, moduleName)
             break
         end
 
-        if openMwRequireRhsModule(code, rhsStart) == moduleName then
+        if exactOpenMwRequireRhsModule(code, rhsStart) == moduleName then
             aliases[alias] = true
         end
 
@@ -648,7 +709,37 @@ local function localRequireAliasModule(code)
         return nil
     end
 
-    return openMwRequireRhsModule(code, rhsStart)
+    return exactOpenMwRequireRhsModule(code, rhsStart)
+end
+
+--- Add type annotations before known chained require return values.
+---@param diffs table[]
+---@param code string
+---@param lineText string
+---@param previousLineText string?
+---@param lineStart integer
+---@param ctx table?
+local function addChainedRequireTypeDiff(diffs, code, lineText, previousLineText, lineStart, ctx)
+    local aliasUse = localRequireMemberAlias(code)
+    if not aliasUse or aliasUse.module ~= "openmw.storage" then
+        return
+    end
+
+    local typeName = storageSectionReturnTypeForContext(ctx, aliasUse.member)
+    if not typeName then
+        return
+    end
+
+    if previousLineText and previousLineText:match("^%s*%-%-%-%s*@type%f[%W]") then
+        return
+    end
+
+    local indent = lineText:match("^(%s*)") or ""
+    table.insert(diffs, {
+        start = lineStart,
+        finish = lineStart - 1,
+        text = indent .. "---@type " .. typeName .. "\n",
+    })
 end
 
 --- Add type annotations before openmw.* local require aliases.
@@ -696,7 +787,7 @@ local function addDirectModuleMemberDiffs(diffs, code, lineStart, ctx, moduleNam
         end
 
         local memberUse = matchRequireMemberAt(code, requireStart, moduleName)
-        if memberUse and shouldRejectModuleMember(ctx, moduleName, memberUse.member) then
+        if memberUse and (shouldRejectModuleMember(ctx, moduleName, memberUse.member) or isUnknownMappedModuleMember(moduleName, memberUse.member)) then
             table.insert(diffs, {
                 start = lineStart + memberUse.start - 1,
                 finish = lineStart + memberUse.finish - 1,
@@ -726,7 +817,7 @@ local function addAliasModuleMemberDiffs(diffs, code, lineStart, ctx, aliases, m
             end
 
             local before = exprStart > 1 and code:sub(exprStart - 1, exprStart - 1) or ""
-            if not before:match("[%w_%.:]") and shouldRejectModuleMember(ctx, moduleName, memberName) then
+            if not before:match("[%w_%.:]") and (shouldRejectModuleMember(ctx, moduleName, memberName) or isUnknownMappedModuleMember(moduleName, memberName)) then
                 table.insert(diffs, {
                     start = lineStart + exprStart - 1,
                     finish = lineStart + memberFinish - 2,
@@ -771,6 +862,7 @@ local function makePoisonDiffs(text, ctx)
                 local searchStart = 1
 
                 addModuleAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, effectiveCtx)
+                addChainedRequireTypeDiff(diffs, code, lineText, previousLineText, lineStart, effectiveCtx)
 
                 if not shouldReject(effectiveCtx, "openmw.core") then
                     recordModuleAliases(code, coreAliases, "openmw.core")
