@@ -48,11 +48,11 @@ local SettingsPageOptions = {}
 ---@field layer string Optional layout to display in. Only applies for the root widget. Note: if the #Element isn't attached to anything, it won't be visible!
 ---@field name string Optional name of the layout. Allows access by name from Content
 ---@field props table Optional table of widget properties
----@field events table Optional table of event callbacks
----@field content openmw.ui.Content Optional openmw.ui.Content of children layouts
----@field template openmw.ui.Template Optional #Template
----@field external table Optional table of external properties
----@field userData any Arbitrary data for you to use, e. g. when receiving the layout in an event callback
+---@field events? table Optional table of event callbacks
+---@field content? openmw.ui.Content Optional openmw.ui.Content of children layouts
+---@field template? openmw.ui.Template Optional #Template
+---@field external? table Optional table of external properties
+---@field userdata? any Arbitrary scripter data, e. g. when receiving the layout in an event callback
 local Layout = {}
 
 ---Template
