@@ -267,11 +267,13 @@ local function playerFrame(box, screenRight)
     local top = box.center.z + box.halfSize.z
     local bottom = box.center.z - box.halfSize.z
     local rightEdge = box.halfSize.x
+    local leftEdge = -box.halfSize.x
 
     if box.vertices then
         top = -math.huge
         bottom = math.huge
         rightEdge = -math.huge
+        leftEdge = math.huge
 
         for _, vertex in ipairs(box.vertices) do
             if vertex.z > top then top = vertex.z end
@@ -280,6 +282,7 @@ local function playerFrame(box, screenRight)
             local offset = vertex - box.center
             local projectedRight = offset * screenRight
             if projectedRight > rightEdge then rightEdge = projectedRight end
+            if projectedRight < leftEdge then leftEdge = projectedRight end
         end
     end
 
@@ -287,6 +290,7 @@ local function playerFrame(box, screenRight)
         target = v3(box.center.x, box.center.y, (top + bottom) * 0.5),
         halfHeight = (top - bottom) * 0.5,
         rightEdge = rightEdge,
+        width = rightEdge - leftEdge,
     }
 end
 
@@ -316,7 +320,7 @@ local function showStaticInventoryCamera()
     local verticalTan = math.tan(camera.getFieldOfView() * 0.5)
     local distance = frame.halfHeight / verticalTan + STATIC_CAMERA_EXTRA_DISTANCE
     local halfViewWidth = distance * verticalTan * aspect
-    local lateralOffset = halfViewWidth - frame.rightEdge
+    local lateralOffset = halfViewWidth - frame.rightEdge - frame.width
     local pos = frame.target + front * distance - screenRight * lateralOffset
 
     camera.setMode(camera.MODE.Static, true)
