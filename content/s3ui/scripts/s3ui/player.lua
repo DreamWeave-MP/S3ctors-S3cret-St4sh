@@ -24,12 +24,12 @@ local ICON_SIZE = v2(40, 40)
 local GRID_COLUMNS = 6
 local GRID_ROWS = 5
 local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
-local STATIC_CAMERA_DISTANCE = 230
-local STATIC_CAMERA_HEIGHT = 55
+local STATIC_CAMERA_EXTRA_DISTANCE = 15
 
 local rootElement = nil
 local statusLayout = nil
 local cameraSnapshot = nil
+local hudVisibleSnapshot = nil
 local registeredWindow = false
 
 local function safeRecord(item)
@@ -263,18 +263,66 @@ local function restoreCamera()
     cameraSnapshot = nil
 end
 
+local function playerFrame(box, screenRight)
+    local top = box.center.z + box.halfSize.z
+    local bottom = box.center.z - box.halfSize.z
+    local rightEdge = box.halfSize.x
+
+    if box.vertices then
+        top = -math.huge
+        bottom = math.huge
+        rightEdge = -math.huge
+
+        for _, vertex in ipairs(box.vertices) do
+            if vertex.z > top then top = vertex.z end
+            if vertex.z < bottom then bottom = vertex.z end
+
+            local offset = vertex - box.center
+            local projectedRight = offset * screenRight
+            if projectedRight > rightEdge then rightEdge = projectedRight end
+        end
+    end
+
+    return {
+        target = v3(box.center.x, box.center.y, (top + bottom) * 0.5),
+        halfHeight = (top - bottom) * 0.5,
+        rightEdge = rightEdge,
+    }
+end
+
+local function saveHudVisibility()
+    if hudVisibleSnapshot ~= nil then return end
+    hudVisibleSnapshot = I.UI.isHudVisible()
+    I.UI.setHudVisibility(false)
+end
+
+local function restoreHudVisibility()
+    if hudVisibleSnapshot == nil then return end
+    I.UI.setHudVisibility(hudVisibleSnapshot)
+    hudVisibleSnapshot = nil
+end
+
 local function showStaticInventoryCamera()
     saveCamera()
     disableInventoryCameraControls()
 
     local actorYaw = self.object.rotation:getYaw()
     local front = util.transform.rotateZ(actorYaw) * v3(0, 1, 0)
-    local pos = camera.getTrackedPosition() + front * STATIC_CAMERA_DISTANCE + v3(0, 0, STATIC_CAMERA_HEIGHT)
+    local screenRight = util.transform.rotateZ(actorYaw) * v3(-1, 0, 0)
+    local bodyBounds = self.object:getBoundingBox()
+    local frame = playerFrame(bodyBounds, screenRight)
+    local screen = ui.screenSize()
+    local aspect = screen.x / screen.y
+    local verticalTan = math.tan(camera.getFieldOfView() * 0.5)
+    local distance = frame.halfHeight / verticalTan + STATIC_CAMERA_EXTRA_DISTANCE
+    local halfViewWidth = distance * verticalTan * aspect
+    local lateralOffset = halfViewWidth - frame.rightEdge
+    local pos = frame.target + front * distance - screenRight * lateralOffset
 
     camera.setMode(camera.MODE.Static, true)
     camera.setStaticPosition(pos)
     camera.setYaw(actorYaw + math.pi)
-    camera.setPitch(math.rad(-8))
+    camera.setPitch(0)
     camera.instantTransition()
 end
 
@@ -296,6 +344,7 @@ end
 
 local function showInventoryWindow()
     destroyInventoryWindow()
+    saveHudVisibility()
     showStaticInventoryCamera()
     rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
     statusLayout = rootElement.layout.content[1].content[1].content[1].content.s3ui_status
@@ -304,6 +353,7 @@ end
 local function hideInventoryWindow()
     destroyInventoryWindow()
     restoreCamera()
+    restoreHudVisibility()
 end
 
 local function registerInventoryWindow()
