@@ -37,12 +37,12 @@ local VIEW_BUTTON_SIZE = v2(44, 0)
 local CATEGORY_HEADER_COLOR = util.color.rgb(0.18, 0.36, 0.68)
 local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
 local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
-local TOOLTIP_LAYER = ROOT_LAYER
-local TOOLTIP_SIZE = v2(360, 230)
+local TOOLTIP_LAYER = 'S3UI_Tooltip'
+local TOOLTIP_SIZE = v2(360, 330)
 local TOOLTIP_MOUSE_OFFSET = v2(24, 24)
-local TOOLTIP_HEADER_SIZE = v2(1, 0.28)
-local TOOLTIP_PRIMARY_SIZE = v2(1, 0.34)
-local TOOLTIP_SECONDARY_SIZE = v2(1, 0.32)
+local TOOLTIP_HEADER_SIZE = v2(1, 0.22)
+local TOOLTIP_FIELDS_SIZE = v2(1, 0.74)
+local TOOLTIP_FIELD_ROW_COUNT = 9
 local TOOLTIP_ICON_SIZE = v2(48, 48)
 local TOOLTIP_FIELD_TEXT_SIZE = 14
 local TOOLTIP_VALUE_TEXT_SIZE = 16
@@ -306,6 +306,12 @@ local function backgroundAlpha()
     return ui._getMenuTransparency()
 end
 
+local function ensureTooltipLayer()
+    if ui.layers.indexOf(TOOLTIP_LAYER) == nil then
+        ui.layers.insertAfter(ROOT_LAYER, TOOLTIP_LAYER, { interactive = false })
+    end
+end
+
 local function itemSortValue(data)
     if sortMode == 'value' then return data.value or 0 end
     if sortMode == 'weight' then return data.weight or 0 end
@@ -397,27 +403,26 @@ end
 
 local function tooltipField(name, label)
     return {
-        name = name .. '_box',
+        name = name .. '_row',
         type = ui.TYPE.Flex,
         template = I.MWUI.templates.borders,
         props = {
-            horizontal = false,
+            horizontal = true,
             autoSize = false,
-            relativeSize = v2(0, 1),
+            relativeSize = v2(1, 1 / TOOLTIP_FIELD_ROW_COUNT),
         },
-        external = { grow = 1 },
         content = ui.content {
             tooltipText(name .. '_label', label, {
-                relativeSize = v2(1, 0.42),
+                relativeSize = v2(0.42, 1),
                 textSize = TOOLTIP_FIELD_TEXT_SIZE,
-                textAlignH = ui.ALIGNMENT.Center,
+                textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
                 autoSize = false,
             }),
             tooltipText(name .. '_value', EMPTY_FIELD, {
-                relativeSize = v2(1, 0.58),
+                relativeSize = v2(0.58, 1),
                 textSize = TOOLTIP_VALUE_TEXT_SIZE,
-                textAlignH = ui.ALIGNMENT.Center,
+                textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
                 multiline = true,
                 wordWrap = true,
@@ -427,12 +432,12 @@ local function tooltipField(name, label)
     }
 end
 
-local function tooltipFieldValue(rowLayout, name)
-    return rowLayout.content[name .. '_box'].content[name .. '_value']
+local function tooltipFieldValue(fieldsLayout, name)
+    return fieldsLayout.content[name .. '_row'].content[name .. '_value']
 end
 
-local function setTooltipField(rowLayout, name, value)
-    tooltipFieldValue(rowLayout, name).props.text = value or EMPTY_FIELD
+local function setTooltipField(fieldsLayout, name, value)
+    tooltipFieldValue(fieldsLayout, name).props.text = value or EMPTY_FIELD
 end
 
 local function makeTooltipLayout()
@@ -499,11 +504,11 @@ local function makeTooltipLayout()
                         },
                     },
                     {
-                        name = 's3ui_tooltip_primary',
+                        name = 's3ui_tooltip_fields',
                         type = ui.TYPE.Flex,
                         props = {
-                            horizontal = true,
-                            relativeSize = TOOLTIP_PRIMARY_SIZE,
+                            horizontal = false,
+                            relativeSize = TOOLTIP_FIELDS_SIZE,
                             autoSize = false,
                         },
                         content = ui.content {
@@ -511,17 +516,6 @@ local function makeTooltipLayout()
                             tooltipField('s3ui_tooltip_value', 'Value'),
                             tooltipField('s3ui_tooltip_weight', 'Weight'),
                             tooltipField('s3ui_tooltip_gold_per_weight', 'Gold/Wt'),
-                        },
-                    },
-                    {
-                        name = 's3ui_tooltip_secondary',
-                        type = ui.TYPE.Flex,
-                        props = {
-                            horizontal = true,
-                            relativeSize = TOOLTIP_SECONDARY_SIZE,
-                            autoSize = false,
-                        },
-                        content = ui.content {
                             tooltipField('s3ui_tooltip_reach', 'Reach'),
                             tooltipField('s3ui_tooltip_speed', 'Speed'),
                             tooltipField('s3ui_tooltip_thrust', 'Thrust'),
@@ -559,8 +553,7 @@ local function updateTooltip(data, mouseEvent)
 
     local bodyContent = tooltipElement.layout.content.s3ui_tooltip_body.content
     local header = bodyContent.s3ui_tooltip_header.content
-    local primary = bodyContent.s3ui_tooltip_primary
-    local secondary = bodyContent.s3ui_tooltip_secondary
+    local fields = bodyContent.s3ui_tooltip_fields
     local record = data.record
 
     if data.icon then
@@ -572,23 +565,23 @@ local function updateTooltip(data, mouseEvent)
     header.s3ui_tooltip_name.props.text = data.name or itemName(data.item, record)
     header.s3ui_tooltip_count.props.text = data.count and data.count > 1 and ('x' .. tostring(data.count)) or ''
 
-    setTooltipField(primary, 's3ui_tooltip_type', typeText(data))
-    setTooltipField(primary, 's3ui_tooltip_value', record and record.value and tostring(record.value) or EMPTY_FIELD)
-    setTooltipField(primary, 's3ui_tooltip_weight', formatNumber(record and record.weight, 2))
-    setTooltipField(primary, 's3ui_tooltip_gold_per_weight', goldPerWeight(record))
+    setTooltipField(fields, 's3ui_tooltip_type', typeText(data))
+    setTooltipField(fields, 's3ui_tooltip_value', record and record.value and tostring(record.value) or EMPTY_FIELD)
+    setTooltipField(fields, 's3ui_tooltip_weight', formatNumber(record and record.weight, 2))
+    setTooltipField(fields, 's3ui_tooltip_gold_per_weight', goldPerWeight(record))
 
     if data.item and data.item.type == types.Weapon then
-        setTooltipField(secondary, 's3ui_tooltip_reach', formatNumber(record and record.reach, 2))
-        setTooltipField(secondary, 's3ui_tooltip_speed', formatNumber(record and record.speed, 2))
-        setTooltipField(secondary, 's3ui_tooltip_thrust', formatDamage(record and record.thrustMinDamage, record and record.thrustMaxDamage))
-        setTooltipField(secondary, 's3ui_tooltip_chop', formatDamage(record and record.chopMinDamage, record and record.chopMaxDamage))
-        setTooltipField(secondary, 's3ui_tooltip_slash', formatDamage(record and record.slashMinDamage, record and record.slashMaxDamage))
+        setTooltipField(fields, 's3ui_tooltip_reach', formatNumber(record and record.reach, 2))
+        setTooltipField(fields, 's3ui_tooltip_speed', formatNumber(record and record.speed, 2))
+        setTooltipField(fields, 's3ui_tooltip_thrust', formatDamage(record and record.thrustMinDamage, record and record.thrustMaxDamage))
+        setTooltipField(fields, 's3ui_tooltip_chop', formatDamage(record and record.chopMinDamage, record and record.chopMaxDamage))
+        setTooltipField(fields, 's3ui_tooltip_slash', formatDamage(record and record.slashMinDamage, record and record.slashMaxDamage))
     else
-        setTooltipField(secondary, 's3ui_tooltip_reach', '')
-        setTooltipField(secondary, 's3ui_tooltip_speed', '')
-        setTooltipField(secondary, 's3ui_tooltip_thrust', '')
-        setTooltipField(secondary, 's3ui_tooltip_chop', '')
-        setTooltipField(secondary, 's3ui_tooltip_slash', '')
+        setTooltipField(fields, 's3ui_tooltip_reach', '')
+        setTooltipField(fields, 's3ui_tooltip_speed', '')
+        setTooltipField(fields, 's3ui_tooltip_thrust', '')
+        setTooltipField(fields, 's3ui_tooltip_chop', '')
+        setTooltipField(fields, 's3ui_tooltip_slash', '')
     end
 
     tooltipElement.layout.props.visible = true
@@ -1094,6 +1087,7 @@ local function showInventoryWindow()
     saveHudVisibility()
     showStaticInventoryCamera()
     rebuildInventoryRoot()
+    ensureTooltipLayer()
     tooltipElement = ui.create(makeTooltipLayout())
 end
 
