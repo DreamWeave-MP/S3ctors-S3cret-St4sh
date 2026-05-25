@@ -53,6 +53,10 @@ end))
 ---actor stats, records, animation helpers, and s3-specific helpers. Some
 ---members only exist for relevant object kinds at runtime.
 ---@class S3lfObject: openmw.SelfObject
+---@field object openmw.LObject Re-exported from openmw.self.object.
+---@field controls? openmw.self.ActorControls Re-exported from openmw.self for actors.
+---@field EQUIPMENT_SLOT openmw.types.EQUIPMENT_SLOT Actor equipment slot constants, exposed directly for convenience.
+---@field STANCE openmw.types.STANCE Actor stance constants, exposed directly for convenience.
 ---@field actorType ActorType
 ---@field record? S3lfRecord
 ---@field bounds? openmw.util.Box
@@ -173,6 +177,8 @@ end))
 ---@field name? string Record-derived field.
 ---@field model? string Record-derived field.
 ---@field baseGold? number Record-derived field.
+---Semantic actor narrowing for actor-only members; common actor constants are also
+---available directly on S3lfObject for convenience.
 ---@class S3lfActorObject: S3lfObject
 ---@field actorType 0|1|2
 ---@field record openmw.types.NpcRecord|openmw.types.CreatureRecord
