@@ -33,9 +33,6 @@ local ITEM_STATE_BADGE_RELATIVE_SIZE = v2(0.22, 0.22)
 local LIST_STATE_BADGE_SIZE = v2(0.04, 0.24)
 local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
 local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
-local HINT_RELATIVE_SIZE = v2(1, 0.05)
-local STATUS_RELATIVE_SIZE = v2(1, 0.05)
-local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
 local TOOLBAR_RELATIVE_SIZE = v2(1, 0.12)
 local MAIN_RELATIVE_SIZE = v2(1, 0)
@@ -106,7 +103,6 @@ local TOOLTIP_FIELD_NAMES = {
 
 local rootElement = nil
 local tooltipElement = nil
-local statusLayout = nil
 local cameraSnapshot = nil
 local hudVisibleSnapshot = nil
 local registeredWindow = false
@@ -121,7 +117,7 @@ local sortAscending = {
 }
 local viewMode = 'grid'
 local uiGeneration = 0
-local pendingRebuildStatus = nil
+local rebuildInventoryPending = false
 local rebuildEventQueued = false
 local rebuildInventoryRoot = nil
 local scrollOffset = 0
@@ -369,12 +365,6 @@ local function collectInventoryItems()
     return result
 end
 
-local function setStatus(text)
-    if not rootElement or not rootElement.layout or not statusLayout then return end
-    statusLayout.props.text = text
-    rootElement:update()
-end
-
 local function textLine(text, template, props)
     props = props or {}
     local name = props.name
@@ -582,11 +572,6 @@ end
 local function scrollStepSize()
     if viewMode == 'list' then return 1 end
     return GRID_COLUMNS
-end
-
-local function visibleEntryCount()
-    if viewMode == 'list' then return LIST_ROWS end
-    return MAX_VISIBLE_ITEMS
 end
 
 local function clampScrollOffset(entryCount)
@@ -885,9 +870,9 @@ local function updateTooltip(data)
     tooltipElement:update()
 end
 
-local function queueInventoryRebuild(statusText)
+local function queueInventoryRebuild()
     hideTooltip()
-    pendingRebuildStatus = statusText or ''
+    rebuildInventoryPending = true
     if rebuildEventQueued then return end
     rebuildEventQueued = true
     self:sendEvent('S3UI_RebuildInventory')
@@ -1000,7 +985,7 @@ local function makeSortButton(mode, label)
                 end
                 sortMode = mode
                 resetScrollOffset()
-                queueInventoryRebuild('Sorted by ' .. label .. (sortAscending[mode] and ' ascending' or ' descending'))
+                queueInventoryRebuild()
             end),
         },
         content = content,
@@ -1070,7 +1055,7 @@ local function makeViewToggleButton()
                 local targetMode = viewMode == 'grid' and 'list' or 'grid'
                 viewMode = targetMode
                 resetScrollOffset()
-                queueInventoryRebuild(targetMode == 'grid' and 'Grid view' or 'List view')
+                queueInventoryRebuild()
             end),
         },
         content = ui.content {
@@ -1104,7 +1089,7 @@ local function makeCategoryRailButton(category)
     }, nil, function()
         selectedCategory = category.key
         resetScrollOffset()
-        queueInventoryRebuild(category.label .. ' selected')
+        queueInventoryRebuild()
     end)
 end
 
@@ -1137,13 +1122,6 @@ local function makeToolbar()
             autoSize = false,
         },
         content = ui.content {
-            tooltipText('s3ui_title', 'Inventory', {
-                size = v2(120, 0),
-                textSize = 22,
-                textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Center,
-                autoSize = false,
-            }, I.MWUI.templates.textHeader, { stretch = 1 }),
             makeViewToggleButton(),
             { external = { grow = 1 } },
             makeSortButton('value', 'Gold'),
@@ -1227,7 +1205,7 @@ local function makeCategoryHeaderSlot(entry, index)
                 if not clicked then return end
                 collapsedCategories[clicked.categoryKey] = not collapsedCategories[clicked.categoryKey]
                 resetScrollOffset()
-                queueInventoryRebuild(clicked.label .. (collapsedCategories[clicked.categoryKey] and ' collapsed' or ' expanded'))
+                queueInventoryRebuild()
             end),
         },
         content = content,
@@ -1327,13 +1305,6 @@ local function makeSlot(entry, index)
             focusLoss = async:callback(function()
                 if generation ~= uiGeneration then return end
                 hideTooltip()
-            end),
-            mouseClick = async:callback(function(_, layout)
-                if generation ~= uiGeneration then return end
-                local clicked = layout and layout.userData
-                if clicked then
-                    setStatus(clicked.name .. '  x' .. tostring(clicked.count))
-                end
             end),
         } or nil,
         content = content,
@@ -1450,7 +1421,7 @@ local function makeListCategoryRow(entry, index)
                 if not clicked then return end
                 collapsedCategories[clicked.categoryKey] = not collapsedCategories[clicked.categoryKey]
                 resetScrollOffset()
-                queueInventoryRebuild(clicked.label .. (collapsedCategories[clicked.categoryKey] and ' collapsed' or ' expanded'))
+                queueInventoryRebuild()
             end),
         },
         content = content,
@@ -1553,13 +1524,6 @@ local function makeListItemRow(entry, index)
                 if generation ~= uiGeneration then return end
                 hideTooltip()
             end),
-            mouseClick = async:callback(function(_, layout)
-                if generation ~= uiGeneration then return end
-                local clicked = layout and layout.userData
-                if clicked then
-                    setStatus(clicked.name .. '  x' .. tostring(clicked.count))
-                end
-            end),
         } or nil,
         content = content,
     }
@@ -1593,17 +1557,9 @@ end
 local function makeInventoryLayout(items)
     local entries = buildDisplayEntries(items)
     lastEntryCount = #entries
-    local maxOffset = clampScrollOffset(#entries)
+    clampScrollOffset(#entries)
     local firstIndex = scrollOffset + 1
-    local lastIndex = math.min(#entries, scrollOffset + visibleEntryCount())
     local inventoryView = viewMode == 'list' and makeList(entries, firstIndex) or makeGrid(entries, firstIndex)
-    local summary
-    if #entries == 0 then
-        summary = '0 entries'
-    else
-        summary = 'Entries ' .. tostring(firstIndex) .. '–' .. tostring(lastIndex) .. ' of ' .. tostring(#entries)
-        if maxOffset > 0 then summary = summary .. '  |  Wheel/PageUp/PageDown scroll by row' end
-    end
 
     return {
         type = ui.TYPE.Widget,
@@ -1633,7 +1589,6 @@ local function makeInventoryLayout(items)
                 },
                 content = ui.content {
                     makeToolbar(),
-                    textLine('Click an item header to collapse a category. Press I to close.', I.MWUI.templates.textNormal, { relativeSize = HINT_RELATIVE_SIZE, textSize = 15 }),
                     {
                         name = 's3ui_main',
                         type = ui.TYPE.Flex,
@@ -1648,7 +1603,6 @@ local function makeInventoryLayout(items)
                             inventoryView,
                         },
                     },
-                    textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', relativeSize = STATUS_RELATIVE_SIZE, textSize = 15 }),
                 },
             },
         },
@@ -1774,9 +1728,8 @@ end
 
 local function destroyInventoryWindow()
     uiGeneration = uiGeneration + 1
-    pendingRebuildStatus = nil
+    rebuildInventoryPending = false
     rebuildEventQueued = false
-    statusLayout = nil
     if tooltipElement and tooltipElement.layout then
         tooltipElement:destroy()
     end
@@ -1787,25 +1740,21 @@ local function destroyInventoryWindow()
     rootElement = nil
 end
 
-rebuildInventoryRoot = function(statusText)
+rebuildInventoryRoot = function()
     uiGeneration = uiGeneration + 1
     hideTooltip()
-    statusLayout = nil
     if rootElement and rootElement.layout then
         rootElement:destroy()
     end
     rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
-    statusLayout = rootElement.layout.content.s3ui_body.content.s3ui_status
-    if statusText then setStatus(statusText) end
 end
 
 local function processPendingRebuild()
     rebuildEventQueued = false
-    if pendingRebuildStatus == nil then return end
-    local statusText = pendingRebuildStatus
-    pendingRebuildStatus = nil
+    if not rebuildInventoryPending then return end
+    rebuildInventoryPending = false
     if not rootElement or not rootElement.layout or not I.UI.isWindowVisible(WINDOW) then return end
-    rebuildInventoryRoot(statusText ~= '' and statusText or nil)
+    rebuildInventoryRoot()
 end
 
 local function showInventoryWindow()
