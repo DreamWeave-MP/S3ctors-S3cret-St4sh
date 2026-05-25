@@ -52,7 +52,7 @@ local SettingsPageOptions = {}
 ---@field content? openmw.ui.Content Optional openmw.ui.Content of children layouts
 ---@field template? openmw.ui.Template Optional #Template
 ---@field external? table Optional table of external properties
----@field userdata? any Arbitrary scripter data, e. g. when receiving the layout in an event callback
+---@field userData? any Arbitrary data for you to use, e. g. when receiving the layout in an event callback
 local Layout = {}
 
 ---Template
