@@ -1,8 +1,9 @@
 ---@omw-context menu|player
 
 local ui = require 'openmw.ui'
+local I = require 'openmw.interfaces'
 
----Build a TextEdit layout.
+---Build a TextEdit layout using `I.MWUI.templates.textEditLine` by default.
 ---Allocates fresh layout, props, and external tables. Event callbacks, if supplied, are passed
 ---through unchanged; callers must wrap OpenMW UI callbacks with `async:callback`.
 ---@param opts? {text?: string, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
@@ -30,7 +31,7 @@ local function textInput(opts)
         external = external,
         events = opts.events,
         userData = opts.userData,
-        template = opts.template,
+        template = opts.template or I.MWUI.templates.textEditLine,
     }
 end
 
