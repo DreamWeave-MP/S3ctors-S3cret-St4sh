@@ -1,1 +1,1 @@
-# S3UI replacement is in progress; no scripts are registered in this step.
+PLAYER: scripts/s3ui/player.lua
