@@ -2,9 +2,11 @@
 
 local async = require 'openmw.async'
 local camera = require 'openmw.camera'
+local omwDebug = require 'openmw.debug'
 local input = require 'openmw.input'
 local I = require 'openmw.interfaces'
 local self = require 'openmw.self'
+local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -18,6 +20,8 @@ local WINDOW = I.UI.WINDOW.Inventory
 local MODE = I.UI.MODE.Interface
 local ROOT_LAYER = 'Windows'
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
+local DEV_RELOAD_SECTION = 'S3UI_DevReload'
+local DEV_RELOAD_REOPEN_KEY = 'reopenInventory'
 local EMPTY_FIELD = inventoryData.EMPTY_FIELD
 local CATEGORY_ORDER = inventoryData.CATEGORY_ORDER
 local collectInventoryItems = inventoryData.collectItems
@@ -80,6 +84,9 @@ local SORT_DIRECTION_ICONS = {
     ascending = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/sort/ascending.dds' },
     descending = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/sort/descending.dds' },
 }
+
+local devReloadStorage = storage.playerSection(DEV_RELOAD_SECTION)
+devReloadStorage:setLifeTime(storage.LIFE_TIME.GameSession)
 
 local TOOLTIP_FIELD_NAMES = {
     's3ui_tooltip_type',
@@ -1750,6 +1757,22 @@ local function toggleInventoryWindow()
     end
 end
 
+local function reloadLuaAndReopenInventory()
+    devReloadStorage:set(DEV_RELOAD_REOPEN_KEY, true)
+    if I.UI.isWindowVisible(WINDOW) then
+        I.UI.removeMode(MODE)
+    end
+    omwDebug.reloadLua()
+end
+
+local function processDevReloadReopen()
+    if devReloadStorage:get(DEV_RELOAD_REOPEN_KEY) ~= true then return end
+    devReloadStorage:set(DEV_RELOAD_REOPEN_KEY, false)
+    if not I.UI.isWindowVisible(WINDOW) then
+        I.UI.setMode(MODE, { windows = { WINDOW } })
+    end
+end
+
 local function destroyInventoryWindow()
     uiGeneration = uiGeneration + 1
     rebuildInventoryPending = false
@@ -1811,11 +1834,14 @@ local function registerInventoryWindow()
 end
 
 registerInventoryWindow()
+async:newUnsavableSimulationTimer(0, processDevReloadReopen)
 
 return {
     engineHandlers = {
         onKeyPress = function(key)
-            if key.code == input.KEY.I then
+            if key.code == input.KEY.F8 then
+                reloadLuaAndReopenInventory()
+            elseif key.code == input.KEY.I then
                 toggleInventoryWindow()
             elseif key.code == input.KEY.PageUp or key.code == input.KEY.UpArrow then
                 scrollInventoryRows(-1)
