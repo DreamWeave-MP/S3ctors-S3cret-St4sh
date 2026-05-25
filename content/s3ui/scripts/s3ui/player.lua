@@ -218,12 +218,13 @@ local function backgroundAlpha()
     return ui._getMenuTransparency()
 end
 
-local function tooltipText(name, text, props)
+local function tooltipText(name, text, props, template, external)
     props = props or {}
     props.text = text
     return {
         name = name,
-        type = ui.TYPE.Text,
+        template = template or I.MWUI.templates.textNormal,
+        external = external,
         props = props,
     }
 end
@@ -321,14 +322,14 @@ local function makeTooltipLayout()
                                 multiline = true,
                                 wordWrap = true,
                                 autoSize = false,
-                            }),
+                            }, I.MWUI.templates.textHeader, { stretch = 1 }),
                             tooltipText('s3ui_tooltip_count', '', {
                                 size = v2(52, 0),
                                 textSize = 18,
                                 textAlignH = ui.ALIGNMENT.Center,
                                 textAlignV = ui.ALIGNMENT.Center,
                                 autoSize = false,
-                            }),
+                            }, nil, { stretch = 1 }),
                         },
                     },
                     {
