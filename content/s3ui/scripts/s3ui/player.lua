@@ -739,7 +739,7 @@ local function makeTooltipLayout()
                                 },
                             },
                             tooltipText('s3ui_tooltip_name', EMPTY_FIELD, {
-                                relativeSize = v2(0.68, 1),
+                                relativeSize = v2(0.52, 1),
                                 textSize = 21,
                                 textAlignH = ui.ALIGNMENT.Start,
                                 textAlignV = ui.ALIGNMENT.Center,
@@ -748,9 +748,9 @@ local function makeTooltipLayout()
                                 autoSize = false,
                             }, I.MWUI.templates.textHeader),
                             tooltipText('s3ui_tooltip_count', '', {
-                                relativeSize = v2(0.14, 1),
+                                relativeSize = v2(0.30, 1),
                                 textSize = 18,
-                                textAlignH = ui.ALIGNMENT.Center,
+                                textAlignH = ui.ALIGNMENT.End,
                                 textAlignV = ui.ALIGNMENT.Center,
                                 autoSize = false,
                             }),
