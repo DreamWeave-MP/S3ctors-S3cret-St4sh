@@ -37,8 +37,8 @@ local STATIC_CAMERA_EXTRA_DISTANCE = 15
 local TOOLBAR_RELATIVE_SIZE = v2(1, 0.12)
 local MAIN_RELATIVE_SIZE = v2(1, 0)
 local CATEGORY_RAIL_SIZE = v2(86, 0)
-local CONTROL_BUTTON_SIZE = v2(48, 0)
-local VIEW_BUTTON_SIZE = v2(44, 0)
+local CONTROL_BUTTON_SIZE = v2(48, 48)
+local VIEW_BUTTON_SIZE = v2(44, 44)
 local VIEW_TOGGLE_ICON_SIZE = v2(0.74, 0.74)
 local SORT_ICON_RELATIVE_SIZE = v2(0.68, 0.68)
 local SORT_DIRECTION_RELATIVE_SIZE = v2(0.34, 0.34)
@@ -968,11 +968,9 @@ local function makeSortButton(mode, label)
     return {
         name = name,
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
         props = {
             size = CONTROL_BUTTON_SIZE,
         },
-        external = { stretch = 1 },
         events = {
             focusGain = async:callback(function()
                 hideTooltip()
@@ -1040,11 +1038,9 @@ local function makeViewToggleButton()
     return {
         name = 's3ui_view_toggle',
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
         props = {
             size = VIEW_BUTTON_SIZE,
         },
-        external = { stretch = 1 },
         events = {
             focusGain = async:callback(function()
                 hideTooltip()
@@ -1119,6 +1115,7 @@ local function makeToolbar()
         props = {
             horizontal = true,
             relativeSize = TOOLBAR_RELATIVE_SIZE,
+            arrange = ui.ALIGNMENT.Center,
             autoSize = false,
         },
         content = ui.content {
