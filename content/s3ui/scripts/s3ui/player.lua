@@ -24,7 +24,7 @@ local collectInventoryItems = inventoryData.collectItems
 local itemName = inventoryData.itemName
 local formatNumber = inventoryData.formatNumber
 local formatCondition = inventoryData.formatCondition
-local bestWeaponDamage = inventoryData.bestWeaponDamage
+local weaponDamageFields = inventoryData.weaponDamageFields
 local typeText = inventoryData.typeText
 local goldPerWeight = inventoryData.goldPerWeight
 
@@ -49,8 +49,10 @@ local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
 local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
 local VIEW_GLYPH_COLOR = util.color.rgb(0.9, 0.84, 0.62)
 local TOOLTIP_LAYER = 'S3UI_Tooltip'
-local TOOLTIP_FIELD_ROW_COUNT = 9
-local COMPACT_DETAIL_FIELD_SLOT_COUNT = 9
+local TOOLTIP_FIELD_ROW_COUNT = 11
+local COMPACT_DETAIL_FIELD_COLUMNS = 4
+local COMPACT_DETAIL_FIELD_ROWS = 3
+local COMPACT_DETAIL_FIELD_SLOT_COUNT = COMPACT_DETAIL_FIELD_COLUMNS * COMPACT_DETAIL_FIELD_ROWS
 
 local TOOLTIP_ICONS = {
     typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
@@ -88,7 +90,9 @@ local TOOLTIP_FIELD_NAMES = {
     's3ui_tooltip_condition',
     's3ui_tooltip_reach',
     's3ui_tooltip_speed',
-    's3ui_tooltip_damage',
+    's3ui_tooltip_chop_damage',
+    's3ui_tooltip_slash_damage',
+    's3ui_tooltip_thrust_damage',
     's3ui_tooltip_effectiveness',
 }
 
@@ -100,7 +104,9 @@ local DETAIL_FIELD_NAMES = {
     condition = 's3ui_tooltip_condition',
     reach = 's3ui_tooltip_reach',
     speed = 's3ui_tooltip_speed',
-    damage = 's3ui_tooltip_damage',
+    chopDamage = 's3ui_tooltip_chop_damage',
+    slashDamage = 's3ui_tooltip_slash_damage',
+    thrustDamage = 's3ui_tooltip_thrust_damage',
     effectiveness = 's3ui_tooltip_effectiveness',
 }
 
@@ -427,12 +433,13 @@ local function detailValueVisible(value)
     return value ~= nil and value ~= '' and value ~= EMPTY_FIELD
 end
 
-local function addDetailField(fields, key, icon, value)
+local function addDetailField(fields, key, icon, value, compactValue)
     if not detailValueVisible(value) then return end
     fields[#fields + 1] = {
         key = key,
         icon = icon,
         value = value,
+        compactValue = compactValue or value,
     }
 end
 
@@ -456,7 +463,9 @@ local function buildDetailModel(data)
     if itemType == types.Weapon then
         addDetailField(fields, 'reach', TOOLTIP_ICONS.reach, formatNumber(record and record.reach, 2))
         addDetailField(fields, 'speed', TOOLTIP_ICONS.speed, formatNumber(record and record.speed, 2))
-        addDetailField(fields, 'damage', TOOLTIP_ICONS.damage, bestWeaponDamage(record))
+        for _, damage in ipairs(weaponDamageFields(record)) do
+            addDetailField(fields, damage.key, TOOLTIP_ICONS.damage, damage.text, damage.compactText)
+        end
         addDetailField(fields, 'effectiveness', TOOLTIP_ICONS.damageSpeed, formatNumber(data.effectiveness, 2))
     elseif itemType == types.Armor then
         addDetailField(fields, 'reach', TOOLTIP_ICONS.armorRating, formatNumber(record and record.baseArmor, 0))
@@ -562,7 +571,9 @@ local function makeTooltipLayout()
                             tooltipField('s3ui_tooltip_condition', TOOLTIP_ICONS.condition),
                             tooltipField('s3ui_tooltip_reach', TOOLTIP_ICONS.reach),
                             tooltipField('s3ui_tooltip_speed', TOOLTIP_ICONS.speed),
-                            tooltipField('s3ui_tooltip_damage', TOOLTIP_ICONS.damage),
+                            tooltipField('s3ui_tooltip_chop_damage', TOOLTIP_ICONS.damage),
+                            tooltipField('s3ui_tooltip_slash_damage', TOOLTIP_ICONS.damage),
+                            tooltipField('s3ui_tooltip_thrust_damage', TOOLTIP_ICONS.damage),
                             tooltipField('s3ui_tooltip_effectiveness', TOOLTIP_ICONS.damageSpeed),
                         },
                     },
@@ -631,7 +642,7 @@ local function compactDetailFieldSlot(slotIndex)
         type = ui.TYPE.Flex,
         props = {
             horizontal = true,
-            relativeSize = v2(1 / 3, 1),
+            relativeSize = v2(1 / COMPACT_DETAIL_FIELD_COLUMNS, 1),
             autoSize = false,
         },
         content = ui.content {
@@ -669,26 +680,26 @@ local function compactDetailFieldSlot(slotIndex)
 end
 
 local function makeCompactDetailFields()
-    local rows = ui.content {}
+    local rows = {}
     local slotIndex = 1
-    for rowIndex = 1, 3 do
-        local row = ui.content {}
-        for _ = 1, 3 do
-            row:add(compactDetailFieldSlot(slotIndex))
+    for rowIndex = 1, COMPACT_DETAIL_FIELD_ROWS do
+        local row = {}
+        for _ = 1, COMPACT_DETAIL_FIELD_COLUMNS do
+            row[#row + 1] = compactDetailFieldSlot(slotIndex)
             slotIndex = slotIndex + 1
         end
-        rows:add {
+        rows[#rows + 1] = {
             name = 's3ui_compact_detail_row_' .. tostring(rowIndex),
             type = ui.TYPE.Flex,
             props = {
                 horizontal = true,
-                relativeSize = v2(1, 1 / 3),
+                relativeSize = v2(1, 1 / COMPACT_DETAIL_FIELD_ROWS),
                 autoSize = false,
             },
-            content = row,
+            content = ui.content(row),
         }
     end
-    return rows
+    return ui.content(rows)
 end
 
 local function makeCompactDetailBar()
@@ -794,7 +805,7 @@ local function makeCompactDetailBar()
 end
 
 local function compactDetailFieldLayout(fieldsLayout, slotIndex)
-    local rowIndex = math.floor((slotIndex - 1) / 3) + 1
+    local rowIndex = math.floor((slotIndex - 1) / COMPACT_DETAIL_FIELD_COLUMNS) + 1
     return fieldsLayout.content['s3ui_compact_detail_row_' .. tostring(rowIndex)].content['s3ui_compact_detail_field_' .. tostring(slotIndex)]
 end
 
@@ -815,19 +826,25 @@ local function setCompactDetailField(fieldsLayout, slotIndex, field)
     local value = slot.content[prefix .. '_value']
     icon.props.resource = field.icon
     icon.props.alpha = 0.95
-    value.props.text = field.value
+    value.props.text = field.compactValue or field.value
 end
 
 local function compactDetailLayout()
     if not rootElement or not rootElement.layout then return nil end
     local body = rootElement.layout.content.s3ui_body
     if not body or not body.content then return nil end
-    return body.content.s3ui_compact_detail_bar
+    local ok, bar = pcall(function() return body.content.s3ui_compact_detail_bar end)
+    if ok then return bar end
+    return nil
 end
 
 hideCompactDetail = function()
+    if not compactDetailVisible then return end
     local bar = compactDetailLayout()
-    if not bar or not compactDetailVisible then return end
+    if not bar then
+        compactDetailVisible = false
+        return
+    end
     bar.content.s3ui_compact_detail_content.props.visible = false
     compactDetailVisible = false
     rootElement:update()
@@ -1562,7 +1579,7 @@ local function makeInventoryLayout(items)
     clampScrollOffset(#entries)
     local firstIndex = scrollOffset + 1
     local inventoryView = viewMode == 'list' and makeList(entries, firstIndex) or makeGrid(entries, firstIndex)
-    local bodyContent = ui.content {
+    local bodyLayouts = {
         makeToolbar(),
         {
             name = 's3ui_main',
@@ -1580,8 +1597,9 @@ local function makeInventoryLayout(items)
         },
     }
     if metrics.detailMode == 'compact' then
-        bodyContent:add(makeCompactDetailBar())
+        bodyLayouts[#bodyLayouts + 1] = makeCompactDetailBar()
     end
+    local bodyContent = ui.content(bodyLayouts)
 
     return {
         type = ui.TYPE.Widget,
