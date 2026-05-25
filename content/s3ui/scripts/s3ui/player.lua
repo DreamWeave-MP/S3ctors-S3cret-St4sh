@@ -56,6 +56,7 @@ local TOOLTIP_FIELD_ROW_COUNT = 11
 local COMPACT_DETAIL_FIELD_COLUMNS = 4
 local COMPACT_DETAIL_FIELD_ROWS = 3
 local COMPACT_DETAIL_FIELD_SLOT_COUNT = COMPACT_DETAIL_FIELD_COLUMNS * COMPACT_DETAIL_FIELD_ROWS
+local ACTIVE_MAIN_MENU_KEY = 'inventory'
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_HEIGHT = 0.72
 local LIST_FIELD_RIGHT_EDGE = {
@@ -139,7 +140,6 @@ local compactDetailVisible = false
 local cameraSnapshot = nil
 local hudVisibleSnapshot = nil
 local registeredWindow = false
-local selectedCategory = 'all'
 local collapsedCategories = {}
 local sortMode = 'value'
 local sortAscending = {
@@ -174,6 +174,25 @@ local ITEM_STATE_ICONS = {
     equipped = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/equipped.dds' },
     enchanted = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/enchanted.dds' },
     broken = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/broken.dds' },
+}
+
+local MAIN_MENU_BUTTONS = {
+    {
+        key = 'character',
+        icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/character.dds' },
+    },
+    {
+        key = 'inventory',
+        icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/inventory.dds' },
+    },
+    {
+        key = 'magic',
+        icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/magic.dds' },
+    },
+    {
+        key = 'journal',
+        icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/journal.dds' },
+    },
 }
 
 local CATEGORY_ICON_RELATIVE_SIZES = {
@@ -322,7 +341,7 @@ local function buildDisplayEntries(items)
     local entries = {}
 
     for _, category in ipairs(CATEGORY_ORDER) do
-        if category.key ~= 'all' and (selectedCategory == 'all' or selectedCategory == category.key) then
+        if category.key ~= 'all' then
             local categoryItems = grouped[category.key]
             if #categoryItems > 0 then
                 entries[#entries + 1] = categoryEntry(category, #categoryItems)
@@ -929,31 +948,6 @@ local function controlText(name, text, textSize)
     })
 end
 
-local function makeControlButton(name, label, active, props, external, onClick)
-    local generation = uiGeneration
-    return {
-        name = name,
-        type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
-        props = props,
-        external = external,
-        events = {
-            focusGain = async:callback(function()
-                hideTooltip()
-            end),
-            mouseClick = async:callback(function()
-                if generation ~= uiGeneration then return end
-                hideTooltip()
-                if onClick then onClick() end
-            end),
-        },
-        content = ui.content {
-            controlBackground(active),
-            controlText(name .. '_text', label),
-        },
-    }
-end
-
 local function sortDirectionIcon(name, icon)
     return {
         name = name,
@@ -1122,20 +1116,54 @@ local function makeToolbarViewToggleButton()
     return button
 end
 
-local function makeCategoryRailButton(category)
-    return makeControlButton('s3ui_category_' .. category.key, category.label, selectedCategory == category.key, {
-        relativeSize = v2(1, 1 / #CATEGORY_ORDER),
-    }, nil, function()
-        selectedCategory = category.key
-        resetScrollOffset()
-        queueInventoryRebuild()
-    end)
+local function menuButtonIconSize(buttonCount)
+    local metrics = layoutMetrics()
+    local buttonHeight = metrics.viewSize.y / buttonCount
+    local edge = math.floor(math.min(metrics.categoryRailSize.x, buttonHeight) * 0.72)
+    if edge < 32 then edge = 32 end
+    return v2(edge, edge)
+end
+
+local function makeMainMenuButton(button)
+    local active = button.key == ACTIVE_MAIN_MENU_KEY
+    local buttonCount = #MAIN_MENU_BUTTONS
+
+    return {
+        name = 's3ui_main_menu_' .. button.key,
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = {
+            relativeSize = v2(1, 1 / buttonCount),
+        },
+        events = {
+            focusGain = async:callback(function()
+                hideTooltip()
+            end),
+            mouseClick = async:callback(function()
+                hideTooltip()
+            end),
+        },
+        content = ui.content {
+            controlBackground(active),
+            {
+                name = 's3ui_main_menu_' .. button.key .. '_icon',
+                type = ui.TYPE.Image,
+                props = {
+                    resource = button.icon,
+                    anchor = v2(0.5, 0.5),
+                    relativePosition = v2(0.5, 0.5),
+                    size = menuButtonIconSize(buttonCount),
+                    alpha = active and 1 or 0.72,
+                },
+            },
+        },
+    }
 end
 
 local function makeCategoryRail()
     local buttons = ui.content {}
-    for _, category in ipairs(CATEGORY_ORDER) do
-        buttons:add(makeCategoryRailButton(category))
+    for _, button in ipairs(MAIN_MENU_BUTTONS) do
+        buttons:add(makeMainMenuButton(button))
     end
 
     return {
