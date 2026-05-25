@@ -286,6 +286,8 @@ end
 
 local function addOrnateFrame(content, prefix, frameSize, alpha)
     local thickness = frameThickness(frameSize)
+    local halfFrame = math.floor(frameSize * 0.5)
+    local cornerOverhang = 4
     local cornerSize = v2(frameSize, frameSize)
     alpha = alpha or 1
 
@@ -296,8 +298,8 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.edgeH,
             anchor = v2(0, 0),
             relativePosition = v2(0, 0),
-            position = v2(frameSize, 0),
-            size = v2(-frameSize * 2, thickness),
+            position = v2(halfFrame, 0),
+            size = v2(-halfFrame * 2, thickness),
             relativeSize = v2(1, 0),
             alpha = alpha,
         },
@@ -309,8 +311,8 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.edgeH,
             anchor = v2(0, 1),
             relativePosition = v2(0, 1),
-            position = v2(frameSize, -thickness),
-            size = v2(-frameSize * 2, thickness),
+            position = v2(halfFrame, -thickness),
+            size = v2(-halfFrame * 2, thickness),
             relativeSize = v2(1, 0),
             alpha = alpha,
         },
@@ -322,8 +324,8 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.edgeV,
             anchor = v2(0, 0),
             relativePosition = v2(0, 0),
-            position = v2(0, frameSize),
-            size = v2(thickness, -frameSize * 2),
+            position = v2(0, halfFrame),
+            size = v2(thickness, -halfFrame * 2),
             relativeSize = v2(0, 1),
             alpha = alpha,
         },
@@ -335,8 +337,8 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.edgeV,
             anchor = v2(1, 0),
             relativePosition = v2(1, 0),
-            position = v2(-thickness, frameSize),
-            size = v2(thickness, -frameSize * 2),
+            position = v2(-thickness, halfFrame),
+            size = v2(thickness, -halfFrame * 2),
             relativeSize = v2(0, 1),
             alpha = alpha,
         },
@@ -348,6 +350,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.topLeft,
             anchor = v2(0, 0),
             relativePosition = v2(0, 0),
+            position = v2(-cornerOverhang, -cornerOverhang),
             size = cornerSize,
             alpha = alpha,
         },
@@ -359,7 +362,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.topRight,
             anchor = v2(1, 0),
             relativePosition = v2(1, 0),
-            position = v2(-frameSize, 0),
+            position = v2(cornerOverhang, -cornerOverhang),
             size = cornerSize,
             alpha = alpha,
         },
@@ -371,7 +374,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.bottomLeft,
             anchor = v2(0, 1),
             relativePosition = v2(0, 1),
-            position = v2(0, -frameSize),
+            position = v2(-cornerOverhang, cornerOverhang),
             size = cornerSize,
             alpha = alpha,
         },
@@ -383,7 +386,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             resource = ORNATE_FRAME_TEXTURES.bottomRight,
             anchor = v2(1, 1),
             relativePosition = v2(1, 1),
-            position = v2(-frameSize, -frameSize),
+            position = v2(cornerOverhang, cornerOverhang),
             size = cornerSize,
             alpha = alpha,
         },
