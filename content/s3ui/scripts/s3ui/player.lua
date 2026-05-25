@@ -36,6 +36,7 @@ local WHITE_TEXTURE = ui.texture { path = 'white' }
 local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
 local CATEGORY_SMALL_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/small_icons.dds'
 local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
+local SIMPLE_BORDER_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
 local ITEM_STATE_BADGE_RELATIVE_SIZE = v2(0.22, 0.22)
@@ -59,6 +60,7 @@ local COMPACT_DETAIL_FIELD_SLOT_COUNT = COMPACT_DETAIL_FIELD_COLUMNS * COMPACT_D
 local ACTIVE_MAIN_MENU_KEY = 'inventory'
 local FRAME_SIZE_PANEL = 34
 local FRAME_SIZE_MEDIUM = 22
+local SIMPLE_BORDER_THICKNESS = 2
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_HEIGHT = 0.72
 local LIST_FIELD_RIGHT_EDGE = {
@@ -389,6 +391,74 @@ local function addOrnateFrame(content, prefix, frameSize, alpha)
             position = v2(cornerOverhang, cornerOverhang),
             size = cornerSize,
             alpha = alpha,
+        },
+    }
+end
+
+local function addSimpleBorder(content, prefix, alpha, insertIndex)
+    alpha = alpha or 0.78
+
+    local function addBorderPart(layout)
+        if insertIndex then
+            content:insert(insertIndex, layout)
+            insertIndex = insertIndex + 1
+        else
+            content:add(layout)
+        end
+    end
+
+    addBorderPart {
+        name = prefix .. '_simple_border_top',
+        type = ui.TYPE.Image,
+        props = {
+            resource = WHITE_TEXTURE,
+            color = SIMPLE_BORDER_COLOR,
+            alpha = alpha,
+            anchor = v2(0, 0),
+            relativePosition = v2(0, 0),
+            size = v2(0, SIMPLE_BORDER_THICKNESS),
+            relativeSize = v2(1, 0),
+        },
+    }
+    addBorderPart {
+        name = prefix .. '_simple_border_bottom',
+        type = ui.TYPE.Image,
+        props = {
+            resource = WHITE_TEXTURE,
+            color = SIMPLE_BORDER_COLOR,
+            alpha = alpha,
+            anchor = v2(0, 1),
+            relativePosition = v2(0, 1),
+            position = v2(0, -SIMPLE_BORDER_THICKNESS),
+            size = v2(0, SIMPLE_BORDER_THICKNESS),
+            relativeSize = v2(1, 0),
+        },
+    }
+    addBorderPart {
+        name = prefix .. '_simple_border_left',
+        type = ui.TYPE.Image,
+        props = {
+            resource = WHITE_TEXTURE,
+            color = SIMPLE_BORDER_COLOR,
+            alpha = alpha,
+            anchor = v2(0, 0),
+            relativePosition = v2(0, 0),
+            size = v2(SIMPLE_BORDER_THICKNESS, 0),
+            relativeSize = v2(0, 1),
+        },
+    }
+    addBorderPart {
+        name = prefix .. '_simple_border_right',
+        type = ui.TYPE.Image,
+        props = {
+            resource = WHITE_TEXTURE,
+            color = SIMPLE_BORDER_COLOR,
+            alpha = alpha,
+            anchor = v2(1, 0),
+            relativePosition = v2(1, 0),
+            position = v2(-SIMPLE_BORDER_THICKNESS, 0),
+            size = v2(SIMPLE_BORDER_THICKNESS, 0),
+            relativeSize = v2(0, 1),
         },
     }
 end
@@ -1298,6 +1368,7 @@ local function makeMainMenuButton(button)
             },
         },
     }
+    addSimpleBorder(content, 's3ui_main_menu_' .. button.key, active and 0.9 or 0.62, 2)
     return {
         name = 's3ui_main_menu_' .. button.key,
         type = ui.TYPE.Widget,
@@ -1431,6 +1502,7 @@ local function makeCategoryHeaderSlot(entry, index)
         textAlignV = ui.ALIGNMENT.Center,
         autoSize = false,
     }))
+    addSimpleBorder(content, 'slot_' .. tostring(index) .. '_category', collapsed and 0.52 or 0.72, 2)
     return {
         name = 'slot_' .. tostring(index),
         type = ui.TYPE.Widget,
@@ -1531,6 +1603,7 @@ local function makeSlot(entry, index)
             props = { relativeSize = v2(1, 1) },
         }
     end
+    addSimpleBorder(content, 'slot_' .. tostring(index), data and 0.42 or 0.28, 1)
     return {
         name = 'slot_' .. tostring(index),
         type = ui.TYPE.Widget,
@@ -1646,6 +1719,7 @@ local function makeListCategoryRow(entry, index)
             },
         }
     end
+    addSimpleBorder(content, 'list_' .. tostring(index) .. '_category', collapsed and 0.52 or 0.72, 2)
     return {
         name = 'list_' .. tostring(index),
         type = ui.TYPE.Widget,
@@ -1748,6 +1822,7 @@ local function makeListItemRow(entry, index)
             autoSize = false,
         }))
     end
+    addSimpleBorder(content, 'list_' .. tostring(index), data and 0.42 or 0.28, 2)
     return {
         name = 'list_' .. tostring(index),
         type = ui.TYPE.Widget,
