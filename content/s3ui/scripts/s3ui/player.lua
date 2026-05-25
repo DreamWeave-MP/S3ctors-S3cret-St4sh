@@ -43,6 +43,8 @@ local CATEGORY_RAIL_SIZE = v2(86, 0)
 local CONTROL_BUTTON_SIZE = v2(48, 0)
 local VIEW_BUTTON_SIZE = v2(44, 0)
 local VIEW_TOGGLE_ICON_SIZE = v2(0.74, 0.74)
+local SORT_ICON_RELATIVE_SIZE = v2(0.68, 0.68)
+local SORT_DIRECTION_RELATIVE_SIZE = v2(0.34, 0.28)
 local CATEGORY_HEADER_COLOR = util.color.rgb(0.18, 0.36, 0.68)
 local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
 local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
@@ -76,6 +78,13 @@ local TOOLTIP_ICONS = {
     damage = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_damage.dds' },
     damageSpeed = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_damage_speed.dds' },
     armorRating = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/armor_rating.dds' },
+}
+
+local SORT_ICONS = {
+    value = TOOLTIP_ICONS.value,
+    weight = TOOLTIP_ICONS.weight,
+    effectiveness = TOOLTIP_ICONS.damageSpeed,
+    condition = TOOLTIP_ICONS.condition,
 }
 
 local TOOLTIP_FIELD_NAMES = {
@@ -928,20 +937,65 @@ local function makeControlButton(name, label, active, props, external, onClick)
     }
 end
 
+local function sortDirectionText(name, directionLabel)
+    return tooltipText(name, directionLabel, {
+        anchor = v2(1, 1),
+        relativePosition = v2(0.9, 0.9),
+        relativeSize = SORT_DIRECTION_RELATIVE_SIZE,
+        textSize = 13,
+        textAlignH = ui.ALIGNMENT.Center,
+        textAlignV = ui.ALIGNMENT.Center,
+        autoSize = false,
+    }, I.MWUI.templates.textHeader)
+end
+
 local function makeSortButton(mode, label)
     local active = sortMode == mode
-    local directionLabel = sortAscending[mode] and ' ^' or ' v'
-    local buttonLabel = active and (label .. directionLabel) or label
-    return makeControlButton('s3ui_sort_' .. mode, buttonLabel, active, {
-        size = CONTROL_BUTTON_SIZE,
-    }, { stretch = 1 }, function()
-        if sortMode == mode then
-            sortAscending[mode] = not sortAscending[mode]
-        end
-        sortMode = mode
-        resetScrollOffset()
-        queueInventoryRebuild('Sorted by ' .. label .. (sortAscending[mode] and ' ascending' or ' descending'))
-    end)
+    local directionLabel = sortAscending[mode] and '^' or 'v'
+    local name = 's3ui_sort_' .. mode
+    local generation = uiGeneration
+    local content = ui.content {
+        controlBackground(active),
+        {
+            name = name .. '_icon',
+            type = ui.TYPE.Image,
+            props = {
+                resource = SORT_ICONS[mode],
+                anchor = v2(0.5, 0.5),
+                relativePosition = v2(0.5, 0.5),
+                relativeSize = SORT_ICON_RELATIVE_SIZE,
+                alpha = active and 1 or 0.82,
+            },
+        },
+    }
+
+    if active then content:add(sortDirectionText(name .. '_direction', directionLabel)) end
+
+    return {
+        name = name,
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = {
+            size = CONTROL_BUTTON_SIZE,
+        },
+        external = { stretch = 1 },
+        events = {
+            focusGain = async:callback(function()
+                hideTooltip()
+            end),
+            mouseClick = async:callback(function()
+                if generation ~= uiGeneration then return end
+                hideTooltip()
+                if sortMode == mode then
+                    sortAscending[mode] = not sortAscending[mode]
+                end
+                sortMode = mode
+                resetScrollOffset()
+                queueInventoryRebuild('Sorted by ' .. label .. (sortAscending[mode] and ' ascending' or ' descending'))
+            end),
+        },
+        content = content,
+    }
 end
 
 local function inventoryWindowActive()
@@ -1084,9 +1138,9 @@ local function makeToolbar()
             makeViewToggleButton(),
             { external = { grow = 1 } },
             makeSortButton('value', 'Gold'),
-            makeSortButton('weight', 'Wt'),
-            makeSortButton('effectiveness', 'Eff'),
-            makeSortButton('condition', 'Cond'),
+            makeSortButton('weight', 'Weight'),
+            makeSortButton('effectiveness', 'Effectiveness'),
+            makeSortButton('condition', 'Condition'),
         },
     }
 end
