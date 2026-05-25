@@ -7,7 +7,7 @@ local v2 = util.vector2
 
 local LAYOUT = {
     windowWidthFraction = 0.52,
-    windowHeightFraction = 0.72,
+    windowHeightFraction = 0.80,
     windowMinSize = v2(560, 400),
     windowMaxSize = v2(960, 820),
     windowMarginFraction = 0.03,
