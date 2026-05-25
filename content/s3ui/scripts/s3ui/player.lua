@@ -38,8 +38,8 @@ local CATEGORY_HEADER_COLOR = util.color.rgb(0.18, 0.36, 0.68)
 local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
 local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
 local TOOLTIP_LAYER = 'S3UI_Tooltip'
-local TOOLTIP_SIZE = v2(420, 330)
-local TOOLTIP_MOUSE_OFFSET = v2(24, 24)
+local TOOLTIP_SIZE = v2(390, 330)
+local TOOLTIP_MIN_MARGIN = v2(24, 24)
 local TOOLTIP_HEADER_SIZE = v2(1, 0.22)
 local TOOLTIP_FIELDS_SIZE = v2(1, 0.74)
 local TOOLTIP_FIELD_ROW_COUNT = 9
@@ -48,14 +48,20 @@ local TOOLTIP_FIELD_ICON_SIZE = v2(28, 28)
 local TOOLTIP_VALUE_TEXT_SIZE = 16
 local EMPTY_FIELD = '—'
 
+local TOOLTIP_VALUE_ICON = ui.texture {
+    path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/all_small_icons.dds',
+    offset = v2(128, 0),
+    size = v2(128, 128),
+}
+
 local TOOLTIP_ICONS = {
     typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
     typeWeapon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_weapon.dds' },
     typeArmor = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_armor.dds' },
     typeBook = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_book.dds' },
-    value = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/gold.dds' },
+    value = TOOLTIP_VALUE_ICON,
     weight = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weight.dds' },
-    goldPerWeight = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/gold.dds' },
+    goldPerWeight = TOOLTIP_VALUE_ICON,
     condition = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/durability.dds' },
     reach = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_reach.dds' },
     speed = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_speed.dds' },
@@ -361,6 +367,16 @@ local function ensureTooltipLayer()
     end
 end
 
+local function tooltipPosition()
+    local screen = ui.screenSize()
+    local preferred = v2(WINDOW_POSITION.x + WINDOW_SIZE.x, WINDOW_POSITION.y)
+    if preferred.x + TOOLTIP_SIZE.x > screen.x - TOOLTIP_MIN_MARGIN.x then preferred.x = screen.x - TOOLTIP_SIZE.x - TOOLTIP_MIN_MARGIN.x end
+    if preferred.y + TOOLTIP_SIZE.y > screen.y - TOOLTIP_MIN_MARGIN.y then preferred.y = screen.y - TOOLTIP_SIZE.y - TOOLTIP_MIN_MARGIN.y end
+    if preferred.x < TOOLTIP_MIN_MARGIN.x then preferred.x = TOOLTIP_MIN_MARGIN.x end
+    if preferred.y < TOOLTIP_MIN_MARGIN.y then preferred.y = TOOLTIP_MIN_MARGIN.y end
+    return preferred
+end
+
 local function itemSortValue(data)
     if sortMode == 'value' then return data.value or 0 end
     if sortMode == 'weight' then return data.weight or 0 end
@@ -515,7 +531,7 @@ local function makeTooltipLayout()
         template = I.MWUI.templates.bordersThick,
         layer = TOOLTIP_LAYER,
         props = {
-            position = WINDOW_POSITION + v2(WINDOW_SIZE.x + 16, 0),
+            position = tooltipPosition(),
             size = TOOLTIP_SIZE,
             visible = false,
         },
@@ -604,21 +620,10 @@ local function hideTooltip()
     tooltipElement:update()
 end
 
-local function moveTooltip(mouseEvent)
-    if not tooltipElement or not tooltipElement.layout or not mouseEvent or not mouseEvent.position then return end
-    local screen = ui.screenSize()
-    local position = mouseEvent.position + TOOLTIP_MOUSE_OFFSET
-    if position.x + TOOLTIP_SIZE.x > screen.x then position.x = screen.x - TOOLTIP_SIZE.x end
-    if position.y + TOOLTIP_SIZE.y > screen.y then position.y = screen.y - TOOLTIP_SIZE.y end
-    if position.x < 0 then position.x = 0 end
-    if position.y < 0 then position.y = 0 end
-    tooltipElement.layout.props.position = position
-end
-
-local function updateTooltip(data, mouseEvent)
+local function updateTooltip(data)
     if not tooltipElement or not tooltipElement.layout or not data then return end
 
-    moveTooltip(mouseEvent)
+    tooltipElement.layout.props.position = tooltipPosition()
 
     local bodyContent = tooltipElement.layout.content.s3ui_tooltip_body.content
     local header = bodyContent.s3ui_tooltip_header.content
@@ -900,10 +905,6 @@ local function makeSlot(entry, index)
             focusLoss = async:callback(function()
                 if generation ~= uiGeneration then return end
                 hideTooltip()
-            end),
-            mouseMove = async:callback(function(mouseEvent, layout)
-                if generation ~= uiGeneration then return end
-                updateTooltip(layout and layout.userData, mouseEvent)
             end),
             mouseClick = async:callback(function(_, layout)
                 if generation ~= uiGeneration then return end
