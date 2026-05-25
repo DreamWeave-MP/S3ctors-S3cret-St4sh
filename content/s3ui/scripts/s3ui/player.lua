@@ -44,9 +44,25 @@ local TOOLTIP_HEADER_SIZE = v2(1, 0.22)
 local TOOLTIP_FIELDS_SIZE = v2(1, 0.74)
 local TOOLTIP_FIELD_ROW_COUNT = 9
 local TOOLTIP_ICON_SIZE = v2(48, 48)
-local TOOLTIP_FIELD_TEXT_SIZE = 14
+local TOOLTIP_FIELD_ICON_SIZE = v2(28, 28)
 local TOOLTIP_VALUE_TEXT_SIZE = 16
 local EMPTY_FIELD = '—'
+
+local TOOLTIP_ICONS = {
+    typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
+    typeWeapon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_weapon.dds' },
+    typeArmor = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_armor.dds' },
+    typeBook = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_book.dds' },
+    value = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/gold.dds' },
+    weight = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weight.dds' },
+    goldPerWeight = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/gold.dds' },
+    condition = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/durability.dds' },
+    reach = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_reach.dds' },
+    speed = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_speed.dds' },
+    damage = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_damage.dds' },
+    damageSpeed = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_damage_speed.dds' },
+    armorRating = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/armor_rating.dds' },
+}
 
 local rootElement = nil
 local tooltipElement = nil
@@ -276,6 +292,31 @@ local function formatDamage(minDamage, maxDamage)
     return tostring(minDamage) .. '–' .. tostring(maxDamage)
 end
 
+local function formatCondition(condition)
+    if type(condition) ~= 'number' or condition <= 0 then return EMPTY_FIELD end
+    return formatNumber(condition, 0)
+end
+
+local function bestWeaponDamage(record)
+    if not record then return EMPTY_FIELD end
+    local bestMin = nil
+    local bestMax = -math.huge
+    local damagePairs = {
+        { record.thrustMinDamage, record.thrustMaxDamage },
+        { record.chopMinDamage, record.chopMaxDamage },
+        { record.slashMinDamage, record.slashMaxDamage },
+    }
+    for _, damage in ipairs(damagePairs) do
+        local minDamage = damage[1]
+        local maxDamage = damage[2]
+        if type(minDamage) == 'number' and type(maxDamage) == 'number' and maxDamage > bestMax then
+            bestMin = minDamage
+            bestMax = maxDamage
+        end
+    end
+    return formatDamage(bestMin, bestMax)
+end
+
 local function subtypeName(recordType, record)
     if not record then return EMPTY_FIELD end
     if recordType == types.Armor then return ARMOR_TYPE_NAMES[record.type] or EMPTY_FIELD end
@@ -293,6 +334,14 @@ local function typeText(data)
     local subtype = subtypeName(data.item and data.item.type, data.record)
     if subtype == EMPTY_FIELD then return recordType end
     return recordType .. ': ' .. subtype
+end
+
+local function typeIcon(data)
+    local itemType = data and data.item and data.item.type
+    if itemType == types.Weapon then return TOOLTIP_ICONS.typeWeapon end
+    if itemType == types.Armor or itemType == types.Clothing then return TOOLTIP_ICONS.typeArmor end
+    if itemType == types.Book then return TOOLTIP_ICONS.typeBook end
+    return TOOLTIP_ICONS.typeGeneric
 end
 
 local function goldPerWeight(record)
@@ -401,7 +450,7 @@ local function tooltipText(name, text, props, template, external)
     }
 end
 
-local function tooltipField(name, label)
+local function tooltipField(name, icon)
     return {
         name = name .. '_row',
         type = ui.TYPE.Flex,
@@ -411,15 +460,28 @@ local function tooltipField(name, label)
             relativeSize = v2(1, 1 / TOOLTIP_FIELD_ROW_COUNT),
         },
         content = ui.content {
-            tooltipText(name .. '_label', label, {
-                relativeSize = v2(0.28, 1),
-                textSize = TOOLTIP_FIELD_TEXT_SIZE,
-                textAlignH = ui.ALIGNMENT.Start,
-                textAlignV = ui.ALIGNMENT.Center,
-                autoSize = false,
-            }),
+            {
+                name = name .. '_icon_box',
+                type = ui.TYPE.Widget,
+                props = {
+                    relativeSize = v2(0.16, 1),
+                    autoSize = false,
+                },
+                content = ui.content {
+                    {
+                        name = name .. '_icon',
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = icon,
+                            anchor = v2(0.5, 0.5),
+                            relativePosition = v2(0.5, 0.5),
+                            size = TOOLTIP_FIELD_ICON_SIZE,
+                        },
+                    },
+                },
+            },
             tooltipText(name .. '_value', EMPTY_FIELD, {
-                relativeSize = v2(0.72, 1),
+                relativeSize = v2(0.84, 1),
                 textSize = TOOLTIP_VALUE_TEXT_SIZE,
                 textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
@@ -435,8 +497,16 @@ local function tooltipFieldValue(fieldsLayout, name)
     return fieldsLayout.content[name .. '_row'].content[name .. '_value']
 end
 
+local function tooltipFieldIcon(fieldsLayout, name)
+    return fieldsLayout.content[name .. '_row'].content[name .. '_icon_box'].content[name .. '_icon']
+end
+
 local function setTooltipField(fieldsLayout, name, value)
     tooltipFieldValue(fieldsLayout, name).props.text = value or EMPTY_FIELD
+end
+
+local function setTooltipFieldIcon(fieldsLayout, name, icon)
+    tooltipFieldIcon(fieldsLayout, name).props.resource = icon
 end
 
 local function makeTooltipLayout()
@@ -511,15 +581,15 @@ local function makeTooltipLayout()
                             autoSize = false,
                         },
                         content = ui.content {
-                            tooltipField('s3ui_tooltip_type', 'Type'),
-                            tooltipField('s3ui_tooltip_value', 'Value'),
-                            tooltipField('s3ui_tooltip_weight', 'Weight'),
-                            tooltipField('s3ui_tooltip_gold_per_weight', 'Gold/Wt'),
-                            tooltipField('s3ui_tooltip_reach', 'Reach'),
-                            tooltipField('s3ui_tooltip_speed', 'Speed'),
-                            tooltipField('s3ui_tooltip_thrust', 'Thrust'),
-                            tooltipField('s3ui_tooltip_chop', 'Chop'),
-                            tooltipField('s3ui_tooltip_slash', 'Slash'),
+                            tooltipField('s3ui_tooltip_type', TOOLTIP_ICONS.typeGeneric),
+                            tooltipField('s3ui_tooltip_value', TOOLTIP_ICONS.value),
+                            tooltipField('s3ui_tooltip_weight', TOOLTIP_ICONS.weight),
+                            tooltipField('s3ui_tooltip_gold_per_weight', TOOLTIP_ICONS.goldPerWeight),
+                            tooltipField('s3ui_tooltip_condition', TOOLTIP_ICONS.condition),
+                            tooltipField('s3ui_tooltip_reach', TOOLTIP_ICONS.reach),
+                            tooltipField('s3ui_tooltip_speed', TOOLTIP_ICONS.speed),
+                            tooltipField('s3ui_tooltip_damage', TOOLTIP_ICONS.damage),
+                            tooltipField('s3ui_tooltip_effectiveness', TOOLTIP_ICONS.damageSpeed),
                         },
                     },
                 },
@@ -564,23 +634,34 @@ local function updateTooltip(data, mouseEvent)
     header.s3ui_tooltip_name.props.text = data.name or itemName(data.item, record)
     header.s3ui_tooltip_count.props.text = data.count and data.count > 1 and ('x' .. tostring(data.count)) or ''
 
+    setTooltipFieldIcon(fields, 's3ui_tooltip_type', typeIcon(data))
+    setTooltipFieldIcon(fields, 's3ui_tooltip_reach', TOOLTIP_ICONS.reach)
+    setTooltipFieldIcon(fields, 's3ui_tooltip_speed', TOOLTIP_ICONS.speed)
+    setTooltipFieldIcon(fields, 's3ui_tooltip_damage', TOOLTIP_ICONS.damage)
+    setTooltipFieldIcon(fields, 's3ui_tooltip_effectiveness', TOOLTIP_ICONS.damageSpeed)
+
     setTooltipField(fields, 's3ui_tooltip_type', typeText(data))
     setTooltipField(fields, 's3ui_tooltip_value', record and record.value and tostring(record.value) or EMPTY_FIELD)
     setTooltipField(fields, 's3ui_tooltip_weight', formatNumber(record and record.weight, 2))
     setTooltipField(fields, 's3ui_tooltip_gold_per_weight', goldPerWeight(record))
+    setTooltipField(fields, 's3ui_tooltip_condition', formatCondition(data.condition))
 
     if data.item and data.item.type == types.Weapon then
         setTooltipField(fields, 's3ui_tooltip_reach', formatNumber(record and record.reach, 2))
         setTooltipField(fields, 's3ui_tooltip_speed', formatNumber(record and record.speed, 2))
-        setTooltipField(fields, 's3ui_tooltip_thrust', formatDamage(record and record.thrustMinDamage, record and record.thrustMaxDamage))
-        setTooltipField(fields, 's3ui_tooltip_chop', formatDamage(record and record.chopMinDamage, record and record.chopMaxDamage))
-        setTooltipField(fields, 's3ui_tooltip_slash', formatDamage(record and record.slashMinDamage, record and record.slashMaxDamage))
+        setTooltipField(fields, 's3ui_tooltip_damage', bestWeaponDamage(record))
+        setTooltipField(fields, 's3ui_tooltip_effectiveness', formatNumber(data.effectiveness, 2))
+    elseif data.item and data.item.type == types.Armor then
+        setTooltipFieldIcon(fields, 's3ui_tooltip_reach', TOOLTIP_ICONS.armorRating)
+        setTooltipField(fields, 's3ui_tooltip_reach', formatNumber(record and record.baseArmor, 0))
+        setTooltipField(fields, 's3ui_tooltip_speed', '')
+        setTooltipField(fields, 's3ui_tooltip_damage', '')
+        setTooltipField(fields, 's3ui_tooltip_effectiveness', '')
     else
         setTooltipField(fields, 's3ui_tooltip_reach', '')
         setTooltipField(fields, 's3ui_tooltip_speed', '')
-        setTooltipField(fields, 's3ui_tooltip_thrust', '')
-        setTooltipField(fields, 's3ui_tooltip_chop', '')
-        setTooltipField(fields, 's3ui_tooltip_slash', '')
+        setTooltipField(fields, 's3ui_tooltip_damage', '')
+        setTooltipField(fields, 's3ui_tooltip_effectiveness', '')
     end
 
     tooltipElement.layout.props.visible = true
