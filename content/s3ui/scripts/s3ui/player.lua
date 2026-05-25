@@ -29,6 +29,8 @@ local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local LIST_ICON_RELATIVE_SIZE = v2(0.08, 0.72)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
+local ITEM_STATE_BADGE_RELATIVE_SIZE = v2(0.22, 0.22)
+local LIST_STATE_BADGE_SIZE = v2(0.04, 0.24)
 local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
 local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
 local HINT_RELATIVE_SIZE = v2(1, 0.05)
@@ -134,6 +136,12 @@ local CATEGORY_ICON_TEXTURES = {
 }
 
 local VIEW_TOGGLE_ICON = ui.texture { path = CATEGORY_SMALL_ICON_ATLAS, offset = v2(385, 1), size = v2(126, 126) }
+
+local ITEM_STATE_ICONS = {
+    equipped = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/equipped.dds' },
+    enchanted = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/enchanted.dds' },
+    broken = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/broken.dds' },
+}
 
 local CATEGORY_ICON_RELATIVE_SIZES = {
     all = v2(0.62, 0.58),
@@ -241,6 +249,34 @@ local function safeItemData(item)
     return nil
 end
 
+local function currentActor()
+    return self.object or self
+end
+
+local function equippedRecordIds(actor)
+    local result = {}
+    local ok, equipment = pcall(function() return types.Actor.getEquipment(actor) end)
+    if not ok or type(equipment) ~= 'table' then return result end
+    for _, item in pairs(equipment) do
+        if item and item.recordId then result[item.recordId] = true end
+    end
+    return result
+end
+
+local function itemEquipped(actor, equippedIds, item)
+    if item and item.recordId and equippedIds[item.recordId] then return true end
+    local ok, equipped = pcall(function() return types.Actor.hasEquipped(actor, item) end)
+    return ok and equipped == true
+end
+
+local function itemEnchanted(record)
+    return record and record.enchant ~= nil and record.enchant ~= ''
+end
+
+local function itemBroken(condition)
+    return type(condition) == 'number' and condition <= 0
+end
+
 local function categoryForItem(itemType)
     if itemType == types.Weapon then return CATEGORY_BY_KEY.weapons end
     if itemType == types.Armor then return CATEGORY_BY_KEY.armor end
@@ -278,7 +314,9 @@ local function itemCondition(itemData)
 end
 
 local function collectInventoryItems()
-    local inventory = types.Actor.inventory(self.object or self)
+    local actor = currentActor()
+    local inventory = types.Actor.inventory(actor)
+    local equippedIds = equippedRecordIds(actor)
     local seen = {}
     local result = {}
 
@@ -290,6 +328,7 @@ local function collectInventoryItems()
             local itemType = item.type
             local category = categoryForItem(itemType)
             local itemData = safeItemData(item)
+            local condition = itemCondition(itemData)
             result[#result + 1] = {
                 item = item,
                 record = record,
@@ -301,7 +340,10 @@ local function collectInventoryItems()
                 value = (record and type(record.value) == 'number') and record.value or 0,
                 weight = (record and type(record.weight) == 'number') and record.weight or 0,
                 effectiveness = itemEffectiveness(itemType, record),
-                condition = itemCondition(itemData),
+                condition = condition,
+                equipped = itemEquipped(actor, equippedIds, item),
+                enchanted = itemEnchanted(record),
+                broken = itemBroken(condition),
             }
         end
     end
@@ -1129,6 +1171,44 @@ local function makeCategoryHeaderSlot(entry, index)
     }
 end
 
+local function addStateBadge(content, name, icon, anchor, position, size)
+    content:add {
+        name = name,
+        type = ui.TYPE.Image,
+        props = {
+            resource = icon,
+            anchor = anchor,
+            relativePosition = position,
+            relativeSize = size,
+            alpha = 0.96,
+        },
+    }
+end
+
+local function addGridStateBadges(content, prefix, data)
+    if data.equipped then
+        addStateBadge(content, prefix .. '_equipped', ITEM_STATE_ICONS.equipped, v2(0, 0), v2(0.08, 0.08), ITEM_STATE_BADGE_RELATIVE_SIZE)
+    end
+    if data.enchanted then
+        addStateBadge(content, prefix .. '_enchanted', ITEM_STATE_ICONS.enchanted, v2(1, 0), v2(0.92, 0.08), ITEM_STATE_BADGE_RELATIVE_SIZE)
+    end
+    if data.broken then
+        addStateBadge(content, prefix .. '_broken', ITEM_STATE_ICONS.broken, v2(0, 1), v2(0.08, 0.92), ITEM_STATE_BADGE_RELATIVE_SIZE)
+    end
+end
+
+local function addListStateBadges(content, prefix, data)
+    if data.equipped then
+        addStateBadge(content, prefix .. '_equipped', ITEM_STATE_ICONS.equipped, v2(0, 0.5), v2(0.012, 0.25), LIST_STATE_BADGE_SIZE)
+    end
+    if data.enchanted then
+        addStateBadge(content, prefix .. '_enchanted', ITEM_STATE_ICONS.enchanted, v2(0, 0.5), v2(0.012, 0.5), LIST_STATE_BADGE_SIZE)
+    end
+    if data.broken then
+        addStateBadge(content, prefix .. '_broken', ITEM_STATE_ICONS.broken, v2(0, 0.5), v2(0.012, 0.75), LIST_STATE_BADGE_SIZE)
+    end
+end
+
 local function makeSlot(entry, index)
     if entry and entry.kind == 'categoryHeader' then return makeCategoryHeaderSlot(entry, index) end
 
@@ -1159,6 +1239,8 @@ local function makeSlot(entry, index)
                 textSize = 13,
             }))
         end
+
+        addGridStateBadges(content, 'slot_' .. tostring(index), data)
     else
         content:add {
             type = ui.TYPE.Widget,
@@ -1335,16 +1417,18 @@ local function makeListItemRow(entry, index)
                 props = {
                     resource = ui.texture { path = data.icon },
                     anchor = v2(0, 0.5),
-                    relativePosition = v2(0.03, 0.5),
+                    relativePosition = v2(0.06, 0.5),
                     relativeSize = LIST_ICON_RELATIVE_SIZE,
                 },
             }
         end
 
+        addListStateBadges(content, 'list_' .. tostring(index), data)
+
         local count = data.count > 1 and (' x' .. tostring(data.count)) or ''
         content:add(textLine(data.name .. count, I.MWUI.templates.textNormal, {
             anchor = v2(0, 0.5),
-            relativePosition = v2(0.13, 0.5),
+            relativePosition = v2(0.16, 0.5),
             relativeSize = v2(0.5, 0.72),
             textSize = 15,
             textAlignH = ui.ALIGNMENT.Start,
