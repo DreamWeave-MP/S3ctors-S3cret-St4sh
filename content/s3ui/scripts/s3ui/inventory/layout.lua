@@ -21,6 +21,9 @@ local LAYOUT = {
     listMinRows = 5,
     listMaxRows = 18,
     listMinRowHeight = 48,
+    listIconSizeFraction = 0.72,
+    listIconMinSize = 28,
+    listIconMaxSize = 44,
     toolbarHeightFraction = 0.1,
     toolbarMinHeight = 40,
     toolbarMaxHeight = 64,
@@ -90,6 +93,8 @@ local function compute()
     local gridColumns = math.floor(clamp(math.floor(viewSize.x / LAYOUT.gridMinCellSize.x), LAYOUT.gridMinColumns, LAYOUT.gridMaxColumns))
     local gridRows = math.floor(clamp(math.floor(viewSize.y / LAYOUT.gridMinCellSize.y), LAYOUT.gridMinRows, LAYOUT.gridMaxRows))
     local listRows = math.floor(clamp(math.floor(viewSize.y / LAYOUT.listMinRowHeight), LAYOUT.listMinRows, LAYOUT.listMaxRows))
+    local listRowHeight = viewSize.y / listRows
+    local listIconSize = math.floor(clamp(listRowHeight * LAYOUT.listIconSizeFraction, LAYOUT.listIconMinSize, LAYOUT.listIconMaxSize))
     local tooltipWidth = math.floor(clamp(screen.x * LAYOUT.tooltipWidthFraction, LAYOUT.tooltipMinWidth, math.min(LAYOUT.tooltipMaxWidth, screen.x - margin * 2)))
     local tooltipFieldRowHeight = math.floor(clamp(shortSide * LAYOUT.tooltipFieldRowHeightFraction, LAYOUT.tooltipFieldRowMinHeight, LAYOUT.tooltipFieldRowMaxHeight))
     local tooltipHeaderHeight = math.floor(tooltipFieldRowHeight * LAYOUT.tooltipHeaderRowMultiplier)
@@ -123,6 +128,7 @@ local function compute()
         gridColumns = gridColumns,
         gridRows = gridRows,
         listRows = listRows,
+        listIconSize = v2(listIconSize, listIconSize),
         tooltipWidth = tooltipWidth,
         tooltipFieldRowHeight = tooltipFieldRowHeight,
         tooltipHeaderHeight = tooltipHeaderHeight,
