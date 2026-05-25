@@ -16,7 +16,8 @@ local inventoryLayout = require 'scripts.s3ui.inventory.layout'
 local v2 = util.vector2
 local v3 = util.vector3
 
-local WINDOW = I.UI.WINDOW.Inventory
+local UI_WINDOWS = I.UI.WINDOW
+local WINDOW = UI_WINDOWS.Inventory
 local MODE = I.UI.MODE.Interface
 local ROOT_LAYER = 'Windows'
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
@@ -69,6 +70,12 @@ local LIST_FIELD_RIGHT_EDGE = {
     weight = 0.8,
     effectiveness = 0.9,
     condition = 0.99,
+}
+local EMPTY_WINDOW_OVERRIDES = {
+    UI_WINDOWS.Map,
+    UI_WINDOWS.Stats,
+    UI_WINDOWS.Magic,
+    UI_WINDOWS.Journal,
 }
 
 local TOOLTIP_ICONS = {
@@ -2100,14 +2107,6 @@ local function showStaticInventoryCamera()
     camera.instantTransition()
 end
 
-local function toggleInventoryWindow()
-    if I.UI.isWindowVisible(WINDOW) then
-        I.UI.removeMode(MODE)
-    else
-        I.UI.setMode(MODE, { windows = { WINDOW } })
-    end
-end
-
 local function reloadLuaAndReopenInventory()
     devReloadStorage:set(DEV_RELOAD_REOPEN_KEY, true)
     if I.UI.isWindowVisible(WINDOW) then
@@ -2185,13 +2184,29 @@ local function hideInventoryWindow()
     restoreHudVisibility()
 end
 
+local function emptyWindowOverride() end
+
+local function closeJournalMode()
+    if I.UI.getMode() == I.UI.MODE.Journal then
+        I.UI.removeMode(I.UI.MODE.Journal)
+    end
+end
+
 local function registerInventoryWindow()
     if registeredWindow then return end
     I.UI.registerWindow(WINDOW, showInventoryWindow, hideInventoryWindow)
+    for _, windowName in ipairs(EMPTY_WINDOW_OVERRIDES) do
+        I.UI.registerWindow(windowName, emptyWindowOverride, emptyWindowOverride)
+    end
     registeredWindow = true
 end
 
 registerInventoryWindow()
+-- Vanilla's Journal trigger pushes MODE.Journal. Until S3UI has a journal tab,
+-- collapse that mode after vanilla trigger handlers run so the action is a no-op.
+input.registerTriggerHandler('Journal', async:callback(function()
+    async:newUnsavableSimulationTimer(0, closeJournalMode)
+end))
 async:newUnsavableSimulationTimer(0, processDevReloadReopen)
 
 return {
@@ -2199,8 +2214,6 @@ return {
         onKeyPress = function(key)
             if key.code == input.KEY.F8 then
                 reloadLuaAndReopenInventory()
-            elseif key.code == input.KEY.I then
-                toggleInventoryWindow()
             elseif key.code == input.KEY.PageUp or key.code == input.KEY.UpArrow then
                 scrollInventoryRows(-1)
             elseif key.code == input.KEY.PageDown or key.code == input.KEY.DownArrow then
