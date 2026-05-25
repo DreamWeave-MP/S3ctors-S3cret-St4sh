@@ -57,6 +57,9 @@ local COMPACT_DETAIL_FIELD_COLUMNS = 4
 local COMPACT_DETAIL_FIELD_ROWS = 3
 local COMPACT_DETAIL_FIELD_SLOT_COUNT = COMPACT_DETAIL_FIELD_COLUMNS * COMPACT_DETAIL_FIELD_ROWS
 local ACTIVE_MAIN_MENU_KEY = 'inventory'
+local FRAME_SIZE_PANEL = 34
+local FRAME_SIZE_MEDIUM = 22
+local FRAME_SIZE_SMALL = 12
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_HEIGHT = 0.72
 local LIST_FIELD_RIGHT_EDGE = {
@@ -93,6 +96,31 @@ local SORT_ICONS = {
 local SORT_DIRECTION_ICONS = {
     ascending = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/sort/ascending.dds' },
     descending = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/sort/descending.dds' },
+}
+
+local ORNATE_FRAME_TEXTURES = {
+    edgeH = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_h.dds' },
+    edgeV = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_v.dds' },
+    topLeft = ui.texture {
+        path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
+        offset = v2(0, 0),
+        size = v2(64, 64),
+    },
+    topRight = ui.texture {
+        path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
+        offset = v2(64, 0),
+        size = v2(64, 64),
+    },
+    bottomLeft = ui.texture {
+        path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
+        offset = v2(0, 64),
+        size = v2(64, 64),
+    },
+    bottomRight = ui.texture {
+        path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
+        offset = v2(64, 64),
+        size = v2(64, 64),
+    },
 }
 
 local devReloadStorage = storage.playerSection(DEV_RELOAD_SECTION)
@@ -244,6 +272,135 @@ end
 
 local function layoutMetrics()
     return activeLayoutMetrics or inventoryLayout.compute()
+end
+
+local function frameThickness(frameSize)
+    local thickness = math.floor(frameSize * 0.14)
+    if thickness < 2 then return 2 end
+    return thickness
+end
+
+local function frameInset(frameSize)
+    return frameThickness(frameSize) + 2
+end
+
+local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
+    local thickness = frameThickness(frameSize)
+    local cornerSize = v2(frameSize, frameSize)
+    alpha = alpha or 1
+
+    local function addFramePart(layout)
+        if insertIndex then
+            content:insert(insertIndex, layout)
+            insertIndex = insertIndex + 1
+        else
+            content:add(layout)
+        end
+    end
+
+    addFramePart {
+        name = prefix .. '_frame_top',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.edgeH,
+            tileH = true,
+            anchor = v2(0, 0),
+            relativePosition = v2(0, 0),
+            position = v2(frameSize, 0),
+            size = v2(-frameSize * 2, thickness),
+            relativeSize = v2(1, 0),
+            alpha = alpha,
+        },
+    }
+    addFramePart {
+        name = prefix .. '_frame_bottom',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.edgeH,
+            tileH = true,
+            anchor = v2(0, 1),
+            relativePosition = v2(0, 1),
+            position = v2(frameSize, -thickness),
+            size = v2(-frameSize * 2, thickness),
+            relativeSize = v2(1, 0),
+            alpha = alpha,
+        },
+    }
+    addFramePart {
+        name = prefix .. '_frame_left',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.edgeV,
+            tileV = true,
+            anchor = v2(0, 0),
+            relativePosition = v2(0, 0),
+            position = v2(0, frameSize),
+            size = v2(thickness, -frameSize * 2),
+            relativeSize = v2(0, 1),
+            alpha = alpha,
+        },
+    }
+    addFramePart {
+        name = prefix .. '_frame_right',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.edgeV,
+            tileV = true,
+            anchor = v2(1, 0),
+            relativePosition = v2(1, 0),
+            position = v2(-thickness, frameSize),
+            size = v2(thickness, -frameSize * 2),
+            relativeSize = v2(0, 1),
+            alpha = alpha,
+        },
+    }
+    addFramePart {
+        name = prefix .. '_frame_top_left',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.topLeft,
+            anchor = v2(0, 0),
+            relativePosition = v2(0, 0),
+            size = cornerSize,
+            alpha = alpha,
+        },
+    }
+    addFramePart {
+        name = prefix .. '_frame_top_right',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.topRight,
+            anchor = v2(1, 0),
+            relativePosition = v2(1, 0),
+            position = v2(-frameSize, 0),
+            size = cornerSize,
+            alpha = alpha,
+        },
+    }
+    addFramePart {
+        name = prefix .. '_frame_bottom_left',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.bottomLeft,
+            anchor = v2(0, 1),
+            relativePosition = v2(0, 1),
+            position = v2(0, -frameSize),
+            size = cornerSize,
+            alpha = alpha,
+        },
+    }
+    addFramePart {
+        name = prefix .. '_frame_bottom_right',
+        type = ui.TYPE.Image,
+        props = {
+            resource = ORNATE_FRAME_TEXTURES.bottomRight,
+            anchor = v2(1, 1),
+            relativePosition = v2(1, 1),
+            position = v2(-frameSize, -frameSize),
+            size = cornerSize,
+            alpha = alpha,
+        },
+    }
 end
 
 local function ensureTooltipLayer()
@@ -527,97 +684,102 @@ end
 local function makeTooltipLayout()
     local metrics = layoutMetrics()
     local defaultHeight = tooltipPixelHeight(TOOLTIP_FIELD_ROW_COUNT, metrics)
+    local inset = frameInset(FRAME_SIZE_MEDIUM)
+    local content = ui.content {
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = WHITE_TEXTURE,
+                color = BACKGROUND_COLOR,
+                alpha = backgroundAlpha(),
+                relativeSize = v2(1, 1),
+            },
+        },
+        {
+            name = 's3ui_tooltip_body',
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = false,
+                position = v2(inset, inset),
+                size = v2(-inset * 2, -inset * 2),
+                relativeSize = v2(1, 1),
+                autoSize = false,
+            },
+            content = ui.content {
+                {
+                    name = 's3ui_tooltip_header',
+                    type = ui.TYPE.Flex,
+                    props = {
+                        horizontal = true,
+                        relativeSize = v2(1, metrics.tooltipHeaderHeight / defaultHeight),
+                        autoSize = false,
+                    },
+                    content = ui.content {
+                        {
+                            name = 's3ui_tooltip_icon_box',
+                            type = ui.TYPE.Widget,
+                            props = {
+                                relativeSize = v2(0.18, 1),
+                            },
+                            content = ui.content {
+                                {
+                                    name = 's3ui_tooltip_icon',
+                                    type = ui.TYPE.Image,
+                                    props = {
+                                        size = metrics.tooltipHeaderIconSize,
+                                        anchor = v2(0.5, 0.5),
+                                        relativePosition = v2(0.5, 0.5),
+                                    },
+                                },
+                            },
+                        },
+                        tooltipText('s3ui_tooltip_name', EMPTY_FIELD, {
+                            relativeSize = v2(0.82, 1),
+                            textSize = metrics.tooltipHeaderTextSize,
+                            textAlignH = ui.ALIGNMENT.Start,
+                            textAlignV = ui.ALIGNMENT.Center,
+                            multiline = true,
+                            wordWrap = true,
+                            autoSize = false,
+                        }, I.MWUI.templates.textHeader),
+                    },
+                },
+                {
+                    name = 's3ui_tooltip_fields',
+                    type = ui.TYPE.Flex,
+                    props = {
+                        horizontal = false,
+                        relativeSize = v2(1, TOOLTIP_FIELD_ROW_COUNT * metrics.tooltipFieldRowHeight / defaultHeight),
+                        autoSize = false,
+                    },
+                    content = ui.content {
+                        tooltipField('s3ui_tooltip_type', TOOLTIP_ICONS.typeGeneric),
+                        tooltipField('s3ui_tooltip_value', TOOLTIP_ICONS.value),
+                        tooltipField('s3ui_tooltip_weight', TOOLTIP_ICONS.weight),
+                        tooltipField('s3ui_tooltip_gold_per_weight', TOOLTIP_ICONS.goldPerWeight),
+                        tooltipField('s3ui_tooltip_condition', TOOLTIP_ICONS.condition),
+                        tooltipField('s3ui_tooltip_reach', TOOLTIP_ICONS.reach),
+                        tooltipField('s3ui_tooltip_speed', TOOLTIP_ICONS.speed),
+                        tooltipField('s3ui_tooltip_chop_damage', TOOLTIP_ICONS.damage),
+                        tooltipField('s3ui_tooltip_slash_damage', TOOLTIP_ICONS.damage),
+                        tooltipField('s3ui_tooltip_thrust_damage', TOOLTIP_ICONS.damage),
+                        tooltipField('s3ui_tooltip_effectiveness', TOOLTIP_ICONS.damageSpeed),
+                    },
+                },
+            },
+        },
+    }
+    addOrnateFrame(content, 's3ui_tooltip', FRAME_SIZE_MEDIUM, 0.95)
+
     return {
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.bordersThick,
         layer = TOOLTIP_LAYER,
         props = {
             position = tooltipPosition(),
             relativeSize = tooltipRelativeSize(TOOLTIP_FIELD_ROW_COUNT, nil, metrics),
             visible = false,
         },
-        content = ui.content {
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = WHITE_TEXTURE,
-                    color = BACKGROUND_COLOR,
-                    alpha = backgroundAlpha(),
-                    relativeSize = v2(1, 1),
-                },
-            },
-            {
-                name = 's3ui_tooltip_body',
-                type = ui.TYPE.Flex,
-                props = {
-                    horizontal = false,
-                    relativeSize = v2(1, 1),
-                    autoSize = false,
-                },
-                content = ui.content {
-                    {
-                        name = 's3ui_tooltip_header',
-                        type = ui.TYPE.Flex,
-                        props = {
-                            horizontal = true,
-                            relativeSize = v2(1, metrics.tooltipHeaderHeight / defaultHeight),
-                            autoSize = false,
-                        },
-                        content = ui.content {
-                            {
-                                name = 's3ui_tooltip_icon_box',
-                                type = ui.TYPE.Widget,
-                                props = {
-                                    relativeSize = v2(0.18, 1),
-                                },
-                                content = ui.content {
-                                    {
-                                        name = 's3ui_tooltip_icon',
-                                        type = ui.TYPE.Image,
-                                        props = {
-                                            size = metrics.tooltipHeaderIconSize,
-                                            anchor = v2(0.5, 0.5),
-                                            relativePosition = v2(0.5, 0.5),
-                                        },
-                                    },
-                                },
-                            },
-                            tooltipText('s3ui_tooltip_name', EMPTY_FIELD, {
-                                relativeSize = v2(0.82, 1),
-                                textSize = metrics.tooltipHeaderTextSize,
-                                textAlignH = ui.ALIGNMENT.Start,
-                                textAlignV = ui.ALIGNMENT.Center,
-                                multiline = true,
-                                wordWrap = true,
-                                autoSize = false,
-                            }, I.MWUI.templates.textHeader),
-                        },
-                    },
-                    {
-                        name = 's3ui_tooltip_fields',
-                        type = ui.TYPE.Flex,
-                        props = {
-                            horizontal = false,
-                            relativeSize = v2(1, TOOLTIP_FIELD_ROW_COUNT * metrics.tooltipFieldRowHeight / defaultHeight),
-                            autoSize = false,
-                        },
-                        content = ui.content {
-                            tooltipField('s3ui_tooltip_type', TOOLTIP_ICONS.typeGeneric),
-                            tooltipField('s3ui_tooltip_value', TOOLTIP_ICONS.value),
-                            tooltipField('s3ui_tooltip_weight', TOOLTIP_ICONS.weight),
-                            tooltipField('s3ui_tooltip_gold_per_weight', TOOLTIP_ICONS.goldPerWeight),
-                            tooltipField('s3ui_tooltip_condition', TOOLTIP_ICONS.condition),
-                            tooltipField('s3ui_tooltip_reach', TOOLTIP_ICONS.reach),
-                            tooltipField('s3ui_tooltip_speed', TOOLTIP_ICONS.speed),
-                            tooltipField('s3ui_tooltip_chop_damage', TOOLTIP_ICONS.damage),
-                            tooltipField('s3ui_tooltip_slash_damage', TOOLTIP_ICONS.damage),
-                            tooltipField('s3ui_tooltip_thrust_damage', TOOLTIP_ICONS.damage),
-                            tooltipField('s3ui_tooltip_effectiveness', TOOLTIP_ICONS.damageSpeed),
-                        },
-                    },
-                },
-            },
-        },
+        content = content,
     }
 end
 
@@ -741,96 +903,101 @@ end
 
 local function makeCompactDetailBar()
     local metrics = layoutMetrics()
-    return {
-        name = 's3ui_compact_detail_bar',
-        type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
-        props = {
-            relativeSize = metrics.compactDetailRelativeSize,
-        },
-        content = ui.content {
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = WHITE_TEXTURE,
-                    color = BACKGROUND_COLOR,
-                    alpha = backgroundAlpha(),
-                    relativeSize = v2(1, 1),
-                },
+    local inset = frameInset(FRAME_SIZE_MEDIUM)
+    local content = ui.content {
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = WHITE_TEXTURE,
+                color = BACKGROUND_COLOR,
+                alpha = backgroundAlpha(),
+                relativeSize = v2(1, 1),
             },
-            {
-                name = 's3ui_compact_detail_content',
-                type = ui.TYPE.Flex,
-                props = {
-                    horizontal = true,
-                    relativeSize = v2(1, 1),
-                    visible = false,
-                    autoSize = false,
-                },
-                content = ui.content {
-                    {
-                        name = 's3ui_compact_detail_header',
-                        type = ui.TYPE.Flex,
-                        props = {
-                            horizontal = true,
-                            relativeSize = metrics.compactDetailHeaderRelativeSize,
-                            autoSize = false,
-                        },
-                        content = ui.content {
-                            {
-                                name = 's3ui_compact_detail_icon_box',
-                                type = ui.TYPE.Widget,
-                                props = {
-                                    relativeSize = v2(0.36, 1),
-                                },
-                                content = ui.content {
-                                    {
-                                        name = 's3ui_compact_detail_icon',
-                                        type = ui.TYPE.Image,
-                                        props = {
-                                            resource = WHITE_TEXTURE,
-                                            anchor = v2(0.5, 0.5),
-                                            relativePosition = v2(0.5, 0.5),
-                                            size = metrics.compactDetailIconSize,
-                                        },
+        },
+        {
+            name = 's3ui_compact_detail_content',
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = true,
+                position = v2(inset, inset),
+                size = v2(-inset * 2, -inset * 2),
+                relativeSize = v2(1, 1),
+                visible = false,
+                autoSize = false,
+            },
+            content = ui.content {
+                {
+                    name = 's3ui_compact_detail_header',
+                    type = ui.TYPE.Flex,
+                    props = {
+                        horizontal = true,
+                        relativeSize = metrics.compactDetailHeaderRelativeSize,
+                        autoSize = false,
+                    },
+                    content = ui.content {
+                        {
+                            name = 's3ui_compact_detail_icon_box',
+                            type = ui.TYPE.Widget,
+                            props = {
+                                relativeSize = v2(0.36, 1),
+                            },
+                            content = ui.content {
+                                {
+                                    name = 's3ui_compact_detail_icon',
+                                    type = ui.TYPE.Image,
+                                    props = {
+                                        resource = WHITE_TEXTURE,
+                                        anchor = v2(0.5, 0.5),
+                                        relativePosition = v2(0.5, 0.5),
+                                        size = metrics.compactDetailIconSize,
                                     },
                                 },
                             },
-                            {
-                                name = 's3ui_compact_detail_title_box',
-                                type = ui.TYPE.Flex,
-                                props = {
-                                    horizontal = false,
-                                    relativeSize = v2(0.64, 1),
+                        },
+                        {
+                            name = 's3ui_compact_detail_title_box',
+                            type = ui.TYPE.Flex,
+                            props = {
+                                horizontal = false,
+                                relativeSize = v2(0.64, 1),
+                                autoSize = false,
+                            },
+                            content = ui.content {
+                                tooltipText('s3ui_compact_detail_name', '', {
+                                    relativeSize = v2(1, 1),
+                                    textSize = metrics.compactDetailHeaderTextSize,
+                                    textAlignH = ui.ALIGNMENT.Start,
+                                    textAlignV = ui.ALIGNMENT.Center,
+                                    multiline = true,
+                                    wordWrap = true,
                                     autoSize = false,
-                                },
-                                content = ui.content {
-                                    tooltipText('s3ui_compact_detail_name', '', {
-                                        relativeSize = v2(1, 1),
-                                        textSize = metrics.compactDetailHeaderTextSize,
-                                        textAlignH = ui.ALIGNMENT.Start,
-                                        textAlignV = ui.ALIGNMENT.Center,
-                                        multiline = true,
-                                        wordWrap = true,
-                                        autoSize = false,
-                                    }, I.MWUI.templates.textHeader),
-                                },
+                                }, I.MWUI.templates.textHeader),
                             },
                         },
                     },
-                    {
-                        name = 's3ui_compact_detail_fields',
-                        type = ui.TYPE.Flex,
-                        props = {
-                            horizontal = false,
-                            relativeSize = metrics.compactDetailFieldsRelativeSize,
-                            autoSize = false,
-                        },
-                        content = makeCompactDetailFields(),
+                },
+                {
+                    name = 's3ui_compact_detail_fields',
+                    type = ui.TYPE.Flex,
+                    props = {
+                        horizontal = false,
+                        relativeSize = metrics.compactDetailFieldsRelativeSize,
+                        autoSize = false,
                     },
+                    content = makeCompactDetailFields(),
                 },
             },
         },
+    }
+    addOrnateFrame(content, 's3ui_compact_detail', FRAME_SIZE_MEDIUM, 0.95)
+
+    return {
+        name = 's3ui_compact_detail_bar',
+        type = ui.TYPE.Widget,
+        props = {
+            relativeSize = metrics.compactDetailRelativeSize,
+        },
+        content = content,
     }
 end
 
@@ -1127,11 +1294,25 @@ end
 local function makeMainMenuButton(button)
     local active = button.key == ACTIVE_MAIN_MENU_KEY
     local buttonCount = #MAIN_MENU_BUTTONS
+    local content = ui.content {
+        controlBackground(active),
+        {
+            name = 's3ui_main_menu_' .. button.key .. '_icon',
+            type = ui.TYPE.Image,
+            props = {
+                resource = button.icon,
+                anchor = v2(0.5, 0.5),
+                relativePosition = v2(0.5, 0.5),
+                size = menuButtonIconSize(buttonCount),
+                alpha = active and 1 or 0.72,
+            },
+        },
+    }
+    addOrnateFrame(content, 's3ui_main_menu_' .. button.key, FRAME_SIZE_SMALL, active and 0.95 or 0.62, 2)
 
     return {
         name = 's3ui_main_menu_' .. button.key,
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
         props = {
             relativeSize = v2(1, 1 / buttonCount),
         },
@@ -1143,20 +1324,7 @@ local function makeMainMenuButton(button)
                 hideTooltip()
             end),
         },
-        content = ui.content {
-            controlBackground(active),
-            {
-                name = 's3ui_main_menu_' .. button.key .. '_icon',
-                type = ui.TYPE.Image,
-                props = {
-                    resource = button.icon,
-                    anchor = v2(0.5, 0.5),
-                    relativePosition = v2(0.5, 0.5),
-                    size = menuButtonIconSize(buttonCount),
-                    alpha = active and 1 or 0.72,
-                },
-            },
-        },
+        content = content,
     }
 end
 
@@ -1275,11 +1443,11 @@ local function makeCategoryHeaderSlot(entry, index)
         textAlignV = ui.ALIGNMENT.Center,
         autoSize = false,
     }))
+    addOrnateFrame(content, 'slot_' .. tostring(index) .. '_category', FRAME_SIZE_SMALL, collapsed and 0.54 or 0.78, 2)
 
     return {
         name = 'slot_' .. tostring(index),
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
         props = {
             relativeSize = v2(1 / layoutMetrics().gridColumns, 1),
         },
@@ -1377,11 +1545,11 @@ local function makeSlot(entry, index)
             props = { relativeSize = v2(1, 1) },
         }
     end
+    addOrnateFrame(content, 'slot_' .. tostring(index), FRAME_SIZE_SMALL, data and 0.58 or 0.32, 1)
 
     return {
         name = 'slot_' .. tostring(index),
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
         props = {
             relativeSize = v2(1 / layoutMetrics().gridColumns, 1),
         },
@@ -1494,11 +1662,11 @@ local function makeListCategoryRow(entry, index)
             },
         }
     end
+    addOrnateFrame(content, 'list_' .. tostring(index) .. '_category', FRAME_SIZE_SMALL, collapsed and 0.5 or 0.72, 2)
 
     return {
         name = 'list_' .. tostring(index),
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
         props = {
             relativeSize = v2(1, 1 / layoutMetrics().listRows),
         },
@@ -1598,11 +1766,11 @@ local function makeListItemRow(entry, index)
             autoSize = false,
         }))
     end
+    addOrnateFrame(content, 'list_' .. tostring(index), FRAME_SIZE_SMALL, data and 0.5 or 0.3, 2)
 
     return {
         name = 'list_' .. tostring(index),
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.borders,
         props = {
             relativeSize = v2(1, 1 / layoutMetrics().listRows),
         },
@@ -1677,37 +1845,41 @@ local function makeInventoryLayout(items)
         bodyLayouts[#bodyLayouts + 1] = makeCompactDetailBar()
     end
     local bodyContent = ui.content(bodyLayouts)
+    local inset = frameInset(FRAME_SIZE_PANEL)
+    local content = ui.content {
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = WHITE_TEXTURE,
+                color = BACKGROUND_COLOR,
+                alpha = backgroundAlpha(),
+                relativeSize = v2(1, 1),
+            },
+        },
+        {
+            name = 's3ui_body',
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = false,
+                position = v2(inset, inset),
+                size = v2(-inset * 2, -inset * 2),
+                relativeSize = v2(1, 1),
+                autoSize = false,
+            },
+            content = bodyContent,
+        },
+    }
+    addOrnateFrame(content, 's3ui_inventory', FRAME_SIZE_PANEL, 1)
 
     return {
         type = ui.TYPE.Widget,
-        template = I.MWUI.templates.bordersThick,
         layer = ROOT_LAYER,
         props = {
             anchor = metrics.windowAnchor,
             relativePosition = metrics.windowRelativePosition,
             size = metrics.windowSize,
         },
-        content = ui.content {
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = WHITE_TEXTURE,
-                    color = BACKGROUND_COLOR,
-                    alpha = backgroundAlpha(),
-                    relativeSize = v2(1, 1),
-                },
-            },
-            {
-                name = 's3ui_body',
-                type = ui.TYPE.Flex,
-                props = {
-                    horizontal = false,
-                    relativeSize = v2(1, 1),
-                    autoSize = false,
-                },
-                content = bodyContent,
-            },
-        },
+        content = content,
     }
 end
 
