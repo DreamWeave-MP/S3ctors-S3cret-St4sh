@@ -21,6 +21,9 @@ local WINDOW_POSITION = v2(24, 80)
 local WINDOW_SIZE = v2(500, 520)
 local GRID_COLUMNS = 6
 local GRID_ROWS = 5
+local WHITE_TEXTURE = ui.texture { path = 'white' }
+local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
+local BACKGROUND_ALPHA = ui._getMenuTransparency()
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
 local TITLE_RELATIVE_SIZE = v2(1, 0.06)
@@ -201,6 +204,15 @@ local function makeInventoryLayout(items)
             size = WINDOW_SIZE,
         },
         content = ui.content {
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = WHITE_TEXTURE,
+                    color = BACKGROUND_COLOR,
+                    alpha = BACKGROUND_ALPHA,
+                    relativeSize = v2(1, 1),
+                },
+            },
             {
                 name = 's3ui_body',
                 type = ui.TYPE.Flex,
