@@ -19,8 +19,8 @@ local CAMERA_CONTROL_TAG = 's3ui_inventory'
 
 local WINDOW_POSITION = v2(24, 80)
 local WINDOW_SIZE = v2(640, 600)
-local GRID_COLUMNS = 6
-local GRID_ROWS = 5
+local GRID_COLUMNS = 7
+local GRID_ROWS = 6
 local LIST_ROWS = 10
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
