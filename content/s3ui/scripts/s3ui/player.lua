@@ -59,7 +59,6 @@ local COMPACT_DETAIL_FIELD_SLOT_COUNT = COMPACT_DETAIL_FIELD_COLUMNS * COMPACT_D
 local ACTIVE_MAIN_MENU_KEY = 'inventory'
 local FRAME_SIZE_PANEL = 34
 local FRAME_SIZE_MEDIUM = 22
-local FRAME_SIZE_SMALL = 12
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_HEIGHT = 0.72
 local LIST_FIELD_RIGHT_EDGE = {
@@ -99,6 +98,7 @@ local SORT_DIRECTION_ICONS = {
 }
 
 local ORNATE_FRAME_TEXTURES = {
+    -- Clean center strips; the ornate accents live in the corner atlas.
     edgeH = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_h.dds' },
     edgeV = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_v.dds' },
     topLeft = ui.texture {
@@ -284,26 +284,16 @@ local function frameInset(frameSize)
     return frameThickness(frameSize) + 2
 end
 
-local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
+local function addOrnateFrame(content, prefix, frameSize, alpha)
     local thickness = frameThickness(frameSize)
     local cornerSize = v2(frameSize, frameSize)
     alpha = alpha or 1
 
-    local function addFramePart(layout)
-        if insertIndex then
-            content:insert(insertIndex, layout)
-            insertIndex = insertIndex + 1
-        else
-            content:add(layout)
-        end
-    end
-
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_top',
         type = ui.TYPE.Image,
         props = {
             resource = ORNATE_FRAME_TEXTURES.edgeH,
-            tileH = true,
             anchor = v2(0, 0),
             relativePosition = v2(0, 0),
             position = v2(frameSize, 0),
@@ -312,12 +302,11 @@ local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
             alpha = alpha,
         },
     }
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_bottom',
         type = ui.TYPE.Image,
         props = {
             resource = ORNATE_FRAME_TEXTURES.edgeH,
-            tileH = true,
             anchor = v2(0, 1),
             relativePosition = v2(0, 1),
             position = v2(frameSize, -thickness),
@@ -326,12 +315,11 @@ local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
             alpha = alpha,
         },
     }
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_left',
         type = ui.TYPE.Image,
         props = {
             resource = ORNATE_FRAME_TEXTURES.edgeV,
-            tileV = true,
             anchor = v2(0, 0),
             relativePosition = v2(0, 0),
             position = v2(0, frameSize),
@@ -340,12 +328,11 @@ local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
             alpha = alpha,
         },
     }
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_right',
         type = ui.TYPE.Image,
         props = {
             resource = ORNATE_FRAME_TEXTURES.edgeV,
-            tileV = true,
             anchor = v2(1, 0),
             relativePosition = v2(1, 0),
             position = v2(-thickness, frameSize),
@@ -354,7 +341,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
             alpha = alpha,
         },
     }
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_top_left',
         type = ui.TYPE.Image,
         props = {
@@ -365,7 +352,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
             alpha = alpha,
         },
     }
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_top_right',
         type = ui.TYPE.Image,
         props = {
@@ -377,7 +364,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
             alpha = alpha,
         },
     }
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_bottom_left',
         type = ui.TYPE.Image,
         props = {
@@ -389,7 +376,7 @@ local function addOrnateFrame(content, prefix, frameSize, alpha, insertIndex)
             alpha = alpha,
         },
     }
-    addFramePart {
+    content:add {
         name = prefix .. '_frame_bottom_right',
         type = ui.TYPE.Image,
         props = {
@@ -1308,8 +1295,6 @@ local function makeMainMenuButton(button)
             },
         },
     }
-    addOrnateFrame(content, 's3ui_main_menu_' .. button.key, FRAME_SIZE_SMALL, active and 0.95 or 0.62, 2)
-
     return {
         name = 's3ui_main_menu_' .. button.key,
         type = ui.TYPE.Widget,
@@ -1443,8 +1428,6 @@ local function makeCategoryHeaderSlot(entry, index)
         textAlignV = ui.ALIGNMENT.Center,
         autoSize = false,
     }))
-    addOrnateFrame(content, 'slot_' .. tostring(index) .. '_category', FRAME_SIZE_SMALL, collapsed and 0.54 or 0.78, 2)
-
     return {
         name = 'slot_' .. tostring(index),
         type = ui.TYPE.Widget,
@@ -1545,8 +1528,6 @@ local function makeSlot(entry, index)
             props = { relativeSize = v2(1, 1) },
         }
     end
-    addOrnateFrame(content, 'slot_' .. tostring(index), FRAME_SIZE_SMALL, data and 0.58 or 0.32, 1)
-
     return {
         name = 'slot_' .. tostring(index),
         type = ui.TYPE.Widget,
@@ -1662,8 +1643,6 @@ local function makeListCategoryRow(entry, index)
             },
         }
     end
-    addOrnateFrame(content, 'list_' .. tostring(index) .. '_category', FRAME_SIZE_SMALL, collapsed and 0.5 or 0.72, 2)
-
     return {
         name = 'list_' .. tostring(index),
         type = ui.TYPE.Widget,
@@ -1766,8 +1745,6 @@ local function makeListItemRow(entry, index)
             autoSize = false,
         }))
     end
-    addOrnateFrame(content, 'list_' .. tostring(index), FRAME_SIZE_SMALL, data and 0.5 or 0.3, 2)
-
     return {
         name = 'list_' .. tostring(index),
         type = ui.TYPE.Widget,
