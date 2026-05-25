@@ -1316,7 +1316,7 @@ local function makeGrid(items, firstIndex)
     local index = firstIndex or 1
     local slotIndex = 1
 
-    for _ = 1, GRID_ROWS do
+    for rowIndex = 1, GRID_ROWS do
         local row = ui.content {}
         for _ = 1, GRID_COLUMNS do
             row:add(makeSlot(items[index], slotIndex))
@@ -1330,6 +1330,7 @@ local function makeGrid(items, firstIndex)
                 relativeSize = v2(1, 1 / GRID_ROWS),
                 autoSize = false,
             },
+            external = rowIndex == GRID_ROWS and { grow = 1 } or nil,
             content = row,
         }
     end
