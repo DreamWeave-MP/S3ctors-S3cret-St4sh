@@ -17,8 +17,12 @@ local MODE = I.UI.MODE.Interface
 local ROOT_LAYER = 'Windows'
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
 
-local WINDOW_POSITION = v2(24, 80)
-local WINDOW_SIZE = v2(640, 600)
+local WINDOW_WIDTH_FRACTION = 0.42
+local WINDOW_HEIGHT_FRACTION = 0.62
+local WINDOW_MIN_SIZE = v2(520, 420)
+local WINDOW_MAX_SIZE = v2(760, 720)
+local WINDOW_MARGIN_FRACTION = 0.03
+local WINDOW_TOP_FRACTION = 0.075
 local GRID_COLUMNS = 7
 local GRID_ROWS = 6
 local LIST_ROWS = 10
@@ -122,6 +126,7 @@ local rebuildEventQueued = false
 local rebuildInventoryRoot = nil
 local scrollOffset = 0
 local lastEntryCount = 0
+local activeLayoutMetrics = nil
 
 local CATEGORY_ORDER = {
     { key = 'all', label = 'All' },
@@ -451,6 +456,40 @@ local function backgroundAlpha()
     return ui._getMenuTransparency()
 end
 
+local function clamp(value, minValue, maxValue)
+    if maxValue < minValue then minValue = maxValue end
+    if value < minValue then return minValue end
+    if value > maxValue then return maxValue end
+    return value
+end
+
+local function computeLayoutMetrics()
+    local screen = ui.screenSize()
+    local shortSide = math.min(screen.x, screen.y)
+    local margin = clamp(shortSide * WINDOW_MARGIN_FRACTION, 12, 48)
+    local maxWidth = math.min(WINDOW_MAX_SIZE.x, screen.x - margin * 2)
+    local maxHeight = math.min(WINDOW_MAX_SIZE.y, screen.y - margin * 2)
+    local windowSize = v2(
+        math.floor(clamp(screen.x * WINDOW_WIDTH_FRACTION, WINDOW_MIN_SIZE.x, maxWidth)),
+        math.floor(clamp(screen.y * WINDOW_HEIGHT_FRACTION, WINDOW_MIN_SIZE.y, maxHeight))
+    )
+    local position = v2(
+        math.floor(margin),
+        math.floor(clamp(screen.y * WINDOW_TOP_FRACTION, margin, screen.y - windowSize.y - margin))
+    )
+
+    return {
+        screen = screen,
+        margin = margin,
+        windowPosition = position,
+        windowSize = windowSize,
+    }
+end
+
+local function layoutMetrics()
+    return activeLayoutMetrics or computeLayoutMetrics()
+end
+
 local function ensureTooltipLayer()
     if ui.layers.indexOf(TOOLTIP_LAYER) == nil then
         ui.layers.insertAfter(ROOT_LAYER, TOOLTIP_LAYER, { interactive = false })
@@ -469,9 +508,10 @@ end
 
 local function tooltipPosition(relativeSize)
     local screen = ui.screenSize()
+    local metrics = layoutMetrics()
     relativeSize = relativeSize or tooltipRelativeSize(TOOLTIP_FIELD_ROW_COUNT, screen)
     local size = v2(screen.x * relativeSize.x, screen.y * relativeSize.y)
-    local preferred = v2(WINDOW_POSITION.x + WINDOW_SIZE.x, WINDOW_POSITION.y)
+    local preferred = v2(metrics.windowPosition.x + metrics.windowSize.x, metrics.windowPosition.y)
     if preferred.x + size.x > screen.x - TOOLTIP_MIN_MARGIN.x then preferred.x = screen.x - size.x - TOOLTIP_MIN_MARGIN.x end
     if preferred.y + size.y > screen.y - TOOLTIP_MIN_MARGIN.y then preferred.y = screen.y - size.y - TOOLTIP_MIN_MARGIN.y end
     if preferred.x < TOOLTIP_MIN_MARGIN.x then preferred.x = TOOLTIP_MIN_MARGIN.x end
@@ -1553,6 +1593,8 @@ local function makeList(items, firstIndex)
 end
 
 local function makeInventoryLayout(items)
+    activeLayoutMetrics = computeLayoutMetrics()
+    local metrics = activeLayoutMetrics
     local entries = buildDisplayEntries(items)
     lastEntryCount = #entries
     clampScrollOffset(#entries)
@@ -1564,8 +1606,8 @@ local function makeInventoryLayout(items)
         template = I.MWUI.templates.bordersThick,
         layer = ROOT_LAYER,
         props = {
-            position = WINDOW_POSITION,
-            size = WINDOW_SIZE,
+            position = metrics.windowPosition,
+            size = metrics.windowSize,
         },
         content = ui.content {
             {
