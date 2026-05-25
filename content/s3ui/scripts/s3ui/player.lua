@@ -68,6 +68,7 @@ local LIST_FIELD_RIGHT_EDGE = {
 local TOOLTIP_ICONS = {
     typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
     typeWeapon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_weapon.dds' },
+    typeRangedWeapon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_ranged_weapon.dds' },
     typeArmor = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_armor.dds' },
     typeBook = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_book.dds' },
     value = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/value.dds' },
@@ -95,6 +96,14 @@ local SORT_DIRECTION_ICONS = {
 
 local devReloadStorage = storage.playerSection(DEV_RELOAD_SECTION)
 devReloadStorage:setLifeTime(storage.LIFE_TIME.GameSession)
+
+local RANGED_WEAPON_TYPES = {
+    [types.Weapon.TYPE.Arrow] = true,
+    [types.Weapon.TYPE.Bolt] = true,
+    [types.Weapon.TYPE.MarksmanBow] = true,
+    [types.Weapon.TYPE.MarksmanCrossbow] = true,
+    [types.Weapon.TYPE.MarksmanThrown] = true,
+}
 
 local TOOLTIP_FIELD_NAMES = {
     's3ui_tooltip_type',
@@ -200,7 +209,11 @@ end
 
 local function typeIcon(data)
     local itemType = data and data.item and data.item.type
-    if itemType == types.Weapon then return TOOLTIP_ICONS.typeWeapon end
+    if itemType == types.Weapon then
+        local weaponType = data and data.record and data.record.type
+        if RANGED_WEAPON_TYPES[weaponType] then return TOOLTIP_ICONS.typeRangedWeapon end
+        return TOOLTIP_ICONS.typeWeapon
+    end
     if itemType == types.Armor or itemType == types.Clothing then return TOOLTIP_ICONS.typeArmor end
     if itemType == types.Book then return TOOLTIP_ICONS.typeBook end
     return TOOLTIP_ICONS.typeGeneric
