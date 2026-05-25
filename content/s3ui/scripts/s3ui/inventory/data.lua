@@ -87,6 +87,12 @@ local APPARATUS_TYPE_NAMES = {
     [types.Apparatus.TYPE.Retort] = 'Retort',
 }
 
+local WEAPON_DAMAGE_ATTACKS = {
+    { key = 'chopDamage', label = 'Chop', compactLabel = 'C', minField = 'chopMinDamage', maxField = 'chopMaxDamage' },
+    { key = 'slashDamage', label = 'Slash', compactLabel = 'S', minField = 'slashMinDamage', maxField = 'slashMaxDamage' },
+    { key = 'thrustDamage', label = 'Thrust', compactLabel = 'T', minField = 'thrustMinDamage', maxField = 'thrustMaxDamage' },
+}
+
 local function safeRecord(item)
     if not item or not item.type or not item.recordId then return nil end
     local records = item.type.records
@@ -253,6 +259,24 @@ local function bestWeaponDamage(record)
     return formatDamage(bestMin, bestMax)
 end
 
+local function weaponDamageFields(record)
+    local result = {}
+    if not record then return result end
+
+    for _, attack in ipairs(WEAPON_DAMAGE_ATTACKS) do
+        local damage = formatDamage(record[attack.minField], record[attack.maxField])
+        if damage ~= EMPTY_FIELD then
+            result[#result + 1] = {
+                key = attack.key,
+                text = attack.label .. ' ' .. damage,
+                compactText = attack.compactLabel .. ' ' .. damage,
+            }
+        end
+    end
+
+    return result
+end
+
 local function subtypeName(recordType, record)
     if not record then return EMPTY_FIELD end
     if recordType == types.Armor then return ARMOR_TYPE_NAMES[record.type] or EMPTY_FIELD end
@@ -287,6 +311,7 @@ return {
     formatNumber = formatNumber,
     formatCondition = formatCondition,
     bestWeaponDamage = bestWeaponDamage,
+    weaponDamageFields = weaponDamageFields,
     typeText = typeText,
     goldPerWeight = goldPerWeight,
 }
