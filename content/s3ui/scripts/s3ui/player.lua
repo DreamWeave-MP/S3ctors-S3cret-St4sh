@@ -34,11 +34,14 @@ local LIST_STATE_BADGE_SIZE = v2(0.04, 0.24)
 local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
 local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
-local TOOLBAR_RELATIVE_SIZE = v2(1, 0.12)
-local MAIN_RELATIVE_SIZE = v2(1, 0)
+local MAIN_RELATIVE_SIZE = v2(1, 1)
 local CATEGORY_RAIL_SIZE = v2(86, 0)
 local CONTROL_BUTTON_SIZE = v2(48, 0)
-local VIEW_BUTTON_SIZE = v2(44, 0)
+local VIEW_BUTTON_SIZE = v2(44, 48)
+local TOP_CONTROL_MARGIN = 10
+local VIEW_BUTTON_POSITION = v2(TOP_CONTROL_MARGIN, TOP_CONTROL_MARGIN)
+local SORT_CONTROLS_SIZE = v2(CONTROL_BUTTON_SIZE.x * 4, 48)
+local SORT_CONTROLS_POSITION = v2(WINDOW_SIZE.x - SORT_CONTROLS_SIZE.x - TOP_CONTROL_MARGIN, TOP_CONTROL_MARGIN)
 local VIEW_TOGGLE_ICON_SIZE = v2(0.74, 0.74)
 local SORT_ICON_RELATIVE_SIZE = v2(0.68, 0.68)
 local SORT_DIRECTION_RELATIVE_SIZE = v2(0.34, 0.34)
@@ -1035,7 +1038,7 @@ local function makeViewGlyph()
     return glyph
 end
 
-local function makeViewToggleButton()
+local function makeViewToggleButton(position)
     local generation = uiGeneration
     return {
         name = 's3ui_view_toggle',
@@ -1043,6 +1046,7 @@ local function makeViewToggleButton()
         template = I.MWUI.templates.borders,
         props = {
             size = VIEW_BUTTON_SIZE,
+            position = position,
         },
         external = { stretch = 1 },
         events = {
@@ -1114,16 +1118,15 @@ end
 
 local function makeToolbar()
     return {
-        name = 's3ui_toolbar',
+        name = 's3ui_sort_controls',
         type = ui.TYPE.Flex,
         props = {
             horizontal = true,
-            relativeSize = TOOLBAR_RELATIVE_SIZE,
+            position = SORT_CONTROLS_POSITION,
+            size = SORT_CONTROLS_SIZE,
             autoSize = false,
         },
         content = ui.content {
-            makeViewToggleButton(),
-            { external = { grow = 1 } },
             makeSortButton('value', 'Gold'),
             makeSortButton('weight', 'Weight'),
             makeSortButton('effectiveness', 'Effectiveness'),
@@ -1581,14 +1584,12 @@ local function makeInventoryLayout(items)
             },
             {
                 name = 's3ui_body',
-                type = ui.TYPE.Flex,
+                type = ui.TYPE.Widget,
                 props = {
-                    horizontal = false,
                     relativeSize = v2(1, 1),
                     autoSize = false,
                 },
                 content = ui.content {
-                    makeToolbar(),
                     {
                         name = 's3ui_main',
                         type = ui.TYPE.Flex,
@@ -1605,6 +1606,8 @@ local function makeInventoryLayout(items)
                     },
                 },
             },
+            makeToolbar(),
+            makeViewToggleButton(VIEW_BUTTON_POSITION),
         },
     }
 end
