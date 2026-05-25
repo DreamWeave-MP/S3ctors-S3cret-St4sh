@@ -178,10 +178,6 @@ local ITEM_STATE_ICONS = {
 
 local MAIN_MENU_BUTTONS = {
     {
-        key = 'character',
-        icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/character.dds' },
-    },
-    {
         key = 'inventory',
         icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/inventory.dds' },
     },
@@ -192,6 +188,10 @@ local MAIN_MENU_BUTTONS = {
     {
         key = 'journal',
         icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/journal.dds' },
+    },
+    {
+        key = 'character',
+        icon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/character.dds' },
     },
 }
 
