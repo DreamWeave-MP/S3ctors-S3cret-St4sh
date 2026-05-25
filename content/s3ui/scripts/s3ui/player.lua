@@ -38,7 +38,7 @@ local CATEGORY_HEADER_COLOR = util.color.rgb(0.18, 0.36, 0.68)
 local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
 local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
 local TOOLTIP_LAYER = 'S3UI_Tooltip'
-local TOOLTIP_SIZE = v2(360, 330)
+local TOOLTIP_SIZE = v2(420, 330)
 local TOOLTIP_MOUSE_OFFSET = v2(24, 24)
 local TOOLTIP_HEADER_SIZE = v2(1, 0.22)
 local TOOLTIP_FIELDS_SIZE = v2(1, 0.74)
@@ -292,7 +292,7 @@ local function typeText(data)
     local recordType = TYPE_NAMES[data.item and data.item.type] or 'Item'
     local subtype = subtypeName(data.item and data.item.type, data.record)
     if subtype == EMPTY_FIELD then return recordType end
-    return recordType .. '\n' .. subtype
+    return recordType .. ': ' .. subtype
 end
 
 local function goldPerWeight(record)
@@ -405,7 +405,6 @@ local function tooltipField(name, label)
     return {
         name = name .. '_row',
         type = ui.TYPE.Flex,
-        template = I.MWUI.templates.borders,
         props = {
             horizontal = true,
             autoSize = false,
@@ -413,14 +412,14 @@ local function tooltipField(name, label)
         },
         content = ui.content {
             tooltipText(name .. '_label', label, {
-                relativeSize = v2(0.42, 1),
+                relativeSize = v2(0.28, 1),
                 textSize = TOOLTIP_FIELD_TEXT_SIZE,
                 textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
                 autoSize = false,
             }),
             tooltipText(name .. '_value', EMPTY_FIELD, {
-                relativeSize = v2(0.58, 1),
+                relativeSize = v2(0.72, 1),
                 textSize = TOOLTIP_VALUE_TEXT_SIZE,
                 textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
