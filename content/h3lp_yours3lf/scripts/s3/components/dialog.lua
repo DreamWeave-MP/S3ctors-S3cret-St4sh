@@ -23,7 +23,13 @@ local function dialog(opts)
     end
     content[#content + 1] = {
         template = I.MWUI.templates.padding,
-        content = ui.content(body),
+        content = ui.content({
+            {
+                type = ui.TYPE.Flex,
+                props = { horizontal = false },
+                content = ui.content(body),
+            },
+        }),
     }
     local props = {}
     for key, value in pairs(opts.props or {}) do
@@ -37,14 +43,20 @@ local function dialog(opts)
         end
     end
     return {
-        type = ui.TYPE.Window,
+        type = ui.TYPE.Widget,
         name = opts.name,
         props = props,
         external = external,
         events = opts.events,
         userData = opts.userData,
         template = opts.template,
-        content = ui.content(content),
+        content = ui.content({
+            {
+                type = ui.TYPE.Flex,
+                props = { horizontal = false },
+                content = ui.content(content),
+            },
+        }),
     }
 end
 

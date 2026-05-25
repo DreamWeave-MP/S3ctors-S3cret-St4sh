@@ -8,7 +8,6 @@ local box = require 'scripts.s3.components.box'
 local bookFrame = require 'scripts.s3.components.bookFrame'
 local button = require 'scripts.s3.components.button'
 local column = require 'scripts.s3.components.column'
-local container = require 'scripts.s3.components.container'
 local dialog = require 'scripts.s3.components.dialog'
 local grid = require 'scripts.s3.components.grid'
 local iconButton = require 'scripts.s3.components.iconButton'
@@ -78,7 +77,7 @@ local function section(id, title, children)
                 children = {
                     text({ name = 'ct_text_' .. id, text = title }),
                     spacer({ name = 'ct_spacer_' .. id, props = { size = v2(0, 4) } }),
-                    container({ name = 'ct_container_' .. id, children = children }),
+                    column({ name = 'ct_section_body_' .. id, children = children }),
                 },
             }),
         },
@@ -144,7 +143,7 @@ local function makeLayout(opts)
                         textInput({
                             name = 'ct_text_input',
                             text = 'edit me',
-                            props = { size = v2(180, 0) },
+                            props = { size = v2(180, 24) },
                             events = {
                                 textChanged = async:callback(function()
                                     -- Deliberately no persistence; this just verifies callback plumbing.

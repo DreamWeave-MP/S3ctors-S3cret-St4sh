@@ -23,7 +23,13 @@ local function bookFrame(opts)
     end
     content[#content + 1] = {
         template = I.MWUI.templates.padding,
-        content = ui.content(body),
+        content = ui.content({
+            {
+                type = ui.TYPE.Flex,
+                props = { horizontal = false },
+                content = ui.content(body),
+            },
+        }),
     }
     local props = {}
     for key, value in pairs(opts.props or {}) do
@@ -43,7 +49,13 @@ local function bookFrame(opts)
         external = external,
         events = opts.events,
         userData = opts.userData,
-        content = ui.content(content),
+        content = ui.content({
+            {
+                type = ui.TYPE.Flex,
+                props = { horizontal = false },
+                content = ui.content(content),
+            },
+        }),
     }
 end
 
