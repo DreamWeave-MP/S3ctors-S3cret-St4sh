@@ -22,9 +22,12 @@ local WINDOW_SIZE = v2(500, 520)
 local GRID_COLUMNS = 6
 local GRID_ROWS = 5
 local WHITE_TEXTURE = ui.texture { path = 'white' }
+local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
 local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
+local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
+local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
 local HINT_RELATIVE_SIZE = v2(1, 0.05)
 local STATUS_RELATIVE_SIZE = v2(1, 0.05)
 local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
@@ -112,6 +115,28 @@ local CATEGORY_ORDER = {
     { key = 'books', label = 'Books' },
     { key = 'tools', label = 'Tools' },
     { key = 'misc', label = 'Misc' },
+}
+
+local CATEGORY_ICON_TEXTURES = {
+    all = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(25, 29), size = v2(206, 204) },
+    weapons = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(284, 3), size = v2(224, 225) },
+    armor = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(555, 0), size = v2(169, 256) },
+    apparel = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(17, 536), size = v2(222, 226) },
+    alchemy = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(802, 25), size = v2(194, 212) },
+    books = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(4, 260), size = v2(247, 241) },
+    tools = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(1061, 529), size = v2(182, 217) },
+    misc = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(1074, 29), size = v2(153, 207) },
+}
+
+local CATEGORY_ICON_RELATIVE_SIZES = {
+    all = v2(0.62, 0.58),
+    weapons = v2(0.7, 0.6),
+    armor = v2(0.48, 0.66),
+    apparel = v2(0.58, 0.58),
+    alchemy = v2(0.6, 0.62),
+    books = v2(0.66, 0.6),
+    tools = v2(0.52, 0.62),
+    misc = v2(0.46, 0.58),
 }
 
 local CATEGORY_BY_KEY = {}
@@ -939,6 +964,58 @@ end
 local function makeCategoryHeaderSlot(entry, index)
     local collapsed = entry.collapsed
     local generation = uiGeneration
+    local icon = CATEGORY_ICON_TEXTURES[entry.categoryKey]
+    local iconSize = CATEGORY_ICON_RELATIVE_SIZES[entry.categoryKey] or v2(0.58, 0.58)
+    local content = ui.content {
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = WHITE_TEXTURE,
+                color = collapsed and CATEGORY_COLLAPSED_COLOR or CATEGORY_HEADER_COLOR,
+                alpha = 0.72,
+                relativeSize = v2(1, 1),
+            },
+        },
+    }
+
+    if icon then
+        content:add {
+            name = 'slot_' .. tostring(index) .. '_category_icon',
+            type = ui.TYPE.Image,
+            props = {
+                resource = icon,
+                anchor = v2(0.5, 0.5),
+                relativePosition = v2(0.5, 0.48),
+                relativeSize = iconSize,
+                alpha = collapsed and 0.62 or 0.95,
+            },
+        }
+    else
+        content:add(controlText('slot_' .. tostring(index) .. '_category_text', entry.label, 13))
+    end
+
+    content:add(textLine(collapsed and '+' or '-', I.MWUI.templates.textHeader, {
+        name = 'slot_' .. tostring(index) .. '_category_toggle',
+        anchor = v2(0, 0),
+        relativePosition = v2(0.08, 0.06),
+        relativeSize = CATEGORY_ICON_TOGGLE_SIZE,
+        textSize = 16,
+        textAlignH = ui.ALIGNMENT.Center,
+        textAlignV = ui.ALIGNMENT.Center,
+        autoSize = false,
+    }))
+
+    content:add(textLine(tostring(entry.count), I.MWUI.templates.textNormal, {
+        name = 'slot_' .. tostring(index) .. '_category_count',
+        anchor = v2(1, 1),
+        relativePosition = v2(0.92, 0.92),
+        relativeSize = CATEGORY_ICON_COUNT_SIZE,
+        textSize = 14,
+        textAlignH = ui.ALIGNMENT.Center,
+        textAlignV = ui.ALIGNMENT.Center,
+        autoSize = false,
+    }))
+
     return {
         name = 'slot_' .. tostring(index),
         type = ui.TYPE.Widget,
@@ -960,18 +1037,7 @@ local function makeCategoryHeaderSlot(entry, index)
                 queueInventoryRebuild(clicked.label .. (collapsedCategories[clicked.categoryKey] and ' collapsed' or ' expanded'))
             end),
         },
-        content = ui.content {
-            {
-                type = ui.TYPE.Image,
-                props = {
-                    resource = WHITE_TEXTURE,
-                    color = collapsed and CATEGORY_COLLAPSED_COLOR or CATEGORY_HEADER_COLOR,
-                    alpha = 0.72,
-                    relativeSize = v2(1, 1),
-                },
-            },
-            controlText('slot_' .. tostring(index) .. '_category_text', (collapsed and '+ ' or '- ') .. entry.label .. '\n' .. tostring(entry.count), 13),
-        },
+        content = content,
     }
 end
 
