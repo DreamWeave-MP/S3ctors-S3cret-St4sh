@@ -25,11 +25,18 @@ local WHITE_TEXTURE = ui.texture { path = 'white' }
 local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
-local TITLE_RELATIVE_SIZE = v2(1, 0.06)
 local HINT_RELATIVE_SIZE = v2(1, 0.05)
 local STATUS_RELATIVE_SIZE = v2(1, 0.05)
 local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
+local TOOLBAR_RELATIVE_SIZE = v2(1, 0.12)
+local MAIN_RELATIVE_SIZE = v2(1, 0)
+local CATEGORY_RAIL_SIZE = v2(86, 0)
+local CONTROL_BUTTON_SIZE = v2(48, 0)
+local VIEW_BUTTON_SIZE = v2(44, 0)
+local CATEGORY_HEADER_COLOR = util.color.rgb(0.18, 0.36, 0.68)
+local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
+local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
 local TOOLTIP_LAYER = ROOT_LAYER
 local TOOLTIP_SIZE = v2(360, 230)
 local TOOLTIP_MOUSE_OFFSET = v2(24, 24)
@@ -47,6 +54,30 @@ local statusLayout = nil
 local cameraSnapshot = nil
 local hudVisibleSnapshot = nil
 local registeredWindow = false
+local selectedCategory = 'all'
+local collapsedCategories = {}
+local sortMode = 'value'
+local viewMode = 'grid'
+local uiGeneration = 0
+local pendingRebuildStatus = nil
+local rebuildEventQueued = false
+local rebuildInventoryRoot = nil
+
+local CATEGORY_ORDER = {
+    { key = 'all', label = 'All' },
+    { key = 'weapons', label = 'Weapons' },
+    { key = 'armor', label = 'Armor' },
+    { key = 'apparel', label = 'Apparel' },
+    { key = 'alchemy', label = 'Alchemy' },
+    { key = 'books', label = 'Books' },
+    { key = 'tools', label = 'Tools' },
+    { key = 'misc', label = 'Misc' },
+}
+
+local CATEGORY_BY_KEY = {}
+for _, category in ipairs(CATEGORY_ORDER) do
+    CATEGORY_BY_KEY[category.key] = category
+end
 
 local TYPE_NAMES = {
     [types.Apparatus] = 'Apparatus',
@@ -132,6 +163,48 @@ local function itemCount(inventory, item)
     return 1
 end
 
+local function safeItemData(item)
+    local ok, itemData = pcall(function() return types.Item.itemData(item) end)
+    if ok then return itemData end
+    return nil
+end
+
+local function categoryForItem(itemType)
+    if itemType == types.Weapon then return CATEGORY_BY_KEY.weapons end
+    if itemType == types.Armor then return CATEGORY_BY_KEY.armor end
+    if itemType == types.Clothing then return CATEGORY_BY_KEY.apparel end
+    if itemType == types.Ingredient or itemType == types.Potion or itemType == types.Apparatus then return CATEGORY_BY_KEY.alchemy end
+    if itemType == types.Book then return CATEGORY_BY_KEY.books end
+    if itemType == types.Lockpick or itemType == types.Probe or itemType == types.Repair or itemType == types.Light then return CATEGORY_BY_KEY.tools end
+    return CATEGORY_BY_KEY.misc
+end
+
+local function weaponEffectiveness(record)
+    if not record then return 0 end
+    local best = 0
+    if type(record.thrustMaxDamage) == 'number' and record.thrustMaxDamage > best then best = record.thrustMaxDamage end
+    if type(record.chopMaxDamage) == 'number' and record.chopMaxDamage > best then best = record.chopMaxDamage end
+    if type(record.slashMaxDamage) == 'number' and record.slashMaxDamage > best then best = record.slashMaxDamage end
+    if type(record.speed) == 'number' then best = best * record.speed end
+    return best
+end
+
+local function itemEffectiveness(itemType, record)
+    if not record then return 0 end
+    if itemType == types.Weapon then return weaponEffectiveness(record) end
+    if itemType == types.Armor and type(record.baseArmor) == 'number' then return record.baseArmor end
+    if (itemType == types.Apparatus or itemType == types.Lockpick or itemType == types.Probe or itemType == types.Repair)
+        and type(record.quality) == 'number' then
+        return record.quality
+    end
+    return 0
+end
+
+local function itemCondition(itemData)
+    if itemData and type(itemData.condition) == 'number' then return itemData.condition end
+    return 0
+end
+
 local function collectInventoryItems()
     local inventory = types.Actor.inventory(self.object or self)
     local seen = {}
@@ -142,12 +215,21 @@ local function collectInventoryItems()
         if recordId and not seen[recordId] then
             seen[recordId] = true
             local record = safeRecord(item)
+            local itemType = item.type
+            local category = categoryForItem(itemType)
+            local itemData = safeItemData(item)
             result[#result + 1] = {
                 item = item,
                 record = record,
                 name = itemName(item, record),
                 icon = record and record.icon,
                 count = itemCount(inventory, item),
+                categoryKey = category.key,
+                categoryLabel = category.label,
+                value = (record and type(record.value) == 'number') and record.value or 0,
+                weight = (record and type(record.weight) == 'number') and record.weight or 0,
+                effectiveness = itemEffectiveness(itemType, record),
+                condition = itemCondition(itemData),
             }
         end
     end
@@ -216,6 +298,78 @@ end
 
 local function backgroundAlpha()
     return ui._getMenuTransparency()
+end
+
+local function itemSortValue(data)
+    if sortMode == 'value' then return data.value or 0 end
+    if sortMode == 'weight' then return data.weight or 0 end
+    if sortMode == 'effectiveness' then return data.effectiveness or 0 end
+    if sortMode == 'condition' then return data.condition or 0 end
+    return 0
+end
+
+local function sortItems(items)
+    table.sort(items, function(left, right)
+        local leftValue = itemSortValue(left)
+        local rightValue = itemSortValue(right)
+        if leftValue ~= rightValue then return leftValue > rightValue end
+        return left.name:lower() < right.name:lower()
+    end)
+end
+
+local function itemsByCategory(items)
+    local grouped = {}
+    for _, category in ipairs(CATEGORY_ORDER) do
+        grouped[category.key] = {}
+    end
+
+    for _, item in ipairs(items) do
+        grouped[item.categoryKey][#grouped[item.categoryKey] + 1] = item
+    end
+
+    for key in pairs(grouped) do
+        sortItems(grouped[key])
+    end
+
+    return grouped
+end
+
+local function categoryEntry(category, count)
+    return {
+        kind = 'categoryHeader',
+        categoryKey = category.key,
+        label = category.label,
+        count = count,
+        collapsed = collapsedCategories[category.key] == true,
+    }
+end
+
+local function itemEntry(item)
+    return {
+        kind = 'item',
+        data = item,
+    }
+end
+
+local function buildDisplayEntries(items)
+    local grouped = itemsByCategory(items)
+    local entries = {}
+
+    for _, category in ipairs(CATEGORY_ORDER) do
+        if category.key ~= 'all' and (selectedCategory == 'all' or selectedCategory == category.key) then
+            local categoryItems = grouped[category.key]
+            if #categoryItems > 0 then
+                entries[#entries + 1] = categoryEntry(category, #categoryItems)
+                if not collapsedCategories[category.key] then
+                    for _, item in ipairs(categoryItems) do
+                        entries[#entries + 1] = itemEntry(item)
+                    end
+                end
+            end
+        end
+    end
+
+    return entries
 end
 
 local function tooltipText(name, text, props, template, external)
@@ -429,7 +583,184 @@ local function updateTooltip(data, mouseEvent)
     tooltipElement:update()
 end
 
-local function makeSlot(data, index)
+local function queueInventoryRebuild(statusText)
+    hideTooltip()
+    pendingRebuildStatus = statusText or ''
+    if rebuildEventQueued then return end
+    rebuildEventQueued = true
+    self:sendEvent('S3UI_RebuildInventory')
+end
+
+local function controlBackground(active)
+    return {
+        type = ui.TYPE.Image,
+        props = {
+            resource = WHITE_TEXTURE,
+            color = active and CATEGORY_ACTIVE_COLOR or CATEGORY_COLLAPSED_COLOR,
+            alpha = active and 0.55 or 0.25,
+            relativeSize = v2(1, 1),
+        },
+    }
+end
+
+local function controlText(name, text, textSize)
+    return tooltipText(name, text, {
+        relativeSize = v2(1, 1),
+        textSize = textSize or 14,
+        textAlignH = ui.ALIGNMENT.Center,
+        textAlignV = ui.ALIGNMENT.Center,
+        multiline = true,
+        wordWrap = true,
+        autoSize = false,
+    })
+end
+
+local function makeControlButton(name, label, active, props, external, onClick)
+    local generation = uiGeneration
+    return {
+        name = name,
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = props,
+        external = external,
+        events = {
+            focusGain = async:callback(function()
+                hideTooltip()
+            end),
+            mouseClick = async:callback(function()
+                if generation ~= uiGeneration then return end
+                hideTooltip()
+                if onClick then onClick() end
+            end),
+        },
+        content = ui.content {
+            controlBackground(active),
+            controlText(name .. '_text', label),
+        },
+    }
+end
+
+local function makeSortButton(mode, label)
+    return makeControlButton('s3ui_sort_' .. mode, label, sortMode == mode, {
+        size = CONTROL_BUTTON_SIZE,
+    }, { stretch = 1 }, function()
+        sortMode = mode
+        queueInventoryRebuild('Sorted by ' .. label)
+    end)
+end
+
+local function makeViewButton(mode, label)
+    return makeControlButton('s3ui_view_' .. mode, label, viewMode == mode, {
+        size = VIEW_BUTTON_SIZE,
+    }, { stretch = 1 }, function()
+        if mode == 'grid' then
+            viewMode = 'grid'
+            queueInventoryRebuild('Grid view')
+        else
+            setStatus('List view is not implemented yet')
+        end
+    end)
+end
+
+local function makeCategoryRailButton(category)
+    return makeControlButton('s3ui_category_' .. category.key, category.label, selectedCategory == category.key, {
+        relativeSize = v2(1, 1 / #CATEGORY_ORDER),
+    }, nil, function()
+        selectedCategory = category.key
+        queueInventoryRebuild(category.label .. ' selected')
+    end)
+end
+
+local function makeCategoryRail()
+    local buttons = ui.content {}
+    for _, category in ipairs(CATEGORY_ORDER) do
+        buttons:add(makeCategoryRailButton(category))
+    end
+
+    return {
+        name = 's3ui_category_rail',
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = false,
+            size = CATEGORY_RAIL_SIZE,
+            autoSize = false,
+        },
+        external = { stretch = 1 },
+        content = buttons,
+    }
+end
+
+local function makeToolbar()
+    return {
+        name = 's3ui_toolbar',
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = true,
+            relativeSize = TOOLBAR_RELATIVE_SIZE,
+            autoSize = false,
+        },
+        content = ui.content {
+            tooltipText('s3ui_title', 'Inventory', {
+                size = v2(120, 0),
+                textSize = 22,
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Center,
+                autoSize = false,
+            }, I.MWUI.templates.textHeader, { stretch = 1 }),
+            makeViewButton('grid', 'Grid'),
+            makeViewButton('list', 'List'),
+            { external = { grow = 1 } },
+            makeSortButton('value', 'Gold'),
+            makeSortButton('weight', 'Wt'),
+            makeSortButton('effectiveness', 'Eff'),
+            makeSortButton('condition', 'Cond'),
+        },
+    }
+end
+
+local function makeCategoryHeaderSlot(entry, index)
+    local collapsed = entry.collapsed
+    local generation = uiGeneration
+    return {
+        name = 'slot_' .. tostring(index),
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = {
+            relativeSize = v2(1 / GRID_COLUMNS, 1),
+        },
+        userData = entry,
+        events = {
+            focusGain = async:callback(function()
+                hideTooltip()
+            end),
+            mouseClick = async:callback(function(_, layout)
+                if generation ~= uiGeneration then return end
+                local clicked = layout and layout.userData
+                if not clicked then return end
+                collapsedCategories[clicked.categoryKey] = not collapsedCategories[clicked.categoryKey]
+                queueInventoryRebuild(clicked.label .. (collapsedCategories[clicked.categoryKey] and ' collapsed' or ' expanded'))
+            end),
+        },
+        content = ui.content {
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = WHITE_TEXTURE,
+                    color = collapsed and CATEGORY_COLLAPSED_COLOR or CATEGORY_HEADER_COLOR,
+                    alpha = 0.72,
+                    relativeSize = v2(1, 1),
+                },
+            },
+            controlText('slot_' .. tostring(index) .. '_category_text', (collapsed and '+ ' or '- ') .. entry.label .. '\n' .. tostring(entry.count), 13),
+        },
+    }
+end
+
+local function makeSlot(entry, index)
+    if entry and entry.kind == 'categoryHeader' then return makeCategoryHeaderSlot(entry, index) end
+
+    local data = entry and entry.data
+    local generation = uiGeneration
     local content = ui.content {}
 
     if data then
@@ -472,15 +803,19 @@ local function makeSlot(data, index)
         userData = data,
         events = data and {
             focusGain = async:callback(function(mouseEvent, layout)
+                if generation ~= uiGeneration then return end
                 updateTooltip(layout and layout.userData, mouseEvent)
             end),
             focusLoss = async:callback(function()
+                if generation ~= uiGeneration then return end
                 hideTooltip()
             end),
             mouseMove = async:callback(function(mouseEvent, layout)
+                if generation ~= uiGeneration then return end
                 updateTooltip(layout and layout.userData, mouseEvent)
             end),
             mouseClick = async:callback(function(_, layout)
+                if generation ~= uiGeneration then return end
                 local clicked = layout and layout.userData
                 if clicked then
                     setStatus(clicked.name .. '  x' .. tostring(clicked.count))
@@ -516,20 +851,21 @@ local function makeGrid(items)
         type = ui.TYPE.Flex,
         props = {
             horizontal = false,
-            relativeSize = v2(1, 0),
+            size = v2(0, 0),
             autoSize = false,
         },
-        external = { grow = 1 },
+        external = { grow = 1, stretch = 1 },
         content = rows,
     }
 end
 
 local function makeInventoryLayout(items)
-    local visibleCount = math.min(#items, MAX_VISIBLE_ITEMS)
-    local hiddenCount = math.max(0, #items - MAX_VISIBLE_ITEMS)
-    local summary = tostring(visibleCount) .. ' shown'
+    local entries = buildDisplayEntries(items)
+    local visibleCount = math.min(#entries, MAX_VISIBLE_ITEMS)
+    local hiddenCount = math.max(0, #entries - MAX_VISIBLE_ITEMS)
+    local summary = tostring(visibleCount) .. ' tiles shown'
     if hiddenCount > 0 then
-        summary = summary .. ', ' .. tostring(hiddenCount) .. ' more in inventory'
+        summary = summary .. ', ' .. tostring(hiddenCount) .. ' more tiles hidden'
     end
 
     return {
@@ -559,9 +895,22 @@ local function makeInventoryLayout(items)
                     autoSize = false,
                 },
                 content = ui.content {
-                    textLine('Inventory', I.MWUI.templates.textHeader, { relativeSize = TITLE_RELATIVE_SIZE }),
-                    textLine('Click an item to show its name. Press I to close.', I.MWUI.templates.textNormal, { relativeSize = HINT_RELATIVE_SIZE, textSize = 15 }),
-                    makeGrid(items),
+                    makeToolbar(),
+                    textLine('Click an item header to collapse a category. Press I to close.', I.MWUI.templates.textNormal, { relativeSize = HINT_RELATIVE_SIZE, textSize = 15 }),
+                    {
+                        name = 's3ui_main',
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = true,
+                            relativeSize = MAIN_RELATIVE_SIZE,
+                            autoSize = false,
+                        },
+                        external = { grow = 1 },
+                        content = ui.content {
+                            makeCategoryRail(),
+                            makeGrid(entries),
+                        },
+                    },
                     textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', relativeSize = STATUS_RELATIVE_SIZE, textSize = 15 }),
                 },
             },
@@ -687,6 +1036,9 @@ local function toggleInventoryWindow()
 end
 
 local function destroyInventoryWindow()
+    uiGeneration = uiGeneration + 1
+    pendingRebuildStatus = nil
+    rebuildEventQueued = false
     statusLayout = nil
     if tooltipElement and tooltipElement.layout then
         tooltipElement:destroy()
@@ -698,12 +1050,32 @@ local function destroyInventoryWindow()
     rootElement = nil
 end
 
+rebuildInventoryRoot = function(statusText)
+    uiGeneration = uiGeneration + 1
+    hideTooltip()
+    statusLayout = nil
+    if rootElement and rootElement.layout then
+        rootElement:destroy()
+    end
+    rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
+    statusLayout = rootElement.layout.content.s3ui_body.content.s3ui_status
+    if statusText then setStatus(statusText) end
+end
+
+local function processPendingRebuild()
+    rebuildEventQueued = false
+    if pendingRebuildStatus == nil then return end
+    local statusText = pendingRebuildStatus
+    pendingRebuildStatus = nil
+    if not rootElement or not rootElement.layout or not I.UI.isWindowVisible(WINDOW) then return end
+    rebuildInventoryRoot(statusText ~= '' and statusText or nil)
+end
+
 local function showInventoryWindow()
     destroyInventoryWindow()
     saveHudVisibility()
     showStaticInventoryCamera()
-    rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
-    statusLayout = rootElement.layout.content.s3ui_body.content.s3ui_status
+    rebuildInventoryRoot()
     tooltipElement = ui.create(makeTooltipLayout())
 end
 
@@ -728,5 +1100,8 @@ return {
                 toggleInventoryWindow()
             end
         end,
+    },
+    eventHandlers = {
+        S3UI_RebuildInventory = processPendingRebuild,
     },
 }
