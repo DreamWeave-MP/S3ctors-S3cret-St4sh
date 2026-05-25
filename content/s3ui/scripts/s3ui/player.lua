@@ -19,10 +19,13 @@ local CAMERA_CONTROL_TAG = 's3ui_inventory'
 
 local WINDOW_POSITION = v2(24, 80)
 local WINDOW_SIZE = v2(500, 520)
-local SLOT_SIZE = v2(72, 72)
-local ICON_SIZE = v2(40, 40)
 local GRID_COLUMNS = 6
 local GRID_ROWS = 5
+local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
+local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
+local TITLE_RELATIVE_SIZE = v2(1, 0.06)
+local HINT_RELATIVE_SIZE = v2(1, 0.05)
+local STATUS_RELATIVE_SIZE = v2(1, 0.05)
 local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
 
@@ -100,8 +103,9 @@ local function makeSlot(data, index)
 
     if data then
         local iconProps = {
-            position = v2(16, 8),
-            size = ICON_SIZE,
+            anchor = v2(0.5, 0.5),
+            relativePosition = v2(0.5, 0.45),
+            relativeSize = ICON_RELATIVE_SIZE,
         }
         if data.icon then
             iconProps.resource = ui.texture { path = data.icon }
@@ -114,23 +118,25 @@ local function makeSlot(data, index)
 
         if data.count > 1 then
             content:add(textLine(tostring(data.count), I.MWUI.templates.textNormal, {
-                position = v2(46, 46),
-                size = v2(22, 18),
+                anchor = v2(1, 1),
+                relativePosition = v2(0.88, 0.88),
+                relativeSize = COUNT_RELATIVE_SIZE,
                 textSize = 13,
             }))
         end
     else
         content:add {
             type = ui.TYPE.Widget,
-            props = { size = v2(1, 1) },
+            props = { relativeSize = v2(1, 1) },
         }
     end
 
     return {
         name = 'slot_' .. tostring(index),
-        template = I.MWUI.templates.box,
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
         props = {
-            size = SLOT_SIZE,
+            relativeSize = v2(1 / GRID_COLUMNS, 1),
         },
         userData = data,
         events = data and {
@@ -159,7 +165,8 @@ local function makeGrid(items)
             type = ui.TYPE.Flex,
             props = {
                 horizontal = true,
-                size = v2(GRID_COLUMNS * SLOT_SIZE.x, SLOT_SIZE.y),
+                relativeSize = v2(1, 1 / GRID_ROWS),
+                autoSize = false,
             },
             content = row,
         }
@@ -169,8 +176,10 @@ local function makeGrid(items)
         type = ui.TYPE.Flex,
         props = {
             horizontal = false,
-            size = v2(GRID_COLUMNS * SLOT_SIZE.x, GRID_ROWS * SLOT_SIZE.y),
+            relativeSize = v2(1, 0),
+            autoSize = false,
         },
+        external = { grow = 1 },
         content = rows,
     }
 end
@@ -184,7 +193,8 @@ local function makeInventoryLayout(items)
     end
 
     return {
-        type = ui.TYPE.Container,
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.bordersThick,
         layer = ROOT_LAYER,
         props = {
             position = WINDOW_POSITION,
@@ -192,29 +202,18 @@ local function makeInventoryLayout(items)
         },
         content = ui.content {
             {
-                template = I.MWUI.templates.boxTransparentThick,
+                name = 's3ui_body',
+                type = ui.TYPE.Flex,
                 props = {
-                    size = WINDOW_SIZE,
+                    horizontal = false,
+                    relativeSize = v2(1, 1),
+                    autoSize = false,
                 },
                 content = ui.content {
-                    {
-                        template = I.MWUI.templates.padding,
-                        content = ui.content {
-                            {
-                                type = ui.TYPE.Flex,
-                                props = {
-                                    horizontal = false,
-                                    size = WINDOW_SIZE - v2(32, 32),
-                                },
-                                content = ui.content {
-                                    textLine('Inventory', I.MWUI.templates.textHeader, { size = v2(450, 28) }),
-                                    textLine('Click an item to show its name. Press I to close.', I.MWUI.templates.textNormal, { size = v2(450, 22), textSize = 15 }),
-                                    makeGrid(items),
-                                    textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', size = v2(450, 24), textSize = 15 }),
-                                },
-                            },
-                        },
-                    },
+                    textLine('Inventory', I.MWUI.templates.textHeader, { relativeSize = TITLE_RELATIVE_SIZE }),
+                    textLine('Click an item to show its name. Press I to close.', I.MWUI.templates.textNormal, { relativeSize = HINT_RELATIVE_SIZE, textSize = 15 }),
+                    makeGrid(items),
+                    textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', relativeSize = STATUS_RELATIVE_SIZE, textSize = 15 }),
                 },
             },
         },
@@ -351,7 +350,7 @@ local function showInventoryWindow()
     saveHudVisibility()
     showStaticInventoryCamera()
     rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
-    statusLayout = rootElement.layout.content[1].content[1].content[1].content.s3ui_status
+    statusLayout = rootElement.layout.content.s3ui_body.content.s3ui_status
 end
 
 local function hideInventoryWindow()
