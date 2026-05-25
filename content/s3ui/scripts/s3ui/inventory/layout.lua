@@ -6,10 +6,10 @@ local util = require 'openmw.util'
 local v2 = util.vector2
 
 local LAYOUT = {
-    windowWidthFraction = 0.42,
-    windowHeightFraction = 0.62,
-    windowMinSize = v2(520, 420),
-    windowMaxSize = v2(760, 720),
+    windowWidthFraction = 0.52,
+    windowHeightFraction = 0.72,
+    windowMinSize = v2(640, 500),
+    windowMaxSize = v2(960, 820),
     windowMarginFraction = 0.03,
     windowTopFraction = 0.075,
     gridMinColumns = 3,
