@@ -947,7 +947,6 @@ local function makeSortButton(mode, label)
     local name = 's3ui_sort_' .. mode
     local generation = uiGeneration
     local content = ui.content {
-        controlBackground(active),
         {
             name = name .. '_icon',
             type = ui.TYPE.Image,
@@ -1055,7 +1054,6 @@ local function makeViewToggleButton()
             end),
         },
         content = ui.content {
-            controlBackground(true),
             {
                 name = 's3ui_view_toggle_icon',
                 type = ui.TYPE.Image,
