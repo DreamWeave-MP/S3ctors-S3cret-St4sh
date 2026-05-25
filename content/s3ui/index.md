@@ -13,7 +13,7 @@ extra:
   version: development
 ---
 
-S3ui is an early replacement OpenMW UI experiment. It currently registers a player-context prototype inventory window toggled through OpenMW's inventory key (I by default).
+S3ui is an early replacement OpenMW UI experiment. It currently registers a player-context prototype inventory window toggled with the hardcoded I key.
 
 <!-- more -->
 

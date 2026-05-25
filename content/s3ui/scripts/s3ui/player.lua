@@ -2,6 +2,7 @@
 
 local async = require 'openmw.async'
 local camera = require 'openmw.camera'
+local input = require 'openmw.input'
 local I = require 'openmw.interfaces'
 local self = require 'openmw.self'
 local types = require 'openmw.types'
@@ -203,7 +204,7 @@ local function makeInventoryLayout(items)
                                 },
                                 content = ui.content {
                                     textLine('Inventory', I.MWUI.templates.textHeader, { size = v2(450, 28) }),
-                                    textLine('Click an item to show its name. Press the inventory key (I by default) to close.', I.MWUI.templates.textNormal, { size = v2(450, 22), textSize = 15 }),
+                                    textLine('Click an item to show its name. Press I to close.', I.MWUI.templates.textNormal, { size = v2(450, 22), textSize = 15 }),
                                     makeGrid(items),
                                     textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', size = v2(450, 24), textSize = 15 }),
                                 },
@@ -239,10 +240,18 @@ end
 local function showPreviewCamera()
     saveCamera()
     camera.setMode(camera.MODE.Preview)
-    camera.setFocalPreferredOffset(v2(-220, 12))
+    camera.setFocalPreferredOffset(v2(-120, 8))
     camera.setYaw(cameraSnapshot.yaw + math.rad(155))
     camera.setPitch(math.rad(-8))
     camera.instantTransition()
+end
+
+local function toggleInventoryWindow()
+    if I.UI.isWindowVisible(WINDOW) then
+        I.UI.removeMode(MODE)
+    else
+        I.UI.setMode(MODE, { windows = { WINDOW } })
+    end
 end
 
 local function destroyInventoryWindow()
@@ -273,4 +282,12 @@ end
 
 registerInventoryWindow()
 
-return {}
+return {
+    engineHandlers = {
+        onKeyPress = function(key)
+            if key.code == input.KEY.I then
+                toggleInventoryWindow()
+            end
+        end,
+    },
+}
