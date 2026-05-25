@@ -21,11 +21,13 @@ local WINDOW_POSITION = v2(24, 80)
 local WINDOW_SIZE = v2(500, 520)
 local GRID_COLUMNS = 6
 local GRID_ROWS = 5
+local LIST_ROWS = 10
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
 local CATEGORY_SMALL_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/small_icons.dds'
 local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
+local LIST_ICON_RELATIVE_SIZE = v2(0.08, 0.72)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
 local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
 local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
@@ -38,9 +40,11 @@ local MAIN_RELATIVE_SIZE = v2(1, 0)
 local CATEGORY_RAIL_SIZE = v2(86, 0)
 local CONTROL_BUTTON_SIZE = v2(48, 0)
 local VIEW_BUTTON_SIZE = v2(44, 0)
+local VIEW_TOGGLE_ICON_SIZE = v2(0.74, 0.74)
 local CATEGORY_HEADER_COLOR = util.color.rgb(0.18, 0.36, 0.68)
 local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
 local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
+local VIEW_GLYPH_COLOR = util.color.rgb(0.9, 0.84, 0.62)
 local TOOLTIP_LAYER = 'S3UI_Tooltip'
 local TOOLTIP_RELATIVE_WIDTH = 0.18
 local TOOLTIP_HEADER_HEIGHT = 72
@@ -128,6 +132,8 @@ local CATEGORY_ICON_TEXTURES = {
     tools = ui.texture { path = CATEGORY_SMALL_ICON_ATLAS, offset = v2(786, 2), size = v2(86, 124) },
     misc = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(1074, 29), size = v2(153, 207) },
 }
+
+local VIEW_TOGGLE_ICON = ui.texture { path = CATEGORY_SMALL_ICON_ATLAS, offset = v2(385, 1), size = v2(126, 126) }
 
 local CATEGORY_ICON_RELATIVE_SIZES = {
     all = v2(0.62, 0.58),
@@ -506,16 +512,33 @@ local function buildDisplayEntries(items)
 end
 
 local function maxScrollOffset(entryCount)
+    if viewMode == 'list' then
+        local extraRows = entryCount - LIST_ROWS
+        if extraRows <= 0 then return 0 end
+        return extraRows
+    end
+
     local extraRows = math.ceil(entryCount / GRID_COLUMNS) - GRID_ROWS
     if extraRows <= 0 then return 0 end
     return extraRows * GRID_COLUMNS
 end
 
+local function scrollStepSize()
+    if viewMode == 'list' then return 1 end
+    return GRID_COLUMNS
+end
+
+local function visibleEntryCount()
+    if viewMode == 'list' then return LIST_ROWS end
+    return MAX_VISIBLE_ITEMS
+end
+
 local function clampScrollOffset(entryCount)
     local maxOffset = maxScrollOffset(entryCount)
+    local step = scrollStepSize()
     if scrollOffset < 0 then scrollOffset = 0 end
     if scrollOffset > maxOffset then scrollOffset = maxOffset end
-    scrollOffset = math.floor(scrollOffset / GRID_COLUMNS) * GRID_COLUMNS
+    scrollOffset = math.floor(scrollOffset / step) * step
     return maxOffset
 end
 
@@ -886,23 +909,88 @@ end
 local function scrollInventoryRows(deltaRows)
     if not inventoryWindowActive() then return end
     local oldOffset = scrollOffset
-    scrollOffset = scrollOffset + deltaRows * GRID_COLUMNS
+    scrollOffset = scrollOffset + deltaRows * scrollStepSize()
     clampScrollOffset(lastEntryCount)
     if scrollOffset == oldOffset then return end
     queueInventoryRebuild()
 end
 
-local function makeViewButton(mode, label)
-    return makeControlButton('s3ui_view_' .. mode, label, viewMode == mode, {
-        size = VIEW_BUTTON_SIZE,
-    }, { stretch = 1 }, function()
-        if mode == 'grid' then
-            viewMode = 'grid'
-            queueInventoryRebuild('Grid view')
-        else
-            setStatus('List view is not implemented yet')
-        end
-    end)
+local function glyphRect(name, position, size)
+    return {
+        name = name,
+        type = ui.TYPE.Image,
+        props = {
+            resource = WHITE_TEXTURE,
+            color = VIEW_GLYPH_COLOR,
+            alpha = 0.95,
+            anchor = v2(0.5, 0.5),
+            relativePosition = position,
+            relativeSize = size,
+        },
+    }
+end
+
+local function makeViewGlyph()
+    local glyph = ui.content {}
+    if viewMode == 'list' then
+        glyph:add(glyphRect('s3ui_view_list_bar_1', v2(0.5, 0.41), v2(0.28, 0.045)))
+        glyph:add(glyphRect('s3ui_view_list_bar_2', v2(0.5, 0.5), v2(0.28, 0.045)))
+        glyph:add(glyphRect('s3ui_view_list_bar_3', v2(0.5, 0.59), v2(0.28, 0.045)))
+    else
+        glyph:add(glyphRect('s3ui_view_grid_dot_1', v2(0.45, 0.45), v2(0.075, 0.075)))
+        glyph:add(glyphRect('s3ui_view_grid_dot_2', v2(0.55, 0.45), v2(0.075, 0.075)))
+        glyph:add(glyphRect('s3ui_view_grid_dot_3', v2(0.45, 0.55), v2(0.075, 0.075)))
+        glyph:add(glyphRect('s3ui_view_grid_dot_4', v2(0.55, 0.55), v2(0.075, 0.075)))
+    end
+    return glyph
+end
+
+local function makeViewToggleButton()
+    local generation = uiGeneration
+    return {
+        name = 's3ui_view_toggle',
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = {
+            size = VIEW_BUTTON_SIZE,
+        },
+        external = { stretch = 1 },
+        events = {
+            focusGain = async:callback(function()
+                hideTooltip()
+            end),
+            mouseClick = async:callback(function()
+                if generation ~= uiGeneration then return end
+                hideTooltip()
+                local targetMode = viewMode == 'grid' and 'list' or 'grid'
+                viewMode = targetMode
+                resetScrollOffset()
+                queueInventoryRebuild(targetMode == 'grid' and 'Grid view' or 'List view')
+            end),
+        },
+        content = ui.content {
+            controlBackground(true),
+            {
+                name = 's3ui_view_toggle_icon',
+                type = ui.TYPE.Image,
+                props = {
+                    resource = VIEW_TOGGLE_ICON,
+                    anchor = v2(0.5, 0.5),
+                    relativePosition = v2(0.5, 0.5),
+                    relativeSize = VIEW_TOGGLE_ICON_SIZE,
+                    alpha = 0.95,
+                },
+            },
+            {
+                name = 's3ui_view_toggle_glyph',
+                type = ui.TYPE.Widget,
+                props = {
+                    relativeSize = v2(1, 1),
+                },
+                content = makeViewGlyph(),
+            },
+        },
+    }
 end
 
 local function makeCategoryRailButton(category)
@@ -951,8 +1039,7 @@ local function makeToolbar()
                 textAlignV = ui.ALIGNMENT.Center,
                 autoSize = false,
             }, I.MWUI.templates.textHeader, { stretch = 1 }),
-            makeViewButton('grid', 'Grid'),
-            makeViewButton('list', 'List'),
+            makeViewToggleButton(),
             { external = { grow = 1 } },
             makeSortButton('value', 'Gold'),
             makeSortButton('weight', 'Wt'),
@@ -1143,12 +1230,226 @@ local function makeGrid(items, firstIndex)
     }
 end
 
+local function makeListCategoryRow(entry, index)
+    local collapsed = entry.collapsed
+    local generation = uiGeneration
+    local icon = CATEGORY_ICON_TEXTURES[entry.categoryKey]
+    local content = ui.content {
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = WHITE_TEXTURE,
+                color = collapsed and CATEGORY_COLLAPSED_COLOR or CATEGORY_HEADER_COLOR,
+                alpha = 0.72,
+                relativeSize = v2(1, 1),
+            },
+        },
+        textLine(collapsed and '+' or '-', I.MWUI.templates.textHeader, {
+            anchor = v2(0, 0.5),
+            relativePosition = v2(0.04, 0.5),
+            relativeSize = v2(0.06, 0.7),
+            textSize = 16,
+            textAlignH = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }),
+        textLine(entry.label, I.MWUI.templates.textHeader, {
+            anchor = v2(0, 0.5),
+            relativePosition = v2(0.18, 0.5),
+            relativeSize = v2(0.5, 0.7),
+            textSize = 16,
+            textAlignH = ui.ALIGNMENT.Start,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }),
+        textLine(tostring(entry.count), I.MWUI.templates.textNormal, {
+            anchor = v2(1, 0.5),
+            relativePosition = v2(0.94, 0.5),
+            relativeSize = v2(0.12, 0.7),
+            textSize = 14,
+            textAlignH = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }),
+    }
+
+    if icon then
+        content:add {
+            name = 'list_' .. tostring(index) .. '_category_icon',
+            type = ui.TYPE.Image,
+            props = {
+                resource = icon,
+                anchor = v2(0, 0.5),
+                relativePosition = v2(0.1, 0.5),
+                relativeSize = v2(0.08, 0.72),
+                alpha = collapsed and 0.62 or 0.95,
+            },
+        }
+    end
+
+    return {
+        name = 'list_' .. tostring(index),
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = {
+            relativeSize = v2(1, 1 / LIST_ROWS),
+        },
+        userData = entry,
+        events = {
+            focusGain = async:callback(function()
+                hideTooltip()
+            end),
+            mouseClick = async:callback(function(_, layout)
+                if generation ~= uiGeneration then return end
+                local clicked = layout and layout.userData
+                if not clicked then return end
+                collapsedCategories[clicked.categoryKey] = not collapsedCategories[clicked.categoryKey]
+                resetScrollOffset()
+                queueInventoryRebuild(clicked.label .. (collapsedCategories[clicked.categoryKey] and ' collapsed' or ' expanded'))
+            end),
+        },
+        content = content,
+    }
+end
+
+local function makeListItemRow(entry, index)
+    local data = entry and entry.data
+    local generation = uiGeneration
+    local content = ui.content {
+        {
+            type = ui.TYPE.Image,
+            props = {
+                resource = WHITE_TEXTURE,
+                color = BACKGROUND_COLOR,
+                alpha = index % 2 == 0 and 0.18 or 0.08,
+                relativeSize = v2(1, 1),
+            },
+        },
+    }
+
+    if data then
+        if data.icon then
+            content:add {
+                name = 'list_' .. tostring(index) .. '_icon',
+                type = ui.TYPE.Image,
+                props = {
+                    resource = ui.texture { path = data.icon },
+                    anchor = v2(0, 0.5),
+                    relativePosition = v2(0.03, 0.5),
+                    relativeSize = LIST_ICON_RELATIVE_SIZE,
+                },
+            }
+        end
+
+        local count = data.count > 1 and (' x' .. tostring(data.count)) or ''
+        content:add(textLine(data.name .. count, I.MWUI.templates.textNormal, {
+            anchor = v2(0, 0.5),
+            relativePosition = v2(0.13, 0.5),
+            relativeSize = v2(0.5, 0.72),
+            textSize = 15,
+            textAlignH = ui.ALIGNMENT.Start,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }))
+        content:add(textLine(tostring(data.value), I.MWUI.templates.textNormal, {
+            anchor = v2(1, 0.5),
+            relativePosition = v2(0.68, 0.5),
+            relativeSize = v2(0.12, 0.72),
+            textSize = 14,
+            textAlignH = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }))
+        content:add(textLine(formatNumber(data.weight, 1), I.MWUI.templates.textNormal, {
+            anchor = v2(1, 0.5),
+            relativePosition = v2(0.8, 0.5),
+            relativeSize = v2(0.12, 0.72),
+            textSize = 14,
+            textAlignH = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }))
+        content:add(textLine(formatNumber(data.effectiveness, 0), I.MWUI.templates.textNormal, {
+            anchor = v2(1, 0.5),
+            relativePosition = v2(0.9, 0.5),
+            relativeSize = v2(0.12, 0.72),
+            textSize = 14,
+            textAlignH = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }))
+        content:add(textLine(formatCondition(data.condition), I.MWUI.templates.textNormal, {
+            anchor = v2(1, 0.5),
+            relativePosition = v2(0.99, 0.5),
+            relativeSize = v2(0.12, 0.72),
+            textSize = 14,
+            textAlignH = ui.ALIGNMENT.Center,
+            textAlignV = ui.ALIGNMENT.Center,
+            autoSize = false,
+        }))
+    end
+
+    return {
+        name = 'list_' .. tostring(index),
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = {
+            relativeSize = v2(1, 1 / LIST_ROWS),
+        },
+        userData = data,
+        events = data and {
+            focusGain = async:callback(function(mouseEvent, layout)
+                if generation ~= uiGeneration then return end
+                updateTooltip(layout and layout.userData, mouseEvent)
+            end),
+            focusLoss = async:callback(function()
+                if generation ~= uiGeneration then return end
+                hideTooltip()
+            end),
+            mouseClick = async:callback(function(_, layout)
+                if generation ~= uiGeneration then return end
+                local clicked = layout and layout.userData
+                if clicked then
+                    setStatus(clicked.name .. '  x' .. tostring(clicked.count))
+                end
+            end),
+        } or nil,
+        content = content,
+    }
+end
+
+local function makeList(items, firstIndex)
+    local rows = ui.content {}
+    local index = firstIndex or 1
+    for slotIndex = 1, LIST_ROWS do
+        local entry = items[index]
+        if entry and entry.kind == 'categoryHeader' then
+            rows:add(makeListCategoryRow(entry, slotIndex))
+        else
+            rows:add(makeListItemRow(entry, slotIndex))
+        end
+        index = index + 1
+    end
+
+    return {
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = false,
+            size = v2(0, 0),
+            autoSize = false,
+        },
+        external = { grow = 1, stretch = 1 },
+        content = rows,
+    }
+end
+
 local function makeInventoryLayout(items)
     local entries = buildDisplayEntries(items)
     lastEntryCount = #entries
     local maxOffset = clampScrollOffset(#entries)
     local firstIndex = scrollOffset + 1
-    local lastIndex = math.min(#entries, scrollOffset + MAX_VISIBLE_ITEMS)
+    local lastIndex = math.min(#entries, scrollOffset + visibleEntryCount())
+    local inventoryView = viewMode == 'list' and makeList(entries, firstIndex) or makeGrid(entries, firstIndex)
     local summary
     if #entries == 0 then
         summary = '0 entries'
@@ -1197,7 +1498,7 @@ local function makeInventoryLayout(items)
                         external = { grow = 1 },
                         content = ui.content {
                             makeCategoryRail(),
-                            makeGrid(entries, firstIndex),
+                            inventoryView,
                         },
                     },
                     textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', relativeSize = STATUS_RELATIVE_SIZE, textSize = 15 }),
