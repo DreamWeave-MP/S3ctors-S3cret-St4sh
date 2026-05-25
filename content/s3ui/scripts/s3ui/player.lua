@@ -23,7 +23,6 @@ local GRID_COLUMNS = 6
 local GRID_ROWS = 5
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
-local BACKGROUND_ALPHA = ui._getMenuTransparency()
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
 local TITLE_RELATIVE_SIZE = v2(1, 0.06)
@@ -31,12 +30,89 @@ local HINT_RELATIVE_SIZE = v2(1, 0.05)
 local STATUS_RELATIVE_SIZE = v2(1, 0.05)
 local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
+local TOOLTIP_LAYER = ROOT_LAYER
+local TOOLTIP_SIZE = v2(360, 230)
+local TOOLTIP_MOUSE_OFFSET = v2(24, 24)
+local TOOLTIP_HEADER_SIZE = v2(1, 0.28)
+local TOOLTIP_PRIMARY_SIZE = v2(1, 0.34)
+local TOOLTIP_SECONDARY_SIZE = v2(1, 0.32)
+local TOOLTIP_ICON_SIZE = v2(48, 48)
+local TOOLTIP_FIELD_TEXT_SIZE = 14
+local TOOLTIP_VALUE_TEXT_SIZE = 16
+local EMPTY_FIELD = '—'
 
 local rootElement = nil
+local tooltipElement = nil
 local statusLayout = nil
 local cameraSnapshot = nil
 local hudVisibleSnapshot = nil
 local registeredWindow = false
+
+local TYPE_NAMES = {
+    [types.Apparatus] = 'Apparatus',
+    [types.Armor] = 'Armor',
+    [types.Book] = 'Book',
+    [types.Clothing] = 'Clothing',
+    [types.Ingredient] = 'Ingredient',
+    [types.Light] = 'Light',
+    [types.Lockpick] = 'Lockpick',
+    [types.Miscellaneous] = 'Miscellaneous',
+    [types.Potion] = 'Potion',
+    [types.Probe] = 'Probe',
+    [types.Repair] = 'Repair',
+    [types.Weapon] = 'Weapon',
+}
+
+local ARMOR_TYPE_NAMES = {
+    [types.Armor.TYPE.Boots] = 'Boots',
+    [types.Armor.TYPE.Cuirass] = 'Cuirass',
+    [types.Armor.TYPE.Greaves] = 'Greaves',
+    [types.Armor.TYPE.Helmet] = 'Helmet',
+    [types.Armor.TYPE.LBracer] = 'Left Bracer',
+    [types.Armor.TYPE.LGauntlet] = 'Left Gauntlet',
+    [types.Armor.TYPE.LPauldron] = 'Left Pauldron',
+    [types.Armor.TYPE.RBracer] = 'Right Bracer',
+    [types.Armor.TYPE.RGauntlet] = 'Right Gauntlet',
+    [types.Armor.TYPE.RPauldron] = 'Right Pauldron',
+    [types.Armor.TYPE.Shield] = 'Shield',
+}
+
+local CLOTHING_TYPE_NAMES = {
+    [types.Clothing.TYPE.Amulet] = 'Amulet',
+    [types.Clothing.TYPE.Belt] = 'Belt',
+    [types.Clothing.TYPE.LGlove] = 'Left Glove',
+    [types.Clothing.TYPE.Pants] = 'Pants',
+    [types.Clothing.TYPE.RGlove] = 'Right Glove',
+    [types.Clothing.TYPE.Ring] = 'Ring',
+    [types.Clothing.TYPE.Robe] = 'Robe',
+    [types.Clothing.TYPE.Shirt] = 'Shirt',
+    [types.Clothing.TYPE.Shoes] = 'Shoes',
+    [types.Clothing.TYPE.Skirt] = 'Skirt',
+}
+
+local WEAPON_TYPE_NAMES = {
+    [types.Weapon.TYPE.Arrow] = 'Arrow',
+    [types.Weapon.TYPE.AxeOneHand] = 'One Handed Axe',
+    [types.Weapon.TYPE.AxeTwoHand] = 'Two Handed Axe',
+    [types.Weapon.TYPE.BluntOneHand] = 'One Handed Blunt',
+    [types.Weapon.TYPE.BluntTwoClose] = 'Close Two Handed Blunt',
+    [types.Weapon.TYPE.BluntTwoWide] = 'Wide Two Handed Blunt',
+    [types.Weapon.TYPE.Bolt] = 'Bolt',
+    [types.Weapon.TYPE.LongBladeOneHand] = 'One Handed Long Blade',
+    [types.Weapon.TYPE.LongBladeTwoHand] = 'Two Handed Long Blade',
+    [types.Weapon.TYPE.MarksmanBow] = 'Bow',
+    [types.Weapon.TYPE.MarksmanCrossbow] = 'Crossbow',
+    [types.Weapon.TYPE.MarksmanThrown] = 'Thrown',
+    [types.Weapon.TYPE.ShortBladeOneHand] = 'Short Blade',
+    [types.Weapon.TYPE.SpearTwoWide] = 'Spear',
+}
+
+local APPARATUS_TYPE_NAMES = {
+    [types.Apparatus.TYPE.Alembic] = 'Alembic',
+    [types.Apparatus.TYPE.Calcinator] = 'Calcinator',
+    [types.Apparatus.TYPE.MortarPestle] = 'Mortar & Pestle',
+    [types.Apparatus.TYPE.Retort] = 'Retort',
+}
 
 local function safeRecord(item)
     if not item or not item.type or not item.recordId then return nil end
@@ -101,6 +177,257 @@ local function textLine(text, template, props)
     }
 end
 
+local function formatNumber(value, decimals)
+    if type(value) ~= 'number' then return EMPTY_FIELD end
+    if decimals then return string.format('%.' .. tostring(decimals) .. 'f', value) end
+    return tostring(value)
+end
+
+local function formatDamage(minDamage, maxDamage)
+    if type(minDamage) ~= 'number' or type(maxDamage) ~= 'number' then return EMPTY_FIELD end
+    return tostring(minDamage) .. '–' .. tostring(maxDamage)
+end
+
+local function subtypeName(recordType, record)
+    if not record then return EMPTY_FIELD end
+    if recordType == types.Armor then return ARMOR_TYPE_NAMES[record.type] or EMPTY_FIELD end
+    if recordType == types.Clothing then return CLOTHING_TYPE_NAMES[record.type] or EMPTY_FIELD end
+    if recordType == types.Weapon then return WEAPON_TYPE_NAMES[record.type] or EMPTY_FIELD end
+    if recordType == types.Apparatus then return APPARATUS_TYPE_NAMES[record.type] or EMPTY_FIELD end
+    if recordType == types.Book and record.isScroll then return 'Scroll' end
+    if recordType == types.Miscellaneous and record.isKey then return 'Key' end
+    return EMPTY_FIELD
+end
+
+local function typeText(data)
+    if not data then return EMPTY_FIELD end
+    local recordType = TYPE_NAMES[data.item and data.item.type] or 'Item'
+    local subtype = subtypeName(data.item and data.item.type, data.record)
+    if subtype == EMPTY_FIELD then return recordType end
+    return recordType .. '\n' .. subtype
+end
+
+local function goldPerWeight(record)
+    if not record or type(record.weight) ~= 'number' or record.weight <= 0 or type(record.value) ~= 'number' then
+        return EMPTY_FIELD
+    end
+    return formatNumber(record.value / record.weight, 2)
+end
+
+local function backgroundAlpha()
+    return ui._getMenuTransparency()
+end
+
+local function tooltipText(name, text, props)
+    props = props or {}
+    props.text = text
+    return {
+        name = name,
+        type = ui.TYPE.Text,
+        props = props,
+    }
+end
+
+local function tooltipField(name, label)
+    return {
+        name = name .. '_box',
+        type = ui.TYPE.Flex,
+        template = I.MWUI.templates.borders,
+        props = {
+            horizontal = false,
+            autoSize = false,
+            relativeSize = v2(0, 1),
+        },
+        external = { grow = 1 },
+        content = ui.content {
+            tooltipText(name .. '_label', label, {
+                relativeSize = v2(1, 0.42),
+                textSize = TOOLTIP_FIELD_TEXT_SIZE,
+                textAlignH = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Center,
+                autoSize = false,
+            }),
+            tooltipText(name .. '_value', EMPTY_FIELD, {
+                relativeSize = v2(1, 0.58),
+                textSize = TOOLTIP_VALUE_TEXT_SIZE,
+                textAlignH = ui.ALIGNMENT.Center,
+                textAlignV = ui.ALIGNMENT.Center,
+                multiline = true,
+                wordWrap = true,
+                autoSize = false,
+            }),
+        },
+    }
+end
+
+local function tooltipFieldValue(rowLayout, name)
+    return rowLayout.content[name .. '_box'].content[name .. '_value']
+end
+
+local function setTooltipField(rowLayout, name, value)
+    tooltipFieldValue(rowLayout, name).props.text = value or EMPTY_FIELD
+end
+
+local function makeTooltipLayout()
+    return {
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.bordersThick,
+        layer = TOOLTIP_LAYER,
+        props = {
+            position = WINDOW_POSITION + v2(WINDOW_SIZE.x + 16, 0),
+            size = TOOLTIP_SIZE,
+            visible = false,
+        },
+        content = ui.content {
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = WHITE_TEXTURE,
+                    color = BACKGROUND_COLOR,
+                    alpha = backgroundAlpha(),
+                    relativeSize = v2(1, 1),
+                },
+            },
+            {
+                name = 's3ui_tooltip_body',
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = false,
+                    relativeSize = v2(1, 1),
+                    autoSize = false,
+                },
+                content = ui.content {
+                    {
+                        name = 's3ui_tooltip_header',
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = true,
+                            relativeSize = TOOLTIP_HEADER_SIZE,
+                            autoSize = false,
+                        },
+                        content = ui.content {
+                            {
+                                name = 's3ui_tooltip_icon',
+                                type = ui.TYPE.Image,
+                                props = {
+                                    size = TOOLTIP_ICON_SIZE,
+                                },
+                            },
+                            tooltipText('s3ui_tooltip_name', EMPTY_FIELD, {
+                                size = v2(250, 0),
+                                textSize = 21,
+                                textAlignH = ui.ALIGNMENT.Start,
+                                textAlignV = ui.ALIGNMENT.Center,
+                                multiline = true,
+                                wordWrap = true,
+                                autoSize = false,
+                            }),
+                            tooltipText('s3ui_tooltip_count', '', {
+                                size = v2(52, 0),
+                                textSize = 18,
+                                textAlignH = ui.ALIGNMENT.Center,
+                                textAlignV = ui.ALIGNMENT.Center,
+                                autoSize = false,
+                            }),
+                        },
+                    },
+                    {
+                        name = 's3ui_tooltip_primary',
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = true,
+                            relativeSize = TOOLTIP_PRIMARY_SIZE,
+                            autoSize = false,
+                        },
+                        content = ui.content {
+                            tooltipField('s3ui_tooltip_type', 'Type'),
+                            tooltipField('s3ui_tooltip_value', 'Value'),
+                            tooltipField('s3ui_tooltip_weight', 'Weight'),
+                            tooltipField('s3ui_tooltip_gold_per_weight', 'Gold/Wt'),
+                        },
+                    },
+                    {
+                        name = 's3ui_tooltip_secondary',
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = true,
+                            relativeSize = TOOLTIP_SECONDARY_SIZE,
+                            autoSize = false,
+                        },
+                        content = ui.content {
+                            tooltipField('s3ui_tooltip_reach', 'Reach'),
+                            tooltipField('s3ui_tooltip_speed', 'Speed'),
+                            tooltipField('s3ui_tooltip_thrust', 'Thrust'),
+                            tooltipField('s3ui_tooltip_chop', 'Chop'),
+                            tooltipField('s3ui_tooltip_slash', 'Slash'),
+                        },
+                    },
+                },
+            },
+        },
+    }
+end
+
+local function hideTooltip()
+    if not tooltipElement or not tooltipElement.layout then return end
+    tooltipElement.layout.props.visible = false
+    tooltipElement:update()
+end
+
+local function moveTooltip(mouseEvent)
+    if not tooltipElement or not tooltipElement.layout or not mouseEvent or not mouseEvent.position then return end
+    local screen = ui.screenSize()
+    local position = mouseEvent.position + TOOLTIP_MOUSE_OFFSET
+    if position.x + TOOLTIP_SIZE.x > screen.x then position.x = screen.x - TOOLTIP_SIZE.x end
+    if position.y + TOOLTIP_SIZE.y > screen.y then position.y = screen.y - TOOLTIP_SIZE.y end
+    if position.x < 0 then position.x = 0 end
+    if position.y < 0 then position.y = 0 end
+    tooltipElement.layout.props.position = position
+end
+
+local function updateTooltip(data, mouseEvent)
+    if not tooltipElement or not tooltipElement.layout or not data then return end
+
+    moveTooltip(mouseEvent)
+
+    local bodyContent = tooltipElement.layout.content.s3ui_tooltip_body.content
+    local header = bodyContent.s3ui_tooltip_header.content
+    local primary = bodyContent.s3ui_tooltip_primary
+    local secondary = bodyContent.s3ui_tooltip_secondary
+    local record = data.record
+
+    if data.icon then
+        header.s3ui_tooltip_icon.props.resource = ui.texture { path = data.icon }
+    else
+        header.s3ui_tooltip_icon.props.resource = WHITE_TEXTURE
+    end
+
+    header.s3ui_tooltip_name.props.text = data.name or itemName(data.item, record)
+    header.s3ui_tooltip_count.props.text = data.count and data.count > 1 and ('x' .. tostring(data.count)) or ''
+
+    setTooltipField(primary, 's3ui_tooltip_type', typeText(data))
+    setTooltipField(primary, 's3ui_tooltip_value', record and record.value and tostring(record.value) or EMPTY_FIELD)
+    setTooltipField(primary, 's3ui_tooltip_weight', formatNumber(record and record.weight, 2))
+    setTooltipField(primary, 's3ui_tooltip_gold_per_weight', goldPerWeight(record))
+
+    if data.item and data.item.type == types.Weapon then
+        setTooltipField(secondary, 's3ui_tooltip_reach', formatNumber(record and record.reach, 2))
+        setTooltipField(secondary, 's3ui_tooltip_speed', formatNumber(record and record.speed, 2))
+        setTooltipField(secondary, 's3ui_tooltip_thrust', formatDamage(record and record.thrustMinDamage, record and record.thrustMaxDamage))
+        setTooltipField(secondary, 's3ui_tooltip_chop', formatDamage(record and record.chopMinDamage, record and record.chopMaxDamage))
+        setTooltipField(secondary, 's3ui_tooltip_slash', formatDamage(record and record.slashMinDamage, record and record.slashMaxDamage))
+    else
+        setTooltipField(secondary, 's3ui_tooltip_reach', '')
+        setTooltipField(secondary, 's3ui_tooltip_speed', '')
+        setTooltipField(secondary, 's3ui_tooltip_thrust', '')
+        setTooltipField(secondary, 's3ui_tooltip_chop', '')
+        setTooltipField(secondary, 's3ui_tooltip_slash', '')
+    end
+
+    tooltipElement.layout.props.visible = true
+    tooltipElement:update()
+end
+
 local function makeSlot(data, index)
     local content = ui.content {}
 
@@ -143,6 +470,15 @@ local function makeSlot(data, index)
         },
         userData = data,
         events = data and {
+            focusGain = async:callback(function(mouseEvent, layout)
+                updateTooltip(layout and layout.userData, mouseEvent)
+            end),
+            focusLoss = async:callback(function()
+                hideTooltip()
+            end),
+            mouseMove = async:callback(function(mouseEvent, layout)
+                updateTooltip(layout and layout.userData, mouseEvent)
+            end),
             mouseClick = async:callback(function(_, layout)
                 local clicked = layout and layout.userData
                 if clicked then
@@ -209,7 +545,7 @@ local function makeInventoryLayout(items)
                 props = {
                     resource = WHITE_TEXTURE,
                     color = BACKGROUND_COLOR,
-                    alpha = BACKGROUND_ALPHA,
+                    alpha = backgroundAlpha(),
                     relativeSize = v2(1, 1),
                 },
             },
@@ -351,6 +687,10 @@ end
 
 local function destroyInventoryWindow()
     statusLayout = nil
+    if tooltipElement and tooltipElement.layout then
+        tooltipElement:destroy()
+    end
+    tooltipElement = nil
     if rootElement and rootElement.layout then
         rootElement:destroy()
     end
@@ -363,6 +703,7 @@ local function showInventoryWindow()
     showStaticInventoryCamera()
     rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
     statusLayout = rootElement.layout.content.s3ui_body.content.s3ui_status
+    tooltipElement = ui.create(makeTooltipLayout())
 end
 
 local function hideInventoryWindow()
