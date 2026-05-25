@@ -1339,6 +1339,7 @@ local function makeGrid(items, firstIndex)
         props = {
             horizontal = false,
             size = v2(0, 0),
+            relativeSize = v2(0, 1),
             autoSize = false,
         },
         external = { grow = 1, stretch = 1 },
@@ -1547,6 +1548,7 @@ local function makeList(items, firstIndex)
         props = {
             horizontal = false,
             size = v2(0, 0),
+            relativeSize = v2(0, 1),
             autoSize = false,
         },
         external = { grow = 1, stretch = 1 },
