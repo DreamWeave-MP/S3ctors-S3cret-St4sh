@@ -40,7 +40,7 @@ local SIMPLE_BORDER_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
 local ITEM_STATE_BADGE_RELATIVE_SIZE = v2(0.22, 0.22)
-local LIST_STATE_BADGE_SIZE = v2(0.04, 0.24)
+local LIST_STATE_BADGE_ICON_FRACTION = 0.36
 local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
 local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
@@ -60,6 +60,7 @@ local COMPACT_DETAIL_FIELD_SLOT_COUNT = COMPACT_DETAIL_FIELD_COLUMNS * COMPACT_D
 local ACTIVE_MAIN_MENU_KEY = 'inventory'
 local FRAME_SIZE_PANEL = 34
 local FRAME_SIZE_MEDIUM = 22
+local FRAME_CORNER_SCALE_PANEL = (FRAME_SIZE_MEDIUM - 1) / FRAME_SIZE_PANEL
 local SIMPLE_BORDER_THICKNESS = 2
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_HEIGHT = 0.72
@@ -286,11 +287,14 @@ local function frameInset(frameSize)
     return frameThickness(frameSize) + 2
 end
 
-local function addOrnateFrame(content, prefix, frameSize, alpha)
+local function addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
     local thickness = frameThickness(frameSize)
-    local halfFrame = math.floor(frameSize * 0.5)
-    local cornerOverhang = 4
-    local cornerSize = v2(frameSize, frameSize)
+    cornerScale = cornerScale or 1
+    local cornerPixelSize = math.floor(frameSize * cornerScale + 0.5)
+    if cornerPixelSize < thickness then cornerPixelSize = thickness end
+    local halfFrame = math.floor(cornerPixelSize * 0.5)
+    local cornerOverhang = math.floor(4 * cornerScale + 0.5)
+    local cornerSize = v2(cornerPixelSize, cornerPixelSize)
     alpha = alpha or 1
 
     content:add {
@@ -1158,6 +1162,8 @@ local function controlBackground(active)
             resource = WHITE_TEXTURE,
             color = active and CATEGORY_ACTIVE_COLOR or CATEGORY_COLLAPSED_COLOR,
             alpha = active and 0.55 or 0.25,
+            position = v2(SIMPLE_BORDER_THICKNESS, SIMPLE_BORDER_THICKNESS),
+            size = v2(-SIMPLE_BORDER_THICKNESS * 2, -SIMPLE_BORDER_THICKNESS * 2),
             relativeSize = v2(1, 1),
         },
     }
@@ -1460,6 +1466,8 @@ local function makeCategoryHeaderSlot(entry, index)
                 resource = WHITE_TEXTURE,
                 color = collapsed and CATEGORY_COLLAPSED_COLOR or CATEGORY_HEADER_COLOR,
                 alpha = 0.72,
+                position = v2(SIMPLE_BORDER_THICKNESS, SIMPLE_BORDER_THICKNESS),
+                size = v2(-SIMPLE_BORDER_THICKNESS * 2, -SIMPLE_BORDER_THICKNESS * 2),
                 relativeSize = v2(1, 1),
             },
         },
@@ -1527,18 +1535,30 @@ local function makeCategoryHeaderSlot(entry, index)
     }
 end
 
-local function addStateBadge(content, name, icon, anchor, position, size)
+local function addStateBadge(content, name, icon, anchor, position, size, absoluteSize)
+    local props = {
+        resource = icon,
+        anchor = anchor,
+        relativePosition = position,
+        alpha = 0.96,
+    }
+    if absoluteSize then
+        props.size = size
+    else
+        props.relativeSize = size
+    end
+
     content:add {
         name = name,
         type = ui.TYPE.Image,
-        props = {
-            resource = icon,
-            anchor = anchor,
-            relativePosition = position,
-            relativeSize = size,
-            alpha = 0.96,
-        },
+        props = props,
     }
+end
+
+local function listStateBadgeSize()
+    local edge = math.floor(layoutMetrics().listIconSize.y * LIST_STATE_BADGE_ICON_FRACTION)
+    if edge < 10 then edge = 10 end
+    return v2(edge, edge)
 end
 
 local function addGridStateBadges(content, prefix, data)
@@ -1554,14 +1574,15 @@ local function addGridStateBadges(content, prefix, data)
 end
 
 local function addListStateBadges(content, prefix, data)
+    local badgeSize = listStateBadgeSize()
     if data.equipped then
-        addStateBadge(content, prefix .. '_equipped', ITEM_STATE_ICONS.equipped, v2(0, 0.5), v2(0.012, 0.25), LIST_STATE_BADGE_SIZE)
+        addStateBadge(content, prefix .. '_equipped', ITEM_STATE_ICONS.equipped, v2(0, 0.5), v2(0.012, 0.25), badgeSize, true)
     end
     if data.enchanted then
-        addStateBadge(content, prefix .. '_enchanted', ITEM_STATE_ICONS.enchanted, v2(0, 0.5), v2(0.012, 0.5), LIST_STATE_BADGE_SIZE)
+        addStateBadge(content, prefix .. '_enchanted', ITEM_STATE_ICONS.enchanted, v2(0, 0.5), v2(0.012, 0.5), badgeSize, true)
     end
     if data.broken then
-        addStateBadge(content, prefix .. '_broken', ITEM_STATE_ICONS.broken, v2(0, 0.5), v2(0.012, 0.75), LIST_STATE_BADGE_SIZE)
+        addStateBadge(content, prefix .. '_broken', ITEM_STATE_ICONS.broken, v2(0, 0.5), v2(0.012, 0.75), badgeSize, true)
     end
 end
 
@@ -1674,6 +1695,8 @@ local function makeListCategoryRow(entry, index)
                 resource = WHITE_TEXTURE,
                 color = collapsed and CATEGORY_COLLAPSED_COLOR or CATEGORY_HEADER_COLOR,
                 alpha = 0.72,
+                position = v2(SIMPLE_BORDER_THICKNESS, SIMPLE_BORDER_THICKNESS),
+                size = v2(-SIMPLE_BORDER_THICKNESS * 2, -SIMPLE_BORDER_THICKNESS * 2),
                 relativeSize = v2(1, 1),
             },
         },
@@ -1924,7 +1947,7 @@ local function makeInventoryLayout(items)
             content = bodyContent,
         },
     }
-    addOrnateFrame(content, 's3ui_inventory', FRAME_SIZE_PANEL, 1)
+    addOrnateFrame(content, 's3ui_inventory', FRAME_SIZE_PANEL, 1, FRAME_CORNER_SCALE_PANEL)
 
     return {
         type = ui.TYPE.Widget,
