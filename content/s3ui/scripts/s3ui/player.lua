@@ -33,7 +33,6 @@ local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/invento
 local CATEGORY_SMALL_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/small_icons.dds'
 local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
-local LIST_ICON_RELATIVE_SIZE = v2(0.08, 0.72)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
 local ITEM_STATE_BADGE_RELATIVE_SIZE = v2(0.22, 0.22)
 local LIST_STATE_BADGE_SIZE = v2(0.04, 0.24)
@@ -1412,7 +1411,7 @@ local function makeListCategoryRow(entry, index)
                 resource = icon,
                 anchor = v2(0, 0.5),
                 relativePosition = v2(0.1, 0.5),
-                relativeSize = v2(0.08, 0.72),
+                size = layoutMetrics().listIconSize,
                 alpha = collapsed and 0.62 or 0.95,
             },
         }
@@ -1467,7 +1466,7 @@ local function makeListItemRow(entry, index)
                     resource = ui.texture { path = data.icon },
                     anchor = v2(0, 0.5),
                     relativePosition = v2(0.06, 0.5),
-                    relativeSize = LIST_ICON_RELATIVE_SIZE,
+                    size = layoutMetrics().listIconSize,
                 },
             }
         end
