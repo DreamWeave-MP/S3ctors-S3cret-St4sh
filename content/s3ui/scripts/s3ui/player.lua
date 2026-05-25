@@ -56,6 +56,14 @@ local TOOLTIP_FIELD_ROW_COUNT = 11
 local COMPACT_DETAIL_FIELD_COLUMNS = 4
 local COMPACT_DETAIL_FIELD_ROWS = 3
 local COMPACT_DETAIL_FIELD_SLOT_COUNT = COMPACT_DETAIL_FIELD_COLUMNS * COMPACT_DETAIL_FIELD_ROWS
+local LIST_FIELD_WIDTH = 0.12
+local LIST_FIELD_HEIGHT = 0.72
+local LIST_FIELD_RIGHT_EDGE = {
+    value = 0.68,
+    weight = 0.8,
+    effectiveness = 0.9,
+    condition = 0.99,
+}
 
 local TOOLTIP_ICONS = {
     typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
@@ -1012,6 +1020,17 @@ local function makeSortButton(mode, label)
     }
 end
 
+local function listFieldCenter(mode)
+    return (LIST_FIELD_RIGHT_EDGE[mode] or 0.5) - LIST_FIELD_WIDTH * 0.5
+end
+
+local function makeToolbarSortButton(mode, label)
+    local button = makeSortButton(mode, label)
+    button.props.anchor = v2(0.5, 0.5)
+    button.props.relativePosition = v2(listFieldCenter(mode), 0.5)
+    return button
+end
+
 local function inventoryWindowActive()
     return rootElement and rootElement.layout and I.UI.isWindowVisible(WINDOW)
 end
@@ -1100,6 +1119,13 @@ local function makeViewToggleButton()
     }
 end
 
+local function makeToolbarViewToggleButton()
+    local button = makeViewToggleButton()
+    button.props.anchor = v2(0.5, 0.5)
+    button.props.relativePosition = v2(0.5, 0.5)
+    return button
+end
+
 local function makeCategoryRailButton(category)
     return makeControlButton('s3ui_category_' .. category.key, category.label, selectedCategory == category.key, {
         relativeSize = v2(1, 1 / #CATEGORY_ORDER),
@@ -1130,6 +1156,7 @@ local function makeCategoryRail()
 end
 
 local function makeToolbar()
+    local metrics = layoutMetrics()
     return {
         name = 's3ui_toolbar',
         type = ui.TYPE.Flex,
@@ -1140,12 +1167,32 @@ local function makeToolbar()
             autoSize = false,
         },
         content = ui.content {
-            makeViewToggleButton(),
-            { external = { grow = 1 } },
-            makeSortButton('value', 'Gold'),
-            makeSortButton('weight', 'Weight'),
-            makeSortButton('effectiveness', 'Effectiveness'),
-            makeSortButton('condition', 'Condition'),
+            {
+                name = 's3ui_toolbar_rail_area',
+                type = ui.TYPE.Widget,
+                props = {
+                    size = v2(metrics.categoryRailSize.x, 0),
+                },
+                external = { stretch = 1 },
+                content = ui.content {
+                    makeToolbarViewToggleButton(),
+                },
+            },
+            {
+                name = 's3ui_toolbar_field_area',
+                type = ui.TYPE.Widget,
+                props = {
+                    size = v2(0, 0),
+                    relativeSize = v2(0, 1),
+                },
+                external = { grow = 1, stretch = 1 },
+                content = ui.content {
+                    makeToolbarSortButton('value', 'Gold'),
+                    makeToolbarSortButton('weight', 'Weight'),
+                    makeToolbarSortButton('effectiveness', 'Effectiveness'),
+                    makeToolbarSortButton('condition', 'Condition'),
+                },
+            },
         },
     }
 end
@@ -1492,8 +1539,8 @@ local function makeListItemRow(entry, index)
         }))
         content:add(textLine(tostring(data.value), I.MWUI.templates.textNormal, {
             anchor = v2(1, 0.5),
-            relativePosition = v2(0.68, 0.5),
-            relativeSize = v2(0.12, 0.72),
+            relativePosition = v2(LIST_FIELD_RIGHT_EDGE.value, 0.5),
+            relativeSize = v2(LIST_FIELD_WIDTH, LIST_FIELD_HEIGHT),
             textSize = 14,
             textAlignH = ui.ALIGNMENT.Center,
             textAlignV = ui.ALIGNMENT.Center,
@@ -1501,8 +1548,8 @@ local function makeListItemRow(entry, index)
         }))
         content:add(textLine(formatNumber(data.weight, 1), I.MWUI.templates.textNormal, {
             anchor = v2(1, 0.5),
-            relativePosition = v2(0.8, 0.5),
-            relativeSize = v2(0.12, 0.72),
+            relativePosition = v2(LIST_FIELD_RIGHT_EDGE.weight, 0.5),
+            relativeSize = v2(LIST_FIELD_WIDTH, LIST_FIELD_HEIGHT),
             textSize = 14,
             textAlignH = ui.ALIGNMENT.Center,
             textAlignV = ui.ALIGNMENT.Center,
@@ -1510,8 +1557,8 @@ local function makeListItemRow(entry, index)
         }))
         content:add(textLine(formatNumber(data.effectiveness, 0), I.MWUI.templates.textNormal, {
             anchor = v2(1, 0.5),
-            relativePosition = v2(0.9, 0.5),
-            relativeSize = v2(0.12, 0.72),
+            relativePosition = v2(LIST_FIELD_RIGHT_EDGE.effectiveness, 0.5),
+            relativeSize = v2(LIST_FIELD_WIDTH, LIST_FIELD_HEIGHT),
             textSize = 14,
             textAlignH = ui.ALIGNMENT.Center,
             textAlignV = ui.ALIGNMENT.Center,
@@ -1519,8 +1566,8 @@ local function makeListItemRow(entry, index)
         }))
         content:add(textLine(formatCondition(data.condition), I.MWUI.templates.textNormal, {
             anchor = v2(1, 0.5),
-            relativePosition = v2(0.99, 0.5),
-            relativeSize = v2(0.12, 0.72),
+            relativePosition = v2(LIST_FIELD_RIGHT_EDGE.condition, 0.5),
+            relativeSize = v2(LIST_FIELD_WIDTH, LIST_FIELD_HEIGHT),
             textSize = 14,
             textAlignH = ui.ALIGNMENT.Center,
             textAlignV = ui.ALIGNMENT.Center,
