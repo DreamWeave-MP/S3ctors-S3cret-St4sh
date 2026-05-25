@@ -2,4 +2,6 @@ public
 dist
 content/*/changelog.md
 unpublished
+.opencode/**
+AGENTS.md
 
