@@ -23,6 +23,7 @@ local GRID_COLUMNS = 6
 local GRID_ROWS = 5
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
+local CATEGORY_SMALL_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/small_icons.dds'
 local BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
 local ICON_RELATIVE_SIZE = v2(0.58, 0.58)
 local COUNT_RELATIVE_SIZE = v2(0.28, 0.22)
@@ -124,7 +125,7 @@ local CATEGORY_ICON_TEXTURES = {
     apparel = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(17, 536), size = v2(222, 226) },
     alchemy = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(802, 25), size = v2(194, 212) },
     books = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(4, 260), size = v2(247, 241) },
-    tools = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(1061, 529), size = v2(182, 217) },
+    tools = ui.texture { path = CATEGORY_SMALL_ICON_ATLAS, offset = v2(528, 0), size = v2(240, 128) },
     misc = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(1074, 29), size = v2(153, 207) },
 }
 
@@ -135,7 +136,7 @@ local CATEGORY_ICON_RELATIVE_SIZES = {
     apparel = v2(0.58, 0.58),
     alchemy = v2(0.6, 0.62),
     books = v2(0.66, 0.6),
-    tools = v2(0.52, 0.62),
+    tools = v2(0.74, 0.46),
     misc = v2(0.46, 0.58),
 }
 
