@@ -38,11 +38,17 @@ local LIST_STATE_BADGE_SIZE = v2(0.04, 0.24)
 local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
 local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
-local TOOLBAR_RELATIVE_SIZE = v2(1, 0.12)
+local TOOLBAR_HEIGHT_FRACTION = 0.1
+local TOOLBAR_MIN_HEIGHT = 40
+local TOOLBAR_MAX_HEIGHT = 64
 local MAIN_RELATIVE_SIZE = v2(1, 0)
-local CATEGORY_RAIL_SIZE = v2(86, 0)
-local CONTROL_BUTTON_SIZE = v2(48, 48)
-local VIEW_BUTTON_SIZE = v2(44, 44)
+local CATEGORY_RAIL_WIDTH_FRACTION = 0.13
+local CATEGORY_RAIL_MIN_WIDTH = 64
+local CATEGORY_RAIL_MAX_WIDTH = 110
+local CONTROL_BUTTON_SIZE_FRACTION = 0.78
+local VIEW_BUTTON_SIZE_FRACTION = 0.72
+local CONTROL_BUTTON_MIN_SIZE = 32
+local CONTROL_BUTTON_MAX_SIZE = 56
 local VIEW_TOGGLE_ICON_SIZE = v2(0.74, 0.74)
 local SORT_ICON_RELATIVE_SIZE = v2(0.68, 0.68)
 local SORT_DIRECTION_RELATIVE_SIZE = v2(0.34, 0.34)
@@ -477,12 +483,20 @@ local function computeLayoutMetrics()
         math.floor(margin),
         math.floor(clamp(screen.y * WINDOW_TOP_FRACTION, margin, screen.y - windowSize.y - margin))
     )
+    local toolbarHeight = math.floor(clamp(windowSize.y * TOOLBAR_HEIGHT_FRACTION, TOOLBAR_MIN_HEIGHT, TOOLBAR_MAX_HEIGHT))
+    local controlButtonSize = math.floor(clamp(toolbarHeight * CONTROL_BUTTON_SIZE_FRACTION, CONTROL_BUTTON_MIN_SIZE, CONTROL_BUTTON_MAX_SIZE))
+    local viewButtonSize = math.floor(clamp(toolbarHeight * VIEW_BUTTON_SIZE_FRACTION, CONTROL_BUTTON_MIN_SIZE, CONTROL_BUTTON_MAX_SIZE))
+    local railWidth = math.floor(clamp(windowSize.x * CATEGORY_RAIL_WIDTH_FRACTION, CATEGORY_RAIL_MIN_WIDTH, CATEGORY_RAIL_MAX_WIDTH))
 
     return {
         screen = screen,
         margin = margin,
         windowPosition = position,
         windowSize = windowSize,
+        toolbarRelativeSize = v2(1, toolbarHeight / windowSize.y),
+        categoryRailSize = v2(railWidth, 0),
+        controlButtonSize = v2(controlButtonSize, controlButtonSize),
+        viewButtonSize = v2(viewButtonSize, viewButtonSize),
     }
 end
 
@@ -1008,7 +1022,7 @@ local function makeSortButton(mode, label)
         name = name,
         type = ui.TYPE.Widget,
         props = {
-            size = CONTROL_BUTTON_SIZE,
+            size = layoutMetrics().controlButtonSize,
         },
         events = {
             focusGain = async:callback(function()
@@ -1078,7 +1092,7 @@ local function makeViewToggleButton()
         name = 's3ui_view_toggle',
         type = ui.TYPE.Widget,
         props = {
-            size = VIEW_BUTTON_SIZE,
+            size = layoutMetrics().viewButtonSize,
         },
         events = {
             focusGain = async:callback(function()
@@ -1138,7 +1152,7 @@ local function makeCategoryRail()
         type = ui.TYPE.Flex,
         props = {
             horizontal = false,
-            size = CATEGORY_RAIL_SIZE,
+            size = layoutMetrics().categoryRailSize,
             autoSize = false,
         },
         external = { stretch = 1 },
@@ -1152,7 +1166,7 @@ local function makeToolbar()
         type = ui.TYPE.Flex,
         props = {
             horizontal = true,
-            relativeSize = TOOLBAR_RELATIVE_SIZE,
+            relativeSize = layoutMetrics().toolbarRelativeSize,
             arrange = ui.ALIGNMENT.Center,
             autoSize = false,
         },
