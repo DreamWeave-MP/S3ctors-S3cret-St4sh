@@ -125,7 +125,7 @@ local CATEGORY_ICON_TEXTURES = {
     apparel = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(17, 536), size = v2(222, 226) },
     alchemy = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(802, 25), size = v2(194, 212) },
     books = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(4, 260), size = v2(247, 241) },
-    tools = ui.texture { path = CATEGORY_SMALL_ICON_ATLAS, offset = v2(528, 0), size = v2(240, 128) },
+    tools = ui.texture { path = CATEGORY_SMALL_ICON_ATLAS, offset = v2(786, 2), size = v2(86, 124) },
     misc = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(1074, 29), size = v2(153, 207) },
 }
 
@@ -136,7 +136,7 @@ local CATEGORY_ICON_RELATIVE_SIZES = {
     apparel = v2(0.58, 0.58),
     alchemy = v2(0.6, 0.62),
     books = v2(0.66, 0.6),
-    tools = v2(0.74, 0.46),
+    tools = v2(0.44, 0.6),
     misc = v2(0.46, 0.58),
 }
 
