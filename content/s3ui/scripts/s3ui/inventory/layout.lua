@@ -10,8 +10,9 @@ local LAYOUT = {
     windowHeightFraction = 0.80,
     windowMinSize = v2(560, 400),
     windowMaxSize = v2(960, 820),
+    windowAnchor = v2(0, 0.5),
+    windowRelativePosition = v2(0.05, 0.5),
     windowMarginFraction = 0.03,
-    windowTopFraction = 0.075,
     gridMinColumns = 3,
     gridMaxColumns = 10,
     gridMinRows = 3,
@@ -68,8 +69,8 @@ local function compute()
         math.floor(clamp(screen.y * LAYOUT.windowHeightFraction, LAYOUT.windowMinSize.y, maxHeight))
     )
     local position = v2(
-        math.floor(margin),
-        math.floor(clamp(screen.y * LAYOUT.windowTopFraction, margin, screen.y - windowSize.y - margin))
+        math.floor(screen.x * LAYOUT.windowRelativePosition.x - windowSize.x * LAYOUT.windowAnchor.x),
+        math.floor(screen.y * LAYOUT.windowRelativePosition.y - windowSize.y * LAYOUT.windowAnchor.y)
     )
     local toolbarHeight = math.floor(clamp(windowSize.y * LAYOUT.toolbarHeightFraction, LAYOUT.toolbarMinHeight, LAYOUT.toolbarMaxHeight))
     local controlButtonSize = math.floor(clamp(toolbarHeight * LAYOUT.controlButtonSizeFraction, LAYOUT.controlButtonMinSize, LAYOUT.controlButtonMaxSize))
@@ -91,7 +92,9 @@ local function compute()
     return {
         screen = screen,
         margin = margin,
+        windowAnchor = LAYOUT.windowAnchor,
         windowPosition = position,
+        windowRelativePosition = LAYOUT.windowRelativePosition,
         windowSize = windowSize,
         viewSize = viewSize,
         toolbarRelativeSize = v2(1, toolbarHeight / windowSize.y),

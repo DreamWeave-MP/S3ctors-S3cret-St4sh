@@ -1297,7 +1297,8 @@ local function makeInventoryLayout(items)
         template = I.MWUI.templates.bordersThick,
         layer = ROOT_LAYER,
         props = {
-            position = metrics.windowPosition,
+            anchor = metrics.windowAnchor,
+            relativePosition = metrics.windowRelativePosition,
             size = metrics.windowSize,
         },
         content = ui.content {
