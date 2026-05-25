@@ -1,0 +1,276 @@
+---@omw-context player
+
+local async = require 'openmw.async'
+local camera = require 'openmw.camera'
+local I = require 'openmw.interfaces'
+local self = require 'openmw.self'
+local types = require 'openmw.types'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local v2 = util.vector2
+
+local WINDOW = I.UI.WINDOW.Inventory
+local MODE = I.UI.MODE.Interface
+local ROOT_LAYER = 'Windows'
+
+local WINDOW_POSITION = v2(24, 80)
+local WINDOW_SIZE = v2(500, 520)
+local SLOT_SIZE = v2(72, 72)
+local ICON_SIZE = v2(40, 40)
+local GRID_COLUMNS = 6
+local GRID_ROWS = 5
+local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
+
+local rootElement = nil
+local statusLayout = nil
+local cameraSnapshot = nil
+local registeredWindow = false
+
+local function safeRecord(item)
+    if not item or not item.type or not item.recordId then return nil end
+    local records = item.type.records
+    if not records then return nil end
+    return records[item.recordId]
+end
+
+local function itemName(item, record)
+    return (record and record.name) or item.recordId or 'Unknown item'
+end
+
+local function itemCount(inventory, item)
+    if not item or not item.recordId then return 1 end
+    local ok, count = pcall(function() return inventory:countOf(item.recordId) end)
+    if ok and count and count > 0 then return count end
+    return 1
+end
+
+local function collectInventoryItems()
+    local inventory = types.Actor.inventory(self.object or self)
+    local seen = {}
+    local result = {}
+
+    for _, item in ipairs(inventory:getAll()) do
+        local recordId = item.recordId
+        if recordId and not seen[recordId] then
+            seen[recordId] = true
+            local record = safeRecord(item)
+            result[#result + 1] = {
+                item = item,
+                record = record,
+                name = itemName(item, record),
+                icon = record and record.icon,
+                count = itemCount(inventory, item),
+            }
+        end
+    end
+
+    table.sort(result, function(left, right)
+        return left.name:lower() < right.name:lower()
+    end)
+
+    return result
+end
+
+local function setStatus(text)
+    if not rootElement or not rootElement.layout or not statusLayout then return end
+    statusLayout.props.text = text
+    rootElement:update()
+end
+
+local function textLine(text, template, props)
+    props = props or {}
+    local name = props.name
+    props.name = nil
+    props.text = text
+    return {
+        name = name,
+        template = template or I.MWUI.templates.textNormal,
+        props = props,
+    }
+end
+
+local function makeSlot(data, index)
+    local content = ui.content {}
+
+    if data then
+        local iconProps = {
+            position = v2(16, 8),
+            size = ICON_SIZE,
+        }
+        if data.icon then
+            iconProps.resource = ui.texture { path = data.icon }
+        end
+
+        content:add {
+            type = ui.TYPE.Image,
+            props = iconProps,
+        }
+
+        if data.count > 1 then
+            content:add(textLine(tostring(data.count), I.MWUI.templates.textNormal, {
+                position = v2(46, 46),
+                size = v2(22, 18),
+                textSize = 13,
+            }))
+        end
+    else
+        content:add {
+            type = ui.TYPE.Widget,
+            props = { size = v2(1, 1) },
+        }
+    end
+
+    return {
+        name = 'slot_' .. tostring(index),
+        template = I.MWUI.templates.box,
+        props = {
+            size = SLOT_SIZE,
+        },
+        userData = data,
+        events = data and {
+            mouseClick = async:callback(function(_, layout)
+                local clicked = layout and layout.userData
+                if clicked then
+                    setStatus(clicked.name .. '  x' .. tostring(clicked.count))
+                end
+            end),
+        } or nil,
+        content = content,
+    }
+end
+
+local function makeGrid(items)
+    local rows = ui.content {}
+    local index = 1
+
+    for _ = 1, GRID_ROWS do
+        local row = ui.content {}
+        for _ = 1, GRID_COLUMNS do
+            row:add(makeSlot(items[index], index))
+            index = index + 1
+        end
+        rows:add {
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = true,
+                size = v2(GRID_COLUMNS * SLOT_SIZE.x, SLOT_SIZE.y),
+            },
+            content = row,
+        }
+    end
+
+    return {
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = false,
+            size = v2(GRID_COLUMNS * SLOT_SIZE.x, GRID_ROWS * SLOT_SIZE.y),
+        },
+        content = rows,
+    }
+end
+
+local function makeInventoryLayout(items)
+    local visibleCount = math.min(#items, MAX_VISIBLE_ITEMS)
+    local hiddenCount = math.max(0, #items - MAX_VISIBLE_ITEMS)
+    local summary = tostring(visibleCount) .. ' shown'
+    if hiddenCount > 0 then
+        summary = summary .. ', ' .. tostring(hiddenCount) .. ' more in inventory'
+    end
+
+    return {
+        type = ui.TYPE.Container,
+        layer = ROOT_LAYER,
+        props = {
+            position = WINDOW_POSITION,
+            size = WINDOW_SIZE,
+        },
+        content = ui.content {
+            {
+                template = I.MWUI.templates.boxTransparentThick,
+                props = {
+                    size = WINDOW_SIZE,
+                },
+                content = ui.content {
+                    {
+                        template = I.MWUI.templates.padding,
+                        content = ui.content {
+                            {
+                                type = ui.TYPE.Flex,
+                                props = {
+                                    horizontal = false,
+                                    size = WINDOW_SIZE - v2(32, 32),
+                                },
+                                content = ui.content {
+                                    textLine('Inventory', I.MWUI.templates.textHeader, { size = v2(450, 28) }),
+                                    textLine('Click an item to show its name. Press the inventory key (I by default) to close.', I.MWUI.templates.textNormal, { size = v2(450, 22), textSize = 15 }),
+                                    makeGrid(items),
+                                    textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', size = v2(450, 24), textSize = 15 }),
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+end
+
+local function saveCamera()
+    if cameraSnapshot then return end
+    cameraSnapshot = {
+        mode = camera.getMode(),
+        yaw = camera.getYaw(),
+        pitch = camera.getPitch(),
+        focalOffset = camera.getFocalPreferredOffset(),
+    }
+end
+
+local function restoreCamera()
+    if not cameraSnapshot then return end
+    camera.setFocalPreferredOffset(cameraSnapshot.focalOffset)
+    camera.setYaw(cameraSnapshot.yaw)
+    camera.setPitch(cameraSnapshot.pitch)
+    camera.setMode(cameraSnapshot.mode)
+    camera.instantTransition()
+    cameraSnapshot = nil
+end
+
+local function showPreviewCamera()
+    saveCamera()
+    camera.setMode(camera.MODE.Preview)
+    camera.setFocalPreferredOffset(v2(-220, 12))
+    camera.setYaw(cameraSnapshot.yaw + math.rad(155))
+    camera.setPitch(math.rad(-8))
+    camera.instantTransition()
+end
+
+local function destroyInventoryWindow()
+    statusLayout = nil
+    if rootElement and rootElement.layout then
+        rootElement:destroy()
+    end
+    rootElement = nil
+end
+
+local function showInventoryWindow()
+    destroyInventoryWindow()
+    showPreviewCamera()
+    rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
+    statusLayout = rootElement.layout.content[1].content[1].content[1].content.s3ui_status
+end
+
+local function hideInventoryWindow()
+    destroyInventoryWindow()
+    restoreCamera()
+end
+
+local function registerInventoryWindow()
+    if registeredWindow then return end
+    I.UI.registerWindow(WINDOW, showInventoryWindow, hideInventoryWindow)
+    registeredWindow = true
+end
+
+registerInventoryWindow()
+
+return {}

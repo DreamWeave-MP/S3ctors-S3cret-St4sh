@@ -1,6 +1,6 @@
 ---
 title: S3ui
-description: Replacement OpenMW UI experiment; implementation currently in progress.
+description: Replacement OpenMW UI experiment with a prototype player inventory window.
 date: 2024-06-06
 
 extra:
@@ -13,7 +13,7 @@ extra:
   version: development
 ---
 
-S3ui is an early replacement OpenMW UI experiment. The old Transmog-derived prototype has been removed and the replacement implementation is in progress, so this package currently registers no scripts.
+S3ui is an early replacement OpenMW UI experiment. It currently registers a player-context prototype inventory window toggled through OpenMW's inventory key (I by default).
 
 <!-- more -->
 
