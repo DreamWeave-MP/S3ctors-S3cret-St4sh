@@ -119,7 +119,6 @@ local function compute()
         compactDetailFieldsRelativeSize = v2(1 - LAYOUT.compactDetailHeaderWidthFraction, 1),
         compactDetailIconSize = v2(math.floor(compactDetailHeight * LAYOUT.compactDetailIconFraction), math.floor(compactDetailHeight * LAYOUT.compactDetailIconFraction)),
         compactDetailHeaderTextSize = math.floor(clamp(shortSide * 0.03, 14, 20)),
-        compactDetailCountTextSize = math.floor(clamp(shortSide * 0.024, 12, 16)),
         compactDetailFieldTextSize = math.floor(clamp(shortSide * 0.025, 12, 16)),
         compactDetailFieldIconSize = v2(math.floor(clamp(compactDetailHeight * 0.18, 18, 28)), math.floor(clamp(compactDetailHeight * 0.18, 18, 28))),
         categoryRailSize = v2(railWidth, 0),
@@ -138,7 +137,6 @@ local function compute()
         tooltipFieldIconSize = v2(tooltipFieldIconSize, tooltipFieldIconSize),
         tooltipValueTextSize = tooltipValueTextSize,
         tooltipHeaderTextSize = math.floor(tooltipValueTextSize * 1.3),
-        tooltipCountTextSize = math.floor(tooltipValueTextSize * 1.12),
     }
 end
 

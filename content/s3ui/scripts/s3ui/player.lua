@@ -501,7 +501,6 @@ local function buildDetailModel(data)
     return {
         icon = data.icon and ui.texture { path = data.icon } or WHITE_TEXTURE,
         name = data.name or itemName(data.item, record),
-        countText = data.count and data.count > 1 and ('x' .. tostring(data.count)) or '',
         fields = fields,
     }
 end
@@ -565,7 +564,7 @@ local function makeTooltipLayout()
                                 },
                             },
                             tooltipText('s3ui_tooltip_name', EMPTY_FIELD, {
-                                relativeSize = v2(0.52, 1),
+                                relativeSize = v2(0.82, 1),
                                 textSize = metrics.tooltipHeaderTextSize,
                                 textAlignH = ui.ALIGNMENT.Start,
                                 textAlignV = ui.ALIGNMENT.Center,
@@ -573,13 +572,6 @@ local function makeTooltipLayout()
                                 wordWrap = true,
                                 autoSize = false,
                             }, I.MWUI.templates.textHeader),
-                            tooltipText('s3ui_tooltip_count', '', {
-                                relativeSize = v2(0.30, 1),
-                                textSize = metrics.tooltipCountTextSize,
-                                textAlignH = ui.ALIGNMENT.End,
-                                textAlignV = ui.ALIGNMENT.Center,
-                                autoSize = false,
-                            }),
                         },
                     },
                     {
@@ -631,7 +623,6 @@ local function updateTooltip(data)
     local headerIcon = header.s3ui_tooltip_icon_box.content.s3ui_tooltip_icon
     headerIcon.props.resource = model.icon
     header.s3ui_tooltip_name.props.text = model.name
-    header.s3ui_tooltip_count.props.text = model.countText
 
     for key, name in pairs(DETAIL_FIELD_NAMES) do
         setTooltipField(fields, name, '')
@@ -796,7 +787,7 @@ local function makeCompactDetailBar()
                                 },
                                 content = ui.content {
                                     tooltipText('s3ui_compact_detail_name', '', {
-                                        relativeSize = v2(1, 0.68),
+                                        relativeSize = v2(1, 1),
                                         textSize = metrics.compactDetailHeaderTextSize,
                                         textAlignH = ui.ALIGNMENT.Start,
                                         textAlignV = ui.ALIGNMENT.Center,
@@ -804,13 +795,6 @@ local function makeCompactDetailBar()
                                         wordWrap = true,
                                         autoSize = false,
                                     }, I.MWUI.templates.textHeader),
-                                    tooltipText('s3ui_compact_detail_count', '', {
-                                        relativeSize = v2(1, 0.32),
-                                        textSize = metrics.compactDetailCountTextSize,
-                                        textAlignH = ui.ALIGNMENT.Start,
-                                        textAlignV = ui.ALIGNMENT.Center,
-                                        autoSize = false,
-                                    }),
                                 },
                             },
                         },
@@ -890,7 +874,6 @@ local function updateCompactDetail(data)
 
     headerContent.s3ui_compact_detail_icon_box.content.s3ui_compact_detail_icon.props.resource = model.icon
     titleContent.s3ui_compact_detail_name.props.text = model.name
-    titleContent.s3ui_compact_detail_count.props.text = model.countText
 
     for slotIndex = 1, COMPACT_DETAIL_FIELD_SLOT_COUNT do
         local field = model.fields[slotIndex]
