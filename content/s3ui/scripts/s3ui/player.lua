@@ -187,6 +187,9 @@ local rebuildInventoryRoot = nil
 local scrollOffset = 0
 local lastEntryCount = 0
 local activeLayoutMetrics = nil
+local selectedSlotIndex = nil
+local selectedSlotViewMode = nil
+local selectedDisplayData = nil
 
 local CATEGORY_ICON_TEXTURES = {
     all = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(25, 29), size = v2(206, 204) },
@@ -1147,6 +1150,30 @@ local function updateDetails(data)
     end
 end
 
+local function selectVisibleSlot(slotIndex, data)
+    selectedSlotIndex = slotIndex
+    selectedSlotViewMode = viewMode
+    if data then
+        updateDetails(data)
+    else
+        hideTooltip()
+    end
+end
+
+local function clearSelectedSlot()
+    selectedSlotIndex = nil
+    selectedSlotViewMode = nil
+    selectedDisplayData = nil
+    hideTooltip()
+end
+
+local function selectedEntryData(entries, firstIndex)
+    if selectedSlotIndex == nil or selectedSlotViewMode ~= viewMode then return nil end
+    local entry = entries[firstIndex + selectedSlotIndex - 1]
+    if entry and entry.kind == 'item' then return entry.data end
+    return nil
+end
+
 local function queueInventoryRebuild()
     hideTooltip()
     rebuildInventoryPending = true
@@ -1226,11 +1253,11 @@ local function makeSortButton(mode, label)
         },
         events = {
             focusGain = async:callback(function()
-                hideTooltip()
+                clearSelectedSlot()
             end),
             mouseClick = async:callback(function()
                 if generation ~= uiGeneration then return end
-                hideTooltip()
+                clearSelectedSlot()
                 if sortMode == mode then
                     sortAscending[mode] = not sortAscending[mode]
                 end
@@ -1307,11 +1334,11 @@ local function makeViewToggleButton()
         },
         events = {
             focusGain = async:callback(function()
-                hideTooltip()
+                clearSelectedSlot()
             end),
             mouseClick = async:callback(function()
                 if generation ~= uiGeneration then return end
-                hideTooltip()
+                clearSelectedSlot()
                 local targetMode = viewMode == 'grid' and 'list' or 'grid'
                 viewMode = targetMode
                 resetScrollOffset()
@@ -1383,10 +1410,10 @@ local function makeMainMenuButton(button)
         },
         events = {
             focusGain = async:callback(function()
-                hideTooltip()
+                clearSelectedSlot()
             end),
             mouseClick = async:callback(function()
-                hideTooltip()
+                clearSelectedSlot()
             end),
         },
         content = content,
@@ -1520,14 +1547,15 @@ local function makeCategoryHeaderSlot(entry, index)
         userData = entry,
         events = {
             focusGain = async:callback(function()
-                hideTooltip()
+                if generation ~= uiGeneration then return end
+                selectVisibleSlot(index, nil)
             end),
             mouseClick = async:callback(function(_, layout)
                 if generation ~= uiGeneration then return end
                 local clicked = layout and layout.userData
                 if not clicked then return end
+                selectVisibleSlot(index, nil)
                 collapsedCategories[clicked.categoryKey] = not collapsedCategories[clicked.categoryKey]
-                resetScrollOffset()
                 queueInventoryRebuild()
             end),
         },
@@ -1635,11 +1663,11 @@ local function makeSlot(entry, index)
         events = data and {
             focusGain = async:callback(function(mouseEvent, layout)
                 if generation ~= uiGeneration then return end
-                updateDetails(layout and layout.userData, mouseEvent)
+                selectVisibleSlot(index, layout and layout.userData)
             end),
             focusLoss = async:callback(function()
                 if generation ~= uiGeneration then return end
-                hideTooltip()
+                clearSelectedSlot()
             end),
         } or nil,
         content = content,
@@ -1752,14 +1780,15 @@ local function makeListCategoryRow(entry, index)
         userData = entry,
         events = {
             focusGain = async:callback(function()
-                hideTooltip()
+                if generation ~= uiGeneration then return end
+                selectVisibleSlot(index, nil)
             end),
             mouseClick = async:callback(function(_, layout)
                 if generation ~= uiGeneration then return end
                 local clicked = layout and layout.userData
                 if not clicked then return end
+                selectVisibleSlot(index, nil)
                 collapsedCategories[clicked.categoryKey] = not collapsedCategories[clicked.categoryKey]
-                resetScrollOffset()
                 queueInventoryRebuild()
             end),
         },
@@ -1856,11 +1885,11 @@ local function makeListItemRow(entry, index)
         events = data and {
             focusGain = async:callback(function(mouseEvent, layout)
                 if generation ~= uiGeneration then return end
-                updateDetails(layout and layout.userData, mouseEvent)
+                selectVisibleSlot(index, layout and layout.userData)
             end),
             focusLoss = async:callback(function()
                 if generation ~= uiGeneration then return end
-                hideTooltip()
+                clearSelectedSlot()
             end),
         } or nil,
         content = content,
@@ -1901,6 +1930,7 @@ local function makeInventoryLayout(items)
     lastEntryCount = #entries
     clampScrollOffset(#entries)
     local firstIndex = scrollOffset + 1
+    selectedDisplayData = selectedEntryData(entries, firstIndex)
     local inventoryView = viewMode == 'list' and makeList(entries, firstIndex) or makeGrid(entries, firstIndex)
     local bodyLayouts = {
         makeToolbar(),
@@ -2107,6 +2137,9 @@ local function destroyInventoryWindow()
     end
     rootElement = nil
     compactDetailVisible = false
+    selectedSlotIndex = nil
+    selectedSlotViewMode = nil
+    selectedDisplayData = nil
 end
 
 rebuildInventoryRoot = function()
@@ -2125,6 +2158,10 @@ rebuildInventoryRoot = function()
         ensureTooltipLayer()
         tooltipElement = ui.create(makeTooltipLayout())
     end
+    if selectedSlotIndex ~= nil and selectedDisplayData then
+        updateDetails(selectedDisplayData)
+    end
+    selectedDisplayData = nil
 end
 
 local function processPendingRebuild()
