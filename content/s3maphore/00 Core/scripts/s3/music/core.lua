@@ -537,7 +537,7 @@ return {
             PlaylistState.staticList = cellChangeData.staticList
             if cellChangeData.nearestRegion then PlaylistState.nearestRegion = cellChangeData.nearestRegion end
 
-            local thisCell = self.cell
+            local thisCell = assert(self.cell)
 
             local shouldUseName = thisCell.name ~= ''
 
