@@ -57,6 +57,12 @@ local registeredWindow = false
 local selectedCategory = 'all'
 local collapsedCategories = {}
 local sortMode = 'value'
+local sortAscending = {
+    value = false,
+    weight = false,
+    effectiveness = false,
+    condition = false,
+}
 local viewMode = 'grid'
 local uiGeneration = 0
 local pendingRebuildStatus = nil
@@ -312,8 +318,14 @@ local function sortItems(items)
     table.sort(items, function(left, right)
         local leftValue = itemSortValue(left)
         local rightValue = itemSortValue(right)
-        if leftValue ~= rightValue then return leftValue > rightValue end
-        return left.name:lower() < right.name:lower()
+        if leftValue ~= rightValue then
+            if sortAscending[sortMode] then return leftValue < rightValue end
+            return leftValue > rightValue
+        end
+        local leftName = left.name:lower()
+        local rightName = right.name:lower()
+        if leftName ~= rightName then return leftName < rightName end
+        return (left.item and left.item.recordId or '') < (right.item and right.item.recordId or '')
     end)
 end
 
@@ -641,11 +653,17 @@ local function makeControlButton(name, label, active, props, external, onClick)
 end
 
 local function makeSortButton(mode, label)
-    return makeControlButton('s3ui_sort_' .. mode, label, sortMode == mode, {
+    local active = sortMode == mode
+    local directionLabel = sortAscending[mode] and ' ^' or ' v'
+    local buttonLabel = active and (label .. directionLabel) or label
+    return makeControlButton('s3ui_sort_' .. mode, buttonLabel, active, {
         size = CONTROL_BUTTON_SIZE,
     }, { stretch = 1 }, function()
+        if sortMode == mode then
+            sortAscending[mode] = not sortAscending[mode]
+        end
         sortMode = mode
-        queueInventoryRebuild('Sorted by ' .. label)
+        queueInventoryRebuild('Sorted by ' .. label .. (sortAscending[mode] and ' ascending' or ' descending'))
     end)
 end
 
