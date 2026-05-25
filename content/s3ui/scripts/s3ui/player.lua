@@ -17,20 +17,50 @@ local MODE = I.UI.MODE.Interface
 local ROOT_LAYER = 'Windows'
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
 
-local WINDOW_WIDTH_FRACTION = 0.42
-local WINDOW_HEIGHT_FRACTION = 0.62
-local WINDOW_MIN_SIZE = v2(520, 420)
-local WINDOW_MAX_SIZE = v2(760, 720)
-local WINDOW_MARGIN_FRACTION = 0.03
-local WINDOW_TOP_FRACTION = 0.075
-local GRID_MIN_COLUMNS = 3
-local GRID_MAX_COLUMNS = 10
-local GRID_MIN_ROWS = 3
-local GRID_MAX_ROWS = 8
-local GRID_MIN_CELL_SIZE = v2(76, 82)
-local LIST_MIN_ROWS = 5
-local LIST_MAX_ROWS = 18
-local LIST_MIN_ROW_HEIGHT = 48
+local LAYOUT = {
+    windowWidthFraction = 0.42,
+    windowHeightFraction = 0.62,
+    windowMinSize = v2(520, 420),
+    windowMaxSize = v2(760, 720),
+    windowMarginFraction = 0.03,
+    windowTopFraction = 0.075,
+    gridMinColumns = 3,
+    gridMaxColumns = 10,
+    gridMinRows = 3,
+    gridMaxRows = 8,
+    gridMinCellSize = v2(76, 82),
+    listMinRows = 5,
+    listMaxRows = 18,
+    listMinRowHeight = 48,
+    toolbarHeightFraction = 0.1,
+    toolbarMinHeight = 40,
+    toolbarMaxHeight = 64,
+    categoryRailWidthFraction = 0.13,
+    categoryRailMinWidth = 64,
+    categoryRailMaxWidth = 110,
+    controlButtonSizeFraction = 0.78,
+    viewButtonSizeFraction = 0.72,
+    controlButtonMinSize = 32,
+    controlButtonMaxSize = 56,
+    tooltipWidthFraction = 0.18,
+    tooltipMinWidth = 220,
+    tooltipMaxWidth = 360,
+    tooltipFieldRowHeightFraction = 0.026,
+    tooltipFieldRowMinHeight = 22,
+    tooltipFieldRowMaxHeight = 32,
+    tooltipHeaderRowMultiplier = 2.55,
+    tooltipPaddingFraction = 0.013,
+    tooltipMinPadding = 8,
+    tooltipMaxPadding = 18,
+    tooltipMarginFraction = 0.02,
+    tooltipMinMargin = 12,
+    tooltipMaxMargin = 32,
+    tooltipFieldIconFraction = 0.82,
+    tooltipHeaderIconFraction = 0.68,
+    tooltipTextSizeFraction = 0.015,
+    tooltipValueTextMinSize = 14,
+    tooltipValueTextMaxSize = 18,
+}
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
 local CATEGORY_SMALL_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/small_icons.dds'
@@ -43,17 +73,7 @@ local LIST_STATE_BADGE_SIZE = v2(0.04, 0.24)
 local CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24)
 local CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24)
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
-local TOOLBAR_HEIGHT_FRACTION = 0.1
-local TOOLBAR_MIN_HEIGHT = 40
-local TOOLBAR_MAX_HEIGHT = 64
 local MAIN_RELATIVE_SIZE = v2(1, 0)
-local CATEGORY_RAIL_WIDTH_FRACTION = 0.13
-local CATEGORY_RAIL_MIN_WIDTH = 64
-local CATEGORY_RAIL_MAX_WIDTH = 110
-local CONTROL_BUTTON_SIZE_FRACTION = 0.78
-local VIEW_BUTTON_SIZE_FRACTION = 0.72
-local CONTROL_BUTTON_MIN_SIZE = 32
-local CONTROL_BUTTON_MAX_SIZE = 56
 local VIEW_TOGGLE_ICON_SIZE = v2(0.74, 0.74)
 local SORT_ICON_RELATIVE_SIZE = v2(0.68, 0.68)
 local SORT_DIRECTION_RELATIVE_SIZE = v2(0.34, 0.34)
@@ -62,18 +82,7 @@ local CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86)
 local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
 local VIEW_GLYPH_COLOR = util.color.rgb(0.9, 0.84, 0.62)
 local TOOLTIP_LAYER = 'S3UI_Tooltip'
-local TOOLTIP_RELATIVE_WIDTH = 0.18
-local TOOLTIP_HEADER_HEIGHT = 72
-local TOOLTIP_FIELD_ROW_HEIGHT = 28
 local TOOLTIP_FIELD_ROW_COUNT = 9
-local TOOLTIP_VERTICAL_PADDING = 14
-local TOOLTIP_DEFAULT_HEIGHT = TOOLTIP_HEADER_HEIGHT + TOOLTIP_FIELD_ROW_COUNT * TOOLTIP_FIELD_ROW_HEIGHT + TOOLTIP_VERTICAL_PADDING
-local TOOLTIP_HEADER_SIZE = v2(1, TOOLTIP_HEADER_HEIGHT / TOOLTIP_DEFAULT_HEIGHT)
-local TOOLTIP_FIELDS_SIZE = v2(1, TOOLTIP_FIELD_ROW_COUNT * TOOLTIP_FIELD_ROW_HEIGHT / TOOLTIP_DEFAULT_HEIGHT)
-local TOOLTIP_MIN_MARGIN = v2(24, 24)
-local TOOLTIP_ICON_SIZE = v2(48, 48)
-local TOOLTIP_FIELD_ICON_SIZE = v2(28, 28)
-local TOOLTIP_VALUE_TEXT_SIZE = 16
 local EMPTY_FIELD = '—'
 
 local TOOLTIP_ICONS = {
@@ -477,25 +486,33 @@ end
 local function computeLayoutMetrics()
     local screen = ui.screenSize()
     local shortSide = math.min(screen.x, screen.y)
-    local margin = clamp(shortSide * WINDOW_MARGIN_FRACTION, 12, 48)
-    local maxWidth = math.min(WINDOW_MAX_SIZE.x, screen.x - margin * 2)
-    local maxHeight = math.min(WINDOW_MAX_SIZE.y, screen.y - margin * 2)
+    local margin = clamp(shortSide * LAYOUT.windowMarginFraction, 12, 48)
+    local maxWidth = math.min(LAYOUT.windowMaxSize.x, screen.x - margin * 2)
+    local maxHeight = math.min(LAYOUT.windowMaxSize.y, screen.y - margin * 2)
     local windowSize = v2(
-        math.floor(clamp(screen.x * WINDOW_WIDTH_FRACTION, WINDOW_MIN_SIZE.x, maxWidth)),
-        math.floor(clamp(screen.y * WINDOW_HEIGHT_FRACTION, WINDOW_MIN_SIZE.y, maxHeight))
+        math.floor(clamp(screen.x * LAYOUT.windowWidthFraction, LAYOUT.windowMinSize.x, maxWidth)),
+        math.floor(clamp(screen.y * LAYOUT.windowHeightFraction, LAYOUT.windowMinSize.y, maxHeight))
     )
     local position = v2(
         math.floor(margin),
-        math.floor(clamp(screen.y * WINDOW_TOP_FRACTION, margin, screen.y - windowSize.y - margin))
+        math.floor(clamp(screen.y * LAYOUT.windowTopFraction, margin, screen.y - windowSize.y - margin))
     )
-    local toolbarHeight = math.floor(clamp(windowSize.y * TOOLBAR_HEIGHT_FRACTION, TOOLBAR_MIN_HEIGHT, TOOLBAR_MAX_HEIGHT))
-    local controlButtonSize = math.floor(clamp(toolbarHeight * CONTROL_BUTTON_SIZE_FRACTION, CONTROL_BUTTON_MIN_SIZE, CONTROL_BUTTON_MAX_SIZE))
-    local viewButtonSize = math.floor(clamp(toolbarHeight * VIEW_BUTTON_SIZE_FRACTION, CONTROL_BUTTON_MIN_SIZE, CONTROL_BUTTON_MAX_SIZE))
-    local railWidth = math.floor(clamp(windowSize.x * CATEGORY_RAIL_WIDTH_FRACTION, CATEGORY_RAIL_MIN_WIDTH, CATEGORY_RAIL_MAX_WIDTH))
+    local toolbarHeight = math.floor(clamp(windowSize.y * LAYOUT.toolbarHeightFraction, LAYOUT.toolbarMinHeight, LAYOUT.toolbarMaxHeight))
+    local controlButtonSize = math.floor(clamp(toolbarHeight * LAYOUT.controlButtonSizeFraction, LAYOUT.controlButtonMinSize, LAYOUT.controlButtonMaxSize))
+    local viewButtonSize = math.floor(clamp(toolbarHeight * LAYOUT.viewButtonSizeFraction, LAYOUT.controlButtonMinSize, LAYOUT.controlButtonMaxSize))
+    local railWidth = math.floor(clamp(windowSize.x * LAYOUT.categoryRailWidthFraction, LAYOUT.categoryRailMinWidth, LAYOUT.categoryRailMaxWidth))
     local viewSize = v2(math.max(windowSize.x - railWidth, 1), math.max(windowSize.y - toolbarHeight, 1))
-    local gridColumns = math.floor(clamp(math.floor(viewSize.x / GRID_MIN_CELL_SIZE.x), GRID_MIN_COLUMNS, GRID_MAX_COLUMNS))
-    local gridRows = math.floor(clamp(math.floor(viewSize.y / GRID_MIN_CELL_SIZE.y), GRID_MIN_ROWS, GRID_MAX_ROWS))
-    local listRows = math.floor(clamp(math.floor(viewSize.y / LIST_MIN_ROW_HEIGHT), LIST_MIN_ROWS, LIST_MAX_ROWS))
+    local gridColumns = math.floor(clamp(math.floor(viewSize.x / LAYOUT.gridMinCellSize.x), LAYOUT.gridMinColumns, LAYOUT.gridMaxColumns))
+    local gridRows = math.floor(clamp(math.floor(viewSize.y / LAYOUT.gridMinCellSize.y), LAYOUT.gridMinRows, LAYOUT.gridMaxRows))
+    local listRows = math.floor(clamp(math.floor(viewSize.y / LAYOUT.listMinRowHeight), LAYOUT.listMinRows, LAYOUT.listMaxRows))
+    local tooltipWidth = math.floor(clamp(screen.x * LAYOUT.tooltipWidthFraction, LAYOUT.tooltipMinWidth, math.min(LAYOUT.tooltipMaxWidth, screen.x - margin * 2)))
+    local tooltipFieldRowHeight = math.floor(clamp(shortSide * LAYOUT.tooltipFieldRowHeightFraction, LAYOUT.tooltipFieldRowMinHeight, LAYOUT.tooltipFieldRowMaxHeight))
+    local tooltipHeaderHeight = math.floor(tooltipFieldRowHeight * LAYOUT.tooltipHeaderRowMultiplier)
+    local tooltipPadding = math.floor(clamp(shortSide * LAYOUT.tooltipPaddingFraction, LAYOUT.tooltipMinPadding, LAYOUT.tooltipMaxPadding))
+    local tooltipMargin = clamp(shortSide * LAYOUT.tooltipMarginFraction, LAYOUT.tooltipMinMargin, LAYOUT.tooltipMaxMargin)
+    local tooltipHeaderIconSize = math.floor(clamp(tooltipHeaderHeight * LAYOUT.tooltipHeaderIconFraction, 32, 56))
+    local tooltipFieldIconSize = math.floor(clamp(tooltipFieldRowHeight * LAYOUT.tooltipFieldIconFraction, 18, 30))
+    local tooltipValueTextSize = math.floor(clamp(shortSide * LAYOUT.tooltipTextSizeFraction, LAYOUT.tooltipValueTextMinSize, LAYOUT.tooltipValueTextMaxSize))
 
     return {
         screen = screen,
@@ -510,6 +527,16 @@ local function computeLayoutMetrics()
         gridColumns = gridColumns,
         gridRows = gridRows,
         listRows = listRows,
+        tooltipWidth = tooltipWidth,
+        tooltipFieldRowHeight = tooltipFieldRowHeight,
+        tooltipHeaderHeight = tooltipHeaderHeight,
+        tooltipPadding = tooltipPadding,
+        tooltipMargin = v2(tooltipMargin, tooltipMargin),
+        tooltipHeaderIconSize = v2(tooltipHeaderIconSize, tooltipHeaderIconSize),
+        tooltipFieldIconSize = v2(tooltipFieldIconSize, tooltipFieldIconSize),
+        tooltipValueTextSize = tooltipValueTextSize,
+        tooltipHeaderTextSize = math.floor(tooltipValueTextSize * 1.3),
+        tooltipCountTextSize = math.floor(tooltipValueTextSize * 1.12),
     }
 end
 
@@ -523,26 +550,28 @@ local function ensureTooltipLayer()
     end
 end
 
-local function tooltipPixelHeight(rowCount)
+local function tooltipPixelHeight(rowCount, metrics)
+    metrics = metrics or layoutMetrics()
     if type(rowCount) ~= 'number' or rowCount < 1 then rowCount = 1 end
-    return TOOLTIP_HEADER_HEIGHT + rowCount * TOOLTIP_FIELD_ROW_HEIGHT + TOOLTIP_VERTICAL_PADDING
+    return metrics.tooltipHeaderHeight + rowCount * metrics.tooltipFieldRowHeight + metrics.tooltipPadding
 end
 
-local function tooltipRelativeSize(rowCount, screen)
-    screen = screen or ui.screenSize()
-    return v2(TOOLTIP_RELATIVE_WIDTH, tooltipPixelHeight(rowCount) / screen.y)
+local function tooltipRelativeSize(rowCount, screen, metrics)
+    metrics = metrics or layoutMetrics()
+    screen = screen or metrics.screen or ui.screenSize()
+    return v2(metrics.tooltipWidth / screen.x, tooltipPixelHeight(rowCount, metrics) / screen.y)
 end
 
 local function tooltipPosition(relativeSize)
     local screen = ui.screenSize()
     local metrics = layoutMetrics()
-    relativeSize = relativeSize or tooltipRelativeSize(TOOLTIP_FIELD_ROW_COUNT, screen)
+    relativeSize = relativeSize or tooltipRelativeSize(TOOLTIP_FIELD_ROW_COUNT, screen, metrics)
     local size = v2(screen.x * relativeSize.x, screen.y * relativeSize.y)
     local preferred = v2(metrics.windowPosition.x + metrics.windowSize.x, metrics.windowPosition.y)
-    if preferred.x + size.x > screen.x - TOOLTIP_MIN_MARGIN.x then preferred.x = screen.x - size.x - TOOLTIP_MIN_MARGIN.x end
-    if preferred.y + size.y > screen.y - TOOLTIP_MIN_MARGIN.y then preferred.y = screen.y - size.y - TOOLTIP_MIN_MARGIN.y end
-    if preferred.x < TOOLTIP_MIN_MARGIN.x then preferred.x = TOOLTIP_MIN_MARGIN.x end
-    if preferred.y < TOOLTIP_MIN_MARGIN.y then preferred.y = TOOLTIP_MIN_MARGIN.y end
+    if preferred.x + size.x > screen.x - metrics.tooltipMargin.x then preferred.x = screen.x - size.x - metrics.tooltipMargin.x end
+    if preferred.y + size.y > screen.y - metrics.tooltipMargin.y then preferred.y = screen.y - size.y - metrics.tooltipMargin.y end
+    if preferred.x < metrics.tooltipMargin.x then preferred.x = metrics.tooltipMargin.x end
+    if preferred.y < metrics.tooltipMargin.y then preferred.y = metrics.tooltipMargin.y end
     return preferred
 end
 
@@ -667,6 +696,7 @@ local function tooltipText(name, text, props, template, external)
 end
 
 local function tooltipField(name, icon)
+    local metrics = layoutMetrics()
     return {
         name = name .. '_row',
         type = ui.TYPE.Flex,
@@ -691,14 +721,14 @@ local function tooltipField(name, icon)
                             resource = icon,
                             anchor = v2(0.5, 0.5),
                             relativePosition = v2(0.5, 0.5),
-                            size = TOOLTIP_FIELD_ICON_SIZE,
+                            size = metrics.tooltipFieldIconSize,
                         },
                     },
                 },
             },
             tooltipText(name .. '_value', EMPTY_FIELD, {
                 relativeSize = v2(0.84, 1),
-                textSize = TOOLTIP_VALUE_TEXT_SIZE,
+                textSize = metrics.tooltipValueTextSize,
                 textAlignH = ui.ALIGNMENT.Start,
                 textAlignV = ui.ALIGNMENT.Center,
                 multiline = true,
@@ -750,13 +780,15 @@ local function addTooltipField(visibleNames, name, value)
 end
 
 local function makeTooltipLayout()
+    local metrics = layoutMetrics()
+    local defaultHeight = tooltipPixelHeight(TOOLTIP_FIELD_ROW_COUNT, metrics)
     return {
         type = ui.TYPE.Widget,
         template = I.MWUI.templates.bordersThick,
         layer = TOOLTIP_LAYER,
         props = {
             position = tooltipPosition(),
-            relativeSize = tooltipRelativeSize(TOOLTIP_FIELD_ROW_COUNT),
+            relativeSize = tooltipRelativeSize(TOOLTIP_FIELD_ROW_COUNT, nil, metrics),
             visible = false,
         },
         content = ui.content {
@@ -783,7 +815,7 @@ local function makeTooltipLayout()
                         type = ui.TYPE.Flex,
                         props = {
                             horizontal = true,
-                            relativeSize = TOOLTIP_HEADER_SIZE,
+                            relativeSize = v2(1, metrics.tooltipHeaderHeight / defaultHeight),
                             autoSize = false,
                         },
                         content = ui.content {
@@ -799,7 +831,7 @@ local function makeTooltipLayout()
                                         name = 's3ui_tooltip_icon',
                                         type = ui.TYPE.Image,
                                         props = {
-                                            size = TOOLTIP_ICON_SIZE,
+                                            size = metrics.tooltipHeaderIconSize,
                                             anchor = v2(0.5, 0.5),
                                             relativePosition = v2(0.5, 0.5),
                                         },
@@ -808,7 +840,7 @@ local function makeTooltipLayout()
                             },
                             tooltipText('s3ui_tooltip_name', EMPTY_FIELD, {
                                 relativeSize = v2(0.52, 1),
-                                textSize = 21,
+                                textSize = metrics.tooltipHeaderTextSize,
                                 textAlignH = ui.ALIGNMENT.Start,
                                 textAlignV = ui.ALIGNMENT.Center,
                                 multiline = true,
@@ -817,7 +849,7 @@ local function makeTooltipLayout()
                             }, I.MWUI.templates.textHeader),
                             tooltipText('s3ui_tooltip_count', '', {
                                 relativeSize = v2(0.30, 1),
-                                textSize = 18,
+                                textSize = metrics.tooltipCountTextSize,
                                 textAlignH = ui.ALIGNMENT.End,
                                 textAlignV = ui.ALIGNMENT.Center,
                                 autoSize = false,
@@ -829,7 +861,7 @@ local function makeTooltipLayout()
                         type = ui.TYPE.Flex,
                         props = {
                             horizontal = false,
-                            relativeSize = TOOLTIP_FIELDS_SIZE,
+                            relativeSize = v2(1, TOOLTIP_FIELD_ROW_COUNT * metrics.tooltipFieldRowHeight / defaultHeight),
                             autoSize = false,
                         },
                         content = ui.content {
@@ -926,13 +958,14 @@ local function updateTooltip(data)
         setTooltipField(fields, 's3ui_tooltip_effectiveness', '')
     end
 
+    local metrics = layoutMetrics()
     local visibleCount = setTooltipVisibleFields(fields, visibleFields)
-    local relativeSize = tooltipRelativeSize(visibleCount)
-    local height = tooltipPixelHeight(visibleCount)
+    local relativeSize = tooltipRelativeSize(visibleCount, nil, metrics)
+    local height = tooltipPixelHeight(visibleCount, metrics)
     tooltipElement.layout.props.relativeSize = relativeSize
     tooltipElement.layout.props.position = tooltipPosition(relativeSize)
-    bodyContent.s3ui_tooltip_header.props.relativeSize = v2(1, TOOLTIP_HEADER_HEIGHT / height)
-    fields.props.relativeSize = v2(1, visibleCount * TOOLTIP_FIELD_ROW_HEIGHT / height)
+    bodyContent.s3ui_tooltip_header.props.relativeSize = v2(1, metrics.tooltipHeaderHeight / height)
+    fields.props.relativeSize = v2(1, visibleCount * metrics.tooltipFieldRowHeight / height)
 
     tooltipElement.layout.props.visible = true
     tooltipElement:update()
