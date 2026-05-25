@@ -18,7 +18,7 @@ local ROOT_LAYER = 'Windows'
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
 
 local WINDOW_POSITION = v2(24, 80)
-local WINDOW_SIZE = v2(500, 520)
+local WINDOW_SIZE = v2(640, 600)
 local GRID_COLUMNS = 6
 local GRID_ROWS = 5
 local LIST_ROWS = 10
