@@ -1,3 +1,5 @@
+---@omw-context menu
+
 local core = require 'openmw.core'
 local util = require 'openmw.util'
 

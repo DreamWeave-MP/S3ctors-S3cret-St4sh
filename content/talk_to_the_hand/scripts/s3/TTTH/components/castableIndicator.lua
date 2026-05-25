@@ -1,10 +1,12 @@
+---@omw-context player
+
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 
 ---@class CastableConstructor
----@field barColor util.color
+---@field barColor openmw.util.Color
 ---@field castableIcon string?
 ---@field castableWidth number
 ---@field Constants H4NDConstants

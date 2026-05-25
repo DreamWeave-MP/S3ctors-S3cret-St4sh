@@ -3,6 +3,7 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 ---@class ImageAtlas
+---@field element openmw.ui.Element?
 local ImageAtlas = {
     textureArray = {},
     element = nil,
