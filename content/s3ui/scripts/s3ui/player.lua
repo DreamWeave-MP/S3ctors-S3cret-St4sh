@@ -100,6 +100,8 @@ local uiGeneration = 0
 local pendingRebuildStatus = nil
 local rebuildEventQueued = false
 local rebuildInventoryRoot = nil
+local scrollOffset = 0
+local lastEntryCount = 0
 
 local CATEGORY_ORDER = {
     { key = 'all', label = 'All' },
@@ -477,6 +479,24 @@ local function buildDisplayEntries(items)
     return entries
 end
 
+local function maxScrollOffset(entryCount)
+    local extraRows = math.ceil(entryCount / GRID_COLUMNS) - GRID_ROWS
+    if extraRows <= 0 then return 0 end
+    return extraRows * GRID_COLUMNS
+end
+
+local function clampScrollOffset(entryCount)
+    local maxOffset = maxScrollOffset(entryCount)
+    if scrollOffset < 0 then scrollOffset = 0 end
+    if scrollOffset > maxOffset then scrollOffset = maxOffset end
+    scrollOffset = math.floor(scrollOffset / GRID_COLUMNS) * GRID_COLUMNS
+    return maxOffset
+end
+
+local function resetScrollOffset()
+    scrollOffset = 0
+end
+
 local function tooltipText(name, text, props, template, external)
     props = props or {}
     props.text = text
@@ -828,8 +848,22 @@ local function makeSortButton(mode, label)
             sortAscending[mode] = not sortAscending[mode]
         end
         sortMode = mode
+        resetScrollOffset()
         queueInventoryRebuild('Sorted by ' .. label .. (sortAscending[mode] and ' ascending' or ' descending'))
     end)
+end
+
+local function inventoryWindowActive()
+    return rootElement and rootElement.layout and I.UI.isWindowVisible(WINDOW)
+end
+
+local function scrollInventoryRows(deltaRows)
+    if not inventoryWindowActive() then return end
+    local oldOffset = scrollOffset
+    scrollOffset = scrollOffset + deltaRows * GRID_COLUMNS
+    clampScrollOffset(lastEntryCount)
+    if scrollOffset == oldOffset then return end
+    queueInventoryRebuild()
 end
 
 local function makeViewButton(mode, label)
@@ -850,6 +884,7 @@ local function makeCategoryRailButton(category)
         relativeSize = v2(1, 1 / #CATEGORY_ORDER),
     }, nil, function()
         selectedCategory = category.key
+        resetScrollOffset()
         queueInventoryRebuild(category.label .. ' selected')
     end)
 end
@@ -921,6 +956,7 @@ local function makeCategoryHeaderSlot(entry, index)
                 local clicked = layout and layout.userData
                 if not clicked then return end
                 collapsedCategories[clicked.categoryKey] = not collapsedCategories[clicked.categoryKey]
+                resetScrollOffset()
                 queueInventoryRebuild(clicked.label .. (collapsedCategories[clicked.categoryKey] and ' collapsed' or ' expanded'))
             end),
         },
@@ -1005,15 +1041,17 @@ local function makeSlot(entry, index)
     }
 end
 
-local function makeGrid(items)
+local function makeGrid(items, firstIndex)
     local rows = ui.content {}
-    local index = 1
+    local index = firstIndex or 1
+    local slotIndex = 1
 
     for _ = 1, GRID_ROWS do
         local row = ui.content {}
         for _ = 1, GRID_COLUMNS do
-            row:add(makeSlot(items[index], index))
+            row:add(makeSlot(items[index], slotIndex))
             index = index + 1
+            slotIndex = slotIndex + 1
         end
         rows:add {
             type = ui.TYPE.Flex,
@@ -1040,11 +1078,16 @@ end
 
 local function makeInventoryLayout(items)
     local entries = buildDisplayEntries(items)
-    local visibleCount = math.min(#entries, MAX_VISIBLE_ITEMS)
-    local hiddenCount = math.max(0, #entries - MAX_VISIBLE_ITEMS)
-    local summary = tostring(visibleCount) .. ' tiles shown'
-    if hiddenCount > 0 then
-        summary = summary .. ', ' .. tostring(hiddenCount) .. ' more tiles hidden'
+    lastEntryCount = #entries
+    local maxOffset = clampScrollOffset(#entries)
+    local firstIndex = scrollOffset + 1
+    local lastIndex = math.min(#entries, scrollOffset + MAX_VISIBLE_ITEMS)
+    local summary
+    if #entries == 0 then
+        summary = '0 entries'
+    else
+        summary = 'Entries ' .. tostring(firstIndex) .. '–' .. tostring(lastIndex) .. ' of ' .. tostring(#entries)
+        if maxOffset > 0 then summary = summary .. '  |  Wheel/PageUp/PageDown scroll by row' end
     end
 
     return {
@@ -1087,7 +1130,7 @@ local function makeInventoryLayout(items)
                         external = { grow = 1 },
                         content = ui.content {
                             makeCategoryRail(),
-                            makeGrid(entries),
+                            makeGrid(entries, firstIndex),
                         },
                     },
                     textLine(summary, I.MWUI.templates.textNormal, { name = 's3ui_status', relativeSize = STATUS_RELATIVE_SIZE, textSize = 15 }),
@@ -1278,6 +1321,29 @@ return {
         onKeyPress = function(key)
             if key.code == input.KEY.I then
                 toggleInventoryWindow()
+            elseif key.code == input.KEY.PageUp or key.code == input.KEY.UpArrow then
+                scrollInventoryRows(-1)
+            elseif key.code == input.KEY.PageDown or key.code == input.KEY.DownArrow then
+                scrollInventoryRows(1)
+            elseif key.code == input.KEY.Home then
+                if not inventoryWindowActive() then return end
+                if scrollOffset ~= 0 then
+                    scrollOffset = 0
+                    queueInventoryRebuild()
+                end
+            elseif key.code == input.KEY.End then
+                if not inventoryWindowActive() then return end
+                local oldOffset = scrollOffset
+                scrollOffset = maxScrollOffset(lastEntryCount)
+                if scrollOffset ~= oldOffset then queueInventoryRebuild() end
+            end
+        end,
+        onMouseWheel = function(vertical, _horizontal)
+            if type(vertical) ~= 'number' then return end
+            if vertical > 0 then
+                scrollInventoryRows(-1)
+            elseif vertical < 0 then
+                scrollInventoryRows(1)
             end
         end,
     },
