@@ -50,6 +50,7 @@ local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
 local VIEW_GLYPH_COLOR = util.color.rgb(0.9, 0.84, 0.62)
 local TOOLTIP_LAYER = 'S3UI_Tooltip'
 local TOOLTIP_FIELD_ROW_COUNT = 9
+local COMPACT_DETAIL_FIELD_SLOT_COUNT = 9
 
 local TOOLTIP_ICONS = {
     typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
@@ -91,8 +92,21 @@ local TOOLTIP_FIELD_NAMES = {
     's3ui_tooltip_effectiveness',
 }
 
+local DETAIL_FIELD_NAMES = {
+    type = 's3ui_tooltip_type',
+    value = 's3ui_tooltip_value',
+    weight = 's3ui_tooltip_weight',
+    goldPerWeight = 's3ui_tooltip_gold_per_weight',
+    condition = 's3ui_tooltip_condition',
+    reach = 's3ui_tooltip_reach',
+    speed = 's3ui_tooltip_speed',
+    damage = 's3ui_tooltip_damage',
+    effectiveness = 's3ui_tooltip_effectiveness',
+}
+
 local rootElement = nil
 local tooltipElement = nil
+local compactDetailVisible = false
 local cameraSnapshot = nil
 local hudVisibleSnapshot = nil
 local registeredWindow = false
@@ -409,9 +423,51 @@ local function setTooltipVisibleFields(fieldsLayout, visibleNames)
     return visibleCount
 end
 
-local function addTooltipField(visibleNames, name, value)
-    if value == nil or value == '' or value == EMPTY_FIELD then return end
-    visibleNames[#visibleNames + 1] = name
+local function detailValueVisible(value)
+    return value ~= nil and value ~= '' and value ~= EMPTY_FIELD
+end
+
+local function addDetailField(fields, key, icon, value)
+    if not detailValueVisible(value) then return end
+    fields[#fields + 1] = {
+        key = key,
+        icon = icon,
+        value = value,
+    }
+end
+
+local function buildDetailModel(data)
+    if not data then return nil end
+
+    local record = data.record
+    local fields = {}
+    local valueText = record and type(record.value) == 'number' and tostring(record.value) or EMPTY_FIELD
+    local weightText = formatNumber(record and record.weight, 2)
+    local goldPerWeightText = goldPerWeight(record)
+    local conditionText = formatCondition(data.condition)
+    local itemType = data.item and data.item.type
+
+    addDetailField(fields, 'type', typeIcon(data), typeText(data))
+    addDetailField(fields, 'value', TOOLTIP_ICONS.value, valueText)
+    addDetailField(fields, 'weight', TOOLTIP_ICONS.weight, weightText)
+    addDetailField(fields, 'goldPerWeight', TOOLTIP_ICONS.goldPerWeight, goldPerWeightText)
+    addDetailField(fields, 'condition', TOOLTIP_ICONS.condition, conditionText)
+
+    if itemType == types.Weapon then
+        addDetailField(fields, 'reach', TOOLTIP_ICONS.reach, formatNumber(record and record.reach, 2))
+        addDetailField(fields, 'speed', TOOLTIP_ICONS.speed, formatNumber(record and record.speed, 2))
+        addDetailField(fields, 'damage', TOOLTIP_ICONS.damage, bestWeaponDamage(record))
+        addDetailField(fields, 'effectiveness', TOOLTIP_ICONS.damageSpeed, formatNumber(data.effectiveness, 2))
+    elseif itemType == types.Armor then
+        addDetailField(fields, 'reach', TOOLTIP_ICONS.armorRating, formatNumber(record and record.baseArmor, 0))
+    end
+
+    return {
+        icon = data.icon and ui.texture { path = data.icon } or WHITE_TEXTURE,
+        name = data.name or itemName(data.item, record),
+        countText = data.count and data.count > 1 and ('x' .. tostring(data.count)) or '',
+        fields = fields,
+    }
 end
 
 local function makeTooltipLayout()
@@ -516,7 +572,10 @@ local function makeTooltipLayout()
     }
 end
 
+local hideCompactDetail
+
 local function hideTooltip()
+    if hideCompactDetail then hideCompactDetail() end
     if not tooltipElement or not tooltipElement.layout then return end
     tooltipElement.layout.props.visible = false
     tooltipElement:update()
@@ -524,72 +583,31 @@ end
 
 local function updateTooltip(data)
     if not tooltipElement or not tooltipElement.layout or not data then return end
+    local model = buildDetailModel(data)
+    if not model then return end
 
     local bodyContent = tooltipElement.layout.content.s3ui_tooltip_body.content
     local header = bodyContent.s3ui_tooltip_header.content
     local fields = bodyContent.s3ui_tooltip_fields
-    local record = data.record
 
     local headerIcon = header.s3ui_tooltip_icon_box.content.s3ui_tooltip_icon
-    if data.icon then
-        headerIcon.props.resource = ui.texture { path = data.icon }
-    else
-        headerIcon.props.resource = WHITE_TEXTURE
+    headerIcon.props.resource = model.icon
+    header.s3ui_tooltip_name.props.text = model.name
+    header.s3ui_tooltip_count.props.text = model.countText
+
+    for key, name in pairs(DETAIL_FIELD_NAMES) do
+        setTooltipField(fields, name, '')
+        setTooltipFieldIcon(fields, name, key == 'type' and TOOLTIP_ICONS.typeGeneric or TOOLTIP_ICONS[key] or WHITE_TEXTURE)
     end
 
-    header.s3ui_tooltip_name.props.text = data.name or itemName(data.item, record)
-    header.s3ui_tooltip_count.props.text = data.count and data.count > 1 and ('x' .. tostring(data.count)) or ''
-
-    setTooltipFieldIcon(fields, 's3ui_tooltip_type', typeIcon(data))
-    setTooltipFieldIcon(fields, 's3ui_tooltip_reach', TOOLTIP_ICONS.reach)
-    setTooltipFieldIcon(fields, 's3ui_tooltip_speed', TOOLTIP_ICONS.speed)
-    setTooltipFieldIcon(fields, 's3ui_tooltip_damage', TOOLTIP_ICONS.damage)
-    setTooltipFieldIcon(fields, 's3ui_tooltip_effectiveness', TOOLTIP_ICONS.damageSpeed)
-
-    local itemType = data.item and data.item.type
-    local valueText = record and type(record.value) == 'number' and tostring(record.value) or EMPTY_FIELD
-    local weightText = formatNumber(record and record.weight, 2)
-    local goldPerWeightText = goldPerWeight(record)
-    local conditionText = formatCondition(data.condition)
-    local visibleFields = { 's3ui_tooltip_type' }
-
-    setTooltipField(fields, 's3ui_tooltip_type', typeText(data))
-    setTooltipField(fields, 's3ui_tooltip_value', valueText)
-    setTooltipField(fields, 's3ui_tooltip_weight', weightText)
-    setTooltipField(fields, 's3ui_tooltip_gold_per_weight', goldPerWeightText)
-    setTooltipField(fields, 's3ui_tooltip_condition', conditionText)
-
-    addTooltipField(visibleFields, 's3ui_tooltip_value', valueText)
-    addTooltipField(visibleFields, 's3ui_tooltip_weight', weightText)
-    addTooltipField(visibleFields, 's3ui_tooltip_gold_per_weight', goldPerWeightText)
-    addTooltipField(visibleFields, 's3ui_tooltip_condition', conditionText)
-
-    if itemType == types.Weapon then
-        local reachText = formatNumber(record and record.reach, 2)
-        local speedText = formatNumber(record and record.speed, 2)
-        local damageText = bestWeaponDamage(record)
-        local effectivenessText = formatNumber(data.effectiveness, 2)
-        setTooltipField(fields, 's3ui_tooltip_reach', reachText)
-        setTooltipField(fields, 's3ui_tooltip_speed', speedText)
-        setTooltipField(fields, 's3ui_tooltip_damage', damageText)
-        setTooltipField(fields, 's3ui_tooltip_effectiveness', effectivenessText)
-        addTooltipField(visibleFields, 's3ui_tooltip_reach', reachText)
-        addTooltipField(visibleFields, 's3ui_tooltip_speed', speedText)
-        addTooltipField(visibleFields, 's3ui_tooltip_damage', damageText)
-        addTooltipField(visibleFields, 's3ui_tooltip_effectiveness', effectivenessText)
-    elseif itemType == types.Armor then
-        local armorText = formatNumber(record and record.baseArmor, 0)
-        setTooltipFieldIcon(fields, 's3ui_tooltip_reach', TOOLTIP_ICONS.armorRating)
-        setTooltipField(fields, 's3ui_tooltip_reach', armorText)
-        setTooltipField(fields, 's3ui_tooltip_speed', '')
-        setTooltipField(fields, 's3ui_tooltip_damage', '')
-        setTooltipField(fields, 's3ui_tooltip_effectiveness', '')
-        addTooltipField(visibleFields, 's3ui_tooltip_reach', armorText)
-    else
-        setTooltipField(fields, 's3ui_tooltip_reach', '')
-        setTooltipField(fields, 's3ui_tooltip_speed', '')
-        setTooltipField(fields, 's3ui_tooltip_damage', '')
-        setTooltipField(fields, 's3ui_tooltip_effectiveness', '')
+    local visibleFields = {}
+    for _, field in ipairs(model.fields) do
+        local tooltipName = DETAIL_FIELD_NAMES[field.key]
+        if tooltipName then
+            setTooltipField(fields, tooltipName, field.value)
+            setTooltipFieldIcon(fields, tooltipName, field.icon)
+            visibleFields[#visibleFields + 1] = tooltipName
+        end
     end
 
     local metrics = layoutMetrics()
@@ -603,6 +621,253 @@ local function updateTooltip(data)
 
     tooltipElement.layout.props.visible = true
     tooltipElement:update()
+end
+
+local function compactDetailFieldSlot(slotIndex)
+    local metrics = layoutMetrics()
+    local name = 's3ui_compact_detail_field_' .. tostring(slotIndex)
+    return {
+        name = name,
+        type = ui.TYPE.Flex,
+        props = {
+            horizontal = true,
+            relativeSize = v2(1 / 3, 1),
+            autoSize = false,
+        },
+        content = ui.content {
+            {
+                name = name .. '_icon_box',
+                type = ui.TYPE.Widget,
+                props = {
+                    relativeSize = v2(0.28, 1),
+                },
+                content = ui.content {
+                    {
+                        name = name .. '_icon',
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = WHITE_TEXTURE,
+                            alpha = 0,
+                            anchor = v2(0.5, 0.5),
+                            relativePosition = v2(0.5, 0.5),
+                            size = metrics.compactDetailFieldIconSize,
+                        },
+                    },
+                },
+            },
+            tooltipText(name .. '_value', '', {
+                relativeSize = v2(0.72, 1),
+                textSize = metrics.compactDetailFieldTextSize,
+                textAlignH = ui.ALIGNMENT.Start,
+                textAlignV = ui.ALIGNMENT.Center,
+                multiline = true,
+                wordWrap = true,
+                autoSize = false,
+            }),
+        },
+    }
+end
+
+local function makeCompactDetailFields()
+    local rows = ui.content {}
+    local slotIndex = 1
+    for rowIndex = 1, 3 do
+        local row = ui.content {}
+        for _ = 1, 3 do
+            row:add(compactDetailFieldSlot(slotIndex))
+            slotIndex = slotIndex + 1
+        end
+        rows:add {
+            name = 's3ui_compact_detail_row_' .. tostring(rowIndex),
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = true,
+                relativeSize = v2(1, 1 / 3),
+                autoSize = false,
+            },
+            content = row,
+        }
+    end
+    return rows
+end
+
+local function makeCompactDetailBar()
+    local metrics = layoutMetrics()
+    return {
+        name = 's3ui_compact_detail_bar',
+        type = ui.TYPE.Widget,
+        template = I.MWUI.templates.borders,
+        props = {
+            relativeSize = metrics.compactDetailRelativeSize,
+        },
+        content = ui.content {
+            {
+                type = ui.TYPE.Image,
+                props = {
+                    resource = WHITE_TEXTURE,
+                    color = BACKGROUND_COLOR,
+                    alpha = backgroundAlpha(),
+                    relativeSize = v2(1, 1),
+                },
+            },
+            {
+                name = 's3ui_compact_detail_content',
+                type = ui.TYPE.Flex,
+                props = {
+                    horizontal = true,
+                    relativeSize = v2(1, 1),
+                    visible = false,
+                    autoSize = false,
+                },
+                content = ui.content {
+                    {
+                        name = 's3ui_compact_detail_header',
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = true,
+                            relativeSize = metrics.compactDetailHeaderRelativeSize,
+                            autoSize = false,
+                        },
+                        content = ui.content {
+                            {
+                                name = 's3ui_compact_detail_icon_box',
+                                type = ui.TYPE.Widget,
+                                props = {
+                                    relativeSize = v2(0.36, 1),
+                                },
+                                content = ui.content {
+                                    {
+                                        name = 's3ui_compact_detail_icon',
+                                        type = ui.TYPE.Image,
+                                        props = {
+                                            resource = WHITE_TEXTURE,
+                                            anchor = v2(0.5, 0.5),
+                                            relativePosition = v2(0.5, 0.5),
+                                            size = metrics.compactDetailIconSize,
+                                        },
+                                    },
+                                },
+                            },
+                            {
+                                name = 's3ui_compact_detail_title_box',
+                                type = ui.TYPE.Flex,
+                                props = {
+                                    horizontal = false,
+                                    relativeSize = v2(0.64, 1),
+                                    autoSize = false,
+                                },
+                                content = ui.content {
+                                    tooltipText('s3ui_compact_detail_name', '', {
+                                        relativeSize = v2(1, 0.68),
+                                        textSize = metrics.compactDetailHeaderTextSize,
+                                        textAlignH = ui.ALIGNMENT.Start,
+                                        textAlignV = ui.ALIGNMENT.Center,
+                                        multiline = true,
+                                        wordWrap = true,
+                                        autoSize = false,
+                                    }, I.MWUI.templates.textHeader),
+                                    tooltipText('s3ui_compact_detail_count', '', {
+                                        relativeSize = v2(1, 0.32),
+                                        textSize = metrics.compactDetailCountTextSize,
+                                        textAlignH = ui.ALIGNMENT.Start,
+                                        textAlignV = ui.ALIGNMENT.Center,
+                                        autoSize = false,
+                                    }),
+                                },
+                            },
+                        },
+                    },
+                    {
+                        name = 's3ui_compact_detail_fields',
+                        type = ui.TYPE.Flex,
+                        props = {
+                            horizontal = false,
+                            relativeSize = metrics.compactDetailFieldsRelativeSize,
+                            autoSize = false,
+                        },
+                        content = makeCompactDetailFields(),
+                    },
+                },
+            },
+        },
+    }
+end
+
+local function compactDetailFieldLayout(fieldsLayout, slotIndex)
+    local rowIndex = math.floor((slotIndex - 1) / 3) + 1
+    return fieldsLayout.content['s3ui_compact_detail_row_' .. tostring(rowIndex)].content['s3ui_compact_detail_field_' .. tostring(slotIndex)]
+end
+
+local function clearCompactDetailField(fieldsLayout, slotIndex)
+    local slot = compactDetailFieldLayout(fieldsLayout, slotIndex)
+    local prefix = 's3ui_compact_detail_field_' .. tostring(slotIndex)
+    local icon = slot.content[prefix .. '_icon_box'].content[prefix .. '_icon']
+    local value = slot.content[prefix .. '_value']
+    icon.props.resource = WHITE_TEXTURE
+    icon.props.alpha = 0
+    value.props.text = ''
+end
+
+local function setCompactDetailField(fieldsLayout, slotIndex, field)
+    local slot = compactDetailFieldLayout(fieldsLayout, slotIndex)
+    local prefix = 's3ui_compact_detail_field_' .. tostring(slotIndex)
+    local icon = slot.content[prefix .. '_icon_box'].content[prefix .. '_icon']
+    local value = slot.content[prefix .. '_value']
+    icon.props.resource = field.icon
+    icon.props.alpha = 0.95
+    value.props.text = field.value
+end
+
+local function compactDetailLayout()
+    if not rootElement or not rootElement.layout then return nil end
+    local body = rootElement.layout.content.s3ui_body
+    if not body or not body.content then return nil end
+    return body.content.s3ui_compact_detail_bar
+end
+
+hideCompactDetail = function()
+    local bar = compactDetailLayout()
+    if not bar or not compactDetailVisible then return end
+    bar.content.s3ui_compact_detail_content.props.visible = false
+    compactDetailVisible = false
+    rootElement:update()
+end
+
+local function updateCompactDetail(data)
+    local model = buildDetailModel(data)
+    local bar = compactDetailLayout()
+    if not model or not bar then return end
+
+    local content = bar.content.s3ui_compact_detail_content
+    local detailContent = content.content
+    local headerContent = detailContent.s3ui_compact_detail_header.content
+    local titleContent = headerContent.s3ui_compact_detail_title_box.content
+    local fields = detailContent.s3ui_compact_detail_fields
+
+    headerContent.s3ui_compact_detail_icon_box.content.s3ui_compact_detail_icon.props.resource = model.icon
+    titleContent.s3ui_compact_detail_name.props.text = model.name
+    titleContent.s3ui_compact_detail_count.props.text = model.countText
+
+    for slotIndex = 1, COMPACT_DETAIL_FIELD_SLOT_COUNT do
+        local field = model.fields[slotIndex]
+        if field then
+            setCompactDetailField(fields, slotIndex, field)
+        else
+            clearCompactDetailField(fields, slotIndex)
+        end
+    end
+
+    content.props.visible = true
+    compactDetailVisible = true
+    rootElement:update()
+end
+
+local function updateDetails(data)
+    if layoutMetrics().detailMode == 'compact' then
+        updateCompactDetail(data)
+    else
+        updateTooltip(data)
+    end
 end
 
 local function queueInventoryRebuild()
@@ -1030,7 +1295,7 @@ local function makeSlot(entry, index)
         events = data and {
             focusGain = async:callback(function(mouseEvent, layout)
                 if generation ~= uiGeneration then return end
-                updateTooltip(layout and layout.userData, mouseEvent)
+                updateDetails(layout and layout.userData, mouseEvent)
             end),
             focusLoss = async:callback(function()
                 if generation ~= uiGeneration then return end
@@ -1251,7 +1516,7 @@ local function makeListItemRow(entry, index)
         events = data and {
             focusGain = async:callback(function(mouseEvent, layout)
                 if generation ~= uiGeneration then return end
-                updateTooltip(layout and layout.userData, mouseEvent)
+                updateDetails(layout and layout.userData, mouseEvent)
             end),
             focusLoss = async:callback(function()
                 if generation ~= uiGeneration then return end
@@ -1297,6 +1562,26 @@ local function makeInventoryLayout(items)
     clampScrollOffset(#entries)
     local firstIndex = scrollOffset + 1
     local inventoryView = viewMode == 'list' and makeList(entries, firstIndex) or makeGrid(entries, firstIndex)
+    local bodyContent = ui.content {
+        makeToolbar(),
+        {
+            name = 's3ui_main',
+            type = ui.TYPE.Flex,
+            props = {
+                horizontal = true,
+                relativeSize = MAIN_RELATIVE_SIZE,
+                autoSize = false,
+            },
+            external = { grow = 1 },
+            content = ui.content {
+                makeCategoryRail(),
+                inventoryView,
+            },
+        },
+    }
+    if metrics.detailMode == 'compact' then
+        bodyContent:add(makeCompactDetailBar())
+    end
 
     return {
         type = ui.TYPE.Widget,
@@ -1325,23 +1610,7 @@ local function makeInventoryLayout(items)
                     relativeSize = v2(1, 1),
                     autoSize = false,
                 },
-                content = ui.content {
-                    makeToolbar(),
-                    {
-                        name = 's3ui_main',
-                        type = ui.TYPE.Flex,
-                        props = {
-                            horizontal = true,
-                            relativeSize = MAIN_RELATIVE_SIZE,
-                            autoSize = false,
-                        },
-                        external = { grow = 1 },
-                        content = ui.content {
-                            makeCategoryRail(),
-                            inventoryView,
-                        },
-                    },
-                },
+                content = bodyContent,
             },
         },
     }
@@ -1476,6 +1745,7 @@ local function destroyInventoryWindow()
         rootElement:destroy()
     end
     rootElement = nil
+    compactDetailVisible = false
 end
 
 rebuildInventoryRoot = function()
@@ -1484,7 +1754,16 @@ rebuildInventoryRoot = function()
     if rootElement and rootElement.layout then
         rootElement:destroy()
     end
+    if tooltipElement and tooltipElement.layout then
+        tooltipElement:destroy()
+    end
+    tooltipElement = nil
     rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
+    compactDetailVisible = false
+    if activeLayoutMetrics.detailMode == 'side' then
+        ensureTooltipLayer()
+        tooltipElement = ui.create(makeTooltipLayout())
+    end
 end
 
 local function processPendingRebuild()
@@ -1500,8 +1779,6 @@ local function showInventoryWindow()
     saveHudVisibility()
     showStaticInventoryCamera()
     rebuildInventoryRoot()
-    ensureTooltipLayer()
-    tooltipElement = ui.create(makeTooltipLayout())
 end
 
 local function hideInventoryWindow()

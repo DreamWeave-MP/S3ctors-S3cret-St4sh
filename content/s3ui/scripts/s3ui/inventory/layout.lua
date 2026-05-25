@@ -31,6 +31,12 @@ local LAYOUT = {
     viewButtonSizeFraction = 0.72,
     controlButtonMinSize = 32,
     controlButtonMaxSize = 56,
+    compactDetailMaxScreenWidth = 936,
+    compactDetailHeightFraction = 0.24,
+    compactDetailMinHeight = 112,
+    compactDetailMaxHeight = 148,
+    compactDetailHeaderWidthFraction = 0.34,
+    compactDetailIconFraction = 0.66,
     tooltipWidthFraction = 0.18,
     tooltipMinWidth = 220,
     tooltipMaxWidth = 360,
@@ -73,10 +79,14 @@ local function compute()
         math.floor(screen.y * LAYOUT.windowRelativePosition.y - windowSize.y * LAYOUT.windowAnchor.y)
     )
     local toolbarHeight = math.floor(clamp(windowSize.y * LAYOUT.toolbarHeightFraction, LAYOUT.toolbarMinHeight, LAYOUT.toolbarMaxHeight))
+    local detailMode = screen.x <= LAYOUT.compactDetailMaxScreenWidth and 'compact' or 'side'
+    local compactDetailHeight = detailMode == 'compact'
+        and math.floor(clamp(shortSide * LAYOUT.compactDetailHeightFraction, LAYOUT.compactDetailMinHeight, LAYOUT.compactDetailMaxHeight))
+        or 0
     local controlButtonSize = math.floor(clamp(toolbarHeight * LAYOUT.controlButtonSizeFraction, LAYOUT.controlButtonMinSize, LAYOUT.controlButtonMaxSize))
     local viewButtonSize = math.floor(clamp(toolbarHeight * LAYOUT.viewButtonSizeFraction, LAYOUT.controlButtonMinSize, LAYOUT.controlButtonMaxSize))
     local railWidth = math.floor(clamp(windowSize.x * LAYOUT.categoryRailWidthFraction, LAYOUT.categoryRailMinWidth, LAYOUT.categoryRailMaxWidth))
-    local viewSize = v2(math.max(windowSize.x - railWidth, 1), math.max(windowSize.y - toolbarHeight, 1))
+    local viewSize = v2(math.max(windowSize.x - railWidth, 1), math.max(windowSize.y - toolbarHeight - compactDetailHeight, 1))
     local gridColumns = math.floor(clamp(math.floor(viewSize.x / LAYOUT.gridMinCellSize.x), LAYOUT.gridMinColumns, LAYOUT.gridMaxColumns))
     local gridRows = math.floor(clamp(math.floor(viewSize.y / LAYOUT.gridMinCellSize.y), LAYOUT.gridMinRows, LAYOUT.gridMaxRows))
     local listRows = math.floor(clamp(math.floor(viewSize.y / LAYOUT.listMinRowHeight), LAYOUT.listMinRows, LAYOUT.listMaxRows))
@@ -98,6 +108,15 @@ local function compute()
         windowSize = windowSize,
         viewSize = viewSize,
         toolbarRelativeSize = v2(1, toolbarHeight / windowSize.y),
+        detailMode = detailMode,
+        compactDetailRelativeSize = v2(1, compactDetailHeight / windowSize.y),
+        compactDetailHeaderRelativeSize = v2(LAYOUT.compactDetailHeaderWidthFraction, 1),
+        compactDetailFieldsRelativeSize = v2(1 - LAYOUT.compactDetailHeaderWidthFraction, 1),
+        compactDetailIconSize = v2(math.floor(compactDetailHeight * LAYOUT.compactDetailIconFraction), math.floor(compactDetailHeight * LAYOUT.compactDetailIconFraction)),
+        compactDetailHeaderTextSize = math.floor(clamp(shortSide * 0.03, 14, 20)),
+        compactDetailCountTextSize = math.floor(clamp(shortSide * 0.024, 12, 16)),
+        compactDetailFieldTextSize = math.floor(clamp(shortSide * 0.025, 12, 16)),
+        compactDetailFieldIconSize = v2(math.floor(clamp(compactDetailHeight * 0.18, 18, 28)), math.floor(clamp(compactDetailHeight * 0.18, 18, 28))),
         categoryRailSize = v2(railWidth, 0),
         controlButtonSize = v2(controlButtonSize, controlButtonSize),
         viewButtonSize = v2(viewButtonSize, viewButtonSize),
