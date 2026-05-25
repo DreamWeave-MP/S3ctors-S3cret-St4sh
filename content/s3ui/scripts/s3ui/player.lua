@@ -144,15 +144,23 @@ local CATEGORY_ICON_RELATIVE_SIZES = {
     misc = v2(0.46, 0.58),
 }
 
+local function textProps(text, props)
+    local result = {}
+    if props then
+        for key, value in pairs(props) do
+            if key ~= 'name' then result[key] = value end
+        end
+    end
+    result.text = text
+    return result
+end
+
 local function textLine(text, template, props)
-    props = props or {}
-    local name = props.name
-    props.name = nil
-    props.text = text
+    local name = props and props.name or nil
     return {
         name = name,
         template = template or I.MWUI.templates.textNormal,
-        props = props,
+        props = textProps(text, props),
     }
 end
 
@@ -196,11 +204,13 @@ local function tooltipPosition(relativeSize)
     relativeSize = relativeSize or tooltipRelativeSize(TOOLTIP_FIELD_ROW_COUNT, screen, metrics)
     local size = v2(screen.x * relativeSize.x, screen.y * relativeSize.y)
     local preferred = v2(metrics.windowPosition.x + metrics.windowSize.x, metrics.windowPosition.y)
-    if preferred.x + size.x > screen.x - metrics.tooltipMargin.x then preferred.x = screen.x - size.x - metrics.tooltipMargin.x end
-    if preferred.y + size.y > screen.y - metrics.tooltipMargin.y then preferred.y = screen.y - size.y - metrics.tooltipMargin.y end
-    if preferred.x < metrics.tooltipMargin.x then preferred.x = metrics.tooltipMargin.x end
-    if preferred.y < metrics.tooltipMargin.y then preferred.y = metrics.tooltipMargin.y end
-    return preferred
+    local x = preferred.x
+    local y = preferred.y
+    if x + size.x > screen.x - metrics.tooltipMargin.x then x = screen.x - size.x - metrics.tooltipMargin.x end
+    if y + size.y > screen.y - metrics.tooltipMargin.y then y = screen.y - size.y - metrics.tooltipMargin.y end
+    if x < metrics.tooltipMargin.x then x = metrics.tooltipMargin.x end
+    if y < metrics.tooltipMargin.y then y = metrics.tooltipMargin.y end
+    return v2(x, y)
 end
 
 local function itemSortValue(data)
@@ -313,13 +323,11 @@ local function resetScrollOffset()
 end
 
 local function tooltipText(name, text, props, template, external)
-    props = props or {}
-    props.text = text
     return {
         name = name,
         template = template or I.MWUI.templates.textNormal,
         external = external,
-        props = props,
+        props = textProps(text, props),
     }
 end
 
@@ -339,7 +347,6 @@ local function tooltipField(name, icon)
                 type = ui.TYPE.Widget,
                 props = {
                     relativeSize = v2(0.16, 1),
-                    autoSize = false,
                 },
                 content = ui.content {
                     {
@@ -452,7 +459,6 @@ local function makeTooltipLayout()
                                 type = ui.TYPE.Widget,
                                 props = {
                                     relativeSize = v2(0.18, 1),
-                                    autoSize = false,
                                 },
                                 content = ui.content {
                                     {
