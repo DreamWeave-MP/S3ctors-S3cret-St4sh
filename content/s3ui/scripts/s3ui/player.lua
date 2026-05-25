@@ -10,10 +10,12 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local v2 = util.vector2
+local v3 = util.vector3
 
 local WINDOW = I.UI.WINDOW.Inventory
 local MODE = I.UI.MODE.Interface
 local ROOT_LAYER = 'Windows'
+local CAMERA_CONTROL_TAG = 's3ui_inventory'
 
 local WINDOW_POSITION = v2(24, 80)
 local WINDOW_SIZE = v2(500, 520)
@@ -22,6 +24,8 @@ local ICON_SIZE = v2(40, 40)
 local GRID_COLUMNS = 6
 local GRID_ROWS = 5
 local MAX_VISIBLE_ITEMS = GRID_COLUMNS * GRID_ROWS
+local STATIC_CAMERA_DISTANCE = 230
+local STATIC_CAMERA_HEIGHT = 55
 
 local rootElement = nil
 local statusLayout = nil
@@ -224,24 +228,52 @@ local function saveCamera()
         yaw = camera.getYaw(),
         pitch = camera.getPitch(),
         focalOffset = camera.getFocalPreferredOffset(),
+        staticPosition = camera.getPosition(),
     }
+end
+
+local function disableInventoryCameraControls()
+    if not I.Camera then return end
+    if I.Camera.disableModeControl then I.Camera.disableModeControl(CAMERA_CONTROL_TAG) end
+    if I.Camera.disableZoom then I.Camera.disableZoom(CAMERA_CONTROL_TAG) end
+    if I.Camera.disableThirdPersonOffsetControl then I.Camera.disableThirdPersonOffsetControl(CAMERA_CONTROL_TAG) end
+end
+
+local function enableInventoryCameraControls()
+    if not I.Camera then return end
+    if I.Camera.enableThirdPersonOffsetControl then I.Camera.enableThirdPersonOffsetControl(CAMERA_CONTROL_TAG) end
+    if I.Camera.enableZoom then I.Camera.enableZoom(CAMERA_CONTROL_TAG) end
+    if I.Camera.enableModeControl then I.Camera.enableModeControl(CAMERA_CONTROL_TAG) end
 end
 
 local function restoreCamera()
     if not cameraSnapshot then return end
+    enableInventoryCameraControls()
+
     camera.setFocalPreferredOffset(cameraSnapshot.focalOffset)
     camera.setYaw(cameraSnapshot.yaw)
     camera.setPitch(cameraSnapshot.pitch)
-    camera.setMode(cameraSnapshot.mode)
+    camera.setMode(cameraSnapshot.mode, true)
+
+    if cameraSnapshot.mode == camera.MODE.Static then
+        camera.setStaticPosition(cameraSnapshot.staticPosition)
+    end
+
     camera.instantTransition()
     cameraSnapshot = nil
 end
 
-local function showPreviewCamera()
+local function showStaticInventoryCamera()
     saveCamera()
-    camera.setMode(camera.MODE.Preview)
-    camera.setFocalPreferredOffset(v2(-120, 8))
-    camera.setYaw(cameraSnapshot.yaw + math.rad(155))
+    disableInventoryCameraControls()
+
+    local actorYaw = self.object.rotation:getYaw()
+    local front = util.transform.rotateZ(actorYaw) * v3(0, 1, 0)
+    local pos = camera.getTrackedPosition() + front * STATIC_CAMERA_DISTANCE + v3(0, 0, STATIC_CAMERA_HEIGHT)
+
+    camera.setMode(camera.MODE.Static, true)
+    camera.setStaticPosition(pos)
+    camera.setYaw(actorYaw + math.pi)
     camera.setPitch(math.rad(-8))
     camera.instantTransition()
 end
@@ -264,7 +296,7 @@ end
 
 local function showInventoryWindow()
     destroyInventoryWindow()
-    showPreviewCamera()
+    showStaticInventoryCamera()
     rootElement = ui.create(makeInventoryLayout(collectInventoryItems()))
     statusLayout = rootElement.layout.content[1].content[1].content[1].content.s3ui_status
 end
