@@ -23,9 +23,14 @@ local WINDOW_MIN_SIZE = v2(520, 420)
 local WINDOW_MAX_SIZE = v2(760, 720)
 local WINDOW_MARGIN_FRACTION = 0.03
 local WINDOW_TOP_FRACTION = 0.075
-local GRID_COLUMNS = 7
-local GRID_ROWS = 6
-local LIST_ROWS = 10
+local GRID_MIN_COLUMNS = 3
+local GRID_MAX_COLUMNS = 10
+local GRID_MIN_ROWS = 3
+local GRID_MAX_ROWS = 8
+local GRID_MIN_CELL_SIZE = v2(76, 82)
+local LIST_MIN_ROWS = 5
+local LIST_MAX_ROWS = 18
+local LIST_MIN_ROW_HEIGHT = 48
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
 local CATEGORY_SMALL_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/small_icons.dds'
@@ -487,16 +492,24 @@ local function computeLayoutMetrics()
     local controlButtonSize = math.floor(clamp(toolbarHeight * CONTROL_BUTTON_SIZE_FRACTION, CONTROL_BUTTON_MIN_SIZE, CONTROL_BUTTON_MAX_SIZE))
     local viewButtonSize = math.floor(clamp(toolbarHeight * VIEW_BUTTON_SIZE_FRACTION, CONTROL_BUTTON_MIN_SIZE, CONTROL_BUTTON_MAX_SIZE))
     local railWidth = math.floor(clamp(windowSize.x * CATEGORY_RAIL_WIDTH_FRACTION, CATEGORY_RAIL_MIN_WIDTH, CATEGORY_RAIL_MAX_WIDTH))
+    local viewSize = v2(math.max(windowSize.x - railWidth, 1), math.max(windowSize.y - toolbarHeight, 1))
+    local gridColumns = math.floor(clamp(math.floor(viewSize.x / GRID_MIN_CELL_SIZE.x), GRID_MIN_COLUMNS, GRID_MAX_COLUMNS))
+    local gridRows = math.floor(clamp(math.floor(viewSize.y / GRID_MIN_CELL_SIZE.y), GRID_MIN_ROWS, GRID_MAX_ROWS))
+    local listRows = math.floor(clamp(math.floor(viewSize.y / LIST_MIN_ROW_HEIGHT), LIST_MIN_ROWS, LIST_MAX_ROWS))
 
     return {
         screen = screen,
         margin = margin,
         windowPosition = position,
         windowSize = windowSize,
+        viewSize = viewSize,
         toolbarRelativeSize = v2(1, toolbarHeight / windowSize.y),
         categoryRailSize = v2(railWidth, 0),
         controlButtonSize = v2(controlButtonSize, controlButtonSize),
         viewButtonSize = v2(viewButtonSize, viewButtonSize),
+        gridColumns = gridColumns,
+        gridRows = gridRows,
+        listRows = listRows,
     }
 end
 
@@ -612,20 +625,21 @@ local function buildDisplayEntries(items)
 end
 
 local function maxScrollOffset(entryCount)
+    local metrics = layoutMetrics()
     if viewMode == 'list' then
-        local extraRows = entryCount - LIST_ROWS
+        local extraRows = entryCount - metrics.listRows
         if extraRows <= 0 then return 0 end
         return extraRows
     end
 
-    local extraRows = math.ceil(entryCount / GRID_COLUMNS) - GRID_ROWS
+    local extraRows = math.ceil(entryCount / metrics.gridColumns) - metrics.gridRows
     if extraRows <= 0 then return 0 end
-    return extraRows * GRID_COLUMNS
+    return extraRows * metrics.gridColumns
 end
 
 local function scrollStepSize()
     if viewMode == 'list' then return 1 end
-    return GRID_COLUMNS
+    return layoutMetrics().gridColumns
 end
 
 local function clampScrollOffset(entryCount)
@@ -1241,7 +1255,7 @@ local function makeCategoryHeaderSlot(entry, index)
         type = ui.TYPE.Widget,
         template = I.MWUI.templates.borders,
         props = {
-            relativeSize = v2(1 / GRID_COLUMNS, 1),
+            relativeSize = v2(1 / layoutMetrics().gridColumns, 1),
         },
         userData = entry,
         events = {
@@ -1343,7 +1357,7 @@ local function makeSlot(entry, index)
         type = ui.TYPE.Widget,
         template = I.MWUI.templates.borders,
         props = {
-            relativeSize = v2(1 / GRID_COLUMNS, 1),
+            relativeSize = v2(1 / layoutMetrics().gridColumns, 1),
         },
         userData = data,
         events = data and {
@@ -1361,13 +1375,14 @@ local function makeSlot(entry, index)
 end
 
 local function makeGrid(items, firstIndex)
+    local metrics = layoutMetrics()
     local rows = ui.content {}
     local index = firstIndex or 1
     local slotIndex = 1
 
-    for rowIndex = 1, GRID_ROWS do
+    for rowIndex = 1, metrics.gridRows do
         local row = ui.content {}
-        for _ = 1, GRID_COLUMNS do
+        for _ = 1, metrics.gridColumns do
             row:add(makeSlot(items[index], slotIndex))
             index = index + 1
             slotIndex = slotIndex + 1
@@ -1376,10 +1391,10 @@ local function makeGrid(items, firstIndex)
             type = ui.TYPE.Flex,
             props = {
                 horizontal = true,
-                relativeSize = v2(1, 1 / GRID_ROWS),
+                relativeSize = v2(1, 1 / metrics.gridRows),
                 autoSize = false,
             },
-            external = rowIndex == GRID_ROWS and { grow = 1 } or nil,
+            external = rowIndex == metrics.gridRows and { grow = 1 } or nil,
             content = row,
         }
     end
@@ -1459,7 +1474,7 @@ local function makeListCategoryRow(entry, index)
         type = ui.TYPE.Widget,
         template = I.MWUI.templates.borders,
         props = {
-            relativeSize = v2(1, 1 / LIST_ROWS),
+            relativeSize = v2(1, 1 / layoutMetrics().listRows),
         },
         userData = entry,
         events = {
@@ -1563,7 +1578,7 @@ local function makeListItemRow(entry, index)
         type = ui.TYPE.Widget,
         template = I.MWUI.templates.borders,
         props = {
-            relativeSize = v2(1, 1 / LIST_ROWS),
+            relativeSize = v2(1, 1 / layoutMetrics().listRows),
         },
         userData = data,
         events = data and {
@@ -1581,9 +1596,10 @@ local function makeListItemRow(entry, index)
 end
 
 local function makeList(items, firstIndex)
+    local metrics = layoutMetrics()
     local rows = ui.content {}
     local index = firstIndex or 1
-    for slotIndex = 1, LIST_ROWS do
+    for slotIndex = 1, metrics.listRows do
         local entry = items[index]
         if entry and entry.kind == 'categoryHeader' then
             rows:add(makeListCategoryRow(entry, slotIndex))
