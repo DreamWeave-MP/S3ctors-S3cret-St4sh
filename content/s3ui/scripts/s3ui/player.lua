@@ -48,20 +48,14 @@ local TOOLTIP_FIELD_ICON_SIZE = v2(28, 28)
 local TOOLTIP_VALUE_TEXT_SIZE = 16
 local EMPTY_FIELD = '—'
 
-local TOOLTIP_VALUE_ICON = ui.texture {
-    path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/all_small_icons.dds',
-    offset = v2(128, 0),
-    size = v2(128, 128),
-}
-
 local TOOLTIP_ICONS = {
     typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
     typeWeapon = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_weapon.dds' },
     typeArmor = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_armor.dds' },
     typeBook = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_book.dds' },
-    value = TOOLTIP_VALUE_ICON,
+    value = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/value.dds' },
     weight = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weight.dds' },
-    goldPerWeight = TOOLTIP_VALUE_ICON,
+    goldPerWeight = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/value.dds' },
     condition = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/durability.dds' },
     reach = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_reach.dds' },
     speed = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/weapon_speed.dds' },
