@@ -8,6 +8,7 @@ local self = require 'openmw.self'
 local types = require 'openmw.types'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
+local inventoryData = require 'scripts.s3ui.inventory.data'
 local inventoryLayout = require 'scripts.s3ui.inventory.layout'
 
 local v2 = util.vector2
@@ -17,6 +18,15 @@ local WINDOW = I.UI.WINDOW.Inventory
 local MODE = I.UI.MODE.Interface
 local ROOT_LAYER = 'Windows'
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
+local EMPTY_FIELD = inventoryData.EMPTY_FIELD
+local CATEGORY_ORDER = inventoryData.CATEGORY_ORDER
+local collectInventoryItems = inventoryData.collectItems
+local itemName = inventoryData.itemName
+local formatNumber = inventoryData.formatNumber
+local formatCondition = inventoryData.formatCondition
+local bestWeaponDamage = inventoryData.bestWeaponDamage
+local typeText = inventoryData.typeText
+local goldPerWeight = inventoryData.goldPerWeight
 
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 local CATEGORY_ICON_ATLAS = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/category_icons.dds'
@@ -40,7 +50,6 @@ local CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28)
 local VIEW_GLYPH_COLOR = util.color.rgb(0.9, 0.84, 0.62)
 local TOOLTIP_LAYER = 'S3UI_Tooltip'
 local TOOLTIP_FIELD_ROW_COUNT = 9
-local EMPTY_FIELD = '—'
 
 local TOOLTIP_ICONS = {
     typeGeneric = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/tooltips/type_generic.dds' },
@@ -105,17 +114,6 @@ local scrollOffset = 0
 local lastEntryCount = 0
 local activeLayoutMetrics = nil
 
-local CATEGORY_ORDER = {
-    { key = 'all', label = 'All' },
-    { key = 'weapons', label = 'Weapons' },
-    { key = 'armor', label = 'Armor' },
-    { key = 'apparel', label = 'Apparel' },
-    { key = 'alchemy', label = 'Alchemy' },
-    { key = 'books', label = 'Books' },
-    { key = 'tools', label = 'Tools' },
-    { key = 'misc', label = 'Misc' },
-}
-
 local CATEGORY_ICON_TEXTURES = {
     all = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(25, 29), size = v2(206, 204) },
     weapons = ui.texture { path = CATEGORY_ICON_ATLAS, offset = v2(284, 3), size = v2(224, 225) },
@@ -146,207 +144,6 @@ local CATEGORY_ICON_RELATIVE_SIZES = {
     misc = v2(0.46, 0.58),
 }
 
-local CATEGORY_BY_KEY = {}
-for _, category in ipairs(CATEGORY_ORDER) do
-    CATEGORY_BY_KEY[category.key] = category
-end
-
-local TYPE_NAMES = {
-    [types.Apparatus] = 'Apparatus',
-    [types.Armor] = 'Armor',
-    [types.Book] = 'Book',
-    [types.Clothing] = 'Clothing',
-    [types.Ingredient] = 'Ingredient',
-    [types.Light] = 'Light',
-    [types.Lockpick] = 'Lockpick',
-    [types.Miscellaneous] = 'Miscellaneous',
-    [types.Potion] = 'Potion',
-    [types.Probe] = 'Probe',
-    [types.Repair] = 'Repair',
-    [types.Weapon] = 'Weapon',
-}
-
-local ARMOR_TYPE_NAMES = {
-    [types.Armor.TYPE.Boots] = 'Boots',
-    [types.Armor.TYPE.Cuirass] = 'Cuirass',
-    [types.Armor.TYPE.Greaves] = 'Greaves',
-    [types.Armor.TYPE.Helmet] = 'Helmet',
-    [types.Armor.TYPE.LBracer] = 'Left Bracer',
-    [types.Armor.TYPE.LGauntlet] = 'Left Gauntlet',
-    [types.Armor.TYPE.LPauldron] = 'Left Pauldron',
-    [types.Armor.TYPE.RBracer] = 'Right Bracer',
-    [types.Armor.TYPE.RGauntlet] = 'Right Gauntlet',
-    [types.Armor.TYPE.RPauldron] = 'Right Pauldron',
-    [types.Armor.TYPE.Shield] = 'Shield',
-}
-
-local CLOTHING_TYPE_NAMES = {
-    [types.Clothing.TYPE.Amulet] = 'Amulet',
-    [types.Clothing.TYPE.Belt] = 'Belt',
-    [types.Clothing.TYPE.LGlove] = 'Left Glove',
-    [types.Clothing.TYPE.Pants] = 'Pants',
-    [types.Clothing.TYPE.RGlove] = 'Right Glove',
-    [types.Clothing.TYPE.Ring] = 'Ring',
-    [types.Clothing.TYPE.Robe] = 'Robe',
-    [types.Clothing.TYPE.Shirt] = 'Shirt',
-    [types.Clothing.TYPE.Shoes] = 'Shoes',
-    [types.Clothing.TYPE.Skirt] = 'Skirt',
-}
-
-local WEAPON_TYPE_NAMES = {
-    [types.Weapon.TYPE.Arrow] = 'Arrow',
-    [types.Weapon.TYPE.AxeOneHand] = 'One Handed Axe',
-    [types.Weapon.TYPE.AxeTwoHand] = 'Two Handed Axe',
-    [types.Weapon.TYPE.BluntOneHand] = 'One Handed Blunt',
-    [types.Weapon.TYPE.BluntTwoClose] = 'Close Two Handed Blunt',
-    [types.Weapon.TYPE.BluntTwoWide] = 'Wide Two Handed Blunt',
-    [types.Weapon.TYPE.Bolt] = 'Bolt',
-    [types.Weapon.TYPE.LongBladeOneHand] = 'One Handed Long Blade',
-    [types.Weapon.TYPE.LongBladeTwoHand] = 'Two Handed Long Blade',
-    [types.Weapon.TYPE.MarksmanBow] = 'Bow',
-    [types.Weapon.TYPE.MarksmanCrossbow] = 'Crossbow',
-    [types.Weapon.TYPE.MarksmanThrown] = 'Thrown',
-    [types.Weapon.TYPE.ShortBladeOneHand] = 'Short Blade',
-    [types.Weapon.TYPE.SpearTwoWide] = 'Spear',
-}
-
-local APPARATUS_TYPE_NAMES = {
-    [types.Apparatus.TYPE.Alembic] = 'Alembic',
-    [types.Apparatus.TYPE.Calcinator] = 'Calcinator',
-    [types.Apparatus.TYPE.MortarPestle] = 'Mortar & Pestle',
-    [types.Apparatus.TYPE.Retort] = 'Retort',
-}
-
-local function safeRecord(item)
-    if not item or not item.type or not item.recordId then return nil end
-    local records = item.type.records
-    if not records then return nil end
-    return records[item.recordId]
-end
-
-local function itemName(item, record)
-    return (record and record.name) or item.recordId or 'Unknown item'
-end
-
-local function itemCount(inventory, item)
-    if not item or not item.recordId then return 1 end
-    local ok, count = pcall(function() return inventory:countOf(item.recordId) end)
-    if ok and count and count > 0 then return count end
-    return 1
-end
-
-local function safeItemData(item)
-    local ok, itemData = pcall(function() return types.Item.itemData(item) end)
-    if ok then return itemData end
-    return nil
-end
-
-local function currentActor()
-    return self.object or self
-end
-
-local function equippedRecordIds(actor)
-    local result = {}
-    local ok, equipment = pcall(function() return types.Actor.getEquipment(actor) end)
-    if not ok or type(equipment) ~= 'table' then return result end
-    for _, item in pairs(equipment) do
-        if item and item.recordId then result[item.recordId] = true end
-    end
-    return result
-end
-
-local function itemEquipped(actor, equippedIds, item)
-    if item and item.recordId and equippedIds[item.recordId] then return true end
-    local ok, equipped = pcall(function() return types.Actor.hasEquipped(actor, item) end)
-    return ok and equipped == true
-end
-
-local function itemEnchanted(record)
-    return record and record.enchant ~= nil and record.enchant ~= ''
-end
-
-local function itemBroken(condition)
-    return type(condition) == 'number' and condition <= 0
-end
-
-local function categoryForItem(itemType)
-    if itemType == types.Weapon then return CATEGORY_BY_KEY.weapons end
-    if itemType == types.Armor then return CATEGORY_BY_KEY.armor end
-    if itemType == types.Clothing then return CATEGORY_BY_KEY.apparel end
-    if itemType == types.Ingredient or itemType == types.Potion or itemType == types.Apparatus then return CATEGORY_BY_KEY.alchemy end
-    if itemType == types.Book then return CATEGORY_BY_KEY.books end
-    if itemType == types.Lockpick or itemType == types.Probe or itemType == types.Repair or itemType == types.Light then return CATEGORY_BY_KEY.tools end
-    return CATEGORY_BY_KEY.misc
-end
-
-local function weaponEffectiveness(record)
-    if not record then return 0 end
-    local best = 0
-    if type(record.thrustMaxDamage) == 'number' and record.thrustMaxDamage > best then best = record.thrustMaxDamage end
-    if type(record.chopMaxDamage) == 'number' and record.chopMaxDamage > best then best = record.chopMaxDamage end
-    if type(record.slashMaxDamage) == 'number' and record.slashMaxDamage > best then best = record.slashMaxDamage end
-    if type(record.speed) == 'number' then best = best * record.speed end
-    return best
-end
-
-local function itemEffectiveness(itemType, record)
-    if not record then return 0 end
-    if itemType == types.Weapon then return weaponEffectiveness(record) end
-    if itemType == types.Armor and type(record.baseArmor) == 'number' then return record.baseArmor end
-    if (itemType == types.Apparatus or itemType == types.Lockpick or itemType == types.Probe or itemType == types.Repair)
-        and type(record.quality) == 'number' then
-        return record.quality
-    end
-    return 0
-end
-
-local function itemCondition(itemData)
-    if itemData and type(itemData.condition) == 'number' then return itemData.condition end
-    return nil
-end
-
-local function collectInventoryItems()
-    local actor = currentActor()
-    local inventory = types.Actor.inventory(actor)
-    local equippedIds = equippedRecordIds(actor)
-    local seen = {}
-    local result = {}
-
-    for _, item in ipairs(inventory:getAll()) do
-        local recordId = item.recordId
-        if recordId and not seen[recordId] then
-            seen[recordId] = true
-            local record = safeRecord(item)
-            local itemType = item.type
-            local category = categoryForItem(itemType)
-            local itemData = safeItemData(item)
-            local condition = itemCondition(itemData)
-            result[#result + 1] = {
-                item = item,
-                record = record,
-                name = itemName(item, record),
-                icon = record and record.icon,
-                count = itemCount(inventory, item),
-                categoryKey = category.key,
-                categoryLabel = category.label,
-                value = (record and type(record.value) == 'number') and record.value or 0,
-                weight = (record and type(record.weight) == 'number') and record.weight or 0,
-                effectiveness = itemEffectiveness(itemType, record),
-                condition = condition,
-                equipped = itemEquipped(actor, equippedIds, item),
-                enchanted = itemEnchanted(record),
-                broken = itemBroken(condition),
-            }
-        end
-    end
-
-    table.sort(result, function(left, right)
-        return left.name:lower() < right.name:lower()
-    end)
-
-    return result
-end
-
 local function textLine(text, template, props)
     props = props or {}
     local name = props.name
@@ -359,74 +156,12 @@ local function textLine(text, template, props)
     }
 end
 
-local function formatNumber(value, decimals)
-    if type(value) ~= 'number' then return EMPTY_FIELD end
-    if decimals then return string.format('%.' .. tostring(decimals) .. 'f', value) end
-    return tostring(value)
-end
-
-local function formatDamage(minDamage, maxDamage)
-    if type(minDamage) ~= 'number' or type(maxDamage) ~= 'number' then return EMPTY_FIELD end
-    return tostring(minDamage) .. '–' .. tostring(maxDamage)
-end
-
-local function formatCondition(condition)
-    if type(condition) ~= 'number' or condition < 0 then return EMPTY_FIELD end
-    return formatNumber(condition, 0)
-end
-
-local function bestWeaponDamage(record)
-    if not record then return EMPTY_FIELD end
-    local bestMin = nil
-    local bestMax = -math.huge
-    local damagePairs = {
-        { record.thrustMinDamage, record.thrustMaxDamage },
-        { record.chopMinDamage, record.chopMaxDamage },
-        { record.slashMinDamage, record.slashMaxDamage },
-    }
-    for _, damage in ipairs(damagePairs) do
-        local minDamage = damage[1]
-        local maxDamage = damage[2]
-        if type(minDamage) == 'number' and type(maxDamage) == 'number' and maxDamage > bestMax then
-            bestMin = minDamage
-            bestMax = maxDamage
-        end
-    end
-    return formatDamage(bestMin, bestMax)
-end
-
-local function subtypeName(recordType, record)
-    if not record then return EMPTY_FIELD end
-    if recordType == types.Armor then return ARMOR_TYPE_NAMES[record.type] or EMPTY_FIELD end
-    if recordType == types.Clothing then return CLOTHING_TYPE_NAMES[record.type] or EMPTY_FIELD end
-    if recordType == types.Weapon then return WEAPON_TYPE_NAMES[record.type] or EMPTY_FIELD end
-    if recordType == types.Apparatus then return APPARATUS_TYPE_NAMES[record.type] or EMPTY_FIELD end
-    if recordType == types.Book and record.isScroll then return 'Scroll' end
-    if recordType == types.Miscellaneous and record.isKey then return 'Key' end
-    return EMPTY_FIELD
-end
-
-local function typeText(data)
-    if not data then return EMPTY_FIELD end
-    local recordType = TYPE_NAMES[data.item and data.item.type] or 'Item'
-    local subtype = subtypeName(data.item and data.item.type, data.record)
-    if subtype == EMPTY_FIELD then return recordType end
-    return subtype
-end
-
 local function typeIcon(data)
     local itemType = data and data.item and data.item.type
     if itemType == types.Weapon then return TOOLTIP_ICONS.typeWeapon end
     if itemType == types.Armor or itemType == types.Clothing then return TOOLTIP_ICONS.typeArmor end
     if itemType == types.Book then return TOOLTIP_ICONS.typeBook end
     return TOOLTIP_ICONS.typeGeneric
-end
-
-local function goldPerWeight(record)
-    if not record or type(record.weight) ~= 'number' or record.weight <= 0 or type(record.value) ~= 'number' then
-        return EMPTY_FIELD
-    end
-    return formatNumber(record.value / record.weight, 2)
 end
 
 local function backgroundAlpha()
