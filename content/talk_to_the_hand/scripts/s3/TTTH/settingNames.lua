@@ -1,3 +1,5 @@
+---@omw-context player
+
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local self = require 'openmw.self'
@@ -74,7 +76,7 @@ local function colorUpdater(key, value)
     updateAtlas(atlasName, atlas, key, value)
 end
 
-local function fadeUpdater(key, _)
+local function fadeUpdater(_key, _)
     if Core.layout.props.alpha ~= 1.0 then Core.layout.props.alpha = 1.0 end
     Core:update()
     H4ND.state.lastUpdateTime = core.getRealTime()
@@ -234,7 +236,7 @@ local function h4ndSubscriber(_, key)
 end
 
 ---@param h4nd H4ND
----@param h4ndStorage userdata
+---@param h4ndStorage openmw.storage.MutableStorageSection
 return function(h4nd, h4ndStorage)
     assert(h4nd)
     H4ND = h4nd

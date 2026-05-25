@@ -1,3 +1,5 @@
+---@omw-context player
+
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -6,10 +8,10 @@ local I = require 'openmw.interfaces'
 ---@class WeaponIndicatorConstructor
 ---@field Constants H4NDConstants
 ---@field enchantFrameVisible boolean
----@field durabilityColor util.color
+---@field durabilityColor openmw.util.Color
 ---@field weaponIcon string
 ---@field weaponHealth number
----@field barSize util.vector2
+---@field barSize openmw.util.Vector2
 ---@field dragEvents table<string, function>
 ---@field useDebug boolean
 ---@field H4ND H4ND

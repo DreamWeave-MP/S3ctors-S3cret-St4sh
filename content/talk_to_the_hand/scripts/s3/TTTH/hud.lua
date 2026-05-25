@@ -1,3 +1,5 @@
+---@omw-context player
+
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
@@ -6,7 +8,9 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3.lf
+local s3lf = assert(I.s3.lf:asActor())
+
+local RandomGen = require 'scripts.s3.randomGen'
 
 -- TODO: Fix default sizes/positions
 -- Add presets
@@ -23,7 +27,7 @@ end
 function colorUtil.screen(base, blend)
     local base_rgb = base:asRgb()
     local blend_rgb = blend:asRgb()
-    local mix = util.vec3(
+    local mix = util.vector3(
         1 - (1 - base_rgb.x) * (1 - blend_rgb.x),
         1 - (1 - base_rgb.y) * (1 - blend_rgb.y),
         1 - (1 - base_rgb.z) * (1 - blend_rgb.z)
@@ -34,7 +38,7 @@ end
 function colorUtil.overlay(base, blend)
     local base_rgb = base:asRgb()
     local blend_rgb = blend:asRgb()
-    local mix = util.vec3(
+    local mix = util.vector3(
         base_rgb.x < 0.5 and (2 * base_rgb.x * blend_rgb.x) or (1 - 2 * (1 - base_rgb.x) * (1 - blend_rgb.x)),
         base_rgb.y < 0.5 and (2 * base_rgb.y * blend_rgb.y) or (1 - 2 * (1 - base_rgb.y) * (1 - blend_rgb.y)),
         base_rgb.z < 0.5 and (2 * base_rgb.z * blend_rgb.z) or (1 - 2 * (1 - base_rgb.z) * (1 - blend_rgb.z))
@@ -45,7 +49,7 @@ end
 function colorUtil.additive(base, blend)
     local base_rgb = base:asRgb()
     local blend_rgb = blend:asRgb()
-    local mix = util.vec3(
+    local mix = util.vector3(
         math.min(base_rgb.x + blend_rgb.x, 1),
         math.min(base_rgb.y + blend_rgb.y, 1),
         math.min(base_rgb.z + blend_rgb.z, 1)
@@ -56,7 +60,7 @@ end
 function colorUtil.softlight(base, blend)
     local base_rgb = base:asRgb()
     local blend_rgb = blend:asRgb()
-    local mix = util.vec3(
+    local mix = util.vector3(
         blend_rgb.x < 0.5 and (2 * base_rgb.x * blend_rgb.x + base_rgb.x * base_rgb.x * (1 - 2 * blend_rgb.x)) or
         (2 * base_rgb.x * (1 - blend_rgb.x) + math.sqrt(base_rgb.x) * (2 * blend_rgb.x - 1)),
         blend_rgb.y < 0.5 and (2 * base_rgb.y * blend_rgb.y + base_rgb.y * base_rgb.y * (1 - 2 * blend_rgb.y)) or
@@ -125,7 +129,7 @@ function colorUtil.hslToRgb(h, s, l)
     return r, g, b
 end
 
----@param color util.color
+---@param color openmw.util.Color
 ---@param degrees integer
 function colorUtil.hueShift(color, degrees)
     local rgb = color:asRgb()
@@ -135,9 +139,9 @@ function colorUtil.hueShift(color, degrees)
     return util.color.rgb(r, g, b)
 end
 
----@param color util.color
+---@param color openmw.util.Color
 ---@param amount number @0-1, where 0 = no change, 1 = fully grayscale
----@return util.color
+---@return openmw.util.Color
 function colorUtil.desaturate(color, amount)
     local rgb = color:asRgb()
     local h, s, l = colorUtil.rgbToHsl(rgb.x, rgb.y, rgb.z)
@@ -186,19 +190,19 @@ local OrbGen = {
 }
 
 ---@param vector util.vector3
----@return util.color
+---@return openmw.util.Color
 function OrbGen.vectorColor(vector)
     return util.color.rgb(vector.x, vector.y, vector.z)
 end
 
 ---@class OrbColors
----@field base util.color
----@field noise util.color
----@field vein util.color
----@field nebula util.color
----@field lid util.color
+---@field base openmw.util.Color
+---@field noise openmw.util.Color
+---@field vein openmw.util.Color
+---@field nebula openmw.util.Color
+---@field lid openmw.util.Color
 
----@param inColor util.color
+---@param inColor openmw.util.Color
 ---@return OrbColors
 function OrbGen:getColor(inColor)
     local mult = self.colorCoeff
@@ -228,12 +232,12 @@ end
 
 ---@class SubElementConstructor
 ---@field alpha number
----@field resource userdata
----@field color util.color,
+---@field resource openmw.ui.TextureResource
+---@field color openmw.util.Color,
 ---@field twoSided boolean
 ---@field rightSide boolean?
 ---@field name string
----@field userdata table<any, any>?
+---@field userData table<any, any>?
 
 ---@param elementInfo  SubElementConstructor
 function OrbGen:subElement(elementInfo)
@@ -254,11 +258,11 @@ function OrbGen:subElement(elementInfo)
             anchor = util.vector2(0, 1),
             relativePosition = util.vector2(xPos, 1),
         },
-        userdata = elementInfo.userdata,
+        userData = elementInfo.userData,
     }
 end
 
----@param color util.color
+---@param color openmw.util.Color
 ---@param twoSided boolean
 ---@param rightSide boolean?
 ---@return table<string, any> layout
@@ -273,7 +277,7 @@ function OrbGen:fill(color, twoSided, rightSide)
     }
 end
 
----@param color util.color
+---@param color openmw.util.Color
 ---@param twoSided boolean
 ---@param rightSide boolean?
 ---@return table<string, any> layout
@@ -290,7 +294,7 @@ function OrbGen:noise(color, twoSided, rightSide)
 end
 
 ---@param atlas ImageAtlas
----@param color util.color
+---@param color openmw.util.Color
 ---@param twoSided boolean
 ---@param rightSide boolean?
 ---@return table<string, any> nebulaOverlay
@@ -302,16 +306,16 @@ function OrbGen:nebula(atlas, color, twoSided, rightSide)
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
-        userdata = {
+        userData = {
             atlas = atlas,
             upOrDown = math.random() <= .5,
-            currentFrame = I.RandomGen.range({ min = 1, max = 100 }, true),
+            currentFrame = RandomGen.range({ min = 1, max = 100 }, true),
         },
     }
 end
 
 ---@param atlas ImageAtlas
----@param color util.color
+---@param color openmw.util.Color
 ---@param twoSided boolean
 ---@param rightSide boolean?
 ---@return table<string, any> veinOverlay
@@ -323,15 +327,15 @@ function OrbGen:vein(atlas, color, twoSided, rightSide)
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
-        userdata = {
+        userData = {
             atlas = atlas,
             upOrDown = math.random() <= .5,
-            currentFrame = I.RandomGen.range({ min = 1, max = 100 }, true),
+            currentFrame = RandomGen.range({ min = 1, max = 100 }, true),
         },
     }
 end
 
----@param color util.color
+---@param color openmw.util.Color
 ---@param twoSided boolean
 ---@param rightSide boolean
 function OrbGen:lid(color, twoSided, rightSide)
@@ -342,7 +346,7 @@ function OrbGen:lid(color, twoSided, rightSide)
         color = color,
         twoSided = twoSided,
         rightSide = rightSide,
-        userdata = {
+        userData = {
             atlas = self.capAtlas,
             currentFrame = 1,
         },
@@ -350,7 +354,7 @@ function OrbGen:lid(color, twoSided, rightSide)
 end
 
 ---@class OrbContainerConstructor
----@field baseColor util.color
+---@field baseColor openmw.util.Color
 ---@field twoSided boolean
 ---@field rightSide boolean
 ---@field stat DynamicStatName
@@ -385,7 +389,7 @@ function OrbGen:container(constructor)
             OrbGen:vein(OrbGen.overAtlas, colors.vein, constructor.twoSided, constructor.rightSide),
             OrbGen:lid(colorUtil.hueShift(colors.noise, -25), constructor.twoSided, constructor.rightSide),
         },
-        userdata = {
+        userData = {
             stat = constructor.stat,
         }
     }
@@ -393,13 +397,13 @@ end
 
 ---@class H4NDOrbConstructor
 ---@field twoSided boolean
----@field leftColor util.color
+---@field leftColor openmw.util.Color
 ---@field leftStat string
----@field rightColor util.color?
+---@field rightColor openmw.util.Color?
 ---@field rightStat string?
 ---@field size number
----@field position util.vector2
----@field anchor util.vector2
+---@field position openmw.util.Vector2
+---@field anchor openmw.util.Vector2
 ---@field useDebug boolean
 ---@field events table<string, function>
 ---@field layer string
@@ -495,9 +499,9 @@ function OrbGen:update(orb)
     local orbBase = orb.layout.content
 
     for _, layout in ipairs(orbBase) do
-        if not layout.userdata then goto CONTINUE end
+        if not layout.userData then goto CONTINUE end
 
-        local stat = layout.userdata.stat
+        local stat = layout.userData.stat
         local height = util.clamp(s3lf[stat].current / s3lf[stat].base, .0, 1.)
 
         local newHeightInt,
@@ -521,8 +525,8 @@ function OrbGen:update(orb)
                 childElement.props.relativeSize = childSize
             end
 
-            if childElement.userdata and childElement.userdata.atlas then
-                local data = childElement.userdata
+            if childElement.userData and childElement.userData.atlas then
+                local data = childElement.userData
 
                 local step = data.upOrDown and 1 or -1
                 data.currentFrame = data.currentFrame + step
@@ -576,34 +580,34 @@ local H4ndStorage = storage.playerSection('SettingsTalkToTheHandMain')
 ---@class H4ND: ProtectedTable
 ---@field UIFramerate integer
 ---@field H4NDWidth number
----@field H4NDPos util.vector2
----@field H4NDAnchor util.vector2
+---@field H4NDPos openmw.util.Vector2
+---@field H4NDAnchor openmw.util.Vector2
 ---@field ThumbStat string
 ---@field PinkyStat string
 ---@field MiddleStat string
----@field fatigueColor util.color
----@field magickaColor util.color
----@field healthColor util.color
----@field DurabilityColor util.color
----@field CastChanceColor util.color
----@field CompassColor util.color
+---@field fatigueColor openmw.util.Color
+---@field magickaColor openmw.util.Color
+---@field healthColor openmw.util.Color
+---@field DurabilityColor openmw.util.Color
+---@field CastChanceColor openmw.util.Color
+---@field CompassColor openmw.util.Color
 ---@field CompassSize integer
----@field CompassPos util.vector2
+---@field CompassPos openmw.util.Vector2
 ---@field CompassStyle H4NDCompassStyle
----@field OrbOneSidedAnchor util.vector2
+---@field OrbOneSidedAnchor openmw.util.Vector2
 ---@field OrbOneSidedSize integer
----@field OrbOneSidedPos util.vector2
----@field OrbTwoSidedAnchor util.vector2
+---@field OrbOneSidedPos openmw.util.Vector2
+---@field OrbTwoSidedAnchor openmw.util.Vector2
 ---@field OrbTwoSidedSize integer
----@field OrbTwoSidedPos util.vector2
+---@field OrbTwoSidedPos openmw.util.Vector2
 ---@field UseFade boolean
 ---@field FadeTime number
 ---@field FadeStep number
 ---@field UIDebug boolean
 ---@field EffectsPerRow integer
----@field EffectBarAnchor util.vector2
----@field EffectBarPos util.vector2
----@field EffectBarSize util.vector2
+---@field EffectBarAnchor openmw.util.Vector2
+---@field EffectBarPos openmw.util.Vector2
+---@field EffectBarSize openmw.util.Vector2
 local H4ND = I.S3ProtectedTable.new {
     storageSection = H4ndStorage,
     logPrefix = '[H4ND]:',
@@ -686,7 +690,7 @@ function H4ND.getAtlasByStatName(statName)
 end
 
 ---@param elementName string
----@return userdata|ImageAtlas|nil handElement
+---@return openmw.ui.Element|ImageAtlas|nil handElement
 function H4ND.getElementByName(elementName)
     return ({
         Compass = Compass,
@@ -733,8 +737,8 @@ end
 --- are then added to the right
 --- So this blows, basically
 --- Used to sort arrays of magic effect ids
----@param effectA MagicEffectWithParams
----@param effectB MagicEffectWithParams
+---@param effectA openmw.core.MagicEffectWithParams
+---@param effectB openmw.core.MagicEffectWithParams
 ---@return boolean
 function EffectBarManager.effectSort(effectA, effectB)
     local magicEffects = core.magic.effects.records
@@ -748,12 +752,11 @@ function EffectBarManager.effectSort(effectA, effectB)
     end
 end
 
----@return table<string, MagicEffectWithParams>
+---@return table<string, openmw.core.MagicEffectWithParams>
 function EffectBarManager:getActiveEffectIds()
     local activeEffects, foundEffects = {}, {}
 
     for _, spell in pairs(s3lf.activeSpells()) do
-        ---@cast spell Spell
         for _, effect in ipairs(spell.effects) do
             local storedEffect = foundEffects[effect.id]
 
@@ -894,15 +897,22 @@ function EffectBarManager:constructEffectImages()
     end
 end
 
----@param item GameObject
+---@param item openmw.Object
+---@return string iconPath
 local function getItemIcon(item)
     return item.type.records[item.recordId].icon
 end
 
+local H2HIcon = core.stats.Skill.records.handtohand.icon
+local RightHandSlot = s3lf:asActor().EQUIPMENT_SLOT.CarriedRight
+
+---@return string iconPath
 local function getSelectedWeaponIcon()
-    local weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+    local weapon = s3lf.getEquipment(RightHandSlot)
+    ---@cast weapon openmw.Object|nil
+
     if not weapon then
-        return core.stats.Skill.records.handtohand.icon
+        return H2HIcon
     end
 
     return getItemIcon(weapon)
@@ -976,12 +986,13 @@ local function updateAtlas(atlasName, atlas)
     H4ND.updateTime()
 end
 
----@return GameObject? weapon
+---@return openmw.LObject? weapon
 local function getWeapon()
+    ---@diagnostic disable-next-line: return-type-mismatch
     return s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
 end
 
----@param weapon GameObject?
+---@param weapon openmw.LObject?
 ---@return boolean
 local function weaponIsEnchanted(weapon)
     if not weapon then return false end
@@ -1169,7 +1180,7 @@ end
 --- Determines if a click occurred on the edge of an element or not.
 --- Feed the params of a mousePress/Click event directly into `Uiti.relativeClickPos`, then into this.
 --- Usage: Uitil.didClickEdge(Uitil.relativeClickPos(mouseEvent.offset, layout))
----@param relativeClickPos util.vector2
+---@param relativeClickPos openmw.util.Vector2
 ---@return boolean
 function Uitil.didClickEdge(relativeClickPos)
     local edgeThreshold = 0.025
@@ -1190,19 +1201,19 @@ local AlignmentCycle = {
 function H4ND.dragEvents(elementName)
     return {
         mousePress = async:callback(function(mouseEvent, layout)
-            if not layout.userdata then layout.userdata = {} end
+            if not layout.userData then layout.userData = {} end
             local element = H4ND.getElementByName(elementName)
             assert(element)
 
-            layout.userdata.doDrag = true
-            layout.userdata.lastPos = mouseEvent.position
+            layout.userData.doDrag = true
+            layout.userData.lastPos = mouseEvent.position
 
             local newAnchor, relativeClickPos = Uitil.getOppositeAnchor(mouseEvent.offset, layout)
             local relativeSize = layout.props.relativeSize or layout.props.size:ediv(ui.screenSize())
 
             if not Uitil.didClickEdge(relativeClickPos) and not input.isShiftPressed() then return end
 
-            layout.userdata.scaleDrag = true
+            layout.userData.scaleDrag = true
             if element == Compass then return end
 
             local anchorDiff = newAnchor - layout.props.anchor
@@ -1212,15 +1223,15 @@ function H4ND.dragEvents(elementName)
             H4ND[name .. 'Pos'] = layout.props.relativePosition + anchorDiff:emul(relativeSize)
         end),
         mouseMove = async:callback(function(mouseEvent, layout)
-            if not layout.userdata or not layout.userdata.doDrag then return end
+            if not layout.userData or not layout.userData.doDrag then return end
 
             local element, screenSize = H4ND.getElementByName(elementName), ui.screenSize()
 
-            local delta = layout.userdata.lastPos - mouseEvent.position
+            local delta = layout.userData.lastPos - mouseEvent.position
             local relativeDelta = delta:ediv(screenSize)
 
             local scalar
-            if layout.userdata.scaleDrag then
+            if layout.userData.scaleDrag then
                 scalar = layout.props.relativeSize or layout.props.size
 
                 --- Mouse movements in either direction may not necessarily cause scaling to go in the direction we want,
@@ -1243,7 +1254,7 @@ function H4ND.dragEvents(elementName)
 
             local newValue = util.vector2(newX, newY)
 
-            if layout.userdata.scaleDrag then
+            if layout.userData.scaleDrag then
                 local handler = H4ND.state.resizeHandlers[element]
 
                 assert(
@@ -1283,20 +1294,20 @@ function H4ND.dragEvents(elementName)
                 H4ND[layout.name .. 'Pos'] = newValue
             end
 
-            layout.userdata.lastPos = mouseEvent.position
+            layout.userData.lastPos = mouseEvent.position
         end),
         mouseRelease = async:callback(function(mouseEvent, layout)
-            if not layout.userdata or not layout.userdata.doDrag then return end
-            layout.userdata.doDrag = false
-            layout.userdata.scaleDrag = false
-            layout.userdata.lastPos = mouseEvent.position
+            if not layout.userData or not layout.userData.doDrag then return end
+            layout.userData.doDrag = false
+            layout.userData.scaleDrag = false
+            layout.userData.lastPos = mouseEvent.position
         end),
         focusLoss = async:callback(function(_, layout)
-            if not layout.userdata or not layout.userdata.doDrag then return end
-            layout.userdata.doDrag = false
-            layout.userdata.scaleDrag = false
+            if not layout.userData or not layout.userData.doDrag then return end
+            layout.userData.doDrag = false
+            layout.userData.scaleDrag = false
         end),
-        mouseDoubleClick = async:callback(function(_, layout)
+        mouseDoubleClick = async:callback(function(_, _layout)
             local element = H4ND.getElementByName(elementName)
             if element ~= EffectBar then return end
 
@@ -1362,7 +1373,7 @@ HudCore = ui.create {
         alpha = 1.0,
     },
     events = H4ND.dragEvents('Core'),
-    userdata = {},
+    userData = {},
     content = ui.content {
         ThumbAtlas.element,
         MiddleAtlas.element,
@@ -1464,13 +1475,12 @@ require 'scripts.s3.ttth.settingNames' (H4ND, H4ndStorage)
 
 ---@class ResizeInfo
 ---@field layout table<string, any>
----@field absoluteDelta util.vector2
----@field resolvedDelta util.vector2
+---@field absoluteDelta openmw.util.Vector2
+---@field resolvedDelta openmw.util.Vector2
 
 ---@alias ResizeHandler fun(resizeInfo: ResizeInfo)
----@alias ui.Element userdata
 
----@type table<ui.Element, ResizeHandler>
+---@type table<openmw.ui.Element, ResizeHandler>
 H4ND.state.resizeHandlers = {
     [CastableIndicator] = function(resizeInfo)
         H4ND.CastableIndicatorSize = resizeInfo.resolvedDelta.x

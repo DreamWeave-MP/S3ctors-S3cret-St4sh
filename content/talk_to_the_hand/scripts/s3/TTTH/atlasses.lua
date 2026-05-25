@@ -1,3 +1,5 @@
+---@omw-context player
+
 local I = require 'openmw.interfaces'
 
 ---@param Constants H4NDConstants
