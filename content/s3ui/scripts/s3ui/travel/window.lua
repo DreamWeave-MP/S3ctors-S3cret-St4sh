@@ -336,6 +336,7 @@ function M.interface()
 		setRenderer = M.setRenderer,
 		resetOverrides = M.resetOverrides,
 		defaultRenderer = builder.make,
+		getBarterOffer = data.getBarterOffer,
 	}
 end
 
