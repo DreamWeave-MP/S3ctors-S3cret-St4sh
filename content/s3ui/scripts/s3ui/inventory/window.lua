@@ -57,8 +57,19 @@ local function selectVisibleSlot(slotIndex, itemData)
 	end
 end
 
+local function updateEquipmentDetails(slot)
+	if slot and slot.itemData then
+		details.update(slot.itemData)
+	else
+		details.hide()
+	end
+end
+
 local function selectEquipmentSlot(slot)
-	if state.selectedEquipmentSlotKey == (slot and slot.key or nil) then
+	local selectedKey = slot and slot.key or nil
+	if state.selectedEquipmentSlotKey == selectedKey then
+		state:selectEquipmentSlot(slot)
+		updateEquipmentDetails(slot)
 		return
 	end
 	state:selectEquipmentSlot(slot)
@@ -221,6 +232,8 @@ local function rebuildRoot()
 	end
 	if state.selectedSlotIndex ~= nil and state.selectedDisplayData then
 		details.update(state.selectedDisplayData)
+	elseif state.primaryTab == "equipment" and state.selectedEquipmentData then
+		details.update(state.selectedEquipmentData)
 	end
 	state.selectedDisplayData = nil
 end
