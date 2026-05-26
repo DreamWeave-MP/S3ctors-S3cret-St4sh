@@ -106,6 +106,75 @@ local function makeToolbarSortButton(ctx, mode)
 	return button
 end
 
+local function glyphRect(name, position, size)
+	return {
+		name = name,
+		type = ui.TYPE.Image,
+		props = {
+			resource = chrome.WHITE_TEXTURE,
+			color = icons.VIEW_GLYPH_COLOR,
+			alpha = 0.95,
+			anchor = v2(0.5, 0.5),
+			relativePosition = position,
+			relativeSize = size,
+		},
+	}
+end
+
+local function makeViewGlyph(viewMode)
+	local glyph = ui.content({})
+	if viewMode == "list" then
+		glyph:add(glyphRect("s3ui_view_list_bar_1", v2(0.5, 0.41), v2(0.28, 0.045)))
+		glyph:add(glyphRect("s3ui_view_list_bar_2", v2(0.5, 0.5), v2(0.28, 0.045)))
+		glyph:add(glyphRect("s3ui_view_list_bar_3", v2(0.5, 0.59), v2(0.28, 0.045)))
+	else
+		glyph:add(glyphRect("s3ui_view_grid_dot_1", v2(0.45, 0.45), v2(0.075, 0.075)))
+		glyph:add(glyphRect("s3ui_view_grid_dot_2", v2(0.55, 0.45), v2(0.075, 0.075)))
+		glyph:add(glyphRect("s3ui_view_grid_dot_3", v2(0.45, 0.55), v2(0.075, 0.075)))
+		glyph:add(glyphRect("s3ui_view_grid_dot_4", v2(0.55, 0.55), v2(0.075, 0.075)))
+	end
+	return glyph
+end
+
+local function makeToolbarViewToggleButton(ctx)
+	local generation, state = ctx.state.generation, ctx.state
+	return {
+		name = "s3ui_view_toggle",
+		type = ui.TYPE.Widget,
+		props = { size = ctx.metrics().viewButtonSize },
+		events = {
+			focusGain = ctx.async:callback(ctx.clearSelection),
+			mouseClick = ctx.async:callback(function()
+				if generation ~= state.generation then
+					return
+				end
+				ctx.clearSelection()
+				state:toggleViewMode()
+				ctx.queueRebuild()
+			end),
+		},
+		content = ui.content({
+			{
+				name = "s3ui_view_toggle_icon",
+				type = ui.TYPE.Image,
+				props = {
+					resource = icons.VIEW_TOGGLE,
+					anchor = v2(0.5, 0.5),
+					relativePosition = v2(0.5, 0.5),
+					relativeSize = icons.VIEW_TOGGLE_ICON_SIZE,
+					alpha = 0.95,
+				},
+			},
+			{
+				name = "s3ui_view_toggle_glyph",
+				type = ui.TYPE.Widget,
+				props = { relativeSize = v2(1, 1) },
+				content = makeViewGlyph(state.viewMode),
+			},
+		}),
+	}
+end
+
 local function toolbarModeIcon(ctx)
 	if ctx.state.primaryTab == "equipment" then
 		return icons.SORT.weight, icons.SORT_ICON_RELATIVE_SIZE, "inventory"
@@ -119,7 +188,7 @@ local function makeToolbarModeToggleButton(ctx)
 	return {
 		name = "s3ui_inventory_mode_toggle",
 		type = ui.TYPE.Widget,
-		props = { size = ctx.metrics().viewButtonSize, anchor = v2(0.5, 0.5), relativePosition = v2(0.5, 0.5) },
+		props = { size = ctx.metrics().viewButtonSize },
 		events = {
 			focusGain = ctx.async:callback(ctx.clearSelection),
 			mouseClick = ctx.async:callback(function()
@@ -145,6 +214,25 @@ local function makeToolbarModeToggleButton(ctx)
 				},
 			},
 		}),
+	}
+end
+
+local function makeToolbarButtonRow(ctx)
+	local content = ui.content({})
+	if ctx.state.primaryTab == "inventory" then
+		content:add(makeToolbarViewToggleButton(ctx))
+	end
+	content:add(makeToolbarModeToggleButton(ctx))
+	return {
+		name = "s3ui_toolbar_button_row",
+		type = ui.TYPE.Flex,
+		props = {
+			horizontal = true,
+			relativeSize = v2(1, 1),
+			arrange = ui.ALIGNMENT.Center,
+			autoSize = false,
+		},
+		content = content,
 	}
 end
 
@@ -233,7 +321,7 @@ function M.makeToolbar(ctx)
 				type = ui.TYPE.Widget,
 				props = { size = v2(metrics.categoryRailSize.x, 0) },
 				external = { stretch = 1 },
-				content = ui.content({ makeToolbarModeToggleButton(ctx) }),
+				content = ui.content({ makeToolbarButtonRow(ctx) }),
 			},
 			{
 				name = "s3ui_toolbar_field_area",
