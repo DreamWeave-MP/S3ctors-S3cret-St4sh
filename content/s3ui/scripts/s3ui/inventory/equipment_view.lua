@@ -10,7 +10,7 @@ local v2 = util.vector2
 local M = {}
 
 local LEFT_WIDTH = 1
-local DETAIL_X = 0.66
+local DETAIL_X = 0.68
 local DETAIL_Y = -0.015
 local DETAIL_WIDTH = 0.32
 
