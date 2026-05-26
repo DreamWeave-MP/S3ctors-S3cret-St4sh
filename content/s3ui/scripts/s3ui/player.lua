@@ -128,6 +128,7 @@ return {
 	},
 	eventHandlers = {
 		S3UI_RebuildInventory = inventoryWindow.processPendingRebuild,
+		S3UI_TravelCellNamesResolved = travelWindow.setCellDisplayNames,
 	},
 	interfaceName = "S3UI",
 	interface = {

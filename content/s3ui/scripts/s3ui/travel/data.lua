@@ -8,6 +8,8 @@ local GOLD_ID = "gold_001"
 
 local M = {}
 
+local cellDisplayNames = {}
+
 local function validObject(object)
 	return object and object.isValid and object:isValid()
 end
@@ -117,6 +119,10 @@ end
 
 local function destinationLabel(destination)
 	local cellId = destination and destination.cellId
+	local displayName = cellDisplayNames[cellId]
+	if type(displayName) == "string" and displayName ~= "" then
+		return displayName
+	end
 	if type(cellId) == "string" and cellId ~= "" then
 		return cellId
 	end
@@ -200,5 +206,21 @@ function M.travelHours(destination)
 end
 
 M.GOLD_ID = GOLD_ID
+
+function M.setCellDisplayNames(names)
+	if type(names) ~= "table" then
+		return false
+	end
+	local changed = false
+	for cellId, displayName in pairs(names) do
+		if type(cellId) == "string" and type(displayName) == "string" and displayName ~= "" then
+			if cellDisplayNames[cellId] ~= displayName then
+				cellDisplayNames[cellId] = displayName
+				changed = true
+			end
+		end
+	end
+	return changed
+end
 
 return M

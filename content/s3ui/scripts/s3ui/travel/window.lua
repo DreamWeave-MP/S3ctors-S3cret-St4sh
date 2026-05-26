@@ -106,6 +106,19 @@ local function rebuildRows()
 	ensureSelectedVisible()
 end
 
+local function requestCellNames()
+	local cellIds = {}
+	for _, row in ipairs(rows) do
+		local cellId = row.cellId or (row.destination and row.destination.cellId)
+		if type(cellId) == "string" and cellId ~= "" then
+			cellIds[#cellIds + 1] = cellId
+		end
+	end
+	if #cellIds > 0 then
+		core.sendGlobalEvent("S3UI_ResolveTravelCellNames", { player = self.object or self, cellIds = cellIds })
+	end
+end
+
 local function closeMode()
 	if MODE then
 		I.UI.removeMode(MODE)
@@ -242,7 +255,15 @@ function M.show(target)
 	selectedIndex = 1
 	scrollOffset = 0
 	rebuildRows()
+	requestCellNames()
 	rootElement = ui.create((renderer or builder.make)(layoutCtx()))
+end
+
+function M.setCellDisplayNames(names)
+	if data.setCellDisplayNames(names) and active() then
+		rebuildRows()
+		M.rebuildElement()
+	end
 end
 
 function M.hide()
@@ -332,6 +353,7 @@ function M.interface()
 		rebuild = M.refresh,
 		updateElement = M.rebuildElement,
 		activateSelection = M.activateSelection,
+		setCellDisplayNames = M.setCellDisplayNames,
 		setHook = M.setHook,
 		setRenderer = M.setRenderer,
 		resetOverrides = M.resetOverrides,
