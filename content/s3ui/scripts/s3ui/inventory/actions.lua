@@ -4,14 +4,12 @@ local core = require("openmw.core")
 local input = require("openmw.input")
 local self = require("openmw.self")
 local types = require("openmw.types")
-local util = require("openmw.util")
 local countModal = require("scripts.s3ui.components.count_modal")
 
 local M = {}
 
 local Actor = types.Actor
 local SLOT = Actor.EQUIPMENT_SLOT
-local DROP_OFFSET = util.vector3(0, 80, 24)
 
 local ARMOR_SLOT_BY_TYPE = {
 	[types.Armor.TYPE.Boots] = SLOT.Boots,
@@ -134,7 +132,7 @@ local function dropEventData(itemData, count)
 		item = itemData.item,
 		count = count,
 		cellName = actor.cell and actor.cell.name or "",
-		position = actor.position + DROP_OFFSET,
+		position = actor.position,
 		onGround = true,
 	}
 end
