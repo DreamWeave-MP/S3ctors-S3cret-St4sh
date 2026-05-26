@@ -16,11 +16,13 @@ local M = {
 	CATEGORY_ICON_COUNT_SIZE = v2(0.34, 0.24),
 	CATEGORY_ICON_TOGGLE_SIZE = v2(0.24, 0.24),
 	MAIN_RELATIVE_SIZE = v2(1, 0),
+	VIEW_TOGGLE_ICON_SIZE = v2(0.74, 0.74),
 	SORT_ICON_RELATIVE_SIZE = v2(0.68, 0.68),
 	SORT_DIRECTION_RELATIVE_SIZE = v2(0.34, 0.34),
 	CATEGORY_HEADER_COLOR = util.color.rgb(0.18, 0.36, 0.68),
 	CATEGORY_ACTIVE_COLOR = util.color.rgb(0.24, 0.47, 0.86),
 	CATEGORY_COLLAPSED_COLOR = util.color.rgb(0.12, 0.18, 0.28),
+	VIEW_GLYPH_COLOR = util.color.rgb(0.9, 0.84, 0.62),
 }
 
 M.TOOLTIP = {
@@ -75,6 +77,8 @@ M.CATEGORY_RELATIVE_SIZES = {
 	tools = v2(0.44, 0.6),
 	misc = v2(0.46, 0.58),
 }
+
+M.VIEW_TOGGLE = ui.texture({ path = CATEGORY_SMALL_ICON_ATLAS, offset = v2(385, 1), size = v2(126, 126) })
 
 M.ITEM_STATE = {
 	equipped = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/equipped.dds" }),
