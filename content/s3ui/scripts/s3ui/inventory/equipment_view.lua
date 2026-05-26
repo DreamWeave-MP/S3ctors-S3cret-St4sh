@@ -12,6 +12,8 @@ local M = {}
 local LEFT_WIDTH = 1
 local DETAIL_X = 0.68
 local DETAIL_WIDTH = 0.32
+local DETAIL_HEIGHT = 0.86
+local DETAIL_Y = (1 - DETAIL_HEIGHT) * 0.5
 
 function M.createLeftPanel(ctx)
 	return leftPanel.create(ctx, LEFT_WIDTH)
@@ -22,17 +24,17 @@ function M.updateLeftPanel(element, ctx)
 end
 
 function M.createDetailPanel(ctx)
-	return detailPanel.create(ctx, DETAIL_WIDTH, DETAIL_X)
+	return detailPanel.create(ctx, DETAIL_WIDTH, DETAIL_X, DETAIL_HEIGHT, DETAIL_Y)
 end
 
 function M.updateDetailPanel(element, ctx)
-	return detailPanel.update(element, ctx, DETAIL_WIDTH, DETAIL_X)
+	return detailPanel.update(element, ctx, DETAIL_WIDTH, DETAIL_X, DETAIL_HEIGHT, DETAIL_Y)
 end
 
 function M.content(ctx)
 	return ui.content({
 		ctx.leftElement or leftPanel.layout(ctx, LEFT_WIDTH),
-		ctx.detailElement or detailPanel.layout(ctx, DETAIL_WIDTH, DETAIL_X),
+		ctx.detailElement or detailPanel.layout(ctx, DETAIL_WIDTH, DETAIL_X, DETAIL_HEIGHT, DETAIL_Y),
 	})
 end
 
