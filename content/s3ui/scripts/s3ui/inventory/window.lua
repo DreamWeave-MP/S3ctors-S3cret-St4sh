@@ -21,6 +21,7 @@ local ROOT_LAYER = "Windows"
 local M = {}
 
 local rootElement = nil
+local equipmentLeftElement = nil
 local equipmentDetailElement = nil
 local rebuildInventoryPending = false
 local rebuildEventQueued = false
@@ -28,6 +29,7 @@ local rebuildEventQueued = false
 local activeLayoutMetrics = nil
 local state = stateFactory.new()
 local queueRebuild
+local equipmentCtx
 
 local function layoutMetrics()
 	return activeLayoutMetrics or layout.compute()
@@ -59,18 +61,27 @@ local function selectVisibleSlot(slotIndex, itemData)
 	end
 end
 
+local function updateEquipmentPanels(groups)
+	if state.primaryTab ~= "equipment" then
+		return
+	end
+	groups = groups or equipmentData.collectGroups()
+	local selectedSlot = equipmentData.findSlot(groups, state.selectedEquipmentSlotKey)
+	if selectedSlot then
+		state:selectEquipmentSlot(selectedSlot)
+	end
+	equipmentView.updateLeftPanel(equipmentLeftElement, equipmentCtx(groups))
+	equipmentView.updateDetailPanel(equipmentDetailElement, state)
+end
+
 local function selectEquipmentSlot(slot)
 	local selectedKey = slot and slot.key or nil
 	if state.selectedEquipmentSlotKey == selectedKey then
-		state:selectEquipmentSlot(slot)
-		details.hide()
-		equipmentView.updateDetailPanel(equipmentDetailElement, state)
 		return
 	end
 	state:selectEquipmentSlot(slot)
 	details.hide()
-	equipmentView.updateDetailPanel(equipmentDetailElement, state)
-	queueRebuild()
+	updateEquipmentPanels()
 end
 
 function queueRebuild()
@@ -115,9 +126,10 @@ local function controlsCtx()
 	}
 end
 
-local function equipmentCtx(groups)
+equipmentCtx = function(groups)
 	return {
 		async = async,
+		leftElement = equipmentLeftElement,
 		detailElement = equipmentDetailElement,
 		groups = groups,
 		metrics = layoutMetrics,
@@ -191,8 +203,10 @@ local function makeInventoryLayout(items)
 	local firstIndex = state.scrollOffset + 1
 	state.selectedDisplayData = state:selectedEntryData(entries, firstIndex)
 	if state.primaryTab == "equipment" then
+		equipmentLeftElement = equipmentView.createLeftPanel(equipmentCtx(equipmentGroups))
 		equipmentDetailElement = equipmentView.createDetailPanel(state)
 	else
+		equipmentLeftElement = nil
 		equipmentDetailElement = nil
 	end
 	return builder.make({
@@ -214,6 +228,10 @@ local function destroyRoot()
 	rebuildInventoryPending = false
 	rebuildEventQueued = false
 	details.destroy()
+	if equipmentLeftElement and equipmentLeftElement.layout then
+		equipmentLeftElement:destroy()
+	end
+	equipmentLeftElement = nil
 	if equipmentDetailElement and equipmentDetailElement.layout then
 		equipmentDetailElement:destroy()
 	end
@@ -228,6 +246,10 @@ end
 local function rebuildRoot()
 	state:bumpGeneration()
 	details.hide()
+	if equipmentLeftElement and equipmentLeftElement.layout then
+		equipmentLeftElement:destroy()
+	end
+	equipmentLeftElement = nil
 	if equipmentDetailElement and equipmentDetailElement.layout then
 		equipmentDetailElement:destroy()
 	end
