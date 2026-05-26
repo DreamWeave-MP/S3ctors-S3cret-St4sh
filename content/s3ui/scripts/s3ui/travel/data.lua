@@ -46,6 +46,57 @@ local function playerGold()
 	return types.Actor.inventory(self):countOf(GOLD_ID)
 end
 
+local function statValue(stat, field, fallback)
+	if not stat then
+		return fallback or 0
+	end
+	local value = stat[field]
+	if type(value) == "number" then
+		return value
+	end
+	return fallback or 0
+end
+
+local function modifiedStat(stat)
+	if not stat then
+		return 0
+	end
+	if type(stat.modified) == "number" then
+		return stat.modified
+	end
+	return statValue(stat, "base") + statValue(stat, "modifier")
+end
+
+local function fatigueTerm(actor)
+	local fatigue = types.Actor.stats.dynamic.fatigue(actor)
+	local maxFatigue = modifiedStat(fatigue)
+	local currentFatigue = statValue(fatigue, "current", maxFatigue)
+	local normalised = 1
+	if math.floor(maxFatigue) ~= 0 then
+		normalised = math.max(0, currentFatigue / maxFatigue)
+	end
+	return numericGmst("fFatigueBase", 1.25) - numericGmst("fFatigueMult", 0.5) * (1 - normalised)
+end
+
+local function mercantile(actor)
+	return math.min(modifiedStat(types.Actor.stats.skills.mercantile(actor)), 100)
+end
+
+local function luckTerm(actor)
+	return math.min(0.1 * modifiedStat(types.Actor.stats.attributes.luck(actor)), 10)
+end
+
+local function personalityTerm(actor)
+	return math.min(0.2 * modifiedStat(types.Actor.stats.attributes.personality(actor)), 10)
+end
+
+local function truncate(value)
+	if value < 0 then
+		return math.ceil(value)
+	end
+	return math.floor(value)
+end
+
 local function targetName(target, record)
 	if record and type(record.name) == "string" and record.name ~= "" then
 		return record.name
@@ -73,6 +124,27 @@ local function basePrice(target, destination)
 	return math.floor(dist)
 end
 
+function M.getBarterOffer(target, basePrice, buying)
+	basePrice = math.floor(tonumber(basePrice) or 0)
+	if basePrice == 0 or not validObject(target) or types.Creature.objectIsInstance(target) then
+		return basePrice
+	end
+	if not types.NPC.objectIsInstance(target) then
+		return math.max(1, basePrice)
+	end
+	local player = self.object or self
+	local disposition = types.NPC.getDisposition(target, player)
+	if type(disposition) ~= "number" then
+		disposition = 50
+	end
+	local pcTerm = (disposition - 50 + mercantile(player) + luckTerm(player) + personalityTerm(player))
+		* fatigueTerm(player)
+	local npcTerm = (mercantile(target) + luckTerm(target) + personalityTerm(target)) * fatigueTerm(target)
+	local buyTerm = 0.01 * (100 - 0.5 * (pcTerm - npcTerm))
+	local sellTerm = 0.01 * (50 - 0.5 * (npcTerm - pcTerm))
+	return math.max(1, truncate(basePrice * (buying and buyTerm or sellTerm)))
+end
+
 ---@param target openmw.Object|nil
 ---@return table
 function M.serviceInfo(target)
@@ -92,7 +164,7 @@ function M.collectRows(target)
 	local info = M.serviceInfo(target)
 	local rows = {}
 	for index, destination in ipairs(info.destinations) do
-		local price = math.max(1, basePrice(target, destination))
+		local price = M.getBarterOffer(target, math.max(1, basePrice(target, destination)), true)
 		rows[#rows + 1] = {
 			index = index,
 			destination = destination,
