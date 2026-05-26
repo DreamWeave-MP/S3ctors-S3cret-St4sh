@@ -9,6 +9,7 @@ local icons = require("scripts.s3ui.inventory.icons")
 local v2 = util.vector2
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_RIGHT_EDGE = { value = 0.68, weight = 0.8, effectiveness = 0.9, condition = 0.99 }
+local TOOLBAR_RAIL_EXTRA_WIDTH = 18
 
 local M = {}
 
@@ -325,7 +326,7 @@ function M.makeToolbar(ctx)
 			{
 				name = "s3ui_toolbar_rail_area",
 				type = ui.TYPE.Widget,
-				props = { size = v2(metrics.categoryRailSize.x, 0) },
+				props = { size = v2(metrics.categoryRailSize.x + TOOLBAR_RAIL_EXTRA_WIDTH, 0) },
 				external = { stretch = 1 },
 				content = ui.content({ makeToolbarButtonRow(ctx) }),
 			},
