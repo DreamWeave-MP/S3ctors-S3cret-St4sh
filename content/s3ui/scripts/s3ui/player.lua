@@ -1,21 +1,21 @@
 ---@omw-context player
 
-local async = require("openmw.async")
-local omwDebug = require("openmw.debug")
-local input = require("openmw.input")
-local I = require("openmw.interfaces")
-local storage = require("openmw.storage")
+local async = require 'openmw.async'
+local omwDebug = require 'openmw.debug'
+local input = require 'openmw.input'
+local I = require 'openmw.interfaces'
+local storage = require 'openmw.storage'
 
-local countModal = require("scripts.s3ui.components.count_modal")
-local inventoryWindow = require("scripts.s3ui.inventory.window")
-local travelWindow = require("scripts.s3ui.travel.window")
+local countModal = require 'scripts.s3ui.components.count_modal'
+local inventoryWindow = require 'scripts.s3ui.inventory.window'
+local travelWindow = require 'scripts.s3ui.travel.window'
 
 local UI_WINDOWS = I.UI.WINDOW
 local WINDOW = UI_WINDOWS.Inventory
 local TRAVEL_WINDOW = UI_WINDOWS.Travel
 local MODE = I.UI.MODE.Interface
-local DEV_RELOAD_SECTION = "S3UI_DevReload"
-local DEV_RELOAD_REOPEN_KEY = "reopenInventory"
+local DEV_RELOAD_SECTION = 'S3UI_DevReload'
+local DEV_RELOAD_REOPEN_KEY = 'reopenInventory'
 local EMPTY_WINDOW_OVERRIDES = {
 	UI_WINDOWS.Map,
 	UI_WINDOWS.Stats,
@@ -70,7 +70,7 @@ registerInventoryWindow()
 -- Vanilla's Journal trigger pushes MODE.Journal. Until S3UI has a journal tab,
 -- collapse that mode after vanilla trigger handlers run so the action is a no-op.
 input.registerTriggerHandler(
-	"Journal",
+	'Journal',
 	async:callback(function()
 		async:newUnsavableSimulationTimer(0, closeJournalMode)
 	end)
@@ -106,7 +106,7 @@ return {
 			if countModal.isOpen() then
 				return
 			end
-			if type(vertical) ~= "number" then
+			if type(vertical) ~= 'number' then
 				return
 			end
 			if travelWindow.active() then
@@ -126,9 +126,10 @@ return {
 	},
 	eventHandlers = {
 		S3UI_RebuildInventory = inventoryWindow.processPendingRebuild,
+		S3UI_TravelFollowerFound = travelWindow.addFollower,
 		S3UI_TravelCellNamesResolved = travelWindow.setCellDisplayNames,
 	},
-	interfaceName = "S3UI",
+	interfaceName = 'S3UI',
 	interface = {
 		version = 1,
 		Travel = travelWindow.interface(),

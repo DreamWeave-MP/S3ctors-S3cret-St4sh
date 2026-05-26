@@ -1,9 +1,10 @@
 ---@omw-context player
 
-local I = require("openmw.interfaces")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local chrome = require("scripts.s3ui.inventory.chrome")
+local core = require 'openmw.core'
+local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local chrome = require 'scripts.s3ui.inventory.chrome'
 
 local v2 = util.vector2
 
@@ -14,8 +15,8 @@ local PADDING = 24
 local ROW_HEIGHT = 36
 local BUTTON_SIZE = v2(104, 34)
 local ROWS_VISIBLE = 8
+local SERVICE_TEXT_COLOR = util.color.commaString(core.getGMST 'FontColor_color_normal')
 local HOVER_COLOR = util.color.rgb(1, 0.94, 0.74)
-local DISABLED_COLOR = util.color.rgb(0.55, 0.52, 0.48)
 local SELECTED_ALPHA = 0.48
 local NORMAL_ALPHA = 0.25
 
@@ -36,7 +37,7 @@ local function panelBackground()
 end
 
 local function button(ctx, name, label, callback)
-	local content = ui.content({
+	local content = ui.content {
 		{
 			type = ui.TYPE.Image,
 			props = {
@@ -52,9 +53,9 @@ local function button(ctx, name, label, callback)
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
 			relativeSize = v2(1, 1),
-			textColor = ctx.hovered == name and HOVER_COLOR or nil,
+			textColor = ctx.hovered == name and HOVER_COLOR or SERVICE_TEXT_COLOR,
 		}),
-	})
+	}
 	chrome.addSimpleBorder(content, name, 0.78, 2)
 	return {
 		name = name,
@@ -75,11 +76,10 @@ end
 
 local function destinationRow(ctx, row, visualIndex)
 	local selected = ctx.selectedIndex == row.index
-	local enabled = row.enabled ~= false
-	local name = "s3ui_travel_destination_" .. tostring(row.index)
-	local content = ui.content({
+	local name = 's3ui_travel_destination_' .. tostring(row.index)
+	local content = ui.content {
 		{
-			name = name .. "_background",
+			name = name .. '_background',
 			type = ui.TYPE.Image,
 			props = {
 				resource = chrome.WHITE_TEXTURE,
@@ -96,9 +96,9 @@ local function destinationRow(ctx, row, visualIndex)
 			textAlignH = ui.ALIGNMENT.Start,
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
-			textColor = enabled and nil or DISABLED_COLOR,
+			textColor = SERVICE_TEXT_COLOR,
 		}),
-		text(tostring(row.price) .. " gp", {
+		text(tostring(row.price) .. ' gp', {
 			anchor = v2(1, 0),
 			relativePosition = v2(1, 0),
 			position = v2(-12, 0),
@@ -108,9 +108,9 @@ local function destinationRow(ctx, row, visualIndex)
 			textAlignH = ui.ALIGNMENT.End,
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
-			textColor = enabled and nil or DISABLED_COLOR,
+			textColor = SERVICE_TEXT_COLOR,
 		}),
-	})
+	}
 	chrome.addSimpleBorder(content, name, selected and 0.9 or 0.5, 2)
 	return {
 		name = name,
@@ -129,14 +129,14 @@ local function destinationRow(ctx, row, visualIndex)
 end
 
 local function destinationRows(ctx)
-	local content = ui.content({})
+	local content = ui.content {}
 	local first = ctx.scrollOffset + 1
 	local last = math.min(#ctx.rows, ctx.scrollOffset + ROWS_VISIBLE)
 	for visualIndex = first, last do
 		content:add(destinationRow(ctx, ctx.rows[visualIndex], visualIndex - first + 1))
 	end
 	return {
-		name = "s3ui_travel_destinations",
+		name = 's3ui_travel_destinations',
 		type = ui.TYPE.Flex,
 		props = { horizontal = false, relativeSize = v2(1, 1), autoSize = false },
 		content = content,
@@ -145,20 +145,20 @@ end
 
 local function statusText(ctx)
 	if #ctx.rows == 0 then
-		return "No destinations available."
+		return 'No destinations available.'
 	end
 	if #ctx.rows <= ROWS_VISIBLE then
-		return ""
+		return ''
 	end
 	return tostring(ctx.scrollOffset + 1)
-		.. "-"
+		.. '-'
 		.. tostring(math.min(#ctx.rows, ctx.scrollOffset + ROWS_VISIBLE))
-		.. " / "
+		.. ' / '
 		.. tostring(#ctx.rows)
 end
 
 function M.make(ctx)
-	local panelContent = ui.content({
+	local panelContent = ui.content {
 		panelBackground(),
 		{
 			type = ui.TYPE.Flex,
@@ -169,8 +169,8 @@ function M.make(ctx)
 				relativeSize = v2(1, 1),
 				autoSize = false,
 			},
-			content = ui.content({
-				text("Travel", {
+			content = ui.content {
+				text('Travel', {
 					textSize = 22,
 					textAlignH = ui.ALIGNMENT.Center,
 					textAlignV = ui.ALIGNMENT.Center,
@@ -185,15 +185,17 @@ function M.make(ctx)
 					autoSize = false,
 					relativeSize = v2(1, 0),
 					size = v2(0, 28),
+					textColor = SERVICE_TEXT_COLOR,
 				}),
 				destinationRows(ctx),
-				text("Gold: " .. tostring(ctx.playerGold) .. "     " .. statusText(ctx), {
+				text('Gold: ' .. tostring(ctx.playerGold) .. '     ' .. statusText(ctx), {
 					textSize = 15,
 					textAlignH = ui.ALIGNMENT.Center,
 					textAlignV = ui.ALIGNMENT.Center,
 					autoSize = false,
 					relativeSize = v2(1, 0),
 					size = v2(0, 30),
+					textColor = SERVICE_TEXT_COLOR,
 				}),
 				{
 					type = ui.TYPE.Flex,
@@ -203,23 +205,23 @@ function M.make(ctx)
 						size = v2(0, 42),
 						arrange = ui.ALIGNMENT.Center,
 					},
-					content = ui.content({
-						button(ctx, "s3ui_travel_confirm", "Travel", ctx.confirm),
-						button(ctx, "s3ui_travel_cancel", "Cancel", ctx.cancel),
-					}),
+					content = ui.content {
+						button(ctx, 's3ui_travel_confirm', 'Travel', ctx.confirm),
+						button(ctx, 's3ui_travel_cancel', 'Cancel', ctx.cancel),
+					},
 				},
-			}),
+			},
 		},
-	})
-	chrome.addOrnateFrame(panelContent, "s3ui_travel", chrome.FRAME_SIZE_MEDIUM, 1)
+	}
+	chrome.addOrnateFrame(panelContent, 's3ui_travel', chrome.FRAME_SIZE_MEDIUM, 1)
 	return {
-		name = "s3ui_travel_root",
+		name = 's3ui_travel_root',
 		type = ui.TYPE.Widget,
-		layer = "Windows",
+		layer = 'Windows',
 		props = { relativeSize = v2(1, 1) },
-		content = ui.content({
+		content = ui.content {
 			{
-				name = "s3ui_travel_panel",
+				name = 's3ui_travel_panel',
 				type = ui.TYPE.Widget,
 				props = {
 					anchor = v2(0.5, 0.5),
@@ -228,7 +230,7 @@ function M.make(ctx)
 				},
 				content = panelContent,
 			},
-		}),
+		},
 	}
 end
 
