@@ -9,13 +9,11 @@ local v2 = util.vector2
 
 local M = {}
 
-local CARD_COLUMNS = 4
 local GROUP_HEIGHTS = { equipped = 1 }
 local SELECTED_BORDER_ALPHA = 0.94
+local CARD_SIZE = v2(60, 60)
 local ICON_SIZE = v2(52, 52)
 local EMPTY_TEXT = "—"
-
-M.CARD_COLUMNS = CARD_COLUMNS
 
 local function textLine(name, text, props, template)
 	props = props or {}
@@ -35,7 +33,11 @@ local function addBackground(content, alpha, color)
 	})
 end
 
-local function iconLayout(name, itemData)
+local function scaledSize(size, scale)
+	return v2(size.x * scale, size.y * scale)
+end
+
+local function iconLayout(name, itemData, scale)
 	if not itemData or not itemData.icon then
 		return nil
 	end
@@ -46,15 +48,15 @@ local function iconLayout(name, itemData)
 			resource = ui.texture({ path = itemData.icon }),
 			anchor = v2(0.5, 0.5),
 			relativePosition = v2(0.5, 0.5),
-			size = ICON_SIZE,
+			size = scaledSize(ICON_SIZE, scale),
 		},
 	}
 end
 
-local function emptySlotLayout(name)
+local function emptySlotLayout(name, scale)
 	return textLine(name, EMPTY_TEXT, {
 		relativeSize = v2(1, 1),
-		textSize = 30,
+		textSize = 30 * scale,
 		textAlignH = ui.ALIGNMENT.Center,
 		textAlignV = ui.ALIGNMENT.Center,
 		autoSize = false,
@@ -95,97 +97,60 @@ local function slotHitbox(ctx, slot, generation)
 	}
 end
 
-local function makeSlotCard(ctx, slot)
+local function makeSlotCard(ctx, slot, placement)
 	local selected = ctx.state.selectedEquipmentSlotKey == slot.key
 	local itemData = slot.itemData
-	local content = ui.content({})
-	addBackground(content, selected and 0.48 or 0.18)
-	local icon = iconLayout("s3ui_equipment_" .. slot.key .. "_icon", itemData)
+	local scale = placement.scale or 1
+	local cardContent = ui.content({})
+	addBackground(cardContent, selected and 0.48 or 0.18)
+	local icon = iconLayout("s3ui_equipment_" .. slot.key .. "_icon", itemData, scale)
 	if icon then
-		content:add(icon)
+		cardContent:add(icon)
 	else
-		content:add(emptySlotLayout("s3ui_equipment_" .. slot.key .. "_empty"))
+		cardContent:add(emptySlotLayout("s3ui_equipment_" .. slot.key .. "_empty", scale))
 	end
 	chrome.addSimpleBorder(
-		content,
+		cardContent,
 		"s3ui_equipment_" .. slot.key,
 		selected and SELECTED_BORDER_ALPHA or 0.48,
 		selected and 3 or 2
 	)
-	content:add(slotHitbox(ctx, slot, ctx.state.generation))
+	cardContent:add(slotHitbox(ctx, slot, ctx.state.generation))
 	return {
 		name = "s3ui_equipment_slot_" .. slot.key,
 		type = ui.TYPE.Widget,
-		props = { relativeSize = v2(1 / CARD_COLUMNS, 1) },
-		content = content,
+		props = {
+			anchor = v2(0.5, 0.5),
+			relativePosition = v2(placement.x, placement.y),
+			size = scaledSize(CARD_SIZE, scale),
+		},
+		content = cardContent,
 	}
-end
-
-local function makeSlotRowFromSlots(ctx, slots, rowHeight)
-	local row = ui.content({})
-	for column = 1, CARD_COLUMNS do
-		local slot = slots[column]
-		if slot then
-			row:add(makeSlotCard(ctx, slot))
-		else
-			row:add({ type = ui.TYPE.Widget, props = { relativeSize = v2(1 / CARD_COLUMNS, 1) } })
-		end
-	end
-	return {
-		type = ui.TYPE.Flex,
-		props = { horizontal = true, relativeSize = v2(1, rowHeight), autoSize = false },
-		content = row,
-	}
-end
-
-local function makeSlotRow(ctx, slots, startIndex, rowHeight)
-	local rowSlots = {}
-	for column = 1, CARD_COLUMNS do
-		rowSlots[column] = slots[startIndex + column - 1]
-	end
-	return makeSlotRowFromSlots(ctx, rowSlots, rowHeight)
-end
-
-local function slotsByKey(slots)
-	local byKey = {}
-	for _, slot in ipairs(slots or {}) do
-		byKey[slot.key] = slot
-	end
-	return byKey
-end
-
-local function makeExplicitRows(ctx, group, rows, rowHeight)
-	local byKey = slotsByKey(group.slots)
-	for _, rowDef in ipairs(group.rows or {}) do
-		local rowSlots = {}
-		for column = 1, CARD_COLUMNS do
-			local key = rowDef[column]
-			rowSlots[column] = key and byKey[key] or nil
-		end
-		rows:add(makeSlotRowFromSlots(ctx, rowSlots, rowHeight))
-	end
 end
 
 local function makeGroup(ctx, group)
-	local hasExplicitRows = group.rows and #group.rows > 0
-	local rowCount = hasExplicitRows and #group.rows or math.max(math.ceil(#group.slots / CARD_COLUMNS), 1)
-	local rows = ui.content({
+	local content = ui.content({
 		textLine("s3ui_equipment_group_" .. group.key, group.title, {
-			relativeSize = v2(1, 0.18),
+			relativeSize = v2(1, 0.1),
 			textSize = 16,
 			textAlignH = ui.ALIGNMENT.Start,
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
 		}, I.MWUI.templates.textHeader),
 	})
-	local rowHeight = 0.82 / rowCount
-	if hasExplicitRows then
-		makeExplicitRows(ctx, group, rows, rowHeight)
-	else
-		for index = 1, #group.slots, CARD_COLUMNS do
-			rows:add(makeSlotRow(ctx, group.slots, index, rowHeight))
+	local paperdoll = ui.content({})
+	for _, slot in ipairs(group.slots or {}) do
+		local placement = group.layout and group.layout[slot.key]
+		if placement then
+			paperdoll:add(makeSlotCard(ctx, slot, placement))
 		end
 	end
+	content:add({
+		name = "s3ui_equipment_group_" .. group.key .. "_paperdoll",
+		type = ui.TYPE.Widget,
+		props = { relativeSize = v2(1, 0.9), autoSize = false },
+		content = paperdoll,
+	})
 	return {
 		name = "s3ui_equipment_group_" .. group.key .. "_body",
 		type = ui.TYPE.Flex,
@@ -194,7 +159,7 @@ local function makeGroup(ctx, group)
 			relativeSize = v2(1, GROUP_HEIGHTS[group.key] or 0.33),
 			autoSize = false,
 		},
-		content = rows,
+		content = content,
 	}
 end
 

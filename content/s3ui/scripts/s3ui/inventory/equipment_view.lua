@@ -10,8 +10,6 @@ local M = {}
 
 local LEFT_WIDTH = 1
 
-M.CARD_COLUMNS = leftPanel.CARD_COLUMNS
-
 function M.createLeftPanel(ctx)
 	return leftPanel.create(ctx, LEFT_WIDTH)
 end
