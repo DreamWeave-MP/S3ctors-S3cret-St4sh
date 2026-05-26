@@ -60,6 +60,20 @@ local function setHoveredControl(name, hovering, callbackGeneration)
 	rootElement:update()
 end
 
+local function setTextEditFocused(layout, focused, callbackGeneration)
+	if not (not closed and callbackGeneration == generation and rootElement and rootElement.layout) then
+		return
+	end
+	if not layout or not layout.props then
+		return
+	end
+	layout.props.textColor = focused and HOVER_TEXT_COLOR or nil
+	if not focused then
+		layout.props.text = inputText
+	end
+	rootElement:update()
+end
+
 local function clampInteger(nextValue)
 	nextValue = math.floor(tonumber(nextValue) or minValue)
 	if nextValue < minValue then
@@ -234,20 +248,20 @@ local function countInput(callbackGeneration)
 				textAlignV = ui.ALIGNMENT.Center,
 			},
 			events = {
-				focusGain = async:callback(function()
-					setHoveredControl("s3ui_count_input", true, callbackGeneration)
+				focusGain = async:callback(function(_, layout)
+					setTextEditFocused(layout, true, callbackGeneration)
 				end),
 				textChanged = async:callback(function(text)
 					if isAlive(callbackGeneration) then
 						inputText = text or ""
 					end
 				end),
-				focusLoss = async:callback(function()
+				focusLoss = async:callback(function(_, layout)
 					if isAlive(callbackGeneration) then
 						value = parseInputText()
 						inputText = tostring(value)
 					end
-					setHoveredControl("s3ui_count_input", false, callbackGeneration)
+					setTextEditFocused(layout, false, callbackGeneration)
 				end),
 			},
 		},
