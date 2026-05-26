@@ -20,6 +20,9 @@ local COUNT_LABEL_SIZE = v2(64, 30)
 local ARROW_BUTTON_SIZE = v2(44, 34)
 local ACTION_BUTTON_SIZE = v2(92, 34)
 local MIN_COUNT = 1
+local BUTTON_ALPHA = { fill = 0.42, border = 0.72 }
+local INPUT_ALPHA = { fill = 0.34, border = 0.76 }
+local HOVER_TEXT_COLOR = util.color.rgb(1, 0.94, 0.74)
 
 local rootElement = nil
 local value = 1
@@ -29,9 +32,33 @@ local inputText = "1"
 local title = "Select Count"
 local dragging = false
 local closed = true
+local hoveredControl = nil
 local generation = 0
 local onOk = nil
 local onCancel = nil
+
+local function hoverTextColor(name)
+	if hoveredControl == name then
+		return HOVER_TEXT_COLOR
+	end
+	return nil
+end
+
+local function setHoveredControl(name, hovering, callbackGeneration)
+	if not (not closed and callbackGeneration == generation and rootElement and rootElement.layout) then
+		return
+	end
+	local nextHovered = hovering and name or hoveredControl
+	if not hovering and hoveredControl == name then
+		nextHovered = nil
+	end
+	if hoveredControl == nextHovered then
+		return
+	end
+	hoveredControl = nextHovered
+	rootElement.layout = M.layout()
+	rootElement:update()
+end
 
 local function clampInteger(nextValue)
 	nextValue = math.floor(tonumber(nextValue) or minValue)
@@ -94,6 +121,7 @@ end
 local function closeWithoutCallback()
 	closed = true
 	dragging = false
+	hoveredControl = nil
 	generation = generation + 1
 	onOk = nil
 	onCancel = nil
@@ -130,38 +158,50 @@ local function modalText(text, props, template)
 	return chrome.textLine(text, template or I.MWUI.templates.textNormal, props)
 end
 
-local function modalButton(name, label, callback, callbackGeneration, size)
+local function modalButton(name, label, callback, callbackGeneration, size, textHover)
 	local content = ui.content({
 		{
+			name = name .. "_background",
 			type = ui.TYPE.Image,
 			props = {
 				resource = chrome.WHITE_TEXTURE,
 				color = chrome.BACKGROUND_COLOR,
-				alpha = 0.42,
+				alpha = BUTTON_ALPHA.fill,
 				relativeSize = v2(1, 1),
 			},
 		},
 		modalText(label, {
+			name = name .. "_label",
 			textSize = 16,
+			textColor = textHover and hoverTextColor(name) or nil,
 			textAlignH = ui.ALIGNMENT.Center,
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
 			relativeSize = v2(1, 1),
 		}),
 	})
-	chrome.addSimpleBorder(content, name, 0.72, 2)
+	chrome.addSimpleBorder(content, name, BUTTON_ALPHA.border, 2)
+	local events = {
+		mouseClick = async:callback(function()
+			if not isAlive(callbackGeneration) then
+				return
+			end
+			callback()
+		end),
+	}
+	if textHover then
+		events.focusGain = async:callback(function()
+			setHoveredControl(name, true, callbackGeneration)
+		end)
+		events.focusLoss = async:callback(function()
+			setHoveredControl(name, false, callbackGeneration)
+		end)
+	end
 	return {
 		name = name,
 		type = ui.TYPE.Widget,
 		props = { size = size or ACTION_BUTTON_SIZE },
-		events = {
-			mouseClick = async:callback(function()
-				if not isAlive(callbackGeneration) then
-					return
-				end
-				callback()
-			end),
-		},
+		events = events,
 		content = content,
 	}
 end
@@ -169,11 +209,12 @@ end
 local function countInput(callbackGeneration)
 	local content = ui.content({
 		{
+			name = "s3ui_count_input_frame_background",
 			type = ui.TYPE.Image,
 			props = {
 				resource = chrome.WHITE_TEXTURE,
 				color = chrome.BACKGROUND_COLOR,
-				alpha = 0.34,
+				alpha = INPUT_ALPHA.fill,
 				relativeSize = v2(1, 1),
 			},
 		},
@@ -186,12 +227,16 @@ local function countInput(callbackGeneration)
 				position = v2(13, 2),
 				size = COUNT_INPUT_SIZE,
 				autoSize = false,
+				textColor = hoverTextColor("s3ui_count_input"),
 				multiline = false,
 				textSize = 16,
 				textAlignH = ui.ALIGNMENT.End,
 				textAlignV = ui.ALIGNMENT.Center,
 			},
 			events = {
+				focusGain = async:callback(function()
+					setHoveredControl("s3ui_count_input", true, callbackGeneration)
+				end),
 				textChanged = async:callback(function(text)
 					if isAlive(callbackGeneration) then
 						inputText = text or ""
@@ -202,6 +247,7 @@ local function countInput(callbackGeneration)
 						value = parseInputText()
 						inputText = tostring(value)
 					end
+					setHoveredControl("s3ui_count_input", false, callbackGeneration)
 				end),
 			},
 		},
@@ -214,7 +260,7 @@ local function countInput(callbackGeneration)
 			size = COUNT_LABEL_SIZE,
 		}),
 	})
-	chrome.addSimpleBorder(content, "s3ui_count_input_frame", 0.76, 1)
+	chrome.addSimpleBorder(content, "s3ui_count_input_frame", INPUT_ALPHA.border, 1)
 	return {
 		name = "s3ui_count_input_frame",
 		type = ui.TYPE.Widget,
@@ -348,8 +394,8 @@ function M.layout()
 					type = ui.TYPE.Flex,
 					props = { horizontal = true, relativeSize = v2(1, 0.23), arrange = ui.ALIGNMENT.Center },
 					content = ui.content({
-						modalButton("s3ui_count_ok", "OK", confirm, callbackGeneration),
-						modalButton("s3ui_count_cancel", "Cancel", cancel, callbackGeneration),
+						modalButton("s3ui_count_ok", "OK", confirm, callbackGeneration, nil, true),
+						modalButton("s3ui_count_cancel", "Cancel", cancel, callbackGeneration, nil, true),
 					}),
 				},
 			}),
