@@ -190,7 +190,7 @@ function M.update(element, state)
 	if not element or not element.layout then
 		return false
 	end
-	element.layout.content = M.content(state)
+	element.layout = M.layout(state)
 	element:update()
 	return true
 end
