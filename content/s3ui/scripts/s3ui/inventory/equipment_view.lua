@@ -11,20 +11,11 @@ local M = {}
 
 local LEFT_WIDTH = 1 - detailPanel.WIDTH
 
-function M.createLeftPanel(ctx)
-	return leftPanel.create(ctx, LEFT_WIDTH)
-end
-
-function M.updateLeftPanel(element, ctx)
-	return leftPanel.update(element, ctx, LEFT_WIDTH)
-end
-
-function M.createDetailPanel(state)
-	return detailPanel.create(state)
-end
-
-function M.updateDetailPanel(element, state)
-	return detailPanel.update(element, state)
+function M.content(ctx)
+	return ui.content({
+		leftPanel.layout(ctx, LEFT_WIDTH),
+		detailPanel.layout(ctx.state),
+	})
 end
 
 function M.make(ctx)
@@ -33,10 +24,7 @@ function M.make(ctx)
 		type = ui.TYPE.Flex,
 		props = { horizontal = true, size = v2(0, 0), relativeSize = v2(0, 1), autoSize = false },
 		external = { grow = 1, stretch = 1 },
-		content = ui.content({
-			ctx.leftElement or leftPanel.layout(ctx, LEFT_WIDTH),
-			ctx.detailElement or detailPanel.layout(ctx.state),
-		}),
+		content = M.content(ctx),
 	}
 end
 
