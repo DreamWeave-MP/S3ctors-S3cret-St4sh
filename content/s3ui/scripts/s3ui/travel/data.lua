@@ -67,8 +67,13 @@ local function modifiedStat(stat)
 	return statValue(stat, "base") + statValue(stat, "modifier")
 end
 
+local function actorStats(actor)
+	return actor and actor.type and actor.type.stats or types.Actor.stats
+end
+
 local function fatigueTerm(actor)
-	local fatigue = types.Actor.stats.dynamic.fatigue(actor)
+	local stats = actorStats(actor)
+	local fatigue = stats and stats.dynamic and stats.dynamic.fatigue(actor) or nil
 	local maxFatigue = modifiedStat(fatigue)
 	local currentFatigue = statValue(fatigue, "current", maxFatigue)
 	local normalised = 1
@@ -79,15 +84,21 @@ local function fatigueTerm(actor)
 end
 
 local function mercantile(actor)
-	return math.min(modifiedStat(types.Actor.stats.skills.mercantile(actor)), 100)
+	local stats = actorStats(actor)
+	local skill = stats and stats.skills and stats.skills.mercantile(actor) or nil
+	return math.min(modifiedStat(skill), 100)
 end
 
 local function luckTerm(actor)
-	return math.min(0.1 * modifiedStat(types.Actor.stats.attributes.luck(actor)), 10)
+	local stats = actorStats(actor)
+	local luck = stats and stats.attributes and stats.attributes.luck(actor) or nil
+	return math.min(0.1 * modifiedStat(luck), 10)
 end
 
 local function personalityTerm(actor)
-	return math.min(0.2 * modifiedStat(types.Actor.stats.attributes.personality(actor)), 10)
+	local stats = actorStats(actor)
+	local personality = stats and stats.attributes and stats.attributes.personality(actor) or nil
+	return math.min(0.2 * modifiedStat(personality), 10)
 end
 
 local function truncate(value)
