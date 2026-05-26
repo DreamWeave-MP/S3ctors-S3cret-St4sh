@@ -159,20 +159,15 @@ function M.new(ctx)
 								type = ui.TYPE.Flex,
 								props = { horizontal = false, relativeSize = v2(0.64, 1), autoSize = false },
 								content = ui.content({
-									detailText(
-										"s3ui_compact_detail_name",
-										"",
-										{
-											relativeSize = v2(1, 1),
-											textSize = m.compactDetailHeaderTextSize,
-											textAlignH = ui.ALIGNMENT.Start,
-											textAlignV = ui.ALIGNMENT.Center,
-											multiline = true,
-											wordWrap = true,
-											autoSize = false,
-										},
-										I.MWUI.templates.textHeader
-									),
+									detailText("s3ui_compact_detail_name", "", {
+										relativeSize = v2(1, 1),
+										textSize = m.compactDetailHeaderTextSize,
+										textAlignH = ui.ALIGNMENT.Start,
+										textAlignV = ui.ALIGNMENT.Center,
+										multiline = true,
+										wordWrap = true,
+										autoSize = false,
+									}, I.MWUI.templates.textHeader),
 								}),
 							},
 						}),

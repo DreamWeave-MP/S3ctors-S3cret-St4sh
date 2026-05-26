@@ -219,20 +219,15 @@ function M.new(ctx)
 									},
 								}),
 							},
-							tooltipText(
-								"s3ui_tooltip_name",
-								EMPTY_FIELD,
-								{
-									relativeSize = v2(0.82, 1),
-									textSize = m.tooltipHeaderTextSize,
-									textAlignH = ui.ALIGNMENT.Start,
-									textAlignV = ui.ALIGNMENT.Center,
-									multiline = true,
-									wordWrap = true,
-									autoSize = false,
-								},
-								I.MWUI.templates.textHeader
-							),
+							tooltipText("s3ui_tooltip_name", EMPTY_FIELD, {
+								relativeSize = v2(0.82, 1),
+								textSize = m.tooltipHeaderTextSize,
+								textAlignH = ui.ALIGNMENT.Start,
+								textAlignV = ui.ALIGNMENT.Center,
+								multiline = true,
+								wordWrap = true,
+								autoSize = false,
+							}, I.MWUI.templates.textHeader),
 						}),
 					},
 					{
