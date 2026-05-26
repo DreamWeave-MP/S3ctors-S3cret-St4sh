@@ -5,6 +5,45 @@ local types = require 'openmw.types'
 
 local EMPTY_FIELD = '—'
 
+---@class S3UI.InventoryCategory
+---@field key string
+---@field label string
+
+---@class S3UI.InventoryItemData
+---@field item any
+---@field record table|nil
+---@field name string
+---@field icon string|nil
+---@field count integer
+---@field categoryKey string
+---@field categoryLabel string
+---@field value number
+---@field weight number
+---@field effectiveness number
+---@field condition number|nil
+---@field equipped boolean
+---@field enchanted boolean
+---@field broken boolean
+
+---@class S3UI.InventoryCategoryEntry
+---@field kind 'categoryHeader'
+---@field categoryKey string
+---@field label string
+---@field count integer
+---@field collapsed boolean
+
+---@class S3UI.InventoryItemEntry
+---@field kind 'item'
+---@field data S3UI.InventoryItemData
+
+---@alias S3UI.InventoryDisplayEntry S3UI.InventoryCategoryEntry|S3UI.InventoryItemEntry
+
+---@class S3UI.WeaponDamageField
+---@field key string
+---@field text string
+---@field compactText string
+
+---@type S3UI.InventoryCategory[]
 local CATEGORY_ORDER = {
     { key = 'all', label = 'All' },
     { key = 'weapons', label = 'Weapons' },
@@ -100,6 +139,9 @@ local function safeRecord(item)
     return records[item.recordId]
 end
 
+---@param item any
+---@param record table|nil
+---@return string
 local function itemName(item, record)
     return (record and record.name) or item.recordId or 'Unknown item'
 end
@@ -181,6 +223,7 @@ local function itemCondition(itemData)
     return nil
 end
 
+---@return S3UI.InventoryItemData[]
 local function collectItems()
     local actor = currentActor()
     local inventory = types.Actor.inventory(actor)
@@ -223,6 +266,9 @@ local function collectItems()
     return result
 end
 
+---@param value number|nil
+---@param decimals integer|nil
+---@return string
 local function formatNumber(value, decimals)
     if type(value) ~= 'number' then return EMPTY_FIELD end
     if decimals then return string.format('%.' .. tostring(decimals) .. 'f', value) end
@@ -234,11 +280,15 @@ local function formatDamage(minDamage, maxDamage)
     return tostring(minDamage) .. '–' .. tostring(maxDamage)
 end
 
+---@param condition number|nil
+---@return string
 local function formatCondition(condition)
     if type(condition) ~= 'number' or condition < 0 then return EMPTY_FIELD end
     return formatNumber(condition, 0)
 end
 
+---@param record table|nil
+---@return string
 local function bestWeaponDamage(record)
     if not record then return EMPTY_FIELD end
     local bestMin = nil
@@ -259,6 +309,8 @@ local function bestWeaponDamage(record)
     return formatDamage(bestMin, bestMax)
 end
 
+---@param record table|nil
+---@return S3UI.WeaponDamageField[]
 local function weaponDamageFields(record)
     local result = {}
     if not record then return result end
@@ -288,6 +340,8 @@ local function subtypeName(recordType, record)
     return EMPTY_FIELD
 end
 
+---@param data S3UI.InventoryItemData|nil
+---@return string
 local function typeText(data)
     if not data then return EMPTY_FIELD end
     local recordType = TYPE_NAMES[data.item and data.item.type] or 'Item'
@@ -296,6 +350,8 @@ local function typeText(data)
     return subtype
 end
 
+---@param record table|nil
+---@return string
 local function goldPerWeight(record)
     if not record or type(record.weight) ~= 'number' or record.weight <= 0 or type(record.value) ~= 'number' then
         return EMPTY_FIELD
