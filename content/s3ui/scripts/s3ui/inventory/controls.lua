@@ -221,6 +221,12 @@ local function makeToolbarButtonRow(ctx)
 	local content = ui.content({})
 	if ctx.state.primaryTab == "inventory" then
 		content:add(makeToolbarViewToggleButton(ctx))
+	else
+		content:add({
+			name = "s3ui_view_toggle_reserved",
+			type = ui.TYPE.Widget,
+			props = { size = ctx.metrics().viewButtonSize },
+		})
 	end
 	content:add(makeToolbarModeToggleButton(ctx))
 	return {
