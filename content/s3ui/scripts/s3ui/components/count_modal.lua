@@ -30,7 +30,7 @@ local minValue = 1
 local maxValue = 1
 local inputText = "1"
 local title = "Select Count"
-local dragging = false
+local draggingControl = nil
 local closed = true
 local hoveredControl = nil
 local generation = 0
@@ -122,19 +122,49 @@ local function sliderRatio()
 	return (value - minValue) / (maxValue - minValue)
 end
 
-local function setValueFromSlider(offsetX)
-	local ratio = offsetX / SLIDER_SIZE.x
+local function setValueFromTrack(offsetX, trackWidth, skipUpdate)
+	local ratio = offsetX / trackWidth
 	if ratio < 0 then
 		ratio = 0
 	elseif ratio > 1 then
 		ratio = 1
 	end
-	setValue(minValue + math.floor((maxValue - minValue) * ratio + 0.5), true)
+	setValue(minValue + math.floor((maxValue - minValue) * ratio + 0.5), skipUpdate)
+end
+
+local function dragEvents(name, trackWidth, callbackGeneration)
+	return {
+		mousePress = async:callback(function(event)
+			if not isAlive(callbackGeneration) or not event or event.button ~= 1 then
+				return
+			end
+			draggingControl = name
+			setValueFromTrack(event.offset.x, trackWidth)
+		end),
+		mouseMove = async:callback(function(event)
+			if not isAlive(callbackGeneration) or draggingControl ~= name or not event then
+				return
+			end
+			setValueFromTrack(event.offset.x, trackWidth)
+		end),
+		mouseRelease = async:callback(function()
+			if draggingControl == name then
+				draggingControl = nil
+				updateRoot()
+			end
+		end),
+		focusLoss = async:callback(function()
+			if draggingControl == name then
+				draggingControl = nil
+				updateRoot()
+			end
+		end),
+	}
 end
 
 local function closeWithoutCallback()
 	closed = true
-	dragging = false
+	draggingControl = nil
 	hoveredControl = nil
 	generation = generation + 1
 	onOk = nil
@@ -283,6 +313,7 @@ local function countInput(callbackGeneration)
 			relativePosition = v2(0.5, 0.5),
 			size = COUNT_DISPLAY_SIZE,
 		},
+		events = dragEvents("count_input", COUNT_DISPLAY_SIZE.x, callbackGeneration),
 		content = content,
 	}
 end
@@ -326,29 +357,7 @@ local function makeSlider(callbackGeneration)
 		name = "s3ui_count_slider",
 		type = ui.TYPE.Widget,
 		props = { size = SLIDER_SIZE },
-		events = {
-			mousePress = async:callback(function(event)
-				if not isAlive(callbackGeneration) or not event or event.button ~= 1 then
-					return
-				end
-				dragging = true
-				setValueFromSlider(event.offset.x)
-			end),
-			mouseMove = async:callback(function(event)
-				if not isAlive(callbackGeneration) or not dragging or not event then
-					return
-				end
-				setValueFromSlider(event.offset.x)
-			end),
-			mouseRelease = async:callback(function()
-				dragging = false
-				updateRoot()
-			end),
-			focusLoss = async:callback(function()
-				dragging = false
-				updateRoot()
-			end),
-		},
+		events = dragEvents("slider", SLIDER_SIZE.x, callbackGeneration),
 		content = content,
 	}
 end
@@ -461,7 +470,7 @@ function M.show(opts)
 	title = opts.title or "Select Count"
 	onOk = opts.onOk
 	onCancel = opts.onCancel
-	dragging = false
+	draggingControl = nil
 	closed = false
 	generation = generation + 1
 	rootElement = ui.create(M.layout())
