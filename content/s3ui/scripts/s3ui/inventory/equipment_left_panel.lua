@@ -10,6 +10,7 @@ local v2 = util.vector2
 local M = {}
 
 local GROUP_HEIGHTS = { equipped = 1 }
+local PAPERDOLL_X_OFFSET = -0.14
 local SELECTED_BORDER_ALPHA = 0.94
 local CARD_SIZE = v2(60, 60)
 local ICON_SIZE = v2(52, 52)
@@ -121,7 +122,7 @@ local function makeSlotCard(ctx, slot, placement)
 		type = ui.TYPE.Widget,
 		props = {
 			anchor = v2(0.5, 0.5),
-			relativePosition = v2(placement.x, placement.y),
+			relativePosition = v2(placement.x + PAPERDOLL_X_OFFSET, placement.y),
 			size = scaledSize(CARD_SIZE, scale),
 		},
 		content = cardContent,
