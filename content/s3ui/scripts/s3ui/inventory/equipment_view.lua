@@ -25,7 +25,7 @@ end
 
 local function cardSummary(slot, selected)
 	if selected then
-		return slot.itemData and "Click again to unequip" or "Click again to browse items"
+		return slot.itemData and "Click or press Enter to unequip" or "Click or press Enter to browse items"
 	end
 	return slot.summary or ""
 end
@@ -132,7 +132,7 @@ local function makeSlotCard(ctx, slot)
 		name = "s3ui_equipment_slot_" .. slot.key,
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(1 / CARD_COLUMNS, 1) },
-		userData = { slot = slot, selected = selected, generation = generation },
+		userData = { slot = slot, generation = generation },
 		events = {
 			focusGain = ctx.async:callback(function(_, layout)
 				local focused = layout and layout.userData
@@ -143,17 +143,24 @@ local function makeSlotCard(ctx, slot)
 					ctx.selectEquipmentSlot(focused.slot)
 				end
 			end),
+			mouseMove = ctx.async:callback(function(_, layout)
+				local hovered = layout and layout.userData
+				if not hovered or hovered.generation ~= ctx.state.generation then
+					return
+				end
+				if hovered.slot then
+					ctx.selectEquipmentSlot(hovered.slot)
+				end
+			end),
 			mouseClick = ctx.async:callback(function(_, layout)
 				local clicked = layout and layout.userData
 				if not clicked or clicked.generation ~= ctx.state.generation then
 					return
 				end
-				if clicked.selected and clicked.slot and clicked.slot.itemData then
+				if clicked.slot and clicked.slot.itemData then
 					ctx.activateEquipmentSlot(clicked.slot)
-				elseif clicked.selected and clicked.slot then
-					ctx.openEquipmentCategory(clicked.slot)
 				elseif clicked.slot then
-					ctx.selectEquipmentSlot(clicked.slot)
+					ctx.openEquipmentCategory(clicked.slot)
 				end
 			end),
 		},
@@ -287,7 +294,7 @@ local function makeDetailPanel(ctx)
 		for index, field in ipairs(model.fields) do
 			body:add(detailField(field, index))
 		end
-		body:add(textLine("s3ui_equipment_detail_hint", "Click the selected slot again, or press Enter, to unequip.", {
+		body:add(textLine("s3ui_equipment_detail_hint", "Click, Enter, or Space to unequip the selected item.", {
 			relativeSize = v2(1, 0.12),
 			textSize = 13,
 			textAlignH = ui.ALIGNMENT.Start,
@@ -320,19 +327,15 @@ local function makeDetailPanel(ctx)
 		)
 		if ctx.state.selectedEquipmentSlotKey then
 			body:add(
-				textLine(
-					"s3ui_equipment_detail_empty_hint",
-					"Click again, or press Enter, to browse compatible items.",
-					{
-						relativeSize = v2(1, 0.14),
-						textSize = 13,
-						textAlignH = ui.ALIGNMENT.Start,
-						textAlignV = ui.ALIGNMENT.Center,
-						multiline = true,
-						wordWrap = true,
-						autoSize = false,
-					}
-				)
+				textLine("s3ui_equipment_detail_empty_hint", "Click, Enter, or Space to browse compatible items.", {
+					relativeSize = v2(1, 0.14),
+					textSize = 13,
+					textAlignH = ui.ALIGNMENT.Start,
+					textAlignV = ui.ALIGNMENT.Center,
+					multiline = true,
+					wordWrap = true,
+					autoSize = false,
+				})
 			)
 		end
 	end
