@@ -358,28 +358,25 @@ local function detailPanelContent(state)
 	return content
 end
 
-local function makeDetailPanel(ctx)
+function M.makeDetailPanelLayout(state)
 	return {
 		name = "s3ui_equipment_detail",
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(DETAIL_WIDTH, 1) },
-		content = detailPanelContent(ctx.state),
+		content = detailPanelContent(state),
 	}
 end
 
-function M.updateDetailPanel(rootElement, state)
-	if not rootElement or not rootElement.layout or not rootElement.layout.content then
+function M.createDetailPanel(state)
+	return ui.create(M.makeDetailPanelLayout(state))
+end
+
+function M.updateDetailPanel(detailElement, state)
+	if not detailElement or not detailElement.layout then
 		return false
 	end
-	local body = rootElement.layout.content.s3ui_body
-	local main = body and body.content and body.content.s3ui_main
-	local equipmentView = main and main.content and main.content.s3ui_equipment_view
-	local detail = equipmentView and equipmentView.content and equipmentView.content.s3ui_equipment_detail
-	if not detail then
-		return false
-	end
-	detail.content = detailPanelContent(state)
-	rootElement:update()
+	detailElement.layout.content = detailPanelContent(state)
+	detailElement:update()
 	return true
 end
 
@@ -400,7 +397,7 @@ function M.make(ctx)
 				props = { horizontal = false, relativeSize = v2(1 - DETAIL_WIDTH, 1), autoSize = false },
 				content = groups,
 			},
-			makeDetailPanel(ctx),
+			ctx.detailElement or M.makeDetailPanelLayout(ctx.state),
 		}),
 	}
 end

@@ -21,6 +21,7 @@ local ROOT_LAYER = "Windows"
 local M = {}
 
 local rootElement = nil
+local equipmentDetailElement = nil
 local rebuildInventoryPending = false
 local rebuildEventQueued = false
 ---@type S3UI.InventoryMetrics|nil
@@ -63,12 +64,12 @@ local function selectEquipmentSlot(slot)
 	if state.selectedEquipmentSlotKey == selectedKey then
 		state:selectEquipmentSlot(slot)
 		details.hide()
-		equipmentView.updateDetailPanel(rootElement, state)
+		equipmentView.updateDetailPanel(equipmentDetailElement, state)
 		return
 	end
 	state:selectEquipmentSlot(slot)
 	details.hide()
-	equipmentView.updateDetailPanel(rootElement, state)
+	equipmentView.updateDetailPanel(equipmentDetailElement, state)
 	queueRebuild()
 end
 
@@ -117,6 +118,7 @@ end
 local function equipmentCtx(groups)
 	return {
 		async = async,
+		detailElement = equipmentDetailElement,
 		groups = groups,
 		metrics = layoutMetrics,
 		queueRebuild = queueRebuild,
@@ -188,6 +190,11 @@ local function makeInventoryLayout(items)
 	state:clampScroll(#entries, metrics)
 	local firstIndex = state.scrollOffset + 1
 	state.selectedDisplayData = state:selectedEntryData(entries, firstIndex)
+	if state.primaryTab == "equipment" then
+		equipmentDetailElement = equipmentView.createDetailPanel(state)
+	else
+		equipmentDetailElement = nil
+	end
 	return builder.make({
 		controlsCtx = controlsCtx(),
 		details = details,
@@ -207,6 +214,10 @@ local function destroyRoot()
 	rebuildInventoryPending = false
 	rebuildEventQueued = false
 	details.destroy()
+	if equipmentDetailElement and equipmentDetailElement.layout then
+		equipmentDetailElement:destroy()
+	end
+	equipmentDetailElement = nil
 	if rootElement and rootElement.layout then
 		rootElement:destroy()
 	end
@@ -217,6 +228,10 @@ end
 local function rebuildRoot()
 	state:bumpGeneration()
 	details.hide()
+	if equipmentDetailElement and equipmentDetailElement.layout then
+		equipmentDetailElement:destroy()
+	end
+	equipmentDetailElement = nil
 	if rootElement and rootElement.layout then
 		rootElement:destroy()
 	end
