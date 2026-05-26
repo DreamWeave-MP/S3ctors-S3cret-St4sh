@@ -2,19 +2,25 @@
 
 local ui = require("openmw.ui")
 local util = require("openmw.util")
-local detailPanel = require("scripts.s3ui.inventory.equipment_detail_panel")
 local leftPanel = require("scripts.s3ui.inventory.equipment_left_panel")
 
 local v2 = util.vector2
 
 local M = {}
 
-local LEFT_WIDTH = 1 - detailPanel.WIDTH
+local LEFT_WIDTH = 1
+
+function M.createLeftPanel(ctx)
+	return leftPanel.create(ctx, LEFT_WIDTH)
+end
+
+function M.updateLeftPanel(element, ctx)
+	return leftPanel.update(element, ctx, LEFT_WIDTH)
+end
 
 function M.content(ctx)
 	return ui.content({
-		leftPanel.layout(ctx, LEFT_WIDTH),
-		detailPanel.layout(ctx.state),
+		ctx.leftElement or leftPanel.layout(ctx, LEFT_WIDTH),
 	})
 end
 

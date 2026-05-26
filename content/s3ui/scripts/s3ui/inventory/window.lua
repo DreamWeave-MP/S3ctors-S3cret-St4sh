@@ -21,6 +21,7 @@ local ROOT_LAYER = "Windows"
 local M = {}
 
 local rootElement = nil
+local equipmentLeftElement = nil
 local rebuildInventoryPending = false
 local rebuildEventQueued = false
 ---@type S3UI.InventoryMetrics|nil
@@ -68,18 +69,7 @@ local function updateEquipmentPanels(groups)
 	if selectedSlot then
 		state:selectEquipmentSlot(selectedSlot)
 	end
-	if not rootElement or not rootElement.layout then
-		return
-	end
-	local ok, view = pcall(function()
-		return rootElement.layout.content.s3ui_body.content.s3ui_main.content.s3ui_equipment_view
-	end)
-	if not ok or not view then
-		queueRebuild()
-		return
-	end
-	view.content = equipmentView.content(equipmentCtx(groups))
-	rootElement:update()
+	equipmentView.updateLeftPanel(equipmentLeftElement, equipmentCtx(groups))
 end
 
 local function selectEquipmentSlot(slot)
@@ -137,6 +127,7 @@ end
 equipmentCtx = function(groups)
 	return {
 		async = async,
+		leftElement = equipmentLeftElement,
 		groups = groups,
 		metrics = layoutMetrics,
 		queueRebuild = queueRebuild,
@@ -208,6 +199,11 @@ local function makeInventoryLayout(items)
 	state:clampScroll(#entries, metrics)
 	local firstIndex = state.scrollOffset + 1
 	state.selectedDisplayData = state:selectedEntryData(entries, firstIndex)
+	if state.primaryTab == "equipment" then
+		equipmentLeftElement = equipmentView.createLeftPanel(equipmentCtx(equipmentGroups))
+	else
+		equipmentLeftElement = nil
+	end
 	return builder.make({
 		controlsCtx = controlsCtx(),
 		details = details,
@@ -227,6 +223,10 @@ local function destroyRoot()
 	rebuildInventoryPending = false
 	rebuildEventQueued = false
 	details.destroy()
+	if equipmentLeftElement and equipmentLeftElement.layout then
+		equipmentLeftElement:destroy()
+	end
+	equipmentLeftElement = nil
 	if rootElement and rootElement.layout then
 		rootElement:destroy()
 	end
@@ -237,6 +237,10 @@ end
 local function rebuildRoot()
 	state:bumpGeneration()
 	details.hide()
+	if equipmentLeftElement and equipmentLeftElement.layout then
+		equipmentLeftElement:destroy()
+	end
+	equipmentLeftElement = nil
 	if rootElement and rootElement.layout then
 		rootElement:destroy()
 	end
