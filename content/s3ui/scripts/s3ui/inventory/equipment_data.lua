@@ -95,8 +95,6 @@ local function summaryText(itemData)
 		summary = "DMG " .. data.bestWeaponDamage(record)
 	elseif item and item.type == types.Armor then
 		summary = "AR " .. data.formatNumber(record and record.baseArmor, 0)
-	elseif item and item.type == types.Clothing then
-		summary = data.typeText(itemData)
 	end
 	local condition = data.formatCondition(itemData.condition)
 	if condition ~= data.EMPTY_FIELD then
