@@ -18,12 +18,16 @@ function M.new()
 			condition = false,
 		},
 		viewMode = "grid",
+		primaryTab = "inventory",
 		generation = 0,
 		scrollOffset = 0,
 		lastEntryCount = 0,
 		selectedSlotIndex = nil,
 		selectedSlotViewMode = nil,
 		selectedDisplayData = nil,
+		selectedEquipmentSlotKey = nil,
+		selectedEquipmentSlotLabel = nil,
+		selectedEquipmentData = nil,
 	}
 
 	function state:bumpGeneration()
@@ -82,8 +86,21 @@ function M.new()
 	end
 
 	function state:toggleViewMode()
+		if self.primaryTab ~= "inventory" then
+			return
+		end
 		self.viewMode = self.viewMode == "grid" and "list" or "grid"
 		self:resetScroll()
+	end
+
+	function state:setPrimaryTab(tab)
+		if self.primaryTab == tab then
+			return false
+		end
+		self.primaryTab = tab
+		self:resetScroll()
+		self:resetTransientSelection()
+		return true
 	end
 
 	function state:toggleCategory(categoryKey)
@@ -100,6 +117,18 @@ function M.new()
 		self.selectedSlotIndex = nil
 		self.selectedSlotViewMode = nil
 		self.selectedDisplayData = nil
+		self.selectedEquipmentSlotKey = nil
+		self.selectedEquipmentSlotLabel = nil
+		self.selectedEquipmentData = nil
+	end
+
+	function state:selectEquipmentSlot(slot)
+		self.selectedSlotIndex = nil
+		self.selectedSlotViewMode = nil
+		self.selectedDisplayData = nil
+		self.selectedEquipmentSlotKey = slot and slot.key or nil
+		self.selectedEquipmentSlotLabel = slot and slot.label or nil
+		self.selectedEquipmentData = slot and slot.itemData or nil
 	end
 
 	function state:selectedEntryData(entries, firstIndex)
@@ -117,6 +146,9 @@ function M.new()
 		self.selectedSlotIndex = nil
 		self.selectedSlotViewMode = nil
 		self.selectedDisplayData = nil
+		self.selectedEquipmentSlotKey = nil
+		self.selectedEquipmentSlotLabel = nil
+		self.selectedEquipmentData = nil
 	end
 
 	function state:buildEntries(items, categoryOrder)

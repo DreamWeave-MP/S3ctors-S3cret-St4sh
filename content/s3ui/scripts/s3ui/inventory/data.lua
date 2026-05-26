@@ -470,6 +470,7 @@ return {
 	formatCondition = formatCondition,
 	bestWeaponDamage = bestWeaponDamage,
 	weaponDamageFields = weaponDamageFields,
+	itemEffectiveness = itemEffectiveness,
 	typeText = typeText,
 	goldPerWeight = goldPerWeight,
 }

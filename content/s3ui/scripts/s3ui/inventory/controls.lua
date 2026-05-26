@@ -7,7 +7,6 @@ local chrome = require("scripts.s3ui.inventory.chrome")
 local icons = require("scripts.s3ui.inventory.icons")
 
 local v2 = util.vector2
-local ACTIVE_MAIN_MENU_KEY = "inventory"
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_RIGHT_EDGE = { value = 0.68, weight = 0.8, effectiveness = 0.9, condition = 0.99 }
 
@@ -176,6 +175,10 @@ local function makeToolbarViewToggleButton(ctx)
 	}
 end
 
+local function mainMenuActive(ctx, button)
+	return button.tab ~= nil and button.tab == ctx.state.primaryTab
+end
+
 local function menuButtonIconSize(metrics, buttonCount)
 	local buttonHeight = metrics.viewSize.y / buttonCount
 	local edge = math.floor(math.min(metrics.categoryRailSize.x, buttonHeight) * 0.72)
@@ -186,7 +189,8 @@ local function menuButtonIconSize(metrics, buttonCount)
 end
 
 local function makeMainMenuButton(ctx, button)
-	local active, buttonCount = button.key == ACTIVE_MAIN_MENU_KEY, #icons.MAIN_MENU_BUTTONS
+	local active, buttonCount = mainMenuActive(ctx, button), #icons.MAIN_MENU_BUTTONS
+	local generation, state = ctx.state.generation, ctx.state
 	local content = ui.content({
 		controlBackground(active),
 		{
@@ -208,7 +212,15 @@ local function makeMainMenuButton(ctx, button)
 		props = { relativeSize = v2(1, 1 / buttonCount) },
 		events = {
 			focusGain = ctx.async:callback(ctx.clearSelection),
-			mouseClick = ctx.async:callback(ctx.clearSelection),
+			mouseClick = ctx.async:callback(function()
+				if generation ~= state.generation then
+					return
+				end
+				ctx.clearSelection()
+				if button.tab and state:setPrimaryTab(button.tab) then
+					ctx.queueRebuild()
+				end
+			end),
 		},
 		content = content,
 	}

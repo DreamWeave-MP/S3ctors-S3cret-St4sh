@@ -4,6 +4,7 @@ local ui = require("openmw.ui")
 local util = require("openmw.util")
 local chrome = require("scripts.s3ui.inventory.chrome")
 local controls = require("scripts.s3ui.inventory.controls")
+local equipmentView = require("scripts.s3ui.inventory.equipment_view")
 local icons = require("scripts.s3ui.inventory.icons")
 local views = require("scripts.s3ui.inventory.views")
 
@@ -12,19 +13,23 @@ local M = {}
 
 function M.make(ctx)
 	local metrics = ctx.metrics
-	local inventoryView = ctx.state.viewMode == "list" and views.makeList(ctx.entries, ctx.firstIndex, ctx.viewCtx)
-		or views.makeGrid(ctx.entries, ctx.firstIndex, ctx.viewCtx)
-	local bodyLayouts = {
-		controls.makeToolbar(ctx.controlsCtx),
-		{
-			name = "s3ui_main",
-			type = ui.TYPE.Flex,
-			props = { horizontal = true, relativeSize = icons.MAIN_RELATIVE_SIZE, autoSize = false },
-			external = { grow = 1 },
-			content = ui.content({ controls.makeCategoryRail(ctx.controlsCtx), inventoryView }),
-		},
+	local bodyLayouts = {}
+	local mainView
+	if ctx.state.primaryTab == "equipment" then
+		mainView = equipmentView.make(ctx.equipmentCtx)
+	else
+		bodyLayouts[#bodyLayouts + 1] = controls.makeToolbar(ctx.controlsCtx)
+		mainView = ctx.state.viewMode == "list" and views.makeList(ctx.entries, ctx.firstIndex, ctx.viewCtx)
+			or views.makeGrid(ctx.entries, ctx.firstIndex, ctx.viewCtx)
+	end
+	bodyLayouts[#bodyLayouts + 1] = {
+		name = "s3ui_main",
+		type = ui.TYPE.Flex,
+		props = { horizontal = true, relativeSize = icons.MAIN_RELATIVE_SIZE, autoSize = false },
+		external = { grow = 1 },
+		content = ui.content({ controls.makeCategoryRail(ctx.controlsCtx), mainView }),
 	}
-	if metrics.detailMode == "compact" then
+	if ctx.state.primaryTab == "inventory" and metrics.detailMode == "compact" then
 		bodyLayouts[#bodyLayouts + 1] = ctx.details.makeCompactDetailBar()
 	end
 
