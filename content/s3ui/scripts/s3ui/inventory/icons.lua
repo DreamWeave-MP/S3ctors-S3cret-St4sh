@@ -97,7 +97,13 @@ M.MENU = {
 M.MAIN_MENU_BUTTONS = {
 	{
 		key = "inventory",
+		tab = "inventory",
 		icon = M.MENU.inventory,
+	},
+	{
+		key = "equipment",
+		tab = "equipment",
+		icon = M.MENU.equipment,
 	},
 	{ key = "magic", icon = M.MENU.magic },
 	{ key = "journal", icon = M.MENU.journal },

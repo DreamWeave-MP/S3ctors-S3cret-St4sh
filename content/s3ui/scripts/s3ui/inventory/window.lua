@@ -8,6 +8,7 @@ local countModal = require("scripts.s3ui.components.count_modal")
 local builder = require("scripts.s3ui.inventory.builder")
 local data = require("scripts.s3ui.inventory.data")
 local detailsFactory = require("scripts.s3ui.inventory.details")
+local equipmentData = require("scripts.s3ui.inventory.equipment_data")
 local inventoryCamera = require("scripts.s3ui.player_camera")
 local layout = require("scripts.s3ui.inventory.layout")
 local stateFactory = require("scripts.s3ui.inventory.state")
@@ -54,6 +55,15 @@ local function selectVisibleSlot(slotIndex, itemData)
 	end
 end
 
+local function selectEquipmentSlot(slot)
+	if state.selectedEquipmentSlotKey == (slot and slot.key or nil) then
+		return
+	end
+	state:selectEquipmentSlot(slot)
+	details.hide()
+	queueRebuild()
+end
+
 local function queueRebuild()
 	details.hide()
 	rebuildInventoryPending = true
@@ -74,6 +84,17 @@ local function controlsCtx()
 	}
 end
 
+local function equipmentCtx(groups)
+	return {
+		async = async,
+		groups = groups,
+		metrics = layoutMetrics,
+		queueRebuild = queueRebuild,
+		selectEquipmentSlot = selectEquipmentSlot,
+		state = state,
+	}
+end
+
 local function viewCtx()
 	return {
 		async = async,
@@ -88,7 +109,14 @@ end
 local function makeInventoryLayout(items)
 	activeLayoutMetrics = layout.compute()
 	local metrics = activeLayoutMetrics
-	local entries = state:buildEntries(items, data.CATEGORY_ORDER)
+	local entries = state.primaryTab == "inventory" and state:buildEntries(items, data.CATEGORY_ORDER) or {}
+	local equipmentGroups = equipmentData.collectGroups()
+	local selectedEquipmentSlot = equipmentData.findSlot(equipmentGroups, state.selectedEquipmentSlotKey)
+	if selectedEquipmentSlot then
+		state:selectEquipmentSlot(selectedEquipmentSlot)
+	elseif state.primaryTab == "equipment" then
+		state.selectedEquipmentData = nil
+	end
 	state.lastEntryCount = #entries
 	state:clampScroll(#entries, metrics)
 	local firstIndex = state.scrollOffset + 1
@@ -96,6 +124,7 @@ local function makeInventoryLayout(items)
 	return builder.make({
 		controlsCtx = controlsCtx(),
 		details = details,
+		equipmentCtx = equipmentCtx(equipmentGroups),
 		entries = entries,
 		firstIndex = firstIndex,
 		metrics = metrics,
@@ -161,7 +190,7 @@ function M.processPendingRebuild()
 end
 
 function M.scrollRows(deltaRows)
-	if not active() then
+	if not active() or state.primaryTab ~= "inventory" then
 		return
 	end
 	if state:scrollRows(deltaRows, layoutMetrics(), state.lastEntryCount) then
@@ -170,19 +199,19 @@ function M.scrollRows(deltaRows)
 end
 
 function M.home()
-	if active() and state:home() then
+	if active() and state.primaryTab == "inventory" and state:home() then
 		queueRebuild()
 	end
 end
 
 function M.endScroll()
-	if active() and state:endScroll(layoutMetrics()) then
+	if active() and state.primaryTab == "inventory" and state:endScroll(layoutMetrics()) then
 		queueRebuild()
 	end
 end
 
 function M.navigateSelection(direction)
-	if not active() then
+	if not active() or state.primaryTab ~= "inventory" then
 		return
 	end
 	local entries = state:buildEntries(data.collectItems(), data.CATEGORY_ORDER)
