@@ -179,7 +179,7 @@ local function toolbarModeIcon(ctx)
 	if ctx.state.primaryTab == "equipment" then
 		return icons.SORT.weight, icons.SORT_ICON_RELATIVE_SIZE, "inventory"
 	end
-	return icons.CATEGORY.armor, icons.CATEGORY_RELATIVE_SIZES.armor or icons.SORT_ICON_RELATIVE_SIZE, "equipment"
+	return icons.MENU.equipment, icons.SORT_ICON_RELATIVE_SIZE, "equipment"
 end
 
 local function makeToolbarModeToggleButton(ctx)
