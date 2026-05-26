@@ -130,15 +130,7 @@ local function makeSlotCard(ctx, slot, placement)
 end
 
 local function makeGroup(ctx, group)
-	local content = ui.content({
-		textLine("s3ui_equipment_group_" .. group.key, group.title, {
-			relativeSize = v2(1, 0.1),
-			textSize = 16,
-			textAlignH = ui.ALIGNMENT.Start,
-			textAlignV = ui.ALIGNMENT.Center,
-			autoSize = false,
-		}, I.MWUI.templates.textHeader),
-	})
+	local content = ui.content({})
 	local paperdoll = ui.content({})
 	for _, slot in ipairs(group.slots or {}) do
 		local placement = group.layout and group.layout[slot.key]
@@ -149,7 +141,7 @@ local function makeGroup(ctx, group)
 	content:add({
 		name = "s3ui_equipment_group_" .. group.key .. "_paperdoll",
 		type = ui.TYPE.Widget,
-		props = { relativeSize = v2(1, 0.9), autoSize = false },
+		props = { relativeSize = v2(1, 1), autoSize = false },
 		content = paperdoll,
 	})
 	return {
