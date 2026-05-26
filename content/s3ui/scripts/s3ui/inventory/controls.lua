@@ -219,6 +219,7 @@ local function makeToolbarModeToggleButton(ctx)
 end
 
 local function makeToolbarButtonRow(ctx)
+	local metrics = ctx.metrics()
 	local content = ui.content({})
 	if ctx.state.primaryTab == "inventory" then
 		content:add(makeToolbarViewToggleButton(ctx))
@@ -235,7 +236,9 @@ local function makeToolbarButtonRow(ctx)
 		type = ui.TYPE.Flex,
 		props = {
 			horizontal = true,
-			relativeSize = v2(1, 1),
+			position = v2(TOOLBAR_RAIL_EXTRA_WIDTH, 0),
+			size = metrics.categoryRailSize,
+			relativeSize = v2(0, 1),
 			arrange = ui.ALIGNMENT.Center,
 			autoSize = false,
 		},
