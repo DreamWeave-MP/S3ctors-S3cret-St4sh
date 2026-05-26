@@ -4,7 +4,6 @@ local I = require("openmw.interfaces")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
 local chrome = require("scripts.s3ui.inventory.chrome")
-local data = require("scripts.s3ui.inventory.data")
 local detailModel = require("scripts.s3ui.inventory.details_model")
 
 local v2 = util.vector2
@@ -15,12 +14,32 @@ local CARD_COLUMNS = 3
 local DETAIL_WIDTH = 0.34
 local GROUP_HEIGHTS = { weapons = 0.22, armor = 0.36, clothing = 0.42 }
 local SELECTED_BORDER_ALPHA = 0.94
+local SELECTED_STRIP_COLOR = util.color.rgb(0.86, 0.72, 0.42)
 local EMPTY_TEXT = "—"
 
 local function textLine(name, text, props, template)
 	props = props or {}
 	props.name = name
 	return chrome.textLine(text, template or I.MWUI.templates.textNormal, props)
+end
+
+local function cardSummary(slot, selected)
+	if selected then
+		return slot.itemData and "Click again to unequip" or "Click again to browse items"
+	end
+	return slot.summary or ""
+end
+
+local function addSelectedBadge(content, slot)
+	content:add(textLine("s3ui_equipment_" .. slot.key .. "_selected", "Selected", {
+		anchor = v2(1, 0),
+		relativePosition = v2(0.94, 0.08),
+		relativeSize = v2(0.38, 0.2),
+		textSize = 11,
+		textAlignH = ui.ALIGNMENT.Right,
+		textAlignV = ui.ALIGNMENT.Center,
+		autoSize = false,
+	}, I.MWUI.templates.textHeader))
 end
 
 local function addBackground(content, alpha, color)
@@ -53,9 +72,23 @@ end
 
 local function makeSlotCard(ctx, slot)
 	local selected = ctx.state.selectedEquipmentSlotKey == slot.key
+	local generation = ctx.state.generation
 	local itemData = slot.itemData
 	local content = ui.content({})
-	addBackground(content, selected and 0.38 or 0.18)
+	addBackground(content, selected and 0.48 or 0.18)
+	if selected then
+		content:add({
+			name = "s3ui_equipment_" .. slot.key .. "_selected_strip",
+			type = ui.TYPE.Image,
+			props = {
+				resource = chrome.WHITE_TEXTURE,
+				color = SELECTED_STRIP_COLOR,
+				alpha = 0.75,
+				relativeSize = v2(1, 0.055),
+			},
+		})
+		addSelectedBadge(content, slot)
+	end
 	local icon = iconLayout("s3ui_equipment_" .. slot.key .. "_icon", itemData)
 	if icon then
 		content:add(icon)
@@ -80,7 +113,7 @@ local function makeSlotCard(ctx, slot)
 		wordWrap = true,
 		autoSize = false,
 	}))
-	content:add(textLine("s3ui_equipment_" .. slot.key .. "_summary", slot.summary or "", {
+	content:add(textLine("s3ui_equipment_" .. slot.key .. "_summary", cardSummary(slot, selected), {
 		anchor = v2(0, 1),
 		relativePosition = v2(0.06, 0.9),
 		relativeSize = v2(0.88, 0.22),
@@ -89,23 +122,38 @@ local function makeSlotCard(ctx, slot)
 		textAlignV = ui.ALIGNMENT.Center,
 		autoSize = false,
 	}))
-	chrome.addSimpleBorder(content, "s3ui_equipment_" .. slot.key, selected and SELECTED_BORDER_ALPHA or 0.48, 2)
+	chrome.addSimpleBorder(
+		content,
+		"s3ui_equipment_" .. slot.key,
+		selected and SELECTED_BORDER_ALPHA or 0.48,
+		selected and 3 or 2
+	)
 	return {
 		name = "s3ui_equipment_slot_" .. slot.key,
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(1 / CARD_COLUMNS, 1) },
-		userData = slot,
+		userData = { slot = slot, selected = selected, generation = generation },
 		events = {
 			focusGain = ctx.async:callback(function(_, layout)
 				local focused = layout and layout.userData
-				if focused then
-					ctx.selectEquipmentSlot(focused)
+				if not focused or focused.generation ~= ctx.state.generation then
+					return
+				end
+				if focused.slot then
+					ctx.selectEquipmentSlot(focused.slot)
 				end
 			end),
 			mouseClick = ctx.async:callback(function(_, layout)
 				local clicked = layout and layout.userData
-				if clicked then
-					ctx.selectEquipmentSlot(clicked)
+				if not clicked or clicked.generation ~= ctx.state.generation then
+					return
+				end
+				if clicked.selected and clicked.slot and clicked.slot.itemData then
+					ctx.activateEquipmentSlot(clicked.slot)
+				elseif clicked.selected and clicked.slot then
+					ctx.openEquipmentCategory(clicked.slot)
+				elseif clicked.slot then
+					ctx.selectEquipmentSlot(clicked.slot)
 				end
 			end),
 		},
@@ -199,9 +247,16 @@ local function makeDetailPanel(ctx)
 	addBackground(content, 0.22)
 	local body = ui.content({})
 	if model then
+		body:add(textLine("s3ui_equipment_detail_slot", selectedLabel, {
+			relativeSize = v2(1, 0.09),
+			textSize = 14,
+			textAlignH = ui.ALIGNMENT.Start,
+			textAlignV = ui.ALIGNMENT.Center,
+			autoSize = false,
+		}, I.MWUI.templates.textHeader))
 		body:add({
 			type = ui.TYPE.Flex,
-			props = { horizontal = true, relativeSize = v2(1, 0.22), autoSize = false },
+			props = { horizontal = true, relativeSize = v2(1, 0.2), autoSize = false },
 			content = ui.content({
 				{
 					type = ui.TYPE.Widget,
@@ -232,6 +287,15 @@ local function makeDetailPanel(ctx)
 		for index, field in ipairs(model.fields) do
 			body:add(detailField(field, index))
 		end
+		body:add(textLine("s3ui_equipment_detail_hint", "Click the selected slot again, or press Enter, to unequip.", {
+			relativeSize = v2(1, 0.12),
+			textSize = 13,
+			textAlignH = ui.ALIGNMENT.Start,
+			textAlignV = ui.ALIGNMENT.Center,
+			multiline = true,
+			wordWrap = true,
+			autoSize = false,
+		}))
 	else
 		body:add(textLine("s3ui_equipment_detail_empty_title", selectedLabel, {
 			relativeSize = v2(1, 0.16),
@@ -243,7 +307,8 @@ local function makeDetailPanel(ctx)
 		body:add(
 			textLine(
 				"s3ui_equipment_detail_empty_text",
-				ctx.state.selectedEquipmentSlotKey and "No item equipped." or "Select an equipment slot.",
+				ctx.state.selectedEquipmentSlotKey and ("No item equipped in " .. selectedLabel .. ".")
+					or "Select an equipment slot.",
 				{
 					relativeSize = v2(1, 0.14),
 					textSize = 15,
@@ -253,6 +318,23 @@ local function makeDetailPanel(ctx)
 				}
 			)
 		)
+		if ctx.state.selectedEquipmentSlotKey then
+			body:add(
+				textLine(
+					"s3ui_equipment_detail_empty_hint",
+					"Click again, or press Enter, to browse compatible items.",
+					{
+						relativeSize = v2(1, 0.14),
+						textSize = 13,
+						textAlignH = ui.ALIGNMENT.Start,
+						textAlignV = ui.ALIGNMENT.Center,
+						multiline = true,
+						wordWrap = true,
+						autoSize = false,
+					}
+				)
+			)
+		end
 	end
 	content:add({
 		name = "s3ui_equipment_detail_body",

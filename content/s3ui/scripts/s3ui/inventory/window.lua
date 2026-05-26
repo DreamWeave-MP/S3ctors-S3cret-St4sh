@@ -5,6 +5,7 @@ local I = require("openmw.interfaces")
 local self = require("openmw.self")
 local ui = require("openmw.ui")
 local countModal = require("scripts.s3ui.components.count_modal")
+local actions = require("scripts.s3ui.inventory.actions")
 local builder = require("scripts.s3ui.inventory.builder")
 local data = require("scripts.s3ui.inventory.data")
 local detailsFactory = require("scripts.s3ui.inventory.details")
@@ -24,6 +25,7 @@ local rebuildEventQueued = false
 ---@type S3UI.InventoryMetrics|nil
 local activeLayoutMetrics = nil
 local state = stateFactory.new()
+local queueRebuild
 
 local function layoutMetrics()
 	return activeLayoutMetrics or layout.compute()
@@ -64,7 +66,7 @@ local function selectEquipmentSlot(slot)
 	queueRebuild()
 end
 
-local function queueRebuild()
+function queueRebuild()
 	details.hide()
 	rebuildInventoryPending = true
 	if rebuildEventQueued then
@@ -72,6 +74,28 @@ local function queueRebuild()
 	end
 	rebuildEventQueued = true
 	self:sendEvent("S3UI_RebuildInventory")
+end
+
+local function actionCtx()
+	return { queueRebuild = queueRebuild }
+end
+
+local function activateEquipmentSlot(slot)
+	actions.activateEquipmentSlot(slot, actionCtx())
+end
+
+local function openEquipmentCategory(slot)
+	local categoryKey = slot and slot.inventoryCategoryKey
+	if not categoryKey then
+		return
+	end
+	state:setPrimaryTab("inventory")
+	for _, category in ipairs(data.CATEGORY_ORDER) do
+		if category.key ~= "all" then
+			state.collapsedCategories[category.key] = category.key ~= categoryKey
+		end
+	end
+	queueRebuild()
 end
 
 local function controlsCtx()
@@ -90,6 +114,8 @@ local function equipmentCtx(groups)
 		groups = groups,
 		metrics = layoutMetrics,
 		queueRebuild = queueRebuild,
+		activateEquipmentSlot = activateEquipmentSlot,
+		openEquipmentCategory = openEquipmentCategory,
 		selectEquipmentSlot = selectEquipmentSlot,
 		state = state,
 	}
@@ -104,6 +130,41 @@ local function viewCtx()
 		selectSlot = selectVisibleSlot,
 		state = state,
 	}
+end
+
+local function flatEquipmentSlots(groups)
+	local slots = {}
+	for _, group in ipairs(groups or {}) do
+		for _, slot in ipairs(group.slots or {}) do
+			slots[#slots + 1] = slot
+		end
+	end
+	return slots
+end
+
+local function equipmentSelectionIndex(slots)
+	for index, slot in ipairs(slots) do
+		if slot.key == state.selectedEquipmentSlotKey then
+			return index
+		end
+	end
+	return nil
+end
+
+local function selectEquipmentByOffset(delta)
+	local slots = flatEquipmentSlots(equipmentData.collectGroups())
+	if #slots == 0 then
+		return
+	end
+	local currentIndex = equipmentSelectionIndex(slots)
+	local targetIndex = currentIndex and (currentIndex + delta) or (delta >= 0 and 1 or #slots)
+	while targetIndex > #slots do
+		targetIndex = targetIndex - #slots
+	end
+	while targetIndex < 1 do
+		targetIndex = targetIndex + #slots
+	end
+	selectEquipmentSlot(slots[targetIndex])
 end
 
 local function makeInventoryLayout(items)
@@ -190,7 +251,11 @@ function M.processPendingRebuild()
 end
 
 function M.scrollRows(deltaRows)
-	if not active() or state.primaryTab ~= "inventory" then
+	if not active() then
+		return
+	end
+	if state.primaryTab == "equipment" then
+		selectEquipmentByOffset(deltaRows * 3)
 		return
 	end
 	if state:scrollRows(deltaRows, layoutMetrics(), state.lastEntryCount) then
@@ -199,19 +264,35 @@ function M.scrollRows(deltaRows)
 end
 
 function M.home()
-	if active() and state.primaryTab == "inventory" and state:home() then
+	if not active() then
+		return
+	end
+	if state.primaryTab == "equipment" then
+		local slots = flatEquipmentSlots(equipmentData.collectGroups())
+		selectEquipmentSlot(slots[1])
+	elseif state:home() then
 		queueRebuild()
 	end
 end
 
 function M.endScroll()
-	if active() and state.primaryTab == "inventory" and state:endScroll(layoutMetrics()) then
+	if not active() then
+		return
+	end
+	if state.primaryTab == "equipment" then
+		local slots = flatEquipmentSlots(equipmentData.collectGroups())
+		selectEquipmentSlot(slots[#slots])
+	elseif state:endScroll(layoutMetrics()) then
 		queueRebuild()
 	end
 end
 
 function M.navigateSelection(direction)
-	if not active() or state.primaryTab ~= "inventory" then
+	if not active() then
+		return
+	end
+	if state.primaryTab == "equipment" then
+		selectEquipmentByOffset(direction)
 		return
 	end
 	local entries = state:buildEntries(data.collectItems(), data.CATEGORY_ORDER)
@@ -249,6 +330,22 @@ function M.navigateSelection(direction)
 	selectVisibleSlot(slotIndex, entry and entry.kind == "item" and entry.data or nil)
 	if state.scrollOffset ~= oldOffset then
 		queueRebuild()
+	end
+end
+
+function M.activateSelection()
+	if not active() then
+		return
+	end
+	if state.primaryTab == "equipment" then
+		local slot = equipmentData.findSlot(equipmentData.collectGroups(), state.selectedEquipmentSlotKey)
+		if slot and slot.itemData then
+			activateEquipmentSlot(slot)
+		elseif slot then
+			openEquipmentCategory(slot)
+		end
+	elseif state.selectedDisplayData then
+		actions.activateItem(state.selectedDisplayData, actionCtx())
 	end
 end
 

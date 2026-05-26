@@ -112,6 +112,21 @@ local function unequip(itemData, ctx)
 	return true
 end
 
+local function unequipSlot(slot, ctx)
+	if not slot or not slot.slot then
+		return false
+	end
+	local actor = playerSelf()
+	local equipment = Actor.getEquipment(actor)
+	if not equipment[slot.slot] then
+		return false
+	end
+	equipment[slot.slot] = nil
+	Actor.setEquipment(actor, equipment)
+	queueRebuild(ctx)
+	return true
+end
+
 local function equip(itemData, ctx)
 	local actor = playerSelf()
 	local equipment = Actor.getEquipment(actor)
@@ -177,6 +192,13 @@ function M.activateItem(itemData, ctx)
 	else
 		equip(itemData, ctx)
 	end
+end
+
+function M.activateEquipmentSlot(slot, ctx)
+	if not slot or not slot.itemData then
+		return false
+	end
+	return unequipSlot(slot, ctx)
 end
 
 return M
