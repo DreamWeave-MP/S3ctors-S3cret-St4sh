@@ -6,6 +6,7 @@ local input = require("openmw.input")
 local I = require("openmw.interfaces")
 local storage = require("openmw.storage")
 
+local countModal = require("scripts.s3ui.components.count_modal")
 local inventoryWindow = require("scripts.s3ui.inventory.window")
 
 local UI_WINDOWS = I.UI.WINDOW
@@ -78,6 +79,8 @@ return {
 		onKeyPress = function(key)
 			if key.code == input.KEY.F8 then
 				reloadLuaAndReopenInventory()
+			elseif countModal.handleKeyPress(key) then
+				return
 			elseif key.code == input.KEY.LeftArrow then
 				inventoryWindow.navigateSelection(-1)
 			elseif key.code == input.KEY.RightArrow then
@@ -93,6 +96,9 @@ return {
 			end
 		end,
 		onMouseWheel = function(vertical, _horizontal)
+			if countModal.isOpen() then
+				return
+			end
 			if type(vertical) ~= "number" then
 				return
 			end

@@ -4,6 +4,7 @@ local async = require("openmw.async")
 local I = require("openmw.interfaces")
 local self = require("openmw.self")
 local ui = require("openmw.ui")
+local countModal = require("scripts.s3ui.components.count_modal")
 local builder = require("scripts.s3ui.inventory.builder")
 local data = require("scripts.s3ui.inventory.data")
 local detailsFactory = require("scripts.s3ui.inventory.details")
@@ -105,6 +106,7 @@ local function makeInventoryLayout(items)
 end
 
 local function destroyRoot()
+	countModal.hide()
 	state:bumpGeneration()
 	rebuildInventoryPending = false
 	rebuildEventQueued = false

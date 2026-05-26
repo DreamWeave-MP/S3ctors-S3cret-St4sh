@@ -3,6 +3,7 @@
 local I = require("openmw.interfaces")
 local ui = require("openmw.ui")
 local util = require("openmw.util")
+local actions = require("scripts.s3ui.inventory.actions")
 local chrome = require("scripts.s3ui.inventory.chrome")
 local controls = require("scripts.s3ui.inventory.controls")
 local data = require("scripts.s3ui.inventory.data")
@@ -219,6 +220,17 @@ local function makeGridSlot(ctx, entry, index)
 				end
 				ctx.selectSlot(index, layout and layout.userData)
 			end),
+			mouseClick = ctx.async:callback(function(event, layout)
+				if generation ~= ctx.state.generation or event.button ~= 1 then
+					return
+				end
+				local clicked = layout and layout.userData
+				if not clicked then
+					return
+				end
+				ctx.selectSlot(index, clicked)
+				actions.activateItem(clicked, ctx)
+			end),
 			focusLoss = ctx.async:callback(function()
 				if generation ~= ctx.state.generation then
 					return
@@ -426,6 +438,17 @@ local function makeListItemRow(ctx, entry, index)
 					return
 				end
 				ctx.selectSlot(index, layout and layout.userData)
+			end),
+			mouseClick = ctx.async:callback(function(event, layout)
+				if generation ~= ctx.state.generation or event.button ~= 1 then
+					return
+				end
+				local clicked = layout and layout.userData
+				if not clicked then
+					return
+				end
+				ctx.selectSlot(index, clicked)
+				actions.activateItem(clicked, ctx)
 			end),
 			focusLoss = ctx.async:callback(function()
 				if generation ~= ctx.state.generation then
