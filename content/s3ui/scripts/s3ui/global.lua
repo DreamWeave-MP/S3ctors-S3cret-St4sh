@@ -91,6 +91,35 @@ local function destinationCell(cellId)
 	return cellId
 end
 
+local function resolvedCellName(cellId)
+	local cell = destinationCell(cellId)
+	if type(cell) == "table" or type(cell) == "userdata" then
+		if type(cell.displayName) == "string" and cell.displayName ~= "" then
+			return cell.displayName
+		end
+		if type(cell.name) == "string" and cell.name ~= "" then
+			return cell.name
+		end
+	end
+	return nil
+end
+
+local function resolveTravelCellNames(data)
+	if type(data) ~= "table" or not validObject(data.player) or type(data.cellIds) ~= "table" then
+		return
+	end
+	local names = {}
+	for _, cellId in ipairs(data.cellIds) do
+		if type(cellId) == "string" and names[cellId] == nil then
+			local name = resolvedCellName(cellId)
+			if name then
+				names[cellId] = name
+			end
+		end
+	end
+	data.player:sendEvent("S3UI_TravelCellNamesResolved", names)
+end
+
 local function addBarterGold(target, price)
 	if not validObject(target) or not types.Actor.objectIsInstance(target) then
 		return
@@ -130,6 +159,7 @@ end
 return {
 	eventHandlers = {
 		S3UI_DropItem = dropItem,
+		S3UI_ResolveTravelCellNames = resolveTravelCellNames,
 		S3UI_TravelExecute = executeTravel,
 	},
 }
