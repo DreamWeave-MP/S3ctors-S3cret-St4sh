@@ -10,6 +10,7 @@ local builder = require("scripts.s3ui.inventory.builder")
 local data = require("scripts.s3ui.inventory.data")
 local detailsFactory = require("scripts.s3ui.inventory.details")
 local equipmentData = require("scripts.s3ui.inventory.equipment_data")
+local equipmentView = require("scripts.s3ui.inventory.equipment_view")
 local inventoryCamera = require("scripts.s3ui.player_camera")
 local layout = require("scripts.s3ui.inventory.layout")
 local stateFactory = require("scripts.s3ui.inventory.state")
@@ -57,23 +58,17 @@ local function selectVisibleSlot(slotIndex, itemData)
 	end
 end
 
-local function updateEquipmentDetails(slot)
-	if slot and slot.itemData then
-		details.update(slot.itemData)
-	else
-		details.hide()
-	end
-end
-
 local function selectEquipmentSlot(slot)
 	local selectedKey = slot and slot.key or nil
 	if state.selectedEquipmentSlotKey == selectedKey then
 		state:selectEquipmentSlot(slot)
-		updateEquipmentDetails(slot)
+		details.hide()
+		equipmentView.updateDetailPanel(rootElement, state)
 		return
 	end
 	state:selectEquipmentSlot(slot)
 	details.hide()
+	equipmentView.updateDetailPanel(rootElement, state)
 	queueRebuild()
 end
 
@@ -232,8 +227,6 @@ local function rebuildRoot()
 	end
 	if state.selectedSlotIndex ~= nil and state.selectedDisplayData then
 		details.update(state.selectedDisplayData)
-	elseif state.primaryTab == "equipment" and state.selectedEquipmentData then
-		details.update(state.selectedEquipmentData)
 	end
 	state.selectedDisplayData = nil
 end

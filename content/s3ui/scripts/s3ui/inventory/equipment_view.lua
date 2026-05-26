@@ -255,9 +255,9 @@ local function detailField(field, index)
 	}
 end
 
-local function makeDetailPanel(ctx)
-	local selectedData = ctx.state.selectedEquipmentData
-	local selectedLabel = ctx.state.selectedEquipmentSlotLabel or "Equipment"
+local function detailPanelContent(state)
+	local selectedData = state.selectedEquipmentData
+	local selectedLabel = state.selectedEquipmentSlotLabel or "Equipment"
 	local model = detailModel.build(selectedData)
 	local content = ui.content({})
 	addBackground(content, 0.22)
@@ -323,7 +323,7 @@ local function makeDetailPanel(ctx)
 		body:add(
 			textLine(
 				"s3ui_equipment_detail_empty_text",
-				ctx.state.selectedEquipmentSlotKey and ("No item equipped in " .. selectedLabel .. ".")
+				state.selectedEquipmentSlotKey and ("No item equipped in " .. selectedLabel .. ".")
 					or "Select an equipment slot.",
 				{
 					relativeSize = v2(1, 0.14),
@@ -334,7 +334,7 @@ local function makeDetailPanel(ctx)
 				}
 			)
 		)
-		if ctx.state.selectedEquipmentSlotKey then
+		if state.selectedEquipmentSlotKey then
 			body:add(
 				textLine("s3ui_equipment_detail_empty_hint", "Click, Enter, or Space to browse compatible items.", {
 					relativeSize = v2(1, 0.14),
@@ -355,12 +355,32 @@ local function makeDetailPanel(ctx)
 		content = body,
 	})
 	chrome.addSimpleBorder(content, "s3ui_equipment_detail", 0.62, 2)
+	return content
+end
+
+local function makeDetailPanel(ctx)
 	return {
 		name = "s3ui_equipment_detail",
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(DETAIL_WIDTH, 1) },
-		content = content,
+		content = detailPanelContent(ctx.state),
 	}
+end
+
+function M.updateDetailPanel(rootElement, state)
+	if not rootElement or not rootElement.layout or not rootElement.layout.content then
+		return false
+	end
+	local body = rootElement.layout.content.s3ui_body
+	local main = body and body.content and body.content.s3ui_main
+	local equipmentView = main and main.content and main.content.s3ui_equipment_view
+	local detail = equipmentView and equipmentView.content and equipmentView.content.s3ui_equipment_detail
+	if not detail then
+		return false
+	end
+	detail.content = detailPanelContent(state)
+	rootElement:update()
+	return true
 end
 
 function M.make(ctx)
