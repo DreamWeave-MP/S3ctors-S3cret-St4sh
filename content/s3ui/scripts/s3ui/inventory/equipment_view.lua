@@ -70,6 +70,46 @@ local function iconLayout(name, itemData)
 	}
 end
 
+local function slotHitbox(ctx, slot, generation)
+	return {
+		name = "s3ui_equipment_" .. slot.key .. "_hitbox",
+		type = ui.TYPE.Widget,
+		props = { relativeSize = v2(1, 1) },
+		userData = { slot = slot, generation = generation },
+		events = {
+			focusGain = ctx.async:callback(function(_, layout)
+				local focused = layout and layout.userData
+				if not focused or focused.generation ~= ctx.state.generation then
+					return
+				end
+				if focused.slot then
+					ctx.selectEquipmentSlot(focused.slot)
+				end
+			end),
+			mouseMove = ctx.async:callback(function(_, layout)
+				local hovered = layout and layout.userData
+				if not hovered or hovered.generation ~= ctx.state.generation then
+					return
+				end
+				if hovered.slot then
+					ctx.selectEquipmentSlot(hovered.slot)
+				end
+			end),
+			mouseClick = ctx.async:callback(function(_, layout)
+				local clicked = layout and layout.userData
+				if not clicked or clicked.generation ~= ctx.state.generation then
+					return
+				end
+				if clicked.slot and clicked.slot.itemData then
+					ctx.activateEquipmentSlot(clicked.slot)
+				elseif clicked.slot then
+					ctx.openEquipmentCategory(clicked.slot)
+				end
+			end),
+		},
+	}
+end
+
 local function makeSlotCard(ctx, slot)
 	local selected = ctx.state.selectedEquipmentSlotKey == slot.key
 	local generation = ctx.state.generation
@@ -128,42 +168,11 @@ local function makeSlotCard(ctx, slot)
 		selected and SELECTED_BORDER_ALPHA or 0.48,
 		selected and 3 or 2
 	)
+	content:add(slotHitbox(ctx, slot, generation))
 	return {
 		name = "s3ui_equipment_slot_" .. slot.key,
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(1 / CARD_COLUMNS, 1) },
-		userData = { slot = slot, generation = generation },
-		events = {
-			focusGain = ctx.async:callback(function(_, layout)
-				local focused = layout and layout.userData
-				if not focused or focused.generation ~= ctx.state.generation then
-					return
-				end
-				if focused.slot then
-					ctx.selectEquipmentSlot(focused.slot)
-				end
-			end),
-			mouseMove = ctx.async:callback(function(_, layout)
-				local hovered = layout and layout.userData
-				if not hovered or hovered.generation ~= ctx.state.generation then
-					return
-				end
-				if hovered.slot then
-					ctx.selectEquipmentSlot(hovered.slot)
-				end
-			end),
-			mouseClick = ctx.async:callback(function(_, layout)
-				local clicked = layout and layout.userData
-				if not clicked or clicked.generation ~= ctx.state.generation then
-					return
-				end
-				if clicked.slot and clicked.slot.itemData then
-					ctx.activateEquipmentSlot(clicked.slot)
-				elseif clicked.slot then
-					ctx.openEquipmentCategory(clicked.slot)
-				end
-			end),
-		},
 		content = content,
 	}
 end
