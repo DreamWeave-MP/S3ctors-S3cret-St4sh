@@ -1,9 +1,8 @@
 ---@module 'doc.s3maphoreTypes'
 
-local core = require 'openmw.core'
-local gameSelf = require 'openmw.self'
-local nearby = require 'openmw.nearby'
-local types = require 'openmw.types'
+local isOpenMW = require 'scripts.s3.isOpenMW'
+
+local core, gameSelf, nearby, types
 
 local musicUtil = require 'scripts.s3.music.util'
 
@@ -12,8 +11,7 @@ local HUGE = math.huge
 --- https://gitlab.com/OpenMW/openmw/-/merge_requests/4334
 --- https://gitlab.com/OpenMW/openmw/-/blob/96d0d1fa7cd83e41853061cca68f612b7eb9c834/CMakeLists.txt#L85
 local OnHitAPIRevision = 85
-local Quests = gameSelf.type.quests(gameSelf)
-local MyLevel = gameSelf.type.stats.level(gameSelf)
+local Quests, MyLevel
 local StaticStrings = require 'scripts.s3.music.staticStrings'
 
 ---@class PlaylistRules: StrictReadOnlyTable helper functions for running playlist behaviors
@@ -23,6 +21,18 @@ local PlaylistRules = {
     combatTargetCacheKey = nil,
     state = require 'scripts.s3.music.playlistState',
 }
+
+if isOpenMW then
+    core = require 'openmw.core'
+    gameSelf = require 'openmw.self'
+    nearby = require 'openmw.nearby'
+    types = require 'openmw.types'
+
+    Quests = gameSelf.type.quests(gameSelf)
+    MyLevel = gameSelf.type.stats.level(gameSelf)
+else
+    MyLevel = tes3.player.object.level
+end
 
 --- Stores playlist rule lookups according to whatever is most relevant for that particular type,
 --- allowing rules to only execute once per a given context.
@@ -127,7 +137,7 @@ function PlaylistRules.combatTargetExact(validTargets)
 
     local result = false
     for _, actor in pairs(FightingActors) do
-        local actorName = actor.type.records[actor.recordId].name:lower()
+        local actorName = isOpenMW and actor.type.records[actor.recordId].name:lower() or actor.object.name:lower()
 
         if validTargets[actorName] then
             result = true
@@ -172,13 +182,13 @@ function PlaylistRules.combatTargetType(targetTypeRules)
     local result = false
 
     for _, actor in pairs(PlaylistRules.state.combatTargets) do
-        local targetIsNPC = types.NPC.objectIsInstance(actor)
+        local targetIsNPC = isOpenMW and types.NPC.objectIsInstance(actor) or actor.objectType == tes3.objectType.npc
         if targetIsNPC then
             result = targetTypeRules.npc ~= nil
 
             if not result then goto FAILED end
         else
-            local creatureRecord = actor.type.records[actor.recordId]
+            local creatureRecord = isOpenMW and actor.type.records[actor.recordId] or actor.baseObject
             local creatureType = validCreatureTypes[creatureRecord.type]
             result = targetTypeRules[creatureType] ~= nil
 
@@ -215,11 +225,11 @@ function PlaylistRules.combatTargetClass(classes)
     local result = false
 
     for _, actor in pairs(PlaylistRules.state.combatTargets) do
-        local targetIsNPC = types.NPC.objectIsInstance(actor)
+        local targetIsNPC = isOpenMW and types.NPC.objectIsInstance(actor) or actor.objectType == tes3.objectType.npc
         if not targetIsNPC then goto CONTINUE end
-        local targetRecord = actor.type.records[actor.recordId]
+        local targetRecord = isOpenMW and actor.type.records[actor.recordId] or actor.baseObject
 
-        if classes[targetRecord.class] then
+        if classes[isOpenMW and targetRecord.class or targetRecord.class.id] then
             result = true
             break
         end
@@ -258,7 +268,7 @@ function PlaylistRules.localMerchantType(services)
 
     local result = false
 
-    for _, actor in pairs(nearby.actors) do
+    for _, actor in pairs(isOpenMW and nearby.actors or tes3.findActorsInProximity{reference = tes3.player, range = math.huge}) do
         local targetRecord = actor.type.records[actor.recordId]
         local targetServices = targetRecord.servicesOffered
 
@@ -303,11 +313,13 @@ function PlaylistRules.combatTargetFaction(factionRules)
 
     local result = false
     for _, actor in pairs(FightingActors) do
-        local getFactionRank = actor.type.getFactionRank
+        local getFactionRank = isOpenMW and actor.type.getFactionRank or
+            --- @param ref tes3reference
+            function(ref) return ref.object.factionRank end
         if getFactionRank == nil then goto SKIPTARGET end
 
         for factionName, rankRange in pairs(factionRules) do
-            local targetFactionRank = getFactionRank(actor, factionName)
+            local targetFactionRank = isOpenMW and getFactionRank(actor, factionName) or getFactionRank(actor)
 
             if targetFactionRank <= (rankRange.max or HUGE) and targetFactionRank >= (rankRange.min or 1) then
                 result = true
@@ -352,14 +364,18 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
 
     local result, levelDifference, levelScale = false, nil, nil
     for _, actor in pairs(PlaylistRules.state.combatTargets) do
-        local targetLevel = combatTargetLevelCache[actor.id] or actor.type.stats.level(actor)
-        if not combatTargetLevelCache[actor.id] then combatTargetLevelCache[actor.id] = targetLevel end
+        local actorId = isOpenMW and actor.id or actor.object.id
+        local actorLevel = isOpenMW and actor.type.stats.level(actor) or actor.object.level
+        local targetLevel = combatTargetLevelCache[actorId] or actorLevel
+        if not combatTargetLevelCache[actorId] then combatTargetLevelCache[actorId] = targetLevel end
 
+        local targetCurrent = isOpenMW and targetLevel.current or targetLevel
+        local playerCurrent = isOpenMW and MyLevel.current or MyLevel
         if levelRule.absolute then
-            levelDifference = targetLevel.current - MyLevel.current
+            levelDifference = targetCurrent - playerCurrent
             levelScale = levelRule.absolute
         elseif levelRule.relative then
-            levelDifference = targetLevel.current / MyLevel.current
+            levelDifference = targetCurrent / playerCurrent
             levelScale = levelRule.relative
         else
             error(
@@ -382,7 +398,7 @@ end
 --- To check specific vampire clans, use the faction rule.
 ---@return boolean
 function PlaylistRules.fightingVampires()
-    if not PlaylistRules.state.isInCombat or core.API_REVISION < OnHitAPIRevision then return false end
+    if not PlaylistRules.state.isInCombat or (isOpenMW and core.API_REVISION < OnHitAPIRevision) then return false end
 
     if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
 
@@ -394,15 +410,26 @@ function PlaylistRules.fightingVampires()
 
     local result = false
     for _, actor in pairs(PlaylistRules.state.combatTargets) do
-        local actorStatCache = S3maphoreGlobalCache[actor.id] or {}
-        if not S3maphoreGlobalCache[actor.id] then S3maphoreGlobalCache[actor.id] = actorStatCache end
+        local actorId = isOpenMW and actor.id or actor.object.id
+        local actorStatCache = S3maphoreGlobalCache[actorId] or {}
+        if not S3maphoreGlobalCache[actorId] then S3maphoreGlobalCache[actorId] = actorStatCache end
 
-        local activeEffects = actorStatCache.effects or actor.type.activeEffects(actor)
+        local activeEffects = actorStatCache.effects or (isOpenMW and actor.type.activeEffects(actor) or actor.mobile.activeMagicEffectList)
         if not actorStatCache.effects then actorStatCache.effects = activeEffects end
 
-        if activeEffects:getEffect(core.magic.EFFECT_TYPE.Vampirism).magnitude > 0 then
-            result = true
-            goto MATCHED
+        if isOpenMW then
+            if activeEffects:getEffect(core.magic.EFFECT_TYPE.Vampirism).magnitude > 0 then
+                result = true
+                goto MATCHED
+            end
+        else
+            --- @param activeEffect tes3activeMagicEffect
+            for _, activeEffect in ipairs(activeEffects) do
+                if (activeEffect.effectId == tes3.effect.vampirism and activeEffect.magnitude > 0) then
+                    result = true
+                    goto MATCHED
+                end
+            end
         end
     end
 
@@ -426,7 +453,7 @@ end
 ---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
 ---@return boolean
 function PlaylistRules.dynamicStatThreshold(statThreshold)
-    if not PlaylistRules.state.isInCombat or core.API_REVISION < OnHitAPIRevision then return false end
+    if not PlaylistRules.state.isInCombat or (isOpenMW and core.API_REVISION < OnHitAPIRevision) then return false end
 
     if not S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] then S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = {} end
 
@@ -441,14 +468,16 @@ function PlaylistRules.dynamicStatThreshold(statThreshold)
     --- if any one of them does not pass, then, bail on the whole thing
     local result = false
     for _, actor in pairs(PlaylistRules.state.combatTargets) do
-        local actorStatCache = S3maphoreGlobalCache[actor.id] or {}
-        if not S3maphoreGlobalCache[actor.id] then S3maphoreGlobalCache[actor.id] = actorStatCache end
+        local actorId = isOpenMW and actor.id or actor.object.id
+        local actorStatCache = S3maphoreGlobalCache[actorId] or {}
+        if not S3maphoreGlobalCache[actorId] then S3maphoreGlobalCache[actorId] = actorStatCache end
 
         for statName, range in pairs(statThreshold) do
-            local stat = actorStatCache[statName] or actor.type.stats.dynamic[statName](actor)
+            --- @type DynamicStat|tes3statistic
+            local stat = actorStatCache[statName] or (isOpenMW and actor.type.stats.dynamic[statName](actor) or actor.mobile[statName])
             if not actorStatCache[statName] then actorStatCache[statName] = stat end
 
-            local normalizedStat = stat.current / stat.base
+            local normalizedStat = isOpenMW and (stat.current / stat.base) or stat.normalized
 
             if normalizedStat < (range.min or 0.0) or normalizedStat > (range.max or HUGE) then
                 PlaylistRules.state.isInCombat = false
@@ -489,9 +518,10 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
     local result = false
 
     for _, actor in pairs(combatTargets) do
-        if S3maphoreGlobalCache[actor.recordId] == nil then S3maphoreGlobalCache[actor.recordId] = {} end
+        local actorId = isOpenMW and actor.recordId or actor.baseObject.id
+        if S3maphoreGlobalCache[actorId] == nil then S3maphoreGlobalCache[actorId] = {} end
 
-        local cachedResult = S3maphoreGlobalCache[actor.recordId][validTargetPatterns]
+        local cachedResult = S3maphoreGlobalCache[actorId][validTargetPatterns]
 
         if cachedResult ~= nil then
             if cachedResult then
@@ -502,7 +532,7 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
             end
         end
 
-        local actorName = actor.type.records[actor.recordId].name:lower()
+        local actorName = actor.type.records[actorId].name:lower()
 
         local result = false
         for _, pattern in ipairs(validTargetPatterns) do
@@ -512,7 +542,7 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
             end
         end
 
-        S3maphoreGlobalCache[actor.recordId][validTargetPatterns] = result
+        S3maphoreGlobalCache[actorId][validTargetPatterns] = result
 
         if result then break end
 
@@ -642,7 +672,12 @@ end
 ---@param maxHour integer
 ---@return boolean
 function PlaylistRules.timeOfDay(minHour, maxHour)
-    local gameHour = math.floor(core.getGameTime() / 3600) % 24
+    local gameHour
+    if isOpenMW then
+        gameHour = math.floor(core.getGameTime() / 3600) % 24
+    else
+        gameHour = math.floor(tes3.worldController.hour.value)
+    end
     return gameHour < maxHour and gameHour >= minHour
 end
 

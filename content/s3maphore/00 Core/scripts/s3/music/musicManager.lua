@@ -1,14 +1,14 @@
 local activePlaylistSettings, ambient, core, gameSelf, vfs
+local isOpenMW = require 'scripts.s3.isOpenMW'
 
 --- FIXME: This isn't API-agnostic, but, I don't care ATM
-local aux_util = require 'openmw_aux.util'
+local aux_util = isOpenMW and require 'openmw_aux.util' or nil
 
 local musicUtil = require 'scripts.s3.music.util'
 
 ---@type table<string, function>
 local L10nCache = {}
 
-local IsOpenMW = require 'scripts.s3.isOpenMW'
 local MusicBanner = require 'scripts.s3.music.banner'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
 
@@ -44,7 +44,14 @@ local MusicManager = {
   end,
   ---@param eventData S3maphoreStateChangeEventData
   callTrackChangedHandlers = function(eventData)
-    aux_util.callEventHandlers(TrackChangeHandlers, eventData)
+    if isOpenMW then
+      aux_util.callEventHandlers(TrackChangeHandlers, eventData)
+    else
+      --- TODO: Check this works.
+      for _, handler in ipairs(TrackChangeHandlers) do
+        event.trigger(handler, eventData)
+      end
+    end
   end,
   currentPlaylist = nil,
   currentTrack = nil,
@@ -65,7 +72,7 @@ local MusicManager = {
   },
 }
 
-if IsOpenMW then
+if isOpenMW then
   local async = require 'openmw.async'
   local storage = require 'openmw.storage'
 
@@ -100,6 +107,24 @@ if IsOpenMW then
     )
   )
 else
+  activePlaylistSettings = tes3.player.tempData['S3maphoreActivePlaylistSettings']
+  table.subscribe(activePlaylistSettings, function(_, key)
+      if not key then return end
+      local playlistAssignedState = activePlaylistSettings[key]
+      local playlistName = key:gsub('Active$', '')
+
+      -- if not I.S3maphore then return end
+      -- Can probably be deleted, but leaving in in case we create an MWSE equivalent. - SB
+
+      local targetPlaylist = MusicManager.registeredPlaylists[playlistName]
+
+      if not targetPlaylist then return end
+
+      if targetPlaylist.active ~= playlistAssignedState then
+        targetPlaylist.active = playlistAssignedState
+      end
+    end
+  )
 end
 
 ---@param playlistId string
@@ -159,14 +184,20 @@ function MusicManager.registerPlaylist(playlist)
 
   local playlistActiveKey = playlist.id .. 'Active'
 
-  if activePlaylistSettings:get(playlistActiveKey) ~= nil then
+  --- `not isOpenMW` is needed for this line because of the explicit `nil` check.
+  local activeStateInSettings = (isOpenMW and activePlaylistSettings:get(playlistActiveKey)) or (not isOpenMW and activePlaylistSettings[playlistActiveKey])
+  if activeStateInSettings ~= nil then
     musicUtil.debugLog('loaded playlist state from settings:', playlist.id)
 
-    playlist.active = activePlaylistSettings:get(playlistActiveKey)
+    playlist.active = isOpenMW and activePlaylistSettings:get(playlistActiveKey) or activePlaylistSettings[playlistActiveKey]
   else
     musicUtil.debugLog('stored playlist state in settings:', playlist.id, storedState)
 
-    activePlaylistSettings:set(playlistActiveKey, storedState)
+    if isOpenMW then
+      activePlaylistSettings:set(playlistActiveKey, storedState)
+    else
+      activePlaylistSettings[playlistActiveKey] = storedState
+    end
   end
 end
 
@@ -183,7 +214,11 @@ function MusicManager.setPlaylistActive(id, state)
   local playlist = MusicManager.registeredPlaylists[id]
   if playlist then
     playlist.active = state
-    activePlaylistSettings:set(playlist.id .. 'Active', playlist.active)
+    if isOpenMW then
+      activePlaylistSettings:set(playlist.id .. 'Active', playlist.active)
+    else
+      activePlaylistSettings[playlist.id .. 'Active'] = playlist.active
+    end
   else
     error(
       ("Playlist '%s' is not registered."):format(id)
@@ -228,7 +263,7 @@ end
 function MusicManager.getCurrentPlaylist()
   if not MusicManager.currentPlaylist then return end
 
-  return musicUtil.makeReadOnly(MusicManager.currentPlaylist)
+  return isOpenMW and musicUtil.makeReadOnly(MusicManager.currentPlaylist) or MusicManager.currentPlaylist
 end
 
 --- Returns a read-only list of read-only playlist structs for introspection. To modify playlists in any way, use other functions.
@@ -236,13 +271,13 @@ function MusicManager.getRegisteredPlaylists()
   local readOnlyPlaylists = {}
 
   for k, v in pairs(MusicManager.registeredPlaylists) do
-    readOnlyPlaylists[k] = musicUtil.makeReadOnly(v, true, true)
+    readOnlyPlaylists[k] = isOpenMW and musicUtil.makeReadOnly(v, true, true) or v
   end
 
-  return musicUtil.makeReadOnly(readOnlyPlaylists)
+  return isOpenMW and musicUtil.makeReadOnly(readOnlyPlaylists) or readOnlyPlaylists
 end
 
-local ReadOnlyPlaylistFileList = musicUtil.makeReadOnly(PlaylistFileList, true, true)
+local ReadOnlyPlaylistFileList = isOpenMW and musicUtil.makeReadOnly(PlaylistFileList, true, true) or PlaylistFileList
 --- Returns a read-only array of all recognized playlist files (files with the .lua extension under the VFS directory, Playlists/ )
 ---@return ReadOnlyTable playlistFiles
 function MusicManager.listPlaylistFiles()
@@ -252,7 +287,15 @@ end
 --- Stops the currently playing track, if any.
 --- The onFrame handler will naturally switch to the next track or playlist
 function MusicManager.skipTrack()
-  if ambient.isMusicPlaying() then ambient.stopMusic() end
+  if isOpenMW then
+    if ambient.isMusicPlaying() then
+      ambient.stopMusic()
+    end
+  else
+    if tes3.worldController.audioController.isMusicPlaying then
+      tes3.worldController.audioController:pauseMusic()
+    end
+  end
 end
 
 --- Tells whether or not music playback is completely disabled
@@ -262,7 +305,7 @@ function MusicManager.getEnabled()
 end
 
 function MusicManager.getState()
-  return musicUtil.makeReadOnly(PlaylistState, true, true)
+  return isOpenMW and musicUtil.makeReadOnly(PlaylistState, true, true) or PlaylistState
 end
 
 ---@return number duration of current silence track
@@ -313,7 +356,7 @@ local specialTrackInfo = {
 ---@param trackPath string VFS path of the track to play
 ---@param reason S3maphoreStateChangeReason
 function MusicManager.playSpecialTrack(trackPath, reason)
-  if not vfs.fileExists(trackPath) then
+  if (isOpenMW and not vfs.fileExists(trackPath)) or lfs.fileexists(trackPath) then
     return print(('Requested track %s does not exist!'):format(trackPath))
   end
 
@@ -339,7 +382,11 @@ function MusicManager.playSpecialTrack(trackPath, reason)
   specialTrackInfo.trackChangeInfo.reason = reason or MusicManager.STATE.SpecialTrackPlaying
   specialTrackInfo.trackChangeInfo.trackName = trackPath
 
-  gameSelf:sendEvent('S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
+  if isOpenMW then
+    gameSelf:sendEvent('S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
+  else
+    event.trigger('S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
+  end
 end
 
 ---@return TimeOfDay
@@ -358,15 +405,28 @@ function MusicManager.updateBanner()
   local playlist, track = MusicManager.getCurrentTrackInfo()
 
   if playlist and track and MusicSettings.BannerEnabled then
-    MusicBanner.layout.props.visible = true
-    MusicBanner.layout.content[1].props.text = ('%s\n\n%s'):format(playlist, track)
+    if isOpenMW then
+      MusicBanner.layout.props.visible = true
+      MusicBanner.layout.content[1].props.text = ('%s\n\n%s'):format(playlist, track)
+    else
+      MusicBanner.visible = true
+      MusicBanner:findChild('SW4_CursorBannerText').text = ('%s\n\n%s'):format(playlist, track)
+    end
   else
-    MusicBanner.layout.props.visible = false
+    if isOpenMW then
+      MusicBanner.layout.props.visible = false
+    else
+      MusicBanner.visible = false
+    end
   end
 
-  MusicBanner:update()
+  if isOpenMW then
+    MusicBanner:update()
+  else
+    MusicBanner:updateLayout()
+  end
 end
 
-MusicManager.playlistTimeOfDay = IsOpenMW and OMWPlaylistTimeOfDay or MWSEPlaylistTimeOfDay
+MusicManager.playlistTimeOfDay = isOpenMW and OMWPlaylistTimeOfDay or MWSEPlaylistTimeOfDay
 
 return MusicManager

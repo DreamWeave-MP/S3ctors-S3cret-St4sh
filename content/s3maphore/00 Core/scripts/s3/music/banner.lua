@@ -1,14 +1,21 @@
-local ui = require 'openmw.ui'
-local util = require 'openmw.util'
-local Constants = require 'scripts.omw.mwui.constants'
 local isOpenMW = require 'scripts.s3.isOpenMW'
+local ui, util, I, Constants
 
-local I = require 'openmw.interfaces'
+local bannerSizePct, BannerSize, SongBanner
 
-local bannerSizePct = isOpenMW and util.vector2(0.15, 0.08) or tes3vector2.new(0.15, 0.08)
-local ScreenSize = isOpenMW and ui.screenSize() or tes3vector2.new(tes3.getViewportSize())
-local BannerSize = isOpenMW and ScreenSize:emul(bannerSizePct) or tes3vector2.new(ScreenSize.x * bannerSizePct.x, ScreenSize.y * bannerSizePct.y)
-local SongBanner
+if isOpenMW then
+    ui = require 'openmw.ui'
+    util = require 'openmw.util'
+    I = require 'openmw.interfaces'
+    Constants = require 'scripts.omw.mwui.constants'
+
+    bannerSizePct = util.vector2(0.15, 0.08)
+    BannerSize = ui.screenSize():emul(bannerSizePct)
+else
+    bannerSizePct = tes3vector2.new(0.15, 0.08)
+    local ScreenW, ScreenH = tes3.getViewportSize()
+    BannerSize = tes3vector2.new(ScreenW * bannerSizePct.x, ScreenH * bannerSizePct.y)
+end
 
 if isOpenMW then
     SongBanner = ui.create {
