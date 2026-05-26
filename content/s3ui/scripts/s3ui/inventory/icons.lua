@@ -86,16 +86,24 @@ M.ITEM_STATE = {
 	broken = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/inventory/status/broken.dds" }),
 }
 
+M.MENU = {
+	inventory = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/inventory.dds" }),
+	magic = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/magic.dds" }),
+	journal = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/journal.dds" }),
+	character = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/character.dds" }),
+	equipment = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/equipment.dds" }),
+}
+
 M.MAIN_MENU_BUTTONS = {
 	{
 		key = "inventory",
-		icon = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/inventory.dds" }),
+		icon = M.MENU.inventory,
 	},
-	{ key = "magic", icon = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/magic.dds" }) },
-	{ key = "journal", icon = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/journal.dds" }) },
+	{ key = "magic", icon = M.MENU.magic },
+	{ key = "journal", icon = M.MENU.journal },
 	{
 		key = "character",
-		icon = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/menu/character.dds" }),
+		icon = M.MENU.character,
 	},
 }
 
