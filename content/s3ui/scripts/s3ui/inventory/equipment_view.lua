@@ -36,7 +36,7 @@ local function addSelectedBadge(content, slot)
 		relativePosition = v2(0.94, 0.08),
 		relativeSize = v2(0.38, 0.2),
 		textSize = 11,
-		textAlignH = ui.ALIGNMENT.Right,
+		textAlignH = ui.ALIGNMENT.End,
 		textAlignV = ui.ALIGNMENT.Center,
 		autoSize = false,
 	}, I.MWUI.templates.textHeader))
