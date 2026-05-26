@@ -11,14 +11,6 @@ local views = require("scripts.s3ui.inventory.views")
 local v2 = util.vector2
 local M = {}
 
-local function makeReservedToolbar(metrics)
-	return {
-		name = "s3ui_toolbar_reserved",
-		type = ui.TYPE.Widget,
-		props = { relativeSize = metrics.toolbarRelativeSize },
-	}
-end
-
 local function makeReservedCompactDetail(metrics)
 	return {
 		name = "s3ui_compact_detail_reserved",
@@ -31,11 +23,10 @@ function M.make(ctx)
 	local metrics = ctx.metrics
 	local bodyLayouts = {}
 	local mainView
+	bodyLayouts[#bodyLayouts + 1] = controls.makeToolbar(ctx.controlsCtx)
 	if ctx.state.primaryTab == "equipment" then
-		bodyLayouts[#bodyLayouts + 1] = makeReservedToolbar(metrics)
 		mainView = equipmentView.make(ctx.equipmentCtx)
 	else
-		bodyLayouts[#bodyLayouts + 1] = controls.makeToolbar(ctx.controlsCtx)
 		mainView = ctx.state.viewMode == "list" and views.makeList(ctx.entries, ctx.firstIndex, ctx.viewCtx)
 			or views.makeGrid(ctx.entries, ctx.firstIndex, ctx.viewCtx)
 	end
