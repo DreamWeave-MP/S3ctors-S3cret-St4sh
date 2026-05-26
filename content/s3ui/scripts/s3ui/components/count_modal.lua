@@ -14,6 +14,9 @@ local M = {}
 local ROOT_LAYER = "Windows"
 local PANEL_SIZE = v2(420, 230)
 local SLIDER_SIZE = v2(240, 24)
+local COUNT_DISPLAY_SIZE = v2(148, 34)
+local COUNT_INPUT_SIZE = v2(58, 30)
+local COUNT_LABEL_SIZE = v2(64, 30)
 local ARROW_BUTTON_SIZE = v2(44, 34)
 local ACTION_BUTTON_SIZE = v2(92, 34)
 local MIN_COUNT = 1
@@ -152,12 +155,73 @@ local function modalButton(name, label, callback, callbackGeneration, size)
 		type = ui.TYPE.Widget,
 		props = { size = size or ACTION_BUTTON_SIZE },
 		events = {
-			mouseClick = async:callback(function(event)
-				if not isAlive(callbackGeneration) or event.button ~= 1 then
+			mouseClick = async:callback(function()
+				if not isAlive(callbackGeneration) then
 					return
 				end
 				callback()
 			end),
+		},
+		content = content,
+	}
+end
+
+local function countInput(callbackGeneration)
+	local content = ui.content({
+		{
+			type = ui.TYPE.Image,
+			props = {
+				resource = chrome.WHITE_TEXTURE,
+				color = chrome.BACKGROUND_COLOR,
+				alpha = 0.34,
+				relativeSize = v2(1, 1),
+			},
+		},
+		{
+			type = ui.TYPE.TextEdit,
+			name = "s3ui_count_input",
+			template = I.MWUI.templates.textEditLine,
+			props = {
+				text = inputText,
+				position = v2(13, 2),
+				size = COUNT_INPUT_SIZE,
+				autoSize = false,
+				multiline = false,
+				textSize = 16,
+				textAlignH = ui.ALIGNMENT.End,
+				textAlignV = ui.ALIGNMENT.Center,
+			},
+			events = {
+				textChanged = async:callback(function(text)
+					if isAlive(callbackGeneration) then
+						inputText = text or ""
+					end
+				end),
+				focusLoss = async:callback(function()
+					if isAlive(callbackGeneration) then
+						value = parseInputText()
+						inputText = tostring(value)
+					end
+				end),
+			},
+		},
+		modalText("/ " .. tostring(maxValue), {
+			textSize = 16,
+			textAlignH = ui.ALIGNMENT.Start,
+			textAlignV = ui.ALIGNMENT.Center,
+			autoSize = false,
+			position = v2(77, 2),
+			size = COUNT_LABEL_SIZE,
+		}),
+	})
+	chrome.addSimpleBorder(content, "s3ui_count_input_frame", 0.76, 1)
+	return {
+		name = "s3ui_count_input_frame",
+		type = ui.TYPE.Widget,
+		props = {
+			anchor = v2(0.5, 0.5),
+			relativePosition = v2(0.5, 0.5),
+			size = COUNT_DISPLAY_SIZE,
 		},
 		content = content,
 	}
@@ -204,14 +268,14 @@ local function makeSlider(callbackGeneration)
 		props = { size = SLIDER_SIZE },
 		events = {
 			mousePress = async:callback(function(event)
-				if not isAlive(callbackGeneration) or event.button ~= 1 then
+				if not isAlive(callbackGeneration) or not event or event.button ~= 1 then
 					return
 				end
 				dragging = true
 				setValueFromSlider(event.offset.x)
 			end),
 			mouseMove = async:callback(function(event)
-				if not isAlive(callbackGeneration) or not dragging then
+				if not isAlive(callbackGeneration) or not dragging or not event then
 					return
 				end
 				setValueFromSlider(event.offset.x)
@@ -264,13 +328,13 @@ function M.layout()
 					autoSize = false,
 					relativeSize = v2(1, 0.2),
 				}, I.MWUI.templates.textHeader),
-				modalText(tostring(value) .. " / " .. tostring(maxValue), {
-					textSize = 16,
-					textAlignH = ui.ALIGNMENT.Center,
-					textAlignV = ui.ALIGNMENT.Center,
-					autoSize = false,
-					relativeSize = v2(1, 0.14),
-				}),
+				{
+					type = ui.TYPE.Widget,
+					props = { relativeSize = v2(1, 0.18) },
+					content = ui.content({
+						countInput(callbackGeneration),
+					}),
+				},
 				{
 					type = ui.TYPE.Flex,
 					props = { horizontal = true, relativeSize = v2(1, 0.25), arrange = ui.ALIGNMENT.Center },
@@ -279,25 +343,6 @@ function M.layout()
 						makeSlider(callbackGeneration),
 						arrowButton("s3ui_count_right", ">", 1, callbackGeneration),
 					}),
-				},
-				{
-					type = ui.TYPE.TextEdit,
-					name = "s3ui_count_input",
-					template = I.MWUI.templates.textEditLine,
-					props = { text = inputText, relativeSize = v2(1, 0.18) },
-					events = {
-						textChanged = async:callback(function(text)
-							if isAlive(callbackGeneration) then
-								inputText = text or ""
-							end
-						end),
-						focusLoss = async:callback(function()
-							if isAlive(callbackGeneration) then
-								value = parseInputText()
-								inputText = tostring(value)
-							end
-						end),
-					},
 				},
 				{
 					type = ui.TYPE.Flex,
