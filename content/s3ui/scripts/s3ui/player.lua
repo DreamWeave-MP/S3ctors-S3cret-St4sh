@@ -59,9 +59,7 @@ local function registerInventoryWindow()
 		return
 	end
 	I.UI.registerWindow(WINDOW, inventoryWindow.show, inventoryWindow.hide)
-	if TRAVEL_WINDOW then
-		I.UI.registerWindow(TRAVEL_WINDOW, travelWindow.show, travelWindow.hide)
-	end
+	I.UI.registerWindow(TRAVEL_WINDOW, travelWindow.show, travelWindow.hide)
 	for _, windowName in ipairs(EMPTY_WINDOW_OVERRIDES) do
 		I.UI.registerWindow(windowName, emptyWindowOverride, emptyWindowOverride)
 	end
