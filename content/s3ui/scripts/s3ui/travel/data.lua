@@ -1,10 +1,10 @@
 ---@omw-context player
 
-local core = require("openmw.core")
-local self = require("openmw.self")
-local types = require("openmw.types")
+local core = require 'openmw.core'
+local self = require 'openmw.self'
+local types = require 'openmw.types'
 
-local GOLD_ID = "gold_001"
+local GOLD_ID = 'gold_001'
 
 local M = {}
 
@@ -16,7 +16,7 @@ end
 
 local function numericGmst(id, fallback)
 	local value = core.getGMST(id)
-	if type(value) == "number" then
+	if type(value) == 'number' then
 		return value
 	end
 	return fallback
@@ -53,7 +53,7 @@ local function statValue(stat, field, fallback)
 		return fallback or 0
 	end
 	local value = stat[field]
-	if type(value) == "number" then
+	if type(value) == 'number' then
 		return value
 	end
 	return fallback or 0
@@ -63,10 +63,10 @@ local function modifiedStat(stat)
 	if not stat then
 		return 0
 	end
-	if type(stat.modified) == "number" then
+	if type(stat.modified) == 'number' then
 		return stat.modified
 	end
-	return statValue(stat, "base") + statValue(stat, "modifier")
+	return statValue(stat, 'base') + statValue(stat, 'modifier')
 end
 
 local function actorStats(actor)
@@ -77,12 +77,12 @@ local function fatigueTerm(actor)
 	local stats = actorStats(actor)
 	local fatigue = stats and stats.dynamic and stats.dynamic.fatigue(actor) or nil
 	local maxFatigue = modifiedStat(fatigue)
-	local currentFatigue = statValue(fatigue, "current", maxFatigue)
+	local currentFatigue = statValue(fatigue, 'current', maxFatigue)
 	local normalised = 1
 	if math.floor(maxFatigue) ~= 0 then
 		normalised = math.max(0, currentFatigue / maxFatigue)
 	end
-	return numericGmst("fFatigueBase", 1.25) - numericGmst("fFatigueMult", 0.5) * (1 - normalised)
+	return numericGmst('fFatigueBase', 1.25) - numericGmst('fFatigueMult', 0.5) * (1 - normalised)
 end
 
 local function mercantile(actor)
@@ -111,29 +111,29 @@ local function truncate(value)
 end
 
 local function targetName(target, record)
-	if record and type(record.name) == "string" and record.name ~= "" then
+	if record and type(record.name) == 'string' and record.name ~= '' then
 		return record.name
 	end
-	return target and target.recordId or "Travel Service"
+	return target and target.recordId or 'Travel Service'
 end
 
 local function destinationLabel(destination)
 	local cellId = destination and destination.cellId
 	local displayName = cellDisplayNames[cellId]
-	if type(displayName) == "string" and displayName ~= "" then
+	if type(displayName) == 'string' and displayName ~= '' then
 		return displayName
 	end
-	if type(cellId) == "string" and cellId ~= "" then
+	if type(cellId) == 'string' and cellId ~= '' then
 		return cellId
 	end
-	return "Wilderness"
+	return 'Wilderness'
 end
 
 local function basePrice(target, destination)
 	if target and target.cell and not target.cell.isExterior then
-		return math.floor(numericGmst("fMagesGuildTravel", 10))
+		return math.floor(numericGmst('fMagesGuildTravel', 10))
 	end
-	local travelMult = numericGmst("fTravelMult", 4000)
+	local travelMult = numericGmst('fTravelMult', 4000)
 	local dist = distance(self.position, destination and destination.position, true)
 	if travelMult ~= 0 then
 		dist = dist / travelMult
@@ -151,7 +151,7 @@ function M.getBarterOffer(target, basePrice, buying)
 	end
 	local player = self.object or self
 	local disposition = types.NPC.getDisposition(target, player)
-	if type(disposition) ~= "number" then
+	if type(disposition) ~= 'number' then
 		disposition = 50
 	end
 	local pcTerm = (disposition - 50 + mercantile(player) + luckTerm(player) + personalityTerm(player))
@@ -176,18 +176,22 @@ function M.serviceInfo(target)
 end
 
 ---@param target openmw.Object|nil
+---@param followerCount number|nil
 ---@return table[]
-function M.collectRows(target)
+function M.collectRows(target, followerCount)
 	local info = M.serviceInfo(target)
+	followerCount = math.max(0, math.floor(tonumber(followerCount) or 0))
 	local rows = {}
 	for index, destination in ipairs(info.destinations) do
-		local price = M.getBarterOffer(target, math.max(1, basePrice(target, destination)), true)
+		local base = math.max(1, basePrice(target, destination)) * (1 + followerCount)
+		local price = M.getBarterOffer(target, base, true)
 		rows[#rows + 1] = {
 			index = index,
 			destination = destination,
 			cellId = destination.cellId,
 			label = destinationLabel(destination),
 			price = price,
+			followerCount = followerCount,
 			enabled = price <= info.playerGold,
 		}
 	end
@@ -195,7 +199,7 @@ function M.collectRows(target)
 end
 
 function M.travelHours(destination)
-	local fTravelTimeMult = numericGmst("fTravelTimeMult", 16000)
+	local fTravelTimeMult = numericGmst('fTravelTimeMult', 16000)
 	if fTravelTimeMult == 0 then
 		return 0
 	end
@@ -208,12 +212,12 @@ end
 M.GOLD_ID = GOLD_ID
 
 function M.setCellDisplayNames(names)
-	if type(names) ~= "table" then
+	if type(names) ~= 'table' then
 		return false
 	end
 	local changed = false
 	for cellId, displayName in pairs(names) do
-		if type(cellId) == "string" and type(displayName) == "string" and displayName ~= "" then
+		if type(cellId) == 'string' and type(displayName) == 'string' and displayName ~= '' then
 			if cellDisplayNames[cellId] ~= displayName then
 				cellDisplayNames[cellId] = displayName
 				changed = true

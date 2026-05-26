@@ -1,13 +1,14 @@
 ---@omw-context player
 
-local async = require("openmw.async")
-local core = require("openmw.core")
-local I = require("openmw.interfaces")
-local input = require("openmw.input")
-local self = require("openmw.self")
-local ui = require("openmw.ui")
-local builder = require("scripts.s3ui.travel.builder")
-local data = require("scripts.s3ui.travel.data")
+local async = require 'openmw.async'
+local core = require 'openmw.core'
+local I = require 'openmw.interfaces'
+local input = require 'openmw.input'
+local self = require 'openmw.self'
+local types = require 'openmw.types'
+local ui = require 'openmw.ui'
+local builder = require 'scripts.s3ui.travel.builder'
+local data = require 'scripts.s3ui.travel.data'
 
 local WINDOW = I.UI.WINDOW.Travel
 local MODE = I.UI.MODE.Travel
@@ -21,11 +22,28 @@ local selectedIndex = 1
 local scrollOffset = 0
 local hovered = nil
 local generation = 0
+local followerRequestId = 0
+local followers = {}
+local followerKeys = {}
 local hooks = {}
 local renderer = nil
 
 local function validObject(object)
 	return object and object.isValid and object:isValid()
+end
+
+local function objectKey(object)
+	if not validObject(object) then
+		return nil
+	end
+	return object.id or tostring(object)
+end
+
+local function closeEnoughForTravel(follower)
+	return validObject(follower)
+		and types.Actor.objectIsInstance(follower)
+		and types.Actor.getStance(follower) == types.Actor.STANCE.Nothing
+		and (follower.position - self.position):length2() <= 800 * 800
 end
 
 local function isAlive(callbackGeneration)
@@ -38,7 +56,7 @@ end
 
 local function callHook(name, ...)
 	local hook = hooks[name]
-	if type(hook) ~= "function" then
+	if type(hook) ~= 'function' then
 		return nil
 	end
 	local ok, result = pcall(hook, ...)
@@ -73,49 +91,71 @@ end
 
 local function applyHooks(defaultRows)
 	local ctx = { target = targetActor, rows = defaultRows }
-	local replacement = callHook("collectDestinations", ctx)
-	local nextRows = type(replacement) == "table" and replacement or defaultRows
+	local replacement = callHook('collectDestinations', ctx)
+	local nextRows = type(replacement) == 'table' and replacement or defaultRows
 	local filtered = {}
 	local playerGold = data.serviceInfo(targetActor).playerGold
 	for index, row in ipairs(nextRows) do
-		local include = callHook("filterDestination", ctx, row)
+		local include = callHook('filterDestination', ctx, row)
 		if include ~= false then
 			row.sourceIndex = row.sourceIndex or row.index or index
-			local price = callHook("priceDestination", ctx, row, row.price)
-			if type(price) == "number" then
+			local price = callHook('priceDestination', ctx, row, row.price)
+			if type(price) == 'number' then
 				row.price = math.max(1, math.floor(price))
 			end
 			row.price = math.max(1, math.floor(tonumber(row.price) or 1))
-			local label = callHook("formatDestination", ctx, row)
-			if type(label) == "string" then
+			local label = callHook('formatDestination', ctx, row)
+			if type(label) == 'string' then
 				row.label = label
 			end
-			row.label = type(row.label) == "string" and row.label or tostring(row.cellId or "Destination")
+			row.label = type(row.label) == 'string' and row.label or tostring(row.cellId or 'Destination')
 			row.index = #filtered + 1
 			local enabled = row.enabled ~= false and row.price <= playerGold
-			local hookEnabled = callHook("enableDestination", ctx, row, enabled)
-			row.enabled = type(hookEnabled) == "boolean" and hookEnabled or enabled
+			local hookEnabled = callHook('enableDestination', ctx, row, enabled)
+			row.enabled = type(hookEnabled) == 'boolean' and hookEnabled or enabled
 			filtered[#filtered + 1] = row
 		end
 	end
 	return filtered
 end
 
+local function followerList()
+	local list = {}
+	for _, follower in ipairs(followers) do
+		if closeEnoughForTravel(follower) then
+			list[#list + 1] = follower
+		end
+	end
+	return list
+end
+
+local function followerCount()
+	return #followerList()
+end
+
 local function rebuildRows()
-	rows = applyHooks(data.collectRows(targetActor))
+	rows = applyHooks(data.collectRows(targetActor, followerCount()))
 	ensureSelectedVisible()
+end
+
+local function requestFollowers()
+	followerRequestId = followerRequestId + 1
+	followers = {}
+	followerKeys = {}
+	local player = self.object or self
+	core.sendGlobalEvent('S3UI_RequestTravelFollowers', { player = player, requestId = followerRequestId })
 end
 
 local function requestCellNames()
 	local cellIds = {}
 	for _, row in ipairs(rows) do
 		local cellId = row.cellId or (row.destination and row.destination.cellId)
-		if type(cellId) == "string" and cellId ~= "" then
+		if type(cellId) == 'string' and cellId ~= '' then
 			cellIds[#cellIds + 1] = cellId
 		end
 	end
 	if #cellIds > 0 then
-		core.sendGlobalEvent("S3UI_ResolveTravelCellNames", { player = self.object or self, cellIds = cellIds })
+		core.sendGlobalEvent('S3UI_ResolveTravelCellNames', { player = self.object or self, cellIds = cellIds })
 	end
 end
 
@@ -133,7 +173,7 @@ local function sendTravel(row)
 	if not (row and row.enabled and validObject(targetActor)) then
 		return
 	end
-	local veto = callHook("beforeTravel", { target = targetActor, rows = rows }, row)
+	local veto = callHook('beforeTravel', { target = targetActor, rows = rows }, row)
 	if veto == false then
 		return
 	end
@@ -144,16 +184,17 @@ local function sendTravel(row)
 		position = row.position or (row.destination and row.destination.position),
 		rotation = row.rotation or (row.destination and row.destination.rotation),
 		price = row.price,
+		followers = followerList(),
 		sourceExterior = targetActor.cell and targetActor.cell.isExterior or false,
-		hours = type(row.hours) == "number" and row.hours or data.travelHours(row.destination),
+		hours = type(row.hours) == 'number' and row.hours or data.travelHours(row.destination),
 	}
-	local handled = callHook("executeTravel", { target = targetActor, rows = rows }, row, payload)
+	local handled = callHook('executeTravel', { target = targetActor, rows = rows }, row, payload)
 	if handled == false then
 		return
 	elseif handled ~= true then
-		core.sendGlobalEvent("S3UI_TravelExecute", payload)
+		core.sendGlobalEvent('S3UI_TravelExecute', payload)
 	end
-	callHook("afterTravel", { target = targetActor, rows = rows }, row, payload)
+	callHook('afterTravel', { target = targetActor, rows = rows }, row, payload)
 	async:newUnsavableSimulationTimer(0, closeMode)
 end
 
@@ -254,9 +295,26 @@ function M.show(target)
 	targetActor = target
 	selectedIndex = 1
 	scrollOffset = 0
+	requestFollowers()
 	rebuildRows()
 	requestCellNames()
 	rootElement = ui.create((renderer or builder.make)(layoutCtx()))
+end
+
+function M.addFollower(data)
+	if type(data) ~= 'table' or data.requestId ~= followerRequestId then
+		return
+	end
+	local follower = data.actor
+	local key = objectKey(follower)
+	if key and not followerKeys[key] then
+		followerKeys[key] = true
+		followers[#followers + 1] = follower
+		if active() then
+			rebuildRows()
+			M.rebuildElement()
+		end
+	end
 end
 
 function M.setCellDisplayNames(names)
@@ -270,6 +328,8 @@ function M.hide()
 	destroyRoot()
 	targetActor = nil
 	rows = {}
+	followers = {}
+	followerKeys = {}
 	selectedIndex = 1
 	scrollOffset = 0
 end
@@ -330,6 +390,10 @@ function M.getDestinations()
 	return rows
 end
 
+function M.getFollowers()
+	return followerList()
+end
+
 function M.setHook(name, fn)
 	hooks[name] = fn
 end
@@ -348,6 +412,7 @@ function M.interface()
 		getElement = M.getElement,
 		getTarget = M.getTarget,
 		getDestinations = M.getDestinations,
+		getFollowers = M.getFollowers,
 		show = M.show,
 		hide = M.hide,
 		rebuild = M.refresh,
