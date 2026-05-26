@@ -5,6 +5,42 @@ local util = require 'openmw.util'
 
 local v2 = util.vector2
 
+---@alias S3UI.InventoryDetailMode 'compact'|'side'
+
+---@class S3UI.InventoryMetrics
+---@field screen openmw.util.Vector2
+---@field margin number
+---@field windowAnchor openmw.util.Vector2
+---@field windowPosition openmw.util.Vector2
+---@field windowRelativePosition openmw.util.Vector2
+---@field windowSize openmw.util.Vector2
+---@field viewSize openmw.util.Vector2
+---@field toolbarRelativeSize openmw.util.Vector2
+---@field detailMode S3UI.InventoryDetailMode
+---@field compactDetailRelativeSize openmw.util.Vector2
+---@field compactDetailHeaderRelativeSize openmw.util.Vector2
+---@field compactDetailFieldsRelativeSize openmw.util.Vector2
+---@field compactDetailIconSize openmw.util.Vector2
+---@field compactDetailHeaderTextSize integer
+---@field compactDetailFieldTextSize integer
+---@field compactDetailFieldIconSize openmw.util.Vector2
+---@field categoryRailSize openmw.util.Vector2
+---@field controlButtonSize openmw.util.Vector2
+---@field viewButtonSize openmw.util.Vector2
+---@field gridColumns integer
+---@field gridRows integer
+---@field listRows integer
+---@field listIconSize openmw.util.Vector2
+---@field tooltipWidth integer
+---@field tooltipFieldRowHeight integer
+---@field tooltipHeaderHeight integer
+---@field tooltipPadding integer
+---@field tooltipMargin openmw.util.Vector2
+---@field tooltipHeaderIconSize openmw.util.Vector2
+---@field tooltipFieldIconSize openmw.util.Vector2
+---@field tooltipValueTextSize integer
+---@field tooltipHeaderTextSize integer
+
 local LAYOUT = {
     windowWidthFraction = 0.52,
     windowHeightFraction = 0.80,
@@ -60,6 +96,10 @@ local LAYOUT = {
     tooltipValueTextMaxSize = 18,
 }
 
+---@param value number
+---@param minValue number
+---@param maxValue number
+---@return number
 local function clamp(value, minValue, maxValue)
     if maxValue < minValue then minValue = maxValue end
     if value < minValue then return minValue end
@@ -67,6 +107,7 @@ local function clamp(value, minValue, maxValue)
     return value
 end
 
+---@return S3UI.InventoryMetrics
 local function compute()
     local screen = ui.screenSize()
     local shortSide = math.min(screen.x, screen.y)
