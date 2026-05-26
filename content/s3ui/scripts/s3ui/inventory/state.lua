@@ -79,7 +79,6 @@ function M.new()
 			self.sortAscending[mode] = not self.sortAscending[mode]
 		end
 		self.sortMode = mode
-		self:resetScroll()
 	end
 
 	function state:toggleViewMode()
