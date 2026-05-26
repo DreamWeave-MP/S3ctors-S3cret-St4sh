@@ -8,9 +8,11 @@ local storage = require("openmw.storage")
 
 local countModal = require("scripts.s3ui.components.count_modal")
 local inventoryWindow = require("scripts.s3ui.inventory.window")
+local travelWindow = require("scripts.s3ui.travel.window")
 
 local UI_WINDOWS = I.UI.WINDOW
 local WINDOW = UI_WINDOWS.Inventory
+local TRAVEL_WINDOW = UI_WINDOWS.Travel
 local MODE = I.UI.MODE.Interface
 local DEV_RELOAD_SECTION = "S3UI_DevReload"
 local DEV_RELOAD_REOPEN_KEY = "reopenInventory"
@@ -57,6 +59,9 @@ local function registerInventoryWindow()
 		return
 	end
 	I.UI.registerWindow(WINDOW, inventoryWindow.show, inventoryWindow.hide)
+	if TRAVEL_WINDOW then
+		I.UI.registerWindow(TRAVEL_WINDOW, travelWindow.show, travelWindow.hide)
+	end
 	for _, windowName in ipairs(EMPTY_WINDOW_OVERRIDES) do
 		I.UI.registerWindow(windowName, emptyWindowOverride, emptyWindowOverride)
 	end
@@ -81,6 +86,8 @@ return {
 				reloadLuaAndReopenInventory()
 			elseif countModal.handleKeyPress(key) then
 				return
+			elseif travelWindow.handleKeyPress(key) then
+				return
 			elseif key.code == input.KEY.Enter or key.code == input.KEY.NP_Enter or key.code == input.KEY.Space then
 				inventoryWindow.activateSelection()
 			elseif key.code == input.KEY.LeftArrow then
@@ -104,6 +111,14 @@ return {
 			if type(vertical) ~= "number" then
 				return
 			end
+			if travelWindow.active() then
+				if vertical > 0 then
+					travelWindow.scroll(-1)
+				elseif vertical < 0 then
+					travelWindow.scroll(1)
+				end
+				return
+			end
 			if vertical > 0 then
 				inventoryWindow.scrollRows(-1)
 			elseif vertical < 0 then
@@ -113,5 +128,11 @@ return {
 	},
 	eventHandlers = {
 		S3UI_RebuildInventory = inventoryWindow.processPendingRebuild,
+	},
+	interfaceName = "S3UI",
+	interface = {
+		version = 1,
+		Travel = travelWindow.interface(),
+		travel = travelWindow.interface(),
 	},
 }

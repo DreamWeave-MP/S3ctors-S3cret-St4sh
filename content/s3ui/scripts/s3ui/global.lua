@@ -1,6 +1,9 @@
 ---@omw-context global
 
 local types = require("openmw.types")
+local world = require("openmw.world")
+
+local GOLD_ID = "gold_001"
 
 local function validObject(object)
 	return object and object.isValid and object:isValid()
@@ -61,8 +64,72 @@ local function dropItem(data)
 	end
 end
 
+local function removeGold(player, price)
+	local remaining = price
+	local inventory = types.Actor.inventory(player)
+	for _, stack in ipairs(inventory:findAll(GOLD_ID)) do
+		if remaining < 1 then
+			return true
+		end
+		if validObject(stack) then
+			local take = math.min(remaining, math.floor(tonumber(stack.count) or 1))
+			stack:remove(take)
+			remaining = remaining - take
+		end
+	end
+	return remaining < 1
+end
+
+local function destinationCell(cellId)
+	if type(cellId) ~= "string" or cellId == "" then
+		return ""
+	end
+	local ok, cell = pcall(world.getCellById, cellId)
+	if ok and cell then
+		return cell
+	end
+	return cellId
+end
+
+local function addBarterGold(target, price)
+	if not validObject(target) or not types.Actor.objectIsInstance(target) then
+		return
+	end
+	local ok, current = pcall(types.Actor.getBarterGold, target)
+	if ok and type(current) == "number" then
+		pcall(types.Actor.setBarterGold, target, current + price)
+	end
+end
+
+local function executeTravel(data)
+	if type(data) ~= "table" then
+		return
+	end
+	local player = data.player
+	local price = math.max(1, math.floor(tonumber(data.price) or 0))
+	if not (validObject(player) and data.position and type(data.cellId) == "string") then
+		return
+	end
+	local inventory = types.Actor.inventory(player)
+	if inventory:countOf(GOLD_ID) < price then
+		return
+	end
+	if not removeGold(player, price) then
+		return
+	end
+	addBarterGold(data.target, price)
+	if data.sourceExterior == true then
+		local hours = math.max(0, math.floor(tonumber(data.hours) or 0))
+		if hours > 0 then
+			world.advanceTime(hours)
+		end
+	end
+	player:teleport(destinationCell(data.cellId), data.position, { rotation = data.rotation, onGround = true })
+end
+
 return {
 	eventHandlers = {
 		S3UI_DropItem = dropItem,
+		S3UI_TravelExecute = executeTravel,
 	},
 }
