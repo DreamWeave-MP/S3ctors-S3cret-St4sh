@@ -13,13 +13,47 @@ M.GROUPS = {
 	{
 		key = "equipped",
 		title = "Equipped",
-		rows = {
-			{ false, "helmet", "amulet", false },
-			{ "leftPauldron", "shirt", "cuirass", "rightPauldron" },
-			{ "leftGauntlet", "pants", "greaves", "rightGauntlet" },
-			{ "carriedLeft", "skirt", "robe", "carriedRight" },
-			{ "leftRing", "belt", "boots", "rightRing" },
-			{ false, "ammunition", false, false },
+		layout = {
+			helmet = { x = 0.5, y = 0.08 },
+			amulet = { x = 0.62, y = 0.1, scale = 0.9 },
+			leftPauldron = { x = 0.32, y = 0.24 },
+			rightPauldron = { x = 0.68, y = 0.24 },
+			shirt = { x = 0.44, y = 0.24 },
+			cuirass = { x = 0.56, y = 0.24 },
+			leftGauntlet = { x = 0.25, y = 0.38 },
+			rightGauntlet = { x = 0.75, y = 0.38 },
+			leftRing = { x = 0.37, y = 0.4, scale = 0.75 },
+			rightRing = { x = 0.63, y = 0.4, scale = 0.75 },
+			carriedLeft = { x = 0.25, y = 0.52 },
+			carriedRight = { x = 0.75, y = 0.52 },
+			ammunition = { x = 0.75, y = 0.68, scale = 0.75 },
+			robe = { x = 0.5, y = 0.38 },
+			belt = { x = 0.5, y = 0.52 },
+			skirt = { x = 0.37, y = 0.66 },
+			pants = { x = 0.5, y = 0.66 },
+			greaves = { x = 0.63, y = 0.66 },
+			boots = { x = 0.5, y = 0.82 },
+		},
+		navOrder = {
+			"helmet",
+			"amulet",
+			"leftPauldron",
+			"shirt",
+			"cuirass",
+			"rightPauldron",
+			"leftGauntlet",
+			"leftRing",
+			"rightRing",
+			"rightGauntlet",
+			"carriedLeft",
+			"belt",
+			"robe",
+			"carriedRight",
+			"ammunition",
+			"skirt",
+			"pants",
+			"greaves",
+			"boots",
 		},
 		slots = {
 			{ key = "helmet", label = "Head", slot = SLOT.Helmet, inventoryCategoryKey = "armor" },
@@ -133,7 +167,13 @@ function M.collectGroups()
 
 	local groups = {}
 	for _, groupDef in ipairs(M.GROUPS) do
-		local group = { key = groupDef.key, title = groupDef.title, rows = groupDef.rows, slots = {} }
+		local group = {
+			key = groupDef.key,
+			title = groupDef.title,
+			layout = groupDef.layout,
+			navOrder = groupDef.navOrder,
+			slots = {},
+		}
 		for _, slotDef in ipairs(groupDef.slots) do
 			local itemData = makeItemData(inventory, equipment[slotDef.slot])
 			group.slots[#group.slots + 1] = {
@@ -148,6 +188,80 @@ function M.collectGroups()
 		groups[#groups + 1] = group
 	end
 	return groups
+end
+
+local function slotsByKey(group)
+	local byKey = {}
+	for _, slot in ipairs(group.slots or {}) do
+		byKey[slot.key] = slot
+	end
+	return byKey
+end
+
+function M.orderedSlots(groups)
+	local ordered = {}
+	for _, group in ipairs(groups or {}) do
+		local byKey = slotsByKey(group)
+		for _, key in ipairs(group.navOrder or {}) do
+			local slot = byKey[key]
+			if slot then
+				ordered[#ordered + 1] = slot
+			end
+		end
+		if not group.navOrder then
+			for _, slot in ipairs(group.slots or {}) do
+				ordered[#ordered + 1] = slot
+			end
+		end
+	end
+	return ordered
+end
+
+function M.findPlacement(groups, key)
+	if not key then
+		return nil
+	end
+	for _, group in ipairs(groups or {}) do
+		local placement = group.layout and group.layout[key]
+		if placement then
+			return placement
+		end
+	end
+	return nil
+end
+
+function M.spatialNeighbor(groups, currentKey, direction)
+	local current = M.findPlacement(groups, currentKey)
+	if not current then
+		local ordered = M.orderedSlots(groups)
+		return ordered[1]
+	end
+
+	local bestSlot, bestScore
+	for _, group in ipairs(groups or {}) do
+		for _, slot in ipairs(group.slots or {}) do
+			local placement = group.layout and group.layout[slot.key]
+			if placement and slot.key ~= currentKey then
+				local dy = placement.y - current.y
+				local valid = direction > 0 and dy > 0 or direction < 0 and dy < 0
+				if valid then
+					local dx = math.abs(placement.x - current.x)
+					local score = math.abs(dy) * 100 + dx * 100
+					if not bestScore or score < bestScore then
+						bestScore = score
+						bestSlot = slot
+					end
+				end
+			end
+		end
+	end
+
+	if bestSlot then
+		return bestSlot
+	end
+
+	local ordered = M.orderedSlots(groups)
+	return direction > 0 and ordered[1] or ordered[#ordered]
 end
 
 function M.findSlot(groups, key)

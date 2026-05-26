@@ -149,27 +149,8 @@ local function viewCtx()
 	}
 end
 
-local function flatEquipmentSlots(groups)
-	local slots = {}
-	for _, group in ipairs(groups or {}) do
-		if group.rows and #group.rows > 0 then
-			local byKey = {}
-			for _, slot in ipairs(group.slots or {}) do
-				byKey[slot.key] = slot
-			end
-			for _, row in ipairs(group.rows) do
-				for column = 1, equipmentView.CARD_COLUMNS do
-					local key = row[column]
-					slots[#slots + 1] = key and byKey[key] or false
-				end
-			end
-		else
-			for _, slot in ipairs(group.slots or {}) do
-				slots[#slots + 1] = slot
-			end
-		end
-	end
-	return slots
+local function orderedEquipmentSlots(groups)
+	return equipmentData.orderedSlots(groups)
 end
 
 local function equipmentSelectionIndex(slots)
@@ -200,7 +181,7 @@ local function lastEquipmentSlot(slots)
 end
 
 local function selectEquipmentByOffset(delta)
-	local slots = flatEquipmentSlots(equipmentData.collectGroups())
+	local slots = orderedEquipmentSlots(equipmentData.collectGroups())
 	if #slots == 0 then
 		return
 	end
@@ -332,7 +313,9 @@ function M.scrollRows(deltaRows)
 		return
 	end
 	if state.primaryTab == "equipment" then
-		selectEquipmentByOffset(deltaRows * equipmentView.CARD_COLUMNS)
+		selectEquipmentSlot(
+			equipmentData.spatialNeighbor(equipmentData.collectGroups(), state.selectedEquipmentSlotKey, deltaRows)
+		)
 		return
 	end
 	if state:scrollRows(deltaRows, layoutMetrics(), state.lastEntryCount) then
@@ -345,7 +328,7 @@ function M.home()
 		return
 	end
 	if state.primaryTab == "equipment" then
-		local slots = flatEquipmentSlots(equipmentData.collectGroups())
+		local slots = orderedEquipmentSlots(equipmentData.collectGroups())
 		selectEquipmentSlot(firstEquipmentSlot(slots))
 	elseif state:home() then
 		queueRebuild()
@@ -357,7 +340,7 @@ function M.endScroll()
 		return
 	end
 	if state.primaryTab == "equipment" then
-		local slots = flatEquipmentSlots(equipmentData.collectGroups())
+		local slots = orderedEquipmentSlots(equipmentData.collectGroups())
 		selectEquipmentSlot(lastEquipmentSlot(slots))
 	elseif state:endScroll(layoutMetrics()) then
 		queueRebuild()
