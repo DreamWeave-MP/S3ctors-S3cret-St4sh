@@ -152,8 +152,21 @@ end
 local function flatEquipmentSlots(groups)
 	local slots = {}
 	for _, group in ipairs(groups or {}) do
-		for _, slot in ipairs(group.slots or {}) do
-			slots[#slots + 1] = slot
+		if group.rows and #group.rows > 0 then
+			local byKey = {}
+			for _, slot in ipairs(group.slots or {}) do
+				byKey[slot.key] = slot
+			end
+			for _, row in ipairs(group.rows) do
+				for column = 1, equipmentView.CARD_COLUMNS do
+					local key = row[column]
+					slots[#slots + 1] = key and byKey[key] or false
+				end
+			end
+		else
+			for _, slot in ipairs(group.slots or {}) do
+				slots[#slots + 1] = slot
+			end
 		end
 	end
 	return slots
@@ -161,8 +174,26 @@ end
 
 local function equipmentSelectionIndex(slots)
 	for index, slot in ipairs(slots) do
-		if slot.key == state.selectedEquipmentSlotKey then
+		if slot and slot.key == state.selectedEquipmentSlotKey then
 			return index
+		end
+	end
+	return nil
+end
+
+local function firstEquipmentSlot(slots)
+	for index = 1, #slots do
+		if slots[index] then
+			return slots[index]
+		end
+	end
+	return nil
+end
+
+local function lastEquipmentSlot(slots)
+	for index = #slots, 1, -1 do
+		if slots[index] then
+			return slots[index]
 		end
 	end
 	return nil
@@ -181,7 +212,23 @@ local function selectEquipmentByOffset(delta)
 	while targetIndex < 1 do
 		targetIndex = targetIndex + #slots
 	end
-	selectEquipmentSlot(slots[targetIndex])
+	local step = delta >= 0 and 1 or -1
+	local attempts = 0
+	while attempts < #slots do
+		local slot = slots[targetIndex]
+		if slot then
+			selectEquipmentSlot(slot)
+			return
+		end
+		targetIndex = targetIndex + step
+		while targetIndex > #slots do
+			targetIndex = targetIndex - #slots
+		end
+		while targetIndex < 1 do
+			targetIndex = targetIndex + #slots
+		end
+		attempts = attempts + 1
+	end
 end
 
 local function makeInventoryLayout(items)
@@ -285,7 +332,7 @@ function M.scrollRows(deltaRows)
 		return
 	end
 	if state.primaryTab == "equipment" then
-		selectEquipmentByOffset(deltaRows * 3)
+		selectEquipmentByOffset(deltaRows * equipmentView.CARD_COLUMNS)
 		return
 	end
 	if state:scrollRows(deltaRows, layoutMetrics(), state.lastEntryCount) then
@@ -299,7 +346,7 @@ function M.home()
 	end
 	if state.primaryTab == "equipment" then
 		local slots = flatEquipmentSlots(equipmentData.collectGroups())
-		selectEquipmentSlot(slots[1])
+		selectEquipmentSlot(firstEquipmentSlot(slots))
 	elseif state:home() then
 		queueRebuild()
 	end
@@ -311,7 +358,7 @@ function M.endScroll()
 	end
 	if state.primaryTab == "equipment" then
 		local slots = flatEquipmentSlots(equipmentData.collectGroups())
-		selectEquipmentSlot(slots[#slots])
+		selectEquipmentSlot(lastEquipmentSlot(slots))
 	elseif state:endScroll(layoutMetrics()) then
 		queueRebuild()
 	end
