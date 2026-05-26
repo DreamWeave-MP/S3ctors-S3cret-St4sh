@@ -15,7 +15,7 @@ local function makeReservedToolbar(metrics)
 	return {
 		name = "s3ui_toolbar_reserved",
 		type = ui.TYPE.Widget,
-		props = { relativeSize = metrics.toolbarRelativeSize, autoSize = false },
+		props = { relativeSize = metrics.toolbarRelativeSize },
 	}
 end
 
@@ -23,7 +23,7 @@ local function makeReservedCompactDetail(metrics)
 	return {
 		name = "s3ui_compact_detail_reserved",
 		type = ui.TYPE.Widget,
-		props = { relativeSize = metrics.compactDetailRelativeSize, autoSize = false },
+		props = { relativeSize = metrics.compactDetailRelativeSize },
 	}
 end
 
