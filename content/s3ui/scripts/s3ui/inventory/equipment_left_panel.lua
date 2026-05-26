@@ -9,11 +9,13 @@ local v2 = util.vector2
 
 local M = {}
 
-local CARD_COLUMNS = 3
-local GROUP_HEIGHTS = { weapons = 0.22, armor = 0.36, clothing = 0.42 }
+local CARD_COLUMNS = 4
+local GROUP_HEIGHTS = { equipped = 1 }
 local SELECTED_BORDER_ALPHA = 0.94
 local SELECTED_STRIP_COLOR = util.color.rgb(0.86, 0.72, 0.42)
 local EMPTY_TEXT = "—"
+
+M.CARD_COLUMNS = CARD_COLUMNS
 
 local function textLine(name, text, props, template)
 	props = props or {}
@@ -168,10 +170,10 @@ local function makeSlotCard(ctx, slot)
 	}
 end
 
-local function makeSlotRow(ctx, slots, startIndex, rowHeight)
+local function makeSlotRowFromSlots(ctx, slots, rowHeight)
 	local row = ui.content({})
 	for column = 1, CARD_COLUMNS do
-		local slot = slots[startIndex + column - 1]
+		local slot = slots[column]
 		if slot then
 			row:add(makeSlotCard(ctx, slot))
 		else
@@ -185,8 +187,37 @@ local function makeSlotRow(ctx, slots, startIndex, rowHeight)
 	}
 end
 
+local function makeSlotRow(ctx, slots, startIndex, rowHeight)
+	local rowSlots = {}
+	for column = 1, CARD_COLUMNS do
+		rowSlots[column] = slots[startIndex + column - 1]
+	end
+	return makeSlotRowFromSlots(ctx, rowSlots, rowHeight)
+end
+
+local function slotsByKey(slots)
+	local byKey = {}
+	for _, slot in ipairs(slots or {}) do
+		byKey[slot.key] = slot
+	end
+	return byKey
+end
+
+local function makeExplicitRows(ctx, group, rows, rowHeight)
+	local byKey = slotsByKey(group.slots)
+	for _, rowDef in ipairs(group.rows or {}) do
+		local rowSlots = {}
+		for column = 1, CARD_COLUMNS do
+			local key = rowDef[column]
+			rowSlots[column] = key and byKey[key] or nil
+		end
+		rows:add(makeSlotRowFromSlots(ctx, rowSlots, rowHeight))
+	end
+end
+
 local function makeGroup(ctx, group)
-	local rowCount = math.max(math.ceil(#group.slots / CARD_COLUMNS), 1)
+	local hasExplicitRows = group.rows and #group.rows > 0
+	local rowCount = hasExplicitRows and #group.rows or math.max(math.ceil(#group.slots / CARD_COLUMNS), 1)
 	local rows = ui.content({
 		textLine("s3ui_equipment_group_" .. group.key, group.title, {
 			relativeSize = v2(1, 0.18),
@@ -197,8 +228,12 @@ local function makeGroup(ctx, group)
 		}, I.MWUI.templates.textHeader),
 	})
 	local rowHeight = 0.82 / rowCount
-	for index = 1, #group.slots, CARD_COLUMNS do
-		rows:add(makeSlotRow(ctx, group.slots, index, rowHeight))
+	if hasExplicitRows then
+		makeExplicitRows(ctx, group, rows, rowHeight)
+	else
+		for index = 1, #group.slots, CARD_COLUMNS do
+			rows:add(makeSlotRow(ctx, group.slots, index, rowHeight))
+		end
 	end
 	return {
 		name = "s3ui_equipment_group_" .. group.key .. "_body",

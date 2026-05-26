@@ -11,43 +11,36 @@ local M = {}
 
 M.GROUPS = {
 	{
-		key = "weapons",
-		title = "Weapons",
-		inventoryCategoryKey = "weapons",
-		slots = {
-			{ key = "carriedRight", label = "Main Hand", slot = SLOT.CarriedRight },
-			{ key = "carriedLeft", label = "Off Hand", slot = SLOT.CarriedLeft },
-			{ key = "ammunition", label = "Ammunition", slot = SLOT.Ammunition },
+		key = "equipped",
+		title = "Equipped",
+		rows = {
+			{ false, "helmet", "amulet", false },
+			{ "leftPauldron", "shirt", "cuirass", "rightPauldron" },
+			{ "leftGauntlet", "pants", "greaves", "rightGauntlet" },
+			{ "carriedLeft", "skirt", "robe", "carriedRight" },
+			{ "leftRing", "belt", "boots", "rightRing" },
+			{ false, "ammunition", false, false },
 		},
-	},
-	{
-		key = "armor",
-		title = "Armor",
-		inventoryCategoryKey = "armor",
 		slots = {
-			{ key = "helmet", label = "Head", slot = SLOT.Helmet },
-			{ key = "cuirass", label = "Cuirass", slot = SLOT.Cuirass },
-			{ key = "greaves", label = "Greaves", slot = SLOT.Greaves },
-			{ key = "leftPauldron", label = "L. Pauldron", slot = SLOT.LeftPauldron },
-			{ key = "rightPauldron", label = "R. Pauldron", slot = SLOT.RightPauldron },
-			{ key = "boots", label = "Boots", slot = SLOT.Boots },
-			{ key = "leftGauntlet", label = "L. Gauntlet", slot = SLOT.LeftGauntlet },
-			{ key = "rightGauntlet", label = "R. Gauntlet", slot = SLOT.RightGauntlet },
-		},
-	},
-	{
-		key = "clothing",
-		title = "Clothing & Jewelry",
-		inventoryCategoryKey = "apparel",
-		slots = {
-			{ key = "shirt", label = "Shirt", slot = SLOT.Shirt },
-			{ key = "pants", label = "Pants", slot = SLOT.Pants },
-			{ key = "robe", label = "Robe", slot = SLOT.Robe },
-			{ key = "skirt", label = "Skirt", slot = SLOT.Skirt },
-			{ key = "belt", label = "Belt", slot = SLOT.Belt },
-			{ key = "amulet", label = "Amulet", slot = SLOT.Amulet },
-			{ key = "leftRing", label = "L. Ring", slot = SLOT.LeftRing },
-			{ key = "rightRing", label = "R. Ring", slot = SLOT.RightRing },
+			{ key = "helmet", label = "Head", slot = SLOT.Helmet, inventoryCategoryKey = "armor" },
+			{ key = "amulet", label = "Amulet", slot = SLOT.Amulet, inventoryCategoryKey = "apparel" },
+			{ key = "leftPauldron", label = "L. Pauldron", slot = SLOT.LeftPauldron, inventoryCategoryKey = "armor" },
+			{ key = "shirt", label = "Shirt", slot = SLOT.Shirt, inventoryCategoryKey = "apparel" },
+			{ key = "cuirass", label = "Cuirass", slot = SLOT.Cuirass, inventoryCategoryKey = "armor" },
+			{ key = "rightPauldron", label = "R. Pauldron", slot = SLOT.RightPauldron, inventoryCategoryKey = "armor" },
+			{ key = "leftGauntlet", label = "L. Gauntlet", slot = SLOT.LeftGauntlet, inventoryCategoryKey = "armor" },
+			{ key = "pants", label = "Pants", slot = SLOT.Pants, inventoryCategoryKey = "apparel" },
+			{ key = "greaves", label = "Greaves", slot = SLOT.Greaves, inventoryCategoryKey = "armor" },
+			{ key = "rightGauntlet", label = "R. Gauntlet", slot = SLOT.RightGauntlet, inventoryCategoryKey = "armor" },
+			{ key = "carriedLeft", label = "Off Hand", slot = SLOT.CarriedLeft, inventoryCategoryKey = "weapons" },
+			{ key = "skirt", label = "Skirt", slot = SLOT.Skirt, inventoryCategoryKey = "apparel" },
+			{ key = "robe", label = "Robe", slot = SLOT.Robe, inventoryCategoryKey = "apparel" },
+			{ key = "carriedRight", label = "Main Hand", slot = SLOT.CarriedRight, inventoryCategoryKey = "weapons" },
+			{ key = "leftRing", label = "L. Ring", slot = SLOT.LeftRing, inventoryCategoryKey = "apparel" },
+			{ key = "belt", label = "Belt", slot = SLOT.Belt, inventoryCategoryKey = "apparel" },
+			{ key = "boots", label = "Boots", slot = SLOT.Boots, inventoryCategoryKey = "armor" },
+			{ key = "rightRing", label = "R. Ring", slot = SLOT.RightRing, inventoryCategoryKey = "apparel" },
+			{ key = "ammunition", label = "Ammunition", slot = SLOT.Ammunition, inventoryCategoryKey = "weapons" },
 		},
 	},
 }
@@ -140,14 +133,14 @@ function M.collectGroups()
 
 	local groups = {}
 	for _, groupDef in ipairs(M.GROUPS) do
-		local group = { key = groupDef.key, title = groupDef.title, slots = {} }
+		local group = { key = groupDef.key, title = groupDef.title, rows = groupDef.rows, slots = {} }
 		for _, slotDef in ipairs(groupDef.slots) do
 			local itemData = makeItemData(inventory, equipment[slotDef.slot])
 			group.slots[#group.slots + 1] = {
 				key = slotDef.key,
 				label = slotDef.label,
 				slot = slotDef.slot,
-				inventoryCategoryKey = groupDef.inventoryCategoryKey,
+				inventoryCategoryKey = slotDef.inventoryCategoryKey or groupDef.inventoryCategoryKey,
 				itemData = itemData,
 				summary = summaryText(itemData),
 			}
