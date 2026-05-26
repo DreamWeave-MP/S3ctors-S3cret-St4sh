@@ -365,7 +365,7 @@ end
 local function arrowButton(name, label, delta, callbackGeneration)
 	return modalButton(name, label, function()
 		setValue(value + delta)
-	end, callbackGeneration, ARROW_BUTTON_SIZE)
+	end, callbackGeneration, ARROW_BUTTON_SIZE, true)
 end
 
 function M.layout()
