@@ -220,8 +220,8 @@ local function makeGridSlot(ctx, entry, index)
 				end
 				ctx.selectSlot(index, layout and layout.userData)
 			end),
-			mouseClick = ctx.async:callback(function(event, layout)
-				if generation ~= ctx.state.generation or event.button ~= 1 then
+			mouseClick = ctx.async:callback(function(_, layout)
+				if generation ~= ctx.state.generation then
 					return
 				end
 				local clicked = layout and layout.userData
@@ -439,8 +439,8 @@ local function makeListItemRow(ctx, entry, index)
 				end
 				ctx.selectSlot(index, layout and layout.userData)
 			end),
-			mouseClick = ctx.async:callback(function(event, layout)
-				if generation ~= ctx.state.generation or event.button ~= 1 then
+			mouseClick = ctx.async:callback(function(_, layout)
+				if generation ~= ctx.state.generation then
 					return
 				end
 				local clicked = layout and layout.userData
