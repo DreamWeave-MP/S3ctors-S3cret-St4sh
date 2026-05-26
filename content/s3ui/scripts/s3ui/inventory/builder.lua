@@ -11,11 +11,28 @@ local views = require("scripts.s3ui.inventory.views")
 local v2 = util.vector2
 local M = {}
 
+local function makeReservedToolbar(metrics)
+	return {
+		name = "s3ui_toolbar_reserved",
+		type = ui.TYPE.Widget,
+		props = { relativeSize = metrics.toolbarRelativeSize, autoSize = false },
+	}
+end
+
+local function makeReservedCompactDetail(metrics)
+	return {
+		name = "s3ui_compact_detail_reserved",
+		type = ui.TYPE.Widget,
+		props = { relativeSize = metrics.compactDetailRelativeSize, autoSize = false },
+	}
+end
+
 function M.make(ctx)
 	local metrics = ctx.metrics
 	local bodyLayouts = {}
 	local mainView
 	if ctx.state.primaryTab == "equipment" then
+		bodyLayouts[#bodyLayouts + 1] = makeReservedToolbar(metrics)
 		mainView = equipmentView.make(ctx.equipmentCtx)
 	else
 		bodyLayouts[#bodyLayouts + 1] = controls.makeToolbar(ctx.controlsCtx)
@@ -31,6 +48,8 @@ function M.make(ctx)
 	}
 	if ctx.state.primaryTab == "inventory" and metrics.detailMode == "compact" then
 		bodyLayouts[#bodyLayouts + 1] = ctx.details.makeCompactDetailBar()
+	elseif ctx.state.primaryTab == "equipment" and metrics.detailMode == "compact" then
+		bodyLayouts[#bodyLayouts + 1] = makeReservedCompactDetail(metrics)
 	end
 
 	local inset = chrome.frameInset(chrome.FRAME_SIZE_PANEL)

@@ -81,6 +81,8 @@ return {
 				reloadLuaAndReopenInventory()
 			elseif countModal.handleKeyPress(key) then
 				return
+			elseif key.code == input.KEY.Enter or key.code == input.KEY.NP_Enter or key.code == input.KEY.Space then
+				inventoryWindow.activateSelection()
 			elseif key.code == input.KEY.LeftArrow then
 				inventoryWindow.navigateSelection(-1)
 			elseif key.code == input.KEY.RightArrow then

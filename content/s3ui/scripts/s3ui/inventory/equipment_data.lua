@@ -13,6 +13,7 @@ M.GROUPS = {
 	{
 		key = "weapons",
 		title = "Weapons",
+		inventoryCategoryKey = "weapons",
 		slots = {
 			{ key = "carriedRight", label = "Main Hand", slot = SLOT.CarriedRight },
 			{ key = "carriedLeft", label = "Off Hand", slot = SLOT.CarriedLeft },
@@ -22,6 +23,7 @@ M.GROUPS = {
 	{
 		key = "armor",
 		title = "Armor",
+		inventoryCategoryKey = "armor",
 		slots = {
 			{ key = "helmet", label = "Head", slot = SLOT.Helmet },
 			{ key = "cuirass", label = "Cuirass", slot = SLOT.Cuirass },
@@ -36,6 +38,7 @@ M.GROUPS = {
 	{
 		key = "clothing",
 		title = "Clothing & Jewelry",
+		inventoryCategoryKey = "apparel",
 		slots = {
 			{ key = "shirt", label = "Shirt", slot = SLOT.Shirt },
 			{ key = "pants", label = "Pants", slot = SLOT.Pants },
@@ -146,6 +149,7 @@ function M.collectGroups()
 				key = slotDef.key,
 				label = slotDef.label,
 				slot = slotDef.slot,
+				inventoryCategoryKey = groupDef.inventoryCategoryKey,
 				itemData = itemData,
 				summary = summaryText(itemData),
 			}
