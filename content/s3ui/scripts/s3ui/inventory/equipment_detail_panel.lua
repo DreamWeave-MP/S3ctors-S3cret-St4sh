@@ -168,9 +168,10 @@ local function body(ctx)
 	}
 end
 
-function M.layout(ctx, width)
+function M.layout(ctx, width, x)
 	local inset = chrome.frameInset(FRAME_SIZE)
 	local content = ui.content({})
+	x = x or 0
 	background(content)
 	content:add({
 		name = "s3ui_equipment_detail_inner",
@@ -182,20 +183,20 @@ function M.layout(ctx, width)
 	return {
 		name = "s3ui_equipment_detail_panel",
 		type = ui.TYPE.Widget,
-		props = { relativeSize = v2(width, 1), autoSize = false },
+		props = { relativePosition = v2(x, 0), relativeSize = v2(width, 1), autoSize = false },
 		content = content,
 	}
 end
 
-function M.create(ctx, width)
-	return ui.create(M.layout(ctx, width))
+function M.create(ctx, width, x)
+	return ui.create(M.layout(ctx, width, x))
 end
 
-function M.update(element, ctx, width)
+function M.update(element, ctx, width, x)
 	if not element or not element.layout then
 		return false
 	end
-	element.layout = M.layout(ctx, width)
+	element.layout = M.layout(ctx, width, x)
 	element:update()
 	return true
 end

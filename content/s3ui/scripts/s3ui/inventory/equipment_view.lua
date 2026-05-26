@@ -9,8 +9,9 @@ local v2 = util.vector2
 
 local M = {}
 
-local LEFT_WIDTH = 0.64
-local DETAIL_WIDTH = 0.36
+local LEFT_WIDTH = 1
+local DETAIL_X = 0.68
+local DETAIL_WIDTH = 0.32
 
 function M.createLeftPanel(ctx)
 	return leftPanel.create(ctx, LEFT_WIDTH)
@@ -21,25 +22,25 @@ function M.updateLeftPanel(element, ctx)
 end
 
 function M.createDetailPanel(ctx)
-	return detailPanel.create(ctx, DETAIL_WIDTH)
+	return detailPanel.create(ctx, DETAIL_WIDTH, DETAIL_X)
 end
 
 function M.updateDetailPanel(element, ctx)
-	return detailPanel.update(element, ctx, DETAIL_WIDTH)
+	return detailPanel.update(element, ctx, DETAIL_WIDTH, DETAIL_X)
 end
 
 function M.content(ctx)
 	return ui.content({
 		ctx.leftElement or leftPanel.layout(ctx, LEFT_WIDTH),
-		ctx.detailElement or detailPanel.layout(ctx, DETAIL_WIDTH),
+		ctx.detailElement or detailPanel.layout(ctx, DETAIL_WIDTH, DETAIL_X),
 	})
 end
 
 function M.make(ctx)
 	return {
 		name = "s3ui_equipment_view",
-		type = ui.TYPE.Flex,
-		props = { horizontal = true, size = v2(0, 0), relativeSize = v2(0, 1), autoSize = false },
+		type = ui.TYPE.Widget,
+		props = { size = v2(0, 0), relativeSize = v2(0, 1), autoSize = false },
 		external = { grow = 1, stretch = 1 },
 		content = M.content(ctx),
 	}
