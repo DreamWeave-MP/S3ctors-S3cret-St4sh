@@ -11,6 +11,8 @@ if require 'scripts.s3.isOpenMW' then
     frameDuration = require 'openmw.core'.getRealFrameDuration
     isMusicPlaying = require 'openmw.ambient'.isMusicPlaying
 else
+    frameDuration = tes3.worldController.deltaTime
+    isMusicPlaying = tes3.worldController.audioController.isMusicPlaying
 end
 
 --- Given the currently-running playlist and settings,
@@ -82,7 +84,6 @@ end
 ---@field updateSilenceParams fun(self, newPlaylist: S3maphorePlaylist)
 SilenceData = musicUtil.getUpdatingSettingsTable(
     'SettingsS3MusicSilenceConfig',
-    'S3maphore.s3.mcm',
     {
         silenceActive = silenceActive,
         updateSilenceParams = updateSilenceParams,

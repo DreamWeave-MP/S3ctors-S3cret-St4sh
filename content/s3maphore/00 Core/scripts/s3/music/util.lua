@@ -250,18 +250,16 @@ local function getActivePlaylistByPriority(playlists, playback)
 end
 
 ---@param groupName string
----@param mcmPath string?
 ---@param originalTable table?
 ---@return UpdatingSettingTable
-local function getUpdatingSettingsTable(groupName, mcmPath, originalTable)
+local function getUpdatingSettingsTable(groupName, originalTable)
     local settingTable = originalTable or {}
 
     local settingGroup
     if isOpenMW then
         settingGroup = storage.playerSection(groupName)
     else
-        assert(mcmPath)
-        settingGroup = require(mcmPath).get(groupName)
+        settingGroup = require('s3maphore.mcm').get(groupName)
     end
 
     local updateSettings
@@ -388,17 +386,25 @@ local function makeReadOnly(inTable, copy, strict, visited)
     return setmetatable(res, MT)
 end
 
-local function OMWGetStoredTracksOrder()
+local function getStoredTracksOrder()
     -- We need a writeable playlists table here.
-    return playlistsSection:asTable()
+    return isOpenMW and playlistsSection:asTable() or playlistsSection
 end
 
-local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
-    playlistsSection:set(playlistId, playlistTracksOrder)
+local function setStoredTracksOrder(playlistId, playlistTracksOrder)
+    if isOpenMW then
+        playlistsSection:set(playlistId, playlistTracksOrder)
+    else
+        playlistsSection[playlistId] = playlistTracksOrder
+    end
 end
 
-local function OMWIsInCombat(fightingActors)
-    return next(fightingActors) ~= nil and debug.isAIEnabled()
+local function isInCombat(fightingActors)
+    if isOpenMW then
+        return next(fightingActors) ~= nil and debug.isAIEnabled()
+    else
+        return tes3.player.mobile.inCombat and tes3.worldController.menuController.aiDisabled == false
+    end
 end
 
 ---@class S3maphoreHelperModule
@@ -408,15 +414,15 @@ local utilModule = {
     deepToString = deepToString,
     getActivePlaylistByPriority = getActivePlaylistByPriority,
     getPlaylistFilePaths = getPlaylistFilePaths,
-    getStoredTracksOrder = isOpenMW and OMWGetStoredTracksOrder,
+    getStoredTracksOrder = getStoredTracksOrder,
     getTracksFromDirectory = getTracksFromDirectory,
     getUpdatingSettingsTable = getUpdatingSettingsTable,
     initMissingPlaylistFields = initMissingPlaylistFields,
     initTracksOrder = initTracksOrder,
-    isInCombat = isOpenMW and OMWIsInCombat,
+    isInCombat = isInCombat,
     isPlaylistActive = isPlaylistActive,
     makeReadOnly = makeReadOnly,
-    setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
+    setStoredTracksOrder = setStoredTracksOrder,
 }
 
 return utilModule

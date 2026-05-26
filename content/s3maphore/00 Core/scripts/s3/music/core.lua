@@ -1,13 +1,8 @@
 ---@module 'doc.s3maphoreTypes'
 
-local ambient                = require 'openmw.ambient'
-local async                  = require 'openmw.async'
-local core                   = require 'openmw.core'
-local input                  = require 'openmw.input'
-local nearby                 = require 'openmw.nearby'
-local self                   = require 'openmw.self'
-local storage                = require 'openmw.storage'
-local types                  = require 'openmw.types'
+local isOpenMW = require 'scripts.s3.isOpenMW'
+
+local ambient, async, core, input, nearby, self, storage, types
 
 local MusicManager           = require 'scripts.s3.music.musicManager'
 local MusicSettings          = require 'scripts.s3.music.musicSettings'
@@ -17,11 +12,26 @@ local PlaylistState          = require 'scripts.s3.music.playlistState'
 local SilenceManager         = require 'scripts.s3.music.silenceManager'
 local Strings                = require 'scripts.s3.music.staticStrings'
 
-local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
+local activePlaylistSettings, tableUtil
 local musicUtil              = require 'scripts.s3.music.util'
-local tableUtil              = require 'scripts.s3.table'
 
-local nullFunction           = require 'scripts.s3.nullFunction'
+if isOpenMW then
+    ambient                  = require 'openmw.ambient'
+    async                    = require 'openmw.async'
+    core                     = require 'openmw.core'
+    input                    = require 'openmw.input'
+    nearby                   = require 'openmw.nearby'
+    self                     = require 'openmw.self'
+    storage                  = require 'openmw.storage'
+    types                    = require 'openmw.types'
+
+    activePlaylistSettings   = storage.playerSection 'S3maphoreActivePlaylistSettings'
+    tableUtil                = require 'scripts.s3.table'
+else
+    activePlaylistSettings   = tes3.player.tempData['S3maphoreActivePlaylistSettings']
+end
+
+local nullFunction           = function() end
 
 local CachedCellGrid         = { x = 0, y = 0, }
 
@@ -39,7 +49,7 @@ local function checkSilenceManager()
     end
 end
 
-local isSoundEnabled = core.sound.isEnabled
+local isSoundEnabled = isOpenMW and core.sound.isEnabled --- TODO: I am unsure what the MWSE equivalent is just yet. - SB
 local function onSoundEnabledChanged()
     if not isSoundEnabled() then return end
 
@@ -73,38 +83,52 @@ local function clearQueuedData()
     end
 end
 
-storage.playerSection('SettingsS3Music'):subscribe(
-    async:callback(
-        function(_, key)
-            if key == 'BannerEnabled' then
-                MusicManager.updateBanner()
-            elseif key == 'MusicEnabled' then
-                if MusicSettings.DebugEnable then
-                    musicUtil.debugLog('Music state changed to', MusicSettings.MusicEnabled)
-                end
+local musicEnabledUpdate = function()
+    if MusicSettings.DebugEnable then
+        musicUtil.debugLog('Music state changed to', MusicSettings.MusicEnabled)
+    end
 
-                MusicManager.forceSkip = false
-                queuedEvent.name = nil
-                clearQueuedData()
+    MusicManager.forceSkip = false
+    queuedEvent.name = nil
+    clearQueuedData()
 
-                if MusicSettings.MusicEnabled then
-                    currentUpdateHandler = onSoundEnabledChanged
-                else
-                    currentUpdateHandler = nullFunction
+    if MusicSettings.MusicEnabled then
+        currentUpdateHandler = onSoundEnabledChanged
+    else
+        currentUpdateHandler = nullFunction
 
-                    if ambient.isMusicPlaying() then
-                        ambient.stopMusic()
-                        MusicManager.currentPlaylist = nil
-                        MusicManager.currentTrack = nil
+        if ambient.isMusicPlaying() then
+            ambient.stopMusic()
+            MusicManager.currentPlaylist = nil
+            MusicManager.currentTrack = nil
 
-                        queuedEvent.data.reason = MusicManager.STATE.Disabled
-                        self:sendEvent('S3maphoreMusicStopped', queuedEvent.data)
-                    end
+            queuedEvent.data.reason = MusicManager.STATE.Disabled
+            if isOpenMW then self:sendEvent('S3maphoreMusicStopped', queuedEvent.data) else event.trigger('S3maphoreMusicStopped', queuedEvent.data) end
+        end
+    end
+end
+
+if isOpenMW then
+    storage.playerSection('SettingsS3Music'):subscribe(
+        async:callback(
+            function(_, key)
+                if key == 'BannerEnabled' then
+                    MusicManager.updateBanner()
+                elseif key == 'MusicEnabled' then
+                    musicEnabledUpdate()
                 end
             end
-        end
+        )
     )
-)
+else
+    --- @param e modConfigEntryClosedEventData
+    local function modConfigEntryClosedCallback(e)
+        MusicManager.updateBanner()
+
+        musicEnabledUpdate()
+    end
+    event.register(tes3.event.modConfigEntryClosed, modConfigEntryClosedCallback)
+end
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
 local function updatePlaylistState()
@@ -130,17 +154,22 @@ local Playback = {
 }
 
 local AIFight, ipairs, isDead, isNPC, LocalActors, MyId
-= types.Actor.stats.ai.fight, ipairs, types.Actor.isDead, types.NPC.objectIsInstance, nearby.actors, self.id
+if isOpenMW then
+    AIFight, ipairs, isDead, isNPC, LocalActors, MyId = types.Actor.stats.ai.fight, ipairs, types.Actor.isDead, types.NPC.objectIsInstance, nearby.actors, self.id
+else
+    LocalActors = tes3.findActorsInProximity{reference = tes3.player, range = math.huge}
+end
 
 local function updateCellHasCombatTargets()
     local nearbyCombatTargets = false
 
+    --- @param actor GameObject|tes3reference
     for _, actor in ipairs(LocalActors) do
         if actor.id ~= MyId then
-            local fightStat = AIFight(actor)
-            local fightLimit = isNPC(actor) and NPCFightThreshold or CreatureFightThreshold
+            local fightStat = isOpenMW and AIFight(actor) or actor.mobile.fight
+            local fightLimit = (isOpenMW and isNPC(actor) or actor.objectType == tes3.objectType.npc) and NPCFightThreshold or CreatureFightThreshold
 
-            if fightStat.modified >= fightLimit and not isDead(actor) then
+            if (isOpenMW and fightStat.modified or fightStat) >= fightLimit and (isOpenMW and not isDead(actor) or actor.mobile.health < 1) then
                 nearbyCombatTargets = true
                 break
             end
@@ -179,9 +208,51 @@ local function onCombatTargetsChanged(eventData)
     end
 end
 
-local function playerDied()
+--- @param e combatStartedEventData
+local function onCombatTargetStart(e)
+    PlaylistState.combatTargets[e.actor.reference.id] = e.actor.reference
+
+    updateCellHasCombatTargets()
+    PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
+    PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
+
+    if PlaylistState.isInCombat then
+        CombatTargetCacheKey = tostring(PlaylistState.combatTargets)
+
+        for targetId, _ in pairs(PlaylistState.combatTargets) do
+            CombatTargetCacheKey = ('%s%s'):format(CombatTargetCacheKey, targetId)
+        end
+
+        PlaylistRules.setCombatTargetCacheKey(CombatTargetCacheKey)
+    end
+end
+
+--- @param e combatStoppedEventData
+local function onCombatTargetStop(e)
+    PlaylistState.combatTargets[e.actor.reference.id] = nil
+    PlaylistRules.clearCombatCaches(e.actor.reference.id)
+
+    updateCellHasCombatTargets()
+    PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
+    PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
+
+    if not PlaylistState.isInCombat then
+        CombatTargetCacheKey = nil
+        PlaylistRules.setCombatTargetCacheKey(nil)
+    end
+end
+
+local function playerDiedOMW()
     MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
     currentUpdateHandler = nullFunction
+end
+
+--- @param e damagedEventData
+local function playerDiedMWSE(e)
+    if (e.reference == tes3.player and e.killingBlow) then
+        MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
+        currentUpdateHandler = nullFunction
+    end
 end
 
 --- If a set of fallback playlists is present, attempt to use them during track selection
@@ -466,7 +537,11 @@ return {
         end,
 
         onUpdate = function(dt)
-            currentUpdateHandler(dt)
+            if isOpenMW then
+                currentUpdateHandler(dt)
+            else
+                currentUpdateHandler(dt.delta)
+            end
         end,
 
         onSave = function()
@@ -476,21 +551,33 @@ return {
                 playlistStates[playlistId] = playlist.active
             end
 
-            return {
-                playlistStates = playlistStates,
-            }
+            if isOpenMW then
+                return {
+                    playlistStates = playlistStates,
+                }
+            else
+                tes3.player.data.playlistStates = playlistStates
+            end
         end,
 
         onLoad = function(data)
-            if not data then return end
+            if isOpenMW then
+                if not data then return end
 
-            for playlistId, playlistState in pairs(data.playlistStates or {}) do
-                activePlaylistSettings:set(playlistId .. 'Active', playlistState)
+                for playlistId, playlistState in pairs(data.playlistStates or {}) do
+                    activePlaylistSettings:set(playlistId .. 'Active', playlistState)
+                end
+            else
+                if not tes3.player.data.playlistStates then return end
+                
+                for playlistId, playlistState in pairs(tes3.player.data.playlistStates or {}) do
+                    activePlaylistSettings[playlistId .. 'Active'] = playlistState
+                end
             end
         end
     },
     eventHandlers = {
-        Died = playerDied,
+        Died = isOpenMW and playerDiedOMW or playerDiedMWSE,
 
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
 
@@ -536,17 +623,17 @@ return {
             PlaylistState.staticList = cellChangeData.staticList
             if cellChangeData.nearestRegion then PlaylistState.nearestRegion = cellChangeData.nearestRegion end
 
-            local thisCell = self.cell
+            local thisCell = isOpenMW and self.cell or tes3.getPlayerCell()
 
             local shouldUseName = thisCell.name ~= ''
 
             PlaylistState.cellHasWater = thisCell.hasWater
             PlaylistState.cellWaterLevel = thisCell.waterLevel
-            PlaylistState.cellIsExterior = thisCell.isExterior or thisCell:hasTag('QuasiExterior')
+            PlaylistState.cellIsExterior = isOpenMW and (thisCell.isExterior or thisCell:hasTag('QuasiExterior')) or (thisCell.isOrBehavesAsExterior)
             PlaylistState.cellName = (shouldUseName and thisCell.name or thisCell.id):lower()
             PlaylistState.cellId = thisCell.id
 
-            if thisCell.isExterior then
+            if isOpenMW and thisCell.isExterior or not thisCell.isInterior then
                 CachedCellGrid.x, CachedCellGrid.y = thisCell.gridX, thisCell.gridY
                 PlaylistState.currentGrid = CachedCellGrid
             else
@@ -577,5 +664,24 @@ return {
             end
             PlaylistRules.clearGlobalCombatTargetCache()
         end,
+    },
+
+    mwse = {
+        --- @param e keyEventData
+        keyCallback = function(e)
+            if e.keyCode == tes3.scanCode.F8 then
+                if e.isShiftDown then
+                    event.trigger('S3maphoreToggleMusic')
+                else
+                    event.trigger('S3maphoreSkipTrack')
+                end
+            elseif e.keyCode == tes3.scanCode.F4 then
+                --- TODO: Remove?
+            end
+        end,
+
+        combatStarted = onCombatTargetStart,
+
+        combatStopped = onCombatTargetStop
     }
 }

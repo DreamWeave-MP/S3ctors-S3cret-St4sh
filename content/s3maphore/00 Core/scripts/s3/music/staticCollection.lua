@@ -1,5 +1,5 @@
-local types = require 'openmw.types'
-local world = require 'openmw.world'
+local isOpenMW = require 'scripts.s3.isOpenMW'
+local types, world
 
 local StaticCellChangeData = {
     staticList = {
@@ -14,9 +14,17 @@ local NearestDoor = nil
 local NullFunction = function() end
 local liveCheckForRegion = NullFunction
 
-local DoorType = types.Door
-local SquaredLen = require 'openmw.util'.vector3(0, 0, 0).length2
-local function checkForRegionOMW(object, target)
+local DoorType, SquaredLen
+
+if isOpenMW then
+    types = require 'openmw.types'
+    world = require 'openmw.world'
+
+    DoorType = types.Door
+    SquaredLen = require 'openmw.util'.vector3(0, 0, 0).length2
+end
+
+local function checkForRegion(object, target)
     if not DoorType.objectIsInstance(object) or not DoorType.isTeleport(object) then return end
 
     local targetPos, objectPos = target.position, object.position
@@ -25,19 +33,9 @@ local function checkForRegionOMW(object, target)
     end
 end
 
---- @param ref tes3reference
-local function checkForRegionMWSE(ref)
-    if not ref.objectType == tes3.objectType.door or not ref.destination then return end
-
-    local targetPos, objectPos = tes3.player.position, ref.position
-    if not NearestDoor or (targetPos - objectPos):length() < (targetPos - NearestDoor.position):length() then
-        NearestDoor = ref
-    end
-end
-
 --- Given a cell object, check the hostility ratings of all actors inside of it
----@param senderCell GameCell
-local function updateCellInfoOMW(sender, senderCell)
+---@param senderCell GameCell|tes3cell
+local function updateCellInfo(sender, senderCell)
     for _, fieldName in ipairs(FieldNames) do
         for k in pairs(StaticCellChangeData.staticList[fieldName]) do
             StaticCellChangeData.staticList[fieldName][k] = nil
@@ -52,90 +50,58 @@ local function updateCellInfoOMW(sender, senderCell)
     local nearestRegion = senderCell.region
     if not nearestRegion then
         NearestDoor = nil
-        liveCheckForRegion = checkForRegionOMW
+        liveCheckForRegion = isOpenMW and checkForRegion or tes3.getClosestExteriorPosition
     end
 
-    for _, object in ipairs(senderCell:getAll()) do
-        if types.Static.objectIsInstance(object) then
-            if not uniqueStaticIds[object.recordId] then
-                addedStatics[#addedStatics + 1] = object.recordId
-                uniqueStaticIds[object.recordId] = true
-            end
+    if isOpenMW then
+        for _, object in ipairs(senderCell:getAll()) do
+            if types.Static.objectIsInstance(object) then
+                if not uniqueStaticIds[object.recordId] then
+                    addedStatics[#addedStatics + 1] = object.recordId
+                    uniqueStaticIds[object.recordId] = true
+                end
 
-            if not uniqueContentFiles[object.contentFile] then
-                if object.contentFile and object.contentFile ~= '' then
-                    addedContentFiles[#addedContentFiles + 1] = object.contentFile:lower()
-                    uniqueContentFiles[object.contentFile] = true
+                if not uniqueContentFiles[object.contentFile] then
+                    if object.contentFile and object.contentFile ~= '' then
+                        addedContentFiles[#addedContentFiles + 1] = object.contentFile:lower()
+                        uniqueContentFiles[object.contentFile] = true
+                    end
                 end
             end
+
+            liveCheckForRegion(object, sender)
         end
 
-        liveCheckForRegion(object, sender)
-    end
+        if NearestDoor then
+            -- Teleport doors *should* always have a target cell
+            local region = DoorType.destCell(NearestDoor).region
 
-    if NearestDoor then
-        -- Teleport doors *should* always have a target cell
-        local region = DoorType.destCell(NearestDoor).region
-
-        if region then
-            nearestRegion = region
-        end
-
-        NearestDoor = nil
-    end
-
-    liveCheckForRegion = NullFunction
-
-    if nearestRegion then
-        StaticCellChangeData.nearestRegion = nearestRegion
-    end
-end
-
----@param cell tes3cell
-local function updateCellInfoMWSE(cell)
-    ---TODO Replicate in MWSE
-    for _, fieldName in ipairs(FieldNames) do
-        for k in pairs(StaticCellChangeData.staticList[fieldName]) do
-            StaticCellChangeData.staticList[fieldName][k] = nil
-        end
-    end
-
-    local uniqueStaticIds, uniqueContentFiles = {}, {}
-
-    local addedStatics, addedContentFiles = StaticCellChangeData.staticList.recordIds,
-        StaticCellChangeData.staticList.contentFiles
-
-    local nearestRegion = cell.region
-    if not nearestRegion then
-        NearestDoor = nil
-        liveCheckForRegion = checkForRegionMWSE
-    end
-
-    for reference in cell:iterateReferences() do
-        if not uniqueStaticIds[reference.baseObject.id] then
-            addedStatics[#addedStatics + 1] = reference.baseObject.id
-            uniqueStaticIds[reference.baseObject.id] = true
-        end
-
-        if not uniqueContentFiles[reference.baseObject.sourceMod] then
-            if reference.baseObject.sourceMod and reference.baseObject.sourceMod ~= '' then
-                addedContentFiles[#addedContentFiles + 1] = reference.baseObject.sourceMod:lower()
-                uniqueContentFiles[reference.baseObject.sourceMod] = true
+            if region then
+                nearestRegion = region
             end
+
+            NearestDoor = nil
         end
+    else
+        for object in senderCell:iterateReferences() do
+            if object.objectType == tes3.objectType.static then
+                if not uniqueStaticIds[object.baseObject.id] then
+                    addedStatics[#addedStatics + 1] = object.baseObject.id
+                    uniqueStaticIds[object.baseObject.id] = true
+                end
 
-        liveCheckForRegion(reference)
-    end
+                if not uniqueContentFiles[object.baseObject.sourceMod] then
+                    if object.baseObject.sourceMod and object.baseObject.sourceMod ~= '' then
+                        addedContentFiles[#addedContentFiles + 1] = object.baseObject.sourceMod:lower()
+                        uniqueContentFiles[object.baseObject.sourceMod] = true
+                    end
+                end
+            end
 
-    if NearestDoor then
-        -- Teleport doors *should* always have a target cell
-        local region = DoorType.destCell(NearestDoor).region
-
-        if region then
-            nearestRegion = region
+            local position = liveCheckForRegion{reference = object}
+            local nearestExteriorCell = tes3.getCell{x = math.floor(position.x / 8192), y = math.floor(position.y / 8192)}
+            nearestRegion = nearestExteriorCell.region
         end
-
-        NearestDoor = nil
     end
 
     liveCheckForRegion = NullFunction
@@ -145,7 +111,7 @@ local function updateCellInfoMWSE(cell)
     end
 end
 
-local Globals = world.mwscript.getGlobalVariables()
+local Globals = isOpenMW and world.mwscript.getGlobalVariables() or nil
 
 ---@enum WeatherType
 local WeatherType = {
@@ -202,7 +168,7 @@ return {
                 local prevCell = PreviousPlayerCells[playerId]
 
                 if not prevCell or prevCell ~= currentCell then
-                    updateCellInfoOMW(player, playerCell)
+                    updateCellInfo(player, playerCell)
                     player:sendEvent('S3maphoreCellChanged', StaticCellChangeData)
                     PreviousPlayerCells[playerId] = currentCell
                 end
@@ -225,7 +191,7 @@ return {
         --- @param e cellChangedEventData
         cellChanged = function(e)
             if not e.previousCell or e.previousCell.id ~= e.cell.id then
-                updateCellInfoMWSE(e.cell)
+                updateCellInfo(tes3.player, e.cell)
                 event.trigger('S3maphoreCellChanged', StaticCellChangeData)
             end
         end

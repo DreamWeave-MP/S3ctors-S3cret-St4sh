@@ -1,5 +1,10 @@
-local util = require 'openmw.util'
-local vfs = require 'openmw.vfs'
+local isOpenMW = require 'scripts.s3.isOpenMW'
+local util, vfs
+
+if isOpenMW then
+  util = require 'openmw.util'
+  vfs = require 'openmw.vfs'
+end
 
 local musicUtil = require 'scripts.s3.music.util'
 
@@ -29,7 +34,7 @@ local PlaylistEnvironment = {
   },
   --- Don't interfaces HAVE to be tables?
   ---@type table <string, any>
-  I = require 'openmw.interfaces',
+  I = isOpenMW and require 'openmw.interfaces' or nil,
   math = math,
   string = string,
   ipairs = ipairs,
@@ -43,16 +48,22 @@ local function playlistCoroutineLoader()
   for _, file in ipairs(musicUtil.getPlaylistFilePaths()) do
     musicUtil.debugLog('reading playlist file', file)
 
-    --- open the file
-    local ok, fileHandle = pcall(vfs.open, file)
-    if not ok then goto fail end
+    local ok
+    if isOpenMW then
+      --- open the file
+      ok, fileHandle = pcall(vfs.open, file)
+      if not ok then goto fail end
 
-    --- read all lines
-    codeString = fileHandle:read('*a')
+      --- read all lines
+      codeString = fileHandle:read('*a')
 
-    --- util.loadCode it
-    ok, result = pcall(util.loadCode, codeString, PlaylistEnvironment)
-    if not ok or type(result) ~= 'function' then goto fail end
+      --- util.loadCode it
+      ok, result = pcall(util.loadCode, codeString, PlaylistEnvironment)
+      if not ok or type(result) ~= 'function' then goto fail end
+    else
+      ok, result = pcall(loadfile, file, PlaylistEnvironment)
+      if not ok or type(result) ~= 'function' then goto fail end
+    end
 
     --- call the resulting function to get the inner playlist array
     ok, result = pcall(result)
