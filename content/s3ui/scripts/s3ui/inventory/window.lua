@@ -22,6 +22,7 @@ local M = {}
 
 local rootElement = nil
 local equipmentLeftElement = nil
+local equipmentDetailElement = nil
 local rebuildInventoryPending = false
 local rebuildEventQueued = false
 ---@type S3UI.InventoryMetrics|nil
@@ -69,7 +70,9 @@ local function updateEquipmentPanels(groups)
 	if selectedSlot then
 		state:selectEquipmentSlot(selectedSlot)
 	end
-	equipmentView.updateLeftPanel(equipmentLeftElement, equipmentCtx(groups))
+	local ctx = equipmentCtx(groups)
+	equipmentView.updateLeftPanel(equipmentLeftElement, ctx)
+	equipmentView.updateDetailPanel(equipmentDetailElement, ctx)
 end
 
 local function selectEquipmentSlot(slot)
@@ -127,6 +130,7 @@ end
 equipmentCtx = function(groups)
 	return {
 		async = async,
+		detailElement = equipmentDetailElement,
 		leftElement = equipmentLeftElement,
 		groups = groups,
 		metrics = layoutMetrics,
@@ -229,8 +233,10 @@ local function makeInventoryLayout(items)
 	state.selectedDisplayData = state:selectedEntryData(entries, firstIndex)
 	if state.primaryTab == "equipment" then
 		equipmentLeftElement = equipmentView.createLeftPanel(equipmentCtx(equipmentGroups))
+		equipmentDetailElement = equipmentView.createDetailPanel(equipmentCtx(equipmentGroups))
 	else
 		equipmentLeftElement = nil
+		equipmentDetailElement = nil
 	end
 	return builder.make({
 		controlsCtx = controlsCtx(),
@@ -255,6 +261,10 @@ local function destroyRoot()
 		equipmentLeftElement:destroy()
 	end
 	equipmentLeftElement = nil
+	if equipmentDetailElement and equipmentDetailElement.layout then
+		equipmentDetailElement:destroy()
+	end
+	equipmentDetailElement = nil
 	if rootElement and rootElement.layout then
 		rootElement:destroy()
 	end
@@ -269,6 +279,10 @@ local function rebuildRoot()
 		equipmentLeftElement:destroy()
 	end
 	equipmentLeftElement = nil
+	if equipmentDetailElement and equipmentDetailElement.layout then
+		equipmentDetailElement:destroy()
+	end
+	equipmentDetailElement = nil
 	if rootElement and rootElement.layout then
 		rootElement:destroy()
 	end
