@@ -14,14 +14,19 @@ extra:
 ---
 context-aware diagnostics for `require('openmw.*')` calls.
 
-Add the stubs directory to `workspace.library`, select Lua 5.1, and load the
+Add the stubs directory to `workspace.library`, select LuaJIT, and load the
 context plugin with `runtime.plugin`:
+
+Cod3x also ships an example config at
+`examples/openmw-mod/.luarc.json`. Copy that file into your mod project root
+and replace `/absolute/path/to/Cod3x` with the folder where you extracted Cod3x.
+
 <!-- more -->
 
 ```json
 {
   "workspace.library": ["/path/to/openmw/lua_api_lls"],
-  "runtime.version": "Lua 5.1",
+  "runtime.version": "LuaJIT",
   "runtime.plugin": "/path/to/openmw/lua_api_lls/omw_context_plugin.lua"
 }
 ```
