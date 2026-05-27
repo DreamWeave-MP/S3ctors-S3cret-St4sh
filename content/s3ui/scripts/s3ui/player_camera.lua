@@ -39,6 +39,7 @@ local ACTOR_FORWARD = v3(0, 1, 0)
 local ACTOR_SCREEN_LEFT = v3(-1, 0, 0)
 
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
+local HALF_TURN_EPSILON = 0.0001
 -- Normalized horizontal screen position for the actor center: 0 = left edge, 0.5 = center, 1 = right edge.
 local INVENTORY_ACTOR_SCREEN_X = 0.8
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
@@ -60,6 +61,7 @@ local STATIC_CAMERA_EXTRA_DISTANCE = 15
 ---@field targetPosition openmw.util.Vector3
 ---@field startYaw number
 ---@field targetYaw number
+---@field yawDelta? number
 ---@field startPitch number
 ---@field targetPitch number
 
@@ -86,6 +88,14 @@ end
 
 local function lerpAngle(a, b, t)
 	return a + s3math.normalizeAngle(b - a) * t
+end
+
+local function closingYawDelta(startYaw, targetYaw)
+	local delta = s3math.normalizeAngle(targetYaw - startYaw)
+	if s3math.abs(s3math.abs(delta) - s3math.pi) <= HALF_TURN_EPSILON then
+		return -delta
+	end
+	return delta
 end
 
 local function closeTargetPosition(snapshot)
@@ -177,14 +187,16 @@ function M.restoreCamera(instant)
 		finishRestoreCamera()
 		return
 	end
+	local startYaw = Camera.getYaw()
 	animation = {
 		phase = transition.CLOSING,
 		elapsed = 0,
 		duration = transition.duration(transition.CLOSING),
 		startPosition = Camera.getPosition(),
 		targetPosition = closeTargetPosition(cameraSnapshot),
-		startYaw = Camera.getYaw(),
+		startYaw = startYaw,
 		targetYaw = cameraSnapshot.yaw,
+		yawDelta = closingYawDelta(startYaw, cameraSnapshot.yaw),
 		startPitch = Camera.getPitch(),
 		targetPitch = cameraSnapshot.pitch,
 	}
@@ -324,7 +336,8 @@ function updateAnimation(dt)
 	local position = animation.startPosition + (animation.targetPosition - animation.startPosition) * t
 	applyPose(
 		position,
-		lerpAngle(animation.startYaw, animation.targetYaw, t),
+		animation.yawDelta and animation.startYaw + animation.yawDelta * t
+			or lerpAngle(animation.startYaw, animation.targetYaw, t),
 		s3math.lerp(animation.startPitch, animation.targetPitch, t)
 	)
 
