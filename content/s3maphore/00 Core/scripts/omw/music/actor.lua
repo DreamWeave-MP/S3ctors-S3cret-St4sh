@@ -1,13 +1,18 @@
+---@omw-context local
+
 local I = require("openmw.interfaces")
 local core = require 'openmw.core'
 local self = require("openmw.self")
 local types = require("openmw.types")
 local nearby = require("openmw.nearby")
 
-local AI = I.AI
+local AI = assert(I.AI)
+local getTargets, isFleeing = AI.getTargets, AI.isFleeing
+
+local next, ipairs = next, ipairs
 
 if core.API_REVISION >= 91 then
-    local Combat = I.Combat
+    local Combat = assert(I.Combat)
     Combat.addOnHitHandler(
         function(attack)
             if not attack.successful then return end
@@ -27,8 +32,10 @@ local function emitTargetsChanged()
     end
 end
 
+local isDeathFinished, isInActorsProcessingRange = types.Actor.isDeathFinished, types.Actor.isInActorsProcessingRange
+local getStance, NoneStance = types.Actor.getStance, types.Actor.STANCE.Nothing
 local function onUpdate(dt)
-    if types.Actor.isDeathFinished(self) or not types.Actor.isInActorsProcessingRange(self) then
+    if isDeathFinished(self) or not isInActorsProcessingRange(self) then
         if next(targets) ~= nil then
             targets = {}
             emitTargetsChanged()
@@ -39,12 +46,12 @@ local function onUpdate(dt)
 
     -- Early-out for actors without targets and without combat state when the game is not paused
     -- TODO: use events or engine handlers to detect when targets change
-    local isStanceNothing = types.Actor.getStance(self) == types.Actor.STANCE.Nothing
-    if isStanceNothing and next(targets) == nil and not AI.isFleeing() and dt > 0 then
+    local isStanceNothing = getStance(self) == NoneStance
+    if isStanceNothing and next(targets) == nil and not isFleeing() and dt > 0 then
         return
     end
 
-    local newTargets = AI.getTargets("Combat")
+    local newTargets = getTargets("Combat")
 
     local changed = false
     if #newTargets ~= #targets then
