@@ -52,6 +52,10 @@ local STATIC_CAMERA_EXTRA_DISTANCE = 15
 ---@field position openmw.util.Vector3
 ---@field staticPosition openmw.util.Vector3
 ---@field firstPersonRestorePosition? openmw.util.Vector3
+---@field inventoryPosition? openmw.util.Vector3
+---@field inventoryYaw? number
+---@field inventoryPitch? number
+---@field inventoryYawDelta? number
 
 ---@class S3UI.CameraAnimation
 ---@field phase 'opening'|'closing'
@@ -77,6 +81,7 @@ local animation = nil
 ---@class S3UI.PlayerCameraModule
 local M = {}
 
+local applyPose
 local finishRestoreCamera
 local updateAnimation
 
@@ -91,12 +96,26 @@ local function lerpAngle(a, b, t)
 	return a + s3math.normalizeAngle(b - a) * t
 end
 
-local function closingYawDelta(startYaw, targetYaw)
+local function openingYawDelta(startYaw, targetYaw)
+	return s3math.normalizeAngle(targetYaw - startYaw)
+end
+
+local function closingYawDelta(snapshot, startYaw, targetYaw)
+	if snapshot.inventoryYawDelta then
+		return -snapshot.inventoryYawDelta
+	end
 	local delta = s3math.normalizeAngle(targetYaw - startYaw)
 	if s3math.abs(s3math.abs(delta) - s3math.pi) <= HALF_TURN_EPSILON then
 		return -delta
 	end
 	return delta
+end
+
+local function saveInventoryPose(snapshot, pose, openingStartYaw)
+	snapshot.inventoryPosition = pose.position
+	snapshot.inventoryYaw = pose.yaw
+	snapshot.inventoryPitch = pose.pitch
+	snapshot.inventoryYawDelta = openingYawDelta(openingStartYaw, pose.yaw)
 end
 
 local function closeTargetPosition(snapshot)
@@ -188,17 +207,24 @@ function M.restoreCamera(instant)
 		finishRestoreCamera()
 		return
 	end
-	local startYaw = Camera.getYaw()
+	local startPosition = cameraSnapshot.inventoryPosition or Camera.getPosition()
+	local startYaw = cameraSnapshot.inventoryYaw or Camera.getYaw()
+	local startPitch = cameraSnapshot.inventoryPitch or Camera.getPitch()
+
+	if cameraSnapshot.inventoryPosition then
+		applyPose(startPosition, startYaw, startPitch)
+	end
+
 	animation = {
 		phase = transition.CLOSING,
 		elapsed = 0,
 		duration = transition.duration(transition.CLOSING),
-		startPosition = Camera.getPosition(),
+		startPosition = startPosition,
 		targetPosition = closeTargetPosition(cameraSnapshot),
 		startYaw = startYaw,
 		targetYaw = cameraSnapshot.yaw,
-		yawDelta = closingYawDelta(startYaw, cameraSnapshot.yaw),
-		startPitch = Camera.getPitch(),
+		yawDelta = closingYawDelta(cameraSnapshot, startYaw, cameraSnapshot.yaw),
+		startPitch = startPitch,
 		targetPitch = cameraSnapshot.pitch,
 	}
 	currentUpdate = updateAnimation
@@ -270,7 +296,7 @@ local function inventoryPose()
 	}
 end
 
-local function applyPose(position, yaw, pitch)
+function applyPose(position, yaw, pitch)
 	Camera.setStaticPosition(position)
 	Camera.setYaw(yaw)
 	Camera.setPitch(pitch)
@@ -299,6 +325,9 @@ function M.showStaticInventoryCamera()
 	local startYaw = Camera.getYaw()
 	local startPitch = Camera.getPitch()
 	local target = inventoryPose()
+	if cameraSnapshot then
+		saveInventoryPose(cameraSnapshot, target, startYaw)
+	end
 
 	Camera.setMode(CameraMode.Static, true)
 	applyPose(startPosition, startYaw, startPitch)
@@ -311,6 +340,7 @@ function M.showStaticInventoryCamera()
 		targetPosition = target.position,
 		startYaw = startYaw,
 		targetYaw = target.yaw,
+		yawDelta = openingYawDelta(startYaw, target.yaw),
 		startPitch = startPitch,
 		targetPitch = target.pitch,
 	}
@@ -329,8 +359,13 @@ function updateAnimation(dt)
 
 	if animation.phase == transition.OPENING then
 		local target = inventoryPose()
+		if cameraSnapshot then
+			saveInventoryPose(cameraSnapshot, target, animation.startYaw)
+		end
 		animation.targetPosition = target.position
 		animation.targetYaw = target.yaw
+		animation.yawDelta = cameraSnapshot and cameraSnapshot.inventoryYawDelta
+			or openingYawDelta(animation.startYaw, target.yaw)
 		animation.targetPitch = target.pitch
 	end
 
