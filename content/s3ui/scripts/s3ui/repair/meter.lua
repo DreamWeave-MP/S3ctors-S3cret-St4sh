@@ -81,10 +81,10 @@ function M.make(strike)
 			},
 		},
 	}
-	chrome.addSimpleBorder(content, 's3ui_repair_meter', 0.7)
 	content:add(good)
 	content:add(perfect)
 	content:add(markerVisual)
+	chrome.addSimpleBorder(content, 's3ui_repair_meter', 1)
 	return {
 		name = 's3ui_repair_meter',
 		type = ui.TYPE.Widget,
