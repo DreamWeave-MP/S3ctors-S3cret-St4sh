@@ -33,6 +33,7 @@ local function reloadLuaAndReopenInventory()
 	devReloadStorage:set(DEV_RELOAD_REOPEN_KEY, true)
 	if I.UI.isWindowVisible(WINDOW) then
 		I.UI.removeMode(MODE)
+		inventoryWindow.destroyInstant()
 	end
 	inventoryCamera.restoreCamera(true)
 	omwDebug.reloadLua()
@@ -81,7 +82,10 @@ async:newUnsavableSimulationTimer(0, processDevReloadReopen)
 
 return {
 	engineHandlers = {
-		onUpdate = inventoryCamera.update,
+		onUpdate = function(dt)
+			inventoryCamera.update(dt)
+			inventoryWindow.update(dt)
+		end,
 		onKeyPress = function(key)
 			if key.code == input.KEY.F8 then
 				reloadLuaAndReopenInventory()

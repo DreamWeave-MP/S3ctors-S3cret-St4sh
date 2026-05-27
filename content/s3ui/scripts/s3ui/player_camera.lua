@@ -5,6 +5,7 @@ local I = require 'openmw.interfaces'
 local self = require 'openmw.self'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
+local transition = require 'scripts.s3ui.inventory.transition'
 local s3math = require 'scripts.s3.math'
 local nullFunction = require 'scripts.s3.nullFunction'
 
@@ -38,9 +39,6 @@ local ACTOR_FORWARD = v3(0, 1, 0)
 local ACTOR_SCREEN_LEFT = v3(-1, 0, 0)
 
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
-local HALF_PI = s3math.pi * 0.5
-local OPEN_DURATION = 0.28
-local CLOSE_DURATION = 0.22
 -- Normalized horizontal screen position for the actor center: 0 = left edge, 0.5 = center, 1 = right edge.
 local INVENTORY_ACTOR_SCREEN_X = 0.8
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
@@ -114,13 +112,6 @@ local function projectedFrontDistance(box, origin, front)
 	return s3math.max(0, distance)
 end
 
-local function animationProgress(anim, rawT)
-	if anim.phase == 'closing' then
-		return rawT
-	end
-	return s3math.sin(rawT * HALF_PI)
-end
-
 local function saveCamera()
 	if cameraSnapshot then
 		return
@@ -187,9 +178,9 @@ function M.restoreCamera(instant)
 		return
 	end
 	animation = {
-		phase = 'closing',
+		phase = transition.CLOSING,
 		elapsed = 0,
-		duration = CLOSE_DURATION,
+		duration = transition.duration(transition.CLOSING),
 		startPosition = Camera.getPosition(),
 		targetPosition = closeTargetPosition(cameraSnapshot),
 		startYaw = Camera.getYaw(),
@@ -300,9 +291,9 @@ function M.showStaticInventoryCamera()
 	applyPose(startPosition, startYaw, startPitch)
 	Camera.instantTransition()
 	animation = {
-		phase = 'opening',
+		phase = transition.OPENING,
 		elapsed = 0,
-		duration = OPEN_DURATION,
+		duration = transition.duration(transition.OPENING),
 		startPosition = startPosition,
 		targetPosition = target.position,
 		startYaw = startYaw,
@@ -321,9 +312,9 @@ function updateAnimation(dt)
 
 	animation.elapsed = animation.elapsed + (tonumber(dt) or 0)
 	local rawT = clamp01(animation.elapsed / animation.duration)
-	local t = animationProgress(animation, rawT)
+	local t = transition.progress(animation.phase, rawT)
 
-	if animation.phase == 'opening' then
+	if animation.phase == transition.OPENING then
 		local target = inventoryPose()
 		animation.targetPosition = target.position
 		animation.targetYaw = target.yaw
@@ -341,7 +332,7 @@ function updateAnimation(dt)
 		return
 	end
 
-	if animation.phase == 'closing' then
+	if animation.phase == transition.CLOSING then
 		finishRestoreCamera()
 	else
 		animation = nil

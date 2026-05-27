@@ -1,19 +1,19 @@
 ---@omw-context player
 
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local chrome = require("scripts.s3ui.inventory.chrome")
-local controls = require("scripts.s3ui.inventory.controls")
-local equipmentView = require("scripts.s3ui.inventory.equipment_view")
-local icons = require("scripts.s3ui.inventory.icons")
-local views = require("scripts.s3ui.inventory.views")
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local chrome = require 'scripts.s3ui.inventory.chrome'
+local controls = require 'scripts.s3ui.inventory.controls'
+local equipmentView = require 'scripts.s3ui.inventory.equipment_view'
+local icons = require 'scripts.s3ui.inventory.icons'
+local views = require 'scripts.s3ui.inventory.views'
 
 local v2 = util.vector2
 local M = {}
 
 local function makeReservedCompactDetail(metrics)
 	return {
-		name = "s3ui_compact_detail_reserved",
+		name = 's3ui_compact_detail_reserved',
 		type = ui.TYPE.Widget,
 		props = { relativeSize = metrics.compactDetailRelativeSize },
 	}
@@ -24,27 +24,27 @@ function M.make(ctx)
 	local bodyLayouts = {}
 	local mainView
 	bodyLayouts[#bodyLayouts + 1] = controls.makeToolbar(ctx.controlsCtx)
-	if ctx.state.primaryTab == "equipment" then
+	if ctx.state.primaryTab == 'equipment' then
 		mainView = equipmentView.make(ctx.equipmentCtx)
 	else
-		mainView = ctx.state.viewMode == "list" and views.makeList(ctx.entries, ctx.firstIndex, ctx.viewCtx)
+		mainView = ctx.state.viewMode == 'list' and views.makeList(ctx.entries, ctx.firstIndex, ctx.viewCtx)
 			or views.makeGrid(ctx.entries, ctx.firstIndex, ctx.viewCtx)
 	end
 	bodyLayouts[#bodyLayouts + 1] = {
-		name = "s3ui_main",
+		name = 's3ui_main',
 		type = ui.TYPE.Flex,
 		props = { horizontal = true, relativeSize = icons.MAIN_RELATIVE_SIZE, autoSize = false },
 		external = { grow = 1 },
-		content = ui.content({ controls.makeCategoryRail(ctx.controlsCtx), mainView }),
+		content = ui.content { controls.makeCategoryRail(ctx.controlsCtx), mainView },
 	}
-	if ctx.state.primaryTab == "inventory" and metrics.detailMode == "compact" then
+	if ctx.state.primaryTab == 'inventory' and metrics.detailMode == 'compact' then
 		bodyLayouts[#bodyLayouts + 1] = ctx.details.makeCompactDetailBar()
-	elseif ctx.state.primaryTab == "equipment" and metrics.detailMode == "compact" then
+	elseif ctx.state.primaryTab == 'equipment' and metrics.detailMode == 'compact' then
 		bodyLayouts[#bodyLayouts + 1] = makeReservedCompactDetail(metrics)
 	end
 
 	local inset = chrome.frameInset(chrome.FRAME_SIZE_PANEL)
-	local content = ui.content({
+	local content = ui.content {
 		{
 			type = ui.TYPE.Image,
 			props = {
@@ -55,7 +55,7 @@ function M.make(ctx)
 			},
 		},
 		{
-			name = "s3ui_body",
+			name = 's3ui_body',
 			type = ui.TYPE.Flex,
 			props = {
 				horizontal = false,
@@ -66,14 +66,14 @@ function M.make(ctx)
 			},
 			content = ui.content(bodyLayouts),
 		},
-	})
-	chrome.addOrnateFrame(content, "s3ui_inventory", chrome.FRAME_SIZE_PANEL, 1, chrome.FRAME_CORNER_SCALE_PANEL)
+	}
+	chrome.addOrnateFrame(content, 's3ui_inventory', chrome.FRAME_SIZE_PANEL, 1, chrome.FRAME_CORNER_SCALE_PANEL)
 	return {
 		type = ui.TYPE.Widget,
 		layer = ctx.rootLayer,
 		props = {
 			anchor = metrics.windowAnchor,
-			relativePosition = metrics.windowRelativePosition,
+			relativePosition = ctx.windowRelativePosition or metrics.windowRelativePosition,
 			size = metrics.windowSize,
 		},
 		content = content,

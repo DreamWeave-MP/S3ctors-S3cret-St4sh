@@ -1,22 +1,27 @@
 ---@omw-context player
 
-local async = require("openmw.async")
-local I = require("openmw.interfaces")
-local self = require("openmw.self")
-local ui = require("openmw.ui")
-local countModal = require("scripts.s3ui.components.count_modal")
-local actions = require("scripts.s3ui.inventory.actions")
-local builder = require("scripts.s3ui.inventory.builder")
-local data = require("scripts.s3ui.inventory.data")
-local detailsFactory = require("scripts.s3ui.inventory.details")
-local equipmentData = require("scripts.s3ui.inventory.equipment_data")
-local equipmentView = require("scripts.s3ui.inventory.equipment_view")
-local inventoryCamera = require("scripts.s3ui.player_camera")
-local layout = require("scripts.s3ui.inventory.layout")
-local stateFactory = require("scripts.s3ui.inventory.state")
+local async = require 'openmw.async'
+local I = require 'openmw.interfaces'
+local self = require 'openmw.self'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local countModal = require 'scripts.s3ui.components.count_modal'
+local actions = require 'scripts.s3ui.inventory.actions'
+local builder = require 'scripts.s3ui.inventory.builder'
+local data = require 'scripts.s3ui.inventory.data'
+local detailsFactory = require 'scripts.s3ui.inventory.details'
+local equipmentData = require 'scripts.s3ui.inventory.equipment_data'
+local equipmentView = require 'scripts.s3ui.inventory.equipment_view'
+local inventoryCamera = require 'scripts.s3ui.player_camera'
+local layout = require 'scripts.s3ui.inventory.layout'
+local stateFactory = require 'scripts.s3ui.inventory.state'
+local transition = require 'scripts.s3ui.inventory.transition'
+local nullFunction = require 'scripts.s3.nullFunction'
+
+local v2 = util.vector2
 
 local WINDOW = I.UI.WINDOW.Inventory
-local ROOT_LAYER = "Windows"
+local ROOT_LAYER = 'Windows'
 
 local M = {}
 
@@ -30,21 +35,77 @@ local activeLayoutMetrics = nil
 local state = stateFactory.new()
 local queueRebuild
 local equipmentCtx
+local updateAnimation
+
+---@type fun(dt: number)
+local currentUpdate = nullFunction
+
+---@type table|nil
+local animation = nil
 
 local function layoutMetrics()
 	return activeLayoutMetrics or layout.compute()
 end
 
-local details = detailsFactory.new({
+local details = detailsFactory.new {
 	metrics = layoutMetrics,
 	root = function()
 		return rootElement
 	end,
 	rootLayer = ROOT_LAYER,
-})
+}
 
 local function active()
 	return rootElement and rootElement.layout and I.UI.isWindowVisible(WINDOW)
+end
+
+local function stopAnimation()
+	animation = nil
+	currentUpdate = nullFunction
+end
+
+---@param metrics S3UI.InventoryMetrics
+local function offscreenLeftPosition(metrics)
+	return v2(-metrics.windowSize.x / metrics.screen.x, metrics.windowRelativePosition.y)
+end
+
+local function currentRootPosition()
+	if rootElement and rootElement.layout and rootElement.layout.props then
+		return rootElement.layout.props.relativePosition
+	end
+	return nil
+end
+
+local function applyRootPosition(position)
+	if not (rootElement and rootElement.layout) then
+		return
+	end
+	rootElement.layout.props.relativePosition = position
+	rootElement:update()
+end
+
+local function beginAnimation(phase, startPosition, targetPosition, onDone)
+	animation = {
+		phase = phase,
+		elapsed = 0,
+		duration = transition.duration(phase),
+		startPosition = startPosition,
+		targetPosition = targetPosition,
+		onDone = onDone,
+	}
+	applyRootPosition(startPosition)
+	currentUpdate = updateAnimation
+end
+
+local function finishAnimation()
+	local done = animation and animation.onDone or nil
+	if animation then
+		applyRootPosition(animation.targetPosition)
+	end
+	stopAnimation()
+	if done then
+		done()
+	end
 end
 
 local function clearSelection()
@@ -62,7 +123,7 @@ local function selectVisibleSlot(slotIndex, itemData)
 end
 
 local function updateEquipmentPanels(groups)
-	if state.primaryTab ~= "equipment" then
+	if state.primaryTab ~= 'equipment' then
 		return
 	end
 	groups = groups or equipmentData.collectGroups()
@@ -92,7 +153,7 @@ function queueRebuild()
 		return
 	end
 	rebuildEventQueued = true
-	self:sendEvent("S3UI_RebuildInventory")
+	self:sendEvent 'S3UI_RebuildInventory'
 end
 
 local function actionCtx()
@@ -108,9 +169,9 @@ local function openEquipmentCategory(slot)
 	if not categoryKey then
 		return
 	end
-	state:setPrimaryTab("inventory")
+	state:setPrimaryTab 'inventory'
 	for _, category in ipairs(data.CATEGORY_ORDER) do
-		if category.key ~= "all" then
+		if category.key ~= 'all' then
 			state.collapsedCategories[category.key] = category.key ~= categoryKey
 		end
 	end
@@ -216,29 +277,30 @@ local function selectEquipmentByOffset(delta)
 	end
 end
 
-local function makeInventoryLayout(items)
+local function makeInventoryLayout(items, rootPosition)
 	activeLayoutMetrics = layout.compute()
 	local metrics = activeLayoutMetrics
-	local entries = state.primaryTab == "inventory" and state:buildEntries(items, data.CATEGORY_ORDER) or {}
+	local windowRelativePosition = type(rootPosition) == 'function' and rootPosition(metrics) or rootPosition
+	local entries = state.primaryTab == 'inventory' and state:buildEntries(items, data.CATEGORY_ORDER) or {}
 	local equipmentGroups = equipmentData.collectGroups()
 	local selectedEquipmentSlot = equipmentData.findSlot(equipmentGroups, state.selectedEquipmentSlotKey)
 	if selectedEquipmentSlot then
 		state:selectEquipmentSlot(selectedEquipmentSlot)
-	elseif state.primaryTab == "equipment" then
+	elseif state.primaryTab == 'equipment' then
 		state.selectedEquipmentData = nil
 	end
 	state.lastEntryCount = #entries
 	state:clampScroll(#entries, metrics)
 	local firstIndex = state.scrollOffset + 1
 	state.selectedDisplayData = state:selectedEntryData(entries, firstIndex)
-	if state.primaryTab == "equipment" then
+	if state.primaryTab == 'equipment' then
 		equipmentLeftElement = equipmentView.createLeftPanel(equipmentCtx(equipmentGroups))
 		equipmentDetailElement = equipmentView.createDetailPanel(equipmentCtx(equipmentGroups))
 	else
 		equipmentLeftElement = nil
 		equipmentDetailElement = nil
 	end
-	return builder.make({
+	return builder.make {
 		controlsCtx = controlsCtx(),
 		details = details,
 		equipmentCtx = equipmentCtx(equipmentGroups),
@@ -248,10 +310,12 @@ local function makeInventoryLayout(items)
 		rootLayer = ROOT_LAYER,
 		state = state,
 		viewCtx = viewCtx(),
-	})
+		windowRelativePosition = windowRelativePosition,
+	}
 end
 
 local function destroyRoot()
+	stopAnimation()
 	countModal.hide()
 	state:bumpGeneration()
 	rebuildInventoryPending = false
@@ -269,10 +333,11 @@ local function destroyRoot()
 		rootElement:destroy()
 	end
 	rootElement = nil
+	activeLayoutMetrics = nil
 	state:resetTransientSelection()
 end
 
-local function rebuildRoot()
+local function rebuildRoot(rootPosition)
 	state:bumpGeneration()
 	details.hide()
 	if equipmentLeftElement and equipmentLeftElement.layout then
@@ -287,8 +352,8 @@ local function rebuildRoot()
 		rootElement:destroy()
 	end
 	details.destroy()
-	rootElement = ui.create(makeInventoryLayout(data.collectItems()))
-	if activeLayoutMetrics.detailMode == "side" then
+	rootElement = ui.create(makeInventoryLayout(data.collectItems(), rootPosition))
+	if activeLayoutMetrics.detailMode == 'side' then
 		details.createSideTooltip()
 	end
 	if state.selectedSlotIndex ~= nil and state.selectedDisplayData then
@@ -297,17 +362,60 @@ local function rebuildRoot()
 	state.selectedDisplayData = nil
 end
 
+function updateAnimation(dt)
+	if not animation then
+		currentUpdate = nullFunction
+		return
+	end
+
+	animation.elapsed = animation.elapsed + (tonumber(dt) or 0)
+	local rawT = animation.elapsed / animation.duration
+	local t = transition.progress(animation.phase, rawT)
+	applyRootPosition(animation.startPosition + (animation.targetPosition - animation.startPosition) * t)
+
+	if rawT >= 1 then
+		finishAnimation()
+	end
+end
+
 function M.show()
 	destroyRoot()
 	inventoryCamera.saveHudVisibility()
 	inventoryCamera.showStaticInventoryCamera()
-	rebuildRoot()
+	rebuildRoot(offscreenLeftPosition)
+	local metrics = activeLayoutMetrics
+	beginAnimation(transition.OPENING, offscreenLeftPosition(metrics), metrics.windowRelativePosition)
 end
 
 function M.hide()
-	destroyRoot()
+	if not (rootElement and rootElement.layout) then
+		destroyRoot()
+		inventoryCamera.restoreCamera()
+		inventoryCamera.restoreHudVisibility()
+		return
+	end
+
+	local metrics = activeLayoutMetrics or layout.compute()
+	local startPosition = currentRootPosition() or metrics.windowRelativePosition
+	state:bumpGeneration()
+	rebuildInventoryPending = false
+	rebuildEventQueued = false
+	countModal.hide()
+	details.hide()
+	beginAnimation(transition.CLOSING, startPosition, offscreenLeftPosition(metrics), function()
+		destroyRoot()
+		inventoryCamera.restoreHudVisibility()
+	end)
 	inventoryCamera.restoreCamera()
+end
+
+function M.destroyInstant()
+	destroyRoot()
 	inventoryCamera.restoreHudVisibility()
+end
+
+function M.update(dt)
+	currentUpdate(dt)
 end
 
 function M.processPendingRebuild()
@@ -319,14 +427,14 @@ function M.processPendingRebuild()
 	if not active() then
 		return
 	end
-	rebuildRoot()
+	rebuildRoot(currentRootPosition())
 end
 
 function M.scrollRows(deltaRows)
 	if not active() then
 		return
 	end
-	if state.primaryTab == "equipment" then
+	if state.primaryTab == 'equipment' then
 		selectEquipmentSlot(
 			equipmentData.spatialNeighbor(equipmentData.collectGroups(), state.selectedEquipmentSlotKey, deltaRows)
 		)
@@ -341,7 +449,7 @@ function M.home()
 	if not active() then
 		return
 	end
-	if state.primaryTab == "equipment" then
+	if state.primaryTab == 'equipment' then
 		local slots = orderedEquipmentSlots(equipmentData.collectGroups())
 		selectEquipmentSlot(firstEquipmentSlot(slots))
 	elseif state:home() then
@@ -353,7 +461,7 @@ function M.endScroll()
 	if not active() then
 		return
 	end
-	if state.primaryTab == "equipment" then
+	if state.primaryTab == 'equipment' then
 		local slots = orderedEquipmentSlots(equipmentData.collectGroups())
 		selectEquipmentSlot(lastEquipmentSlot(slots))
 	elseif state:endScroll(layoutMetrics()) then
@@ -365,7 +473,7 @@ function M.navigateSelection(direction)
 	if not active() then
 		return
 	end
-	if state.primaryTab == "equipment" then
+	if state.primaryTab == 'equipment' then
 		selectEquipmentByOffset(direction)
 		return
 	end
@@ -401,7 +509,7 @@ function M.navigateSelection(direction)
 		return
 	end
 	local entry = entries[targetIndex]
-	selectVisibleSlot(slotIndex, entry and entry.kind == "item" and entry.data or nil)
+	selectVisibleSlot(slotIndex, entry and entry.kind == 'item' and entry.data or nil)
 	if state.scrollOffset ~= oldOffset then
 		queueRebuild()
 	end
@@ -411,7 +519,7 @@ function M.activateSelection()
 	if not active() then
 		return
 	end
-	if state.primaryTab == "equipment" then
+	if state.primaryTab == 'equipment' then
 		local slot = equipmentData.findSlot(equipmentData.collectGroups(), state.selectedEquipmentSlotKey)
 		if slot and slot.itemData then
 			activateEquipmentSlot(slot)
