@@ -9,12 +9,14 @@ local storage = require 'openmw.storage'
 local countModal = require 'scripts.s3ui.components.count_modal'
 local inventoryWindow = require 'scripts.s3ui.inventory.window'
 local inventoryCamera = require 'scripts.s3ui.player_camera'
+local repairWindow = require 'scripts.s3ui.repair.window'
 local travelWindow = require 'scripts.s3ui.travel.window'
 
 ---@class S3UI.PlayerScriptModule
 
 local UI_WINDOWS = I.UI.WINDOW
 local WINDOW = UI_WINDOWS.Inventory
+local REPAIR_WINDOW = UI_WINDOWS.Repair
 local TRAVEL_WINDOW = UI_WINDOWS.Travel
 local MODE = I.UI.MODE.Interface
 local DEV_RELOAD_SECTION = 'S3UI_DevReload'
@@ -64,6 +66,7 @@ local function registerInventoryWindow()
 		return
 	end
 	I.UI.registerWindow(WINDOW, inventoryWindow.show, inventoryWindow.hide)
+	I.UI.registerWindow(REPAIR_WINDOW, repairWindow.show, repairWindow.hide)
 	I.UI.registerWindow(TRAVEL_WINDOW, travelWindow.show, travelWindow.hide)
 	for _, windowName in ipairs(EMPTY_WINDOW_OVERRIDES) do
 		I.UI.registerWindow(windowName, emptyWindowOverride, emptyWindowOverride)
@@ -87,11 +90,14 @@ return {
 		onUpdate = function(dt)
 			inventoryCamera.update(dt)
 			inventoryWindow.update(dt)
+			repairWindow.update(dt)
 		end,
 		onKeyPress = function(key)
 			if key.code == input.KEY.F8 then
 				reloadLuaAndReopenInventory()
 			elseif countModal.handleKeyPress(key) then
+				return
+			elseif repairWindow.handleKeyPress(key) then
 				return
 			elseif travelWindow.handleKeyPress(key) then
 				return
@@ -123,6 +129,14 @@ return {
 					travelWindow.scroll(-1)
 				elseif vertical < 0 then
 					travelWindow.scroll(1)
+				end
+				return
+			end
+			if repairWindow.active() then
+				if vertical > 0 then
+					repairWindow.scroll(-1)
+				elseif vertical < 0 then
+					repairWindow.scroll(1)
 				end
 				return
 			end
