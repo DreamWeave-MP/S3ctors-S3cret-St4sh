@@ -151,7 +151,6 @@ function M.applyConditionGain(repairItem, amount)
 	end
 	local before = type(itemData.condition) == 'number' and itemData.condition or repairItem.condition
 	local after = s3math.min(repairItem.maxCondition, before + s3math.max(0, amount))
-	itemData.condition = after
 	repairItem.condition = after
 	repairItem.conditionPercent = s3math.clamp(after / repairItem.maxCondition, 0, 1)
 	repairItem.damage = repairItem.maxCondition - after
@@ -171,7 +170,6 @@ function M.consumeToolUses(toolInfo, amount)
 	end
 	local before = type(itemData.condition) == 'number' and itemData.condition or toolInfo.uses
 	local after = s3math.max(0, before - s3math.max(0, amount))
-	itemData.condition = after
 	toolInfo.uses = after
 	return before - after
 end

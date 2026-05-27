@@ -22,7 +22,6 @@ local HOVER_COLOR = util.color.rgb(1, 0.94, 0.74)
 local HIGHLIGHT_COLOR = util.color.rgb(0.86, 0.66, 0.28)
 local NORMAL_ALPHA = 0.22
 local HIGHLIGHT_ALPHA = 0.32
-local CENTER = 0.5
 
 local function text(value, props, template)
 	return chrome.textLine(value, template or I.MWUI.templates.textNormal, props)
@@ -159,104 +158,13 @@ local function itemRows(ctx)
 	}
 end
 
-function M.meterLayout(ctx)
-	local strike = ctx.strike
-	local marker = strike and strike.marker or 0
-	local goodLeft = strike and CENTER - strike.goodHalfWidth or 0.4
-	local goodWidth = strike and strike.goodHalfWidth * 2 or 0.2
-	local perfectLeft = strike and CENTER - strike.perfectHalfWidth or 0.48
-	local perfectWidth = strike and strike.perfectHalfWidth * 2 or 0.04
-	local content = ui.content {
-		{
-			name = 's3ui_repair_meter_background',
-			type = ui.TYPE.Image,
-			props = {
-				resource = chrome.WHITE_TEXTURE,
-				color = chrome.BACKGROUND_COLOR,
-				alpha = 0.5,
-				relativeSize = v2(1, 1),
-			},
-		},
-		{
-			name = 's3ui_repair_meter_good',
-			type = ui.TYPE.Image,
-			props = {
-				resource = chrome.WHITE_TEXTURE,
-				color = util.color.rgb(0.62, 0.48, 0.2),
-				alpha = 0.75,
-				relativePosition = v2(goodLeft, 0),
-				relativeSize = v2(goodWidth, 1),
-			},
-		},
-		{
-			name = 's3ui_repair_meter_perfect',
-			type = ui.TYPE.Image,
-			props = {
-				resource = chrome.WHITE_TEXTURE,
-				color = util.color.rgb(0.95, 0.82, 0.35),
-				alpha = 0.92,
-				relativePosition = v2(perfectLeft, 0),
-				relativeSize = v2(perfectWidth, 1),
-			},
-		},
-		{
-			name = 's3ui_repair_meter_marker',
-			type = ui.TYPE.Image,
-			props = {
-				resource = chrome.WHITE_TEXTURE,
-				color = HOVER_COLOR,
-				alpha = 1,
-				relativePosition = v2(marker, 0),
-				size = v2(4, 0),
-				relativeSize = v2(0, 1),
-			},
-		},
-	}
-	chrome.addSimpleBorder(content, 's3ui_repair_meter', 0.7, 2)
-	return {
-		name = 's3ui_repair_meter',
-		type = ui.TYPE.Widget,
-		props = { relativeSize = v2(1, 0), size = v2(0, 42) },
-		content = content,
-	}
-end
-
-local function meterParts(element)
-	local layout = element and element.layout
-	local content = layout and layout.content
-	if not content then
-		return nil, nil, nil
-	end
-	return content.s3ui_repair_meter_marker, content.s3ui_repair_meter_good, content.s3ui_repair_meter_perfect
-end
-
-function M.updateMeter(element, strike, updateBands)
-	local marker, good, perfect = meterParts(element)
-	if not (marker and marker.props and strike) then
-		return false
-	end
-	marker.props.relativePosition = v2(strike.marker, 0)
-	if updateBands then
-		local goodLeft = CENTER - strike.goodHalfWidth
-		local goodWidth = strike.goodHalfWidth * 2
-		local perfectLeft = CENTER - strike.perfectHalfWidth
-		local perfectWidth = strike.perfectHalfWidth * 2
-		if good and good.props then
-			good.props.relativePosition = v2(goodLeft, 0)
-			good.props.relativeSize = v2(goodWidth, 1)
-		end
-		if perfect and perfect.props then
-			perfect.props.relativePosition = v2(perfectLeft, 0)
-			perfect.props.relativeSize = v2(perfectWidth, 1)
-		end
-	end
-	element:update()
-	return true
-end
-
 local function selectedPanel(ctx)
 	local item = ctx.selectedItem
-	local status = ctx.lastMessage or 'Time the marker inside the gold band, then strike.'
+	local status = ctx.lastMessage
+		or (
+			ctx.meterRunning and 'Time the marker inside the gold band, then Activate to strike.'
+			or 'Press Activate to start the repair strike.'
+		)
 	if not item then
 		return text('Select a damaged item to begin.', {
 			textSize = 17,
@@ -267,6 +175,7 @@ local function selectedPanel(ctx)
 		})
 	end
 	return {
+		name = 's3ui_repair_selected_panel',
 		type = ui.TYPE.Flex,
 		props = { horizontal = false, relativeSize = v2(1, 1), autoSize = false },
 		content = ui.content {
@@ -283,7 +192,7 @@ local function selectedPanel(ctx)
 				size = v2(0, 26),
 				textColor = TEXT_COLOR,
 			}),
-			ctx.meterElement or M.meterLayout(ctx),
+			ctx.meterLayout,
 			text(status, {
 				textSize = 16,
 				textAlignH = ui.ALIGNMENT.Center,
@@ -304,6 +213,7 @@ function M.make(ctx)
 	local panelContent = ui.content {
 		panelBackground(),
 		{
+			name = 's3ui_repair_panel_body',
 			type = ui.TYPE.Flex,
 			props = {
 				horizontal = false,
@@ -340,15 +250,18 @@ function M.make(ctx)
 					}
 				),
 				{
+					name = 's3ui_repair_panel_columns',
 					type = ui.TYPE.Flex,
 					props = { horizontal = true, relativeSize = v2(1, 1), autoSize = false },
 					content = ui.content {
 						{
+							name = 's3ui_repair_item_wrapper',
 							type = ui.TYPE.Widget,
 							props = { relativeSize = v2(0.46, 1) },
 							content = ui.content { itemRows(ctx) },
 						},
 						{
+							name = 's3ui_repair_detail_wrapper',
 							type = ui.TYPE.Widget,
 							props = { relativeSize = v2(0.54, 1), position = v2(18, 0), size = v2(-18, 0) },
 							content = ui.content { selectedPanel(ctx) },

@@ -83,6 +83,14 @@ input.registerTriggerHandler(
 		async:newUnsavableSimulationTimer(0, closeJournalMode)
 	end)
 )
+input.registerTriggerHandler(
+	'Activate',
+	async:callback(function()
+		if repairWindow.active() then
+			repairWindow.activateStrike()
+		end
+	end)
+)
 async:newUnsavableSimulationTimer(0, processDevReloadReopen)
 
 return {
@@ -90,6 +98,8 @@ return {
 		onUpdate = function(dt)
 			inventoryCamera.update(dt)
 			inventoryWindow.update(dt)
+		end,
+		onFrame = function(dt)
 			repairWindow.update(dt)
 		end,
 		onKeyPress = function(key)
@@ -98,6 +108,8 @@ return {
 			elseif countModal.handleKeyPress(key) then
 				return
 			elseif repairWindow.handleKeyPress(key) then
+				return
+			elseif repairWindow.active() and key.code == input.KEY.Space then
 				return
 			elseif travelWindow.handleKeyPress(key) then
 				return
