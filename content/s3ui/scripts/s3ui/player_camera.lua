@@ -24,6 +24,7 @@ local Camera = {
 	setYaw = camera.setYaw,
 }
 local CameraMode = {
+	FirstPerson = camera.MODE.FirstPerson,
 	Static = camera.MODE.Static,
 }
 local Transform = {
@@ -33,6 +34,8 @@ local Ui = {
 	screenSize = ui.screenSize,
 }
 local getSelfBoundingBox = self.getBoundingBox
+local ACTOR_FORWARD = v3(0, 1, 0)
+local ACTOR_SCREEN_LEFT = v3(-1, 0, 0)
 
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
 local OPEN_DURATION = 0.28
@@ -46,6 +49,7 @@ local STATIC_CAMERA_EXTRA_DISTANCE = 15
 ---@field focalOffset openmw.util.Vector2
 ---@field position openmw.util.Vector3
 ---@field staticPosition openmw.util.Vector3
+---@field firstPersonRestorePosition? openmw.util.Vector3
 
 ---@class S3UI.CameraAnimation
 ---@field phase 'opening'|'closing'
@@ -83,18 +87,60 @@ local function lerpAngle(a, b, t)
 	return a + s3math.normalizeAngle(b - a) * t
 end
 
+local function closeTargetPosition(snapshot)
+	if snapshot.mode ~= CameraMode.FirstPerson then
+		return snapshot.position
+	end
+	return snapshot.firstPersonRestorePosition or snapshot.position
+end
+
+---@param box table
+---@param origin openmw.util.Vector3
+---@param front openmw.util.Vector3
+---@return number
+local function projectedFrontDistance(box, origin, front)
+	local distance = -math.huge
+
+	for _, vertex in ipairs(box.vertices) do
+		local projectedFront = (vertex - origin) * front
+		if projectedFront > distance then
+			distance = projectedFront
+		end
+	end
+
+	return math.max(0, distance)
+end
+
+local function animationProgress(anim, rawT)
+	if anim.phase == 'closing' then
+		return s3math.smoothstep(0, 1, rawT)
+	end
+	return s3math.smootherstep(0, 1, rawT)
+end
+
 local function saveCamera()
 	if cameraSnapshot then
 		return
 	end
 	local position = Camera.getPosition()
+	local mode = Camera.getMode()
+	local yaw = Camera.getYaw()
+	local firstPersonRestorePosition = nil
+
+	if mode == CameraMode.FirstPerson then
+		local bodyBounds = getSelfBoundingBox(self)
+		local forward = Transform.rotateZ(yaw) * ACTOR_FORWARD
+		firstPersonRestorePosition = position + forward * projectedFrontDistance(bodyBounds, position, forward)
+	end
+
 	cameraSnapshot = {
-		mode = Camera.getMode(),
-		yaw = Camera.getYaw(),
+		mode = mode,
+		yaw = yaw,
 		pitch = Camera.getPitch(),
 		focalOffset = Camera.getFocalPreferredOffset(),
 		position = position,
 		staticPosition = position,
+		firstPersonRestorePosition = firstPersonRestorePosition,
 	}
 end
 
@@ -142,7 +188,7 @@ function M.restoreCamera(instant)
 		elapsed = 0,
 		duration = CLOSE_DURATION,
 		startPosition = Camera.getPosition(),
-		targetPosition = cameraSnapshot.position,
+		targetPosition = closeTargetPosition(cameraSnapshot),
 		startYaw = Camera.getYaw(),
 		targetYaw = cameraSnapshot.yaw,
 		startPitch = Camera.getPitch(),
@@ -218,8 +264,9 @@ end
 
 local function inventoryPose()
 	local actorYaw = self.rotation:getYaw()
-	local front = Transform.rotateZ(actorYaw) * v3(0, 1, 0)
-	local screenRight = Transform.rotateZ(actorYaw) * v3(-1, 0, 0)
+	local actorFacing = Transform.rotateZ(actorYaw)
+	local front = actorFacing * ACTOR_FORWARD
+	local screenRight = actorFacing * ACTOR_SCREEN_LEFT
 	local bodyBounds = getSelfBoundingBox(self)
 	local frame = playerFrame(bodyBounds, screenRight)
 	local screen = Ui.screenSize()
@@ -292,7 +339,7 @@ function updateAnimation(dt)
 
 	animation.elapsed = animation.elapsed + (tonumber(dt) or 0)
 	local rawT = clamp01(animation.elapsed / animation.duration)
-	local t = s3math.smootherstep(0, 1, rawT)
+	local t = animationProgress(animation, rawT)
 
 	if animation.phase == 'opening' then
 		local target = inventoryPose()
