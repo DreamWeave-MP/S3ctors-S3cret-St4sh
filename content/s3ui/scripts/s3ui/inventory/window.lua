@@ -58,7 +58,10 @@ local details = detailsFactory.new {
 }
 
 local function active()
-	return rootElement and rootElement.layout and I.UI.isWindowVisible(WINDOW)
+	return rootElement
+		and rootElement.layout
+		and I.UI.isWindowVisible(WINDOW)
+		and not (animation and animation.phase == transition.CLOSING)
 end
 
 local function stopAnimation()
@@ -158,8 +161,38 @@ function queueRebuild()
 	self:sendEvent 'S3UI_RebuildInventory'
 end
 
+local function destroyRoot()
+	stopAnimation()
+	countModal.hide()
+	state:bumpGeneration()
+	rebuildInventoryPending = false
+	rebuildEventQueued = false
+	details.destroy()
+	if equipmentLeftElement and equipmentLeftElement.layout then
+		equipmentLeftElement:destroy()
+	end
+	equipmentLeftElement = nil
+	if equipmentDetailElement and equipmentDetailElement.layout then
+		equipmentDetailElement:destroy()
+	end
+	equipmentDetailElement = nil
+	if rootElement and rootElement.layout then
+		rootElement:destroy()
+	end
+	rootElement = nil
+	activeLayoutMetrics = nil
+	state:resetTransientSelection()
+end
+
+local function closeInventoryForRepair(onClosed)
+	M.hide(onClosed)
+end
+
 local function actionCtx()
-	return { queueRebuild = queueRebuild }
+	return {
+		closeInventoryForRepair = closeInventoryForRepair,
+		queueRebuild = queueRebuild,
+	}
 end
 
 local function activateEquipmentSlot(slot)
@@ -209,6 +242,7 @@ local function viewCtx()
 	return {
 		async = async,
 		clearSelection = clearSelection,
+		closeInventoryForRepair = closeInventoryForRepair,
 		metrics = layoutMetrics,
 		queueRebuild = queueRebuild,
 		selectSlot = selectVisibleSlot,
@@ -267,29 +301,6 @@ local function makeInventoryLayout(items, rootPosition)
 	}
 end
 
-local function destroyRoot()
-	stopAnimation()
-	countModal.hide()
-	state:bumpGeneration()
-	rebuildInventoryPending = false
-	rebuildEventQueued = false
-	details.destroy()
-	if equipmentLeftElement and equipmentLeftElement.layout then
-		equipmentLeftElement:destroy()
-	end
-	equipmentLeftElement = nil
-	if equipmentDetailElement and equipmentDetailElement.layout then
-		equipmentDetailElement:destroy()
-	end
-	equipmentDetailElement = nil
-	if rootElement and rootElement.layout then
-		rootElement:destroy()
-	end
-	rootElement = nil
-	activeLayoutMetrics = nil
-	state:resetTransientSelection()
-end
-
 local function rebuildRoot(rootPosition)
 	state:bumpGeneration()
 	details.hide()
@@ -340,11 +351,17 @@ function M.show()
 	beginAnimation(transition.OPENING, offscreenLeftPosition(metrics), metrics.windowRelativePosition)
 end
 
-function M.hide()
+function M.hide(onHidden)
+	if animation and animation.phase == transition.CLOSING then
+		return
+	end
 	if not (rootElement and rootElement.layout) then
 		destroyRoot()
 		inventoryCamera.restoreCamera()
 		inventoryCamera.restoreHudVisibility()
+		if onHidden then
+			onHidden()
+		end
 		return
 	end
 
@@ -358,6 +375,9 @@ function M.hide()
 	beginAnimation(transition.CLOSING, startPosition, offscreenLeftPosition(metrics), function()
 		destroyRoot()
 		inventoryCamera.restoreHudVisibility()
+		if onHidden then
+			onHidden()
+		end
 	end)
 	inventoryCamera.restoreCamera()
 end

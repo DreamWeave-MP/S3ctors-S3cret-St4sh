@@ -52,6 +52,7 @@
 ---@field state S3UI.InventoryState
 
 ---@class S3UI.InventoryViewContext: S3UI.InventoryControlContext
+---@field closeInventoryForRepair fun(onClosed?: fun())
 ---@field selectSlot fun(slotIndex: integer, itemData: S3UI.InventoryItemData|nil)
 
 ---@class S3UI.InventoryNavigationContext
