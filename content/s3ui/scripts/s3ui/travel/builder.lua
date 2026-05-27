@@ -17,7 +17,10 @@ local BUTTON_SIZE = v2(104, 34)
 local ROWS_VISIBLE = 8
 local SERVICE_TEXT_COLOR = util.color.commaString(core.getGMST 'FontColor_color_normal')
 local HOVER_COLOR = util.color.rgb(1, 0.94, 0.74)
-local SELECTED_ALPHA = 0.48
+local HIGHLIGHT_BACKGROUND_COLOR = util.color.rgb(0.86, 0.66, 0.28)
+local HIGHLIGHT_ALPHA = 0.24
+local BUTTON_NORMAL_ALPHA = 0.38
+local BUTTON_HIGHLIGHT_ALPHA = 0.3
 local NORMAL_ALPHA = 0.25
 
 local function text(text, props, template)
@@ -37,13 +40,14 @@ local function panelBackground()
 end
 
 local function button(ctx, name, label, callback)
+	local highlighted = ctx.hovered == name
 	local content = ui.content {
 		{
 			type = ui.TYPE.Image,
 			props = {
 				resource = chrome.WHITE_TEXTURE,
-				color = chrome.BACKGROUND_COLOR,
-				alpha = 0.38,
+				color = highlighted and HIGHLIGHT_BACKGROUND_COLOR or chrome.BACKGROUND_COLOR,
+				alpha = highlighted and BUTTON_HIGHLIGHT_ALPHA or BUTTON_NORMAL_ALPHA,
 				relativeSize = v2(1, 1),
 			},
 		},
@@ -53,10 +57,10 @@ local function button(ctx, name, label, callback)
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
 			relativeSize = v2(1, 1),
-			textColor = ctx.hovered == name and HOVER_COLOR or SERVICE_TEXT_COLOR,
+			textColor = highlighted and HOVER_COLOR or SERVICE_TEXT_COLOR,
 		}),
 	}
-	chrome.addSimpleBorder(content, name, 0.78, 2)
+	chrome.addSimpleBorder(content, name, highlighted and 0.95 or 0.78, 2)
 	return {
 		name = name,
 		type = ui.TYPE.Widget,
@@ -83,8 +87,8 @@ local function destinationRow(ctx, row, visualIndex)
 			type = ui.TYPE.Image,
 			props = {
 				resource = chrome.WHITE_TEXTURE,
-				color = chrome.BACKGROUND_COLOR,
-				alpha = selected and SELECTED_ALPHA or NORMAL_ALPHA,
+				color = selected and HIGHLIGHT_BACKGROUND_COLOR or chrome.BACKGROUND_COLOR,
+				alpha = selected and HIGHLIGHT_ALPHA or NORMAL_ALPHA,
 				relativeSize = v2(1, 1),
 			},
 		},
@@ -96,7 +100,7 @@ local function destinationRow(ctx, row, visualIndex)
 			textAlignH = ui.ALIGNMENT.Start,
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
-			textColor = SERVICE_TEXT_COLOR,
+			textColor = selected and HOVER_COLOR or SERVICE_TEXT_COLOR,
 		}),
 		text(tostring(row.price) .. ' gp', {
 			anchor = v2(1, 0),
@@ -108,7 +112,7 @@ local function destinationRow(ctx, row, visualIndex)
 			textAlignH = ui.ALIGNMENT.End,
 			textAlignV = ui.ALIGNMENT.Center,
 			autoSize = false,
-			textColor = SERVICE_TEXT_COLOR,
+			textColor = selected and HOVER_COLOR or SERVICE_TEXT_COLOR,
 		}),
 	}
 	chrome.addSimpleBorder(content, name, selected and 0.9 or 0.5, 2)
