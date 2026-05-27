@@ -9,6 +9,7 @@ local util = require 'openmw.util'
 local v3 = util.vector3
 
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
+local FINALIZE_EVENT_DELAY = 1
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
 
 ---@class S3UI.CameraSnapshot
@@ -33,6 +34,13 @@ local function bumpCameraGeneration()
 	cameraGeneration = cameraGeneration + 1
 	pendingFinalizeGeneration = nil
 	return cameraGeneration
+end
+
+local function queueFinalizeCamera(generation, remainingEvents)
+	self:sendEvent('S3UI_FinalizeInventoryCamera', {
+		generation = generation,
+		remainingEvents = remainingEvents,
+	})
 end
 
 local function saveCamera()
@@ -182,19 +190,19 @@ function M.showStaticInventoryCamera()
 	disableInventoryCameraControls()
 	local generation = bumpCameraGeneration()
 
-	if cameraSnapshot and cameraSnapshot.mode == camera.MODE.FirstPerson then
-		camera.setMode(camera.MODE.Preview, true)
-		camera.instantTransition()
-		pendingFinalizeGeneration = generation
-		self:sendEvent('S3UI_FinalizeInventoryCamera', generation)
-		return
-	end
-
-	finalizeStaticInventoryCamera()
+	camera.setMode(camera.MODE.Preview, true)
+	camera.instantTransition()
+	pendingFinalizeGeneration = generation
+	queueFinalizeCamera(generation, FINALIZE_EVENT_DELAY)
 end
 
-function M.finalizePendingStaticInventoryCamera(generation)
-	if generation ~= pendingFinalizeGeneration then
+function M.finalizePendingStaticInventoryCamera(payload)
+	if type(payload) ~= 'table' or payload.generation ~= pendingFinalizeGeneration then
+		return
+	end
+	local remainingEvents = math.max(0, math.floor(tonumber(payload.remainingEvents) or 0))
+	if remainingEvents > 0 then
+		queueFinalizeCamera(payload.generation, remainingEvents - 1)
 		return
 	end
 	pendingFinalizeGeneration = nil
