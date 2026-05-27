@@ -5,11 +5,14 @@ local I = require 'openmw.interfaces'
 local self = require 'openmw.self'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
+local s3math = require 'scripts.s3.math'
+local nullFunction = require 'scripts.s3.nullFunction'
 
 local v3 = util.vector3
 
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
-local FINALIZE_EVENT_DELAY = 1
+local OPEN_DURATION = 0.28
+local CLOSE_DURATION = 0.2
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
 
 ---@class S3UI.CameraSnapshot
@@ -17,7 +20,19 @@ local STATIC_CAMERA_EXTRA_DISTANCE = 15
 ---@field yaw number
 ---@field pitch number
 ---@field focalOffset openmw.util.Vector2
+---@field position openmw.util.Vector3
 ---@field staticPosition openmw.util.Vector3
+
+---@class S3UI.CameraAnimation
+---@field phase 'opening'|'closing'
+---@field elapsed number
+---@field duration number
+---@field startPosition openmw.util.Vector3
+---@field targetPosition openmw.util.Vector3
+---@field startYaw number
+---@field targetYaw number
+---@field startPitch number
+---@field targetPitch number
 
 ---@type S3UI.CameraSnapshot|nil
 local cameraSnapshot = nil
@@ -25,34 +40,37 @@ local cameraSnapshot = nil
 ---@type boolean|nil
 local hudVisibleSnapshot = nil
 
-local cameraGeneration = 0
-local pendingFinalizeGeneration = nil
+---@type S3UI.CameraAnimation|nil
+local animation = nil
 
 local M = {}
 
-local function bumpCameraGeneration()
-	cameraGeneration = cameraGeneration + 1
-	pendingFinalizeGeneration = nil
-	return cameraGeneration
+local finishRestoreCamera
+local updateAnimation
+
+---@type fun(dt: number)
+local currentUpdate = nullFunction
+
+local function clamp01(value)
+	return s3math.clamp(value, 0, 1)
 end
 
-local function queueFinalizeCamera(generation, remainingEvents)
-	self:sendEvent('S3UI_FinalizeInventoryCamera', {
-		generation = generation,
-		remainingEvents = remainingEvents,
-	})
+local function lerpAngle(a, b, t)
+	return a + s3math.normalizeAngle(b - a) * t
 end
 
 local function saveCamera()
 	if cameraSnapshot then
 		return
 	end
+	local position = camera.getPosition()
 	cameraSnapshot = {
 		mode = camera.getMode(),
 		yaw = camera.getYaw(),
 		pitch = camera.getPitch(),
 		focalOffset = camera.getFocalPreferredOffset(),
-		staticPosition = camera.getPosition(),
+		position = position,
+		staticPosition = position,
 	}
 end
 
@@ -86,11 +104,37 @@ local function enableInventoryCameraControls()
 	end
 end
 
-function M.restoreCamera()
+---@param instant? boolean
+function M.restoreCamera(instant)
 	if not cameraSnapshot then
 		return
 	end
-	bumpCameraGeneration()
+	if instant then
+		finishRestoreCamera()
+		return
+	end
+	animation = {
+		phase = 'closing',
+		elapsed = 0,
+		duration = CLOSE_DURATION,
+		startPosition = camera.getPosition(),
+		targetPosition = cameraSnapshot.position,
+		startYaw = camera.getYaw(),
+		targetYaw = cameraSnapshot.yaw,
+		startPitch = camera.getPitch(),
+		targetPitch = cameraSnapshot.pitch,
+	}
+	currentUpdate = updateAnimation
+end
+
+function finishRestoreCamera()
+	if not cameraSnapshot then
+		animation = nil
+		currentUpdate = nullFunction
+		return
+	end
+	animation = nil
+	currentUpdate = nullFunction
 	enableInventoryCameraControls()
 
 	camera.setFocalPreferredOffset(cameraSnapshot.focalOffset)
@@ -148,7 +192,7 @@ local function playerFrame(box, screenRight)
 	}
 end
 
-local function finalizeStaticInventoryCamera()
+local function inventoryPose()
 	local actorYaw = self.object.rotation:getYaw()
 	local front = util.transform.rotateZ(actorYaw) * v3(0, 1, 0)
 	local screenRight = util.transform.rotateZ(actorYaw) * v3(-1, 0, 0)
@@ -162,11 +206,17 @@ local function finalizeStaticInventoryCamera()
 	local lateralOffset = halfViewWidth - frame.rightEdge - frame.width
 	local pos = frame.target + front * distance - screenRight * lateralOffset
 
-	camera.setMode(camera.MODE.Static, true)
-	camera.setStaticPosition(pos)
-	camera.setYaw(actorYaw + math.pi)
-	camera.setPitch(0)
-	camera.instantTransition()
+	return {
+		position = pos,
+		yaw = actorYaw + math.pi,
+		pitch = 0,
+	}
+end
+
+local function applyPose(position, yaw, pitch)
+	camera.setStaticPosition(position)
+	camera.setYaw(yaw)
+	camera.setPitch(pitch)
 end
 
 function M.saveHudVisibility()
@@ -188,25 +238,66 @@ end
 function M.showStaticInventoryCamera()
 	saveCamera()
 	disableInventoryCameraControls()
-	local generation = bumpCameraGeneration()
+	local startPosition = camera.getPosition()
+	local startYaw = camera.getYaw()
+	local startPitch = camera.getPitch()
+	local target = inventoryPose()
 
-	camera.setMode(camera.MODE.Preview, true)
+	camera.setMode(camera.MODE.Static, true)
+	applyPose(startPosition, startYaw, startPitch)
 	camera.instantTransition()
-	pendingFinalizeGeneration = generation
-	queueFinalizeCamera(generation, FINALIZE_EVENT_DELAY)
+	animation = {
+		phase = 'opening',
+		elapsed = 0,
+		duration = OPEN_DURATION,
+		startPosition = startPosition,
+		targetPosition = target.position,
+		startYaw = startYaw,
+		targetYaw = target.yaw,
+		startPitch = startPitch,
+		targetPitch = target.pitch,
+	}
+	currentUpdate = updateAnimation
 end
 
-function M.finalizePendingStaticInventoryCamera(payload)
-	if type(payload) ~= 'table' or payload.generation ~= pendingFinalizeGeneration then
+function updateAnimation(dt)
+	if not animation then
+		currentUpdate = nullFunction
 		return
 	end
-	local remainingEvents = math.max(0, math.floor(tonumber(payload.remainingEvents) or 0))
-	if remainingEvents > 0 then
-		queueFinalizeCamera(payload.generation, remainingEvents - 1)
+
+	animation.elapsed = animation.elapsed + (tonumber(dt) or 0)
+	local rawT = clamp01(animation.elapsed / animation.duration)
+	local t = s3math.smootherstep(0, 1, rawT)
+
+	if animation.phase == 'opening' then
+		local target = inventoryPose()
+		animation.targetPosition = target.position
+		animation.targetYaw = target.yaw
+		animation.targetPitch = target.pitch
+	end
+
+	local position = animation.startPosition + (animation.targetPosition - animation.startPosition) * t
+	applyPose(
+		position,
+		lerpAngle(animation.startYaw, animation.targetYaw, t),
+		s3math.lerp(animation.startPitch, animation.targetPitch, t)
+	)
+
+	if rawT < 1 then
 		return
 	end
-	pendingFinalizeGeneration = nil
-	finalizeStaticInventoryCamera()
+
+	if animation.phase == 'closing' then
+		finishRestoreCamera()
+	else
+		animation = nil
+		currentUpdate = nullFunction
+	end
+end
+
+function M.update(dt)
+	currentUpdate(dt)
 end
 
 return M
