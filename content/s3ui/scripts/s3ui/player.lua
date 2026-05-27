@@ -8,6 +8,7 @@ local storage = require 'openmw.storage'
 
 local countModal = require 'scripts.s3ui.components.count_modal'
 local inventoryWindow = require 'scripts.s3ui.inventory.window'
+local inventoryCamera = require 'scripts.s3ui.player_camera'
 local travelWindow = require 'scripts.s3ui.travel.window'
 
 local UI_WINDOWS = I.UI.WINDOW
@@ -125,6 +126,7 @@ return {
 		end,
 	},
 	eventHandlers = {
+		S3UI_FinalizeInventoryCamera = inventoryCamera.finalizePendingStaticInventoryCamera,
 		S3UI_RebuildInventory = inventoryWindow.processPendingRebuild,
 		S3UI_TravelFollowerFound = travelWindow.addFollower,
 		S3UI_TravelCellNamesResolved = travelWindow.setCellDisplayNames,

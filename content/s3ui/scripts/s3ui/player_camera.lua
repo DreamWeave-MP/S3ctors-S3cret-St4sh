@@ -1,21 +1,21 @@
 ---@omw-context player
 
-local camera = require("openmw.camera")
-local I = require("openmw.interfaces")
-local self = require("openmw.self")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
+local camera = require 'openmw.camera'
+local I = require 'openmw.interfaces'
+local self = require 'openmw.self'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
 
 local v3 = util.vector3
 
-local CAMERA_CONTROL_TAG = "s3ui_inventory"
+local CAMERA_CONTROL_TAG = 's3ui_inventory'
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
 
 ---@class S3UI.CameraSnapshot
 ---@field mode any
 ---@field yaw number
 ---@field pitch number
----@field focalOffset openmw.util.Vector3
+---@field focalOffset openmw.util.Vector2
 ---@field staticPosition openmw.util.Vector3
 
 ---@type S3UI.CameraSnapshot|nil
@@ -24,7 +24,16 @@ local cameraSnapshot = nil
 ---@type boolean|nil
 local hudVisibleSnapshot = nil
 
+local cameraGeneration = 0
+local pendingFinalizeGeneration = nil
+
 local M = {}
+
+local function bumpCameraGeneration()
+	cameraGeneration = cameraGeneration + 1
+	pendingFinalizeGeneration = nil
+	return cameraGeneration
+end
 
 local function saveCamera()
 	if cameraSnapshot then
@@ -73,6 +82,7 @@ function M.restoreCamera()
 	if not cameraSnapshot then
 		return
 	end
+	bumpCameraGeneration()
 	enableInventoryCameraControls()
 
 	camera.setFocalPreferredOffset(cameraSnapshot.focalOffset)
@@ -130,6 +140,27 @@ local function playerFrame(box, screenRight)
 	}
 end
 
+local function finalizeStaticInventoryCamera()
+	local actorYaw = self.object.rotation:getYaw()
+	local front = util.transform.rotateZ(actorYaw) * v3(0, 1, 0)
+	local screenRight = util.transform.rotateZ(actorYaw) * v3(-1, 0, 0)
+	local bodyBounds = self.object:getBoundingBox()
+	local frame = playerFrame(bodyBounds, screenRight)
+	local screen = ui.screenSize()
+	local aspect = screen.x / screen.y
+	local verticalTan = math.tan(camera.getFieldOfView() * 0.5)
+	local distance = frame.halfHeight / verticalTan + STATIC_CAMERA_EXTRA_DISTANCE
+	local halfViewWidth = distance * verticalTan * aspect
+	local lateralOffset = halfViewWidth - frame.rightEdge - frame.width
+	local pos = frame.target + front * distance - screenRight * lateralOffset
+
+	camera.setMode(camera.MODE.Static, true)
+	camera.setStaticPosition(pos)
+	camera.setYaw(actorYaw + math.pi)
+	camera.setPitch(0)
+	camera.instantTransition()
+end
+
 function M.saveHudVisibility()
 	if hudVisibleSnapshot ~= nil then
 		return
@@ -149,25 +180,25 @@ end
 function M.showStaticInventoryCamera()
 	saveCamera()
 	disableInventoryCameraControls()
+	local generation = bumpCameraGeneration()
 
-	local actorYaw = self.object.rotation:getYaw()
-	local front = util.transform.rotateZ(actorYaw) * v3(0, 1, 0)
-	local screenRight = util.transform.rotateZ(actorYaw) * v3(-1, 0, 0)
-	local bodyBounds = self.object:getBoundingBox()
-	local frame = playerFrame(bodyBounds, screenRight)
-	local screen = ui.screenSize()
-	local aspect = screen.x / screen.y
-	local verticalTan = math.tan(camera.getFieldOfView() * 0.5)
-	local distance = frame.halfHeight / verticalTan + STATIC_CAMERA_EXTRA_DISTANCE
-	local halfViewWidth = distance * verticalTan * aspect
-	local lateralOffset = halfViewWidth - frame.rightEdge - frame.width
-	local pos = frame.target + front * distance - screenRight * lateralOffset
+	if cameraSnapshot and cameraSnapshot.mode == camera.MODE.FirstPerson then
+		camera.setMode(camera.MODE.Preview, true)
+		camera.instantTransition()
+		pendingFinalizeGeneration = generation
+		self:sendEvent('S3UI_FinalizeInventoryCamera', generation)
+		return
+	end
 
-	camera.setMode(camera.MODE.Static, true)
-	camera.setStaticPosition(pos)
-	camera.setYaw(actorYaw + math.pi)
-	camera.setPitch(0)
-	camera.instantTransition()
+	finalizeStaticInventoryCamera()
+end
+
+function M.finalizePendingStaticInventoryCamera(generation)
+	if generation ~= pendingFinalizeGeneration then
+		return
+	end
+	pendingFinalizeGeneration = nil
+	finalizeStaticInventoryCamera()
 end
 
 return M
