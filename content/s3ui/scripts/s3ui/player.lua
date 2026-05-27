@@ -34,6 +34,7 @@ local function reloadLuaAndReopenInventory()
 	if I.UI.isWindowVisible(WINDOW) then
 		I.UI.removeMode(MODE)
 	end
+	inventoryCamera.restoreCamera(true)
 	omwDebug.reloadLua()
 end
 
@@ -80,6 +81,7 @@ async:newUnsavableSimulationTimer(0, processDevReloadReopen)
 
 return {
 	engineHandlers = {
+		onUpdate = inventoryCamera.update,
 		onKeyPress = function(key)
 			if key.code == input.KEY.F8 then
 				reloadLuaAndReopenInventory()
@@ -126,7 +128,6 @@ return {
 		end,
 	},
 	eventHandlers = {
-		S3UI_FinalizeInventoryCamera = inventoryCamera.finalizePendingStaticInventoryCamera,
 		S3UI_RebuildInventory = inventoryWindow.processPendingRebuild,
 		S3UI_TravelFollowerFound = travelWindow.addFollower,
 		S3UI_TravelCellNamesResolved = travelWindow.setCellDisplayNames,
