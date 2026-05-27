@@ -98,7 +98,7 @@ local function updateCellInfo(sender, senderCell)
                 end
             end
 
-            local position = liveCheckForRegion{reference = object}
+            local position = liveCheckForRegion{reference = object} or object.position
             local nearestExteriorCell = tes3.getCell{x = math.floor(position.x / 8192), y = math.floor(position.y / 8192)}
             nearestRegion = nearestExteriorCell.region
         end
