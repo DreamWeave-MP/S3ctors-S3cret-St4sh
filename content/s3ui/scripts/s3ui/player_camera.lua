@@ -38,8 +38,9 @@ local ACTOR_FORWARD = v3(0, 1, 0)
 local ACTOR_SCREEN_LEFT = v3(-1, 0, 0)
 
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
+local HALF_PI = s3math.pi * 0.5
 local OPEN_DURATION = 0.28
-local CLOSE_DURATION = 0.2
+local CLOSE_DURATION = 0.26
 -- Normalized horizontal screen position for the actor center: 0 = left edge, 0.5 = center, 1 = right edge.
 local INVENTORY_ACTOR_SCREEN_X = 0.8
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
@@ -101,7 +102,7 @@ end
 ---@param front openmw.util.Vector3
 ---@return number
 local function projectedFrontDistance(box, origin, front)
-	local distance = -math.huge
+	local distance = -s3math.huge
 
 	for _, vertex in ipairs(box.vertices) do
 		local projectedFront = (vertex - origin) * front
@@ -110,14 +111,11 @@ local function projectedFrontDistance(box, origin, front)
 		end
 	end
 
-	return math.max(0, distance)
+	return s3math.max(0, distance)
 end
 
-local function animationProgress(anim, rawT)
-	if anim.phase == 'closing' then
-		return s3math.smoothstep(0, 1, rawT)
-	end
-	return s3math.smootherstep(0, 1, rawT)
+local function animationProgress(rawT)
+	return s3math.sin(rawT * HALF_PI)
 end
 
 local function saveCamera()
@@ -225,8 +223,8 @@ end
 ---@param box table
 ---@return table
 local function playerFrame(box)
-	local top = -math.huge
-	local bottom = math.huge
+	local top = -s3math.huge
+	local bottom = s3math.huge
 
 	for _, vertex in ipairs(box.vertices) do
 		if vertex.z > top then
@@ -252,7 +250,7 @@ local function inventoryPose()
 	local frame = playerFrame(bodyBounds)
 	local screen = Ui.screenSize()
 	local aspect = screen.x / screen.y
-	local verticalTan = math.tan(Camera.getFieldOfView() * 0.5)
+	local verticalTan = s3math.tan(Camera.getFieldOfView() * 0.5)
 	local distance = frame.halfHeight / verticalTan + STATIC_CAMERA_EXTRA_DISTANCE
 	local halfViewWidth = distance * verticalTan * aspect
 	local lateralOffset = (INVENTORY_ACTOR_SCREEN_X * 2 - 1) * halfViewWidth
@@ -260,7 +258,7 @@ local function inventoryPose()
 
 	return {
 		position = pos,
-		yaw = actorYaw + math.pi,
+		yaw = actorYaw + s3math.pi,
 		pitch = 0,
 	}
 end
@@ -320,7 +318,7 @@ function updateAnimation(dt)
 
 	animation.elapsed = animation.elapsed + (tonumber(dt) or 0)
 	local rawT = clamp01(animation.elapsed / animation.duration)
-	local t = animationProgress(animation, rawT)
+	local t = animationProgress(rawT)
 
 	if animation.phase == 'opening' then
 		local target = inventoryPose()
