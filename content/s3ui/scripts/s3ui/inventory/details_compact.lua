@@ -1,10 +1,10 @@
 ---@omw-context player
 
-local I = require("openmw.interfaces")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local chrome = require("scripts.s3ui.inventory.chrome")
-local detailModel = require("scripts.s3ui.inventory.details_model")
+local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local chrome = require 'scripts.s3ui.inventory.chrome'
+local detailModel = require 'scripts.s3ui.inventory.details_model'
 
 local v2 = util.vector2
 local WHITE_TEXTURE = chrome.WHITE_TEXTURE
@@ -14,6 +14,7 @@ local FIELD_COLUMNS = 4
 local FIELD_ROWS = 3
 local FIELD_SLOT_COUNT = FIELD_COLUMNS * FIELD_ROWS
 
+---@class S3UI.InventoryCompactDetailsModule
 local M = {}
 
 local function detailText(name, text, props, template)
@@ -31,19 +32,19 @@ function M.new(ctx)
 	local updateRoot = ctx.updateRoot
 
 	local function fieldSlot(slotIndex)
-		local m, name = metrics(), "s3ui_compact_detail_field_" .. tostring(slotIndex)
+		local m, name = metrics(), 's3ui_compact_detail_field_' .. tostring(slotIndex)
 		return {
 			name = name,
 			type = ui.TYPE.Flex,
 			props = { horizontal = true, relativeSize = v2(1 / FIELD_COLUMNS, 1), autoSize = false },
-			content = ui.content({
+			content = ui.content {
 				{
-					name = name .. "_icon_box",
+					name = name .. '_icon_box',
 					type = ui.TYPE.Widget,
 					props = { relativeSize = v2(0.28, 1) },
-					content = ui.content({
+					content = ui.content {
 						{
-							name = name .. "_icon",
+							name = name .. '_icon',
 							type = ui.TYPE.Image,
 							props = {
 								resource = WHITE_TEXTURE,
@@ -53,9 +54,9 @@ function M.new(ctx)
 								size = m.compactDetailFieldIconSize,
 							},
 						},
-					}),
+					},
 				},
-				detailText(name .. "_value", "", {
+				detailText(name .. '_value', '', {
 					relativeSize = v2(0.72, 1),
 					textSize = m.compactDetailFieldTextSize,
 					textAlignH = ui.ALIGNMENT.Start,
@@ -64,7 +65,7 @@ function M.new(ctx)
 					wordWrap = true,
 					autoSize = false,
 				}),
-			}),
+			},
 		}
 	end
 
@@ -77,7 +78,7 @@ function M.new(ctx)
 				slotIndex = slotIndex + 1
 			end
 			rows[#rows + 1] = {
-				name = "s3ui_compact_detail_row_" .. tostring(rowIndex),
+				name = 's3ui_compact_detail_row_' .. tostring(rowIndex),
 				type = ui.TYPE.Flex,
 				props = { horizontal = true, relativeSize = v2(1, 1 / FIELD_ROWS), autoSize = false },
 				content = ui.content(row),
@@ -106,7 +107,7 @@ function M.new(ctx)
 
 	function self.makeBar()
 		local m, inset = metrics(), chrome.frameInset(FRAME_SIZE_MEDIUM)
-		local content = ui.content({
+		local content = ui.content {
 			{
 				type = ui.TYPE.Image,
 				props = {
@@ -117,7 +118,7 @@ function M.new(ctx)
 				},
 			},
 			{
-				name = "s3ui_compact_detail_content",
+				name = 's3ui_compact_detail_content',
 				type = ui.TYPE.Flex,
 				props = {
 					horizontal = true,
@@ -127,23 +128,23 @@ function M.new(ctx)
 					visible = false,
 					autoSize = false,
 				},
-				content = ui.content({
+				content = ui.content {
 					{
-						name = "s3ui_compact_detail_header",
+						name = 's3ui_compact_detail_header',
 						type = ui.TYPE.Flex,
 						props = {
 							horizontal = true,
 							relativeSize = m.compactDetailHeaderRelativeSize,
 							autoSize = false,
 						},
-						content = ui.content({
+						content = ui.content {
 							{
-								name = "s3ui_compact_detail_icon_box",
+								name = 's3ui_compact_detail_icon_box',
 								type = ui.TYPE.Widget,
 								props = { relativeSize = v2(0.36, 1) },
-								content = ui.content({
+								content = ui.content {
 									{
-										name = "s3ui_compact_detail_icon",
+										name = 's3ui_compact_detail_icon',
 										type = ui.TYPE.Image,
 										props = {
 											resource = WHITE_TEXTURE,
@@ -152,14 +153,14 @@ function M.new(ctx)
 											size = m.compactDetailIconSize,
 										},
 									},
-								}),
+								},
 							},
 							{
-								name = "s3ui_compact_detail_title_box",
+								name = 's3ui_compact_detail_title_box',
 								type = ui.TYPE.Flex,
 								props = { horizontal = false, relativeSize = v2(0.64, 1), autoSize = false },
-								content = ui.content({
-									detailText("s3ui_compact_detail_name", "", {
+								content = ui.content {
+									detailText('s3ui_compact_detail_name', '', {
 										relativeSize = v2(1, 1),
 										textSize = m.compactDetailHeaderTextSize,
 										textAlignH = ui.ALIGNMENT.Start,
@@ -168,12 +169,12 @@ function M.new(ctx)
 										wordWrap = true,
 										autoSize = false,
 									}, I.MWUI.templates.textHeader),
-								}),
+								},
 							},
-						}),
+						},
 					},
 					{
-						name = "s3ui_compact_detail_fields",
+						name = 's3ui_compact_detail_fields',
 						type = ui.TYPE.Flex,
 						props = {
 							horizontal = false,
@@ -182,12 +183,12 @@ function M.new(ctx)
 						},
 						content = fieldsLayout(),
 					},
-				}),
+				},
 			},
-		})
-		chrome.addOrnateFrame(content, "s3ui_compact_detail", FRAME_SIZE_MEDIUM, 0.95)
+		}
+		chrome.addOrnateFrame(content, 's3ui_compact_detail', FRAME_SIZE_MEDIUM, 0.95)
 		return {
-			name = "s3ui_compact_detail_bar",
+			name = 's3ui_compact_detail_bar',
 			type = ui.TYPE.Widget,
 			props = { relativeSize = m.compactDetailRelativeSize },
 			content = content,
@@ -214,23 +215,23 @@ function M.new(ctx)
 			return
 		end
 		local content = bar.content.s3ui_compact_detail_content
-		local detailContent, prefix = content.content, "s3ui_compact_detail_field_"
+		local detailContent, prefix = content.content, 's3ui_compact_detail_field_'
 		local headerContent = detailContent.s3ui_compact_detail_header.content
 		headerContent.s3ui_compact_detail_icon_box.content.s3ui_compact_detail_icon.props.resource = model.icon
 		headerContent.s3ui_compact_detail_title_box.content.s3ui_compact_detail_name.props.text = model.name
 		local fields = detailContent.s3ui_compact_detail_fields
 		for slotIndex = 1, FIELD_SLOT_COUNT do
 			local row =
-				fields.content["s3ui_compact_detail_row_" .. tostring(math.floor((slotIndex - 1) / FIELD_COLUMNS) + 1)]
+				fields.content['s3ui_compact_detail_row_' .. tostring(math.floor((slotIndex - 1) / FIELD_COLUMNS) + 1)]
 			local slot = row.content[prefix .. tostring(slotIndex)]
-			local icon = slot.content[prefix .. tostring(slotIndex) .. "_icon_box"].content[prefix .. tostring(
+			local icon = slot.content[prefix .. tostring(slotIndex) .. '_icon_box'].content[prefix .. tostring(
 				slotIndex
-			) .. "_icon"]
-			local value = slot.content[prefix .. tostring(slotIndex) .. "_value"]
+			) .. '_icon']
+			local value = slot.content[prefix .. tostring(slotIndex) .. '_value']
 			local field = model.fields[slotIndex]
 			icon.props.resource = field and field.icon or WHITE_TEXTURE
 			icon.props.alpha = field and 0.95 or 0
-			value.props.text = field and (field.compactValue or field.value) or ""
+			value.props.text = field and (field.compactValue or field.value) or ''
 		end
 		content.props.visible = true
 		self.visible = true

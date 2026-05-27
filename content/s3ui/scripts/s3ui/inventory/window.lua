@@ -14,6 +14,7 @@ local equipmentData = require 'scripts.s3ui.inventory.equipment_data'
 local equipmentView = require 'scripts.s3ui.inventory.equipment_view'
 local inventoryCamera = require 'scripts.s3ui.player_camera'
 local layout = require 'scripts.s3ui.inventory.layout'
+local navigation = require 'scripts.s3ui.inventory.window_navigation'
 local stateFactory = require 'scripts.s3ui.inventory.state'
 local transition = require 'scripts.s3ui.inventory.transition'
 local nullFunction = require 'scripts.s3.nullFunction'
@@ -23,6 +24,7 @@ local v2 = util.vector2
 local WINDOW = I.UI.WINDOW.Inventory
 local ROOT_LAYER = 'Windows'
 
+---@class S3UI.InventoryWindowModule
 local M = {}
 
 local rootElement = nil
@@ -214,67 +216,18 @@ local function viewCtx()
 	}
 end
 
-local function orderedEquipmentSlots(groups)
-	return equipmentData.orderedSlots(groups)
-end
-
-local function equipmentSelectionIndex(slots)
-	for index, slot in ipairs(slots) do
-		if slot and slot.key == state.selectedEquipmentSlotKey then
-			return index
-		end
-	end
-	return nil
-end
-
-local function firstEquipmentSlot(slots)
-	for index = 1, #slots do
-		if slots[index] then
-			return slots[index]
-		end
-	end
-	return nil
-end
-
-local function lastEquipmentSlot(slots)
-	for index = #slots, 1, -1 do
-		if slots[index] then
-			return slots[index]
-		end
-	end
-	return nil
-end
-
-local function selectEquipmentByOffset(delta)
-	local slots = orderedEquipmentSlots(equipmentData.collectGroups())
-	if #slots == 0 then
-		return
-	end
-	local currentIndex = equipmentSelectionIndex(slots)
-	local targetIndex = currentIndex and (currentIndex + delta) or (delta >= 0 and 1 or #slots)
-	while targetIndex > #slots do
-		targetIndex = targetIndex - #slots
-	end
-	while targetIndex < 1 do
-		targetIndex = targetIndex + #slots
-	end
-	local step = delta >= 0 and 1 or -1
-	local attempts = 0
-	while attempts < #slots do
-		local slot = slots[targetIndex]
-		if slot then
-			selectEquipmentSlot(slot)
-			return
-		end
-		targetIndex = targetIndex + step
-		while targetIndex > #slots do
-			targetIndex = targetIndex - #slots
-		end
-		while targetIndex < 1 do
-			targetIndex = targetIndex + #slots
-		end
-		attempts = attempts + 1
-	end
+local function navigationCtx()
+	return {
+		actionCtx = actionCtx,
+		activateEquipmentSlot = activateEquipmentSlot,
+		clearSelection = clearSelection,
+		layoutMetrics = layoutMetrics,
+		openEquipmentCategory = openEquipmentCategory,
+		queueRebuild = queueRebuild,
+		selectEquipmentSlot = selectEquipmentSlot,
+		selectVisibleSlot = selectVisibleSlot,
+		state = state,
+	}
 end
 
 local function makeInventoryLayout(items, rootPosition)
@@ -430,105 +383,41 @@ function M.processPendingRebuild()
 	rebuildRoot(currentRootPosition())
 end
 
+---@param deltaRows integer
 function M.scrollRows(deltaRows)
 	if not active() then
 		return
 	end
-	if state.primaryTab == 'equipment' then
-		selectEquipmentSlot(
-			equipmentData.spatialNeighbor(equipmentData.collectGroups(), state.selectedEquipmentSlotKey, deltaRows)
-		)
-		return
-	end
-	if state:scrollRows(deltaRows, layoutMetrics(), state.lastEntryCount) then
-		queueRebuild()
-	end
+	navigation.scrollRows(navigationCtx(), deltaRows)
 end
 
 function M.home()
 	if not active() then
 		return
 	end
-	if state.primaryTab == 'equipment' then
-		local slots = orderedEquipmentSlots(equipmentData.collectGroups())
-		selectEquipmentSlot(firstEquipmentSlot(slots))
-	elseif state:home() then
-		queueRebuild()
-	end
+	navigation.home(navigationCtx())
 end
 
 function M.endScroll()
 	if not active() then
 		return
 	end
-	if state.primaryTab == 'equipment' then
-		local slots = orderedEquipmentSlots(equipmentData.collectGroups())
-		selectEquipmentSlot(lastEquipmentSlot(slots))
-	elseif state:endScroll(layoutMetrics()) then
-		queueRebuild()
-	end
+	navigation.endScroll(navigationCtx())
 end
 
+---@param direction integer
 function M.navigateSelection(direction)
 	if not active() then
 		return
 	end
-	if state.primaryTab == 'equipment' then
-		selectEquipmentByOffset(direction)
-		return
-	end
-	local entries = state:buildEntries(data.collectItems(), data.CATEGORY_ORDER)
-	if #entries == 0 then
-		clearSelection()
-		return
-	end
-	local metrics = layoutMetrics()
-	local capacity = state:visibleSlotCount(metrics)
-	local currentIndex = nil
-	if state.selectedSlotIndex ~= nil and state.selectedSlotViewMode == state.viewMode then
-		currentIndex = state.scrollOffset + state.selectedSlotIndex
-	end
-	local targetIndex
-	if currentIndex then
-		targetIndex = currentIndex + direction
-		if targetIndex > #entries then
-			targetIndex = 1
-		elseif targetIndex < 1 then
-			targetIndex = #entries
-		end
-	elseif direction > 0 then
-		targetIndex = math.min(state.scrollOffset + 1, #entries)
-	else
-		targetIndex = math.min(state.scrollOffset + capacity, #entries)
-	end
-	local oldOffset = state.scrollOffset
-	state.scrollOffset = state:scrollOffsetForSelection(targetIndex, direction, metrics)
-	state:clampScroll(#entries, metrics)
-	local slotIndex = targetIndex - state.scrollOffset
-	if slotIndex < 1 or slotIndex > capacity then
-		return
-	end
-	local entry = entries[targetIndex]
-	selectVisibleSlot(slotIndex, entry and entry.kind == 'item' and entry.data or nil)
-	if state.scrollOffset ~= oldOffset then
-		queueRebuild()
-	end
+	navigation.navigateSelection(navigationCtx(), direction)
 end
 
 function M.activateSelection()
 	if not active() then
 		return
 	end
-	if state.primaryTab == 'equipment' then
-		local slot = equipmentData.findSlot(equipmentData.collectGroups(), state.selectedEquipmentSlotKey)
-		if slot and slot.itemData then
-			activateEquipmentSlot(slot)
-		elseif slot then
-			openEquipmentCategory(slot)
-		end
-	elseif state.selectedDisplayData then
-		actions.activateItem(state.selectedDisplayData, actionCtx())
-	end
+	navigation.activateSelection(navigationCtx())
 end
 
 M.active = active

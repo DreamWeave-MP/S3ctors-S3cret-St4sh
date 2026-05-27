@@ -3,6 +3,8 @@
 local types = require 'openmw.types'
 local world = require 'openmw.world'
 
+---@class S3UI.GlobalScriptModule
+
 local GOLD_ID = 'gold_001'
 
 local function validObject(object)

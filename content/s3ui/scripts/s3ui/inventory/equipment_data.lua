@@ -1,18 +1,19 @@
 ---@omw-context player
 
-local self = require("openmw.self")
-local types = require("openmw.types")
-local data = require("scripts.s3ui.inventory.data")
+local self = require 'openmw.self'
+local types = require 'openmw.types'
+local data = require 'scripts.s3ui.inventory.data'
 
 local Actor = types.Actor
 local SLOT = Actor.EQUIPMENT_SLOT
 
+---@class S3UI.EquipmentDataModule
 local M = {}
 
 M.GROUPS = {
 	{
-		key = "equipped",
-		title = "Equipped",
+		key = 'equipped',
+		title = 'Equipped',
 		layout = {
 			helmet = { x = 0.5, y = 0.08 },
 			amulet = { x = 0.62, y = 0.1, scale = 0.9 },
@@ -35,46 +36,46 @@ M.GROUPS = {
 			boots = { x = 0.5, y = 0.82 },
 		},
 		navOrder = {
-			"helmet",
-			"amulet",
-			"leftPauldron",
-			"shirt",
-			"cuirass",
-			"rightPauldron",
-			"leftGauntlet",
-			"leftRing",
-			"rightRing",
-			"rightGauntlet",
-			"carriedLeft",
-			"belt",
-			"robe",
-			"carriedRight",
-			"ammunition",
-			"skirt",
-			"pants",
-			"greaves",
-			"boots",
+			'helmet',
+			'amulet',
+			'leftPauldron',
+			'shirt',
+			'cuirass',
+			'rightPauldron',
+			'leftGauntlet',
+			'leftRing',
+			'rightRing',
+			'rightGauntlet',
+			'carriedLeft',
+			'belt',
+			'robe',
+			'carriedRight',
+			'ammunition',
+			'skirt',
+			'pants',
+			'greaves',
+			'boots',
 		},
 		slots = {
-			{ key = "helmet", label = "Head", slot = SLOT.Helmet, inventoryCategoryKey = "armor" },
-			{ key = "amulet", label = "Amulet", slot = SLOT.Amulet, inventoryCategoryKey = "apparel" },
-			{ key = "leftPauldron", label = "L. Pauldron", slot = SLOT.LeftPauldron, inventoryCategoryKey = "armor" },
-			{ key = "shirt", label = "Shirt", slot = SLOT.Shirt, inventoryCategoryKey = "apparel" },
-			{ key = "cuirass", label = "Cuirass", slot = SLOT.Cuirass, inventoryCategoryKey = "armor" },
-			{ key = "rightPauldron", label = "R. Pauldron", slot = SLOT.RightPauldron, inventoryCategoryKey = "armor" },
-			{ key = "leftGauntlet", label = "L. Gauntlet", slot = SLOT.LeftGauntlet, inventoryCategoryKey = "armor" },
-			{ key = "pants", label = "Pants", slot = SLOT.Pants, inventoryCategoryKey = "apparel" },
-			{ key = "greaves", label = "Greaves", slot = SLOT.Greaves, inventoryCategoryKey = "armor" },
-			{ key = "rightGauntlet", label = "R. Gauntlet", slot = SLOT.RightGauntlet, inventoryCategoryKey = "armor" },
-			{ key = "carriedLeft", label = "Off Hand", slot = SLOT.CarriedLeft, inventoryCategoryKey = "weapons" },
-			{ key = "skirt", label = "Skirt", slot = SLOT.Skirt, inventoryCategoryKey = "apparel" },
-			{ key = "robe", label = "Robe", slot = SLOT.Robe, inventoryCategoryKey = "apparel" },
-			{ key = "carriedRight", label = "Main Hand", slot = SLOT.CarriedRight, inventoryCategoryKey = "weapons" },
-			{ key = "leftRing", label = "L. Ring", slot = SLOT.LeftRing, inventoryCategoryKey = "apparel" },
-			{ key = "belt", label = "Belt", slot = SLOT.Belt, inventoryCategoryKey = "apparel" },
-			{ key = "boots", label = "Boots", slot = SLOT.Boots, inventoryCategoryKey = "armor" },
-			{ key = "rightRing", label = "R. Ring", slot = SLOT.RightRing, inventoryCategoryKey = "apparel" },
-			{ key = "ammunition", label = "Ammunition", slot = SLOT.Ammunition, inventoryCategoryKey = "weapons" },
+			{ key = 'helmet', label = 'Head', slot = SLOT.Helmet, inventoryCategoryKey = 'armor' },
+			{ key = 'amulet', label = 'Amulet', slot = SLOT.Amulet, inventoryCategoryKey = 'apparel' },
+			{ key = 'leftPauldron', label = 'L. Pauldron', slot = SLOT.LeftPauldron, inventoryCategoryKey = 'armor' },
+			{ key = 'shirt', label = 'Shirt', slot = SLOT.Shirt, inventoryCategoryKey = 'apparel' },
+			{ key = 'cuirass', label = 'Cuirass', slot = SLOT.Cuirass, inventoryCategoryKey = 'armor' },
+			{ key = 'rightPauldron', label = 'R. Pauldron', slot = SLOT.RightPauldron, inventoryCategoryKey = 'armor' },
+			{ key = 'leftGauntlet', label = 'L. Gauntlet', slot = SLOT.LeftGauntlet, inventoryCategoryKey = 'armor' },
+			{ key = 'pants', label = 'Pants', slot = SLOT.Pants, inventoryCategoryKey = 'apparel' },
+			{ key = 'greaves', label = 'Greaves', slot = SLOT.Greaves, inventoryCategoryKey = 'armor' },
+			{ key = 'rightGauntlet', label = 'R. Gauntlet', slot = SLOT.RightGauntlet, inventoryCategoryKey = 'armor' },
+			{ key = 'carriedLeft', label = 'Off Hand', slot = SLOT.CarriedLeft, inventoryCategoryKey = 'weapons' },
+			{ key = 'skirt', label = 'Skirt', slot = SLOT.Skirt, inventoryCategoryKey = 'apparel' },
+			{ key = 'robe', label = 'Robe', slot = SLOT.Robe, inventoryCategoryKey = 'apparel' },
+			{ key = 'carriedRight', label = 'Main Hand', slot = SLOT.CarriedRight, inventoryCategoryKey = 'weapons' },
+			{ key = 'leftRing', label = 'L. Ring', slot = SLOT.LeftRing, inventoryCategoryKey = 'apparel' },
+			{ key = 'belt', label = 'Belt', slot = SLOT.Belt, inventoryCategoryKey = 'apparel' },
+			{ key = 'boots', label = 'Boots', slot = SLOT.Boots, inventoryCategoryKey = 'armor' },
+			{ key = 'rightRing', label = 'R. Ring', slot = SLOT.RightRing, inventoryCategoryKey = 'apparel' },
+			{ key = 'ammunition', label = 'Ammunition', slot = SLOT.Ammunition, inventoryCategoryKey = 'weapons' },
 		},
 	},
 }
@@ -109,23 +110,23 @@ local function itemCount(inventory, item)
 end
 
 local function itemCondition(itemData)
-	return itemData and type(itemData.condition) == "number" and itemData.condition or nil
+	return itemData and type(itemData.condition) == 'number' and itemData.condition or nil
 end
 
 local function summaryText(itemData)
 	if not itemData then
-		return ""
+		return ''
 	end
 	local record, item = itemData.record, itemData.item
-	local summary = ""
+	local summary = ''
 	if item and item.type == types.Weapon then
-		summary = "DMG " .. data.bestWeaponDamage(record)
+		summary = 'DMG ' .. data.bestWeaponDamage(record)
 	elseif item and item.type == types.Armor then
-		summary = "AR " .. data.formatNumber(record and record.baseArmor, 0)
+		summary = 'AR ' .. data.formatNumber(record and record.baseArmor, 0)
 	end
 	local condition = data.formatCondition(itemData.condition)
 	if condition ~= data.EMPTY_FIELD then
-		return summary ~= "" and (summary .. "   Cnd " .. condition) or ("Cnd " .. condition)
+		return summary ~= '' and (summary .. '   Cnd ' .. condition) or ('Cnd ' .. condition)
 	end
 	return summary
 end
@@ -143,25 +144,26 @@ local function makeItemData(inventory, item)
 		name = data.itemName(item, record),
 		icon = record and record.icon,
 		count = itemCount(inventory, item),
-		categoryKey = "equipment",
-		categoryLabel = "Equipment",
-		value = record and type(record.value) == "number" and record.value or 0,
-		weight = record and type(record.weight) == "number" and record.weight or 0,
+		categoryKey = 'equipment',
+		categoryLabel = 'Equipment',
+		value = record and type(record.value) == 'number' and record.value or 0,
+		weight = record and type(record.weight) == 'number' and record.weight or 0,
 		effectiveness = data.itemEffectiveness(item.type, record),
 		condition = condition,
 		equipped = true,
-		enchanted = record and record.enchant ~= nil and record.enchant ~= "" or false,
-		broken = type(condition) == "number" and condition <= 0,
+		enchanted = record and record.enchant ~= nil and record.enchant ~= '' or false,
+		broken = type(condition) == 'number' and condition <= 0,
 	}
 end
 
+---@return S3UI.EquipmentGroup[]
 function M.collectGroups()
 	local actor = currentActor()
 	local inventory = Actor.inventory(actor)
 	local ok, equipment = pcall(function()
 		return Actor.getEquipment(actor)
 	end)
-	if not ok or type(equipment) ~= "table" then
+	if not ok or type(equipment) ~= 'table' then
 		equipment = {}
 	end
 
@@ -198,6 +200,8 @@ local function slotsByKey(group)
 	return byKey
 end
 
+---@param groups S3UI.EquipmentGroup[]
+---@return S3UI.EquipmentSlot[]
 function M.orderedSlots(groups)
 	local ordered = {}
 	for _, group in ipairs(groups or {}) do
@@ -217,6 +221,9 @@ function M.orderedSlots(groups)
 	return ordered
 end
 
+---@param groups S3UI.EquipmentGroup[]
+---@param key string|nil
+---@return table|nil
 function M.findPlacement(groups, key)
 	if not key then
 		return nil
@@ -230,6 +237,10 @@ function M.findPlacement(groups, key)
 	return nil
 end
 
+---@param groups S3UI.EquipmentGroup[]
+---@param currentKey string|nil
+---@param direction integer
+---@return S3UI.EquipmentSlot|nil
 function M.spatialNeighbor(groups, currentKey, direction)
 	local current = M.findPlacement(groups, currentKey)
 	if not current then
@@ -264,6 +275,9 @@ function M.spatialNeighbor(groups, currentKey, direction)
 	return direction > 0 and ordered[1] or ordered[#ordered]
 end
 
+---@param groups S3UI.EquipmentGroup[]
+---@param key string|nil
+---@return S3UI.EquipmentSlot|nil
 function M.findSlot(groups, key)
 	if not key then
 		return nil

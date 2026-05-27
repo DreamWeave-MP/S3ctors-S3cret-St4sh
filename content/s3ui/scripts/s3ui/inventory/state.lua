@@ -1,7 +1,8 @@
 ---@omw-context player
 
-local display = require("scripts.s3ui.inventory.display")
+local display = require 'scripts.s3ui.inventory.display'
 
+---@class S3UI.InventoryStateModule
 local M = {}
 
 ---@class S3UI.InventoryState
@@ -10,15 +11,15 @@ local M = {}
 function M.new()
 	local state = {
 		collapsedCategories = {},
-		sortMode = "value",
+		sortMode = 'value',
 		sortAscending = {
 			value = false,
 			weight = false,
 			effectiveness = false,
 			condition = false,
 		},
-		viewMode = "grid",
-		primaryTab = "inventory",
+		viewMode = 'grid',
+		primaryTab = 'inventory',
 		generation = 0,
 		scrollOffset = 0,
 		lastEntryCount = 0,
@@ -86,10 +87,10 @@ function M.new()
 	end
 
 	function state:toggleViewMode()
-		if self.primaryTab ~= "inventory" then
+		if self.primaryTab ~= 'inventory' then
 			return
 		end
-		self.viewMode = self.viewMode == "grid" and "list" or "grid"
+		self.viewMode = self.viewMode == 'grid' and 'list' or 'grid'
 		self:resetScroll()
 	end
 
@@ -136,7 +137,7 @@ function M.new()
 			return nil
 		end
 		local entry = entries[firstIndex + self.selectedSlotIndex - 1]
-		if entry and entry.kind == "item" then
+		if entry and entry.kind == 'item' then
 			return entry.data
 		end
 		return nil

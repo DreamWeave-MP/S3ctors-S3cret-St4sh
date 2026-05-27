@@ -9,6 +9,7 @@ local icons = require 'scripts.s3ui.inventory.icons'
 local views = require 'scripts.s3ui.inventory.views'
 
 local v2 = util.vector2
+---@class S3UI.InventoryBuilderModule
 local M = {}
 
 local function makeReservedCompactDetail(metrics)
@@ -19,6 +20,8 @@ local function makeReservedCompactDetail(metrics)
 	}
 end
 
+---@param ctx S3UI.InventoryBuilderContext
+---@return table layout
 function M.make(ctx)
 	local metrics = ctx.metrics
 	local bodyLayouts = {}

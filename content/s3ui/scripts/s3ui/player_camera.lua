@@ -74,6 +74,7 @@ local hudVisibleSnapshot = nil
 ---@type S3UI.CameraAnimation|nil
 local animation = nil
 
+---@class S3UI.PlayerCameraModule
 local M = {}
 
 local finishRestoreCamera

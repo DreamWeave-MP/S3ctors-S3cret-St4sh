@@ -2,6 +2,7 @@
 
 local s3math = require 'scripts.s3.math'
 
+---@class S3UI.InventoryTransitionModule
 local M = {}
 
 local HALF_PI = s3math.pi * 0.5

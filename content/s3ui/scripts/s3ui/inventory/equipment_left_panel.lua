@@ -1,12 +1,13 @@
 ---@omw-context player
 
-local I = require("openmw.interfaces")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local chrome = require("scripts.s3ui.inventory.chrome")
+local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local chrome = require 'scripts.s3ui.inventory.chrome'
 
 local v2 = util.vector2
 
+---@class S3UI.EquipmentLeftPanelModule
 local M = {}
 
 local GROUP_HEIGHTS = { equipped = 1 }
@@ -14,7 +15,7 @@ local PAPERDOLL_X_OFFSET = -0.14
 local SELECTED_BORDER_ALPHA = 0.94
 local CARD_SIZE = v2(60, 60)
 local ICON_SIZE = v2(52, 52)
-local EMPTY_TEXT = "—"
+local EMPTY_TEXT = '—'
 
 local function textLine(name, text, props, template)
 	props = props or {}
@@ -23,7 +24,7 @@ local function textLine(name, text, props, template)
 end
 
 local function addBackground(content, alpha, color)
-	content:add({
+	content:add {
 		type = ui.TYPE.Image,
 		props = {
 			resource = chrome.WHITE_TEXTURE,
@@ -31,7 +32,7 @@ local function addBackground(content, alpha, color)
 			alpha = alpha,
 			relativeSize = v2(1, 1),
 		},
-	})
+	}
 end
 
 local function scaledSize(size, scale)
@@ -46,7 +47,7 @@ local function iconLayout(name, itemData, scale)
 		name = name,
 		type = ui.TYPE.Image,
 		props = {
-			resource = ui.texture({ path = itemData.icon }),
+			resource = ui.texture { path = itemData.icon },
 			anchor = v2(0.5, 0.5),
 			relativePosition = v2(0.5, 0.5),
 			size = scaledSize(ICON_SIZE, scale),
@@ -66,7 +67,7 @@ end
 
 local function slotHitbox(ctx, slot, generation)
 	return {
-		name = "s3ui_equipment_" .. slot.key .. "_hitbox",
+		name = 's3ui_equipment_' .. slot.key .. '_hitbox',
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(1, 1) },
 		userData = { slot = slot, generation = generation },
@@ -102,23 +103,23 @@ local function makeSlotCard(ctx, slot, placement)
 	local selected = ctx.state.selectedEquipmentSlotKey == slot.key
 	local itemData = slot.itemData
 	local scale = placement.scale or 1
-	local cardContent = ui.content({})
+	local cardContent = ui.content {}
 	addBackground(cardContent, selected and 0.48 or 0.18)
-	local icon = iconLayout("s3ui_equipment_" .. slot.key .. "_icon", itemData, scale)
+	local icon = iconLayout('s3ui_equipment_' .. slot.key .. '_icon', itemData, scale)
 	if icon then
 		cardContent:add(icon)
 	else
-		cardContent:add(emptySlotLayout("s3ui_equipment_" .. slot.key .. "_empty", scale))
+		cardContent:add(emptySlotLayout('s3ui_equipment_' .. slot.key .. '_empty', scale))
 	end
 	chrome.addSimpleBorder(
 		cardContent,
-		"s3ui_equipment_" .. slot.key,
+		's3ui_equipment_' .. slot.key,
 		selected and SELECTED_BORDER_ALPHA or 0.48,
 		selected and 3 or 2
 	)
 	cardContent:add(slotHitbox(ctx, slot, ctx.state.generation))
 	return {
-		name = "s3ui_equipment_slot_" .. slot.key,
+		name = 's3ui_equipment_slot_' .. slot.key,
 		type = ui.TYPE.Widget,
 		props = {
 			anchor = v2(0.5, 0.5),
@@ -130,22 +131,22 @@ local function makeSlotCard(ctx, slot, placement)
 end
 
 local function makeGroup(ctx, group)
-	local content = ui.content({})
-	local paperdoll = ui.content({})
+	local content = ui.content {}
+	local paperdoll = ui.content {}
 	for _, slot in ipairs(group.slots or {}) do
 		local placement = group.layout and group.layout[slot.key]
 		if placement then
 			paperdoll:add(makeSlotCard(ctx, slot, placement))
 		end
 	end
-	content:add({
-		name = "s3ui_equipment_group_" .. group.key .. "_paperdoll",
+	content:add {
+		name = 's3ui_equipment_group_' .. group.key .. '_paperdoll',
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(1, 1), autoSize = false },
 		content = paperdoll,
-	})
+	}
 	return {
-		name = "s3ui_equipment_group_" .. group.key .. "_body",
+		name = 's3ui_equipment_group_' .. group.key .. '_body',
 		type = ui.TYPE.Flex,
 		props = {
 			horizontal = false,
@@ -157,12 +158,12 @@ local function makeGroup(ctx, group)
 end
 
 function M.layout(ctx, width)
-	local groups = ui.content({})
+	local groups = ui.content {}
 	for _, group in ipairs(ctx.groups or {}) do
 		groups:add(makeGroup(ctx, group))
 	end
 	return {
-		name = "s3ui_equipment_slots",
+		name = 's3ui_equipment_slots',
 		type = ui.TYPE.Flex,
 		props = { horizontal = false, relativeSize = v2(width, 1), autoSize = false },
 		content = groups,

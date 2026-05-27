@@ -1,9 +1,9 @@
 ---@omw-context player
 
-local self = require("openmw.self")
-local types = require("openmw.types")
+local self = require 'openmw.self'
+local types = require 'openmw.types'
 
-local EMPTY_FIELD = "—"
+local EMPTY_FIELD = '—'
 
 ---@class S3UI.InventoryCategory
 ---@field key string
@@ -43,16 +43,18 @@ local EMPTY_FIELD = "—"
 ---@field text string
 ---@field compactText string
 
+---@class S3UI.InventoryDataModule
+
 ---@type S3UI.InventoryCategory[]
 local CATEGORY_ORDER = {
-	{ key = "all", label = "All" },
-	{ key = "weapons", label = "Weapons" },
-	{ key = "armor", label = "Armor" },
-	{ key = "apparel", label = "Apparel" },
-	{ key = "alchemy", label = "Alchemy" },
-	{ key = "books", label = "Books" },
-	{ key = "tools", label = "Tools" },
-	{ key = "misc", label = "Misc" },
+	{ key = 'all', label = 'All' },
+	{ key = 'weapons', label = 'Weapons' },
+	{ key = 'armor', label = 'Armor' },
+	{ key = 'apparel', label = 'Apparel' },
+	{ key = 'alchemy', label = 'Alchemy' },
+	{ key = 'books', label = 'Books' },
+	{ key = 'tools', label = 'Tools' },
+	{ key = 'misc', label = 'Misc' },
 }
 
 local CATEGORY_BY_KEY = {}
@@ -61,86 +63,86 @@ for _, category in ipairs(CATEGORY_ORDER) do
 end
 
 local TYPE_NAMES = {
-	[types.Apparatus] = "Apparatus",
-	[types.Armor] = "Armor",
-	[types.Book] = "Book",
-	[types.Clothing] = "Clothing",
-	[types.Ingredient] = "Ingredient",
-	[types.Light] = "Light",
-	[types.Lockpick] = "Lockpick",
-	[types.Miscellaneous] = "Miscellaneous",
-	[types.Potion] = "Potion",
-	[types.Probe] = "Probe",
-	[types.Repair] = "Repair",
-	[types.Weapon] = "Weapon",
+	[types.Apparatus] = 'Apparatus',
+	[types.Armor] = 'Armor',
+	[types.Book] = 'Book',
+	[types.Clothing] = 'Clothing',
+	[types.Ingredient] = 'Ingredient',
+	[types.Light] = 'Light',
+	[types.Lockpick] = 'Lockpick',
+	[types.Miscellaneous] = 'Miscellaneous',
+	[types.Potion] = 'Potion',
+	[types.Probe] = 'Probe',
+	[types.Repair] = 'Repair',
+	[types.Weapon] = 'Weapon',
 }
 
 local ARMOR_TYPE_NAMES = {
-	[types.Armor.TYPE.Boots] = "Boots",
-	[types.Armor.TYPE.Cuirass] = "Cuirass",
-	[types.Armor.TYPE.Greaves] = "Greaves",
-	[types.Armor.TYPE.Helmet] = "Helmet",
-	[types.Armor.TYPE.LBracer] = "Left Bracer",
-	[types.Armor.TYPE.LGauntlet] = "Left Gauntlet",
-	[types.Armor.TYPE.LPauldron] = "Left Pauldron",
-	[types.Armor.TYPE.RBracer] = "Right Bracer",
-	[types.Armor.TYPE.RGauntlet] = "Right Gauntlet",
-	[types.Armor.TYPE.RPauldron] = "Right Pauldron",
-	[types.Armor.TYPE.Shield] = "Shield",
+	[types.Armor.TYPE.Boots] = 'Boots',
+	[types.Armor.TYPE.Cuirass] = 'Cuirass',
+	[types.Armor.TYPE.Greaves] = 'Greaves',
+	[types.Armor.TYPE.Helmet] = 'Helmet',
+	[types.Armor.TYPE.LBracer] = 'Left Bracer',
+	[types.Armor.TYPE.LGauntlet] = 'Left Gauntlet',
+	[types.Armor.TYPE.LPauldron] = 'Left Pauldron',
+	[types.Armor.TYPE.RBracer] = 'Right Bracer',
+	[types.Armor.TYPE.RGauntlet] = 'Right Gauntlet',
+	[types.Armor.TYPE.RPauldron] = 'Right Pauldron',
+	[types.Armor.TYPE.Shield] = 'Shield',
 }
 
 local CLOTHING_TYPE_NAMES = {
-	[types.Clothing.TYPE.Amulet] = "Amulet",
-	[types.Clothing.TYPE.Belt] = "Belt",
-	[types.Clothing.TYPE.LGlove] = "Left Glove",
-	[types.Clothing.TYPE.Pants] = "Pants",
-	[types.Clothing.TYPE.RGlove] = "Right Glove",
-	[types.Clothing.TYPE.Ring] = "Ring",
-	[types.Clothing.TYPE.Robe] = "Robe",
-	[types.Clothing.TYPE.Shirt] = "Shirt",
-	[types.Clothing.TYPE.Shoes] = "Shoes",
-	[types.Clothing.TYPE.Skirt] = "Skirt",
+	[types.Clothing.TYPE.Amulet] = 'Amulet',
+	[types.Clothing.TYPE.Belt] = 'Belt',
+	[types.Clothing.TYPE.LGlove] = 'Left Glove',
+	[types.Clothing.TYPE.Pants] = 'Pants',
+	[types.Clothing.TYPE.RGlove] = 'Right Glove',
+	[types.Clothing.TYPE.Ring] = 'Ring',
+	[types.Clothing.TYPE.Robe] = 'Robe',
+	[types.Clothing.TYPE.Shirt] = 'Shirt',
+	[types.Clothing.TYPE.Shoes] = 'Shoes',
+	[types.Clothing.TYPE.Skirt] = 'Skirt',
 }
 
 local WEAPON_TYPE_NAMES = {
-	[types.Weapon.TYPE.Arrow] = "Arrow",
-	[types.Weapon.TYPE.AxeOneHand] = "One Handed Axe",
-	[types.Weapon.TYPE.AxeTwoHand] = "Two Handed Axe",
-	[types.Weapon.TYPE.BluntOneHand] = "One Handed Blunt",
-	[types.Weapon.TYPE.BluntTwoClose] = "Close Two Handed Blunt",
-	[types.Weapon.TYPE.BluntTwoWide] = "Wide Two Handed Blunt",
-	[types.Weapon.TYPE.Bolt] = "Bolt",
-	[types.Weapon.TYPE.LongBladeOneHand] = "One Handed Long Blade",
-	[types.Weapon.TYPE.LongBladeTwoHand] = "Two Handed Long Blade",
-	[types.Weapon.TYPE.MarksmanBow] = "Bow",
-	[types.Weapon.TYPE.MarksmanCrossbow] = "Crossbow",
-	[types.Weapon.TYPE.MarksmanThrown] = "Thrown",
-	[types.Weapon.TYPE.ShortBladeOneHand] = "Short Blade",
-	[types.Weapon.TYPE.SpearTwoWide] = "Spear",
+	[types.Weapon.TYPE.Arrow] = 'Arrow',
+	[types.Weapon.TYPE.AxeOneHand] = 'One Handed Axe',
+	[types.Weapon.TYPE.AxeTwoHand] = 'Two Handed Axe',
+	[types.Weapon.TYPE.BluntOneHand] = 'One Handed Blunt',
+	[types.Weapon.TYPE.BluntTwoClose] = 'Close Two Handed Blunt',
+	[types.Weapon.TYPE.BluntTwoWide] = 'Wide Two Handed Blunt',
+	[types.Weapon.TYPE.Bolt] = 'Bolt',
+	[types.Weapon.TYPE.LongBladeOneHand] = 'One Handed Long Blade',
+	[types.Weapon.TYPE.LongBladeTwoHand] = 'Two Handed Long Blade',
+	[types.Weapon.TYPE.MarksmanBow] = 'Bow',
+	[types.Weapon.TYPE.MarksmanCrossbow] = 'Crossbow',
+	[types.Weapon.TYPE.MarksmanThrown] = 'Thrown',
+	[types.Weapon.TYPE.ShortBladeOneHand] = 'Short Blade',
+	[types.Weapon.TYPE.SpearTwoWide] = 'Spear',
 }
 
 local APPARATUS_TYPE_NAMES = {
-	[types.Apparatus.TYPE.Alembic] = "Alembic",
-	[types.Apparatus.TYPE.Calcinator] = "Calcinator",
-	[types.Apparatus.TYPE.MortarPestle] = "Mortar & Pestle",
-	[types.Apparatus.TYPE.Retort] = "Retort",
+	[types.Apparatus.TYPE.Alembic] = 'Alembic',
+	[types.Apparatus.TYPE.Calcinator] = 'Calcinator',
+	[types.Apparatus.TYPE.MortarPestle] = 'Mortar & Pestle',
+	[types.Apparatus.TYPE.Retort] = 'Retort',
 }
 
 local WEAPON_DAMAGE_ATTACKS = {
-	{ key = "chopDamage", label = "Chop", compactLabel = "C", minField = "chopMinDamage", maxField = "chopMaxDamage" },
+	{ key = 'chopDamage', label = 'Chop', compactLabel = 'C', minField = 'chopMinDamage', maxField = 'chopMaxDamage' },
 	{
-		key = "slashDamage",
-		label = "Slash",
-		compactLabel = "S",
-		minField = "slashMinDamage",
-		maxField = "slashMaxDamage",
+		key = 'slashDamage',
+		label = 'Slash',
+		compactLabel = 'S',
+		minField = 'slashMinDamage',
+		maxField = 'slashMaxDamage',
 	},
 	{
-		key = "thrustDamage",
-		label = "Thrust",
-		compactLabel = "T",
-		minField = "thrustMinDamage",
-		maxField = "thrustMaxDamage",
+		key = 'thrustDamage',
+		label = 'Thrust',
+		compactLabel = 'T',
+		minField = 'thrustMinDamage',
+		maxField = 'thrustMaxDamage',
 	},
 }
 
@@ -159,7 +161,7 @@ end
 ---@param record table|nil
 ---@return string
 local function itemName(item, record)
-	return (record and record.name) or item.recordId or "Unknown item"
+	return (record and record.name) or item.recordId or 'Unknown item'
 end
 
 local function itemCount(inventory, item)
@@ -194,7 +196,7 @@ local function equippedRecordIds(actor)
 	local ok, equipment = pcall(function()
 		return types.Actor.getEquipment(actor)
 	end)
-	if not ok or type(equipment) ~= "table" then
+	if not ok or type(equipment) ~= 'table' then
 		return result
 	end
 	for _, item in pairs(equipment) do
@@ -216,11 +218,11 @@ local function itemEquipped(actor, equippedIds, item)
 end
 
 local function itemEnchanted(record)
-	return record and record.enchant ~= nil and record.enchant ~= ""
+	return record and record.enchant ~= nil and record.enchant ~= ''
 end
 
 local function itemBroken(condition)
-	return type(condition) == "number" and condition <= 0
+	return type(condition) == 'number' and condition <= 0
 end
 
 local function categoryForItem(itemType)
@@ -250,16 +252,16 @@ local function weaponEffectiveness(record)
 		return 0
 	end
 	local best = 0
-	if type(record.thrustMaxDamage) == "number" and record.thrustMaxDamage > best then
+	if type(record.thrustMaxDamage) == 'number' and record.thrustMaxDamage > best then
 		best = record.thrustMaxDamage
 	end
-	if type(record.chopMaxDamage) == "number" and record.chopMaxDamage > best then
+	if type(record.chopMaxDamage) == 'number' and record.chopMaxDamage > best then
 		best = record.chopMaxDamage
 	end
-	if type(record.slashMaxDamage) == "number" and record.slashMaxDamage > best then
+	if type(record.slashMaxDamage) == 'number' and record.slashMaxDamage > best then
 		best = record.slashMaxDamage
 	end
-	if type(record.speed) == "number" then
+	if type(record.speed) == 'number' then
 		best = best * record.speed
 	end
 	return best
@@ -272,7 +274,7 @@ local function itemEffectiveness(itemType, record)
 	if itemType == types.Weapon then
 		return weaponEffectiveness(record)
 	end
-	if itemType == types.Armor and type(record.baseArmor) == "number" then
+	if itemType == types.Armor and type(record.baseArmor) == 'number' then
 		return record.baseArmor
 	end
 	if
@@ -281,7 +283,7 @@ local function itemEffectiveness(itemType, record)
 			or itemType == types.Lockpick
 			or itemType == types.Probe
 			or itemType == types.Repair
-		) and type(record.quality) == "number"
+		) and type(record.quality) == 'number'
 	then
 		return record.quality
 	end
@@ -289,7 +291,7 @@ local function itemEffectiveness(itemType, record)
 end
 
 local function itemCondition(itemData)
-	if itemData and type(itemData.condition) == "number" then
+	if itemData and type(itemData.condition) == 'number' then
 		return itemData.condition
 	end
 	return nil
@@ -320,8 +322,8 @@ local function collectItems()
 				count = itemCount(inventory, item),
 				categoryKey = category.key,
 				categoryLabel = category.label,
-				value = (record and type(record.value) == "number") and record.value or 0,
-				weight = (record and type(record.weight) == "number") and record.weight or 0,
+				value = (record and type(record.value) == 'number') and record.value or 0,
+				weight = (record and type(record.weight) == 'number') and record.weight or 0,
 				effectiveness = itemEffectiveness(itemType, record),
 				condition = condition,
 				equipped = itemEquipped(actor, equippedIds, item),
@@ -342,26 +344,26 @@ end
 ---@param decimals integer|nil
 ---@return string
 local function formatNumber(value, decimals)
-	if type(value) ~= "number" then
+	if type(value) ~= 'number' then
 		return EMPTY_FIELD
 	end
 	if decimals then
-		return string.format("%." .. tostring(decimals) .. "f", value)
+		return string.format('%.' .. tostring(decimals) .. 'f', value)
 	end
 	return tostring(value)
 end
 
 local function formatDamage(minDamage, maxDamage)
-	if type(minDamage) ~= "number" or type(maxDamage) ~= "number" then
+	if type(minDamage) ~= 'number' or type(maxDamage) ~= 'number' then
 		return EMPTY_FIELD
 	end
-	return tostring(minDamage) .. "–" .. tostring(maxDamage)
+	return tostring(minDamage) .. '–' .. tostring(maxDamage)
 end
 
 ---@param condition number|nil
 ---@return string
 local function formatCondition(condition)
-	if type(condition) ~= "number" or condition < 0 then
+	if type(condition) ~= 'number' or condition < 0 then
 		return EMPTY_FIELD
 	end
 	return formatNumber(condition, 0)
@@ -383,7 +385,7 @@ local function bestWeaponDamage(record)
 	for _, damage in ipairs(damagePairs) do
 		local minDamage = damage[1]
 		local maxDamage = damage[2]
-		if type(minDamage) == "number" and type(maxDamage) == "number" and maxDamage > bestMax then
+		if type(minDamage) == 'number' and type(maxDamage) == 'number' and maxDamage > bestMax then
 			bestMin = minDamage
 			bestMax = maxDamage
 		end
@@ -404,8 +406,8 @@ local function weaponDamageFields(record)
 		if damage ~= EMPTY_FIELD then
 			result[#result + 1] = {
 				key = attack.key,
-				text = attack.label .. " " .. damage,
-				compactText = attack.compactLabel .. " " .. damage,
+				text = attack.label .. ' ' .. damage,
+				compactText = attack.compactLabel .. ' ' .. damage,
 			}
 		end
 	end
@@ -430,10 +432,10 @@ local function subtypeName(recordType, record)
 		return APPARATUS_TYPE_NAMES[record.type] or EMPTY_FIELD
 	end
 	if recordType == types.Book and record.isScroll then
-		return "Scroll"
+		return 'Scroll'
 	end
 	if recordType == types.Miscellaneous and record.isKey then
-		return "Key"
+		return 'Key'
 	end
 	return EMPTY_FIELD
 end
@@ -444,7 +446,7 @@ local function typeText(data)
 	if not data then
 		return EMPTY_FIELD
 	end
-	local recordType = TYPE_NAMES[data.item and data.item.type] or "Item"
+	local recordType = TYPE_NAMES[data.item and data.item.type] or 'Item'
 	local subtype = subtypeName(data.item and data.item.type, data.record)
 	if subtype == EMPTY_FIELD then
 		return recordType
@@ -455,7 +457,7 @@ end
 ---@param record table|nil
 ---@return string
 local function goldPerWeight(record)
-	if not record or type(record.weight) ~= "number" or record.weight <= 0 or type(record.value) ~= "number" then
+	if not record or type(record.weight) ~= 'number' or record.weight <= 0 or type(record.value) ~= 'number' then
 		return EMPTY_FIELD
 	end
 	return formatNumber(record.value / record.weight, 2)

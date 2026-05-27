@@ -11,6 +11,8 @@ local inventoryWindow = require 'scripts.s3ui.inventory.window'
 local inventoryCamera = require 'scripts.s3ui.player_camera'
 local travelWindow = require 'scripts.s3ui.travel.window'
 
+---@class S3UI.PlayerScriptModule
+
 local UI_WINDOWS = I.UI.WINDOW
 local WINDOW = UI_WINDOWS.Inventory
 local TRAVEL_WINDOW = UI_WINDOWS.Travel

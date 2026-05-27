@@ -3,22 +3,23 @@
 ---@alias S3UI.InventoryViewMode 'grid'|'list'
 ---@alias S3UI.InventorySortMode 'value'|'weight'|'effectiveness'|'condition'
 
+---@class S3UI.InventoryDisplayModule
 local M = {}
 
 ---@param data S3UI.InventoryItemData
 ---@param sortMode S3UI.InventorySortMode
 ---@return number
 local function itemSortValue(data, sortMode)
-	if sortMode == "value" then
+	if sortMode == 'value' then
 		return data.value or 0
 	end
-	if sortMode == "weight" then
+	if sortMode == 'weight' then
 		return data.weight or 0
 	end
-	if sortMode == "effectiveness" then
+	if sortMode == 'effectiveness' then
 		return data.effectiveness or 0
 	end
-	if sortMode == "condition" then
+	if sortMode == 'condition' then
 		return data.condition or 0
 	end
 	return 0
@@ -42,7 +43,7 @@ local function sortItems(items, sortMode, sortAscending)
 		if leftName ~= rightName then
 			return leftName < rightName
 		end
-		return (left.item and left.item.recordId or "") < (right.item and right.item.recordId or "")
+		return (left.item and left.item.recordId or '') < (right.item and right.item.recordId or '')
 	end)
 end
 
@@ -74,7 +75,7 @@ end
 ---@return S3UI.InventoryCategoryEntry
 local function categoryEntry(category, count, collapsed)
 	return {
-		kind = "categoryHeader",
+		kind = 'categoryHeader',
 		categoryKey = category.key,
 		label = category.label,
 		count = count,
@@ -86,7 +87,7 @@ end
 ---@return S3UI.InventoryItemEntry
 local function itemEntry(item)
 	return {
-		kind = "item",
+		kind = 'item',
 		data = item,
 	}
 end
@@ -102,7 +103,7 @@ function M.buildDisplayEntries(items, categoryOrder, collapsedCategories, sortMo
 	local entries = {}
 
 	for _, category in ipairs(categoryOrder) do
-		if category.key ~= "all" then
+		if category.key ~= 'all' then
 			local categoryItems = grouped[category.key]
 			if #categoryItems > 0 then
 				entries[#entries + 1] =
@@ -123,7 +124,7 @@ end
 ---@param metrics S3UI.InventoryMetrics
 ---@return integer
 function M.visibleSlotCount(viewMode, metrics)
-	if viewMode == "list" then
+	if viewMode == 'list' then
 		return metrics.listRows
 	end
 	return metrics.gridRows * metrics.gridColumns
@@ -134,7 +135,7 @@ end
 ---@param metrics S3UI.InventoryMetrics
 ---@return integer
 function M.maxScrollOffset(entryCount, viewMode, metrics)
-	if viewMode == "list" then
+	if viewMode == 'list' then
 		local extraRows = entryCount - metrics.listRows
 		if extraRows <= 0 then
 			return 0
@@ -153,7 +154,7 @@ end
 ---@param metrics S3UI.InventoryMetrics
 ---@return integer
 function M.scrollStepSize(viewMode, metrics)
-	if viewMode == "list" then
+	if viewMode == 'list' then
 		return 1
 	end
 	return metrics.gridColumns
@@ -171,7 +172,7 @@ function M.scrollOffsetForSelection(targetIndex, direction, scrollOffset, viewMo
 		return scrollOffset
 	end
 
-	if viewMode == "list" then
+	if viewMode == 'list' then
 		if direction > 0 then
 			return targetIndex - capacity
 		end

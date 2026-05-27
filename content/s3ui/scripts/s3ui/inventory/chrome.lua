@@ -1,14 +1,15 @@
 ---@omw-context player
 
-local I = require("openmw.interfaces")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
+local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
 
 local v2 = util.vector2
 
+---@class S3UI.InventoryChromeModule
 local M = {}
 
-M.WHITE_TEXTURE = ui.texture({ path = "white" })
+M.WHITE_TEXTURE = ui.texture { path = 'white' }
 M.BACKGROUND_COLOR = util.color.rgb(0, 0, 0)
 local SIMPLE_BORDER_COLOR = util.color.rgb(0, 0, 0)
 
@@ -19,28 +20,28 @@ M.SIMPLE_BORDER_THICKNESS = 2
 
 local ORNATE_FRAME_TEXTURES = {
 	-- Clean center strips; the ornate accents live in the corner atlas.
-	edgeH = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_h.dds" }),
-	edgeV = ui.texture({ path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_v.dds" }),
-	topLeft = ui.texture({
-		path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds",
+	edgeH = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_h.dds' },
+	edgeV = ui.texture { path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/edge_v.dds' },
+	topLeft = ui.texture {
+		path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
 		offset = v2(0, 0),
 		size = v2(64, 64),
-	}),
-	topRight = ui.texture({
-		path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds",
+	},
+	topRight = ui.texture {
+		path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
 		offset = v2(64, 0),
 		size = v2(64, 64),
-	}),
-	bottomLeft = ui.texture({
-		path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds",
+	},
+	bottomLeft = ui.texture {
+		path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
 		offset = v2(0, 64),
 		size = v2(64, 64),
-	}),
-	bottomRight = ui.texture({
-		path = "textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds",
+	},
+	bottomRight = ui.texture {
+		path = 'textures/s3ui/presets/coffee_ui/dark_s3ctor/borders/ornate/corners.dds',
 		offset = v2(64, 64),
 		size = v2(64, 64),
-	}),
+	},
 }
 
 ---@param text string
@@ -50,7 +51,7 @@ function M.textProps(text, props)
 	local result = {}
 	if props then
 		for key, value in pairs(props) do
-			if key ~= "name" then
+			if key ~= 'name' then
 				result[key] = value
 			end
 		end
@@ -110,8 +111,8 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 	local cornerSize = v2(cornerPixelSize, cornerPixelSize)
 	alpha = alpha or 1
 
-	content:add({
-		name = prefix .. "_frame_top",
+	content:add {
+		name = prefix .. '_frame_top',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.edgeH,
@@ -122,9 +123,9 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			relativeSize = v2(1, 0),
 			alpha = alpha,
 		},
-	})
-	content:add({
-		name = prefix .. "_frame_bottom",
+	}
+	content:add {
+		name = prefix .. '_frame_bottom',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.edgeH,
@@ -135,9 +136,9 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			relativeSize = v2(1, 0),
 			alpha = alpha,
 		},
-	})
-	content:add({
-		name = prefix .. "_frame_left",
+	}
+	content:add {
+		name = prefix .. '_frame_left',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.edgeV,
@@ -148,9 +149,9 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			relativeSize = v2(0, 1),
 			alpha = alpha,
 		},
-	})
-	content:add({
-		name = prefix .. "_frame_right",
+	}
+	content:add {
+		name = prefix .. '_frame_right',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.edgeV,
@@ -161,9 +162,9 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			relativeSize = v2(0, 1),
 			alpha = alpha,
 		},
-	})
-	content:add({
-		name = prefix .. "_frame_top_left",
+	}
+	content:add {
+		name = prefix .. '_frame_top_left',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.topLeft,
@@ -173,9 +174,9 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			size = cornerSize,
 			alpha = alpha,
 		},
-	})
-	content:add({
-		name = prefix .. "_frame_top_right",
+	}
+	content:add {
+		name = prefix .. '_frame_top_right',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.topRight,
@@ -185,9 +186,9 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			size = cornerSize,
 			alpha = alpha,
 		},
-	})
-	content:add({
-		name = prefix .. "_frame_bottom_left",
+	}
+	content:add {
+		name = prefix .. '_frame_bottom_left',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.bottomLeft,
@@ -197,9 +198,9 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			size = cornerSize,
 			alpha = alpha,
 		},
-	})
-	content:add({
-		name = prefix .. "_frame_bottom_right",
+	}
+	content:add {
+		name = prefix .. '_frame_bottom_right',
 		type = ui.TYPE.Image,
 		props = {
 			resource = ORNATE_FRAME_TEXTURES.bottomRight,
@@ -209,7 +210,7 @@ function M.addOrnateFrame(content, prefix, frameSize, alpha, cornerScale)
 			size = cornerSize,
 			alpha = alpha,
 		},
-	})
+	}
 end
 
 ---@param content openmw.ui.Content
@@ -228,8 +229,8 @@ function M.addSimpleBorder(content, prefix, alpha, insertIndex)
 		end
 	end
 
-	addBorderPart({
-		name = prefix .. "_simple_border_top",
+	addBorderPart {
+		name = prefix .. '_simple_border_top',
 		type = ui.TYPE.Image,
 		props = {
 			resource = M.WHITE_TEXTURE,
@@ -240,9 +241,9 @@ function M.addSimpleBorder(content, prefix, alpha, insertIndex)
 			size = v2(0, M.SIMPLE_BORDER_THICKNESS),
 			relativeSize = v2(1, 0),
 		},
-	})
-	addBorderPart({
-		name = prefix .. "_simple_border_bottom",
+	}
+	addBorderPart {
+		name = prefix .. '_simple_border_bottom',
 		type = ui.TYPE.Image,
 		props = {
 			resource = M.WHITE_TEXTURE,
@@ -254,9 +255,9 @@ function M.addSimpleBorder(content, prefix, alpha, insertIndex)
 			size = v2(0, M.SIMPLE_BORDER_THICKNESS),
 			relativeSize = v2(1, 0),
 		},
-	})
-	addBorderPart({
-		name = prefix .. "_simple_border_left",
+	}
+	addBorderPart {
+		name = prefix .. '_simple_border_left',
 		type = ui.TYPE.Image,
 		props = {
 			resource = M.WHITE_TEXTURE,
@@ -267,9 +268,9 @@ function M.addSimpleBorder(content, prefix, alpha, insertIndex)
 			size = v2(M.SIMPLE_BORDER_THICKNESS, 0),
 			relativeSize = v2(0, 1),
 		},
-	})
-	addBorderPart({
-		name = prefix .. "_simple_border_right",
+	}
+	addBorderPart {
+		name = prefix .. '_simple_border_right',
 		type = ui.TYPE.Image,
 		props = {
 			resource = M.WHITE_TEXTURE,
@@ -281,7 +282,7 @@ function M.addSimpleBorder(content, prefix, alpha, insertIndex)
 			size = v2(M.SIMPLE_BORDER_THICKNESS, 0),
 			relativeSize = v2(0, 1),
 		},
-	})
+	}
 end
 
 return M

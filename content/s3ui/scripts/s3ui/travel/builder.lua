@@ -8,6 +8,7 @@ local chrome = require 'scripts.s3ui.inventory.chrome'
 
 local v2 = util.vector2
 
+---@class S3UI.TravelBuilderModule
 local M = {}
 
 local PANEL_SIZE = v2(520, 430)
@@ -161,6 +162,8 @@ local function statusText(ctx)
 		.. tostring(#ctx.rows)
 end
 
+---@param ctx S3UI.TravelLayoutContext
+---@return table layout
 function M.make(ctx)
 	local panelContent = ui.content {
 		panelBackground(),

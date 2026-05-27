@@ -1,16 +1,17 @@
 ---@omw-context player
 
-local I = require("openmw.interfaces")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local chrome = require("scripts.s3ui.inventory.chrome")
-local icons = require("scripts.s3ui.inventory.icons")
+local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local chrome = require 'scripts.s3ui.inventory.chrome'
+local icons = require 'scripts.s3ui.inventory.icons'
 
 local v2 = util.vector2
 local LIST_FIELD_WIDTH = 0.12
 local LIST_FIELD_RIGHT_EDGE = { value = 0.68, weight = 0.8, effectiveness = 0.9, condition = 0.99 }
 local TOOLBAR_RAIL_EXTRA_WIDTH = 18
 
+---@class S3UI.InventoryControlsModule
 local M = {}
 
 local function controlBackground(active)
@@ -63,11 +64,11 @@ end
 
 local function makeSortButton(ctx, mode)
 	local state, active = ctx.state, ctx.state.sortMode == mode
-	local directionKey = state.sortAscending[mode] and "ascending" or "descending"
-	local name, generation = "s3ui_sort_" .. mode, state.generation
-	local content = ui.content({
+	local directionKey = state.sortAscending[mode] and 'ascending' or 'descending'
+	local name, generation = 's3ui_sort_' .. mode, state.generation
+	local content = ui.content {
 		{
-			name = name .. "_icon",
+			name = name .. '_icon',
 			type = ui.TYPE.Image,
 			props = {
 				resource = icons.SORT[mode],
@@ -77,9 +78,9 @@ local function makeSortButton(ctx, mode)
 				alpha = active and 1 or 0.82,
 			},
 		},
-	})
+	}
 	if active then
-		content:add(sortDirectionIcon(name .. "_direction", icons.SORT_DIRECTION[directionKey]))
+		content:add(sortDirectionIcon(name .. '_direction', icons.SORT_DIRECTION[directionKey]))
 	end
 	return {
 		name = name,
@@ -123,16 +124,16 @@ local function glyphRect(name, position, size)
 end
 
 local function makeViewGlyph(viewMode)
-	local glyph = ui.content({})
-	if viewMode == "list" then
-		glyph:add(glyphRect("s3ui_view_list_bar_1", v2(0.5, 0.41), v2(0.28, 0.045)))
-		glyph:add(glyphRect("s3ui_view_list_bar_2", v2(0.5, 0.5), v2(0.28, 0.045)))
-		glyph:add(glyphRect("s3ui_view_list_bar_3", v2(0.5, 0.59), v2(0.28, 0.045)))
+	local glyph = ui.content {}
+	if viewMode == 'list' then
+		glyph:add(glyphRect('s3ui_view_list_bar_1', v2(0.5, 0.41), v2(0.28, 0.045)))
+		glyph:add(glyphRect('s3ui_view_list_bar_2', v2(0.5, 0.5), v2(0.28, 0.045)))
+		glyph:add(glyphRect('s3ui_view_list_bar_3', v2(0.5, 0.59), v2(0.28, 0.045)))
 	else
-		glyph:add(glyphRect("s3ui_view_grid_dot_1", v2(0.45, 0.45), v2(0.075, 0.075)))
-		glyph:add(glyphRect("s3ui_view_grid_dot_2", v2(0.55, 0.45), v2(0.075, 0.075)))
-		glyph:add(glyphRect("s3ui_view_grid_dot_3", v2(0.45, 0.55), v2(0.075, 0.075)))
-		glyph:add(glyphRect("s3ui_view_grid_dot_4", v2(0.55, 0.55), v2(0.075, 0.075)))
+		glyph:add(glyphRect('s3ui_view_grid_dot_1', v2(0.45, 0.45), v2(0.075, 0.075)))
+		glyph:add(glyphRect('s3ui_view_grid_dot_2', v2(0.55, 0.45), v2(0.075, 0.075)))
+		glyph:add(glyphRect('s3ui_view_grid_dot_3', v2(0.45, 0.55), v2(0.075, 0.075)))
+		glyph:add(glyphRect('s3ui_view_grid_dot_4', v2(0.55, 0.55), v2(0.075, 0.075)))
 	end
 	return glyph
 end
@@ -140,7 +141,7 @@ end
 local function makeToolbarViewToggleButton(ctx)
 	local generation, state = ctx.state.generation, ctx.state
 	return {
-		name = "s3ui_view_toggle",
+		name = 's3ui_view_toggle',
 		type = ui.TYPE.Widget,
 		props = { size = ctx.metrics().viewButtonSize },
 		events = {
@@ -154,9 +155,9 @@ local function makeToolbarViewToggleButton(ctx)
 				ctx.queueRebuild()
 			end),
 		},
-		content = ui.content({
+		content = ui.content {
 			{
-				name = "s3ui_view_toggle_icon",
+				name = 's3ui_view_toggle_icon',
 				type = ui.TYPE.Image,
 				props = {
 					resource = icons.VIEW_TOGGLE,
@@ -167,27 +168,27 @@ local function makeToolbarViewToggleButton(ctx)
 				},
 			},
 			{
-				name = "s3ui_view_toggle_glyph",
+				name = 's3ui_view_toggle_glyph',
 				type = ui.TYPE.Widget,
 				props = { relativeSize = v2(1, 1) },
 				content = makeViewGlyph(state.viewMode),
 			},
-		}),
+		},
 	}
 end
 
 local function toolbarModeIcon(ctx)
-	if ctx.state.primaryTab == "equipment" then
-		return icons.SORT.weight, icons.SORT_ICON_RELATIVE_SIZE, "inventory"
+	if ctx.state.primaryTab == 'equipment' then
+		return icons.SORT.weight, icons.SORT_ICON_RELATIVE_SIZE, 'inventory'
 	end
-	return icons.MENU.equipment, icons.SORT_ICON_RELATIVE_SIZE, "equipment"
+	return icons.MENU.equipment, icons.SORT_ICON_RELATIVE_SIZE, 'equipment'
 end
 
 local function makeToolbarModeToggleButton(ctx)
 	local generation, state = ctx.state.generation, ctx.state
 	local icon, iconSize, targetTab = toolbarModeIcon(ctx)
 	return {
-		name = "s3ui_inventory_mode_toggle",
+		name = 's3ui_inventory_mode_toggle',
 		type = ui.TYPE.Widget,
 		props = { size = ctx.metrics().viewButtonSize },
 		events = {
@@ -202,9 +203,9 @@ local function makeToolbarModeToggleButton(ctx)
 				end
 			end),
 		},
-		content = ui.content({
+		content = ui.content {
 			{
-				name = "s3ui_inventory_mode_toggle_icon",
+				name = 's3ui_inventory_mode_toggle_icon',
 				type = ui.TYPE.Image,
 				props = {
 					resource = icon,
@@ -214,25 +215,25 @@ local function makeToolbarModeToggleButton(ctx)
 					alpha = 0.95,
 				},
 			},
-		}),
+		},
 	}
 end
 
 local function makeToolbarButtonRow(ctx)
 	local metrics = ctx.metrics()
-	local content = ui.content({})
-	if ctx.state.primaryTab == "inventory" then
+	local content = ui.content {}
+	if ctx.state.primaryTab == 'inventory' then
 		content:add(makeToolbarViewToggleButton(ctx))
 	else
-		content:add({
-			name = "s3ui_view_toggle_reserved",
+		content:add {
+			name = 's3ui_view_toggle_reserved',
 			type = ui.TYPE.Widget,
 			props = { size = ctx.metrics().viewButtonSize },
-		})
+		}
 	end
 	content:add(makeToolbarModeToggleButton(ctx))
 	return {
-		name = "s3ui_toolbar_button_row",
+		name = 's3ui_toolbar_button_row',
 		type = ui.TYPE.Flex,
 		props = {
 			horizontal = true,
@@ -247,7 +248,7 @@ local function makeToolbarButtonRow(ctx)
 end
 
 local function mainMenuActive(ctx, button)
-	if button.tab == "inventory" and ctx.state.primaryTab == "equipment" then
+	if button.tab == 'inventory' and ctx.state.primaryTab == 'equipment' then
 		return true
 	end
 	return button.tab ~= nil and button.tab == ctx.state.primaryTab
@@ -265,10 +266,10 @@ end
 local function makeMainMenuButton(ctx, button)
 	local active, buttonCount = mainMenuActive(ctx, button), #icons.MAIN_MENU_BUTTONS
 	local generation, state = ctx.state.generation, ctx.state
-	local content = ui.content({
+	local content = ui.content {
 		controlBackground(active),
 		{
-			name = "s3ui_main_menu_" .. button.key .. "_icon",
+			name = 's3ui_main_menu_' .. button.key .. '_icon',
 			type = ui.TYPE.Image,
 			props = {
 				resource = button.icon,
@@ -278,10 +279,10 @@ local function makeMainMenuButton(ctx, button)
 				alpha = active and 1 or 0.72,
 			},
 		},
-	})
-	chrome.addSimpleBorder(content, "s3ui_main_menu_" .. button.key, active and 0.9 or 0.62, 2)
+	}
+	chrome.addSimpleBorder(content, 's3ui_main_menu_' .. button.key, active and 0.9 or 0.62, 2)
 	return {
-		name = "s3ui_main_menu_" .. button.key,
+		name = 's3ui_main_menu_' .. button.key,
 		type = ui.TYPE.Widget,
 		props = { relativeSize = v2(1, 1 / buttonCount) },
 		events = {
@@ -301,12 +302,12 @@ local function makeMainMenuButton(ctx, button)
 end
 
 function M.makeCategoryRail(ctx)
-	local buttons = ui.content({})
+	local buttons = ui.content {}
 	for _, button in ipairs(icons.MAIN_MENU_BUTTONS) do
 		buttons:add(makeMainMenuButton(ctx, button))
 	end
 	return {
-		name = "s3ui_category_rail",
+		name = 's3ui_category_rail',
 		type = ui.TYPE.Flex,
 		props = { horizontal = false, size = ctx.metrics().categoryRailSize, autoSize = false },
 		external = { stretch = 1 },
@@ -317,7 +318,7 @@ end
 function M.makeToolbar(ctx)
 	local metrics = ctx.metrics()
 	return {
-		name = "s3ui_toolbar",
+		name = 's3ui_toolbar',
 		type = ui.TYPE.Flex,
 		props = {
 			horizontal = true,
@@ -325,27 +326,27 @@ function M.makeToolbar(ctx)
 			arrange = ui.ALIGNMENT.Center,
 			autoSize = false,
 		},
-		content = ui.content({
+		content = ui.content {
 			{
-				name = "s3ui_toolbar_rail_area",
+				name = 's3ui_toolbar_rail_area',
 				type = ui.TYPE.Widget,
 				props = { size = v2(metrics.categoryRailSize.x + TOOLBAR_RAIL_EXTRA_WIDTH, 0) },
 				external = { stretch = 1 },
-				content = ui.content({ makeToolbarButtonRow(ctx) }),
+				content = ui.content { makeToolbarButtonRow(ctx) },
 			},
 			{
-				name = "s3ui_toolbar_field_area",
+				name = 's3ui_toolbar_field_area',
 				type = ui.TYPE.Widget,
 				props = { size = v2(0, 0), relativeSize = v2(0, 1) },
 				external = { grow = 1, stretch = 1 },
-				content = ctx.state.primaryTab == "inventory" and ui.content({
-					makeToolbarSortButton(ctx, "value"),
-					makeToolbarSortButton(ctx, "weight"),
-					makeToolbarSortButton(ctx, "effectiveness"),
-					makeToolbarSortButton(ctx, "condition"),
-				}) or ui.content({}),
+				content = ctx.state.primaryTab == 'inventory' and ui.content {
+					makeToolbarSortButton(ctx, 'value'),
+					makeToolbarSortButton(ctx, 'weight'),
+					makeToolbarSortButton(ctx, 'effectiveness'),
+					makeToolbarSortButton(ctx, 'condition'),
+				} or ui.content {},
 			},
-		}),
+		},
 	}
 end
 
