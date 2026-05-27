@@ -1,11 +1,12 @@
 ---@omw-context player
 
-local core = require("openmw.core")
-local input = require("openmw.input")
-local self = require("openmw.self")
-local types = require("openmw.types")
-local countModal = require("scripts.s3ui.components.count_modal")
+local core = require 'openmw.core'
+local input = require 'openmw.input'
+local self = require 'openmw.self'
+local types = require 'openmw.types'
+local countModal = require 'scripts.s3ui.components.count_modal'
 
+---@class S3UI.InventoryActionsModule
 local M = {}
 
 local Actor = types.Actor
@@ -146,7 +147,7 @@ local function dropEventData(itemData, count)
 		player = actor,
 		item = itemData.item,
 		count = count,
-		cellName = actor.cell and actor.cell.name or "",
+		cellName = actor.cell and actor.cell.name or '',
 		position = actor.position,
 		onGround = true,
 	}
@@ -163,20 +164,20 @@ local function dropCount(itemData, count, ctx)
 	if count > itemData.count then
 		count = itemData.count
 	end
-	core.sendGlobalEvent("S3UI_DropItem", dropEventData(itemData, count))
+	core.sendGlobalEvent('S3UI_DropItem', dropEventData(itemData, count))
 	queueRebuild(ctx)
 end
 
 local function openDropCountModal(itemData, ctx)
-	countModal.show({
-		title = "Drop " .. itemData.name,
+	countModal.show {
+		title = 'Drop ' .. itemData.name,
 		min = 1,
 		max = itemData.count,
 		initial = itemData.count,
 		onOk = function(count)
 			dropCount(itemData, count, ctx)
 		end,
-	})
+	}
 end
 
 function M.activateItem(itemData, ctx)

@@ -1,9 +1,11 @@
 ---@omw-context player
 
-local ui = require("openmw.ui")
-local util = require("openmw.util")
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
 
 local v2 = util.vector2
+
+---@class S3UI.InventoryLayoutModule
 
 ---@alias S3UI.InventoryDetailMode 'compact'|'side'
 
@@ -130,8 +132,8 @@ local function compute()
 	)
 	local toolbarHeight =
 		math.floor(clamp(windowSize.y * LAYOUT.toolbarHeightFraction, LAYOUT.toolbarMinHeight, LAYOUT.toolbarMaxHeight))
-	local detailMode = screen.x <= LAYOUT.compactDetailMaxScreenWidth and "compact" or "side"
-	local compactDetailHeight = detailMode == "compact"
+	local detailMode = screen.x <= LAYOUT.compactDetailMaxScreenWidth and 'compact' or 'side'
+	local compactDetailHeight = detailMode == 'compact'
 			and math.floor(
 				clamp(
 					shortSide * LAYOUT.compactDetailHeightFraction,

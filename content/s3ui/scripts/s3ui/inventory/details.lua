@@ -1,13 +1,13 @@
 ---@omw-context player
 
-local I = require("openmw.interfaces")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local chrome = require("scripts.s3ui.inventory.chrome")
-local compactFactory = require("scripts.s3ui.inventory.details_compact")
-local data = require("scripts.s3ui.inventory.data")
-local detailModel = require("scripts.s3ui.inventory.details_model")
-local icons = require("scripts.s3ui.inventory.icons")
+local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local chrome = require 'scripts.s3ui.inventory.chrome'
+local compactFactory = require 'scripts.s3ui.inventory.details_compact'
+local data = require 'scripts.s3ui.inventory.data'
+local detailModel = require 'scripts.s3ui.inventory.details_model'
+local icons = require 'scripts.s3ui.inventory.icons'
 
 local v2 = util.vector2
 local EMPTY_FIELD = data.EMPTY_FIELD
@@ -15,37 +15,38 @@ local TOOLTIP = icons.TOOLTIP
 local WHITE_TEXTURE = chrome.WHITE_TEXTURE
 local BACKGROUND_COLOR = chrome.BACKGROUND_COLOR
 local FRAME_SIZE_MEDIUM = chrome.FRAME_SIZE_MEDIUM
-local TOOLTIP_LAYER = "S3UI_Tooltip"
+local TOOLTIP_LAYER = 'S3UI_Tooltip'
 local TOOLTIP_FIELD_ROW_COUNT = 11
 
 local TOOLTIP_FIELD_NAMES = {
-	"s3ui_tooltip_type",
-	"s3ui_tooltip_value",
-	"s3ui_tooltip_weight",
-	"s3ui_tooltip_gold_per_weight",
-	"s3ui_tooltip_condition",
-	"s3ui_tooltip_reach",
-	"s3ui_tooltip_speed",
-	"s3ui_tooltip_chop_damage",
-	"s3ui_tooltip_slash_damage",
-	"s3ui_tooltip_thrust_damage",
-	"s3ui_tooltip_effectiveness",
+	's3ui_tooltip_type',
+	's3ui_tooltip_value',
+	's3ui_tooltip_weight',
+	's3ui_tooltip_gold_per_weight',
+	's3ui_tooltip_condition',
+	's3ui_tooltip_reach',
+	's3ui_tooltip_speed',
+	's3ui_tooltip_chop_damage',
+	's3ui_tooltip_slash_damage',
+	's3ui_tooltip_thrust_damage',
+	's3ui_tooltip_effectiveness',
 }
 
 local DETAIL_FIELD_NAMES = {
-	type = "s3ui_tooltip_type",
-	value = "s3ui_tooltip_value",
-	weight = "s3ui_tooltip_weight",
-	goldPerWeight = "s3ui_tooltip_gold_per_weight",
-	condition = "s3ui_tooltip_condition",
-	reach = "s3ui_tooltip_reach",
-	speed = "s3ui_tooltip_speed",
-	chopDamage = "s3ui_tooltip_chop_damage",
-	slashDamage = "s3ui_tooltip_slash_damage",
-	thrustDamage = "s3ui_tooltip_thrust_damage",
-	effectiveness = "s3ui_tooltip_effectiveness",
+	type = 's3ui_tooltip_type',
+	value = 's3ui_tooltip_value',
+	weight = 's3ui_tooltip_weight',
+	goldPerWeight = 's3ui_tooltip_gold_per_weight',
+	condition = 's3ui_tooltip_condition',
+	reach = 's3ui_tooltip_reach',
+	speed = 's3ui_tooltip_speed',
+	chopDamage = 's3ui_tooltip_chop_damage',
+	slashDamage = 's3ui_tooltip_slash_damage',
+	thrustDamage = 's3ui_tooltip_thrust_damage',
+	effectiveness = 's3ui_tooltip_effectiveness',
 }
 
+---@class S3UI.InventoryDetailsModule
 local M = {}
 
 local function tooltipText(name, text, props, template)
@@ -56,6 +57,8 @@ local function tooltipText(name, text, props, template)
 	}
 end
 
+---@param ctx S3UI.InventoryDetailsContext
+---@return S3UI.InventoryDetailsController
 function M.new(ctx)
 	local self = { tooltipElement = nil }
 	local metrics = ctx.metrics
@@ -68,11 +71,11 @@ function M.new(ctx)
 		end
 	end
 
-	local compact = compactFactory.new({ metrics = metrics, root = root, updateRoot = updateRoot })
+	local compact = compactFactory.new { metrics = metrics, root = root, updateRoot = updateRoot }
 
 	local function tooltipPixelHeight(rowCount, m)
 		m = m or metrics()
-		if type(rowCount) ~= "number" or rowCount < 1 then
+		if type(rowCount) ~= 'number' or rowCount < 1 then
 			rowCount = 1
 		end
 		return m.tooltipHeaderHeight + rowCount * m.tooltipFieldRowHeight + m.tooltipPadding
@@ -107,17 +110,17 @@ function M.new(ctx)
 	local function tooltipField(name, icon)
 		local m = metrics()
 		return {
-			name = name .. "_row",
+			name = name .. '_row',
 			type = ui.TYPE.Flex,
 			props = { horizontal = true, autoSize = false, relativeSize = v2(1, 1 / TOOLTIP_FIELD_ROW_COUNT) },
-			content = ui.content({
+			content = ui.content {
 				{
-					name = name .. "_icon_box",
+					name = name .. '_icon_box',
 					type = ui.TYPE.Widget,
 					props = { relativeSize = v2(0.16, 1) },
-					content = ui.content({
+					content = ui.content {
 						{
-							name = name .. "_icon",
+							name = name .. '_icon',
 							type = ui.TYPE.Image,
 							props = {
 								resource = icon,
@@ -126,9 +129,9 @@ function M.new(ctx)
 								size = m.tooltipFieldIconSize,
 							},
 						},
-					}),
+					},
 				},
-				tooltipText(name .. "_value", EMPTY_FIELD, {
+				tooltipText(name .. '_value', EMPTY_FIELD, {
 					relativeSize = v2(0.84, 1),
 					textSize = m.tooltipValueTextSize,
 					textAlignH = ui.ALIGNMENT.Start,
@@ -137,16 +140,16 @@ function M.new(ctx)
 					wordWrap = true,
 					autoSize = false,
 				}),
-			}),
+			},
 		}
 	end
 
 	local function setTooltipField(fieldsLayout, name, value)
-		fieldsLayout.content[name .. "_row"].content[name .. "_value"].props.text = value or EMPTY_FIELD
+		fieldsLayout.content[name .. '_row'].content[name .. '_value'].props.text = value or EMPTY_FIELD
 	end
 
 	local function setTooltipFieldIcon(fieldsLayout, name, icon)
-		fieldsLayout.content[name .. "_row"].content[name .. "_icon_box"].content[name .. "_icon"].props.resource = icon
+		fieldsLayout.content[name .. '_row'].content[name .. '_icon_box'].content[name .. '_icon'].props.resource = icon
 	end
 
 	local function setVisibleFields(fieldsLayout, visibleNames)
@@ -156,7 +159,7 @@ function M.new(ctx)
 		end
 		local visibleCount = math.max(#visibleNames, 1)
 		for _, name in ipairs(TOOLTIP_FIELD_NAMES) do
-			local row = fieldsLayout.content[name .. "_row"]
+			local row = fieldsLayout.content[name .. '_row']
 			local isVisible = visible[name] == true
 			row.props.visible = isVisible
 			row.props.relativeSize = isVisible and v2(1, 1 / visibleCount) or v2(1, 0)
@@ -173,7 +176,7 @@ function M.new(ctx)
 	function self.makeTooltipLayout()
 		local m, defaultHeight = metrics(), tooltipPixelHeight(TOOLTIP_FIELD_ROW_COUNT, metrics())
 		local inset = chrome.frameInset(FRAME_SIZE_MEDIUM)
-		local content = ui.content({
+		local content = ui.content {
 			{
 				type = ui.TYPE.Image,
 				props = {
@@ -184,7 +187,7 @@ function M.new(ctx)
 				},
 			},
 			{
-				name = "s3ui_tooltip_body",
+				name = 's3ui_tooltip_body',
 				type = ui.TYPE.Flex,
 				props = {
 					horizontal = false,
@@ -193,23 +196,23 @@ function M.new(ctx)
 					relativeSize = v2(1, 1),
 					autoSize = false,
 				},
-				content = ui.content({
+				content = ui.content {
 					{
-						name = "s3ui_tooltip_header",
+						name = 's3ui_tooltip_header',
 						type = ui.TYPE.Flex,
 						props = {
 							horizontal = true,
 							relativeSize = v2(1, m.tooltipHeaderHeight / defaultHeight),
 							autoSize = false,
 						},
-						content = ui.content({
+						content = ui.content {
 							{
-								name = "s3ui_tooltip_icon_box",
+								name = 's3ui_tooltip_icon_box',
 								type = ui.TYPE.Widget,
 								props = { relativeSize = v2(0.18, 1) },
-								content = ui.content({
+								content = ui.content {
 									{
-										name = "s3ui_tooltip_icon",
+										name = 's3ui_tooltip_icon',
 										type = ui.TYPE.Image,
 										props = {
 											size = m.tooltipHeaderIconSize,
@@ -217,9 +220,9 @@ function M.new(ctx)
 											relativePosition = v2(0.5, 0.5),
 										},
 									},
-								}),
+								},
 							},
-							tooltipText("s3ui_tooltip_name", EMPTY_FIELD, {
+							tooltipText('s3ui_tooltip_name', EMPTY_FIELD, {
 								relativeSize = v2(0.82, 1),
 								textSize = m.tooltipHeaderTextSize,
 								textAlignH = ui.ALIGNMENT.Start,
@@ -228,34 +231,34 @@ function M.new(ctx)
 								wordWrap = true,
 								autoSize = false,
 							}, I.MWUI.templates.textHeader),
-						}),
+						},
 					},
 					{
-						name = "s3ui_tooltip_fields",
+						name = 's3ui_tooltip_fields',
 						type = ui.TYPE.Flex,
 						props = {
 							horizontal = false,
 							relativeSize = v2(1, TOOLTIP_FIELD_ROW_COUNT * m.tooltipFieldRowHeight / defaultHeight),
 							autoSize = false,
 						},
-						content = ui.content({
-							tooltipField("s3ui_tooltip_type", TOOLTIP.typeGeneric),
-							tooltipField("s3ui_tooltip_value", TOOLTIP.value),
-							tooltipField("s3ui_tooltip_weight", TOOLTIP.weight),
-							tooltipField("s3ui_tooltip_gold_per_weight", TOOLTIP.goldPerWeight),
-							tooltipField("s3ui_tooltip_condition", TOOLTIP.condition),
-							tooltipField("s3ui_tooltip_reach", TOOLTIP.reach),
-							tooltipField("s3ui_tooltip_speed", TOOLTIP.speed),
-							tooltipField("s3ui_tooltip_chop_damage", TOOLTIP.damage),
-							tooltipField("s3ui_tooltip_slash_damage", TOOLTIP.damage),
-							tooltipField("s3ui_tooltip_thrust_damage", TOOLTIP.damage),
-							tooltipField("s3ui_tooltip_effectiveness", TOOLTIP.damageSpeed),
-						}),
+						content = ui.content {
+							tooltipField('s3ui_tooltip_type', TOOLTIP.typeGeneric),
+							tooltipField('s3ui_tooltip_value', TOOLTIP.value),
+							tooltipField('s3ui_tooltip_weight', TOOLTIP.weight),
+							tooltipField('s3ui_tooltip_gold_per_weight', TOOLTIP.goldPerWeight),
+							tooltipField('s3ui_tooltip_condition', TOOLTIP.condition),
+							tooltipField('s3ui_tooltip_reach', TOOLTIP.reach),
+							tooltipField('s3ui_tooltip_speed', TOOLTIP.speed),
+							tooltipField('s3ui_tooltip_chop_damage', TOOLTIP.damage),
+							tooltipField('s3ui_tooltip_slash_damage', TOOLTIP.damage),
+							tooltipField('s3ui_tooltip_thrust_damage', TOOLTIP.damage),
+							tooltipField('s3ui_tooltip_effectiveness', TOOLTIP.damageSpeed),
+						},
 					},
-				}),
+				},
 			},
-		})
-		chrome.addOrnateFrame(content, "s3ui_tooltip", FRAME_SIZE_MEDIUM, 0.95)
+		}
+		chrome.addOrnateFrame(content, 's3ui_tooltip', FRAME_SIZE_MEDIUM, 0.95)
 		return {
 			type = ui.TYPE.Widget,
 			layer = TOOLTIP_LAYER,
@@ -303,8 +306,8 @@ function M.new(ctx)
 		header.s3ui_tooltip_icon_box.content.s3ui_tooltip_icon.props.resource = model.icon
 		header.s3ui_tooltip_name.props.text = model.name
 		for key, name in pairs(DETAIL_FIELD_NAMES) do
-			setTooltipField(fields, name, "")
-			setTooltipFieldIcon(fields, name, key == "type" and TOOLTIP.typeGeneric or TOOLTIP[key] or WHITE_TEXTURE)
+			setTooltipField(fields, name, '')
+			setTooltipFieldIcon(fields, name, key == 'type' and TOOLTIP.typeGeneric or TOOLTIP[key] or WHITE_TEXTURE)
 		end
 		local visibleFields = {}
 		for _, field in ipairs(model.fields) do
@@ -330,7 +333,7 @@ function M.new(ctx)
 	end
 
 	function self.update(itemData)
-		if metrics().detailMode == "compact" then
+		if metrics().detailMode == 'compact' then
 			compact.update(itemData)
 		else
 			self.updateTooltip(itemData)

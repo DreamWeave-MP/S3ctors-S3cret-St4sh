@@ -6,6 +6,7 @@ local types = require 'openmw.types'
 
 local GOLD_ID = 'gold_001'
 
+---@class S3UI.TravelDataModule
 local M = {}
 
 local cellDisplayNames = {}
@@ -178,6 +179,9 @@ end
 ---@param target openmw.Object|nil
 ---@param followerCount number|nil
 ---@return table[]
+---@param target openmw.Object|nil
+---@param followerCount integer|nil
+---@return S3UI.TravelRow[]
 function M.collectRows(target, followerCount)
 	local info = M.serviceInfo(target)
 	followerCount = math.max(0, math.floor(tonumber(followerCount) or 0))
@@ -198,6 +202,8 @@ function M.collectRows(target, followerCount)
 	return rows
 end
 
+---@param destination S3UI.TravelDestination|nil
+---@return number
 function M.travelHours(destination)
 	local fTravelTimeMult = numericGmst('fTravelTimeMult', 16000)
 	if fTravelTimeMult == 0 then
@@ -211,6 +217,8 @@ end
 
 M.GOLD_ID = GOLD_ID
 
+---@param names table<string, string>
+---@return boolean changed
 function M.setCellDisplayNames(names)
 	if type(names) ~= 'table' then
 		return false

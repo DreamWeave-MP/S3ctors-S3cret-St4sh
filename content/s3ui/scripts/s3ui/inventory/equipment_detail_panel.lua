@@ -1,13 +1,14 @@
 ---@omw-context player
 
-local I = require("openmw.interfaces")
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local chrome = require("scripts.s3ui.inventory.chrome")
-local detailModel = require("scripts.s3ui.inventory.details_model")
+local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local chrome = require 'scripts.s3ui.inventory.chrome'
+local detailModel = require 'scripts.s3ui.inventory.details_model'
 
 local v2 = util.vector2
 
+---@class S3UI.EquipmentDetailPanelModule
 local M = {}
 
 local FRAME_SIZE = chrome.FRAME_SIZE_MEDIUM
@@ -26,7 +27,7 @@ local function detailText(name, text, props, template)
 end
 
 local function background(content)
-	content:add({
+	content:add {
 		type = ui.TYPE.Image,
 		props = {
 			resource = chrome.WHITE_TEXTURE,
@@ -34,22 +35,22 @@ local function background(content)
 			alpha = chrome.backgroundAlpha(),
 			relativeSize = v2(1, 1),
 		},
-	})
+	}
 end
 
 local function header(model)
 	return {
-		name = "s3ui_equipment_detail_header",
+		name = 's3ui_equipment_detail_header',
 		type = ui.TYPE.Flex,
 		props = { horizontal = true, relativeSize = v2(1, 0.22), autoSize = false },
-		content = ui.content({
+		content = ui.content {
 			{
-				name = "s3ui_equipment_detail_icon_box",
+				name = 's3ui_equipment_detail_icon_box',
 				type = ui.TYPE.Widget,
 				props = { relativeSize = v2(0.3, 1), autoSize = false },
-				content = ui.content({
+				content = ui.content {
 					{
-						name = "s3ui_equipment_detail_icon",
+						name = 's3ui_equipment_detail_icon',
 						type = ui.TYPE.Image,
 						props = {
 							resource = model.icon,
@@ -58,9 +59,9 @@ local function header(model)
 							size = ICON_SIZE,
 						},
 					},
-				}),
+				},
 			},
-			detailText("s3ui_equipment_detail_name", model.name or "", {
+			detailText('s3ui_equipment_detail_name', model.name or '', {
 				relativeSize = v2(0.7, 1),
 				textSize = TITLE_TEXT_SIZE,
 				textAlignH = ui.ALIGNMENT.Start,
@@ -69,24 +70,24 @@ local function header(model)
 				wordWrap = true,
 				autoSize = false,
 			}, I.MWUI.templates.textHeader),
-		}),
+		},
 	}
 end
 
 local function fieldRow(index, field)
-	local name = "s3ui_equipment_detail_field_" .. tostring(index)
+	local name = 's3ui_equipment_detail_field_' .. tostring(index)
 	return {
 		name = name,
 		type = ui.TYPE.Flex,
 		props = { horizontal = true, relativeSize = v2(1, 1 / FIELD_ROW_COUNT), autoSize = false },
-		content = ui.content({
+		content = ui.content {
 			{
-				name = name .. "_icon_box",
+				name = name .. '_icon_box',
 				type = ui.TYPE.Widget,
 				props = { relativeSize = v2(0.18, 1), autoSize = false },
-				content = ui.content({
+				content = ui.content {
 					{
-						name = name .. "_icon",
+						name = name .. '_icon',
 						type = ui.TYPE.Image,
 						props = {
 							resource = field.icon,
@@ -96,9 +97,9 @@ local function fieldRow(index, field)
 							size = FIELD_ICON_SIZE,
 						},
 					},
-				}),
+				},
 			},
-			detailText(name .. "_value", field.value or "", {
+			detailText(name .. '_value', field.value or '', {
 				relativeSize = v2(0.82, 1),
 				textSize = BODY_TEXT_SIZE,
 				textAlignH = ui.ALIGNMENT.Start,
@@ -107,7 +108,7 @@ local function fieldRow(index, field)
 				wordWrap = true,
 				autoSize = false,
 			}),
-		}),
+		},
 	}
 end
 
@@ -120,7 +121,7 @@ local function fields(model)
 		end
 	end
 	return {
-		name = "s3ui_equipment_detail_fields",
+		name = 's3ui_equipment_detail_fields',
 		type = ui.TYPE.Flex,
 		props = { horizontal = false, relativeSize = v2(1, 0.78), autoSize = false },
 		content = ui.content(rows),
@@ -128,21 +129,21 @@ local function fields(model)
 end
 
 local function placeholder(ctx)
-	local title = ctx.state.selectedEquipmentSlotLabel or "Equipment"
-	local body = ctx.state.selectedEquipmentSlotKey and "Empty slot" or "Hover equipment to inspect it."
+	local title = ctx.state.selectedEquipmentSlotLabel or 'Equipment'
+	local body = ctx.state.selectedEquipmentSlotKey and 'Empty slot' or 'Hover equipment to inspect it.'
 	return {
-		name = "s3ui_equipment_detail_placeholder",
+		name = 's3ui_equipment_detail_placeholder',
 		type = ui.TYPE.Flex,
 		props = { horizontal = false, relativeSize = v2(1, 1), autoSize = false },
-		content = ui.content({
-			detailText("s3ui_equipment_detail_placeholder_title", title, {
+		content = ui.content {
+			detailText('s3ui_equipment_detail_placeholder_title', title, {
 				relativeSize = v2(1, 0.25),
 				textSize = TITLE_TEXT_SIZE,
 				textAlignH = ui.ALIGNMENT.Center,
 				textAlignV = ui.ALIGNMENT.End,
 				autoSize = false,
 			}, I.MWUI.templates.textHeader),
-			detailText("s3ui_equipment_detail_placeholder_body", body, {
+			detailText('s3ui_equipment_detail_placeholder_body', body, {
 				relativeSize = v2(1, 0.75),
 				textSize = BODY_TEXT_SIZE,
 				textAlignH = ui.ALIGNMENT.Center,
@@ -151,7 +152,7 @@ local function placeholder(ctx)
 				wordWrap = true,
 				autoSize = false,
 			}),
-		}),
+		},
 	}
 end
 
@@ -161,29 +162,29 @@ local function body(ctx)
 		return placeholder(ctx)
 	end
 	return {
-		name = "s3ui_equipment_detail_body",
+		name = 's3ui_equipment_detail_body',
 		type = ui.TYPE.Flex,
 		props = { horizontal = false, relativeSize = v2(1, 1), autoSize = false },
-		content = ui.content({ header(model), fields(model) }),
+		content = ui.content { header(model), fields(model) },
 	}
 end
 
 function M.layout(ctx, width, x, height, y)
 	local inset = chrome.frameInset(FRAME_SIZE)
-	local content = ui.content({})
+	local content = ui.content {}
 	x = x or 0
 	height = height or 1
 	y = y or 0
 	background(content)
-	content:add({
-		name = "s3ui_equipment_detail_inner",
+	content:add {
+		name = 's3ui_equipment_detail_inner',
 		type = ui.TYPE.Widget,
 		props = { position = v2(inset, inset), size = v2(-inset * 2, -inset * 2), relativeSize = v2(1, 1) },
-		content = ui.content({ body(ctx) }),
-	})
-	chrome.addOrnateFrame(content, "s3ui_equipment_detail", FRAME_SIZE, 0.95)
+		content = ui.content { body(ctx) },
+	}
+	chrome.addOrnateFrame(content, 's3ui_equipment_detail', FRAME_SIZE, 0.95)
 	return {
-		name = "s3ui_equipment_detail_panel",
+		name = 's3ui_equipment_detail_panel',
 		type = ui.TYPE.Widget,
 		props = { relativePosition = v2(x, y), relativeSize = v2(width, height), autoSize = false },
 		content = content,

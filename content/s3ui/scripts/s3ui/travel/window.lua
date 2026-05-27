@@ -13,6 +13,7 @@ local data = require 'scripts.s3ui.travel.data'
 local WINDOW = I.UI.WINDOW.Travel
 local MODE = I.UI.MODE.Travel
 
+---@class S3UI.TravelWindowModule
 local M = {}
 
 local rootElement = nil
@@ -290,6 +291,7 @@ local function destroyRoot()
 	rootElement = nil
 end
 
+---@param target openmw.Object
 function M.show(target)
 	destroyRoot()
 	targetActor = target
@@ -301,6 +303,7 @@ function M.show(target)
 	rootElement = ui.create((renderer or builder.make)(layoutCtx()))
 end
 
+---@param data table
 function M.addFollower(data)
 	if type(data) ~= 'table' or data.requestId ~= followerRequestId then
 		return
@@ -317,6 +320,7 @@ function M.addFollower(data)
 	end
 end
 
+---@param names table<string, string>
 function M.setCellDisplayNames(names)
 	if data.setCellDisplayNames(names) and active() then
 		rebuildRows()
@@ -334,6 +338,7 @@ function M.hide()
 	scrollOffset = 0
 end
 
+---@param delta integer
 function M.navigate(delta)
 	if not active() or #rows == 0 then
 		return
@@ -341,6 +346,7 @@ function M.navigate(delta)
 	selectIndex(math.max(1, math.min(#rows, selectedIndex + delta)))
 end
 
+---@param deltaRows integer
 function M.scroll(deltaRows)
 	if not active() then
 		return
@@ -356,6 +362,8 @@ function M.activateSelection()
 	end
 end
 
+---@param key table
+---@return boolean handled
 function M.handleKeyPress(key)
 	if not active() then
 		return false
@@ -378,26 +386,33 @@ function M.handleKeyPress(key)
 	return true
 end
 
+---@return table|nil
 function M.getElement()
 	return rootElement
 end
 
+---@return openmw.Object|nil
 function M.getTarget()
 	return targetActor
 end
 
+---@return S3UI.TravelRow[]
 function M.getDestinations()
 	return rows
 end
 
+---@return openmw.Object[]
 function M.getFollowers()
 	return followerList()
 end
 
+---@param name string
+---@param fn function|nil
 function M.setHook(name, fn)
 	hooks[name] = fn
 end
 
+---@param fn function|nil
 function M.setRenderer(fn)
 	renderer = fn
 end
@@ -407,6 +422,7 @@ function M.resetOverrides()
 	renderer = nil
 end
 
+---@return S3UI.TravelInterface
 function M.interface()
 	return {
 		getElement = M.getElement,

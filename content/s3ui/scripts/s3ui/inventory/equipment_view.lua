@@ -1,12 +1,13 @@
 ---@omw-context player
 
-local ui = require("openmw.ui")
-local util = require("openmw.util")
-local detailPanel = require("scripts.s3ui.inventory.equipment_detail_panel")
-local leftPanel = require("scripts.s3ui.inventory.equipment_left_panel")
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+local detailPanel = require 'scripts.s3ui.inventory.equipment_detail_panel'
+local leftPanel = require 'scripts.s3ui.inventory.equipment_left_panel'
 
 local v2 = util.vector2
 
+---@class S3UI.EquipmentViewModule
 local M = {}
 
 local LEFT_WIDTH = 1
@@ -32,15 +33,15 @@ function M.updateDetailPanel(element, ctx)
 end
 
 function M.content(ctx)
-	return ui.content({
+	return ui.content {
 		ctx.leftElement or leftPanel.layout(ctx, LEFT_WIDTH),
 		ctx.detailElement or detailPanel.layout(ctx, DETAIL_WIDTH, DETAIL_X, DETAIL_HEIGHT, DETAIL_Y),
-	})
+	}
 end
 
 function M.make(ctx)
 	return {
-		name = "s3ui_equipment_view",
+		name = 's3ui_equipment_view',
 		type = ui.TYPE.Widget,
 		props = { size = v2(0, 0), relativeSize = v2(0, 1), autoSize = false },
 		external = { grow = 1, stretch = 1 },

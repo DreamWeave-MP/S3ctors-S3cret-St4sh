@@ -5,6 +5,8 @@ local I = require 'openmw.interfaces'
 local self = require 'openmw.self'
 local types = require 'openmw.types'
 
+---@class S3UI.TravelFollowerScriptModule
+
 local MAX_TRAVEL_FOLLOWER_DISTANCE2 = 800 * 800
 
 local function validObject(object)
