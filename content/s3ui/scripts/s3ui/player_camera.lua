@@ -9,6 +9,30 @@ local s3math = require 'scripts.s3.math'
 local nullFunction = require 'scripts.s3.nullFunction'
 
 local v3 = util.vector3
+local Camera = {
+	getFieldOfView = camera.getFieldOfView,
+	getFocalPreferredOffset = camera.getFocalPreferredOffset,
+	getMode = camera.getMode,
+	getPitch = camera.getPitch,
+	getPosition = camera.getPosition,
+	getYaw = camera.getYaw,
+	instantTransition = camera.instantTransition,
+	setFocalPreferredOffset = camera.setFocalPreferredOffset,
+	setMode = camera.setMode,
+	setPitch = camera.setPitch,
+	setStaticPosition = camera.setStaticPosition,
+	setYaw = camera.setYaw,
+}
+local CameraMode = {
+	Static = camera.MODE.Static,
+}
+local Transform = {
+	rotateZ = util.transform.rotateZ,
+}
+local Ui = {
+	screenSize = ui.screenSize,
+}
+local getSelfBoundingBox = self.getBoundingBox
 
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
 local OPEN_DURATION = 0.28
@@ -63,12 +87,12 @@ local function saveCamera()
 	if cameraSnapshot then
 		return
 	end
-	local position = camera.getPosition()
+	local position = Camera.getPosition()
 	cameraSnapshot = {
-		mode = camera.getMode(),
-		yaw = camera.getYaw(),
-		pitch = camera.getPitch(),
-		focalOffset = camera.getFocalPreferredOffset(),
+		mode = Camera.getMode(),
+		yaw = Camera.getYaw(),
+		pitch = Camera.getPitch(),
+		focalOffset = Camera.getFocalPreferredOffset(),
 		position = position,
 		staticPosition = position,
 	}
@@ -117,11 +141,11 @@ function M.restoreCamera(instant)
 		phase = 'closing',
 		elapsed = 0,
 		duration = CLOSE_DURATION,
-		startPosition = camera.getPosition(),
+		startPosition = Camera.getPosition(),
 		targetPosition = cameraSnapshot.position,
-		startYaw = camera.getYaw(),
+		startYaw = Camera.getYaw(),
 		targetYaw = cameraSnapshot.yaw,
-		startPitch = camera.getPitch(),
+		startPitch = Camera.getPitch(),
 		targetPitch = cameraSnapshot.pitch,
 	}
 	currentUpdate = updateAnimation
@@ -137,16 +161,16 @@ function finishRestoreCamera()
 	currentUpdate = nullFunction
 	enableInventoryCameraControls()
 
-	camera.setFocalPreferredOffset(cameraSnapshot.focalOffset)
-	camera.setYaw(cameraSnapshot.yaw)
-	camera.setPitch(cameraSnapshot.pitch)
-	camera.setMode(cameraSnapshot.mode, true)
+	Camera.setFocalPreferredOffset(cameraSnapshot.focalOffset)
+	Camera.setYaw(cameraSnapshot.yaw)
+	Camera.setPitch(cameraSnapshot.pitch)
+	Camera.setMode(cameraSnapshot.mode, true)
 
-	if cameraSnapshot.mode == camera.MODE.Static then
-		camera.setStaticPosition(cameraSnapshot.staticPosition)
+	if cameraSnapshot.mode == CameraMode.Static then
+		Camera.setStaticPosition(cameraSnapshot.staticPosition)
 	end
 
-	camera.instantTransition()
+	Camera.instantTransition()
 	cameraSnapshot = nil
 end
 
@@ -193,14 +217,14 @@ local function playerFrame(box, screenRight)
 end
 
 local function inventoryPose()
-	local actorYaw = self.object.rotation:getYaw()
-	local front = util.transform.rotateZ(actorYaw) * v3(0, 1, 0)
-	local screenRight = util.transform.rotateZ(actorYaw) * v3(-1, 0, 0)
-	local bodyBounds = self.object:getBoundingBox()
+	local actorYaw = self.rotation:getYaw()
+	local front = Transform.rotateZ(actorYaw) * v3(0, 1, 0)
+	local screenRight = Transform.rotateZ(actorYaw) * v3(-1, 0, 0)
+	local bodyBounds = getSelfBoundingBox(self)
 	local frame = playerFrame(bodyBounds, screenRight)
-	local screen = ui.screenSize()
+	local screen = Ui.screenSize()
 	local aspect = screen.x / screen.y
-	local verticalTan = math.tan(camera.getFieldOfView() * 0.5)
+	local verticalTan = math.tan(Camera.getFieldOfView() * 0.5)
 	local distance = frame.halfHeight / verticalTan + STATIC_CAMERA_EXTRA_DISTANCE
 	local halfViewWidth = distance * verticalTan * aspect
 	local lateralOffset = halfViewWidth - frame.rightEdge - frame.width
@@ -214,9 +238,9 @@ local function inventoryPose()
 end
 
 local function applyPose(position, yaw, pitch)
-	camera.setStaticPosition(position)
-	camera.setYaw(yaw)
-	camera.setPitch(pitch)
+	Camera.setStaticPosition(position)
+	Camera.setYaw(yaw)
+	Camera.setPitch(pitch)
 end
 
 function M.saveHudVisibility()
@@ -238,14 +262,14 @@ end
 function M.showStaticInventoryCamera()
 	saveCamera()
 	disableInventoryCameraControls()
-	local startPosition = camera.getPosition()
-	local startYaw = camera.getYaw()
-	local startPitch = camera.getPitch()
+	local startPosition = Camera.getPosition()
+	local startYaw = Camera.getYaw()
+	local startPitch = Camera.getPitch()
 	local target = inventoryPose()
 
-	camera.setMode(camera.MODE.Static, true)
+	Camera.setMode(CameraMode.Static, true)
 	applyPose(startPosition, startYaw, startPitch)
-	camera.instantTransition()
+	Camera.instantTransition()
 	animation = {
 		phase = 'opening',
 		elapsed = 0,
