@@ -224,33 +224,26 @@ end
 ---@param screenRight openmw.util.Vector3
 ---@return table
 local function playerFrame(box, screenRight)
-	local top = box.center.z + box.halfSize.z
-	local bottom = box.center.z - box.halfSize.z
-	local rightEdge = box.halfSize.x
-	local leftEdge = -box.halfSize.x
+	local top = -math.huge
+	local bottom = math.huge
+	local rightEdge = -math.huge
+	local leftEdge = math.huge
 
-	if box.vertices then
-		top = -math.huge
-		bottom = math.huge
-		rightEdge = -math.huge
-		leftEdge = math.huge
+	for _, vertex in ipairs(box.vertices) do
+		if vertex.z > top then
+			top = vertex.z
+		end
+		if vertex.z < bottom then
+			bottom = vertex.z
+		end
 
-		for _, vertex in ipairs(box.vertices) do
-			if vertex.z > top then
-				top = vertex.z
-			end
-			if vertex.z < bottom then
-				bottom = vertex.z
-			end
-
-			local offset = vertex - box.center
-			local projectedRight = offset * screenRight
-			if projectedRight > rightEdge then
-				rightEdge = projectedRight
-			end
-			if projectedRight < leftEdge then
-				leftEdge = projectedRight
-			end
+		local offset = vertex - box.center
+		local projectedRight = offset * screenRight
+		if projectedRight > rightEdge then
+			rightEdge = projectedRight
+		end
+		if projectedRight < leftEdge then
+			leftEdge = projectedRight
 		end
 	end
 
