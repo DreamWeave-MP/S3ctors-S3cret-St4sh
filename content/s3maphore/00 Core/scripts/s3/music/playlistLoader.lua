@@ -48,21 +48,21 @@ local function playlistCoroutineLoader()
   for _, file in ipairs(musicUtil.getPlaylistFilePaths()) do
     musicUtil.debugLog('reading playlist file', file)
 
-    local ok
+    --- open the file
+    local ok, fileHandle = pcall(isOpenMW and vfs.open or io.open, file)
+    if not ok then goto fail end
+
+    --- read all lines
+    codeString = fileHandle:read('*a')
+
     if isOpenMW then
-      --- open the file
-      ok, fileHandle = pcall(vfs.open, file)
-      if not ok then goto fail end
-
-      --- read all lines
-      codeString = fileHandle:read('*a')
-
       --- util.loadCode it
       ok, result = pcall(util.loadCode, codeString, PlaylistEnvironment)
       if not ok or type(result) ~= 'function' then goto fail end
     else
-      ok, result = pcall(loadfile, file, PlaylistEnvironment)
-      if not ok or type(result) ~= 'function' then goto fail end
+      result = loadstring(codeString)
+      if result == nil then goto fail end
+      setfenv(result, PlaylistEnvironment)
     end
 
     --- call the resulting function to get the inner playlist array

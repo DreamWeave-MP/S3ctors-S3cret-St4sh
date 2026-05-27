@@ -137,7 +137,7 @@ function PlaylistRules.combatTargetExact(validTargets)
 
     local result = false
     for _, actor in pairs(FightingActors) do
-        local actorName = isOpenMW and actor.type.records[actor.recordId].name:lower() or actor.object.name:lower()
+        local actorName = isOpenMW and actor.type.records[actor.recordId].name:lower() or actor.baseObject.name:lower()
 
         if validTargets[actorName] then
             result = true
@@ -268,8 +268,22 @@ function PlaylistRules.localMerchantType(services)
 
     local result = false
 
-    for _, actor in pairs(isOpenMW and nearby.actors or tes3.findActorsInProximity{reference = tes3.player, range = math.huge}) do
-        local targetRecord = actor.type.records[actor.recordId]
+    --- @type GameObject[]|tes3reference[]
+    local actors
+    if isOpenMW then
+        actors = nearby.actors
+    else
+        actors = {}
+        --- @param cell tes3cell
+        for _, cell in ipairs(tes3.getActiveCells()) do
+            for ref in cell:iterateReferences{tes3.objectType.npc, tes3.objectType.creature} do
+                table.insert(actors, ref)
+            end
+        end
+    end
+    
+    for _, actor in ipairs(actors) do
+        local targetRecord = isOpenMW and actor.type.records[actor.recordId] or actor.baseObject
         local targetServices = targetRecord.servicesOffered
 
         local maybeMatchedAll = true
@@ -313,9 +327,7 @@ function PlaylistRules.combatTargetFaction(factionRules)
 
     local result = false
     for _, actor in pairs(FightingActors) do
-        local getFactionRank = isOpenMW and actor.type.getFactionRank or
-            --- @param ref tes3reference
-            function(ref) return ref.object.factionRank end
+        local getFactionRank = isOpenMW and actor.type.getFactionRank or function(ref) return ref.object.factionRank end
         if getFactionRank == nil then goto SKIPTARGET end
 
         for factionName, rankRange in pairs(factionRules) do

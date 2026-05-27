@@ -49,7 +49,7 @@ local function checkSilenceManager()
     end
 end
 
-local isSoundEnabled = isOpenMW and core.sound.isEnabled --- TODO: I am unsure what the MWSE equivalent is just yet. - SB
+local isSoundEnabled = isOpenMW and core.sound.isEnabled or function() return not tes3.worldController.audioController.disableAudio end
 local function onSoundEnabledChanged()
     if not isSoundEnabled() then return end
 
@@ -153,11 +153,20 @@ local Playback = {
     state = PlaylistState,
 }
 
-local AIFight, ipairs, isDead, isNPC, LocalActors, MyId
+local ipairs = ipairs
+local AIFight, isDead, isNPC, LocalActors, MyId
 if isOpenMW then
-    AIFight, ipairs, isDead, isNPC, LocalActors, MyId = types.Actor.stats.ai.fight, ipairs, types.Actor.isDead, types.NPC.objectIsInstance, nearby.actors, self.id
+    AIFight, isDead, isNPC, LocalActors, MyId = types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance, nearby.actors, self.id
 else
-    LocalActors = tes3.findActorsInProximity{reference = tes3.player, range = math.huge}
+    --- There is a function called `tes3.findActorsInProximity` but it requires a range value which may not cover all objects when in an interior cell.
+    LocalActors = {}
+    --- @param cell tes3cell
+    for _, cell in ipairs(tes3.getActiveCells()) do
+        for ref in cell:iterateReferences{tes3.objectType.npc, tes3.objectType.creature} do
+            table.insert(LocalActors, ref)
+        end
+    end
+    -- LocalActors = tes3.findActorsInProximity{reference = tes3.player, range = math.huge}
 end
 
 local function updateCellHasCombatTargets()
@@ -165,11 +174,11 @@ local function updateCellHasCombatTargets()
 
     --- @param actor GameObject|tes3reference
     for _, actor in ipairs(LocalActors) do
-        if actor.id ~= MyId then
+        if isOpenMW and actor.id ~= MyId or actor.mobile then
             local fightStat = isOpenMW and AIFight(actor) or actor.mobile.fight
             local fightLimit = (isOpenMW and isNPC(actor) or actor.objectType == tes3.objectType.npc) and NPCFightThreshold or CreatureFightThreshold
 
-            if (isOpenMW and fightStat.modified or fightStat) >= fightLimit and (isOpenMW and not isDead(actor) or actor.mobile.health < 1) then
+            if (isOpenMW and fightStat.modified or fightStat) >= fightLimit and (isOpenMW and not isDead(actor) or actor.mobile.health.current < 1) then
                 nearbyCombatTargets = true
                 break
             end
@@ -212,7 +221,9 @@ end
 local function onCombatTargetStart(e)
     PlaylistState.combatTargets[e.actor.reference.id] = e.actor.reference
 
-    updateCellHasCombatTargets()
+    if e.actor.reference ~= tes3.player then
+        updateCellHasCombatTargets()
+    end
     PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
     PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
 
@@ -232,7 +243,9 @@ local function onCombatTargetStop(e)
     PlaylistState.combatTargets[e.actor.reference.id] = nil
     PlaylistRules.clearCombatCaches(e.actor.reference.id)
 
-    updateCellHasCombatTargets()
+    if e.actor.reference ~= tes3.player then
+        updateCellHasCombatTargets()
+    end
     PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
     PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
 

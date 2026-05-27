@@ -149,7 +149,7 @@ end
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
   musicUtil.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
-  initPlaylistL10n(playlist.id)
+  -- initPlaylistL10n(playlist.id) --- TODO: We're removing this, aren't we? - SB
 
   local existingOrder = MusicManager.playlistsTracksOrder[playlist.id]
 
