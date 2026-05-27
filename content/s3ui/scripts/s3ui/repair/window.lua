@@ -1,11 +1,14 @@
 ---@omw-context player
 
 local async = require 'openmw.async'
+local core = require 'openmw.core'
 local I = require 'openmw.interfaces'
 local input = require 'openmw.input'
+local self = require 'openmw.self'
 local ui = require 'openmw.ui'
 local builder = require 'scripts.s3ui.repair.builder'
 local data = require 'scripts.s3ui.repair.data'
+local meter = require 'scripts.s3ui.repair.meter'
 local strike = require 'scripts.s3ui.repair.strike'
 local s3math = require 'scripts.s3.math'
 
@@ -16,7 +19,6 @@ local MODE = I.UI.MODE.Repair
 local M = {}
 
 local rootElement = nil
-local meterElement = nil
 local tool = nil
 local items = {}
 local selectedIndex = 1
@@ -25,6 +27,7 @@ local hovered = nil
 local generation = 0
 local armorer = 35
 local strikeState = nil
+local meterRunning = false
 local lastMessage = nil
 
 local function active()
@@ -60,8 +63,9 @@ end
 
 local function resetStrike()
 	strikeState = strike.new(armorer, tool and tool.quality or 1)
-	if meterElement and meterElement.layout then
-		builder.updateMeter(meterElement, strikeState, true)
+	meterRunning = false
+	if rootElement then
+		meter.update(rootElement, strikeState)
 	end
 end
 
@@ -69,11 +73,27 @@ local function isAlive(callbackGeneration)
 	return callbackGeneration == generation and rootElement and rootElement.layout
 end
 
+local refreshItems
+local bindMeterFromRoot
+
 local function closeMode()
 	I.UI.removeMode(MODE)
 end
 
-local function refreshItems()
+local function playerObject()
+	return self.object or self
+end
+
+local function queueRepairRefresh()
+	async:newUnsavableSimulationTimer(0, function()
+		if active() then
+			refreshItems()
+			M.rebuildElement()
+		end
+	end)
+end
+
+function refreshItems()
 	items = data.collectRepairableItems()
 	ensureSelectedVisible()
 	if #items == 0 then
@@ -103,6 +123,7 @@ local function layoutCtx()
 		hovered = hovered,
 		items = items,
 		lastMessage = lastMessage,
+		meterRunning = meterRunning,
 		scrollOffset = scrollOffset,
 		select = function(index)
 			if isAlive(callbackGeneration) then
@@ -111,7 +132,7 @@ local function layoutCtx()
 		end,
 		selectedIndex = selectedIndex,
 		selectedItem = selectedItem(),
-		meterElement = meterElement,
+		meterLayout = meter.make(strikeState),
 		setHovered = function(name)
 			if isAlive(callbackGeneration) then
 				hovered = name
@@ -127,32 +148,62 @@ local function layoutCtx()
 		strike = strikeState,
 		strikeNow = function()
 			if isAlive(callbackGeneration) then
-				M.strikeSelected()
+				M.activateStrike()
 			end
 		end,
 		tool = tool,
 	}
 end
 
+local rebuildLayout
+
 function M.rebuildElement()
 	if not (rootElement and rootElement.layout) then
 		return
 	end
-	rootElement.layout = builder.make(layoutCtx())
+	rootElement.layout = rebuildLayout()
 	rootElement:update()
+	bindMeterFromRoot()
 end
 
 local function destroyRoot()
 	generation = generation + 1
 	hovered = nil
-	if meterElement and meterElement.layout then
-		meterElement:destroy()
-	end
-	meterElement = nil
 	if rootElement and rootElement.layout then
 		rootElement:destroy()
 	end
+	meter.reset()
 	rootElement = nil
+end
+
+function rebuildLayout()
+	return builder.make(layoutCtx())
+end
+
+---@param rootLayout openmw.ui.Layout|nil
+---@return openmw.ui.Layout|nil
+local function meterLayoutFromRoot(rootLayout)
+	local selectedContent = nil
+	local rootContent = rootLayout and rootLayout.content
+	local panel = rootContent and rootContent.s3ui_repair_panel
+	local panelContent = panel and panel.content
+	local body = panelContent and panelContent.s3ui_repair_panel_body
+	local bodyContent = body and body.content
+	local columns = bodyContent and bodyContent.s3ui_repair_panel_columns
+	local columnsContent = columns and columns.content
+	local detailWrapper = columnsContent and columnsContent.s3ui_repair_detail_wrapper
+	local detailContent = detailWrapper and detailWrapper.content
+	local selectedPanel = detailContent and detailContent.s3ui_repair_selected_panel
+	selectedContent = selectedPanel and selectedPanel.content
+	return selectedContent and selectedContent.s3ui_repair_meter
+end
+
+function bindMeterFromRoot()
+	if not (rootElement and rootElement.layout) then
+		meter.reset()
+		return false
+	end
+	return meter.bind(meterLayoutFromRoot(rootElement.layout))
 end
 
 ---@param repairTool openmw.Object|nil
@@ -165,8 +216,8 @@ function M.show(repairTool)
 	lastMessage = nil
 	refreshItems()
 	resetStrike()
-	meterElement = ui.create(builder.meterLayout { strike = strikeState })
-	rootElement = ui.create(builder.make(layoutCtx()))
+	rootElement = ui.create(rebuildLayout())
+	bindMeterFromRoot()
 end
 
 function M.hide()
@@ -177,7 +228,30 @@ function M.hide()
 	scrollOffset = 0
 	lastMessage = nil
 	strikeState = nil
-	meterElement = nil
+	meterRunning = false
+end
+
+function M.startStrike()
+	if not (active() and selectedItem() and strikeState) then
+		return false
+	end
+	if not tool or tool.uses <= 0 then
+		lastMessage = 'The repair tool is spent.'
+		M.rebuildElement()
+		return false
+	end
+	meterRunning = true
+	lastMessage = nil
+	M.rebuildElement()
+	return true
+end
+
+function M.activateStrike()
+	if not meterRunning then
+		return M.startStrike()
+	end
+	M.strikeSelected()
+	return true
 end
 
 ---@param index integer
@@ -227,11 +301,12 @@ end
 
 function M.strikeSelected()
 	local item = selectedItem()
-	if not (item and strikeState) then
+	if not (item and strikeState and meterRunning) then
 		return
 	end
 	if not tool or tool.uses <= 0 then
 		lastMessage = 'The repair tool is spent.'
+		meterRunning = false
 		M.rebuildElement()
 		return
 	end
@@ -240,21 +315,27 @@ function M.strikeSelected()
 	local wear = strike.toolWear(tool.quality, wearMultiplier)
 	local applied = data.applyConditionGain(item, gain)
 	local consumed = data.consumeToolUses(tool, wear)
+	if applied > 0 then
+		core.sendGlobalEvent('ModifyItemCondition', { actor = playerObject(), item = item.item, amount = applied })
+	end
+	core.sendGlobalEvent('S3UI_SetItemCondition', { item = tool.item, condition = tool.uses })
 	strikeState.lastRating = rating
 	strikeState.lastGain = applied
 	strikeState.lastWear = consumed
 	lastMessage = rating .. ' strike. +' .. tostring(applied) .. ' condition, -' .. tostring(consumed) .. ' tool uses.'
 	refreshAfterRepair()
 	M.rebuildElement()
+	queueRepairRefresh()
 end
 
 ---@param dt number
 function M.update(dt)
-	if not active() or not strikeState or #items == 0 then
+	if not active() or not meterRunning or not strikeState or #items == 0 then
 		return
 	end
-	strike.update(strikeState, dt)
-	builder.updateMeter(meterElement, strikeState, false)
+	local frameDt = core.getRealFrameDuration()
+	strike.update(strikeState, frameDt)
+	meter.update(rootElement, strikeState)
 end
 
 ---@param key table
@@ -265,8 +346,8 @@ function M.handleKeyPress(key)
 	end
 	if key.code == input.KEY.Escape then
 		closeMode()
-	elseif key.code == input.KEY.Enter or key.code == input.KEY.NP_Enter or key.code == input.KEY.Space then
-		M.strikeSelected()
+	elseif key.code == input.KEY.Enter or key.code == input.KEY.NP_Enter then
+		M.activateStrike()
 	elseif key.code == input.KEY.UpArrow then
 		M.navigate(-1)
 	elseif key.code == input.KEY.DownArrow then

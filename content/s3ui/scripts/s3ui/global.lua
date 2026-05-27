@@ -140,6 +140,17 @@ local function travelFollowerCandidate(data)
 	data.player:sendEvent('S3UI_TravelFollowerFound', { requestId = data.requestId, actor = data.actor })
 end
 
+local function setItemCondition(data)
+	if type(data) ~= 'table' or not validObject(data.item) then
+		return
+	end
+	local itemData = types.Item.itemData(data.item)
+	local condition = tonumber(data.condition)
+	if itemData and condition then
+		itemData.condition = math.max(0, condition)
+	end
+end
+
 local function addBarterGold(target, price)
 	if not validObject(target) or not types.Actor.objectIsInstance(target) then
 		return
@@ -193,6 +204,7 @@ return {
 		S3UI_RequestTravelFollowers = requestTravelFollowers,
 		S3UI_TravelFollowerCandidate = travelFollowerCandidate,
 		S3UI_ResolveTravelCellNames = resolveTravelCellNames,
+		S3UI_SetItemCondition = setItemCondition,
 		S3UI_TravelExecute = executeTravel,
 	},
 }
