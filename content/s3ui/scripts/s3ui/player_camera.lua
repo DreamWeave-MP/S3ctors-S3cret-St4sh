@@ -40,7 +40,7 @@ local ACTOR_SCREEN_LEFT = v3(-1, 0, 0)
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
 local HALF_PI = s3math.pi * 0.5
 local OPEN_DURATION = 0.28
-local CLOSE_DURATION = 0.26
+local CLOSE_DURATION = 0.22
 -- Normalized horizontal screen position for the actor center: 0 = left edge, 0.5 = center, 1 = right edge.
 local INVENTORY_ACTOR_SCREEN_X = 0.8
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
@@ -114,7 +114,10 @@ local function projectedFrontDistance(box, origin, front)
 	return s3math.max(0, distance)
 end
 
-local function animationProgress(rawT)
+local function animationProgress(anim, rawT)
+	if anim.phase == 'closing' then
+		return rawT
+	end
 	return s3math.sin(rawT * HALF_PI)
 end
 
@@ -318,7 +321,7 @@ function updateAnimation(dt)
 
 	animation.elapsed = animation.elapsed + (tonumber(dt) or 0)
 	local rawT = clamp01(animation.elapsed / animation.duration)
-	local t = animationProgress(rawT)
+	local t = animationProgress(animation, rawT)
 
 	if animation.phase == 'opening' then
 		local target = inventoryPose()
