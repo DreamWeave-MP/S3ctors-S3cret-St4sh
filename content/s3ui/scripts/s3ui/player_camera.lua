@@ -40,6 +40,8 @@ local ACTOR_SCREEN_LEFT = v3(-1, 0, 0)
 local CAMERA_CONTROL_TAG = 's3ui_inventory'
 local OPEN_DURATION = 0.28
 local CLOSE_DURATION = 0.2
+-- Normalized horizontal screen position for the actor center: 0 = left edge, 0.5 = center, 1 = right edge.
+local INVENTORY_ACTOR_SCREEN_X = 0.8
 local STATIC_CAMERA_EXTRA_DISTANCE = 15
 
 ---@class S3UI.CameraSnapshot
@@ -221,13 +223,10 @@ function finishRestoreCamera()
 end
 
 ---@param box table
----@param screenRight openmw.util.Vector3
 ---@return table
-local function playerFrame(box, screenRight)
+local function playerFrame(box)
 	local top = -math.huge
 	local bottom = math.huge
-	local rightEdge = -math.huge
-	local leftEdge = math.huge
 
 	for _, vertex in ipairs(box.vertices) do
 		if vertex.z > top then
@@ -236,22 +235,11 @@ local function playerFrame(box, screenRight)
 		if vertex.z < bottom then
 			bottom = vertex.z
 		end
-
-		local offset = vertex - box.center
-		local projectedRight = offset * screenRight
-		if projectedRight > rightEdge then
-			rightEdge = projectedRight
-		end
-		if projectedRight < leftEdge then
-			leftEdge = projectedRight
-		end
 	end
 
 	return {
 		target = v3(box.center.x, box.center.y, (top + bottom) * 0.5),
 		halfHeight = (top - bottom) * 0.5,
-		rightEdge = rightEdge,
-		width = rightEdge - leftEdge,
 	}
 end
 
@@ -261,13 +249,13 @@ local function inventoryPose()
 	local front = actorFacing * ACTOR_FORWARD
 	local screenRight = actorFacing * ACTOR_SCREEN_LEFT
 	local bodyBounds = getSelfBoundingBox(self)
-	local frame = playerFrame(bodyBounds, screenRight)
+	local frame = playerFrame(bodyBounds)
 	local screen = Ui.screenSize()
 	local aspect = screen.x / screen.y
 	local verticalTan = math.tan(Camera.getFieldOfView() * 0.5)
 	local distance = frame.halfHeight / verticalTan + STATIC_CAMERA_EXTRA_DISTANCE
 	local halfViewWidth = distance * verticalTan * aspect
-	local lateralOffset = halfViewWidth - frame.rightEdge - frame.width
+	local lateralOffset = (INVENTORY_ACTOR_SCREEN_X * 2 - 1) * halfViewWidth
 	local pos = frame.target + front * distance - screenRight * lateralOffset
 
 	return {
