@@ -219,39 +219,39 @@ end
 
 --- @param e combatStartedEventData
 local function onCombatTargetStart(e)
-    PlaylistState.combatTargets[e.actor.reference.id] = e.actor.reference
-
     if e.actor.reference ~= tes3.player then
+        PlaylistState.combatTargets[e.actor.reference.id] = e.actor.reference
+
         updateCellHasCombatTargets()
-    end
-    PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
-    PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
+        PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
+        PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
 
-    if PlaylistState.isInCombat then
-        CombatTargetCacheKey = tostring(PlaylistState.combatTargets)
+        if PlaylistState.isInCombat then
+            CombatTargetCacheKey = tostring(PlaylistState.combatTargets)
 
-        for targetId, _ in pairs(PlaylistState.combatTargets) do
-            CombatTargetCacheKey = ('%s%s'):format(CombatTargetCacheKey, targetId)
+            for targetId, _ in pairs(PlaylistState.combatTargets) do
+                CombatTargetCacheKey = ('%s%s'):format(CombatTargetCacheKey, targetId)
+            end
+
+            PlaylistRules.setCombatTargetCacheKey(CombatTargetCacheKey)
         end
-
-        PlaylistRules.setCombatTargetCacheKey(CombatTargetCacheKey)
     end
 end
 
 --- @param e combatStoppedEventData
 local function onCombatTargetStop(e)
-    PlaylistState.combatTargets[e.actor.reference.id] = nil
-    PlaylistRules.clearCombatCaches(e.actor.reference.id)
-
     if e.actor.reference ~= tes3.player then
-        updateCellHasCombatTargets()
-    end
-    PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
-    PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
+        PlaylistState.combatTargets[e.actor.reference.id] = nil
+        PlaylistRules.clearCombatCaches(e.actor.reference.id)
 
-    if not PlaylistState.isInCombat then
-        CombatTargetCacheKey = nil
-        PlaylistRules.setCombatTargetCacheKey(nil)
+        updateCellHasCombatTargets()
+        PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
+        PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
+
+        if not PlaylistState.isInCombat then
+            CombatTargetCacheKey = nil
+            PlaylistRules.setCombatTargetCacheKey(nil)
+        end
     end
 end
 
