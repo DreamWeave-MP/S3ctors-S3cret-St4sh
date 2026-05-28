@@ -12,14 +12,17 @@
 ---@class openmw.self: openmw.SelfObject
 ---@field object openmw.LObject The object the script is attached to (readonly)
 ---@field controls openmw.self.ActorControls Movement controls (only for actors)
+---@field ATTACK_TYPE openmw.self.AttackTypeConstants Attack type constants. Use with `controls.use`.
 local self = {}
 
----@class openmw.self.ATTACK_TYPE
----@field NoAttack number
----@field Any number
----@field Chop number
----@field Slash number
----@field Thrust number
+---@alias openmw.self.ATTACK_TYPE integer
+
+---@class openmw.self.AttackTypeConstants
+---@field NoAttack openmw.self.ATTACK_TYPE
+---@field Any openmw.self.ATTACK_TYPE
+---@field Chop openmw.self.ATTACK_TYPE
+---@field Slash openmw.self.ATTACK_TYPE
+---@field Thrust openmw.self.ATTACK_TYPE
 local ATTACK_TYPE = {}
 
 ---Allows to view and/or modify controls of an actor. All fields are mutable.
@@ -46,6 +49,9 @@ self.object = nil
 ---Movement controls (only for actors)
 ---@type openmw.self.ActorControls
 self.controls = nil
+
+---@type openmw.self.AttackTypeConstants
+self.ATTACK_TYPE = nil
 
 ---Enables or disables standard AI (enabled by default).
 ---@param v boolean

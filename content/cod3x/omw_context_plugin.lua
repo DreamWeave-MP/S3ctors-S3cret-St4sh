@@ -693,14 +693,14 @@ end
 
 --- Match `local alias = require('openmw.*')` style alias declarations on one line.
 ---@param code string
----@return string?
+---@return string?, string?
 local function localRequireAliasModule(code)
-    local _, _, _, rhsStart = code:find("^%s*local%s+([%a_][%w_]*)%s*=%s*()")
+    local _, _, alias, rhsStart = code:find("^%s*local%s+([%a_][%w_]*)%s*=%s*()")
     if not rhsStart then
         return nil
     end
 
-    return exactOpenMwRequireRhsModule(code, rhsStart)
+    return alias, exactOpenMwRequireRhsModule(code, rhsStart)
 end
 
 --- Add type annotations before known chained require return values.
@@ -733,7 +733,9 @@ local function addChainedRequireTypeDiff(diffs, code, lineText, previousLineText
     })
 end
 
---- Add type annotations before openmw.* local require aliases.
+--- Add casts after openmw.* local require aliases.
+--- Casts avoid assignment diagnostics against the broad raw module return type while
+--- still narrowing the alias for context-aware member diagnostics and completion.
 ---@param diffs table[]
 ---@param code string
 ---@param lineText string
@@ -741,7 +743,7 @@ end
 ---@param lineStart integer
 ---@param ctx table?
 local function addModuleAliasTypeDiff(diffs, code, lineText, previousLineText, lineStart, ctx)
-    local moduleName = localRequireAliasModule(code)
+    local alias, moduleName = localRequireAliasModule(code)
     if not moduleName then
         return
     end
@@ -757,9 +759,9 @@ local function addModuleAliasTypeDiff(diffs, code, lineText, previousLineText, l
 
     local indent = lineText:match("^(%s*)") or ""
     table.insert(diffs, {
-        start = lineStart,
-        finish = lineStart - 1,
-        text = indent .. "---@type " .. typeName .. "\n",
+        start = lineStart + #lineText + 1,
+        finish = lineStart + #lineText,
+        text = indent .. "---@cast " .. alias .. " " .. typeName .. "\n",
     })
 end
 
