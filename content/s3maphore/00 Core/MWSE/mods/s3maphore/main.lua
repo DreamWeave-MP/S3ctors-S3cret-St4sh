@@ -17,24 +17,34 @@ local function loadedCallback(e)
 
         mcm.initGameSessionData()
 
-        --- Register MWSE events
         local core = require("scripts.s3.music.core")
+        local staticCollection = require("scripts.s3.music.staticCollection")
+        local actor = require("scripts.omw.music.actor")
+
+        --- Register MWSE events
         event.register(tes3.event.journal, core.engineHandlers.onQuestUpdate)
         event.register(tes3.event.simulate, core.engineHandlers.onUpdate)
-        event.register(tes3.event.saved, core.engineHandlers.onSave)
+        event.register(tes3.event.save, core.engineHandlers.onSave)
         event.register(tes3.event.loaded, core.engineHandlers.onLoad)
 
         event.register(tes3.event.damaged, core.eventHandlers.Died)
 
         event.register(tes3.event.key, core.mwse.keyCallback)
-        event.register(tes3.event.combatStarted, core.mwse.combatStarted)
-        event.register(tes3.event.combatStopped, core.mwse.combatStopped)
 
-        local staticCollection = require("scripts.s3.music.staticCollection")
-        event.register(tes3.event.weatherCycled, staticCollection.mwse.weatherChanged)
+        event.register(tes3.event.weatherChangedImmediate, staticCollection.mwse.weatherChanged)
+        event.register(tes3.event.weatherTransitionFinished, staticCollection.mwse.weatherChanged)
         event.register(tes3.event.cellChanged, staticCollection.mwse.cellChanged)
 
+        event.register(tes3.event.referenceDeactivated, actor.engineHandlers.onInactive)
+
+        event.register(tes3.event.damage, actor.mwse.onDamage)
+        event.register(tes3.event.damaged, actor.mwse.onDeath)
+        event.register(tes3.event.combatStarted, actor.mwse.combatStarted)
+        event.register(tes3.event.combatStopped, actor.mwse.combatStopped)
+
         --- Register S3maphore events
+        event.register("S3maphoreCombatStarted", core.mwse.combatStarted)
+        event.register("S3maphoreCombatStopped", core.mwse.combatStopped)
 
         event.register("S3maphoreToggleMusic", core.eventHandlers.S3maphoreToggleMusic)
         event.register("S3maphoreSkipTrack", core.eventHandlers.S3maphoreSkipTrack)
