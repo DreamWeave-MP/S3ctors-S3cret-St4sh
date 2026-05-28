@@ -403,6 +403,8 @@ function M.processPendingRebuild()
 	rebuildRoot(currentRootPosition())
 end
 
+M.queueRebuild = queueRebuild
+
 ---@param deltaRows integer
 function M.scrollRows(deltaRows)
 	if not active() then

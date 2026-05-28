@@ -1,6 +1,5 @@
 ---@omw-context player
 
-local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input = require 'openmw.input'
 local self = require 'openmw.self'
@@ -82,11 +81,9 @@ local function openDropCountModal(itemData, ctx)
 	}
 end
 
-local function queueRebuildAfterUse(ctx)
-	queueRebuild(ctx)
-	async:newUnsavableSimulationTimer(0, function()
-		queueRebuild(ctx)
-	end)
+local function sendUseItem(item, actor, force)
+	core.sendGlobalEvent('UseItem', { object = item, actor = actor, force = force })
+	self:sendEvent('S3UI_InventoryActionQueued')
 end
 
 local function useItem(itemData, ctx)
@@ -95,18 +92,18 @@ local function useItem(itemData, ctx)
 	end
 	local item = itemData.item
 	local actor = playerObject()
+	local force = itemData.force or false
 	if itemData.item.type == types.Repair then
 		if ctx and ctx.closeInventoryForRepair then
 			ctx.closeInventoryForRepair(function()
-				core.sendGlobalEvent('UseItem', { object = item, actor = actor })
+				sendUseItem(item, actor, force)
 			end)
 			return true
 		end
-		core.sendGlobalEvent('UseItem', { object = item, actor = actor })
+		sendUseItem(item, actor, force)
 		return true
 	end
-	core.sendGlobalEvent('UseItem', { object = item, actor = actor })
-	queueRebuildAfterUse(ctx)
+	sendUseItem(item, actor, force)
 	return true
 end
 
