@@ -142,6 +142,33 @@ Example:
   end
 ```
 
+## uiSnapshot
+
+`scripts.s3.uiSnapshot` is a plain helper module for turning OpenMW UI layouts or element-like values into deterministic plain Lua snapshots and formatted text. It does not import `openmw.ui`, create UI, destroy UI, register handlers, or mutate the values it inspects.
+
+Example:
+
+```lua
+local uiSnapshot = require 'scripts.s3.uiSnapshot'
+local text = uiSnapshot.format(element)
+```
+
+Public API names:
+
+- `uiSnapshot.fromLayout(layout, opts)` captures a layout or arbitrary value as a fresh plain table.
+- `uiSnapshot.fromElement(element, opts)` captures `element.layout`; destroyed or invalid elements return an invalid-element marker instead of throwing.
+- `uiSnapshot.capture(value, opts)` captures an element when `value.layout` is readable, otherwise captures the value directly.
+- `uiSnapshot.lines(value, opts)` returns deterministic formatted lines.
+- `uiSnapshot.format(value, opts)` returns one newline-separated deterministic string.
+
+All capture and format calls allocate fresh tables and/or strings. Use this for diagnostics, logs, tests, and bug reports, not from per-frame UI hot paths or high-frequency callbacks. Returned snapshots are plain diagnostic data and do not keep UI elements alive.
+
+## Fixture Probes
+
+The Lua files under `scripts/s3/fixtures` are opt-in development/runtime probe scripts. They are not normal H3 behavior and are not referenced by the shipped `H3lp Yours3lf.esp`. Use them only through the example `examples/h3-fixtures.omwscripts` file or an equivalent local test setup.
+
+The probes print compact `S3TRACE|...` lines for lifecycle, event, save/load, timer, inventory-read, and simple UI visibility diagnostics. Their default behavior is intentionally safe and read-only: inventory probing only counts entries, mutation requests are traced as blocked, UI roots are only created after explicit fixture events, and saved fixture state is limited to small primitive counters.
+
 ## LogMessage
 
 Emits a message to the `~` console from any context. Takes one argument. Re-exported through the `s3lf` module under the name `ConsoleLog`.
