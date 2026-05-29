@@ -387,6 +387,10 @@ local function shouldReject(ctx, moduleName)
         return false
     end
 
+    if moduleName == "openmw_aux" then
+        return true
+    end
+
     if not ctx or ctx.invalid then
         return true
     end
@@ -642,7 +646,8 @@ local function matchRequireMemberAt(line, pos, moduleName)
     return nil
 end
 
---- Return the module name only when the RHS is exactly require('openmw.*') or require('openmw_aux.*').
+--- Return the module name only when the RHS is exactly require('openmw'), require('openmw_aux'),
+--- or a dotted OpenMW/OpenMW aux module require.
 ---@param code string
 ---@param rhsStart integer
 ---@return string?
