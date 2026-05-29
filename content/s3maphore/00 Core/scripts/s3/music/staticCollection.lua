@@ -180,14 +180,17 @@ return {
     eventHandlers = {},
 
     mwse = {
-        weatherChanged = function(e)
+        onUpdate = function(e)
             local weatherTracker = tes3.getGlobal('S3maphoreWeatherTracker')
             if weatherTracker ~= -1 then
                 local weatherName = WeatherType[weatherTracker]
-                event.trigger('S3maphoreWeatherChanged', {weatherName = weatherName})
-                weatherTracker = -1
+
+                event.trigger('S3maphoreWeatherChanged', weatherName)
+
+                tes3.setGlobal('S3maphoreWeatherTracker', -1)
             end
         end,
+
         --- @param e cellChangedEventData
         cellChanged = function(e)
             if not e.previousCell or e.previousCell.id ~= e.cell.id then

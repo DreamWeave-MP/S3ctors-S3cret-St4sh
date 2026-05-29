@@ -31,8 +31,7 @@ local function loadedCallback(e)
 
         event.register(tes3.event.key, core.mwse.keyCallback)
 
-        event.register(tes3.event.weatherChangedImmediate, staticCollection.mwse.weatherChanged)
-        event.register(tes3.event.weatherTransitionFinished, staticCollection.mwse.weatherChanged)
+        event.register(tes3.event.simulate, staticCollection.mwse.onUpdate)
         event.register(tes3.event.cellChanged, staticCollection.mwse.cellChanged)
 
         event.register(tes3.event.referenceDeactivated, actor.engineHandlers.onInactive)
@@ -43,9 +42,6 @@ local function loadedCallback(e)
         event.register(tes3.event.combatStopped, actor.mwse.combatStopped)
 
         --- Register S3maphore events
-        event.register("S3maphoreCombatStarted", core.mwse.combatStarted)
-        event.register("S3maphoreCombatStopped", core.mwse.combatStopped)
-
         event.register("S3maphoreToggleMusic", core.eventHandlers.S3maphoreToggleMusic)
         event.register("S3maphoreSkipTrack", core.eventHandlers.S3maphoreSkipTrack)
         event.register("S3maphoreSpecialTrack", core.eventHandlers.S3maphoreSpecialTrack)
@@ -55,6 +51,9 @@ local function loadedCallback(e)
         event.register("S3maphoreCellChanged", core.eventHandlers.S3maphoreCellChanged)
         event.register("S3maphoreWeatherChanged", core.eventHandlers.S3maphoreWeatherChanged)
         event.register("S3maphoreClearTargetCache", core.eventHandlers.S3maphoreClearTargetCache)
+        
+        event.register("S3maphoreCombatStarted", core.mwse.combatStarted)
+        event.register("S3maphoreCombatStopped", core.mwse.combatStopped)
     end
 end
 event.register(tes3.event.loaded, loadedCallback)

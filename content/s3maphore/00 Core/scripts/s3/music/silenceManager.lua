@@ -3,6 +3,7 @@
 --- in an API-specific manner
 local musicUtil = require 'scripts.s3.music.util'
 local INTERRUPT = require 'scripts.s3.music.enum.interruptMode'
+local isOpenMW = require 'scripts.s3.isOpenMW'
 
 local SilenceData
 local frameDuration, isMusicPlaying
@@ -63,7 +64,7 @@ end
 
 ---@return boolean beQuiet whether or not a silence track is presently active
 local function silenceActive(self)
-    local silenceTrackRunning = not isMusicPlaying() and self.time > 0
+    local silenceTrackRunning = not (isOpenMW and isMusicPlaying() or tes3.worldController.audioController.isMusicPlaying) and self.time > 0
 
     if silenceTrackRunning then
         self.time = self.time - frameDuration(); print(self.time)

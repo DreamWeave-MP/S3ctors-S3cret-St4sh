@@ -49,7 +49,7 @@ else
     fileExists = tes3.getFileExists
     musicSettings = require 's3maphore.mcm'.get('SettingsS3Music')
     pathsMatching = function(prefix)
-        return lfs.walkdir('Data Files\\' .. prefix)
+        return lfs.walkdir('Data Files/' .. prefix)
     end
     playlistsSection = tes3.player.tempData['S3MusicPlaylistsTrackOrder']
 end
