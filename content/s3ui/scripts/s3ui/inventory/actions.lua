@@ -66,7 +66,6 @@ local function dropCount(itemData, count, ctx)
 		count = itemData.count
 	end
 	core.sendGlobalEvent('S3UI_DropItem', dropEventData(itemData, count))
-	queueRebuild(ctx)
 end
 
 local function openDropCountModal(itemData, ctx)

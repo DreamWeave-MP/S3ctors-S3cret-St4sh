@@ -32,10 +32,15 @@ local equipmentLeftElement = nil
 local equipmentDetailElement = nil
 local rebuildInventoryPending = false
 local rebuildEventQueued = false
+local deferredRebuildPending = false
+local deferredRebuildReady = false
+local deferredRebuildTimerQueued = false
+local deferredRebuildTimerSerial = 0
 ---@type S3UI.InventoryMetrics|nil
 local activeLayoutMetrics = nil
 local state = stateFactory.new()
 local queueRebuild
+local queueDeferredRebuild
 local equipmentCtx
 local updateAnimation
 
@@ -161,12 +166,39 @@ function queueRebuild()
 	self:sendEvent 'S3UI_RebuildInventory'
 end
 
+function queueDeferredRebuild()
+	details.hide()
+	deferredRebuildPending = true
+	if deferredRebuildTimerQueued then
+		return
+	end
+	deferredRebuildTimerQueued = true
+	deferredRebuildTimerSerial = deferredRebuildTimerSerial + 1
+	local timerSerial = deferredRebuildTimerSerial
+	async:newUnsavableSimulationTimer(0, function()
+		if timerSerial ~= deferredRebuildTimerSerial then
+			return
+		end
+		deferredRebuildTimerQueued = false
+		if not deferredRebuildPending then
+			return
+		end
+		deferredRebuildReady = true
+		rebuildEventQueued = true
+		self:sendEvent 'S3UI_RebuildInventory'
+	end)
+end
+
 local function destroyRoot()
 	stopAnimation()
 	countModal.hide()
 	state:bumpGeneration()
 	rebuildInventoryPending = false
 	rebuildEventQueued = false
+	deferredRebuildPending = false
+	deferredRebuildReady = false
+	deferredRebuildTimerQueued = false
+	deferredRebuildTimerSerial = deferredRebuildTimerSerial + 1
 	details.destroy()
 	if equipmentLeftElement and equipmentLeftElement.layout then
 		equipmentLeftElement:destroy()
@@ -370,6 +402,10 @@ function M.hide(onHidden)
 	state:bumpGeneration()
 	rebuildInventoryPending = false
 	rebuildEventQueued = false
+	deferredRebuildPending = false
+	deferredRebuildReady = false
+	deferredRebuildTimerQueued = false
+	deferredRebuildTimerSerial = deferredRebuildTimerSerial + 1
 	countModal.hide()
 	details.hide()
 	beginAnimation(transition.CLOSING, startPosition, offscreenLeftPosition(metrics), function()
@@ -393,17 +429,26 @@ end
 
 function M.processPendingRebuild()
 	rebuildEventQueued = false
-	if not rebuildInventoryPending then
+	local immediatePending = rebuildInventoryPending
+	local deferredReady = deferredRebuildReady
+	if not (immediatePending or deferredReady) then
 		return
 	end
-	rebuildInventoryPending = false
 	if not active() then
 		return
+	end
+	if immediatePending then
+		rebuildInventoryPending = false
+	end
+	if deferredReady then
+		deferredRebuildPending = false
+		deferredRebuildReady = false
 	end
 	rebuildRoot(currentRootPosition())
 end
 
 M.queueRebuild = queueRebuild
+M.queueDeferredRebuild = queueDeferredRebuild
 
 ---@param deltaRows integer
 function M.scrollRows(deltaRows)
