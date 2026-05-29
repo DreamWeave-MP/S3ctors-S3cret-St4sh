@@ -34,7 +34,7 @@
 ---      ---@omw-context-begin, and ---@omw-context-end
 ---   c) ignores ---@meta files and plugin/tooling files under /cod3x/
 ---   d) poisons missing/invalid context annotations with an undefined global,
----   e) poisons offending require('openmw.*') calls with an undefined global,
+---   e) poisons offending require('openmw.*') and require('openmw_aux.*') calls with an undefined global,
 ---   f) poisons offending openmw.core/openmw.storage top-level member access with an undefined global,
 ---      which makes LuaLS emit its built-in undefined-global diagnostic
 ---   g) blocks LuaLS module resolution for the same offending modules via
@@ -76,7 +76,7 @@
 -- ---------------------------------------------------------------------------
 -- Availability map
 -- ---------------------------------------------------------------------------
--- Derived from the @context annotations in files/lua_api/openmw/*.lua.
+-- Derived from OpenMW Lua API annotations and openmw_aux source comments.
 -- Each entry maps a fully-qualified module name to the set of contexts in
 -- which it is available.
 --
@@ -98,6 +98,10 @@ local AVAILABILITY = {
 
     -- Runtime contexts only
     ["openmw.interfaces"]     = { global = true, ["local"] = true, player = true, menu = true },
+    ["openmw_aux.calendar"]       = { global = true, ["local"] = true, player = true, menu = true },
+    ["openmw_aux.calendarconfig"] = { global = true, ["local"] = true, player = true, menu = true },
+    ["openmw_aux.time"]           = { global = true, ["local"] = true, player = true, menu = true },
+    ["openmw_aux.util"]           = { global = true, ["local"] = true, player = true, menu = true },
 
     -- Load only
     ["openmw.content"]        = { load = true },
@@ -114,6 +118,7 @@ local AVAILABILITY = {
     ["openmw.ambient"]        = { player = true, menu = true },
     ["openmw.input"]          = { player = true, menu = true },
     ["openmw.ui"]             = { player = true, menu = true },
+    ["openmw_aux.ui"]         = { player = true, menu = true },
 
     -- Player only
     ["openmw.camera"]         = { player = true },
@@ -317,7 +322,9 @@ end
 ---@param moduleName string
 ---@return boolean
 local function isOpenMwModule(moduleName)
-    return moduleName == "openmw" or moduleName:match("^openmw%.") ~= nil
+    return moduleName == "openmw" or moduleName == "openmw_aux"
+        or moduleName:match("^openmw%.") ~= nil
+        or moduleName:match("^openmw_aux%.") ~= nil
 end
 
 --- Build a readable undefined global name for LuaLS to diagnose.
@@ -635,7 +642,7 @@ local function matchRequireMemberAt(line, pos, moduleName)
     return nil
 end
 
---- Return the module name only when the RHS is exactly require('openmw.*').
+--- Return the module name only when the RHS is exactly require('openmw.*') or require('openmw_aux.*').
 ---@param code string
 ---@param rhsStart integer
 ---@return string?
@@ -823,7 +830,7 @@ local function addAliasModuleMemberDiffs(diffs, code, lineStart, ctx, aliases, m
     end
 end
 
---- Scan `text` for require('openmw.*') calls and build poison edits.
+--- Scan `text` for OpenMW require calls and build poison edits.
 ---@param text string
 ---@param ctx table?
 ---@return table[], table
