@@ -11,6 +11,12 @@ local function validObject(object)
 	return object and object.isValid and object:isValid()
 end
 
+local function ackInventoryMutation(player, reason)
+	if validObject(player) then
+		player:sendEvent('S3UI_InventoryMutationApplied', { reason = reason })
+	end
+end
+
 local function dropItem(data)
 	if type(data) ~= 'table' then
 		return
@@ -28,6 +34,7 @@ local function dropItem(data)
 	end
 
 	local remaining = count
+	local droppedAny = false
 	local function dropFromStack(stack)
 		if remaining < 1 or not validObject(stack) or stack.parentContainer ~= player then
 			return
@@ -44,25 +51,34 @@ local function dropItem(data)
 		if validObject(dropped) then
 			dropped:teleport(cellName, position, { onGround = data.onGround ~= false })
 			remaining = remaining - dropCount
+			droppedAny = true
 		end
 	end
 
 	dropFromStack(item)
 	if remaining < 1 then
+		ackInventoryMutation(player, 'drop')
 		return
 	end
 
 	local recordId = item.recordId
 	if not recordId then
+		if droppedAny then
+			ackInventoryMutation(player, 'drop')
+		end
 		return
 	end
 	for _, stack in ipairs(types.Actor.inventory(player):getAll()) do
 		if stack ~= item and stack.recordId == recordId then
 			dropFromStack(stack)
 			if remaining < 1 then
+				ackInventoryMutation(player, 'drop')
 				return
 			end
 		end
+	end
+	if droppedAny then
+		ackInventoryMutation(player, 'drop')
 	end
 end
 
@@ -151,6 +167,96 @@ local function setItemCondition(data)
 	end
 end
 
+local function repairToolEventItem(data, requireExpectedCondition)
+	if type(data) ~= 'table' then
+		return nil, nil
+	end
+	local player = data.player
+	local item = data.item
+	local expectedBefore = tonumber(data.expectedBefore)
+	if not (validObject(player) and types.Actor.objectIsInstance(player) and validObject(item)) then
+		return nil, nil
+	end
+	if type(data.recordId) ~= 'string' or item.parentContainer ~= player or item.recordId ~= data.recordId then
+		return nil, nil
+	end
+	if item.type ~= types.Repair and not types.Repair.objectIsInstance(item) then
+		return nil, nil
+	end
+	if requireExpectedCondition and not expectedBefore then
+		return nil, nil
+	end
+	local itemData = types.Item.itemData(item)
+	if requireExpectedCondition and itemData and type(itemData.condition) == 'number' and itemData.condition ~= expectedBefore then
+		return nil, nil
+	end
+	return player, item
+end
+
+local function stackCount(item)
+	return math.max(1, math.floor(tonumber(item.count) or 1))
+end
+
+local function validRepairToolStack(player, recordId, item)
+	return validObject(item)
+		and item.parentContainer == player
+		and item.recordId == recordId
+		and (item.type == types.Repair or types.Repair.objectIsInstance(item))
+end
+
+local function setRepairToolCondition(data)
+	local player, item = repairToolEventItem(data, true)
+	local condition = type(data) == 'table' and tonumber(data.condition) or nil
+	if not (player and item and condition and condition > 0) then
+		return
+	end
+
+	local target = item
+	if stackCount(item) > 1 then
+		target = item:split(1)
+		if not validObject(target) then
+			return
+		end
+	end
+
+	local itemData = types.Item.itemData(target)
+	if itemData then
+		itemData.condition = condition
+		if target.parentContainer ~= player then
+			target:moveInto(types.Actor.inventory(player))
+		end
+		ackInventoryMutation(player, 'repairToolCondition')
+	end
+end
+
+local function consumeRepairTool(data)
+	if type(data) ~= 'table' then
+		return
+	end
+	local player = data.player
+	local recordId = data.recordId
+	if not (validObject(player) and types.Actor.objectIsInstance(player) and type(recordId) == 'string') then
+		return
+	end
+
+	local target = data.item
+	if not validRepairToolStack(player, recordId, target) then
+		target = nil
+		for _, stack in ipairs(types.Actor.inventory(player):findAll(recordId)) do
+			if validRepairToolStack(player, recordId, stack) then
+				target = stack
+				break
+			end
+		end
+		if not target then
+			return
+		end
+	end
+
+	target:remove(1)
+	ackInventoryMutation(player, 'consumeRepairTool')
+end
+
 local function addBarterGold(target, price)
 	if not validObject(target) or not types.Actor.objectIsInstance(target) then
 		return
@@ -205,6 +311,8 @@ return {
 		S3UI_TravelFollowerCandidate = travelFollowerCandidate,
 		S3UI_ResolveTravelCellNames = resolveTravelCellNames,
 		S3UI_SetItemCondition = setItemCondition,
+		S3UI_SetRepairToolCondition = setRepairToolCondition,
+		S3UI_ConsumeRepairTool = consumeRepairTool,
 		S3UI_TravelExecute = executeTravel,
 	},
 }

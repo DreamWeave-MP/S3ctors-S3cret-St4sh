@@ -161,6 +161,7 @@ return {
 	},
 	eventHandlers = {
 		S3UI_InventoryActionQueued = inventoryWindow.queueRebuild,
+		S3UI_InventoryMutationApplied = inventoryWindow.queueDeferredRebuild,
 		S3UI_RebuildInventory = inventoryWindow.processPendingRebuild,
 		S3UI_TravelFollowerFound = travelWindow.addFollower,
 		S3UI_TravelCellNamesResolved = travelWindow.setCellDisplayNames,

@@ -88,6 +88,10 @@ local function queueRepairRefresh()
 	async:newUnsavableSimulationTimer(0, function()
 		if active() then
 			refreshItems()
+			if #items == 0 then
+				closeMode()
+				return
+			end
 			M.rebuildElement()
 		end
 	end)
@@ -98,6 +102,9 @@ function refreshItems()
 	ensureSelectedVisible()
 	if #items == 0 then
 		selectedIndex = 1
+		if active() then
+			closeMode()
+		end
 	end
 end
 
@@ -237,7 +244,7 @@ function M.startStrike()
 	end
 	if not tool or tool.uses <= 0 then
 		lastMessage = 'The repair tool is spent.'
-		M.rebuildElement()
+		closeMode()
 		return false
 	end
 	meterRunning = true
@@ -307,23 +314,56 @@ function M.strikeSelected()
 	if not tool or tool.uses <= 0 then
 		lastMessage = 'The repair tool is spent.'
 		meterRunning = false
-		M.rebuildElement()
+		closeMode()
 		return
 	end
 	local rating, performance, wearMultiplier = strike.rating(strikeState)
 	local gain = strike.conditionGain(item, armorer, tool.quality, performance)
 	local wear = strike.toolWear(tool.quality, wearMultiplier)
+	local beforeUses = tool.uses
+	local afterUses = s3math.max(0, beforeUses - s3math.max(0, wear))
+	local willDestroyTool = afterUses <= 0
+	local wasStackedTool = math.floor(tonumber(tool.item and tool.item.count) or 1) > 1
 	local applied = data.applyConditionGain(item, gain)
-	local consumed = data.consumeToolUses(tool, wear)
+	local consumed = beforeUses - afterUses
+	tool.uses = afterUses
 	if applied > 0 then
 		core.sendGlobalEvent('ModifyItemCondition', { actor = playerObject(), item = item.item, amount = applied })
 	end
-	core.sendGlobalEvent('S3UI_SetItemCondition', { item = tool.item, condition = tool.uses })
+	if willDestroyTool then
+		core.sendGlobalEvent('S3UI_ConsumeRepairTool', {
+			player = playerObject(),
+			item = tool.item,
+			recordId = tool.item.recordId,
+			wear = wear,
+			expectedBefore = beforeUses,
+		})
+	else
+		core.sendGlobalEvent('S3UI_SetRepairToolCondition', {
+			player = playerObject(),
+			item = tool.item,
+			recordId = tool.item.recordId,
+			condition = afterUses,
+			wear = wear,
+			expectedBefore = beforeUses,
+		})
+	end
 	strikeState.lastRating = rating
 	strikeState.lastGain = applied
 	strikeState.lastWear = consumed
 	lastMessage = rating .. ' strike. +' .. tostring(applied) .. ' condition, -' .. tostring(consumed) .. ' tool uses.'
+	if willDestroyTool then
+		closeMode()
+		return
+	end
+	if wasStackedTool then
+		closeMode()
+		return
+	end
 	refreshAfterRepair()
+	if not active() then
+		return
+	end
 	M.rebuildElement()
 	queueRepairRefresh()
 end
