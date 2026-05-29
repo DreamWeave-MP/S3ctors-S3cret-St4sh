@@ -49,7 +49,7 @@ local function checkSilenceManager()
     end
 end
 
-local isSoundEnabled = isOpenMW and core.sound.isEnabled or function() return not tes3.worldController.audioController.disableAudio end
+local isSoundEnabled = isOpenMW and core.sound.isEnabled or function() return true end
 local function onSoundEnabledChanged()
     if not isSoundEnabled() then return end
 
@@ -97,8 +97,12 @@ local musicEnabledUpdate = function()
     else
         currentUpdateHandler = nullFunction
 
-        if ambient.isMusicPlaying() then
-            ambient.stopMusic()
+        if isOpenMW and ambient.isMusicPlaying() or tes3.worldController.audioController.isMusicPlaying then
+            if isOpenMW then
+                ambient.stopMusic()
+            else
+                tes3.worldController.audioController:pauseMusic()
+            end
             MusicManager.currentPlaylist = nil
             MusicManager.currentTrack = nil
 
@@ -134,11 +138,15 @@ end
 local function updatePlaylistState()
     PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
 
-    PlaylistState.isUnderwater = PlaylistState.cellHasWater
-        and self.type.isSwimming(self)
-        and
-        self.position.z + self:getBoundingBox().halfSize.z * 2 <
-        PlaylistState.cellWaterLevel -- - 100 -- Hardcoded value for now, but, PLEASE make this a s3tting later
+    if isOpenMW then
+        PlaylistState.isUnderwater = PlaylistState.cellHasWater
+            and self.type.isSwimming(self)
+            and
+            self.position.z + self:getBoundingBox().halfSize.z * 2 <
+            PlaylistState.cellWaterLevel -- - 100 -- Hardcoded value for now, but, PLEASE make this a s3tting later
+    else
+        PlaylistState.isUnderwater = tes3.player.mobile.underwater
+    end
 end
 
 ---@type PlaylistRules
@@ -399,13 +407,17 @@ local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
 
 handlePlayback = function(_)
     if queuedEvent.name then
-        self:sendEvent(queuedEvent.name, queuedEvent.data)
+        if isOpenMW then
+            self:sendEvent(queuedEvent.name, queuedEvent.data)
+        else
+            event.trigger(queuedEvent.name, queuedEvent.data)
+        end
         queuedEvent.name = nil
         clearQueuedData()
         return
     end
 
-    local musicPlaying = ambient.isMusicPlaying()
+    local musicPlaying = isOpenMW and ambient.isMusicPlaying() or tes3.worldController.audioController.isMusicPlaying
 
     updatePlaylistState()
 
@@ -413,7 +425,11 @@ handlePlayback = function(_)
 
     if not newPlaylist then
         if musicPlaying then
-            ambient.stopMusic()
+            if isOpenMW then
+                ambient.stopMusic()
+            else
+                tes3.worldController.audioController:pauseMusic()
+            end
             clearQueuedData()
             queuedEvent.name = 'S3maphoreMusicStopped'
             queuedEvent.data.reason = MusicManager.STATE.NoPlaylist
@@ -448,7 +464,7 @@ handlePlayback = function(_)
                     ) or (
                         MusicSettings.ForcePlaylistChangeOnHostileExteriorTransition
                         and PlaylistState.cellHasCombatTargets
-                        and not self.cell.isExterior -- Only do this skip type for *real* interiors
+                        and not (isOpenMW and self.cell.isExterior or tes3.player.cell.isOrBehavesAsExterior) -- Only do this skip type for *real* interiors
                     )
                 )
             ) or (
@@ -503,7 +519,11 @@ handlePlayback = function(_)
 
     switchPlaylist(newPlaylist)
 
-    tableUtil.clear(TrackChangeData)
+    if isOpenMW then
+        tableUtil.clear(TrackChangeData)
+    else
+        TrackChangeData = {}
+    end
     TrackChangeData.fadeOut = MusicParams.fadeOut
     TrackChangeData.playlistId = newPlaylist and newPlaylist.id
     TrackChangeData.trackName = MusicManager.currentTrack

@@ -47,9 +47,8 @@ local MusicManager = {
     if isOpenMW then
       aux_util.callEventHandlers(TrackChangeHandlers, eventData)
     else
-      --- TODO: Check this works.
       for _, handler in ipairs(TrackChangeHandlers) do
-        event.trigger(handler, eventData)
+        pcall(handler, eventData)
       end
     end
   end,
@@ -133,9 +132,19 @@ local function initPlaylistL10n(playlistId)
 
   local l10nContextName = ('S3maphoreTracks_%s'):format(playlistId:gsub('/', '_'))
 
-  if not vfs.pathsWithPrefix('l10n/' .. l10nContextName)() then return end
+  local pathsWithPrefix
+  if isOpenMW then
+    pathsWithPrefix = vfs.pathsWithPrefix
+  else
+    pathsWithPrefix = function(prefix)
+      return lfs.walkdir('Data Files/' .. prefix)
+    end
+  end
+  local translations = pathsWithPrefix('l10n/' .. l10nContextName)
+  if not translations() then return end
 
-  local ok, maybeTranslations = pcall(function() return core.l10n(l10nContextName) end)
+  local l10n = isOpenMW and core.l10n or (require 'i18n').loadFile(translations())
+  local ok, maybeTranslations = pcall(function() return l10n(l10nContextName) end)
 
   if ok then
     L10nCache[playlistId] = maybeTranslations
@@ -149,7 +158,7 @@ end
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
   musicUtil.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
-  -- initPlaylistL10n(playlist.id) --- TODO: We're removing this, aren't we? - SB
+  initPlaylistL10n(playlist.id) --- TODO: We're removing this, aren't we? - SB
 
   local existingOrder = MusicManager.playlistsTracksOrder[playlist.id]
 
