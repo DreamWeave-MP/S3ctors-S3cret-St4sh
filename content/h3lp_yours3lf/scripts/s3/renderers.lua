@@ -187,9 +187,9 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
                                     dragging = false
                                     if offsetInsidePicker(event.offset) then
                                         offsetToDraft(event.offset)
-                                        writtenValue = draft
-                                        set(draft)
                                     end
+                                    writtenValue = draft
+                                    set(draft)
                                 end),
                                 focusLoss = async:callback(function()
                                     dragging = false
