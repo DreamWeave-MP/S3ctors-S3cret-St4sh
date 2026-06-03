@@ -45,8 +45,8 @@ local SettingsPageOptions = {}
 ---Layout
 ---@class openmw.ui.Layout
 ---@field type any Type of the widget, one of the values in #TYPE. Must match the type in #Template if both are present
----@field layer string Optional layout to display in. Only applies for the root widget. Note: if the #Element isn't attached to anything, it won't be visible!
----@field name string Optional name of the layout. Allows access by name from Content
+---@field layer? string Optional layout to display in. Only applies for the root widget. Note: if the #Element isn't attached to anything, it won't be visible!
+---@field name? string Optional name of the layout. Allows access by name from Content
 ---@field props table Optional table of widget properties
 ---@field events? table Optional table of event callbacks
 ---@field content? openmw.ui.Content Optional openmw.ui.Content of children layouts
