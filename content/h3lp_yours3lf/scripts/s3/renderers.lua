@@ -126,9 +126,23 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
 
         local function button(label, callback)
             return {
-                template = I.MWUI.templates.box,
                 props = { size = util.vector2(92, 32) },
                 content = ui.content({
+                    {
+                        type = ui.TYPE.Image,
+                        props = {
+                            resource = whiteTexture,
+                            relativeSize = util.vector2(1, 1),
+                            color = util.color.rgb(0, 0, 0),
+                            alpha = backgroundAlpha,
+                        },
+                    },
+                    {
+                        template = I.MWUI.templates.borders,
+                        props = {
+                            relativeSize = util.vector2(1, 1),
+                        },
+                    },
                     {
                         template = I.MWUI.templates.textNormal,
                         props = {
@@ -250,7 +264,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
                                     },
                                     content = ui.content({
                                         button(l10n('button_apply'), closePopup),
-                                        { template = I.MWUI.templates.interval },
+                                        { props = { size = util.vector2(10, 0) } },
                                         button(l10n('button_cancel'), function()
                                             if writtenValue and not sameScreenPosition(writtenValue, original) then
                                                 set(original)
