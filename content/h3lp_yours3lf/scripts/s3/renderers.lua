@@ -9,48 +9,234 @@ local I = require 'openmw.interfaces'
 
 local markTexture = ui.texture { path = 'textures/menu_map_smark.dds' }
 
+local screenPositionPopup
+local screenPositionGeneration = 0
+
+local function normalizedScreenPosition(value)
+    if type(value) ~= 'table' or type(value.x) ~= 'number' or type(value.y) ~= 'number' then
+        return util.vector2(0.5, 0.5)
+    end
+    return util.vector2(
+        util.clamp(value.x, 0, 1),
+        util.clamp(value.y, 0, 1))
+end
+
+local function sameScreenPosition(a, b)
+    return a and b and a.x == b.x and a.y == b.y
+end
+
+local function destroyScreenPositionPopup()
+    local popup = screenPositionPopup
+    if not popup then return end
+    popup.alive = false
+    screenPositionPopup = nil
+    if popup.element and popup.element.layout then
+        popup.element:destroy()
+    end
+end
+
+local function isScreenPositionPopupAlive(popup, generation)
+    return popup
+        and popup.alive
+        and screenPositionPopup == popup
+        and popup.generation == generation
+        and popup.element
+        and popup.element.layout ~= nil
+end
+
 I.Settings.registerRenderer('ScreenPosition', function(value, set)
+    local l10n = core.l10n('H3')
     local buttonSize = util.vector2(20, 20)
-    local containerSize = util.vector2(50, 50)
-    local update = async:callback(function(event)
-        if event.button ~= 1 then return end
-        local relativeOffset = (event.offset - buttonSize / 2):ediv(containerSize)
-        local clampedOffset = util.vector2(
-            util.clamp(relativeOffset.x, 0, 1),
-            util.clamp(relativeOffset.y, 0, 1))
-        set(clampedOffset)
-    end)
+    local previewSize = util.vector2(50, 50)
+    local pickerSize = util.vector2(260, 180)
+    local panelSize = util.vector2(320, 250)
+    local currentValue = normalizedScreenPosition(value)
+
+    local function marker(position, size)
+        return {
+            template = I.MWUI.templates.borders,
+            props = {
+                anchor = position,
+                relativePosition = position,
+                size = size,
+            },
+            content = ui.content({
+                {
+                    type = ui.TYPE.Image,
+                    props = {
+                        resource = markTexture,
+                        relativeSize = util.vector2(1, 1),
+                        color = util.color.rgb(202 / 255, 165 / 255, 96 / 255),
+                    },
+                },
+            }),
+        }
+    end
+
+    local function openPopup()
+        destroyScreenPositionPopup()
+        screenPositionGeneration = screenPositionGeneration + 1
+
+        local original = normalizedScreenPosition(value)
+        local draft = original
+        local writtenValue = nil
+        local dragging = false
+        local popup = {
+            alive = true,
+            generation = screenPositionGeneration,
+            element = nil,
+        }
+        local generation = popup.generation
+        local markerLayout = marker(draft, buttonSize)
+
+        local function updateMarker()
+            markerLayout.props.anchor = draft
+            markerLayout.props.relativePosition = draft
+            if isScreenPositionPopupAlive(popup, generation) then
+                popup.element:update()
+            end
+        end
+
+        local function offsetToDraft(offset)
+            local relativeOffset = (offset - buttonSize / 2):ediv(pickerSize - buttonSize)
+            draft = util.vector2(
+                util.clamp(relativeOffset.x, 0, 1),
+                util.clamp(relativeOffset.y, 0, 1))
+            updateMarker()
+        end
+
+        local function offsetInsidePicker(offset)
+            return offset.x >= 0 and offset.y >= 0 and offset.x <= pickerSize.x and offset.y <= pickerSize.y
+        end
+
+        local function closePopup()
+            if isScreenPositionPopupAlive(popup, generation) then
+                destroyScreenPositionPopup()
+            end
+        end
+
+        local function button(label, callback)
+            return {
+                template = I.MWUI.templates.box,
+                props = { size = util.vector2(92, 32) },
+                content = ui.content({
+                    {
+                        template = I.MWUI.templates.textNormal,
+                        props = {
+                            text = label,
+                            textAlignH = ui.ALIGNMENT.Center,
+                            textAlignV = ui.ALIGNMENT.Center,
+                            autoSize = false,
+                            relativeSize = util.vector2(1, 1),
+                        },
+                    },
+                }),
+                events = {
+                    mouseClick = async:callback(function()
+                        if isScreenPositionPopupAlive(popup, generation) then
+                            callback()
+                        end
+                    end),
+                },
+            }
+        end
+
+        popup.element = ui.create({
+            type = ui.TYPE.Widget,
+            layer = 'Windows',
+            props = { relativeSize = util.vector2(1, 1) },
+            content = ui.content({
+                {
+                    template = I.MWUI.templates.box,
+                    props = {
+                        anchor = util.vector2(0.5, 0.5),
+                        relativePosition = util.vector2(0.5, 0.5),
+                        size = panelSize,
+                    },
+                    content = ui.content({
+                        {
+                            template = I.MWUI.templates.padding,
+                            props = { size = util.vector2(0, 12) },
+                        },
+                        {
+                            template = I.MWUI.templates.box,
+                            props = {
+                                anchor = util.vector2(0.5, 0),
+                                relativePosition = util.vector2(0.5, 0),
+                                size = pickerSize,
+                            },
+                            content = ui.content({ markerLayout }),
+                            events = {
+                                mousePress = async:callback(function(event)
+                                    if not isScreenPositionPopupAlive(popup, generation) or not event or event.button ~= 1 then
+                                        return
+                                    end
+                                    dragging = true
+                                    offsetToDraft(event.offset)
+                                end),
+                                mouseMove = async:callback(function(event)
+                                    if not isScreenPositionPopupAlive(popup, generation) or not dragging or not event then
+                                        return
+                                    end
+                                    offsetToDraft(event.offset)
+                                end),
+                                mouseRelease = async:callback(function(event)
+                                    if not isScreenPositionPopupAlive(popup, generation) or not dragging or not event or event.button ~= 1 then
+                                        return
+                                    end
+                                    dragging = false
+                                    if offsetInsidePicker(event.offset) then
+                                        offsetToDraft(event.offset)
+                                        writtenValue = draft
+                                        set(draft)
+                                    end
+                                end),
+                                focusLoss = async:callback(function()
+                                    dragging = false
+                                end),
+                            },
+                        },
+                        {
+                            template = I.MWUI.templates.padding,
+                            props = { size = util.vector2(0, 12) },
+                        },
+                        {
+                            type = ui.TYPE.Flex,
+                            props = {
+                                horizontal = true,
+                                arrange = ui.ALIGNMENT.Center,
+                                size = util.vector2(0, 36),
+                            },
+                            content = ui.content({
+                                button(l10n('button_apply'), closePopup),
+                                { template = I.MWUI.templates.interval },
+                                button(l10n('button_cancel'), function()
+                                    if writtenValue and not sameScreenPosition(writtenValue, original) then
+                                        set(original)
+                                    end
+                                    closePopup()
+                                end),
+                            }),
+                        },
+                    }),
+                },
+            }),
+        })
+        screenPositionPopup = popup
+    end
 
     return {
         template = I.MWUI.templates.box,
         content = ui.content({
             {
                 props = {
-                    size = containerSize + buttonSize,
+                    size = previewSize + buttonSize,
                 },
                 content = ui.content({
-                    {
-                        template = I.MWUI.templates.borders,
-                        props = {
-                            anchor = value,
-                            relativePosition = value,
-                            size = buttonSize,
-                        },
-                        content = ui.content({
-                            {
-                                type = ui.TYPE.Image,
-                                props = {
-                                    resource = markTexture,
-                                    relativeSize = util.vector2(1, 1),
-                                    color = util.color.rgb(202 / 255, 165 / 255, 96 / 255),
-                                },
-                            },
-                        }),
-                    },
+                    marker(currentValue, buttonSize),
                 }),
                 events = {
-                    mouseMove = update,
-                    mousePress = update,
+                    mouseClick = async:callback(openPopup),
                 },
             },
         }),
