@@ -27,9 +27,9 @@ local Settings = {}
 ---@field key string A unique key, starts with "Settings" by convention
 ---@field l10n string A localization context (an argument of core.l10n)
 ---@field name string A key from the localization context
----@field description string A key from the localization context (optional, can be `nil`)
+---@field description? string Optional key from the localization context; can be `nil`
 ---@field page string Key of a page which will contain this group
----@field order number Groups within the same page are sorted by this number, or their key for equal values. Defaults to 0.
+---@field order? number Optional sort key for groups within the same page; groups are sorted by this number, or their key for equal values. Defaults to 0.
 ---@field permanentStorage boolean Whether the group should be stored in permanent storage, or in the save file
 ---@field settings openmw.interfaces.Settings.SettingOptions[] A [iterables#List](iterables.html#List) table of #SettingOptions
 local GroupOptions = {}
