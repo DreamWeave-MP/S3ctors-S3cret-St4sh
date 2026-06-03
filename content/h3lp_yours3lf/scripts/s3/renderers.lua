@@ -2,12 +2,14 @@
 
 local async = require 'openmw.async'
 local core = require 'openmw.core'
+local menu = require 'openmw.menu'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 
 local markTexture = ui.texture { path = 'textures/menu_map_smark.dds' }
+local screenPositionLayer = 'Modal'
 
 local screenPositionPopup
 local screenPositionGeneration = 0
@@ -81,6 +83,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
         local draft = original
         local writtenValue = nil
         local dragging = false
+        local screenSize = ui.screenSize()
         local popup = {
             alive = true,
             generation = screenPositionGeneration,
@@ -143,14 +146,17 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
 
         popup.element = ui.create({
             type = ui.TYPE.Widget,
-            layer = 'Windows',
-            props = { relativeSize = util.vector2(1, 1) },
+            layer = screenPositionLayer,
+            props = {
+                position = util.vector2(0, 0),
+                size = screenSize,
+            },
             content = ui.content({
                 {
                     template = I.MWUI.templates.box,
                     props = {
                         anchor = util.vector2(0.5, 0.5),
-                        relativePosition = util.vector2(0.5, 0.5),
+                        position = screenSize / 2,
                         size = panelSize,
                     },
                     content = ui.content({
@@ -351,3 +357,14 @@ I.Settings.registerRenderer('List', function(input, set)
         }),
     }
 end)
+
+---@type { engineHandlers: table }
+return {
+    engineHandlers = {
+        onStateChanged = function()
+            if menu.getState() ~= menu.STATE.NoGame then
+                destroyScreenPositionPopup()
+            end
+        end,
+    },
+}
