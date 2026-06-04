@@ -52,25 +52,43 @@ local function menuTransparency()
     return ui._getMenuTransparency()
 end
 
-I.Settings.registerRenderer('ScreenPosition', function(value, set)
+local function screenPositionTitle(argument)
+    if type(argument) ~= 'table' then
+        return nil
+    end
+    if type(argument.title) == 'string' then
+        return argument.title
+    end
+    if type(argument.l10n) == 'string' and type(argument.name) == 'string' then
+        return core.l10n(argument.l10n)(argument.name)
+    end
+    return nil
+end
+
+I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
     local l10n = core.l10n('H3')
     local buttonSize = util.vector2(20, 20)
     local previewSize = util.vector2(50, 50)
-    local pickerSize = util.vector2(260, 180)
-    local panelSize = util.vector2(320, 250)
-    local buttonRowSize = util.vector2(194, 32)
-    local contentTop = 14
-    local contentGap = 12
+    local titleText = screenPositionTitle(argument)
+    local panelRelativeSize = util.vector2(0.18, titleText and 0.24 or 0.21)
+    local titleRelativePosition = util.vector2(0.5, 0.09)
+    local titleRelativeSize = util.vector2(0.9, 0.1)
+    local pickerRelativePosition = util.vector2(0.5, titleText and 0.48 or 0.42)
+    local pickerRelativeSize = util.vector2(0.82, titleText and 0.56 or 0.68)
+    local markerRelativeSize = util.vector2(0.08, 0.11)
+    local buttonRowRelativePosition = util.vector2(0.5, 0.88)
+    local buttonRowRelativeSize = util.vector2(0.64, 0.12)
+    local buttonRelativeSize = util.vector2(0.47, 1)
+    local buttonSpacerRelativeSize = util.vector2(0.06, 1)
     local currentValue = normalizedScreenPosition(value)
 
-    local function marker(position, size)
+    local function marker(position, props)
+        props = props or { size = buttonSize }
+        props.anchor = position
+        props.relativePosition = position
         return {
             template = I.MWUI.templates.borders,
-            props = {
-                anchor = position,
-                relativePosition = position,
-                size = size,
-            },
+            props = props,
             content = ui.content({
                 {
                     type = ui.TYPE.Image,
@@ -97,8 +115,18 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
             generation = screenPositionGeneration,
             element = nil,
         }
+        local screenSize = ui.screenSize()
+        local panelSize = util.vector2(
+            screenSize.x * panelRelativeSize.x,
+            screenSize.y * panelRelativeSize.y)
+        local pickerSize = util.vector2(
+            panelSize.x * pickerRelativeSize.x,
+            panelSize.y * pickerRelativeSize.y)
+        local markerSize = util.vector2(
+            pickerSize.x * markerRelativeSize.x,
+            pickerSize.y * markerRelativeSize.y)
         local generation = popup.generation
-        local markerLayout = marker(draft, buttonSize)
+        local markerLayout = marker(draft, { relativeSize = markerRelativeSize })
         local backgroundAlpha = menuTransparency()
 
         local function updateMarker()
@@ -110,7 +138,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
         end
 
         local function offsetToDraft(offset)
-            local relativeOffset = (offset - buttonSize / 2):ediv(pickerSize - buttonSize)
+            local relativeOffset = (offset - markerSize / 2):ediv(pickerSize - markerSize)
             draft = util.vector2(
                 s3math.clamp(relativeOffset.x, 0, 1),
                 s3math.clamp(relativeOffset.y, 0, 1))
@@ -129,7 +157,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
 
         local function button(label, callback)
             return {
-                props = { size = util.vector2(92, 32) },
+                props = { relativeSize = buttonRelativeSize },
                 content = ui.content({
                     {
                         type = ui.TYPE.Image,
@@ -177,7 +205,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
                     props = {
                         anchor = util.vector2(0.5, 0.5),
                         relativePosition = util.vector2(0.5, 0.5),
-                        size = panelSize,
+                        relativeSize = panelRelativeSize,
                     },
                     content = ui.content({
                         {
@@ -195,12 +223,23 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
                                 relativeSize = util.vector2(1, 1),
                             },
                         },
+                        titleText and {
+                            template = I.MWUI.templates.textHeader,
+                            props = {
+                                anchor = util.vector2(0.5, 0.5),
+                                relativePosition = titleRelativePosition,
+                                relativeSize = titleRelativeSize,
+                                text = titleText,
+                                textAlignH = ui.ALIGNMENT.Center,
+                                textAlignV = ui.ALIGNMENT.Center,
+                                autoSize = false,
+                            },
+                        } or nil,
                         {
                             props = {
-                                anchor = util.vector2(0.5, 0),
-                                relativePosition = util.vector2(0.5, 0),
-                                position = util.vector2(0, contentTop),
-                                size = pickerSize,
+                                anchor = util.vector2(0.5, 0.5),
+                                relativePosition = pickerRelativePosition,
+                                relativeSize = pickerRelativeSize,
                             },
                             content = ui.content({
                                 {
@@ -253,16 +292,15 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
                         {
                             type = ui.TYPE.Flex,
                             props = {
-                                anchor = util.vector2(0.5, 0),
-                                relativePosition = util.vector2(0.5, 0),
-                                position = util.vector2(0, contentTop + pickerSize.y + contentGap),
+                                anchor = util.vector2(0.5, 0.5),
+                                relativePosition = buttonRowRelativePosition,
                                 horizontal = true,
                                 arrange = ui.ALIGNMENT.Center,
-                                size = buttonRowSize,
+                                relativeSize = buttonRowRelativeSize,
                             },
                             content = ui.content({
                                 button(l10n('button_apply'), closePopup),
-                                { props = { size = util.vector2(10, 0) } },
+                                { props = { relativeSize = buttonSpacerRelativeSize } },
                                 button(l10n('button_cancel'), function()
                                     if writtenValue and not sameScreenPosition(writtenValue, original) then
                                         set(original)
@@ -286,7 +324,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
                     size = previewSize + buttonSize,
                 },
                 content = ui.content({
-                    marker(currentValue, buttonSize),
+                    marker(currentValue, { size = buttonSize }),
                 }),
                 events = {
                     mouseClick = async:callback(openPopup),
