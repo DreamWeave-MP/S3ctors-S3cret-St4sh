@@ -58,7 +58,9 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
     local previewSize = util.vector2(50, 50)
     local pickerSize = util.vector2(260, 180)
     local panelSize = util.vector2(320, 250)
-    local panelPadding = util.vector2(16, 10)
+    local buttonRowSize = util.vector2(194, 32)
+    local contentTop = 14
+    local contentGap = 12
     local currentValue = normalizedScreenPosition(value)
 
     local function marker(position, size)
@@ -194,86 +196,79 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set)
                             },
                         },
                         {
-                            type = ui.TYPE.Flex,
                             props = {
-                                position = panelPadding,
-                                size = panelSize - panelPadding * 2,
+                                anchor = util.vector2(0.5, 0),
+                                relativePosition = util.vector2(0.5, 0),
+                                position = util.vector2(0, contentTop),
+                                size = pickerSize,
                             },
                             content = ui.content({
                                 {
+                                    type = ui.TYPE.Image,
                                     props = {
-                                        size = pickerSize,
-                                    },
-                                    content = ui.content({
-                                        {
-                                            type = ui.TYPE.Image,
-                                            props = {
-                                                resource = whiteTexture,
-                                                relativeSize = util.vector2(1, 1),
-                                                color = util.color.rgb(0, 0, 0),
-                                                alpha = backgroundAlpha,
-                                            },
-                                        },
-                                        {
-                                            template = I.MWUI.templates.borders,
-                                            props = {
-                                                relativeSize = util.vector2(1, 1),
-                                            },
-                                        },
-                                        markerLayout,
-                                    }),
-                                    events = {
-                                        mousePress = async:callback(function(event)
-                                            if not isScreenPositionPopupAlive(popup, generation) or not event or event.button ~= 1 then
-                                                return
-                                            end
-                                            dragging = true
-                                            offsetToDraft(event.offset)
-                                        end),
-                                        mouseMove = async:callback(function(event)
-                                            if not isScreenPositionPopupAlive(popup, generation) or not dragging or not event then
-                                                return
-                                            end
-                                            offsetToDraft(event.offset)
-                                        end),
-                                        mouseRelease = async:callback(function(event)
-                                            if not isScreenPositionPopupAlive(popup, generation) or not dragging or not event or event.button ~= 1 then
-                                                return
-                                            end
-                                            dragging = false
-                                            if offsetInsidePicker(event.offset) then
-                                                offsetToDraft(event.offset)
-                                            end
-                                            writtenValue = draft
-                                            set(draft)
-                                        end),
-                                        focusLoss = async:callback(function()
-                                            dragging = false
-                                        end),
+                                        resource = whiteTexture,
+                                        relativeSize = util.vector2(1, 1),
+                                        color = util.color.rgb(0, 0, 0),
+                                        alpha = backgroundAlpha,
                                     },
                                 },
                                 {
-                                    template = I.MWUI.templates.padding,
-                                    props = { size = util.vector2(0, 12) },
-                                },
-                                {
-                                    type = ui.TYPE.Flex,
+                                    template = I.MWUI.templates.borders,
                                     props = {
-                                        horizontal = true,
-                                        arrange = ui.ALIGNMENT.Center,
-                                        size = util.vector2(0, 36),
+                                        relativeSize = util.vector2(1, 1),
                                     },
-                                    content = ui.content({
-                                        button(l10n('button_apply'), closePopup),
-                                        { props = { size = util.vector2(10, 0) } },
-                                        button(l10n('button_cancel'), function()
-                                            if writtenValue and not sameScreenPosition(writtenValue, original) then
-                                                set(original)
-                                            end
-                                            closePopup()
-                                        end),
-                                    }),
                                 },
+                                markerLayout,
+                            }),
+                            events = {
+                                mousePress = async:callback(function(event)
+                                    if not isScreenPositionPopupAlive(popup, generation) or not event or event.button ~= 1 then
+                                        return
+                                    end
+                                    dragging = true
+                                    offsetToDraft(event.offset)
+                                end),
+                                mouseMove = async:callback(function(event)
+                                    if not isScreenPositionPopupAlive(popup, generation) or not dragging or not event then
+                                        return
+                                    end
+                                    offsetToDraft(event.offset)
+                                end),
+                                mouseRelease = async:callback(function(event)
+                                    if not isScreenPositionPopupAlive(popup, generation) or not dragging or not event or event.button ~= 1 then
+                                        return
+                                    end
+                                    dragging = false
+                                    if offsetInsidePicker(event.offset) then
+                                        offsetToDraft(event.offset)
+                                    end
+                                    writtenValue = draft
+                                    set(draft)
+                                end),
+                                focusLoss = async:callback(function()
+                                    dragging = false
+                                end),
+                            },
+                        },
+                        {
+                            type = ui.TYPE.Flex,
+                            props = {
+                                anchor = util.vector2(0.5, 0),
+                                relativePosition = util.vector2(0.5, 0),
+                                position = util.vector2(0, contentTop + pickerSize.y + contentGap),
+                                horizontal = true,
+                                arrange = ui.ALIGNMENT.Center,
+                                size = buttonRowSize,
+                            },
+                            content = ui.content({
+                                button(l10n('button_apply'), closePopup),
+                                { props = { size = util.vector2(10, 0) } },
+                                button(l10n('button_cancel'), function()
+                                    if writtenValue and not sameScreenPosition(writtenValue, original) then
+                                        set(original)
+                                    end
+                                    closePopup()
+                                end),
                             }),
                         },
                     }),
