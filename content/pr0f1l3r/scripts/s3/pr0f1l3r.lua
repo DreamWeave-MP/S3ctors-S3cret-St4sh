@@ -10,12 +10,16 @@ local TRACE_DETAIL_LIMIT = 32
 local TRACE_EVENT_LIMIT = 512
 local TRACE_SIDEEXIT_LIMIT = 256
 local TRACE_AGGREGATE_LIMIT = 256
+local TRACE_RAW_LINE_LIMIT = 1024
+local DEFAULT_CAPTURE_FRAMES = 300
+local DEFAULT_PROFILE_FRAMES = 300
 
 local function nullfunction() end
 local tick = nullfunction
 
-local collectgarbage, debug, io, os_clock, jit, jit_util, jit_vmdef, jit_v, jit_dump, tmpPath, tmpFile
+local collectgarbage, debug, io, os_clock, jit, jit_util, jit_vmdef, jit_v, jit_dump, tracePath, dumpPath, tmpFile
 local bit_band, bit_rshift
+local profilerJitOffOk, profilerJitOffErr
 do
   ---@diagnostic disable-next-line: param-type-mismatch
   local S              = select 'sandbox.bypass'
@@ -36,8 +40,9 @@ do
   end
   jit_v                = require 'jit.v'
   jit_dump             = require 'jit.dump'
-  tmpPath              = S.os.tmpname()
-  tmpFile              = S.io.open(tmpPath, 'w+')
+  tracePath            = S.os.tmpname()
+  dumpPath             = S.os.tmpname()
+  profilerJitOffOk, profilerJitOffErr = pcall(jit.off, true, true)
   require              = OMWRequire
 end
 
@@ -104,6 +109,10 @@ local function printWithFields(prefix, extra, message)
   local fields = baseFields(extra)
   print(prefix .. ' ' .. fields .. (message and (' ' .. message) or ''))
 end
+
+printWithFields('[JIT]', {
+  field('event', 'profiler-jit-off'), field('ok', profilerJitOffOk), field('error', profilerJitOffErr),
+})
 
 local function safeFuncInfo(func, pc)
   if type(func) ~= 'function' then return nil end
@@ -442,7 +451,14 @@ local function printHotSummaries()
   hotStats = {}
 end
 
-local function beginRun(mode)
+local function printMeasurementNote(validFor, invalidFor, reason)
+  printWithFields('[JIT measurement-note]', {
+    field('event', 'measurement-note'), field('valid_for', validFor), field('invalid_for', invalidFor), field('reason', reason),
+  })
+end
+
+local function beginRun(mode, opts)
+  opts = opts or {}
   nextRunId = nextRunId + 1
   activeRunId = tostring(nextRunId)
   profilerMode = mode
@@ -463,7 +479,11 @@ local function beginRun(mode)
   traceEventOverflowDroppedOccurrences = 0
   traceDetailCount = 0
   traceDetailTruncated = false
-  attachTraceCollector()
+  if opts.traceCollector then
+    attachTraceCollector()
+  else
+    detachTraceCollector()
+  end
   printWithFields('[JIT]', { field('event', 'run-start') })
 end
 
@@ -503,16 +523,26 @@ local function recordSideExitLine(line)
   end
 end
 
-local function readAndPrintFile(path, prefix, filter)
+local function readAndPrintFile(path, prefix, filter, rawLineLimit)
   local f = io.open(path, 'r')
   if not f then return end
+  local emitted = 0
+  local omitted = 0
   for line in f:lines() do
     if not filter or line:find(filter, 1, true) then
-      printWithFields(prefix, { field('raw', line) })
       if prefix == '[JIT Trace]' then recordSideExitLine(line) end
+      if not rawLineLimit or emitted < rawLineLimit then
+        emitted = emitted + 1
+        printWithFields(prefix, { field('raw', line) })
+      else
+        omitted = omitted + 1
+      end
     end
   end
   f:close()
+  if omitted > 0 then
+    printWithFields(prefix, { field('omitted', omitted), field('limit', rawLineLimit) })
+  end
 end
 
 -- ── call counter ─────────────────────────────────────────────────────────────
@@ -550,6 +580,7 @@ end
 
 local function startCallCounter(mode, keepRun)
   if not keepRun then beginRun(mode or 'calls') end
+  printMeasurementNote('call_counts', 'throughput', 'debug_hook')
   printWithFields('[JIT]', { field('event', 'call-counter-start') })
   callCounts = {}
   callCounterActive = true
@@ -623,6 +654,7 @@ end
 
 local function startTimingProfiler()
   beginRun('timing')
+  printMeasurementNote('function_wall_time', 'throughput', 'debug_hook')
   printWithFields('[JIT]', { field('event', 'timing-start') })
   timings = {}
   timeStack = {}
@@ -698,6 +730,7 @@ end
 
 local function startMemProfiler()
   beginRun('memory')
+  printMeasurementNote('allocation_attribution', 'throughput', 'debug_hook')
   printWithFields('[JIT]', { field('event', 'memory-start') })
   memAllocs = {}
   memStack  = {}
@@ -749,20 +782,20 @@ local function closeTmpFile()
   end
 end
 
-local function ensureTmpFile()
-  if not tmpFile then tmpFile = io.open(tmpPath, 'w+') end
-  return tmpFile
-end
-
-local function resetTmpFile()
+local function resetTmpFile(path)
   closeTmpFile()
-  tmpFile = io.open(tmpPath, 'w+')
+  tmpFile = io.open(path, 'w+')
   return tmpFile
 end
 
 local function stopRuntimeDumpers()
   pcall(jit_v.off)
   pcall(jit_dump.off)
+end
+
+local function flushJitTraces(reason)
+  local ok, err = pcall(jit.flush)
+  printWithFields('[JIT]', { field('event', 'jit-flush'), field('ok', ok), field('reason', reason), field('error', err) })
 end
 
 local function recordHot(label, elapsed, count)
@@ -799,19 +832,57 @@ local function hot(label, fn, ...)
 end
 
 local tickProfiler
+local tickThroughputWindow
+local activeFrameLimit = DEFAULT_CAPTURE_FRAMES
 
-local function startFullProfiler()
+local function startJitCaptureProfiler(frames)
   if tick ~= nullfunction then
     ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
     return
   end
+  activeFrameLimit = tonumber(frames) or DEFAULT_CAPTURE_FRAMES
   stopRuntimeDumpers()
-  beginRun('full')
-  resetTmpFile()
+  beginRun('jit-capture', { traceCollector = true })
+  printMeasurementNote('trace_ir', 'throughput', 'jit_dump_overhead')
+  flushJitTraces('jit-capture-start')
+  resetTmpFile(tracePath)
+  closeTmpFile()
+  resetTmpFile(dumpPath)
+  closeTmpFile()
+  printWithFields('[JIT]', { field('event', 'jit-v-start'), field('path', tracePath) })
+  jit_v.on(tracePath)
+  printWithFields('[JIT]', { field('event', 'jit-dump-start'), field('path', dumpPath) })
+  jit_dump.on('tbisrXT', dumpPath)
   tick = tickProfiler
 end
 
+local function startThroughputWindow(frames, label)
+  if tick ~= nullfunction then
+    ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
+    return
+  end
+  activeFrameLimit = tonumber(frames) or DEFAULT_PROFILE_FRAMES
+  if label then scenarioLabel = tostring(label) end
+  stopRuntimeDumpers()
+  beginRun('throughput-window')
+  printMeasurementNote('stress_ops_sec', 'call_counts', 'no_debug_hook')
+  tick = tickThroughputWindow
+end
+
+local function finishJitCapture()
+  stopRuntimeDumpers()
+  readAndPrintFile(tracePath, '[JIT Trace]', nil, TRACE_RAW_LINE_LIMIT)
+  readAndPrintFile(dumpPath, '[JIT Dump]', nil, TRACE_RAW_LINE_LIMIT)
+  closeTmpFile()
+  tick = nullfunction
+  endRun()
+end
+
 local function stopActiveProfiler()
+  if profilerMode == 'jit-capture' then
+    finishJitCapture()
+    return
+  end
   stopRuntimeDumpers()
   stopCallCounter(nil, true)
   stopTimingProfiler()
@@ -822,40 +893,28 @@ local function stopActiveProfiler()
 end
 
 -- ── keybinds ──────────────────────────────────────────────────────────────────
---   Shift+F3: timing profiler (300 frames, all scripts)
---   F3:       standalone call counter (300 frames, all scripts)
---   F4:       full pipeline (jit.v → jit.dump → call counter)
---   Ctrl+Shift+Z: memory allocation profiler (300 frames, all scripts)
+--   Shift+F3: timing hook sample only; debug hook poisons throughput (300 frames)
+--   F3:       call counts only; debug hook poisons throughput (300 frames)
+--   F4:       JIT capture only; jit.v/jit.dump overhead poisons throughput
+--   Ctrl+Shift+Z: allocation attribution only; debug hook poisons throughput (300 frames)
 --   Shift+F4: stop whatever is running early
 
--- ── full pipeline (F4) ────────────────────────────────────────────────────────
--- frames  1 – 100: jit.v on,  warming up
--- frames 101 – 200: jit.dump on for one more warm pass
--- frames 201 – 500: call counter sampling live onUpdate
--- frame  500:       all results dumped, profiling done
+-- ── JIT capture (F4) ──────────────────────────────────────────────────────────
+-- Capture starts before the first profiled frame, after a best-effort trace flush.
+-- No debug hook or call counter runs during this window.
 
 function tickProfiler()
   profilingFrame = profilingFrame + 1
 
-  if profilingFrame == 1 then
-    printWithFields('[JIT]', { field('event', 'jit-v-start') })
-    resetTmpFile()
-    jit_v.on(tmpPath)
-  elseif profilingFrame == 100 then
-    jit_v.off()
-    ensureTmpFile()
-    readAndPrintFile(tmpPath, '[JIT Trace]')
-    printWithFields('[JIT]', { field('event', 'jit-dump-start') })
-    resetTmpFile()
-    jit_dump.on('tbisrXT', tmpPath)
-  elseif profilingFrame == 200 then
-    jit_dump.off()
-    ensureTmpFile()
-    readAndPrintFile(tmpPath, '[JIT Dump]')
-    startCallCounter('full', true)
-  elseif profilingFrame == 500 then
-    stopCallCounter(nil, true)
-    closeTmpFile()
+  if profilingFrame >= activeFrameLimit then
+    finishJitCapture()
+  end
+end
+
+function tickThroughputWindow()
+  profilingFrame = profilingFrame + 1
+
+  if profilingFrame >= activeFrameLimit then
     tick = nullfunction
     endRun()
   end
@@ -865,7 +924,19 @@ return {
   interfaceName = 'pr0f1l3r',
   interface = {
     benchAll = function()
-      startFullProfiler()
+      startJitCaptureProfiler()
+    end,
+    benchJit = function(frames)
+      startJitCaptureProfiler(frames)
+    end,
+    benchTrace = function(frames)
+      startJitCaptureProfiler(frames)
+    end,
+    benchWindow = function(frames, label)
+      startThroughputWindow(frames, label)
+    end,
+    benchThroughput = function(frames, label)
+      startThroughputWindow(frames, label)
     end,
     bench = function(path)
       if tick ~= nullfunction then
@@ -975,7 +1046,7 @@ return {
         elseif tick ~= nullfunction then
           ui.showMessage '[JIT] already profiling — press Shift+F4 to stop'
         else
-          startFullProfiler()
+          startJitCaptureProfiler()
         end
       end
     end,
