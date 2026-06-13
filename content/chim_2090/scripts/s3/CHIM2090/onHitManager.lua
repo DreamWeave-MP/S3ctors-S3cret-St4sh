@@ -44,37 +44,37 @@ local function CHIMHitHandler(attack)
         return false
     end
 
-    if hasNgarde then return end
+    local shieldMultiplier, didBlock, canBlock, flankMult = 1.0, false, false, false
+    if not hasNgarde then
+        canBlock, flankMult = I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, gameSelf)
 
-    local shieldMultiplier, didBlock = 1.0, false
-    local canBlock, flankMult = I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, gameSelf)
+        if canBlock then
+            ---@type CHIMBlockData
+            local blockData = {
+                damage = attack.damage.health or attack.damage.fatigue,
+                hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
+                type = attack.type or DefaultAttack,
+                weapon = attack.weapon,
+                attackStrength = attack.strength,
+                applyDurabilityDamage = true,
+                attacker = attack.attacker,
+            }
 
-    if canBlock then
-        ---@type CHIMBlockData
-        local blockData = {
-            damage = attack.damage.health or attack.damage.fatigue,
-            hitPos = attack.hitPos, -- For now we'll assume these always exist but that won't necessarily be the case!
-            type = attack.type or DefaultAttack,
-            weapon = attack.weapon,
-            attackStrength = attack.strength,
-            applyDurabilityDamage = true,
-            attacker = attack.attacker,
-        }
+            if I.s3ChimParry.Manager.ready() then
+                blockData.applyDurabilityDamage = false
+                attacker:sendEvent('CHIMOnParry', {
+                    damage = I.s3ChimParry.Manager.getDamage(blockData),
+                })
 
-        if I.s3ChimParry.Manager.ready() then
-            blockData.applyDurabilityDamage = false
-            attacker:sendEvent('CHIMOnParry', {
-                damage = I.s3ChimParry.Manager.getDamage(blockData),
-            })
+                if I.S3LockOn then s3lf:sendEvent('S3TargetLockHit', attacker) end
 
-            if I.S3LockOn then s3lf:sendEvent('S3TargetLockHit', attacker) end
-
-            return false
-        elseif I.s3ChimBlock.isBlocking then
-            local blockResult = I.s3ChimBlock.Manager.handleHit(blockData)
-            shieldMultiplier = blockResult.damageMult
-            attack.hitPos = nil
-            didBlock = true
+                return false
+            elseif I.s3ChimBlock.isBlocking then
+                local blockResult = I.s3ChimBlock.Manager.handleHit(blockData)
+                shieldMultiplier = blockResult.damageMult
+                attack.hitPos = nil
+                didBlock = true
+            end
         end
     end
 
@@ -140,8 +140,10 @@ end
 
 Combat.addOnHitHandler(CHIMHitHandler)
 
-return {
-    eventHandlers = {
+local scriptHandlers = {}
+
+if not hasNgarde then
+    scriptHandlers.eventHandlers = {
         CHIMOnParry = function(parryData)
             Fatigue.current = Fatigue.current - parryData.damage
 
@@ -156,4 +158,6 @@ return {
             end
         end,
     }
-}
+end
+
+return scriptHandlers
