@@ -1,9 +1,13 @@
+---@omw-context local
+
 local anim = require 'openmw.animation'
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input
 local types = require 'openmw.types'
 local util = require 'openmw.util'
+
+local hasNgarde = require 'openmw.core'.contentFiles.has 'ngarde.omwscripts'
 
 --- We also need to make sure we early-out of the entire script for creatures which are not bipedal
 
@@ -701,7 +705,7 @@ local function timedBlockHandler(_, key)
         Block.state.isBlocking = false
     elseif key == 'parry stop' then
         Block.state.isParrying = false
-    elseif key == 'half' then
+    elseif not hasNgarde and key == 'half' then
         I.s3ChimParry.Manager.start()
     end
 end

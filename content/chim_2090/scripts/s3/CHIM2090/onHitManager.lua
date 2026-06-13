@@ -1,4 +1,8 @@
+---@omw-context local
+
 local animation = require 'openmw.animation'
+
+local hasNgarde = require 'openmw.core'.contentFiles.has 'ngarde.omwscripts'
 
 ---@alias AttackType integer
 
@@ -55,7 +59,7 @@ local function CHIMHitHandler(attack)
             attacker = attack.attacker,
         }
 
-        if I.s3ChimParry.Manager.ready() then
+        if not hasNgarde and I.s3ChimParry.Manager.ready() then
             blockData.applyDurabilityDamage = false
             attacker:sendEvent('CHIMOnParry', {
                 damage = I.s3ChimParry.Manager.getDamage(blockData),
