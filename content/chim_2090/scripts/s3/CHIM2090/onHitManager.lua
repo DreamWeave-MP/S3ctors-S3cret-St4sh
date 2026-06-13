@@ -1,4 +1,8 @@
+---@omw-context local
+
 local animation = require 'openmw.animation'
+
+local hasNgarde = require 'openmw.core'.contentFiles.has 'ngarde.omwscripts'
 
 ---@alias AttackType integer
 
@@ -39,6 +43,8 @@ local function CHIMHitHandler(attack)
     if I.s3ChimRoll and I.s3ChimRoll.hasIFrames then
         return false
     end
+
+    if hasNgarde then return end
 
     local shieldMultiplier, didBlock = 1.0, false
     local canBlock, flankMult = I.s3ChimBlock.Manager.canBlockAtAngle(attack.attacker, gameSelf)

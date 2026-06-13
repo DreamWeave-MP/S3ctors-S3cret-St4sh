@@ -1,12 +1,15 @@
+---@omw-context local
+
 local anim = require 'openmw.animation'
 local core = require 'openmw.core'
-local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 local s3lf = I.s3.lf
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
+
+if core.contentFiles.has 'ngarde.omwscripts' then return {} end
 
 local blockEndAnimData = {
     startKey = 'parry start',
