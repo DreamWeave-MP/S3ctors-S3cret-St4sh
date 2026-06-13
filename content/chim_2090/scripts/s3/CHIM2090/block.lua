@@ -1,9 +1,13 @@
+---@omw-context local
+
 local anim = require 'openmw.animation'
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local input
 local types = require 'openmw.types'
 local util = require 'openmw.util'
+
+if core.contentFiles.has 'ngarde.omwscripts' then return {} end
 
 --- We also need to make sure we early-out of the entire script for creatures which are not bipedal
 
