@@ -1,10 +1,6 @@
----@omw-context local
-
 local anim = require 'openmw.animation'
 local core = require 'openmw.core'
-
-if core.contentFiles.has 'ngarde.omwscripts' then return {} end
-
+local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
