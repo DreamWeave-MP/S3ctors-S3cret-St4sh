@@ -1,3 +1,4 @@
+---@omw-context menu
 local input = require 'openmw.input'
 
 local I = require 'openmw.interfaces'
@@ -76,7 +77,7 @@ I.Settings.registerGroup {
             argument = { key = MOD_NAME .. 'ToggleTrigger', type = "trigger" },
             name = MOD_NAME .. 'Toggle',
             description = MOD_NAME .. 'ToggleDesc',
-            default = 'z',
+            default = 'Hawk3yeToggleKey',
         },
         {
             key = MOD_NAME .. 'Hold',
@@ -84,7 +85,7 @@ I.Settings.registerGroup {
             argument = { key = MOD_NAME .. 'HoldAction', type = "action" },
             name = MOD_NAME .. 'Hold',
             description = MOD_NAME .. 'HoldDesc',
-            default = 'm2',
+            default = 'Hawk3yeHoldKey',
         },
     }
 }
