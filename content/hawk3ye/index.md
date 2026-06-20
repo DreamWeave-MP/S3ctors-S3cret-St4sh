@@ -15,7 +15,7 @@ extra:
     content_files:
       - Hawk3ye.esp
 
-  version: 0.51
+  version: 0.52
   nexus_id: 57125
 ---
 Hawk3ye was inspired by [Zoom To See](https://www.nexusmods.com/morrowind/mods/57046?tab=description). However, when eyeing it for my own personal setup, I found the mod was broken and wasn't really very satisfying overall. So, I refactored it for greater reliability and mod compatibility.
