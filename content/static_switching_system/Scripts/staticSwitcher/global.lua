@@ -399,14 +399,15 @@ local function getRangeValue(numberOrTable)
   return rangeOrValue
 end
 
----@param rotateDatum RotationParamInput
+---@param isRelative boolean
+---@param rotateActionDetails table<Axis, number>
+---@param currentTransform openmw.util.Transform
 ---@return openmw.util.Transform transform
-local function getRotationValue(rotateDatum)
-  local rotateActionDetails = rotateDatum.rotateActionDetails
+local function getRotationValue(isRelative, rotateActionDetails, currentTransform)
   local rootTransform = util.transform.identity
 
-  if rotateDatum.isRelative then
-    rootTransform = rotateDatum.currentTransform * rootTransform
+  if isRelative then
+    rootTransform = currentTransform * rootTransform
   end
 
   for _, axis in ipairs(AXES) do
@@ -639,12 +640,11 @@ return {
               end
 
               if actionDetails.rotate then
-                newTransform = getRotationValue {
-                  object              = modifyTarget,
-                  isRelative          = useRelativeTransform,
-                  rotateActionDetails = actionDetails.rotate,
-                  currentTransform    = newTransform or modifyTarget.rotation,
-                }
+                newTransform = getRotationValue(
+                  useRelativeTransform,
+                  actionDetails.rotate,
+                  newTransform or modifyTarget.rotation
+                )
 
                 wasModified = true
               end
