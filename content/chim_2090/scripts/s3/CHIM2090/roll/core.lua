@@ -1,3 +1,4 @@
+---@omw-context local | player
 local animation = require 'openmw.animation'
 local async = require 'openmw.async'
 local camera
@@ -6,6 +7,7 @@ local input
 
 local I = require 'openmw.interfaces'
 local Animation = I.AnimationController
+local randomGen = require 'scripts.s3.randomGen'
 local s3lf = I.s3.lf
 
 local modInfo = require 'scripts.s3.chim2090.modinfo'
@@ -16,8 +18,10 @@ local types = require 'openmw.types'
 local isPlayer = s3lf.actorType == 0
 
 if isPlayer then
+    ---@omw-context-begin player
     camera = require 'openmw.camera'
     input = require 'openmw.input'
+    ---@omw-context-end player
 end
 
 ---@class RollManager: ProtectedTable
@@ -54,7 +58,7 @@ function Roll:hasIFrames()
 end
 
 function Roll:getRandomPitch()
-    return 1 + I.RandomGen.range(-self.RollSoundPitchRange, self.RollSoundPitchRange)
+    return 1 + randomGen.range(-self.RollSoundPitchRange, self.RollSoundPitchRange)
 end
 
 ---@return RollType
@@ -165,7 +169,7 @@ local animationKeyHandlers = {
 
         Roll:setIframeState(true)
 
-        local soundIndex = I.RandomGen.range(numRollSounds, true)
+        local soundIndex = randomGen.range(numRollSounds, true)
         local pitch, sound = Roll:getRandomPitch(), rollSounds[soundIndex]
 
         core.sound.playSound3d(sound, s3lf.object, { pitch = pitch })
@@ -382,7 +386,7 @@ eventHandlers.CHIMToggleRoll = function(rollDirection)
     if isPlayer then
         input.activateTrigger('CHIMRollAction')
     else
-        Roll:activate(rollDirection or I.RandomGen.range(4, true))
+        Roll:activate(rollDirection or randomGen.range(4, true))
     end
 end
 
