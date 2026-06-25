@@ -533,31 +533,22 @@ return {
     -- Replace this with a toggle for a coroutine loader
     StaticSwitcherRunGlobalFunctions = function()
       for _, cell in ipairs(world.cells) do
+        local shouldProcess = false
+        local targetModules
+
         --- Global functions only run in exteriors
-        if not cell.isExterior then goto SKIPCELL end
-
         --- if targetModule is nil, then, this cell isn't handled by any modules and should NOT be loaded
-        local targetModules = getReplacementModuleForCell(cell)
-        if not next(targetModules) then goto SKIPCELL end
+        if cell.isExterior then targetModules = getReplacementModuleForCell(cell) end
+        if targetModules and next(targetModules) then shouldProcess = true end
 
-        -- Log(
-        --   ReplacingObjectsStr:format(cell)
-        -- )
-
-        for _, object in ipairs(cell:getAll()) do
-          local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
-          if not replacementMesh or not replacementModule then goto SKIPOBJECT end
-
-          -- Log(
-          --   ReplacingIndividualObjectStr:format(object, replacementMesh, replacementModule)
-          -- )
-
-          replaceObject(object, replacementModule, replacementMesh)
-
-          ::SKIPOBJECT::
+        if shouldProcess then
+          for _, object in ipairs(cell:getAll()) do
+            local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
+            if replacementMesh and replacementModule then
+              replaceObject(object, replacementModule, replacementMesh)
+            end
+          end
         end
-
-        ::SKIPCELL::
       end
     end,
   },
