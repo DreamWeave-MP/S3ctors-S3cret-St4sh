@@ -38,12 +38,6 @@ local objectModificationStore = {}
 --- Indexed first by object string, then contains
 local actionLookupCache       = {}
 
-local STATE                   = {
-  overrideRecords = overrideRecords,
-  objectDeleteQueue = objectDeleteQueue,
-  replacedObjectSet = replacedObjectSet,
-}
-
 local ROTATE_FORMAT_STR,
 GET_REFNUM_STR,
 -- GENERATED_OBJECT,
@@ -688,7 +682,11 @@ return {
       end
     end,
     onSave = function()
-      return STATE
+      return {
+        overrideRecords = overrideRecords,
+        objectDeleteQueue = objectDeleteQueue,
+        replacedObjectSet = replacedObjectSet,
+      }
     end,
     onLoad = function(data)
       if not data then return end
