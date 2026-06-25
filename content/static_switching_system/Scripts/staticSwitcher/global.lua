@@ -9,7 +9,6 @@ local world                   = require 'openmw.world'
 local randomGen               = require 'scripts.staticSwitcher.randomGen'
 ---@type StaticUtil
 local staticUtil              = require 'scripts.staticSwitcher.util'
-local strings                 = staticUtil.strings
 
 local szudzik                 = require 'scripts.staticSwitcher.szudzik'
 local tableHash               = require 'scripts.staticSwitcher.tableHash'
@@ -38,6 +37,23 @@ local objectModificationStore = {}
 --- Indexed first by object string, then contains
 local actionLookupCache       = {}
 
+local ROTATE_FORMAT_STR,
+GET_REFNUM_STR,
+-- GENERATED_OBJECT,
+INVALID_MODULE_NAME,
+-- NOT_A_REF_NUM,
+-- REPLACING_OBJECTS,
+-- REPLACING_INDIVIDUAL_OBJECT,
+INVALID_TYPE                  =
+    'rotate%s',
+    '%s %s has refNum %d',
+    -- 'Object %s is generated and cannot be modified on a per-instance basis!',
+    'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.',
+    -- 'Refnum: %s was not a number!',
+    -- 'Replacing Objects in cell: %s',
+    -- 'Replacing object %s with model %s provided by module %s',
+    'Invalid type was provided: %s'
+
 ---@param object GameObject
 ---@param oldRecord ActivatorRecord
 ---@param newModel string
@@ -53,7 +69,7 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
 
   if not types.Static.objectIsInstance(object) and not types.Activator.objectIsInstance(object) then
     error(
-      strings.InvalidTypeStr:format(object.type)
+      INVALID_TYPE:format(object.type)
     )
   end
 
@@ -120,9 +136,11 @@ end
 ---@param replacementMesh string the mesh which will be used in place of the original
 local function replaceObject(object, replacementModule, replacementMesh)
   ---@type ActivatorRecord
-  local objectRecord = staticUtil.Record(object)
+  local objectRecord = object.type.records[object.recordId]
+
   local moduleData = ComposedReplacements[replacementModule]
   if moduleData.ignoreRecords[object.recordId] then return end
+
   local oldModel = objectRecord.model
 
   if not oldModel or not staticUtil.assertMeshExists(
@@ -130,7 +148,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
         oldModel,
         objectRecord.id,
         replacementModule,
-        ComposedReplacements[replacementModule].logString or strings.LOG_PREFIX
+        ComposedReplacements[replacementModule].logString or 'StaticSwitchingSystem'
       ) then
     return
   end
@@ -267,7 +285,7 @@ local conditionHandlers = {
 
     assert(
       targetType ~= nil,
-      strings.InvalidTypeStr:format(capitalizedTypeName)
+      INVALID_TYPE:format(capitalizedTypeName)
     )
 
     return targetType.objectIsInstance(object)
@@ -390,7 +408,7 @@ local function getRotationValue(rotateDatum)
 
   for _, axis in ipairs { 'z', 'y', 'x', } do
     if rotateActionDetails[axis] then
-      rootTransform = util.transform[strings.ROTATE_FORMAT_STR:format(axis:upper())](
+      rootTransform = util.transform[ROTATE_FORMAT_STR:format(axis:upper())](
         math.rad(
           getRangeValue(
             rotateActionDetails[axis]
@@ -459,7 +477,7 @@ local function uninstallModule(fileName)
 
   if not localModuleReplacements then
     return staticUtil.Log(
-      strings.InvalidModuleNameStr:format(fileName)
+      INVALID_MODULE_NAME:format(fileName)
     )
   end
 
@@ -501,7 +519,7 @@ return {
       local isGenerated, refNum = staticUtil.getRefNum(object)
 
       staticUtil.Log(
-        strings.GET_REFNUM_STR:format(
+        GET_REFNUM_STR:format(
           isGenerated and 'Generated Object' or '' .. object.id, object.recordId, refNum
         )
       )
