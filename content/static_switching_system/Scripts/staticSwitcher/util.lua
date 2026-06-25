@@ -1,13 +1,21 @@
+---@omw-context global | menu
 local aux_util = require 'openmw_aux.util'
 local util     = require 'openmw.util'
 local vfs      = require 'openmw.vfs'
 
 
 ---@class StaticUtil
-local staticUtil   = {}
+local staticUtil = {}
 
----@type SSSStaticStrings
-staticUtil.strings = require 'scripts.staticSwitcher.staticStrings'
+local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR
+do
+    ---@type SSSStaticStrings
+    local strings = require 'scripts.staticSwitcher.staticStrings'
+
+    LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR =
+        strings.LOG_PREFIX, strings.LOG_FORMAT_STR, strings.MISSING_MESH_ERROR, strings.PREFIX_FRAME,
+        strings.TITLE_CAP_FORMAT_STR
+end
 
 ---@param modelPath string
 ---@param originalModel string
@@ -19,7 +27,7 @@ function staticUtil.assertMeshExists(modelPath, originalModel, recordId, moduleN
     if vfs.fileExists(modelPath) then return true end
 
     staticUtil.Log(
-        staticUtil.strings.MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
+        MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
         logString
     )
 end
@@ -78,9 +86,9 @@ end
 
 ---@param path string normalized VFS path referring to a mesh replacement map
 function staticUtil.getPathBaseName(path)
-    ---@type string
-    local baseName
-    for part in string.gmatch(path, "([^/]+)") do
+    local baseName = ''
+
+    for part in path:gmatch("([^/]+)") do
         baseName = part
     end
 
@@ -118,10 +126,10 @@ end
 ---@param message string
 ---@param prefix string?
 function staticUtil.LogString(message, prefix)
-    if not prefix then prefix = staticUtil.strings.LOG_PREFIX end
+    if not prefix then prefix = LOG_PREFIX end
 
-    return staticUtil.strings.LOG_FORMAT_STR:format(
-        staticUtil.strings.PREFIX_FRAME:format(prefix),
+    return LOG_FORMAT_STR:format(
+        PREFIX_FRAME:format(prefix),
         message
     )
 end
@@ -215,7 +223,7 @@ function staticUtil.capitalize(inputString)
     local stringLength = #inputString
     if stringLength <= 1 then return inputString:upper() end
 
-    return staticUtil.strings.TITLE_CAP_FORMAT_STR:format(
+    return TITLE_CAP_FORMAT_STR:format(
         inputString:sub(1, 1):upper(),
         inputString:sub(2, stringLength)
     )
