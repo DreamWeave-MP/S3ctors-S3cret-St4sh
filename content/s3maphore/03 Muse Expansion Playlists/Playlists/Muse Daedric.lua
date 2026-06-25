@@ -35,7 +35,7 @@ end
 
 ---@type ValidPlaylistCallback
 local function daedricTilesetRule()
-    return not Playback.state.cellIsExterior
+    return not Playback.state.isInCombat
         and Playback.rules.staticExact(Tilesets.Daedric)
 end
 

@@ -27,7 +27,6 @@ end
 ---@type ValidPlaylistCallback
 local function dwemerStaticRule()
     return not Playback.state.isInCombat
-        and not Playback.state.cellIsExterior
         and Playback.rules.staticExact(Tilesets.Dwemer)
 end
 
