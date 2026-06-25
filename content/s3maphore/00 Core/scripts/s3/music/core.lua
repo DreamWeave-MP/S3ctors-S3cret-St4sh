@@ -20,7 +20,6 @@ local Strings                = require 'scripts.s3.music.staticStrings'
 
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicUtil              = require 'scripts.s3.music.util'
-local tableUtil              = require 'scripts.s3.table'
 
 local nullFunction           = require 'scripts.s3.nullFunction'
 
