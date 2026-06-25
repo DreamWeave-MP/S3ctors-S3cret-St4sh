@@ -6,12 +6,13 @@ local util                    = require 'openmw.util'
 local vfs                     = require 'openmw.vfs'
 local world                   = require 'openmw.world'
 
-local randomGen               = require 'scripts.staticSwitcher.randomGen'
+local randomGen               = require 'scripts.s3.randomGen'
+
 ---@type StaticUtil
 local staticUtil              = require 'scripts.staticSwitcher.util'
 
-local szudzik                 = require 'scripts.staticSwitcher.szudzik'
-local tableHash               = require 'scripts.staticSwitcher.tableHash'
+local szudzik                 = require 'scripts.s3.szudzik'
+local tableHash               = require 'scripts.s3.tableHash'
 
 local TICKS_TO_DELETE         = 3
 local moduleToRemove
