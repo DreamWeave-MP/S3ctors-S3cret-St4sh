@@ -186,38 +186,86 @@ local function replaceObject(object, replacementModule, replacementMesh)
 end
 
 local function staticLoaderModuleHandler(meshReplacementsTable)
-  local replacementTable = {}
-
-  if meshReplacementsTable.log_name then
-    replacementTable.logString = meshReplacementsTable.log_name
+  local meshMap
+  if meshReplacementsTable.replace_meshes and next(meshReplacementsTable.replace_meshes) ~= nil then
+    if table.new then
+      meshMap = table.new(0, table.nkeys(meshReplacementsTable.replace_meshes))
+    else
+      meshMap = {}
+    end
   end
 
-  replacementTable.meshMap = {}
-  for oldMesh, newMesh in pairs(meshReplacementsTable.replace_meshes or {}) do
-    replacementTable.meshMap[staticUtil.normalizePath(
-      staticUtil.getMeshPath(
-        oldMesh
-      )
-    )] = staticUtil.normalizePath(
-      staticUtil.getMeshPath(
-        newMesh
-      )
-    )
+  local cellNameMatches
+  if meshReplacementsTable.replace_names and next(meshReplacementsTable.replace_names) ~= nil then
+    if table.new then
+      cellNameMatches = table.new(#meshReplacementsTable.replace_names, 0)
+    else
+      cellNameMatches = {}
+    end
   end
 
-  replacementTable.cellNameMatches = {}
-  for i, replaceString in ipairs(meshReplacementsTable.replace_names or {}) do
-    replacementTable.cellNameMatches[i] = replaceString:lower()
+  local gridIndices
+  if meshReplacementsTable.exterior_cells and next(meshReplacementsTable.exterior_cells) ~= nil then
+    if table.new then
+      gridIndices = table.new(0, #meshReplacementsTable.exterior_cells)
+    else
+      gridIndices = {}
+    end
   end
 
-  replacementTable.gridIndices = {}
-  for _, cellGrid in ipairs(meshReplacementsTable.exterior_cells or {}) do
-    replacementTable.gridIndices[szudzik.getIndex(cellGrid.x, cellGrid.y)] = true
+  local ignoreRecords
+  if meshReplacementsTable.ignore_records and next(meshReplacementsTable.ignore_records) ~= nil then
+    if table.new then
+      ignoreRecords = table.new(0, #meshReplacementsTable.ignore_records)
+    else
+      ignoreRecords = {}
+    end
   end
 
-  replacementTable.ignoreRecords = {}
-  for _, ignoreRecord in ipairs(meshReplacementsTable.ignore_records or {}) do
-    replacementTable.ignoreRecords[ignoreRecord] = true
+  local replacementTable
+  if table.new then
+    local numElements = (meshMap and 1 or 0)
+        + (cellNameMatches and 1 or 0)
+        + (gridIndices and 1 or 0)
+        + (ignoreRecords and 1 or 0)
+        + (meshReplacementsTable.log_name and 1 or 0)
+    replacementTable = table.new(0, numElements)
+  else
+    replacementTable = {}
+  end
+
+  if meshMap then replacementTable.meshMap = meshMap end
+  if cellNameMatches then replacementTable.cellNameMatches = cellNameMatches end
+  if gridIndices then replacementTable.gridIndices = gridIndices end
+  if ignoreRecords then replacementTable.ignoreRecords = ignoreRecords end
+  if meshReplacementsTable.log_name then replacementTable.logString = meshReplacementsTable.log_name end
+
+  if meshMap then
+    local key, value = '', ''
+    for oldMesh, newMesh in pairs(meshReplacementsTable.replace_meshes) do
+      key = staticUtil.normalizePath(staticUtil.getMeshPath(oldMesh))
+      value = staticUtil.normalizePath(staticUtil.getMeshPath(newMesh))
+
+      meshMap[key] = value
+    end
+  end
+
+  if cellNameMatches then
+    for i, replaceString in ipairs(meshReplacementsTable.replace_names) do
+      cellNameMatches[i] = replaceString:lower()
+    end
+  end
+
+  if gridIndices then
+    for _, cellGrid in ipairs(meshReplacementsTable.exterior_cells) do
+      replacementTable.gridIndices[szudzik.getIndex(cellGrid.x, cellGrid.y)] = true
+    end
+  end
+
+  if ignoreRecords then
+    for _, ignoreRecord in ipairs(meshReplacementsTable.ignore_records) do
+      replacementTable.ignoreRecords[ignoreRecord] = true
+    end
   end
 
   return replacementTable
