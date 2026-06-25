@@ -1,10 +1,17 @@
 ---@omw-context runtime
-local bitXor, bitAnd, floor, realTime, round
+local bitXor, bitAnd, floor, realTime
+
+--- @param value number
+--- @param digits? number
+--- @return number result
+local function round(value, digits)
+    local mult = 10 ^ (digits or 0)
+
+    return floor(value * mult + 0.5) / mult
+end
 
 do
-    local math = require 'scripts.s3.math'
     floor = math.floor
-    round = math.round
 end
 
 if require 'scripts.s3.isOpenMW' then
