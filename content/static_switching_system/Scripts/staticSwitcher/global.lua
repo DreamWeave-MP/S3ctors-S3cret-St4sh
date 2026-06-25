@@ -1,3 +1,4 @@
+---@omw-context global
 local aux_util                = require 'openmw_aux.util'
 local markup                  = require 'openmw.markup'
 local types                   = require 'openmw.types'
@@ -19,7 +20,7 @@ local moduleToRemove
 ---@type ObjectDeleteData[]
 local objectDeleteQueue       = {}
 
----@type table <GameObject, ReplacedObjectData>
+---@type table <GObject, ReplacedObjectData>
 local replacedObjectSet       = {}
 
 --- Maps module names to the record ids they manage
@@ -185,10 +186,6 @@ local function staticLoaderModuleHandler(meshReplacementsTable)
   return replacementTable
 end
 
-local function safeCreateObject(objectId)
-  return world.createObject(objectId)
-end
-
 ---@class ActionPriority
 local ACTIONPRIORITY = {
   'replace',
@@ -323,7 +320,7 @@ local function getMatchingInstanceModules(object)
   --- This is kind of terrible and appears to be a bug in the engine itself
   --- but, for now, using the tostring version works alright-ish until... we find out it doesn't, somehow
   --- like perhaps the ID changing due to load order fuckery (which is why we used the GO itself as a key in the first place)
-  local objectString = tostring(object)
+  local objectString = object.id
 
   for _, actionList in pairs(objectModificationStore) do
     for _, actionData in ipairs(actionList) do
@@ -385,7 +382,6 @@ end
 ---@return userdata transform
 local function getRotationValue(rotateDatum)
   local rotateActionDetails = rotateDatum.rotateActionDetails
-  ---@type userdata
   local rootTransform = util.transform.identity
 
   if rotateDatum.isRelative then
@@ -410,13 +406,11 @@ end
 local actionHandlers = {
   ['replace'] = function(_, replaceActionData)
     for replaceId, replaceChance in pairs(replaceActionData) do
-      if randomGen:float() > replaceChance then goto SKIPREPLACEMENT end
+      if randomGen:float() <= replaceChance then
+        local result, replacement = pcall(world.createObject, replaceId)
 
-      local result, replacement = pcall(safeCreateObject, replaceId)
-
-      if result then return replacement end
-
-      ::SKIPREPLACEMENT::
+        if result then return replacement end
+      end
     end
   end,
 }
