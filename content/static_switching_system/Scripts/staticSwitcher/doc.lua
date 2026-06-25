@@ -1,10 +1,12 @@
+---@meta
+
 ---@alias MeshToSourceMap table<string, SourceMapData> Maps a new mesh to the source file which defined this replacement.
 ---@alias OriginalModel RecordId
 ---@alias ReplacedRecordId RecordId
 ---@alias ReplacementMap table < OriginalModel, ReplacedRecordId >
 ---@alias RecordId string
 ---@alias SzudzikCoord integer
----@alias SSSConditionHandler fun(object: GameObject, matchData: any): boolean
+---@alias SSSConditionHandler fun(object: openmw.GObject, matchData: any): boolean
 
 --- Represents the uppermost bits to strip off of an object ID in order to determine its local reference number
 --- math.pow(2, 24)
@@ -31,36 +33,6 @@
 ---@class ExteriorGrid
 ---@field x integer X coordinate of an exterior cell in which to replace objects
 ---@field y integer Y coordinate of an exterior cell in which to replace objects
-
----@class ActivatorRecord
----@field name string? human-readable name displayed for this objecdt
----@field mwscript string? recordId of the mwscript running on this object
----@field id RecordId
----@field model string? mesh displayed for the object in game. If not present (usually a light), then the record is completely ignored.
-
----@class GameCell
----@field name string
----@field gridX integer exterior X coordinate of the cell. Be warned this is present even for interiors and fake exteriors.
----@field gridY integer exterior Y coordinate of the cell. Be warned this is present even for interiors and fake exteriors.
----@field isExterior boolean whether or not the cell is a true exterior
----@field id string
-
----@class GameObject
----@field recordId RecordId
----@field type table<string, any>
----@field scale integer Object scale
----@field enabled boolean
----@field count integer
----@field contentFile string? Content file which originally defined this object. Nil for dynamically created objects.
----@field cell GameCell
----@field isValid fun(self: GameObject): boolean whether or not the object is currently valid, eg teleporting or similar
----@field remove fun(self: GameObject, count: integer?) destroy the object completely
----@field position util.vector3
----@field getBoundingBox fun(): userdata
----@field teleport fun(cell: GameCell, position: util.vector3, options: table)
----@field sendEvent fun(self: GameObject, eventName: string, eventData: any)
----@field id string The unique identifier for the object.
----@field rotation userdata We'll have to document transform at some point
 
 ---@class SSSModule
 ---@field cellNameMatches string[] list of cell names which will be fuzzy-matched for a given module
