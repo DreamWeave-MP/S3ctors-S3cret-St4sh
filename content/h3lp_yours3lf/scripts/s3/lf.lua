@@ -218,8 +218,25 @@ local instance = {
 }
 ---@cast instance S3lfObject
 
-local sortedPairs = require 'scripts.s3.table'.sortedPairs
+local insert, pairs, sort = table.insert, pairs, table.sort
 
+--- Sorts a table using an optional comparator function and returns an iterator over a sorted copy
+---@generic K, V
+---@param tbl table<K, V>
+---@param comparator? fun(a: K, b: K): boolean
+---@return fun(): K, V
+local function sortedPairs(tbl, comparator)
+  local tableKeys = {}
+  for key in pairs(tbl) do insert(tableKeys, key) end
+
+  sort(tableKeys, comparator)
+  local i = 0
+
+  return function()
+    i = i + 1
+    return tableKeys[i], tbl[tableKeys[i]]
+  end
+end
 local function alphabeticalParts()
   local parts = {}
   local methodParts = {}
