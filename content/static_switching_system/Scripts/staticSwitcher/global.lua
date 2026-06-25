@@ -532,7 +532,8 @@ return {
     end,
     -- Replace this with a toggle for a coroutine loader
     StaticSwitcherRunGlobalFunctions = function()
-      for _, cell in ipairs(world.cells) do
+      for i = 1, #world.cells do
+        local cell = world.cells[i]
         local shouldProcess = false
         local targetModules
 
