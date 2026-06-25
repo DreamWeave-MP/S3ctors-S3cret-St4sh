@@ -18,12 +18,12 @@
 ---@field max integer
 
 ---@class ObjectDeleteData
----@field object GameObject
+---@field object openmw.GObject
 ---@field ticks integer number of frames before this object will be deleted
 ---@field removeOrDisable boolean whether or not the object will be permanently removed or just disabled. When replacing, the original objects are disabled, but when uninstalling a module the replacements are removed and the originals restored.
 
 ---@class ReplacedObjectData
----@field originalObject GameObject
+---@field originalObject openmw.GObject
 ---@field sourceFile string
 
 ---@class SourceMapData
