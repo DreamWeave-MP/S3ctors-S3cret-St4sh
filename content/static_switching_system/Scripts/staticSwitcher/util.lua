@@ -7,15 +7,12 @@ local vfs      = require 'openmw.vfs'
 ---@class StaticUtil
 local staticUtil = {}
 
-local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR
-do
-    ---@type SSSStaticStrings
-    local strings = require 'scripts.staticSwitcher.staticStrings'
-
-    LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR =
-        strings.LOG_PREFIX, strings.LOG_FORMAT_STR, strings.MISSING_MESH_ERROR, strings.PREFIX_FRAME,
-        strings.TITLE_CAP_FORMAT_STR
-end
+local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR =
+    'StaticSwitchingSystem',
+    '%s %s',
+    [[Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]],
+    '[ %s ]:',
+    '%s%s'
 
 ---@param modelPath string
 ---@param originalModel string
@@ -105,7 +102,7 @@ function staticUtil.getReplacementMeshForObject(meshMap, object)
     --- Special handling for marker types which are statics but have no .type field on them
     if not object.type then return end
 
-    local objectModel = staticUtil.Record(object).model
+    local objectModel = object.type.records[object.recordId].model
     if not objectModel then return end
 
     local replacementObjectMesh = meshMap[objectModel]
