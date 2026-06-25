@@ -33,7 +33,7 @@ local function CHIMHitHandler(attack)
     -- maybe we don't actually want to do this
     if not attacker or not meleeOrRanged then return end
 
-    s3lf:sendEvent('CHIMEnsureStats')
+    s3lf.sendObjectEvent('CHIMEnsureStats')
     attacker:sendEvent('CHIMEnsureStats')
 
     if not attack.successful then
@@ -66,7 +66,7 @@ local function CHIMHitHandler(attack)
                     damage = I.s3ChimParry.Manager.getDamage(blockData),
                 })
 
-                if I.S3LockOn then s3lf:sendEvent('S3TargetLockHit', attacker) end
+                if I.S3LockOn then s3lf.sendObjectEvent('S3TargetLockHit', attacker) end
 
                 return false
             elseif I.s3ChimBlock.isBlocking then
