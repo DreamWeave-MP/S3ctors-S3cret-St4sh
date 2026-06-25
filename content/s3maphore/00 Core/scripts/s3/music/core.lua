@@ -420,7 +420,7 @@ handlePlayback = function(_)
 
     switchPlaylist(newPlaylist)
 
-    tableUtil.clear(TrackChangeData)
+    for key in next, TrackChangeData do TrackChangeData[key] = nil end
     TrackChangeData.fadeOut = MusicParams.fadeOut
     TrackChangeData.playlistId = newPlaylist and newPlaylist.id
     TrackChangeData.trackName = MusicManager.currentTrack
