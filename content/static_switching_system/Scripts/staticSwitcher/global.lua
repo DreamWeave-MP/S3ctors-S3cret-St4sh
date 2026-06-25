@@ -38,6 +38,12 @@ local objectModificationStore = {}
 --- Indexed first by object string, then contains
 local actionLookupCache       = {}
 
+local STATE                   = {
+  overrideRecords = overrideRecords,
+  objectDeleteQueue = objectDeleteQueue,
+  replacedObjectSet = replacedObjectSet,
+}
+
 local ROTATE_FORMAT_STR,
 GET_REFNUM_STR,
 -- GENERATED_OBJECT,
@@ -682,22 +688,14 @@ return {
       end
     end,
     onSave = function()
-      return {
-        overrideRecords = overrideRecords,
-        objectDeleteQueue = objectDeleteQueue,
-        replacedObjectSet = replacedObjectSet,
-      }
+      return STATE
     end,
     onLoad = function(data)
       if not data then return end
 
-      for target, source in pairs {
-        [overrideRecords] = data.overrideRecords,
-        [objectDeleteQueue] = data.objectDeleteQueue,
-        [replacedObjectSet] = data.replacedObjectSet,
-      } do
-        staticUtil.deepCopy(target, source)
-      end
+      staticUtil.deepCopy(overrideRecords, data.overrideRecords)
+      staticUtil.deepCopy(objectDeleteQueue, objectDeleteQueue)
+      staticUtil.deepCopy(replacedObjectSet, replacedObjectSet)
     end,
   }
 }
