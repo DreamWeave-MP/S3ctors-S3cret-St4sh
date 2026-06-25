@@ -13,6 +13,7 @@ local TRACE_AGGREGATE_LIMIT = 256
 local TRACE_RAW_LINE_LIMIT = 1024
 local DEFAULT_CAPTURE_FRAMES = 300
 local DEFAULT_PROFILE_FRAMES = 300
+local JIT_DUMP_MODE = 'bi'
 
 local function nullfunction() end
 local tick = nullfunction
@@ -773,6 +774,55 @@ local function stopMemProfiler(filter)
   endRun()
 end
 
+local function clearDebugHookBeforeJitCapture()
+  local ok, hookFn, mask, count = pcall(debug.gethook)
+  local hookExists = ok and hookFn ~= nil
+  printWithFields('[JIT]', {
+    field('event', 'debug-hook-before-jit-capture'),
+    field('ok', ok),
+    field('hook', ok and hookExists),
+    field('mask', ok and mask or nil),
+    field('count', ok and count or nil),
+    field('error', not ok and hookFn or nil),
+  })
+  local clearOk, clearErr = pcall(debug.sethook)
+  local resetCallCounter = callCounterActive
+  local resetTiming = timingActive
+  local resetMem = memActive
+  printWithFields('[JIT]', {
+    field('event', 'debug-hook-clear-before-jit-capture'),
+    field('ok', clearOk),
+    field('stale_call_counter', resetCallCounter),
+    field('stale_timing', resetTiming),
+    field('stale_memory', resetMem),
+    field('error', clearErr),
+  })
+
+  local postOk, postHookFn, postMask, postCount = pcall(debug.gethook)
+  local postHookExists = postOk and postHookFn ~= nil
+  printWithFields('[JIT]', {
+    field('event', 'debug-hook-after-jit-capture-clear'),
+    field('ok', postOk),
+    field('hook', postOk and postHookExists),
+    field('mask', postOk and postMask or nil),
+    field('count', postOk and postCount or nil),
+    field('error', not postOk and postHookFn or nil),
+  })
+  if clearOk and postOk and not postHookExists then
+    callCounterActive = false
+    timingActive = false
+    if memActive then collectgarbage('restart') end
+    memActive = false
+    timeStack = {}
+    memStack = {}
+  end
+  if not ok then return false, 'debug_gethook_before_failed: ' .. tostring(hookFn) end
+  if not clearOk then return false, 'debug_sethook_failed: ' .. tostring(clearErr) end
+  if not postOk then return false, 'debug_gethook_after_failed: ' .. tostring(postHookFn) end
+  if postHookExists then return false, 'debug_hook_still_active: ' .. tostring(postHookFn) end
+  return true
+end
+
 -- ── file cleanup ──────────────────────────────────────────────────────────────
 
 local function closeTmpFile()
@@ -844,6 +894,19 @@ local function startJitCaptureProfiler(frames)
   stopRuntimeDumpers()
   beginRun('jit-capture', { traceCollector = true })
   printMeasurementNote('trace_ir', 'throughput', 'jit_dump_overhead')
+  local hookClearOk, hookClearReason = clearDebugHookBeforeJitCapture()
+  if not hookClearOk then
+    printWithFields('[JIT]', {
+      field('event', 'jit-capture-abort'),
+      field('reason', 'debug_hook_active_or_uncertain'),
+      field('detail', hookClearReason),
+    })
+    stopRuntimeDumpers()
+    closeTmpFile()
+    tick = nullfunction
+    endRun()
+    return
+  end
   flushJitTraces('jit-capture-start')
   resetTmpFile(tracePath)
   closeTmpFile()
@@ -851,8 +914,8 @@ local function startJitCaptureProfiler(frames)
   closeTmpFile()
   printWithFields('[JIT]', { field('event', 'jit-v-start'), field('path', tracePath) })
   jit_v.on(tracePath)
-  printWithFields('[JIT]', { field('event', 'jit-dump-start'), field('path', dumpPath) })
-  jit_dump.on('tbisrXT', dumpPath)
+  printWithFields('[JIT]', { field('event', 'jit-dump-start'), field('path', dumpPath), field('dump_mode', JIT_DUMP_MODE) })
+  jit_dump.on(JIT_DUMP_MODE, dumpPath)
   tick = tickProfiler
 end
 
