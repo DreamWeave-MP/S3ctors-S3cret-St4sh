@@ -18,7 +18,7 @@ end
 return {
     {
         id = 's3/dungeon',
-        priority = PlaylistPriority.CellExact,
+        priority = PlaylistPriority.Tileset + 1,
         randomize = true,
         isValidCallback = generalDungeonRule,
     },
