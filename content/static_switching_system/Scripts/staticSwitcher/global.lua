@@ -1,45 +1,45 @@
 ---@omw-context global
-local aux_util                   = require 'openmw_aux.util'
-local markup                     = require 'openmw.markup'
-local types                      = require 'openmw.types'
-local util                       = require 'openmw.util'
-local vfs                        = require 'openmw.vfs'
-local world                      = require 'openmw.world'
+local aux_util                          = require 'openmw_aux.util'
+local markup                            = require 'openmw.markup'
+local types                             = require 'openmw.types'
+local util                              = require 'openmw.util'
+local vfs                               = require 'openmw.vfs'
+local world                             = require 'openmw.world'
 
-local randomGen                  = require 'scripts.s3.randomGen'
+local randomGen                         = require 'scripts.s3.randomGen'
 
-local szudzik                    = require 'scripts.s3.szudzik'
-local tableHash                  = require 'scripts.s3.tableHash'
+local szudzik                           = require 'scripts.s3.szudzik'
+local tableHash                         = require 'scripts.s3.tableHash'
 
-local conditionHandlers          = require 'Scripts.staticSwitcher.conditionHandlers'
+local conditionHandlers                 = require 'Scripts.staticSwitcher.conditionHandlers'
 ---@type StaticUtil
-local staticUtil                 = require 'scripts.staticSwitcher.util'
+local staticUtil                        = require 'scripts.staticSwitcher.util'
 
-local AXES                       = { 'z', 'y', 'x', }
+local AXES                              = { 'z', 'y', 'x', }
 
-local TICKS_TO_DELETE            = 3
+local TICKS_TO_DELETE                   = 3
 local moduleToRemove
 
 ---@type ObjectDeleteData[]
-local objectDeleteQueue          = {}
+local objectDeleteQueue                 = {}
 
 ---@type table <openmw.GObject, ReplacedObjectData>
-local replacedObjectSet          = {}
+local replacedObjectSet                 = {}
 
 --- Maps module names to the record ids they manage
 ---@type table<string, ReplacementMap>
-local overrideRecords            = {}
+local overrideRecords                   = {}
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
-local ComposedReplacements       = {}
+local ComposedReplacements              = {}
 
 --- Indexed first by module name, then an array of actions and conditions
 --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
 --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
-local objectModificationStore    = {}
+local objectModificationStore           = {}
 
 --- Indexed first by object string, then contains
-local actionLookupCache          = {}
+local actionLookupCache                 = {}
 
 local ROTATE_FORMAT_STR,
 GET_REFNUM_STR,
@@ -48,7 +48,7 @@ INVALID_MODULE_NAME,
 -- NOT_A_REF_NUM,
 -- REPLACING_OBJECTS,
 -- REPLACING_INDIVIDUAL_OBJECT,
-INVALID_TYPE                     =
+INVALID_TYPE                            =
     'rotate%s',
     '%s %s has refNum %d',
     -- 'Object %s is generated and cannot be modified on a per-instance basis!',
@@ -58,13 +58,13 @@ INVALID_TYPE                     =
     -- 'Replacing object %s with model %s provided by module %s',
     'Invalid type was provided: %s'
 
-local error, ipairs, next, pairs = error, ipairs, next, pairs
+local error, ipairs, next, pairs, pcall = error, ipairs, next, pairs, pcall
 
 local createActivatorDraft,
 createRecord,
 objectIsStatic,
 objectIsActivator,
-sendMenuEvent                    =
+sendMenuEvent                           =
     types.Activator.createRecordDraft,
     world.createRecord,
     types.Static.objectIsInstance,
