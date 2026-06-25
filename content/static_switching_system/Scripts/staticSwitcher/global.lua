@@ -693,8 +693,8 @@ return {
       if not data then return end
 
       staticUtil.deepCopy(overrideRecords, data.overrideRecords)
-      staticUtil.deepCopy(objectDeleteQueue, objectDeleteQueue)
-      staticUtil.deepCopy(replacedObjectSet, replacedObjectSet)
+      staticUtil.deepCopy(objectDeleteQueue, data.objectDeleteQueue)
+      staticUtil.deepCopy(replacedObjectSet, data.replacedObjectSet)
     end,
   }
 }
