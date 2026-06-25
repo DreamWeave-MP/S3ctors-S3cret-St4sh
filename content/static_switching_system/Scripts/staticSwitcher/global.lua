@@ -8,11 +8,14 @@ local world                   = require 'openmw.world'
 
 local randomGen               = require 'scripts.s3.randomGen'
 
+local szudzik                 = require 'scripts.s3.szudzik'
+local tableHash               = require 'scripts.s3.tableHash'
+
+local conditionHandlers       = require 'Scripts.staticSwitcher.conditionHandlers'
 ---@type StaticUtil
 local staticUtil              = require 'scripts.staticSwitcher.util'
 
-local szudzik                 = require 'scripts.s3.szudzik'
-local tableHash               = require 'scripts.s3.tableHash'
+local AXES                    = { 'z', 'y', 'x', }
 
 local TICKS_TO_DELETE         = 3
 local moduleToRemove
@@ -20,7 +23,7 @@ local moduleToRemove
 ---@type ObjectDeleteData[]
 local objectDeleteQueue       = {}
 
----@type table <GObject, ReplacedObjectData>
+---@type table <openmw.GObject, ReplacedObjectData>
 local replacedObjectSet       = {}
 
 --- Maps module names to the record ids they manage
@@ -55,8 +58,19 @@ INVALID_TYPE                  =
     -- 'Replacing object %s with model %s provided by module %s',
     'Invalid type was provided: %s'
 
----@param object GameObject
----@param oldRecord ActivatorRecord
+local error, ipairs, pairs    = error, ipairs, pairs
+
+local createActivatorDraft,
+createRecord,
+objectIsStatic,
+objectIsActivator             =
+    types.Activator.createRecordDraft,
+    world.createRecord,
+    types.Static.objectIsInstance,
+    types.Activator.objectIsInstance
+
+---@param object openmw.GObject
+---@param oldRecord openmw.types.ActivatorRecord
 ---@param newModel string
 ---@param replacementModule string
 local function createReplacementRecord(object, oldRecord, newModel, replacementModule)
@@ -68,24 +82,26 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
 
   local newRecord = { model = newModel }
 
-  if not types.Static.objectIsInstance(object) and not types.Activator.objectIsInstance(object) then
+  if not objectIsStatic(object) and not objectIsActivator(object) then
     error(
       INVALID_TYPE:format(object.type)
     )
   end
 
-  local scriptId
+  local scriptId = ''
+
   if oldRecord.name then newRecord.name = oldRecord.name end
+
   if oldRecord.mwscript then
     scriptId = oldRecord.mwscript
     newRecord.mwscript = scriptId
   end
 
-  moduleRecords[oldRecordId] = world.createRecord(types.Activator.createRecordDraft(newRecord)).id
+  moduleRecords[oldRecordId] = createRecord(createActivatorDraft(newRecord)).id
 end
 
 --- Adds an object to the delete queue, to be processed on another frame
----@param object GameObject
+---@param object openmw.GObject
 local function addObjectToDeleteQueue(object, removeOrDisable)
   objectDeleteQueue[#objectDeleteQueue + 1] = {
     object = object,
@@ -96,7 +112,7 @@ local function addObjectToDeleteQueue(object, removeOrDisable)
 end
 
 ---@param replacementTable SSSModule
----@param cell GameCell
+---@param cell openmw.core.GCell
 ---@return true? locationMatched whether or not a given cell is handled by this module
 local function replacementTableMatchesCell(replacementTable, cell)
   if cell.isExterior then
@@ -118,7 +134,7 @@ local function replacementTableMatchesCell(replacementTable, cell)
   end
 end
 
----@param cell GameCell
+---@param cell openmw.core.GCell
 ---@return table<string, SSSModule> modulesForThisCell subtable of valid modules for this cell
 local function getReplacementModuleForCell(cell)
   local modulesForThisCell = {}
@@ -132,11 +148,11 @@ local function getReplacementModuleForCell(cell)
   return modulesForThisCell
 end
 
----@param object GameObject
+---@param object openmw.GObject
 ---@param replacementModule string the module which is replacing this object
 ---@param replacementMesh string the mesh which will be used in place of the original
 local function replaceObject(object, replacementModule, replacementMesh)
-  ---@type ActivatorRecord
+  ---@type openmw.types.ActivatorRecord
   local objectRecord = object.type.records[object.recordId]
 
   local moduleData = ComposedReplacements[replacementModule]
@@ -159,6 +175,8 @@ local function replaceObject(object, replacementModule, replacementMesh)
   local targetRecord = overrideRecords[replacementModule][objectRecord.id]
   local replacement = world.createObject(targetRecord)
   replacement:setScale(object.scale)
+
+  ---@diagnostic disable-next-line: param-type-mismatch
   replacement:teleport(object.cell.name, object.position, object.rotation)
 
   addObjectToDeleteQueue(object, false)
@@ -236,72 +254,6 @@ local function sortActionByType(actionData)
   end
 end
 
----@type table<string, SSSConditionHandler>
-local conditionHandlers = {
-  carrying = function(object, itemId)
-    if not object.type then return false end
-
-    local objectHasInventory = object.type.inventory ~= nil
-    if not objectHasInventory then return false end
-
-    local objectInventory = object.type.inventory(object)
-
-    local itemType = type(itemId)
-    if itemType == 'string' then
-      return objectInventory:find(itemId) ~= nil
-    else
-      local itemName, itemCount = next(itemId)
-
-      return objectInventory:countOf(itemName) >= itemCount
-    end
-  end,
-  cell = function(object, cellName)
-    return object.cell.name == cellName
-  end,
-  coords = function(object, cellCords)
-    if not object.cell.isExterior then return false end
-    return object.cell.gridX == cellCords.x and object.cell.gridY == cellCords.y
-  end,
-  content_file = function(object, contentFileName)
-    return (
-      object.contentFile == contentFileName:lower()
-    ) or (
-      not object.contentFile and contentFileName:upper() == 'GENERATED'
-    )
-  end,
-  name = function(object, targetName)
-    --- Statics may never have a name
-    if types.Static.objectIsInstance(object) or not object.type then return false end
-
-    local objectRecord = object.type.records[object.recordId]
-
-    if objectRecord.name == nil or objectRecord.name == '' then return false end
-
-    return objectRecord.name == targetName
-        or objectRecord.name:match(targetName) ~= nil
-  end,
-  object_type = function(object, targetTypeName)
-    local capitalizedTypeName = (targetTypeName:lower() == 'npc' and 'NPC') or staticUtil.capitalize(targetTypeName)
-    local targetType = types[capitalizedTypeName]
-
-    assert(
-      targetType ~= nil,
-      INVALID_TYPE:format(capitalizedTypeName)
-    )
-
-    return targetType.objectIsInstance(object)
-  end,
-  record_id = function(object, targetRecordId)
-    local originalId, lowerId = object.recordId, targetRecordId:lower()
-
-    return originalId == lowerId or originalId:match(lowerId)
-  end,
-  ref_num = function(object, targetRefNum)
-    local _, refNum = staticUtil.getRefNum(object)
-
-    return refNum == targetRefNum
-  end,
-}
 
 local function matchesAllConditions(object, conditions)
   for _, conditionData in ipairs(conditions) do
@@ -387,7 +339,7 @@ local function getRangeValue(numberOrTable)
     rangeOrValue = numberOrTable
   elseif actionDataType == 'table' then
     assert(numberOrTable.max, 'An upper bound is required when selecting a numeric range!')
-    rangeOrValue = randomGen:range(numberOrTable.min or 0, numberOrTable.max)
+    rangeOrValue = randomGen.range(numberOrTable.min or 0, numberOrTable.max)
   elseif actionDataType == 'nil' then
     return 0
   else
@@ -398,7 +350,7 @@ local function getRangeValue(numberOrTable)
 end
 
 ---@param rotateDatum RotationParamInput
----@return userdata transform
+---@return openmw.util.Transform transform
 local function getRotationValue(rotateDatum)
   local rotateActionDetails = rotateDatum.rotateActionDetails
   local rootTransform = util.transform.identity
@@ -407,7 +359,7 @@ local function getRotationValue(rotateDatum)
     rootTransform = rotateDatum.currentTransform * rootTransform
   end
 
-  for _, axis in ipairs { 'z', 'y', 'x', } do
+  for _, axis in ipairs(AXES) do
     if rotateActionDetails[axis] then
       rootTransform = util.transform[ROTATE_FORMAT_STR:format(axis:upper())](
         math.rad(
@@ -425,7 +377,7 @@ end
 local actionHandlers = {
   ['replace'] = function(_, replaceActionData)
     for replaceId, replaceChance in pairs(replaceActionData) do
-      if randomGen:float() <= replaceChance then
+      if randomGen.float() <= replaceChance then
         local result, replacement = pcall(world.createObject, replaceId)
 
         if result then return replacement end
@@ -507,7 +459,6 @@ return {
     overrideRecords = function()
       return util.makeReadOnly(overrideRecords)
     end,
-    randomGen = randomGen,
     replacedObjectSet = function()
       return util.makeReadOnly(replacedObjectSet)
     end,
@@ -628,7 +579,7 @@ return {
                 if scaleType == 'number' then
                   targetScale = actionDetails.scale
                 elseif scaleType == 'table' then
-                  targetScale = randomGen:range(actionDetails.scale.min or 1.0, actionDetails.scale.max)
+                  targetScale = randomGen.range(actionDetails.scale.min or 1.0, actionDetails.scale.max)
                 else
                   error("Invalid type for scale parameter: " .. scaleType)
                 end
