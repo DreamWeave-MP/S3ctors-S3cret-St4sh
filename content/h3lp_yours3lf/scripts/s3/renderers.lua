@@ -5,8 +5,9 @@ local core = require 'openmw.core'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local clamp = util.clamp
+
 local I = require 'openmw.interfaces'
-local s3math = require 'scripts.s3.math'
 
 local markTexture = ui.texture { path = 'textures/menu_map_smark.dds' }
 local whiteTexture = ui.texture { path = 'white' }
@@ -20,8 +21,8 @@ local function normalizedScreenPosition(value)
         return util.vector2(0.5, 0.5)
     end
     return util.vector2(
-        s3math.clamp(value.x, 0, 1),
-        s3math.clamp(value.y, 0, 1))
+        clamp(value.x, 0, 1),
+        clamp(value.y, 0, 1))
 end
 
 local function sameScreenPosition(a, b)
@@ -136,8 +137,8 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
 
         local function offsetToDraft(offset)
             draft = util.vector2(
-                s3math.clamp(offset.x / pickerSize.x, 0, 1),
-                s3math.clamp(offset.y / pickerSize.y, 0, 1))
+                clamp(offset.x / pickerSize.x, 0, 1),
+                clamp(offset.y / pickerSize.y, 0, 1))
             updateMarker()
         end
 
