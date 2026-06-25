@@ -1,11 +1,14 @@
 ---@omw-context global | menu
-local aux_util = require 'openmw_aux.util'
-local util     = require 'openmw.util'
-local vfs      = require 'openmw.vfs'
 
+local aux_util                                                                           = require 'openmw_aux.util'
+local util                                                                               = require 'openmw.util'
+local vfs                                                                                = require 'openmw.vfs'
+
+---@type ContentFileBits
+local ContentFileBits                                                                    = 16777216
 
 ---@class StaticUtil
-local staticUtil = {}
+local staticUtil                                                                         = {}
 
 local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR =
     'StaticSwitchingSystem',
@@ -71,7 +74,7 @@ function staticUtil.getMeshPath(path)
     return path
 end
 
----@param object GameObject
+---@param object openmw.GObject
 ---@param replacementModules table<string, SSSModule>
 ---@return string? moduleName, string? replacementMesh the specific module name and model path which should be used to replace a particular gameObject
 function staticUtil.getObjectReplacement(object, replacementModules)
@@ -96,7 +99,7 @@ end
 
 --- Given a particular gameObject, check whether this module can rightfully replace it.
 --- The function must be created on a per-module basis in order to refer to the current local value of `replacementTable`
----@param object GameObject
+---@param object openmw.GObject
 ---@return string? replacementObjectMesh
 function staticUtil.getReplacementMeshForObject(meshMap, object)
     --- Special handling for marker types which are statics but have no .type field on them
@@ -139,17 +142,14 @@ function staticUtil.normalizePath(path)
     return normalized:lower()
 end
 
----@param object GameObject
----@return ActivatorRecord Object record data
+---@param object openmw.GObject
+---@return openmw.types.ActivatorRecord Object record data
 function staticUtil.Record(object)
     return object.type.records[object.recordId]
 end
 
----@type ContentFileBits
-local ContentFileBits = 16777216
-
 --- Fetches the object index of a given gameObject, including generated objects
----@param object GameObject
+---@param object openmw.GObject
 ---@return boolean isGenerated, number refNum
 function staticUtil.getRefNum(object)
     local objectId = tonumber(object.id)
