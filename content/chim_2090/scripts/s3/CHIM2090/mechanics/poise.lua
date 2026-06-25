@@ -524,8 +524,8 @@ if isPlayer then
     PoiseIcon.state.element = ui.create {
         type = ui.TYPE.Image,
         layer = 'HUD',
+        name = 'CHIMPoiseIndicator',
         props = {
-            name = 'CHIMPoiseIndicator',
             relativePosition = PoiseIcon.PoiseHUDPos,
             resource = PoiseIcon:getCurrentTexture(),
             color = PoiseIcon.PoiseHUDColor,
