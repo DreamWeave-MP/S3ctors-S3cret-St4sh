@@ -303,10 +303,9 @@ local function matchesAllConditions(object, conditions)
     for conditionName, conditionValue in pairs(conditionData) do
       local conditionHandler = conditionHandlers[conditionName]
 
-      assert(
-        type(conditionHandler) == 'function',
-        ('Condition %s is an invalid condition for the handler!'):format(conditionName)
-      )
+      if type(conditionHandler) ~= 'function' then
+        error(('Condition %s is an invalid condition for the handler!'):format(conditionName))
+      end
 
       if type(conditionValue) == 'table' then
         local matchedAnyValue = false
