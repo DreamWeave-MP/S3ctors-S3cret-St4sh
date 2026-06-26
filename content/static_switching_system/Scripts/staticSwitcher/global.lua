@@ -489,15 +489,15 @@ return {
     onUpdate = function()
       DeleteManager:processDeleteQueue()
 
+      if not ModuleToRemove or not DeleteManager:queueIsEmpty() then return end
+
       --- When a module is removed and all objects are removed
       --- kick every player from the game and force them to save
-      if ModuleToRemove and DeleteManager:queueIsEmpty() then
-        for _, player in ipairs(world.players) do
-          sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
-        end
-
-        ModuleToRemove = nil
+      for _, player in ipairs(world.players) do
+        sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
       end
+
+      ModuleToRemove = nil
     end,
     onObjectActive = function(object)
       local instanceModificationList = getMatchingInstanceModules(object)
