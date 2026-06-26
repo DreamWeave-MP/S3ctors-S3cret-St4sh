@@ -3,8 +3,8 @@
 local TICKS_TO_DELETE = 3
 
 ---@class SSSDeleteManager
+---@field queue ObjectDeleteData[]
 local DeleteManager = {
-  ---@type ObjectDeleteData[]
   queue = {},
 }
 --- Adds an object to the delete queue, to be processed on another frame
@@ -39,6 +39,9 @@ function DeleteManager:processDeleteQueue()
   end
 end
 
+---@return boolean
 function DeleteManager:queueIsEmpty()
   return next(self.queue) == nil
 end
+
+return DeleteManager
