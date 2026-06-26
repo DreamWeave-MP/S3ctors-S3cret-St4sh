@@ -580,44 +580,6 @@ return {
     version = 2,
   },
   interfaceName = "StaticSwitcher_G",
-  eventHandlers = {
-    StaticSwitcherGetRefNum = function(object)
-      local isGenerated, refNum = staticUtil.getRefNum(object)
-
-      staticUtil.Log(
-        GET_REFNUM_STR:format(
-          isGenerated and 'Generated Object' or '' .. object.id, object.recordId, refNum
-        )
-      )
-    end,
-    -- Replace this with a toggle for a coroutine loader
-    StaticSwitcherRunGlobalFunctions = function()
-      for i = 1, #Cells do
-        local cell = Cells[i]
-        local shouldProcess = false
-        local targetModules
-
-        --- Global functions only run in exteriors
-        --- if targetModule is nil, then, this cell isn't handled by any modules and should NOT be loaded
-        if cell.isExterior then targetModules = getReplacementModuleForCell(cell) end
-        if targetModules and next(targetModules) then shouldProcess = true end
-
-        if shouldProcess then
-          local objects = cell:getAll()
-
-          for j = 1, #objects do
-            local object = objects[j]
-
-            local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
-
-            if replacementMesh and replacementModule then
-              replaceObject(object, replacementModule, replacementMesh)
-            end
-          end
-        end
-      end
-    end,
-  },
   engineHandlers = {
     onUpdate = function()
       for i = #objectDeleteQueue, 1, -1 do
