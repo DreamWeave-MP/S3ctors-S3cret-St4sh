@@ -73,9 +73,7 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
   local newRecord = { model = newModel }
 
   if not objectIsStatic(object) and not objectIsActivator(object) then
-    error(
-      INVALID_TYPE:format(object.type)
-    )
+    error(INVALID_TYPE:format(object.type))
   end
 
   local scriptId = ''
@@ -468,7 +466,7 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
 end
 
 
-for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
+for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
   local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
   if baseName ~= 'example' then
     loadSwitcherModule(meshReplacementsPath, baseName)
