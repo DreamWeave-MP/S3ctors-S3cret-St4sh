@@ -46,7 +46,7 @@ local ROTATE_FORMAT_STR, INVALID_TYPE                   = 'rotate%s', 'Invalid t
 
 local meshReplacementModules, meshReplacementModulesLen = {}, 0
 
-local error, ipairs, next, pairs, pcall                 = error, ipairs, next, pairs, pcall
+local error, ipairs, next, pairs, pcall, type           = error, ipairs, next, pairs, pcall, type
 
 local createActivatorDraft,
 createRecord,
