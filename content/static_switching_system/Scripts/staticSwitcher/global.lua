@@ -141,10 +141,11 @@ end
 ---@param cell openmw.core.GCell
 ---@return table<string, SSSModule> modulesForThisCell subtable of valid modules for this cell
 local function getReplacementModuleForCell(cell)
-  local modulesForThisCell = {}
+  local modulesForThisCell
 
   for moduleName, moduleData in pairs(ComposedReplacements) do
     if replacementTableMatchesCell(moduleData, cell) then
+      modulesForThisCell = modulesForThisCell or {}
       modulesForThisCell[moduleName] = moduleData
     end
   end
