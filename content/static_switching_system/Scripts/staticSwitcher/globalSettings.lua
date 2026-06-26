@@ -1,7 +1,5 @@
 ---@omw-context global
 
-local async               = require 'openmw.async'
-local storage             = require 'openmw.storage'
 local I                   = require 'openmw.interfaces'
 
 local staticUtil          = require 'scripts.staticswitcher.util'
