@@ -60,11 +60,13 @@ INVALID_TYPE                            =
 
 local error, ipairs, next, pairs, pcall = error, ipairs, next, pairs, pcall
 
-local createActivatorDraft,
+local Cells,
+createActivatorDraft,
 createRecord,
 objectIsStatic,
 objectIsActivator,
 sendMenuEvent                           =
+    world.cells,
     types.Activator.createRecordDraft,
     world.createRecord,
     types.Static.objectIsInstance,
@@ -532,8 +534,8 @@ return {
     end,
     -- Replace this with a toggle for a coroutine loader
     StaticSwitcherRunGlobalFunctions = function()
-      for i = 1, #world.cells do
-        local cell = world.cells[i]
+      for i = 1, #Cells do
+        local cell = Cells[i]
         local shouldProcess = false
         local targetModules
 
@@ -543,8 +545,13 @@ return {
         if targetModules and next(targetModules) then shouldProcess = true end
 
         if shouldProcess then
-          for _, object in ipairs(cell:getAll()) do
+          local objects = cell:getAll()
+
+          for j = 1, #objects do
+            local object = objects[j]
+
             local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
+
             if replacementMesh and replacementModule then
               replaceObject(object, replacementModule, replacementMesh)
             end
