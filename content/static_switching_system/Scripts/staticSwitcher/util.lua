@@ -195,7 +195,7 @@ function staticUtil.mergeTables(target, source, is_array)
         return target
     end
 
-    if is_array or is_table_array(source) then
+    if is_array or (table.isarray and table.isarray(source)) or is_table_array(source) then
         for _, value in ipairs(source) do
             table.insert(target, value)
         end

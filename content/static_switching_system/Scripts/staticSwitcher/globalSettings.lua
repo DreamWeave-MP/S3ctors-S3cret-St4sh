@@ -6,7 +6,10 @@ local staticUtil          = require 'scripts.staticswitcher.util'
 
 local INVALID_MODULE_NAME = 'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.'
 
-local addObjectToDeleteQueue, replacedObjectSet
+---@type SSSDeleteManager?
+local DeleteManager
+
+local replacedObjectSet
 
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
@@ -23,7 +26,7 @@ local function uninstallModule(fileName)
 
   for newObject, oldObject in pairs(localModuleReplacements) do
     oldObject.enabled = true
-    addObjectToDeleteQueue(newObject, true)
+    assert(DeleteManager):addObjectToDeleteQueue(newObject, true)
 
     objectsToRemoveLength = objectsToRemoveLength + 1
     objectsToRemove[objectsToRemoveLength] = newObject
@@ -38,11 +41,12 @@ local function uninstallModule(fileName)
 end
 
 ---@param meshReplacementModules string[]
----@param addObjectToDeleteQueueIn fun(object: openmw.GObject, removeOrDisable: boolean)
+---@param deleteManager SSSDeleteManager
 ---@param replacedObjectSetIn table <openmw.GObject, ReplacedObjectData>
-return function(meshReplacementModules, addObjectToDeleteQueueIn, replacedObjectSetIn)
+return function(meshReplacementModules, deleteManager, replacedObjectSetIn)
   if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
-  addObjectToDeleteQueue = assert(addObjectToDeleteQueueIn)
+
+  DeleteManager = assert(deleteManager)
   replacedObjectSet = assert(replacedObjectSetIn)
 
   I.Settings.registerGroup {
