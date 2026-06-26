@@ -576,6 +576,7 @@ return {
         if not wasModified then return end
 
         modifyTarget:setScale(targetScale)
+        ---@diagnostic disable-next-line: param-type-mismatch
         modifyTarget:teleport(newCell, newPos, newTransform)
       else
         local targetModules = getReplacementModuleForCell(object.cell)
