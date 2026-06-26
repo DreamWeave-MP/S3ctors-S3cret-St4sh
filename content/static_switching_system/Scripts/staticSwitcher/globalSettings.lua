@@ -39,19 +39,6 @@ local function uninstallModule(fileName)
   return fileName
 end
 
-local settingsGroup = storage.globalSection('SettingsStaticSwitcher')
-if settingsGroup:get('StaticSwitcherDisableModule') then settingsGroup:set('StaticSwitcherDisableModule', false) end
-
-settingsGroup:subscribe(
-  async:callback(
-    function(_, key)
-      if key == 'StaticSwitcherDisableModule' then
-        uninstallModule(settingsGroup:get('StaticSwitcherModuleSelect'))
-      end
-    end
-  )
-)
-
 ---@param meshReplacementModules string[]
 ---@param addObjectToDeleteQueueIn fun(object: openmw.GObject, removeOrDisable: boolean)
 ---@param replacedObjectSetIn table <openmw.GObject, ReplacedObjectData>

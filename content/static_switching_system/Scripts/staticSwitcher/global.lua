@@ -20,7 +20,7 @@ local staticUtil                                        = require 'scripts.stati
 local AXES                                              = { 'z', 'y', 'x', }
 
 local TICKS_TO_DELETE                                   = 3
-local moduleToRemove
+local ModuleToRemove
 
 ---@type ObjectDeleteData[]
 local ObjectDeleteQueue                                 = {}
@@ -104,6 +104,20 @@ local uninstallModule = require 'Scripts.staticSwitcher.globalSettings' (
   MeshReplacementModules,
   addObjectToDeleteQueue,
   ReplacedObjectSet
+)
+
+local settingsGroup = require 'openmw.storage'.globalSection('SettingsStaticSwitcher')
+if settingsGroup:get('StaticSwitcherDisableModule') then settingsGroup:set('StaticSwitcherDisableModule', false) end
+
+settingsGroup:subscribe(
+  require 'openmw.async':callback(
+    function(_, key)
+      if key == 'StaticSwitcherDisableModule' then
+        ModuleToRemove = settingsGroup:get('StaticSwitcherModuleSelect')
+        uninstallModule(ModuleToRemove)
+      end
+    end
+  )
 )
 
 ---@param replacementTable SSSModule
@@ -226,6 +240,8 @@ local function staticLoaderModuleHandler(meshReplacementsTable)
         + (ignoreRecords and 1 or 0)
         + (meshReplacementsTable.log_name and 1 or 0)
     replacementTable = table.new(0, numElements)
+
+    print('allocating replacement table with', numElements, 'elements')
   else
     replacementTable = {}
   end
@@ -473,7 +489,9 @@ return {
     replacedObjectSet = function()
       return util.makeReadOnly(ReplacedObjectSet)
     end,
-    uninstallModule = uninstallModule,
+    uninstallModule = function(moduleName)
+      ModuleToRemove = uninstallModule(moduleName)
+    end,
     version = 2,
   },
   interfaceName = "StaticSwitcher_G",
@@ -501,12 +519,12 @@ return {
 
       --- When a module is removed and all objects are removed
       --- kick every player from the game and force them to save
-      if moduleToRemove and not next(ObjectDeleteQueue) then
+      if ModuleToRemove and not next(ObjectDeleteQueue) then
         for _, player in ipairs(world.players) do
-          sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', moduleToRemove)
+          sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
         end
 
-        moduleToRemove = nil
+        ModuleToRemove = nil
       end
     end,
     onObjectActive = function(object)
@@ -592,7 +610,7 @@ return {
         if not targetModules then return end
 
         local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
-        if not replacementModule or replacementModule == moduleToRemove or not replacementMesh then return end
+        if not replacementModule or replacementModule == ModuleToRemove or not replacementMesh then return end
 
         replaceObject(object, replacementModule, replacementMesh)
       end
