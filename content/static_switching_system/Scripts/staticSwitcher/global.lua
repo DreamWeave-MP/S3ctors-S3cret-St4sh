@@ -12,6 +12,7 @@ local randomGen                                         = require 'scripts.s3.ra
 local szudzik                                           = require 'scripts.s3.szudzik'
 local tableHash                                         = require 'scripts.s3.tableHash'
 
+local actionHandlers                                    = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers                                 = require 'Scripts.staticSwitcher.conditionHandlers'
 ---@type StaticUtil
 local staticUtil                                        = require 'scripts.staticSwitcher.util'
@@ -46,7 +47,7 @@ local ROTATE_FORMAT_STR, INVALID_TYPE                   = 'rotate%s', 'Invalid t
 
 local meshReplacementModules, meshReplacementModulesLen = {}, 0
 
-local error, ipairs, next, pairs, pcall, type           = error, ipairs, next, pairs, pcall, type
+local error, ipairs, next, pairs, type                  = error, ipairs, next, pairs, type
 
 local createActivatorDraft,
 createRecord,
