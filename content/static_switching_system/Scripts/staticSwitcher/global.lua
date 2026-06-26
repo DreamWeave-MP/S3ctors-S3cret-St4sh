@@ -19,11 +19,7 @@ local staticUtil                                        = require 'scripts.stati
 
 local AXES                                              = { 'z', 'y', 'x', }
 
-local TICKS_TO_DELETE                                   = 3
 local ModuleToRemove
-
----@type ObjectDeleteData[]
-local ObjectDeleteQueue                                 = {}
 
 ---@type table <openmw.GObject, ReplacedObjectData>
 local ReplacedObjectSet                                 = {}
@@ -89,20 +85,11 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
   moduleRecords[oldRecordId] = createRecord(createActivatorDraft(newRecord)).id
 end
 
---- Adds an object to the delete queue, to be processed on another frame
----@param object openmw.GObject
-local function addObjectToDeleteQueue(object, removeOrDisable)
-  ObjectDeleteQueue[#ObjectDeleteQueue + 1] = {
-    object = object,
-    ticks = TICKS_TO_DELETE,
-    removeOrDisable =
-        removeOrDisable
-  }
-end
+local DeleteManager = require 'Scripts.staticSwitcher.deleteManager'
 
 local uninstallModule = require 'Scripts.staticSwitcher.globalSettings' (
   MeshReplacementModules,
-  addObjectToDeleteQueue,
+  DeleteManager,
   ReplacedObjectSet
 )
 
@@ -189,7 +176,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
   ---@diagnostic disable-next-line: param-type-mismatch
   replacement:teleport(object.cell.name, object.position, object.rotation)
 
-  addObjectToDeleteQueue(object, false)
+  DeleteManager:addObjectToDeleteQueue(object, false)
 
   if not ReplacedObjectSet[replacementModule] then ReplacedObjectSet[replacementModule] = {} end
   ReplacedObjectSet[replacementModule][replacement] = object
@@ -497,29 +484,11 @@ return {
   interfaceName = "StaticSwitcher_G",
   engineHandlers = {
     onUpdate = function()
-      for i = #ObjectDeleteQueue, 1, -1 do
-        local objectInfo = ObjectDeleteQueue[i]
-
-        if objectInfo.ticks > 0 then
-          objectInfo.ticks = objectInfo.ticks - 1
-        else
-          local object = objectInfo.object
-
-          if objectInfo.removeOrDisable then
-            if object.count > 0 and object:isValid() then
-              object:remove()
-              table.remove(ObjectDeleteQueue, i)
-            end
-          else
-            object.enabled = false
-            table.remove(ObjectDeleteQueue, i)
-          end
-        end
-      end
+      DeleteManager:processDeleteQueue()
 
       --- When a module is removed and all objects are removed
       --- kick every player from the game and force them to save
-      if ModuleToRemove and not next(ObjectDeleteQueue) then
+      if ModuleToRemove and DeleteManager:queueIsEmpty() then
         for _, player in ipairs(world.players) do
           sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
         end
