@@ -418,18 +418,6 @@ local function getRotationValue(isRelative, rotateActionDetails, currentTransfor
   return rootTransform
 end
 
-local actionHandlers = {
-  ['replace'] = function(_, replaceActionData)
-    for replaceId, replaceChance in pairs(replaceActionData) do
-      if randomGen.float() <= replaceChance then
-        local result, replacement = pcall(world.createObject, replaceId)
-
-        if result then return replacement end
-      end
-    end
-  end,
-}
-
 local function loadSwitcherModule(meshReplacementsPath, baseName)
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
   local meshReplacementsText = meshReplacementsFile:read('*all')
