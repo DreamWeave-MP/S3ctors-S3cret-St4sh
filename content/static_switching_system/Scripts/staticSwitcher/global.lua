@@ -1,10 +1,15 @@
 ---@omw-context global
+local async                             = require 'openmw.async'
 local aux_util                          = require 'openmw_aux.util'
+local core                              = require 'openmw.core'
 local markup                            = require 'openmw.markup'
+local storage                           = require 'openmw.storage'
 local types                             = require 'openmw.types'
 local util                              = require 'openmw.util'
 local vfs                               = require 'openmw.vfs'
 local world                             = require 'openmw.world'
+
+local I                                 = require 'openmw.interfaces'
 
 local randomGen                         = require 'scripts.s3.randomGen'
 
@@ -440,12 +445,19 @@ local actionHandlers = {
   end,
 }
 
+local meshReplacementModules, meshReplacementModulesLen = {}, 0
+
 for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
   local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
   if baseName == 'example' then goto SKIPMODULE end
 
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
   local meshReplacementsText = meshReplacementsFile:read('*all')
+
+  if not meshReplacementsText then error('Failed to read' .. meshReplacementsFile .. '!') end
+
+  meshReplacementModulesLen = meshReplacementModulesLen + 1
+  meshReplacementModules[meshReplacementModulesLen] = baseName
 
   ---@type SSSModuleRaw
   local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
@@ -474,6 +486,41 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
 
   ::SKIPMODULE::
 end
+
+if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
+
+I.Settings.registerGroup {
+  key = 'SettingsStaticSwitcher',
+  l10n = 'StaticSwitcher',
+  page = 'StaticSwitcherPage',
+  name = 'StaticSwitcherSettings',
+  description = '',
+  permanentStorage = true,
+  settings = {
+    {
+      renderer = 'select',
+      key = 'StaticSwitcherModuleSelect',
+      name = 'StaticSwitcherModuleSelection',
+      description = 'StaticSwitcherModuleSelectionDesc',
+      default = meshReplacementModules[1] or 'WTF',
+      argument = {
+        l10n = 'StaticSwitcher',
+        items = meshReplacementModules,
+      },
+    },
+    {
+      key = 'StaticSwitcherDisableModule',
+      renderer = 'checkbox',
+      name = 'StaticSwitcherModuleDisableButton',
+      description = 'StaticSwitcherModuleDisableDesc',
+      argument = {
+        l10n = 'StaticSwitcher',
+        trueLabel = 'StaticSwitcherTrueLabel',
+        falseLabel = 'StaticSwitcherFalseLabel',
+      }
+    }
+  }
+}
 
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
@@ -504,6 +551,19 @@ local function uninstallModule(fileName)
   moduleToRemove = fileName
 end
 
+local settingsGroup = storage.globalSection('SettingsStaticSwitcher')
+if settingsGroup:get('StaticSwitcherDisableModule') then settingsGroup:set('StaticSwitcherDisableModule', false) end
+
+settingsGroup:subscribe(
+  async:callback(
+    function(_, key)
+      if key == 'StaticSwitcherDisableModule' then
+        uninstallModule(settingsGroup:get('StaticSwitcherModuleSelect'))
+      end
+    end
+  )
+)
+
 return {
   interface = {
     getRefNum = staticUtil.getRefNum,
@@ -529,9 +589,6 @@ return {
           isGenerated and 'Generated Object' or '' .. object.id, object.recordId, refNum
         )
       )
-    end,
-    StaticSwitcherRemoveModule = function(moduleName)
-      uninstallModule(moduleName)
     end,
     -- Replace this with a toggle for a coroutine loader
     StaticSwitcherRunGlobalFunctions = function()
@@ -562,9 +619,6 @@ return {
     end,
   },
   engineHandlers = {
-    onPlayerAdded = function(player)
-      sendMenuEvent(player, 'StaticSwitcherRequestGlobalFunctions')
-    end,
     onUpdate = function()
       for i = #objectDeleteQueue, 1, -1 do
         local objectInfo = objectDeleteQueue[i]
