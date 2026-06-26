@@ -339,25 +339,24 @@ local function getMatchingInstanceModules(object)
   for _, actionList in pairs(ObjectModificationStore) do
     for _, actionData in ipairs(actionList) do
       local actionTableHash = tableHash(actionData)
-      -- conditions defined, but not passed
-      if actionData.conditions and not matchesAllConditions(object, actionData.conditions) then goto SKIPACTION end
+      local shouldProcess = actionData.conditions and matchesAllConditions(object.actionData.conditions)
 
       -- Action conditions have been evaluated already, and this action can only run once
       if actionData.once and
           ActionLookupCache[objectString]
           and ActionLookupCache[objectString][actionTableHash] then
-        goto SKIPACTION
+        shouldProcess = false
       end
 
-      matchingActions = matchingActions or {}
-      actionIndex = actionIndex + 1
-      matchingActions[actionIndex] = actionData.actions
+      if shouldProcess then
+        matchingActions = matchingActions or {}
+        actionIndex = actionIndex + 1
+        matchingActions[actionIndex] = actionData.actions
 
-      if not ActionLookupCache[objectString] then ActionLookupCache[objectString] = {} end
+        if not ActionLookupCache[objectString] then ActionLookupCache[objectString] = {} end
 
-      ActionLookupCache[objectString][actionTableHash] = true
-
-      ::SKIPACTION::
+        ActionLookupCache[objectString][actionTableHash] = true
+      end
     end
   end
 
