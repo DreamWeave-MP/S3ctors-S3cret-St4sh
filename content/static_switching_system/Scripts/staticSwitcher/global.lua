@@ -484,13 +484,15 @@ return {
         if objectInfo.ticks > 0 then
           objectInfo.ticks = objectInfo.ticks - 1
         else
+          local object = objectInfo.object
+
           if objectInfo.removeOrDisable then
-            if objectInfo.object.count > 0 and objectInfo.object:isValid() then
-              objectInfo.object:remove()
+            if object.count > 0 and object:isValid() then
+              object:remove()
               table.remove(objectDeleteQueue, i)
             end
           else
-            objectInfo.object.enabled = false
+            object.enabled = false
             table.remove(objectDeleteQueue, i)
           end
         end
