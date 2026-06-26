@@ -590,7 +590,7 @@ return {
     onSave = function()
       return {
         overrideRecords = OverrideRecords,
-        objectDeleteQueue = ObjectDeleteQueue,
+        objectDeleteQueue = DeleteManager.queue,
         replacedObjectSet = ReplacedObjectSet,
       }
     end,
@@ -598,7 +598,7 @@ return {
       if not data then return end
 
       staticUtil.deepCopy(OverrideRecords, data.overrideRecords)
-      staticUtil.deepCopy(ObjectDeleteQueue, data.objectDeleteQueue)
+      staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
       staticUtil.deepCopy(ReplacedObjectSet, data.replacedObjectSet)
     end,
   }
