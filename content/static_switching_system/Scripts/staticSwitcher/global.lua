@@ -1,7 +1,7 @@
 ---@omw-context global
+
 local async                             = require 'openmw.async'
 local aux_util                          = require 'openmw_aux.util'
-local core                              = require 'openmw.core'
 local markup                            = require 'openmw.markup'
 local storage                           = require 'openmw.storage'
 local types                             = require 'openmw.types'
@@ -47,7 +47,6 @@ local objectModificationStore           = {}
 local actionLookupCache                 = {}
 
 local ROTATE_FORMAT_STR,
-GET_REFNUM_STR,
 -- GENERATED_OBJECT,
 INVALID_MODULE_NAME,
 -- NOT_A_REF_NUM,
@@ -55,7 +54,6 @@ INVALID_MODULE_NAME,
 -- REPLACING_INDIVIDUAL_OBJECT,
 INVALID_TYPE                            =
     'rotate%s',
-    '%s %s has refNum %d',
     -- 'Object %s is generated and cannot be modified on a per-instance basis!',
     'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.',
     -- 'Refnum: %s was not a number!',
@@ -65,13 +63,11 @@ INVALID_TYPE                            =
 
 local error, ipairs, next, pairs, pcall = error, ipairs, next, pairs, pcall
 
-local Cells,
-createActivatorDraft,
+local createActivatorDraft,
 createRecord,
 objectIsStatic,
 objectIsActivator,
 sendMenuEvent                           =
-    world.cells,
     types.Activator.createRecordDraft,
     world.createRecord,
     types.Static.objectIsInstance,
@@ -690,7 +686,7 @@ return {
         modifyTarget:teleport(newCell, newPos, newTransform)
       else
         local targetModules = getReplacementModuleForCell(object.cell)
-        if not next(targetModules) then return end
+        if not targetModules then return end
 
         local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
         if not replacementModule or replacementModule == moduleToRemove or not replacementMesh then return end
