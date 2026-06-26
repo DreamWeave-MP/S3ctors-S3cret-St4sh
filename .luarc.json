@@ -43,6 +43,7 @@
     },
     "workspace.library": [
         "content/cod3x/?.lua",
-        "content/s3maphore/?.lua"
+        "content/s3maphore/?.lua",
+        "rubic0nMeta/?.lua"
     ]
 }
