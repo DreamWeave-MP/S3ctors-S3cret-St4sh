@@ -47,18 +47,10 @@ local objectModificationStore           = {}
 local actionLookupCache                 = {}
 
 local ROTATE_FORMAT_STR,
--- GENERATED_OBJECT,
 INVALID_MODULE_NAME,
--- NOT_A_REF_NUM,
--- REPLACING_OBJECTS,
--- REPLACING_INDIVIDUAL_OBJECT,
 INVALID_TYPE                            =
     'rotate%s',
-    -- 'Object %s is generated and cannot be modified on a per-instance basis!',
     'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.',
-    -- 'Refnum: %s was not a number!',
-    -- 'Replacing Objects in cell: %s',
-    -- 'Replacing object %s with model %s provided by module %s',
     'Invalid type was provided: %s'
 
 local error, ipairs, next, pairs, pcall = error, ipairs, next, pairs, pcall
