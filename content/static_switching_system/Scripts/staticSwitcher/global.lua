@@ -329,7 +329,7 @@ local function matchesAllConditions(object, conditions)
 end
 
 local function getMatchingInstanceModules(object)
-  local matchingActions, actionIndex = {}, 1
+  local matchingActions, actionIndex
 
   --- This is kind of terrible and appears to be a bug in the engine itself
   --- but, for now, using the tostring version works alright-ish until... we find out it doesn't, somehow
@@ -349,8 +349,9 @@ local function getMatchingInstanceModules(object)
         goto SKIPACTION
       end
 
-      matchingActions[actionIndex] = actionData.actions
+      matchingActions = matchingActions or {}
       actionIndex = actionIndex + 1
+      matchingActions[actionIndex] = actionData.actions
 
       if not ActionLookupCache[objectString] then ActionLookupCache[objectString] = {} end
 
