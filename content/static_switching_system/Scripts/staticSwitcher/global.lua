@@ -23,14 +23,14 @@ local TICKS_TO_DELETE                                   = 3
 local moduleToRemove
 
 ---@type ObjectDeleteData[]
-local objectDeleteQueue                                 = {}
+local ObjectDeleteQueue                                 = {}
 
 ---@type table <openmw.GObject, ReplacedObjectData>
-local replacedObjectSet                                 = {}
+local ReplacedObjectSet                                 = {}
 
 --- Maps module names to the record ids they manage
 ---@type table<string, ReplacementMap>
-local overrideRecords                                   = {}
+local OverrideRecords                                   = {}
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
 local ComposedReplacements                              = {}
@@ -38,14 +38,14 @@ local ComposedReplacements                              = {}
 --- Indexed first by module name, then an array of actions and conditions
 --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
 --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
-local objectModificationStore                           = {}
+local ObjectModificationStore                           = {}
 
 --- Indexed first by object string, then contains
-local actionLookupCache                                 = {}
+local ActionLookupCache                                 = {}
 
 local ROTATE_FORMAT_STR, INVALID_TYPE                   = 'rotate%s', 'Invalid type was provided: %s'
 
-local meshReplacementModules, meshReplacementModulesLen = {}, 0
+local MeshReplacementModules, MeshReplacementModulesLen = {}, 0
 
 local error, ipairs, next, pairs, type                  = error, ipairs, next, pairs, type
 
@@ -67,8 +67,8 @@ sendMenuEvent                                           =
 local function createReplacementRecord(object, oldRecord, newModel, replacementModule)
   local oldRecordId = object.recordId
 
-  if not overrideRecords[replacementModule] then overrideRecords[replacementModule] = {} end
-  local moduleRecords = overrideRecords[replacementModule]
+  if not OverrideRecords[replacementModule] then OverrideRecords[replacementModule] = {} end
+  local moduleRecords = OverrideRecords[replacementModule]
   if moduleRecords[oldRecordId] then return end
 
   local newRecord = { model = newModel }
@@ -92,7 +92,7 @@ end
 --- Adds an object to the delete queue, to be processed on another frame
 ---@param object openmw.GObject
 local function addObjectToDeleteQueue(object, removeOrDisable)
-  objectDeleteQueue[#objectDeleteQueue + 1] = {
+  ObjectDeleteQueue[#ObjectDeleteQueue + 1] = {
     object = object,
     ticks = TICKS_TO_DELETE,
     removeOrDisable =
@@ -101,9 +101,9 @@ local function addObjectToDeleteQueue(object, removeOrDisable)
 end
 
 local uninstallModule = require 'Scripts.staticSwitcher.globalSettings' (
-  meshReplacementModules,
+  MeshReplacementModules,
   addObjectToDeleteQueue,
-  replacedObjectSet
+  ReplacedObjectSet
 )
 
 ---@param replacementTable SSSModule
@@ -168,7 +168,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
 
   createReplacementRecord(object, objectRecord, replacementMesh, replacementModule)
 
-  local targetRecord = overrideRecords[replacementModule][objectRecord.id]
+  local targetRecord = OverrideRecords[replacementModule][objectRecord.id]
   local replacement = world.createObject(targetRecord)
   replacement:setScale(object.scale)
 
@@ -177,8 +177,8 @@ local function replaceObject(object, replacementModule, replacementMesh)
 
   addObjectToDeleteQueue(object, false)
 
-  if not replacedObjectSet[replacementModule] then replacedObjectSet[replacementModule] = {} end
-  replacedObjectSet[replacementModule][replacement] = object
+  if not ReplacedObjectSet[replacementModule] then ReplacedObjectSet[replacementModule] = {} end
+  ReplacedObjectSet[replacementModule][replacement] = object
 end
 
 local function staticLoaderModuleHandler(meshReplacementsTable)
@@ -336,7 +336,7 @@ local function getMatchingInstanceModules(object)
   --- like perhaps the ID changing due to load order fuckery (which is why we used the GO itself as a key in the first place)
   local objectString = object.id
 
-  for _, actionList in pairs(objectModificationStore) do
+  for _, actionList in pairs(ObjectModificationStore) do
     for _, actionData in ipairs(actionList) do
       local actionTableHash = tableHash(actionData)
       -- conditions defined, but not passed
@@ -344,17 +344,17 @@ local function getMatchingInstanceModules(object)
 
       -- Action conditions have been evaluated already, and this action can only run once
       if actionData.once and
-          actionLookupCache[objectString]
-          and actionLookupCache[objectString][actionTableHash] then
+          ActionLookupCache[objectString]
+          and ActionLookupCache[objectString][actionTableHash] then
         goto SKIPACTION
       end
 
       matchingActions[actionIndex] = actionData.actions
       actionIndex = actionIndex + 1
 
-      if not actionLookupCache[objectString] then actionLookupCache[objectString] = {} end
+      if not ActionLookupCache[objectString] then ActionLookupCache[objectString] = {} end
 
-      actionLookupCache[objectString][actionTableHash] = true
+      ActionLookupCache[objectString][actionTableHash] = true
 
       ::SKIPACTION::
     end
@@ -424,8 +424,8 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
 
   if not meshReplacementsText then error('Failed to read' .. meshReplacementsFile .. '!') end
 
-  meshReplacementModulesLen = meshReplacementModulesLen + 1
-  meshReplacementModules[meshReplacementModulesLen] = baseName
+  MeshReplacementModulesLen = MeshReplacementModulesLen + 1
+  MeshReplacementModules[MeshReplacementModulesLen] = baseName
 
   ---@type SSSModuleRaw
   local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
@@ -444,7 +444,7 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
       modStore[index] = instance_action
     end
 
-    objectModificationStore[baseName] = modStore
+    ObjectModificationStore[baseName] = modStore
   else
     ---@cast meshReplacementsTable SSSModuleStatic
     ComposedReplacements[baseName] = staticLoaderModuleHandler(meshReplacementsTable)
@@ -465,13 +465,13 @@ return {
   interface = {
     getRefNum = staticUtil.getRefNum,
     objectModificationStore = function()
-      return util.makeReadOnly(objectModificationStore)
+      return util.makeReadOnly(ObjectModificationStore)
     end,
     overrideRecords = function()
-      return util.makeReadOnly(overrideRecords)
+      return util.makeReadOnly(OverrideRecords)
     end,
     replacedObjectSet = function()
-      return util.makeReadOnly(replacedObjectSet)
+      return util.makeReadOnly(ReplacedObjectSet)
     end,
     uninstallModule = uninstallModule,
     version = 2,
@@ -479,8 +479,8 @@ return {
   interfaceName = "StaticSwitcher_G",
   engineHandlers = {
     onUpdate = function()
-      for i = #objectDeleteQueue, 1, -1 do
-        local objectInfo = objectDeleteQueue[i]
+      for i = #ObjectDeleteQueue, 1, -1 do
+        local objectInfo = ObjectDeleteQueue[i]
 
         if objectInfo.ticks > 0 then
           objectInfo.ticks = objectInfo.ticks - 1
@@ -490,18 +490,18 @@ return {
           if objectInfo.removeOrDisable then
             if object.count > 0 and object:isValid() then
               object:remove()
-              table.remove(objectDeleteQueue, i)
+              table.remove(ObjectDeleteQueue, i)
             end
           else
             object.enabled = false
-            table.remove(objectDeleteQueue, i)
+            table.remove(ObjectDeleteQueue, i)
           end
         end
       end
 
       --- When a module is removed and all objects are removed
       --- kick every player from the game and force them to save
-      if moduleToRemove and not next(objectDeleteQueue) then
+      if moduleToRemove and not next(ObjectDeleteQueue) then
         for _, player in ipairs(world.players) do
           sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', moduleToRemove)
         end
@@ -599,17 +599,17 @@ return {
     end,
     onSave = function()
       return {
-        overrideRecords = overrideRecords,
-        objectDeleteQueue = objectDeleteQueue,
-        replacedObjectSet = replacedObjectSet,
+        overrideRecords = OverrideRecords,
+        objectDeleteQueue = ObjectDeleteQueue,
+        replacedObjectSet = ReplacedObjectSet,
       }
     end,
     onLoad = function(data)
       if not data then return end
 
-      staticUtil.deepCopy(overrideRecords, data.overrideRecords)
-      staticUtil.deepCopy(objectDeleteQueue, data.objectDeleteQueue)
-      staticUtil.deepCopy(replacedObjectSet, data.replacedObjectSet)
+      staticUtil.deepCopy(OverrideRecords, data.overrideRecords)
+      staticUtil.deepCopy(ObjectDeleteQueue, data.objectDeleteQueue)
+      staticUtil.deepCopy(ReplacedObjectSet, data.replacedObjectSet)
     end,
   }
 }
