@@ -1,65 +1,58 @@
 ---@omw-context global
 
-local async                             = require 'openmw.async'
-local aux_util                          = require 'openmw_aux.util'
-local markup                            = require 'openmw.markup'
-local storage                           = require 'openmw.storage'
-local types                             = require 'openmw.types'
-local util                              = require 'openmw.util'
-local vfs                               = require 'openmw.vfs'
-local world                             = require 'openmw.world'
+local aux_util                                          = require 'openmw_aux.util'
+local markup                                            = require 'openmw.markup'
+local types                                             = require 'openmw.types'
+local util                                              = require 'openmw.util'
+local vfs                                               = require 'openmw.vfs'
+local world                                             = require 'openmw.world'
 
-local I                                 = require 'openmw.interfaces'
+local randomGen                                         = require 'scripts.s3.randomGen'
 
-local randomGen                         = require 'scripts.s3.randomGen'
+local szudzik                                           = require 'scripts.s3.szudzik'
+local tableHash                                         = require 'scripts.s3.tableHash'
 
-local szudzik                           = require 'scripts.s3.szudzik'
-local tableHash                         = require 'scripts.s3.tableHash'
-
-local conditionHandlers                 = require 'Scripts.staticSwitcher.conditionHandlers'
+local conditionHandlers                                 = require 'Scripts.staticSwitcher.conditionHandlers'
 ---@type StaticUtil
-local staticUtil                        = require 'scripts.staticSwitcher.util'
+local staticUtil                                        = require 'scripts.staticSwitcher.util'
 
-local AXES                              = { 'z', 'y', 'x', }
+local AXES                                              = { 'z', 'y', 'x', }
 
-local TICKS_TO_DELETE                   = 3
+local TICKS_TO_DELETE                                   = 3
 local moduleToRemove
 
 ---@type ObjectDeleteData[]
-local objectDeleteQueue                 = {}
+local objectDeleteQueue                                 = {}
 
 ---@type table <openmw.GObject, ReplacedObjectData>
-local replacedObjectSet                 = {}
+local replacedObjectSet                                 = {}
 
 --- Maps module names to the record ids they manage
 ---@type table<string, ReplacementMap>
-local overrideRecords                   = {}
+local overrideRecords                                   = {}
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
-local ComposedReplacements              = {}
+local ComposedReplacements                              = {}
 
 --- Indexed first by module name, then an array of actions and conditions
 --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
 --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
-local objectModificationStore           = {}
+local objectModificationStore                           = {}
 
 --- Indexed first by object string, then contains
-local actionLookupCache                 = {}
+local actionLookupCache                                 = {}
 
-local ROTATE_FORMAT_STR,
-INVALID_MODULE_NAME,
-INVALID_TYPE                            =
-    'rotate%s',
-    'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.',
-    'Invalid type was provided: %s'
+local ROTATE_FORMAT_STR, INVALID_TYPE                   = 'rotate%s', 'Invalid type was provided: %s'
 
-local error, ipairs, next, pairs, pcall = error, ipairs, next, pairs, pcall
+local meshReplacementModules, meshReplacementModulesLen = {}, 0
+
+local error, ipairs, next, pairs, pcall                 = error, ipairs, next, pairs, pcall
 
 local createActivatorDraft,
 createRecord,
 objectIsStatic,
 objectIsActivator,
-sendMenuEvent                           =
+sendMenuEvent                                           =
     types.Activator.createRecordDraft,
     world.createRecord,
     types.Static.objectIsInstance,
@@ -107,6 +100,12 @@ local function addObjectToDeleteQueue(object, removeOrDisable)
         removeOrDisable
   }
 end
+
+local uninstallModule = require 'Scripts.staticSwitcher.globalSettings' (
+  meshReplacementModules,
+  addObjectToDeleteQueue,
+  replacedObjectSet
+)
 
 ---@param replacementTable SSSModule
 ---@param cell openmw.core.GCell
@@ -433,12 +432,7 @@ local actionHandlers = {
   end,
 }
 
-local meshReplacementModules, meshReplacementModulesLen = {}, 0
-
-for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
-  local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
-  if baseName == 'example' then goto SKIPMODULE end
-
+local function loadSwitcherModule(meshReplacementsPath, baseName)
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
   local meshReplacementsText = meshReplacementsFile:read('*all')
 
@@ -471,86 +465,15 @@ for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') d
   end
 
   meshReplacementsFile:close()
-
-  ::SKIPMODULE::
 end
 
-if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
 
-I.Settings.registerGroup {
-  key = 'SettingsStaticSwitcher',
-  l10n = 'StaticSwitcher',
-  page = 'StaticSwitcherPage',
-  name = 'StaticSwitcherSettings',
-  description = '',
-  permanentStorage = true,
-  settings = {
-    {
-      renderer = 'select',
-      key = 'StaticSwitcherModuleSelect',
-      name = 'StaticSwitcherModuleSelection',
-      description = 'StaticSwitcherModuleSelectionDesc',
-      default = meshReplacementModules[1] or 'WTF',
-      argument = {
-        l10n = 'StaticSwitcher',
-        items = meshReplacementModules,
-      },
-    },
-    {
-      key = 'StaticSwitcherDisableModule',
-      renderer = 'checkbox',
-      name = 'StaticSwitcherModuleDisableButton',
-      description = 'StaticSwitcherModuleDisableDesc',
-      argument = {
-        l10n = 'StaticSwitcher',
-        trueLabel = 'StaticSwitcherTrueLabel',
-        falseLabel = 'StaticSwitcherFalseLabel',
-      }
-    }
-  }
-}
-
---- Remove all objects which were replaced by a given module
---- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
----@param fileName string
-local function uninstallModule(fileName)
-  local objectsToRemove, objectsToRemoveLength = {}, 0
-  local localModuleReplacements = replacedObjectSet[fileName]
-
-  if not localModuleReplacements then
-    return staticUtil.Log(
-      INVALID_MODULE_NAME:format(fileName)
-    )
+for meshReplacementsPath in vfs.pathsWithPrefix('scripts/staticSwitcher/data') do
+  local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
+  if baseName ~= 'example' then
+    loadSwitcherModule(meshReplacementsPath, baseName)
   end
-
-  for newObject, oldObject in pairs(localModuleReplacements) do
-    oldObject.enabled = true
-    addObjectToDeleteQueue(newObject, true)
-
-    objectsToRemoveLength = objectsToRemoveLength + 1
-    objectsToRemove[objectsToRemoveLength] = newObject
-  end
-
-  for i = 1, objectsToRemoveLength do
-    local targetObject = objectsToRemove[i]
-    replacedObjectSet[fileName][targetObject] = nil
-  end
-
-  moduleToRemove = fileName
 end
-
-local settingsGroup = storage.globalSection('SettingsStaticSwitcher')
-if settingsGroup:get('StaticSwitcherDisableModule') then settingsGroup:set('StaticSwitcherDisableModule', false) end
-
-settingsGroup:subscribe(
-  async:callback(
-    function(_, key)
-      if key == 'StaticSwitcherDisableModule' then
-        uninstallModule(settingsGroup:get('StaticSwitcherModuleSelect'))
-      end
-    end
-  )
-)
 
 return {
   interface = {
