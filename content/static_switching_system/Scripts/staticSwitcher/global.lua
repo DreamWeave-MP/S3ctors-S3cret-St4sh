@@ -185,7 +185,10 @@ end
 local function staticLoaderModuleHandler(meshReplacementsTable)
   local meshMap
   if meshReplacementsTable.replace_meshes and next(meshReplacementsTable.replace_meshes) ~= nil then
+    --- Rubic0n annotations need updated for OpenResty additions
+    ---@diagnostic disable-next-line: undefined-field
     if table.new then
+      ---@diagnostic disable-next-line: undefined-field
       meshMap = table.new(0, table.nkeys(meshReplacementsTable.replace_meshes))
     else
       meshMap = {}
