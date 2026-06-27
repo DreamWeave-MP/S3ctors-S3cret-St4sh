@@ -106,15 +106,18 @@ end
 ---@param cell openmw.core.GCell
 ---@return true? locationMatched whether or not a given cell is handled by this module
 local function replacementTableMatchesCell(replacementTable, cell)
-  if cell.isExterior then
-    local cellIndex = szudzik.getIndex(cell.gridX, cell.gridY)
-    if replacementTable.gridIndices[cellIndex] then
-      return true
-    end
+  local grid = replacementTable.gridIndices
+
+  if grid and cell.isExterior then
+    if grid[szudzik.getIndex(cell.gridX, cell.gridY)] then return true end
   end
 
+  local nameMatches = replacementTable.cellNameMatches
+
+  if not nameMatches then return end
+
   local cellIdLower, cellNameLower = cell.id:lower(), cell.name:lower()
-  for _, cellName in ipairs(replacementTable.cellNameMatches) do
+  for _, cellName in ipairs(nameMatches) do
     if cellName == cellIdLower
         or cellName == cellNameLower
         or cellNameLower:match(cellName)
