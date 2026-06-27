@@ -14,22 +14,13 @@ local tableHash                                         = require 'scripts.s3.ta
 
 local actionHandlers                                    = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers                                 = require 'Scripts.staticSwitcher.conditionHandlers'
+
 ---@type StaticUtil
 local staticUtil                                        = require 'scripts.staticSwitcher.util'
 
 local AXES                                              = { 'z', 'y', 'x', }
 
 local ModuleToRemove
-
----@type table <openmw.GObject, ReplacedObjectData>
-local ReplacedObjectSet                                 = {}
-
---- Maps module names to the record ids they manage
----@type table<string, ReplacementMap>
-local OverrideRecords                                   = {}
-
----@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
-local ComposedReplacements                              = {}
 
 --- Indexed first by module name, then an array of actions and conditions
 --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
@@ -39,61 +30,28 @@ local ObjectModificationStore                           = {}
 --- Indexed first by object string, then contains
 local ActionLookupCache                                 = {}
 
-local ROTATE_FORMAT_STR, INVALID_TYPE                   = 'rotate%s', 'Invalid type was provided: %s'
+local ROTATE_FORMAT_STR                                 = 'rotate%s'
 
 local MeshReplacementModules, MeshReplacementModulesLen = {}, 0
 
 local error, ipairs, next, pairs, type                  = error, ipairs, next, pairs, type
 
-local createActivatorDraft,
-createRecord,
-objectIsStatic,
-objectIsActivator,
-sendMenuEvent                                           =
-    types.Activator.createRecordDraft,
-    world.createRecord,
-    types.Static.objectIsInstance,
-    types.Activator.objectIsInstance,
-    types.Player.sendMenuEvent
+local sendMenuEvent                                     = types.Player.sendMenuEvent
 
----@param object openmw.GObject
----@param oldRecord openmw.types.ActivatorRecord
----@param newModel string
----@param replacementModule string
-local function createReplacementRecord(object, oldRecord, newModel, replacementModule)
-  local oldRecordId = object.recordId
+local DeleteManager                                     = require 'Scripts.staticSwitcher.deleteManager'
 
-  if not OverrideRecords[replacementModule] then OverrideRecords[replacementModule] = {} end
-  local moduleRecords = OverrideRecords[replacementModule]
-  if moduleRecords[oldRecordId] then return end
-
-  local newRecord = { model = newModel }
-
-  if not objectIsStatic(object) and not objectIsActivator(object) then
-    error(INVALID_TYPE:format(object.type))
-  end
-
-  local scriptId = ''
-
-  if oldRecord.name then newRecord.name = oldRecord.name end
-
-  if oldRecord.mwscript then
-    scriptId = oldRecord.mwscript
-    newRecord.mwscript = scriptId
-  end
-
-  moduleRecords[oldRecordId] = createRecord(createActivatorDraft(newRecord)).id
-end
-
-local DeleteManager = require 'Scripts.staticSwitcher.deleteManager'
-
-local uninstallModule = require 'Scripts.staticSwitcher.globalSettings' (
-  MeshReplacementModules,
-  DeleteManager,
-  ReplacedObjectSet
+local StaticReplacements                                = require 'Scripts.staticSwitcher.staticReplacements' (
+  DeleteManager
 )
 
-local settingsGroup = require 'openmw.storage'.globalSection('SettingsStaticSwitcher')
+local uninstallModule                                   = require 'Scripts.staticSwitcher.globalSettings' (
+  MeshReplacementModules,
+  DeleteManager,
+  StaticReplacements.ReplacedObjectSet
+)
+
+local settingsGroup                                     = require 'openmw.storage'.globalSection(
+  'SettingsStaticSwitcher')
 if settingsGroup:get('StaticSwitcherDisableModule') then settingsGroup:set('StaticSwitcherDisableModule', false) end
 
 settingsGroup:subscribe(
@@ -106,81 +64,6 @@ settingsGroup:subscribe(
     end
   )
 )
-
----@param replacementTable SSSModule
----@param cell openmw.core.GCell
----@return true? locationMatched whether or not a given cell is handled by this module
-local function replacementTableMatchesCell(replacementTable, cell)
-  if cell.isExterior then
-    local cellIndex = szudzik.getIndex(cell.gridX, cell.gridY)
-    if replacementTable.gridIndices[cellIndex] then
-      return true
-    end
-  end
-
-  local cellIdLower, cellNameLower = cell.id:lower(), cell.name:lower()
-  for _, cellName in ipairs(replacementTable.cellNameMatches) do
-    if cellName == cellIdLower
-        or cellName == cellNameLower
-        or cellNameLower:match(cellName)
-        or cellIdLower:match(cellName)
-    then
-      return true
-    end
-  end
-end
-
----@param cell openmw.core.GCell
----@return table<string, SSSModule> modulesForThisCell subtable of valid modules for this cell
-local function getReplacementModuleForCell(cell)
-  local modulesForThisCell
-
-  for moduleName, moduleData in pairs(ComposedReplacements) do
-    if replacementTableMatchesCell(moduleData, cell) then
-      modulesForThisCell = modulesForThisCell or {}
-      modulesForThisCell[moduleName] = moduleData
-    end
-  end
-
-  return modulesForThisCell
-end
-
----@param object openmw.GObject
----@param replacementModule string the module which is replacing this object
----@param replacementMesh string the mesh which will be used in place of the original
-local function replaceObject(object, replacementModule, replacementMesh)
-  ---@type openmw.types.ActivatorRecord
-  local objectRecord = object.type.records[object.recordId]
-
-  local moduleData = ComposedReplacements[replacementModule]
-  if moduleData.ignoreRecords[object.recordId] then return end
-
-  local oldModel = objectRecord.model
-
-  if not oldModel or not staticUtil.assertMeshExists(
-        replacementMesh,
-        oldModel,
-        objectRecord.id,
-        replacementModule,
-        ComposedReplacements[replacementModule].logString or 'StaticSwitchingSystem'
-      ) then
-    return
-  end
-
-  createReplacementRecord(object, objectRecord, replacementMesh, replacementModule)
-
-  local targetRecord = OverrideRecords[replacementModule][objectRecord.id]
-  local replacement = world.createObject(targetRecord)
-  replacement:setScale(object.scale)
-
-  ---@diagnostic disable-next-line: param-type-mismatch
-  replacement:teleport(object.cell.name, object.position, object.rotation)
-
-  DeleteManager:addObjectToDeleteQueue(object, false)
-
-  if not ReplacedObjectSet[replacementModule] then ReplacedObjectSet[replacementModule] = {} end
-  ReplacedObjectSet[replacementModule][replacement] = object
-end
 
 local function staticLoaderModuleHandler(meshReplacementsTable)
   local meshMap
@@ -424,6 +307,8 @@ local function getRotationValue(isRelative, rotateActionDetails, currentTransfor
   return rootTransform
 end
 
+local composedReplacements = StaticReplacements.ComposedReplacements
+
 local function loadSwitcherModule(meshReplacementsPath, baseName)
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
   local meshReplacementsText = meshReplacementsFile:read('*all')
@@ -453,7 +338,7 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
     ObjectModificationStore[baseName] = modStore
   else
     ---@cast meshReplacementsTable SSSModuleStatic
-    ComposedReplacements[baseName] = staticLoaderModuleHandler(meshReplacementsTable)
+    composedReplacements[baseName] = staticLoaderModuleHandler(meshReplacementsTable)
   end
 
   meshReplacementsFile:close()
@@ -474,10 +359,10 @@ return {
       return util.makeReadOnly(ObjectModificationStore)
     end,
     overrideRecords = function()
-      return util.makeReadOnly(OverrideRecords)
+      return util.makeReadOnly(StaticReplacements.OverrideRecords)
     end,
     replacedObjectSet = function()
-      return util.makeReadOnly(ReplacedObjectSet)
+      return util.makeReadOnly(StaticReplacements.ReplacedObjectSet)
     end,
     uninstallModule = function(moduleName)
       ModuleToRemove = uninstallModule(moduleName)
@@ -579,28 +464,22 @@ return {
         ---@diagnostic disable-next-line: param-type-mismatch
         modifyTarget:teleport(newCell, newPos, newTransform)
       else
-        local targetModules = getReplacementModuleForCell(object.cell)
-        if not targetModules then return end
-
-        local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
-        if not replacementModule or replacementModule == ModuleToRemove or not replacementMesh then return end
-
-        replaceObject(object, replacementModule, replacementMesh)
+        StaticReplacements.tryReplaceObject(object)
       end
     end,
     onSave = function()
       return {
-        overrideRecords = OverrideRecords,
+        overrideRecords = StaticReplacements.OverrideRecords,
         objectDeleteQueue = DeleteManager.queue,
-        replacedObjectSet = ReplacedObjectSet,
+        replacedObjectSet = StaticReplacements.ReplacedObjectSet,
       }
     end,
     onLoad = function(data)
       if not data then return end
 
-      staticUtil.deepCopy(OverrideRecords, data.overrideRecords)
+      staticUtil.deepCopy(StaticReplacements.OverrideRecords, data.overrideRecords)
       staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
-      staticUtil.deepCopy(ReplacedObjectSet, data.replacedObjectSet)
+      staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
     end,
   }
 }

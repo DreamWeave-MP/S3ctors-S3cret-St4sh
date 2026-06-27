@@ -9,14 +9,14 @@ local INVALID_MODULE_NAME = 'Invalid module name provided: %s. Either it does no
 ---@type SSSDeleteManager?
 local DeleteManager
 
-local replacedObjectSet
+local ReplacedObjectSet
 
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
 ---@param fileName string
 local function uninstallModule(fileName)
   local objectsToRemove, objectsToRemoveLength = {}, 0
-  local localModuleReplacements = replacedObjectSet[fileName]
+  local localModuleReplacements = ReplacedObjectSet[fileName]
 
   if not localModuleReplacements then
     return staticUtil.Log(
@@ -34,7 +34,7 @@ local function uninstallModule(fileName)
 
   for i = 1, objectsToRemoveLength do
     local targetObject = objectsToRemove[i]
-    replacedObjectSet[fileName][targetObject] = nil
+    ReplacedObjectSet[fileName][targetObject] = nil
   end
 
   return fileName
@@ -42,12 +42,12 @@ end
 
 ---@param meshReplacementModules string[]
 ---@param deleteManager SSSDeleteManager
----@param replacedObjectSetIn table <openmw.GObject, ReplacedObjectData>
-return function(meshReplacementModules, deleteManager, replacedObjectSetIn)
+---@param replacedObjectSet table <openmw.GObject, ReplacedObjectData>
+return function(meshReplacementModules, deleteManager, replacedObjectSet)
   if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
 
   DeleteManager = assert(deleteManager)
-  replacedObjectSet = assert(replacedObjectSetIn)
+  ReplacedObjectSet = assert(replacedObjectSet)
 
   I.Settings.registerGroup {
     key = 'SettingsStaticSwitcher',
