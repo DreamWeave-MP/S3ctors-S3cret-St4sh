@@ -73,7 +73,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
   local objectRecord = object.type.records[object.recordId]
 
   local moduleData = ComposedReplacements[replacementModule]
-  if moduleData.ignoreRecords[object.recordId] then return end
+  if moduleData.ignoreRecords and moduleData.ignoreRecords[object.recordId] then return end
 
   local oldModel = objectRecord.model
 
