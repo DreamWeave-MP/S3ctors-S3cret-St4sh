@@ -46,27 +46,26 @@ local processActiveObject, processDeletions, processUninstall
 processActiveObject = function()
   local numObjects = #ActiveObjectStack; local object = ActiveObjectStack[numObjects]
 
-  if not object then
-    UpdateFunction = processDeletions
-    return
-  elseif object:isValid() and object.count >= 1 then
-    local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+  if object then
+    if object:isValid() and object.count >= 1 then
+      local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
 
-    --- I don't like this.
-    --- Ideally we should have like, a special type that gets assigned to each module, or something
-    --- a more bespoke way to describe what *type* of module it is
-    if instanceModificationList then
-      InstanceModifiers.tryModifyObject(object, instanceModificationList)
-    else
-      StaticReplacements.tryReplaceObject(object)
+      --- I don't like this.
+      --- Ideally we should have like, a special type that gets assigned to each module, or something
+      --- a more bespoke way to describe what *type* of module it is
+      if instanceModificationList then
+        InstanceModifiers.tryModifyObject(object, instanceModificationList)
+      else
+        StaticReplacements.tryReplaceObject(object)
+      end
     end
-  end
 
-  ActiveObjectStack[numObjects] = nil
+    ActiveObjectStack[numObjects] = nil
+  end
 
   if not DeleteManager:queueIsEmpty() then
     UpdateFunction = processDeletions
-  elseif #ActiveObjectStack == 0 then
+  elseif numObjects <= 1 then
     UpdateFunction = NullFunction
   end
 end
