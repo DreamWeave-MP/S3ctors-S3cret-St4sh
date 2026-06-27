@@ -142,6 +142,21 @@ local function tryApplyReplacement(object, modifyTarget, replaceAction)
   return foundReplacement, true
 end
 
+---@param scaleAction SSSNumericRange
+---@param referenceScale number
+---@return number targetScale
+local function getScaleValue(scaleAction, referenceScale)
+  local scaleType = type(scaleAction)
+
+  if scaleType == 'number' then
+    return referenceScale * scaleAction
+  elseif scaleType == 'table' then
+    return referenceScale * randomGen.range(scaleAction.min or 1.0, scaleAction.max)
+  end
+
+  error('Invalid type for scale parameter: ' .. scaleType)
+end
+
 ---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
@@ -166,17 +181,7 @@ local function tryModifyObject(object, instanceModificationList)
 
         if transformAction.scale then
           local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
-          local transformScale = transformAction.scale; local scaleType = type(transformScale)
-
-          if scaleType == 'number' then
-            targetScale = transformScale
-          elseif scaleType == 'table' then
-            targetScale = randomGen.range(transformScale.min or 1.0, transformScale.max)
-          else
-            error("Invalid type for scale parameter: " .. scaleType)
-          end
-
-          targetScale = referenceScale * targetScale
+          targetScale = getScaleValue(transformAction.scale, referenceScale)
           wasModified = true
         end
 
