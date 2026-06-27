@@ -36,12 +36,75 @@ local uninstallModule    = require 'Scripts.staticSwitcher.globalSettings' (
 local settingsGroup      = require 'openmw.storage'.globalSection('SettingsStaticSwitcher')
 if settingsGroup:get 'StaticSwitcherDisableModule' then settingsGroup:set('StaticSwitcherDisableModule', false) end
 
+---@type openmw.GObject[]
+local ActiveObjectStack = {}
+
+local NullFunction = require 'scripts.s3.nullFunction'
+local UpdateFunction = NullFunction
+local processActiveObject, processDeletions, processUninstall
+
+processActiveObject = function()
+  local numObjects = #ActiveObjectStack; local object = ActiveObjectStack[numObjects]
+
+  if not object then
+    UpdateFunction = processDeletions
+    return
+  elseif object:isValid() and object.count >= 1 then
+    local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+
+    --- I don't like this.
+    --- Ideally we should have like, a special type that gets assigned to each module, or something
+    --- a more bespoke way to describe what *type* of module it is
+    if instanceModificationList then
+      InstanceModifiers.tryModifyObject(object, instanceModificationList)
+    else
+      StaticReplacements.tryReplaceObject(object)
+    end
+  end
+
+  ActiveObjectStack[numObjects] = nil
+
+  if #ActiveObjectStack > 0 then
+    return
+  elseif DeleteManager:queueIsEmpty() then
+    UpdateFunction = NullFunction
+  else
+    UpdateFunction = processDeletions
+  end
+end
+
+processUninstall = function()
+  --- When a module is removed and all objects are removed
+  --- kick every player from the game and force them to save
+  for _, player in ipairs(world.players) do
+    sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
+  end
+
+  ModuleToRemove = nil
+  UpdateFunction = NullFunction
+end
+
+processDeletions = function()
+  DeleteManager:processDeleteQueue()
+
+  local deletionsFinished = DeleteManager:queueIsEmpty()
+
+  if next(ActiveObjectStack) ~= nil then
+    UpdateFunction = processActiveObject
+  elseif ModuleToRemove and deletionsFinished then
+    UpdateFunction = processUninstall
+  elseif deletionsFinished then
+    UpdateFunction = NullFunction
+  end
+end
+
 settingsGroup:subscribe(
   require 'openmw.async':callback(
     function(_, key)
       if key == 'StaticSwitcherDisableModule' then
         ModuleToRemove = settingsGroup:get('StaticSwitcherModuleSelect')
         uninstallModule(ModuleToRemove)
+        UpdateFunction = processDeletions
       end
     end
   )
@@ -66,36 +129,22 @@ return {
     ---@param moduleName string
     uninstallModule = function(moduleName)
       ModuleToRemove = uninstallModule(moduleName)
+      UpdateFunction = processDeletions
     end,
     version = 3,
   },
   interfaceName = "StaticSwitcher_G",
   engineHandlers = {
     onUpdate = function()
-      DeleteManager:processDeleteQueue()
-
-      if not ModuleToRemove or not DeleteManager:queueIsEmpty() then return end
-
-      --- When a module is removed and all objects are removed
-      --- kick every player from the game and force them to save
-      for _, player in ipairs(world.players) do
-        sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
-      end
-
-      ModuleToRemove = nil
+      UpdateFunction()
     end,
     ---@param object openmw.GObject
     onObjectActive = function(object)
-      local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+      if ModuleToRemove then return end
 
-      --- I don't like this.
-      --- Ideally we should have like, a special type that gets assigned to each module, or something
-      --- a more bespoke way to describe what *type* of module it is
-      if instanceModificationList then
-        InstanceModifiers.tryModifyObject(object, instanceModificationList)
-      else
-        StaticReplacements.tryReplaceObject(object)
-      end
+      ActiveObjectStack[#ActiveObjectStack + 1] = object
+
+      if UpdateFunction ~= processActiveObject then UpdateFunction = processActiveObject end
     end,
     ---@return SSSSavedState
     onSave = function()
