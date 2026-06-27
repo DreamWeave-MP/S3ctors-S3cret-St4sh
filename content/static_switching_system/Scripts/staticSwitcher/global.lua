@@ -43,9 +43,8 @@ local uninstallModule            = require 'Scripts.staticSwitcher.globalSetting
   StaticReplacements.ReplacedObjectSet
 )
 
-local settingsGroup              = require 'openmw.storage'.globalSection(
-  'SettingsStaticSwitcher')
-if settingsGroup:get('StaticSwitcherDisableModule') then settingsGroup:set('StaticSwitcherDisableModule', false) end
+local settingsGroup              = require 'openmw.storage'.globalSection('SettingsStaticSwitcher')
+if settingsGroup:get 'StaticSwitcherDisableModule' then settingsGroup:set('StaticSwitcherDisableModule', false) end
 
 settingsGroup:subscribe(
   require 'openmw.async':callback(
@@ -57,7 +56,6 @@ settingsGroup:subscribe(
     end
   )
 )
-
 
 local function matchesAllConditions(object, conditions)
   for _, conditionData in ipairs(conditions) do
@@ -122,16 +120,6 @@ local function getMatchingInstanceModules(object)
 
   return matchingActions
 end
-
----@alias Axis
----| 'x'
----| 'y'
----| 'z'
-
----@class RotationParamInput
----@field isRelative boolean
----@field currentTransform userdata
----@field rotateActionDetails table<Axis, integer> map of axes to rotations as degrees
 
 ---@param numberOrTable number|table
 ---@return number rangeOrValue

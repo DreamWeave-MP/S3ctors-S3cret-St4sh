@@ -54,3 +54,13 @@
 ---@field exterior_cells ExteriorGrid[] array of grid indices in which a particular module will replace objects
 ---@field replace_meshes table<string, string> map of old meshes to new ones
 ---@field ignore_records string[] records to ignore when replacing with this module. Typically used for scripted objects, but maybe not.
+
+---@alias Axis
+---| 'x'
+---| 'y'
+---| 'z'
+
+---@class RotationParamInput
+---@field isRelative boolean
+---@field currentTransform userdata
+---@field rotateActionDetails table<Axis, integer> map of axes to rotations as degrees
