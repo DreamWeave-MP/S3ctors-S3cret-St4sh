@@ -166,7 +166,7 @@ end
 ---@return openmw.util.Transform newTransform
 ---@return openmw.util.Vector3 newPos
 ---@return number targetScale
-local function applyTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
+local function accumulateTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
   local wasModified = false
   local useRelativeTransform = transformAction.transform_type == nil or
       transformAction.transform_type == 'relative'
@@ -183,7 +183,7 @@ local function applyTransformAction(transformAction, modifyTarget, newTransform,
     newTransform = getRotationValue(
       useRelativeTransform,
       rotateAction,
-      newTransform or modifyTarget.rotation
+      newTransform
     )
 
     wasModified = true
@@ -230,7 +230,7 @@ local function tryModifyObject(object, instanceModificationList)
       elseif transformAction then
         local didTransform
         didTransform, newTransform, newPos, targetScale =
-            applyTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
+            accumulateTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
         wasModified = wasModified or didTransform
       end
     end
