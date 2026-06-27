@@ -187,11 +187,6 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
   meshReplacementsFile:close()
 end
 
-for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
-  local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
-  loadSwitcherModule(meshReplacementsPath, baseName)
-end
-
 ---@type SSSModuleCatalog
 local ModuleCatalog = {
   moduleNames = MeshReplacementModules,
@@ -206,5 +201,11 @@ local ModuleCatalog = {
 ---@return SSSModuleCatalog
 return function(staticReplacements)
   StaticReplacements = assert(staticReplacements)
+
+  for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
+    local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
+    loadSwitcherModule(meshReplacementsPath, baseName)
+  end
+
   return ModuleCatalog
 end
