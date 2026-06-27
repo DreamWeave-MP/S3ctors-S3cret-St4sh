@@ -6,6 +6,7 @@ local randomGen = require 'scripts.s3.randomgen'
 
 local pairs, pcall = pairs, pcall
 
+---@type table<string, fun(object: openmw.GObject, replaceActionData: SSSReplaceAction): openmw.GObject?>
 local actionHandlers = {
   ['replace'] = function(_, replaceActionData)
     for replaceId, replaceChance in pairs(replaceActionData) do

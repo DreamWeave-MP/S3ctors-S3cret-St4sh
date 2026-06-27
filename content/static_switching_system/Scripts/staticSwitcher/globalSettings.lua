@@ -9,11 +9,13 @@ local INVALID_MODULE_NAME = 'Invalid module name provided: %s. Either it does no
 ---@type SSSDeleteManager?
 local DeleteManager
 
+---@type SSSReplacedObjectSet
 local ReplacedObjectSet
 
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
 ---@param fileName string
+---@return string? removedModule
 local function uninstallModule(fileName)
   local objectsToRemove, objectsToRemoveLength = {}, 0
   local localModuleReplacements = ReplacedObjectSet[fileName]
@@ -42,7 +44,8 @@ end
 
 ---@param meshReplacementModules string[]
 ---@param deleteManager SSSDeleteManager
----@param replacedObjectSet table <openmw.GObject, ReplacedObjectData>
+---@param replacedObjectSet SSSReplacedObjectSet
+---@return fun(fileName: string): string? uninstallModule
 return function(meshReplacementModules, deleteManager, replacedObjectSet)
   if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
 

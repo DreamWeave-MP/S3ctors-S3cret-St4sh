@@ -25,10 +25,10 @@ objectIsActivator                  =
 local ComposedReplacements         = {}
 
 --- Maps module names to the record ids they manage
----@type table<string, ReplacementMap>
+---@type SSSOverrideRecords
 local OverrideRecords              = {}
 
----@type table <openmw.GObject, ReplacedObjectData>
+---@type SSSReplacedObjectSet
 local ReplacedObjectSet            = {}
 
 ---@type SSSDeleteManager
@@ -126,7 +126,7 @@ local function replacementTableMatchesCell(replacementTable, cell)
 end
 
 ---@param cell openmw.core.GCell
----@return table<string, SSSModule> modulesForThisCell subtable of valid modules for this cell
+---@return table<string, SSSModule>? modulesForThisCell subtable of valid modules for this cell
 local function getReplacementModuleForCell(cell)
   local modulesForThisCell
 
@@ -163,7 +163,7 @@ local function tryReplaceObject(object)
   replaceObject(object, replacementModule, replacementMesh)
 end
 
----@class SSSStaticReplacements
+---@type SSSStaticReplacements
 local StaticReplacements = {
   ComposedReplacements = ComposedReplacements,
   OverrideRecords = OverrideRecords,
@@ -172,6 +172,7 @@ local StaticReplacements = {
 }
 
 ---@param deleteManager SSSDeleteManager
+---@return SSSStaticReplacements
 return function(deleteManager)
   DeleteManager = assert(deleteManager)
   return StaticReplacements

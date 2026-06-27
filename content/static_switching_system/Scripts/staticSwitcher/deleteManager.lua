@@ -9,6 +9,7 @@ local DeleteManager = {
 }
 --- Adds an object to the delete queue, to be processed on another frame
 ---@param object openmw.GObject
+---@param removeOrDisable boolean true removes the object, false disables it
 function DeleteManager:addObjectToDeleteQueue(object, removeOrDisable)
   self.queue[#self.queue + 1] = {
     object = object,
@@ -17,6 +18,7 @@ function DeleteManager:addObjectToDeleteQueue(object, removeOrDisable)
   }
 end
 
+--- Processes delayed object deletion/disable work and removes completed queue entries.
 function DeleteManager:processDeleteQueue()
   for i = #self.queue, 1, -1 do
     local objectInfo = self.queue[i]
@@ -39,7 +41,7 @@ function DeleteManager:processDeleteQueue()
   end
 end
 
----@return boolean
+---@return boolean isEmpty whether the delete queue has no pending objects
 function DeleteManager:queueIsEmpty()
   return next(self.queue) == nil
 end

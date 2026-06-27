@@ -99,6 +99,7 @@ end
 
 --- Given a particular gameObject, check whether this module can rightfully replace it.
 --- The function must be created on a per-module basis in order to refer to the current local value of `replacementTable`
+---@param meshMap ReplacementMap
 ---@param object openmw.GObject
 ---@return string? replacementObjectMesh
 function staticUtil.getReplacementMeshForObject(meshMap, object)
@@ -125,6 +126,7 @@ end
 --- Helper function to generate a log message string, but without printing it for reusability.
 ---@param message string
 ---@param prefix string?
+---@return string logMessage
 function staticUtil.LogString(message, prefix)
     if not prefix then prefix = LOG_PREFIX end
 
@@ -143,7 +145,7 @@ function staticUtil.normalizePath(path)
 end
 
 ---@param object openmw.GObject
----@return openmw.types.ActivatorRecord Object record data
+---@return openmw.types.ActivatorRecord|openmw.types.StaticRecord Object record data
 function staticUtil.Record(object)
     return object.type.records[object.recordId]
 end
@@ -168,6 +170,7 @@ function staticUtil.getRefNum(object)
 end
 
 ---@param t table
+---@return boolean isArray
 local function is_table_array(t)
     if type(t) ~= "table" then return false end
 
@@ -187,9 +190,10 @@ local function is_table_array(t)
 end
 
 --- Deep merges tables with special array handling
--- @param target The table to merge into
--- @param source The table to merge from
--- @param is_array If true, treats tables as arrays (appends instead of overwrites)
+---@param target table The table to merge into
+---@param source table The table to merge from
+---@param is_array boolean? If true, treats tables as arrays (appends instead of overwrites)
+---@return table target The merged target table
 function staticUtil.mergeTables(target, source, is_array)
     if type(target) ~= "table" or type(source) ~= "table" then
         return target
@@ -215,7 +219,7 @@ end
 --- Takes a string as input and performs Title capitalization on it.
 --- Note that other characters are lowercased explicitly.
 ---@param inputString string The string whose first letter should be capitalized
----@return string capitalizedString The original string, with Title capitalizatio
+---@return string capitalizedString The original string, with Title capitalization
 function staticUtil.capitalize(inputString)
     local stringLength = #inputString
     if stringLength <= 1 then return inputString:upper() end
