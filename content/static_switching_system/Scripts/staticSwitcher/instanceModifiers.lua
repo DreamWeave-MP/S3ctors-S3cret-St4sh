@@ -17,8 +17,10 @@ local ModuleCatalog
 
 local assert, error, ipairs, pairs, type = assert, error, ipairs, pairs, type
 
-local AXES                               = { 'z', 'y', 'x', }
-local ROTATE_FORMAT_STR                  = 'rotate%s'
+local rotateX                            = util.transform.rotateX
+local rotateY                            = util.transform.rotateY
+local rotateZ                            = util.transform.rotateZ
+local rad                                = math.rad
 
 ---@param object openmw.GObject
 ---@param conditions SSSConditionData[]
@@ -113,23 +115,16 @@ end
 ---@param currentTransform openmw.util.Transform
 ---@return openmw.util.Transform transform
 local function getRotationValue(isRelative, rotateActionDetails, currentTransform)
-  local rootTransform = util.transform.identity
+  local rootTransform = isRelative and currentTransform or util.transform.identity
 
-  if isRelative then
-    rootTransform = currentTransform * rootTransform
-  end
+  local z = rotateActionDetails.z
+  if z then rootTransform = rotateZ(rad(getRangeValue(z))) * rootTransform end
 
-  for _, axis in ipairs(AXES) do
-    if rotateActionDetails[axis] then
-      rootTransform = util.transform[ROTATE_FORMAT_STR:format(axis:upper())](
-        math.rad(
-          getRangeValue(
-            rotateActionDetails[axis]
-          )
-        )
-      ) * rootTransform
-    end
-  end
+  local y = rotateActionDetails.y
+  if y then rootTransform = rotateY(rad(getRangeValue(y))) * rootTransform end
+
+  local x = rotateActionDetails.x
+  if x then rootTransform = rotateX(rad(getRangeValue(x))) * rootTransform end
 
   return rootTransform
 end
