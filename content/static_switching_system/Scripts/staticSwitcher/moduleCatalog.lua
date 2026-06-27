@@ -8,20 +8,22 @@ local szudzik                                           = require 'scripts.s3.sz
 
 local staticUtil                                        = require 'Scripts.staticSwitcher.util'
 
+---@type string[], integer
 local MeshReplacementModules, MeshReplacementModulesLen = {}, 0
 
+---@type SSSObjectModificationStore
 local ObjectModificationStore                           = {}
 
 ---@type SSSStaticReplacements
 local StaticReplacements
 
----@class ActionPriority
+---@type string[]
 local ACTIONPRIORITY                                    = {
   'replace',
   'transform',
 }
 
----@class ConditionPriority
+---@type string[]
 local CONDITIONPRIORITY                                 = {
   'content_file',
   'object_type',
@@ -36,17 +38,23 @@ local CONDITIONPRIORITY                                 = {
 
 local error, ipairs, pairs                              = error, ipairs, pairs
 
+---@param conditionData SSSConditionData
+---@return integer?
 local function sortConditionByType(conditionData)
   for index, conditionName in ipairs(CONDITIONPRIORITY) do
     if conditionData[conditionName] then return index end
   end
 end
 
+---@param actionData SSSInstanceAction
+---@return integer?
 local function sortActionByType(actionData)
   for index, actionName in ipairs(ACTIONPRIORITY) do
     if actionData[actionName] then return index end
   end
 end
+---@param meshReplacementsTable SSSModuleStatic
+---@return SSSModule
 local function staticModuleLoader(meshReplacementsTable)
   local meshMap
   if meshReplacementsTable.replace_meshes and next(meshReplacementsTable.replace_meshes) ~= nil then
@@ -140,6 +148,8 @@ end
 
 
 
+---@param meshReplacementsPath string
+---@param baseName string
 local function loadSwitcherModule(meshReplacementsPath, baseName)
   if baseName == 'example' then return end
 
@@ -182,9 +192,7 @@ for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
   loadSwitcherModule(meshReplacementsPath, baseName)
 end
 
----@class SSSModuleCatalog
----@field moduleNames string[]
----@field numModules number
+---@type SSSModuleCatalog
 local ModuleCatalog = {
   moduleNames = MeshReplacementModules,
   numModules = MeshReplacementModulesLen,
@@ -195,6 +203,7 @@ local ModuleCatalog = {
 }
 
 ---@param staticReplacements SSSStaticReplacements
+---@return SSSModuleCatalog
 return function(staticReplacements)
   StaticReplacements = assert(staticReplacements)
   return ModuleCatalog

@@ -8,7 +8,8 @@ local tableHash                          = require 'scripts.s3.tableHash'
 local actionHandlers                     = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers                  = require 'Scripts.staticSwitcher.conditionHandlers'
 
---- Indexed first by object string, then contains
+--- Indexed first by object id, then by action table hash.
+---@type table<string, table<string, true>>
 local ActionLookupCache                  = {}
 
 ---@type SSSModuleCatalog
@@ -19,6 +20,9 @@ local assert, error, ipairs, pairs, type = assert, error, ipairs, pairs, type
 local AXES                               = { 'z', 'y', 'x', }
 local ROTATE_FORMAT_STR                  = 'rotate%s'
 
+---@param object openmw.GObject
+---@param conditions SSSConditionData[]
+---@return boolean
 local function matchesAllConditions(object, conditions)
   for _, conditionData in ipairs(conditions) do
     for conditionName, conditionValue in pairs(conditionData) do
@@ -48,6 +52,8 @@ local function matchesAllConditions(object, conditions)
   return true
 end
 
+---@param object openmw.GObject
+---@return SSSInstanceModificationList?
 local function getMatchingInstanceModules(object)
   local matchingActions, actionIndex
 
@@ -59,7 +65,7 @@ local function getMatchingInstanceModules(object)
   for _, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
     for _, actionData in ipairs(actionList) do
       local actionTableHash = tableHash(actionData)
-      local shouldProcess = actionData.conditions and matchesAllConditions(object.actionData.conditions)
+      local shouldProcess = actionData.conditions and matchesAllConditions(object, actionData.conditions)
 
       -- Action conditions have been evaluated already, and this action can only run once
       if actionData.once and
@@ -70,7 +76,7 @@ local function getMatchingInstanceModules(object)
 
       if shouldProcess then
         matchingActions = matchingActions or {}
-        actionIndex = actionIndex + 1
+        actionIndex = (actionIndex or 0) + 1
         matchingActions[actionIndex] = actionData.actions
 
         if not ActionLookupCache[objectString] then ActionLookupCache[objectString] = {} end
@@ -83,7 +89,7 @@ local function getMatchingInstanceModules(object)
   return matchingActions
 end
 
----@param numberOrTable number|table
+---@param numberOrTable SSSNumericRange?
 ---@return number rangeOrValue
 local function getRangeValue(numberOrTable)
   local actionDataType, rangeOrValue = type(numberOrTable)
@@ -103,7 +109,7 @@ local function getRangeValue(numberOrTable)
 end
 
 ---@param isRelative boolean
----@param rotateActionDetails table<Axis, number>
+---@param rotateActionDetails SSSVector3Range
 ---@param currentTransform openmw.util.Transform
 ---@return openmw.util.Transform transform
 local function getRotationValue(isRelative, rotateActionDetails, currentTransform)
@@ -129,6 +135,7 @@ local function getRotationValue(isRelative, rotateActionDetails, currentTransfor
 end
 
 ---@param object openmw.GObject
+---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
   local wasModified = false
   local modifyTarget = object
@@ -138,28 +145,29 @@ local function tryModifyObject(object, instanceModificationList)
 
   for _, instanceModification in ipairs(instanceModificationList) do
     for _, actionData in ipairs(instanceModification) do
+      local replaceAction, transformAction = actionData.replace, actionData.transform
+
       --- Should we allow only one successful replacement???
-      if actionData.replace and modifyTarget == object then
+      if replaceAction and modifyTarget == object then
         local foundReplacement = actionHandlers.replace(object, actionData.replace)
+
         if foundReplacement then
           modifyTarget.enabled = false
           modifyTarget = foundReplacement
           wasModified = true
         end
-      elseif actionData.transform then
-        local actionDetails = actionData.transform
+      elseif transformAction then
+        local useRelativeTransform = transformAction.transform_type == nil or
+            transformAction.transform_type == 'relative'
 
-        local useRelativeTransform = actionDetails.transform_type == nil or
-            actionDetails.transform_type == 'relative'
-
-        if actionDetails.scale then
+        if transformAction.scale then
           local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
-          local scaleType = type(actionDetails.scale)
+          local transformScale = transformAction.scale; local scaleType = type(transformScale)
 
           if scaleType == 'number' then
-            targetScale = actionDetails.scale
+            targetScale = transformScale
           elseif scaleType == 'table' then
-            targetScale = randomGen.range(actionDetails.scale.min or 1.0, actionDetails.scale.max)
+            targetScale = randomGen.range(transformScale.min or 1.0, transformScale.max)
           else
             error("Invalid type for scale parameter: " .. scaleType)
           end
@@ -168,21 +176,21 @@ local function tryModifyObject(object, instanceModificationList)
           wasModified = true
         end
 
-        if actionDetails.rotate then
+        if transformAction.rotate then
           newTransform = getRotationValue(
             useRelativeTransform,
-            actionDetails.rotate,
+            transformAction.rotate,
             newTransform or modifyTarget.rotation
           )
 
           wasModified = true
         end
 
-        if actionDetails.position then
+        if transformAction.position then
           local actionTargetPos = util.vector3(
-            getRangeValue(actionDetails.position.x),
-            getRangeValue(actionDetails.position.y),
-            getRangeValue(actionDetails.position.z)
+            getRangeValue(transformAction.position.x),
+            getRangeValue(transformAction.position.y),
+            getRangeValue(transformAction.position.z)
           )
 
           if useRelativeTransform then
@@ -211,6 +219,7 @@ local InstanceModifiers = {
 }
 
 ---@param moduleCatalog SSSModuleCatalog
+---@return SSSInstanceModifiers
 return function(moduleCatalog)
   ModuleCatalog = assert(moduleCatalog)
   return InstanceModifiers

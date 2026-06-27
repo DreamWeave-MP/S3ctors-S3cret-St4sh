@@ -12,6 +12,7 @@ local menu = require 'openmw.menu'
 
 return {
     eventHandlers = {
+        ---@param moduleName string
         StaticSwitcherMenuRemoveModule = function(moduleName)
             ---@diagnostic disable-next-line: missing-parameter
             menu.saveGame(StaticSwitcherL10n('StaticSwitcherSaveDesc', { moduleName = moduleName }))

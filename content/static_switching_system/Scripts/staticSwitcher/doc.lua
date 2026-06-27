@@ -13,9 +13,11 @@
 ---@alias ContentFileBits
 ---| 16777216
 
+---@alias SSSNumericRange number|RangeTable
+
 ---@class RangeTable
----@field min integer? defaults to 1 if not present
----@field max integer
+---@field min number? lower bound for random range; caller supplies its own default when absent
+---@field max number required upper bound for random range
 
 ---@class ObjectDeleteData
 ---@field object openmw.GObject
@@ -35,32 +37,104 @@
 ---@field y integer Y coordinate of an exterior cell in which to replace objects
 
 ---@class SSSModule
----@field cellNameMatches string[] list of cell names which will be fuzzy-matched for a given module
----@field meshMap ReplacementMap
----@field gridIndices table<SzudzikCoord, true>
+---@field cellNameMatches string[]? list of cell names which will be fuzzy-matched for a given module
+---@field meshMap ReplacementMap? normalized old mesh path to normalized replacement mesh path
+---@field gridIndices table<SzudzikCoord, true>? exterior cell indices handled by this module
 ---@field logString string? prefix displayed when
----@field ignoreRecords table<string, true> list of records which this module will explicitly ignore during replacement
+---@field ignoreRecords table<RecordId, true>? list of records which this module will explicitly ignore during replacement
 
---- A Static Switching System module as it exists in yaml format.
---- Most fields are NOT optional, and a corresponding JsonSchema exists for them as well.
+--- A Static Switching System module as it exists in YAML format.
+--- Most fields are NOT optional, and a corresponding JSON Schema exists for them as well.
 ---@class SSSModuleRaw
 ---@field log_name string?
 
 ---@class SSSModuleInstances: SSSModuleRaw
----@field instances table<string, table> Set of gameobjectt record ids or refNums to muck with
+---@field instances SSSInstanceRule[] set of game object rules to muck with
 
 ---@class SSSModuleStatic: SSSModuleRaw
----@field replace_names string[] array of cell names to match replacements for
----@field exterior_cells ExteriorGrid[] array of grid indices in which a particular module will replace objects
+---@field replace_names string[]? array of cell names to match replacements for
+---@field exterior_cells ExteriorGrid[]? array of grid indices in which a particular module will replace objects
 ---@field replace_meshes table<string, string> map of old meshes to new ones
----@field ignore_records string[] records to ignore when replacing with this module. Typically used for scripted objects, but maybe not.
+---@field ignore_records RecordId[]? records to ignore when replacing with this module. Typically used for scripted objects, but maybe not.
 
 ---@alias Axis
 ---| 'x'
 ---| 'y'
 ---| 'z'
 
+---@alias SSSTransformType
+---| 'relative'
+---| 'absolute'
+
+---@class SSSVector3Range
+---@field x SSSNumericRange?
+---@field y SSSNumericRange?
+---@field z SSSNumericRange?
+
+---@class SSSTransformAction
+---@field transform_type SSSTransformType?
+---@field scale SSSNumericRange?
+---@field rotate SSSVector3Range?
+---@field position SSSVector3Range?
+
+---@alias SSSReplaceAction table<RecordId, number>
+
+---@class SSSInstanceAction
+---@field replace SSSReplaceAction?
+---@field transform SSSTransformAction?
+
+---@class SSSConditionData
+---@field carrying string|table<RecordId, integer>?
+---@field cell string?
+---@field coords ExteriorGrid?
+---@field content_file string?
+---@field name string?
+---@field object_type string?
+---@field record_id string?
+---@field ref_num number?
+
+---@class SSSInstanceRule
+---@field conditions SSSConditionData[]?
+---@field actions SSSInstanceAction[]
+---@field once boolean?
+
+---@alias SSSObjectModificationStore table<string, SSSInstanceRule[]>
+---@alias SSSInstanceModificationList SSSInstanceAction[][]
+---@alias SSSOverrideRecords table<string, ReplacementMap>
+---@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>>
+
+---@class SSSModuleCatalog
+---@field moduleNames string[] loaded module base names
+---@field numModules number number of loaded module base names
+---@field ObjectModificationStore SSSObjectModificationStore module-name keyed instance modification rules
+
+---@class SSSStaticReplacements
+---@field ComposedReplacements table<string, SSSModule> module-name keyed static replacement data
+---@field OverrideRecords SSSOverrideRecords module-name keyed generated replacement record IDs
+---@field ReplacedObjectSet SSSReplacedObjectSet module-name keyed replacement object to original object map
+---@field tryReplaceObject fun(object: openmw.GObject)
+
+---@class SSSInstanceModifiers
+---@field getMatchingInstanceModules fun(object: openmw.GObject): SSSInstanceModificationList?
+---@field tryModifyObject fun(object: openmw.GObject, instanceModificationList: SSSInstanceModificationList)
+
+---@class SSSSavedState
+---@field overrideRecords SSSOverrideRecords?
+---@field objectDeleteQueue ObjectDeleteData[]?
+---@field replacedObjectSet SSSReplacedObjectSet?
+
+---@class openmw.interfaces.StaticSwitcher_G
+---@field getRefNum fun(object: openmw.GObject): boolean, number Returns whether the object is generated and its local/generated reference number.
+---@field objectModificationStore fun(): SSSObjectModificationStore Returns the loaded instance-modification rule store.
+---@field overrideRecords fun(): SSSOverrideRecords Returns generated override record IDs keyed by module name.
+---@field replacedObjectSet fun(): SSSReplacedObjectSet Returns replacement objects keyed by module name for uninstall bookkeeping.
+---@field uninstallModule fun(moduleName: string) Queues uninstall/removal for a loaded replacement module.
+---@field version integer Static Switching System interface version.
+
+---@class openmw.interfaces
+---@field StaticSwitcher_G openmw.interfaces.StaticSwitcher_G
+
 ---@class RotationParamInput
 ---@field isRelative boolean
----@field currentTransform userdata
----@field rotateActionDetails table<Axis, integer> map of axes to rotations as degrees
+---@field currentTransform openmw.util.Transform
+---@field rotateActionDetails SSSVector3Range map of axes to rotations as degrees
