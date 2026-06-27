@@ -130,6 +130,19 @@ local function getRotationValue(isRelative, rotateActionDetails, currentTransfor
 end
 
 ---@param object openmw.GObject
+---@param modifyTarget openmw.GObject
+---@param replaceAction SSSReplaceAction
+---@return openmw.GObject modifyTarget
+---@return boolean wasModified
+local function tryApplyReplacement(object, modifyTarget, replaceAction)
+  local foundReplacement = actionHandlers.replace(object, replaceAction)
+  if not foundReplacement then return modifyTarget, false end
+
+  modifyTarget.enabled = false
+  return foundReplacement, true
+end
+
+---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
   local wasModified = false
@@ -144,13 +157,9 @@ local function tryModifyObject(object, instanceModificationList)
 
       --- Should we allow only one successful replacement???
       if replaceAction and modifyTarget == object then
-        local foundReplacement = actionHandlers.replace(object, actionData.replace)
-
-        if foundReplacement then
-          modifyTarget.enabled = false
-          modifyTarget = foundReplacement
-          wasModified = true
-        end
+        local didReplace
+        modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
+        wasModified = wasModified or didReplace
       elseif transformAction then
         local useRelativeTransform = transformAction.transform_type == nil or
             transformAction.transform_type == 'relative'
