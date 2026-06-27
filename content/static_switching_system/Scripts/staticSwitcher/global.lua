@@ -114,6 +114,10 @@ return {
   interface = {
     ---@return boolean isGenerated, number refNum
     getRefNum = staticUtil.getRefNum,
+    ---@return table<string, SSSModule> moduleData Map of file names handling mesh replacements to the data contained therein
+    composedReplacements = function()
+      return util.makeReadOnly(StaticReplacements.ComposedReplacements)
+    end,
     ---@return SSSObjectModificationStore
     objectModificationStore = function()
       return util.makeReadOnly(ModuleCatalog.ObjectModificationStore)
