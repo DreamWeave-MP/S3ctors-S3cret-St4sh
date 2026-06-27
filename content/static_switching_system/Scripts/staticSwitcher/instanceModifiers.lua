@@ -157,6 +157,58 @@ local function getScaleValue(scaleAction, referenceScale)
   error('Invalid type for scale parameter: ' .. scaleType)
 end
 
+---@param transformAction SSSTransformAction
+---@param modifyTarget openmw.GObject
+---@param newTransform openmw.util.Transform
+---@param newPos openmw.util.Vector3
+---@param targetScale number
+---@return boolean wasModified
+---@return openmw.util.Transform newTransform
+---@return openmw.util.Vector3 newPos
+---@return number targetScale
+local function applyTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
+  local wasModified = false
+  local useRelativeTransform = transformAction.transform_type == nil or
+      transformAction.transform_type == 'relative'
+
+  local scaleAction = transformAction.scale
+  if scaleAction then
+    local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
+    targetScale = getScaleValue(scaleAction, referenceScale)
+    wasModified = true
+  end
+
+  local rotateAction = transformAction.rotate
+  if rotateAction then
+    newTransform = getRotationValue(
+      useRelativeTransform,
+      rotateAction,
+      newTransform or modifyTarget.rotation
+    )
+
+    wasModified = true
+  end
+
+  local positionAction = transformAction.position
+  if positionAction then
+    local actionTargetPos = util.vector3(
+      getRangeValue(positionAction.x),
+      getRangeValue(positionAction.y),
+      getRangeValue(positionAction.z)
+    )
+
+    if useRelativeTransform then
+      newPos = newPos + actionTargetPos
+    else
+      newPos = actionTargetPos
+    end
+
+    wasModified = true
+  end
+
+  return wasModified, newTransform, newPos, targetScale
+end
+
 ---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
@@ -176,40 +228,10 @@ local function tryModifyObject(object, instanceModificationList)
         modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
         wasModified = wasModified or didReplace
       elseif transformAction then
-        local useRelativeTransform = transformAction.transform_type == nil or
-            transformAction.transform_type == 'relative'
-
-        if transformAction.scale then
-          local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
-          targetScale = getScaleValue(transformAction.scale, referenceScale)
-          wasModified = true
-        end
-
-        if transformAction.rotate then
-          newTransform = getRotationValue(
-            useRelativeTransform,
-            transformAction.rotate,
-            newTransform or modifyTarget.rotation
-          )
-
-          wasModified = true
-        end
-
-        if transformAction.position then
-          local actionTargetPos = util.vector3(
-            getRangeValue(transformAction.position.x),
-            getRangeValue(transformAction.position.y),
-            getRangeValue(transformAction.position.z)
-          )
-
-          if useRelativeTransform then
-            newPos = newPos + actionTargetPos
-          else
-            newPos = actionTargetPos
-          end
-
-          wasModified = true
-        end
+        local didTransform
+        didTransform, newTransform, newPos, targetScale =
+            applyTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
+        wasModified = wasModified or didTransform
       end
     end
   end
