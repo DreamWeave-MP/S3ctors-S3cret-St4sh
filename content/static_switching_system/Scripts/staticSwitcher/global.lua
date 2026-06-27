@@ -64,12 +64,10 @@ processActiveObject = function()
 
   ActiveObjectStack[numObjects] = nil
 
-  if #ActiveObjectStack > 0 then
-    return
-  elseif DeleteManager:queueIsEmpty() then
-    UpdateFunction = NullFunction
-  else
+  if not DeleteManager:queueIsEmpty() then
     UpdateFunction = processDeletions
+  elseif #ActiveObjectStack == 0 then
+    UpdateFunction = NullFunction
   end
 end
 
