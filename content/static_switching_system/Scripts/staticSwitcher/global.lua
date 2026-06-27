@@ -1,56 +1,49 @@
 ---@omw-context global
 
-local aux_util                                          = require 'openmw_aux.util'
-local markup                                            = require 'openmw.markup'
-local types                                             = require 'openmw.types'
-local util                                              = require 'openmw.util'
-local vfs                                               = require 'openmw.vfs'
-local world                                             = require 'openmw.world'
+local types                      = require 'openmw.types'
+local util                       = require 'openmw.util'
+local world                      = require 'openmw.world'
 
-local randomGen                                         = require 'scripts.s3.randomGen'
+local randomGen                  = require 'scripts.s3.randomGen'
 
-local szudzik                                           = require 'scripts.s3.szudzik'
-local tableHash                                         = require 'scripts.s3.tableHash'
+local tableHash                  = require 'scripts.s3.tableHash'
 
-local actionHandlers                                    = require 'Scripts.staticSwitcher.actionHandlers'
-local conditionHandlers                                 = require 'Scripts.staticSwitcher.conditionHandlers'
+local actionHandlers             = require 'Scripts.staticSwitcher.actionHandlers'
+local conditionHandlers          = require 'Scripts.staticSwitcher.conditionHandlers'
 
 ---@type StaticUtil
-local staticUtil                                        = require 'scripts.staticSwitcher.util'
+local staticUtil                 = require 'scripts.staticSwitcher.util'
 
-local AXES                                              = { 'z', 'y', 'x', }
+local AXES                       = { 'z', 'y', 'x', }
 
 local ModuleToRemove
 
---- Indexed first by module name, then an array of actions and conditions
---- all values in said array will be strings, and, when each lookup is performed they can/should be cached
---- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
-local ObjectModificationStore                           = {}
-
 --- Indexed first by object string, then contains
-local ActionLookupCache                                 = {}
+local ActionLookupCache          = {}
 
-local ROTATE_FORMAT_STR                                 = 'rotate%s'
+local ROTATE_FORMAT_STR          = 'rotate%s'
 
-local MeshReplacementModules, MeshReplacementModulesLen = {}, 0
+local error, ipairs, pairs, type = error, ipairs, pairs, type
 
-local error, ipairs, next, pairs, type                  = error, ipairs, next, pairs, type
+local sendMenuEvent              = types.Player.sendMenuEvent
 
-local sendMenuEvent                                     = types.Player.sendMenuEvent
+local DeleteManager              = require 'Scripts.staticSwitcher.deleteManager'
 
-local DeleteManager                                     = require 'Scripts.staticSwitcher.deleteManager'
-
-local StaticReplacements                                = require 'Scripts.staticSwitcher.staticReplacements' (
+local StaticReplacements         = require 'Scripts.staticSwitcher.staticReplacements' (
   DeleteManager
 )
 
-local uninstallModule                                   = require 'Scripts.staticSwitcher.globalSettings' (
-  MeshReplacementModules,
+local ModuleCatalog              = require 'Scripts.staticSwitcher.moduleCatalog' (
+  StaticReplacements
+)
+
+local uninstallModule            = require 'Scripts.staticSwitcher.globalSettings' (
+  ModuleCatalog.moduleNames,
   DeleteManager,
   StaticReplacements.ReplacedObjectSet
 )
 
-local settingsGroup                                     = require 'openmw.storage'.globalSection(
+local settingsGroup              = require 'openmw.storage'.globalSection(
   'SettingsStaticSwitcher')
 if settingsGroup:get('StaticSwitcherDisableModule') then settingsGroup:set('StaticSwitcherDisableModule', false) end
 
@@ -64,128 +57,6 @@ settingsGroup:subscribe(
     end
   )
 )
-
-local function staticLoaderModuleHandler(meshReplacementsTable)
-  local meshMap
-  if meshReplacementsTable.replace_meshes and next(meshReplacementsTable.replace_meshes) ~= nil then
-    --- Rubic0n annotations need updated for OpenResty additions
-    ---@diagnostic disable-next-line: undefined-field
-    if table.new then
-      ---@diagnostic disable-next-line: undefined-field
-      meshMap = table.new(0, table.nkeys(meshReplacementsTable.replace_meshes))
-    else
-      meshMap = {}
-    end
-  end
-
-  local cellNameMatches
-  if meshReplacementsTable.replace_names and next(meshReplacementsTable.replace_names) ~= nil then
-    if table.new then
-      cellNameMatches = table.new(#meshReplacementsTable.replace_names, 0)
-    else
-      cellNameMatches = {}
-    end
-  end
-
-  local gridIndices
-  if meshReplacementsTable.exterior_cells and next(meshReplacementsTable.exterior_cells) ~= nil then
-    if table.new then
-      gridIndices = table.new(0, #meshReplacementsTable.exterior_cells)
-    else
-      gridIndices = {}
-    end
-  end
-
-  local ignoreRecords
-  if meshReplacementsTable.ignore_records and next(meshReplacementsTable.ignore_records) ~= nil then
-    if table.new then
-      ignoreRecords = table.new(0, #meshReplacementsTable.ignore_records)
-    else
-      ignoreRecords = {}
-    end
-  end
-
-  local replacementTable
-  if table.new then
-    local numElements = (meshMap and 1 or 0)
-        + (cellNameMatches and 1 or 0)
-        + (gridIndices and 1 or 0)
-        + (ignoreRecords and 1 or 0)
-        + (meshReplacementsTable.log_name and 1 or 0)
-    replacementTable = table.new(0, numElements)
-
-    print('allocating replacement table with', numElements, 'elements')
-  else
-    replacementTable = {}
-  end
-
-  if meshMap then replacementTable.meshMap = meshMap end
-  if cellNameMatches then replacementTable.cellNameMatches = cellNameMatches end
-  if gridIndices then replacementTable.gridIndices = gridIndices end
-  if ignoreRecords then replacementTable.ignoreRecords = ignoreRecords end
-  if meshReplacementsTable.log_name then replacementTable.logString = meshReplacementsTable.log_name end
-
-  if meshMap then
-    local key, value = '', ''
-    for oldMesh, newMesh in pairs(meshReplacementsTable.replace_meshes) do
-      key = staticUtil.normalizePath(staticUtil.getMeshPath(oldMesh))
-      value = staticUtil.normalizePath(staticUtil.getMeshPath(newMesh))
-
-      meshMap[key] = value
-    end
-  end
-
-  if cellNameMatches then
-    for i, replaceString in ipairs(meshReplacementsTable.replace_names) do
-      cellNameMatches[i] = replaceString:lower()
-    end
-  end
-
-  if gridIndices then
-    for _, cellGrid in ipairs(meshReplacementsTable.exterior_cells) do
-      replacementTable.gridIndices[szudzik.getIndex(cellGrid.x, cellGrid.y)] = true
-    end
-  end
-
-  if ignoreRecords then
-    for _, ignoreRecord in ipairs(meshReplacementsTable.ignore_records) do
-      replacementTable.ignoreRecords[ignoreRecord] = true
-    end
-  end
-
-  return replacementTable
-end
-
----@class ActionPriority
-local ACTIONPRIORITY = {
-  'replace',
-  'transform',
-}
-
----@class ConditionPriority
-local CONDITIONPRIORITY = {
-  'content_file',
-  'object_type',
-  --- Record ID comes before many other searches as it's likely to be cheap and common
-  --- This one doesn't have a separate match variant
-  'record_id',
-  'ref_num',
-  --- Name matches should always be last as they're inevitably going to be the slowest
-  'name',
-  'carrying',
-}
-
-local function sortConditionByType(conditionData)
-  for index, conditionName in ipairs(CONDITIONPRIORITY) do
-    if conditionData[conditionName] then return index end
-  end
-end
-
-local function sortActionByType(actionData)
-  for index, actionName in ipairs(ACTIONPRIORITY) do
-    if actionData[actionName] then return index end
-  end
-end
 
 
 local function matchesAllConditions(object, conditions)
@@ -225,7 +96,7 @@ local function getMatchingInstanceModules(object)
   --- like perhaps the ID changing due to load order fuckery (which is why we used the GO itself as a key in the first place)
   local objectString = object.id
 
-  for _, actionList in pairs(ObjectModificationStore) do
+  for _, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
     for _, actionData in ipairs(actionList) do
       local actionTableHash = tableHash(actionData)
       local shouldProcess = actionData.conditions and matchesAllConditions(object.actionData.conditions)
@@ -307,56 +178,11 @@ local function getRotationValue(isRelative, rotateActionDetails, currentTransfor
   return rootTransform
 end
 
-local composedReplacements = StaticReplacements.ComposedReplacements
-
-local function loadSwitcherModule(meshReplacementsPath, baseName)
-  local meshReplacementsFile = vfs.open(meshReplacementsPath)
-  local meshReplacementsText = meshReplacementsFile:read('*all')
-
-  if not meshReplacementsText then error('Failed to read' .. meshReplacementsFile .. '!') end
-
-  MeshReplacementModulesLen = MeshReplacementModulesLen + 1
-  MeshReplacementModules[MeshReplacementModulesLen] = baseName
-
-  ---@type SSSModuleRaw
-  local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
-
-  ---@cast meshReplacementsTable SSSModuleInstances
-  if meshReplacementsTable.instances then
-    local modStore = {}
-
-    for index, instance_action in ipairs(meshReplacementsTable.instances) do
-      if instance_action.conditions then
-        instance_action.conditions = aux_util.mapFilterSort(instance_action.conditions, sortConditionByType)
-      end
-
-      instance_action.actions = aux_util.mapFilterSort(instance_action.actions, sortActionByType)
-
-      modStore[index] = instance_action
-    end
-
-    ObjectModificationStore[baseName] = modStore
-  else
-    ---@cast meshReplacementsTable SSSModuleStatic
-    composedReplacements[baseName] = staticLoaderModuleHandler(meshReplacementsTable)
-  end
-
-  meshReplacementsFile:close()
-end
-
-
-for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
-  local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
-  if baseName ~= 'example' then
-    loadSwitcherModule(meshReplacementsPath, baseName)
-  end
-end
-
 return {
   interface = {
     getRefNum = staticUtil.getRefNum,
     objectModificationStore = function()
-      return util.makeReadOnly(ObjectModificationStore)
+      return util.makeReadOnly(ModuleCatalog.ObjectModificationStore)
     end,
     overrideRecords = function()
       return util.makeReadOnly(StaticReplacements.OverrideRecords)
@@ -367,7 +193,7 @@ return {
     uninstallModule = function(moduleName)
       ModuleToRemove = uninstallModule(moduleName)
     end,
-    version = 2,
+    version = 3,
   },
   interfaceName = "StaticSwitcher_G",
   engineHandlers = {
