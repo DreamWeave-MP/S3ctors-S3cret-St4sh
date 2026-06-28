@@ -31,15 +31,13 @@ function DeleteManager:processDeleteQueue()
       local object = objectInfo.object
 
       if objectInfo.removeOrDisable then
-        if object:isValid() and object.count > 0 then
-          object:remove()
-          remove(self.queue, i)
-        end
+        if object:isValid() and object.count > 0 then object:remove() end
+
+        remove(self.queue, i)
       else
-        if object:isValid() and object.count > 0 then
-          object.enabled = false
-          remove(self.queue, i)
-        end
+        if object:isValid() and object.count > 0 then object.enabled = false end
+
+        remove(self.queue, i)
       end
     end
   end
