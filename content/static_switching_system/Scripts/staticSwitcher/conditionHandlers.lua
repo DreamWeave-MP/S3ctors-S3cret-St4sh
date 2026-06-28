@@ -32,7 +32,7 @@ local conditionHandlers = {
   ---@param cellName string
   ---@return boolean
   cell = function(object, cellName)
-    return object.cell.name == cellName
+    return object.cell.name == cellName or object.cell.id == cellName
   end,
   ---@param object openmw.GObject
   ---@param cellCoords ExteriorGrid
