@@ -29,7 +29,7 @@ local function uninstallModule(fileName)
   end
 
   for newObject, oldObject in pairs(localModuleReplacements) do
-    oldObject.enabled = true
+    if oldObject:isValid() and oldObject.count >= 1 then oldObject.enabled = true end
     DeleteManager:addObjectToDeleteQueue(newObject, true)
 
     objectsToRemoveLength = objectsToRemoveLength + 1
