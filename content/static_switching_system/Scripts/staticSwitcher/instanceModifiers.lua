@@ -158,7 +158,6 @@ local function getScaleValue(scaleAction, referenceScale)
 end
 
 ---@param transformAction SSSTransformAction
----@param modifyTarget openmw.GObject
 ---@param newTransform openmw.util.Transform
 ---@param newPos openmw.util.Vector3
 ---@param targetScale number
@@ -166,14 +165,14 @@ end
 ---@return openmw.util.Transform newTransform
 ---@return openmw.util.Vector3 newPos
 ---@return number targetScale
-local function accumulateTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
+local function accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
   local wasModified = false
   local useRelativeTransform = transformAction.transform_type == nil or
       transformAction.transform_type == 'relative'
 
   local scaleAction = transformAction.scale
   if scaleAction then
-    local referenceScale = useRelativeTransform and modifyTarget.scale or 1.0
+    local referenceScale = useRelativeTransform and targetScale or 1.0
     targetScale = getScaleValue(scaleAction, referenceScale)
     wasModified = true
   end
@@ -230,7 +229,7 @@ local function tryModifyObject(object, instanceModificationList)
       elseif transformAction then
         local didTransform
         didTransform, newTransform, newPos, targetScale =
-            accumulateTransformAction(transformAction, modifyTarget, newTransform, newPos, targetScale)
+            accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
         wasModified = wasModified or didTransform
       end
     end
