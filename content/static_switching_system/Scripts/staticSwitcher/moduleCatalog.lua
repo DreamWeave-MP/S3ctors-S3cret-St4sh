@@ -26,6 +26,9 @@ local ACTIONPRIORITY                                    = {
 
 ---@type string[]
 local CONDITIONPRIORITY                                 = {
+  --- Locational condtions have highest priority
+  'cell',
+  'coords',
   'content_file',
   'object_type',
   --- Record ID comes before many other searches as it's likely to be cheap and common
