@@ -107,8 +107,6 @@ local function staticModuleLoader(meshReplacementsTable)
         + (ignoreRecords and 1 or 0)
         + (meshReplacementsTable.log_name and 1 or 0)
     replacementTable = table.new(0, numElements)
-
-    print('allocating replacement table with', numElements, 'elements')
   else
     replacementTable = {}
   end
