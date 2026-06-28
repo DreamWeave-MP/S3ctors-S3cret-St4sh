@@ -185,24 +185,18 @@
                 }
             ]
         },
-        "gridOrGridList": {
-            "oneOf": [
-                {
-                    "$ref": "#/definitions/exteriorGrid"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/exteriorGrid"
-                    },
-                    "minItems": 1
-                }
-            ]
+        "exteriorGridList": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/exteriorGrid"
+            },
+            "minItems": 1,
+            "description": "One or more exterior grid coordinates. This must be an array because table-valued condition payloads are treated as OR-lists by the loader."
         },
-        "carryingOrCarryingList": {
+        "carryingConditionValue": {
             "oneOf": [
                 {
-                    "$ref": "#/definitions/carryingCondition"
+                    "$ref": "#/definitions/recordId"
                 },
                 {
                     "type": "array",
@@ -217,13 +211,13 @@
             "type": "object",
             "properties": {
                 "carrying": {
-                    "$ref": "#/definitions/carryingOrCarryingList"
+                    "$ref": "#/definitions/carryingConditionValue"
                 },
                 "cell": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
                 "coords": {
-                    "$ref": "#/definitions/gridOrGridList"
+                    "$ref": "#/definitions/exteriorGridList"
                 },
                 "content_file": {
                     "$ref": "#/definitions/stringOrStringList"
