@@ -96,6 +96,7 @@
 ---@class SSSInstanceRule
 ---@field conditions SSSConditionData[]?
 ---@field actions SSSInstanceAction[]
+---@field actionHash string hash of the table. Provided *after* being parsed from YAML data.
 ---@field once boolean?
 
 ---@alias SSSObjectModificationStore table<string, SSSInstanceRule[]>

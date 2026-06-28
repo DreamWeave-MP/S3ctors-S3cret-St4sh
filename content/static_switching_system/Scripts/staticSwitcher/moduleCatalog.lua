@@ -5,6 +5,7 @@ local markup                                            = require 'openmw.markup
 local vfs                                               = require 'openmw.vfs'
 
 local szudzik                                           = require 'scripts.s3.szudzik'
+local tableHash                                         = require 'scripts.s3.tableHash'
 
 local staticUtil                                        = require 'Scripts.staticSwitcher.util'
 
@@ -174,6 +175,9 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
       end
 
       instance_action.actions = aux_util.mapFilterSort(instance_action.actions, sortActionByType)
+
+      local actionHash = tableHash(instance_action)
+      instance_action.actionHash = actionHash
 
       modStore[index] = instance_action
     end
