@@ -43,24 +43,28 @@ local NullFunction = require 'scripts.s3.nullFunction'
 local UpdateFunction = NullFunction
 local processActiveObject, processDeletions, processUninstall
 
+local REPLACE_PER_BATCH = 4
+
 processActiveObject = function()
-  local numObjects = #ActiveObjectStack; local object = ActiveObjectStack[numObjects]
+  for _ = 1, REPLACE_PER_BATCH do
+    local numObjects = #ActiveObjectStack; local object = ActiveObjectStack[numObjects]
 
-  if object then
-    if object:isValid() and object.count >= 1 then
-      local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+    if object then
+      if object:isValid() and object.count >= 1 then
+        local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
 
-      --- I don't like this.
-      --- Ideally we should have like, a special type that gets assigned to each module, or something
-      --- a more bespoke way to describe what *type* of module it is
-      if instanceModificationList then
-        InstanceModifiers.tryModifyObject(object, instanceModificationList)
-      else
-        StaticReplacements.tryReplaceObject(object)
+        --- I don't like this.
+        --- Ideally we should have like, a special type that gets assigned to each module, or something
+        --- a more bespoke way to describe what *type* of module it is
+        if instanceModificationList then
+          InstanceModifiers.tryModifyObject(object, instanceModificationList)
+        else
+          StaticReplacements.tryReplaceObject(object)
+        end
       end
-    end
 
-    ActiveObjectStack[numObjects] = nil
+      ActiveObjectStack[numObjects] = nil
+    end
   end
 
   if not DeleteManager:queueIsEmpty() then
