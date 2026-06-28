@@ -1,40 +1,30 @@
 ---@omw-context global
 
-local types                        = require 'openmw.types'
-local world                        = require 'openmw.world'
+local world                 = require 'openmw.world'
 
-local szudzik                      = require 'scripts.s3.szudzik'
+local szudzik               = require 'scripts.s3.szudzik'
 
 ---@type StaticUtil
-local staticUtil                   = require 'scripts.staticSwitcher.util'
+local staticUtil            = require 'scripts.staticSwitcher.util'
 
-local INVALID_TYPE                 = 'Invalid type was provided: %s'
+local SwitcherSection       = require 'openmw.storage'.globalSection 'SettingsStaticSwitcher'
 
-local SwitcherSection              = require 'openmw.storage'.globalSection 'SettingsStaticSwitcher'
-
-local createActivatorDraft,
-createRecord,
-objectIsStatic,
-objectIsActivator                  =
-    types.Activator.createRecordDraft,
-    world.createRecord,
-    types.Static.objectIsInstance,
-    types.Activator.objectIsInstance
+local createRecord          = world.createRecord
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
-local ComposedReplacements         = {}
+local ComposedReplacements  = {}
 
 --- Maps module names to the record ids they manage
 ---@type SSSOverrideRecords
-local OverrideRecords              = {}
+local OverrideRecords       = {}
 
 ---@type SSSReplacedObjectSet
-local ReplacedObjectSet            = {}
+local ReplacedObjectSet     = {}
 
 ---@type SSSDeleteManager
 local DeleteManager
 
-local assert, error, ipairs, pairs = assert, error, ipairs, pairs
+local assert, ipairs, pairs = assert, ipairs, pairs
 
 ---@param object openmw.GObject
 ---@param oldRecord openmw.types.ActivatorRecord
