@@ -120,8 +120,8 @@ local function replacementTableMatchesCell(replacementTable, cell)
   for _, cellName in ipairs(nameMatches) do
     if cellName == cellIdLower
         or cellName == cellNameLower
-        or cellNameLower:match(cellName)
-        or cellIdLower:match(cellName)
+        or cellNameLower:find(cellName, 1, true)
+        or cellIdLower:find(cellName, 1, true)
     then
       return true
     end

@@ -63,7 +63,7 @@ local conditionHandlers = {
     if objectRecord.name == nil or objectRecord.name == '' then return false end
 
     return objectRecord.name == targetName
-        or objectRecord.name:match(targetName) ~= nil
+        or objectRecord.name:find(targetName, 1, true) ~= nil
   end,
   ---@param object openmw.GObject
   ---@param targetTypeName string
@@ -85,7 +85,7 @@ local conditionHandlers = {
   record_id = function(object, targetRecordId)
     local originalId, lowerId = object.recordId, targetRecordId:lower()
 
-    return originalId == lowerId or originalId:match(lowerId)
+    return originalId == lowerId or originalId:find(lowerId, 1, true) ~= nil
   end,
   ---@param object openmw.GObject
   ---@param targetRefNum number
