@@ -49,12 +49,10 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
 
   local newRecord = { model = newModel }
 
-  if not objectIsStatic(object) and not objectIsActivator(object) then
-    error(INVALID_TYPE:format(object.type))
-  end
-
   local scriptId = ''
 
+  --- We now allow any record type, but,
+  --- we don't necessarily copy all the relevant data for all possible types yet
   if oldRecord.name then newRecord.name = oldRecord.name end
 
   if oldRecord.mwscript then
@@ -62,7 +60,7 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
     newRecord.mwscript = scriptId
   end
 
-  moduleRecords[oldRecordId] = createRecord(createActivatorDraft(newRecord)).id
+  moduleRecords[oldRecordId] = createRecord(object.type.createRecordDraft(newRecord)).id
 end
 
 ---@param object openmw.GObject
