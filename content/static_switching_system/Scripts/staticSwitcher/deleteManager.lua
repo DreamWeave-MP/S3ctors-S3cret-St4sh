@@ -2,6 +2,8 @@
 
 local TICKS_TO_DELETE = 3
 
+local next, remove = next, table.remove
+
 ---@class SSSDeleteManager
 ---@field queue ObjectDeleteData[]
 local DeleteManager = {
@@ -31,11 +33,11 @@ function DeleteManager:processDeleteQueue()
       if objectInfo.removeOrDisable then
         if object:isValid() and object.count > 0 then
           object:remove()
-          table.remove(self.queue, i)
+          remove(self.queue, i)
         end
       else
         object.enabled = false
-        table.remove(self.queue, i)
+        remove(self.queue, i)
       end
     end
   end
