@@ -1,7 +1,6 @@
 ---@omw-context global | menu
 
 local aux_util                                                                           = require 'openmw_aux.util'
-local util                                                                               = require 'openmw.util'
 local vfs                                                                                = require 'openmw.vfs'
 
 ---@type ContentFileBits
@@ -16,6 +15,13 @@ local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FO
     [[Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]],
     '[ %s ]:',
     '%s%s'
+
+local assert, error, ipairs, pairs, print, tonumber, type                                =
+    assert, error, ipairs, pairs, print, tonumber, type
+
+local Insert, IsArray, Max, Floor                                                        =
+---@diagnostic disable-next-line: undefined-field
+    table.insert, table.isarray, math.max, math.floor
 
 ---@param modelPath string
 ---@param originalModel string
@@ -154,13 +160,13 @@ end
 ---@param object openmw.GObject
 ---@return boolean isGenerated, number refNum
 function staticUtil.getRefNum(object)
-    local objectId = tonumber(object.id)
+    local idString = object.id; local objectId = tonumber(idString)
 
     if objectId then
-        return false, util.bitXor(objectId, ContentFileBits)
+        return false, objectId % ContentFileBits
     else
         local generatedRef = tonumber(
-            object.id:sub(2, #object.id)
+            idString:sub(2, #idString)
         )
 
         assert(generatedRef)
@@ -178,11 +184,11 @@ local function is_table_array(t)
     local count = 0
 
     for k, _ in pairs(t) do
-        if type(k) ~= "number" or k < 1 or math.floor(k) ~= k then
+        if type(k) ~= "number" or k < 1 or Floor(k) ~= k then
             return false
         end
 
-        max_index = math.max(max_index, k)
+        max_index = Max(max_index, k)
         count = count + 1
     end
 
@@ -199,9 +205,9 @@ function staticUtil.mergeTables(target, source, is_array)
         return target
     end
 
-    if is_array or (table.isarray and table.isarray(source)) or is_table_array(source) then
+    if is_array or (IsArray and IsArray(source)) or is_table_array(source) then
         for _, value in ipairs(source) do
-            table.insert(target, value)
+            Insert(target, value)
         end
     else
         for key, value in pairs(source) do
