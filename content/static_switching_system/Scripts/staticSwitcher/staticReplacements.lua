@@ -94,7 +94,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
   replacement:setScale(object.scale)
 
   ---@diagnostic disable-next-line: param-type-mismatch
-  replacement:teleport(object.cell.name, object.position, object.rotation)
+  replacement:teleport(object.cell, object.position, object.rotation)
 
   DeleteManager:addObjectToDeleteQueue(object, false)
 
