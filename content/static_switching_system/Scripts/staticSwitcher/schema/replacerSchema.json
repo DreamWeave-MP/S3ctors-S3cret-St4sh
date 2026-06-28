@@ -2,6 +2,276 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Static Switcher Module",
     "type": "object",
+    "definitions": {
+        "recordId": {
+            "type": "string"
+        },
+        "numericRange": {
+            "oneOf": [
+                {
+                    "type": "number",
+                    "description": "Fixed numeric value"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "min": {
+                            "type": "number",
+                            "description": "Optional minimum value"
+                        },
+                        "max": {
+                            "type": "number",
+                            "description": "Required maximum value"
+                        }
+                    },
+                    "required": [
+                        "max"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Random range with optional lower bound"
+                }
+            ]
+        },
+        "vector3Range": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "$ref": "#/definitions/numericRange"
+                },
+                "y": {
+                    "$ref": "#/definitions/numericRange"
+                },
+                "z": {
+                    "$ref": "#/definitions/numericRange"
+                }
+            },
+            "additionalProperties": false
+        },
+        "exteriorGrid": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "type": "integer"
+                },
+                "y": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "x",
+                "y"
+            ],
+            "additionalProperties": false
+        },
+        "replacementMap": {
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "type": "string"
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+        },
+        "replaceAction": {
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+        },
+        "transformAction": {
+            "type": "object",
+            "properties": {
+                "scale": {
+                    "$ref": "#/definitions/numericRange"
+                },
+                "rotate": {
+                    "$ref": "#/definitions/vector3Range"
+                },
+                "position": {
+                    "$ref": "#/definitions/vector3Range"
+                },
+                "transform_type": {
+                    "type": "string",
+                    "enum": [
+                        "relative",
+                        "absolute"
+                    ],
+                    "default": "relative",
+                    "description": "Whether transformations should be applied relative to existing values (default) or as absolute replacements"
+                }
+            },
+            "additionalProperties": false
+        },
+        "instanceAction": {
+            "type": "object",
+            "oneOf": [
+                {
+                    "properties": {
+                        "replace": {
+                            "$ref": "#/definitions/replaceAction"
+                        }
+                    },
+                    "required": [
+                        "replace"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "properties": {
+                        "transform": {
+                            "$ref": "#/definitions/transformAction"
+                        }
+                    },
+                    "required": [
+                        "transform"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "carryingCount": {
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+        },
+        "carryingCondition": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/recordId"
+                },
+                {
+                    "$ref": "#/definitions/carryingCount"
+                }
+            ]
+        },
+        "stringOrStringList": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1
+                }
+            ]
+        },
+        "numberOrNumberList": {
+            "oneOf": [
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 1
+                }
+            ]
+        },
+        "gridOrGridList": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/exteriorGrid"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/exteriorGrid"
+                    },
+                    "minItems": 1
+                }
+            ]
+        },
+        "carryingOrCarryingList": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/carryingCondition"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/carryingCondition"
+                    },
+                    "minItems": 1
+                }
+            ]
+        },
+        "conditionData": {
+            "type": "object",
+            "properties": {
+                "carrying": {
+                    "$ref": "#/definitions/carryingOrCarryingList"
+                },
+                "cell": {
+                    "$ref": "#/definitions/stringOrStringList"
+                },
+                "coords": {
+                    "$ref": "#/definitions/gridOrGridList"
+                },
+                "content_file": {
+                    "$ref": "#/definitions/stringOrStringList"
+                },
+                "name": {
+                    "$ref": "#/definitions/stringOrStringList"
+                },
+                "object_type": {
+                    "$ref": "#/definitions/stringOrStringList"
+                },
+                "record_id": {
+                    "$ref": "#/definitions/stringOrStringList"
+                },
+                "ref_num": {
+                    "$ref": "#/definitions/numberOrNumberList"
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+        },
+        "instanceRule": {
+            "type": "object",
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/conditionData"
+                    },
+                    "minItems": 1
+                },
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/instanceAction"
+                    },
+                    "minItems": 1
+                },
+                "once": {
+                    "type": "boolean",
+                    "description": "Whether to process this rule only once per object."
+                }
+            },
+            "required": [
+                "actions"
+            ],
+            "additionalProperties": false
+        }
+    },
     "properties": {
         "log_name": {
             "type": "string",
@@ -18,20 +288,7 @@
         "exterior_cells": {
             "type": "array",
             "items": {
-                "type": "object",
-                "properties": {
-                    "x": {
-                        "type": "integer"
-                    },
-                    "y": {
-                        "type": "integer"
-                    }
-                },
-                "required": [
-                    "x",
-                    "y"
-                ],
-                "additionalProperties": false
+                "$ref": "#/definitions/exteriorGrid"
             },
             "minItems": 1,
             "description": "List of exterior cell coordinates to replace objects in"
@@ -39,230 +296,132 @@
         "ignore_records": {
             "type": "array",
             "items": {
-                "type": "string"
+                "$ref": "#/definitions/recordId"
             },
             "minItems": 1,
             "description": "List of records to ignore when replacing objects for this module"
         },
         "replace_meshes": {
-            "type": "object",
-            "patternProperties": {
-                "^.*$": {
-                    "type": "string"
-                }
-            },
-            "minProperties": 1,
-            "description": "Mapping of mesh paths to replace"
+            "$ref": "#/definitions/replacementMap",
+            "description": "Mapping of old mesh paths to replacement mesh paths"
         },
         "instances": {
-            "type": "object",
-            "description": "set of specific gameObjects to attempt replacing or altering",
-            "patternProperties": {
-                "^.*\\.(esm|esp|esl|omwaddon|omwgame)$": {
-                    "type": "object",
-                    "patternProperties": {
-                        "^[0-9]+$": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "oneOf": [
-                                    {
-                                        "properties": {
-                                            "replace": {
-                                                "type": "object",
-                                                "patternProperties": {
-                                                    "^.*$": {
-                                                        "type": "number",
-                                                        "minimum": 0,
-                                                        "maximum": 1
-                                                    }
-                                                },
-                                                "additionalProperties": false
-                                            },
-                                            "once": {
-                                                "type": "boolean",
-                                                "description": "Whether to attempt replacing this object only once, or each time it spawns."
-                                            }
-                                        },
-                                        "required": [
-                                            "replace"
-                                        ],
-                                        "additionalProperties": false
-                                    },
-                                    {
-                                        "properties": {
-                                            "transform": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "scale": {
-                                                        "oneOf": [
-                                                            {
-                                                                "type": "number",
-                                                                "description": "Fixed scale value"
-                                                            },
-                                                            {
-                                                                "type": "object",
-                                                                "properties": {
-                                                                    "min": {
-                                                                        "type": "number",
-                                                                        "description": "Minimum scale (optional)"
-                                                                    },
-                                                                    "max": {
-                                                                        "type": "number",
-                                                                        "description": "Maximum scale (required)"
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "max"
-                                                                ],
-                                                                "additionalProperties": false,
-                                                                "description": "Random range for scale"
-                                                            }
-                                                        ],
-                                                        "description": "Either fixed value or {min?, max} range"
-                                                    },
-                                                    "rotate": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "x": {
-                                                                "type": "number"
-                                                            },
-                                                            "y": {
-                                                                "type": "number"
-                                                            },
-                                                            "z": {
-                                                                "type": "number"
-                                                            }
-                                                        },
-                                                        "anyOf": [
-                                                            {
-                                                                "required": [
-                                                                    "x"
-                                                                ]
-                                                            },
-                                                            {
-                                                                "required": [
-                                                                    "y"
-                                                                ]
-                                                            },
-                                                            {
-                                                                "required": [
-                                                                    "z"
-                                                                ]
-                                                            }
-                                                        ]
-                                                    },
-                                                    "transform_type": {
-                                                        "type": "string",
-                                                        "enum": [
-                                                            "relative",
-                                                            "absolute"
-                                                        ],
-                                                        "default": "relative",
-                                                        "description": "Whether transformations should be applied relative to existing values (default) or as absolute replacements"
-                                                    }
-                                                },
-                                                "additionalProperties": false
-                                            }
-                                        },
-                                        "required": [
-                                            "transform"
-                                        ],
-                                        "additionalProperties": false
-                                    }
-                                ]
-                            },
-                            "minItems": 1
-                        }
-                    },
-                    "additionalProperties": false
-                }
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/instanceRule"
             },
-            "additionalProperties": false,
-            "examples": [
-                {
-                    "Morrowind.esm": {
-                        "67647": [
-                            {
-                                "replace": {
-                                    "dremora": 0.25,
-                                    "dremora_special_fyr": 0.01,
-                                    "dremora_gothren_guard2": 0.33
-                                }
-                            },
-                            {
-                                "transform": {
-                                    "scale": 1.5,
-                                    "rotate": [
-                                        0,
-                                        90,
-                                        0
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
+            "minItems": 1,
+            "description": "Ordered rules for specific object replacement or transformation"
         }
     },
     "oneOf": [
         {
-            "allOf": [
-                {
-                    "required": [
-                        "instances"
-                    ],
-                    "not": {
-                        "anyOf": [
-                            {
-                                "required": [
-                                    "replace_names"
-                                ]
-                            },
-                            {
-                                "required": [
-                                    "exterior_cells"
-                                ]
-                            },
-                            {
-                                "required": [
-                                    "replace_meshes"
-                                ]
-                            }
+            "required": [
+                "instances"
+            ],
+            "not": {
+                "anyOf": [
+                    {
+                        "required": [
+                            "replace_names"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "exterior_cells"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "replace_meshes"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "ignore_records"
                         ]
                     }
-                }
-            ]
+                ]
+            }
         },
         {
-            "allOf": [
+            "required": [
+                "replace_meshes"
+            ],
+            "anyOf": [
                 {
                     "required": [
-                        "replace_meshes"
+                        "replace_names"
                     ]
                 },
                 {
-                    "anyOf": [
+                    "required": [
+                        "exterior_cells"
+                    ]
+                }
+            ],
+            "not": {
+                "required": [
+                    "instances"
+                ]
+            }
+        }
+    ],
+    "additionalProperties": false,
+    "examples": [
+        {
+            "log_name": "Example static module",
+            "replace_names": [
+                "suran"
+            ],
+            "exterior_cells": [
+                {
+                    "x": 6,
+                    "y": -7
+                }
+            ],
+            "replace_meshes": {
+                "x/ex_hlaalu_b_01.nif": "my_mod/ex_hlaalu_b_01.nif"
+            }
+        },
+        {
+            "log_name": "Example instance module",
+            "instances": [
+                {
+                    "conditions": [
                         {
-                            "required": [
-                                "replace_names"
-                            ]
+                            "content_file": "Morrowind.esm"
                         },
                         {
-                            "required": [
-                                "exterior_cells"
-                            ]
+                            "ref_num": 67647
+                        }
+                    ],
+                    "once": true,
+                    "actions": [
+                        {
+                            "replace": {
+                                "dremora": 0.25,
+                                "dremora_special_fyr": 0.01,
+                                "dremora_gothren_guard2": 0.33
+                            }
+                        },
+                        {
+                            "transform": {
+                                "scale": 1.5,
+                                "rotate": {
+                                    "z": 90
+                                },
+                                "position": {
+                                    "x": {
+                                        "min": -32,
+                                        "max": 32
+                                    }
+                                }
+                            }
                         }
                     ]
                 }
             ]
-        },
-        {
-            "not": {
-                "instances": "object"
-            }
         }
-    ],
-    "additionalProperties": false
+    ]
 }
