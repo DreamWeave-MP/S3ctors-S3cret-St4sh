@@ -194,16 +194,6 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
   meshReplacementsFile:close()
 end
 
----@type SSSModuleCatalog
-local ModuleCatalog = {
-  moduleNames = MeshReplacementModules,
-  numModules = MeshReplacementModulesLen,
-  --- Indexed first by module name, then an array of actions and conditions
-  --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
-  --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
-  ObjectModificationStore = ObjectModificationStore,
-}
-
 ---@param staticReplacements SSSStaticReplacements
 ---@return SSSModuleCatalog
 return function(staticReplacements)
@@ -214,5 +204,13 @@ return function(staticReplacements)
     loadSwitcherModule(meshReplacementsPath, baseName)
   end
 
-  return ModuleCatalog
+  ---@type SSSModuleCatalog
+  return {
+    moduleNames = MeshReplacementModules,
+    numModules = MeshReplacementModulesLen,
+    --- Indexed first by module name, then an array of actions and conditions
+    --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
+    --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
+    ObjectModificationStore = ObjectModificationStore,
+  }
 end
