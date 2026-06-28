@@ -6,7 +6,7 @@ local staticUtil          = require 'scripts.staticswitcher.util'
 
 local INVALID_MODULE_NAME = 'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.'
 
----@type SSSDeleteManager?
+---@type SSSDeleteManager
 local DeleteManager
 
 ---@type SSSReplacedObjectSet
@@ -30,7 +30,7 @@ local function uninstallModule(fileName)
 
   for newObject, oldObject in pairs(localModuleReplacements) do
     oldObject.enabled = true
-    assert(DeleteManager):addObjectToDeleteQueue(newObject, true)
+    DeleteManager:addObjectToDeleteQueue(newObject, true)
 
     objectsToRemoveLength = objectsToRemoveLength + 1
     objectsToRemove[objectsToRemoveLength] = newObject
