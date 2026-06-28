@@ -13,7 +13,7 @@ return function(itemData)
   nameInputBox.props.inheritAlpha = false
   local confirmScreen = {
     type = ui.TYPE.Flex,
-    layer = 'HUD',
+    layer = 'Windows',
     props = {
       name = "Confirm Screen",
       relativeSize = util.vector2(.25, .25),
