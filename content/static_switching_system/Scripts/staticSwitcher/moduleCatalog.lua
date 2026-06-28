@@ -40,7 +40,9 @@ local CONDITIONPRIORITY                                 = {
   'carrying',
 }
 
-local error, ipairs, pairs                              = error, ipairs, pairs
+local error, ipairs, NewTable, next, nkeys, pairs       =
+---@diagnostic disable-next-line: undefined-field
+    error, ipairs, table.new, next, table.nkeys, pairs
 
 ---@param conditionData SSSConditionData
 ---@return integer?
@@ -64,9 +66,9 @@ local function staticModuleLoader(meshReplacementsTable)
   if meshReplacementsTable.replace_meshes and next(meshReplacementsTable.replace_meshes) ~= nil then
     --- Rubic0n annotations need updated for OpenResty additions
     ---@diagnostic disable-next-line: undefined-field
-    if table.new then
+    if NewTable then
       ---@diagnostic disable-next-line: undefined-field
-      meshMap = table.new(0, table.nkeys(meshReplacementsTable.replace_meshes))
+      meshMap = NewTable(0, nkeys(meshReplacementsTable.replace_meshes))
     else
       meshMap = {}
     end
@@ -74,8 +76,8 @@ local function staticModuleLoader(meshReplacementsTable)
 
   local cellNameMatches
   if meshReplacementsTable.replace_names and next(meshReplacementsTable.replace_names) ~= nil then
-    if table.new then
-      cellNameMatches = table.new(#meshReplacementsTable.replace_names, 0)
+    if NewTable then
+      cellNameMatches = NewTable(#meshReplacementsTable.replace_names, 0)
     else
       cellNameMatches = {}
     end
@@ -83,8 +85,8 @@ local function staticModuleLoader(meshReplacementsTable)
 
   local gridIndices
   if meshReplacementsTable.exterior_cells and next(meshReplacementsTable.exterior_cells) ~= nil then
-    if table.new then
-      gridIndices = table.new(0, #meshReplacementsTable.exterior_cells)
+    if NewTable then
+      gridIndices = NewTable(0, #meshReplacementsTable.exterior_cells)
     else
       gridIndices = {}
     end
@@ -92,21 +94,21 @@ local function staticModuleLoader(meshReplacementsTable)
 
   local ignoreRecords
   if meshReplacementsTable.ignore_records and next(meshReplacementsTable.ignore_records) ~= nil then
-    if table.new then
-      ignoreRecords = table.new(0, #meshReplacementsTable.ignore_records)
+    if NewTable then
+      ignoreRecords = NewTable(0, #meshReplacementsTable.ignore_records)
     else
       ignoreRecords = {}
     end
   end
 
   local replacementTable
-  if table.new then
+  if NewTable then
     local numElements = (meshMap and 1 or 0)
         + (cellNameMatches and 1 or 0)
         + (gridIndices and 1 or 0)
         + (ignoreRecords and 1 or 0)
         + (meshReplacementsTable.log_name and 1 or 0)
-    replacementTable = table.new(0, numElements)
+    replacementTable = NewTable(0, numElements)
   else
     replacementTable = {}
   end
