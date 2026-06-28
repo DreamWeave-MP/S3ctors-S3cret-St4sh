@@ -12,6 +12,8 @@ local DeleteManager
 ---@type SSSReplacedObjectSet
 local ReplacedObjectSet
 
+local assert, next, pairs = assert, next, pairs
+
 --- Remove all objects which were replaced by a given module
 --- After all objects from this module are inserted into the delete queue, mark this module as unusable for replacements
 ---@param fileName string
