@@ -67,7 +67,7 @@ local function getMatchingInstanceModules(object)
   for _, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
     for _, actionData in ipairs(actionList) do
       local actionTableHash = tableHash(actionData)
-      local shouldProcess = actionData.conditions and matchesAllConditions(object, actionData.conditions)
+      local shouldProcess = not actionData.conditions or matchesAllConditions(object, actionData.conditions)
 
       -- Action conditions have been evaluated already, and this action can only run once
       if actionData.once and
