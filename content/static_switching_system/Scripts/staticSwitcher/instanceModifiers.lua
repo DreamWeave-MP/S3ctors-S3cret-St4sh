@@ -216,7 +216,7 @@ local function tryModifyObject(object, instanceModificationList)
   local modifyTarget = object
   --- Do replacements first, then transforms, then item additions/removals, then spells
 
-  local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, 1.0
+  local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, object.scale
 
   for _, instanceModification in ipairs(instanceModificationList) do
     for _, actionData in ipairs(instanceModification) do
