@@ -26,7 +26,7 @@ local ACTIONPRIORITY                                    = {
 
 ---@type string[]
 local CONDITIONPRIORITY                                 = {
-  --- Locational condtions have highest priority
+  --- Locational conditions have highest priority
   'cell',
   'coords',
   'content_file',
