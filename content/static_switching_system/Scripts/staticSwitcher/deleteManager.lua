@@ -36,8 +36,10 @@ function DeleteManager:processDeleteQueue()
           remove(self.queue, i)
         end
       else
-        object.enabled = false
-        remove(self.queue, i)
+        if object:isValid() and object.count > 0 then
+          object.enabled = false
+          remove(self.queue, i)
+        end
       end
     end
   end
