@@ -3,7 +3,6 @@
 local util                               = require 'openmw.util'
 
 local randomGen                          = require 'scripts.s3.randomGen'
-local tableHash                          = require 'scripts.s3.tableHash'
 
 local actionHandlers                     = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers                  = require 'Scripts.staticSwitcher.conditionHandlers'
@@ -66,7 +65,8 @@ local function getMatchingInstanceModules(object)
 
   for _, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
     for _, actionData in ipairs(actionList) do
-      local actionTableHash = tableHash(actionData)
+      local actionTableHash = actionData.actionHash
+
       local shouldProcess = not actionData.conditions or matchesAllConditions(object, actionData.conditions)
 
       -- Action conditions have been evaluated already, and this action can only run once
