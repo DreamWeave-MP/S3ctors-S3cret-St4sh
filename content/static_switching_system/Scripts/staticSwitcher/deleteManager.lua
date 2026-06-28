@@ -29,7 +29,7 @@ function DeleteManager:processDeleteQueue()
       local object = objectInfo.object
 
       if objectInfo.removeOrDisable then
-        if object.count > 0 and object:isValid() then
+        if object:isValid() and object.count > 0 then
           object:remove()
           table.remove(self.queue, i)
         end
