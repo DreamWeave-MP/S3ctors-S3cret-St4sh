@@ -122,6 +122,14 @@ local conditionHandlers = {
     return refNum == targetRefNum
   end,
   ---@param object openmw.GObject
+  ---@param shouldBeGenerated boolean
+  ---@return boolean
+  generated = function(object, shouldBeGenerated)
+    local isGenerated = staticUtil.getRefNum(object)
+
+    return isGenerated == shouldBeGenerated
+  end,
+  ---@param object openmw.GObject
   ---@param targetRegion string
   ---@return boolean
   region = function(object, targetRegion)

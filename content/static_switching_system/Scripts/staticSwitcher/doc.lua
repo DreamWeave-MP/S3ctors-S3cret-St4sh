@@ -104,6 +104,7 @@
 ---@field object_type string?
 ---@field record_id string?
 ---@field ref_num number?
+---@field generated boolean?
 ---@field region string?
 ---@field scale SSSNumericRange?
 
