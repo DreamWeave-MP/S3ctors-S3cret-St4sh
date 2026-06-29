@@ -133,8 +133,12 @@
 ---@field entries SSSReplacementChain[] serialized chain list containing remappable object handles
 ---@field byObjectId table<string, SSSReplacementChain> runtime-only object-id to chain index rebuilt from entries
 
+---@class SSSReplacementChainSavedEntry
+---@field root openmw.GObject first source object in this chain
+---@field steps SSSReplacementChainStep[] ordered replacement edges
+
 ---@class SSSReplacementChainsSaved
----@field entries SSSReplacementChain[] serialized chain list containing remappable object handles
+---@field entries SSSReplacementChainSavedEntry[] serialized chain list containing remappable object handles
 
 ---@class SSSOnceCacheEntry
 ---@field object openmw.GObject remappable saved object handle used to rebuild the runtime object-id index
