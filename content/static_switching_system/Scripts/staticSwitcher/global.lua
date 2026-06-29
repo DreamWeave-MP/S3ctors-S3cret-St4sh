@@ -162,7 +162,7 @@ return {
         overrideRecords = StaticReplacements.OverrideRecords,
         objectDeleteQueue = DeleteManager.queue,
         instanceModifiers = InstanceModifiers.saveOnceCache(),
-        replacementChains = StaticReplacements.ReplacementChains,
+        replacementChains = StaticReplacements.saveReplacementChains(),
         replacedObjectSet = StaticReplacements.ReplacedObjectSet,
       }
     end,
@@ -179,6 +179,8 @@ return {
       InstanceModifiers.loadOnceCache(data.instanceModifiers)
       staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
       StaticReplacements.loadReplacementChains(data.replacementChains)
+
+      if not DeleteManager:queueIsEmpty() then UpdateFunction = processDeletions end
     end,
   }
 }
