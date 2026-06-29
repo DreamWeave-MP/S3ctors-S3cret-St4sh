@@ -110,8 +110,10 @@ settingsGroup:subscribe(
   require 'openmw.async':callback(
     function(_, key)
       if key == 'StaticSwitcherDisableModule' then
-        ModuleToRemove = settingsGroup:get('StaticSwitcherModuleSelect')
-        uninstallModule(ModuleToRemove)
+        local removedModule = uninstallModule(settingsGroup:get('StaticSwitcherModuleSelect'))
+        if not removedModule then return end
+
+        ModuleToRemove = removedModule
         UpdateFunction = processDeletions
       end
     end
