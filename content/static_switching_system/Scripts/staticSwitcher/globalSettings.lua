@@ -12,6 +12,9 @@ local DeleteManager
 ---@type SSSReplacedObjectSet
 local ReplacedObjectSet
 
+---@type (fun(fileName: string): string?)?
+local ChainUninstallModule
+
 local assert, next, pairs = assert, next, pairs
 
 --- Remove all objects which were replaced by a given module
@@ -19,6 +22,18 @@ local assert, next, pairs = assert, next, pairs
 ---@param fileName string
 ---@return string? removedModule
 local function uninstallModule(fileName)
+  if ChainUninstallModule then
+    local removedModule = ChainUninstallModule(fileName)
+
+    if not removedModule then
+      return staticUtil.Log(
+        INVALID_MODULE_NAME:format(fileName)
+      )
+    end
+
+    return removedModule
+  end
+
   local objectsToRemove, objectsToRemoveLength = {}, 0
   local localModuleReplacements = ReplacedObjectSet[fileName]
 
@@ -47,12 +62,14 @@ end
 ---@param meshReplacementModules string[]
 ---@param deleteManager SSSDeleteManager
 ---@param replacedObjectSet SSSReplacedObjectSet
+---@param chainUninstallModule (fun(fileName: string): string?)?
 ---@return fun(fileName: string): string? uninstallModule
-return function(meshReplacementModules, deleteManager, replacedObjectSet)
+return function(meshReplacementModules, deleteManager, replacedObjectSet, chainUninstallModule)
   if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
 
   DeleteManager = assert(deleteManager)
   ReplacedObjectSet = assert(replacedObjectSet)
+  ChainUninstallModule = chainUninstallModule
 
   I.Settings.registerGroup {
     key = 'SettingsStaticSwitcher',
