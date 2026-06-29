@@ -9,8 +9,19 @@ local tableHash                                         = require 'scripts.s3.ta
 
 local staticUtil                                        = require 'Scripts.staticSwitcher.util'
 
+local DATA_PREFIX                                         = 'scripts/staticswitcher/data/'
+
 ---@type string[], integer
-local MeshReplacementModules, MeshReplacementModulesLen = {}, 0
+local ModuleIds, ModuleIdsLen                             = {}, 0
+
+---@type table<string, SSSModuleIdentity>
+local Modules                                             = {}
+
+---@type table<string, string>
+local ModuleLabels                                        = {}
+
+---@type table<string, string[]>
+local LegacyIdsByBasename                                 = {}
 
 ---@type SSSObjectModificationStore
 local ObjectModificationStore                           = {}
@@ -40,9 +51,54 @@ local CONDITIONPRIORITY                                 = {
   'carrying',
 }
 
-local error, ipairs, NewTable, next, nkeys, pairs       =
+local error, ipairs, NewTable, next, nkeys, pairs, sort   =
 ---@diagnostic disable-next-line: undefined-field
-    error, ipairs, table.new, next, table.nkeys, pairs
+    error, ipairs, table.new, next, table.nkeys, pairs, table.sort
+
+---@param modulePath string
+---@return string pathWithoutExtension
+local function stripYamlExtension(modulePath)
+  return modulePath:gsub('%.yaml$', ''):gsub('%.yml$', '')
+end
+
+---@param modulePath string
+---@return string label
+local function getModuleLabel(modulePath)
+  return stripYamlExtension(modulePath):gsub('^' .. DATA_PREFIX, '')
+end
+
+---@param modulePath string
+---@return SSSModuleIdentity moduleIdentity
+local function createModuleIdentity(modulePath)
+  local moduleId = staticUtil.normalizePath(modulePath)
+  local displayName = staticUtil.getPathBaseName(moduleId)
+
+  return {
+    id = moduleId,
+    path = moduleId,
+    displayName = displayName,
+    label = getModuleLabel(moduleId),
+  }
+end
+
+---@param moduleIdentity SSSModuleIdentity
+local function addModuleIdentity(moduleIdentity)
+  local moduleId, displayName = moduleIdentity.id, moduleIdentity.displayName
+
+  Modules[moduleId] = moduleIdentity
+  ModuleLabels[moduleId] = moduleIdentity.label
+
+  ModuleIdsLen = ModuleIdsLen + 1
+  ModuleIds[ModuleIdsLen] = moduleId
+
+  local legacyIds = LegacyIdsByBasename[displayName]
+  if not legacyIds then
+    legacyIds = {}
+    LegacyIdsByBasename[displayName] = legacyIds
+  end
+
+  legacyIds[#legacyIds + 1] = moduleId
+end
 
 ---@param conditionData SSSConditionData
 ---@return integer?
@@ -153,15 +209,14 @@ end
 
 
 ---@param meshReplacementsPath string
----@param baseName string
-local function loadSwitcherModule(meshReplacementsPath, baseName)
+---@param moduleIdentity SSSModuleIdentity
+local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
   local meshReplacementsText = meshReplacementsFile:read('*all')
 
   if not meshReplacementsText then error('Failed to read' .. meshReplacementsFile .. '!') end
 
-  MeshReplacementModulesLen = MeshReplacementModulesLen + 1
-  MeshReplacementModules[MeshReplacementModulesLen] = baseName
+  addModuleIdentity(moduleIdentity)
 
   ---@type SSSModuleRaw
   local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
@@ -183,10 +238,10 @@ local function loadSwitcherModule(meshReplacementsPath, baseName)
       modStore[index] = instance_action
     end
 
-    ObjectModificationStore[baseName] = modStore
+    ObjectModificationStore[moduleIdentity.id] = modStore
   else
     ---@cast meshReplacementsTable SSSModuleStatic
-    StaticReplacements.ComposedReplacements[baseName] = staticModuleLoader(meshReplacementsTable)
+    StaticReplacements.ComposedReplacements[moduleIdentity.id] = staticModuleLoader(meshReplacementsTable)
   end
 
   meshReplacementsFile:close()
@@ -197,15 +252,27 @@ end
 return function(staticReplacements)
   StaticReplacements = assert(staticReplacements)
 
+  local modulePaths, modulePathIndex = {}, 0
+
   for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
-    local baseName = staticUtil.getPathBaseName(meshReplacementsPath)
-    loadSwitcherModule(meshReplacementsPath, baseName)
+    modulePathIndex = modulePathIndex + 1
+    modulePaths[modulePathIndex] = staticUtil.normalizePath(meshReplacementsPath)
+  end
+
+  sort(modulePaths)
+
+  for _, meshReplacementsPath in ipairs(modulePaths) do
+    loadSwitcherModule(meshReplacementsPath, createModuleIdentity(meshReplacementsPath))
   end
 
   ---@type SSSModuleCatalog
   return {
-    moduleNames = MeshReplacementModules,
-    numModules = MeshReplacementModulesLen,
+    legacyIdsByBasename = LegacyIdsByBasename,
+    moduleLabels = ModuleLabels,
+    moduleNames = ModuleIds,
+    moduleIds = ModuleIds,
+    modules = Modules,
+    numModules = ModuleIdsLen,
     --- Indexed first by module name, then an array of actions and conditions
     --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
     --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
