@@ -277,7 +277,7 @@
                 "type": "string"
             },
             "minItems": 1,
-            "description": "List of cell names to replace objects within"
+            "description": "Optional list of cell names to replace objects within. If both replace_names and exterior_cells are omitted from a static module, replace_meshes applies in every cell."
         },
         "exterior_cells": {
             "type": "array",
@@ -285,7 +285,7 @@
                 "$ref": "#/definitions/exteriorGrid"
             },
             "minItems": 1,
-            "description": "List of exterior cell coordinates to replace objects in"
+            "description": "Optional list of exterior cell coordinates to replace objects in. If both exterior_cells and replace_names are omitted from a static module, replace_meshes applies in every cell."
         },
         "ignore_records": {
             "type": "array",
@@ -297,7 +297,7 @@
         },
         "replace_meshes": {
             "$ref": "#/definitions/replacementMap",
-            "description": "Mapping of old mesh paths to replacement mesh paths"
+            "description": "Mapping of old mesh paths to replacement mesh paths. With no replace_names or exterior_cells filters, this mapping is unconditional and applies in every cell."
         },
         "instances": {
             "type": "array",
@@ -342,18 +342,6 @@
             "required": [
                 "replace_meshes"
             ],
-            "anyOf": [
-                {
-                    "required": [
-                        "replace_names"
-                    ]
-                },
-                {
-                    "required": [
-                        "exterior_cells"
-                    ]
-                }
-            ],
             "not": {
                 "required": [
                     "instances"
@@ -376,6 +364,12 @@
             ],
             "replace_meshes": {
                 "x/ex_hlaalu_b_01.nif": "my_mod/ex_hlaalu_b_01.nif"
+            }
+        },
+        {
+            "log_name": "Example unconditional static module",
+            "replace_meshes": {
+                "x/common_mesh.nif": "my_mod/common_mesh.nif"
             }
         },
         {
