@@ -482,12 +482,16 @@ end
 local function replacementTableMatchesCell(replacementTable, cell)
   local grid = replacementTable.gridIndices
   local nameMatches = replacementTable.cellNameMatches
+  local regionMatches = replacementTable.regionMatches
 
-  if not grid and not nameMatches then return true end
+  if not grid and not nameMatches and not regionMatches then return true end
 
   if grid and cell.isExterior then
     if grid[szudzik.getIndex(cell.gridX, cell.gridY)] then return true end
   end
+
+  local region = cell.region
+  if regionMatches and region and regionMatches[region:lower()] then return true end
 
   if not nameMatches then return end
 
