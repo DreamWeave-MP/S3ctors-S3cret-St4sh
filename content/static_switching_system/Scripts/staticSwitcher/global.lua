@@ -142,7 +142,10 @@ return {
     end,
     ---@param moduleName string
     uninstallModule = function(moduleName)
-      ModuleToRemove = uninstallModule(moduleName)
+      local removedModule = uninstallModule(moduleName)
+      if not removedModule then return end
+
+      ModuleToRemove = removedModule
       UpdateFunction = processDeletions
     end,
     version = 3,
