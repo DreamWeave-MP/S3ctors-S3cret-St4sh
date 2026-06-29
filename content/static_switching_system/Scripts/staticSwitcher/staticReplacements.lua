@@ -235,8 +235,7 @@ local function addImportEdge(sourceToEdge, replacementIds, moduleName, sourceObj
     return
   end
 
-  local moduleId = resolveModuleId(moduleName)
-  if not moduleId then return end
+  local moduleId = resolveModuleId(moduleName) or moduleName
 
   sourceToEdge[sourceObject.id] = {
     moduleName = moduleId,
