@@ -100,6 +100,15 @@ local function addModuleIdentity(moduleIdentity)
   legacyIds[#legacyIds + 1] = moduleId
 end
 
+---@param moduleKey string
+---@return string? moduleId
+local function resolveModuleId(moduleKey)
+  if Modules[moduleKey] then return moduleKey end
+
+  local legacyIds = LegacyIdsByBasename[moduleKey]
+  if legacyIds and #legacyIds == 1 then return legacyIds[1] end
+end
+
 ---@param conditionData SSSConditionData
 ---@return integer?
 local function sortConditionByType(conditionData)
@@ -273,6 +282,7 @@ return function(staticReplacements)
     moduleIds = ModuleIds,
     modules = Modules,
     numModules = ModuleIdsLen,
+    resolveModuleId = resolveModuleId,
     --- Indexed first by module name, then an array of actions and conditions
     --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
     --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
