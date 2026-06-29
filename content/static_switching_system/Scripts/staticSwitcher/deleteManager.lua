@@ -20,6 +20,24 @@ function DeleteManager:addObjectToDeleteQueue(object, removeOrDisable)
   }
 end
 
+--- Removes pending queue entries for an object, optionally filtered by operation.
+---@param targetObject openmw.GObject
+---@param removeOrDisable boolean? true removes, false disables, nil removes either operation
+function DeleteManager:removeObjectFromDeleteQueue(targetObject, removeOrDisable)
+  local targetId = targetObject.id
+
+  for i = #self.queue, 1, -1 do
+    local objectInfo = self.queue[i]
+    local queuedObject = objectInfo.object
+
+    if queuedObject:isValid()
+        and queuedObject.id == targetId
+        and (removeOrDisable == nil or objectInfo.removeOrDisable == removeOrDisable) then
+      remove(self.queue, i)
+    end
+  end
+end
+
 --- Processes delayed object deletion/disable work and removes completed queue entries.
 function DeleteManager:processDeleteQueue()
   for i = #self.queue, 1, -1 do
