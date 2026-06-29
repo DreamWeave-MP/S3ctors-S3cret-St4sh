@@ -106,6 +106,9 @@ local function loadOnceCache(savedOnceCache)
         if type(moduleName) ~= 'string' then error('Once cache module name must be a string!') end
         if type(moduleActions) ~= 'table' then error('Once cache module actions must be a table!') end
 
+        local moduleId = ModuleCatalog.resolveModuleId(moduleName)
+        if not moduleId then error('Once cache module name does not resolve to a loaded SSS module: ' .. moduleName) end
+
         local copiedModuleActions = {}
 
         for actionHash, wasApplied in pairs(moduleActions) do
@@ -115,7 +118,7 @@ local function loadOnceCache(savedOnceCache)
           copiedModuleActions[actionHash] = true
         end
 
-        entry.modules[moduleName] = copiedModuleActions
+        entry.modules[moduleId] = copiedModuleActions
       end
 
       OnceCache.byObjectId[object.id] = entry
