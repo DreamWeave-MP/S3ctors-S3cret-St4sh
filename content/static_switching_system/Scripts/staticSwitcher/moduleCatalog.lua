@@ -155,8 +155,6 @@ end
 ---@param meshReplacementsPath string
 ---@param baseName string
 local function loadSwitcherModule(meshReplacementsPath, baseName)
-  if baseName == 'example' then return end
-
   local meshReplacementsFile = vfs.open(meshReplacementsPath)
   local meshReplacementsText = meshReplacementsFile:read('*all')
 
