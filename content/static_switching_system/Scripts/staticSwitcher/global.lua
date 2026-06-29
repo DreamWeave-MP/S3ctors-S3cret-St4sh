@@ -23,6 +23,8 @@ local ModuleCatalog      = require 'Scripts.staticSwitcher.moduleCatalog' (
   StaticReplacements
 )
 
+StaticReplacements.setModuleResolver(ModuleCatalog.resolveModuleId)
+
 local InstanceModifiers  = require 'Scripts.staticSwitcher.instanceModifiers' (
   ModuleCatalog
 )
