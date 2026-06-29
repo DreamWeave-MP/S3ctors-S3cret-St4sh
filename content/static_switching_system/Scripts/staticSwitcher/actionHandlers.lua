@@ -1,12 +1,99 @@
 ---@omw-context global
 
 local world = require 'openmw.world'
+local types = require 'openmw.types'
 
 local randomGen = require 'scripts.s3.randomGen'
 
-local pairs, pcall = pairs, pcall
+local pairs, pcall, type = pairs, pcall, type
 
----@type table<string, fun(object: openmw.GObject, replaceActionData: SSSReplaceAction): openmw.GObject?>
+local ActorObjectIsInstance = types.Actor.objectIsInstance
+local ContainerObjectIsInstance = types.Container.objectIsInstance
+
+---@param object openmw.GObject
+---@return openmw.core.Inventory? inventory
+local function getObjectInventory(object)
+  if not ContainerObjectIsInstance(object) and not ActorObjectIsInstance(object) then return end
+
+  return object.type.inventory(object)
+end
+
+---@param object openmw.GObject
+---@param recordId RecordId
+---@param count integer
+---@return boolean wasAdded
+local function addItemToInventory(object, recordId, count)
+  if count < 1 then return false end
+
+  local inventory = getObjectInventory(object)
+  if not inventory then return false end
+
+  world.createObject(recordId, count):moveInto(inventory)
+  return true
+end
+
+---@param chance SSSChanceRange?
+---@return number chanceValue
+local function getChanceValue(chance)
+  local chanceType = type(chance)
+
+  if chanceType == 'number' then
+    return chance
+  elseif chanceType == 'table' then
+    return randomGen.range(chance.min or 0, chance.max)
+  end
+
+  return 0
+end
+
+---@param itemData integer|SSSItemActionDetails
+---@return integer count
+---@return SSSChanceRange? chance
+local function getItemActionDetails(itemData)
+  if type(itemData) == 'table' then
+    if not itemData.count and not itemData.chance then return 0 end
+
+    return itemData.count or 1, itemData.chance
+  end
+
+  return itemData
+end
+
+---@param chance SSSChanceRange?
+---@return boolean shouldApply
+local function shouldApplyChance(chance)
+  if not chance then return true end
+
+  return randomGen.float() <= getChanceValue(chance)
+end
+
+---@param object openmw.GObject
+---@param itemAction SSSItemAction
+---@param itemHandler fun(object: openmw.GObject, recordId: RecordId, count: integer): boolean
+---@return boolean wasApplied
+local function applyItemAction(object, itemAction, itemHandler)
+  local actionType = type(itemAction)
+
+  if actionType == 'string' then
+    return itemHandler(object, itemAction, 1)
+  elseif actionType == 'table' then
+    local wasApplied = false
+
+    for recordId, itemData in pairs(itemAction) do
+      local count, chance = getItemActionDetails(itemData)
+
+      if count >= 1 and shouldApplyChance(chance) then
+        wasApplied = itemHandler(object, recordId, count) or wasApplied
+      end
+    end
+
+    return wasApplied
+  end
+
+  return false
+end
+
+---@type table<string, function>
 local actionHandlers = {
   ['replace'] = function(_, replaceActionData)
     for replaceId, replaceChance in pairs(replaceActionData) do
@@ -16,6 +103,9 @@ local actionHandlers = {
         if result then return replacement end
       end
     end
+  end,
+  ['add'] = function(object, addActionData)
+    return applyItemAction(object, addActionData, addItemToInventory)
   end,
 }
 
