@@ -4,13 +4,14 @@ local util                               = require 'openmw.util'
 
 local randomGen                          = require 'scripts.s3.randomGen'
 
+local staticUtil                         = require 'scripts.staticSwitcher.util'
+
 local actionHandlers                     = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers                  = require 'Scripts.staticSwitcher.conditionHandlers'
 
 --- Versioned separately from the global save shape; missing or unknown once-cache
 --- versions are treated as empty caches so old saves load safely.
 local ONCE_CACHE_SCHEMA_VERSION           = 1
-local GOBJECT_TYPE                        = 'MWLua::GObject'
 
 ---@type SSSOnceCache
 local OnceCache                           = {
@@ -27,12 +28,6 @@ local rotateX                            = util.transform.rotateX
 local rotateY                            = util.transform.rotateY
 local rotateZ                            = util.transform.rotateZ
 local rad                                = math.rad
-
----@param value any
----@return boolean
-local function isGObject(value)
-  return type(value) == 'userdata' and value.__type == GOBJECT_TYPE
-end
 
 local function resetOnceCache()
   OnceCache = {
@@ -101,7 +96,7 @@ local function loadOnceCache(savedOnceCache)
 
     local object, modules = savedEntry.object, savedEntry.modules
 
-    if not isGObject(object) then error('Once cache entry object must be an openmw.GObject!') end
+    if not staticUtil.isGObject(object) then error('Once cache entry object must be an openmw.GObject!') end
     if type(modules) ~= 'table' then error('Once cache entry modules must be a table!') end
 
     if object:isValid() then
