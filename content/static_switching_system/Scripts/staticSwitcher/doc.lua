@@ -107,7 +107,7 @@
 ---@field once boolean?
 
 ---@class SSSInstanceModification
----@field moduleName string module that provided this modification rule
+---@field moduleName string canonical module id that provided this modification rule
 ---@field actionHash string stable hash of the parsed rule data
 ---@field once boolean? whether this rule should only apply once to a saved object
 ---@field actions SSSInstanceAction[]
@@ -119,7 +119,7 @@
 ---@alias SSSReplacementStepBySource table<string, openmw.GObject> runtime-only source object id to replacement object map
 
 ---@class SSSReplacementChainStep
----@field moduleName string basename of the module that produced this chain step
+---@field moduleName string canonical module id that produced this chain step
 ---@field source openmw.GObject source object for this replacement edge
 ---@field replacement openmw.GObject replacement object created by this edge
 
@@ -127,7 +127,7 @@
 ---@field root openmw.GObject first source object in this chain
 ---@field current openmw.GObject latest valid replacement object in this chain
 ---@field steps SSSReplacementChainStep[] ordered replacement edges
----@field appliedModules table<string, true> module basenames already applied to this chain lineage
+---@field appliedModules table<string, true> canonical module ids already applied to this chain lineage
 
 ---@class SSSReplacementChains
 ---@field entries SSSReplacementChain[] serialized chain list containing remappable object handles
@@ -142,7 +142,7 @@
 
 ---@class SSSOnceCacheEntry
 ---@field object openmw.GObject remappable saved object handle used to rebuild the runtime object-id index
----@field modules table<string, table<string, true>> module name to action hash set
+---@field modules table<string, table<string, true>> canonical module id to action hash set
 
 ---@class SSSOnceCache
 ---@field entries SSSOnceCacheEntry[] serialized entry list containing remappable object handles
@@ -153,19 +153,25 @@
 ---@field entries SSSOnceCacheEntry[] serialized entry list containing remappable object handles
 
 ---@class SSSModuleCatalog
----@field moduleNames string[] loaded module base names
----@field numModules number number of loaded module base names
----@field ObjectModificationStore SSSObjectModificationStore module-name keyed instance modification rules
+---@field moduleNames string[] alias for moduleIds
+---@field moduleIds string[] loaded canonical module ids
+---@field modules table<string, SSSModuleIdentity> canonical module id to identity metadata
+---@field moduleLabels table<string, string> canonical module id to display label
+---@field legacyIdsByBasename table<string, string[]> legacy basename to candidate canonical module ids
+---@field numModules number number of loaded canonical module ids
+---@field resolveModuleId fun(moduleKey: string): string? resolves canonical ids and unambiguous legacy basenames
+---@field ObjectModificationStore SSSObjectModificationStore canonical module-id keyed instance modification rules
 
 ---@class SSSStaticReplacements
----@field ComposedReplacements table<string, SSSModule> module-name keyed static replacement data
+---@field ComposedReplacements table<string, SSSModule> canonical module-id keyed static replacement data
 ---@field loadReplacementChains fun(savedChains?: SSSReplacementChainsSaved)
 ---@field ReplacementChains SSSReplacementChains saved chain state plus runtime indexes
----@field OverrideRecords SSSOverrideRecords module-name keyed generated replacement record IDs
+---@field OverrideRecords SSSOverrideRecords canonical module-id keyed generated replacement record IDs
 ---@field rebuildReplacementStepBySource fun() rebuilds runtime source-object replacement guard from saved replacement objects
----@field ReplacedObjectSet SSSReplacedObjectSet module-name keyed replacement object to original object map
+---@field ReplacedObjectSet SSSReplacedObjectSet canonical module-id keyed replacement object to original object map
 ---@field saveReplacementChains fun(): SSSReplacementChainsSaved
 ---@field uninstallModule fun(moduleName: string): string? removes the target module and later chain steps, restoring the source before the removed suffix
+---@field setModuleResolver fun(moduleResolver: fun(moduleKey: string): string?) sets the canonical module-id resolver for save migration and settings compatibility
 ---@field tryReplaceObject fun(object: openmw.GObject)
 
 ---@class SSSInstanceModifiers
@@ -184,8 +190,8 @@
 ---@class openmw.interfaces.StaticSwitcher_G
 ---@field getRefNum fun(object: openmw.GObject): boolean, number Returns whether the object is generated and its local/generated reference number.
 ---@field objectModificationStore fun(): SSSObjectModificationStore Returns the loaded instance-modification rule store.
----@field overrideRecords fun(): SSSOverrideRecords Returns generated override record IDs keyed by module name.
----@field replacedObjectSet fun(): SSSReplacedObjectSet Returns replacement objects keyed by module name for uninstall bookkeeping.
+---@field overrideRecords fun(): SSSOverrideRecords Returns generated override record IDs keyed by canonical module id.
+---@field replacedObjectSet fun(): SSSReplacedObjectSet Returns replacement objects keyed by canonical module id for uninstall bookkeeping.
 ---@field uninstallModule fun(moduleName: string) Queues uninstall/removal for a loaded replacement module.
 ---@field version integer Static Switching System interface version.
 
