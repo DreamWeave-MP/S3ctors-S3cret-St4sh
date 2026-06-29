@@ -111,6 +111,21 @@
 ---@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>>
 ---@alias SSSReplacementStepBySource table<string, openmw.GObject> runtime-only source object id to replacement object map
 
+---@class SSSReplacementChainStep
+---@field moduleName string basename of the module that produced this chain step
+---@field source openmw.GObject source object for this replacement edge
+---@field replacement openmw.GObject replacement object created by this edge
+
+---@class SSSReplacementChain
+---@field root openmw.GObject first source object in this chain
+---@field current openmw.GObject latest valid replacement object in this chain
+---@field steps SSSReplacementChainStep[] ordered replacement edges
+---@field appliedModules table<string, true> module basenames already applied to this chain lineage
+
+---@class SSSReplacementChains
+---@field entries SSSReplacementChain[] serialized chain list containing remappable object handles
+---@field byObjectId table<string, SSSReplacementChain> runtime-only object-id to chain index rebuilt from entries
+
 ---@class SSSOnceCacheEntry
 ---@field object openmw.GObject remappable saved object handle used to rebuild the runtime object-id index
 ---@field modules table<string, table<string, true>> module name to action hash set
@@ -130,9 +145,12 @@
 
 ---@class SSSStaticReplacements
 ---@field ComposedReplacements table<string, SSSModule> module-name keyed static replacement data
+---@field loadReplacementChains fun(savedChains?: SSSReplacementChains)
+---@field ReplacementChains SSSReplacementChains saved chain state plus runtime indexes
 ---@field OverrideRecords SSSOverrideRecords module-name keyed generated replacement record IDs
 ---@field rebuildReplacementStepBySource fun() rebuilds runtime source-object replacement guard from saved replacement objects
 ---@field ReplacedObjectSet SSSReplacedObjectSet module-name keyed replacement object to original object map
+---@field uninstallModule fun(moduleName: string): string? removes the target module and later chain steps, restoring the source before the removed suffix
 ---@field tryReplaceObject fun(object: openmw.GObject)
 
 ---@class SSSInstanceModifiers
@@ -145,6 +163,7 @@
 ---@field overrideRecords SSSOverrideRecords?
 ---@field objectDeleteQueue ObjectDeleteData[]?
 ---@field instanceModifiers SSSOnceCacheSaved?
+---@field replacementChains SSSReplacementChains?
 ---@field replacedObjectSet SSSReplacedObjectSet?
 
 ---@class openmw.interfaces.StaticSwitcher_G
