@@ -30,7 +30,8 @@ local InstanceModifiers  = require 'Scripts.staticSwitcher.instanceModifiers' (
 local uninstallModule    = require 'Scripts.staticSwitcher.globalSettings' (
   ModuleCatalog.moduleNames,
   DeleteManager,
-  StaticReplacements.ReplacedObjectSet
+  StaticReplacements.ReplacedObjectSet,
+  StaticReplacements.uninstallModule
 )
 
 local settingsGroup      = require 'openmw.storage'.globalSection('SettingsStaticSwitcher')
