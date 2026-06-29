@@ -95,6 +95,7 @@ return function(moduleIds, deleteManager, replacedObjectSet, chainUninstallModul
         renderer = 'checkbox',
         name = 'StaticSwitcherModuleDisableButton',
         description = 'StaticSwitcherModuleDisableDesc',
+        default = false,
         argument = {
           l10n = 'StaticSwitcher',
           trueLabel = 'StaticSwitcherTrueLabel',
