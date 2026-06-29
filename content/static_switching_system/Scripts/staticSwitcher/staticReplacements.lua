@@ -93,6 +93,36 @@ local function rebuildReplacementStepBySource()
   end
 end
 
+local function migrateOverrideRecords()
+  local migrations = {}
+
+  for moduleName, moduleRecords in pairs(OverrideRecords) do
+    local moduleId = resolveModuleId(moduleName)
+
+    if moduleId and moduleId ~= moduleName then
+      migrations[#migrations + 1] = {
+        from = moduleName,
+        records = moduleRecords,
+        to = moduleId,
+      }
+    end
+  end
+
+  for _, migration in ipairs(migrations) do
+    local targetRecords = OverrideRecords[migration.to]
+
+    if not targetRecords then
+      OverrideRecords[migration.to] = migration.records
+    else
+      for recordId, replacementRecordId in pairs(migration.records) do
+        if not targetRecords[recordId] then targetRecords[recordId] = replacementRecordId end
+      end
+    end
+
+    OverrideRecords[migration.from] = nil
+  end
+end
+
 local function rebuildReplacedObjectSetFromChains()
   clearTable(ReplacedObjectSet)
 
@@ -517,6 +547,7 @@ local StaticReplacements = {
   loadReplacementChains = loadReplacementChains,
   ReplacementChains = ReplacementChains,
   OverrideRecords = OverrideRecords,
+  migrateOverrideRecords = migrateOverrideRecords,
   rebuildReplacementStepBySource = rebuildReplacementStepBySource,
   ReplacedObjectSet = ReplacedObjectSet,
   saveReplacementChains = saveReplacementChains,
