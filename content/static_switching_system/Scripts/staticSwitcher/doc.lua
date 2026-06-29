@@ -107,6 +107,7 @@
 ---@field generated boolean?
 ---@field region string?
 ---@field scale SSSNumericRange?
+---@field worldspace string?
 
 ---@class SSSInstanceRule
 ---@field conditions SSSConditionData[]?

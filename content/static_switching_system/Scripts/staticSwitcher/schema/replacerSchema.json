@@ -251,6 +251,9 @@
                 },
                 "scale": {
                     "$ref": "#/definitions/numericRange"
+                },
+                "worldspace": {
+                    "$ref": "#/definitions/stringOrStringList"
                 }
             },
             "minProperties": 1,
