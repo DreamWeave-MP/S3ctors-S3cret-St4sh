@@ -52,6 +52,12 @@ local conditionHandlers = {
     )
   end,
   ---@param object openmw.GObject
+  ---@param shouldBeExterior boolean
+  ---@return boolean
+  exterior = function(object, shouldBeExterior)
+    return object.cell ~= nil and object.cell.isExterior == shouldBeExterior
+  end,
+  ---@param object openmw.GObject
   ---@param targetName string
   ---@return boolean
   name = function(object, targetName)
