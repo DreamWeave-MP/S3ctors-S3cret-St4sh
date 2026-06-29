@@ -59,13 +59,13 @@ local function uninstallModule(fileName)
   return fileName
 end
 
----@param meshReplacementModules string[]
+---@param moduleIds string[] canonical loaded module ids
 ---@param deleteManager SSSDeleteManager
 ---@param replacedObjectSet SSSReplacedObjectSet
 ---@param chainUninstallModule (fun(fileName: string): string?)?
 ---@return fun(fileName: string): string? uninstallModule
-return function(meshReplacementModules, deleteManager, replacedObjectSet, chainUninstallModule)
-  if not next(meshReplacementModules) then meshReplacementModules[1] = 'INSTALL SOME MODS' end
+return function(moduleIds, deleteManager, replacedObjectSet, chainUninstallModule)
+  if not next(moduleIds) then moduleIds[1] = 'INSTALL SOME MODS' end
 
   DeleteManager = assert(deleteManager)
   ReplacedObjectSet = assert(replacedObjectSet)
@@ -84,10 +84,10 @@ return function(meshReplacementModules, deleteManager, replacedObjectSet, chainU
         key = 'StaticSwitcherModuleSelect',
         name = 'StaticSwitcherModuleSelection',
         description = 'StaticSwitcherModuleSelectionDesc',
-        default = meshReplacementModules[1] or 'WTF',
+        default = moduleIds[1] or 'WTF',
         argument = {
           l10n = 'StaticSwitcher',
-          items = meshReplacementModules,
+          items = moduleIds,
         },
       },
       {
