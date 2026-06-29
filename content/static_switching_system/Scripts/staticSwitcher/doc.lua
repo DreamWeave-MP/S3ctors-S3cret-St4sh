@@ -101,6 +101,7 @@
 ---@field object_type string?
 ---@field record_id string?
 ---@field ref_num number?
+---@field region string?
 
 ---@class SSSInstanceRule
 ---@field conditions SSSConditionData[]?
