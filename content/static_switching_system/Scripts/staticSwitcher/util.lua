@@ -71,7 +71,7 @@ end
 ---@param path string Path to check for the `meshes/` prefix
 ---@return string original path, but with `meshes/` prepended
 function staticUtil.getMeshPath(path)
-    path = path:gsub("^[/\\]+", "")
+    path = staticUtil.normalizePath(path):gsub("^/+", "")
 
     if not path:match("^meshes/") then
         path = "meshes/" .. path
