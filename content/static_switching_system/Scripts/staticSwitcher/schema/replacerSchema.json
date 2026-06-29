@@ -231,6 +231,9 @@
                 "name": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
+                "has_name": {
+                    "type": "boolean"
+                },
                 "mesh": {
                     "$ref": "#/definitions/stringOrStringList"
                 },

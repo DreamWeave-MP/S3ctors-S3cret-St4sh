@@ -78,6 +78,18 @@ local conditionHandlers = {
         or objectRecord.name:find(targetName, 1, true) ~= nil
   end,
   ---@param object openmw.GObject
+  ---@param shouldHaveName boolean
+  ---@return boolean
+  has_name = function(object, shouldHaveName)
+    if not object.type then return shouldHaveName == false end
+
+    local objectRecord = object.type.records[object.recordId]
+    local objectName = objectRecord and objectRecord.name
+    local objectHasName = objectName ~= nil and objectName ~= ''
+
+    return objectHasName == shouldHaveName
+  end,
+  ---@param object openmw.GObject
   ---@param targetMesh string
   ---@return boolean
   mesh = function(object, targetMesh)

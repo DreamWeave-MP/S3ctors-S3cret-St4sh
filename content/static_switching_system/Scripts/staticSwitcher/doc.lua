@@ -99,6 +99,7 @@
 ---@field content_file string?
 ---@field exterior boolean?
 ---@field quasi_exterior boolean?
+---@field has_name boolean?
 ---@field mesh string?
 ---@field name string?
 ---@field object_type string?
