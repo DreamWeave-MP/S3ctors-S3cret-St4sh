@@ -59,8 +59,8 @@
 ---@field instances SSSInstanceRule[] set of game object rules to muck with
 
 ---@class SSSModuleStatic: SSSModuleRaw
----@field replace_names string[]? array of cell names to match replacements for
----@field exterior_cells ExteriorGrid[]? array of grid indices in which a particular module will replace objects
+---@field replace_names string[]? array of cell names to match replacements for; omit with exterior_cells to apply replace_meshes in every cell
+---@field exterior_cells ExteriorGrid[]? array of grid indices in which a particular module will replace objects; omit with replace_names to apply replace_meshes in every cell
 ---@field replace_meshes table<string, string> map of old meshes to new ones
 ---@field ignore_records RecordId[]? records to ignore when replacing with this module. Typically used for scripted objects, but maybe not.
 
