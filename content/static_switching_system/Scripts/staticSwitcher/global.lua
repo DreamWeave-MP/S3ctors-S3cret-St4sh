@@ -177,6 +177,7 @@ return {
       end
 
       staticUtil.deepCopy(StaticReplacements.OverrideRecords, data.overrideRecords)
+      StaticReplacements.migrateOverrideRecords()
       staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
       InstanceModifiers.loadOnceCache(data.instanceModifiers)
       staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)

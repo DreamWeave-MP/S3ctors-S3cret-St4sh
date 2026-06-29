@@ -167,6 +167,7 @@
 ---@field loadReplacementChains fun(savedChains?: SSSReplacementChainsSaved)
 ---@field ReplacementChains SSSReplacementChains saved chain state plus runtime indexes
 ---@field OverrideRecords SSSOverrideRecords canonical module-id keyed generated replacement record IDs
+---@field migrateOverrideRecords fun() migrates unambiguous legacy basename override-record keys to canonical module ids
 ---@field rebuildReplacementStepBySource fun() rebuilds runtime source-object replacement guard from saved replacement objects
 ---@field ReplacedObjectSet SSSReplacedObjectSet canonical module-id keyed replacement object to original object map
 ---@field saveReplacementChains fun(): SSSReplacementChainsSaved
