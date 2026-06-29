@@ -2,7 +2,7 @@
 
 local world = require 'openmw.world'
 
-local randomGen = require 'scripts.s3.randomgen'
+local randomGen = require 'scripts.s3.randomGen'
 
 local pairs, pcall = pairs, pcall
 
