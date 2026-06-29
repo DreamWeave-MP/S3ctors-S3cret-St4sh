@@ -225,6 +225,9 @@
                 "exterior": {
                     "type": "boolean"
                 },
+                "quasi_exterior": {
+                    "type": "boolean"
+                },
                 "name": {
                     "$ref": "#/definitions/stringOrStringList"
                 },

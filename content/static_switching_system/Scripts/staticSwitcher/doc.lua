@@ -98,6 +98,7 @@
 ---@field coords ExteriorGrid?
 ---@field content_file string?
 ---@field exterior boolean?
+---@field quasi_exterior boolean?
 ---@field mesh string?
 ---@field name string?
 ---@field object_type string?
