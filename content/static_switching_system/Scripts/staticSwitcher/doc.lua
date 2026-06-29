@@ -87,14 +87,26 @@
 ---@field position SSSVector3Range?
 
 ---@alias SSSReplaceAction table<RecordId, number>
+---@alias SSSChanceRange number|SSSChanceRangeTable
+
+---@class SSSChanceRangeTable
+---@field min number? lower bound for a random chance; defaults to 0 when absent
+---@field max number required upper bound for a random chance
+
+---@class SSSItemActionDetails
+---@field count integer? item count; defaults to 1 when absent
+---@field chance SSSChanceRange? fixed or random chance to apply this item entry
+
+---@alias SSSItemAction RecordId|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, disable, delete.
+--- Combined actions run in priority order: replace, transform, add, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
 ---@field replace SSSReplaceAction?
 ---@field transform SSSTransformAction?
+---@field add SSSItemAction? queues item(s) into the current action target when it is an Actor or Container
 ---@field disable true? disables the final action target; with replace, disables the replacement
 ---@field delete true? queues removal of the original matched source object through DeleteManager
 

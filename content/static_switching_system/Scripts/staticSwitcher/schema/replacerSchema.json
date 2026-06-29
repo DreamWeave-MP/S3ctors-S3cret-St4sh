@@ -32,6 +32,38 @@
                 }
             ]
         },
+        "chanceRange": {
+            "oneOf": [
+                {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Fixed chance from 0 to 1."
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "min": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "description": "Optional minimum chance; defaults to 0."
+                        },
+                        "max": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "description": "Required maximum chance."
+                        }
+                    },
+                    "required": [
+                        "max"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Randomly selected chance range."
+                }
+            ]
+        },
         "vector3Range": {
             "type": "object",
             "properties": {
@@ -85,6 +117,60 @@
             "minProperties": 1,
             "additionalProperties": false
         },
+        "itemAction": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/recordId",
+                    "description": "A record ID to add as a single item."
+                },
+                {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "oneOf": [
+                                {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "Fixed item count with an implicit 100% chance."
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "count": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "default": 1,
+                                            "description": "Number of items to add."
+                                        },
+                                        "chance": {
+                                            "$ref": "#/definitions/chanceRange",
+                                            "description": "Chance to apply this item entry."
+                                        }
+                                    },
+                                    "anyOf": [
+                                        {
+                                            "required": [
+                                                "count"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "chance"
+                                            ]
+                                        }
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Item count and optional chance roll."
+                                }
+                            ]
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Record IDs mapped to counts."
+                }
+            ]
+        },
         "transformAction": {
             "type": "object",
             "properties": {
@@ -118,6 +204,10 @@
                 "transform": {
                     "$ref": "#/definitions/transformAction"
                 },
+                "add": {
+                    "$ref": "#/definitions/itemAction",
+                    "description": "Queues one or more items to be added to the current action target's inventory when the target is an Actor or Container."
+                },
                 "disable": {
                     "const": true,
                     "description": "Disable the action target after any replacement or transform actions in this rule. If paired with replace, this disables the replacement."
@@ -136,6 +226,11 @@
                 {
                     "required": [
                         "transform"
+                    ]
+                },
+                {
+                    "required": [
+                        "add"
                     ]
                 },
                 {

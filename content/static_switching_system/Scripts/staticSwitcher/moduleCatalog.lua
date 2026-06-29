@@ -36,6 +36,7 @@ local StaticReplacements
 local ACTIONPRIORITY                                    = {
   'replace',
   'transform',
+  'add',
   'disable',
   'delete',
 }

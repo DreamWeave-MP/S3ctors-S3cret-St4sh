@@ -342,6 +342,7 @@ end
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
   local anyActionApplied = false
+  local needsPlacementUpdate = false
   local shouldDisable = false
   local shouldDelete = false
   local modifyTarget = object
@@ -353,8 +354,8 @@ local function tryModifyObject(object, instanceModificationList)
     local currentRuleApplied = false
 
     for _, actionData in ipairs(instanceModification.actions) do
-      local replaceAction, transformAction, disableAction, deleteAction =
-          actionData.replace, actionData.transform, actionData.disable, actionData.delete
+      local replaceAction, transformAction, addAction, disableAction, deleteAction =
+          actionData.replace, actionData.transform, actionData.add, actionData.disable, actionData.delete
       local replaceActionSucceeded = false
 
       --- Should we allow only one successful replacement???
@@ -363,6 +364,7 @@ local function tryModifyObject(object, instanceModificationList)
         modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
         replaceActionSucceeded = didReplace
         anyActionApplied = anyActionApplied or didReplace
+        needsPlacementUpdate = needsPlacementUpdate or didReplace
         currentRuleApplied = currentRuleApplied or didReplace
       end
 
@@ -371,7 +373,14 @@ local function tryModifyObject(object, instanceModificationList)
         didTransform, newTransform, newPos, targetScale =
             accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
         anyActionApplied = anyActionApplied or didTransform
+        needsPlacementUpdate = needsPlacementUpdate or didTransform
         currentRuleApplied = currentRuleApplied or didTransform
+      end
+
+      if addAction then
+        local didAdd = actionHandlers.add(modifyTarget, addAction)
+        anyActionApplied = anyActionApplied or didAdd
+        currentRuleApplied = currentRuleApplied or didAdd
       end
 
       if disableAction then
@@ -394,9 +403,11 @@ local function tryModifyObject(object, instanceModificationList)
 
   if not anyActionApplied then return end
 
-  modifyTarget:setScale(targetScale)
-  ---@diagnostic disable-next-line: param-type-mismatch
-  modifyTarget:teleport(newCell, newPos, newTransform)
+  if needsPlacementUpdate then
+    modifyTarget:setScale(targetScale)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    modifyTarget:teleport(newCell, newPos, newTransform)
+  end
 
   if shouldDisable and modifyTarget:isValid() then modifyTarget.enabled = false end
 
