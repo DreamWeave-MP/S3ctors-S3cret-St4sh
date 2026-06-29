@@ -481,12 +481,13 @@ end
 ---@return true? locationMatched whether or not a given cell is handled by this module
 local function replacementTableMatchesCell(replacementTable, cell)
   local grid = replacementTable.gridIndices
+  local nameMatches = replacementTable.cellNameMatches
+
+  if not grid and not nameMatches then return true end
 
   if grid and cell.isExterior then
     if grid[szudzik.getIndex(cell.gridX, cell.gridY)] then return true end
   end
-
-  local nameMatches = replacementTable.cellNameMatches
 
   if not nameMatches then return end
 
