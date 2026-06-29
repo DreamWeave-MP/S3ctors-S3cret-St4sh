@@ -277,7 +277,7 @@
                 "type": "string"
             },
             "minItems": 1,
-            "description": "Optional list of cell names to replace objects within. If both replace_names and exterior_cells are omitted from a static module, replace_meshes applies in every cell."
+            "description": "Optional list of cell names to replace objects within. If replace_names, exterior_cells, and replace_regions are all omitted from a static module, replace_meshes applies in every cell."
         },
         "exterior_cells": {
             "type": "array",
@@ -285,7 +285,15 @@
                 "$ref": "#/definitions/exteriorGrid"
             },
             "minItems": 1,
-            "description": "Optional list of exterior cell coordinates to replace objects in. If both exterior_cells and replace_names are omitted from a static module, replace_meshes applies in every cell."
+            "description": "Optional list of exterior cell coordinates to replace objects in. If exterior_cells, replace_names, and replace_regions are all omitted from a static module, replace_meshes applies in every cell."
+        },
+        "replace_regions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "description": "Optional list of exact, case-insensitive cell region IDs/names to replace objects within. Region filters are ORed with replace_names and exterior_cells."
         },
         "ignore_records": {
             "type": "array",
@@ -297,7 +305,7 @@
         },
         "replace_meshes": {
             "$ref": "#/definitions/replacementMap",
-            "description": "Mapping of old mesh paths to replacement mesh paths. With no replace_names or exterior_cells filters, this mapping is unconditional and applies in every cell."
+            "description": "Mapping of old mesh paths to replacement mesh paths. With no replace_names, exterior_cells, or replace_regions filters, this mapping is unconditional and applies in every cell."
         },
         "instances": {
             "type": "array",
@@ -323,6 +331,11 @@
                     {
                         "required": [
                             "exterior_cells"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "replace_regions"
                         ]
                     },
                     {
@@ -361,6 +374,9 @@
                     "x": 6,
                     "y": -7
                 }
+            ],
+            "replace_regions": [
+                "ascadian isles region"
             ],
             "replace_meshes": {
                 "x/ex_hlaalu_b_01.nif": "my_mod/ex_hlaalu_b_01.nif"
