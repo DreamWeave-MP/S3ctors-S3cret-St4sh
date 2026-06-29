@@ -145,6 +145,14 @@ local conditionHandlers = {
 
     return object.scale >= (targetScale.min or -math.huge) and object.scale <= targetScale.max
   end,
+  ---@param object openmw.GObject
+  ---@param targetWorldspace string
+  ---@return boolean
+  worldspace = function(object, targetWorldspace)
+    local worldspace = object.cell and object.cell.worldSpaceId
+
+    return worldspace ~= nil and worldspace:lower() == targetWorldspace:lower()
+  end,
 }
 
 return conditionHandlers
