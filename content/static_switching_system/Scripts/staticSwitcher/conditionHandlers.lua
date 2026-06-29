@@ -58,6 +58,12 @@ local conditionHandlers = {
     return object.cell ~= nil and object.cell.isExterior == shouldBeExterior
   end,
   ---@param object openmw.GObject
+  ---@param shouldBeQuasiExterior boolean
+  ---@return boolean
+  quasi_exterior = function(object, shouldBeQuasiExterior)
+    return object.cell ~= nil and object.cell.isQuasiExterior == shouldBeQuasiExterior
+  end,
+  ---@param object openmw.GObject
   ---@param targetName string
   ---@return boolean
   name = function(object, targetName)
