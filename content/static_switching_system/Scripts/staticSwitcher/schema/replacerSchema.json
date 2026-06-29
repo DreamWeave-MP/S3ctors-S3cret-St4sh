@@ -133,6 +133,18 @@
                         "transform"
                     ],
                     "additionalProperties": false
+                },
+                {
+                    "properties": {
+                        "disable": {
+                            "const": true,
+                            "description": "Disable the matched object after any replacement or transform actions in this rule."
+                        }
+                    },
+                    "required": [
+                        "disable"
+                    ],
+                    "additionalProperties": false
                 }
             ]
         },

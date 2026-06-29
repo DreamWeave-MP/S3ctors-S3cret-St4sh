@@ -319,6 +319,7 @@ end
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
   local wasModified = false
+  local shouldDisable = false
   local modifyTarget = object
   --- Do replacements first, then transforms, then item additions/removals, then spells
 
@@ -328,7 +329,8 @@ local function tryModifyObject(object, instanceModificationList)
     local modificationWasApplied = false
 
     for _, actionData in ipairs(instanceModification.actions) do
-      local replaceAction, transformAction = actionData.replace, actionData.transform
+      local replaceAction, transformAction, disableAction =
+          actionData.replace, actionData.transform, actionData.disable
 
       --- Should we allow only one successful replacement???
       if replaceAction and modifyTarget == object then
@@ -342,6 +344,10 @@ local function tryModifyObject(object, instanceModificationList)
             accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
         wasModified = wasModified or didTransform
         modificationWasApplied = modificationWasApplied or didTransform
+      elseif disableAction then
+        shouldDisable = true
+        wasModified = true
+        modificationWasApplied = true
       end
     end
 
@@ -355,6 +361,8 @@ local function tryModifyObject(object, instanceModificationList)
   modifyTarget:setScale(targetScale)
   ---@diagnostic disable-next-line: param-type-mismatch
   modifyTarget:teleport(newCell, newPos, newTransform)
+
+  if shouldDisable then modifyTarget.enabled = false end
 end
 
 ---@class SSSInstanceModifiers

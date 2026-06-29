@@ -91,6 +91,7 @@
 ---@class SSSInstanceAction
 ---@field replace SSSReplaceAction?
 ---@field transform SSSTransformAction?
+---@field disable true?
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
