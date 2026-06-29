@@ -99,10 +99,28 @@
 ---@field actionHash string hash of the table. Provided *after* being parsed from YAML data.
 ---@field once boolean?
 
+---@class SSSInstanceModification
+---@field moduleName string module that provided this modification rule
+---@field actionHash string stable hash of the parsed rule data
+---@field once boolean? whether this rule should only apply once to a saved object
+---@field actions SSSInstanceAction[]
+
 ---@alias SSSObjectModificationStore table<string, SSSInstanceRule[]>
----@alias SSSInstanceModificationList SSSInstanceAction[][]
+---@alias SSSInstanceModificationList SSSInstanceModification[]
 ---@alias SSSOverrideRecords table<string, ReplacementMap>
 ---@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>>
+
+---@class SSSOnceCacheEntry
+---@field object openmw.GObject remappable saved object handle used to rebuild the runtime object-id index
+---@field modules table<string, table<string, true>> module name to action hash set
+
+---@class SSSOnceCache
+---@field entries SSSOnceCacheEntry[] serialized entry list containing remappable object handles
+---@field byObjectId table<string, SSSOnceCacheEntry> runtime-only cache rebuilt from remapped object handles
+
+---@class SSSOnceCacheSaved
+---@field schemaVersion integer once-cache schema version
+---@field entries SSSOnceCacheEntry[] serialized entry list containing remappable object handles
 
 ---@class SSSModuleCatalog
 ---@field moduleNames string[] loaded module base names
@@ -117,11 +135,14 @@
 
 ---@class SSSInstanceModifiers
 ---@field getMatchingInstanceModules fun(object: openmw.GObject): SSSInstanceModificationList?
+---@field loadOnceCache fun(savedOnceCache?: SSSOnceCacheSaved)
+---@field saveOnceCache fun(): SSSOnceCacheSaved
 ---@field tryModifyObject fun(object: openmw.GObject, instanceModificationList: SSSInstanceModificationList)
 
 ---@class SSSSavedState
 ---@field overrideRecords SSSOverrideRecords?
 ---@field objectDeleteQueue ObjectDeleteData[]?
+---@field instanceModifiers SSSOnceCacheSaved?
 ---@field replacedObjectSet SSSReplacedObjectSet?
 
 ---@class openmw.interfaces.StaticSwitcher_G
