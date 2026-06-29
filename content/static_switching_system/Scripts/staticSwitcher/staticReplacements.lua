@@ -37,11 +37,20 @@ local ReplacementModuleOrder
 ---@type SSSDeleteManager
 local DeleteManager
 
+---@type fun(moduleKey: string): string?
+local ResolveModuleId
+
 local assert, ipairs, pairs, sort = assert, ipairs, pairs, table.sort
 
 ---@param targetTable table
 local function clearTable(targetTable)
   for key in pairs(targetTable) do targetTable[key] = nil end
+end
+
+---@param moduleKey string
+---@return string? moduleId
+local function resolveModuleId(moduleKey)
+  return ResolveModuleId and ResolveModuleId(moduleKey) or moduleKey
 end
 
 ---@return string[] moduleOrder
@@ -509,6 +518,11 @@ local StaticReplacements = {
   uninstallModule = uninstallModule,
   tryReplaceObject = tryReplaceObject,
 }
+
+---@param moduleResolver fun(moduleKey: string): string?
+function StaticReplacements.setModuleResolver(moduleResolver)
+  ResolveModuleId = moduleResolver
+end
 
 ---@param deleteManager SSSDeleteManager
 ---@return SSSStaticReplacements
