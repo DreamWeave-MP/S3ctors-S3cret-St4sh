@@ -109,6 +109,7 @@
 ---@alias SSSInstanceModificationList SSSInstanceModification[]
 ---@alias SSSOverrideRecords table<string, ReplacementMap>
 ---@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>>
+---@alias SSSReplacementStepBySource table<string, openmw.GObject> runtime-only source object id to replacement object map
 
 ---@class SSSOnceCacheEntry
 ---@field object openmw.GObject remappable saved object handle used to rebuild the runtime object-id index
@@ -130,6 +131,7 @@
 ---@class SSSStaticReplacements
 ---@field ComposedReplacements table<string, SSSModule> module-name keyed static replacement data
 ---@field OverrideRecords SSSOverrideRecords module-name keyed generated replacement record IDs
+---@field rebuildReplacementStepBySource fun() rebuilds runtime source-object replacement guard from saved replacement objects
 ---@field ReplacedObjectSet SSSReplacedObjectSet module-name keyed replacement object to original object map
 ---@field tryReplaceObject fun(object: openmw.GObject)
 

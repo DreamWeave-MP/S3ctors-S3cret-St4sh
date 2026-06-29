@@ -21,10 +21,38 @@ local OverrideRecords       = {}
 ---@type SSSReplacedObjectSet
 local ReplacedObjectSet     = {}
 
+---@type SSSReplacementStepBySource
+local ReplacementStepBySource = {}
+
 ---@type SSSDeleteManager
 local DeleteManager
 
 local assert, ipairs, pairs = assert, ipairs, pairs
+
+---@param sourceObject openmw.GObject
+---@return boolean
+local function sourceObjectAlreadyReplaced(sourceObject)
+  local replacement = ReplacementStepBySource[sourceObject.id]
+
+  if not replacement then return false end
+
+  if replacement:isValid() then return true end
+
+  ReplacementStepBySource[sourceObject.id] = nil
+  return false
+end
+
+local function rebuildReplacementStepBySource()
+  ReplacementStepBySource = {}
+
+  for _, moduleReplacements in pairs(ReplacedObjectSet) do
+    for replacement, sourceObject in pairs(moduleReplacements) do
+      if replacement:isValid() and sourceObject:isValid() then
+        ReplacementStepBySource[sourceObject.id] = replacement
+      end
+    end
+  end
+end
 
 ---@param object openmw.GObject
 ---@param oldRecord openmw.types.ActivatorRecord -- HACK: Not actually an activator record, but easier to annotate.
@@ -46,6 +74,8 @@ end
 ---@param replacementModule string the module which is replacing this object
 ---@param replacementMesh string the mesh which will be used in place of the original
 local function replaceObject(object, replacementModule, replacementMesh)
+  if sourceObjectAlreadyReplaced(object) then return end
+
   local objectRecord = object.type.records[object.recordId]
 
   local moduleData = ComposedReplacements[replacementModule]
@@ -76,6 +106,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
 
   if not ReplacedObjectSet[replacementModule] then ReplacedObjectSet[replacementModule] = {} end
   ReplacedObjectSet[replacementModule][replacement] = object
+  ReplacementStepBySource[object.id] = replacement
 end
 
 ---@param replacementTable SSSModule
@@ -146,6 +177,7 @@ end
 local StaticReplacements = {
   ComposedReplacements = ComposedReplacements,
   OverrideRecords = OverrideRecords,
+  rebuildReplacementStepBySource = rebuildReplacementStepBySource,
   ReplacedObjectSet = ReplacedObjectSet,
   tryReplaceObject = tryReplaceObject,
 }

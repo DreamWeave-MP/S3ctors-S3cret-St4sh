@@ -168,6 +168,7 @@ return {
     onLoad = function(data)
       if not data then
         InstanceModifiers.loadOnceCache()
+        StaticReplacements.rebuildReplacementStepBySource()
         return
       end
 
@@ -175,6 +176,7 @@ return {
       staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
       InstanceModifiers.loadOnceCache(data.instanceModifiers)
       staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
+      StaticReplacements.rebuildReplacementStepBySource()
     end,
   }
 }
