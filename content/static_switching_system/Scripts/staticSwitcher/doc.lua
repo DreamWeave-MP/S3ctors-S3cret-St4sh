@@ -47,6 +47,7 @@
 ---@field cellNameMatches string[]? list of cell names which will be fuzzy-matched for a given module
 ---@field meshMap ReplacementMap? normalized old mesh path to normalized replacement mesh path
 ---@field gridIndices table<SzudzikCoord, true>? exterior cell indices handled by this module
+---@field regionMatches table<string, true>? lowercase cell region names/ids handled by this module
 ---@field logString string? prefix displayed when
 ---@field ignoreRecords table<RecordId, true>? list of records which this module will explicitly ignore during replacement
 
@@ -59,8 +60,9 @@
 ---@field instances SSSInstanceRule[] set of game object rules to muck with
 
 ---@class SSSModuleStatic: SSSModuleRaw
----@field replace_names string[]? array of cell names to match replacements for; omit with exterior_cells to apply replace_meshes in every cell
----@field exterior_cells ExteriorGrid[]? array of grid indices in which a particular module will replace objects; omit with replace_names to apply replace_meshes in every cell
+---@field replace_names string[]? array of cell names to match replacements for; omit with exterior_cells and replace_regions to apply replace_meshes in every cell
+---@field exterior_cells ExteriorGrid[]? array of grid indices in which a particular module will replace objects; omit with replace_names and replace_regions to apply replace_meshes in every cell
+---@field replace_regions string[]? array of exact, case-insensitive cell region IDs/names to match replacements for; ORed with replace_names and exterior_cells
 ---@field replace_meshes table<string, string> map of old meshes to new ones
 ---@field ignore_records RecordId[]? records to ignore when replacing with this module. Typically used for scripted objects, but maybe not.
 

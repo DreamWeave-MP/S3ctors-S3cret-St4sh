@@ -1,8 +1,11 @@
 log_name: "an example file"
 
-# Omit both replace_names and exterior_cells to apply replace_meshes in every cell.
+# Omit replace_names, exterior_cells, and replace_regions to apply replace_meshes in every cell.
 replace_names:
   - "dagoth ur"
+
+replace_regions:
+  - "ashlands region"
 
 exterior_cells:
   - x: 0
