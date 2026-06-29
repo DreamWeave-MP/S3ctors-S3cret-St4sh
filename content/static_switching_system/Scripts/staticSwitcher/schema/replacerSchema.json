@@ -225,6 +225,9 @@
                 "name": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
+                "mesh": {
+                    "$ref": "#/definitions/stringOrStringList"
+                },
                 "object_type": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
