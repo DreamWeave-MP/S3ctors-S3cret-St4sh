@@ -7,9 +7,16 @@ local randomGen                          = require 'scripts.s3.randomGen'
 local actionHandlers                     = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers                  = require 'Scripts.staticSwitcher.conditionHandlers'
 
---- Indexed first by object id, then by action table hash.
----@type table<string, table<string, true>>
-local ActionLookupCache                  = {}
+--- Versioned separately from the global save shape; missing or unknown once-cache
+--- versions are treated as empty caches so old saves load safely.
+local ONCE_CACHE_SCHEMA_VERSION           = 1
+local GOBJECT_TYPE                        = 'MWLua::GObject'
+
+---@type SSSOnceCache
+local OnceCache                           = {
+  entries = {},
+  byObjectId = {},
+}
 
 ---@type SSSModuleCatalog
 local ModuleCatalog
@@ -20,6 +27,115 @@ local rotateX                            = util.transform.rotateX
 local rotateY                            = util.transform.rotateY
 local rotateZ                            = util.transform.rotateZ
 local rad                                = math.rad
+
+---@param value any
+---@return boolean
+local function isGObject(value)
+  return type(value) == 'userdata' and value.__type == GOBJECT_TYPE
+end
+
+local function resetOnceCache()
+  OnceCache = {
+    entries = {},
+    byObjectId = {},
+  }
+end
+
+---@param object openmw.GObject
+---@return SSSOnceCacheEntry entry
+local function getOrCreateOnceCacheEntry(object)
+  local objectId = object.id
+  local entry = OnceCache.byObjectId[objectId]
+
+  if not entry then
+    entry = {
+      object = object,
+      modules = {},
+    }
+
+    OnceCache.byObjectId[objectId] = entry
+    OnceCache.entries[#OnceCache.entries + 1] = entry
+  end
+
+  return entry
+end
+
+---@param object openmw.GObject
+---@param moduleName string
+---@param actionHash string
+---@return boolean
+local function onceActionWasApplied(object, moduleName, actionHash)
+  local entry = OnceCache.byObjectId[object.id]
+  local moduleActions = entry and entry.modules[moduleName]
+
+  return (moduleActions and moduleActions[actionHash] == true) or false
+end
+
+---@param object openmw.GObject
+---@param moduleName string
+---@param actionHash string
+local function markOnceActionApplied(object, moduleName, actionHash)
+  local entry = getOrCreateOnceCacheEntry(object)
+  local moduleActions = entry.modules[moduleName]
+
+  if not moduleActions then
+    moduleActions = {}
+    entry.modules[moduleName] = moduleActions
+  end
+
+  moduleActions[actionHash] = true
+end
+
+---@param savedOnceCache SSSOnceCacheSaved?
+local function loadOnceCache(savedOnceCache)
+  resetOnceCache()
+
+  if type(savedOnceCache) ~= 'table'
+      or savedOnceCache.schemaVersion ~= ONCE_CACHE_SCHEMA_VERSION
+      or type(savedOnceCache.entries) ~= 'table' then
+    return
+  end
+
+  for _, savedEntry in ipairs(savedOnceCache.entries) do
+    if type(savedEntry) ~= 'table' then error('Once cache entry must be a table!') end
+
+    local object, modules = savedEntry.object, savedEntry.modules
+
+    if not isGObject(object) then error('Once cache entry object must be an openmw.GObject!') end
+    if type(modules) ~= 'table' then error('Once cache entry modules must be a table!') end
+
+    if object:isValid() then
+      local entry = { object = object, modules = {} }
+
+      for moduleName, moduleActions in pairs(modules) do
+        if type(moduleName) ~= 'string' then error('Once cache module name must be a string!') end
+        if type(moduleActions) ~= 'table' then error('Once cache module actions must be a table!') end
+
+        local copiedModuleActions = {}
+
+        for actionHash, wasApplied in pairs(moduleActions) do
+          if type(actionHash) ~= 'string' then error('Once cache action hash must be a string!') end
+          if wasApplied ~= true then error('Once cache action value must be true!') end
+
+          copiedModuleActions[actionHash] = true
+        end
+
+        entry.modules[moduleName] = copiedModuleActions
+      end
+
+      OnceCache.byObjectId[object.id] = entry
+      OnceCache.entries[#OnceCache.entries + 1] = entry
+    end
+  end
+end
+
+---@return SSSOnceCacheSaved
+local function saveOnceCache()
+  return {
+    schemaVersion = ONCE_CACHE_SCHEMA_VERSION,
+    entries = OnceCache.entries,
+  }
+end
 
 ---@param object openmw.GObject
 ---@param conditions SSSConditionData[]
@@ -58,32 +174,26 @@ end
 local function getMatchingInstanceModules(object)
   local matchingActions, actionIndex
 
-  --- This is kind of terrible and appears to be a bug in the engine itself
-  --- but, for now, using the tostring version works alright-ish until... we find out it doesn't, somehow
-  --- like perhaps the ID changing due to load order fuckery (which is why we used the GO itself as a key in the first place)
-  local objectString = object.id
-
-  for _, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
+  for moduleName, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
     for _, actionData in ipairs(actionList) do
       local actionTableHash = actionData.actionHash
 
       local shouldProcess = not actionData.conditions or matchesAllConditions(object, actionData.conditions)
 
       -- Action conditions have been evaluated already, and this action can only run once
-      if actionData.once and
-          ActionLookupCache[objectString]
-          and ActionLookupCache[objectString][actionTableHash] then
+      if actionData.once and onceActionWasApplied(object, moduleName, actionTableHash) then
         shouldProcess = false
       end
 
       if shouldProcess then
         matchingActions = matchingActions or {}
         actionIndex = (actionIndex or 0) + 1
-        matchingActions[actionIndex] = actionData.actions
-
-        if not ActionLookupCache[objectString] then ActionLookupCache[objectString] = {} end
-
-        ActionLookupCache[objectString][actionTableHash] = true
+        matchingActions[actionIndex] = {
+          moduleName = moduleName,
+          actionHash = actionTableHash,
+          once = actionData.once,
+          actions = actionData.actions,
+        }
       end
     end
   end
@@ -218,7 +328,9 @@ local function tryModifyObject(object, instanceModificationList)
   local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, object.scale
 
   for _, instanceModification in ipairs(instanceModificationList) do
-    for _, actionData in ipairs(instanceModification) do
+    local modificationWasApplied = false
+
+    for _, actionData in ipairs(instanceModification.actions) do
       local replaceAction, transformAction = actionData.replace, actionData.transform
 
       --- Should we allow only one successful replacement???
@@ -226,12 +338,18 @@ local function tryModifyObject(object, instanceModificationList)
         local didReplace
         modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
         wasModified = wasModified or didReplace
+        modificationWasApplied = modificationWasApplied or didReplace
       elseif transformAction then
         local didTransform
         didTransform, newTransform, newPos, targetScale =
             accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
         wasModified = wasModified or didTransform
+        modificationWasApplied = modificationWasApplied or didTransform
       end
+    end
+
+    if instanceModification.once and modificationWasApplied then
+      markOnceActionApplied(object, instanceModification.moduleName, instanceModification.actionHash)
     end
   end
 
@@ -245,6 +363,8 @@ end
 ---@class SSSInstanceModifiers
 local InstanceModifiers = {
   getMatchingInstanceModules = getMatchingInstanceModules,
+  loadOnceCache = loadOnceCache,
+  saveOnceCache = saveOnceCache,
   tryModifyObject = tryModifyObject,
 }
 
