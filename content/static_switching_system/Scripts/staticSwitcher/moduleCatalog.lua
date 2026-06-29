@@ -14,6 +14,9 @@ local DATA_PREFIX                                         = 'scripts/staticswitc
 ---@type string[], integer
 local ModuleIds, ModuleIdsLen                             = {}, 0
 
+---@type string[], integer
+local StaticModuleIds, StaticModuleIdsLen                 = {}, 0
+
 ---@type table<string, SSSModuleIdentity>
 local Modules                                             = {}
 
@@ -250,6 +253,8 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
     ObjectModificationStore[moduleIdentity.id] = modStore
   else
     ---@cast meshReplacementsTable SSSModuleStatic
+    StaticModuleIdsLen = StaticModuleIdsLen + 1
+    StaticModuleIds[StaticModuleIdsLen] = moduleIdentity.id
     StaticReplacements.ComposedReplacements[moduleIdentity.id] = staticModuleLoader(meshReplacementsTable)
   end
 
@@ -282,6 +287,7 @@ return function(staticReplacements)
     moduleIds = ModuleIds,
     modules = Modules,
     numModules = ModuleIdsLen,
+    staticModuleIds = StaticModuleIds,
     resolveModuleId = resolveModuleId,
     --- Indexed first by canonical module id, then an array of actions and conditions
     --- all values in said array will be strings, and, when each lookup is performed they can/should be cached

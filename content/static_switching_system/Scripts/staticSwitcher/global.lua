@@ -30,7 +30,7 @@ local InstanceModifiers  = require 'Scripts.staticSwitcher.instanceModifiers' (
 )
 
 local uninstallModule    = require 'Scripts.staticSwitcher.globalSettings' (
-  ModuleCatalog.moduleIds,
+  ModuleCatalog.staticModuleIds,
   DeleteManager,
   StaticReplacements.ReplacedObjectSet,
   StaticReplacements.uninstallModule
