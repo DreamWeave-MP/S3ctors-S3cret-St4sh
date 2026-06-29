@@ -88,10 +88,15 @@
 
 ---@alias SSSReplaceAction table<RecordId, number>
 
+--- Instance action tables may combine fields, for example replace + delete.
+--- Combined actions run in priority order: replace, transform, disable, delete.
+--- Same-table delete paired with replace queues removal only when replacement succeeds;
+--- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
 ---@field replace SSSReplaceAction?
 ---@field transform SSSTransformAction?
----@field disable true?
+---@field disable true? disables the final action target; with replace, disables the replacement
+---@field delete true? queues removal of the original matched source object through DeleteManager
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
