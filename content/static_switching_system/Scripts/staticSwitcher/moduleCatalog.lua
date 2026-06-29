@@ -160,6 +160,15 @@ local function staticModuleLoader(meshReplacementsTable)
     end
   end
 
+  local regionMatches
+  if meshReplacementsTable.replace_regions and next(meshReplacementsTable.replace_regions) ~= nil then
+    if NewTable then
+      regionMatches = NewTable(0, #meshReplacementsTable.replace_regions)
+    else
+      regionMatches = {}
+    end
+  end
+
   local ignoreRecords
   if meshReplacementsTable.ignore_records and next(meshReplacementsTable.ignore_records) ~= nil then
     if NewTable then
@@ -174,6 +183,7 @@ local function staticModuleLoader(meshReplacementsTable)
     local numElements = (meshMap and 1 or 0)
         + (cellNameMatches and 1 or 0)
         + (gridIndices and 1 or 0)
+        + (regionMatches and 1 or 0)
         + (ignoreRecords and 1 or 0)
         + (meshReplacementsTable.log_name and 1 or 0)
     replacementTable = NewTable(0, numElements)
@@ -184,6 +194,7 @@ local function staticModuleLoader(meshReplacementsTable)
   if meshMap then replacementTable.meshMap = meshMap end
   if cellNameMatches then replacementTable.cellNameMatches = cellNameMatches end
   if gridIndices then replacementTable.gridIndices = gridIndices end
+  if regionMatches then replacementTable.regionMatches = regionMatches end
   if ignoreRecords then replacementTable.ignoreRecords = ignoreRecords end
   if meshReplacementsTable.log_name then replacementTable.logString = meshReplacementsTable.log_name end
 
@@ -206,6 +217,12 @@ local function staticModuleLoader(meshReplacementsTable)
   if gridIndices then
     for _, cellGrid in ipairs(meshReplacementsTable.exterior_cells) do
       replacementTable.gridIndices[szudzik.getIndex(cellGrid.x, cellGrid.y)] = true
+    end
+  end
+
+  if regionMatches then
+    for _, regionName in ipairs(meshReplacementsTable.replace_regions) do
+      regionMatches[regionName:lower()] = true
     end
   end
 
