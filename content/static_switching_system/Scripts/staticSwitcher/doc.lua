@@ -24,6 +24,13 @@
 ---@field ticks integer number of frames before this object will be deleted
 ---@field removeOrDisable boolean whether or not the object will be permanently removed or just disabled. When replacing, the original objects are disabled, but when uninstalling a module the replacements are removed and the originals restored.
 
+---@class SSSDeleteManager
+---@field queue ObjectDeleteData[]
+---@field addObjectToDeleteQueue fun(self: SSSDeleteManager, object: openmw.GObject, removeOrDisable: boolean)
+---@field removeObjectFromDeleteQueue fun(self: SSSDeleteManager, targetObject: openmw.GObject, removeOrDisable?: boolean)
+---@field processDeleteQueue fun(self: SSSDeleteManager)
+---@field queueIsEmpty fun(self: SSSDeleteManager): boolean
+
 ---@class ReplacedObjectData
 ---@field originalObject openmw.GObject
 ---@field sourceFile string
@@ -126,6 +133,9 @@
 ---@field entries SSSReplacementChain[] serialized chain list containing remappable object handles
 ---@field byObjectId table<string, SSSReplacementChain> runtime-only object-id to chain index rebuilt from entries
 
+---@class SSSReplacementChainsSaved
+---@field entries SSSReplacementChain[] serialized chain list containing remappable object handles
+
 ---@class SSSOnceCacheEntry
 ---@field object openmw.GObject remappable saved object handle used to rebuild the runtime object-id index
 ---@field modules table<string, table<string, true>> module name to action hash set
@@ -145,11 +155,12 @@
 
 ---@class SSSStaticReplacements
 ---@field ComposedReplacements table<string, SSSModule> module-name keyed static replacement data
----@field loadReplacementChains fun(savedChains?: SSSReplacementChains)
+---@field loadReplacementChains fun(savedChains?: SSSReplacementChainsSaved)
 ---@field ReplacementChains SSSReplacementChains saved chain state plus runtime indexes
 ---@field OverrideRecords SSSOverrideRecords module-name keyed generated replacement record IDs
 ---@field rebuildReplacementStepBySource fun() rebuilds runtime source-object replacement guard from saved replacement objects
 ---@field ReplacedObjectSet SSSReplacedObjectSet module-name keyed replacement object to original object map
+---@field saveReplacementChains fun(): SSSReplacementChainsSaved
 ---@field uninstallModule fun(moduleName: string): string? removes the target module and later chain steps, restoring the source before the removed suffix
 ---@field tryReplaceObject fun(object: openmw.GObject)
 
@@ -163,7 +174,7 @@
 ---@field overrideRecords SSSOverrideRecords?
 ---@field objectDeleteQueue ObjectDeleteData[]?
 ---@field instanceModifiers SSSOnceCacheSaved?
----@field replacementChains SSSReplacementChains?
+---@field replacementChains SSSReplacementChainsSaved?
 ---@field replacedObjectSet SSSReplacedObjectSet?
 
 ---@class openmw.interfaces.StaticSwitcher_G
