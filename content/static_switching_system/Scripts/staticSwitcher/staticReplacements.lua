@@ -85,6 +85,23 @@ local function rebuildReplacementStepBySource()
   end
 end
 
+local function rebuildReplacedObjectSetFromChains()
+  clearTable(ReplacedObjectSet)
+
+  for _, chain in ipairs(ReplacementChains.entries) do
+    for _, step in ipairs(chain.steps) do
+      local moduleReplacements = ReplacedObjectSet[step.moduleName]
+
+      if not moduleReplacements then
+        moduleReplacements = {}
+        ReplacedObjectSet[step.moduleName] = moduleReplacements
+      end
+
+      moduleReplacements[step.replacement] = step.source
+    end
+  end
+end
+
 ---@param object openmw.GObject
 ---@return SSSReplacementChain? chain
 local function getReplacementChain(object)
@@ -161,7 +178,11 @@ local function rebuildReplacementChainIndexes()
         local moduleName = step.moduleName
         local sourceObject, replacement = step.source, step.replacement
 
-        if moduleName and sourceObject and replacement
+        if #sanitizedSteps >= MAX_REPLACEMENT_CHAIN_DEPTH
+            or not moduleName
+            or appliedModules[moduleName] then
+          break
+        elseif moduleName and sourceObject and replacement
             and sourceObject:isValid()
             and replacement:isValid() then
           sanitizedSteps[#sanitizedSteps + 1] = step
@@ -187,36 +208,72 @@ local function rebuildReplacementChainIndexes()
   end
 
   ReplacementChains.entries = newEntries
+  rebuildReplacedObjectSetFromChains()
 end
 
 local function importLegacyReplacementChains()
   clearTable(ReplacementChains.entries)
   clearTable(ReplacementChains.byObjectId)
 
+  local sourceToEdge, replacementIds, visitedEdges = {}, {}, {}
+
   for moduleName, moduleReplacements in pairs(ReplacedObjectSet) do
     for replacement, sourceObject in pairs(moduleReplacements) do
       if replacement:isValid() and sourceObject:isValid() then
-        local chain = {
-          root = sourceObject,
-          current = replacement,
-          steps = {
-            {
-              moduleName = moduleName,
-              source = sourceObject,
-              replacement = replacement,
-            }
-          },
-          appliedModules = {
-            [moduleName] = true,
-          },
+        local edge = {
+          moduleName = moduleName,
+          source = sourceObject,
+          replacement = replacement,
         }
 
-        ReplacementChains.entries[#ReplacementChains.entries + 1] = chain
+        sourceToEdge[sourceObject.id] = edge
+        replacementIds[replacement.id] = true
       end
     end
   end
 
+  local function importChain(firstEdge)
+    if visitedEdges[firstEdge] then return end
+
+    local chain = {
+      root = firstEdge.source,
+      current = firstEdge.source,
+      steps = {},
+      appliedModules = {},
+    }
+
+    local edge = firstEdge
+
+    while edge
+        and not visitedEdges[edge]
+        and not chain.appliedModules[edge.moduleName]
+        and #chain.steps < MAX_REPLACEMENT_CHAIN_DEPTH do
+      visitedEdges[edge] = true
+      chain.steps[#chain.steps + 1] = edge
+      chain.appliedModules[edge.moduleName] = true
+      chain.current = edge.replacement
+      edge = sourceToEdge[chain.current.id]
+    end
+
+    if #chain.steps > 0 then ReplacementChains.entries[#ReplacementChains.entries + 1] = chain end
+  end
+
+  for sourceId, edge in pairs(sourceToEdge) do
+    if not replacementIds[sourceId] then importChain(edge) end
+  end
+
+  for _, edge in pairs(sourceToEdge) do
+    importChain(edge)
+  end
+
   rebuildReplacementChainIndexes()
+end
+
+---@return SSSReplacementChainsSaved
+local function saveReplacementChains()
+  return {
+    entries = ReplacementChains.entries,
+  }
 end
 
 ---@param savedChains SSSReplacementChains?
@@ -249,7 +306,10 @@ local function uninstallModule(moduleName)
 
     if firstRemovedStepIndex then
       local restoreObject = chain.steps[firstRemovedStepIndex].source
-      if restoreObject:isValid() and restoreObject.count >= 1 then restoreObject.enabled = true end
+      if restoreObject:isValid() and restoreObject.count >= 1 then
+        DeleteManager:removeObjectFromDeleteQueue(restoreObject, false)
+        restoreObject.enabled = true
+      end
 
       for stepIndex = #chain.steps, firstRemovedStepIndex, -1 do
         local step = chain.steps[stepIndex]
@@ -396,6 +456,7 @@ local StaticReplacements = {
   OverrideRecords = OverrideRecords,
   rebuildReplacementStepBySource = rebuildReplacementStepBySource,
   ReplacedObjectSet = ReplacedObjectSet,
+  saveReplacementChains = saveReplacementChains,
   uninstallModule = uninstallModule,
   tryReplaceObject = tryReplaceObject,
 }
