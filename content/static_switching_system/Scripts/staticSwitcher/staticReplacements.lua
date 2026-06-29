@@ -12,8 +12,6 @@ local SwitcherSection       = require 'openmw.storage'.globalSection 'SettingsSt
 local createRecord          = world.createRecord
 
 local MAX_REPLACEMENT_CHAIN_DEPTH = 8
-local GOBJECT_TYPE = 'MWLua::GObject'
-
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
 local ComposedReplacements  = {}
 
@@ -44,14 +42,6 @@ local assert, ipairs, pairs, sort = assert, ipairs, pairs, table.sort
 ---@param targetTable table
 local function clearTable(targetTable)
   for key in pairs(targetTable) do targetTable[key] = nil end
-end
-
----@param value any
----@return boolean
-local function isGObject(value)
-  return type(value) == 'userdata'
-      and value.__type
-      and value.__type.name == GOBJECT_TYPE
 end
 
 ---@return string[] moduleOrder
@@ -178,7 +168,7 @@ local function rebuildReplacementChainIndexes()
   for _, chain in ipairs(oldEntries) do
     local root = chain.root
 
-    if isGObject(root) and root:isValid() then
+    if staticUtil.isGObject(root) and root:isValid() then
       local sanitizedSteps = {}
       local appliedModules = {}
       local current = root
@@ -191,8 +181,8 @@ local function rebuildReplacementChainIndexes()
             or not moduleName
             or appliedModules[moduleName] then
           break
-        elseif isGObject(sourceObject)
-            and isGObject(replacement)
+        elseif staticUtil.isGObject(sourceObject)
+            and staticUtil.isGObject(replacement)
             and sourceObject:isValid()
             and replacement:isValid()
             and sourceObject.id == current.id then
@@ -229,8 +219,8 @@ end
 ---@param replacement any
 local function addImportEdge(sourceToEdge, replacementIds, moduleName, sourceObject, replacement)
   if type(moduleName) ~= 'string'
-      or not isGObject(sourceObject)
-      or not isGObject(replacement)
+      or not staticUtil.isGObject(sourceObject)
+      or not staticUtil.isGObject(replacement)
       or not sourceObject:isValid()
       or not replacement:isValid() then
     return
