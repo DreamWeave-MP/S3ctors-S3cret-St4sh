@@ -235,8 +235,11 @@ local function addImportEdge(sourceToEdge, replacementIds, moduleName, sourceObj
     return
   end
 
+  local moduleId = resolveModuleId(moduleName)
+  if not moduleId then return end
+
   sourceToEdge[sourceObject.id] = {
-    moduleName = moduleName,
+    moduleName = moduleId,
     source = sourceObject,
     replacement = replacement,
   }
@@ -350,6 +353,9 @@ end
 ---@param moduleName string
 ---@return string? removedModule
 local function uninstallModule(moduleName)
+  moduleName = resolveModuleId(moduleName)
+  if not moduleName then return end
+
   local removedModule
 
   for _, chain in ipairs(ReplacementChains.entries) do
@@ -471,7 +477,7 @@ end
 ---@return boolean
 local function moduleIsUninstallTarget(moduleName)
   return SwitcherSection:get 'StaticSwitcherDisableModule' and
-      SwitcherSection:get 'StaticSwitcherModuleSelect' == moduleName
+      resolveModuleId(SwitcherSection:get 'StaticSwitcherModuleSelect') == moduleName
 end
 
 ---@param object openmw.GObject
