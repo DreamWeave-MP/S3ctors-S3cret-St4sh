@@ -271,8 +271,17 @@ end
 
 ---@return SSSReplacementChainsSaved
 local function saveReplacementChains()
+  local savedEntries = {}
+
+  for _, chain in ipairs(ReplacementChains.entries) do
+    savedEntries[#savedEntries + 1] = {
+      root = chain.root,
+      steps = chain.steps,
+    }
+  end
+
   return {
-    entries = ReplacementChains.entries,
+    entries = savedEntries,
   }
 end
 
