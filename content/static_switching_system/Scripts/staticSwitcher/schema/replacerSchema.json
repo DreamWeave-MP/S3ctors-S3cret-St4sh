@@ -243,6 +243,9 @@
                 "ref_num": {
                     "$ref": "#/definitions/numberOrNumberList"
                 },
+                "generated": {
+                    "type": "boolean"
+                },
                 "region": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
