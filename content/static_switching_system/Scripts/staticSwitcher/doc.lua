@@ -37,7 +37,7 @@
 
 ---@class SourceMapData
 ---@field logString string log prefix associated with this specific mesh replacement
----@field sourceFile string the basename of the yaml file which defined this replacement
+---@field sourceFile string module source path which defined this replacement
 
 ---@class ExteriorGrid
 ---@field x integer X coordinate of an exterior cell in which to replace objects

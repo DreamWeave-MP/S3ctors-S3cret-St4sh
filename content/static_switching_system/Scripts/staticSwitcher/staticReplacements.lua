@@ -12,10 +12,10 @@ local SwitcherSection       = require 'openmw.storage'.globalSection 'SettingsSt
 local createRecord          = world.createRecord
 
 local MAX_REPLACEMENT_CHAIN_DEPTH = 8
----@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
+---@type table<string, SSSModule> Map of canonical module ids handling mesh replacements to the data contained therein
 local ComposedReplacements  = {}
 
---- Maps module names to the record ids they manage
+--- Maps canonical module ids to the record ids they manage
 ---@type SSSOverrideRecords
 local OverrideRecords       = {}
 

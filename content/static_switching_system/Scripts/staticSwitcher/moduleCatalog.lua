@@ -283,9 +283,9 @@ return function(staticReplacements)
     modules = Modules,
     numModules = ModuleIdsLen,
     resolveModuleId = resolveModuleId,
-    --- Indexed first by module name, then an array of actions and conditions
+    --- Indexed first by canonical module id, then an array of actions and conditions
     --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
-    --- based on the generated hash of each set of table values (itself, keyed by the name of the loaded module)
+    --- based on the generated hash of each set of table values (itself, keyed by the id of the loaded module)
     ObjectModificationStore = ObjectModificationStore,
   }
 end
