@@ -160,15 +160,20 @@ return {
       return {
         overrideRecords = StaticReplacements.OverrideRecords,
         objectDeleteQueue = DeleteManager.queue,
+        instanceModifiers = InstanceModifiers.saveOnceCache(),
         replacedObjectSet = StaticReplacements.ReplacedObjectSet,
       }
     end,
     ---@param data SSSSavedState?
     onLoad = function(data)
-      if not data then return end
+      if not data then
+        InstanceModifiers.loadOnceCache()
+        return
+      end
 
       staticUtil.deepCopy(StaticReplacements.OverrideRecords, data.overrideRecords)
       staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
+      InstanceModifiers.loadOnceCache(data.instanceModifiers)
       staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
     end,
   }
