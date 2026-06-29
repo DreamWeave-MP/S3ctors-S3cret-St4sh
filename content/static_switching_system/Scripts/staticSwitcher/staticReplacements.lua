@@ -12,6 +12,7 @@ local SwitcherSection       = require 'openmw.storage'.globalSection 'SettingsSt
 local createRecord          = world.createRecord
 
 local MAX_REPLACEMENT_CHAIN_DEPTH = 8
+local GOBJECT_TYPE = 'MWLua::GObject'
 
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
 local ComposedReplacements  = {}
@@ -43,6 +44,12 @@ local assert, ipairs, pairs, sort = assert, ipairs, pairs, table.sort
 ---@param targetTable table
 local function clearTable(targetTable)
   for key in pairs(targetTable) do targetTable[key] = nil end
+end
+
+---@param value any
+---@return boolean
+local function isGObject(value)
+  return type(value) == 'userdata' and value.__type == GOBJECT_TYPE
 end
 
 ---@return string[] moduleOrder
@@ -169,7 +176,7 @@ local function rebuildReplacementChainIndexes()
   for _, chain in ipairs(oldEntries) do
     local root = chain.root
 
-    if root and root:isValid() then
+    if isGObject(root) and root:isValid() then
       local sanitizedSteps = {}
       local appliedModules = {}
       local current = root
@@ -182,9 +189,11 @@ local function rebuildReplacementChainIndexes()
             or not moduleName
             or appliedModules[moduleName] then
           break
-        elseif moduleName and sourceObject and replacement
+        elseif isGObject(sourceObject)
+            and isGObject(replacement)
             and sourceObject:isValid()
-            and replacement:isValid() then
+            and replacement:isValid()
+            and sourceObject.id == current.id then
           sanitizedSteps[#sanitizedSteps + 1] = step
           appliedModules[moduleName] = true
           current = replacement
@@ -211,26 +220,35 @@ local function rebuildReplacementChainIndexes()
   rebuildReplacedObjectSetFromChains()
 end
 
-local function importLegacyReplacementChains()
+---@param sourceToEdge table<string, SSSReplacementChainStep>
+---@param replacementIds table<string, true>
+---@param moduleName string
+---@param sourceObject any
+---@param replacement any
+local function addImportEdge(sourceToEdge, replacementIds, moduleName, sourceObject, replacement)
+  if type(moduleName) ~= 'string'
+      or not isGObject(sourceObject)
+      or not isGObject(replacement)
+      or not sourceObject:isValid()
+      or not replacement:isValid() then
+    return
+  end
+
+  sourceToEdge[sourceObject.id] = {
+    moduleName = moduleName,
+    source = sourceObject,
+    replacement = replacement,
+  }
+
+  replacementIds[replacement.id] = true
+end
+
+---@param sourceToEdge table<string, SSSReplacementChainStep>
+---@param replacementIds table<string, true>
+local function importReplacementChainsFromEdges(sourceToEdge, replacementIds)
   clearTable(ReplacementChains.entries)
   clearTable(ReplacementChains.byObjectId)
-
-  local sourceToEdge, replacementIds, visitedEdges = {}, {}, {}
-
-  for moduleName, moduleReplacements in pairs(ReplacedObjectSet) do
-    for replacement, sourceObject in pairs(moduleReplacements) do
-      if replacement:isValid() and sourceObject:isValid() then
-        local edge = {
-          moduleName = moduleName,
-          source = sourceObject,
-          replacement = replacement,
-        }
-
-        sourceToEdge[sourceObject.id] = edge
-        replacementIds[replacement.id] = true
-      end
-    end
-  end
+  local visitedEdges = {}
 
   local function importChain(firstEdge)
     if visitedEdges[firstEdge] then return end
@@ -269,6 +287,37 @@ local function importLegacyReplacementChains()
   rebuildReplacementChainIndexes()
 end
 
+local function importLegacyReplacementChains()
+  local sourceToEdge, replacementIds = {}, {}
+
+  for moduleName, moduleReplacements in pairs(ReplacedObjectSet) do
+    for replacement, sourceObject in pairs(moduleReplacements) do
+      addImportEdge(sourceToEdge, replacementIds, moduleName, sourceObject, replacement)
+    end
+  end
+
+  importReplacementChainsFromEdges(sourceToEdge, replacementIds)
+end
+
+---@param savedChains SSSReplacementChainsSaved
+local function importSavedReplacementChains(savedChains)
+  local sourceToEdge, replacementIds = {}, {}
+
+  if type(savedChains.entries) ~= 'table' then return importLegacyReplacementChains() end
+
+  for _, chain in ipairs(savedChains.entries) do
+    if type(chain) == 'table' and type(chain.steps) == 'table' then
+      for _, step in ipairs(chain.steps) do
+        if type(step) == 'table' then
+          addImportEdge(sourceToEdge, replacementIds, step.moduleName, step.source, step.replacement)
+        end
+      end
+    end
+  end
+
+  importReplacementChainsFromEdges(sourceToEdge, replacementIds)
+end
+
 ---@return SSSReplacementChainsSaved
 local function saveReplacementChains()
   local savedEntries = {}
@@ -291,8 +340,7 @@ local function loadReplacementChains(savedChains)
   clearTable(ReplacementChains.byObjectId)
 
   if savedChains and savedChains.entries then
-    staticUtil.deepCopy(ReplacementChains.entries, savedChains.entries)
-    rebuildReplacementChainIndexes()
+    importSavedReplacementChains(savedChains)
   else
     importLegacyReplacementChains()
   end
