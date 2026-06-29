@@ -95,6 +95,14 @@ local conditionHandlers = {
 
     return refNum == targetRefNum
   end,
+  ---@param object openmw.GObject
+  ---@param targetRegion string
+  ---@return boolean
+  region = function(object, targetRegion)
+    local region = object.cell and object.cell.region
+
+    return region ~= nil and region:lower() == targetRegion:lower()
+  end,
 }
 
 return conditionHandlers
