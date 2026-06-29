@@ -129,6 +129,14 @@ local conditionHandlers = {
 
     return region ~= nil and region:lower() == targetRegion:lower()
   end,
+  ---@param object openmw.GObject
+  ---@param targetScale SSSNumericRange
+  ---@return boolean
+  scale = function(object, targetScale)
+    if type(targetScale) == 'number' then return object.scale == targetScale end
+
+    return object.scale >= (targetScale.min or -math.huge) and object.scale <= targetScale.max
+  end,
 }
 
 return conditionHandlers

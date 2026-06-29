@@ -105,6 +105,7 @@
 ---@field record_id string?
 ---@field ref_num number?
 ---@field region string?
+---@field scale SSSNumericRange?
 
 ---@class SSSInstanceRule
 ---@field conditions SSSConditionData[]?
