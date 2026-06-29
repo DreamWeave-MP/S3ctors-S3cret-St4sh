@@ -16,6 +16,8 @@ local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FO
     '[ %s ]:',
     '%s%s'
 
+local GOBJECT_TYPE                                                                       = 'MWLua::GObject'
+
 local assert, error, ipairs, pairs, print, tonumber, type                                =
     assert, error, ipairs, pairs, print, tonumber, type
 
@@ -78,6 +80,14 @@ function staticUtil.getMeshPath(path)
     end
 
     return path
+end
+
+---@param value any
+---@return boolean
+function staticUtil.isGObject(value)
+    return type(value) == 'userdata'
+        and value.__type
+        and value.__type.name == GOBJECT_TYPE
 end
 
 ---@param object openmw.GObject
