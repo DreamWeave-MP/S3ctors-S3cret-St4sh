@@ -49,7 +49,9 @@ end
 ---@param value any
 ---@return boolean
 local function isGObject(value)
-  return type(value) == 'userdata' and value.__type == GOBJECT_TYPE
+  if type(value) ~= 'userdata' or not value.__type then return false end
+
+  return value.__type == GOBJECT_TYPE or value.__type.name == GOBJECT_TYPE
 end
 
 ---@return string[] moduleOrder
