@@ -155,6 +155,7 @@
 ---@class SSSModuleCatalog
 ---@field moduleNames string[] alias for moduleIds
 ---@field moduleIds string[] loaded canonical module ids
+---@field staticModuleIds string[] loaded canonical module ids that define static replacements and can be uninstalled by the current static-chain uninstall flow
 ---@field modules table<string, SSSModuleIdentity> canonical module id to identity metadata
 ---@field moduleLabels table<string, string> canonical module id to display label
 ---@field legacyIdsByBasename table<string, string[]> legacy basename to candidate canonical module ids
