@@ -37,6 +37,7 @@ local ACTIONPRIORITY                                    = {
   'replace',
   'transform',
   'disable',
+  'delete',
 }
 
 ---@type string[]

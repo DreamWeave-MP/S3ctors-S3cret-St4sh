@@ -9,7 +9,7 @@ local staticUtil         = require 'scripts.staticSwitcher.util'
 
 local ModuleToRemove
 
-local ipairs             = ipairs
+local ipairs, type       = ipairs, type
 
 local sendMenuEvent      = types.Player.sendMenuEvent
 
@@ -26,7 +26,8 @@ local ModuleCatalog      = require 'Scripts.staticSwitcher.moduleCatalog' (
 StaticReplacements.setModuleResolver(ModuleCatalog.resolveModuleId)
 
 local InstanceModifiers  = require 'Scripts.staticSwitcher.instanceModifiers' (
-  ModuleCatalog
+  ModuleCatalog,
+  DeleteManager
 )
 
 local uninstallModule    = require 'Scripts.staticSwitcher.globalSettings' (
@@ -176,6 +177,7 @@ return {
     ---@param data SSSSavedState?
     onLoad = function(data)
       if not data then
+        DeleteManager.queue = {}
         InstanceModifiers.loadOnceCache()
         StaticReplacements.loadReplacementChains()
         return
@@ -183,7 +185,10 @@ return {
 
       staticUtil.deepCopy(StaticReplacements.OverrideRecords, data.overrideRecords)
       StaticReplacements.migrateOverrideRecords()
-      staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
+      DeleteManager.queue = {}
+      if type(data.objectDeleteQueue) == 'table' then
+        staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
+      end
       InstanceModifiers.loadOnceCache(data.instanceModifiers)
       staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
       StaticReplacements.loadReplacementChains(data.replacementChains)

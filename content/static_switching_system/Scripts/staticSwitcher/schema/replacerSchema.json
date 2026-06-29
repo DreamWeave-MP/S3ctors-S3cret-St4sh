@@ -111,42 +111,45 @@
         },
         "instanceAction": {
             "type": "object",
-            "oneOf": [
+            "properties": {
+                "replace": {
+                    "$ref": "#/definitions/replaceAction"
+                },
+                "transform": {
+                    "$ref": "#/definitions/transformAction"
+                },
+                "disable": {
+                    "const": true,
+                    "description": "Disable the action target after any replacement or transform actions in this rule. If paired with replace, this disables the replacement."
+                },
+                "delete": {
+                    "const": true,
+                    "description": "Queue removal of the matched source object after any replacement or transform actions in this rule. If paired in the same action table with replace, removal is queued only when that replacement succeeds."
+                }
+            },
+            "anyOf": [
                 {
-                    "properties": {
-                        "replace": {
-                            "$ref": "#/definitions/replaceAction"
-                        }
-                    },
                     "required": [
                         "replace"
-                    ],
-                    "additionalProperties": false
+                    ]
                 },
                 {
-                    "properties": {
-                        "transform": {
-                            "$ref": "#/definitions/transformAction"
-                        }
-                    },
                     "required": [
                         "transform"
-                    ],
-                    "additionalProperties": false
+                    ]
                 },
                 {
-                    "properties": {
-                        "disable": {
-                            "const": true,
-                            "description": "Disable the matched object after any replacement or transform actions in this rule."
-                        }
-                    },
                     "required": [
                         "disable"
-                    ],
-                    "additionalProperties": false
+                    ]
+                },
+                {
+                    "required": [
+                        "delete"
+                    ]
                 }
-            ]
+            ],
+            "additionalProperties": false
         },
         "carryingCount": {
             "type": "object",

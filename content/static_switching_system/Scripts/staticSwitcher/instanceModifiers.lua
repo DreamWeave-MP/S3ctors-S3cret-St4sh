@@ -9,8 +9,8 @@ local staticUtil                         = require 'scripts.staticSwitcher.util'
 local actionHandlers                     = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers                  = require 'Scripts.staticSwitcher.conditionHandlers'
 
---- Versioned separately from the global save shape; missing or unknown once-cache
---- versions are treated as empty caches so old saves load safely.
+--- Migration/default handling: versioned separately from the global save shape;
+--- missing or unknown once-cache versions are treated as empty caches so old saves load safely.
 local ONCE_CACHE_SCHEMA_VERSION           = 1
 
 ---@type SSSOnceCache
@@ -21,6 +21,9 @@ local OnceCache                           = {
 
 ---@type SSSModuleCatalog
 local ModuleCatalog
+
+---@type SSSDeleteManager
+local DeleteManager
 
 local assert, error, ipairs, pairs, type = assert, error, ipairs, pairs, type
 
@@ -34,6 +37,23 @@ local function resetOnceCache()
     entries = {},
     byObjectId = {},
   }
+end
+
+local function pruneOnceCache()
+  local prunedEntries, prunedEntryCount, prunedByObjectId = {}, 0, {}
+
+  for _, entry in ipairs(OnceCache.entries) do
+    local object = entry.object
+
+    if staticUtil.isGObject(object) and object:isValid() then
+      prunedEntryCount = prunedEntryCount + 1
+      prunedEntries[prunedEntryCount] = entry
+      prunedByObjectId[object.id] = entry
+    end
+  end
+
+  OnceCache.entries = prunedEntries
+  OnceCache.byObjectId = prunedByObjectId
 end
 
 ---@param object openmw.GObject
@@ -128,7 +148,10 @@ end
 
 ---@return SSSOnceCacheSaved
 local function saveOnceCache()
+  pruneOnceCache()
+
   return {
+    -- Migration/default handling lives in loadOnceCache: unknown versions load as empty.
     schemaVersion = ONCE_CACHE_SCHEMA_VERSION,
     entries = OnceCache.entries,
   }
@@ -318,51 +341,68 @@ end
 ---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
-  local wasModified = false
+  local anyActionApplied = false
   local shouldDisable = false
+  local shouldDelete = false
   local modifyTarget = object
   --- Do replacements first, then transforms, then item additions/removals, then spells
 
   local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, object.scale
 
   for _, instanceModification in ipairs(instanceModificationList) do
-    local modificationWasApplied = false
+    local currentRuleApplied = false
 
     for _, actionData in ipairs(instanceModification.actions) do
-      local replaceAction, transformAction, disableAction =
-          actionData.replace, actionData.transform, actionData.disable
+      local replaceAction, transformAction, disableAction, deleteAction =
+          actionData.replace, actionData.transform, actionData.disable, actionData.delete
+      local replaceActionSucceeded = false
 
       --- Should we allow only one successful replacement???
       if replaceAction and modifyTarget == object then
         local didReplace
         modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
-        wasModified = wasModified or didReplace
-        modificationWasApplied = modificationWasApplied or didReplace
-      elseif transformAction then
+        replaceActionSucceeded = didReplace
+        anyActionApplied = anyActionApplied or didReplace
+        currentRuleApplied = currentRuleApplied or didReplace
+      end
+
+      if transformAction then
         local didTransform
         didTransform, newTransform, newPos, targetScale =
             accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
-        wasModified = wasModified or didTransform
-        modificationWasApplied = modificationWasApplied or didTransform
-      elseif disableAction then
+        anyActionApplied = anyActionApplied or didTransform
+        currentRuleApplied = currentRuleApplied or didTransform
+      end
+
+      if disableAction then
         shouldDisable = true
-        wasModified = true
-        modificationWasApplied = true
+        anyActionApplied = true
+        currentRuleApplied = true
+      end
+
+      if deleteAction and (not replaceAction or replaceActionSucceeded) then
+        shouldDelete = true
+        anyActionApplied = true
+        currentRuleApplied = true
       end
     end
 
-    if instanceModification.once and modificationWasApplied then
+    if instanceModification.once and currentRuleApplied then
       markOnceActionApplied(object, instanceModification.moduleName, instanceModification.actionHash)
     end
   end
 
-  if not wasModified then return end
+  if not anyActionApplied then return end
 
   modifyTarget:setScale(targetScale)
   ---@diagnostic disable-next-line: param-type-mismatch
   modifyTarget:teleport(newCell, newPos, newTransform)
 
-  if shouldDisable then modifyTarget.enabled = false end
+  if shouldDisable and modifyTarget:isValid() then modifyTarget.enabled = false end
+
+  if shouldDelete and object:isValid() then
+    DeleteManager:addObjectToDeleteQueue(object, true)
+  end
 end
 
 ---@class SSSInstanceModifiers
@@ -374,8 +414,10 @@ local InstanceModifiers = {
 }
 
 ---@param moduleCatalog SSSModuleCatalog
+---@param deleteManager SSSDeleteManager
 ---@return SSSInstanceModifiers
-return function(moduleCatalog)
+return function(moduleCatalog, deleteManager)
   ModuleCatalog = assert(moduleCatalog)
+  DeleteManager = assert(deleteManager)
   return InstanceModifiers
 end
