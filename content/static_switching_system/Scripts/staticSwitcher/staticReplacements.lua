@@ -11,6 +11,8 @@ local SwitcherSection       = require 'openmw.storage'.globalSection 'SettingsSt
 
 local createRecord          = world.createRecord
 
+local MAX_REPLACEMENT_CHAIN_DEPTH = 8
+
 ---@type table<string, SSSModule> Map of file names handling mesh replacements to the data contained therein
 local ComposedReplacements  = {}
 
@@ -24,10 +26,39 @@ local ReplacedObjectSet     = {}
 ---@type SSSReplacementStepBySource
 local ReplacementStepBySource = {}
 
+---@type SSSReplacementChains
+local ReplacementChains    = {
+  entries = {},
+  byObjectId = {},
+}
+
+---@type string[]?
+local ReplacementModuleOrder
+
 ---@type SSSDeleteManager
 local DeleteManager
 
-local assert, ipairs, pairs = assert, ipairs, pairs
+local assert, ipairs, pairs, sort = assert, ipairs, pairs, table.sort
+
+---@param targetTable table
+local function clearTable(targetTable)
+  for key in pairs(targetTable) do targetTable[key] = nil end
+end
+
+---@return string[] moduleOrder
+local function getReplacementModuleOrder()
+  if not ReplacementModuleOrder then
+    ReplacementModuleOrder = {}
+
+    for moduleName in pairs(ComposedReplacements) do
+      ReplacementModuleOrder[#ReplacementModuleOrder + 1] = moduleName
+    end
+
+    sort(ReplacementModuleOrder)
+  end
+
+  return ReplacementModuleOrder
+end
 
 ---@param sourceObject openmw.GObject
 ---@return boolean
@@ -43,7 +74,7 @@ local function sourceObjectAlreadyReplaced(sourceObject)
 end
 
 local function rebuildReplacementStepBySource()
-  ReplacementStepBySource = {}
+  clearTable(ReplacementStepBySource)
 
   for _, moduleReplacements in pairs(ReplacedObjectSet) do
     for replacement, sourceObject in pairs(moduleReplacements) do
@@ -52,6 +83,189 @@ local function rebuildReplacementStepBySource()
       end
     end
   end
+end
+
+---@param object openmw.GObject
+---@return SSSReplacementChain? chain
+local function getReplacementChain(object)
+  return ReplacementChains.byObjectId[object.id]
+end
+
+---@param object openmw.GObject
+---@return SSSReplacementChain chain
+local function getOrCreateReplacementChain(object)
+  local chain = getReplacementChain(object)
+  if chain then return chain end
+
+  chain = {
+    root = object,
+    current = object,
+    steps = {},
+    appliedModules = {},
+  }
+
+  ReplacementChains.entries[#ReplacementChains.entries + 1] = chain
+  ReplacementChains.byObjectId[object.id] = chain
+
+  return chain
+end
+
+---@param chain SSSReplacementChain
+---@return boolean
+local function chainCanContinue(chain)
+  return #chain.steps < MAX_REPLACEMENT_CHAIN_DEPTH
+end
+
+---@param chain SSSReplacementChain?
+---@param moduleName string
+---@return boolean
+local function chainCanApplyModule(chain, moduleName)
+  return not chain or not chain.appliedModules[moduleName]
+end
+
+---@param chain SSSReplacementChain
+---@param moduleName string
+---@param sourceObject openmw.GObject
+---@param replacement openmw.GObject
+local function addReplacementChainStep(chain, moduleName, sourceObject, replacement)
+  local steps = chain.steps
+  steps[#steps + 1] = {
+    moduleName = moduleName,
+    source = sourceObject,
+    replacement = replacement,
+  }
+
+  chain.current = replacement
+  chain.appliedModules[moduleName] = true
+  ReplacementChains.byObjectId[sourceObject.id] = chain
+  ReplacementChains.byObjectId[replacement.id] = chain
+  ReplacementStepBySource[sourceObject.id] = replacement
+end
+
+local function rebuildReplacementChainIndexes()
+  local oldEntries = ReplacementChains.entries
+  local newEntries = {}
+
+  clearTable(ReplacementChains.byObjectId)
+  clearTable(ReplacementStepBySource)
+
+  for _, chain in ipairs(oldEntries) do
+    local root = chain.root
+
+    if root and root:isValid() then
+      local sanitizedSteps = {}
+      local appliedModules = {}
+      local current = root
+
+      for _, step in ipairs(chain.steps or {}) do
+        local moduleName = step.moduleName
+        local sourceObject, replacement = step.source, step.replacement
+
+        if moduleName and sourceObject and replacement
+            and sourceObject:isValid()
+            and replacement:isValid() then
+          sanitizedSteps[#sanitizedSteps + 1] = step
+          appliedModules[moduleName] = true
+          current = replacement
+
+          ReplacementChains.byObjectId[sourceObject.id] = chain
+          ReplacementChains.byObjectId[replacement.id] = chain
+          ReplacementStepBySource[sourceObject.id] = replacement
+        else
+          break
+        end
+      end
+
+      if #sanitizedSteps > 0 then
+        chain.steps = sanitizedSteps
+        chain.appliedModules = appliedModules
+        chain.current = current
+        ReplacementChains.byObjectId[root.id] = chain
+        newEntries[#newEntries + 1] = chain
+      end
+    end
+  end
+
+  ReplacementChains.entries = newEntries
+end
+
+local function importLegacyReplacementChains()
+  clearTable(ReplacementChains.entries)
+  clearTable(ReplacementChains.byObjectId)
+
+  for moduleName, moduleReplacements in pairs(ReplacedObjectSet) do
+    for replacement, sourceObject in pairs(moduleReplacements) do
+      if replacement:isValid() and sourceObject:isValid() then
+        local chain = {
+          root = sourceObject,
+          current = replacement,
+          steps = {
+            {
+              moduleName = moduleName,
+              source = sourceObject,
+              replacement = replacement,
+            }
+          },
+          appliedModules = {
+            [moduleName] = true,
+          },
+        }
+
+        ReplacementChains.entries[#ReplacementChains.entries + 1] = chain
+      end
+    end
+  end
+
+  rebuildReplacementChainIndexes()
+end
+
+---@param savedChains SSSReplacementChains?
+local function loadReplacementChains(savedChains)
+  clearTable(ReplacementChains.entries)
+  clearTable(ReplacementChains.byObjectId)
+
+  if savedChains and savedChains.entries then
+    staticUtil.deepCopy(ReplacementChains.entries, savedChains.entries)
+    rebuildReplacementChainIndexes()
+  else
+    importLegacyReplacementChains()
+  end
+end
+
+---@param moduleName string
+---@return string? removedModule
+local function uninstallModule(moduleName)
+  local removedModule
+
+  for _, chain in ipairs(ReplacementChains.entries) do
+    local firstRemovedStepIndex
+
+    for stepIndex, step in ipairs(chain.steps) do
+      if step.moduleName == moduleName then
+        firstRemovedStepIndex = stepIndex
+        break
+      end
+    end
+
+    if firstRemovedStepIndex then
+      local restoreObject = chain.steps[firstRemovedStepIndex].source
+      if restoreObject:isValid() and restoreObject.count >= 1 then restoreObject.enabled = true end
+
+      for stepIndex = #chain.steps, firstRemovedStepIndex, -1 do
+        local step = chain.steps[stepIndex]
+        local moduleReplacements = ReplacedObjectSet[step.moduleName]
+
+        if moduleReplacements then moduleReplacements[step.replacement] = nil end
+        DeleteManager:addObjectToDeleteQueue(step.replacement, true)
+        chain.steps[stepIndex] = nil
+      end
+
+      removedModule = moduleName
+    end
+  end
+
+  rebuildReplacementChainIndexes()
+  return removedModule
 end
 
 ---@param object openmw.GObject
@@ -73,7 +287,7 @@ end
 ---@param object openmw.GObject
 ---@param replacementModule string the module which is replacing this object
 ---@param replacementMesh string the mesh which will be used in place of the original
-local function replaceObject(object, replacementModule, replacementMesh)
+local function replaceObject(object, replacementModule, replacementMesh, chain)
   if sourceObjectAlreadyReplaced(object) then return end
 
   local objectRecord = object.type.records[object.recordId]
@@ -106,7 +320,7 @@ local function replaceObject(object, replacementModule, replacementMesh)
 
   if not ReplacedObjectSet[replacementModule] then ReplacedObjectSet[replacementModule] = {} end
   ReplacedObjectSet[replacementModule][replacement] = object
-  ReplacementStepBySource[object.id] = replacement
+  addReplacementChainStep(chain or getOrCreateReplacementChain(object), replacementModule, object, replacement)
 end
 
 ---@param replacementTable SSSModule
@@ -135,21 +349,6 @@ local function replacementTableMatchesCell(replacementTable, cell)
   end
 end
 
----@param cell openmw.core.GCell
----@return table<string, SSSModule>? modulesForThisCell subtable of valid modules for this cell
-local function getReplacementModuleForCell(cell)
-  local modulesForThisCell
-
-  for moduleName, moduleData in pairs(ComposedReplacements) do
-    if replacementTableMatchesCell(moduleData, cell) then
-      modulesForThisCell = modulesForThisCell or {}
-      modulesForThisCell[moduleName] = moduleData
-    end
-  end
-
-  return modulesForThisCell
-end
-
 ---@param moduleName string
 ---@return boolean
 local function moduleIsUninstallTarget(moduleName)
@@ -158,27 +357,46 @@ local function moduleIsUninstallTarget(moduleName)
 end
 
 ---@param object openmw.GObject
-local function tryReplaceObject(object)
-  local targetModules = getReplacementModuleForCell(object.cell)
-  if not targetModules then return end
+---@param chain SSSReplacementChain?
+---@return string? replacementModule
+---@return string? replacementMesh
+local function getObjectReplacement(object, chain)
+  for _, moduleName in ipairs(getReplacementModuleOrder()) do
+    local moduleData = ComposedReplacements[moduleName]
 
-  local replacementModule, replacementMesh = staticUtil.getObjectReplacement(object, targetModules)
-
-  if not replacementModule
-      or moduleIsUninstallTarget(replacementModule)
-      or not replacementMesh then
-    return
+    if moduleData
+        and not moduleIsUninstallTarget(moduleName)
+        and chainCanApplyModule(chain, moduleName)
+        and replacementTableMatchesCell(moduleData, object.cell) then
+      local replacementMesh = staticUtil.getReplacementMeshForObject(moduleData.meshMap, object)
+      if replacementMesh then return moduleName, replacementMesh end
+    end
   end
+end
 
-  replaceObject(object, replacementModule, replacementMesh)
+---@param object openmw.GObject
+local function tryReplaceObject(object)
+  if sourceObjectAlreadyReplaced(object) then return end
+
+  local chain = getReplacementChain(object)
+  if chain and not chainCanContinue(chain) then return end
+
+  local replacementModule, replacementMesh = getObjectReplacement(object, chain)
+
+  if not replacementModule or not replacementMesh then return end
+
+  replaceObject(object, replacementModule, replacementMesh, chain)
 end
 
 ---@type SSSStaticReplacements
 local StaticReplacements = {
   ComposedReplacements = ComposedReplacements,
+  loadReplacementChains = loadReplacementChains,
+  ReplacementChains = ReplacementChains,
   OverrideRecords = OverrideRecords,
   rebuildReplacementStepBySource = rebuildReplacementStepBySource,
   ReplacedObjectSet = ReplacedObjectSet,
+  uninstallModule = uninstallModule,
   tryReplaceObject = tryReplaceObject,
 }
 
