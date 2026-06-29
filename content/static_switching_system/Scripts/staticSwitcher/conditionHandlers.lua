@@ -66,6 +66,20 @@ local conditionHandlers = {
         or objectRecord.name:find(targetName, 1, true) ~= nil
   end,
   ---@param object openmw.GObject
+  ---@param targetMesh string
+  ---@return boolean
+  mesh = function(object, targetMesh)
+    if not object.type then return false end
+
+    local objectRecord = object.type.records[object.recordId]
+    local objectMesh = objectRecord and objectRecord.model
+
+    if not objectMesh then return false end
+
+    return staticUtil.normalizePath(staticUtil.getMeshPath(objectMesh)) ==
+        staticUtil.normalizePath(staticUtil.getMeshPath(targetMesh))
+  end,
+  ---@param object openmw.GObject
   ---@param targetTypeName string
   ---@return boolean
   object_type = function(object, targetTypeName)
