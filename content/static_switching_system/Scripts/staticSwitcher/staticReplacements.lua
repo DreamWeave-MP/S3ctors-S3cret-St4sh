@@ -27,7 +27,7 @@ local DeleteManager
 local assert, ipairs, pairs = assert, ipairs, pairs
 
 ---@param object openmw.GObject
----@param oldRecord openmw.types.ActivatorRecord
+---@param oldRecord openmw.types.ActivatorRecord -- HACK: Not actually an activator record, but easier to annotate.
 ---@param newModel string
 ---@param replacementModule string
 local function createReplacementRecord(object, oldRecord, newModel, replacementModule)
@@ -37,18 +37,7 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
   local moduleRecords = OverrideRecords[replacementModule]
   if moduleRecords[oldRecordId] then return end
 
-  local newRecord = { model = newModel }
-
-  local scriptId = ''
-
-  --- We now allow any record type, but,
-  --- we don't necessarily copy all the relevant data for all possible types yet
-  if oldRecord.name then newRecord.name = oldRecord.name end
-
-  if oldRecord.mwscript then
-    scriptId = oldRecord.mwscript
-    newRecord.mwscript = scriptId
-  end
+  local newRecord = { template = oldRecord, model = newModel }
 
   moduleRecords[oldRecordId] = createRecord(object.type.createRecordDraft(newRecord)).id
 end
@@ -57,7 +46,6 @@ end
 ---@param replacementModule string the module which is replacing this object
 ---@param replacementMesh string the mesh which will be used in place of the original
 local function replaceObject(object, replacementModule, replacementMesh)
-  ---@type openmw.types.ActivatorRecord
   local objectRecord = object.type.records[object.recordId]
 
   local moduleData = ComposedReplacements[replacementModule]
