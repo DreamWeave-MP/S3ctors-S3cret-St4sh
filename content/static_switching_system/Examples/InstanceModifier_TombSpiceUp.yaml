@@ -111,7 +111,7 @@ instances:
       - cell_match: tomb
       - object_type: LevelledCreature
       - record_id: ^in_tomb_all_lev%+0$
-    once: per_cell
+    once: true
     actions:
       - replace:
           'in_tomb_all_lev+2': 1.0
