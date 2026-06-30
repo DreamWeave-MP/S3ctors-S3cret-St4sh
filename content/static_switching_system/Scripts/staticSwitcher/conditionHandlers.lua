@@ -331,7 +331,7 @@ local conditionHandlers = {
 		return true
 	end,
 	['time_of_day'] = function(_, hourData)
-		local currentHour = core.getGameTime().hour
+		local currentHour = (core.getGameTime() / 3600) % 24
 
 		if type(hourData) == 'number' then
 			return currentHour >= hourData
