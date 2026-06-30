@@ -3,6 +3,7 @@
 local I = require 'openmw.interfaces'
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
+local StrFormat = string.format
 
 local INVALID_MODULE_NAME = 'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.'
 
@@ -26,7 +27,7 @@ local function uninstallModule(fileName)
 		local removedModule = ChainUninstallModule(fileName)
 
 		if not removedModule then
-			return staticUtil.Log(INVALID_MODULE_NAME:format(fileName))
+			return staticUtil.Log(StrFormat(INVALID_MODULE_NAME, fileName))
 		end
 
 		return removedModule

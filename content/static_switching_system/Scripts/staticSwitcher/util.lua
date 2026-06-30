@@ -19,6 +19,7 @@ local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FO
 local GOBJECT_TYPE = 'MWLua::GObject'
 
 local assert, error, pairs, print, tonumber, type = assert, error, pairs, print, tonumber, type
+local StrFind, StrFormat, StrGsub, StrLower, StrMatch, StrUpper, StrSub = string.find, string.format, string.gsub, string.lower, string.match, string.upper, string.sub
 
 local Insert, IsArray, Max, Floor =
 		---@diagnostic disable-next-line: undefined-field
@@ -38,7 +39,7 @@ function staticUtil.assertMeshExists(modelPath, originalModel, recordId, moduleN
 		return true
 	end
 
-	staticUtil.Log(MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName), logString)
+	staticUtil.Log(StrFormat(MISSING_MESH_ERROR, modelPath, originalModel, recordId, moduleName), logString)
 end
 
 ---@param inputTarget table? Table into which values will be copied
@@ -72,9 +73,9 @@ end
 ---@param path string Path to check for the `meshes/` prefix
 ---@return string original path, but with `meshes/` prepended
 function staticUtil.getMeshPath(path)
-	path = staticUtil.normalizePath(path):gsub('^/+', '')
+	path = StrGsub(staticUtil.normalizePath(path), '^/+', '')
 
-	if not path:match '^meshes/' then
+	if not StrMatch(path, '^meshes/') then
 		path = 'meshes/' .. path
 	end
 
@@ -151,15 +152,15 @@ function staticUtil.LogString(message, prefix)
 		prefix = LOG_PREFIX
 	end
 
-	return LOG_FORMAT_STR:format(PREFIX_FRAME:format(prefix), message)
+	return StrFormat(LOG_FORMAT_STR, StrFormat(PREFIX_FRAME, prefix), message)
 end
 
 ---Function to normalize path separators in a string
 ---@param path string
 ---@return string normalized path
 function staticUtil.normalizePath(path)
-	local normalized, _ = path:gsub('\\', '/'):gsub('([^:])//+', '%1/')
-	return normalized:lower()
+	local normalized, _ = StrGsub(StrGsub(path, '\\', '/'), '([^:])//+', '%1/')
+	return StrLower(normalized)
 end
 
 ---@param object openmw.GObject
@@ -178,7 +179,7 @@ function staticUtil.getRefNum(object)
 	if objectId then
 		return false, objectId % ContentFileBits
 	else
-		local generatedRef = tonumber(idString:sub(2, #idString))
+		local generatedRef = tonumber(StrSub(idString, 2, #idString))
 
 		assert(generatedRef)
 
@@ -242,10 +243,10 @@ end
 function staticUtil.capitalize(inputString)
 	local stringLength = #inputString
 	if stringLength <= 1 then
-		return inputString:upper()
+		return StrUpper(inputString)
 	end
 
-	return TITLE_CAP_FORMAT_STR:format(inputString:sub(1, 1):upper(), inputString:sub(2, stringLength))
+	return StrFormat(TITLE_CAP_FORMAT_STR, StrUpper(StrSub(inputString, 1, 1)), StrSub(inputString, 2, stringLength))
 end
 
 return staticUtil
