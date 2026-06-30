@@ -156,6 +156,10 @@ return {
 				return
 			end
 
+			if not next(ActiveObjectStack) then
+				InstanceModifiers.clearPerCellTracking()
+			end
+
 			ActiveObjectStack[#ActiveObjectStack + 1] = object
 
 			if UpdateFunction ~= processActiveObject then
