@@ -145,6 +145,7 @@
 ---@field target_level number|table? Target object level gate: bare number means at-least, table with min/max for range. Non-actors return false.
 ---@field time_of_day number|table? Game hour gate: bare number means at-least, table with min/max for range. Computed from core.getGameTime().
 ---@field player_faction table? Player faction membership: {faction: string, rank?: integer, min?: integer, max?: integer}. rank is shorthand for min. Returns false if player is not in the faction.
+---@field faction_owner_id string|string[]? Object owner faction ID. Case-insensitive exact match. Returns false when no faction owner is set.
 ---@field target_faction table? Target NPC primary faction: same shape as player_faction but checks only the NPC's primary faction (not all joined factions). Non-NPCs return false.
 ---@field target_class string|string[]? Target NPC class ID (exact match, case-insensitive). Non-NPCs return false.
 ---@field player_equipped string|string[]? Record ID(s) to match against any equipped item on the player. Exact match.

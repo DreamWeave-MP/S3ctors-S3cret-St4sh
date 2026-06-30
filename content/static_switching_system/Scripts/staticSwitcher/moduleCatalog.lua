@@ -78,6 +78,7 @@ local CONDITIONPRIORITY = {
 	'target_level',
 	'time_of_day',
 	'player_faction',
+	'faction_owner_id',
 	'target_faction',
 	'target_class',
 	'player_equipped',
