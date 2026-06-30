@@ -136,12 +136,35 @@
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "minimum": 1,
-                                            "default": 1,
-                                            "description": "Number of items to apply."
-                                        },
+                                    "count": {
+                                        "oneOf": [
+                                            {
+                                                "type": "integer",
+                                                "minimum": 1,
+                                                "description": "Fixed item count."
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "min": {
+                                                        "type": "integer",
+                                                        "minimum": 1,
+                                                        "description": "Minimum count (defaults to 1)."
+                                                    },
+                                                    "max": {
+                                                        "type": "integer",
+                                                        "minimum": 1,
+                                                        "description": "Required maximum count."
+                                                    }
+                                                },
+                                                "required": ["max"],
+                                                "additionalProperties": false,
+                                                "description": "Random count range."
+                                            }
+                                        ],
+                                        "default": 1,
+                                        "description": "Number of items to apply, or a random range."
+                                    },
                                         "chance": {
                                             "$ref": "#/definitions/chanceRange",
                                             "description": "Chance to apply this item entry."
@@ -199,10 +222,21 @@
             "type": "object",
             "properties": {
                 "count": {
-                    "type": "integer",
-                    "minimum": 1,
+                    "oneOf": [
+                        {"type": "integer", "minimum": 1, "description": "Fixed number of objects."},
+                        {
+                            "type": "object",
+                            "properties": {
+                                "min": {"type": "integer", "minimum": 1},
+                                "max": {"type": "integer", "minimum": 1}
+                            },
+                            "required": ["max"],
+                            "additionalProperties": false,
+                            "description": "Random count range."
+                        }
+                    ],
                     "default": 1,
-                    "description": "Number of objects to spawn from this pool."
+                    "description": "Number of objects to spawn from this pool, or a random range."
                 },
                 "chance": {
                     "type": "number",
