@@ -3,7 +3,7 @@
 local types = require 'openmw.types'
 local Door = types.Door
 
-local staticUtil = require 'scripts.staticSwitcher.util'
+local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local INVALID_TYPE = 'Invalid type was provided: %s'
 

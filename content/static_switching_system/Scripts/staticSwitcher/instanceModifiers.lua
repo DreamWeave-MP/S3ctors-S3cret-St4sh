@@ -4,7 +4,7 @@ local util = require 'openmw.util'
 
 local randomGen = require 'scripts.s3.randomGen'
 
-local staticUtil = require 'scripts.staticSwitcher.util'
+local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'

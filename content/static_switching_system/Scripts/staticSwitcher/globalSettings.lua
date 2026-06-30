@@ -2,7 +2,7 @@
 
 local I = require 'openmw.interfaces'
 
-local staticUtil = require 'scripts.staticswitcher.util'
+local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local INVALID_MODULE_NAME = 'Invalid module name provided: %s. Either it does not exist, or has not replaced anything.'
 
