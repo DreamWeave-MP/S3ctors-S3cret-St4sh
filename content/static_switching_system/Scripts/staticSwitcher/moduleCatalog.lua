@@ -321,8 +321,10 @@ return function(staticReplacements)
 	local modulePaths, modulePathIndex = {}, 0
 
 	for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
-		modulePathIndex = modulePathIndex + 1
-		modulePaths[modulePathIndex] = staticUtil.normalizePath(meshReplacementsPath)
+		if meshReplacementsPath:match '%.ya?ml$' then
+			modulePathIndex = modulePathIndex + 1
+			modulePaths[modulePathIndex] = staticUtil.normalizePath(meshReplacementsPath)
+		end
 	end
 
 	sort(modulePaths)
