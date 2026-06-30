@@ -560,7 +560,7 @@ local actionHandlers = {
 		for i = 1, #keyData do
 			local keyId, chance = next(keyData[i])
 			if shouldApplyChance(chance) then
-				object.type.setKeyRecord(object, entry.id)
+				object.type.setKeyRecord(object, keyId)
 				return true
 			end
 		end
@@ -580,7 +580,7 @@ local actionHandlers = {
 		for i = 1, #trapData do
 			local trapId, chance = next(trapData[i])
 			if shouldApplyChance(chance) then
-				object.type.setTrapSpell(object, entry.id)
+				object.type.setTrapSpell(object, trapId)
 				return true
 			end
 		end

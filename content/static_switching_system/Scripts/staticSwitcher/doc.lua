@@ -132,8 +132,8 @@
 ---@field delete true? queues removal of the original matched source object through DeleteManager
 ---@field create SSSCreateAction? spawns objects at the trigger's position; each pool evaluated independently with optional count, chance, and position/rotation/scale overrides
 ---@field lock_level SSSNumericRange? locks (positive) or unlocks (zero/negative) the target object; non-lockable objects no-op
----@field key false|{id: string, chance?: SSSChanceRange}[]? sets or removes key; first passing entry wins
----@field trap false|{id: string, chance?: SSSChanceRange}[]? sets or removes trap; first passing entry wins
+---@field key false|table<string, SSSChanceRange>[]? sets or removes key; each entry is `{recordId: chance}`; first passing entry wins
+---@field trap false|table<string, SSSChanceRange>[]? sets or removes trap; each entry is `{recordId: chance}`; first passing entry wins
 ---@field set_ownership {owner?: string, faction?: string, factionRank?: integer}? sets ownership on the target object
 ---@field playsound string|{id: string, chance?: number}? plays a 3D positional sound at the target
 
