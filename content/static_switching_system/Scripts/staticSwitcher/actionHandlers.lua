@@ -155,20 +155,6 @@ local function unequipInventoryItem(actor, recordId, count)
 	return false
 end
 
----@param chance SSSChanceRange?
----@return number chanceValue
-local function getChanceValue(chance)
-	local chanceType = type(chance)
-
-	if chanceType == 'number' then
-		return chance
-	elseif chanceType == 'table' then
-		return randomGen.range(chance.min or 0, chance.max)
-	end
-
-	return 0
-end
-
 ---@param itemData integer|SSSItemActionDetails
 ---@return integer count
 ---@return SSSChanceRange? chance
