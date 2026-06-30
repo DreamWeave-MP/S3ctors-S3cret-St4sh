@@ -19,7 +19,7 @@ instances:
       - record_id:
           - candle
           - skull
-          - urn
+          - _urn
           - bone
           - lantern
     once: per_cell
