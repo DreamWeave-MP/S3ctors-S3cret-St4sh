@@ -108,8 +108,7 @@ local conditionHandlers = {
 			cellName = cellName:lower()
 		end
 
-		return (cellName and cellName:find(matchStr, 1, true))
-			or (cellId and cellId:find(matchStr, 1, true))
+		return (cellName and cellName:find(matchStr, 1, true)) or (cellId and cellId:find(matchStr, 1, true))
 	end,
 	---@param object openmw.GObject
 	---@param cellCoords ExteriorGrid
@@ -454,7 +453,6 @@ local conditionHandlers = {
 				if value < attrValue then
 					return false
 				end
-
 			else
 				if attrValue.min and value < attrValue.min then
 					return false
@@ -463,7 +461,6 @@ local conditionHandlers = {
 				if attrValue.max and value > attrValue.max then
 					return false
 				end
-
 			end
 		end
 
@@ -479,7 +476,6 @@ local conditionHandlers = {
 				if value < skillValue then
 					return false
 				end
-
 			else
 				if skillValue.min and value < skillValue.min then
 					return false
@@ -488,7 +484,6 @@ local conditionHandlers = {
 				if skillValue.max and value > skillValue.max then
 					return false
 				end
-
 			end
 		end
 
@@ -514,7 +509,6 @@ local conditionHandlers = {
 				if value < attrValue then
 					return false
 				end
-
 			else
 				if attrValue.min and value < attrValue.min then
 					return false
@@ -523,7 +517,6 @@ local conditionHandlers = {
 				if attrValue.max and value > attrValue.max then
 					return false
 				end
-
 			end
 		end
 
@@ -549,7 +542,6 @@ local conditionHandlers = {
 				if value < skillValue then
 					return false
 				end
-
 			else
 				if skillValue.min and value < skillValue.min then
 					return false
@@ -558,7 +550,6 @@ local conditionHandlers = {
 				if skillValue.max and value > skillValue.max then
 					return false
 				end
-
 			end
 		end
 
