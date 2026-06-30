@@ -31,3 +31,8 @@ StaticSwitcherModuleSelectionDesc: |-
 
 StaticSwitcherSaveDesc: |-
   Removed SSS Module {moduleName}
+
+StaticSwitcherEnableDebugName: Enable Debug Logging
+StaticSwitcherEnableDebugDesc: |-
+  When enabled, detailed debug and info messages are printed to the console.
+  Useful for module authors and troubleshooting module behavior.

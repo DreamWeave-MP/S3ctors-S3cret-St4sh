@@ -102,6 +102,18 @@ return function(moduleIds, deleteManager, replacedObjectSet, chainUninstallModul
 					falseLabel = 'StaticSwitcherFalseLabel',
 				},
 			},
+			{
+				key = 'StaticSwitcherEnableDebug',
+				renderer = 'checkbox',
+				name = 'StaticSwitcherEnableDebugName',
+				description = 'StaticSwitcherEnableDebugDesc',
+				default = false,
+				argument = {
+					l10n = 'StaticSwitcher',
+					trueLabel = 'StaticSwitcherTrueLabel',
+					falseLabel = 'StaticSwitcherFalseLabel',
+				},
+			},
 		},
 	}
 
