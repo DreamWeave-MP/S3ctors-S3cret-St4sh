@@ -221,8 +221,44 @@
                     "description": "Queues forced OpenMW UseItem for one or more currently equipped matching items on the current action target when the target is an Actor. The requested count must already be equipped; missing items are not created."
                 },
                 "disable": {
-                    "const": true,
-                    "description": "Disable the action target after any replacement or transform actions in this rule. If paired with replace, this disables the replacement."
+                    "oneOf": [
+                        {
+                            "const": true
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "chance": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1,
+                                    "description": "Probability from 0 to 1 that this action applies."
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    ],
+                    "description": "Disable the action target after any replacement or transform actions in this rule. If paired with replace, this disables the replacement. When an object with chance is given instead of true, the action applies only when the random roll succeeds."
+                },
+                "enable": {
+                    "oneOf": [
+                        {
+                            "const": true
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "chance": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1,
+                                    "description": "Probability from 0 to 1 that this action applies."
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    ],
+                    "description": "Enable the action target after any replacement, transform, or disable actions in this rule. Cancels any pending disable from the same processing pass. When an object with chance is given instead of true, the action applies only when the random roll succeeds."
                 },
                 "delete": {
                     "const": true,
@@ -263,6 +299,11 @@
                 {
                     "required": [
                         "disable"
+                    ]
+                },
+                {
+                    "required": [
+                        "enable"
                     ]
                 },
                 {
@@ -352,6 +393,10 @@
                 },
                 "cell": {
                     "$ref": "#/definitions/stringOrStringList"
+                },
+                "cell_match": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Case-insensitive substring match against the object's cell name or cell ID."
                 },
                 "coords": {
                     "$ref": "#/definitions/exteriorGridList"

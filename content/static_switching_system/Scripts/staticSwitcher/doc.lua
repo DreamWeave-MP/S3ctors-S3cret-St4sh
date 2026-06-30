@@ -100,7 +100,7 @@
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, disable, delete.
+--- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, disable, enable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -110,12 +110,14 @@
 ---@field remove SSSItemAction? removes item(s) from the current action target when it is an Actor or Container and enough items are available
 ---@field equip SSSItemAction? queues forced OpenMW UseItem for item(s) on Actor targets, creating the requested count first only when missing; usable non-equipment may be consumed/used
 ---@field unequip SSSItemAction? queues forced OpenMW UseItem for currently equipped item(s) on Actor targets; requested count must already be equipped
----@field disable true? disables the final action target; with replace, disables the replacement
+---@field disable true|{chance: number?}? disables the final action target; with replace, disables the replacement; chance field rolls independently
+---@field enable true|{chance: number?}? enables the final action target; cancels any pending disable from the same rule; chance field rolls independently
 ---@field delete true? queues removal of the original matched source object through DeleteManager
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
 ---@field cell string?
+---@field cell_match string? substring match against object.cell.name or object.cell.id, case-insensitive
 ---@field coords ExteriorGrid?
 ---@field content_file string?
 ---@field exterior boolean?

@@ -87,6 +87,20 @@ local conditionHandlers = {
 		return object.cell.name == cellName or object.cell.id == cellName
 	end,
 	---@param object openmw.GObject
+	---@param matchStr string
+	---@return boolean
+	cell_match = function(object, matchStr)
+		local cell = object.cell
+		if not cell then
+			return false
+		end
+
+		local lowerSearch = matchStr:lower()
+
+		return (cell.name and cell.name:lower():find(lowerSearch, 1, true))
+			or (cell.id and cell.id:lower():find(lowerSearch, 1, true))
+	end,
+	---@param object openmw.GObject
 	---@param cellCoords ExteriorGrid
 	---@return boolean
 	coords = function(object, cellCoords)

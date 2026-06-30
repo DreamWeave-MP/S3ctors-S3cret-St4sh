@@ -433,12 +433,31 @@ local function accumulateTransformAction(transformAction, newTransform, newPos, 
 	return wasModified, newTransform, newPos, targetScale
 end
 
+---@param actionValue boolean|{chance: number?}?
+---@return boolean
+local function shouldFireAction(actionValue)
+	if actionValue == true then
+		return true
+	end
+
+	if type(actionValue) ~= 'table' then
+		return false
+	end
+
+	if actionValue.chance == nil then
+		return true
+	end
+
+	return randomGen.float() <= actionValue.chance
+end
+
 ---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
 	local anyActionApplied = false
 	local needsPlacementUpdate = false
 	local shouldDisable = false
+	local shouldEnable = false
 	local shouldDelete = false
 	local modifyTarget = object
 	--- Do replacements first, then transforms, then item additions/removals, then spells
@@ -451,7 +470,7 @@ local function tryModifyObject(object, instanceModificationList)
 		local currentRuleApplied = false
 
 		for _, actionData in ipairs(instanceModification.actions) do
-			local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction =
+			local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, enableAction, deleteAction =
 				actionData.replace,
 				actionData.transform,
 				actionData.add,
@@ -459,6 +478,7 @@ local function tryModifyObject(object, instanceModificationList)
 				actionData.equip,
 				actionData.unequip,
 				actionData.disable,
+				actionData.enable,
 				actionData.delete
 			local replaceActionSucceeded = false
 
@@ -513,11 +533,20 @@ local function tryModifyObject(object, instanceModificationList)
 				logger.debug('  unequip on %s: %s', object.id, didUnequip and 'OK' or 'failed (not equipped)')
 			end
 
-			if disableAction then
+			if disableAction and shouldFireAction(disableAction) then
+				shouldEnable = false
 				shouldDisable = true
 				anyActionApplied = true
 				currentRuleApplied = true
 				logger.debug('  disable on %s', object.id)
+			end
+
+			if enableAction and shouldFireAction(enableAction) then
+				shouldDisable = false
+				shouldEnable = true
+				anyActionApplied = true
+				currentRuleApplied = true
+				logger.debug('  enable on %s', object.id)
 			end
 
 			if deleteAction and (not replaceAction or replaceActionSucceeded) then
@@ -553,7 +582,9 @@ local function tryModifyObject(object, instanceModificationList)
 		modifyTarget:teleport(newCell, newPos, newTransform)
 	end
 
-	if shouldDisable and modifyTarget:isValid() then
+	if shouldEnable and modifyTarget:isValid() then
+		modifyTarget.enabled = true
+	elseif shouldDisable and modifyTarget:isValid() then
 		modifyTarget.enabled = false
 	end
 
