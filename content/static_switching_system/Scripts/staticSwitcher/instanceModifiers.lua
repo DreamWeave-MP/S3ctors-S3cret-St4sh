@@ -377,12 +377,13 @@ local function tryModifyObject(object, instanceModificationList)
 		local currentRuleApplied = false
 
 		for _, actionData in ipairs(instanceModification.actions) do
-			local replaceAction, transformAction, addAction, removeAction, equipAction, disableAction, deleteAction =
+			local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction =
 				actionData.replace,
 				actionData.transform,
 				actionData.add,
 				actionData.remove,
 				actionData.equip,
+				actionData.unequip,
 				actionData.disable,
 				actionData.delete
 			local replaceActionSucceeded = false
@@ -422,6 +423,12 @@ local function tryModifyObject(object, instanceModificationList)
 				local didEquip = actionHandlers.equip(modifyTarget, equipAction)
 				anyActionApplied = anyActionApplied or didEquip
 				currentRuleApplied = currentRuleApplied or didEquip
+			end
+
+			if unequipAction then
+				local didUnequip = actionHandlers.unequip(modifyTarget, unequipAction)
+				anyActionApplied = anyActionApplied or didUnequip
+				currentRuleApplied = currentRuleApplied or didUnequip
 			end
 
 			if disableAction then
