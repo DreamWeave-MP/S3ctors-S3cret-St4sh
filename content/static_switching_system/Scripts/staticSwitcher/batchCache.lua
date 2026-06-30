@@ -1,10 +1,6 @@
 ---@omw-context global
 
 ---@type SSSBatchCache
----@field clear fun() Clears all cached values between activation batches.
----@field playerQuests fun(): table Returns the player's quest table, cached per batch.
----@field playerEquipment fun(): table Returns the player's equipment table, cached per batch.
----@field currentWeather fun(cell: openmw.core.Cell): openmw.core.WeatherRecord? Returns current weather for a cell, cached per batch.
 
 local types = require 'openmw.types'
 local core = require 'openmw.core'

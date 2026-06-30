@@ -277,3 +277,9 @@
 ---@field warn fun(message: string) Non-critical issues; always prints
 ---@field error fun(message: string) Critical errors; always prints
 ---@field isDebugEnabled fun(): boolean Check whether debug logging is active without printing
+
+---@class SSSBatchCache
+---@field clear fun() Clears all cached values between activation batches.
+---@field playerQuests fun(): table Returns the player's quest table, cached per batch.
+---@field playerEquipment fun(): table Returns the player's equipment table, cached per batch.
+---@field currentWeather fun(cell: openmw.core.Cell): openmw.core.WeatherRecord? Returns current weather for a cell, cached per batch.
