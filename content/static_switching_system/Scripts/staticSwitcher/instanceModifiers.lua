@@ -6,7 +6,14 @@ local randomGen = require 'scripts.s3.randomGen'
 
 local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
-local logger = require 'Scripts.staticSwitcher.logger'
+
+local DebugLog
+do
+	local logger = require 'Scripts.staticSwitcher.logger'
+	DebugLog = DebugLog
+end
+
+local StrFormat = string.format
 
 --- Migration/default handling: versioned separately from the global save shape;
 --- missing or unknown once-cache versions are treated as empty caches so old saves load safely.
@@ -19,7 +26,7 @@ local OnceCache = {
 }
 
 --- Runtime-only per-cell-load tracking set.
---- Tracks "objectId:moduleName:actionHash" for rules with once="per_cell".
+--- Tracks "object.id:moduleName:actionHash" for rules with once="per_cell".
 --- Cleared at the start of each new activation batch (onObjectActive when the
 --- stack was empty). Marked entries suppress re-processing of objects that
 --- were already modified this cell load, including replacement objects.
@@ -114,7 +121,7 @@ end
 ---@param actionHash string
 ---@return string
 local function perCellKey(object, moduleName, actionHash)
-	return ('%s:%s:%s'):format(object.id, moduleName, actionHash)
+	return StrFormat('%s:%s:%s', object.id, moduleName, actionHash)
 end
 
 ---@param object openmw.GObject
@@ -222,7 +229,7 @@ local function matchesAllConditions(object, conditions)
 			local conditionHandler = conditionHandlers[conditionName]
 
 			if type(conditionHandler) ~= 'function' then
-				error(('Condition %s is an invalid condition for the handler!'):format(conditionName))
+				error(StrFormat('Condition %s is an invalid condition for the handler!', conditionName))
 			end
 
 			if type(conditionValue) == 'table' then
@@ -242,16 +249,16 @@ local function matchesAllConditions(object, conditions)
 					end
 
 					if not matchedAnyValue then
-						logger.debug('Condition %s OR-list FAIL for %s', conditionName, object.id)
+						DebugLog('Condition %s OR-list FAIL for %s', conditionName, object.id)
 						return false
 					end
 				elseif not conditionHandler(object, conditionValue) then
-					logger.debug('Condition %s FAIL for %s', conditionName, object.id)
+					DebugLog('Condition %s FAIL for %s', conditionName, object.id)
 					return false
 				end
 			else
 				if not conditionHandler(object, conditionValue) then
-					logger.debug('Condition %s=%s FAIL for %s', conditionName, tostring(conditionValue), object.id)
+					DebugLog('Condition %s=%s FAIL for %s', conditionName, tostring(conditionValue), object.id)
 					return false
 				end
 			end
@@ -308,7 +315,7 @@ local function getMatchingInstanceModules(object)
 			end
 
 			if skipReason then
-				logger.debug('SKIP %s/%s on %s: %s', moduleName, actionTableHash, object.id, skipReason)
+				DebugLog('SKIP %s/%s on %s: %s', moduleName, actionTableHash, object.id, skipReason)
 			else
 				matchingActions = matchingActions or {}
 				actionIndex = (actionIndex or 0) + 1
@@ -324,7 +331,7 @@ local function getMatchingInstanceModules(object)
 	end
 
 	if matchingActions then
-		logger.debug('MATCH %d rule(s) for %s (%s)', #matchingActions, object.id, object.recordId or '?')
+		DebugLog('MATCH %d rule(s) for %s (%s)', #matchingActions, object.id, object.recordId or '?')
 	end
 
 	return matchingActions
@@ -353,11 +360,12 @@ local function tryModifyObject(object, instanceModificationList)
 	local shouldDisable = false
 	local shouldDelete = false
 	local modifyTarget = object
+	local objectId = object.id
 	--- Do replacements first, then transforms, then item additions/removals, then spells
 
 	local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, object.scale
 
-	logger.debug('APPLY %d rule(s) to %s (%s)', #instanceModificationList, object.id, object.recordId or '?')
+	DebugLog('APPLY %d rule(s) to %s (%s)', #instanceModificationList, objectId, object.recordId or '?')
 
 	for modIndex = 1, #instanceModificationList do
 		local instanceModification = instanceModificationList[modIndex]
@@ -391,7 +399,7 @@ local function tryModifyObject(object, instanceModificationList)
 					anyActionApplied = anyActionApplied or didReplace
 					needsPlacementUpdate = needsPlacementUpdate or didReplace
 					currentRuleApplied = currentRuleApplied or didReplace
-					logger.debug('  replace on %s: %s', object.id, didReplace and 'OK' or 'failed (no matching roll)')
+					DebugLog('  replace on %s: %s', objectId, didReplace and 'OK' or 'failed (no matching roll)')
 				end
 
 				if transformAction then
@@ -402,7 +410,7 @@ local function tryModifyObject(object, instanceModificationList)
 					needsPlacementUpdate = needsPlacementUpdate or didTransform
 					currentRuleApplied = currentRuleApplied or didTransform
 					if didTransform then
-						logger.debug('  transform on %s: scale=%.3f', object.id, targetScale)
+						DebugLog('  transform on %s: scale=%.3f', objectId, targetScale)
 					end
 				end
 
@@ -410,56 +418,56 @@ local function tryModifyObject(object, instanceModificationList)
 					local didSet = actionHandlers.set_ownership(modifyTarget, setOwnershipAction)
 					anyActionApplied = anyActionApplied or didSet
 					currentRuleApplied = currentRuleApplied or didSet
-					logger.debug('  set_ownership on %s: %s', object.id, didSet and 'OK' or 'noop')
+					DebugLog('  set_ownership on %s: %s', objectId, didSet and 'OK' or 'noop')
 				end
 
 				if addAction then
 					local didAdd = actionHandlers.add(modifyTarget, addAction)
 					anyActionApplied = anyActionApplied or didAdd
 					currentRuleApplied = currentRuleApplied or didAdd
-					logger.debug('  add on %s: %s', object.id, didAdd and 'OK' or 'failed')
+					DebugLog('  add on %s: %s', objectId, didAdd and 'OK' or 'failed')
 				end
 
 				if removeAction then
 					local didRemove = actionHandlers.remove(modifyTarget, removeAction)
 					anyActionApplied = anyActionApplied or didRemove
 					currentRuleApplied = currentRuleApplied or didRemove
-					logger.debug('  remove on %s: %s', object.id, didRemove and 'OK' or 'nothing to remove')
+					DebugLog('  remove on %s: %s', objectId, didRemove and 'OK' or 'nothing to remove')
 				end
 
 				if equipAction then
 					local didEquip = actionHandlers.equip(modifyTarget, equipAction)
 					anyActionApplied = anyActionApplied or didEquip
 					currentRuleApplied = currentRuleApplied or didEquip
-					logger.debug('  equip on %s: %s', object.id, didEquip and 'OK' or 'failed')
+					DebugLog('  equip on %s: %s', objectId, didEquip and 'OK' or 'failed')
 				end
 
 				if unequipAction then
 					local didUnequip = actionHandlers.unequip(modifyTarget, unequipAction)
 					anyActionApplied = anyActionApplied or didUnequip
 					currentRuleApplied = currentRuleApplied or didUnequip
-					logger.debug('  unequip on %s: %s', object.id, didUnequip and 'OK' or 'failed (not equipped)')
+					DebugLog('  unequip on %s: %s', objectId, didUnequip and 'OK' or 'failed (not equipped)')
 				end
 
 				if lockLevelAction then
 					local didLock = actionHandlers.lock_level(modifyTarget, lockLevelAction)
 					anyActionApplied = anyActionApplied or didLock
 					currentRuleApplied = currentRuleApplied or didLock
-					logger.debug('  lock_level on %s: %s', object.id, didLock and 'OK' or 'failed (not lockable)')
+					DebugLog('  lock_level on %s: %s', objectId, didLock and 'OK' or 'failed (not lockable)')
 				end
 
 				if keyAction then
 					local didKey = actionHandlers.key(modifyTarget, keyAction)
 					anyActionApplied = anyActionApplied or didKey
 					currentRuleApplied = currentRuleApplied or didKey
-					logger.debug('  key on %s: %s', object.id, didKey and 'OK' or 'failed (not lockable)')
+					DebugLog('  key on %s: %s', objectId, didKey and 'OK' or 'failed (not lockable)')
 				end
 
 				if trapAction then
 					local didTrap = actionHandlers.trap(modifyTarget, trapAction)
 					anyActionApplied = anyActionApplied or didTrap
 					currentRuleApplied = currentRuleApplied or didTrap
-					logger.debug('  trap on %s: %s', object.id, didTrap and 'OK' or 'failed (not lockable)')
+					DebugLog('  trap on %s: %s', objectId, didTrap and 'OK' or 'failed (not lockable)')
 				end
 
 				if createAction then
@@ -467,7 +475,7 @@ local function tryModifyObject(object, instanceModificationList)
 					if numCreated > 0 then
 						anyActionApplied = true
 						currentRuleApplied = true
-						logger.debug('  create on %s: %d spawned', object.id, numCreated)
+						DebugLog('  create on %s: %d spawned', objectId, numCreated)
 					end
 				end
 
@@ -475,12 +483,12 @@ local function tryModifyObject(object, instanceModificationList)
 					local didPlay = actionHandlers.playsound(modifyTarget, playsoundAction)
 					anyActionApplied = anyActionApplied or didPlay
 					currentRuleApplied = currentRuleApplied or didPlay
-					logger.debug('  playsound on %s: %s', object.id, didPlay and 'OK' or 'miss')
+					DebugLog('  playsound on %s: %s', objectId, didPlay and 'OK' or 'miss')
 				end
 
 				if disableAction then
 					local didDisable = actionHandlers.disable(modifyTarget, disableAction)
-					logger.debug('  disable on %s: roll=%s', object.id, didDisable and 'OK' or 'miss')
+					DebugLog('  disable on %s: roll=%s', objectId, didDisable and 'OK' or 'miss')
 					if didDisable then
 						shouldDisable = true
 						anyActionApplied = true
@@ -494,17 +502,17 @@ local function tryModifyObject(object, instanceModificationList)
 						shouldDelete = true
 						anyActionApplied = true
 						currentRuleApplied = true
-						logger.debug('  delete on %s', object.id)
+						DebugLog('  delete on %s', objectId)
 					end
 				end
 			else
-				logger.debug('  chance miss on %s: %.2f', object.id, actionData.chance)
+				DebugLog('  chance miss on %s: %.2f', objectId, actionData.chance)
 			end
 		end
 
 		if instanceModification.once == true and currentRuleApplied then
 			markOnceActionApplied(object, instanceModification.moduleName, instanceModification.actionHash)
-			logger.debug('  once=true cached: %s/%s', instanceModification.moduleName, instanceModification.actionHash)
+			DebugLog('  once=true cached: %s/%s', instanceModification.moduleName, instanceModification.actionHash)
 		end
 
 		if instanceModification.once == 'per_cell' and currentRuleApplied then
@@ -513,7 +521,7 @@ local function tryModifyObject(object, instanceModificationList)
 			if modifyTarget ~= object then
 				markAppliedThisLoad(modifyTarget, instanceModification.moduleName, instanceModification.actionHash)
 			end
-			logger.debug(
+			DebugLog(
 				'  once=per_cell marked: %s/%s',
 				instanceModification.moduleName,
 				instanceModification.actionHash
@@ -522,7 +530,7 @@ local function tryModifyObject(object, instanceModificationList)
 
 		if instanceModification.moduleOnce and currentRuleApplied then
 			markOnceActionApplied(object, instanceModification.moduleName, '*')
-			logger.debug('  module once=true cached: %s', instanceModification.moduleName)
+			DebugLog('  module once=true cached: %s', instanceModification.moduleName)
 		end
 	end
 
