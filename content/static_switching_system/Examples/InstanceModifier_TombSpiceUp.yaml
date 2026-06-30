@@ -38,10 +38,10 @@ instances:
       - transform:
           scale: { min: 0.6, max: 1.4 }
 
-  # Rule 2: Candle roulette. Each visit, candles have a 30% chance to
-  # be out and a 30% chance to be lit. When both roll true, enable
-  # wins (it fires later in priority). Net result: ~30% of candles
-  # dark, ~70% lit or unchanged — keeps the tomb feel while varying.
+  # Rule 3: Candle roulette. Each visit, candles have a 50% chance to
+  # be dark. Once disabled, objects stay disabled — onObjectActive does
+  # not fire for disabled objects across cell loads, so the SSS can't
+  # re-enable them. Use once=true for a one-time roll per save.
   - conditions:
       - cell_match: tomb
       - record_id: 
