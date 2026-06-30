@@ -57,7 +57,7 @@ local CONDITIONPRIORITY = {
 	'record_id',
 	'ref_num',
 	--- Name matches should always be last as they're inevitably going to be the slowest
-	'name',
+	'nameMatch',
 	'carrying',
 }
 

@@ -365,7 +365,7 @@
                 "quasi_exterior": {
                     "type": "boolean"
                 },
-                "name": {
+                "nameMatch": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
                 "has_name": {

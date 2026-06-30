@@ -117,7 +117,7 @@ local conditionHandlers = {
 	---@param object openmw.GObject
 	---@param targetName string
 	---@return boolean
-	name = function(object, targetName)
+	nameMatch = function(object, targetName)
 		--- Statics may never have a name
 		if types.Static.objectIsInstance(object) or not object.type then
 			return false
