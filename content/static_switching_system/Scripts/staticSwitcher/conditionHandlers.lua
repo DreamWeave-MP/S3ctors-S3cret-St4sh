@@ -16,6 +16,7 @@ local INVALID_TYPE = 'Invalid type was provided: %s'
 local cellToExteriorRegion = {}
 
 local type = type
+local StrFind, StrLower, StrFormat = string.find, string.lower, string.format
 
 ---@param cell openmw.core.GCell
 ---@param position openmw.util.Vector3
@@ -81,7 +82,7 @@ local conditionHandlers = {
 
 		local itemType = type(itemId)
 		if itemType == 'string' then
-			return objectInventory:find(itemId) ~= nil
+			return StrFind(objectInventory, itemId) ~= nil
 		else
 			local itemName, itemCount = next(itemId)
 
@@ -103,12 +104,12 @@ local conditionHandlers = {
 			return false
 		end
 
-		local cellId, cellName = cell.id:lower(), cell.name
+		local cellId, cellName = StrLower(cell.id), cell.name
 		if cellName ~= '' then
-			cellName = cellName:lower()
+			cellName = StrLower(cellName)
 		end
 
-		return (cellName and cellName:find(matchStr, 1, true)) or (cellId and cellId:find(matchStr, 1, true))
+		return (cellName and StrFind(cellName, matchStr, 1, true)) or (cellId and StrFind(cellId, matchStr, 1, true))
 	end,
 	---@param object openmw.GObject
 	---@param cellCoords ExteriorGrid
@@ -153,7 +154,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		return objectRecord.name == targetName or objectRecord.name:find(targetName, 1, true) ~= nil
+		return objectRecord.name == targetName or StrFind(objectRecord.name, targetName, 1, true) ~= nil
 	end,
 	---@param object openmw.GObject
 	---@param shouldHaveName boolean
@@ -322,7 +323,7 @@ local conditionHandlers = {
 	object_type = function(object, targetTypeName)
 		local targetType = types[targetTypeName]
 
-		assert(targetType ~= nil, INVALID_TYPE:format(targetTypeName))
+		assert(targetType ~= nil, StrFormat(INVALID_TYPE, targetTypeName))
 
 		return targetType.objectIsInstance(object)
 	end,
@@ -335,7 +336,7 @@ local conditionHandlers = {
 		-- Pattern matching enables ^/$ anchors (e.g. ^urn_ excludes furn_*).
 		-- TES3 record IDs are alphanumeric + underscore + space + apostrophe,
 		-- none of which are Lua-pattern-special, so this is backwards compatible.
-		return originalId == targetId or originalId:find(targetId, 1) ~= nil
+		return originalId == targetId or StrFind(originalId, targetId, 1) ~= nil
 	end,
 	---@param object openmw.GObject
 	---@param targetData table<string, number[]>
@@ -382,7 +383,7 @@ local conditionHandlers = {
 			region = getExteriorRegionFromDoor(cell, object.position)
 		end
 
-		return region ~= nil and region:lower() == targetRegion
+		return region ~= nil and StrLower(region) == targetRegion
 	end,
 	---@param object openmw.GObject
 	---@param targetScale SSSNumericRange
@@ -400,7 +401,7 @@ local conditionHandlers = {
 	worldspace = function(object, targetWorldspace)
 		local worldspace = object.cell and object.cell.worldSpaceId
 
-		return worldspace ~= nil and worldspace:lower() == targetWorldspace
+		return worldspace ~= nil and StrLower(worldspace) == targetWorldspace
 	end,
 	['player_level'] = function(_, levelData)
 		local currentLevel = Player.type.stats.level(Player).current
@@ -656,12 +657,12 @@ local conditionHandlers = {
 		end
 
 		if type(classData) == 'string' then
-			return classId:lower() == classData
+			return StrLower(classId) == classData
 		end
 
 		if classData[1] then
 			for i = 1, #classData do
-				if classId:lower() == classData[i] then
+				if StrLower(classId) == classData[i] then
 					return true
 				end
 			end
@@ -705,7 +706,7 @@ local conditionHandlers = {
 			if not current then
 				return false
 			end
-			return current.name:lower():find(weatherData, 1, true) ~= nil
+			return StrFind(StrLower(current.name), weatherData, 1, true) ~= nil
 		end
 
 		if weatherData[1] then
@@ -714,7 +715,7 @@ local conditionHandlers = {
 					if current == nil then
 						return true
 					end
-				elseif current and current.name:lower():find(weatherData[i], 1, true) ~= nil then
+				elseif current and StrFind(StrLower(current.name), weatherData[i], 1, true) ~= nil then
 					return true
 				end
 			end
@@ -727,7 +728,7 @@ local conditionHandlers = {
 			end
 		end
 		if weatherData.name then
-			if not current or not current.name:lower():find(weatherData.name:lower(), 1, true) then
+			if not current or not StrFind(StrLower(current.name), StrLower(weatherData.name), 1, true) then
 				return false
 			end
 		end
@@ -756,7 +757,7 @@ conditionHandlers['not'] = function(object, innerCondition)
 	local innerHandler = conditionHandlers[innerName]
 
 	if type(innerHandler) ~= 'function' then
-		error(('Condition %s is an invalid condition for the NOT handler!'):format(innerName))
+		error(StrFormat('Condition %s is an invalid condition for the NOT handler!', innerName))
 	end
 
 	-- Expand OR-lists inside the negation so
