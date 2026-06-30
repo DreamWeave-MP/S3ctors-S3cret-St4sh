@@ -237,7 +237,11 @@ local function rebuildReplacementChainIndexes()
 					local moduleName = step.moduleName
 					local sourceObject, replacement = step.source, step.replacement
 
-					if #sanitizedSteps >= MAX_REPLACEMENT_CHAIN_DEPTH or not moduleName or appliedModules[moduleName] then
+					if
+						#sanitizedSteps >= MAX_REPLACEMENT_CHAIN_DEPTH
+						or not moduleName
+						or appliedModules[moduleName]
+					then
 						break
 					elseif
 						staticUtil.isGObject(sourceObject)

@@ -169,7 +169,9 @@ local conditionHandlers = {
 	locked = function(object, lockData)
 		local objType = object.type
 
-		if not objType then return false end
+		if not objType then
+			return false
+		end
 
 		local isLocked = objType.isLocked
 		if not isLocked then
@@ -572,7 +574,7 @@ local conditionHandlers = {
 ---@param object openmw.GObject
 ---@param innerCondition table<string, any>
 ---@return boolean
-conditionHandlers["not"] = function(object, innerCondition)
+conditionHandlers['not'] = function(object, innerCondition)
 	local innerName, innerValue = next(innerCondition)
 	local innerHandler = conditionHandlers[innerName]
 

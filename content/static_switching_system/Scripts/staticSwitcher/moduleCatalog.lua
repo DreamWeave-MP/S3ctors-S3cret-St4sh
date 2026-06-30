@@ -37,7 +37,7 @@ local ObjectModificationStore = {}
 local StaticReplacements
 
 ---@type string[]
-	local ACTIONPRIORITY = {
+local ACTIONPRIORITY = {
 	'replace',
 	'transform',
 	'add',
@@ -413,7 +413,11 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 	end
 
 	if meshReplacementsTable.instances then
-		logger.info('Loaded module %s: %d instance rule(s)', moduleIdentity.displayName, #meshReplacementsTable.instances)
+		logger.info(
+			'Loaded module %s: %d instance rule(s)',
+			moduleIdentity.displayName,
+			#meshReplacementsTable.instances
+		)
 	else
 		local numReplacements = 0
 		if meshReplacementsTable.replace_meshes then
