@@ -102,10 +102,10 @@ local conditionHandlers = {
 			return false
 		end
 
-		local lowerSearch = matchStr:lower()
+		local searchStr = matchStr
 
-		return (cell.name and cell.name:lower():find(lowerSearch, 1, true))
-			or (cell.id and cell.id:lower():find(lowerSearch, 1, true))
+		return (cell.name and cell.name:lower():find(searchStr, 1, true))
+			or (cell.id and cell.id:lower():find(searchStr, 1, true))
 	end,
 	---@param object openmw.GObject
 	---@param cellCoords ExteriorGrid
@@ -120,7 +120,7 @@ local conditionHandlers = {
 	---@param contentFileName string
 	---@return boolean
 	content_file = function(object, contentFileName)
-		return (object.contentFile == contentFileName:lower())
+		return (object.contentFile == contentFileName)
 			or (not object.contentFile and contentFileName:upper() == 'GENERATED')
 	end,
 	---@param object openmw.GObject
@@ -263,12 +263,12 @@ local conditionHandlers = {
 	---@param targetRecordId RecordId
 	---@return boolean
 	record_id = function(object, targetRecordId)
-		local originalId, lowerId = object.recordId, targetRecordId:lower()
+		local originalId, targetId = object.recordId, targetRecordId
 
 		-- Pattern matching enables ^/$ anchors (e.g. ^urn_ excludes furn_*).
 		-- TES3 record IDs are alphanumeric + underscore + space + apostrophe,
 		-- none of which are Lua-pattern-special, so this is backwards compatible.
-		return originalId == lowerId or originalId:find(lowerId, 1) ~= nil
+		return originalId == targetId or originalId:find(targetId, 1) ~= nil
 	end,
 	---@param object openmw.GObject
 	---@param targetData table<string, number[]>
@@ -281,7 +281,7 @@ local conditionHandlers = {
 		end
 
 		for contentFile, refnums in pairs(targetData) do
-			if objectContentFile == contentFile:lower() then
+			if objectContentFile == contentFile then
 				local _, refNum = staticUtil.getRefNum(object)
 
 				for _, targetRef in ipairs(refnums) do
@@ -315,7 +315,7 @@ local conditionHandlers = {
 			region = getExteriorRegionFromDoor(cell, object.position)
 		end
 
-		return region ~= nil and region:lower() == targetRegion:lower()
+		return region ~= nil and region:lower() == targetRegion
 	end,
 	---@param object openmw.GObject
 	---@param targetScale SSSNumericRange
@@ -333,7 +333,7 @@ local conditionHandlers = {
 	worldspace = function(object, targetWorldspace)
 		local worldspace = object.cell and object.cell.worldSpaceId
 
-		return worldspace ~= nil and worldspace:lower() == targetWorldspace:lower()
+		return worldspace ~= nil and worldspace:lower() == targetWorldspace
 	end,
 	['player_level'] = function(_, levelData)
 		local currentLevel = Player.type.stats.level(Player).current
@@ -415,7 +415,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		return ownerFaction:lower() == factionId:lower()
+		return ownerFaction == factionId
 	end,
 	['owner_id'] = function(object, ownerRecordId)
 		local ownerId = object.owner.recordId
@@ -423,7 +423,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		return ownerId:lower() == ownerRecordId:lower()
+		return ownerId == ownerRecordId
 	end,
 	['faction_owner_rank'] = function(object, rankData)
 		local rank = object.owner.factionRank
@@ -477,12 +477,12 @@ local conditionHandlers = {
 		end
 
 		if type(classData) == 'string' then
-			return classId:lower() == classData:lower()
+			return classId:lower() == classData
 		end
 
 		if classData[1] then
 			for i = 1, #classData do
-				if classId:lower() == classData[i]:lower() then
+				if classId:lower() == classData[i] then
 					return true
 				end
 			end
@@ -526,7 +526,7 @@ local conditionHandlers = {
 			if not current then
 				return false
 			end
-			return string.find(current.name:lower(), weatherData:lower(), 1, true) ~= nil
+			return current.name:lower():find(weatherData, 1, true) ~= nil
 		end
 
 		if weatherData[1] then
@@ -535,7 +535,7 @@ local conditionHandlers = {
 					if current == nil then
 						return true
 					end
-				elseif current and string.find(current.name:lower(), weatherData[i]:lower(), 1, true) ~= nil then
+				elseif current and current.name:lower():find(weatherData[i], 1, true) ~= nil then
 					return true
 				end
 			end
@@ -548,7 +548,7 @@ local conditionHandlers = {
 			end
 		end
 		if weatherData.name then
-			if not current or not string.find(current.name:lower(), weatherData.name:lower(), 1, true) then
+			if not current or not current.name:lower():find(weatherData.name:lower(), 1, true) then
 				return false
 			end
 		end
