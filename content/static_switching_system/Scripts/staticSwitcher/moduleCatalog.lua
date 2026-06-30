@@ -9,9 +9,15 @@ local tableHash = require 'scripts.s3.tableHash'
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
 local validation = require 'Scripts.staticSwitcher.validation'
-local logger = require 'Scripts.staticSwitcher.logger'
+
+local InfoLog
+do
+	local logger = require 'Scripts.staticSwitcher.logger'
+	InfoLog = logger.info
+end
 
 local type = type
+local StrLower, StrGsub, StrMatch = string.lower, string.gsub, string.match
 
 local DATA_PREFIX = 'scripts/staticswitcher/data/'
 
@@ -125,13 +131,13 @@ error,
 ---@param modulePath string
 ---@return string pathWithoutExtension
 local function stripYamlExtension(modulePath)
-	return modulePath:gsub('%.yaml$', ''):gsub('%.yml$', '')
+	return StrGsub(StrGsub(modulePath, '%.yaml$', ''), '%.yml$', '')
 end
 
 ---@param modulePath string
 ---@return string label
 local function getModuleLabel(modulePath)
-	return stripYamlExtension(modulePath):gsub('^' .. DATA_PREFIX, '')
+	return StrGsub(stripYamlExtension(modulePath), '^' .. DATA_PREFIX, '')
 end
 
 ---@param modulePath string
@@ -232,7 +238,7 @@ local function sanitizeConditionValue(conditionName, conditionValue)
 		if type(conditionValue) == 'table' then
 			local lowered = {}
 			for k, v in pairs(conditionValue) do
-				lowered[k:lower()] = v
+				lowered[StrLower(k)] = v
 			end
 			return lowered
 		end
@@ -242,12 +248,12 @@ local function sanitizeConditionValue(conditionName, conditionValue)
 	local valueType = type(conditionValue)
 
 	if valueType == 'string' then
-		return conditionValue:lower()
+		return StrLower(conditionValue)
 	end
 
 	if valueType == 'table' then
 		for i = 1, #conditionValue do
-			conditionValue[i] = conditionValue[i]:lower()
+			conditionValue[i] = StrLower(conditionValue[i])
 		end
 	end
 
@@ -350,7 +356,7 @@ local function staticModuleLoader(meshReplacementsTable)
 	if cellNameMatches then
 		for nameIdx = 1, #meshReplacementsTable.replace_names do
 			local replaceString = meshReplacementsTable.replace_names[nameIdx]
-			cellNameMatches[nameIdx] = replaceString:lower()
+			cellNameMatches[nameIdx] = StrLower(replaceString)
 		end
 	end
 
@@ -364,7 +370,7 @@ local function staticModuleLoader(meshReplacementsTable)
 	if regionMatches then
 		for regionIdx = 1, #meshReplacementsTable.replace_regions do
 			local regionName = meshReplacementsTable.replace_regions[regionIdx]
-			regionMatches[regionName:lower()] = true
+			regionMatches[StrLower(regionName)] = true
 		end
 	end
 
@@ -427,7 +433,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 					for i = 1, #actionData.key do
 						local k, v = next(actionData.key[i])
 
-						actionData.key[i][k:lower()] = v
+						actionData.key[i][StrLower(k)] = v
 						actionData.key[i][k] = nil
 					end
 				end
@@ -436,7 +442,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 					for i = 1, #actionData.trap do
 						local k, v = next(actionData.trap[i])
 
-						actionData.trap[i][k:lower()] = v
+						actionData.trap[i][StrLower(k)] = v
 						actionData.trap[i][k] = nil
 					end
 				end
@@ -463,7 +469,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 	end
 
 	if meshReplacementsTable.instances then
-		logger.info(
+		InfoLog(
 			'Loaded module %s: %d instance rule(s)',
 			moduleIdentity.displayName,
 			#meshReplacementsTable.instances
@@ -475,7 +481,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 				numReplacements = numReplacements + 1
 			end
 		end
-		logger.info('Loaded module %s: %d replacement(s)', moduleIdentity.displayName, numReplacements)
+		InfoLog('Loaded module %s: %d replacement(s)', moduleIdentity.displayName, numReplacements)
 	end
 
 	meshReplacementsFile:close()
@@ -489,7 +495,7 @@ return function(staticReplacements)
 	local modulePaths, modulePathIndex = {}, 0
 
 	for meshReplacementsPath in vfs.pathsWithPrefix 'scripts/staticSwitcher/data' do
-		if meshReplacementsPath:match '%.ya?ml$' then
+		if StrMatch(meshReplacementsPath, '%.ya?ml$') then
 			modulePathIndex = modulePathIndex + 1
 			modulePaths[modulePathIndex] = staticUtil.normalizePath(meshReplacementsPath)
 		end
