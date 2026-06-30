@@ -125,7 +125,7 @@
 ---@field nameMatch string?
 ---@field object_type string?
 ---@field record_id string?
----@field ref_num number?
+---@field content_file_target table<string, number[]>?
 ---@field generated boolean?
 ---@field region string?
 ---@field scale SSSNumericRange?

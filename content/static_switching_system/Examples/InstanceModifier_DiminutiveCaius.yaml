@@ -10,14 +10,17 @@ log_name: Diminutive Armored Caius
 #
 # once: true so the tiny armored look persists across saves.
 #
-# Conditions use BOTH record_id and ref_num — redundant for Vanilla,
-# but shows how to combine broad and narrow matching. The ref_num
-# check ensures only the specific placed reference in his house is
-# targeted, not any cloned copy another mod might place.
+# Conditions use BOTH record_id and content_file_target — redundant for
+# Vanilla, but shows how to combine broad and narrow matching.
+# content_file_target scopes the reference number to a specific content
+# file, so only the exact placed reference is matched — no ambiguity
+# if another plugin happens to have the same local refnum.
 instances:
   - conditions:
       - record_id: "caius cosades"
-      - ref_num: 67647
+      - content_file_target:
+          Morrowind.esm:
+            - 67647
     once: true
     actions:
       # Full Imperial Steel armor set + shield + broadsword.

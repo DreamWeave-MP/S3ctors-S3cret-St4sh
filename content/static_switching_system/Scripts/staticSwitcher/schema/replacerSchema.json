@@ -380,8 +380,20 @@
                 "record_id": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
-                "ref_num": {
-                    "$ref": "#/definitions/numberOrNumberList"
+                "content_file_target": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            },
+                            "minItems": 1
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Map of content file names to reference numbers within that file. The object must originate from the specified content file AND have a matching reference number. All keyed content files are OR-ed; all reference numbers within a matched content file are OR-ed."
                 },
                 "generated": {
                     "type": "boolean"

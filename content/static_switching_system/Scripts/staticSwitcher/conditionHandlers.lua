@@ -183,12 +183,30 @@ local conditionHandlers = {
 		return originalId == lowerId or originalId:find(lowerId, 1, true) ~= nil
 	end,
 	---@param object openmw.GObject
-	---@param targetRefNum number
+	---@param targetData table<string, number[]>
 	---@return boolean
-	ref_num = function(object, targetRefNum)
-		local _, refNum = staticUtil.getRefNum(object)
+	content_file_target = function(object, targetData)
+		local objectContentFile = object.contentFile
 
-		return refNum == targetRefNum
+		if not objectContentFile then
+			return false
+		end
+
+		for contentFile, refnums in pairs(targetData) do
+			if objectContentFile == contentFile:lower() then
+				local _, refNum = staticUtil.getRefNum(object)
+
+				for _, targetRef in ipairs(refnums) do
+					if refNum == targetRef then
+						return true
+					end
+				end
+
+				return false
+			end
+		end
+
+		return false
 	end,
 	---@param object openmw.GObject
 	---@param shouldBeGenerated boolean

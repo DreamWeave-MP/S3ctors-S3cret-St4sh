@@ -55,7 +55,7 @@ local CONDITIONPRIORITY = {
 	--- Record ID comes before many other searches as it's likely to be cheap and common
 	--- This one doesn't have a separate match variant
 	'record_id',
-	'ref_num',
+	'content_file_target',
 	--- Name matches should always be last as they're inevitably going to be the slowest
 	'nameMatch',
 	'carrying',
