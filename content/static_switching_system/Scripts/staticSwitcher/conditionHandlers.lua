@@ -14,6 +14,8 @@ local INVALID_TYPE = 'Invalid type was provided: %s'
 
 local cellToExteriorRegion = {}
 
+local type = type
+
 ---@param cell openmw.core.GCell
 ---@param position openmw.util.Vector3
 ---@return string|nil
@@ -163,6 +165,50 @@ local conditionHandlers = {
 		local objectHasName = objectName ~= nil and objectName ~= ''
 
 		return objectHasName == shouldHaveName
+	end,
+	locked = function(object, lockData)
+		local objType = object.type
+
+		if not objType then return false end
+
+		local isLocked = objType.isLocked
+		if not isLocked then
+			return false
+		end
+
+		local dataType = type(lockData)
+
+		if dataType == 'boolean' then
+			return isLocked(object) == lockData
+		end
+
+		if dataType == 'number' then
+			if not isLocked(object) then
+				return false
+			end
+
+			return objType.getLockLevel(object) >= lockData
+		end
+
+		if dataType == 'table' then
+			if not isLocked(object) then
+				return false
+			end
+
+			local level = objType.getLockLevel(object)
+
+			if lockData.min and level < lockData.min then
+				return false
+			end
+
+			if lockData.max and level > lockData.max then
+				return false
+			end
+
+			return true
+		end
+
+		return false
 	end,
 	---@param object openmw.GObject
 	---@param params { quest: string, index?: integer, min?: integer, max?: integer }

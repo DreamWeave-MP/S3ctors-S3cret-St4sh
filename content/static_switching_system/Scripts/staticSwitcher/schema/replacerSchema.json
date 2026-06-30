@@ -541,6 +541,22 @@
                 "has_name": {
                     "type": "boolean"
                 },
+                "locked": {
+                    "oneOf": [
+                        {"type": "boolean", "description": "Check if the object is locked or unlocked."},
+                        {"type": "integer", "minimum": 1, "description": "Object must be locked at this level or higher."},
+                        {
+                            "type": "object",
+                            "properties": {
+                                "min": {"type": "integer", "minimum": 1},
+                                "max": {"type": "integer", "minimum": 1}
+                            },
+                            "additionalProperties": false,
+                            "description": "Lock level range. Object must be locked. At least one of min/max required."
+                        }
+                    ],
+                    "description": "Gate by object lock state. Non-lockable objects return false."
+                },
                 "player_level": {
                     "oneOf": [
                         {
