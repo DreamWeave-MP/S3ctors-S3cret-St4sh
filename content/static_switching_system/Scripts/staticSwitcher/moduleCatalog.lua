@@ -326,7 +326,10 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 			modStore[index] = instance_action
 		end
 
-		ObjectModificationStore[moduleIdentity.id] = modStore
+		ObjectModificationStore[moduleIdentity.id] = {
+			rules = modStore,
+			moduleOnce = meshReplacementsTable.once,
+		}
 	else
 		---@cast meshReplacementsTable SSSModuleStatic
 		StaticModuleIdsLen = StaticModuleIdsLen + 1

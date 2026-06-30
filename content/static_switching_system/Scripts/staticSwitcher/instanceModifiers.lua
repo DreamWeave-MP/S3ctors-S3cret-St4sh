@@ -261,8 +261,12 @@ end
 local function getMatchingInstanceModules(object)
 	local matchingActions, actionIndex
 
-	for moduleName, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
+	for moduleName, moduleData in pairs(ModuleCatalog.ObjectModificationStore) do
+		local actionList = moduleData.rules
+		local moduleOnce = moduleData.moduleOnce
+
 		for _, actionData in ipairs(actionList) do
+
 			local actionTableHash = actionData.actionHash
 			local skipReason
 
@@ -282,6 +286,11 @@ local function getMatchingInstanceModules(object)
 				skipReason = 'once=per_cell already applied this load'
 			end
 
+			-- Module-level once: skip all rules for this module if any rule has already applied
+			if not skipReason and moduleOnce and onceActionWasApplied(object, moduleName, '*') then
+				skipReason = 'module once=true already applied'
+			end
+
 			if skipReason then
 				logger.debug('SKIP %s/%s on %s: %s', moduleName, actionTableHash, object.id, skipReason)
 			else
@@ -291,6 +300,7 @@ local function getMatchingInstanceModules(object)
 					moduleName = moduleName,
 					actionHash = actionTableHash,
 					once = actionData.once,
+					moduleOnce = moduleOnce,
 					actions = actionData.actions,
 				}
 			end
@@ -450,6 +460,11 @@ local function tryModifyObject(object, instanceModificationList)
 				markAppliedThisLoad(modifyTarget, instanceModification.moduleName, instanceModification.actionHash)
 			end
 			logger.debug('  once=per_cell marked: %s/%s', instanceModification.moduleName, instanceModification.actionHash)
+		end
+
+		if instanceModification.moduleOnce and currentRuleApplied then
+			markOnceActionApplied(object, instanceModification.moduleName, '*')
+			logger.debug('  module once=true cached: %s', instanceModification.moduleName)
 		end
 	end
 
