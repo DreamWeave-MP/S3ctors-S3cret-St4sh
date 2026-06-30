@@ -62,9 +62,9 @@ local ACTIONPRIORITY = {
 	'key',
 	'trap',
 	'create',
+	'playsound',
 	'disable',
 	'delete',
-	'playsound',
 }
 
 ---@type string[]
