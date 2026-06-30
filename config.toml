@@ -4,6 +4,7 @@ base_url = "https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh"
 
 # Do you want your site to break horribly?
 # If so, set this to false.
+ignored_content = ["cod3x/examples/**"]
 compile_sass = true
 
 
