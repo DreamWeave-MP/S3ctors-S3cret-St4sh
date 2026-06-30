@@ -33,7 +33,7 @@ local ModuleCatalog
 ---@type SSSDeleteManager
 local DeleteManager
 
-local assert, error, ipairs, pairs, type = assert, error, ipairs, pairs, type
+local assert, error, pairs, type = assert, error, pairs, type
 
 local function resetOnceCache()
 	OnceCache = {
@@ -45,7 +45,8 @@ end
 local function pruneOnceCache()
 	local prunedEntries, prunedEntryCount, prunedByObjectId = {}, 0, {}
 
-	for _, entry in ipairs(OnceCache.entries) do
+	for entryIndex = 1, #OnceCache.entries do
+		local entry = OnceCache.entries[entryIndex]
 		local object = entry.object
 
 		if staticUtil.isGObject(object) and object:isValid() then
@@ -150,7 +151,8 @@ local function loadOnceCache(savedOnceCache)
 		return
 	end
 
-	for _, savedEntry in ipairs(savedOnceCache.entries) do
+	for savedIndex = 1, #savedOnceCache.entries do
+		local savedEntry = savedOnceCache.entries[savedIndex]
 		if type(savedEntry) ~= 'table' then
 			error 'Once cache entry must be a table!'
 		end
@@ -214,7 +216,8 @@ end
 ---@param conditions SSSConditionData[]
 ---@return boolean
 local function matchesAllConditions(object, conditions)
-	for _, conditionData in ipairs(conditions) do
+	for condIndex = 1, #conditions do
+		local conditionData = conditions[condIndex]
 		for conditionName, conditionValue in pairs(conditionData) do
 			local conditionHandler = conditionHandlers[conditionName]
 
@@ -231,8 +234,8 @@ local function matchesAllConditions(object, conditions)
 				if isOrList then
 					local matchedAnyValue = false
 
-					for _, individualCondition in ipairs(conditionValue) do
-						if not matchedAnyValue and conditionHandler(object, individualCondition) then
+					for indivIndex = 1, #conditionValue do
+						if not matchedAnyValue and conditionHandler(object, conditionValue[indivIndex]) then
 							matchedAnyValue = true
 							break
 						end
@@ -267,7 +270,8 @@ local function getMatchingInstanceModules(object)
 		local actionList = moduleData.rules
 		local moduleOnce = moduleData.moduleOnce
 
-		for _, actionData in ipairs(actionList) do
+		for listIdx = 1, #actionList do
+			local actionData = actionList[listIdx]
 
 			local actionTableHash = actionData.actionHash
 			local skipReason
@@ -345,10 +349,12 @@ local function tryModifyObject(object, instanceModificationList)
 
 	logger.debug('APPLY %d rule(s) to %s (%s)', #instanceModificationList, object.id, object.recordId or '?')
 
-	for _, instanceModification in ipairs(instanceModificationList) do
+	for modIndex = 1, #instanceModificationList do
+		local instanceModification = instanceModificationList[modIndex]
 		local currentRuleApplied = false
 
-		for _, actionData in ipairs(instanceModification.actions) do
+		for actIndex = 1, #instanceModification.actions do
+			local actionData = instanceModification.actions[actIndex]
 			if not actionData.chance or randomGen.float() <= actionData.chance then
 				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction =
 					actionData.replace,
