@@ -496,7 +496,7 @@ local function tryModifyObject(object, instanceModificationList)
 				local didRemove = actionHandlers.remove(modifyTarget, removeAction)
 				anyActionApplied = anyActionApplied or didRemove
 				currentRuleApplied = currentRuleApplied or didRemove
-				logger.debug('  remove on %s: %s', object.id, didRemove and 'OK' or 'failed (not enough)')
+				logger.debug('  remove on %s: %s', object.id, didRemove and 'OK' or 'nothing to remove')
 			end
 
 			if equipAction then
