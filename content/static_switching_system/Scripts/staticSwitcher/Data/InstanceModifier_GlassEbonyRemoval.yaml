@@ -1,0 +1,61 @@
+log_name: Glass and Ebony Removal
+
+# Removes all glass and ebony weapons and armor from world placements and
+# container inventories. After installing this module, these items are only
+# obtainable through quest rewards, vendor purchases, or scripted spawns.
+
+instances:
+  # Rule 1: Delete placed glass/ebony weapons and armor from the world.
+  # nameMatch catches anything whose display name contains "Glass" or "Ebony",
+  # which covers every piece of glass and ebony equipment.
+  - conditions:
+      - nameMatch:
+          - Glass
+          - Ebony
+      - object_type:
+          - Weapon
+          - Armor
+    actions:
+      - delete: true
+
+  # Rule 2: Remove glass/ebony items from container inventories.
+  # The array form applies math.huge as the remove count for each entry,
+  # which caps at whatever quantity the container actually holds.
+  - conditions:
+      - object_type: Container
+    actions:
+      - remove:
+          - glass_longsword
+          - glass_battle_axe
+          - glass_warhammer
+          - glass_staff
+          - glass_dagger
+          - glass_shortsword
+          - glass_broadsword
+          - glass_helm
+          - glass_cuirass
+          - glass_left_pauldron
+          - glass_right_pauldron
+          - glass_greaves
+          - glass_boots
+          - glass_left_bracer
+          - glass_right_bracer
+          - glass_shield
+          - glass_tower_shield
+          - ebony_longsword
+          - ebony_battle_axe
+          - ebony_warhammer
+          - ebony_staff
+          - ebony_dagger
+          - ebony_shortsword
+          - ebony_broadsword
+          - ebony_helm
+          - ebony_cuirass
+          - ebony_left_pauldron
+          - ebony_right_pauldron
+          - ebony_greaves
+          - ebony_boots
+          - ebony_left_bracer
+          - ebony_right_bracer
+          - ebony_shield
+          - ebony_tower_shield

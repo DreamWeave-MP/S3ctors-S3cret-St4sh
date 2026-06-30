@@ -97,7 +97,7 @@
 ---@field count integer? item count; defaults to 1 when absent
 ---@field chance SSSChanceRange? fixed or random chance to apply this item entry
 
----@alias SSSItemAction RecordId|table<RecordId, integer|SSSItemActionDetails>
+---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
 --- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, disable, delete.
