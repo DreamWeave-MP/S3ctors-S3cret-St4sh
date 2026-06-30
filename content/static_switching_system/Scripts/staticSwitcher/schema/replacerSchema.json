@@ -195,6 +195,54 @@
             },
             "additionalProperties": false
         },
+        "createPool": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Number of objects to spawn from this pool."
+                },
+                "chance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Probability (0-1) that this pool activates."
+                },
+                "scale": {
+                    "$ref": "#/definitions/numericRange"
+                },
+                "rotate": {
+                    "$ref": "#/definitions/vector3Range"
+                },
+                "position": {
+                    "$ref": "#/definitions/vector3Range"
+                },
+                "transform_type": {
+                    "type": "string",
+                    "enum": ["relative", "absolute"],
+                    "default": "relative",
+                    "description": "Whether position/rotation/scale overrides are relative to the trigger object's values (default) or absolute."
+                }
+            },
+            "additionalProperties": false
+        },
+        "createAction": {
+            "type": "object",
+            "description": "Map of record IDs to spawn details. Each pool is evaluated independently (unlike replace, which picks one winner). Values can be a bare record ID (spawn 1), an integer count, or a full create pool config with chance and transform overrides.",
+            "patternProperties": {
+                "^.*$": {
+                    "oneOf": [
+                        {"type": "string", "description": "Spawn 1 copy at trigger position."},
+                        {"type": "integer", "minimum": 1, "description": "Spawn this many copies at trigger position."},
+                        {"$ref": "#/definitions/createPool"}
+                    ]
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+        },
         "instanceAction": {
             "type": "object",
             "properties": {
@@ -243,6 +291,10 @@
                 "delete": {
                     "const": true,
                     "description": "Queue removal of the matched source object after any replacement or transform actions in this rule. If paired in the same action table with replace, removal is queued only when that replacement succeeds."
+                },
+                "create": {
+                    "$ref": "#/definitions/createAction",
+                    "description": "Spawn objects at the trigger's position. Each pool (record ID) is evaluated independently with optional count, chance, and position/rotation/scale overrides per pool. Transform overrides within a pool re-randomize per object for scatter/spread effects."
                 }
             },
             "anyOf": [
@@ -284,6 +336,11 @@
                 {
                     "required": [
                         "delete"
+                    ]
+                },
+                {
+                    "required": [
+                        "create"
                     ]
                 }
             ],

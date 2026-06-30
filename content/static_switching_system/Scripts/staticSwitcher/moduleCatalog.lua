@@ -42,6 +42,7 @@ local StaticReplacements
 	'remove',
 	'equip',
 	'unequip',
+	'create',
 	'disable',
 	'delete',
 }

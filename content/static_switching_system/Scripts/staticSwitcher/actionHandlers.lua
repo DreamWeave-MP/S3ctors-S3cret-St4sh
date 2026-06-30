@@ -391,6 +391,76 @@ local actionHandlers = {
 	['delete'] = function(_, deleteAction, replaceAction, replaceActionSucceeded)
 		return deleteAction and (not replaceAction or replaceActionSucceeded)
 	end,
+	['create'] = function(triggerObject, createActionData)
+		local totalCreated = 0
+
+		for recordId, details in pairs(createActionData) do
+			local count, chance, positionOverride, rotateOverride, scaleOverride, transformType
+			local detailsType = type(details)
+
+			if detailsType == 'string' then
+				count = 1
+			elseif detailsType == 'number' then
+				count = math.floor(details)
+			elseif detailsType == 'table' then
+				count = details.count or 1
+				chance = details.chance
+				positionOverride = details.position
+				rotateOverride = details.rotate
+				scaleOverride = details.scale
+				transformType = details.transform_type
+			end
+
+			if count and count >= 1 then
+				if chance and randomGen.float() > chance then
+					-- pool missed
+				else
+					local useRelativeTransform = transformType == nil or transformType == 'relative'
+					local baseTransform = triggerObject.rotation
+					local basePos = triggerObject.position
+					local baseScale = triggerObject.scale
+					local baseCell = triggerObject.cell
+
+					for _ = 1, count do
+						local newPos = basePos
+						local newTransform = baseTransform
+						local targetScale = baseScale
+
+						if positionOverride then
+							local offset = util.vector3(
+								getRangeValue(positionOverride.x),
+								getRangeValue(positionOverride.y),
+								getRangeValue(positionOverride.z)
+							)
+							if useRelativeTransform then
+								newPos = newPos + offset
+							else
+								newPos = offset
+							end
+						end
+
+						if rotateOverride then
+							newTransform = getRotationValue(useRelativeTransform, rotateOverride, newTransform)
+						end
+
+						if scaleOverride then
+							local referenceScale = useRelativeTransform and targetScale or 1.0
+							targetScale = getScaleValue(scaleOverride, referenceScale)
+						end
+
+						local obj = world.createObject(recordId)
+						obj:teleport(baseCell, newPos, newTransform)
+						if scaleOverride then
+							obj:setScale(targetScale)
+						end
+						totalCreated = totalCreated + 1
+					end
+				end
+			end
+		end
+
+		return totalCreated
+	end,
 }
 
 return actionHandlers
