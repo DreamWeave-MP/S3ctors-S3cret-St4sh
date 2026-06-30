@@ -123,6 +123,7 @@
 ---@field has_name boolean?
 ---@field mesh string?
 ---@field nameMatch string?
+---@field not table? Inverts a single inner condition, e.g. `{nameMatch = "Guard"}`.
 ---@field object_type string?
 ---@field record_id string?
 ---@field content_file_target table<string, number[]>?
