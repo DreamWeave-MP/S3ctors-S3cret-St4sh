@@ -34,6 +34,27 @@ and replace `/absolute/path/to/Cod3x` with the folder where you extracted Cod3x.
 Do not use the old `plugins` setting; LuaLS expects `runtime.plugin` for this
 plugin.
 
+Cod3x relies on LuaLS virtual source transforms for implicit casts and
+context-aware diagnostics.  In VSCode/VSCodium, disable LuaLS on-type line
+formatting so Enter-key formatting cannot apply transformed offsets to the real
+buffer:
+
+```json
+{
+  "language.fixIndent": false,
+  "typeFormat.config": {
+    "format_line": "false"
+  }
+}
+```
+
+These are LuaLS settings, not Cod3x-only magic.  The old GitHub wiki is
+deprecated in favor of the current LuaLS website; see the current LuaLS docs for
+[`language.fixIndent`](https://luals.github.io/wiki/settings/#languagefixindent)
+and [`typeFormat.config`](https://luals.github.io/wiki/settings/#typeformatconfig).
+LuaLS also defines these keys in its upstream config template as
+`Lua.language.fixIndent` and `Lua.typeFormat.config`.
+
 Declare the OpenMW script context near the top of each script:
 
 ```lua

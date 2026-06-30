@@ -12,8 +12,18 @@ Use forward slashes in paths, even on Windows:
     "workspace.library": [
         "C:/Modding/Tools/Cod3x"
     ],
-    "runtime.plugin": "C:/Modding/Tools/Cod3x/omw_context_plugin.lua"
+    "runtime.plugin": "C:/Modding/Tools/Cod3x/omw_context_plugin.lua",
+    "language.fixIndent": false,
+    "typeFormat.config": {
+        "format_line": "false"
+    }
 }
 ```
+
+`language.fixIndent` and `typeFormat.config.format_line` are LuaLS settings used
+to disable VSCode/VSCodium on-type formatting while keeping Cod3x's virtual
+LuaLS transforms enabled.  The current LuaLS docs list them at
+<https://luals.github.io/wiki/settings/#languagefixindent> and
+<https://luals.github.io/wiki/settings/#typeformatconfig>.
 
 This file is meant for your mod workspace, not your OpenMW install directory.
