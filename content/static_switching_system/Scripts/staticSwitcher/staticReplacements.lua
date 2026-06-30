@@ -7,6 +7,9 @@ local szudzik = require 'scripts.s3.szudzik'
 ---@type StaticUtil
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
+---@type SSSLogger
+local logger = require 'Scripts.staticSwitcher.logger'
+
 local SwitcherSection = require('openmw.storage').globalSection 'SettingsStaticSwitcher'
 
 local createRecord = world.createRecord
@@ -80,6 +83,7 @@ local function sourceObjectAlreadyReplaced(sourceObject)
 	end
 
 	if replacement:isValid() then
+		logger.debug('  skip %s: already replaced', sourceObject.id)
 		return true
 	end
 
@@ -406,9 +410,11 @@ end
 local function uninstallModule(moduleName)
 	moduleName = resolveModuleId(moduleName)
 	if not moduleName then
+		logger.warn(('uninstallModule: %s could not be resolved'):format(moduleName))
 		return
 	end
 
+	logger.info('Uninstalling module: %s', moduleName)
 	local removedModule
 
 	for _, chain in ipairs(ReplacementChains.entries) do
@@ -459,12 +465,14 @@ local function createReplacementRecord(object, oldRecord, newModel, replacementM
 	end
 	local moduleRecords = OverrideRecords[replacementModule]
 	if moduleRecords[oldRecordId] then
+		logger.debug('  reuse record %s -> %s', oldRecordId, moduleRecords[oldRecordId])
 		return
 	end
 
 	local newRecord = { template = oldRecord, model = newModel }
 
 	moduleRecords[oldRecordId] = createRecord(object.type.createRecordDraft(newRecord)).id
+	logger.debug('  created record %s -> %s', oldRecordId, moduleRecords[oldRecordId])
 end
 
 ---@param object openmw.GObject
@@ -479,6 +487,7 @@ local function replaceObject(object, replacementModule, replacementMesh, chain)
 
 	local moduleData = ComposedReplacements[replacementModule]
 	if moduleData.ignoreRecords and moduleData.ignoreRecords[object.recordId] then
+		logger.debug('  skip %s/%s: in ignore_records', replacementModule, object.id)
 		return
 	end
 
@@ -513,6 +522,8 @@ local function replaceObject(object, replacementModule, replacementMesh, chain)
 	end
 	ReplacedObjectSet[replacementModule][replacement] = object
 	addReplacementChainStep(chain or getOrCreateReplacementChain(object), replacementModule, object, replacement)
+
+	logger.debug('  replaced %s: %s -> %s (%s)', object.id, oldModel, replacementMesh, replacementModule)
 end
 
 ---@param replacementTable SSSModule
@@ -569,15 +580,24 @@ end
 local function getObjectReplacement(object, chain)
 	for _, moduleName in ipairs(getReplacementModuleOrder()) do
 		local moduleData = ComposedReplacements[moduleName]
+		local skip
 
-		if
-			moduleData
-			and not moduleIsUninstallTarget(moduleName)
-			and chainCanApplyModule(chain, moduleName)
-			and replacementTableMatchesCell(moduleData, object.cell)
-		then
+		if not moduleData then
+			skip = 'no module data'
+		elseif moduleIsUninstallTarget(moduleName) then
+			skip = 'marked for uninstall'
+		elseif not chainCanApplyModule(chain, moduleName) then
+			skip = 'already applied in chain'
+		elseif not replacementTableMatchesCell(moduleData, object.cell) then
+			skip = 'cell does not match'
+		end
+
+		if skip then
+			logger.debug('  skip module %s on %s: %s', moduleName, object.id, skip)
+		else
 			local replacementMesh = staticUtil.getReplacementMeshForObject(moduleData.meshMap, object)
 			if replacementMesh then
+				logger.debug('  match module %s -> %s on %s', moduleName, replacementMesh, object.id)
 				return moduleName, replacementMesh
 			end
 		end
@@ -586,18 +606,22 @@ end
 
 ---@param object openmw.GObject
 local function tryReplaceObject(object)
+	logger.debug('tryReplaceObject %s (%s)', object.id, object.recordId or '?')
+
 	if sourceObjectAlreadyReplaced(object) then
 		return
 	end
 
 	local chain = getReplacementChain(object)
 	if chain and not chainCanContinue(chain) then
+		logger.debug('  chain max depth reached for %s', object.id)
 		return
 	end
 
 	local replacementModule, replacementMesh = getObjectReplacement(object, chain)
 
 	if not replacementModule or not replacementMesh then
+		logger.debug('  no replacement for %s', object.id)
 		return
 	end
 
