@@ -7,24 +7,24 @@ local vfs = require 'openmw.vfs'
 local ContentFileBits = 16777216
 
 local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR =
-	'StaticSwitchingSystem',
-	'%s %s',
-	[[Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]],
-	'[ %s ]:',
-	'%s%s'
+		'StaticSwitchingSystem',
+		'%s %s',
+		[[Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]],
+		'[ %s ]:',
+		'%s%s'
 
 local GOBJECT_TYPE = 'MWLua::GObject'
 
 local assert, error, pairs, print, tonumber, type = assert, error, pairs, print, tonumber, type
 local StrFind, StrFormat, StrGsub, StrGmatch, StrLower, StrMatch, StrUpper, StrSub =
-	string.find, string.format, string.gsub, string.gmatch, string.lower, string.match, string.upper, string.sub
+		string.find, string.format, string.gsub, string.gmatch, string.lower, string.match, string.upper, string.sub
 
 local Insert, IsArray, Max, Floor =
+		table.insert,
 		---@diagnostic disable-next-line: undefined-field
-table.insert,
-	table.isarray,
-	math.max,
-	math.floor
+		table.isarray,
+		math.max,
+		math.floor
 
 local Log, LogString, normalizePath, getReplacementMeshForObject
 
