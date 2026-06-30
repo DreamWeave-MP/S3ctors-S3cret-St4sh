@@ -11,6 +11,8 @@ local staticUtil = require 'Scripts.staticSwitcher.util'
 local validation = require 'Scripts.staticSwitcher.validation'
 local logger = require 'Scripts.staticSwitcher.logger'
 
+local type = type
+
 local DATA_PREFIX = 'scripts/staticswitcher/data/'
 
 ---@type string[], integer
@@ -175,6 +177,57 @@ local function sortActionByType(actionData)
 		end
 	end
 end
+
+local LOWERED_CONDITION_KEYS = {
+	cell_match = true,
+	content_file = true,
+	content_file_target = 'keys',
+	record_id = true,
+	faction_owner_id = true,
+	owner_id = true,
+	target_class = true,
+	current_weather = true,
+	region = true,
+	worldspace = true,
+}
+
+--- Pre-lowercase string condition values at module load time so handlers
+--- don't pay :lower() on user-provided strings in the hot path.
+---@param conditionName string
+---@param conditionValue any
+---@return any
+local function sanitizeConditionValue(conditionName, conditionValue)
+	local keyPolicy = LOWERED_CONDITION_KEYS[conditionName]
+	if not keyPolicy then
+		return conditionValue
+	end
+
+	if keyPolicy == 'keys' then
+		if type(conditionValue) == 'table' then
+			local lowered = {}
+			for k, v in pairs(conditionValue) do
+				lowered[k:lower()] = v
+			end
+			return lowered
+		end
+		return conditionValue
+	end
+
+	local valueType = type(conditionValue)
+
+	if valueType == 'string' then
+		return conditionValue:lower()
+	end
+
+	if valueType == 'table' and conditionValue[1] then
+		for i = 1, #conditionValue do
+			conditionValue[i] = conditionValue[i]:lower()
+		end
+	end
+
+	return conditionValue
+end
+
 ---@param meshReplacementsTable SSSModuleStatic
 ---@return SSSModule
 local function staticModuleLoader(meshReplacementsTable)
@@ -318,6 +371,18 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 
 		for index, instance_action in ipairs(meshReplacementsTable.instances) do
 			if instance_action.conditions then
+				for _, conditionData in ipairs(instance_action.conditions) do
+					for conditionName, conditionValue in pairs(conditionData) do
+						if conditionName == 'not' and type(conditionValue) == 'table' then
+							for innerName, innerValue in pairs(conditionValue) do
+								conditionValue[innerName] = sanitizeConditionValue(innerName, innerValue)
+							end
+						else
+							conditionData[conditionName] = sanitizeConditionValue(conditionName, conditionValue)
+						end
+					end
+				end
+
 				instance_action.conditions = aux_util.mapFilterSort(instance_action.conditions, sortConditionByType)
 			end
 
