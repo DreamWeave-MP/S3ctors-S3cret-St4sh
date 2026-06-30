@@ -479,6 +479,30 @@ local actionHandlers = {
 
 		return totalCreated
 	end,
+	['lock_level'] = function(object, lockData)
+		if not object.type.lock then
+			return false
+		end
+
+		local level
+		if type(lockData) == 'number' then
+			level = lockData
+		elseif type(lockData) == 'table' then
+			lockData.min = lockData.min or 1
+			assert(lockData.min <= lockData.max, 'RangeTable requires min <= max')
+			level = randomGen.range(lockData, true)
+		else
+			return false
+		end
+
+		if level <= 0 then
+			object.type.unlock(object)
+		else
+			object.type.lock(object, level)
+		end
+
+		return true
+	end,
 }
 
 return actionHandlers
