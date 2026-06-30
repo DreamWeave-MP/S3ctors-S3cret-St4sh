@@ -43,7 +43,7 @@ local DeleteManager
 ---@type fun(moduleKey: string): string?
 local ResolveModuleId
 
-local assert, ipairs, pairs, sort = assert, ipairs, pairs, table.sort
+local assert, pairs, sort = assert, pairs, table.sort
 
 ---@param targetTable table
 local function clearTable(targetTable)
@@ -118,7 +118,8 @@ local function migrateOverrideRecords()
 		end
 	end
 
-	for _, migration in ipairs(migrations) do
+	for migIdx = 1, #migrations do
+		local migration = migrations[migIdx]
 		local targetRecords = OverrideRecords[migration.to]
 
 		if not targetRecords then
@@ -138,8 +139,11 @@ end
 local function rebuildReplacedObjectSetFromChains()
 	clearTable(ReplacedObjectSet)
 
-	for _, chain in ipairs(ReplacementChains.entries) do
-		for _, step in ipairs(chain.steps) do
+	for chainIdx = 1, #ReplacementChains.entries do
+		local chain = ReplacementChains.entries[chainIdx]
+
+		for stepIdx = 1, #chain.steps do
+			local step = chain.steps[stepIdx]
 			local moduleReplacements = ReplacedObjectSet[step.moduleName]
 
 			if not moduleReplacements then
@@ -218,7 +222,8 @@ local function rebuildReplacementChainIndexes()
 	clearTable(ReplacementChains.byObjectId)
 	clearTable(ReplacementStepBySource)
 
-	for _, chain in ipairs(oldEntries) do
+	for oldIdx = 1, #oldEntries do
+		local chain = oldEntries[oldIdx]
 		local root = chain.root
 
 		if staticUtil.isGObject(root) and root:isValid() then
@@ -226,28 +231,31 @@ local function rebuildReplacementChainIndexes()
 			local appliedModules = {}
 			local current = root
 
-			for _, step in ipairs(chain.steps or {}) do
-				local moduleName = step.moduleName
-				local sourceObject, replacement = step.source, step.replacement
+			if chain.steps then
+				for stpIdx = 1, #chain.steps do
+					local step = chain.steps[stpIdx]
+					local moduleName = step.moduleName
+					local sourceObject, replacement = step.source, step.replacement
 
-				if #sanitizedSteps >= MAX_REPLACEMENT_CHAIN_DEPTH or not moduleName or appliedModules[moduleName] then
-					break
-				elseif
-					staticUtil.isGObject(sourceObject)
-					and staticUtil.isGObject(replacement)
-					and sourceObject:isValid()
-					and replacement:isValid()
-					and sourceObject.id == current.id
-				then
-					sanitizedSteps[#sanitizedSteps + 1] = step
-					appliedModules[moduleName] = true
-					current = replacement
+					if #sanitizedSteps >= MAX_REPLACEMENT_CHAIN_DEPTH or not moduleName or appliedModules[moduleName] then
+						break
+					elseif
+						staticUtil.isGObject(sourceObject)
+						and staticUtil.isGObject(replacement)
+						and sourceObject:isValid()
+						and replacement:isValid()
+						and sourceObject.id == current.id
+					then
+						sanitizedSteps[#sanitizedSteps + 1] = step
+						appliedModules[moduleName] = true
+						current = replacement
 
-					ReplacementChains.byObjectId[sourceObject.id] = chain
-					ReplacementChains.byObjectId[replacement.id] = chain
-					ReplacementStepBySource[sourceObject.id] = replacement
-				else
-					break
+						ReplacementChains.byObjectId[sourceObject.id] = chain
+						ReplacementChains.byObjectId[replacement.id] = chain
+						ReplacementStepBySource[sourceObject.id] = replacement
+					else
+						break
+					end
 				end
 			end
 
@@ -364,9 +372,11 @@ local function importSavedReplacementChains(savedChains)
 		return importLegacyReplacementChains()
 	end
 
-	for _, chain in ipairs(savedChains.entries) do
+	for savedIdx = 1, #savedChains.entries do
+		local chain = savedChains.entries[savedIdx]
 		if type(chain) == 'table' and type(chain.steps) == 'table' then
-			for _, step in ipairs(chain.steps) do
+			for impStepIdx = 1, #chain.steps do
+				local step = chain.steps[impStepIdx]
 				if type(step) == 'table' then
 					addImportEdge(sourceToEdge, replacementIds, step.moduleName, step.source, step.replacement)
 				end
@@ -381,7 +391,8 @@ end
 local function saveReplacementChains()
 	local savedEntries = {}
 
-	for _, chain in ipairs(ReplacementChains.entries) do
+	for saveIdx = 1, #ReplacementChains.entries do
+		local chain = ReplacementChains.entries[saveIdx]
 		savedEntries[#savedEntries + 1] = {
 			root = chain.root,
 			steps = chain.steps,
@@ -417,10 +428,12 @@ local function uninstallModule(moduleName)
 	logger.info('Uninstalling module: %s', moduleName)
 	local removedModule
 
-	for _, chain in ipairs(ReplacementChains.entries) do
+	for uninstIdx = 1, #ReplacementChains.entries do
+		local chain = ReplacementChains.entries[uninstIdx]
 		local firstRemovedStepIndex
 
-		for stepIndex, step in ipairs(chain.steps) do
+		for stepIndex = 1, #chain.steps do
+			local step = chain.steps[stepIndex]
 			if step.moduleName == moduleName then
 				firstRemovedStepIndex = stepIndex
 				break
@@ -554,7 +567,8 @@ local function replacementTableMatchesCell(replacementTable, cell)
 	end
 
 	local cellIdLower, cellNameLower = cell.id:lower(), cell.name:lower()
-	for _, cellName in ipairs(nameMatches) do
+	for nameIdx = 1, #nameMatches do
+		local cellName = nameMatches[nameIdx]
 		if
 			cellName == cellIdLower
 			or cellName == cellNameLower
@@ -578,7 +592,9 @@ end
 ---@return string? replacementModule
 ---@return string? replacementMesh
 local function getObjectReplacement(object, chain)
-	for _, moduleName in ipairs(getReplacementModuleOrder()) do
+	local moduleOrder = getReplacementModuleOrder()
+	for moIdx = 1, #moduleOrder do
+		local moduleName = moduleOrder[moIdx]
 		local moduleData = ComposedReplacements[moduleName]
 		local skip
 
