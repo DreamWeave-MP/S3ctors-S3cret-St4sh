@@ -47,6 +47,6 @@ instances:
           - candle
           - brazier
           - sconce
-    once: per_cell
+    once: true
     actions:
       - disable: { chance: 0.5 }
