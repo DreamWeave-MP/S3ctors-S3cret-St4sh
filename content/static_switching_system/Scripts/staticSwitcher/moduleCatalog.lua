@@ -9,6 +9,7 @@ local tableHash = require 'scripts.s3.tableHash'
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
 local validation = require 'Scripts.staticSwitcher.validation'
+local logger = require 'Scripts.staticSwitcher.logger'
 
 local DATA_PREFIX = 'scripts/staticswitcher/data/'
 
@@ -308,6 +309,18 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 		StaticModuleIdsLen = StaticModuleIdsLen + 1
 		StaticModuleIds[StaticModuleIdsLen] = moduleIdentity.id
 		StaticReplacements.ComposedReplacements[moduleIdentity.id] = staticModuleLoader(meshReplacementsTable)
+	end
+
+	if meshReplacementsTable.instances then
+		logger.info('Loaded module %s: %d instance rule(s)', moduleIdentity.displayName, #meshReplacementsTable.instances)
+	else
+		local numReplacements = 0
+		if meshReplacementsTable.replace_meshes then
+			for _ in pairs(meshReplacementsTable.replace_meshes) do
+				numReplacements = numReplacements + 1
+			end
+		end
+		logger.info('Loaded module %s: %d replacement(s)', moduleIdentity.displayName, numReplacements)
 	end
 
 	meshReplacementsFile:close()
