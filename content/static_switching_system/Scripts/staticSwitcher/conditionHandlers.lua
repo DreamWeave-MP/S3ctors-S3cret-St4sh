@@ -1,10 +1,58 @@
 ---@omw-context global
 
 local types = require 'openmw.types'
+local Door = types.Door
 
 local staticUtil = require 'scripts.staticSwitcher.util'
 
 local INVALID_TYPE = 'Invalid type was provided: %s'
+
+local cellToExteriorRegion = {}
+
+---@param cell openmw.core.GCell
+---@param position openmw.util.Vector3
+---@return string|nil
+local function getExteriorRegionFromDoor(cell, position)
+	local cached = cellToExteriorRegion[cell.id]
+
+	if cached ~= nil then
+		if type(cached) == 'string' then
+			return cached
+		end
+
+		return
+	end
+
+	local nearestDoor
+	local nearestDistSq = math.huge
+
+	for _, door in ipairs(cell:getAll(types.Door)) do
+		if Door.isTeleport(door) then
+			local dest = Door.destCell(door)
+
+			if dest and dest.isExterior then
+				local distSq = (position - door.position):length2()
+
+				if distSq < nearestDistSq then
+					nearestDistSq = distSq
+					nearestDoor = door
+				end
+			end
+		end
+	end
+
+	if not nearestDoor then
+		cellToExteriorRegion[cell.id] = true
+
+		return
+	end
+
+	local region = Door.destCell(nearestDoor).region
+
+	cellToExteriorRegion[cell.id] = region or true
+
+	return region
+end
 
 ---@type table<string, SSSConditionHandler>
 local conditionHandlers = {
@@ -154,7 +202,12 @@ local conditionHandlers = {
 	---@param targetRegion string
 	---@return boolean
 	region = function(object, targetRegion)
-		local region = object.cell and object.cell.region
+		local cell = object.cell
+		local region = cell.region
+
+		if not region and not cell.isExterior then
+			region = getExteriorRegionFromDoor(cell, object.position)
+		end
 
 		return region ~= nil and region:lower() == targetRegion:lower()
 	end,
