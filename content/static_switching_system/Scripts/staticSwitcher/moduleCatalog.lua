@@ -80,6 +80,7 @@ local CONDITIONPRIORITY = {
 	'player_faction',
 	'faction_owner_id',
 	'owner_id',
+	'faction_owner_rank',
 	'target_faction',
 	'target_class',
 	'player_equipped',
