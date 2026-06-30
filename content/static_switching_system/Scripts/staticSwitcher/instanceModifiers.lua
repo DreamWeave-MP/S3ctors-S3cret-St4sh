@@ -1,7 +1,5 @@
 ---@omw-context global
 
-local util = require 'openmw.util'
-
 local randomGen = require 'scripts.s3.randomGen'
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
@@ -36,11 +34,6 @@ local ModuleCatalog
 local DeleteManager
 
 local assert, error, ipairs, pairs, type = assert, error, ipairs, pairs, type
-
-local rotateX = util.transform.rotateX
-local rotateY = util.transform.rotateY
-local rotateZ = util.transform.rotateZ
-local rad = math.rad
 
 local function resetOnceCache()
 	OnceCache = {
@@ -313,50 +306,6 @@ local function getMatchingInstanceModules(object)
 	return matchingActions
 end
 
----@param numberOrTable SSSNumericRange?
----@return number rangeOrValue
-local function getRangeValue(numberOrTable)
-	local actionDataType, rangeOrValue = type(numberOrTable)
-
-	if actionDataType == 'number' then
-		rangeOrValue = numberOrTable
-	elseif actionDataType == 'table' then
-		assert(numberOrTable.max, 'An upper bound is required when selecting a numeric range!')
-		rangeOrValue = randomGen.range(numberOrTable.min or 0, numberOrTable.max)
-	elseif actionDataType == 'nil' then
-		return 0
-	else
-		error('Incorrect type provided to getPerAxisRotation: ' .. actionDataType)
-	end
-
-	return rangeOrValue
-end
-
----@param isRelative boolean
----@param rotateActionDetails SSSVector3Range
----@param currentTransform openmw.util.Transform
----@return openmw.util.Transform transform
-local function getRotationValue(isRelative, rotateActionDetails, currentTransform)
-	local rootTransform = isRelative and currentTransform or util.transform.identity
-
-	local z = rotateActionDetails.z
-	if z then
-		rootTransform = rotateZ(rad(getRangeValue(z))) * rootTransform
-	end
-
-	local y = rotateActionDetails.y
-	if y then
-		rootTransform = rotateY(rad(getRangeValue(y))) * rootTransform
-	end
-
-	local x = rotateActionDetails.x
-	if x then
-		rootTransform = rotateX(rad(getRangeValue(x))) * rootTransform
-	end
-
-	return rootTransform
-end
-
 ---@param object openmw.GObject
 ---@param modifyTarget openmw.GObject
 ---@param replaceAction SSSReplaceAction
@@ -370,67 +319,6 @@ local function tryApplyReplacement(object, modifyTarget, replaceAction)
 
 	modifyTarget.enabled = false
 	return foundReplacement, true
-end
-
----@param scaleAction SSSNumericRange
----@param referenceScale number
----@return number targetScale
-local function getScaleValue(scaleAction, referenceScale)
-	local scaleType = type(scaleAction)
-
-	if scaleType == 'number' then
-		return referenceScale * scaleAction
-	elseif scaleType == 'table' then
-		return referenceScale * randomGen.range(scaleAction.min or 1.0, scaleAction.max)
-	end
-
-	error('Invalid type for scale parameter: ' .. scaleType)
-end
-
----@param transformAction SSSTransformAction
----@param newTransform openmw.util.Transform
----@param newPos openmw.util.Vector3
----@param targetScale number
----@return boolean wasModified
----@return openmw.util.Transform newTransform
----@return openmw.util.Vector3 newPos
----@return number targetScale
-local function accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
-	local wasModified = false
-	local useRelativeTransform = transformAction.transform_type == nil or transformAction.transform_type == 'relative'
-
-	local scaleAction = transformAction.scale
-	if scaleAction then
-		local referenceScale = useRelativeTransform and targetScale or 1.0
-		targetScale = getScaleValue(scaleAction, referenceScale)
-		wasModified = true
-	end
-
-	local rotateAction = transformAction.rotate
-	if rotateAction then
-		newTransform = getRotationValue(useRelativeTransform, rotateAction, newTransform)
-
-		wasModified = true
-	end
-
-	local positionAction = transformAction.position
-	if positionAction then
-		local actionTargetPos = util.vector3(
-			getRangeValue(positionAction.x),
-			getRangeValue(positionAction.y),
-			getRangeValue(positionAction.z)
-		)
-
-		if useRelativeTransform then
-			newPos = newPos + actionTargetPos
-		else
-			newPos = actionTargetPos
-		end
-
-		wasModified = true
-	end
-
-	return wasModified, newTransform, newPos, targetScale
 end
 
 ---@param object openmw.GObject
@@ -476,7 +364,7 @@ local function tryModifyObject(object, instanceModificationList)
 			if transformAction then
 				local didTransform
 				didTransform, newTransform, newPos, targetScale =
-					accumulateTransformAction(transformAction, newTransform, newPos, targetScale)
+					actionHandlers.transform(modifyTarget, transformAction, newTransform, newPos, targetScale)
 				anyActionApplied = anyActionApplied or didTransform
 				needsPlacementUpdate = needsPlacementUpdate or didTransform
 				currentRuleApplied = currentRuleApplied or didTransform

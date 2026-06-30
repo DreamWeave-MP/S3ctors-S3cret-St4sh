@@ -3,10 +3,16 @@
 local core = require 'openmw.core'
 local world = require 'openmw.world'
 local types = require 'openmw.types'
+local util = require 'openmw.util'
 
 local randomGen = require 'scripts.s3.randomGen'
 
 local pairs, pcall, type = pairs, pcall, type
+
+local rotateX = util.transform.rotateX
+local rotateY = util.transform.rotateY
+local rotateZ = util.transform.rotateZ
+local rad = math.rad
 
 local ActorObjectIsInstance = types.Actor.objectIsInstance
 local ContainerObjectIsInstance = types.Container.objectIsInstance
@@ -245,8 +251,108 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
 	return false
 end
 
+---
+--- Helper: extract a numeric value from a number or {min, max} range table.
+---@param numberOrTable number|SSSNumericRange
+---@return number
+local function getRangeValue(numberOrTable)
+	local actionDataType = type(numberOrTable)
+
+	if actionDataType == 'number' then
+		return numberOrTable
+	elseif actionDataType == 'table' then
+		assert(numberOrTable.max, 'An upper bound is required when selecting a numeric range!')
+		return randomGen.range(numberOrTable.min or 0, numberOrTable.max)
+	elseif actionDataType == 'nil' then
+		return 0
+	else
+		error('Incorrect type provided to getRangeValue: ' .. actionDataType)
+	end
+end
+
+---
+--- Apply rotation to a transform, optionally relative to current.
+---@param isRelative boolean
+---@param rotateActionDetails SSSVector3Range
+---@param currentTransform openmw.util.Transform
+---@return openmw.util.Transform
+local function getRotationValue(isRelative, rotateActionDetails, currentTransform)
+	local rootTransform = isRelative and currentTransform or util.transform.identity
+
+	local z = rotateActionDetails.z
+	if z then
+		rootTransform = rotateZ(rad(getRangeValue(z))) * rootTransform
+	end
+
+	local y = rotateActionDetails.y
+	if y then
+		rootTransform = rotateY(rad(getRangeValue(y))) * rootTransform
+	end
+
+	local x = rotateActionDetails.x
+	if x then
+		rootTransform = rotateX(rad(getRangeValue(x))) * rootTransform
+	end
+
+	return rootTransform
+end
+
+---
+--- Calculate target scale from a scale action, relative to a reference.
+---@param scaleAction SSSNumericRange
+---@param referenceScale number
+---@return number
+local function getScaleValue(scaleAction, referenceScale)
+	local scaleType = type(scaleAction)
+
+	if scaleType == 'number' then
+		return referenceScale * scaleAction
+	elseif scaleType == 'table' then
+		return referenceScale * randomGen.range(scaleAction.min or 1.0, scaleAction.max)
+	end
+
+	error('Invalid type for scale parameter: ' .. scaleType)
+end
+
 ---@type table<string, function>
 local actionHandlers = {
+	['transform'] = function(_, transformAction, newTransform, newPos, targetScale)
+		local wasModified = false
+		local useRelativeTransform = transformAction.transform_type == nil
+			or transformAction.transform_type == 'relative'
+
+		local scaleAction = transformAction.scale
+		if scaleAction then
+			local referenceScale = useRelativeTransform and targetScale or 1.0
+			targetScale = getScaleValue(scaleAction, referenceScale)
+			wasModified = true
+		end
+
+		local rotateAction = transformAction.rotate
+		if rotateAction then
+			newTransform = getRotationValue(useRelativeTransform, rotateAction, newTransform)
+			wasModified = true
+		end
+
+		local positionAction = transformAction.position
+		if positionAction then
+			local actionTargetPos = util.vector3(
+				getRangeValue(positionAction.x),
+				getRangeValue(positionAction.y),
+				getRangeValue(positionAction.z)
+			)
+
+			if useRelativeTransform then
+				newPos = newPos + actionTargetPos
+			else
+				newPos = actionTargetPos
+			end
+
+			wasModified = true
+		end
+
+		return wasModified, newTransform, newPos, targetScale
+	end,
 	['replace'] = function(_, replaceActionData)
 		for replaceId, replaceChance in pairs(replaceActionData) do
 			if randomGen.float() <= replaceChance then
