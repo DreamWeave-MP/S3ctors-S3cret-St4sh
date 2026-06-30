@@ -22,6 +22,7 @@ instances:
           - ^urn_
           - bone
           - lantern
+          - ^web_
     once: per_cell
     actions:
       - transform:
@@ -33,6 +34,7 @@ instances:
       - record_id:
           - skull
           - bone
+          - ^web_
     once: per_cell
     actions:
       - transform:
@@ -115,3 +117,14 @@ instances:
     actions:
       - replace:
           'in_tomb_all_lev+2': 1.0
+
+  # Rule 8: Diseased Rats.
+  # Tomb rats have a 60% chance to spawn diseased.
+  - conditions:
+      - cell_match: tomb
+      - object_type: Creature
+      - record_id: ^rat$
+    once: per_cell
+    actions:
+      - replace:
+          rat_diseased: 0.6
