@@ -130,7 +130,7 @@
 ---@field mesh string?
 ---@field nameMatch string?
 ---@field not table? Inverts a single inner condition, e.g. `{nameMatch = "Guard"}`.
----@field object_type string?
+---@field object_type string? Exact OpenMW type name, e.g. Container, Creature, LevelledCreature, Weapon, Armor, NPC, Static, Door, Activator
 ---@field record_id string? Lua pattern match against the object's record ID; use ^/$ for start/end anchoring
 ---@field content_file_target table<string, number[]>?
 ---@field generated boolean?

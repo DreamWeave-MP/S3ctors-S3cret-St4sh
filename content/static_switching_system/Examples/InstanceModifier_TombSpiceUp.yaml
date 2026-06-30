@@ -99,3 +99,19 @@ instances:
     actions:
       - replace:
           'skeleton warrior': 0.3
+
+  # Rule 7: Upgraded Tomb Spawners.
+  # Replace low-level leveled creature spawners with the higher-tier
+  # variant. The replacement spawner resolves immediately on placement,
+  # creating an additional creature beyond the one the original spawner
+  # already produced. This is a one-time double-spawn per spawn point;
+  # on later cell loads the original is gone and only the replacement
+  # spawner's creatures appear.
+  - conditions:
+      - cell_match: tomb
+      - object_type: LevelledCreature
+      - record_id: ^in_tomb_all_lev%+0$
+    once: per_cell
+    actions:
+      - replace:
+          'in_tomb_all_lev+2': 1.0

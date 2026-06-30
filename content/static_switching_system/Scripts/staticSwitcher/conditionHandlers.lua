@@ -181,10 +181,9 @@ local conditionHandlers = {
 	---@param targetTypeName string
 	---@return boolean
 	object_type = function(object, targetTypeName)
-		local capitalizedTypeName = (targetTypeName:lower() == 'npc' and 'NPC') or staticUtil.capitalize(targetTypeName)
-		local targetType = types[capitalizedTypeName]
+		local targetType = types[targetTypeName]
 
-		assert(targetType ~= nil, INVALID_TYPE:format(capitalizedTypeName))
+		assert(targetType ~= nil, INVALID_TYPE:format(targetTypeName))
 
 		return targetType.objectIsInstance(object)
 	end,
