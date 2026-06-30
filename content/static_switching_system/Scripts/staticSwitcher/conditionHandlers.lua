@@ -102,8 +102,10 @@ local conditionHandlers = {
 			return false
 		end
 
-		local cellName = cell.name and cell.name:lower()
-		local cellId = cell.id and cell.id:lower()
+		local cellId, cellName = cell.id:lower(), cell.name
+		if cellName ~= '' then
+			cellName = cellName:lower()
+		end
 
 		return (cellName and cellName:find(matchStr, 1, true))
 			or (cellId and cellId:find(matchStr, 1, true))
