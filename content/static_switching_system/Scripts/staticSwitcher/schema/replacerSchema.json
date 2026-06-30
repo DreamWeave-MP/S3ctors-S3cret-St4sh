@@ -329,6 +329,10 @@
                 "create": {
                     "$ref": "#/definitions/createAction",
                     "description": "Spawn objects at the trigger's position. Each pool (record ID) is evaluated independently with optional count, chance, and position/rotation/scale overrides per pool. Transform overrides within a pool re-randomize per object for scatter/spread effects."
+                },
+                "lock_level": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Lock or unlock the target object. Positive values lock at that level. Zero or negative values unlock. Non-lockable objects (statics, creatures) no-op."
                 }
             },
             "anyOf": [
@@ -375,6 +379,11 @@
                 {
                     "required": [
                         "create"
+                    ]
+                },
+                {
+                    "required": [
+                        "lock_level"
                     ]
                 }
             ],

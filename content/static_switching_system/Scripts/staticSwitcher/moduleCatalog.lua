@@ -42,6 +42,7 @@ local StaticReplacements
 	'remove',
 	'equip',
 	'unequip',
+	'lock_level',
 	'create',
 	'disable',
 	'delete',

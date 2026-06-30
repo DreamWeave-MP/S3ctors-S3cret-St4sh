@@ -337,7 +337,7 @@ local function tryModifyObject(object, instanceModificationList)
 		local currentRuleApplied = false
 
 		for _, actionData in ipairs(instanceModification.actions) do
-			local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction =
+			local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction =
 				actionData.replace,
 				actionData.transform,
 				actionData.add,
@@ -346,7 +346,8 @@ local function tryModifyObject(object, instanceModificationList)
 				actionData.unequip,
 				actionData.disable,
 				actionData.delete,
-				actionData.create
+				actionData.create,
+				actionData.lock_level
 			local replaceActionSucceeded = false
 
 			--- Should we allow only one successful replacement???
@@ -398,6 +399,13 @@ local function tryModifyObject(object, instanceModificationList)
 				anyActionApplied = anyActionApplied or didUnequip
 				currentRuleApplied = currentRuleApplied or didUnequip
 				logger.debug('  unequip on %s: %s', object.id, didUnequip and 'OK' or 'failed (not equipped)')
+			end
+
+			if lockLevelAction then
+				local didLock = actionHandlers.lock_level(modifyTarget, lockLevelAction)
+				anyActionApplied = anyActionApplied or didLock
+				currentRuleApplied = currentRuleApplied or didLock
+				logger.debug('  lock_level on %s: %s', object.id, didLock and 'OK' or 'failed (not lockable)')
 			end
 
 			if createAction then

@@ -110,7 +110,7 @@
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, create, disable, delete.
+--- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, lock_level, create, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -128,6 +128,7 @@
 --- you want a one-time effect, or avoid disable entirely for objects you want to toggle.
 ---@field delete true? queues removal of the original matched source object through DeleteManager
 ---@field create SSSCreateAction? spawns objects at the trigger's position; each pool evaluated independently with optional count, chance, and position/rotation/scale overrides
+---@field lock_level SSSNumericRange? locks (positive) or unlocks (zero/negative) the target object; non-lockable objects no-op
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
