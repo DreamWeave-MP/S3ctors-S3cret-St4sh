@@ -532,6 +532,57 @@
                 "has_name": {
                     "type": "boolean"
                 },
+                "player_level": {
+                    "oneOf": [
+                        {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Player must be at least this level."
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "min": {"type": "integer", "minimum": 1},
+                                "max": {"type": "integer", "minimum": 1}
+                            },
+                            "additionalProperties": false,
+                            "description": "Player level range. At least one of min or max is required."
+                        }
+                    ],
+                    "anyOf": [
+                        {"required": ["min"]},
+                        {"required": ["max"]}
+                    ],
+                    "description": "Gate by player level. Bare number means at-least."
+                },
+                "current_weather": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "Case-insensitive substring match against the current weather name. The literal value \"none\" matches when no weather is active (interiors, transitions)."
+                        },
+                        {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 1,
+                            "description": "Match any of the listed weather name substrings. Include \"none\" to match when no weather is active."
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "isStorm": {"type": "boolean"},
+                                "name": {"type": "string"}
+                            },
+                            "additionalProperties": false,
+                            "description": "Match by storm flag and/or weather name substring. At least one of isStorm or name is required; when both are present both must match."
+                        }
+                    ],
+                    "anyOf": [
+                        {"required": ["isStorm"]},
+                        {"required": ["name"]}
+                    ],
+                    "description": "Gate by current weather in the player's cell."
+                },
                 "mesh": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
