@@ -35,7 +35,7 @@ local ObjectModificationStore = {}
 local StaticReplacements
 
 ---@type string[]
-local ACTIONPRIORITY = {
+	local ACTIONPRIORITY = {
 	'replace',
 	'transform',
 	'add',
@@ -43,7 +43,6 @@ local ACTIONPRIORITY = {
 	'equip',
 	'unequip',
 	'disable',
-	'enable',
 	'delete',
 }
 
