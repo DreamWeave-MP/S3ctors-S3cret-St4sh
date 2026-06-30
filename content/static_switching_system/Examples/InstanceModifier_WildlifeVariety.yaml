@@ -47,16 +47,27 @@ instances:
             max: 1.2
 
   # Rule 4: Randomize bottles in Caius's house — replace action with
-  # weighted chances. Once true so the replacement persists.
+  # weighted chances. Per-cell so the swap re-randomises each time you
+  # enter the house rather than persisting across saves.
   - conditions:
       - cell: "Balmora, Caius Cosades' House"
       - record_id:
+          - misc_com_bottle_01
           - misc_com_bottle_02
+          - misc_com_bottle_03
+          - misc_com_bottle_04
+          - misc_com_bottle_05
+          - misc_com_bottle_06
+          - misc_de_goblet_01
           - misc_de_goblet_03
-    once: true
+    once: per_cell
     actions:
       - replace:
-          misc_com_bottle_01: 0.2
-          misc_com_bottle_04: 0.2
-          misc_com_bottle_05: 0.2
-          misc_de_goblet_01: 0.15
+          misc_com_bottle_01: 0.15
+          misc_com_bottle_02: 0.15
+          misc_com_bottle_03: 0.1
+          misc_com_bottle_04: 0.15
+          misc_com_bottle_05: 0.15
+          misc_com_bottle_06: 0.1
+          misc_de_goblet_01: 0.1
+          misc_de_goblet_03: 0.1
