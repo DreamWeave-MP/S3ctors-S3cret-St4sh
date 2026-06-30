@@ -176,6 +176,10 @@ local function getItemActionDetails(itemData)
 
 		local count = itemData.count or 1
 		if type(count) == 'table' then
+			assert(count.max, 'RangeTable requires a "max"')
+			assert((count.min or 1) <= count.max, 'RangeTable requires min <= max')
+			-- Must use randomGen.range(_, true) for integer output;
+			-- getRangeValue returns floats (correct for positions, not counts).
 			count = randomGen.range(count, true)
 		end
 
@@ -410,6 +414,10 @@ local actionHandlers = {
 			elseif detailsType == 'table' then
 				count = details.count or 1
 				if type(count) == 'table' then
+					assert(count.max, 'RangeTable requires a "max"')
+					assert((count.min or 1) <= count.max, 'RangeTable requires min <= max')
+					-- Must use randomGen.range(_, true) for integer output;
+					-- getRangeValue returns floats (correct for positions, not counts).
 					count = randomGen.range(count, true)
 				end
 				chance = details.chance
