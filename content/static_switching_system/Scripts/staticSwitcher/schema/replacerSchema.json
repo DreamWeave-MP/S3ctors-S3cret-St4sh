@@ -280,6 +280,12 @@
         "instanceAction": {
             "type": "object",
             "properties": {
+                "chance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Probability 0-1 that this action block fires. When omitted, always fires."
+                },
                 "replace": {
                     "$ref": "#/definitions/replaceAction"
                 },
