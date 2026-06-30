@@ -16,7 +16,7 @@ local INVALID_TYPE = 'Invalid type was provided: %s'
 local cellToExteriorRegion = {}
 
 local type = type
-local StrFind, StrLower, StrFormat = string.find, string.lower, string.format
+local StrFind, StrLower, StrFormat, StrUpper = string.find, string.lower, string.format, string.upper
 
 ---@param cell openmw.core.GCell
 ---@param position openmw.util.Vector3
@@ -125,7 +125,7 @@ local conditionHandlers = {
 	---@return boolean
 	content_file = function(object, contentFileName)
 		return (object.contentFile == contentFileName)
-			or (not object.contentFile and contentFileName:upper() == 'GENERATED')
+			or (not object.contentFile and StrUpper(contentFileName) == 'GENERATED')
 	end,
 	---@param object openmw.GObject
 	---@param shouldBeExterior boolean
