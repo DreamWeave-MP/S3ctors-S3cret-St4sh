@@ -367,15 +367,15 @@
                             "type": "array",
                             "items": {
                                 "type": "object",
-                                "properties": {
-                                    "id": {"type": "string", "description": "Trap spell ID."},
-                                    "chance": {"$ref": "#/definitions/chanceRange", "description": "Probability this trap is chosen."}
+                                "patternProperties": {
+                                    "^.*$": {"$ref": "#/definitions/chanceRange"}
                                 },
-                                "required": ["id"],
+                                "minProperties": 1,
+                                "maxProperties": 1,
                                 "additionalProperties": false
                             },
                             "minItems": 1,
-                            "description": "Ordered trap entries. First entry whose chance passes wins."
+                            "description": "Ordered trap entries (single-key chance tables). First entry whose chance passes wins."
                         }
                     ],
                     "description": "Set or remove the trap on a lockable object. Non-lockable objects no-op."
@@ -405,6 +405,10 @@
                                 "timeOffset": {"type": "number", "minimum": 0}
                             },
                             "additionalProperties": false,
+                            "anyOf": [
+                                {"required": ["id"]},
+                                {"required": ["file"]}
+                            ],
                             "description": "3D positional sound at target. Requires id or file."
                         }
                     ],

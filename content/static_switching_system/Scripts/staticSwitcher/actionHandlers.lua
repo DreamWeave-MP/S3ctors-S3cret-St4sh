@@ -432,7 +432,7 @@ local actionHandlers = {
 			end
 
 			if count and count >= 1 then
-		if chance and not shouldApplyChance(chance) then
+				if chance and not shouldApplyChance(chance) then
 					-- pool missed
 				else
 					local useRelativeTransform = transformType == nil or transformType == 'relative'
@@ -531,10 +531,18 @@ local actionHandlers = {
 		local options
 		if volume or pitch or doLoop or timeOffset then
 			options = {}
-			if volume then options.volume = volume end
-			if pitch then options.pitch = pitch end
-			if doLoop then options.loop = doLoop end
-			if timeOffset then options.timeOffset = timeOffset end
+			if volume then
+				options.volume = volume
+			end
+			if pitch then
+				options.pitch = pitch
+			end
+			if doLoop then
+				options.loop = doLoop
+			end
+			if timeOffset then
+				options.timeOffset = timeOffset
+			end
 		end
 
 		if soundFile then
