@@ -3,7 +3,8 @@
 local types = require 'openmw.types'
 local world = require 'openmw.world'
 local core = require 'openmw.core'
-local Weather = core.weather
+
+local BatchCache = require 'Scripts.staticSwitcher.batchCache'
 
 local Player = world.players[1]
 local Door = types.Door
@@ -226,7 +227,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local quests = types.Player.quests(Player)
+		local quests = BatchCache.playerQuests()
 		local quest = quests[questId]
 		if not quest then
 			return false
@@ -499,7 +500,7 @@ local conditionHandlers = {
 		return false
 	end,
 	['player_equipped'] = function(_, equippedData)
-		local equipment = Player:getEquipment()
+		local equipment = BatchCache.playerEquipment()
 
 		if type(equippedData) == 'string' then
 			for _, item in pairs(equipment) do
@@ -524,7 +525,7 @@ local conditionHandlers = {
 		return false
 	end,
 	['current_weather'] = function(_, weatherData)
-		local current = Weather.getCurrent(Player.cell)
+		local current = BatchCache.currentWeather(Player.cell)
 
 		if type(weatherData) == 'string' then
 			if weatherData == 'none' then
