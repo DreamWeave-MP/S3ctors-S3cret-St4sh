@@ -20,6 +20,7 @@ instances:
           - candle
           - skull
           - _urn
+          - urn_
           - bone
           - lantern
     once: per_cell
