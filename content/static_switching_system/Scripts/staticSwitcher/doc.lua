@@ -126,6 +126,7 @@
 ---@field content_file string?
 ---@field exterior boolean?
 ---@field quasi_exterior boolean?
+---@field has_journal table? Quest journal index: `{quest: string, index?: integer, min?: integer, max?: integer}`. `index` is shorthand for `min`. Returns true when `stage >= min and stage <= max`.
 ---@field has_name boolean?
 ---@field mesh string?
 ---@field nameMatch string?
