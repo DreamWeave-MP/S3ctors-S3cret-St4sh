@@ -19,6 +19,15 @@ local OnceCache = {
 	byObjectId = {},
 }
 
+--- Runtime-only per-cell-load tracking set.
+--- Tracks "objectId:moduleName:actionHash" for rules with once="per_cell".
+--- Cleared at the start of each new activation batch (onObjectActive when the
+--- stack was empty). Marked entries suppress re-processing of objects that
+--- were already modified this cell load, including replacement objects.
+--- Not saved — only lives for the current cell session.
+---@type table<string, true>
+local PerCellApplied = {}
+
 ---@type SSSModuleCatalog
 local ModuleCatalog
 
@@ -99,6 +108,39 @@ local function markOnceActionApplied(object, moduleName, actionHash)
 	end
 
 	moduleActions[actionHash] = true
+end
+
+---
+--- Per-cell-load tracking helpers
+---
+
+---@param object openmw.GObject
+---@param moduleName string
+---@param actionHash string
+---@return string
+local function perCellKey(object, moduleName, actionHash)
+	return ('%s:%s:%s'):format(object.id, moduleName, actionHash)
+end
+
+---@param object openmw.GObject
+---@param moduleName string
+---@param actionHash string
+---@return boolean
+local function wasAppliedThisLoad(object, moduleName, actionHash)
+	return PerCellApplied[perCellKey(object, moduleName, actionHash)] == true
+end
+
+---@param object openmw.GObject
+---@param moduleName string
+---@param actionHash string
+local function markAppliedThisLoad(object, moduleName, actionHash)
+	PerCellApplied[perCellKey(object, moduleName, actionHash)] = true
+end
+
+--- Clears the per-cell tracking table. Called from the activation listener when
+--- the ActiveObjectStack was empty, indicating a fresh cell-load batch.
+local function clearPerCellTracking()
+	PerCellApplied = {}
 end
 
 ---@param savedOnceCache SSSOnceCacheSaved?
@@ -230,7 +272,12 @@ local function getMatchingInstanceModules(object)
 			local shouldProcess = not actionData.conditions or matchesAllConditions(object, actionData.conditions)
 
 			-- Action conditions have been evaluated already, and this action can only run once
-			if actionData.once and onceActionWasApplied(object, moduleName, actionTableHash) then
+			if actionData.once == true and onceActionWasApplied(object, moduleName, actionTableHash) then
+				shouldProcess = false
+			end
+
+			-- Per-cell once: only skip for this cell-load session; not saved
+			if actionData.once == 'per_cell' and wasAppliedThisLoad(object, moduleName, actionTableHash) then
 				shouldProcess = false
 			end
 
@@ -453,8 +500,16 @@ local function tryModifyObject(object, instanceModificationList)
 			end
 		end
 
-		if instanceModification.once and currentRuleApplied then
+		if instanceModification.once == true and currentRuleApplied then
 			markOnceActionApplied(object, instanceModification.moduleName, instanceModification.actionHash)
+		end
+
+		if instanceModification.once == 'per_cell' and currentRuleApplied then
+			markAppliedThisLoad(object, instanceModification.moduleName, instanceModification.actionHash)
+			-- Also mark the replacement target so fresh activations skip re-processing
+			if modifyTarget ~= object then
+				markAppliedThisLoad(modifyTarget, instanceModification.moduleName, instanceModification.actionHash)
+			end
 		end
 	end
 
@@ -483,6 +538,7 @@ local InstanceModifiers = {
 	loadOnceCache = loadOnceCache,
 	saveOnceCache = saveOnceCache,
 	tryModifyObject = tryModifyObject,
+	clearPerCellTracking = clearPerCellTracking,
 }
 
 ---@param moduleCatalog SSSModuleCatalog
