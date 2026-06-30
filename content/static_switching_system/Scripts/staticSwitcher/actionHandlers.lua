@@ -6,7 +6,7 @@ local types = require 'openmw.types'
 
 local randomGen = require 'scripts.s3.randomGen'
 
-local ipairs, pairs, pcall, type = ipairs, pairs, pcall, type
+local pairs, pcall, type = pairs, pcall, type
 
 local ActorObjectIsInstance = types.Actor.objectIsInstance
 local ContainerObjectIsInstance = types.Container.objectIsInstance
@@ -49,17 +49,21 @@ local function removeItemFromInventory(object, recordId, count)
 	end
 
 	local inventory = getObjectInventory(object)
-	if not inventory or inventory:countOf(recordId) < count then
+	if not inventory then
 		return false
 	end
 
-	local remainingCount = count
+	local availableCount = inventory:countOf(recordId)
+	if availableCount < 1 then
+		return false
+	end
 
-	for _, itemStack in ipairs(inventory:findAll(recordId)) do
-		local removeCount = remainingCount
-		if itemStack.count < removeCount then
-			removeCount = itemStack.count
-		end
+	local remainingCount = math.min(count, availableCount)
+	local items = inventory:findAll(recordId)
+
+	for i = 1, #items do
+		local itemStack = items[i]
+		local removeCount = math.min(remainingCount, itemStack.count)
 
 		itemStack:remove(removeCount)
 		remainingCount = remainingCount - removeCount
@@ -201,13 +205,30 @@ end
 ---@param object openmw.GObject
 ---@param itemAction SSSItemAction
 ---@param itemHandler fun(object: openmw.GObject, recordId: RecordId, count: integer): boolean
+---@param arrayItemCount integer? Default count to use for each element in the array form.
 ---@return boolean wasApplied
-local function applyItemAction(object, itemAction, itemHandler)
+local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
 	local actionType = type(itemAction)
 
 	if actionType == 'string' then
 		return itemHandler(object, itemAction, 1)
 	elseif actionType == 'table' then
+		local firstKey = next(itemAction)
+
+		-- Array of record IDs: apply the same count to each.
+		if firstKey and type(firstKey) == 'number' then
+			local wasApplied = false
+			local count = arrayItemCount or 1
+			local numItems = #itemAction
+
+			for i = 1, numItems do
+				wasApplied = itemHandler(object, itemAction[i], count) or wasApplied
+			end
+
+			return wasApplied
+		end
+
+		-- Map of record IDs to counts: existing behavior.
 		local wasApplied = false
 
 		for recordId, itemData in pairs(itemAction) do
@@ -238,16 +259,16 @@ local actionHandlers = {
 		end
 	end,
 	['add'] = function(object, addActionData)
-		return applyItemAction(object, addActionData, addItemToInventory)
+		return applyItemAction(object, addActionData, addItemToInventory, 1)
 	end,
 	['remove'] = function(object, removeActionData)
-		return applyItemAction(object, removeActionData, removeItemFromInventory)
+		return applyItemAction(object, removeActionData, removeItemFromInventory, math.huge)
 	end,
 	['equip'] = function(object, equipActionData)
-		return applyItemAction(object, equipActionData, equipInventoryItem)
+		return applyItemAction(object, equipActionData, equipInventoryItem, 1)
 	end,
 	['unequip'] = function(object, unequipActionData)
-		return applyItemAction(object, unequipActionData, unequipInventoryItem)
+		return applyItemAction(object, unequipActionData, unequipInventoryItem, 1)
 	end,
 }
 
