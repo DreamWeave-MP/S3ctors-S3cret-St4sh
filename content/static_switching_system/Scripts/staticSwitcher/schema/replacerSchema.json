@@ -368,6 +368,10 @@
                 "nameMatch": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
+                "not": {
+                    "$ref": "#/definitions/conditionData",
+                    "description": "Invert a single inner condition. The value is a condition table like {nameMatch: \"Guard\"} — the inner condition is evaluated and the result negated."
+                },
                 "has_name": {
                     "type": "boolean"
                 },
