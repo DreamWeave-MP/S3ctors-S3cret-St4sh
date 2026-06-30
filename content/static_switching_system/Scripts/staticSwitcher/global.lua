@@ -18,15 +18,15 @@ local sendMenuEvent = types.Player.sendMenuEvent
 
 local DeleteManager = require 'Scripts.staticSwitcher.deleteManager'
 
-local StaticReplacements = require 'Scripts.staticSwitcher.staticReplacements'(DeleteManager)
+local StaticReplacements = require 'Scripts.staticSwitcher.staticReplacements' (DeleteManager)
 
-local ModuleCatalog = require 'Scripts.staticSwitcher.moduleCatalog'(StaticReplacements)
+local ModuleCatalog = require 'Scripts.staticSwitcher.moduleCatalog' (StaticReplacements)
 
 StaticReplacements.setModuleResolver(ModuleCatalog.resolveModuleId)
 
-local InstanceModifiers = require 'Scripts.staticSwitcher.instanceModifiers'(ModuleCatalog, DeleteManager)
+local InstanceModifiers = require 'Scripts.staticSwitcher.instanceModifiers' (ModuleCatalog, DeleteManager)
 
-local uninstallModule = require 'Scripts.staticSwitcher.globalSettings'(
+local uninstallModule = require 'Scripts.staticSwitcher.globalSettings' (
 	ModuleCatalog.staticModuleIds,
 	DeleteManager,
 	StaticReplacements.ReplacedObjectSet,
