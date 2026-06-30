@@ -43,6 +43,7 @@ local ACTIONPRIORITY = {
 	'equip',
 	'unequip',
 	'disable',
+	'enable',
 	'delete',
 }
 
