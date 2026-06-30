@@ -138,18 +138,23 @@ instances:
       - replace:
           in_tomb_all_lev+2: 1.0
 
-  # Rule 7a: Sixth House Corruption (journal 30-69).
-  # Targets both +0 (fallback) and +2 (result of Rule 7) to replace with
-  # in_6th_all_lev+2 — corprus_stalker(3), ash_slave(3), corprus_lame(10),
-  # ash_zombie(10), ash_ghoul(17), ascended_sleeper(27).
+  # Rule 7a: Sixth House Corruption (a1 >= 50, c3 < 50).
+  # Targets the +2 from Rule 7. The not condition on c3_destroydagoth
+  # keeps the corruption contained to the pre-Dagoth-Ur phase — once
+  # c3 finishes, Rule 7b cleans up permanently without re-corruption.
+  # Replaces with in_6th_all_lev+2 — corprus_stalker(3), ash_slave(3),
+  # corprus_lame(10), ash_zombie(10), ash_ghoul(17), ascended_sleeper(27).
   - conditions:
       - cell_match: tomb
       - object_type: LevelledCreature
-      - record_id: ^in_tomb_all_lev%+[02]$
+      - record_id: ^in_tomb_all_lev%+2$
       - has_journal:
-          quest: A1_4_MainQuest
-          min: 30
-          max: 69
+          quest: a1_v_vivecinformants
+          index: 50
+      - not:
+          has_journal:
+            quest: c3_destroydagoth
+            index: 50
     actions:
       - replace:
           in_6th_all_lev+2: 1.0
@@ -161,8 +166,8 @@ instances:
       - object_type: LevelledCreature
       - record_id: ^in_6th_all_lev%+2$
       - has_journal:
-          quest: A1_4_MainQuest
-          index: 70
+          quest: c3_destroydagoth
+          index: 50
     actions:
       - replace:
           in_tomb_all_lev+2: 1.0
