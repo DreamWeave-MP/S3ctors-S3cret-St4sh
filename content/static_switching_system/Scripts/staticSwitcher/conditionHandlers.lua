@@ -2,7 +2,8 @@
 
 local types = require 'openmw.types'
 local world = require 'openmw.world'
-local Weather = require 'openmw.core'.weather
+local core = require 'openmw.core'
+local Weather = core.weather
 
 local Player = world.players[1]
 local Door = types.Door
@@ -303,6 +304,128 @@ local conditionHandlers = {
 		end
 
 		return true
+	end,
+	['target_level'] = function(object, levelData)
+		local stats = object.type.stats
+		if not stats then
+			return false
+		end
+
+		local currentLevel = stats.level(object).current
+
+		if type(levelData) == 'number' then
+			return currentLevel >= levelData
+		end
+
+		if levelData.min and currentLevel < levelData.min then
+			return false
+		end
+		if levelData.max and currentLevel > levelData.max then
+			return false
+		end
+
+		return true
+	end,
+	['time_of_day'] = function(_, hourData)
+		local currentHour = core.getGameTime().hour
+
+		if type(hourData) == 'number' then
+			return currentHour >= hourData
+		end
+
+		if hourData.min and currentHour < hourData.min then
+			return false
+		end
+		if hourData.max and currentHour > hourData.max then
+			return false
+		end
+
+		return true
+	end,
+	['player_faction'] = function(_, factionData)
+		local faction = factionData.faction
+		local rank = Player.type.getFactionRank(Player, faction)
+
+		if factionData.rank then
+			return rank >= factionData.rank
+		end
+
+		if factionData.min and rank < factionData.min then
+			return false
+		end
+		if factionData.max and rank > factionData.max then
+			return false
+		end
+
+		return rank > 0
+	end,
+	['target_faction'] = function(object, factionData)
+		if object.type ~= types.NPC then
+			return false
+		end
+
+		local faction = factionData.faction
+		local rank = object.type.getFactionRank(object, faction)
+
+		if factionData.rank then
+			return rank >= factionData.rank
+		end
+
+		if factionData.min and rank < factionData.min then
+			return false
+		end
+		if factionData.max and rank > factionData.max then
+			return false
+		end
+
+		return rank > 0
+	end,
+	['target_class'] = function(object, classData)
+		if object.type ~= types.NPC then
+			return false
+		end
+
+		local classId = object.type.records[object.recordId].class
+
+		if type(classData) == 'string' then
+			return classId:lower() == classData:lower()
+		end
+
+		if classData[1] then
+			for i = 1, #classData do
+				if classId:lower() == classData[i]:lower() then
+					return true
+				end
+			end
+			return false
+		end
+
+		return false
+	end,
+	['player_equipped'] = function(_, equippedData)
+		local equipment = Player:getEquipment()
+
+		if type(equippedData) == 'string' then
+			for _, item in pairs(equipment) do
+				if item.recordId == equippedData then
+					return true
+				end
+			end
+			return false
+		end
+
+		if equippedData[1] then
+			for _, item in pairs(equipment) do
+				for i = 1, #equippedData do
+					if item.recordId == equippedData[i] then
+						return true
+					end
+				end
+			end
+			return false
+		end
+
+		return false
 	end,
 	['current_weather'] = function(_, weatherData)
 		local current = Weather.getCurrent(Player.cell)

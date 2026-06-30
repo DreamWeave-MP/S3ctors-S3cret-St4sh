@@ -555,6 +555,56 @@
                     ],
                     "description": "Gate by player level. Bare number means at-least."
                 },
+                "target_level": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Gate by target object level. Bare number means at-least, table with min/max for range. Non-actors return false."
+                },
+                "time_of_day": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Game hour gate. Bare number means at-least, table with min/max for range. Hour is a 0-23 float."
+                },
+                "player_faction": {
+                    "type": "object",
+                    "properties": {
+                        "faction": {"type": "string", "description": "Faction ID to check membership of."},
+                        "rank": {"type": "integer", "minimum": 1, "description": "Shorthand for min. Rank >= rank."},
+                        "min": {"type": "integer", "minimum": 1},
+                        "max": {"type": "integer", "minimum": 1}
+                    },
+                    "required": ["faction"],
+                    "anyOf": [
+                        {"required": ["rank"]},
+                        {"required": ["min"]},
+                        {"required": ["max"]}
+                    ],
+                    "additionalProperties": false,
+                    "description": "Player faction membership. At least one of rank/min/max is required. Returns false if player is not in the faction."
+                },
+                "target_faction": {
+                    "type": "object",
+                    "properties": {
+                        "faction": {"type": "string", "description": "Faction ID to check membership of."},
+                        "rank": {"type": "integer", "minimum": 1, "description": "Shorthand for min. Rank >= rank."},
+                        "min": {"type": "integer", "minimum": 1},
+                        "max": {"type": "integer", "minimum": 1}
+                    },
+                    "required": ["faction"],
+                    "anyOf": [
+                        {"required": ["rank"]},
+                        {"required": ["min"]},
+                        {"required": ["max"]}
+                    ],
+                    "additionalProperties": false,
+                    "description": "Target NPC faction membership. Same shape as player_faction. Non-NPCs return false."
+                },
+                "target_class": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Target NPC class ID. Exact match, case-insensitive. Non-NPCs return false."
+                },
+                "player_equipped": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Record ID(s) to match against any item equipped by the player. Exact match."
+                },
                 "current_weather": {
                     "oneOf": [
                         {
