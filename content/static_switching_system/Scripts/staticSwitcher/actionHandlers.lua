@@ -9,7 +9,7 @@ local ambient = require 'openmw.ambient'
 
 local randomGen = require 'scripts.s3.randomGen'
 
-local pairs, pcall, type = pairs, pcall, type
+local next, pairs, pcall, type = next, pairs, pcall, type
 
 local rotateX = util.transform.rotateX
 local rotateY = util.transform.rotateY
@@ -208,6 +208,8 @@ local function shouldApplyChance(chance)
 
 		return randomGen.float() <= chance
 	end
+
+	assert(chance.max, 'Chance range table is missing required "max" field')
 
 	if chance.max <= 0 then
 		return false
@@ -432,7 +434,7 @@ local actionHandlers = {
 			end
 
 			if count and count >= 1 then
-				if chance and randomGen.float() > chance then
+		if chance and not shouldApplyChance(chance) then
 					-- pool missed
 				else
 					local useRelativeTransform = transformType == nil or transformType == 'relative'
@@ -555,9 +557,10 @@ local actionHandlers = {
 			return true
 		end
 
-		for keyId, chance in pairs(keyData) do
+		for i = 1, #keyData do
+			local keyId, chance = next(keyData[i])
 			if shouldApplyChance(chance) then
-				object.type.setKeyRecord(object, keyId)
+				object.type.setKeyRecord(object, entry.id)
 				return true
 			end
 		end
@@ -574,9 +577,10 @@ local actionHandlers = {
 			return true
 		end
 
-		for trapId, chance in pairs(trapData) do
+		for i = 1, #trapData do
+			local trapId, chance = next(trapData[i])
 			if shouldApplyChance(chance) then
-				object.type.setTrapSpell(object, trapId)
+				object.type.setTrapSpell(object, entry.id)
 				return true
 			end
 		end

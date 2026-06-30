@@ -344,13 +344,18 @@
                     "oneOf": [
                         {"const": false, "description": "Remove the key from the object."},
                         {
-                            "type": "object",
-                            "patternProperties": {
-                                "^.*$": {"$ref": "#/definitions/chanceRange"}
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "patternProperties": {
+                                    "^.*$": {"$ref": "#/definitions/chanceRange"}
+                                },
+                                "minProperties": 1,
+                                "maxProperties": 1,
+                                "additionalProperties": false
                             },
-                            "minProperties": 1,
-                            "additionalProperties": false,
-                            "description": "Map of key record IDs to chances. First match wins."
+                            "minItems": 1,
+                            "description": "Ordered key entries (single-key chance tables). First entry whose chance passes wins."
                         }
                     ],
                     "description": "Set or remove the key on a lockable object. Non-lockable objects no-op."
@@ -359,13 +364,18 @@
                     "oneOf": [
                         {"const": false, "description": "Remove the trap from the object."},
                         {
-                            "type": "object",
-                            "patternProperties": {
-                                "^.*$": {"$ref": "#/definitions/chanceRange"}
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "string", "description": "Trap spell ID."},
+                                    "chance": {"$ref": "#/definitions/chanceRange", "description": "Probability this trap is chosen."}
+                                },
+                                "required": ["id"],
+                                "additionalProperties": false
                             },
-                            "minProperties": 1,
-                            "additionalProperties": false,
-                            "description": "Map of trap spell IDs to chances. First match wins."
+                            "minItems": 1,
+                            "description": "Ordered trap entries. First entry whose chance passes wins."
                         }
                     ],
                     "description": "Set or remove the trap on a lockable object. Non-lockable objects no-op."

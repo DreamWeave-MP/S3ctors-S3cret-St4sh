@@ -420,6 +420,28 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 
 			instance_action.actions = aux_util.mapFilterSort(instance_action.actions, sortActionByType)
 
+			for actSanIdx = 1, #instance_action.actions do
+				local actionData = instance_action.actions[actSanIdx]
+
+				if actionData.key then
+					for i = 1, #actionData.key do
+						local k, v = next(actionData.key[i])
+
+						actionData.key[i][k:lower()] = v
+						actionData.key[i][k] = nil
+					end
+				end
+
+				if actionData.trap then
+					for i = 1, #actionData.trap do
+						local k, v = next(actionData.trap[i])
+
+						actionData.trap[i][k:lower()] = v
+						actionData.trap[i][k] = nil
+					end
+				end
+			end
+
 			local actionHash = tableHash(instance_action)
 			instance_action.actionHash = actionHash
 
