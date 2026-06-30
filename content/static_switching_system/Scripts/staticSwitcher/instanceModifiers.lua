@@ -409,11 +409,14 @@ local function tryModifyObject(object, instanceModificationList)
 				end
 			end
 
-			if deleteAction and (not replaceAction or replaceActionSucceeded) then
-				shouldDelete = true
-				anyActionApplied = true
-				currentRuleApplied = true
-				logger.debug('  delete on %s', object.id)
+			if deleteAction then
+				local didDelete = actionHandlers.delete(modifyTarget, deleteAction, replaceAction, replaceActionSucceeded)
+				if didDelete then
+					shouldDelete = true
+					anyActionApplied = true
+					currentRuleApplied = true
+					logger.debug('  delete on %s', object.id)
+				end
 			end
 		end
 
