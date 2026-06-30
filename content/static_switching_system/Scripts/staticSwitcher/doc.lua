@@ -115,6 +115,7 @@
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
+---@field chance number? probability 0-1 that this entire action block fires; omitted means always
 ---@field replace SSSReplaceAction?
 ---@field transform SSSTransformAction?
 ---@field add SSSItemAction? queues item(s) into the current action target when it is an Actor or Container

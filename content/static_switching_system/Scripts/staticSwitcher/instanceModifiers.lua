@@ -2,6 +2,8 @@
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
+local randomGen = require 'scripts.s3.randomGen'
+
 local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
 local logger = require 'Scripts.staticSwitcher.logger'
@@ -347,104 +349,108 @@ local function tryModifyObject(object, instanceModificationList)
 		local currentRuleApplied = false
 
 		for _, actionData in ipairs(instanceModification.actions) do
-			local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction =
-				actionData.replace,
-				actionData.transform,
-				actionData.add,
-				actionData.remove,
-				actionData.equip,
-				actionData.unequip,
-				actionData.disable,
-				actionData.delete,
-				actionData.create,
-				actionData.lock_level
-			local replaceActionSucceeded = false
+			if not actionData.chance or randomGen.float() <= actionData.chance then
+				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction =
+					actionData.replace,
+					actionData.transform,
+					actionData.add,
+					actionData.remove,
+					actionData.equip,
+					actionData.unequip,
+					actionData.disable,
+					actionData.delete,
+					actionData.create,
+					actionData.lock_level
+				local replaceActionSucceeded = false
 
-			--- Should we allow only one successful replacement???
-			if replaceAction and modifyTarget == object then
-				local didReplace
-				modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
-				replaceActionSucceeded = didReplace
-				anyActionApplied = anyActionApplied or didReplace
-				needsPlacementUpdate = needsPlacementUpdate or didReplace
-				currentRuleApplied = currentRuleApplied or didReplace
-				logger.debug('  replace on %s: %s', object.id, didReplace and 'OK' or 'failed (no matching roll)')
-			end
-
-			if transformAction then
-				local didTransform
-				didTransform, newTransform, newPos, targetScale =
-					actionHandlers.transform(modifyTarget, transformAction, newTransform, newPos, targetScale)
-				anyActionApplied = anyActionApplied or didTransform
-				needsPlacementUpdate = needsPlacementUpdate or didTransform
-				currentRuleApplied = currentRuleApplied or didTransform
-				if didTransform then
-					logger.debug('  transform on %s: scale=%.3f', object.id, targetScale)
+				--- Should we allow only one successful replacement???
+				if replaceAction and modifyTarget == object then
+					local didReplace
+					modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
+					replaceActionSucceeded = didReplace
+					anyActionApplied = anyActionApplied or didReplace
+					needsPlacementUpdate = needsPlacementUpdate or didReplace
+					currentRuleApplied = currentRuleApplied or didReplace
+					logger.debug('  replace on %s: %s', object.id, didReplace and 'OK' or 'failed (no matching roll)')
 				end
-			end
 
-			if addAction then
-				local didAdd = actionHandlers.add(modifyTarget, addAction)
-				anyActionApplied = anyActionApplied or didAdd
-				currentRuleApplied = currentRuleApplied or didAdd
-				logger.debug('  add on %s: %s', object.id, didAdd and 'OK' or 'failed')
-			end
-
-			if removeAction then
-				local didRemove = actionHandlers.remove(modifyTarget, removeAction)
-				anyActionApplied = anyActionApplied or didRemove
-				currentRuleApplied = currentRuleApplied or didRemove
-				logger.debug('  remove on %s: %s', object.id, didRemove and 'OK' or 'nothing to remove')
-			end
-
-			if equipAction then
-				local didEquip = actionHandlers.equip(modifyTarget, equipAction)
-				anyActionApplied = anyActionApplied or didEquip
-				currentRuleApplied = currentRuleApplied or didEquip
-				logger.debug('  equip on %s: %s', object.id, didEquip and 'OK' or 'failed')
-			end
-
-			if unequipAction then
-				local didUnequip = actionHandlers.unequip(modifyTarget, unequipAction)
-				anyActionApplied = anyActionApplied or didUnequip
-				currentRuleApplied = currentRuleApplied or didUnequip
-				logger.debug('  unequip on %s: %s', object.id, didUnequip and 'OK' or 'failed (not equipped)')
-			end
-
-			if lockLevelAction then
-				local didLock = actionHandlers.lock_level(modifyTarget, lockLevelAction)
-				anyActionApplied = anyActionApplied or didLock
-				currentRuleApplied = currentRuleApplied or didLock
-				logger.debug('  lock_level on %s: %s', object.id, didLock and 'OK' or 'failed (not lockable)')
-			end
-
-			if createAction then
-				local numCreated = actionHandlers.create(modifyTarget, createAction)
-				if numCreated > 0 then
-					anyActionApplied = true
-					currentRuleApplied = true
-					logger.debug('  create on %s: %d spawned', object.id, numCreated)
+				if transformAction then
+					local didTransform
+					didTransform, newTransform, newPos, targetScale =
+						actionHandlers.transform(modifyTarget, transformAction, newTransform, newPos, targetScale)
+					anyActionApplied = anyActionApplied or didTransform
+					needsPlacementUpdate = needsPlacementUpdate or didTransform
+					currentRuleApplied = currentRuleApplied or didTransform
+					if didTransform then
+						logger.debug('  transform on %s: scale=%.3f', object.id, targetScale)
+					end
 				end
-			end
 
-			if disableAction then
-				local didDisable = actionHandlers.disable(modifyTarget, disableAction)
-				logger.debug('  disable on %s: roll=%s', object.id, didDisable and 'OK' or 'miss')
-				if didDisable then
-					shouldDisable = true
-					anyActionApplied = true
-					currentRuleApplied = true
+				if addAction then
+					local didAdd = actionHandlers.add(modifyTarget, addAction)
+					anyActionApplied = anyActionApplied or didAdd
+					currentRuleApplied = currentRuleApplied or didAdd
+					logger.debug('  add on %s: %s', object.id, didAdd and 'OK' or 'failed')
 				end
-			end
 
-			if deleteAction then
-				local didDelete = actionHandlers.delete(object, deleteAction, replaceAction, replaceActionSucceeded)
-				if didDelete then
-					shouldDelete = true
-					anyActionApplied = true
-					currentRuleApplied = true
-					logger.debug('  delete on %s', object.id)
+				if removeAction then
+					local didRemove = actionHandlers.remove(modifyTarget, removeAction)
+					anyActionApplied = anyActionApplied or didRemove
+					currentRuleApplied = currentRuleApplied or didRemove
+					logger.debug('  remove on %s: %s', object.id, didRemove and 'OK' or 'nothing to remove')
 				end
+
+				if equipAction then
+					local didEquip = actionHandlers.equip(modifyTarget, equipAction)
+					anyActionApplied = anyActionApplied or didEquip
+					currentRuleApplied = currentRuleApplied or didEquip
+					logger.debug('  equip on %s: %s', object.id, didEquip and 'OK' or 'failed')
+				end
+
+				if unequipAction then
+					local didUnequip = actionHandlers.unequip(modifyTarget, unequipAction)
+					anyActionApplied = anyActionApplied or didUnequip
+					currentRuleApplied = currentRuleApplied or didUnequip
+					logger.debug('  unequip on %s: %s', object.id, didUnequip and 'OK' or 'failed (not equipped)')
+				end
+
+				if lockLevelAction then
+					local didLock = actionHandlers.lock_level(modifyTarget, lockLevelAction)
+					anyActionApplied = anyActionApplied or didLock
+					currentRuleApplied = currentRuleApplied or didLock
+					logger.debug('  lock_level on %s: %s', object.id, didLock and 'OK' or 'failed (not lockable)')
+				end
+
+				if createAction then
+					local numCreated = actionHandlers.create(modifyTarget, createAction)
+					if numCreated > 0 then
+						anyActionApplied = true
+						currentRuleApplied = true
+						logger.debug('  create on %s: %d spawned', object.id, numCreated)
+					end
+				end
+
+				if disableAction then
+					local didDisable = actionHandlers.disable(modifyTarget, disableAction)
+					logger.debug('  disable on %s: roll=%s', object.id, didDisable and 'OK' or 'miss')
+					if didDisable then
+						shouldDisable = true
+						anyActionApplied = true
+						currentRuleApplied = true
+					end
+				end
+
+				if deleteAction then
+					local didDelete = actionHandlers.delete(object, deleteAction, replaceAction, replaceActionSucceeded)
+					if didDelete then
+						shouldDelete = true
+						anyActionApplied = true
+						currentRuleApplied = true
+						logger.debug('  delete on %s', object.id)
+					end
+				end
+			else
+				logger.debug('  chance miss on %s: %.2f', object.id, actionData.chance)
 			end
 		end
 
