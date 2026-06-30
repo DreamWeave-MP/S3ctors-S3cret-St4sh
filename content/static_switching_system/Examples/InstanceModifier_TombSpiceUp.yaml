@@ -1,0 +1,43 @@
+log_name: Tomb Spice-Up
+
+# Every tomb visit feels slightly different. Candles flicker out at
+# random, urns and skulls spin in their sockets, bone piles are never
+# quite where you left them.
+#
+# cell_match: tomb matches any cell whose name or id contains "tomb".
+# This covers ancestral tombs, tombs, and related interiors.
+#
+# once: per_cell means every fresh cell load re-rolls the transform
+# values and disable/enable chance. Save and re-enter for a new mood.
+
+instances:
+  # Rule 1: Random transform on tomb clutter.
+  # Every candle, skull, urn, bone, lantern, and mummy wrap gets a
+  # random scale (0.6x to 1.4x) and a random Z rotation.
+  - conditions:
+      - cell_match: tomb
+      - record_id:
+          - candle
+          - skull
+          - urn
+          - bone
+          - lantern
+          - mummy
+    once: per_cell
+    actions:
+      - transform:
+          scale: { min: 0.6, max: 1.4 }
+          rotate:
+            z: { min: 0, max: 360 }
+
+  # Rule 2: Candle roulette. Each visit, candles have a 30% chance to
+  # be out and a 30% chance to be lit. When both roll true, enable
+  # wins (it fires later in priority). Net result: ~30% of candles
+  # dark, ~70% lit or unchanged — keeps the tomb feel while varying.
+  - conditions:
+      - cell_match: tomb
+      - record_id: candle
+    once: per_cell
+    actions:
+      - disable: { chance: 0.3 }
+      - enable: { chance: 0.3 }
