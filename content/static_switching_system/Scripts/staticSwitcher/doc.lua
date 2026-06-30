@@ -55,6 +55,7 @@
 --- Most fields are NOT optional, and a corresponding JSON Schema exists for them as well.
 ---@class SSSModuleRaw
 ---@field log_name string?
+---@field once boolean? when true, the entire module only processes each object once across all rules
 
 ---@class SSSModuleInstances: SSSModuleRaw
 ---@field instances SSSInstanceRule[] set of game object rules to muck with
@@ -170,9 +171,10 @@
 ---@field moduleName string canonical module id that provided this modification rule
 ---@field actionHash string stable hash of the parsed rule data
 ---@field once boolean? whether this rule should only apply once to a saved object
+---@field moduleOnce boolean? when true, marking any rule applied blocks the entire module for this object
 ---@field actions SSSInstanceAction[]
 
----@alias SSSObjectModificationStore table<string, SSSInstanceRule[]>
+---@alias SSSObjectModificationStore table<string, {rules: SSSInstanceRule[], moduleOnce: boolean?}>
 ---@alias SSSInstanceModificationList SSSInstanceModification[]
 ---@alias SSSOverrideRecords table<string, ReplacementMap>
 ---@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>>

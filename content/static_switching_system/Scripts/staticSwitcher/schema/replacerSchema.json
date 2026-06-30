@@ -731,6 +731,10 @@
             "type": "string",
             "description": "Optional name for logging purposes"
         },
+        "once": {
+            "type": "boolean",
+            "description": "When true, the entire module only processes each object once across all rules. After any rule in the module applies to an object, no further rules from this module will be evaluated for that object."
+        },
         "replace_names": {
             "type": "array",
             "items": {
