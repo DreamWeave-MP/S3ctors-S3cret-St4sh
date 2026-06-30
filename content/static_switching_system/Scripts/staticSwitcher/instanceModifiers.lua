@@ -354,8 +354,9 @@ local function tryModifyObject(object, instanceModificationList)
     local currentRuleApplied = false
 
     for _, actionData in ipairs(instanceModification.actions) do
-      local replaceAction, transformAction, addAction, disableAction, deleteAction =
-          actionData.replace, actionData.transform, actionData.add, actionData.disable, actionData.delete
+      local replaceAction, transformAction, addAction, removeAction, disableAction, deleteAction =
+          actionData.replace, actionData.transform, actionData.add, actionData.remove,
+          actionData.disable, actionData.delete
       local replaceActionSucceeded = false
 
       --- Should we allow only one successful replacement???
@@ -381,6 +382,12 @@ local function tryModifyObject(object, instanceModificationList)
         local didAdd = actionHandlers.add(modifyTarget, addAction)
         anyActionApplied = anyActionApplied or didAdd
         currentRuleApplied = currentRuleApplied or didAdd
+      end
+
+      if removeAction then
+        local didRemove = actionHandlers.remove(modifyTarget, removeAction)
+        anyActionApplied = anyActionApplied or didRemove
+        currentRuleApplied = currentRuleApplied or didRemove
       end
 
       if disableAction then

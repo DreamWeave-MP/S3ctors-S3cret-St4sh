@@ -5,7 +5,7 @@ local types = require 'openmw.types'
 
 local randomGen = require 'scripts.s3.randomGen'
 
-local pairs, pcall, type = pairs, pcall, type
+local ipairs, pairs, pcall, type = ipairs, pairs, pcall, type
 
 local ActorObjectIsInstance = types.Actor.objectIsInstance
 local ContainerObjectIsInstance = types.Container.objectIsInstance
@@ -30,6 +30,31 @@ local function addItemToInventory(object, recordId, count)
 
   world.createObject(recordId, count):moveInto(inventory)
   return true
+end
+
+---@param object openmw.GObject
+---@param recordId RecordId
+---@param count integer
+---@return boolean wasRemoved
+local function removeItemFromInventory(object, recordId, count)
+  if count < 1 then return false end
+
+  local inventory = getObjectInventory(object)
+  if not inventory or inventory:countOf(recordId) < count then return false end
+
+  local remainingCount = count
+
+  for _, itemStack in ipairs(inventory:findAll(recordId)) do
+    local removeCount = remainingCount
+    if itemStack.count < removeCount then removeCount = itemStack.count end
+
+    itemStack:remove(removeCount)
+    remainingCount = remainingCount - removeCount
+
+    if remainingCount <= 0 then return true end
+  end
+
+  return false
 end
 
 ---@param chance SSSChanceRange?
@@ -106,6 +131,9 @@ local actionHandlers = {
   end,
   ['add'] = function(object, addActionData)
     return applyItemAction(object, addActionData, addItemToInventory)
+  end,
+  ['remove'] = function(object, removeActionData)
+    return applyItemAction(object, removeActionData, removeItemFromInventory)
   end,
 }
 
