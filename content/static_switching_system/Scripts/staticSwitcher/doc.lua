@@ -56,6 +56,7 @@
 ---@class SSSModuleRaw
 ---@field log_name string?
 ---@field once boolean? when true, the entire module only processes each object once across all rules
+---@field priority string? load order tier: cleanup, foundation, remodel, balance, standard, polish, finisher; defaults to standard
 
 ---@class SSSModuleInstances: SSSModuleRaw
 ---@field instances SSSInstanceRule[] set of game object rules to muck with
@@ -178,7 +179,7 @@
 ---@field moduleOnce boolean? when true, marking any rule applied blocks the entire module for this object
 ---@field actions SSSInstanceAction[]
 
----@alias SSSObjectModificationStore table<string, {rules: SSSInstanceRule[], moduleOnce: boolean?}>
+---@alias SSSObjectModificationStore table<string, {rules: SSSInstanceRule[], moduleOnce: boolean?, priority: string?}>
 ---@alias SSSInstanceModificationList SSSInstanceModification[]
 ---@alias SSSOverrideRecords table<string, ReplacementMap>
 ---@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>>
@@ -228,6 +229,7 @@
 ---@field numModules number number of loaded canonical module ids
 ---@field resolveModuleId fun(moduleKey: string): string? resolves canonical ids and unambiguous legacy basenames
 ---@field ObjectModificationStore SSSObjectModificationStore canonical module-id keyed instance modification rules
+---@field SortedModuleIds string[] module IDs in priority-sorted load order
 
 ---@class SSSStaticReplacements
 ---@field ComposedReplacements table<string, SSSModule> canonical module-id keyed static replacement data

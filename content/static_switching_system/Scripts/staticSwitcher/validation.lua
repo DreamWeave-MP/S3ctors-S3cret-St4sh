@@ -2,6 +2,8 @@
 
 local KNOWN_KEYS = {
 	log_name = true,
+	once = true,
+	priority = true,
 	replace_names = true,
 	exterior_cells = true,
 	replace_regions = true,
