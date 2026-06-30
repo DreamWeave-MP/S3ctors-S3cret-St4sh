@@ -1,6 +1,7 @@
 ---@omw-context global
 
 local types = require 'openmw.types'
+local world = require 'openmw.world'
 local Door = types.Door
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
@@ -158,6 +159,32 @@ local conditionHandlers = {
 		local objectHasName = objectName ~= nil and objectName ~= ''
 
 		return objectHasName == shouldHaveName
+	end,
+	---@param object openmw.GObject
+	---@param params { quest: string, index?: integer, min?: integer, max?: integer }
+	---@return boolean
+	has_journal = function(_, params)
+		local questId = params.quest
+		if type(questId) ~= 'string' then
+			return false
+		end
+
+		local player = world.players[1]
+		if not player then
+			return false
+		end
+
+		local quests = types.Player.quests(player)
+		local quest = quests[questId]
+		if not quest then
+			return false
+		end
+
+		local stage = quest.stage
+		local minStage = params.index or params.min or 0
+		local maxStage = params.max or math.huge
+
+		return stage >= minStage and stage <= maxStage
 	end,
 	---@param object openmw.GObject
 	---@param targetMesh string

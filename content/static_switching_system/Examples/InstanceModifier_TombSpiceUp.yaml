@@ -102,21 +102,73 @@ instances:
       - replace:
           'skeleton warrior': 0.3
 
-  # Rule 7: Upgraded Tomb Spawners.
-  # Replace low-level leveled creature spawners with the higher-tier
-  # variant. The replacement spawner resolves immediately on placement,
-  # creating an additional creature beyond the one the original spawner
-  # already produced. This is a one-time double-spawn per spawn point;
-  # on later cell loads the original is gone and only the replacement
-  # spawner's creatures appear.
+  # ── Main-Quest Tomb Corruption ───────────────────────────────────────────
+  #
+  # Once the player learns about the Sixth House (journal >= 30), tomb
+  # spawners are replaced with Sixth House leveled lists from vanilla
+  # Morrowind.esm (in_6th_all_lev+0). After Dagoth Ur falls (journal >= 70),
+  # the corruption recedes and tombs return to the upgraded +2 tier.
+  #
+  # Players who never enter tombs during the Sixth House phase still get
+  # the +2 upgrade after journal 70 (Rule 7c).
+  #
+  # A1_4_MainQuest journal stages:
+  #   0–19  Report to Caius / lay low
+  #   20    Caius reveals the Sixth House
+  #   30–49 Corprus / Nerevarine revelation (Caius promotes you)
+  #   50–69 Hortator / Ashlander Nerevarine
+  #   70+   Dagoth Ur defeated
+  #
+  # The Calc_From_All_Levels flag on the Sixth House lists means they
+  # dynamically scale to the player, so early-tomb explorers are not
+  # punished — corprus_stalker/ash_slave spawn at PC level 1.
+
+  # Rule 7a: Sixth House Corruption (journal 30-69).
+  # Replace normal tomb spawners with the +2 tier of vanilla Sixth House
+  # leveled lists. The player should be decently leveled by journal 30,
+  # so we don't pull punches: corprus_stalker(3), ash_slave(3),
+  # corprus_lame(10), ash_zombie(10), ash_ghoul(17), ascended_sleeper(27).
   - conditions:
       - cell_match: tomb
       - object_type: LevelledCreature
       - record_id: ^in_tomb_all_lev%+0$
-    once: true
+      - has_journal:
+          quest: A1_4_MainQuest
+          min: 30
+          max: 69
     actions:
       - replace:
-          'in_tomb_all_lev+2': 1.0
+          in_6th_all_lev+2: 1.0
+
+  # Rule 7b: Sixth House Cleanup (journal >= 70).
+  # Replace corrupted Sixth House lists with upgraded normal spawners
+  # once the main quest is complete. Only fires for tombs that were
+  # corrupted in Phase 7a.
+  - conditions:
+      - cell_match: tomb
+      - object_type: LevelledCreature
+      - record_id: ^in_6th_all_lev%+2$
+      - has_journal:
+          quest: A1_4_MainQuest
+          index: 70
+    actions:
+      - replace:
+          in_tomb_all_lev+2: 1.0
+
+  # Rule 7c: Post-MQ Uncorrupted Upgrade (journal >= 70).
+  # Players who never visited tombs during the Sixth House phase still
+  # get the +2 upgrade after finishing the main quest, since their
+  # original in_tomb_all_lev+0 is still active.
+  - conditions:
+      - cell_match: tomb
+      - object_type: LevelledCreature
+      - record_id: ^in_tomb_all_lev%+0$
+      - has_journal:
+          quest: A1_4_MainQuest
+          index: 70
+    actions:
+      - replace:
+          in_tomb_all_lev+2: 1.0
 
   # Rule 8: Diseased Rats.
   # Tomb rats have a 60% chance to spawn diseased.

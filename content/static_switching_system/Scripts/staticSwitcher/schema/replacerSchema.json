@@ -392,6 +392,52 @@
                     "$ref": "#/definitions/conditionData",
                     "description": "Invert a single inner condition. The value is a condition table like {nameMatch: \"Guard\"} — the inner condition is evaluated and the result negated."
                 },
+                "has_journal": {
+                    "type": "object",
+                    "properties": {
+                        "quest": {
+                            "type": "string",
+                            "description": "Quest ID to check the journal index of."
+                        },
+                        "index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Shorthand for min. Stage >= index."
+                        },
+                        "min": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Minimum journal stage, inclusive."
+                        },
+                        "max": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Maximum journal stage, inclusive."
+                        }
+                    },
+                    "required": [
+                        "quest"
+                    ],
+                    "anyOf": [
+                        {
+                            "required": [
+                                "index"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "min"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "max"
+                            ]
+                        }
+                    ],
+                    "additionalProperties": false,
+                    "description": "Check whether the player's journal stage for a quest is within the given range. At least one of index/min/max is required."
+                },
                 "has_name": {
                     "type": "boolean"
                 },
