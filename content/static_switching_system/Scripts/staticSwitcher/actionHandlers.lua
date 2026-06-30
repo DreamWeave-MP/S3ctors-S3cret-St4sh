@@ -111,6 +111,50 @@ local function equipInventoryItem(actor, recordId, count)
 	return true
 end
 
+---@param actor openmw.GObject
+---@param recordId RecordId
+---@return integer count
+local function countEquippedItems(actor, recordId)
+	if not ActorObjectIsInstance(actor) then
+		return 0
+	end
+
+	local count = 0
+
+	for _, item in pairs(actor.type.getEquipment(actor)) do
+		if item.recordId == recordId then
+			count = count + 1
+		end
+	end
+
+	return count
+end
+
+---@param actor openmw.GObject
+---@param recordId RecordId
+---@param count integer
+---@return boolean wasUnequipped
+local function unequipInventoryItem(actor, recordId, count)
+	if count < 1 or countEquippedItems(actor, recordId) < count then
+		return false
+	end
+
+	local remainingCount = count
+
+	for _, item in pairs(actor.type.getEquipment(actor)) do
+		if item.recordId == recordId then
+			core.sendGlobalEvent('UseItem', { object = item, actor = actor, force = true })
+			remainingCount = remainingCount - 1
+
+			if remainingCount <= 0 then
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
 ---@param chance SSSChanceRange?
 ---@return number chanceValue
 local function getChanceValue(chance)
@@ -211,6 +255,9 @@ local actionHandlers = {
 	end,
 	['equip'] = function(object, equipActionData)
 		return applyItemAction(object, equipActionData, equipInventoryItem)
+	end,
+	['unequip'] = function(object, unequipActionData)
+		return applyItemAction(object, unequipActionData, unequipInventoryItem)
 	end,
 }
 

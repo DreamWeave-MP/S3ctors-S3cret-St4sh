@@ -39,6 +39,7 @@ local ACTIONPRIORITY = {
 	'add',
 	'remove',
 	'equip',
+	'unequip',
 	'disable',
 	'delete',
 }

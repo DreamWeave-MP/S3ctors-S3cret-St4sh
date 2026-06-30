@@ -216,6 +216,10 @@
                     "$ref": "#/definitions/itemAction",
                     "description": "Queues forced OpenMW UseItem for one or more items on the current action target when the target is an Actor, creating and moving the requested count into inventory first when missing. Equippable items equip; consumables or usable items may be consumed/used by OpenMW."
                 },
+                "unequip": {
+                    "$ref": "#/definitions/itemAction",
+                    "description": "Queues forced OpenMW UseItem for one or more currently equipped matching items on the current action target when the target is an Actor. The requested count must already be equipped; missing items are not created."
+                },
                 "disable": {
                     "const": true,
                     "description": "Disable the action target after any replacement or transform actions in this rule. If paired with replace, this disables the replacement."
@@ -249,6 +253,11 @@
                 {
                     "required": [
                         "equip"
+                    ]
+                },
+                {
+                    "required": [
+                        "unequip"
                     ]
                 },
                 {
