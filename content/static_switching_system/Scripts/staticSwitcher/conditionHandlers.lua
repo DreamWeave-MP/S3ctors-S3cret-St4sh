@@ -102,10 +102,11 @@ local conditionHandlers = {
 			return false
 		end
 
-		local searchStr = matchStr
+		local cellName = cell.name and cell.name:lower()
+		local cellId = cell.id and cell.id:lower()
 
-		return (cell.name and cell.name:lower():find(searchStr, 1, true))
-			or (cell.id and cell.id:lower():find(searchStr, 1, true))
+		return (cellName and cellName:find(matchStr, 1, true))
+			or (cellId and cellId:find(matchStr, 1, true))
 	end,
 	---@param object openmw.GObject
 	---@param cellCoords ExteriorGrid
@@ -173,19 +174,21 @@ local conditionHandlers = {
 			return false
 		end
 
-		local isLocked = objType.isLocked
-		if not isLocked then
+		local isLockedFn = objType.isLocked
+		if not isLockedFn then
 			return false
 		end
+
+		local locked = isLockedFn(object)
 
 		local dataType = type(lockData)
 
 		if dataType == 'boolean' then
-			return isLocked(object) == lockData
+			return locked == lockData
 		end
 
 		if dataType == 'number' then
-			if not isLocked(object) then
+			if not locked then
 				return false
 			end
 
@@ -193,7 +196,7 @@ local conditionHandlers = {
 		end
 
 		if dataType == 'table' then
-			if not isLocked(object) then
+			if not locked then
 				return false
 			end
 
@@ -282,10 +285,10 @@ local conditionHandlers = {
 			return false
 		end
 
+		local _, refNum = staticUtil.getRefNum(object)
+
 		for contentFile, refnums in pairs(targetData) do
 			if objectContentFile == contentFile then
-				local _, refNum = staticUtil.getRefNum(object)
-
 				for refIndex = 1, #refnums do
 					if refNum == refnums[refIndex] then
 						return true
