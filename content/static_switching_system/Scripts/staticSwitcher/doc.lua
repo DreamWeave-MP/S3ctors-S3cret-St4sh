@@ -144,6 +144,10 @@
 ---@field has_journal table? Quest journal index: `{quest: string, index?: integer, min?: integer, max?: integer}`. `index` is shorthand for `min`. Returns true when `stage >= min and stage <= max`.
 ---@field player_level number|table? Player level gate: bare number means at-least, table with min/max for range
 ---@field target_level number|table? Target object level gate: bare number means at-least, table with min/max for range. Non-actors return false.
+---@field player_attribute table? Player attribute checks: `{strength: 50}` or `{endurance: {min: 50, max: 80}}`. Keys are attribute IDs. All entries ANDed.
+---@field player_skill table? Player skill checks: same shape as player_attribute. Keys are skill IDs.
+---@field target_attribute table? Target actor attribute checks: same shape as player_attribute. Non-actors return false.
+---@field target_skill table? Target NPC skill checks: same shape as player_attribute. Non-NPCs return false.
 ---@field time_of_day number|table? Game hour gate: bare number means at-least, table with min/max for range. Computed from core.getGameTime().
 ---@field player_faction table? Player faction membership: {faction: string, rank?: integer, min?: integer, max?: integer}. rank is shorthand for min. Returns false if player is not in the faction.
 ---@field faction_owner_id string|string[]? Object owner faction ID. Case-insensitive exact match. Returns false when no faction owner is set.
@@ -285,3 +289,5 @@
 ---@field playerQuests fun(): table<string, openmw.types.PlayerQuest> Returns the player's quest table, cached per batch.
 ---@field playerEquipment fun(): openmw.types.EquipmentTable Returns the player's equipment table, cached per batch.
 ---@field currentWeather fun(cell: openmw.core.Cell): openmw.core.WeatherRecord? Returns current weather for a cell, cached per batch.
+---@field attributeStat fun(object: openmw.GObject?, attrId: string): openmw.types.AttributeStat Returns cached attribute stat; defaults to Player when object is nil.
+---@field skillStat fun(object: openmw.GObject?, skillId: string): openmw.types.SkillStat Returns cached skill stat; defaults to Player when object is nil.

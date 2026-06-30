@@ -384,6 +384,126 @@ local conditionHandlers = {
 
 		return true
 	end,
+	['player_attribute'] = function(_, attrData)
+		local getStat = BatchCache.attributeStat
+
+		for attrId, attrValue in pairs(attrData) do
+			local value = getStat(nil, attrId).modified
+
+			if type(attrValue) == 'number' then
+				if value < attrValue then
+					return false
+				end
+
+			else
+				if attrValue.min and value < attrValue.min then
+					return false
+				end
+
+				if attrValue.max and value > attrValue.max then
+					return false
+				end
+
+			end
+		end
+
+		return true
+	end,
+	['player_skill'] = function(_, skillData)
+		local getStat = BatchCache.skillStat
+
+		for skillId, skillValue in pairs(skillData) do
+			local value = getStat(nil, skillId).modified
+
+			if type(skillValue) == 'number' then
+				if value < skillValue then
+					return false
+				end
+
+			else
+				if skillValue.min and value < skillValue.min then
+					return false
+				end
+
+				if skillValue.max and value > skillValue.max then
+					return false
+				end
+
+			end
+		end
+
+		return true
+	end,
+	['target_attribute'] = function(object, attrData)
+		local objType = object.type
+		if not objType then
+			return false
+		end
+
+		local stats = objType.stats
+		if not stats then
+			return false
+		end
+
+		local getStat = BatchCache.attributeStat
+
+		for attrId, attrValue in pairs(attrData) do
+			local value = getStat(object, attrId).modified
+
+			if type(attrValue) == 'number' then
+				if value < attrValue then
+					return false
+				end
+
+			else
+				if attrValue.min and value < attrValue.min then
+					return false
+				end
+
+				if attrValue.max and value > attrValue.max then
+					return false
+				end
+
+			end
+		end
+
+		return true
+	end,
+	['target_skill'] = function(object, skillData)
+		local objType = object.type
+		if not objType then
+			return false
+		end
+
+		local stats = objType.stats
+		if not stats or not stats.skills then
+			return false
+		end
+
+		local getStat = BatchCache.skillStat
+
+		for skillId, skillValue in pairs(skillData) do
+			local value = getStat(object, skillId).modified
+
+			if type(skillValue) == 'number' then
+				if value < skillValue then
+					return false
+				end
+
+			else
+				if skillValue.min and value < skillValue.min then
+					return false
+				end
+
+				if skillValue.max and value > skillValue.max then
+					return false
+				end
+
+			end
+		end
+
+		return true
+	end,
 	['time_of_day'] = function(_, hourData)
 		local currentHour = (core.getGameTime() / 3600) % 24
 
