@@ -100,7 +100,7 @@
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, disable, enable, delete.
+--- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -111,7 +111,11 @@
 ---@field equip SSSItemAction? queues forced OpenMW UseItem for item(s) on Actor targets, creating the requested count first only when missing; usable non-equipment may be consumed/used
 ---@field unequip SSSItemAction? queues forced OpenMW UseItem for currently equipped item(s) on Actor targets; requested count must already be equipped
 ---@field disable true|{chance: number?}? disables the final action target; with replace, disables the replacement; chance field rolls independently
----@field enable true|{chance: number?}? enables the final action target; cancels any pending disable from the same rule; chance field rolls independently
+--- NOTE: Disabled objects do NOT trigger onObjectActive on subsequent cell loads. The engine
+--- filters out disabled objects during scene insertion (scene.cpp:248), so there is no engine
+--- event path for the SSS to re-enable a disabled object across cell visits. Objects disabled
+--- here stay disabled permanently from the SSS's perspective. Use once=true with disable when
+--- you want a one-time effect, or avoid disable entirely for objects you want to toggle.
 ---@field delete true? queues removal of the original matched source object through DeleteManager
 
 ---@class SSSConditionData
