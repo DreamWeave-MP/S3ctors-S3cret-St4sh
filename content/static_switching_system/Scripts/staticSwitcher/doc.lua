@@ -148,6 +148,7 @@
 ---@field player_equipped string|string[]? Record ID(s) to match against any equipped item on the player. Exact match.
 ---@field current_weather string|string[]|table? Current weather in the player's cell: string for substring match, array for any-of, table with {isStorm, name} for storm/name filter (both must match when present). The value "none" matches when no weather is active (interiors).
 ---@field has_name boolean?
+---@field locked boolean|number|table? Lock state: boolean for locked/unlocked, number for minimum lock level, table with {min, max} for range. Non-lockable objects return false.
 ---@field mesh string?
 ---@field nameMatch string?
 ---@field not table? Inverts a single inner condition, e.g. `{nameMatch = "Guard"}`.

@@ -68,6 +68,7 @@ local CONDITIONPRIORITY = {
 	'mesh',
 	'scale',
 	'has_name',
+	'locked',
 	--- Name matches should always be last as they're inevitably going to be the slowest
 	'nameMatch',
 	'carrying',
