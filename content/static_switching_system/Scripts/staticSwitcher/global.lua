@@ -5,7 +5,7 @@ local util = require 'openmw.util'
 local world = require 'openmw.world'
 
 ---@type StaticUtil
-local staticUtil = require 'scripts.staticSwitcher.util'
+local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local ModuleToRemove
 

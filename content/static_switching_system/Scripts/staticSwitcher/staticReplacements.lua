@@ -5,7 +5,7 @@ local world = require 'openmw.world'
 local szudzik = require 'scripts.s3.szudzik'
 
 ---@type StaticUtil
-local staticUtil = require 'scripts.staticSwitcher.util'
+local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local SwitcherSection = require('openmw.storage').globalSection 'SettingsStaticSwitcher'
 
