@@ -100,7 +100,7 @@
 ---@alias SSSItemAction RecordId|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, add, remove, disable, delete.
+--- Combined actions run in priority order: replace, transform, add, remove, equip, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -108,6 +108,7 @@
 ---@field transform SSSTransformAction?
 ---@field add SSSItemAction? queues item(s) into the current action target when it is an Actor or Container
 ---@field remove SSSItemAction? removes item(s) from the current action target when it is an Actor or Container and enough items are available
+---@field equip SSSItemAction? queues forced OpenMW UseItem for item(s) on Actor targets, creating the requested count first only when missing; usable non-equipment may be consumed/used
 ---@field disable true? disables the final action target; with replace, disables the replacement
 ---@field delete true? queues removal of the original matched source object through DeleteManager
 

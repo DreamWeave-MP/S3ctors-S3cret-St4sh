@@ -212,6 +212,10 @@
                     "$ref": "#/definitions/itemAction",
                     "description": "Removes one or more items from the current action target's inventory when the target is an Actor or Container and the requested count is available."
                 },
+                "equip": {
+                    "$ref": "#/definitions/itemAction",
+                    "description": "Queues forced OpenMW UseItem for one or more items on the current action target when the target is an Actor, creating and moving the requested count into inventory first when missing. Equippable items equip; consumables or usable items may be consumed/used by OpenMW."
+                },
                 "disable": {
                     "const": true,
                     "description": "Disable the action target after any replacement or transform actions in this rule. If paired with replace, this disables the replacement."
@@ -240,6 +244,11 @@
                 {
                     "required": [
                         "remove"
+                    ]
+                },
+                {
+                    "required": [
+                        "equip"
                     ]
                 },
                 {

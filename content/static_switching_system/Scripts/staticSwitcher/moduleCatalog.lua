@@ -38,6 +38,7 @@ local ACTIONPRIORITY = {
 	'transform',
 	'add',
 	'remove',
+	'equip',
 	'disable',
 	'delete',
 }

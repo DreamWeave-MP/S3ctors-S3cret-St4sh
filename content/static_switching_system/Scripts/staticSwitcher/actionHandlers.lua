@@ -1,5 +1,6 @@
 ---@omw-context global
 
+local core = require 'openmw.core'
 local world = require 'openmw.world'
 local types = require 'openmw.types'
 
@@ -71,6 +72,45 @@ local function removeItemFromInventory(object, recordId, count)
 	return false
 end
 
+---@param actor openmw.GObject
+---@param recordId RecordId
+---@param count integer
+---@return openmw.GObject? item
+local function getOrCreateInventoryItem(actor, recordId, count)
+	if count < 1 or not ActorObjectIsInstance(actor) then
+		return
+	end
+
+	local inventory = getObjectInventory(actor)
+	if not inventory then
+		return
+	end
+
+	local item = inventory:find(recordId)
+	if item then
+		return item
+	end
+
+	item = world.createObject(recordId, count)
+	item:moveInto(inventory)
+
+	return item
+end
+
+---@param actor openmw.GObject
+---@param recordId RecordId
+---@param count integer
+---@return boolean wasEquipped
+local function equipInventoryItem(actor, recordId, count)
+	local item = getOrCreateInventoryItem(actor, recordId, count)
+	if not item then
+		return false
+	end
+
+	core.sendGlobalEvent('UseItem', { object = item, actor = actor, force = true })
+	return true
+end
+
 ---@param chance SSSChanceRange?
 ---@return number chanceValue
 local function getChanceValue(chance)
@@ -105,6 +145,20 @@ end
 local function shouldApplyChance(chance)
 	if not chance then
 		return true
+	end
+
+	if type(chance) == 'number' then
+		if chance <= 0 then
+			return false
+		elseif chance >= 1 then
+			return true
+		end
+	elseif type(chance) == 'table' then
+		if chance.max <= 0 then
+			return false
+		elseif chance.min and chance.min >= 1 then
+			return true
+		end
 	end
 
 	return randomGen.float() <= getChanceValue(chance)
@@ -154,6 +208,9 @@ local actionHandlers = {
 	end,
 	['remove'] = function(object, removeActionData)
 		return applyItemAction(object, removeActionData, removeItemFromInventory)
+	end,
+	['equip'] = function(object, equipActionData)
+		return applyItemAction(object, equipActionData, equipInventoryItem)
 	end,
 }
 
