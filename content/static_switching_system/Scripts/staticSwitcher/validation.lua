@@ -1,5 +1,7 @@
 ---@omw-context global
 
+local StrFormat = string.format
+
 local KNOWN_KEYS = {
 	log_name = true,
 	once = true,
@@ -17,16 +19,16 @@ local KNOWN_KEYS = {
 local function validateModule(modulePath, moduleData)
 	for key in pairs(moduleData) do
 		if not KNOWN_KEYS[key] then
-			print(('SSS Warning: unknown top-level key "%s" in %s'):format(key, modulePath))
+			print(StrFormat('SSS Warning: unknown top-level key "%s" in %s', key, modulePath))
 		end
 	end
 
 	if not moduleData.replace_meshes and not moduleData.instances then
-		print(('SSS Warning: no replace_meshes or instances in %s'):format(modulePath))
+		print(StrFormat('SSS Warning: no replace_meshes or instances in %s', modulePath))
 	end
 
 	if moduleData.replace_meshes and moduleData.instances then
-		print(('SSS Warning: both replace_meshes and instances in %s; they are mutually exclusive'):format(modulePath))
+		print(StrFormat('SSS Warning: both replace_meshes and instances in %s; they are mutually exclusive', modulePath))
 	end
 end
 
