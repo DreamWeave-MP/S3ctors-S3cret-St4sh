@@ -284,8 +284,8 @@ local conditionHandlers = {
 			if objectContentFile == contentFile then
 				local _, refNum = staticUtil.getRefNum(object)
 
-				for _, targetRef in ipairs(refnums) do
-					if refNum == targetRef then
+				for refIndex = 1, #refnums do
+					if refNum == refnums[refIndex] then
 						return true
 					end
 				end
@@ -587,8 +587,8 @@ conditionHandlers["not"] = function(object, innerCondition)
 		local firstKey = next(innerValue)
 
 		if firstKey and type(firstKey) == 'number' then
-			for _, individualValue in ipairs(innerValue) do
-				if innerHandler(object, individualValue) then
+			for valIndex = 1, #innerValue do
+				if innerHandler(object, innerValue[valIndex]) then
 					return false
 				end
 			end
