@@ -240,26 +240,6 @@
                     ],
                     "description": "Disable the action target after any replacement or transform actions in this rule. If paired with replace, this disables the replacement. When an object with chance is given instead of true, the action applies only when the random roll succeeds."
                 },
-                "enable": {
-                    "oneOf": [
-                        {
-                            "const": true
-                        },
-                        {
-                            "type": "object",
-                            "properties": {
-                                "chance": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "maximum": 1,
-                                    "description": "Probability from 0 to 1 that this action applies."
-                                }
-                            },
-                            "additionalProperties": false
-                        }
-                    ],
-                    "description": "Enable the action target after any replacement, transform, or disable actions in this rule. Cancels any pending disable from the same processing pass. When an object with chance is given instead of true, the action applies only when the random roll succeeds."
-                },
                 "delete": {
                     "const": true,
                     "description": "Queue removal of the matched source object after any replacement or transform actions in this rule. If paired in the same action table with replace, removal is queued only when that replacement succeeds."
@@ -299,11 +279,6 @@
                 {
                     "required": [
                         "disable"
-                    ]
-                },
-                {
-                    "required": [
-                        "enable"
                     ]
                 },
                 {
