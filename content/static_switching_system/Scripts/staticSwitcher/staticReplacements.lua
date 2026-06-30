@@ -451,8 +451,8 @@ local function uninstallModule(moduleName)
 				restoreObject.enabled = true
 			end
 
-			for stepIndex = #chain.steps, firstRemovedStepIndex, -1 do
-				local step = chain.steps[stepIndex]
+			for revIdx = #chain.steps, firstRemovedStepIndex, -1 do
+				local step = chain.steps[revIdx]
 				local moduleReplacements = ReplacedObjectSet[step.moduleName]
 
 				if moduleReplacements then

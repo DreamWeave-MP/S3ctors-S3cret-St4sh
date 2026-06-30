@@ -220,7 +220,7 @@ local function sanitizeConditionValue(conditionName, conditionValue)
 		return conditionValue:lower()
 	end
 
-	if valueType == 'table' and conditionValue[1] then
+	if valueType == 'table' then
 		for i = 1, #conditionValue do
 			conditionValue[i] = conditionValue[i]:lower()
 		end
