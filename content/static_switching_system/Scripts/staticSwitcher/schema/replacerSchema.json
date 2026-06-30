@@ -397,13 +397,18 @@
                             "type": "object",
                             "properties": {
                                 "id": {"type": "string", "description": "Sound record ID."},
-                                "chance": {"type": "number", "minimum": 0, "maximum": 1, "description": "Probability 0-1."}
+                                "file": {"type": "string", "description": "VFS path to a sound file."},
+                                "chance": {"$ref": "#/definitions/chanceRange"},
+                                "volume": {"type": "number", "minimum": 0},
+                                "pitch": {"type": "number", "minimum": 0},
+                                "loop": {"type": "boolean"},
+                                "timeOffset": {"type": "number", "minimum": 0}
                             },
-                            "required": ["id"],
-                            "additionalProperties": false
+                            "additionalProperties": false,
+                            "description": "3D positional sound at target. Requires id or file."
                         }
                     ],
-                    "description": "Play a 3D positional sound at the target object."
+                    "description": "Play 3D positional sound at the target object."
                 }
             },
             "anyOf": [
