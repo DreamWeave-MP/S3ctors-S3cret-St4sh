@@ -13,9 +13,11 @@ local ContainerObjectIsInstance = types.Container.objectIsInstance
 ---@param object openmw.GObject
 ---@return openmw.core.Inventory? inventory
 local function getObjectInventory(object)
-  if not ContainerObjectIsInstance(object) and not ActorObjectIsInstance(object) then return end
+	if not ContainerObjectIsInstance(object) and not ActorObjectIsInstance(object) then
+		return
+	end
 
-  return object.type.inventory(object)
+	return object.type.inventory(object)
 end
 
 ---@param object openmw.GObject
@@ -23,13 +25,17 @@ end
 ---@param count integer
 ---@return boolean wasAdded
 local function addItemToInventory(object, recordId, count)
-  if count < 1 then return false end
+	if count < 1 then
+		return false
+	end
 
-  local inventory = getObjectInventory(object)
-  if not inventory then return false end
+	local inventory = getObjectInventory(object)
+	if not inventory then
+		return false
+	end
 
-  world.createObject(recordId, count):moveInto(inventory)
-  return true
+	world.createObject(recordId, count):moveInto(inventory)
+	return true
 end
 
 ---@param object openmw.GObject
@@ -37,59 +43,71 @@ end
 ---@param count integer
 ---@return boolean wasRemoved
 local function removeItemFromInventory(object, recordId, count)
-  if count < 1 then return false end
+	if count < 1 then
+		return false
+	end
 
-  local inventory = getObjectInventory(object)
-  if not inventory or inventory:countOf(recordId) < count then return false end
+	local inventory = getObjectInventory(object)
+	if not inventory or inventory:countOf(recordId) < count then
+		return false
+	end
 
-  local remainingCount = count
+	local remainingCount = count
 
-  for _, itemStack in ipairs(inventory:findAll(recordId)) do
-    local removeCount = remainingCount
-    if itemStack.count < removeCount then removeCount = itemStack.count end
+	for _, itemStack in ipairs(inventory:findAll(recordId)) do
+		local removeCount = remainingCount
+		if itemStack.count < removeCount then
+			removeCount = itemStack.count
+		end
 
-    itemStack:remove(removeCount)
-    remainingCount = remainingCount - removeCount
+		itemStack:remove(removeCount)
+		remainingCount = remainingCount - removeCount
 
-    if remainingCount <= 0 then return true end
-  end
+		if remainingCount <= 0 then
+			return true
+		end
+	end
 
-  return false
+	return false
 end
 
 ---@param chance SSSChanceRange?
 ---@return number chanceValue
 local function getChanceValue(chance)
-  local chanceType = type(chance)
+	local chanceType = type(chance)
 
-  if chanceType == 'number' then
-    return chance
-  elseif chanceType == 'table' then
-    return randomGen.range(chance.min or 0, chance.max)
-  end
+	if chanceType == 'number' then
+		return chance
+	elseif chanceType == 'table' then
+		return randomGen.range(chance.min or 0, chance.max)
+	end
 
-  return 0
+	return 0
 end
 
 ---@param itemData integer|SSSItemActionDetails
 ---@return integer count
 ---@return SSSChanceRange? chance
 local function getItemActionDetails(itemData)
-  if type(itemData) == 'table' then
-    if not itemData.count and not itemData.chance then return 0 end
+	if type(itemData) == 'table' then
+		if not itemData.count and not itemData.chance then
+			return 0
+		end
 
-    return itemData.count or 1, itemData.chance
-  end
+		return itemData.count or 1, itemData.chance
+	end
 
-  return itemData
+	return itemData
 end
 
 ---@param chance SSSChanceRange?
 ---@return boolean shouldApply
 local function shouldApplyChance(chance)
-  if not chance then return true end
+	if not chance then
+		return true
+	end
 
-  return randomGen.float() <= getChanceValue(chance)
+	return randomGen.float() <= getChanceValue(chance)
 end
 
 ---@param object openmw.GObject
@@ -97,44 +115,46 @@ end
 ---@param itemHandler fun(object: openmw.GObject, recordId: RecordId, count: integer): boolean
 ---@return boolean wasApplied
 local function applyItemAction(object, itemAction, itemHandler)
-  local actionType = type(itemAction)
+	local actionType = type(itemAction)
 
-  if actionType == 'string' then
-    return itemHandler(object, itemAction, 1)
-  elseif actionType == 'table' then
-    local wasApplied = false
+	if actionType == 'string' then
+		return itemHandler(object, itemAction, 1)
+	elseif actionType == 'table' then
+		local wasApplied = false
 
-    for recordId, itemData in pairs(itemAction) do
-      local count, chance = getItemActionDetails(itemData)
+		for recordId, itemData in pairs(itemAction) do
+			local count, chance = getItemActionDetails(itemData)
 
-      if count >= 1 and shouldApplyChance(chance) then
-        wasApplied = itemHandler(object, recordId, count) or wasApplied
-      end
-    end
+			if count >= 1 and shouldApplyChance(chance) then
+				wasApplied = itemHandler(object, recordId, count) or wasApplied
+			end
+		end
 
-    return wasApplied
-  end
+		return wasApplied
+	end
 
-  return false
+	return false
 end
 
 ---@type table<string, function>
 local actionHandlers = {
-  ['replace'] = function(_, replaceActionData)
-    for replaceId, replaceChance in pairs(replaceActionData) do
-      if randomGen.float() <= replaceChance then
-        local result, replacement = pcall(world.createObject, replaceId)
+	['replace'] = function(_, replaceActionData)
+		for replaceId, replaceChance in pairs(replaceActionData) do
+			if randomGen.float() <= replaceChance then
+				local result, replacement = pcall(world.createObject, replaceId)
 
-        if result then return replacement end
-      end
-    end
-  end,
-  ['add'] = function(object, addActionData)
-    return applyItemAction(object, addActionData, addItemToInventory)
-  end,
-  ['remove'] = function(object, removeActionData)
-    return applyItemAction(object, removeActionData, removeItemFromInventory)
-  end,
+				if result then
+					return replacement
+				end
+			end
+		end
+	end,
+	['add'] = function(object, addActionData)
+		return applyItemAction(object, addActionData, addItemToInventory)
+	end,
+	['remove'] = function(object, removeActionData)
+		return applyItemAction(object, removeActionData, removeItemFromInventory)
+	end,
 }
 
 return actionHandlers

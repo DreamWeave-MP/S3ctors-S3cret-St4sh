@@ -1,44 +1,39 @@
 ---@omw-context global
 
-local types              = require 'openmw.types'
-local util               = require 'openmw.util'
-local world              = require 'openmw.world'
+local types = require 'openmw.types'
+local util = require 'openmw.util'
+local world = require 'openmw.world'
 
 ---@type StaticUtil
-local staticUtil         = require 'scripts.staticSwitcher.util'
+local staticUtil = require 'scripts.staticSwitcher.util'
 
 local ModuleToRemove
 
-local ipairs, type       = ipairs, type
+local ipairs, type = ipairs, type
 
-local sendMenuEvent      = types.Player.sendMenuEvent
+local sendMenuEvent = types.Player.sendMenuEvent
 
-local DeleteManager      = require 'Scripts.staticSwitcher.deleteManager'
+local DeleteManager = require 'Scripts.staticSwitcher.deleteManager'
 
-local StaticReplacements = require 'Scripts.staticSwitcher.staticReplacements' (
-  DeleteManager
-)
+local StaticReplacements = require 'Scripts.staticSwitcher.staticReplacements'(DeleteManager)
 
-local ModuleCatalog      = require 'Scripts.staticSwitcher.moduleCatalog' (
-  StaticReplacements
-)
+local ModuleCatalog = require 'Scripts.staticSwitcher.moduleCatalog'(StaticReplacements)
 
 StaticReplacements.setModuleResolver(ModuleCatalog.resolveModuleId)
 
-local InstanceModifiers  = require 'Scripts.staticSwitcher.instanceModifiers' (
-  ModuleCatalog,
-  DeleteManager
+local InstanceModifiers = require 'Scripts.staticSwitcher.instanceModifiers'(ModuleCatalog, DeleteManager)
+
+local uninstallModule = require 'Scripts.staticSwitcher.globalSettings'(
+	ModuleCatalog.staticModuleIds,
+	DeleteManager,
+	StaticReplacements.ReplacedObjectSet,
+	StaticReplacements.uninstallModule
 )
 
-local uninstallModule    = require 'Scripts.staticSwitcher.globalSettings' (
-  ModuleCatalog.staticModuleIds,
-  DeleteManager,
-  StaticReplacements.ReplacedObjectSet,
-  StaticReplacements.uninstallModule
-)
-
-local settingsGroup      = require 'openmw.storage'.globalSection('SettingsStaticSwitcher')
-if settingsGroup:get 'StaticSwitcherDisableModule' then settingsGroup:set('StaticSwitcherDisableModule', false) end
+local settingsGroup = require('openmw.storage').globalSection 'SettingsStaticSwitcher'
+if settingsGroup:get 'StaticSwitcherDisableModule' then
+	settingsGroup:set('StaticSwitcherDisableModule', false)
+end
 
 ---@type openmw.GObject[]
 local ActiveObjectStack = {}
@@ -50,150 +45,158 @@ local processActiveObject, processDeletions, processUninstall
 local REPLACE_PER_BATCH = 4
 
 processActiveObject = function()
-  local numObjects = 0
+	local numObjects = 0
 
-  for _ = 1, REPLACE_PER_BATCH do
-    numObjects = #ActiveObjectStack
+	for _ = 1, REPLACE_PER_BATCH do
+		numObjects = #ActiveObjectStack
 
-    if numObjects == 0 then break end
+		if numObjects == 0 then
+			break
+		end
 
-    local object = ActiveObjectStack[numObjects]
+		local object = ActiveObjectStack[numObjects]
 
-    if object:isValid() and object.count >= 1 then
-      local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+		if object:isValid() and object.count >= 1 then
+			local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
 
-      --- I don't like this.
-      --- Ideally we should have like, a special type that gets assigned to each module, or something
-      --- a more bespoke way to describe what *type* of module it is
-      if instanceModificationList then
-        InstanceModifiers.tryModifyObject(object, instanceModificationList)
-      else
-        StaticReplacements.tryReplaceObject(object)
-      end
-    end
+			--- I don't like this.
+			--- Ideally we should have like, a special type that gets assigned to each module, or something
+			--- a more bespoke way to describe what *type* of module it is
+			if instanceModificationList then
+				InstanceModifiers.tryModifyObject(object, instanceModificationList)
+			else
+				StaticReplacements.tryReplaceObject(object)
+			end
+		end
 
-    ActiveObjectStack[numObjects] = nil
-  end
+		ActiveObjectStack[numObjects] = nil
+	end
 
-  if not DeleteManager:queueIsEmpty() then
-    UpdateFunction = processDeletions
-  elseif numObjects <= 1 then
-    UpdateFunction = NullFunction
-  end
+	if not DeleteManager:queueIsEmpty() then
+		UpdateFunction = processDeletions
+	elseif numObjects <= 1 then
+		UpdateFunction = NullFunction
+	end
 end
 
 processUninstall = function()
-  --- When a module is removed and all objects are removed
-  --- kick every player from the game and force them to save
-  for _, player in ipairs(world.players) do
-    sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
-  end
+	--- When a module is removed and all objects are removed
+	--- kick every player from the game and force them to save
+	for _, player in ipairs(world.players) do
+		sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
+	end
 
-  ModuleToRemove = nil
-  UpdateFunction = NullFunction
+	ModuleToRemove = nil
+	UpdateFunction = NullFunction
 end
 
 processDeletions = function()
-  DeleteManager:processDeleteQueue()
+	DeleteManager:processDeleteQueue()
 
-  local deletionsFinished = DeleteManager:queueIsEmpty()
+	local deletionsFinished = DeleteManager:queueIsEmpty()
 
-  if next(ActiveObjectStack) ~= nil then
-    UpdateFunction = processActiveObject
-  elseif ModuleToRemove and deletionsFinished then
-    UpdateFunction = processUninstall
-  elseif deletionsFinished then
-    UpdateFunction = NullFunction
-  end
+	if next(ActiveObjectStack) ~= nil then
+		UpdateFunction = processActiveObject
+	elseif ModuleToRemove and deletionsFinished then
+		UpdateFunction = processUninstall
+	elseif deletionsFinished then
+		UpdateFunction = NullFunction
+	end
 end
 
-settingsGroup:subscribe(
-  require 'openmw.async':callback(
-    function(_, key)
-      if key == 'StaticSwitcherDisableModule' and settingsGroup:get('StaticSwitcherDisableModule') == true then
-        local removedModule = uninstallModule(settingsGroup:get('StaticSwitcherModuleSelect'))
-        if not removedModule then return end
+settingsGroup:subscribe(require('openmw.async'):callback(function(_, key)
+	if key == 'StaticSwitcherDisableModule' and settingsGroup:get 'StaticSwitcherDisableModule' == true then
+		local removedModule = uninstallModule(settingsGroup:get 'StaticSwitcherModuleSelect')
+		if not removedModule then
+			return
+		end
 
-        ModuleToRemove = removedModule
-        UpdateFunction = processDeletions
-      end
-    end
-  )
-)
+		ModuleToRemove = removedModule
+		UpdateFunction = processDeletions
+	end
+end))
 
 return {
-  interface = {
-    ---@return boolean isGenerated, number refNum
-    getRefNum = staticUtil.getRefNum,
-    ---@return table<string, SSSModule> moduleData Map of file names handling mesh replacements to the data contained therein
-    composedReplacements = function()
-      return util.makeReadOnly(StaticReplacements.ComposedReplacements)
-    end,
-    ---@return SSSObjectModificationStore
-    objectModificationStore = function()
-      return util.makeReadOnly(ModuleCatalog.ObjectModificationStore)
-    end,
-    ---@return SSSOverrideRecords
-    overrideRecords = function()
-      return util.makeReadOnly(StaticReplacements.OverrideRecords)
-    end,
-    ---@return SSSReplacedObjectSet
-    replacedObjectSet = function()
-      return util.makeReadOnly(StaticReplacements.ReplacedObjectSet)
-    end,
-    ---@param moduleName string
-    uninstallModule = function(moduleName)
-      local removedModule = uninstallModule(moduleName)
-      if not removedModule then return end
+	interface = {
+		---@return boolean isGenerated, number refNum
+		getRefNum = staticUtil.getRefNum,
+		---@return table<string, SSSModule> moduleData Map of file names handling mesh replacements to the data contained therein
+		composedReplacements = function()
+			return util.makeReadOnly(StaticReplacements.ComposedReplacements)
+		end,
+		---@return SSSObjectModificationStore
+		objectModificationStore = function()
+			return util.makeReadOnly(ModuleCatalog.ObjectModificationStore)
+		end,
+		---@return SSSOverrideRecords
+		overrideRecords = function()
+			return util.makeReadOnly(StaticReplacements.OverrideRecords)
+		end,
+		---@return SSSReplacedObjectSet
+		replacedObjectSet = function()
+			return util.makeReadOnly(StaticReplacements.ReplacedObjectSet)
+		end,
+		---@param moduleName string
+		uninstallModule = function(moduleName)
+			local removedModule = uninstallModule(moduleName)
+			if not removedModule then
+				return
+			end
 
-      ModuleToRemove = removedModule
-      UpdateFunction = processDeletions
-    end,
-    version = 3,
-  },
-  interfaceName = "StaticSwitcher_G",
-  engineHandlers = {
-    onUpdate = function()
-      UpdateFunction()
-    end,
-    ---@param object openmw.GObject
-    onObjectActive = function(object)
-      if ModuleToRemove then return end
+			ModuleToRemove = removedModule
+			UpdateFunction = processDeletions
+		end,
+		version = 3,
+	},
+	interfaceName = 'StaticSwitcher_G',
+	engineHandlers = {
+		onUpdate = function()
+			UpdateFunction()
+		end,
+		---@param object openmw.GObject
+		onObjectActive = function(object)
+			if ModuleToRemove then
+				return
+			end
 
-      ActiveObjectStack[#ActiveObjectStack + 1] = object
+			ActiveObjectStack[#ActiveObjectStack + 1] = object
 
-      if UpdateFunction ~= processActiveObject then UpdateFunction = processActiveObject end
-    end,
-    ---@return SSSSavedState
-    onSave = function()
-      return {
-        overrideRecords = StaticReplacements.OverrideRecords,
-        objectDeleteQueue = DeleteManager.queue,
-        instanceModifiers = InstanceModifiers.saveOnceCache(),
-        replacementChains = StaticReplacements.saveReplacementChains(),
-        replacedObjectSet = StaticReplacements.ReplacedObjectSet,
-      }
-    end,
-    ---@param data SSSSavedState?
-    onLoad = function(data)
-      if not data then
-        DeleteManager.queue = {}
-        InstanceModifiers.loadOnceCache()
-        StaticReplacements.loadReplacementChains()
-        return
-      end
+			if UpdateFunction ~= processActiveObject then
+				UpdateFunction = processActiveObject
+			end
+		end,
+		---@return SSSSavedState
+		onSave = function()
+			return {
+				overrideRecords = StaticReplacements.OverrideRecords,
+				objectDeleteQueue = DeleteManager.queue,
+				instanceModifiers = InstanceModifiers.saveOnceCache(),
+				replacementChains = StaticReplacements.saveReplacementChains(),
+				replacedObjectSet = StaticReplacements.ReplacedObjectSet,
+			}
+		end,
+		---@param data SSSSavedState?
+		onLoad = function(data)
+			if not data then
+				DeleteManager.queue = {}
+				InstanceModifiers.loadOnceCache()
+				StaticReplacements.loadReplacementChains()
+				return
+			end
 
-      staticUtil.deepCopy(StaticReplacements.OverrideRecords, data.overrideRecords)
-      StaticReplacements.migrateOverrideRecords()
-      DeleteManager.queue = {}
-      if type(data.objectDeleteQueue) == 'table' then
-        staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
-      end
-      InstanceModifiers.loadOnceCache(data.instanceModifiers)
-      staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
-      StaticReplacements.loadReplacementChains(data.replacementChains)
+			staticUtil.deepCopy(StaticReplacements.OverrideRecords, data.overrideRecords)
+			StaticReplacements.migrateOverrideRecords()
+			DeleteManager.queue = {}
+			if type(data.objectDeleteQueue) == 'table' then
+				staticUtil.deepCopy(DeleteManager.queue, data.objectDeleteQueue)
+			end
+			InstanceModifiers.loadOnceCache(data.instanceModifiers)
+			staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
+			StaticReplacements.loadReplacementChains(data.replacementChains)
 
-      if not DeleteManager:queueIsEmpty() then UpdateFunction = processDeletions end
-    end,
-  }
+			if not DeleteManager:queueIsEmpty() then
+				UpdateFunction = processDeletions
+			end
+		end,
+	},
 }
