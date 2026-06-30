@@ -58,9 +58,53 @@ local function currentWeather(cell)
 	return weather ~= false and weather or nil
 end
 
+local function attributeStat(object, attrId)
+	object = object or Player
+	local byObject = Cache._attrStats
+	if not byObject then
+		byObject = {}
+		Cache._attrStats = byObject
+	end
+	local byAttr = byObject[object.id]
+	if not byAttr then
+		byAttr = {}
+		byObject[object.id] = byAttr
+	end
+	local stat = byAttr[attrId]
+	if not stat then
+		local stats = object.type.stats
+		stat = stats.attributes[attrId](object)
+		byAttr[attrId] = stat
+	end
+	return stat
+end
+
+local function skillStat(object, skillId)
+	object = object or Player
+	local byObject = Cache._skillStats
+	if not byObject then
+		byObject = {}
+		Cache._skillStats = byObject
+	end
+	local bySkill = byObject[object.id]
+	if not bySkill then
+		bySkill = {}
+		byObject[object.id] = bySkill
+	end
+	local stat = bySkill[skillId]
+	if not stat then
+		local stats = object.type.stats
+		stat = stats.skills[skillId](object)
+		bySkill[skillId] = stat
+	end
+	return stat
+end
+
 return {
 	clear = clearCache,
 	playerQuests = playerQuests,
 	playerEquipment = playerEquipment,
 	currentWeather = currentWeather,
+	attributeStat = attributeStat,
+	skillStat = skillStat,
 }

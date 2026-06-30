@@ -590,6 +590,108 @@
                     "$ref": "#/definitions/numericRange",
                     "description": "Gate by target object level. Bare number means at-least, table with min/max for range. Non-actors return false."
                 },
+                "player_attribute": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "oneOf": [
+                                {"type": "number", "description": "Minimum modified attribute value."},
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "min": {"type": "number"},
+                                        "max": {"type": "number"}
+                                    },
+                                    "anyOf": [
+                                        {"required": ["min"]},
+                                        {"required": ["max"]}
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Modified attribute range."
+                                }
+                            ]
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Player modified attribute checks. Keys are attribute IDs (strength, intelligence, etc.). All entries must pass (AND)."
+                },
+                "player_skill": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "oneOf": [
+                                {"type": "number", "description": "Minimum modified skill value."},
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "min": {"type": "number"},
+                                        "max": {"type": "number"}
+                                    },
+                                    "anyOf": [
+                                        {"required": ["min"]},
+                                        {"required": ["max"]}
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Modified skill range."
+                                }
+                            ]
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Player modified skill checks. Keys are skill IDs (longblade, destruction, etc.). All entries must pass (AND)."
+                },
+                "target_attribute": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "oneOf": [
+                                {"type": "number", "description": "Minimum modified attribute value."},
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "min": {"type": "number"},
+                                        "max": {"type": "number"}
+                                    },
+                                    "anyOf": [
+                                        {"required": ["min"]},
+                                        {"required": ["max"]}
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            ]
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Target actor modified attribute checks. Non-actors return false."
+                },
+                "target_skill": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "oneOf": [
+                                {"type": "number", "description": "Minimum modified skill value."},
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "min": {"type": "number"},
+                                        "max": {"type": "number"}
+                                    },
+                                    "anyOf": [
+                                        {"required": ["min"]},
+                                        {"required": ["max"]}
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            ]
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Target NPC modified skill checks. Non-NPCs return false."
+                },
                 "time_of_day": {
                     "$ref": "#/definitions/numericRange",
                     "description": "Game hour gate. Bare number means at-least, table with min/max for range. Hour is a 0-23 float."
