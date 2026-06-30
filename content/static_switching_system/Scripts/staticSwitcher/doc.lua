@@ -127,7 +127,7 @@
 ---@field nameMatch string?
 ---@field not table? Inverts a single inner condition, e.g. `{nameMatch = "Guard"}`.
 ---@field object_type string?
----@field record_id string?
+---@field record_id string? Lua pattern match against the object's record ID; use ^/$ for start/end anchoring
 ---@field content_file_target table<string, number[]>?
 ---@field generated boolean?
 ---@field region string?
