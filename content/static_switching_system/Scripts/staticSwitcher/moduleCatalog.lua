@@ -50,16 +50,28 @@ local StaticReplacements
 local CONDITIONPRIORITY = {
 	--- Locational conditions have highest priority
 	'cell',
+	'cell_match',
 	'coords',
 	'content_file',
+	'exterior',
+	'quasi_exterior',
+	'region',
+	'worldspace',
 	'object_type',
 	--- Record ID comes before many other searches as it's likely to be cheap and common
-	--- This one doesn't have a separate match variant
 	'record_id',
 	'content_file_target',
+	--- Object property checks
+	'generated',
+	'mesh',
+	'scale',
+	'has_name',
 	--- Name matches should always be last as they're inevitably going to be the slowest
 	'nameMatch',
 	'carrying',
+	--- Journal gates are relatively expensive (player/quest lookup); evaluated last
+	'has_journal',
+	'not',
 }
 
 local error, ipairs, NewTable, next, nkeys, pairs, sort =
