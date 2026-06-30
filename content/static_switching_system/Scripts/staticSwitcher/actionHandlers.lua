@@ -174,7 +174,12 @@ local function getItemActionDetails(itemData)
 			return 0
 		end
 
-		return itemData.count or 1, itemData.chance
+		local count = itemData.count or 1
+		if type(count) == 'table' then
+			count = randomGen.range(count, true)
+		end
+
+		return count, itemData.chance
 	end
 
 	return itemData
@@ -404,6 +409,9 @@ local actionHandlers = {
 				count = math.floor(details)
 			elseif detailsType == 'table' then
 				count = details.count or 1
+				if type(count) == 'table' then
+					count = randomGen.range(count, true)
+				end
 				chance = details.chance
 				positionOverride = details.position
 				rotateOverride = details.rotate

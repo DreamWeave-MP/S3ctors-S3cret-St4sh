@@ -94,11 +94,11 @@
 ---@field max number required upper bound for a random chance
 
 ---@class SSSItemActionDetails
----@field count integer? item count; defaults to 1 when absent
+---@field count integer|SSSNumericRange? item count or random range; defaults to 1 when absent
 ---@field chance SSSChanceRange? fixed or random chance to apply this item entry
 
 ---@class SSSCreatePool
----@field count integer? number of objects to spawn; defaults to 1
+---@field count integer|SSSNumericRange? number of objects to spawn or random range; defaults to 1
 ---@field chance number? probability 0-1 that this pool activates; no chance means always
 ---@field scale SSSNumericRange?
 ---@field rotate SSSVector3Range?
