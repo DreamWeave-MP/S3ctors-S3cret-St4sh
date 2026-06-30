@@ -8,6 +8,7 @@ local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
+local logger = require 'Scripts.staticSwitcher.logger'
 
 --- Migration/default handling: versioned separately from the global save shape;
 --- missing or unknown once-cache versions are treated as empty caches so old saves load safely.
@@ -140,6 +141,7 @@ end
 --- Clears the per-cell tracking table. Called from the activation listener when
 --- the ActiveObjectStack was empty, indicating a fresh cell-load batch.
 local function clearPerCellTracking()
+	logger.debug 'Cleared per-cell tracking for new cell-load batch'
 	PerCellApplied = {}
 end
 
@@ -244,13 +246,16 @@ local function matchesAllConditions(object, conditions)
 					end
 
 					if not matchedAnyValue then
+						logger.debug('Condition %s OR-list FAIL for %s', conditionName, object.id)
 						return false
 					end
 				elseif not conditionHandler(object, conditionValue) then
+					logger.debug('Condition %s FAIL for %s', conditionName, object.id)
 					return false
 				end
 			else
 				if not conditionHandler(object, conditionValue) then
+					logger.debug('Condition %s=%s FAIL for %s', conditionName, tostring(conditionValue), object.id)
 					return false
 				end
 			end
@@ -268,20 +273,27 @@ local function getMatchingInstanceModules(object)
 	for moduleName, actionList in pairs(ModuleCatalog.ObjectModificationStore) do
 		for _, actionData in ipairs(actionList) do
 			local actionTableHash = actionData.actionHash
+			local skipReason
 
-			local shouldProcess = not actionData.conditions or matchesAllConditions(object, actionData.conditions)
+			local conditionsPassed = not actionData.conditions or matchesAllConditions(object, actionData.conditions)
+
+			if not conditionsPassed then
+				skipReason = 'conditions failed'
+			end
 
 			-- Action conditions have been evaluated already, and this action can only run once
-			if actionData.once == true and onceActionWasApplied(object, moduleName, actionTableHash) then
-				shouldProcess = false
+			if not skipReason and actionData.once == true and onceActionWasApplied(object, moduleName, actionTableHash) then
+				skipReason = 'once=true already applied'
 			end
 
 			-- Per-cell once: only skip for this cell-load session; not saved
-			if actionData.once == 'per_cell' and wasAppliedThisLoad(object, moduleName, actionTableHash) then
-				shouldProcess = false
+			if not skipReason and actionData.once == 'per_cell' and wasAppliedThisLoad(object, moduleName, actionTableHash) then
+				skipReason = 'once=per_cell already applied this load'
 			end
 
-			if shouldProcess then
+			if skipReason then
+				logger.debug('SKIP %s/%s on %s: %s', moduleName, actionTableHash, object.id, skipReason)
+			else
 				matchingActions = matchingActions or {}
 				actionIndex = (actionIndex or 0) + 1
 				matchingActions[actionIndex] = {
@@ -292,6 +304,10 @@ local function getMatchingInstanceModules(object)
 				}
 			end
 		end
+	end
+
+	if matchingActions then
+		logger.debug('MATCH %d rule(s) for %s (%s)', #matchingActions, object.id, object.recordId or '?')
 	end
 
 	return matchingActions
@@ -429,6 +445,8 @@ local function tryModifyObject(object, instanceModificationList)
 
 	local newTransform, newPos, newCell, targetScale = object.rotation, object.position, object.cell, object.scale
 
+	logger.debug('APPLY %d rule(s) to %s (%s)', #instanceModificationList, object.id, object.recordId or '?')
+
 	for _, instanceModification in ipairs(instanceModificationList) do
 		local currentRuleApplied = false
 
@@ -452,6 +470,7 @@ local function tryModifyObject(object, instanceModificationList)
 				anyActionApplied = anyActionApplied or didReplace
 				needsPlacementUpdate = needsPlacementUpdate or didReplace
 				currentRuleApplied = currentRuleApplied or didReplace
+				logger.debug('  replace on %s: %s', object.id, didReplace and 'OK' or 'failed (no matching roll)')
 			end
 
 			if transformAction then
@@ -461,47 +480,57 @@ local function tryModifyObject(object, instanceModificationList)
 				anyActionApplied = anyActionApplied or didTransform
 				needsPlacementUpdate = needsPlacementUpdate or didTransform
 				currentRuleApplied = currentRuleApplied or didTransform
+				if didTransform then
+					logger.debug('  transform on %s: scale=%.3f', object.id, targetScale)
+				end
 			end
 
 			if addAction then
 				local didAdd = actionHandlers.add(modifyTarget, addAction)
 				anyActionApplied = anyActionApplied or didAdd
 				currentRuleApplied = currentRuleApplied or didAdd
+				logger.debug('  add on %s: %s', object.id, didAdd and 'OK' or 'failed')
 			end
 
 			if removeAction then
 				local didRemove = actionHandlers.remove(modifyTarget, removeAction)
 				anyActionApplied = anyActionApplied or didRemove
 				currentRuleApplied = currentRuleApplied or didRemove
+				logger.debug('  remove on %s: %s', object.id, didRemove and 'OK' or 'failed (not enough)')
 			end
 
 			if equipAction then
 				local didEquip = actionHandlers.equip(modifyTarget, equipAction)
 				anyActionApplied = anyActionApplied or didEquip
 				currentRuleApplied = currentRuleApplied or didEquip
+				logger.debug('  equip on %s: %s', object.id, didEquip and 'OK' or 'failed')
 			end
 
 			if unequipAction then
 				local didUnequip = actionHandlers.unequip(modifyTarget, unequipAction)
 				anyActionApplied = anyActionApplied or didUnequip
 				currentRuleApplied = currentRuleApplied or didUnequip
+				logger.debug('  unequip on %s: %s', object.id, didUnequip and 'OK' or 'failed (not equipped)')
 			end
 
 			if disableAction then
 				shouldDisable = true
 				anyActionApplied = true
 				currentRuleApplied = true
+				logger.debug('  disable on %s', object.id)
 			end
 
 			if deleteAction and (not replaceAction or replaceActionSucceeded) then
 				shouldDelete = true
 				anyActionApplied = true
 				currentRuleApplied = true
+				logger.debug('  delete on %s', object.id)
 			end
 		end
 
 		if instanceModification.once == true and currentRuleApplied then
 			markOnceActionApplied(object, instanceModification.moduleName, instanceModification.actionHash)
+			logger.debug('  once=true cached: %s/%s', instanceModification.moduleName, instanceModification.actionHash)
 		end
 
 		if instanceModification.once == 'per_cell' and currentRuleApplied then
@@ -510,6 +539,7 @@ local function tryModifyObject(object, instanceModificationList)
 			if modifyTarget ~= object then
 				markAppliedThisLoad(modifyTarget, instanceModification.moduleName, instanceModification.actionHash)
 			end
+			logger.debug('  once=per_cell marked: %s/%s', instanceModification.moduleName, instanceModification.actionHash)
 		end
 	end
 
