@@ -49,5 +49,4 @@ instances:
           - sconce
     once: per_cell
     actions:
-      - disable: { chance: 0.3 }
-      - enable: { chance: 0.3 }
+      - disable: { chance: 0.5 }
