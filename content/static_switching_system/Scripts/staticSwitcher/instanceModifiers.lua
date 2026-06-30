@@ -1,7 +1,5 @@
 ---@omw-context global
 
-local randomGen = require 'scripts.s3.randomGen'
-
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
@@ -402,12 +400,9 @@ local function tryModifyObject(object, instanceModificationList)
 			end
 
 			if disableAction then
-				local fire = disableAction == true
-					or (type(disableAction) == 'table'
-						and (disableAction.chance == nil
-							or randomGen.float() <= disableAction.chance))
-				logger.debug('  disable on %s: roll=%s', object.id, fire and 'OK' or 'miss')
-				if fire then
+				local didDisable = actionHandlers.disable(modifyTarget, disableAction)
+				logger.debug('  disable on %s: roll=%s', object.id, didDisable and 'OK' or 'miss')
+				if didDisable then
 					shouldDisable = true
 					anyActionApplied = true
 					currentRuleApplied = true

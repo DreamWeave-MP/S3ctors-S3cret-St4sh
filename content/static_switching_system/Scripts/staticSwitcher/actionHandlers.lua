@@ -376,6 +376,18 @@ local actionHandlers = {
 	['unequip'] = function(object, unequipActionData)
 		return applyItemAction(object, unequipActionData, unequipInventoryItem, 1)
 	end,
+	['disable'] = function(_, disableAction)
+		if disableAction == true then
+			return true
+		end
+		if type(disableAction) == 'table' then
+			if not disableAction.chance then
+				return true
+			end
+			return randomGen.float() <= disableAction.chance
+		end
+		return false
+	end,
 }
 
 return actionHandlers
