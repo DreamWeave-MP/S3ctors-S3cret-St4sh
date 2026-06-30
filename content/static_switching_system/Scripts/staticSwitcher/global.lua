@@ -7,6 +7,9 @@ local world = require 'openmw.world'
 ---@type StaticUtil
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
+---@type SSSLogger
+local logger = require 'Scripts.staticSwitcher.logger'
+
 local ModuleToRemove
 
 local ipairs, type = ipairs, type
@@ -69,6 +72,8 @@ processActiveObject = function()
 		ActiveObjectStack[numObjects] = nil
 	end
 
+	logger.debug('Batch processed, stack: %d remaining', #ActiveObjectStack)
+
 	if not DeleteManager:queueIsEmpty() then
 		UpdateFunction = processDeletions
 	elseif numObjects <= 1 then
@@ -79,6 +84,8 @@ end
 processUninstall = function()
 	--- When a module is removed and all objects are removed
 	--- kick every player from the game and force them to save
+	logger.info('Uninstall complete for %s, forcing save and quit', ModuleToRemove)
+
 	for _, player in ipairs(world.players) do
 		sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
 	end
@@ -99,11 +106,16 @@ processDeletions = function()
 	elseif deletionsFinished then
 		UpdateFunction = NullFunction
 	end
+
+	logger.debug('Deletions: queue empty=%s, stack=%d', deletionsFinished, #ActiveObjectStack)
 end
 
 settingsGroup:subscribe(require('openmw.async'):callback(function(_, key)
 	if key == 'StaticSwitcherDisableModule' and settingsGroup:get 'StaticSwitcherDisableModule' == true then
-		local removedModule = uninstallModule(settingsGroup:get 'StaticSwitcherModuleSelect')
+		local moduleToUninstall = settingsGroup:get 'StaticSwitcherModuleSelect'
+		logger.info('Uninstall triggered via settings for: %s', moduleToUninstall)
+
+		local removedModule = uninstallModule(moduleToUninstall)
 		if not removedModule then
 			return
 		end
@@ -156,11 +168,14 @@ return {
 				return
 			end
 
-			if not next(ActiveObjectStack) then
+			local stackWasEmpty = not next(ActiveObjectStack)
+
+			if stackWasEmpty then
 				InstanceModifiers.clearPerCellTracking()
 			end
 
 			ActiveObjectStack[#ActiveObjectStack + 1] = object
+			logger.debug('Object active: %s (%s) [stack=%d]', object.id, object.recordId or '?', #ActiveObjectStack)
 
 			if UpdateFunction ~= processActiveObject then
 				UpdateFunction = processActiveObject
@@ -168,6 +183,7 @@ return {
 		end,
 		---@return SSSSavedState
 		onSave = function()
+			logger.debug 'Saving SSS state'
 			return {
 				overrideRecords = StaticReplacements.OverrideRecords,
 				objectDeleteQueue = DeleteManager.queue,
@@ -179,12 +195,14 @@ return {
 		---@param data SSSSavedState?
 		onLoad = function(data)
 			if not data then
+				logger.debug 'Loading SSS state: fresh save (no data)'
 				DeleteManager.queue = {}
 				InstanceModifiers.loadOnceCache()
 				StaticReplacements.loadReplacementChains()
 				return
 			end
 
+			logger.debug 'Loading SSS state from save data'
 			staticUtil.deepCopy(StaticReplacements.OverrideRecords, data.overrideRecords)
 			StaticReplacements.migrateOverrideRecords()
 			DeleteManager.queue = {}
@@ -196,6 +214,7 @@ return {
 			StaticReplacements.loadReplacementChains(data.replacementChains)
 
 			if settingsGroup:get 'StaticSwitcherDisableModule' then
+				logger.info 'Clearing stale disable-module flag after load'
 				settingsGroup:set('StaticSwitcherDisableModule', false)
 			end
 
