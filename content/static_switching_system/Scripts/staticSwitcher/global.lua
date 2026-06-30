@@ -9,9 +9,11 @@ local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
 
----@type SSSLogger
-local logger = require 'Scripts.staticSwitcher.logger'
-local DebugLog, InfoLog = logger.debug, logger.info
+local DebugLog, InfoLog
+do
+	local logger = require 'Scripts.staticSwitcher.logger'
+	DebugLog, InfoLog = logger.debug, logger.info
+end
 
 local ModuleToRemove
 
