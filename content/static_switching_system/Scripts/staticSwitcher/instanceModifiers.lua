@@ -283,12 +283,20 @@ local function getMatchingInstanceModules(object)
 			end
 
 			-- Action conditions have been evaluated already, and this action can only run once
-			if not skipReason and actionData.once == true and onceActionWasApplied(object, moduleName, actionTableHash) then
+			if
+				not skipReason
+				and actionData.once == true
+				and onceActionWasApplied(object, moduleName, actionTableHash)
+			then
 				skipReason = 'once=true already applied'
 			end
 
 			-- Per-cell once: only skip for this cell-load session; not saved
-			if not skipReason and actionData.once == 'per_cell' and wasAppliedThisLoad(object, moduleName, actionTableHash) then
+			if
+				not skipReason
+				and actionData.once == 'per_cell'
+				and wasAppliedThisLoad(object, moduleName, actionTableHash)
+			then
 				skipReason = 'once=per_cell already applied this load'
 			end
 
@@ -471,7 +479,11 @@ local function tryModifyObject(object, instanceModificationList)
 			if modifyTarget ~= object then
 				markAppliedThisLoad(modifyTarget, instanceModification.moduleName, instanceModification.actionHash)
 			end
-			logger.debug('  once=per_cell marked: %s/%s', instanceModification.moduleName, instanceModification.actionHash)
+			logger.debug(
+				'  once=per_cell marked: %s/%s',
+				instanceModification.moduleName,
+				instanceModification.actionHash
+			)
 		end
 
 		if instanceModification.moduleOnce and currentRuleApplied then

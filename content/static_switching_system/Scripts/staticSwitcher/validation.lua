@@ -24,7 +24,12 @@ local function validateModule(modulePath, moduleData)
 	end
 
 	if moduleData.replace_meshes and moduleData.instances then
-		print(string.format('SSS Warning: both replace_meshes and instances in %s; they are mutually exclusive', modulePath))
+		print(
+			string.format(
+				'SSS Warning: both replace_meshes and instances in %s; they are mutually exclusive',
+				modulePath
+			)
+		)
 	end
 end
 

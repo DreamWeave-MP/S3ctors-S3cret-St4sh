@@ -1,7 +1,7 @@
 ---@omw-context global
 
-local storage = require('openmw.storage')
-local staticUtil = require('Scripts.staticSwitcher.util')
+local storage = require 'openmw.storage'
+local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local LOG_PREFIX = 'SSS'
 local SettingsSection = storage.globalSection 'SettingsStaticSwitcher'
@@ -13,7 +13,7 @@ end
 
 ---@return boolean
 local function isDebugEnabled()
-	return SettingsSection:get('StaticSwitcherEnableDebug') == true
+	return SettingsSection:get 'StaticSwitcherEnableDebug' == true
 end
 
 --- Detailed trace. Format inside the guard — no work when logging is off.
@@ -21,7 +21,9 @@ end
 ---@param formatString string
 ---@param ... any
 local function debug(formatString, ...)
-	if not isDebugEnabled() then return end
+	if not isDebugEnabled() then
+		return
+	end
 	log(select('#', ...) > 0 and formatString:format(...) or formatString)
 end
 
@@ -29,7 +31,9 @@ end
 ---@param formatString string
 ---@param ... any
 local function info(formatString, ...)
-	if not isDebugEnabled() then return end
+	if not isDebugEnabled() then
+		return
+	end
 	local message = select('#', ...) > 0 and formatString:format(...) or formatString
 	staticUtil.Log('[INFO] ' .. message, LOG_PREFIX)
 end
