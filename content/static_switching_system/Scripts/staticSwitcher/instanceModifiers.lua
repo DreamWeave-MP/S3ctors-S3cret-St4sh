@@ -521,11 +521,7 @@ local function tryModifyObject(object, instanceModificationList)
 			if modifyTarget ~= object then
 				markAppliedThisLoad(modifyTarget, instanceModification.moduleName, instanceModification.actionHash)
 			end
-			DebugLog(
-				'  once=per_cell marked: %s/%s',
-				instanceModification.moduleName,
-				instanceModification.actionHash
-			)
+			DebugLog('  once=per_cell marked: %s/%s', instanceModification.moduleName, instanceModification.actionHash)
 		end
 
 		if instanceModification.moduleOnce and currentRuleApplied then

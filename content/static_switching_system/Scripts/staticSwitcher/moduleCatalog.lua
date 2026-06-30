@@ -469,11 +469,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 	end
 
 	if meshReplacementsTable.instances then
-		InfoLog(
-			'Loaded module %s: %d instance rule(s)',
-			moduleIdentity.displayName,
-			#meshReplacementsTable.instances
-		)
+		InfoLog('Loaded module %s: %d instance rule(s)', moduleIdentity.displayName, #meshReplacementsTable.instances)
 	else
 		local numReplacements = 0
 		if meshReplacementsTable.replace_meshes then
