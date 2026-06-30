@@ -598,6 +598,10 @@
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "Faction that owns the object. Case-insensitive exact match against owner.factionId. Returns false when no faction owner is set."
                 },
+                "owner_id": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "NPC that owns the object. Case-insensitive exact match against owner.recordId. Returns false when no owner is set."
+                },
                 "player_faction": {
                     "type": "object",
                     "properties": {
