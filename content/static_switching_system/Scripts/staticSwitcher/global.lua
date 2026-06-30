@@ -31,9 +31,6 @@ local uninstallModule = require 'Scripts.staticSwitcher.globalSettings'(
 )
 
 local settingsGroup = require('openmw.storage').globalSection 'SettingsStaticSwitcher'
-if settingsGroup:get 'StaticSwitcherDisableModule' then
-	settingsGroup:set('StaticSwitcherDisableModule', false)
-end
 
 ---@type openmw.GObject[]
 local ActiveObjectStack = {}
@@ -193,6 +190,10 @@ return {
 			InstanceModifiers.loadOnceCache(data.instanceModifiers)
 			staticUtil.deepCopy(StaticReplacements.ReplacedObjectSet, data.replacedObjectSet)
 			StaticReplacements.loadReplacementChains(data.replacementChains)
+
+			if settingsGroup:get 'StaticSwitcherDisableModule' then
+				settingsGroup:set('StaticSwitcherDisableModule', false)
+			end
 
 			if not DeleteManager:queueIsEmpty() then
 				UpdateFunction = processDeletions
