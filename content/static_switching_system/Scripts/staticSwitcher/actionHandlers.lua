@@ -388,6 +388,9 @@ local actionHandlers = {
 		end
 		return false
 	end,
+	['delete'] = function(_, deleteAction, replaceAction, replaceActionSucceeded)
+		return deleteAction and (not replaceAction or replaceActionSucceeded)
+	end,
 }
 
 return actionHandlers
