@@ -72,6 +72,8 @@ local CONDITIONPRIORITY = {
 	'carrying',
 	--- Journal gates are relatively expensive (player/quest lookup); evaluated last
 	'has_journal',
+	'player_level',
+	'current_weather',
 	'not',
 }
 

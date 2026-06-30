@@ -2,6 +2,9 @@
 
 local types = require 'openmw.types'
 local world = require 'openmw.world'
+local Weather = require 'openmw.core'.weather
+
+local Player = world.players[1]
 local Door = types.Door
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
@@ -169,12 +172,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local player = world.players[1]
-		if not player then
-			return false
-		end
-
-		local quests = types.Player.quests(player)
+		local quests = types.Player.quests(Player)
 		local quest = quests[questId]
 		if not quest then
 			return false
@@ -289,6 +287,61 @@ local conditionHandlers = {
 		local worldspace = object.cell and object.cell.worldSpaceId
 
 		return worldspace ~= nil and worldspace:lower() == targetWorldspace:lower()
+	end,
+	['player_level'] = function(_, levelData)
+		local currentLevel = Player.type.stats.level(Player).current
+
+		if type(levelData) == 'number' then
+			return currentLevel >= levelData
+		end
+
+		if levelData.min and currentLevel < levelData.min then
+			return false
+		end
+		if levelData.max and currentLevel > levelData.max then
+			return false
+		end
+
+		return true
+	end,
+	['current_weather'] = function(_, weatherData)
+		local current = Weather.getCurrent(Player.cell)
+
+		if type(weatherData) == 'string' then
+			if weatherData == 'none' then
+				return current == nil
+			end
+			if not current then
+				return false
+			end
+			return string.find(current.name:lower(), weatherData:lower(), 1, true) ~= nil
+		end
+
+		if weatherData[1] then
+			for i = 1, #weatherData do
+				if weatherData[i] == 'none' then
+					if current == nil then
+						return true
+					end
+				elseif current and string.find(current.name:lower(), weatherData[i]:lower(), 1, true) ~= nil then
+					return true
+				end
+			end
+			return false
+		end
+
+		if weatherData.isStorm ~= nil then
+			if not current or current.isStorm ~= weatherData.isStorm then
+				return false
+			end
+		end
+		if weatherData.name then
+			if not current or not string.find(current.name:lower(), weatherData.name:lower(), 1, true) then
+				return false
+			end
+		end
+
+		return true
 	end,
 }
 

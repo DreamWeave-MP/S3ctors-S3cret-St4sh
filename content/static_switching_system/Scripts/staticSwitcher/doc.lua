@@ -138,6 +138,8 @@
 ---@field exterior boolean?
 ---@field quasi_exterior boolean?
 ---@field has_journal table? Quest journal index: `{quest: string, index?: integer, min?: integer, max?: integer}`. `index` is shorthand for `min`. Returns true when `stage >= min and stage <= max`.
+---@field player_level number|table? Player level gate: bare number means at-least, table with min/max for range
+---@field current_weather string|string[]|table? Current weather in the player's cell: string for substring match, array for any-of, table with {isStorm, name} for storm/name filter (both must match when present). The value "none" matches when no weather is active (interiors).
 ---@field has_name boolean?
 ---@field mesh string?
 ---@field nameMatch string?
