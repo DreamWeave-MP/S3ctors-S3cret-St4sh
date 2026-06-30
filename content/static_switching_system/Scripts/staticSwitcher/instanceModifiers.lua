@@ -186,16 +186,25 @@ local function matchesAllConditions(object, conditions)
 			end
 
 			if type(conditionValue) == 'table' then
-				local matchedAnyValue = false
+				-- Array-like tables are OR-lists: any element may match.
+				-- Map-like tables (string/non-integer keys) are passed as-is to the handler.
+				local firstKey = next(conditionValue)
+				local isOrList = firstKey and type(firstKey) == 'number'
 
-				for _, individualCondition in ipairs(conditionValue) do
-					if not matchedAnyValue and conditionHandler(object, individualCondition) then
-						matchedAnyValue = true
-						break
+				if isOrList then
+					local matchedAnyValue = false
+
+					for _, individualCondition in ipairs(conditionValue) do
+						if not matchedAnyValue and conditionHandler(object, individualCondition) then
+							matchedAnyValue = true
+							break
+						end
 					end
-				end
 
-				if not matchedAnyValue then
+					if not matchedAnyValue then
+						return false
+					end
+				elseif not conditionHandler(object, conditionValue) then
 					return false
 				end
 			else
