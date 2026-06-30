@@ -26,6 +26,8 @@ table.insert,
 	math.max,
 	math.floor
 
+local Log, LogString, normalizePath, getReplacementMeshForObject
+
 ---@param modelPath string
 ---@param originalModel string
 ---@param recordId string
@@ -116,7 +118,7 @@ end
 ---@param meshMap ReplacementMap
 ---@param object openmw.GObject
 ---@return string? replacementObjectMesh
-local function getReplacementMeshForObject(meshMap, object)
+function getReplacementMeshForObject(meshMap, object)
 	--- Special handling for marker types which are statics but have no .type field on them
 	if not object.type then
 		return
@@ -137,7 +139,7 @@ end
 --- Actual log writing function, given whatever message
 ---@param message string
 ---@param prefix string?
-local function Log(message, prefix)
+function Log(message, prefix)
 	print(LogString(message, prefix))
 end
 
@@ -145,7 +147,7 @@ end
 ---@param message string
 ---@param prefix string?
 ---@return string logMessage
-local function LogString(message, prefix)
+function LogString(message, prefix)
 	if not prefix then
 		prefix = LOG_PREFIX
 	end
@@ -156,7 +158,7 @@ end
 ---Function to normalize path separators in a string
 ---@param path string
 ---@return string normalized path
-local function normalizePath(path)
+function normalizePath(path)
 	local normalized, _ = StrGsub(StrGsub(path, '\\', '/'), '([^:])//+', '%1/')
 	return StrLower(normalized)
 end
