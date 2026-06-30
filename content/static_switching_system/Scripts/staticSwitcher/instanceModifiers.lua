@@ -410,7 +410,7 @@ local function tryModifyObject(object, instanceModificationList)
 			end
 
 			if deleteAction then
-				local didDelete = actionHandlers.delete(modifyTarget, deleteAction, replaceAction, replaceActionSucceeded)
+				local didDelete = actionHandlers.delete(object, deleteAction, replaceAction, replaceActionSucceeded)
 				if didDelete then
 					shouldDelete = true
 					anyActionApplied = true
