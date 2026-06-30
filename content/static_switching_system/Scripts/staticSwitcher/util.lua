@@ -1,29 +1,31 @@
 ---@omw-context global | menu
 
-local aux_util                                                                           = require 'openmw_aux.util'
-local vfs                                                                                = require 'openmw.vfs'
+local aux_util = require 'openmw_aux.util'
+local vfs = require 'openmw.vfs'
 
 ---@type ContentFileBits
-local ContentFileBits                                                                    = 16777216
+local ContentFileBits = 16777216
 
 ---@class StaticUtil
-local staticUtil                                                                         = {}
+local staticUtil = {}
 
 local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR =
-    'StaticSwitchingSystem',
-    '%s %s',
-    [[Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]],
-    '[ %s ]:',
-    '%s%s'
+	'StaticSwitchingSystem',
+	'%s %s',
+	[[Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]],
+	'[ %s ]:',
+	'%s%s'
 
-local GOBJECT_TYPE                                                                       = 'MWLua::GObject'
+local GOBJECT_TYPE = 'MWLua::GObject'
 
-local assert, error, ipairs, pairs, print, tonumber, type                                =
-    assert, error, ipairs, pairs, print, tonumber, type
+local assert, error, ipairs, pairs, print, tonumber, type = assert, error, ipairs, pairs, print, tonumber, type
 
-local Insert, IsArray, Max, Floor                                                        =
----@diagnostic disable-next-line: undefined-field
-    table.insert, table.isarray, math.max, math.floor
+local Insert, IsArray, Max, Floor =
+		---@diagnostic disable-next-line: undefined-field
+table.insert,
+	table.isarray,
+	math.max,
+	math.floor
 
 ---@param modelPath string
 ---@param originalModel string
@@ -32,85 +34,82 @@ local Insert, IsArray, Max, Floor                                               
 ---@param logString string
 ---@return boolean? whether the mesh exists or not
 function staticUtil.assertMeshExists(modelPath, originalModel, recordId, moduleName, logString)
-    if vfs.fileExists(modelPath) then return true end
+	if vfs.fileExists(modelPath) then
+		return true
+	end
 
-    staticUtil.Log(
-        MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName),
-        logString
-    )
+	staticUtil.Log(MISSING_MESH_ERROR:format(modelPath, originalModel, recordId, moduleName), logString)
 end
 
 ---@param inputTarget table? Table into which values will be copied
 ---@param source table? Table values will copy from
 ---@return table target
 function staticUtil.deepCopy(inputTarget, source)
-    local target = inputTarget or {}
+	local target = inputTarget or {}
 
-    if source and type(source) ~= 'table' then error('Source table was not even a table, it was: ' .. source) end
+	if source and type(source) ~= 'table' then
+		error('Source table was not even a table, it was: ' .. source)
+	end
 
-    for k, v in pairs(source or {}) do
-        if type(v) == 'table' then
-            local newSubTable = {}
-            target[k] = newSubTable
-            staticUtil.deepCopy(newSubTable, v)
-        else
-            target[k] = v
-        end
-    end
+	for k, v in pairs(source or {}) do
+		if type(v) == 'table' then
+			local newSubTable = {}
+			target[k] = newSubTable
+			staticUtil.deepCopy(newSubTable, v)
+		else
+			target[k] = v
+		end
+	end
 
-    return target
+	return target
 end
 
 ---@param object any
 function staticUtil.deepLog(object)
-    print(
-        staticUtil.LogString(
-            aux_util.deepToString(object, 5)
-        )
-    )
+	print(staticUtil.LogString(aux_util.deepToString(object, 5)))
 end
 
 ---@param path string Path to check for the `meshes/` prefix
 ---@return string original path, but with `meshes/` prepended
 function staticUtil.getMeshPath(path)
-    path = staticUtil.normalizePath(path):gsub("^/+", "")
+	path = staticUtil.normalizePath(path):gsub('^/+', '')
 
-    if not path:match("^meshes/") then
-        path = "meshes/" .. path
-    end
+	if not path:match '^meshes/' then
+		path = 'meshes/' .. path
+	end
 
-    return path
+	return path
 end
 
 ---@param value any
 ---@return boolean
 function staticUtil.isGObject(value)
-    return type(value) == 'userdata'
-        and value.__type
-        and value.__type.name == GOBJECT_TYPE
+	return type(value) == 'userdata' and value.__type and value.__type.name == GOBJECT_TYPE
 end
 
 ---@param object openmw.GObject
 ---@param replacementModules table<string, SSSModule>
 ---@return string? moduleName, string? replacementMesh the specific module name and model path which should be used to replace a particular gameObject
 function staticUtil.getObjectReplacement(object, replacementModules)
-    for moduleName, moduleData in pairs(replacementModules) do
-        local replacementMesh = staticUtil.getReplacementMeshForObject(moduleData.meshMap, object)
-        if replacementMesh then return moduleName, replacementMesh end
-    end
+	for moduleName, moduleData in pairs(replacementModules) do
+		local replacementMesh = staticUtil.getReplacementMeshForObject(moduleData.meshMap, object)
+		if replacementMesh then
+			return moduleName, replacementMesh
+		end
+	end
 end
 
 ---@param path string normalized VFS path referring to a mesh replacement map
 function staticUtil.getPathBaseName(path)
-    local baseName = ''
+	local baseName = ''
 
-    for part in path:gmatch("([^/]+)") do
-        baseName = part
-    end
+	for part in path:gmatch '([^/]+)' do
+		baseName = part
+	end
 
-    for split in baseName:gmatch('([^.]+)') do
-        return split
-    end
+	for split in baseName:gmatch '([^.]+)' do
+		return split
+	end
 end
 
 --- Given a particular gameObject, check whether this module can rightfully replace it.
@@ -119,24 +118,28 @@ end
 ---@param object openmw.GObject
 ---@return string? replacementObjectMesh
 function staticUtil.getReplacementMeshForObject(meshMap, object)
-    --- Special handling for marker types which are statics but have no .type field on them
-    if not object.type then return end
+	--- Special handling for marker types which are statics but have no .type field on them
+	if not object.type then
+		return
+	end
 
-    local objectModel = object.type.records[object.recordId].model
-    if not objectModel then return end
+	local objectModel = object.type.records[object.recordId].model
+	if not objectModel then
+		return
+	end
 
-    local replacementObjectMesh = meshMap[objectModel]
+	local replacementObjectMesh = meshMap[objectModel]
 
-    if replacementObjectMesh then return replacementObjectMesh end
+	if replacementObjectMesh then
+		return replacementObjectMesh
+	end
 end
 
 --- Actual log writing function, given whatever message
 ---@param message string
 ---@param prefix string?
 function staticUtil.Log(message, prefix)
-    print(
-        staticUtil.LogString(message, prefix)
-    )
+	print(staticUtil.LogString(message, prefix))
 end
 
 --- Helper function to generate a log message string, but without printing it for reusability.
@@ -144,65 +147,65 @@ end
 ---@param prefix string?
 ---@return string logMessage
 function staticUtil.LogString(message, prefix)
-    if not prefix then prefix = LOG_PREFIX end
+	if not prefix then
+		prefix = LOG_PREFIX
+	end
 
-    return LOG_FORMAT_STR:format(
-        PREFIX_FRAME:format(prefix),
-        message
-    )
+	return LOG_FORMAT_STR:format(PREFIX_FRAME:format(prefix), message)
 end
 
 ---Function to normalize path separators in a string
 ---@param path string
 ---@return string normalized path
 function staticUtil.normalizePath(path)
-    local normalized, _ = path:gsub("\\", "/"):gsub("([^:])//+", "%1/")
-    return normalized:lower()
+	local normalized, _ = path:gsub('\\', '/'):gsub('([^:])//+', '%1/')
+	return normalized:lower()
 end
 
 ---@param object openmw.GObject
 ---@return openmw.types.ActivatorRecord|openmw.types.StaticRecord Object record data
 function staticUtil.Record(object)
-    return object.type.records[object.recordId]
+	return object.type.records[object.recordId]
 end
 
 --- Fetches the object index of a given gameObject, including generated objects
 ---@param object openmw.GObject
 ---@return boolean isGenerated, number refNum
 function staticUtil.getRefNum(object)
-    local idString = object.id; local objectId = tonumber(idString)
+	local idString = object.id
+	local objectId = tonumber(idString)
 
-    if objectId then
-        return false, objectId % ContentFileBits
-    else
-        local generatedRef = tonumber(
-            idString:sub(2, #idString)
-        )
+	if objectId then
+		return false, objectId % ContentFileBits
+	else
+		local generatedRef = tonumber(idString:sub(2, #idString))
 
-        assert(generatedRef)
+		assert(generatedRef)
 
-        return true, generatedRef
-    end
+		return true, generatedRef
+	end
 end
 
 ---@param t table
 ---@return boolean isArray
 local function is_table_array(t)
-    if type(t) ~= "table" then return false end
+	if type(t) ~= 'table' then
+		return false
+	end
 
-    local max_index = 0
-    local count = 0
+	local max_index = 0
+	local count = 0
 
-    for k, _ in pairs(t) do
-        if type(k) ~= "number" or k < 1 or Floor(k) ~= k then
-            return false
-        end
+	for k, _ in pairs(t) do
+		if type(k) ~= 'number' or k < 1 or Floor(k) ~= k then
+			return false
+		end
 
-        max_index = Max(max_index, k)
-        count = count + 1
-    end
+		max_index = Max(max_index, k)
+		count = count + 1
+	end
 
-    return max_index == count
+	return max_index == count
 end
 
 --- Deep merges tables with special array handling
@@ -211,25 +214,25 @@ end
 ---@param is_array boolean? If true, treats tables as arrays (appends instead of overwrites)
 ---@return table target The merged target table
 function staticUtil.mergeTables(target, source, is_array)
-    if type(target) ~= "table" or type(source) ~= "table" then
-        return target
-    end
+	if type(target) ~= 'table' or type(source) ~= 'table' then
+		return target
+	end
 
-    if is_array or (IsArray and IsArray(source)) or is_table_array(source) then
-        for _, value in ipairs(source) do
-            Insert(target, value)
-        end
-    else
-        for key, value in pairs(source) do
-            if type(value) == "table" and type(target[key]) == "table" then
-                staticUtil.mergeTables(target[key], value, is_table_array(value))
-            else
-                target[key] = value
-            end
-        end
-    end
+	if is_array or (IsArray and IsArray(source)) or is_table_array(source) then
+		for _, value in ipairs(source) do
+			Insert(target, value)
+		end
+	else
+		for key, value in pairs(source) do
+			if type(value) == 'table' and type(target[key]) == 'table' then
+				staticUtil.mergeTables(target[key], value, is_table_array(value))
+			else
+				target[key] = value
+			end
+		end
+	end
 
-    return target
+	return target
 end
 
 --- Takes a string as input and performs Title capitalization on it.
@@ -237,13 +240,12 @@ end
 ---@param inputString string The string whose first letter should be capitalized
 ---@return string capitalizedString The original string, with Title capitalization
 function staticUtil.capitalize(inputString)
-    local stringLength = #inputString
-    if stringLength <= 1 then return inputString:upper() end
+	local stringLength = #inputString
+	if stringLength <= 1 then
+		return inputString:upper()
+	end
 
-    return TITLE_CAP_FORMAT_STR:format(
-        inputString:sub(1, 1):upper(),
-        inputString:sub(2, stringLength)
-    )
+	return TITLE_CAP_FORMAT_STR:format(inputString:sub(1, 1):upper(), inputString:sub(2, stringLength))
 end
 
 return staticUtil
