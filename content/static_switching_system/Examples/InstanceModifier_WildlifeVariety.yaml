@@ -1,0 +1,62 @@
+log_name: Wildlife Size and Variety Pack
+
+# Most complex instance modifier: multiple rules, OR-list conditions,
+# region and exterior targeting, replace actions with weighted chances,
+# and a mix of once and non-once rules.
+#
+# Four rules demonstrating different patterns:
+#   1. OR-list: target multiple creature types by record_id
+#   2. Region + object_type: all creatures in the Ashlands
+#   3. exterior + object_type: underground creatures
+#   4. Cell + record_id OR-list + replace: bottle variety in Caius's house
+instances:
+  # Rule 1: Guar and nix-hound size variety (OR-list record_id).
+  # No once — sizes re-roll each cell load, which is fine for wildlife.
+  - conditions:
+      - record_id:
+          - guar
+          - guar_pack
+          - nix-hound
+    actions:
+      - transform:
+          scale:
+            min: 0.7
+            max: 1.5
+
+  # Rule 2: Ashlands creatures grow larger.
+  # once: true so a specific creature keeps its size across save/load.
+  - conditions:
+      - region: ashlands region
+      - object_type: Creature
+    once: true
+    actions:
+      - transform:
+          scale:
+            min: 1.0
+            max: 1.8
+
+  # Rule 3: Cave/dungeon creatures tend toward the small side.
+  - conditions:
+      - exterior: false
+      - object_type: Creature
+    once: true
+    actions:
+      - transform:
+          scale:
+            min: 0.6
+            max: 1.2
+
+  # Rule 4: Randomize bottles in Caius's house — replace action with
+  # weighted chances. Once true so the replacement persists.
+  - conditions:
+      - cell: "Balmora, Caius Cosades' House"
+      - record_id:
+          - misc_com_bottle_02
+          - misc_de_goblet_03
+    once: true
+    actions:
+      - replace:
+          misc_com_bottle_01: 0.2
+          misc_com_bottle_04: 0.2
+          misc_com_bottle_05: 0.2
+          misc_de_goblet_01: 0.15
