@@ -306,6 +306,10 @@ local conditionHandlers = {
 		return true
 	end,
 	['target_level'] = function(object, levelData)
+		if not object.type then
+			return false
+		end
+
 		local stats = object.type.stats
 		if not stats then
 			return false
@@ -385,7 +389,11 @@ local conditionHandlers = {
 			return false
 		end
 
-		local classId = object.type.records[object.recordId].class
+		local objectRecord = object.type.records[object.recordId]
+		local classId = objectRecord and objectRecord.class
+		if not classId then
+			return false
+		end
 
 		if type(classData) == 'string' then
 			return classId:lower() == classData:lower()
