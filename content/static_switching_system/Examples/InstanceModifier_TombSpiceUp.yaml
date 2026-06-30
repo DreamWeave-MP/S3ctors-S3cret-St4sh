@@ -27,6 +27,7 @@ instances:
       - transform:
           rotate:
             z: { min: 0, max: 360 }
+
   - conditions:
       - cell_match: tomb
       - record_id:
