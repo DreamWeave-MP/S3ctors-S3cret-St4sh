@@ -16,8 +16,8 @@ local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FO
 local GOBJECT_TYPE = 'MWLua::GObject'
 
 local assert, error, pairs, print, tonumber, type = assert, error, pairs, print, tonumber, type
-local StrFind, StrFormat, StrGsub, StrGmatch, StrLower, StrMatch, StrUpper, StrSub =
-		string.find, string.format, string.gsub, string.gmatch, string.lower, string.match, string.upper, string.sub
+local StrFormat, StrGsub, StrGmatch, StrLower, StrMatch, StrUpper, StrSub =
+	string.format, string.gsub, string.gmatch, string.lower, string.match, string.upper, string.sub
 
 local Insert, IsArray, Max, Floor =
 		table.insert,
