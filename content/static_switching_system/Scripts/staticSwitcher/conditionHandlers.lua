@@ -218,6 +218,66 @@ local conditionHandlers = {
 
 		return false
 	end,
+	has_key = function(object, keyData)
+		local getKeyRecord = object.type.getKeyRecord
+		if not getKeyRecord then
+			return false
+		end
+
+		local keyId = getKeyRecord(object)
+		local keyRecordId = keyId and keyId.id
+
+		if keyData == true then
+			return keyRecordId ~= nil
+		end
+		if keyData == false then
+			return keyRecordId == nil
+		end
+
+		if type(keyData) == 'string' then
+			return keyRecordId == keyData
+		end
+
+		if keyData[1] then
+			for i = 1, #keyData do
+				if keyRecordId == keyData[i] then
+					return true
+				end
+			end
+		end
+
+		return false
+	end,
+	has_trap = function(object, trapData)
+		local getTrapSpell = object.type.getTrapSpell
+		if not getTrapSpell then
+			return false
+		end
+
+		local trapId = getTrapSpell(object)
+		local trapRecordId = trapId and trapId.id
+
+		if trapData == true then
+			return trapRecordId ~= nil
+		end
+		if trapData == false then
+			return trapRecordId == nil
+		end
+
+		if type(trapData) == 'string' then
+			return trapRecordId == trapData
+		end
+
+		if trapData[1] then
+			for i = 1, #trapData do
+				if trapRecordId == trapData[i] then
+					return true
+				end
+			end
+		end
+
+		return false
+	end,
 	---@param object openmw.GObject
 	---@param params { quest: string, index?: integer, min?: integer, max?: integer }
 	---@return boolean

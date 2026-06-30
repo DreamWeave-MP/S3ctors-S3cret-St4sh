@@ -339,6 +339,61 @@
                 "lock_level": {
                     "$ref": "#/definitions/numericRange",
                     "description": "Lock or unlock the target object. Positive values lock at that level. Zero or negative values unlock. Non-lockable objects (statics, creatures) no-op."
+                },
+                "key": {
+                    "oneOf": [
+                        {"const": false, "description": "Remove the key from the object."},
+                        {
+                            "type": "object",
+                            "patternProperties": {
+                                "^.*$": {"$ref": "#/definitions/chanceRange"}
+                            },
+                            "minProperties": 1,
+                            "additionalProperties": false,
+                            "description": "Map of key record IDs to chances. First match wins."
+                        }
+                    ],
+                    "description": "Set or remove the key on a lockable object. Non-lockable objects no-op."
+                },
+                "trap": {
+                    "oneOf": [
+                        {"const": false, "description": "Remove the trap from the object."},
+                        {
+                            "type": "object",
+                            "patternProperties": {
+                                "^.*$": {"$ref": "#/definitions/chanceRange"}
+                            },
+                            "minProperties": 1,
+                            "additionalProperties": false,
+                            "description": "Map of trap spell IDs to chances. First match wins."
+                        }
+                    ],
+                    "description": "Set or remove the trap on a lockable object. Non-lockable objects no-op."
+                },
+                "set_ownership": {
+                    "type": "object",
+                    "properties": {
+                        "owner": {"type": "string", "description": "NPC record ID to set as owner."},
+                        "faction": {"type": "string", "description": "Faction ID to set as owner."},
+                        "factionRank": {"type": "integer", "minimum": 0, "description": "Required faction rank."}
+                    },
+                    "additionalProperties": false,
+                    "description": "Set ownership on the target object. All fields optional."
+                },
+                "playsound": {
+                    "oneOf": [
+                        {"type": "string", "description": "Sound record ID to play."},
+                        {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string", "description": "Sound record ID."},
+                                "chance": {"type": "number", "minimum": 0, "maximum": 1, "description": "Probability 0-1."}
+                            },
+                            "required": ["id"],
+                            "additionalProperties": false
+                        }
+                    ],
+                    "description": "Play a 3D positional sound at the target object."
                 }
             },
             "anyOf": [
@@ -390,6 +445,26 @@
                 {
                     "required": [
                         "lock_level"
+                    ]
+                },
+                {
+                    "required": [
+                        "key"
+                    ]
+                },
+                {
+                    "required": [
+                        "trap"
+                    ]
+                },
+                {
+                    "required": [
+                        "set_ownership"
+                    ]
+                },
+                {
+                    "required": [
+                        "playsound"
                     ]
                 }
             ],
@@ -543,6 +618,22 @@
                     ],
                     "additionalProperties": false,
                     "description": "Check whether the player's journal stage for a quest is within the given range. At least one of index/min/max is required."
+                },
+                "has_trap": {
+                    "oneOf": [
+                        {"type": "boolean", "description": "Check if object has any trap set."},
+                        {"type": "string", "description": "Trap spell ID to match exactly."},
+                        {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "Match any of the listed trap spell IDs."}
+                    ],
+                    "description": "Gate by object trap state. Non-lockable objects return false."
+                },
+                "has_key": {
+                    "oneOf": [
+                        {"type": "boolean", "description": "Check if object has any key set."},
+                        {"type": "string", "description": "Key record ID to match exactly."},
+                        {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "Match any of the listed key record IDs."}
+                    ],
+                    "description": "Gate by object key state. Non-lockable objects return false."
                 },
                 "has_name": {
                     "type": "boolean"

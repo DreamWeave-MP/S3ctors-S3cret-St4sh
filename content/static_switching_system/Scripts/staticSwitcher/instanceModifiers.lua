@@ -366,7 +366,7 @@ local function tryModifyObject(object, instanceModificationList)
 		for actIndex = 1, #instanceModification.actions do
 			local actionData = instanceModification.actions[actIndex]
 			if not actionData.chance or randomGen.float() <= actionData.chance then
-				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction =
+				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction =
 					actionData.replace,
 					actionData.transform,
 					actionData.add,
@@ -376,7 +376,11 @@ local function tryModifyObject(object, instanceModificationList)
 					actionData.disable,
 					actionData.delete,
 					actionData.create,
-					actionData.lock_level
+					actionData.lock_level,
+					actionData.set_ownership,
+					actionData.playsound,
+					actionData.key,
+					actionData.trap
 				local replaceActionSucceeded = false
 
 				--- Should we allow only one successful replacement???
@@ -400,6 +404,13 @@ local function tryModifyObject(object, instanceModificationList)
 					if didTransform then
 						logger.debug('  transform on %s: scale=%.3f', object.id, targetScale)
 					end
+				end
+
+				if setOwnershipAction then
+					local didSet = actionHandlers.set_ownership(modifyTarget, setOwnershipAction)
+					anyActionApplied = anyActionApplied or didSet
+					currentRuleApplied = currentRuleApplied or didSet
+					logger.debug('  set_ownership on %s: %s', object.id, didSet and 'OK' or 'noop')
 				end
 
 				if addAction then
@@ -437,6 +448,20 @@ local function tryModifyObject(object, instanceModificationList)
 					logger.debug('  lock_level on %s: %s', object.id, didLock and 'OK' or 'failed (not lockable)')
 				end
 
+				if keyAction then
+					local didKey = actionHandlers.key(modifyTarget, keyAction)
+					anyActionApplied = anyActionApplied or didKey
+					currentRuleApplied = currentRuleApplied or didKey
+					logger.debug('  key on %s: %s', object.id, didKey and 'OK' or 'failed (not lockable)')
+				end
+
+				if trapAction then
+					local didTrap = actionHandlers.trap(modifyTarget, trapAction)
+					anyActionApplied = anyActionApplied or didTrap
+					currentRuleApplied = currentRuleApplied or didTrap
+					logger.debug('  trap on %s: %s', object.id, didTrap and 'OK' or 'failed (not lockable)')
+				end
+
 				if createAction then
 					local numCreated = actionHandlers.create(modifyTarget, createAction)
 					if numCreated > 0 then
@@ -444,6 +469,13 @@ local function tryModifyObject(object, instanceModificationList)
 						currentRuleApplied = true
 						logger.debug('  create on %s: %d spawned', object.id, numCreated)
 					end
+				end
+
+				if playsoundAction then
+					local didPlay = actionHandlers.playsound(modifyTarget, playsoundAction)
+					anyActionApplied = anyActionApplied or didPlay
+					currentRuleApplied = currentRuleApplied or didPlay
+					logger.debug('  playsound on %s: %s', object.id, didPlay and 'OK' or 'miss')
 				end
 
 				if disableAction then

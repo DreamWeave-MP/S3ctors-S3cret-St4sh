@@ -5,6 +5,8 @@ local world = require 'openmw.world'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
+local ambient = require 'openmw.ambient'
+
 local randomGen = require 'scripts.s3.randomGen'
 
 local pairs, pcall, type = pairs, pcall, type
@@ -502,6 +504,84 @@ local actionHandlers = {
 		end
 
 		return true
+	end,
+	['playsound'] = function(object, soundData)
+		local soundId, chance
+
+		if type(soundData) == 'string' then
+			soundId = soundData
+		elseif type(soundData) == 'table' then
+			soundId = soundData.id
+			chance = soundData.chance
+		end
+
+		if not soundId then
+			return false
+		end
+
+		if chance and randomGen.float() > chance then
+			return false
+		end
+
+		ambient.playSound(soundId, { object = object })
+		return true
+	end,
+	['set_ownership'] = function(object, ownershipData)
+		local madeChange = false
+		local owner = object.owner
+
+		if ownershipData.owner then
+			owner.recordId = ownershipData.owner
+			madeChange = true
+		end
+		if ownershipData.faction then
+			owner.factionId = ownershipData.faction
+			madeChange = true
+		end
+		if ownershipData.factionRank then
+			owner.factionRank = ownershipData.factionRank
+			madeChange = true
+		end
+
+		return madeChange
+	end,
+	['key'] = function(object, keyData)
+		if not object.type.setKeyRecord then
+			return false
+		end
+
+		if keyData == false then
+			object.type.setKeyRecord(object, nil)
+			return true
+		end
+
+		for keyId, chance in pairs(keyData) do
+			if shouldApplyChance(chance) then
+				object.type.setKeyRecord(object, keyId)
+				return true
+			end
+		end
+
+		return false
+	end,
+	['trap'] = function(object, trapData)
+		if not object.type.setTrapSpell then
+			return false
+		end
+
+		if trapData == false then
+			object.type.setTrapSpell(object, nil)
+			return true
+		end
+
+		for trapId, chance in pairs(trapData) do
+			if shouldApplyChance(chance) then
+				object.type.setTrapSpell(object, trapId)
+				return true
+			end
+		end
+
+		return false
 	end,
 }
 

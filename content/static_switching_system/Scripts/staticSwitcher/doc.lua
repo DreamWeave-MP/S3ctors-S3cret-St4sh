@@ -112,7 +112,7 @@
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, lock_level, create, disable, delete.
+--- Combined actions run in priority order: replace, transform, set_ownership, add, remove, equip, unequip, lock_level, key, trap, create, playsound, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -132,6 +132,10 @@
 ---@field delete true? queues removal of the original matched source object through DeleteManager
 ---@field create SSSCreateAction? spawns objects at the trigger's position; each pool evaluated independently with optional count, chance, and position/rotation/scale overrides
 ---@field lock_level SSSNumericRange? locks (positive) or unlocks (zero/negative) the target object; non-lockable objects no-op
+---@field key false|table<RecordId, SSSChanceRange>? sets or removes key on lockable object; chance table picks one winner
+---@field trap false|table<RecordId, SSSChanceRange>? sets or removes trap on lockable object; chance table picks one winner
+---@field set_ownership {owner?: string, faction?: string, factionRank?: integer}? sets ownership on the target object
+---@field playsound string|{id: string, chance?: number}? plays a 3D positional sound at the target
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
@@ -158,6 +162,8 @@
 ---@field player_equipped string|string[]? Record ID(s) to match against any equipped item on the player. Exact match.
 ---@field current_weather string|string[]|table? Current weather in the player's cell: string for substring match, array for any-of, table with {isStorm, name} for storm/name filter (both must match when present). The value "none" matches when no weather is active (interiors).
 ---@field has_name boolean?
+---@field has_key boolean|string|string[]? Key state: boolean for any/none, string for exact key ID match, array for any-of. Non-lockable objects return false.
+---@field has_trap boolean|string|string[]? Trap state: boolean for any/none, string for exact trap ID match, array for any-of. Non-lockable objects return false.
 ---@field locked boolean|number|table? Lock state: boolean for locked/unlocked, number for minimum lock level, table with {min, max} for range. Non-lockable objects return false.
 ---@field mesh string?
 ---@field nameMatch string?

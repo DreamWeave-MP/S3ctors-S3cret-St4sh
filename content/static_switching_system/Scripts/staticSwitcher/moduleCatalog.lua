@@ -53,14 +53,18 @@ local StaticReplacements
 local ACTIONPRIORITY = {
 	'replace',
 	'transform',
+	'set_ownership',
 	'add',
 	'remove',
 	'equip',
 	'unequip',
 	'lock_level',
+	'key',
+	'trap',
 	'create',
 	'disable',
 	'delete',
+	'playsound',
 }
 
 ---@type string[]
@@ -84,6 +88,8 @@ local CONDITIONPRIORITY = {
 	'scale',
 	'has_name',
 	'locked',
+	'has_key',
+	'has_trap',
 	--- Name matches should always be last as they're inevitably going to be the slowest
 	'nameMatch',
 	'carrying',
@@ -207,6 +213,8 @@ local LOWERED_CONDITION_KEYS = {
 	current_weather = true,
 	region = true,
 	worldspace = true,
+	has_key = true,
+	has_trap = true,
 }
 
 --- Pre-lowercase string condition values at module load time so handlers
