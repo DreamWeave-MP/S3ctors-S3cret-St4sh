@@ -266,7 +266,9 @@ end
 local function getMatchingInstanceModules(object)
 	local matchingActions, actionIndex
 
-	for moduleName, moduleData in pairs(ModuleCatalog.ObjectModificationStore) do
+	for modIdx = 1, #ModuleCatalog.SortedModuleIds do
+		local moduleName = ModuleCatalog.SortedModuleIds[modIdx]
+		local moduleData = ModuleCatalog.ObjectModificationStore[moduleName]
 		local actionList = moduleData.rules
 		local moduleOnce = moduleData.moduleOnce
 

@@ -33,6 +33,19 @@ local LegacyIdsByBasename = {}
 ---@type SSSObjectModificationStore
 local ObjectModificationStore = {}
 
+local PRIORITY_ORDER = {
+	cleanup = 1,
+	foundation = 2,
+	remodel = 3,
+	balance = 4,
+	standard = 5,
+	polish = 6,
+	finisher = 7,
+}
+
+---@type string[]
+local SortedModuleIds = {}
+
 ---@type SSSStaticReplacements
 local StaticReplacements
 
@@ -404,7 +417,10 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 		ObjectModificationStore[moduleIdentity.id] = {
 			rules = modStore,
 			moduleOnce = meshReplacementsTable.once,
+			priority = meshReplacementsTable.priority or 'standard',
 		}
+
+		SortedModuleIds[#SortedModuleIds + 1] = moduleIdentity.id
 	else
 		---@cast meshReplacementsTable SSSModuleStatic
 		StaticModuleIdsLen = StaticModuleIdsLen + 1
@@ -452,6 +468,17 @@ return function(staticReplacements)
 		loadSwitcherModule(meshReplacementsPath, createModuleIdentity(meshReplacementsPath))
 	end
 
+	table.sort(SortedModuleIds, function(a, b)
+		local pa = ObjectModificationStore[a].priority
+		local pb = ObjectModificationStore[b].priority
+		local orderA = PRIORITY_ORDER[pa] or PRIORITY_ORDER.standard
+		local orderB = PRIORITY_ORDER[pb] or PRIORITY_ORDER.standard
+		if orderA ~= orderB then
+			return orderA < orderB
+		end
+		return a < b
+	end)
+
 	---@type SSSModuleCatalog
 	return {
 		legacyIdsByBasename = LegacyIdsByBasename,
@@ -466,5 +493,6 @@ return function(staticReplacements)
 		--- all values in said array will be strings, and, when each lookup is performed they can/should be cached
 		--- based on the generated hash of each set of table values (itself, keyed by the id of the loaded module)
 		ObjectModificationStore = ObjectModificationStore,
+		SortedModuleIds = SortedModuleIds,
 	}
 end
