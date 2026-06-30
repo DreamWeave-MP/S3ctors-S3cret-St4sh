@@ -15,18 +15,17 @@ local KNOWN_KEYS = {
 local function validateModule(modulePath, moduleData)
 	for key in pairs(moduleData) do
 		if not KNOWN_KEYS[key] then
-			print(string.format('SSS Warning: unknown top-level key "%s" in %s', key, modulePath))
+			print(('SSS Warning: unknown top-level key "%s" in %s'):format(key, modulePath))
 		end
 	end
 
 	if not moduleData.replace_meshes and not moduleData.instances then
-		print(string.format('SSS Warning: no replace_meshes or instances in %s', modulePath))
+		print(('SSS Warning: no replace_meshes or instances in %s'):format(modulePath))
 	end
 
 	if moduleData.replace_meshes and moduleData.instances then
 		print(
-			string.format(
-				'SSS Warning: both replace_meshes and instances in %s; they are mutually exclusive',
+			('SSS Warning: both replace_meshes and instances in %s; they are mutually exclusive'):format(
 				modulePath
 			)
 		)
