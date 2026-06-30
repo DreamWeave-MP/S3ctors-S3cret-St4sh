@@ -1,0 +1,20 @@
+log_name: Improved Creature Meshes with Exclusions
+
+# Global unconditional static mesh replacement — no replace_names, exterior_cells,
+# or replace_regions filters means this applies in EVERY cell.
+#
+# Replace all instances of the standard cliff racer and shalk meshes
+# with custom improved versions from my_mod.
+replace_meshes:
+  r/CliffRacer.NIF: my_mod/creatures/cliff_racer_replacer.NIF
+  r/Shalk.NIF: my_mod/creatures/shalk_replacer.NIF
+
+# Exclude specific record variants that share the same base mesh.
+# Diseased cliff racers and blighted shalk share the same model paths
+# as their vanilla counterparts but are separate records. Without
+# ignore_records, they would get replaced too — this keeps them vanilla.
+#
+# Replacements are filtered by record ID BEFORE the mesh swap is performed.
+ignore_records:
+  - cliff racer_diseased
+  - shalk_blighted
