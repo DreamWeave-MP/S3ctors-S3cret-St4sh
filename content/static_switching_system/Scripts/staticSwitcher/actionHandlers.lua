@@ -5,8 +5,6 @@ local world = require 'openmw.world'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
 
-local ambient = require 'openmw.ambient'
-
 local randomGen = require 'scripts.s3.randomGen'
 
 local next, pairs, pcall, type = next, pairs, pcall, type
@@ -508,24 +506,43 @@ local actionHandlers = {
 		return true
 	end,
 	['playsound'] = function(object, soundData)
-		local soundId, chance
+		local soundId, soundFile, chance, volume, pitch, doLoop, timeOffset
 
 		if type(soundData) == 'string' then
 			soundId = soundData
 		elseif type(soundData) == 'table' then
 			soundId = soundData.id
+			soundFile = soundData.file
 			chance = soundData.chance
+			volume = soundData.volume
+			pitch = soundData.pitch
+			doLoop = soundData.loop
+			timeOffset = soundData.timeOffset
 		end
 
-		if not soundId then
+		if not soundId and not soundFile then
 			return false
 		end
 
-		if chance and randomGen.float() > chance then
+		if chance and not shouldApplyChance(chance) then
 			return false
 		end
 
-		ambient.playSound(soundId, { object = object })
+		local options
+		if volume or pitch or doLoop or timeOffset then
+			options = {}
+			if volume then options.volume = volume end
+			if pitch then options.pitch = pitch end
+			if doLoop then options.loop = doLoop end
+			if timeOffset then options.timeOffset = timeOffset end
+		end
+
+		if soundFile then
+			core.sound.playSoundFile3d(soundFile, object, options)
+		else
+			core.sound.playSound3d(soundId, object, options)
+		end
+
 		return true
 	end,
 	['set_ownership'] = function(object, ownershipData)
