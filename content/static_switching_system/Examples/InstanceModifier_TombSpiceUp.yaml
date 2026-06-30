@@ -19,8 +19,7 @@ instances:
       - record_id:
           - candle
           - skull
-          - _urn
-          - urn_
+          - ^urn_
           - bone
           - lantern
     once: per_cell
@@ -44,7 +43,10 @@ instances:
   # dark, ~70% lit or unchanged — keeps the tomb feel while varying.
   - conditions:
       - cell_match: tomb
-      - record_id: candle
+      - record_id: 
+          - candle
+          - brazier
+          - sconce
     once: per_cell
     actions:
       - disable: { chance: 0.3 }

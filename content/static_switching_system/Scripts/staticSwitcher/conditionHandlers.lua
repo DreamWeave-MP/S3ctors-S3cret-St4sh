@@ -194,7 +194,10 @@ local conditionHandlers = {
 	record_id = function(object, targetRecordId)
 		local originalId, lowerId = object.recordId, targetRecordId:lower()
 
-		return originalId == lowerId or originalId:find(lowerId, 1, true) ~= nil
+		-- Pattern matching enables ^/$ anchors (e.g. ^urn_ excludes furn_*).
+		-- TES3 record IDs are alphanumeric + underscore + space + apostrophe,
+		-- none of which are Lua-pattern-special, so this is backwards compatible.
+		return originalId == lowerId or originalId:find(lowerId, 1) ~= nil
 	end,
 	---@param object openmw.GObject
 	---@param targetData table<string, number[]>
