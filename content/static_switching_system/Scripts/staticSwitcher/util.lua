@@ -6,18 +6,18 @@ local vfs = require 'openmw.vfs'
 ---@type ContentFileBits
 local ContentFileBits = 16777216
 
-local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR =
+local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FORMAT_STR, GOBJECT_TYPE =
 		'StaticSwitchingSystem',
 		'%s %s',
 		[[Requested model %s to replace %s on object %s, but the mesh was not found. The module: %s was not properly installed!]],
 		'[ %s ]:',
-		'%s%s'
-
-local GOBJECT_TYPE = 'MWLua::GObject'
+		'%s%s',
+		'MWLua::GObject'
 
 local assert, error, pairs, print, tonumber, type = assert, error, pairs, print, tonumber, type
+
 local StrFormat, StrGsub, StrGmatch, StrLower, StrMatch, StrUpper, StrSub =
-	string.format, string.gsub, string.gmatch, string.lower, string.match, string.upper, string.sub
+		string.format, string.gsub, string.gmatch, string.lower, string.match, string.upper, string.sub
 
 local Insert, IsArray, Max, Floor =
 		table.insert,
