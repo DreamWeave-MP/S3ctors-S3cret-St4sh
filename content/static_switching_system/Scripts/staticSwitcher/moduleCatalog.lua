@@ -8,6 +8,7 @@ local szudzik = require 'scripts.s3.szudzik'
 local tableHash = require 'scripts.s3.tableHash'
 
 local staticUtil = require 'Scripts.staticSwitcher.util'
+local validation = require 'Scripts.staticSwitcher.validation'
 
 local DATA_PREFIX = 'scripts/staticswitcher/data/'
 
@@ -281,6 +282,8 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 
 	---@type SSSModuleRaw
 	local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
+
+	validation.validate(meshReplacementsPath, meshReplacementsTable)
 
 	---@cast meshReplacementsTable SSSModuleInstances
 	if meshReplacementsTable.instances then
