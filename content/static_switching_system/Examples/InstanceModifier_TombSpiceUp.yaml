@@ -22,13 +22,20 @@ instances:
           - urn
           - bone
           - lantern
-          - mummy
+    once: per_cell
+    actions:
+      - transform:
+          rotate:
+            z: { min: 0, max: 360 }
+  - conditions:
+      - cell_match: tomb
+      - record_id:
+          - skull
+          - bone
     once: per_cell
     actions:
       - transform:
           scale: { min: 0.6, max: 1.4 }
-          rotate:
-            z: { min: 0, max: 360 }
 
   # Rule 2: Candle roulette. Each visit, candles have a 30% chance to
   # be out and a 30% chance to be lit. When both roll true, enable
