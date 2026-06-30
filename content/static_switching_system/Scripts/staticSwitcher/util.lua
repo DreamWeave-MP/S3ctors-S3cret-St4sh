@@ -18,7 +18,7 @@ local LOG_PREFIX, LOG_FORMAT_STR, MISSING_MESH_ERROR, PREFIX_FRAME, TITLE_CAP_FO
 
 local GOBJECT_TYPE = 'MWLua::GObject'
 
-local assert, error, ipairs, pairs, print, tonumber, type = assert, error, ipairs, pairs, print, tonumber, type
+local assert, error, pairs, print, tonumber, type = assert, error, pairs, print, tonumber, type
 
 local Insert, IsArray, Max, Floor =
 		---@diagnostic disable-next-line: undefined-field
@@ -219,8 +219,8 @@ function staticUtil.mergeTables(target, source, is_array)
 	end
 
 	if is_array or (IsArray and IsArray(source)) or is_table_array(source) then
-		for _, value in ipairs(source) do
-			Insert(target, value)
+		for srcIdx = 1, #source do
+			Insert(target, source[srcIdx])
 		end
 	else
 		for key, value in pairs(source) do

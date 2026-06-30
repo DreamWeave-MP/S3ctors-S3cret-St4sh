@@ -12,7 +12,7 @@ local logger = require 'Scripts.staticSwitcher.logger'
 
 local ModuleToRemove
 
-local ipairs, type = ipairs, type
+local type = type
 
 local sendMenuEvent = types.Player.sendMenuEvent
 
@@ -86,8 +86,8 @@ processUninstall = function()
 	--- kick every player from the game and force them to save
 	logger.info('Uninstall complete for %s, forcing save and quit', ModuleToRemove)
 
-	for _, player in ipairs(world.players) do
-		sendMenuEvent(player, 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
+	for pIdx = 1, #world.players do
+		sendMenuEvent(world.players[pIdx], 'StaticSwitcherMenuRemoveModule', ModuleToRemove)
 	end
 
 	ModuleToRemove = nil
