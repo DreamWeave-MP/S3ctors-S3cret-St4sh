@@ -235,3 +235,10 @@
 ---@field isRelative boolean
 ---@field currentTransform openmw.util.Transform
 ---@field rotateActionDetails SSSVector3Range map of axes to rotations as degrees
+
+---@class SSSLogger
+---@field debug fun(formatString: string, ...: any) Fine-grained trace; format is deferred past the debug-setting guard
+---@field info fun(formatString: string, ...: any) General operation info; same deferred-format behavior
+---@field warn fun(message: string) Non-critical issues; always prints
+---@field error fun(message: string) Critical errors; always prints
+---@field isDebugEnabled fun(): boolean Check whether debug logging is active without printing
