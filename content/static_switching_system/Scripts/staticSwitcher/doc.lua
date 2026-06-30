@@ -122,7 +122,7 @@
 ---@field quasi_exterior boolean?
 ---@field has_name boolean?
 ---@field mesh string?
----@field name string?
+---@field nameMatch string?
 ---@field object_type string?
 ---@field record_id string?
 ---@field ref_num number?
