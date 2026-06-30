@@ -139,6 +139,12 @@
 ---@field quasi_exterior boolean?
 ---@field has_journal table? Quest journal index: `{quest: string, index?: integer, min?: integer, max?: integer}`. `index` is shorthand for `min`. Returns true when `stage >= min and stage <= max`.
 ---@field player_level number|table? Player level gate: bare number means at-least, table with min/max for range
+---@field target_level number|table? Target object level gate: bare number means at-least, table with min/max for range. Non-actors return false.
+---@field time_of_day number|table? Game hour gate: bare number means at-least, table with min/max for range. Hour is 0-23 float.
+---@field player_faction table? Player faction membership: {faction: string, rank?: integer, min?: integer, max?: integer}. rank is shorthand for min. Returns false if player is not in the faction.
+---@field target_faction table? Target NPC faction: same shape as player_faction. Non-NPCs return false.
+---@field target_class string|string[]? Target NPC class ID (exact match, case-insensitive). Non-NPCs return false.
+---@field player_equipped string|string[]? Record ID(s) to match against any equipped item on the player. Exact match.
 ---@field current_weather string|string[]|table? Current weather in the player's cell: string for substring match, array for any-of, table with {isStorm, name} for storm/name filter (both must match when present). The value "none" matches when no weather is active (interiors).
 ---@field has_name boolean?
 ---@field mesh string?
