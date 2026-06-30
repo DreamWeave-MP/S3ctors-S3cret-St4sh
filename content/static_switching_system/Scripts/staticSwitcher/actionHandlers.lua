@@ -197,15 +197,19 @@ local function shouldApplyChance(chance)
 		elseif chance >= 1 then
 			return true
 		end
-	elseif type(chance) == 'table' then
-		if chance.max <= 0 then
-			return false
-		elseif chance.min and chance.min >= 1 then
-			return true
-		end
+
+		return randomGen.float() <= chance
 	end
 
-	return randomGen.float() <= getChanceValue(chance)
+	if chance.max <= 0 then
+		return false
+	elseif chance.min and chance.min >= 1 then
+		return true
+	end
+
+	local roll = randomGen.float()
+
+	return roll >= (chance.min or 0) and roll <= chance.max
 end
 
 ---@param object openmw.GObject
