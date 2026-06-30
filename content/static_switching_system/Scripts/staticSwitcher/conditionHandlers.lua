@@ -409,6 +409,14 @@ local conditionHandlers = {
 
 		return rank > 0
 	end,
+	['faction_owner_id'] = function(object, factionId)
+		local ownerFaction = object.owner.factionId
+		if not ownerFaction then
+			return false
+		end
+
+		return ownerFaction:lower() == factionId:lower()
+	end,
 	['target_faction'] = function(object, factionData)
 		if object.type ~= types.NPC then
 			return false

@@ -594,6 +594,10 @@
                     "$ref": "#/definitions/numericRange",
                     "description": "Game hour gate. Bare number means at-least, table with min/max for range. Hour is a 0-23 float."
                 },
+                "faction_owner_id": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Faction that owns the object. Case-insensitive exact match against owner.factionId. Returns false when no faction owner is set."
+                },
                 "player_faction": {
                     "type": "object",
                     "properties": {
