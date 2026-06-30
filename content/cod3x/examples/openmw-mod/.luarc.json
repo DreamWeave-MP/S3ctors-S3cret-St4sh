@@ -3,5 +3,9 @@
     "workspace.library": [
         "/absolute/path/to/Cod3x"
     ],
-    "runtime.plugin": "/absolute/path/to/Cod3x/omw_context_plugin.lua"
+    "runtime.plugin": "/absolute/path/to/Cod3x/omw_context_plugin.lua",
+    "language.fixIndent": false,
+    "typeFormat.config": {
+        "format_line": "false"
+    }
 }

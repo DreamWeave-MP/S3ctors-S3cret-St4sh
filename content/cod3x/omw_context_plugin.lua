@@ -40,6 +40,12 @@
 ---   g) blocks LuaLS module resolution for the same offending modules via
 ---      ResolveRequire returning {}
 ---
+--- IMPORTANT: OnSetText diffs are virtual LuaLS transforms.  They must not be
+--- applied to source files.  VSCode/VSCodium's LuaLS on-type formatting path can
+--- compute edits against this transformed text and leak shifted offsets into the
+--- real buffer.  Cod3x configs disable that on-type formatting path while keeping
+--- these virtual transforms enabled.
+---
 --- Context semantics (matches OpenMW docs @context convention)
 --- -----------------------------------------------------------
 ---   global  : global scripts (one per game world)
@@ -928,7 +934,8 @@ end
 -- ---------------------------------------------------------------------------
 
 --- Called by LLS whenever a file's text is set or updated.
---- We cache context and return poison-pill edits for invalid OpenMW requires.
+--- We cache context and return virtual poison/type edits for LuaLS' transformed
+--- analysis document.  These edits are not intended to modify user files.
 ---@param uri  string
 ---@param text string
 ---@return table[]?   -- nil = don't modify the text
