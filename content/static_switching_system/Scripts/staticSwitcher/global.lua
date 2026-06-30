@@ -7,6 +7,8 @@ local world = require 'openmw.world'
 ---@type StaticUtil
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
+local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+
 ---@type SSSLogger
 local logger = require 'Scripts.staticSwitcher.logger'
 
@@ -172,6 +174,7 @@ return {
 
 			if stackWasEmpty then
 				InstanceModifiers.clearPerCellTracking()
+				BatchCache.clear()
 			end
 
 			ActiveObjectStack[#ActiveObjectStack + 1] = object
