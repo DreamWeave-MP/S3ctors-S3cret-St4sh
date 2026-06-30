@@ -247,6 +247,46 @@ local conditionHandlers = {
 
 		return worldspace ~= nil and worldspace:lower() == targetWorldspace:lower()
 	end,
+	--- Invert a single inner condition. The value is a condition table like
+	--- `{nameMatch = "Guard"}` — the inner condition is extracted, evaluated
+	--- through its own handler, and the result is negated.
+	---
+	--- Multiple exclusions use multiple `not` entries (ANDed together):
+	--- ```yaml
+	--- conditions:
+	---   - not: { nameMatch: Guard }
+	---   - not: { nameMatch: Soldier }
+	--- ```
+	---@param object openmw.GObject
+	---@param innerCondition table<string, any>
+	---@return boolean
+	["not"] = function(object, innerCondition)
+		local innerName, innerValue = next(innerCondition)
+		local innerHandler = conditionHandlers[innerName]
+
+		if type(innerHandler) ~= 'function' then
+			error(('Condition %s is an invalid condition for the NOT handler!'):format(innerName))
+		end
+
+		-- Expand OR-lists inside the negation so
+		-- `not: { nameMatch: [Guard, Soldier] }` works intuitively:
+		-- if ANY value matches, the negation fails.
+		if type(innerValue) == 'table' then
+			local firstKey = next(innerValue)
+
+			if firstKey and type(firstKey) == 'number' then
+				for _, individualValue in ipairs(innerValue) do
+					if innerHandler(object, individualValue) then
+						return false
+					end
+				end
+
+				return true
+			end
+		end
+
+		return not innerHandler(object, innerValue)
+	end,
 }
 
 return conditionHandlers
