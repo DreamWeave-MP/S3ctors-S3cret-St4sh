@@ -97,10 +97,20 @@
 ---@field count integer? item count; defaults to 1 when absent
 ---@field chance SSSChanceRange? fixed or random chance to apply this item entry
 
+---@class SSSCreatePool
+---@field count integer? number of objects to spawn; defaults to 1
+---@field chance number? probability 0-1 that this pool activates; no chance means always
+---@field scale SSSNumericRange?
+---@field rotate SSSVector3Range?
+---@field position SSSVector3Range?
+---@field transform_type SSSTransformType?
+
+---@alias SSSCreateAction table<RecordId, RecordId|integer|SSSCreatePool>
+
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, disable, delete.
+--- Combined actions run in priority order: replace, transform, add, remove, equip, unequip, create, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -117,6 +127,7 @@
 --- here stay disabled permanently from the SSS's perspective. Use once=true with disable when
 --- you want a one-time effect, or avoid disable entirely for objects you want to toggle.
 ---@field delete true? queues removal of the original matched source object through DeleteManager
+---@field create SSSCreateAction? spawns objects at the trigger's position; each pool evaluated independently with optional count, chance, and position/rotation/scale overrides
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
