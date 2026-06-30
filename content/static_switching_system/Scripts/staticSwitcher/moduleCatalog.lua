@@ -90,10 +90,9 @@ local CONDITIONPRIORITY = {
 	'not',
 }
 
-local error, ipairs, NewTable, next, nkeys, pairs, sort =
+local error, NewTable, next, nkeys, pairs, sort =
 		---@diagnostic disable-next-line: undefined-field
 error,
-	ipairs,
 	table.new,
 	next,
 	table.nkeys,
@@ -161,9 +160,10 @@ end
 ---@param conditionData SSSConditionData
 ---@return integer?
 local function sortConditionByType(conditionData)
-	for index, conditionName in ipairs(CONDITIONPRIORITY) do
+	for condPrioIndex = 1, #CONDITIONPRIORITY do
+		local conditionName = CONDITIONPRIORITY[condPrioIndex]
 		if conditionData[conditionName] then
-			return index
+			return condPrioIndex
 		end
 	end
 end
@@ -171,9 +171,10 @@ end
 ---@param actionData SSSInstanceAction
 ---@return integer?
 local function sortActionByType(actionData)
-	for index, actionName in ipairs(ACTIONPRIORITY) do
+	for actPrioIndex = 1, #ACTIONPRIORITY do
+		local actionName = ACTIONPRIORITY[actPrioIndex]
 		if actionData[actionName] then
-			return index
+			return actPrioIndex
 		end
 	end
 end
@@ -322,25 +323,29 @@ local function staticModuleLoader(meshReplacementsTable)
 	end
 
 	if cellNameMatches then
-		for i, replaceString in ipairs(meshReplacementsTable.replace_names) do
-			cellNameMatches[i] = replaceString:lower()
+		for nameIdx = 1, #meshReplacementsTable.replace_names do
+			local replaceString = meshReplacementsTable.replace_names[nameIdx]
+			cellNameMatches[nameIdx] = replaceString:lower()
 		end
 	end
 
 	if gridIndices then
-		for _, cellGrid in ipairs(meshReplacementsTable.exterior_cells) do
+		for cellIdx = 1, #meshReplacementsTable.exterior_cells do
+			local cellGrid = meshReplacementsTable.exterior_cells[cellIdx]
 			replacementTable.gridIndices[szudzik.getIndex(cellGrid.x, cellGrid.y)] = true
 		end
 	end
 
 	if regionMatches then
-		for _, regionName in ipairs(meshReplacementsTable.replace_regions) do
+		for regionIdx = 1, #meshReplacementsTable.replace_regions do
+			local regionName = meshReplacementsTable.replace_regions[regionIdx]
 			regionMatches[regionName:lower()] = true
 		end
 	end
 
 	if ignoreRecords then
-		for _, ignoreRecord in ipairs(meshReplacementsTable.ignore_records) do
+		for recIdx = 1, #meshReplacementsTable.ignore_records do
+			local ignoreRecord = meshReplacementsTable.ignore_records[recIdx]
 			replacementTable.ignoreRecords[ignoreRecord] = true
 		end
 	end
@@ -369,9 +374,11 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 	if meshReplacementsTable.instances then
 		local modStore = {}
 
-		for index, instance_action in ipairs(meshReplacementsTable.instances) do
+		for ruleIdx = 1, #meshReplacementsTable.instances do
+			local instance_action = meshReplacementsTable.instances[ruleIdx]
 			if instance_action.conditions then
-				for _, conditionData in ipairs(instance_action.conditions) do
+				for condIdx = 1, #instance_action.conditions do
+					local conditionData = instance_action.conditions[condIdx]
 					for conditionName, conditionValue in pairs(conditionData) do
 						if conditionName == 'not' and type(conditionValue) == 'table' then
 							for innerName, innerValue in pairs(conditionValue) do
@@ -391,7 +398,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 			local actionHash = tableHash(instance_action)
 			instance_action.actionHash = actionHash
 
-			modStore[index] = instance_action
+			modStore[ruleIdx] = instance_action
 		end
 
 		ObjectModificationStore[moduleIdentity.id] = {
@@ -436,7 +443,8 @@ return function(staticReplacements)
 
 	sort(modulePaths)
 
-	for _, meshReplacementsPath in ipairs(modulePaths) do
+	for pathIdx = 1, #modulePaths do
+		local meshReplacementsPath = modulePaths[pathIdx]
 		loadSwitcherModule(meshReplacementsPath, createModuleIdentity(meshReplacementsPath))
 	end
 
