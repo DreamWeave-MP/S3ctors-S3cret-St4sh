@@ -1,43 +1,55 @@
 ---@omw-context local
 
-local I = require("openmw.interfaces")
-local core = require 'openmw.core'
-local self = require("openmw.self")
-local types = require("openmw.types")
-local nearby = require("openmw.nearby")
+local next, pairs, require = next, pairs, require
 
-local AI = assert(I.AI)
-local getTargets, isFleeing = AI.getTargets, AI.isFleeing
+local self = require 'openmw.self'
+local Players
 
-local next, ipairs = next, ipairs
+local Targets = {}
+local TargetChangeData = { actor = self, targets = Targets }
 
-if core.API_REVISION >= 91 then
-    local Combat = assert(I.Combat)
-    Combat.addOnHitHandler(
-        function(attack)
-            if not attack.successful then return end
+---@diagnostic disable-next-line: undefined-field
+local clear = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
 
-            for _, player in ipairs(nearby.players) do
-                player:sendEvent('S3maphoreClearTargetCache', self.id)
-            end
-        end
-    )
-end
+local IsDeathFinished, IsInActorsProcessingRange, GetStance, GetTargets, IsFleeing, UnarmedStance
 
-local targets = {}
-
-local function emitTargetsChanged()
-    for _, actor in ipairs(nearby.players) do
-        actor:sendEvent("OMWMusicCombatTargetsChanged", { actor = self, targets = targets })
+---@param eventId string
+---@param eventData any
+local function emitToPlayers(eventId, eventData)
+    for i = 1, #Players do
+        Players[i]:sendEvent(eventId, eventData)
     end
 end
 
-local isDeathFinished, isInActorsProcessingRange = types.Actor.isDeathFinished, types.Actor.isInActorsProcessingRange
-local getStance, NoneStance = types.Actor.getStance, types.Actor.STANCE.Nothing
+do
+    local I = require 'openmw.interfaces'
+    local AI = I.AI
+    GetTargets, IsFleeing = AI.getTargets, AI.isFleeing
+
+    local types = require 'openmw.types'
+    IsDeathFinished, IsInActorsProcessingRange = types.Actor.isDeathFinished, types.Actor.isInActorsProcessingRange
+    GetStance, UnarmedStance = types.Actor.getStance, types.Actor.STANCE.Nothing
+
+    Players = require 'openmw.nearby'.players
+
+    ---@param attack openmw.interfaces.Combat.AttackInfo
+    local function s3maphoreAttackHandler(attack)
+        if not attack.successful then return end
+        emitToPlayers('S3maphoreClearTargetCache', self.id)
+    end
+
+    I.Combat.addOnHitHandler(s3maphoreAttackHandler)
+end
+
+local function emitTargetsChanged()
+    emitToPlayers('OMWMusicCombatTargetsChanged', TargetChangeData)
+end
+
 local function onUpdate(dt)
-    if isDeathFinished(self) or not isInActorsProcessingRange(self) then
-        if next(targets) ~= nil then
-            targets = {}
+    --- If the actor is dead, or simply out of processing range, we can handoff to the next actor in the chain immediately
+    if IsDeathFinished(self) or not IsInActorsProcessingRange(self) then
+        if next(Targets) then
+            clear(Targets)
             emitTargetsChanged()
         end
 
@@ -46,18 +58,19 @@ local function onUpdate(dt)
 
     -- Early-out for actors without targets and without combat state when the game is not paused
     -- TODO: use events or engine handlers to detect when targets change
-    local isStanceNothing = getStance(self) == NoneStance
-    if isStanceNothing and next(targets) == nil and not isFleeing() and dt > 0 then
+    if (GetStance(self) == UnarmedStance) and not next(Targets) and not IsFleeing() and dt > 0 then
         return
     end
 
-    local newTargets = getTargets("Combat")
+    local newTargets = GetTargets 'Combat'
 
-    local changed = false
-    if #newTargets ~= #targets then
+    local changed, numTargets = false, #Targets
+    if #newTargets ~= numTargets then
         changed = true
     else
-        for i, target in ipairs(targets) do
+        for i = 1, numTargets do
+            local target = Targets[i]
+
             if target ~= newTargets[i] then
                 changed = true
                 break
@@ -65,17 +78,17 @@ local function onUpdate(dt)
         end
     end
 
-    targets = newTargets
-    if changed then
-        emitTargetsChanged()
-    end
+    Targets = newTargets
+
+    if not changed then return end
+
+    emitTargetsChanged()
 end
 
 local function onInactive()
-    if next(targets) ~= nil then
-        targets = {}
-        emitTargetsChanged()
-    end
+    if not next(Targets) then return end
+    clear(Targets)
+    emitTargetsChanged()
 end
 
 return {
