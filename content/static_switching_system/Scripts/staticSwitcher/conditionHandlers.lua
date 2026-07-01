@@ -551,7 +551,7 @@ local conditionHandlers = {
 		end
 
 		local stats = objType.stats
-		if not stats then
+		if not stats or not stats.attributes then
 			return false
 		end
 
@@ -609,6 +609,17 @@ local conditionHandlers = {
 		end
 
 		return true
+	end,
+	['player_spell'] = function(_, spellData)
+		return BatchCache.actorSpells()[spellData] ~= nil
+	end,
+	['target_spell'] = function(object, spellData)
+		local spells = BatchCache.actorSpells(object)
+		if not spells then
+			return false
+		end
+
+		return spells[spellData] ~= nil
 	end,
 	['player_health'] = function(_, healthData)
 		local value = BatchCache.dynamicStat(nil, 'health').current

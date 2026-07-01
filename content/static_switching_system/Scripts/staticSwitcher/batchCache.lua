@@ -121,6 +121,26 @@ local function dynamicStat(object, statName)
 	return stat
 end
 
+local function actorSpells(object)
+	object = object or Player
+	local spellsFn = object.type.spells
+	if not spellsFn then
+		return
+	end
+
+	local byObject = Cache._actorSpells
+	if not byObject then
+		byObject = {}
+		Cache._actorSpells = byObject
+	end
+	local spells = byObject[object.id]
+	if not spells then
+		spells = spellsFn(object)
+		byObject[object.id] = spells
+	end
+	return spells
+end
+
 return {
 	clear = clearCache,
 	playerQuests = playerQuests,
@@ -129,4 +149,5 @@ return {
 	attributeStat = attributeStat,
 	skillStat = skillStat,
 	dynamicStat = dynamicStat,
+	actorSpells = actorSpells,
 }
