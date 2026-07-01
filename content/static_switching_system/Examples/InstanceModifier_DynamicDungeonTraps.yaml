@@ -1,0 +1,128 @@
+log_name: Dynamic Dungeon Traps
+priority: balance
+
+instances:
+  - conditions:
+      - object_type: Container
+      - cell_tag: CellDungeon
+      - locked: false
+    actions:
+      - lock_level: {min: 1, max: 20}
+    once: true
+
+  - conditions:
+      - object_type: [Door, Container]
+      - cell_tag: CellDungeon
+      - locked: {min: 30}
+      - player_level: {max: 4}
+    actions:
+      - lock_level: {min: 1, max: 20}
+    once: true
+
+  - conditions:
+      - object_type: [Door, Container]
+      - cell_tag: CellDungeon
+      - locked: true
+      - has_trap: false
+      - player_level: {min: 5, max: 14}
+    actions:
+      - chance: 0.3
+        trap:
+          - trap_fire00: 0.6
+          - trap_frost00: 0.4
+    once: true
+
+  - conditions:
+      - object_type: Container
+      - cell_tag: CellDungeon
+      - locked: true
+      - player_level: {min: 5, max: 14}
+    actions:
+      - chance: 0.5
+        add:
+          gold_001: {min: 10, max: 50}
+    once: true
+
+  - conditions:
+      - object_type: [Door, Container]
+      - cell_tag: CellDungeon
+      - locked: true
+      - player_level: {min: 15, max: 24}
+    actions:
+      - lock_level: {min: 30, max: 60}
+    once: true
+
+  - conditions:
+      - object_type: [Door, Container]
+      - cell_tag: CellDungeon
+      - locked: true
+      - has_trap: false
+      - player_level: {min: 15, max: 24}
+    actions:
+      - chance: 0.5
+        trap:
+          - trap_fire00: 0.25
+          - trap_frost00: 0.25
+          - trap_shock00: 0.25
+          - trap_poison00: 0.25
+    once: true
+
+  - conditions:
+      - object_type: Container
+      - cell_tag: CellDungeon
+      - locked: true
+      - player_level: {min: 15, max: 24}
+    actions:
+      - chance: 0.6
+        add:
+          gold_001: {min: 50, max: 200}
+    once: true
+
+  - conditions:
+      - object_type: [Door, Container]
+      - cell_tag: CellDungeon
+      - locked: true
+      - player_level: {min: 25}
+    actions:
+      - lock_level: {min: 60, max: 100}
+    once: true
+
+  - conditions:
+      - object_type: [Door, Container]
+      - cell_tag: CellDungeon
+      - locked: true
+      - has_trap: false
+      - player_level: {min: 25}
+    actions:
+      - chance: 0.7
+        trap:
+          - trap_fire00: 0.15
+          - trap_frost00: 0.15
+          - trap_shock00: 0.15
+          - trap_poison00: 0.15
+          - trap_health00: 0.15
+          - trap_paralyze00: 0.15
+          - trap_silence00: 0.1
+    once: true
+
+  - conditions:
+      - object_type: Container
+      - cell_tag: CellDungeon
+      - locked: true
+      - player_level: {min: 25}
+    actions:
+      - chance: 0.8
+        add:
+          gold_001: {min: 200, max: 500}
+    once: true
+
+  - conditions:
+      - object_type: [Door, Container]
+      - cell_tag: CellDungeon
+      - locked: true
+      - has_key: true
+      - player_level: {min: 25}
+    actions:
+      - chance: 0.3
+        key: false
+    once: true
