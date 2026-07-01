@@ -107,6 +107,8 @@ local CONDITIONPRIORITY = {
 	'cell_tag',
 	'is_dead',
 	'creature_type',
+	'has_enchantment',
+	'enchantment',
 	'race',
 	'target_disposition',
 	'locked',
@@ -251,6 +253,7 @@ local LOWERED_CONDITION_KEYS = {
 	has_trap = true,
 	has_mwscript = true,
 	race = true,
+	enchantment = true,
 	global_value = 'arrayKeys',
 }
 

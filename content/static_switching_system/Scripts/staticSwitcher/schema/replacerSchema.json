@@ -778,6 +778,14 @@
                     ],
                     "description": "Target creature type classification. Non-creatures return false."
                 },
+                "has_enchantment": {
+                    "type": "boolean",
+                    "description": "Whether the target object has an enchantment. Non-equipment objects return false."
+                },
+                "enchantment": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Enchantment ID on the target object. Exact, case-insensitive match. Returns false when no enchantment is present."
+                },
                 "race": {
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "Target NPC race ID. Exact match. Non-NPCs return false."

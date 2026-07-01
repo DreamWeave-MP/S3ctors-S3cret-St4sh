@@ -237,6 +237,41 @@ local conditionHandlers = {
 
 		return false
 	end,
+	has_enchantment = function(object, shouldHave)
+		if not object.type then
+			return false
+		end
+
+		local objectRecord = object.type.records[object.recordId]
+		local hasEnchant = objectRecord and objectRecord.enchant ~= nil
+
+		return hasEnchant == shouldHave
+	end,
+	enchantment = function(object, enchantId)
+		if not object.type then
+			return false
+		end
+
+		local objectRecord = object.type.records[object.recordId]
+		local enchant = objectRecord and objectRecord.enchant
+		if not enchant then
+			return false
+		end
+
+		if type(enchantId) == 'string' then
+			return enchant == enchantId
+		end
+
+		if enchantId[1] then
+			for i = 1, #enchantId do
+				if enchant == enchantId[i] then
+					return true
+				end
+			end
+		end
+
+		return false
+	end,
 	race = function(object, raceData)
 		local objType = object.type
 		if not objType or objType ~= types.NPC then
