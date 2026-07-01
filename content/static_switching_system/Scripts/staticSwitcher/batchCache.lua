@@ -2,22 +2,19 @@
 
 ---@type SSSBatchCache
 
-local types = require 'openmw.types'
-local core = require 'openmw.core'
-local world = require 'openmw.world'
+local types  = require 'openmw.types'
+local core   = require 'openmw.core'
+local world  = require 'openmw.world'
 
 local Player = world.players[1]
 
-local Cache = {}
+local Cache  = {}
 
 local clear
-if table.clear then
-	clear = table.clear
-else
-	clear = function(t)
-		for k in pairs(t) do
-			t[k] = nil
-		end
+---@diagnostic disable-next-line: undefined-field
+clear        = table.clear or function(t)
+	for k in pairs(t) do
+		t[k] = nil
 	end
 end
 
