@@ -4,19 +4,19 @@ local markup = require 'openmw.markup'
 local storage = require 'openmw.storage'
 local vfs = require 'openmw.vfs'
 
-local TaggerInterface = require 'Scripts.S3.ModTags.interface'
-local ingestTag = TaggerInterface.ingestTag
-local removeTagFromMemory = TaggerInterface.removeTagFromMemory
-local markLoadingComplete = TaggerInterface.markLoadingComplete
-local isLoadingComplete = TaggerInterface._isLoadingComplete
-local syncToStorage = TaggerInterface.syncToStorage
-TaggerInterface.ingestTag = nil
-TaggerInterface.removeTagFromMemory = nil
-TaggerInterface.markLoadingComplete = nil
-TaggerInterface._isLoadingComplete = nil
-TaggerInterface.syncToStorage = nil
+local FlexTagInterface = require 'Scripts.S3.ModTags.interface'
+local ingestTag = FlexTagInterface.ingestTag
+local removeTagFromMemory = FlexTagInterface.removeTagFromMemory
+local markLoadingComplete = FlexTagInterface.markLoadingComplete
+local isLoadingComplete = FlexTagInterface._isLoadingComplete
+local syncToStorage = FlexTagInterface.syncToStorage
+FlexTagInterface.ingestTag = nil
+FlexTagInterface.removeTagFromMemory = nil
+FlexTagInterface.markLoadingComplete = nil
+FlexTagInterface._isLoadingComplete = nil
+FlexTagInterface.syncToStorage = nil
 
-local TagSection = storage.globalSection 'TaggerStorage'
+local TagSection = storage.globalSection 'FlexTagStorage'
 
 ---@diagnostic disable-next-line: param-type-mismatch
 TagSection:setLifeTime(storage.LIFE_TIME.Temporary)
@@ -24,7 +24,7 @@ TagSection:setLifeTime(storage.LIFE_TIME.Temporary)
 local CoCreate, CoResume, CoStatus, CoYield = coroutine.create, coroutine.resume, coroutine.status, coroutine.yield
 local pairs, print, type = pairs, print, type
 
-local LogPrefix = ' [ TAGGER ]:'
+local LogPrefix = ' [ FLEXTAG ]:'
 local function TagLog(...)
 	print(LogPrefix, ...)
 end
@@ -142,15 +142,15 @@ local function onRemoveTags(eventData)
 end
 
 return {
-	interfaceName = 'TaggerG',
-	interface = TaggerInterface,
+	interfaceName = 'FlexTagG',
+	interface = FlexTagInterface,
 	engineHandlers = {
 		onUpdate = function()
 			onUpdate()
 		end,
 	},
 	eventHandlers = {
-		TaggerAddTags = onAddTags,
-		TaggerRemoveTags = onRemoveTags,
+		FlexTagAdd = onAddTags,
+		FlexTagRemove = onRemoveTags,
 	},
 }
