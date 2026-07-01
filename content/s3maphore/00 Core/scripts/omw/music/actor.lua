@@ -9,7 +9,10 @@ local Targets = {}
 local TargetChangeData = { actor = self, targets = Targets }
 
 ---@diagnostic disable-next-line: undefined-field
-local clear = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
+local clearImpl = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
+local function clear()
+    clearImpl(Targets)
+end
 
 local IsDeathFinished, IsInActorsProcessingRange, GetStance, GetTargets, IsFleeing, UnarmedStance
 
@@ -60,7 +63,7 @@ local function onUpdate(dt)
     end
 
     if shouldClear then
-        clear(Targets)
+        clear()
     end
 
     -- TODO: use events or engine handlers to detect when targets change
@@ -82,7 +85,11 @@ local function onUpdate(dt)
             end
         end
 
-        Targets = newTargets
+        clear()
+
+        for i = 1, numTargets do
+            Targets[i] = newTargets[i]
+        end
     end
 
     if changed then
@@ -92,7 +99,7 @@ end
 
 local function onInactive()
     if not next(Targets) then return end
-    clear(Targets)
+    clear()
     emitTargetsChanged()
 end
 
