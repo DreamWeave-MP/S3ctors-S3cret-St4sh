@@ -34,6 +34,10 @@ local OnceCache = {
 ---@type table<string, true>
 local PerCellApplied = {}
 
+local AND_LIST_CONDITIONS = {
+	global_value = true,
+}
+
 ---@type SSSModuleCatalog
 local ModuleCatalog
 
@@ -238,7 +242,7 @@ local function matchesAllConditions(object, conditions)
 				local firstKey = next(conditionValue)
 				local isOrList = firstKey and type(firstKey) == 'number'
 
-				if isOrList then
+				if isOrList and not AND_LIST_CONDITIONS[conditionName] then
 					local matchedAnyValue = false
 
 					for indivIndex = 1, #conditionValue do

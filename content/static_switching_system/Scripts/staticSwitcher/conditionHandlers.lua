@@ -201,6 +201,8 @@ local conditionHandlers = {
 			return false
 		end
 
+		mwscript = StrLower(mwscript)
+
 		if type(scriptData) == 'string' then
 			return mwscript == scriptData
 		end
