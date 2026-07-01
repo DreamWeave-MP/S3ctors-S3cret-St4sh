@@ -17,6 +17,9 @@ extra:
       - FlexTag.esp
 
   version: 1.0.0
+
+aliases:
+  - /tagger/
 ---
 
 FlexTag is a lightweight, zero-overhead tagging framework for Morrowind on OpenMW. It lets mods ask questions like "is this cell a dungeon?" or "does this NPC belong to the Camonna Tong?" — without hardcoding IDs or guessing.
