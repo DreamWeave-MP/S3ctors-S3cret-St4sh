@@ -1,9 +1,15 @@
-local markup = require('openmw.markup')
-local storage = require('openmw.storage')
-local vfs = require('openmw.vfs')
+---@omw-context global
 
-local TagSection = storage.globalSection('TaggerStorage')
+local markup = require 'openmw.markup'
+local storage = require 'openmw.storage'
+local vfs = require 'openmw.vfs'
+
+local TagSection = storage.globalSection 'TaggerStorage'
+
+---@diagnostic disable-next-line: param-type-mismatch
 TagSection:setLifeTime(storage.LIFE_TIME.GameSession)
+
+local pairs, print, type = pairs, print, type
 
 ---@alias ObjectTag string Identifying tag applied to any gameObject or record
 
@@ -17,11 +23,11 @@ TagSection:setLifeTime(storage.LIFE_TIME.GameSession)
 
 --- A list of all tags that can be applied to a gameObject or record
 ---@type ObjectTagList
-local TagList = {}
+local InProgressTagList = {}
 
 --- Main table storing a map of recordIds to their tags
 ---@type AppliedTags
-local AppliedTags = {}
+local InProgressAppliedTags = {}
 
 local LogPrefix = ' [ TAGGER ]:'
 local function TagLog(...)
@@ -36,8 +42,8 @@ local function applyItemTag(itemId, tagName)
         return TagLog(itemId, 'in', tagName, 'is not a valid recordId! Skipping . . .')
     end
     itemId = itemId:lower()
-    AppliedTags[itemId] = AppliedTags[itemId] or {}
-    AppliedTags[itemId][tagName] = true
+    InProgressAppliedTags[itemId] = InProgressAppliedTags[itemId] or {}
+    InProgressAppliedTags[itemId][tagName] = true
 end
 
 ---Process a single tag and its item list from a YAML table.
@@ -52,7 +58,7 @@ local function processTag(tagName, itemList)
     end
 
     tagName = tagName:lower()
-    TagList[tagName] = true
+    InProgressTagList[tagName] = true
 
     for i = 1, #itemList do
         applyItemTag(itemList[i], tagName)
@@ -84,41 +90,60 @@ local function loadTagFiles()
         end
     end
 
-    TagSection:set('TagList', TagList)
-    TagSection:set('AppliedTags', AppliedTags)
-  
-    TagList = {}
-    AppliedTags = {}
+    TagSection:set('TagList', InProgressTagList)
+    TagSection:set('AppliedTags', InProgressAppliedTags)
 
+    InProgressTagList = {}
+    InProgressAppliedTags = {}
 end
 
 loadTagFiles()
 
-local TaggerInterface = require('Scripts.S3.ModTags.interface')
+local TaggerInterface = require 'Scripts.S3.ModTags.interface'
 
 ---@param eventData table<string, string[]> flat map of tagged objects to tag lists
 local function onAddTags(eventData)
-	local applied = TagSection:get('AppliedTags')
+    local applied = TagSection:get('AppliedTags')
 
-	for taggedObject, tagList in pairs(eventData) do
-		local taggedId = taggedObject:lower()
+    for taggedObject, tagList in pairs(eventData) do
+        local taggedId = taggedObject:lower()
 
-		applied[taggedId] = applied[taggedId] or {}
-		local tagTable = applied[taggedId]
+        applied[taggedId] = applied[taggedId] or {}
+        local tagTable = applied[taggedId]
 
-		for tagIdx = 1, #tagList do
-			local tag = tagList[tagIdx]:lower()
-			tagTable[tag] = true
-		end
-	end
+        for tagIdx = 1, #tagList do
+            local tag = tagList[tagIdx]:lower()
+            tagTable[tag] = true
+        end
+    end
 
-	TagSection:set('AppliedTags', applied)
+    TagSection:set('AppliedTags', applied)
+end
+
+---@param eventData table<string, string[]> flat map of tagged objects to tag lists
+local function onRemoveTags(eventData)
+    local applied = TagSection:get('AppliedTags')
+
+    for taggedObject, tagList in pairs(eventData) do
+        local taggedId = taggedObject:lower()
+
+        applied[taggedId] = applied[taggedId] or {}
+        local tagTable = applied[taggedId]
+
+        for tagIdx = 1, #tagList do
+            local tag = tagList[tagIdx]:lower()
+            tagTable[tag] = nil
+        end
+    end
+
+    TagSection:set('AppliedTags', applied)
 end
 
 return {
-	interfaceName = 'TaggerG',
-	interface = TaggerInterface,
-	eventHandlers = {
-		TaggerAddTags = onAddTags,
-	},
+    interfaceName = 'TaggerG',
+    interface = TaggerInterface,
+    eventHandlers = {
+        TaggerAddTags = onAddTags,
+        TaggerRemoveTags = onRemoveTags,
+    },
 }
