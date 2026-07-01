@@ -136,6 +136,7 @@
 ---@field trap false|table<string, SSSChanceRange>[]? sets or removes trap; each entry is `{recordId: chance}`; first passing entry wins
 ---@field set_ownership {owner?: string, faction?: string, factionRank?: integer}? sets ownership on the target object
 ---@field playsound string|{id?: string, file?: string, chance?: SSSChanceRange, volume?: number, pitch?: number, loop?: boolean, timeOffset?: number}? plays a 3D positional sound at the target
+---@field add_lua_script string? attaches a Lua script (VFS path) to the target object
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?

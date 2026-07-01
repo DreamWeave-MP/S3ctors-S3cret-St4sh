@@ -378,21 +378,22 @@ local function tryModifyObject(object, instanceModificationList)
 		for actIndex = 1, #instanceModification.actions do
 			local actionData = instanceModification.actions[actIndex]
 			if not actionData.chance or randomGen.float() <= actionData.chance then
-				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction =
-						actionData.replace,
-						actionData.transform,
-						actionData.add,
-						actionData.remove,
-						actionData.equip,
-						actionData.unequip,
-						actionData.disable,
-						actionData.delete,
-						actionData.create,
-						actionData.lock_level,
-						actionData.set_ownership,
-						actionData.playsound,
-						actionData.key,
-						actionData.trap
+				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction, addLuaScriptAction =
+					actionData.replace,
+					actionData.transform,
+					actionData.add,
+					actionData.remove,
+					actionData.equip,
+					actionData.unequip,
+					actionData.disable,
+					actionData.delete,
+					actionData.create,
+					actionData.lock_level,
+					actionData.set_ownership,
+					actionData.playsound,
+					actionData.key,
+					actionData.trap,
+					actionData.add_lua_script
 				local replaceActionSucceeded = false
 
 				--- Should we allow only one successful replacement???
@@ -488,6 +489,13 @@ local function tryModifyObject(object, instanceModificationList)
 					anyActionApplied = anyActionApplied or didPlay
 					currentRuleApplied = currentRuleApplied or didPlay
 					DebugLog('  playsound on %s: %s', objectId, didPlay and 'OK' or 'miss')
+				end
+
+				if addLuaScriptAction then
+					local didAdd = actionHandlers.add_lua_script(modifyTarget, addLuaScriptAction)
+					anyActionApplied = anyActionApplied or didAdd
+					currentRuleApplied = currentRuleApplied or didAdd
+					DebugLog('  add_lua_script on %s: OK', objectId)
 				end
 
 				if disableAction then
