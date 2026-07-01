@@ -28,41 +28,45 @@ local function TagLog(...)
     print(LogPrefix, ...)
 end
 
---- Load all tags from a tag file into memory
----@param tagTable TagTable
-local function loadTagData(tagTable)
-    for _, tagName in ipairs(tagTable.tags or {}) do
-        tagName = tagName:lower()
+---Process a single item entry for a given tag, adding it to the inverted index.
+---@param itemId string
+---@param tagName string
+local function applyItemTag(itemId, tagName)
+    if type(itemId) ~= 'string' then
+        return TagLog(itemId, 'in', tagName, 'is not a valid recordId! Skipping . . .')
+    end
+    itemId = itemId:lower()
+    AppliedTags[itemId] = AppliedTags[itemId] or {}
+    AppliedTags[itemId][tagName] = true
+end
 
-        if TagList[tagName] then
-            TagLog(tagName, 'is already defined! Skipping . . .')
-        elseif type(tagName) == 'string' then
-            TagList[tagName] = true
-        else
-            TagLog(tagName, 'is not a valid tag! Skipping . . .')
-        end
+---Process a single tag and its item list from a YAML table.
+---@param tagName string
+---@param itemList string[]
+local function processTag(tagName, itemList)
+    if type(tagName) ~= 'string' then
+        return TagLog(tagName, 'is not a valid tag name! Skipping . . .')
+    end
+    if type(itemList) ~= 'table' then
+        return TagLog(tagName, 'has a non-table item list. Skipping . . .')
     end
 
-    for taggedObject, tagList in pairs(tagTable.applied_tags or {}) do
-        if type(taggedObject) == 'string' then
-            taggedObject = taggedObject:lower()
+    tagName = tagName:lower()
+    TagList[tagName] = true
 
-            if not AppliedTags[taggedObject] then
-                AppliedTags[taggedObject] = {}
-            end
+    for i = 1, #itemList do
+        applyItemTag(itemList[i], tagName)
+    end
+end
 
-            for _, tagName in ipairs(tagList) do
-                if type(tagName) == 'string' then
-                    tagName = tagName:lower()
-                    AppliedTags[taggedObject][tagName] = true
-                else
-                    TagLog(tagName, 'is not a valid tag! Skipping . . .')
-                end
-            end
-
-        else
-            TagLog(taggedObject, 'is not a valid recordId! Skipping . . .')
-        end
+--- Load all tags from a tag file into memory.
+--- New flat format: { TagName = { recordId, recordId, ... }, ... }
+--- Tags are derived from the top-level keys; the inverted index (item → tags)
+--- is built here from the forward lists.
+---@param tagTable table<string, string[]>
+local function loadTagData(tagTable)
+    for tagName, itemList in pairs(tagTable) do
+        processTag(tagName, itemList)
     end
 end
 
