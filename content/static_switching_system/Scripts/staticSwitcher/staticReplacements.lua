@@ -4,7 +4,6 @@ local world = require 'openmw.world'
 
 local szudzik = require 'scripts.s3.szudzik'
 
----@type StaticUtil
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local DebugLog, InfoLog, WarnLog
@@ -243,17 +242,17 @@ local function rebuildReplacementChainIndexes()
 					local sourceObject, replacement = step.source, step.replacement
 
 					if
-						#sanitizedSteps >= MAX_REPLACEMENT_CHAIN_DEPTH
-						or not moduleName
-						or appliedModules[moduleName]
+							#sanitizedSteps >= MAX_REPLACEMENT_CHAIN_DEPTH
+							or not moduleName
+							or appliedModules[moduleName]
 					then
 						break
 					elseif
-						staticUtil.isGObject(sourceObject)
-						and staticUtil.isGObject(replacement)
-						and sourceObject:isValid()
-						and replacement:isValid()
-						and sourceObject.id == current.id
+							staticUtil.isGObject(sourceObject)
+							and staticUtil.isGObject(replacement)
+							and sourceObject:isValid()
+							and replacement:isValid()
+							and sourceObject.id == current.id
 					then
 						sanitizedSteps[#sanitizedSteps + 1] = step
 						appliedModules[moduleName] = true
@@ -289,11 +288,11 @@ end
 ---@param replacement any
 local function addImportEdge(sourceToEdge, replacementIds, moduleName, sourceObject, replacement)
 	if
-		type(moduleName) ~= 'string'
-		or not staticUtil.isGObject(sourceObject)
-		or not staticUtil.isGObject(replacement)
-		or not sourceObject:isValid()
-		or not replacement:isValid()
+			type(moduleName) ~= 'string'
+			or not staticUtil.isGObject(sourceObject)
+			or not staticUtil.isGObject(replacement)
+			or not sourceObject:isValid()
+			or not replacement:isValid()
 	then
 		return
 	end
@@ -513,14 +512,14 @@ local function replaceObject(object, replacementModule, replacementMesh, chain)
 	local oldModel = objectRecord.model
 
 	if
-		not oldModel
-		or not staticUtil.assertMeshExists(
-			replacementMesh,
-			oldModel,
-			objectRecord.id,
-			replacementModule,
-			ComposedReplacements[replacementModule].logString or 'StaticSwitchingSystem'
-		)
+			not oldModel
+			or not staticUtil.assertMeshExists(
+				replacementMesh,
+				oldModel,
+				objectRecord.id,
+				replacementModule,
+				ComposedReplacements[replacementModule].logString or 'StaticSwitchingSystem'
+			)
 	then
 		return
 	end
@@ -576,10 +575,10 @@ local function replacementTableMatchesCell(replacementTable, cell)
 	for nameIdx = 1, #nameMatches do
 		local cellName = nameMatches[nameIdx]
 		if
-			cellName == cellIdLower
-			or cellName == cellNameLower
-			or StrFind(cellNameLower, cellName, 1, true)
-			or StrFind(cellIdLower, cellName, 1, true)
+				cellName == cellIdLower
+				or cellName == cellNameLower
+				or StrFind(cellNameLower, cellName, 1, true)
+				or StrFind(cellIdLower, cellName, 1, true)
 		then
 			return true
 		end
@@ -590,7 +589,7 @@ end
 ---@return boolean
 local function moduleIsUninstallTarget(moduleName)
 	return SwitcherSection:get 'StaticSwitcherDisableModule'
-		and resolveModuleId(SwitcherSection:get 'StaticSwitcherModuleSelect') == moduleName
+			and resolveModuleId(SwitcherSection:get 'StaticSwitcherModuleSelect') == moduleName
 end
 
 ---@param object openmw.GObject
