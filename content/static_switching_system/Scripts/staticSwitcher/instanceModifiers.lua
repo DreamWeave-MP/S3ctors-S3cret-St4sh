@@ -411,6 +411,9 @@ local function tryModifyObject(object, instanceModificationList)
 					needsPlacementUpdate = needsPlacementUpdate or didReplace
 					currentRuleApplied = currentRuleApplied or didReplace
 					DebugLog('  replace on %s: %s', objectId, didReplace and 'OK' or 'failed (no matching roll)')
+					if didReplace then
+						markAppliedThisLoad(modifyTarget, instanceModification.moduleName, instanceModification.actionHash)
+					end
 				end
 
 				if transformAction then
