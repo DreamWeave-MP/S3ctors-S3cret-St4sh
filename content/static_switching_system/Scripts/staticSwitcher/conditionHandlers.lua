@@ -441,7 +441,7 @@ local conditionHandlers = {
 	---@param shouldBeGenerated boolean
 	---@return boolean
 	generated_object = function(object, shouldBeGenerated)
-		return (object.contentFile == nil) == shouldBeGenerated
+		return (not object.contentFile) == shouldBeGenerated
 	end,
 	---@param object openmw.GObject
 	---@param targetRegion string

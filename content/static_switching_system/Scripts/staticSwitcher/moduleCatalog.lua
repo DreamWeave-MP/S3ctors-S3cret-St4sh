@@ -215,7 +215,7 @@ end
 local function sortConditionByType(conditionData)
 	for condPrioIndex = 1, #CONDITIONPRIORITY do
 		local conditionName = CONDITIONPRIORITY[condPrioIndex]
-		if conditionData[conditionName] then
+		if conditionData[conditionName] ~= nil then
 			return condPrioIndex
 		end
 	end
@@ -226,7 +226,7 @@ end
 local function sortActionByType(actionData)
 	for actPrioIndex = 1, #ACTIONPRIORITY do
 		local actionName = ACTIONPRIORITY[actPrioIndex]
-		if actionData[actionName] then
+		if actionData[actionName] ~= nil then
 			return actPrioIndex
 		end
 	end
