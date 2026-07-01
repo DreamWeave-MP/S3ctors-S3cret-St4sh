@@ -168,6 +168,8 @@
 ---@field player_equipped string|string[]? Record ID(s) to match against any equipped item on the player. Exact match.
 ---@field current_weather string|string[]|table? Current weather in the player's cell: string for substring match, array for any-of, table with {isStorm, name} for storm/name filter (both must match when present). The value "none" matches when no weather is active (interiors).
 ---@field has_name boolean?
+---@field has_lua_script string|string[]? Lua script path(s) attached to the object. Exact match.
+---@field has_mwscript string|string[]? MWScript record ID(s) on the object. Exact, case-insensitive match. Returns false when no MWScript is attached.
 ---@field has_key boolean|string|string[]? Key state: boolean for any/none, string for exact key ID match, array for any-of. Non-lockable objects return false.
 ---@field has_trap boolean|string|string[]? Trap state: boolean for any/none, string for exact trap ID match, array for any-of. Non-lockable objects return false.
 ---@field locked boolean|number|table? Lock state: boolean for locked/unlocked, number for minimum lock level, table with {min, max} for range. Non-lockable objects return false.

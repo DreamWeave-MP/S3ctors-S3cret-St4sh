@@ -171,6 +171,50 @@ local conditionHandlers = {
 
 		return objectHasName == shouldHaveName
 	end,
+	has_lua_script = function(object, scriptPath)
+		if not object.type then
+			return false
+		end
+
+		if type(scriptPath) == 'string' then
+			return object:hasScript(scriptPath)
+		end
+
+		if scriptPath[1] then
+			for i = 1, #scriptPath do
+				if object:hasScript(scriptPath[i]) then
+					return true
+				end
+			end
+		end
+
+		return false
+	end,
+	has_mwscript = function(object, scriptData)
+		if not object.type then
+			return false
+		end
+
+		local objectRecord = object.type.records[object.recordId]
+		local mwscript = objectRecord and objectRecord.mwscript
+		if not mwscript then
+			return false
+		end
+
+		if type(scriptData) == 'string' then
+			return mwscript == scriptData
+		end
+
+		if scriptData[1] then
+			for i = 1, #scriptData do
+				if mwscript == scriptData[i] then
+					return true
+				end
+			end
+		end
+
+		return false
+	end,
 	locked = function(object, lockData)
 		local objType = object.type
 
@@ -396,7 +440,14 @@ local conditionHandlers = {
 			return object.scale == targetScale
 		end
 
-		return object.scale >= (targetScale.min or -math.huge) and object.scale <= targetScale.max
+		if targetScale.min and object.scale < targetScale.min then
+			return false
+		end
+		if targetScale.max and object.scale > targetScale.max then
+			return false
+		end
+
+		return true
 	end,
 	---@param object openmw.GObject
 	---@param targetWorldspace string

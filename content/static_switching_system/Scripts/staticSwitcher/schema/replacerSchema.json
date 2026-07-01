@@ -21,14 +21,15 @@
                         },
                         "max": {
                             "type": "number",
-                            "description": "Required maximum value"
+                            "description": "Optional maximum value"
                         }
                     },
-                    "required": [
-                        "max"
+                    "anyOf": [
+                        {"required": ["min"]},
+                        {"required": ["max"]}
                     ],
                     "additionalProperties": false,
-                    "description": "Random range with optional lower bound"
+                    "description": "Range with at least one bound"
                 }
             ]
         },
@@ -656,6 +657,14 @@
                 },
                 "has_name": {
                     "type": "boolean"
+                },
+                "has_lua_script": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Lua script path(s) attached to the object. Exact match against VFS path."
+                },
+                "has_mwscript": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "MWScript record ID(s) on the object. Exact match, case-insensitive. Returns false when no MWScript is attached."
                 },
                 "locked": {
                     "oneOf": [
