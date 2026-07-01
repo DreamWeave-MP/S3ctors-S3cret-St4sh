@@ -112,7 +112,7 @@
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, set_ownership, add, remove, equip, unequip, lock_level, key, trap, create, playsound, disable, delete.
+--- Combined actions run in priority order: replace, transform, teleport, set_ownership, add, remove, equip, unequip, lock_level, key, trap, create, global_set, playsound, add_lua_script, activate_by_player, remove_lua_script, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
