@@ -427,12 +427,12 @@ end
 ---@param moduleName string
 ---@return string? removedModule
 local function uninstallModule(moduleName)
-	moduleName = resolveModuleId(moduleName)
-	if not moduleName then
+	local resolvedName = resolveModuleId(moduleName)
+	if not resolvedName then
 		return WarnLog(StrFormat('uninstallModule: %s could not be resolved', moduleName))
 	end
 
-	InfoLog('Uninstalling module: %s', moduleName)
+	InfoLog('Uninstalling module: %s', resolvedName)
 	local removedModule
 
 	for uninstIdx = 1, #ReplacementChains.entries do
@@ -441,7 +441,7 @@ local function uninstallModule(moduleName)
 
 		for stepIndex = 1, #chain.steps do
 			local step = chain.steps[stepIndex]
-			if step.moduleName == moduleName then
+			if step.moduleName == resolvedName then
 				firstRemovedStepIndex = stepIndex
 				break
 			end
@@ -462,10 +462,10 @@ local function uninstallModule(moduleName)
 					moduleReplacements[step.replacement] = nil
 				end
 				DeleteManager:addObjectToDeleteQueue(step.replacement, true)
-				chain.steps[stepIndex] = nil
+				chain.steps[revIdx] = nil
 			end
 
-			removedModule = moduleName
+			removedModule = resolvedName
 		end
 	end
 
