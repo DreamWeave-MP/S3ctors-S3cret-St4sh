@@ -249,7 +249,7 @@ local function capitalize(inputString)
 	return StrFormat(TITLE_CAP_FORMAT_STR, StrUpper(StrSub(inputString, 1, 1)), StrSub(inputString, 2, stringLength))
 end
 
----@class StaticUtil
+---@type StaticUtil
 return {
 	assertMeshExists = assertMeshExists,
 	deepCopy = deepCopy,
