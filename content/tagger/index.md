@@ -1,14 +1,13 @@
 ---
 title: Tagger
-description: Tagger is an attempt to reimplement Skyrim's system of adding tags to records/objects in-game, in OpenMW.
-date: 2025-04-27
+description: A community tagging standard for Morrowind records and cells. Tags dungeons, items, NPCs, ingredients, civic spaces, and more. Built as a dependency for mods like Static Switching System.
+date: 2025-07-01
 
 taxonomies:
   tags:
     - OpenMW-Lua
     - Frameworks
     - Dependencies
-    - Skyrim Features
 
 extra:
   install_info:
@@ -17,51 +16,130 @@ extra:
     content_files:
       - Tagger.esp
 
-  version: 0.5
+  version: 1.0.0
 ---
 
-While eventually Skyrim's literal format could be supported, this is most likely a long ways off and not necessarily practical for Morrowind modders. MTM attempts to bridge the gap, by making it easy to create and use tags for classifying objects - like, which cells are dungeons, or merchants, or distinguishing bandages from regular medical supplies, etc.
+Tagger is a lightweight, zero-overhead tagging framework for Morrowind on OpenMW. It lets mods ask questions like "is this cell a dungeon?" or "does this NPC belong to the Camonna Tong?" — without hardcoding IDs or guessing.
 
-End users will need this as a dependency of other mods (hopefully), but it doesn't do much of anything in itself. Read on past the installation guide for developer's notes.
+Nothing happens in-game just by installing Tagger. It's a dependency. Other mods use it.
 
-## Using Tags
+## Built-In Tags
 
-Tags are stored as yaml files under the subdirectory `ModTags` of any `data=` entry in openmw.cfg. When properly installed, Tagger includes a (hopefully growing) built-in set of tag definitions for the vanilla plugins, as well as some popular mods. Contributions to Tagger's built-in tags and associations are welcome and desired. The rest of this category will describe how to create tags and attach them to any object desired. This includes cells, quests, objects in the game world, or whatever other thing you can represent as a string in Lua.
+Tagger ships with six tag datasets covering the vanilla game and its DLCs:
 
-### Yaml Schema
+<!-- more -->
 
-Every Tagger definition file should have either or both of the following fields:
+| Module | Tags | What It Covers |
+|---|---|---|
+| `dungeon_tags.yaml` | 12 | 576 dungeon cells plus subcategories (mine, cave, daedric, dwemer, tomb, shipwreck, sewer, stronghold) |
+| `item_tags.yaml` | 42 | Weapon and armor materials, clothing tiers, enchanted items, unique gear |
+| `civic_tags.yaml` | 5 | Taverns, merchants, Tribunal Temples, Imperial Cult shrines |
+| `npc_tags.yaml` | 22 | Bandits, Sixth House, vampires, necromancers, assassins, faction enemies — with vanilla-specific variants |
+| `ingr_tags.yaml` | 9 | Edible vs. inedible ingredients, plants, fungi, minerals, animal parts, magical, quest |
+| `item_origins.yaml` | 5 | Item origins: Morrowind, Skyrim, Cyrodiil, Orsinium, Elsweyr |
 
-`tags` is a list of tag names to be used. It might look like this:
+All tags use the record IDs from `Morrowind.esm`, `Tribunal.esm`, and `Bloodmoon.esm`. Case-insensitive.
 
-        tags:
-          - "ArmorDwarven"
-          - "ArmorIron"
-          - "ArmorGlass"
+## YAML Format
 
-These will then be made available to other modders through the Tagger interface.
+Tag data files live in a `ModTags/` directory under any `data=` path in `openmw.cfg`. The format is simple — each top-level key is a tag name, and its value is a list of record IDs:
 
-`applied_tags` is a map of tagged objects to the list of tags they actually use. Multiple mods may add as many tags as they wish to the same object as many times as they like. Tags may not be removed by design.
+```yaml
+CellDungeon:
+  - "addamasartus"
+  - "ald daedroth, inner shrine"
+  - "arkngthand, cells of hollow hand"
 
-        applied_tags:
-          "Seyda Neen, Arrille's Tradehouse":
-            - "CellMerchant"
-          "Arkngthand, Halls of Hollow Hand":
-            - "CellDungeon"
-            - "CellDwemer"
-            - "CellDwemerDungeon"
-            - "CellMainQuest" 
-          "Caius Cosades":
-            - "NPCMainQuest"
+NPCBandit:
+  - "adraria nilor"
+  - "agrob gro-bolmog"
+```
 
-When Tagger is loaded, all tags are loaded immediately and made available in all script contexts. Tags are stored inside of a global storage section which only lives through the length of your play session.
-This means that Tagger doesn't occupy unnecessary space in your save file, is always as up to date as it can be, and can be used by any object in the game. Also, note that it's not necessarily a requirement that tags are associated with a specific gameObject. You can apply tags to anything you can represent as a string in a yaml file, so feel free to make up your own associations, such as with quests or even specific MWScripts.
+That's it. No wrapper keys, no `tags` list, no `applied_tags` map. Create as many files as you want. Tagger loads them all.
 
-### API
+## API
 
-For scripters whom are not creating their own tag definitions but derivative scripts (you can do both!) there are mostly four values you'd care about.
-Global scripts can access Tagger's features through `I.TaggerG`, whereas all other scripts can access them through `I.TaggerL`. Both the global list of tags and all applied tags are available as the values `I.TaggerL.TagList` or `I.TaggerL.AppliedTags`. Calls to these functions normalize your inputs, so don't worry about case sensitivity.
+Tagger exposes two interfaces: `I.TaggerG` (global scripts) and `I.TaggerL` (all other contexts). Both have the same functions. Every function that accepts an object also accepts a raw string record ID — case doesn't matter.
 
-You can check if an object has a tag, or read its entire tag list like so:
-        I.TaggerL.objectHasTag(self, "NPCMainQuest")
-        I.TaggerL.objectTags(self)
+### Querying Tags
+
+**`objectHasTag(object, tag)`** — returns `true` if the object has the tag. `tag` can be a single string or an array of strings (returns `true` on the first match).
+
+```lua
+if I.TaggerL.objectHasTag(self.cell, "CellDungeonDaedric") then
+    -- do something in daedric ruins
+end
+
+if I.TaggerL.objectHasTag(self, {"NPCBandit", "NPCSixthHouse"}) then
+    -- target is either a bandit or a Sixth House cultist
+end
+```
+
+**`objectTags(object)`** — returns a table of all tags on an object (read-only).
+
+```lua
+local tags = I.TaggerL.objectTags(self)
+if tags.NPCBandit then
+    -- ...
+end
+```
+
+**`getRecordsWithTag(tag)`** — returns an array of all record IDs that have a given tag.
+
+```lua
+local dungeons = I.TaggerG.getRecordsWithTag("CellDungeonMorrowind")
+log(#dungeons .. " dungeon cells found")
+```
+
+**`tagList()`** — returns the set of all registered tag names.
+
+**`appliedTags()`** — returns the full `{recordId: {tagName: true}}` map (read-only).
+
+### Modifying Tags
+
+**`addTag(object, tag)`** — adds one or more tags to an object. `tag` can be a single string or an array.
+
+```lua
+I.TaggerG.addTag(someNPC, "QuestActive")
+I.TaggerG.addTag(someCell, {"CellExplored", "CellCleared"})
+```
+
+**`removeTag(object, tag)`** — removes one or more tags from an object.
+
+```lua
+I.TaggerG.removeTag(someNPC, "QuestActive")
+```
+
+Tags added or removed at runtime are visible immediately and persist for the session.
+
+### Type Reference
+
+| Type | Meaning |
+|---|---|
+| `Tagger.Taggable` | A string record ID, or any OpenMW game object (`GObject`, `LObject`, `SelfObject`), or a cell (`GCell`, `LCell`) |
+| `Tagger.ObjectTag` | A tag name string |
+| `Tagger.TagArg` | A single tag string or an array of tag strings |
+| `Tagger.ObjectTagList` | A set of tag names (`{[tag] = true}`) |
+| `Tagger.AppliedTags` | The full record-to-tag map (`{[recordId] = ObjectTagList}`) |
+
+## For Mod Authors: Adding Tags
+
+Drop a `.yaml` file into any `ModTags/` directory. Use the format above: top-level keys are tag names, values are arrays of record IDs. Tagger loads all files at startup, one key per frame, so even large files won't cause a hitch.
+
+```yaml
+# MyMod_tags.yaml
+QuestActive:
+  - "caldera_mine_slave_key"
+  - "dwemer_boots_auriels"
+
+CellCleared:
+  - "addamasartus"
+  - "gnisis, eggmine"
+```
+
+## Technical Notes
+
+- Tags are loaded via a coroutine that yields between YAML keys — zero frame hitches.
+- All storage writes are deferred until loading completes. Runtime tag mutations are atomic.
+- The `TagList` catalogue prunes automatically when the last instance of a tag is removed.
+- Storage lifetime is `Temporary` — nothing persists in your save file. Tags rebuild fresh each session.
