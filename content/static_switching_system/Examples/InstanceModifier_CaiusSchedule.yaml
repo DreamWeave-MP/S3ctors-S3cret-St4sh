@@ -1,0 +1,61 @@
+log_name: Caius Cosades Daily Schedule
+priority: remodel
+
+instances:
+  # Caius hangs out on his roof in the mornings
+  - conditions:
+      - record_id: caius cosades
+      - cell_match: "Balmora, Caius Cosades' House"
+      - time_of_day:
+          min: 8
+          max: 13
+    actions:
+      - teleport:
+          cell:
+            x: -2
+            y: -2
+          position:
+            x: -15371
+            y: -12604
+            z: 759
+    once: per_cell
+
+  # Then he goes to drink with his friends in the evening
+  - conditions:
+      - record_id: caius cosades
+      - exterior: true
+      - coords:
+          - x: -2
+            y: -2
+      - time_of_day:
+          min: 13
+          max: 20
+    actions:
+      - teleport:
+          cell: "balmora, south wall cornerclub"
+          position:
+            x:	771
+            y:	754
+            z:	-250
+    once: per_cell
+
+  # Then he goes home for the night
+  - conditions:
+      - record_id: caius cosades
+      - cell_match: "balmora, south wall cornerclub"
+      - time_of_day:
+          min: 20
+          max: 8
+    actions:
+      - teleport:
+          cell: "balmora, caius cosades' house"
+          position:
+            x: -74
+            y: -192
+            z: 70
+          rotation:
+            x: 1.6758620738983	
+            y: -0.27589106559753	
+            z: -0.028718255460262
+
+    once: per_cell
