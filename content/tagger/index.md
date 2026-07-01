@@ -15,7 +15,7 @@ extra:
     data_directories:
       - .
     content_files:
-      - ModTags.omwscripts
+      - Tagger.esp
 
   version: 0.5
 ---
