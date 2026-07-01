@@ -112,7 +112,7 @@
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, teleport, set_ownership, add, remove, equip, unequip, lock_level, key, trap, create, global_set, playsound, add_lua_script, activate_by_player, remove_lua_script, disable, delete.
+--- Combined actions run in priority order: replace, transform, teleport, set_ownership, add_tag, remove_tag, add, remove, equip, unequip, lock_level, key, trap, create, global_set, playsound, add_lua_script, activate_by_player, remove_lua_script, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -135,6 +135,8 @@
 ---@field key false|table<string, SSSChanceRange>[]? sets or removes key; each entry is `{recordId: chance}`; first passing entry wins
 ---@field trap false|table<string, SSSChanceRange>[]? sets or removes trap; each entry is `{recordId: chance}`; first passing entry wins
 ---@field set_ownership {owner?: string, faction?: string, factionRank?: integer}? sets ownership on the target object
+---@field add_tag string? assigns a Tagger tag to the target object
+---@field remove_tag string? removes a Tagger tag from the target object
 ---@field playsound string|{id?: string, file?: string, chance?: SSSChanceRange, volume?: number, pitch?: number, loop?: boolean, timeOffset?: number}? plays a 3D positional sound at the target
 ---@field add_lua_script string? attaches a Lua script (VFS path) to the target object
 ---@field activate_by_player boolean? activates the target object as if the player used it

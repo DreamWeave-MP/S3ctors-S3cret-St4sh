@@ -378,26 +378,28 @@ local function tryModifyObject(object, instanceModificationList)
 		for actIndex = 1, #instanceModification.actions do
 			local actionData = instanceModification.actions[actIndex]
 			if not actionData.chance or randomGen.float() <= actionData.chance then
-				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction, addLuaScriptAction, activateByPlayerAction, removeLuaScriptAction, globalSetAction, teleportAction =
-					actionData.replace,
-					actionData.transform,
-					actionData.add,
-					actionData.remove,
-					actionData.equip,
-					actionData.unequip,
-					actionData.disable,
-					actionData.delete,
-					actionData.create,
-					actionData.lock_level,
-					actionData.set_ownership,
-					actionData.playsound,
-					actionData.key,
-					actionData.trap,
-					actionData.add_lua_script,
-					actionData.activate_by_player,
-					actionData.remove_lua_script,
-					actionData.global_set,
-					actionData.teleport
+				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction, addLuaScriptAction, activateByPlayerAction, removeLuaScriptAction, globalSetAction, teleportAction, addTagAction, removeTagAction =
+						actionData.replace,
+						actionData.transform,
+						actionData.add,
+						actionData.remove,
+						actionData.equip,
+						actionData.unequip,
+						actionData.disable,
+						actionData.delete,
+						actionData.create,
+						actionData.lock_level,
+						actionData.set_ownership,
+						actionData.playsound,
+						actionData.key,
+						actionData.trap,
+						actionData.add_lua_script,
+						actionData.activate_by_player,
+						actionData.remove_lua_script,
+						actionData.global_set,
+						actionData.teleport,
+						actionData.add_tag,
+						actionData.remove_tag
 				local replaceActionSucceeded = false
 
 				--- Should we allow only one successful replacement???
@@ -435,6 +437,20 @@ local function tryModifyObject(object, instanceModificationList)
 					anyActionApplied = anyActionApplied or didSet
 					currentRuleApplied = currentRuleApplied or didSet
 					DebugLog('  set_ownership on %s: %s', objectId, didSet and 'OK' or 'noop')
+				end
+
+				if addTagAction then
+					actionHandlers.add_tag(modifyTarget, addTagAction)
+					anyActionApplied = true
+					currentRuleApplied = true
+					DebugLog('  add_tag on %s', objectId)
+				end
+
+				if removeTagAction then
+					actionHandlers.remove_tag(modifyTarget, removeTagAction)
+					anyActionApplied = true
+					currentRuleApplied = true
+					DebugLog('  remove_tag on %s', objectId)
 				end
 
 				if addAction then
