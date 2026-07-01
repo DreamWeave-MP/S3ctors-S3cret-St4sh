@@ -69,6 +69,7 @@ local ACTIONPRIORITY = {
 	'trap',
 	'create',
 	'playsound',
+	'add_lua_script',
 	'disable',
 	'delete',
 }

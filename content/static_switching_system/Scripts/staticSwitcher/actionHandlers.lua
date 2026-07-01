@@ -612,6 +612,10 @@ local actionHandlers = {
 
 		return false
 	end,
+	['add_lua_script'] = function(object, scriptPath)
+		object:addScript(scriptPath)
+		return true
+	end,
 }
 
 return actionHandlers
