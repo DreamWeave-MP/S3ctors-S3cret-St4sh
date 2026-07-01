@@ -19,6 +19,13 @@ local StrFormat = string.format
 
 local next, pairs, pcall, type = next, pairs, pcall, type
 
+local addTag, removeTag
+local I = require 'openmw.interfaces'
+if I.TaggerG then
+	addTag = I.TaggerG.addTag
+	removeTag = I.TaggerG.removeTag
+end
+
 local rotateX = util.transform.rotateX
 local rotateY = util.transform.rotateY
 local rotateZ = util.transform.rotateZ
@@ -690,6 +697,22 @@ local actionHandlers = {
 		end
 
 		object:teleport(targetCell, targetPos, options)
+		return true
+	end,
+	['add_tag'] = function(object, tag)
+		if not addTag then
+			return false
+		end
+
+		addTag(object, tag)
+		return true
+	end,
+	['remove_tag'] = function(object, tag)
+		if not removeTag then
+			return false
+		end
+
+		removeTag(object, tag)
 		return true
 	end,
 }

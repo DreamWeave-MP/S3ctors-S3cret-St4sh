@@ -293,6 +293,14 @@
                 "transform": {
                     "$ref": "#/definitions/transformAction"
                 },
+                "add_tag": {
+                    "type": "string",
+                    "description": "Tagger tag to assign to the target object. Requires Tagger mod."
+                },
+                "remove_tag": {
+                    "type": "string",
+                    "description": "Tagger tag to remove from the target object. Requires Tagger mod."
+                },
                 "add": {
                     "$ref": "#/definitions/itemAction",
                     "description": "Queues one or more items to be added to the current action target's inventory when the target is an Actor or Container."
@@ -531,6 +539,16 @@
                 {
                     "required": [
                         "set_ownership"
+                    ]
+                },
+                {
+                    "required": [
+                        "add_tag"
+                    ]
+                },
+                {
+                    "required": [
+                        "remove_tag"
                     ]
                 },
                 {

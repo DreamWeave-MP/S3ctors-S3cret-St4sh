@@ -61,6 +61,8 @@ local ACTIONPRIORITY = {
 	'transform',
 	'teleport',
 	'set_ownership',
+	'add_tag',
+	'remove_tag',
 	'add',
 	'remove',
 	'equip',
