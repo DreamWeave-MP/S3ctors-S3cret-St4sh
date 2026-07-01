@@ -139,6 +139,24 @@ local function actorSpells(object)
 	return spells
 end
 
+local function objectRecord(object)
+	if not object.type then
+		return nil
+	end
+
+	local byObject = Cache._records
+	if not byObject then
+		byObject = {}
+		Cache._records = byObject
+	end
+	local record = byObject[object.id]
+	if not record then
+		record = object.type.records[object.recordId]
+		byObject[object.id] = record
+	end
+	return record
+end
+
 local function globalVariables()
 	local byPlayer = Cache._globals
 	if not byPlayer then
@@ -163,4 +181,5 @@ return {
 	dynamicStat = dynamicStat,
 	actorSpells = actorSpells,
 	globalVariables = globalVariables,
+	objectRecord = objectRecord,
 }
