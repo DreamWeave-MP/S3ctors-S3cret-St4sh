@@ -46,43 +46,48 @@ local function emitTargetsChanged()
 end
 
 local function onUpdate(dt)
-    --- If the actor is dead, or simply out of processing range, we can handoff to the next actor in the chain immediately
-    if IsDeathFinished(self) or not IsInActorsProcessingRange(self) then
-        if next(Targets) then
-            clear(Targets)
-            emitTargetsChanged()
-        end
+    local startedWithTargets = next(Targets) ~= nil
+    local isDead = IsDeathFinished(self) or not IsInActorsProcessingRange(self)
 
-        return
+    local shouldClear = isDead and startedWithTargets
+    local shouldSkipFetch = isDead
+
+    if not shouldSkipFetch then
+        shouldSkipFetch = (GetStance(self) == UnarmedStance)
+            and not startedWithTargets
+            and not IsFleeing()
+            and dt > 0
     end
 
-    -- Early-out for actors without targets and without combat state when the game is not paused
+    if shouldClear then
+        clear(Targets)
+    end
+
     -- TODO: use events or engine handlers to detect when targets change
-    if (GetStance(self) == UnarmedStance) and not next(Targets) and not IsFleeing() and dt > 0 then
-        return
-    end
 
-    local newTargets = GetTargets 'Combat'
+    local changed = shouldClear
 
-    local changed, numTargets = false, #Targets
-    if #newTargets ~= numTargets then
-        changed = true
-    else
-        for i = 1, numTargets do
-            local target = Targets[i]
+    if not shouldSkipFetch then
+        local newTargets = GetTargets 'Combat'
+        local numTargets = #Targets
 
-            if target ~= newTargets[i] then
-                changed = true
-                break
+        if #newTargets ~= numTargets then
+            changed = true
+        else
+            for i = 1, numTargets do
+                if Targets[i] ~= newTargets[i] then
+                    changed = true
+                    break
+                end
             end
         end
+
+        Targets = newTargets
     end
 
-    Targets = newTargets
-
-    if not changed then return end
-
-    emitTargetsChanged()
+    if changed then
+        emitTargetsChanged()
+    end
 end
 
 local function onInactive()
