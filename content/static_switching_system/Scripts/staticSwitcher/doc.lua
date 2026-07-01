@@ -184,6 +184,8 @@
 ---@field cell_tag string|string[]? Tagger tag(s) on the object's cell. Requires Tagger mod. Match any.
 ---@field is_dead boolean? Whether the target actor is dead. Non-actors return false.
 ---@field creature_type string|number|(string|number)[]? Target creature type (creatures/daedra/undead/humanoid). Non-creatures return false.
+---@field has_enchantment boolean? Whether the target object has an enchantment.
+---@field enchantment string|string[]? Enchantment ID on the target object. Exact, case-insensitive match. Returns false when no enchantment is present.
 ---@field race string|string[]? Target NPC race ID. Exact, case-insensitive match. Non-NPCs return false.
 ---@field target_disposition number|table? Target NPC disposition toward the player. Non-NPCs return false.
 ---@field has_key boolean|string|string[]? Key state: boolean for any/none, string for exact key ID match, array for any-of. Non-lockable objects return false.
