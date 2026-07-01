@@ -103,6 +103,7 @@ local CONDITIONPRIORITY = {
 	'carrying',
 	--- Journal gates are relatively expensive (player/quest lookup); evaluated last
 	'has_journal',
+	'global_value',
 	'player_level',
 	'target_level',
 	'player_attribute',
@@ -235,6 +236,7 @@ local LOWERED_CONDITION_KEYS = {
 	has_key = true,
 	has_trap = true,
 	has_mwscript = true,
+	global_value = 'arrayKeys',
 }
 
 --- Pre-lowercase string condition values at module load time so handlers
@@ -255,6 +257,17 @@ local function sanitizeConditionValue(conditionName, conditionValue)
 				lowered[StrLower(k)] = v
 			end
 			return lowered
+		end
+		return conditionValue
+	end
+
+	if keyPolicy == 'arrayKeys' then
+		if type(conditionValue) == 'table' then
+			for i = 1, #conditionValue do
+				local k, v = next(conditionValue[i])
+				conditionValue[i][StrLower(k)] = v
+				conditionValue[i][k] = nil
+			end
 		end
 		return conditionValue
 	end

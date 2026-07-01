@@ -613,6 +613,32 @@ local conditionHandlers = {
 	['player_spell'] = function(_, spellData)
 		return BatchCache.actorSpells()[spellData] ~= nil
 	end,
+	['global_value'] = function(_, globalData)
+		local globals = BatchCache.globalVariables()
+
+		for i = 1, #globalData do
+			local varName, varValue = next(globalData[i])
+			local value = globals[varName]
+			if not value then
+				return false
+			end
+
+			if type(varValue) == 'number' then
+				if value < varValue then
+					return false
+				end
+			else
+				if varValue.min and value < varValue.min then
+					return false
+				end
+				if varValue.max and value > varValue.max then
+					return false
+				end
+			end
+		end
+
+		return true
+	end,
 	['target_spell'] = function(object, spellData)
 		local spells = BatchCache.actorSpells(object)
 		if not spells then

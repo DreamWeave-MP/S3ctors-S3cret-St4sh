@@ -4,8 +4,9 @@
 
 local types = require 'openmw.types'
 local core = require 'openmw.core'
+local world = require 'openmw.world'
 
-local Player = require('openmw.world').players[1]
+local Player = world.players[1]
 
 local Cache = {}
 
@@ -141,6 +142,20 @@ local function actorSpells(object)
 	return spells
 end
 
+local function globalVariables()
+	local byPlayer = Cache._globals
+	if not byPlayer then
+		byPlayer = {}
+		Cache._globals = byPlayer
+	end
+	local globals = byPlayer[Player.id]
+	if not globals then
+		globals = world.mwscript.getGlobalVariables(Player)
+		byPlayer[Player.id] = globals
+	end
+	return globals
+end
+
 return {
 	clear = clearCache,
 	playerQuests = playerQuests,
@@ -150,4 +165,5 @@ return {
 	skillStat = skillStat,
 	dynamicStat = dynamicStat,
 	actorSpells = actorSpells,
+	globalVariables = globalVariables,
 }

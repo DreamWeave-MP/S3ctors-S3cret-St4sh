@@ -593,6 +593,30 @@
                     "$ref": "#/definitions/conditionData",
                     "description": "Invert a single inner condition. The value is a condition table like {nameMatch: \"Guard\"} — the inner condition is evaluated and the result negated."
                 },
+                "global_value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "patternProperties": {
+                            "^.*$": {
+                                "oneOf": [
+                                    {"type": "number"},
+                                    {
+                                        "type": "object",
+                                        "properties": {"min": {"type": "number"}, "max": {"type": "number"}},
+                                        "anyOf": [{"required": ["min"]}, {"required": ["max"]}],
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            }
+                        },
+                        "minProperties": 1,
+                        "maxProperties": 1,
+                        "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "description": "MWScript global variable gate. Ordered array of single-key tables. Each entry checked in order; all must pass (AND)."
+                },
                 "has_journal": {
                     "type": "object",
                     "properties": {
