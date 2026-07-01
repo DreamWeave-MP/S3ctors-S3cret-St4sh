@@ -297,3 +297,26 @@
 ---@field currentWeather fun(cell: openmw.core.Cell): openmw.core.WeatherRecord? Returns current weather for a cell, cached per batch.
 ---@field attributeStat fun(object: openmw.GObject?, attrId: string): openmw.types.AttributeStat Returns cached attribute stat; defaults to Player when object is nil.
 ---@field skillStat fun(object: openmw.GObject?, skillId: string): openmw.types.SkillStat Returns cached skill stat; defaults to Player when object is nil.
+
+---@class SSSModuleIdentity
+---@field id string canonical module id (normalized path)
+---@field path string normalized module path
+---@field displayName string base filename without extension
+---@field label string relative path label
+
+---@class StaticUtil
+---@field assertMeshExists fun(modelPath: string, originalModel: string, recordId: string, moduleName: string, logString: string): boolean?
+---@field deepCopy fun(inputTarget: table?, source: table?): table
+---@field deepLog fun(object: any)
+---@field getMeshPath fun(path: string): string
+---@field isGObject fun(value: any): boolean
+---@field getObjectReplacement fun(object: openmw.GObject, replacementModules: table<string, SSSModule>): string?, string?
+---@field getPathBaseName fun(path: string): string
+---@field getReplacementMeshForObject fun(meshMap: ReplacementMap, object: openmw.GObject): string?
+---@field Log fun(message: string, prefix: string?)
+---@field LogString fun(message: string, prefix: string?): string
+---@field normalizePath fun(path: string): string
+---@field Record fun(object: openmw.GObject): openmw.types.ActivatorRecord|openmw.types.StaticRecord
+---@field getRefNum fun(object: openmw.GObject): boolean, number
+---@field mergeTables fun(target: table, source: table, is_array: boolean?): table
+---@field capitalize fun(inputString: string): string
