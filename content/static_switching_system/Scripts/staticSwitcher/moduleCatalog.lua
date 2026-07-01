@@ -93,6 +93,8 @@ local CONDITIONPRIORITY = {
 	'mesh',
 	'scale',
 	'has_name',
+	'has_lua_script',
+	'has_mwscript',
 	'locked',
 	'has_key',
 	'has_trap',
@@ -230,6 +232,7 @@ local LOWERED_CONDITION_KEYS = {
 	worldspace = true,
 	has_key = true,
 	has_trap = true,
+	has_mwscript = true,
 }
 
 --- Pre-lowercase string condition values at module load time so handlers
