@@ -24,6 +24,8 @@ TagSection:subscribe(async:callback(
 			AppliedTags = TagSection:get(key)
 		elseif key == 'TagList' then
 			TagList = TagSection:get(key)
+		elseif key == 'TagToRecords' then
+			TagToRecords = TagSection:get(key)
 		end
 	end
 ))
@@ -226,6 +228,7 @@ local function markLoadingComplete()
 	---@cast TagSection openmw.storage.MutableStorageSection
 	TagSection:set('TagList', TagList)
 	TagSection:set('AppliedTags', AppliedTags)
+	TagSection:set('TagToRecords', TagToRecords)
 	loadingComplete = true
 end
 
@@ -287,6 +290,7 @@ if isGlobal then
 		---@cast TagSection openmw.storage.MutableStorageSection
 		TagSection:set('AppliedTags', AppliedTags)
 		TagSection:set('TagList', TagList)
+		TagSection:set('TagToRecords', TagToRecords)
 	end
 
 	return Interface(addTagGlobal, removeTagGlobal)
