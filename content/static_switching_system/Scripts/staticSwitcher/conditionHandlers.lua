@@ -109,7 +109,8 @@ local conditionHandlers = {
 			cellName = StrLower(cellName)
 		end
 
-		return (cellName and StrFind(cellName, matchStr, 1, true)) or (cellId and StrFind(cellId, matchStr, 1, true))
+		return (cellName and StrFind(cellName, matchStr, 1, true) ~= nil)
+				or (cellId and StrFind(cellId, matchStr, 1, true) ~= nil)
 	end,
 	---@param object openmw.GObject
 	---@param cellCoords ExteriorGrid
@@ -125,7 +126,7 @@ local conditionHandlers = {
 	---@return boolean
 	content_file = function(object, contentFileName)
 		return (object.contentFile == contentFileName)
-			or (not object.contentFile and StrUpper(contentFileName) == 'GENERATED')
+				or (not object.contentFile and StrUpper(contentFileName) == 'GENERATED')
 	end,
 	---@param object openmw.GObject
 	---@param shouldBeExterior boolean
@@ -278,7 +279,7 @@ local conditionHandlers = {
 
 		return false
 	end,
-	---@param object openmw.GObject
+	---@param _ openmw.GObject
 	---@param params { quest: string, index?: integer, min?: integer, max?: integer }
 	---@return boolean
 	has_journal = function(_, params)
@@ -315,7 +316,7 @@ local conditionHandlers = {
 		end
 
 		return staticUtil.normalizePath(staticUtil.getMeshPath(objectMesh))
-			== staticUtil.normalizePath(staticUtil.getMeshPath(targetMesh))
+				== staticUtil.normalizePath(staticUtil.getMeshPath(targetMesh))
 	end,
 	---@param object openmw.GObject
 	---@param targetTypeName string
@@ -377,6 +378,8 @@ local conditionHandlers = {
 	---@return boolean
 	region = function(object, targetRegion)
 		local cell = object.cell
+		---@cast cell openmw.core.GCell
+		---@type string?
 		local region = cell.region
 
 		if not region and not cell.isExterior then

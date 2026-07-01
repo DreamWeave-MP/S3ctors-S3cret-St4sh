@@ -10,7 +10,7 @@ local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
 local DebugLog
 do
 	local logger = require 'Scripts.staticSwitcher.logger'
-	DebugLog = DebugLog
+	DebugLog = logger.debug
 end
 
 local StrFormat = string.format
@@ -142,7 +142,7 @@ end
 --- Clears the per-cell tracking table. Called from the activation listener when
 --- the ActiveObjectStack was empty, indicating a fresh cell-load batch.
 local function clearPerCellTracking()
-	logger.debug 'Cleared per-cell tracking for new cell-load batch'
+	DebugLog 'Cleared per-cell tracking for new cell-load batch'
 	PerCellApplied = {}
 end
 
@@ -151,9 +151,9 @@ local function loadOnceCache(savedOnceCache)
 	resetOnceCache()
 
 	if
-		type(savedOnceCache) ~= 'table'
-		or savedOnceCache.schemaVersion ~= ONCE_CACHE_SCHEMA_VERSION
-		or type(savedOnceCache.entries) ~= 'table'
+			type(savedOnceCache) ~= 'table'
+			or savedOnceCache.schemaVersion ~= ONCE_CACHE_SCHEMA_VERSION
+			or type(savedOnceCache.entries) ~= 'table'
 	then
 		return
 	end
@@ -293,18 +293,18 @@ local function getMatchingInstanceModules(object)
 
 			-- Action conditions have been evaluated already, and this action can only run once
 			if
-				not skipReason
-				and actionData.once == true
-				and onceActionWasApplied(object, moduleName, actionTableHash)
+					not skipReason
+					and actionData.once == true
+					and onceActionWasApplied(object, moduleName, actionTableHash)
 			then
 				skipReason = 'once=true already applied'
 			end
 
 			-- Per-cell once: only skip for this cell-load session; not saved
 			if
-				not skipReason
-				and actionData.once == 'per_cell'
-				and wasAppliedThisLoad(object, moduleName, actionTableHash)
+					not skipReason
+					and actionData.once == 'per_cell'
+					and wasAppliedThisLoad(object, moduleName, actionTableHash)
 			then
 				skipReason = 'once=per_cell already applied this load'
 			end
@@ -375,20 +375,20 @@ local function tryModifyObject(object, instanceModificationList)
 			local actionData = instanceModification.actions[actIndex]
 			if not actionData.chance or randomGen.float() <= actionData.chance then
 				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction =
-					actionData.replace,
-					actionData.transform,
-					actionData.add,
-					actionData.remove,
-					actionData.equip,
-					actionData.unequip,
-					actionData.disable,
-					actionData.delete,
-					actionData.create,
-					actionData.lock_level,
-					actionData.set_ownership,
-					actionData.playsound,
-					actionData.key,
-					actionData.trap
+						actionData.replace,
+						actionData.transform,
+						actionData.add,
+						actionData.remove,
+						actionData.equip,
+						actionData.unequip,
+						actionData.disable,
+						actionData.delete,
+						actionData.create,
+						actionData.lock_level,
+						actionData.set_ownership,
+						actionData.playsound,
+						actionData.key,
+						actionData.trap
 				local replaceActionSucceeded = false
 
 				--- Should we allow only one successful replacement???
@@ -405,7 +405,7 @@ local function tryModifyObject(object, instanceModificationList)
 				if transformAction then
 					local didTransform
 					didTransform, newTransform, newPos, targetScale =
-						actionHandlers.transform(modifyTarget, transformAction, newTransform, newPos, targetScale)
+							actionHandlers.transform(modifyTarget, transformAction, newTransform, newPos, targetScale)
 					anyActionApplied = anyActionApplied or didTransform
 					needsPlacementUpdate = needsPlacementUpdate or didTransform
 					currentRuleApplied = currentRuleApplied or didTransform

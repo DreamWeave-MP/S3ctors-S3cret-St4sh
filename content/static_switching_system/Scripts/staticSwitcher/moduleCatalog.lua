@@ -120,24 +120,27 @@ local CONDITIONPRIORITY = {
 }
 
 local error, NewTable, next, nkeys, pairs, sort =
+		error,
 		---@diagnostic disable-next-line: undefined-field
-error,
-	table.new,
-	next,
-	table.nkeys,
-	pairs,
-	table.sort
+		table.new,
+		next,
+		---@diagnostic disable-next-line: undefined-field
+		table.nkeys,
+		pairs,
+		table.sort
 
 ---@param modulePath string
 ---@return string pathWithoutExtension
 local function stripYamlExtension(modulePath)
-	return StrGsub(StrGsub(modulePath, '%.yaml$', ''), '%.yml$', '')
+	local result, _ = StrGsub(StrGsub(modulePath, '%.yaml$', ''), '%.yml$', '')
+	return result
 end
 
 ---@param modulePath string
 ---@return string label
 local function getModuleLabel(modulePath)
-	return StrGsub(stripYamlExtension(modulePath), '^' .. DATA_PREFIX, '')
+	local result, _ = StrGsub(stripYamlExtension(modulePath), '^' .. DATA_PREFIX, '')
+	return result
 end
 
 ---@param modulePath string
@@ -314,11 +317,11 @@ local function staticModuleLoader(meshReplacementsTable)
 	local replacementTable
 	if NewTable then
 		local numElements = (meshMap and 1 or 0)
-			+ (cellNameMatches and 1 or 0)
-			+ (gridIndices and 1 or 0)
-			+ (regionMatches and 1 or 0)
-			+ (ignoreRecords and 1 or 0)
-			+ (meshReplacementsTable.log_name and 1 or 0)
+				+ (cellNameMatches and 1 or 0)
+				+ (gridIndices and 1 or 0)
+				+ (regionMatches and 1 or 0)
+				+ (ignoreRecords and 1 or 0)
+				+ (meshReplacementsTable.log_name and 1 or 0)
 		replacementTable = NewTable(0, numElements)
 	else
 		replacementTable = {}
@@ -432,6 +435,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 				if actionData.key then
 					for i = 1, #actionData.key do
 						local k, v = next(actionData.key[i])
+						assert(k ~= nil and v ~= nil)
 
 						actionData.key[i][StrLower(k)] = v
 						actionData.key[i][k] = nil
@@ -441,6 +445,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 				if actionData.trap then
 					for i = 1, #actionData.trap do
 						local k, v = next(actionData.trap[i])
+						assert(k ~= nil and v ~= nil)
 
 						actionData.trap[i][StrLower(k)] = v
 						actionData.trap[i][k] = nil
