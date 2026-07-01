@@ -7,6 +7,8 @@ local util = require 'openmw.util'
 
 local randomGen = require 'scripts.s3.randomGen'
 
+local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+
 local next, pairs, pcall, type = next, pairs, pcall, type
 
 local rotateX = util.transform.rotateX
@@ -16,6 +18,8 @@ local rad = math.rad
 
 local ActorObjectIsInstance = types.Actor.objectIsInstance
 local ContainerObjectIsInstance = types.Container.objectIsInstance
+
+local Player = world.players[1]
 
 ---@param object openmw.GObject
 ---@return openmw.core.Inventory? inventory
@@ -614,6 +618,55 @@ local actionHandlers = {
 	end,
 	['add_lua_script'] = function(object, scriptPath)
 		object:addScript(scriptPath)
+		return true
+	end,
+	['activate_by_player'] = function(object)
+		object:activateBy(Player)
+		return true
+	end,
+	['remove_lua_script'] = function(object, scriptPath)
+		object:removeScript(scriptPath)
+		return true
+	end,
+	['global_set'] = function(_, globalData)
+		local globals = BatchCache.globalVariables()
+		local value = globalData.value
+
+		if type(value) == 'table' then
+			value = randomGen.range(value, true)
+		end
+
+		globals[globalData.name] = value
+		return true
+	end,
+	['teleport'] = function(object, teleportData)
+		local cell = teleportData.cell
+		local pos = teleportData.position
+		local rot = teleportData.rotation
+		local onGround = teleportData.onGround
+
+		local targetCell = cell or object.cell
+		local targetPos = object.position
+		local targetRot = object.rotation
+
+		if pos then
+			targetPos = util.vector3(
+				pos.x and getRangeValue(pos.x) or targetPos.x,
+				pos.y and getRangeValue(pos.y) or targetPos.y,
+				pos.z and getRangeValue(pos.z) or targetPos.z
+			)
+		end
+
+		if rot then
+			targetRot = getRotationValue(true, rot, targetRot)
+		end
+
+		local options = { rotation = targetRot }
+		if onGround then
+			options.onGround = true
+		end
+
+		object:teleport(targetCell, targetPos, options)
 		return true
 	end,
 }

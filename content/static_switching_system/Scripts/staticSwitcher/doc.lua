@@ -137,6 +137,10 @@
 ---@field set_ownership {owner?: string, faction?: string, factionRank?: integer}? sets ownership on the target object
 ---@field playsound string|{id?: string, file?: string, chance?: SSSChanceRange, volume?: number, pitch?: number, loop?: boolean, timeOffset?: number}? plays a 3D positional sound at the target
 ---@field add_lua_script string? attaches a Lua script (VFS path) to the target object
+---@field activate_by_player boolean? activates the target object as if the player used it
+---@field remove_lua_script string? removes a Lua script (VFS path) from the target object
+---@field global_set {name: string, value: number|SSSNumericRange}? sets a MWScript global variable
+---@field teleport {cell?: string, position?: {x?: SSSNumericRange, y?: SSSNumericRange, z?: SSSNumericRange}, rotation?: SSSVector3Range, onGround?: boolean}? teleports the target object
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
