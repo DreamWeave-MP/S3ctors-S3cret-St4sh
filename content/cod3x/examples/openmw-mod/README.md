@@ -1,3 +1,15 @@
++++
+title = "example config"
+date = 2026-07-01
+
+[taxonomies]
+tags = [ "Different", "Tag", "Names"]
+
+[extra]
+hide_download_bar = true
+version = 1.0
++++
+
 # Cod3x LuaLS example config
 
 Copy `.luarc.json` from this directory into the root folder of your OpenMW-Lua
