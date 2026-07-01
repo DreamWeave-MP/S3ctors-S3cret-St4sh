@@ -424,6 +424,7 @@ local actionHandlers = {
 	end,
 	['create'] = function(triggerObject, createActionData)
 		local totalCreated = 0
+		local createdObjects = {}
 
 		for recordId, details in pairs(createActionData) do
 			local count, chance, positionOverride, rotateOverride, scaleOverride, transformType
@@ -493,12 +494,13 @@ local actionHandlers = {
 							obj:setScale(targetScale)
 						end
 						totalCreated = totalCreated + 1
+						createdObjects[totalCreated] = obj
 					end
 				end
 			end
 		end
 
-		return totalCreated
+		return totalCreated, createdObjects
 	end,
 	['lock_level'] = function(object, lockData)
 		if not object.type.lock then
