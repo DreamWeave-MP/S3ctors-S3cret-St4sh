@@ -1,4 +1,5 @@
+---@omw-context local
 return {
     interfaceName = 'TaggerL',
-    interface = require('Scripts.S3.ModTags.interface'),
+    interface = require 'Scripts.S3.ModTags.interface',
 }
