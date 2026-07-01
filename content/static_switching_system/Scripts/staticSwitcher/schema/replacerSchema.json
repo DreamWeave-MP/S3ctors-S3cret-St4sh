@@ -1036,8 +1036,13 @@
                     "additionalProperties": false,
                     "description": "Map of content file names to reference numbers within that file. The object must originate from the specified content file AND have a matching reference number. All keyed content files are OR-ed; all reference numbers within a matched content file are OR-ed."
                 },
-                "generated": {
-                    "type": "boolean"
+                "generated_record": {
+                    "type": "boolean",
+                    "description": "Whether the object's record was dynamically created (true) or comes from a plugin (false)."
+                },
+                "generated_object": {
+                    "type": "boolean",
+                    "description": "Whether the object instance was dynamically created (true) or original world placement (false)."
                 },
                 "region": {
                     "$ref": "#/definitions/stringOrStringList"
