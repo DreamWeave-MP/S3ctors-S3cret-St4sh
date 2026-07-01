@@ -59,6 +59,7 @@ local StaticReplacements
 local ACTIONPRIORITY = {
 	'replace',
 	'transform',
+	'teleport',
 	'set_ownership',
 	'add',
 	'remove',
@@ -68,8 +69,11 @@ local ACTIONPRIORITY = {
 	'key',
 	'trap',
 	'create',
+	'global_set',
 	'playsound',
 	'add_lua_script',
+	'activate_by_player',
+	'remove_lua_script',
 	'disable',
 	'delete',
 }

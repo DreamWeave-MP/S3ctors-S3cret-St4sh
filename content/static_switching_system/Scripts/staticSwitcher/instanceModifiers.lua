@@ -378,7 +378,7 @@ local function tryModifyObject(object, instanceModificationList)
 		for actIndex = 1, #instanceModification.actions do
 			local actionData = instanceModification.actions[actIndex]
 			if not actionData.chance or randomGen.float() <= actionData.chance then
-				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction, addLuaScriptAction =
+				local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction, addLuaScriptAction, activateByPlayerAction, removeLuaScriptAction, globalSetAction, teleportAction =
 					actionData.replace,
 					actionData.transform,
 					actionData.add,
@@ -393,7 +393,11 @@ local function tryModifyObject(object, instanceModificationList)
 					actionData.playsound,
 					actionData.key,
 					actionData.trap,
-					actionData.add_lua_script
+					actionData.add_lua_script,
+					actionData.activate_by_player,
+					actionData.remove_lua_script,
+					actionData.global_set,
+					actionData.teleport
 				local replaceActionSucceeded = false
 
 				--- Should we allow only one successful replacement???
@@ -417,6 +421,13 @@ local function tryModifyObject(object, instanceModificationList)
 					if didTransform then
 						DebugLog('  transform on %s: scale=%.3f', objectId, targetScale)
 					end
+				end
+
+				if teleportAction then
+					local didTeleport = actionHandlers.teleport(modifyTarget, teleportAction)
+					anyActionApplied = anyActionApplied or didTeleport
+					currentRuleApplied = currentRuleApplied or didTeleport
+					DebugLog('  teleport on %s: %s', objectId, didTeleport and 'OK' or 'failed')
 				end
 
 				if setOwnershipAction then
@@ -484,6 +495,13 @@ local function tryModifyObject(object, instanceModificationList)
 					end
 				end
 
+				if globalSetAction then
+					local didSet = actionHandlers.global_set(modifyTarget, globalSetAction)
+					anyActionApplied = anyActionApplied or didSet
+					currentRuleApplied = currentRuleApplied or didSet
+					DebugLog('  global_set: %s', didSet and 'OK' or 'failed')
+				end
+
 				if playsoundAction then
 					local didPlay = actionHandlers.playsound(modifyTarget, playsoundAction)
 					anyActionApplied = anyActionApplied or didPlay
@@ -496,6 +514,20 @@ local function tryModifyObject(object, instanceModificationList)
 					anyActionApplied = anyActionApplied or didAdd
 					currentRuleApplied = currentRuleApplied or didAdd
 					DebugLog('  add_lua_script on %s: OK', objectId)
+				end
+
+				if activateByPlayerAction then
+					actionHandlers.activate_by_player(modifyTarget)
+					anyActionApplied = true
+					currentRuleApplied = true
+					DebugLog('  activate_by_player on %s', objectId)
+				end
+
+				if removeLuaScriptAction then
+					local didRemove = actionHandlers.remove_lua_script(modifyTarget, removeLuaScriptAction)
+					anyActionApplied = anyActionApplied or didRemove
+					currentRuleApplied = currentRuleApplied or didRemove
+					DebugLog('  remove_lua_script on %s: OK', objectId)
 				end
 
 				if disableAction then

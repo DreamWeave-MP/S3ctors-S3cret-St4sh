@@ -345,6 +345,48 @@
                     "type": "string",
                     "description": "VFS path to a Lua script to attach to the target object."
                 },
+                "activate_by_player": {
+                    "type": "boolean",
+                    "description": "Activate the target object as if the player used it."
+                },
+                "remove_lua_script": {
+                    "type": "string",
+                    "description": "VFS path to a Lua script to remove from the target object."
+                },
+                "global_set": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Global variable name."},
+                        "value": {
+                            "oneOf": [
+                                {"type": "number"},
+                                {"type": "object", "properties": {"min": {"type": "number"}, "max": {"type": "number"}}, "required": ["max"], "additionalProperties": false}
+                            ]
+                        }
+                    },
+                    "required": ["name", "value"],
+                    "additionalProperties": false,
+                    "description": "Set a MWScript global variable to a value or random range."
+                },
+                "teleport": {
+                    "type": "object",
+                    "properties": {
+                        "cell": {"type": "string", "description": "Target cell name. Defaults to current cell."},
+                        "position": {
+                            "type": "object",
+                            "properties": {
+                                "x": {"$ref": "#/definitions/numericRange"},
+                                "y": {"$ref": "#/definitions/numericRange"},
+                                "z": {"$ref": "#/definitions/numericRange"}
+                            },
+                            "additionalProperties": false
+                        },
+                        "rotation": {"$ref": "#/definitions/vector3Range"},
+                        "onGround": {"type": "boolean", "description": "Place on ground after teleport."}
+                    },
+                    "additionalProperties": false,
+                    "description": "Teleport the target object to a cell and/or position."
+                },
                 "key": {
                     "oneOf": [
                         {"const": false, "description": "Remove the key from the object."},
