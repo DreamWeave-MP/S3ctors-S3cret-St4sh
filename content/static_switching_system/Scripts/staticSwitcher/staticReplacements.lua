@@ -412,7 +412,7 @@ local function saveReplacementChains()
 	}
 end
 
----@param savedChains SSSReplacementChains?
+---@param savedChains SSSReplacementChainsSaved?
 local function loadReplacementChains(savedChains)
 	clearTable(ReplacementChains.entries)
 	clearTable(ReplacementChains.byObjectId)
@@ -647,6 +647,11 @@ local function tryReplaceObject(object)
 	replaceObject(object, replacementModule, replacementMesh, chain)
 end
 
+---@param moduleResolver fun(moduleKey: string): string?
+local function setModuleResolver(moduleResolver)
+	ResolveModuleId = moduleResolver
+end
+
 ---@type SSSStaticReplacements
 local StaticReplacements = {
 	ComposedReplacements = ComposedReplacements,
@@ -657,14 +662,10 @@ local StaticReplacements = {
 	rebuildReplacementStepBySource = rebuildReplacementStepBySource,
 	ReplacedObjectSet = ReplacedObjectSet,
 	saveReplacementChains = saveReplacementChains,
+	setModuleResolver = setModuleResolver,
 	uninstallModule = uninstallModule,
 	tryReplaceObject = tryReplaceObject,
 }
-
----@param moduleResolver fun(moduleKey: string): string?
-function StaticReplacements.setModuleResolver(moduleResolver)
-	ResolveModuleId = moduleResolver
-end
 
 ---@param deleteManager SSSDeleteManager
 ---@return SSSStaticReplacements
