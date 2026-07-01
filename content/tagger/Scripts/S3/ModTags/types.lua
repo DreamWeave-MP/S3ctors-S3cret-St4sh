@@ -19,7 +19,7 @@
 ---@class Tagger.Interface
 ---@field addTag fun(object: Tagger.Taggable, tag: Tagger.TagArg)
 ---@field removeTag fun(object: Tagger.Taggable, tag: Tagger.TagArg)
----@field objectHasTag fun(object: Tagger.Taggable, tag: Tagger.ObjectTag): boolean?
+---@field objectHasTag fun(object: Tagger.Taggable, tag: Tagger.ObjectTag | Tagger.ObjectTag[]): true??
 ---@field objectTags fun(object: Tagger.Taggable): Tagger.ObjectTagList?
 ---@field tagList fun(): Tagger.ObjectTagList
 ---@field appliedTags fun(): Tagger.AppliedTags

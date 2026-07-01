@@ -247,6 +247,14 @@ local function Interface(addTagFunc, removeTagFunc)
 
 			if not tags then return end
 
+			if type(tag) == 'table' then
+				for i = 1, #tag do
+					if tags[tag[i]:lower()] then return true end
+				end
+
+				return
+			end
+
 			return tags[tag:lower()]
 		end,
 		objectTags = function(object)
