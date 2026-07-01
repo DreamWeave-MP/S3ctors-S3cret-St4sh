@@ -503,11 +503,15 @@ local function tryModifyObject(object, instanceModificationList)
 				end
 
 				if createAction then
-					local numCreated = actionHandlers.create(modifyTarget, createAction)
+					local numCreated, createdObjects = actionHandlers.create(modifyTarget, createAction)
 					if numCreated > 0 then
 						anyActionApplied = true
 						currentRuleApplied = true
 						DebugLog('  create on %s: %d spawned', objectId, numCreated)
+
+						for objIdx = 1, numCreated do
+							markAppliedThisLoad(createdObjects[objIdx], instanceModification.moduleName, instanceModification.actionHash)
+						end
 					end
 				end
 
