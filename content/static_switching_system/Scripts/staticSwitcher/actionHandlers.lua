@@ -9,6 +9,14 @@ local randomGen = require 'scripts.s3.randomGen'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
 
+local WarnLog
+do
+	local logger = require 'Scripts.staticSwitcher.logger'
+	WarnLog = logger.warn
+end
+
+local StrFormat = string.format
+
 local next, pairs, pcall, type = next, pairs, pcall, type
 
 local rotateX = util.transform.rotateX
@@ -645,7 +653,22 @@ local actionHandlers = {
 		local rot = teleportData.rotation
 		local onGround = teleportData.onGround
 
-		local targetCell = cell or object.cell
+		local targetCell = object.cell
+
+		if cell then
+			local cellType = type(cell)
+			if cellType == 'string' then
+				targetCell = world.getCellByName(cell)
+			elseif cellType == 'table' then
+				targetCell = world.getExteriorCell(cell.x, cell.y)
+			end
+
+			if not targetCell then
+				WarnLog(StrFormat('teleport: cell not found for %s', object.id))
+				return false
+			end
+		end
+
 		local targetPos = object.position
 		local targetRot = object.rotation
 

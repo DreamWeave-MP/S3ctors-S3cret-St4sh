@@ -371,7 +371,12 @@
                 "teleport": {
                     "type": "object",
                     "properties": {
-                        "cell": {"type": "string", "description": "Target cell name. Defaults to current cell."},
+                        "cell": {
+                            "oneOf": [
+                                {"type": "string", "description": "Cell name or ID."},
+                                {"type": "object", "properties": {"x": {"type": "integer"}, "y": {"type": "integer"}}, "required": ["x", "y"], "additionalProperties": false, "description": "Exterior grid coordinates."}
+                            ]
+                        },
                         "position": {
                             "type": "object",
                             "properties": {

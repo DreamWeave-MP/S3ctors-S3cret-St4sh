@@ -782,10 +782,17 @@ local conditionHandlers = {
 			return currentHour >= hourData
 		end
 
-		if hourData.min and currentHour < hourData.min then
+		local min = hourData.min
+		local max = hourData.max
+
+		if min and max and min > max then
+			return currentHour >= min or currentHour <= max
+		end
+
+		if min and currentHour < min then
 			return false
 		end
-		if hourData.max and currentHour > hourData.max then
+		if max and currentHour > max then
 			return false
 		end
 
