@@ -16,6 +16,13 @@ local INVALID_TYPE = 'Invalid type was provided: %s'
 
 local cellToExteriorRegion = {}
 
+local CREATURE_TYPE_MAP = {
+	creatures = types.Creature.TYPE.Creatures,
+	daedra = types.Creature.TYPE.Daedra,
+	undead = types.Creature.TYPE.Undead,
+	humanoid = types.Creature.TYPE.Humanoid,
+}
+
 local type = type
 local StrFind, StrLower, StrFormat, StrUpper = string.find, string.lower, string.format, string.upper
 
@@ -190,6 +197,67 @@ local conditionHandlers = {
 		end
 
 		return hasTag(object.cell, tagName)
+	end,
+	is_dead = function(object, shouldBeDead)
+		if not types.Actor.objectIsInstance(object) then
+			return false
+		end
+
+		return types.Actor.isDead(object) == shouldBeDead
+	end,
+	creature_type = function(object, typeValue)
+		local objType = object.type
+		if not objType or objType ~= types.Creature then
+			return false
+		end
+
+		local objectRecord = objType.records[object.recordId]
+		if not objectRecord then
+			return false
+		end
+
+		local creatureType = objectRecord.type
+
+		if type(typeValue) == 'string' then
+			typeValue = CREATURE_TYPE_MAP[typeValue]
+		end
+
+		if type(typeValue) == 'number' then
+			return creatureType == typeValue
+		end
+
+		if typeValue[1] then
+			for i = 1, #typeValue do
+				local value = CREATURE_TYPE_MAP[typeValue[i]] or typeValue[i]
+				if creatureType == value then
+					return true
+				end
+			end
+		end
+
+		return false
+	end,
+	race = function(object, raceData)
+		local objType = object.type
+		if not objType or objType ~= types.NPC then
+			return false
+		end
+
+		local npcRace = objType.records[object.recordId].race
+
+		if type(raceData) == 'string' then
+			return npcRace == raceData
+		end
+
+		if raceData[1] then
+			for i = 1, #raceData do
+				if npcRace == raceData[i] then
+					return true
+				end
+			end
+		end
+
+		return false
 	end,
 	has_lua_script = function(object, scriptPath)
 		if not object.type then
