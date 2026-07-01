@@ -327,6 +327,7 @@
 ---@field dynamicStat fun(object: openmw.GObject?, statName: string): openmw.types.DynamicStat|nil Returns cached dynamic stat (health/magicka/fatigue); defaults to Player when object is nil.
 ---@field actorSpells fun(object: openmw.GObject?): table Returns cached spell list; defaults to Player when object is nil.
 ---@field globalVariables fun(): table Returns cached MWScript global variables.
+---@field objectRecord fun(object: openmw.GObject): table? Returns cached object record data; nil when object has no type.
 
 ---@class SSSModuleIdentity
 ---@field id string canonical module id (normalized path)

@@ -162,7 +162,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local objectRecord = object.type.records[object.recordId]
+		local objectRecord = BatchCache.objectRecord(object)
 
 		if objectRecord.name == nil or objectRecord.name == '' then
 			return false
@@ -178,7 +178,7 @@ local conditionHandlers = {
 			return shouldHaveName == false
 		end
 
-		local objectRecord = object.type.records[object.recordId]
+		local objectRecord = BatchCache.objectRecord(object)
 		local objectName = objectRecord and objectRecord.name
 		local objectHasName = objectName ~= nil and objectName ~= ''
 
@@ -242,7 +242,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local objectRecord = object.type.records[object.recordId]
+		local objectRecord = BatchCache.objectRecord(object)
 		local hasEnchant = objectRecord and objectRecord.enchant ~= nil
 
 		return hasEnchant == shouldHave
@@ -252,7 +252,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local objectRecord = object.type.records[object.recordId]
+		local objectRecord = BatchCache.objectRecord(object)
 		local enchant = objectRecord and objectRecord.enchant
 		if not enchant then
 			return false
@@ -338,7 +338,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local objectRecord = object.type.records[object.recordId]
+		local objectRecord = BatchCache.objectRecord(object)
 		local mwscript = objectRecord and objectRecord.mwscript
 		if not mwscript then
 			return false
@@ -497,7 +497,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local objectRecord = object.type.records[object.recordId]
+		local objectRecord = BatchCache.objectRecord(object)
 		local objectMesh = objectRecord and objectRecord.model
 
 		if not objectMesh then
@@ -1023,7 +1023,7 @@ local conditionHandlers = {
 			return false
 		end
 
-		local objectRecord = object.type.records[object.recordId]
+		local objectRecord = BatchCache.objectRecord(object)
 		local classId = objectRecord and objectRecord.class
 		if not classId then
 			return false
