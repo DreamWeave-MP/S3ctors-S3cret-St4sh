@@ -108,6 +108,7 @@ local CONDITIONPRIORITY = {
 	'is_dead',
 	'creature_type',
 	'race',
+	'target_disposition',
 	'locked',
 	'has_key',
 	'has_trap',

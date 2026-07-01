@@ -259,6 +259,26 @@ local conditionHandlers = {
 
 		return false
 	end,
+	target_disposition = function(object, dispData)
+		if object.type ~= types.NPC then
+			return false
+		end
+
+		local disposition = types.NPC.getDisposition(object, Player)
+
+		if type(dispData) == 'number' then
+			return disposition >= dispData
+		end
+
+		if dispData.min and disposition < dispData.min then
+			return false
+		end
+		if dispData.max and disposition > dispData.max then
+			return false
+		end
+
+		return true
+	end,
 	has_lua_script = function(object, scriptPath)
 		if not object.type then
 			return false

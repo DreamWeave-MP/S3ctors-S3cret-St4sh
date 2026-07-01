@@ -782,6 +782,10 @@
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "Target NPC race ID. Exact match. Non-NPCs return false."
                 },
+                "target_disposition": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Target NPC disposition toward the player. Non-NPCs return false."
+                },
                 "locked": {
                     "oneOf": [
                         {"type": "boolean", "description": "Check if the object is locked or unlocked."},
