@@ -54,22 +54,57 @@ local function validateArguments(object, tag, isInstance)
 end
 
 return {
-    tagList = function()
-        return TagList
-    end,
-    appliedTags = function()
-        return AppliedTags
-    end,
-    objectHasTag = function(object, tag)
-        validateArguments(object, tag)
+	tagList = function()
+		return TagList
+	end,
+	appliedTags = function()
+		return AppliedTags
+	end,
+	objectHasTag = function(object, tag)
+		validateArguments(object, tag)
 
-        local recordId = getRecordId(object)
+		local recordId = getRecordId(object)
 
-        return (AppliedTags[recordId] and AppliedTags[recordId][tag:lower()]) or false
-    end,
-    objectTags = function(object)
-        assert(object ~= nil, "An object must be provided to get its tags!")
+		return (AppliedTags[recordId] and AppliedTags[recordId][tag:lower()]) or false
+	end,
+	objectTags = function(object)
+		assert(object ~= nil, "An object must be provided to get its tags!")
 
-        return AppliedTags[getRecordId(object)] or {}
-    end,
+		return AppliedTags[getRecordId(object)] or {}
+	end,
+	registerTag = function(tag)
+		assert(tag ~= nil and type(tag) == 'string', 'A tag as a string must be provided!')
+		TagList[tag] = true
+		TagSection:set('TagList', TagList)
+	end,
+	addTag = function(object, tag)
+		validateArguments(object, tag, true)
+
+		local recordId = getRecordId(object)
+		local lowerTag = tag:lower()
+		local applied = TagSection:get('AppliedTags')
+
+		applied[recordId] = applied[recordId] or {}
+		applied[recordId][lowerTag] = true
+		AppliedTags[recordId] = AppliedTags[recordId] or {}
+		AppliedTags[recordId][lowerTag] = true
+
+		TagSection:set('AppliedTags', applied)
+	end,
+	removeTag = function(object, tag)
+		validateArguments(object, tag, true)
+
+		local recordId = getRecordId(object)
+		local lowerTag = tag:lower()
+		local applied = TagSection:get('AppliedTags')
+
+		if not applied[recordId] then
+			return
+		end
+
+		applied[recordId][lowerTag] = nil
+		AppliedTags[recordId][lowerTag] = nil
+
+		TagSection:set('AppliedTags', applied)
+	end,
 }

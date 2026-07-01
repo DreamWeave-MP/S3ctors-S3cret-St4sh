@@ -90,7 +90,31 @@ end
 
 loadTagFiles()
 
+local TaggerInterface = require('Scripts.S3.ModTags.interface')
+
+---@param eventData table<string, string[]> flat map of tagged objects to tag lists
+local function onAddTags(eventData)
+	local applied = TagSection:get('AppliedTags')
+
+	for taggedObject, tagList in pairs(eventData) do
+		local taggedId = taggedObject:lower()
+
+		applied[taggedId] = applied[taggedId] or {}
+		local tagTable = applied[taggedId]
+
+		for tagIdx = 1, #tagList do
+			local tag = tagList[tagIdx]:lower()
+			tagTable[tag] = true
+		end
+	end
+
+	TagSection:set('AppliedTags', applied)
+end
+
 return {
-    interfaceName = 'TaggerG',
-    interface = require('Scripts.S3.ModTags.interface'),
+	interfaceName = 'TaggerG',
+	interface = TaggerInterface,
+	eventHandlers = {
+		TaggerAddTags = onAddTags,
+	},
 }
