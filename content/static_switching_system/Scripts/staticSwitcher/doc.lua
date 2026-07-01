@@ -146,6 +146,7 @@
 ---@field exterior boolean?
 ---@field quasi_exterior boolean?
 ---@field has_journal table? Quest journal index: `{quest: string, index?: integer, min?: integer, max?: integer}`. `index` is shorthand for `min`. Returns true when `stage >= min and stage <= max`.
+---@field global_value table? MWScript global variable gate: keys are variable names, values are number (min) or {min, max} range. All entries ANDed.
 ---@field player_level number|table? Player level gate: bare number means at-least, table with min/max for range
 ---@field target_level number|table? Target object level gate: bare number means at-least, table with min/max for range. Non-actors return false.
 ---@field player_attribute table? Player attribute checks: `{strength: 50}` or `{endurance: {min: 50, max: 80}}`. Keys are attribute IDs. All entries ANDed.
@@ -309,6 +310,7 @@
 ---@field skillStat fun(object: openmw.GObject?, skillId: string): openmw.types.SkillStat Returns cached skill stat; defaults to Player when object is nil.
 ---@field dynamicStat fun(object: openmw.GObject?, statName: string): openmw.types.DynamicStat|nil Returns cached dynamic stat (health/magicka/fatigue); defaults to Player when object is nil.
 ---@field actorSpells fun(object: openmw.GObject?): table Returns cached spell list; defaults to Player when object is nil.
+---@field globalVariables fun(): table Returns cached MWScript global variables.
 
 ---@class SSSModuleIdentity
 ---@field id string canonical module id (normalized path)
