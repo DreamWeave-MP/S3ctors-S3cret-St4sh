@@ -802,6 +802,12 @@
                     "additionalProperties": false,
                     "description": "Target NPC modified skill checks. Non-NPCs return false."
                 },
+                "player_health": {"$ref": "#/definitions/numericRange", "description": "Player current health gate. Bare number means at-least."},
+                "player_magicka": {"$ref": "#/definitions/numericRange", "description": "Player current magicka gate."},
+                "player_fatigue": {"$ref": "#/definitions/numericRange", "description": "Player current fatigue gate."},
+                "target_health": {"$ref": "#/definitions/numericRange", "description": "Target current health gate. Non-actors return false."},
+                "target_magicka": {"$ref": "#/definitions/numericRange", "description": "Target current magicka gate. Non-actors return false."},
+                "target_fatigue": {"$ref": "#/definitions/numericRange", "description": "Target current fatigue gate. Non-actors return false."},
                 "time_of_day": {
                     "$ref": "#/definitions/numericRange",
                     "description": "Game hour gate. Bare number means at-least, table with min/max for range. Hour is a 0-23 float."

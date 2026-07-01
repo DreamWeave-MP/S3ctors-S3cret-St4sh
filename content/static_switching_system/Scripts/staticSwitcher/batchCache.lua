@@ -100,6 +100,27 @@ local function skillStat(object, skillId)
 	return stat
 end
 
+local function dynamicStat(object, statName)
+	object = object or Player
+	local byObject = Cache._dynStats
+	if not byObject then
+		byObject = {}
+		Cache._dynStats = byObject
+	end
+	local byStat = byObject[object.id]
+	if not byStat then
+		byStat = {}
+		byObject[object.id] = byStat
+	end
+	local stat = byStat[statName]
+	if not stat then
+		local stats = object.type.stats
+		stat = stats.dynamic[statName](object)
+		byStat[statName] = stat
+	end
+	return stat
+end
+
 return {
 	clear = clearCache,
 	playerQuests = playerQuests,
@@ -107,4 +128,5 @@ return {
 	currentWeather = currentWeather,
 	attributeStat = attributeStat,
 	skillStat = skillStat,
+	dynamicStat = dynamicStat,
 }

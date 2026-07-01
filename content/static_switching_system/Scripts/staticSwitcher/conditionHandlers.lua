@@ -559,6 +559,132 @@ local conditionHandlers = {
 
 		return true
 	end,
+	['player_health'] = function(_, healthData)
+		local value = BatchCache.dynamicStat(nil, 'health').current
+
+		if type(healthData) == 'number' then
+			return value >= healthData
+		end
+
+		if healthData.min and value < healthData.min then
+			return false
+		end
+		if healthData.max and value > healthData.max then
+			return false
+		end
+
+		return true
+	end,
+	['player_magicka'] = function(_, magickaData)
+		local value = BatchCache.dynamicStat(nil, 'magicka').current
+
+		if type(magickaData) == 'number' then
+			return value >= magickaData
+		end
+
+		if magickaData.min and value < magickaData.min then
+			return false
+		end
+		if magickaData.max and value > magickaData.max then
+			return false
+		end
+
+		return true
+	end,
+	['player_fatigue'] = function(_, fatigueData)
+		local value = BatchCache.dynamicStat(nil, 'fatigue').current
+
+		if type(fatigueData) == 'number' then
+			return value >= fatigueData
+		end
+
+		if fatigueData.min and value < fatigueData.min then
+			return false
+		end
+		if fatigueData.max and value > fatigueData.max then
+			return false
+		end
+
+		return true
+	end,
+	['target_health'] = function(object, healthData)
+		local objType = object.type
+		if not objType then
+			return false
+		end
+
+		local stats = objType.stats
+		if not stats then
+			return false
+		end
+
+		local value = BatchCache.dynamicStat(object, 'health').current
+
+		if type(healthData) == 'number' then
+			return value >= healthData
+		end
+
+		if healthData.min and value < healthData.min then
+			return false
+		end
+		if healthData.max and value > healthData.max then
+			return false
+		end
+
+		return true
+	end,
+	['target_magicka'] = function(object, magickaData)
+		local objType = object.type
+		if not objType then
+			return false
+		end
+
+		local stats = objType.stats
+		if not stats then
+			return false
+		end
+
+		local value = BatchCache.dynamicStat(object, 'magicka').current
+
+		if type(magickaData) == 'number' then
+			return value >= magickaData
+		end
+
+		if magickaData.min and value < magickaData.min then
+			return false
+		end
+		if magickaData.max and value > magickaData.max then
+			return false
+		end
+
+		return true
+	end,
+	['target_fatigue'] = function(object, fatigueData)
+		local objType = object.type
+		if not objType then
+			return false
+		end
+
+		local stats = objType.stats
+		if not stats then
+			return false
+		end
+
+		local value = BatchCache.dynamicStat(object, 'fatigue').current
+
+		if type(fatigueData) == 'number' then
+			return value >= fatigueData
+		end
+
+		if fatigueData.min and value < fatigueData.min then
+			return false
+		end
+		if fatigueData.max and value > fatigueData.max then
+			return false
+		end
+
+		return true
+	end,
 	['time_of_day'] = function(_, hourData)
 		local currentHour = (core.getGameTime() / 3600) % 24
 
