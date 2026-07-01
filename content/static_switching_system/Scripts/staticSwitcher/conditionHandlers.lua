@@ -5,6 +5,7 @@ local world = require 'openmw.world'
 local core = require 'openmw.core'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+local I = require 'openmw.interfaces'
 
 local Player = world.players[1]
 local Door = types.Door
@@ -17,6 +18,11 @@ local cellToExteriorRegion = {}
 
 local type = type
 local StrFind, StrLower, StrFormat, StrUpper = string.find, string.lower, string.format, string.upper
+
+local hasTag
+if I.TaggerG then
+	hasTag = I.TaggerG.objectHasTag
+end
 
 ---@param cell openmw.core.GCell
 ---@param position openmw.util.Vector3
@@ -170,6 +176,20 @@ local conditionHandlers = {
 		local objectHasName = objectName ~= nil and objectName ~= ''
 
 		return objectHasName == shouldHaveName
+	end,
+	has_tag = function(object, tagName)
+		if not hasTag then
+			return false
+		end
+
+		return hasTag(object, tagName)
+	end,
+	cell_tag = function(object, tagName)
+		if not hasTag then
+			return false
+		end
+
+		return hasTag(object.cell, tagName)
 	end,
 	has_lua_script = function(object, scriptPath)
 		if not object.type then

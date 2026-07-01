@@ -741,6 +741,14 @@
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "MWScript record ID(s) on the object. Exact match, case-insensitive. Returns false when no MWScript is attached."
                 },
+                "has_tag": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Tagger tag(s) on the object. Requires Tagger mod. Match any."
+                },
+                "cell_tag": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Tagger tag(s) on the object's cell. Requires Tagger mod. Match any."
+                },
                 "locked": {
                     "oneOf": [
                         {"type": "boolean", "description": "Check if the object is locked or unlocked."},

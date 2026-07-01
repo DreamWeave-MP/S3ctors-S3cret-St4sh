@@ -100,6 +100,8 @@ local CONDITIONPRIORITY = {
 	'has_name',
 	'has_lua_script',
 	'has_mwscript',
+	'has_tag',
+	'cell_tag',
 	'locked',
 	'has_key',
 	'has_trap',
