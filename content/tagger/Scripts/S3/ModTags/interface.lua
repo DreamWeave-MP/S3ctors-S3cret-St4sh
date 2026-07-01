@@ -6,7 +6,7 @@ local util = require 'openmw.util'
 
 local SendGlobalEvent = require 'openmw.core'.sendGlobalEvent
 
-local TagSection = storage.globalSection 'TaggerStorage'
+local TagSection = storage.globalSection 'FlexTagStorage'
 
 local AppliedTags = {}
 local TagList = {}
@@ -41,7 +41,7 @@ local validCellTypes = {
 	['MWLua::LCell'] = true,
 }
 
----@param object Tagger.Taggable
+---@param object FlexTag.Taggable
 ---@return string
 local function getRecordId(object)
 	local objectType = type(object)
@@ -64,7 +64,7 @@ end
 ---Memory-only tag ingestion. Updates AppliedTags but does NOT write to storage.
 ---Used by the YAML loader coroutine during staggered startup.
 ---@param recordId string
----@param tagName Tagger.ObjectTag
+---@param tagName FlexTag.ObjectTag
 local function ingestTag(recordId, tagName)
 	recordId = recordId:lower()
 	tagName = tagName:lower()
@@ -103,7 +103,7 @@ local function removeTagFromMemory(recordId, tagName)
 end
 
 ---@param object string
----@param tag Tagger.ObjectTag
+---@param tag FlexTag.ObjectTag
 local function addTagImpl(object, tag)
 	local recordId = getRecordId(object)
 	local lowerTag = tag:lower()
@@ -118,8 +118,8 @@ local function addTagImpl(object, tag)
 	TagToRecords[lowerTag][recordId] = true
 end
 
----@param objectOrId Tagger.Taggable
----@param tag Tagger.ObjectTag
+---@param objectOrId FlexTag.Taggable
+---@param tag FlexTag.ObjectTag
 local function removeTagImpl(objectOrId, tag)
 	local recordId = getRecordId(objectOrId)
 
@@ -145,8 +145,8 @@ end
 
 local loadingComplete = false
 
----@param object Tagger.Taggable
----@param tag Tagger.TagArg
+---@param object FlexTag.Taggable
+---@param tag FlexTag.TagArg
 local function addTagGlobal(object, tag)
 	---@cast TagSection openmw.storage.MutableStorageSection
 	local tagType = type(tag)
@@ -167,8 +167,8 @@ local function addTagGlobal(object, tag)
 	end
 end
 
----@param objectOrId Tagger.Taggable
----@param tagOrList Tagger.TagArg
+---@param objectOrId FlexTag.Taggable
+---@param tagOrList FlexTag.TagArg
 local function removeTagGlobal(objectOrId, tagOrList)
 	---@cast TagSection openmw.storage.MutableStorageSection
 	local tagType = type(tagOrList)
@@ -188,8 +188,8 @@ local function removeTagGlobal(objectOrId, tagOrList)
 	end
 end
 
----@param objectOrId Tagger.Taggable
----@param tagOrList Tagger.TagArg
+---@param objectOrId FlexTag.Taggable
+---@param tagOrList FlexTag.TagArg
 local function addTagLocal(objectOrId, tagOrList)
 	local taggedId = getRecordId(objectOrId)
 
@@ -202,11 +202,11 @@ local function addTagLocal(objectOrId, tagOrList)
 		'Must provide a non-empty string array to addTag event!'
 	)
 
-	SendGlobalEvent('TaggerAddTags', { [taggedId] = tagOrList })
+	SendGlobalEvent('FlexTagAdd', { [taggedId] = tagOrList })
 end
 
----@param objectOrId Tagger.Taggable
----@param tagOrList Tagger.TagArg
+---@param objectOrId FlexTag.Taggable
+---@param tagOrList FlexTag.TagArg
 local function removeTagLocal(objectOrId, tagOrList)
 	local taggedId = getRecordId(objectOrId)
 
@@ -219,7 +219,7 @@ local function removeTagLocal(objectOrId, tagOrList)
 		'Must provide a non-empty string array to removeTag event!'
 	)
 
-	SendGlobalEvent('TaggerRemoveTags', { [taggedId] = tagOrList })
+	SendGlobalEvent('FlexTagRemove', { [taggedId] = tagOrList })
 end
 
 ---Called by the global script once all YAML files have been loaded.
@@ -234,9 +234,9 @@ end
 
 local isGlobal = pcall(require, 'openmw.world')
 
----@param addTagFunc fun(object: Tagger.Taggable, tag: Tagger.TagArg)
----@param removeTagFunc fun(object: Tagger.Taggable, tag: Tagger.TagArg)
----@return Tagger.Interface
+---@param addTagFunc fun(object: FlexTag.Taggable, tag: FlexTag.TagArg)
+---@param removeTagFunc fun(object: FlexTag.Taggable, tag: FlexTag.TagArg)
+---@return FlexTag.Interface
 local function Interface(addTagFunc, removeTagFunc)
 	return {
 		addTag = addTagFunc,
