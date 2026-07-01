@@ -812,6 +812,14 @@
                     "description": "Target NPC modified skill checks. Non-NPCs return false."
                 },
                 "player_health": {"$ref": "#/definitions/numericRange", "description": "Player current health gate. Bare number means at-least."},
+                "player_spell": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Spell ID(s) the player must know. Exact match."
+                },
+                "target_spell": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Spell ID(s) the target must know. Non-actors return false."
+                },
                 "player_magicka": {"$ref": "#/definitions/numericRange", "description": "Player current magicka gate."},
                 "player_fatigue": {"$ref": "#/definitions/numericRange", "description": "Player current fatigue gate."},
                 "target_health": {"$ref": "#/definitions/numericRange", "description": "Target current health gate. Non-actors return false."},

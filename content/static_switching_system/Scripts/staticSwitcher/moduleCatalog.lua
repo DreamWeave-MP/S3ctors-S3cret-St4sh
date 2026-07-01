@@ -109,6 +109,8 @@ local CONDITIONPRIORITY = {
 	'player_skill',
 	'target_attribute',
 	'target_skill',
+	'player_spell',
+	'target_spell',
 	'player_health',
 	'player_magicka',
 	'player_fatigue',

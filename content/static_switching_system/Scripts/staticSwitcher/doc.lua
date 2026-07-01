@@ -153,6 +153,8 @@
 ---@field target_attribute table? Target actor attribute checks: same shape as player_attribute. Non-actors return false.
 ---@field target_skill table? Target NPC skill checks: same shape as player_attribute. Non-NPCs return false.
 ---@field player_health number|table? Player current health gate. Bare number means at-least, table with min/max for range.
+---@field player_spell string|string[]? Spell ID(s) the player must know. Exact match.
+---@field target_spell string|string[]? Spell ID(s) the target must know. Non-actors return false.
 ---@field player_magicka number|table? Player current magicka gate.
 ---@field player_fatigue number|table? Player current fatigue gate.
 ---@field target_health number|table? Target current health gate. Non-actors return false.
@@ -306,6 +308,7 @@
 ---@field attributeStat fun(object: openmw.GObject?, attrId: string): openmw.types.AttributeStat Returns cached attribute stat; defaults to Player when object is nil.
 ---@field skillStat fun(object: openmw.GObject?, skillId: string): openmw.types.SkillStat Returns cached skill stat; defaults to Player when object is nil.
 ---@field dynamicStat fun(object: openmw.GObject?, statName: string): openmw.types.DynamicStat|nil Returns cached dynamic stat (health/magicka/fatigue); defaults to Player when object is nil.
+---@field actorSpells fun(object: openmw.GObject?): table Returns cached spell list; defaults to Player when object is nil.
 
 ---@class SSSModuleIdentity
 ---@field id string canonical module id (normalized path)
