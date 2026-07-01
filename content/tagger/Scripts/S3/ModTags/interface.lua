@@ -8,10 +8,13 @@ local SendGlobalEvent = require 'openmw.core'.sendGlobalEvent
 
 local TagSection = storage.globalSection 'TaggerStorage'
 
-local AppliedTags = TagSection:get 'AppliedTags'
-local TagList = TagSection:get 'TagList'
+local AppliedTags = {}
+local TagList = {}
+local TagRefCounts = {}
 
-local assert, error, pcall, require, type = assert, error, pcall, require, type
+local syncToStorage
+
+local assert, error, pcall, require, tostring, type = assert, error, pcall, require, tostring, type
 
 TagSection:subscribe(async:callback(
 	function(_, key)
@@ -34,155 +37,225 @@ local validCellTypes = {
 	['MWLua::LCell'] = true,
 }
 
+---@param object Tagger.Taggable
+---@return string
 local function getRecordId(object)
 	local objectType = type(object)
 
 	if objectType == 'string' then
 		return object:lower()
+		---@diagnostic disable-next-line: undefined-field
 	elseif objectType == 'userdata' and validObjectTypes[object.__type.name] then
 		return object.recordId
+		---@diagnostic disable-next-line: undefined-field
 	elseif objectType == 'userdata' and validCellTypes[object.__type.name] then
 		return object.id
 	else
+		---@diagnostic disable-next-line: undefined-field
 		local errorTypeName = object.__type and object.__type.name or objectType
 		error('Invalid object type: ' .. objectType .. ' ' .. errorTypeName)
 	end
 end
 
-local function validateArguments(object, tag, isInstance)
-	assert(object ~= nil, "An object must be provided to check its tags!")
+---Memory-only tag ingestion. Updates AppliedTags but does NOT write to storage.
+---Used by the YAML loader coroutine during staggered startup.
+---@param recordId string
+---@param tagName Tagger.ObjectTag
+local function ingestTag(recordId, tagName)
+	recordId = recordId:lower()
+	tagName = tagName:lower()
 
-	assert(tag ~= nil and type(tag) == 'string', "A tag as a string must be provided to check an object's tags!")
+	AppliedTags[recordId] = AppliedTags[recordId] or {}
+	if not AppliedTags[recordId][tagName] then
+		TagRefCounts[tagName] = (TagRefCounts[tagName] or 0) + 1
+	end
+	AppliedTags[recordId][tagName] = true
+	TagList[tagName] = true
+end
 
-	if isInstance then
-		assert(type(object) == 'userdata' and validObjectTypes[object.__type.name],
-			'Object argument must be a valid gameObject!')
+local function removeTagFromMemory(recordId, tagName)
+	recordId = recordId:lower()
+
+	local tagTable = AppliedTags[recordId]
+	if not tagTable then return end
+
+	tagName = tagName:lower()
+	if not tagTable[tagName] then return end
+
+	tagTable[tagName] = nil
+	TagRefCounts[tagName] = TagRefCounts[tagName] - 1
+	if TagRefCounts[tagName] <= 0 then
+		TagRefCounts[tagName] = nil
+		TagList[tagName] = nil
 	end
 end
 
----@param object string|openmw.Object
----@param tag string
+---@param object string
+---@param tag Tagger.ObjectTag
 local function addTagImpl(object, tag)
 	local recordId = getRecordId(object)
 	local lowerTag = tag:lower()
 
 	AppliedTags[recordId] = AppliedTags[recordId] or {}
+	if not AppliedTags[recordId][lowerTag] then
+		TagRefCounts[lowerTag] = (TagRefCounts[lowerTag] or 0) + 1
+	end
 	AppliedTags[recordId][lowerTag] = true
+	TagList[lowerTag] = true
 end
 
----@param objectOrId string|openmw.Object
----@param tag string
+---@param objectOrId Tagger.Taggable
+---@param tag Tagger.ObjectTag
 local function removeTagImpl(objectOrId, tag)
 	local recordId = getRecordId(objectOrId)
+
+	local tagTable = AppliedTags[recordId]
+	if not tagTable then return end
+
 	local lowerTag = tag:lower()
+	if not tagTable[lowerTag] then return end
 
-	if not AppliedTags[recordId] then return end
-
-	AppliedTags[recordId][lowerTag] = nil
+	tagTable[lowerTag] = nil
+	TagRefCounts[lowerTag] = TagRefCounts[lowerTag] - 1
+	if TagRefCounts[lowerTag] <= 0 then
+		TagRefCounts[lowerTag] = nil
+		TagList[lowerTag] = nil
+	end
 end
 
+local loadingComplete = false
+
+---@param object Tagger.Taggable
+---@param tag Tagger.TagArg
 local function addTagGlobal(object, tag)
 	---@cast TagSection openmw.storage.MutableStorageSection
-	validateArguments(object, tag, true)
-
 	local tagType = type(tag)
+	local id = getRecordId(object)
 
 	if tagType == 'table' then
 		for i = 1, #tag do
-			addTagImpl(object, tag[i])
+			addTagImpl(id, tag[i])
 		end
 	elseif tagType == 'string' then
-		addTagImpl(object, tag)
+		addTagImpl(id, tag)
 	else
-		error('Invalid tag value ' .. tag .. ' !')
+		error('Invalid tag value ' .. tostring(tag) .. ' !')
 	end
 
-	TagSection:set('AppliedTags', AppliedTags)
+	if loadingComplete then
+		syncToStorage()
+	end
 end
 
----@param objectOrId openmw.Object|string
----@param tagOrList string|string[]
+---@param objectOrId Tagger.Taggable
+---@param tagOrList Tagger.TagArg
 local function removeTagGlobal(objectOrId, tagOrList)
 	---@cast TagSection openmw.storage.MutableStorageSection
-	validateArguments(objectOrId, tagOrList, true)
-
-	local tagType = type(objectOrId)
+	local tagType = type(tagOrList)
 
 	if tagType == 'table' then
-		for i = 1, #objectOrId do
-			removeTagImpl(objectOrId, objectOrId[i])
+		for i = 1, #tagOrList do
+			removeTagImpl(objectOrId, tagOrList[i])
 		end
 	elseif tagType == 'string' then
-		removeTagImpl(objectOrId, objectOrId)
+		removeTagImpl(objectOrId, tagOrList)
 	else
-		error('Invalid tag value ' .. objectOrId .. ' !')
+		error('Invalid tag value ' .. tostring(tagOrList) .. ' !')
 	end
 
-	TagSection:set('AppliedTags', AppliedTags)
+	if loadingComplete then
+		syncToStorage()
+	end
 end
 
----@param objectOrId openmw.Object|string
----@param tagOrList string|string[]
+---@param objectOrId Tagger.Taggable
+---@param tagOrList Tagger.TagArg
 local function addTagLocal(objectOrId, tagOrList)
-	local taggedId = type(objectOrId) == 'userdata' and objectOrId.recordId or objectOrId
+	local taggedId = getRecordId(objectOrId)
 
-	if type(tagOrList) ~= 'string' then
-		assert(
-			tagOrList[1],
-			'Must provide either string or string array to addTag event!'
-		)
-	else
-		tagOrList = { tagOrList, }
+	if type(tagOrList) == 'string' then
+		tagOrList = { tagOrList }
 	end
+
+	assert(
+		type(tagOrList) == 'table' and #tagOrList > 0,
+		'Must provide a non-empty string array to addTag event!'
+	)
 
 	SendGlobalEvent('TaggerAddTags', { [taggedId] = tagOrList })
 end
 
----@param objectOrId openmw.Object|string
----@param tagOrList string|string[]
+---@param objectOrId Tagger.Taggable
+---@param tagOrList Tagger.TagArg
 local function removeTagLocal(objectOrId, tagOrList)
-	local taggedId = type(objectOrId) == 'userdata' and objectOrId.recordId or objectOrId
+	local taggedId = getRecordId(objectOrId)
 
-	if type(tagOrList) ~= 'string' then
-		assert(
-			tagOrList[1],
-			'Must provide either string or string array to addTag event!'
-		)
-	else
-		tagOrList = { tagOrList, }
+	if type(tagOrList) == 'string' then
+		tagOrList = { tagOrList }
 	end
 
-	SendGlobalEvent('TaggerAddTags', { [taggedId] = tagOrList })
+	assert(
+		type(tagOrList) == 'table' and #tagOrList > 0,
+		'Must provide a non-empty string array to removeTag event!'
+	)
+
+	SendGlobalEvent('TaggerRemoveTags', { [taggedId] = tagOrList })
+end
+
+---Called by the global script once all YAML files have been loaded.
+---Writes the accumulated tags to storage and unlocks deferred writes.
+local function markLoadingComplete()
+	---@cast TagSection openmw.storage.MutableStorageSection
+	TagSection:set('TagList', TagList)
+	TagSection:set('AppliedTags', AppliedTags)
+	loadingComplete = true
 end
 
 local isGlobal = pcall(require, 'openmw.world')
 
+---@param addTagFunc fun(object: Tagger.Taggable, tag: Tagger.TagArg)
+---@param removeTagFunc fun(object: Tagger.Taggable, tag: Tagger.TagArg)
+---@return Tagger.Interface
 local function Interface(addTagFunc, removeTagFunc)
 	return {
 		addTag = addTagFunc,
-		tagList = function()
-			if isGlobal then return TagList else return util.makeReadOnly(TagList) end
-		end,
-		appliedTags = function()
-			if isGlobal then return AppliedTags else return util.makeReadOnly(AppliedTags) end
-		end,
+		removeTag = removeTagFunc,
 		objectHasTag = function(object, tag)
-			validateArguments(object, tag)
-
 			local recordId = getRecordId(object)
+			local tags = AppliedTags[recordId]
 
-			return (AppliedTags[recordId] and AppliedTags[recordId][tag:lower()]) or false
+			if not tags then return end
+
+			return tags[tag:lower()]
 		end,
 		objectTags = function(object)
-			assert(object ~= nil, "An object must be provided to get its tags!")
+			local tags = AppliedTags[getRecordId(object)]
 
-			return AppliedTags[getRecordId(object)] or {}
+			if not tags then return end
+
+			return util.makeReadOnly(tags)
 		end,
-		removeTag = removeTagFunc,
+		tagList = function()
+			return util.makeReadOnly(TagList)
+		end,
+		appliedTags = function()
+			return util.makeReadOnly(AppliedTags)
+		end,
+		ingestTag = ingestTag,
+		removeTagFromMemory = removeTagFromMemory,
+		_isLoadingComplete = function() return loadingComplete end,
+		markLoadingComplete = markLoadingComplete,
+		syncToStorage = syncToStorage,
 	}
 end
 
 if isGlobal then
+	syncToStorage = function()
+		---@cast TagSection openmw.storage.MutableStorageSection
+		TagSection:set('AppliedTags', AppliedTags)
+		TagSection:set('TagList', TagList)
+	end
+
 	return Interface(addTagGlobal, removeTagGlobal)
 else
 	return Interface(addTagLocal, removeTagLocal)
