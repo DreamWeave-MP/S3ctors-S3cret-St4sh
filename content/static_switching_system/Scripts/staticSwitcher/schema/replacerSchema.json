@@ -773,9 +773,8 @@
                 },
                 "creature_type": {
                     "oneOf": [
-                        {"type": "string", "description": "Creature type name (creatures, daedra, undead, humanoid)."},
-                        {"type": "integer", "description": "Raw creature type value."},
-                        {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "integer"}]}, "minItems": 1, "description": "Match any."}
+                        {"type": "string", "enum": ["creatures", "daedra", "undead", "humanoid"], "description": "Creature type name."},
+                        {"type": "array", "items": {"type": "string", "enum": ["creatures", "daedra", "undead", "humanoid"]}, "minItems": 1, "description": "Match any."}
                     ],
                     "description": "Target creature type classification. Non-creatures return false."
                 },
