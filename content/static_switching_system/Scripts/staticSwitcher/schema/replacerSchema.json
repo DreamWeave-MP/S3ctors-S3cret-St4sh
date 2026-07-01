@@ -767,6 +767,22 @@
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "Tagger tag(s) on the object's cell. Requires Tagger mod. Match any."
                 },
+                "is_dead": {
+                    "type": "boolean",
+                    "description": "Whether the target actor is dead. Non-actors return false."
+                },
+                "creature_type": {
+                    "oneOf": [
+                        {"type": "string", "description": "Creature type name (creatures, daedra, undead, humanoid)."},
+                        {"type": "integer", "description": "Raw creature type value."},
+                        {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "integer"}]}, "minItems": 1, "description": "Match any."}
+                    ],
+                    "description": "Target creature type classification. Non-creatures return false."
+                },
+                "race": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Target NPC race ID. Exact match. Non-NPCs return false."
+                },
                 "locked": {
                     "oneOf": [
                         {"type": "boolean", "description": "Check if the object is locked or unlocked."},

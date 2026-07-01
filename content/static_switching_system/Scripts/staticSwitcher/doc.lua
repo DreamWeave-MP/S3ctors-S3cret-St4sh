@@ -182,6 +182,9 @@
 ---@field has_mwscript string|string[]? MWScript record ID(s) on the object. Exact, case-insensitive match. Returns false when no MWScript is attached.
 ---@field has_tag string|string[]? Tagger tag(s) on the object. Requires Tagger mod. Match any.
 ---@field cell_tag string|string[]? Tagger tag(s) on the object's cell. Requires Tagger mod. Match any.
+---@field is_dead boolean? Whether the target actor is dead. Non-actors return false.
+---@field creature_type string|number|(string|number)[]? Target creature type (creatures/daedra/undead/humanoid). Non-creatures return false.
+---@field race string|string[]? Target NPC race ID. Exact, case-insensitive match. Non-NPCs return false.
 ---@field has_key boolean|string|string[]? Key state: boolean for any/none, string for exact key ID match, array for any-of. Non-lockable objects return false.
 ---@field has_trap boolean|string|string[]? Trap state: boolean for any/none, string for exact trap ID match, array for any-of. Non-lockable objects return false.
 ---@field locked boolean|number|table? Lock state: boolean for locked/unlocked, number for minimum lock level, table with {min, max} for range. Non-lockable objects return false.

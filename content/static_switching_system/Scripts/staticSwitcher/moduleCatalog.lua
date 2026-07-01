@@ -105,6 +105,9 @@ local CONDITIONPRIORITY = {
 	'has_mwscript',
 	'has_tag',
 	'cell_tag',
+	'is_dead',
+	'creature_type',
+	'race',
 	'locked',
 	'has_key',
 	'has_trap',
@@ -246,6 +249,7 @@ local LOWERED_CONDITION_KEYS = {
 	has_key = true,
 	has_trap = true,
 	has_mwscript = true,
+	race = true,
 	global_value = 'arrayKeys',
 }
 
