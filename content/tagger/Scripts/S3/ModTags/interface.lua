@@ -11,10 +11,12 @@ local TagSection = storage.globalSection 'TaggerStorage'
 local AppliedTags = {}
 local TagList = {}
 local TagRefCounts = {}
+local TagToRecords = {}
 
 local syncToStorage
 
-local assert, error, pcall, require, tostring, type = assert, error, pcall, require, tostring, type
+local assert, error, next, pcall, require, tostring, type =
+		assert, error, next, pcall, require, tostring, type
 
 TagSection:subscribe(async:callback(
 	function(_, key)
@@ -71,6 +73,8 @@ local function ingestTag(recordId, tagName)
 	end
 	AppliedTags[recordId][tagName] = true
 	TagList[tagName] = true
+	TagToRecords[tagName] = TagToRecords[tagName] or {}
+	TagToRecords[tagName][recordId] = true
 end
 
 local function removeTagFromMemory(recordId, tagName)
@@ -84,6 +88,12 @@ local function removeTagFromMemory(recordId, tagName)
 
 	tagTable[tagName] = nil
 	TagRefCounts[tagName] = TagRefCounts[tagName] - 1
+	if TagToRecords[tagName] then
+		TagToRecords[tagName][recordId] = nil
+		if not next(TagToRecords[tagName]) then
+			TagToRecords[tagName] = nil
+		end
+	end
 	if TagRefCounts[tagName] <= 0 then
 		TagRefCounts[tagName] = nil
 		TagList[tagName] = nil
@@ -102,6 +112,8 @@ local function addTagImpl(object, tag)
 	end
 	AppliedTags[recordId][lowerTag] = true
 	TagList[lowerTag] = true
+	TagToRecords[lowerTag] = TagToRecords[lowerTag] or {}
+	TagToRecords[lowerTag][recordId] = true
 end
 
 ---@param objectOrId Tagger.Taggable
@@ -117,6 +129,12 @@ local function removeTagImpl(objectOrId, tag)
 
 	tagTable[lowerTag] = nil
 	TagRefCounts[lowerTag] = TagRefCounts[lowerTag] - 1
+	if TagToRecords[lowerTag] then
+		TagToRecords[lowerTag][recordId] = nil
+		if not next(TagToRecords[lowerTag]) then
+			TagToRecords[lowerTag] = nil
+		end
+	end
 	if TagRefCounts[lowerTag] <= 0 then
 		TagRefCounts[lowerTag] = nil
 		TagList[lowerTag] = nil
@@ -240,6 +258,21 @@ local function Interface(addTagFunc, removeTagFunc)
 		end,
 		appliedTags = function()
 			return util.makeReadOnly(AppliedTags)
+		end,
+		getRecordsWithTag = function(tag)
+			local result = {}
+			local records = TagToRecords[tag:lower()]
+
+			if not records then return result end
+
+			local resultLen = 0
+
+			for recordId in pairs(records) do
+				resultLen = resultLen + 1
+				result[resultLen] = recordId
+			end
+
+			return result
 		end,
 		ingestTag = ingestTag,
 		removeTagFromMemory = removeTagFromMemory,

@@ -23,6 +23,7 @@
 ---@field objectTags fun(object: Tagger.Taggable): Tagger.ObjectTagList?
 ---@field tagList fun(): Tagger.ObjectTagList
 ---@field appliedTags fun(): Tagger.AppliedTags
+---@field getRecordsWithTag fun(tag: Tagger.ObjectTag): string[]
 ---@field ingestTag fun(recordId: string, tagName: Tagger.ObjectTag) @private
 ---@field removeTagFromMemory fun(recordId: string, tagName: Tagger.ObjectTag) @private
 ---@field _isLoadingComplete fun(): boolean @private
