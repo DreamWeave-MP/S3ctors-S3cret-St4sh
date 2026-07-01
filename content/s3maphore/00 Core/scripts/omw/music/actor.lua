@@ -72,12 +72,12 @@ local function onUpdate(dt)
 
     if not shouldSkipFetch then
         local newTargets = GetTargets 'Combat'
-        local numTargets = #Targets
+        local numOldTargets, numNewTargets = #Targets, #newTargets
 
-        if #newTargets ~= numTargets then
+        if numNewTargets ~= numOldTargets then
             changed = true
         else
-            for i = 1, numTargets do
+            for i = 1, numOldTargets do
                 if Targets[i] ~= newTargets[i] then
                     changed = true
                     break
@@ -87,9 +87,7 @@ local function onUpdate(dt)
 
         clear()
 
-        for i = 1, numTargets do
-            Targets[i] = newTargets[i]
-        end
+        for i = 1, numNewTargets do Targets[i] = newTargets[i] end
     end
 
     if changed then
