@@ -1,0 +1,30 @@
+log_name: Mudcrab Reinforcements
+priority: balance
+
+instances:
+  - conditions:
+      - record_id: mudcrab
+      - generated_object: false
+      - player_level: {min: 10, max: 19}
+    actions:
+      - chance: 0.1
+        create:
+          mudcrab:
+            count: 5
+            position:
+              x: {min: -300, max: 300}
+              y: {min: -300, max: 300}
+    once: per_cell
+
+  - conditions:
+      - record_id: mudcrab
+      - generated_object: false
+      - player_level: 20
+    actions:
+      - create:
+          mudcrab:
+            count: 10
+            position:
+              x: {min: -300, max: 300}
+              y: {min: -300, max: 300}
+    once: per_cell

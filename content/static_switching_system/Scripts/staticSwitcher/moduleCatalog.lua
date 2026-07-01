@@ -96,7 +96,8 @@ local CONDITIONPRIORITY = {
 	'record_id',
 	'content_file_target',
 	--- Object property checks
-	'generated',
+	'generated_record',
+	'generated_object',
 	'mesh',
 	'scale',
 	'has_name',

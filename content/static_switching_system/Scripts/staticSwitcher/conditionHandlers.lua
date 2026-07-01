@@ -434,10 +434,14 @@ local conditionHandlers = {
 	---@param object openmw.GObject
 	---@param shouldBeGenerated boolean
 	---@return boolean
-	generated = function(object, shouldBeGenerated)
-		local isGenerated = staticUtil.getRefNum(object)
-
-		return isGenerated == shouldBeGenerated
+	generated_record = function(object, shouldBeGenerated)
+		return staticUtil.getRefNum(object) == shouldBeGenerated
+	end,
+	---@param object openmw.GObject
+	---@param shouldBeGenerated boolean
+	---@return boolean
+	generated_object = function(object, shouldBeGenerated)
+		return (object.contentFile == nil) == shouldBeGenerated
 	end,
 	---@param object openmw.GObject
 	---@param targetRegion string
