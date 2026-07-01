@@ -178,6 +178,8 @@
 ---@field has_name boolean?
 ---@field has_lua_script string|string[]? Lua script path(s) attached to the object. Exact match.
 ---@field has_mwscript string|string[]? MWScript record ID(s) on the object. Exact, case-insensitive match. Returns false when no MWScript is attached.
+---@field has_tag string|string[]? Tagger tag(s) on the object. Requires Tagger mod. Match any.
+---@field cell_tag string|string[]? Tagger tag(s) on the object's cell. Requires Tagger mod. Match any.
 ---@field has_key boolean|string|string[]? Key state: boolean for any/none, string for exact key ID match, array for any-of. Non-lockable objects return false.
 ---@field has_trap boolean|string|string[]? Trap state: boolean for any/none, string for exact trap ID match, array for any-of. Non-lockable objects return false.
 ---@field locked boolean|number|table? Lock state: boolean for locked/unlocked, number for minimum lock level, table with {min, max} for range. Non-lockable objects return false.
