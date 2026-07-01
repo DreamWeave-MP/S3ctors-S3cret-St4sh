@@ -4,119 +4,97 @@ local markup = require 'openmw.markup'
 local storage = require 'openmw.storage'
 local vfs = require 'openmw.vfs'
 
+local TaggerInterface = require 'Scripts.S3.ModTags.interface'
+local ingestTag = TaggerInterface.ingestTag
+local removeTagFromMemory = TaggerInterface.removeTagFromMemory
+local markLoadingComplete = TaggerInterface.markLoadingComplete
+local isLoadingComplete = TaggerInterface._isLoadingComplete
+local syncToStorage = TaggerInterface.syncToStorage
+TaggerInterface.ingestTag = nil
+TaggerInterface.removeTagFromMemory = nil
+TaggerInterface.markLoadingComplete = nil
+TaggerInterface._isLoadingComplete = nil
+TaggerInterface.syncToStorage = nil
+
 local TagSection = storage.globalSection 'TaggerStorage'
 
 ---@diagnostic disable-next-line: param-type-mismatch
-TagSection:setLifeTime(storage.LIFE_TIME.GameSession)
+TagSection:setLifeTime(storage.LIFE_TIME.Temporary)
 
-local CoCreate, CoStatus, CoResume, CoYield, pairs, print, type =
-    coroutine.create, coroutine.resume, coroutine.status, coroutine.yield, pairs, print, type
-
----@alias ObjectTag string Identifying tag applied to any gameObject or record
-
----@alias ObjectTagList table<ObjectTag, boolean>
-
----@alias AppliedTags table<string, ObjectTagList>
-
----@class TagTable
----@field tags string[] A list of all tags that can be applied to a record or gameObject
----@field applied_tags AppliedTags A map of recordIds to their tags
+local CoCreate, CoResume, CoStatus, CoYield = coroutine.create, coroutine.resume, coroutine.status, coroutine.yield
+local pairs, print, type = pairs, print, type
 
 local LogPrefix = ' [ TAGGER ]:'
 local function TagLog(...)
-    print(LogPrefix, ...)
+	print(LogPrefix, ...)
 end
 
----Process a single item entry for a given tag, adding it to the inverted index.
----@param itemId string
----@param tagName string
----@param InProgressAppliedTags AppliedTags
-local function applyItemTag(itemId, tagName, InProgressAppliedTags)
-    if type(itemId) ~= 'string' then
-        return TagLog(itemId, 'in', tagName, 'is not a valid recordId! Skipping . . .')
-    end
-    itemId = itemId:lower()
-    InProgressAppliedTags[itemId] = InProgressAppliedTags[itemId] or {}
-    InProgressAppliedTags[itemId][tagName] = true
-end
-
----Process a single tag and its item list from a YAML table.
----@param tagName string
----@param itemList string[]
----@param InProgressAppliedTags AppliedTags
----@param InProgressTagList ObjectTagList
-local function processTag(tagName, itemList, InProgressAppliedTags, InProgressTagList)
-    if type(tagName) ~= 'string' then
-        return TagLog(tagName, 'is not a valid tag name! Skipping . . .')
-    end
-    if type(itemList) ~= 'table' then
-        return TagLog(tagName, 'has a non-table item list. Skipping . . .')
-    end
-
-    tagName = tagName:lower()
-    InProgressTagList[tagName] = true
-
-    for i = 1, #itemList do
-        applyItemTag(itemList[i], tagName, InProgressAppliedTags)
-    end
-end
-
---- Load all tags from a tag file into memory.
---- New flat format: { TagName = { recordId, recordId, ... }, ... }
---- Tags are derived from the top-level keys; the inverted index (item → tags)
---- is built here from the forward lists.
+---Load a single YAML table's tags into the in-progress tables (memory-only).
+---Yields between each top-level key so large tag groups don't hitch a frame.
 ---@param tagTable table<string, string[]>
----@param InProgressAppliedTags AppliedTags
----@param InProgressTagList ObjectTagList
-local function loadTagData(tagTable, InProgressAppliedTags, InProgressTagList)
-    for tagName, itemList in pairs(tagTable) do
-        processTag(tagName, itemList, InProgressAppliedTags, InProgressTagList)
-    end
+---@param tagCount number number of keys in this table
+local function loadTagTableWithYields(tagTable, tagCount)
+	local i = 0
+
+	for tagName, itemList in pairs(tagTable) do
+		i = i + 1
+
+		if type(tagName) ~= 'string' then
+			TagLog(tagName, 'is not a valid tag name! Skipping . . .')
+		elseif type(itemList) ~= 'table' then
+			TagLog(tagName, 'has a non-table item list. Skipping . . .')
+		else
+			for j = 1, #itemList do
+				if type(itemList[j]) == 'string' then
+					ingestTag(itemList[j], tagName)
+				else
+					TagLog(tagName, 'has non-string entry, skipping:', itemList[j])
+				end
+			end
+		end
+
+		if i < tagCount then
+			CoYield()
+		end
+	end
 end
 
 ---@return thread
 local function createTagLoaderCoroutine()
-    return CoCreate(function()
-        --- A list of all tags that can be applied to a gameObject or record
-        ---@type ObjectTagList
-        local InProgressTagList = {}
+	return CoCreate(function()
+		local fileList = {}
+		for tagFile in vfs.pathsWithPrefix("ModTags/") do
+			fileList[#fileList + 1] = tagFile
+		end
 
-        --- Main table storing a map of recordIds to their tags
-        ---@type AppliedTags
-        local InProgressAppliedTags = {}
+		if #fileList == 0 then
+			TagLog('No tag files found in ModTags/')
+			markLoadingComplete()
+			return
+		end
 
-        local fileList = {}
-        for tagFile in vfs.pathsWithPrefix("ModTags/") do
-            fileList[#fileList + 1] = tagFile
-        end
+		TagLog('Staggered loading of', #fileList, 'tag files . . .')
 
-        if #fileList == 0 then
-            return TagLog('No tag files found in ModTags/')
-        end
+		for i = 1, #fileList do
+			local tagFile = fileList[i]
+			local tagTable = markup.loadYaml(tagFile)
 
-        TagLog('Staggered loading of', #fileList, 'tag files . . .')
+			if tagTable then
+				local keyCount = 0
+				for _ in pairs(tagTable) do keyCount = keyCount + 1 end
+				loadTagTableWithYields(tagTable, keyCount)
+			else
+				TagLog(tagFile, 'is not a valid YAML file! Skipping . . .')
+			end
 
-        for i = 1, #fileList do
-            local tagFile = fileList[i]
-            local tagTable = markup.loadYaml(tagFile)
+			if i < #fileList then
+				CoYield()
+			end
+		end
 
-            if tagTable then
-                loadTagData(tagTable, InProgressAppliedTags, InProgressTagList)
-            else
-                TagLog(tagFile, 'is not a valid YAML file! Skipping . . .')
-            end
-
-            if i < #fileList then
-                CoYield()
-            end
-        end
-
-        TagSection:set('TagList', InProgressTagList)
-        TagSection:set('AppliedTags', InProgressAppliedTags)
-
-
-        TagLog('Tag loading complete.')
-    end)
+		markLoadingComplete()
+		TagLog('Tag loading complete.')
+	end)
 end
 
 local loaderCo = createTagLoaderCoroutine()
@@ -125,67 +103,54 @@ local onUpdate
 local function noop() end
 
 local function resumeLoader()
-    if CoStatus(loaderCo) == 'dead' then onUpdate = noop end
+	local ok, err = CoResume(loaderCo)
 
-    local ok, err = CoResume(loaderCo)
+	if not ok then
+		TagLog('Coroutine error:', err)
+		markLoadingComplete()
+	end
 
-    if not ok then TagLog('Coroutine error:', err) end
-
-    if CoStatus(loaderCo) == 'dead' then onUpdate = noop end
+	if CoStatus(loaderCo) == 'dead' then onUpdate = noop end
 end
 
 onUpdate = resumeLoader
 
-local TaggerInterface = require 'Scripts.S3.ModTags.interface'
-
----@param eventData table<string, string[]> flat map of tagged objects to tag lists
+---@param eventData table<string, string[]>
 local function onAddTags(eventData)
-    local applied = TagSection:get('AppliedTags')
+	for taggedObject, tagList in pairs(eventData) do
+		for tagIdx = 1, #tagList do
+			ingestTag(taggedObject, tagList[tagIdx])
+		end
+	end
 
-    for taggedObject, tagList in pairs(eventData) do
-        local taggedId = taggedObject:lower()
-
-        applied[taggedId] = applied[taggedId] or {}
-        local tagTable = applied[taggedId]
-
-        for tagIdx = 1, #tagList do
-            local tag = tagList[tagIdx]:lower()
-            tagTable[tag] = true
-        end
-    end
-
-    TagSection:set('AppliedTags', applied)
+	if isLoadingComplete() then
+		syncToStorage()
+	end
 end
 
----@param eventData table<string, string[]> flat map of tagged objects to tag lists
+---@param eventData table<string, string[]>
 local function onRemoveTags(eventData)
-    local applied = TagSection:get('AppliedTags')
+	for taggedObject, tagList in pairs(eventData) do
+		for tagIdx = 1, #tagList do
+			removeTagFromMemory(taggedObject, tagList[tagIdx])
+		end
+	end
 
-    for taggedObject, tagList in pairs(eventData) do
-        local taggedId = taggedObject:lower()
-
-        applied[taggedId] = applied[taggedId] or {}
-        local tagTable = applied[taggedId]
-
-        for tagIdx = 1, #tagList do
-            local tag = tagList[tagIdx]:lower()
-            tagTable[tag] = nil
-        end
-    end
-
-    TagSection:set('AppliedTags', applied)
+	if isLoadingComplete() then
+		syncToStorage()
+	end
 end
 
 return {
-    interfaceName = 'TaggerG',
-    interface = TaggerInterface,
-    engineHandlers = {
-        onUpdate = function()
-            onUpdate()
-        end,
-    },
-    eventHandlers = {
-        TaggerAddTags = onAddTags,
-        TaggerRemoveTags = onRemoveTags,
-    },
+	interfaceName = 'TaggerG',
+	interface = TaggerInterface,
+	engineHandlers = {
+		onUpdate = function()
+			onUpdate()
+		end,
+	},
+	eventHandlers = {
+		TaggerAddTags = onAddTags,
+		TaggerRemoveTags = onRemoveTags,
+	},
 }
