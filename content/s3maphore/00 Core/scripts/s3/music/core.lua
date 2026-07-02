@@ -30,8 +30,8 @@ local musicUtil                                                  = require 'scri
 
 local NullFunction                                               = require 'scripts.s3.nullFunction'
 
-local error, next, pairs, Random, Remove, tostring               =
-    error, next, pairs, math.random, table.remove, tostring
+local error, next, pairs, Random, Remove, tostring, TableSort    =
+    error, next, pairs, math.random, table.remove, tostring, table.sort
 
 local StrFormat, StrLower                                        = string.format, string.lower
 
@@ -102,7 +102,11 @@ end
 
 local function realResolvePlaylist()
     updatePlaylistState()
-    local newPlaylist = musicUtil.getActivePlaylistByPriority(MusicManager.registeredPlaylists, PlaylistEnv.Playback)
+    local newPlaylist = musicUtil.getActivePlaylistByPriority(
+        MusicManager.specialPlaylists,
+        PlaylistEnv.Playback,
+        MusicManager.activePlaydeck
+    )
 
     if newPlaylist == desiredPlaylist then return end
     desiredPlaylist = newPlaylist
@@ -126,6 +130,15 @@ currentUpdateHandler = function(_)
     PlaylistLoader = nil
     updateActorChain = realUpdateActorChain
     resolvePlaylist = realResolvePlaylist
+
+    local function priorityThenRegistration(a, b)
+        return a.priority < b.priority
+            or (a.priority == b.priority and a.registrationOrder > b.registrationOrder)
+    end
+    TableSort(MusicManager.explorePlaylists, priorityThenRegistration)
+    TableSort(MusicManager.battlePlaylists, priorityThenRegistration)
+    TableSort(MusicManager.specialPlaylists, priorityThenRegistration)
+
     resolvePlaylist()
 
     core.sendGlobalEvent('S3maphoreInitializationComplete', self.id)
@@ -200,7 +213,7 @@ end
 local CombatTargetCacheKey
 ---@param eventData CombatTargetChangedData
 local function onCombatTargetsChanged(eventData)
-    if not next(eventData.targets) then
+    if next(eventData.targets) then
         PlaylistState.combatTargets[eventData.actor.id] = eventData.actor
     else
         PlaylistState.combatTargets[eventData.actor.id] = nil
@@ -223,6 +236,9 @@ local function onCombatTargetsChanged(eventData)
         CombatTargetCacheKey = nil; PlaylistRules.setCombatTargetCacheKey()
     end
 
+    MusicManager.activePlaydeck = PlaylistState.isInCombat and MusicManager.battlePlaylists or
+        MusicManager.explorePlaylists
+    print(MusicManager.activePlaydeck, MusicManager.battlePlaylists, MusicManager.explorePlaylists)
     resolvePlaylist()
 end
 
@@ -547,11 +563,6 @@ return {
             end
 
             MusicManager.updateBanner()
-        end,
-
-        ---@param hasCombatTargets boolean
-        S3maphoreCombatTargetsUpdated = function(hasCombatTargets)
-            PlaylistState.cellHasCombatTargets = hasCombatTargets
         end,
 
         ---@param cellChangeData S3maphoreCellChangeData
