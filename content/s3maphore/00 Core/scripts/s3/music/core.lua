@@ -33,7 +33,9 @@ local NullFunction                                               = require 'scri
 local error, next, pairs, Random, Remove, tostring               =
     error, next, pairs, math.random, table.remove, tostring
 
-local AIFight, isDead, isNPC, isSoundEnabled, sendEvent          =
+local StrFormat, StrLower                                        = string.format, string.lower
+
+local AIFight, IsDead, IsNPC, IsSoundEnabled, SendEvent          =
     types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance, core.sound.isEnabled, self.sendEvent
 
 ---@type fun(dt: number)
@@ -60,7 +62,7 @@ local function checkSilenceManager()
     end
 end
 local function onSoundEnabledChanged()
-    if not isSoundEnabled() then return end
+    if not IsSoundEnabled() then return end
 
     currentUpdateHandler = checkSilenceManager
 end
@@ -73,7 +75,7 @@ local function realUpdateActorChain()
             actor = Actors[chainPosition]
             if not actor then break end
         end
-        sendEvent(actor, 'S3maphoreCheckCombat')
+        SendEvent(actor, 'S3maphoreCheckCombat')
         chainPosition = chainPosition + 1
     end
 end
@@ -170,7 +172,7 @@ storage.playerSection('SettingsS3Music'):subscribe(
                         MusicManager.currentTrack = nil
 
                         queuedEvent.data.reason = MusicManager.STATE.Disabled
-                        sendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
+                        SendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
                     end
                 end
             end
@@ -188,9 +190,9 @@ local function updateCellHasCombatTargets()
         local fightStat = AIFight(actor)
         ---@cast fightStat openmw.types.AIStat
 
-        local fightLimit = isNPC(actor) and NPCFightThreshold or CreatureFightThreshold
+        local fightLimit = IsNPC(actor) and NPCFightThreshold or CreatureFightThreshold
 
-        if fightStat.modified >= fightLimit and not isDead(actor) then
+        if fightStat.modified >= fightLimit and not IsDead(actor) then
             nearbyCombatTargets = true
             break
         end
@@ -217,7 +219,7 @@ local function onCombatTargetsChanged(eventData)
         CombatTargetCacheKey = tostring(PlaylistState.combatTargets)
 
         for targetId, _ in pairs(PlaylistState.combatTargets) do
-            CombatTargetCacheKey = ('%s%s'):format(CombatTargetCacheKey, targetId)
+            CombatTargetCacheKey = StrFormat('%s%s', CombatTargetCacheKey, targetId)
         end
 
         PlaylistRules.setCombatTargetCacheKey(CombatTargetCacheKey)
@@ -256,7 +258,7 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
     if not MusicManager.registeredPlaylists[selectedPlaylistId] then
         if selectedPlaylistId and MusicSettings.DebugEnable then
             musicUtil.debugLog(
-                Strings.FallbackPlaylistDoesntExist:format(newPlaylist.id, selectedPlaylistId)
+                StrFormat(Strings.FallbackPlaylistDoesntExist, newPlaylist.id, selectedPlaylistId)
             )
         end
 
@@ -270,7 +272,7 @@ end
 local function selectTrackFromPlaylist(playlistId)
     local playlist = MusicManager.registeredPlaylists[playlistId]
 
-    if not playlist then error(Strings.PlaylistNotRegistered:format(playlistId)) end
+    if not playlist then error(StrFormat(Strings.PlaylistNotRegistered, playlistId)) end
 
     local playlistOrder = MusicManager.playlistsTracksOrder[playlist.id]
     local nextTrackIndex = Remove(playlistOrder)
@@ -301,7 +303,7 @@ local function selectTrackFromPlaylist(playlistId)
     local trackPath = playlist.tracks[nextTrackIndex]
 
     if not trackPath then
-        error(Strings.NoTrackPath:format(nextTrackIndex, playlist.id))
+        error(StrFormat(Strings.NoTrackPath, nextTrackIndex, playlist.id))
     end
 
     return trackPath
@@ -345,7 +347,8 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
 
     if MusicSettings.DebugEnable then
         musicUtil.debugLog(
-            Strings.InterruptModeFallthrough:format(
+            StrFormat(
+                Strings.InterruptModeFallthrough,
                 oldPlaylist.id,
                 oldPlaylist.interruptMode,
                 newPlaylist.id,
@@ -360,7 +363,7 @@ end
 handlePlayback = function(_)
     checkTimeOfDay()
     if queuedEvent.name then
-        sendEvent(self, queuedEvent.name, queuedEvent.data)
+        SendEvent(self, queuedEvent.name, queuedEvent.data)
         queuedEvent.name = nil
         clearQueuedData()
         return
@@ -381,7 +384,7 @@ handlePlayback = function(_)
 
             clearQueuedData()
             queuedEvent.data.reason = MusicManager.STATE.NoPlaylist
-            sendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
+            SendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
             return
         end
 
@@ -447,7 +450,7 @@ MusicManager.addTrackChangedHandler(
     function(eventData)
         if MusicSettings.DebugEnable then
             musicUtil.debugLog(
-                Strings.TrackChanged:format(eventData.playlistId, eventData.trackName)
+                StrFormat(Strings.TrackChanged, eventData.playlistId, eventData.trackName)
             )
         end
 
@@ -473,9 +476,9 @@ return {
         onKeyPress = function(key)
             if key.code == input.KEY.F8 then
                 if key.withShift then
-                    sendEvent(self, 'S3maphoreToggleMusic')
+                    SendEvent(self, 'S3maphoreToggleMusic')
                 else
-                    sendEvent(self, 'S3maphoreSkipTrack')
+                    SendEvent(self, 'S3maphoreSkipTrack')
                 end
             elseif key.code == input.KEY.F4 then
             end
@@ -531,7 +534,7 @@ return {
         S3maphoreSetPlaylistActive = function(eventData)
             if MusicSettings.DebugEnable then
                 musicUtil.debugLog(
-                    Strings.ChangingPlaylist:format(eventData.playlist, eventData.state)
+                    StrFormat(Strings.ChangingPlaylist, eventData.playlist, eventData.state)
                 )
             end
 
@@ -543,7 +546,7 @@ return {
         S3maphoreMusicStopped = function(eventData)
             if MusicSettings.DebugEnable then
                 musicUtil.debugLog(
-                    Strings.MusicStopped:format(eventData.reason)
+                    StrFormat(Strings.MusicStopped, eventData.reason)
                 )
             end
 
@@ -573,7 +576,7 @@ return {
             PlaylistState.cellHasWater = thisCell.hasWater
             PlaylistState.cellWaterLevel = thisCell.waterLevel
             PlaylistState.cellIsExterior = thisCell.isExterior or thisCell:hasTag 'QuasiExterior'
-            PlaylistState.cellName = (shouldUseName and thisCell.name or thisCell.id):lower()
+            PlaylistState.cellName = StrLower(shouldUseName and thisCell.name or thisCell.id)
             PlaylistState.cellId = thisCell.id
 
             if thisCell.isExterior then
@@ -589,9 +592,7 @@ return {
 
         S3maphoreWeatherChanged = function(weatherName)
             if MusicSettings.DebugEnable then
-                musicUtil.debugLog(
-                    Strings.WeatherChanged:format(weatherName)
-                )
+                musicUtil.debugLog(StrFormat(Strings.WeatherChanged, weatherName))
             end
 
             PlaylistState.weather = weatherName
