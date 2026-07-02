@@ -13,6 +13,6 @@ local musicUtil = require 'scripts.s3.music.util'
 ---@field ForcePlaylistChangeOnOverworldTransition boolean
 ---@field FadeOutDuration number
 ---@field MusicEnabled boolean
-local MusicSettings = musicUtil.getUpdatingSettingsTable('SettingsS3Music')
+local MusicSettings = musicUtil.getUpdatingSettingsTable 'SettingsS3Music'
 
 return MusicSettings
