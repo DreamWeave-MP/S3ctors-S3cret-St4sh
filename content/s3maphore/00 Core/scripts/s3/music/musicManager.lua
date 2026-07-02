@@ -230,7 +230,7 @@ end
 function MusicManager.getCurrentPlaylist()
   if not MusicManager.currentPlaylist then return end
 
-  return musicUtil.makeReadOnly(MusicManager.currentPlaylist)
+  return musicUtil.makeReadOnly(MusicManager.currentPlaylist, true)
 end
 
 --- Returns a read-only list of read-only playlist structs for introspection. To modify playlists in any way, use other functions.
