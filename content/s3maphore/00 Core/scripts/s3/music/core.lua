@@ -202,9 +202,7 @@ end
 local CombatTargetCacheKey
 ---@param eventData CombatTargetChangedData
 local function onCombatTargetsChanged(eventData)
-    if eventData.actor == nil then return end
-
-    if next(eventData.targets) ~= nil then
+    if not next(eventData.targets) then
         PlaylistState.combatTargets[eventData.actor.id] = eventData.actor
     else
         PlaylistState.combatTargets[eventData.actor.id] = nil
