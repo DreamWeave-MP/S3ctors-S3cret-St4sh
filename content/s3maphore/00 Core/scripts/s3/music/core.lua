@@ -213,6 +213,8 @@ end
 local CombatTargetCacheKey
 ---@param eventData CombatTargetChangedData
 local function onCombatTargetsChanged(eventData)
+    if IsDead(self) then return end
+
     if next(eventData.targets) then
         PlaylistState.combatTargets[eventData.actor.id] = eventData.actor
     else
