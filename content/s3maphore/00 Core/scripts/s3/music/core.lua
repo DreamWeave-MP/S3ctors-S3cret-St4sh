@@ -140,11 +140,7 @@ local TrackChangeData = {
     trackName = '',
 }
 local function clearQueuedData()
-    local key = next(queuedEvent.data)
-    while key do
-        queuedEvent.data[key] = nil
-        key = next(queuedEvent.data)
-    end
+    for key in next, queuedEvent.data do queuedEvent.data[key] = nil end
 end
 
 storage.playerSection('SettingsS3Music'):subscribe(
