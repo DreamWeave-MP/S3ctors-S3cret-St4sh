@@ -1,49 +1,57 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local ambient                          = require 'openmw.ambient'
-local async                            = require 'openmw.async'
-local core                             = require 'openmw.core'
-local input                            = require 'openmw.input'
-local nearby                           = require 'openmw.nearby'
-local self                             = require 'openmw.self'
-local storage                          = require 'openmw.storage'
-local types                            = require 'openmw.types'
+local ambient                                                    = require 'openmw.ambient'
+local async                                                      = require 'openmw.async'
+local core                                                       = require 'openmw.core'
+local input                                                      = require 'openmw.input'
+local nearby                                                     = require 'openmw.nearby'
+local self                                                       = require 'openmw.self'
+local storage                                                    = require 'openmw.storage'
+local types                                                      = require 'openmw.types'
 
-local MusicManager                     = require 'scripts.s3.music.musicManager'
-local MusicSettings                    = require 'scripts.s3.music.musicSettings'
+local MusicManager                                               = require 'scripts.s3.music.musicManager'
+local MusicSettings                                              = require 'scripts.s3.music.musicSettings'
 ---@type function?
-local PlaylistLoader                   = require 'scripts.s3.music.playlistLoader'
-local PlaylistState                    = require 'scripts.s3.music.playlistState'
-local SilenceManager                   = require 'scripts.s3.music.silenceManager'
-local Strings                          = require 'scripts.s3.music.staticStrings'
+local PlaylistLoader                                             = require 'scripts.s3.music.playlistLoader'
+local PlaylistState                                              = require 'scripts.s3.music.playlistState'
+local SilenceManager                                             = require 'scripts.s3.music.silenceManager'
+local Strings                                                    = require 'scripts.s3.music.staticStrings'
 
-local activePlaylistSettings           = storage.playerSection 'S3maphoreActivePlaylistSettings'
-local musicUtil                        = require 'scripts.s3.music.util'
+local activePlaylistSettings                                     = storage.playerSection 'S3maphoreActivePlaylistSettings'
+local musicUtil                                                  = require 'scripts.s3.music.util'
 
-local nullFunction                     = require 'scripts.s3.nullFunction'
+local nullFunction                                               = require 'scripts.s3.nullFunction'
 
-local CachedCellGrid                   = { x = 0, y = 0, }
+local error, next, pairs, Random, Remove, tostring               =
+    error, next, pairs, math.random, table.remove, tostring
 
-local NPCFightThreshold                = 90
-local CreatureFightThreshold           = 83
-
-local Actors                           = nearby.actors
-local BATCH_SIZE                       = 4
-local chainPosition                    = 2
+local AIFight, isDead, isNPC, isSoundEnabled, sendEvent          =
+    types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance, core.sound.isEnabled, self.sendEvent
 
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback, updateActorChain = nullFunction, nullFunction
+local handlePlayback, updateActorChain, resolvePlaylist          = nullFunction, nullFunction, nullFunction
+local desiredPlaylist, resolverDirty, didTransition, wasExterior = nil, false, false, false
+
+local CachedCellGrid                                             = { x = 0, y = 0, }
+
+---@type QueuedEvent
+local queuedEvent                                                = { name = '', data = {} }
+
+local NPCFightThreshold                                          = 90
+local CreatureFightThreshold                                     = 83
+
+local Actors                                                     = nearby.actors
+local BATCH_SIZE                                                 = 4
+local chainPosition                                              = 2
 
 local function checkSilenceManager()
     if not SilenceManager:silenceActive() then
         currentUpdateHandler = handlePlayback
     end
 end
-
-local isSoundEnabled = core.sound.isEnabled
 local function onSoundEnabledChanged()
     if not isSoundEnabled() then return end
 
@@ -58,18 +66,51 @@ local function realUpdateActorChain()
             actor = Actors[chainPosition]
             if not actor then break end
         end
-        actor:sendEvent 'S3maphoreCheckCombat'
+        sendEvent(actor, 'S3maphoreCheckCombat')
         chainPosition = chainPosition + 1
     end
 end
 
+--- Updates the playlist state for this frame, before it is actively used in playlist selection
+local function updatePlaylistState()
+    PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
+
+    PlaylistState.isUnderwater = PlaylistState.cellHasWater
+        and self.type.isSwimming(self)
+        and
+        self.position.z + self:getBoundingBox().halfSize.z * 2 <
+        PlaylistState.cellWaterLevel -- - 100 -- Hardcoded value for now, but, PLEASE make this a s3tting later
+end
+
+local function checkTimeOfDay()
+    local newTOD = MusicManager.playlistTimeOfDay()
+
+    if newTOD == PlaylistState.playlistTimeOfDay then return end
+
+    PlaylistState.playlistTimeOfDay = newTOD
+    queuedEvent.name = 'S3maphoreTODChanged'
+end
+
+local function realResolvePlaylist()
+    updatePlaylistState()
+    local newPlaylist = musicUtil.getActivePlaylistByPriority(MusicManager.registeredPlaylists, Playback)
+
+    if newPlaylist == desiredPlaylist then return end
+    desiredPlaylist = newPlaylist
+    resolverDirty = true
+end
+
 ---@type fun(_: number)
 currentUpdateHandler = function(_)
-    assert(PlaylistLoader)
+    if not PlaylistLoader then error 'Playlist loader not found during initialization!' end
+
     if not PlaylistLoader() then return end
 
     PlaylistLoader = nil
     updateActorChain = realUpdateActorChain
+    resolvePlaylist = realResolvePlaylist
+    resolvePlaylist()
+
     currentUpdateHandler = onSoundEnabledChanged
 end
 
@@ -80,9 +121,6 @@ local TrackChangeData = {
     reason = MusicManager.STATE.TrackChanged,
     trackName = '',
 }
-
----@type QueuedEvent
-local queuedEvent = { name = nil, data = {} }
 local function clearQueuedData()
     local key = next(queuedEvent.data)
     while key do
@@ -116,7 +154,7 @@ storage.playerSection('SettingsS3Music'):subscribe(
                         MusicManager.currentTrack = nil
 
                         queuedEvent.data.reason = MusicManager.STATE.Disabled
-                        self:sendEvent('S3maphoreMusicStopped', queuedEvent.data)
+                        sendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
                     end
                 end
             end
@@ -124,16 +162,6 @@ storage.playerSection('SettingsS3Music'):subscribe(
     )
 )
 
---- Updates the playlist state for this frame, before it is actively used in playlist selection
-local function updatePlaylistState()
-    PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
-
-    PlaylistState.isUnderwater = PlaylistState.cellHasWater
-        and self.type.isSwimming(self)
-        and
-        self.position.z + self:getBoundingBox().halfSize.z * 2 <
-        PlaylistState.cellWaterLevel -- - 100 -- Hardcoded value for now, but, PLEASE make this a s3tting later
-end
 
 ---@type PlaylistRules
 local PlaylistRules = require 'scripts.s3.music.playlistRules'
@@ -146,22 +174,22 @@ local Playback = {
     rules = PlaylistRules,
     state = PlaylistState,
 }
-
-local AIFight, ipairs, isDead, isNPC, LocalActors, MyId
-= types.Actor.stats.ai.fight, ipairs, types.Actor.isDead, types.NPC.objectIsInstance, nearby.actors, self.id
-
 local function updateCellHasCombatTargets()
     local nearbyCombatTargets = false
 
-    for _, actor in ipairs(LocalActors) do
-        if actor.id ~= MyId then
-            local fightStat = AIFight(actor)
-            local fightLimit = isNPC(actor) and NPCFightThreshold or CreatureFightThreshold
+    -- Player is always at index 1, so if we start at 2
+    -- We can skip the identity check
+    for i = 2, #Actors do
+        local actor = Actors[i]
 
-            if fightStat.modified >= fightLimit and not isDead(actor) then
-                nearbyCombatTargets = true
-                break
-            end
+        local fightStat = AIFight(actor)
+        ---@cast fightStat openmw.types.AIStat
+
+        local fightLimit = isNPC(actor) and NPCFightThreshold or CreatureFightThreshold
+
+        if fightStat.modified >= fightLimit and not isDead(actor) then
+            nearbyCombatTargets = true
+            break
         end
     end
 
@@ -195,6 +223,8 @@ local function onCombatTargetsChanged(eventData)
     else
         CombatTargetCacheKey = nil; PlaylistRules.setCombatTargetCacheKey(nil)
     end
+
+    resolvePlaylist()
 end
 
 local function playerDied()
@@ -209,17 +239,17 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
     local fallbackData = newPlaylist.fallback
     if not fallbackData or not fallbackData.playlists then return newPlaylist.id end
 
-    local useOtherPlaylist = math.random() <= (fallbackData.playlistChance or 0.5)
+    local useOtherPlaylist = Random() <= (fallbackData.playlistChance or 0.5)
 
     if not useOtherPlaylist then return newPlaylist.id end
 
     for i = #fallbackData.playlists, 1, -1 do
         local playlistId = fallbackData.playlists[i]
-        if not MusicManager.registeredPlaylists[playlistId] then table.remove(fallbackData.playlists, i) end
+        if not MusicManager.registeredPlaylists[playlistId] then Remove(fallbackData.playlists, i) end
     end
 
     local numBackupPlaylists = #fallbackData.playlists
-    local selectedPlaylistIndex = math.random(numBackupPlaylists)
+    local selectedPlaylistIndex = Random(numBackupPlaylists)
     local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
 
     if not MusicManager.registeredPlaylists[selectedPlaylistId] then
@@ -239,10 +269,10 @@ end
 local function selectTrackFromPlaylist(playlistId)
     local playlist = MusicManager.registeredPlaylists[playlistId]
 
-    assert(playlist, Strings.PlaylistNotRegistered:format(playlistId))
+    if not playlist then error(Strings.PlaylistNotRegistered:format(playlistId)) end
 
     local playlistOrder = MusicManager.playlistsTracksOrder[playlist.id]
-    local nextTrackIndex = table.remove(playlistOrder)
+    local nextTrackIndex = Remove(playlistOrder)
 
     if nextTrackIndex == nil then
         error(Strings.NextTrackIndexNil)
@@ -258,7 +288,7 @@ local function selectTrackFromPlaylist(playlistId)
 
         -- If next track for randomized playist will be the same as one we want to play, swap it with random track.
         if playlist.randomize and #playlistOrder > 1 and playlistOrder[1] == nextTrackIndex then
-            local index = math.random(2, #playlistOrder)
+            local index = Random(2, #playlistOrder)
             playlistOrder[1], playlistOrder[index] = playlistOrder[index], playlistOrder[1]
         end
 
@@ -269,10 +299,9 @@ local function selectTrackFromPlaylist(playlistId)
 
     local trackPath = playlist.tracks[nextTrackIndex]
 
-    assert(
-        trackPath,
-        Strings.NoTrackPath:format(nextTrackIndex, playlist.id)
-    )
+    if not trackPath then
+        error(Strings.NoTrackPath:format(nextTrackIndex, playlist.id))
+    end
 
     return trackPath
 end
@@ -327,13 +356,10 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
     return false
 end
 
-local didChangePlaylist = false
-
-local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
-
 handlePlayback = function(_)
+    checkTimeOfDay()
     if queuedEvent.name then
-        self:sendEvent(queuedEvent.name, queuedEvent.data)
+        sendEvent(self, queuedEvent.name, queuedEvent.data)
         queuedEvent.name = nil
         clearQueuedData()
         return
@@ -341,105 +367,75 @@ handlePlayback = function(_)
 
     local musicPlaying = ambient.isMusicPlaying()
 
-    updatePlaylistState()
+    -- Resolver flagged a new playlist this tick
+    if resolverDirty then
+        resolverDirty = false
 
-    local newPlaylist = musicUtil.getActivePlaylistByPriority(MusicManager.registeredPlaylists, Playback)
-
-    if not newPlaylist then
-        if musicPlaying then
-            ambient.stopMusic()
-            clearQueuedData()
-            queuedEvent.name = 'S3maphoreMusicStopped'
-            queuedEvent.data.reason = MusicManager.STATE.NoPlaylist
-
-            if MusicManager.currentPlaylist ~= nil then
-                MusicManager.currentPlaylist.deactivateAfterEnd = nil
+        if not desiredPlaylist then
+            if musicPlaying then
+                ambient.stopMusic()
+                MusicManager.currentPlaylist = nil
+                MusicManager.currentTrack = nil
             end
 
-            MusicManager.currentPlaylist = nil
-            MusicManager.currentTrack = nil
+            clearQueuedData()
+            queuedEvent.data.reason = MusicManager.STATE.NoPlaylist
+            sendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
+            return
         end
 
-        return
-    end
+        if desiredPlaylist ~= MusicManager.currentPlaylist
+            and canSwitchPlaylist(MusicManager.currentPlaylist, desiredPlaylist) then
+            MusicManager.forceSkip = true
+        elseif desiredPlaylist ~= MusicManager.currentPlaylist and didTransition then
+            local isExterior     = PlaylistState.cellIsExterior
+            local friendlyEnter  = not PlaylistState.cellHasCombatTargets
+            local hostileEnter   = PlaylistState.cellHasCombatTargets
 
-    didChangePlaylist = didChangePlaylist or
-        (
-            MusicManager.currentPlaylist ~= nil
-            and newPlaylist ~= nil
-            and MusicManager.currentPlaylist ~= newPlaylist
-        )
+            local overworldCross = wasExterior and isExterior
+                and desiredPlaylist.priority <
+                (MusicManager.currentPlaylist and MusicManager.currentPlaylist.priority or 1000)
 
-    local didTransition = inExteriorBeforeCellChange ~= PlaylistState.cellIsExterior
-
-    MusicManager.forceSkip = MusicManager.forceSkip or didChangePlaylist
-        and (
-            didTransition and (
-                (
-                    (
-                        MusicSettings.ForcePlaylistChangeOnFriendlyExteriorTransition
-                        and not PlaylistState.cellHasCombatTargets
-                    ) or (
-                        MusicSettings.ForcePlaylistChangeOnHostileExteriorTransition
-                        and PlaylistState.cellHasCombatTargets
-                        and not self.cell.isExterior -- Only do this skip type for *real* interiors
-                    )
-                )
-            ) or (
-                MusicSettings.ForcePlaylistChangeOnOverworldTransition and inExteriorBeforeCellChange and PlaylistState.cellIsExterior
-                and (
-                    newPlaylist.priority < (MusicManager.currentPlaylist and MusicManager.currentPlaylist.priority or 1000)
-                )
-            )
-        )
-
-    if didTransition then
-        -- if forceSkip then
-        if MusicSettings.DebugEnable then
-            musicUtil.debugLog(
-                Strings.PlaylistSkipFormatStr:format(
-                    didChangePlaylist,
-                    didTransition,
-                    MusicSettings.ForcePlaylistChangeOnFriendlyExteriorTransition,
-                    MusicSettings.ForcePlaylistChangeOnHostileExteriorTransition,
-                    MusicSettings.ForcePlaylistChangeOnOverworldTransition,
-                    PlaylistState.cellHasCombatTargets
-                )
-            )
+            if (MusicSettings.ForcePlaylistChangeOnFriendlyExteriorTransition and friendlyEnter)
+                or (MusicSettings.ForcePlaylistChangeOnHostileExteriorTransition and hostileEnter)
+                or (MusicSettings.ForcePlaylistChangeOnOverworldTransition and overworldCross) then
+                MusicManager.forceSkip = true
+            end
         end
-
-        didChangePlaylist = false
+        didTransition = false
     end
 
-    --- Update this particular state value as it could change before other less-relevant ones are updated, making
-    --- skip detection *potentially* less accurate
-    inExteriorBeforeCellChange = PlaylistState.cellIsExterior
-
-    --- Only pick a new track, if no music is playing, or we've asked for a forced skip
+    -- Need a new track?
     local pickNewTrack = not musicPlaying or MusicManager.forceSkip
-    if musicPlaying and not MusicManager.forceSkip then
-        --- In special cases, we can force a new track to be picked,
-        --- if the playlist has changed, and we're allowed to do so (by the new playlist's interrupt mode overriding the old one)
-        pickNewTrack = newPlaylist ~= MusicManager.currentPlaylist and
-            canSwitchPlaylist(MusicManager.currentPlaylist, newPlaylist)
-    end
 
     if not pickNewTrack then return end
 
     MusicManager.forceSkip = false
-    didChangePlaylist = false
 
-    if newPlaylist and newPlaylist.deactivateAfterEnd then
-        newPlaylist.deactivateAfterEnd = nil
-        newPlaylist.active = false
+    local target = desiredPlaylist or MusicManager.currentPlaylist
+    if not target then return end
+
+    if target.deactivateAfterEnd then
+        target.deactivateAfterEnd = nil
+        target.active = false
+        desiredPlaylist = nil
+        MusicManager.currentPlaylist = nil
+        MusicManager.currentTrack = nil
+        resolvePlaylist()
         return
     end
 
-    switchPlaylist(newPlaylist)
+    if target ~= MusicManager.currentPlaylist then
+        switchPlaylist(target)
+    else
+        local nextTrack = selectTrackFromPlaylist(target.id)
+        MusicManager.currentTrack = nextTrack
+        MusicParams.fadeOut = target.fadeOut or MusicSettings.FadeOutDuration
+    end
 
     for key in next, TrackChangeData do TrackChangeData[key] = nil end
     TrackChangeData.fadeOut = MusicParams.fadeOut
-    TrackChangeData.playlistId = newPlaylist and newPlaylist.id
+    TrackChangeData.playlistId = target.id
     TrackChangeData.trackName = MusicManager.currentTrack
     TrackChangeData.reason = MusicManager.STATE.TrackChanged
     MusicManager.callTrackChangedHandlers(TrackChangeData)
@@ -470,14 +466,15 @@ return {
         onQuestUpdate = function()
             ---@diagnostic disable-next-line: invisible
             PlaylistRules.clearJournalCache()
+            resolvePlaylist()
         end,
 
         onKeyPress = function(key)
             if key.code == input.KEY.F8 then
                 if key.withShift then
-                    self:sendEvent('S3maphoreToggleMusic')
+                    sendEvent(self, 'S3maphoreToggleMusic')
                 else
-                    self:sendEvent('S3maphoreSkipTrack')
+                    sendEvent(self, 'S3maphoreSkipTrack')
                 end
             elseif key.code == input.KEY.F4 then
             end
@@ -503,8 +500,10 @@ return {
         onLoad = function(data)
             if not data then return end
 
-            for playlistId, playlistState in pairs(data.playlistStates or {}) do
-                activePlaylistSettings:set(playlistId .. 'Active', playlistState)
+            if data.playlistStates then
+                for playlistId, playlistState in pairs(data.playlistStates) do
+                    activePlaylistSettings:set(playlistId .. 'Active', playlistState)
+                end
             end
         end
     },
@@ -513,11 +512,17 @@ return {
 
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
 
-        S3maphoreToggleMusic = MusicManager.overrideMusicEnabled,
+        S3maphoreToggleMusic = function(enabled)
+            MusicManager.overrideMusicEnabled(enabled)
+            if MusicSettings.MusicEnabled then
+                resolvePlaylist()
+            end
+        end,
 
         S3maphoreSkipTrack = function()
             currentUpdateHandler = onSoundEnabledChanged
             MusicManager.skipTrack()
+            resolvePlaylist()
         end,
 
         S3maphoreSpecialTrack = MusicManager.playSpecialTrack,
@@ -530,6 +535,7 @@ return {
             end
 
             MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
+            resolvePlaylist()
         end,
 
         ---@param eventData S3maphoreStateChangeEventData
@@ -551,18 +557,21 @@ return {
         ---@param cellChangeData S3maphoreCellChangeData
         S3maphoreCellChanged = function(cellChangeData)
             chainPosition = 2
+            wasExterior = PlaylistState.cellIsExterior
+            didTransition = true
             updateCellHasCombatTargets()
 
             PlaylistState.staticList = cellChangeData.staticList
             if cellChangeData.nearestRegion then PlaylistState.nearestRegion = cellChangeData.nearestRegion end
 
-            local thisCell = assert(self.cell)
+            local thisCell = self.cell
+            ---@cast thisCell openmw.core.LCell
 
             local shouldUseName = thisCell.name ~= ''
 
             PlaylistState.cellHasWater = thisCell.hasWater
             PlaylistState.cellWaterLevel = thisCell.waterLevel
-            PlaylistState.cellIsExterior = thisCell.isExterior or thisCell:hasTag('QuasiExterior')
+            PlaylistState.cellIsExterior = thisCell.isExterior or thisCell:hasTag 'QuasiExterior'
             PlaylistState.cellName = (shouldUseName and thisCell.name or thisCell.id):lower()
             PlaylistState.cellId = thisCell.id
 
@@ -579,6 +588,8 @@ return {
             if not PlaylistLoader then
                 currentUpdateHandler = onSoundEnabledChanged
             end
+
+            resolvePlaylist()
         end,
 
         S3maphoreWeatherChanged = function(weatherName)
@@ -589,13 +600,17 @@ return {
             end
 
             PlaylistState.weather = weatherName
+            resolvePlaylist()
         end,
 
         S3maphoreClearTargetCache = function()
             if MusicSettings.DebugEnable then
                 musicUtil.debugLog('clearing target cache for key', CombatTargetCacheKey)
             end
+
             PlaylistRules.clearGlobalCombatTargetCache()
         end,
+
+        S3maphoreTODChanged = realResolvePlaylist,
     }
 }
