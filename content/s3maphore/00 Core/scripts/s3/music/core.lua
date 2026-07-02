@@ -224,7 +224,7 @@ local function onCombatTargetsChanged(eventData)
 
         PlaylistRules.setCombatTargetCacheKey(CombatTargetCacheKey)
     else
-        CombatTargetCacheKey = nil; PlaylistRules.setCombatTargetCacheKey(nil)
+        CombatTargetCacheKey = nil; PlaylistRules.setCombatTargetCacheKey()
     end
 
     resolvePlaylist()
