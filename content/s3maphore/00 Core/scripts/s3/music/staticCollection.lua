@@ -12,7 +12,7 @@ local StaticCellChangeData = {
 }
 
 local FieldNames = { 'recordIds', 'contentFiles', }
-local NearestDoor = nil
+local NearestDoor
 local NullFunction = function() end
 local liveCheckForRegion = NullFunction
 
