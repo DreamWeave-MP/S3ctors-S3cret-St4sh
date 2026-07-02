@@ -21,21 +21,18 @@ local PreviousPlayerWeathers = {}
 ---@type table<string, boolean>
 local PlayersInitialized = {}
 
-local NearestDoor
 local FieldNames = { 'recordIds', 'contentFiles', }
-local NullFunction = require 'scripts.s3.nullFunction'
-local liveCheckForRegion = NullFunction
 
 local pairs, StrFind, StrFormat, StrGsub, StrLower = pairs, string.find, string.format, string.gsub, string.lower
 
----@type fun(cell: openmw.core.GCell): openmw.GObject[]
+---@type fun(cell: openmw.core.GCell, filter: openmw.types.Door | openmw.types.Static): openmw.GObject[]
 local GetAll
 --- Hoisted copy of GameObject.sendEvent
 ---@type fun(obj: openmw.Object, id: string, data: any)
 local SendEvent
 
-local Cells, DoorDestination, GetCurrentWeather, IsDoor,
-IsStatic, IsTeleportDoor, Players, SqLen
+local Cells, DoorDestination, DoorType, GetCurrentWeather, GetExteriorCell,
+IsDoor, IsTeleportDoor, Players, SqLen, StaticType
 
 do
     local core = require 'openmw.core'
@@ -44,9 +41,11 @@ do
 
     Cells, Players = world.cells, world.players
     GetCurrentWeather = core.weather.getCurrent
-    IsStatic = types.Static.objectIsInstance
-    DoorDestination, IsDoor, IsTeleportDoor = types.Door.destCell, types.Door.objectIsInstance, types.Door.isTeleport
+    GetExteriorCell = world.getExteriorCell
+    DoorDestination, DoorType, IsDoor, IsTeleportDoor = types.Door.destCell, types.Door, types.Door.objectIsInstance,
+        types.Door.isTeleport
     SqLen = require 'openmw.util'.vector3(0, 0, 0).length2
+    StaticType = types.Static
 end
 
 ---@diagnostic disable-next-line: undefined-field
@@ -54,67 +53,88 @@ local clear = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
 
 ---@param object openmw.GObject
 ---@param target openmw.GObject
-local function checkForRegion(object, target)
+---@param nearestDoor openmw.GObject?
+---@return openmw.GObject? nearestDoor
+local function checkForRegion(object, target, nearestDoor)
     if not IsDoor(object) or not IsTeleportDoor(object) then return end
 
     local targetPos, objectPos = target.position, object.position
-    if not NearestDoor or SqLen(targetPos - objectPos) < SqLen(targetPos - NearestDoor.position) then
-        NearestDoor = object
+    if not nearestDoor or SqLen(targetPos - objectPos) < SqLen(targetPos - nearestDoor.position) then
+        return object
     end
 end
 
---- Given a cell object, check the hostility ratings of all actors inside of it
----@param cellId openmw.core.GCell
-local function updateCellInfo(sender, cellId)
-    for i = 1, #FieldNames do
-        local fieldName = FieldNames[i]
-        clear(StaticCellChangeData.staticList[fieldName])
-    end
+---@param cell openmw.core.GCell
+---@param seenRecordIds table<string, boolean>
+---@param seenContentFiles table<string, boolean>
+---@param outRecordIds string[]
+---@param outContentFiles string[]
+local function collectStaticItems(cell, seenRecordIds, seenContentFiles, outRecordIds, outContentFiles)
+    local objects = GetAll(cell, StaticType)
 
-    local uniqueStaticIds, uniqueContentFiles = {}, {}
-
-    local addedStatics, addedContentFiles = StaticCellChangeData.staticList.recordIds,
-        StaticCellChangeData.staticList.contentFiles
-
-    local nearestRegion = cellId.region
-    if not nearestRegion then
-        NearestDoor = nil
-        liveCheckForRegion = checkForRegion
-    end
-
-    local objects = GetAll(cellId)
     for i = 1, #objects do
-        local object = objects[i]
+        local staticObj = objects[i]
 
-        if IsStatic(object) then
-            if not uniqueStaticIds[object.recordId] then
-                addedStatics[#addedStatics + 1] = object.recordId
-                uniqueStaticIds[object.recordId] = true
+        if not seenRecordIds[staticObj.recordId] then
+            outRecordIds[#outRecordIds + 1] = staticObj.recordId
+            seenRecordIds[staticObj.recordId] = true
+        end
+
+        if staticObj.contentFile and staticObj.contentFile ~= '' then
+            local contentFile = staticObj.contentFile
+
+            if not seenContentFiles[contentFile] then
+                outContentFiles[#outContentFiles + 1] = contentFile
+                seenContentFiles[contentFile] = true
             end
+        end
+    end
+end
 
-            if not uniqueContentFiles[object.contentFile] then
-                if object.contentFile and object.contentFile ~= '' then
-                    addedContentFiles[#addedContentFiles + 1] = StrLower(object.contentFile)
-                    uniqueContentFiles[object.contentFile] = true
+---@param playerActor openmw.GObject
+---@param playerCell openmw.core.GCell
+local function updateCellInfo(playerActor, playerCell)
+    for i = 1, #FieldNames do
+        clear(StaticCellChangeData.staticList[FieldNames[i]])
+    end
+
+    local outRecordIds                    = StaticCellChangeData.staticList.recordIds
+    local outContentFiles                 = StaticCellChangeData.staticList.contentFiles
+    local seenRecordIds, seenContentFiles = {}, {}
+
+    local nearestRegion                   = playerCell.region
+
+    if playerCell.isExterior then
+        local gridX, gridY = playerCell.gridX, playerCell.gridY
+
+        for offsetX = -1, 1 do
+            for offsetY = -1, 1 do
+                local exteriorCell = GetExteriorCell(gridX + offsetX, gridY + offsetY)
+                if exteriorCell then
+                    collectStaticItems(exteriorCell, seenRecordIds, seenContentFiles, outRecordIds,
+                        outContentFiles)
                 end
             end
         end
+    else
+        collectStaticItems(playerCell, seenRecordIds, seenContentFiles, outRecordIds, outContentFiles)
 
-        liveCheckForRegion(object, sender)
-    end
+        if not nearestRegion then
+            local nearestDoor
 
-    if NearestDoor then
-        -- Teleport doors *should* always have a target cell
-        local region = DoorDestination(NearestDoor).region
+            local allDoors = GetAll(playerCell, DoorType)
 
-        if region then
-            nearestRegion = region
+            for i = 1, #allDoors do
+                nearestDoor = checkForRegion(allDoors[i], playerActor, nearestDoor)
+            end
+
+            if nearestDoor then
+                local region = DoorDestination(nearestDoor).region
+                if region then nearestRegion = region end
+                nearestDoor = nil
+            end
         end
-
-        NearestDoor = nil
     end
-
-    liveCheckForRegion = NullFunction
 
     if nearestRegion then
         StaticCellChangeData.nearestRegion = nearestRegion
