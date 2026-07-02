@@ -11,29 +11,31 @@ local StaticCellChangeData = {
     nearestRegion = '',
 }
 
-local FieldNames = { 'recordIds', 'contentFiles', }
 local NearestDoor
-local NullFunction = function() end
+local FieldNames = { 'recordIds', 'contentFiles', }
+local NullFunction = require 'scripts.s3.nullFunction'
 local liveCheckForRegion = NullFunction
 
 local DoorType = types.Door
-local SquaredLen = require 'openmw.util'.vector3(0, 0, 0).length2
+local SqLen = require 'openmw.util'.vector3(0, 0, 0).length2
+
+---@diagnostic disable-next-line: undefined-field
+local clear = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
 local function checkForRegion(object, target)
     if not DoorType.objectIsInstance(object) or not DoorType.isTeleport(object) then return end
 
     local targetPos, objectPos = target.position, object.position
-    if not NearestDoor or SquaredLen(targetPos - objectPos) < SquaredLen(targetPos - NearestDoor.position) then
+    if not NearestDoor or SqLen(targetPos - objectPos) < SqLen(targetPos - NearestDoor.position) then
         NearestDoor = object
     end
 end
 
 --- Given a cell object, check the hostility ratings of all actors inside of it
----@param senderCell GameCell
+---@param senderCell openmw.core.GCell
 local function updateCellInfo(sender, senderCell)
-    for _, fieldName in ipairs(FieldNames) do
-        for k in pairs(StaticCellChangeData.staticList[fieldName]) do
-            StaticCellChangeData.staticList[fieldName][k] = nil
-        end
+    for i = 1, #FieldNames do
+        local fieldName = FieldNames[i]
+        clear(StaticCellChangeData.staticList[fieldName])
     end
 
     local uniqueStaticIds, uniqueContentFiles = {}, {}
@@ -47,7 +49,10 @@ local function updateCellInfo(sender, senderCell)
         liveCheckForRegion = checkForRegion
     end
 
-    for _, object in ipairs(senderCell:getAll()) do
+    local objects = senderCell:getAll()
+    for i = 1, #objects do
+        local object = objects[i]
+
         if types.Static.objectIsInstance(object) then
             if not uniqueStaticIds[object.recordId] then
                 addedStatics[#addedStatics + 1] = object.recordId
@@ -108,7 +113,9 @@ return {
         findCellMatches = function(pattern)
             local cellStr = ''
 
-            for _, cell in ipairs(world.cells) do
+            for i = 1, #world.cells do
+                local cell = world.cells[i]
+
                 if cell.name
                     and cell.name ~= ''
                     and cell.name:lower():find(pattern)
