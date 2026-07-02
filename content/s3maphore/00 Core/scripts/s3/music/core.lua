@@ -454,7 +454,7 @@ handlePlayback = function(_)
     TrackChangeData.playlistId = target.id
     TrackChangeData.trackName = MusicManager.currentTrack
     TrackChangeData.reason = MusicManager.STATE.TrackChanged
-    MusicManager.callTrackChangedHandlers(TrackChangeData)
+    SendEvent(self, 'S3maphoreTrackChanged', TrackChangeData)
 end
 
 MusicManager.addTrackChangedHandler(
@@ -615,5 +615,7 @@ return {
         end,
 
         S3maphoreTODChanged = realResolvePlaylist,
+
+        S3maphoreTrackChanged = MusicManager.callTrackChangedHandlers,
     }
 }

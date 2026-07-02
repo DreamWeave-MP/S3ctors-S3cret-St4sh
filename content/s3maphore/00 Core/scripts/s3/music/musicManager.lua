@@ -353,7 +353,7 @@ function MusicManager.playSpecialTrack(trackPath, reason)
   specialTrackInfo.trackChangeInfo.reason = reason or MusicManager.STATE.SpecialTrackPlaying
   specialTrackInfo.trackChangeInfo.trackName = trackPath
 
-  MusicManager.callTrackChangedHandlers(specialTrackInfo.trackChangeInfo)
+  gameSelf:sendEvent('S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
 end
 
 ---@return TimeOfDay
