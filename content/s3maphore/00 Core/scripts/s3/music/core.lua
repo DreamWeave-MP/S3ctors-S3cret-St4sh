@@ -1,41 +1,41 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local ambient                = require 'openmw.ambient'
-local async                  = require 'openmw.async'
-local core                   = require 'openmw.core'
-local input                  = require 'openmw.input'
-local nearby                 = require 'openmw.nearby'
-local self                   = require 'openmw.self'
-local storage                = require 'openmw.storage'
-local types                  = require 'openmw.types'
+local ambient                          = require 'openmw.ambient'
+local async                            = require 'openmw.async'
+local core                             = require 'openmw.core'
+local input                            = require 'openmw.input'
+local nearby                           = require 'openmw.nearby'
+local self                             = require 'openmw.self'
+local storage                          = require 'openmw.storage'
+local types                            = require 'openmw.types'
 
-local MusicManager           = require 'scripts.s3.music.musicManager'
-local MusicSettings          = require 'scripts.s3.music.musicSettings'
+local MusicManager                     = require 'scripts.s3.music.musicManager'
+local MusicSettings                    = require 'scripts.s3.music.musicSettings'
 ---@type function?
-local PlaylistLoader         = require 'scripts.s3.music.playlistLoader'
-local PlaylistState          = require 'scripts.s3.music.playlistState'
-local SilenceManager         = require 'scripts.s3.music.silenceManager'
-local Strings                = require 'scripts.s3.music.staticStrings'
+local PlaylistLoader                   = require 'scripts.s3.music.playlistLoader'
+local PlaylistState                    = require 'scripts.s3.music.playlistState'
+local SilenceManager                   = require 'scripts.s3.music.silenceManager'
+local Strings                          = require 'scripts.s3.music.staticStrings'
 
-local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
-local musicUtil              = require 'scripts.s3.music.util'
+local activePlaylistSettings           = storage.playerSection 'S3maphoreActivePlaylistSettings'
+local musicUtil                        = require 'scripts.s3.music.util'
 
-local nullFunction           = require 'scripts.s3.nullFunction'
+local nullFunction                     = require 'scripts.s3.nullFunction'
 
-local CachedCellGrid         = { x = 0, y = 0, }
+local CachedCellGrid                   = { x = 0, y = 0, }
 
-local NPCFightThreshold      = 90
-local CreatureFightThreshold = 83
+local NPCFightThreshold                = 90
+local CreatureFightThreshold           = 83
 
-local Actors                  = nearby.actors
-local BATCH_SIZE              = 4
-local chainPosition           = 2
+local Actors                           = nearby.actors
+local BATCH_SIZE                       = 4
+local chainPosition                    = 2
 
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback         = nullFunction
+local handlePlayback, updateActorChain = nullFunction, nullFunction
 
 local function checkSilenceManager()
     if not SilenceManager:silenceActive() then
@@ -48,6 +48,19 @@ local function onSoundEnabledChanged()
     if not isSoundEnabled() then return end
 
     currentUpdateHandler = checkSilenceManager
+end
+
+local function realUpdateActorChain()
+    for _ = 1, BATCH_SIZE do
+        local actor = Actors[chainPosition]
+        if not actor then
+            chainPosition = 2
+            actor = Actors[chainPosition]
+            if not actor then break end
+        end
+        actor:sendEvent 'S3maphoreCheckCombat'
+        chainPosition = chainPosition + 1
+    end
 end
 
 ---@type fun(_: number)
@@ -317,21 +330,6 @@ end
 local didChangePlaylist = false
 
 local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
-
-local updateActorChain        = nullFunction
-
-local function realUpdateActorChain()
-    for _ = 1, BATCH_SIZE do
-        local actor = Actors[chainPosition]
-        if not actor then
-            chainPosition = 2
-            actor = Actors[chainPosition]
-            if not actor then break end
-        end
-        actor:sendEvent 'S3maphoreCheckCombat'
-        chainPosition = chainPosition + 1
-    end
-end
 
 handlePlayback = function(_)
     if queuedEvent.name then
