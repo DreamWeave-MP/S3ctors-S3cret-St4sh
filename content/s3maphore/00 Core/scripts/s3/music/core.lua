@@ -56,6 +56,7 @@ currentUpdateHandler = function(_)
     if not PlaylistLoader() then return end
 
     PlaylistLoader = nil
+    updateActorChain = realUpdateActorChain
     currentUpdateHandler = onSoundEnabledChanged
 end
 
@@ -317,7 +318,9 @@ local didChangePlaylist = false
 
 local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
 
-local function updateActorChain()
+local updateActorChain        = nullFunction
+
+local function realUpdateActorChain()
     for _ = 1, BATCH_SIZE do
         local actor = Actors[chainPosition]
         if not actor then
