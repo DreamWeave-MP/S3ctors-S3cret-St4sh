@@ -1,16 +1,27 @@
 ---@omw-context player
 
 local isOpenMW = require 'scripts.s3.isOpenMW'
-local async, debug, fileExists, musicSettings, pathsMatching, playlistsSection, storage, vfs
 
 ---@type PlaylistPriority
 local PlaylistPriority = require 'doc.playlistPriority'
+
 ---@type S3maphoreStaticStrings
 local Strings = require 'scripts.s3.music.staticStrings'
 
+local async, fileExists, isAIEnabled, musicSettings, pathsMatching, playlistsSection,
+storage, storageGet, vfs
+
+local error, getmetatable, next, pairs, pcall, rawget, rawset, setmetatable, type =
+    error, getmetatable, next, pairs, pcall, rawget, rawset, setmetatable, type
+
+local Random, print, StrFormat, StrLower, StrMatch, StrSub,
+TableConcat, TableInsert, TableRemove, tostring =
+    math.random, print, string.format, string.lower, string.match, string.sub,
+    table.concat, table.insert, table.remove, tostring
+
 local ReadOnlyMT = {
     __newindex = function(t)
-        error(('Write attempt to read-only table %s'):format(t))
+        error(StrFormat('Write attempt to read-only table %s', t))
     end,
     __metatable = false,
 }
@@ -23,14 +34,11 @@ local StrictReadOnlyMT = {
             if found ~= nil then
                 return found
             else
-                error(
-                    ('Failed to locate key %s in table %s!'):format(key, inTable),
-                    2
-                )
+                error(StrFormat('Failed to locate key %s in table %s!', key, inTable), 2)
             end
         end,
         __newindex = function(inTable)
-            error(('Write attempt to read-only table %s'):format(inTable))
+            error(StrFormat('Write attempt to read-only table %s', inTable))
         end,
         __metatable = false,
     }
@@ -38,21 +46,22 @@ local StrictReadOnlyMT = {
 
 if isOpenMW then
     async = require 'openmw.async'
-    debug = require 'openmw.debug'
     storage = require 'openmw.storage'
     vfs = require 'openmw.vfs'
 
     fileExists = vfs.fileExists
+    isAIEnabled = require 'openmw.debug'.isAIEnabled
     musicSettings = storage.playerSection('SettingsS3Music')
     pathsMatching = vfs.pathsWithPrefix
     playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
     playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
+    storageGet = musicSettings.get
 end
 
 ---@param ... any
 local function debugLog(...)
     if isOpenMW then
-        if not musicSettings:get('DebugEnable') then return end
+        if not storageGet(musicSettings, 'DebugEnable') then return end
     else
     end
 
@@ -60,10 +69,10 @@ local function debugLog(...)
     for i = 1, #args do
         args[i] = tostring(args[i])
     end
-    local msg = table.concat(args, " ")
-    print(
-        Strings.LogFormatStr:format(msg)
-    )
+
+    local msg = TableConcat(args, " ")
+
+    print(StrFormat(Strings.LogFormatStr, msg))
 end
 
 ---@param root table
@@ -100,14 +109,14 @@ local function deepToString(val, level, prefix)
     end
 
     strs[#strs + 1] = prefix .. '}'
-    return table.concat(strs)
+    return TableConcat(strs)
 end
 
 local function getPlaylistFilePaths()
     local result = {}
     for fileName in pathsMatching('playlists/') do
         if fileName:find('%.lua$') then
-            table.insert(result, fileName)
+            TableInsert(result, fileName)
         end
     end
 
@@ -117,27 +126,38 @@ end
 local function getTracksFromDirectory(path, exclusions)
     local result = {}
 
-    if not exclusions.tracks then exclusions.tracks = {} end
-    if not exclusions.playlists then exclusions.playlists = {} end
-
-    table.insert(exclusions.tracks, '.*/.gitkeep$')
-
     for fileName in pathsMatching(path) do
-        --- Playlists must have a particular starting prefix in order to be excluded
-        for _, playlistName in ipairs(exclusions.playlists) do
-            playlistName = 'music/' .. playlistName:lower()
-            if fileName:sub(1, #playlistName) == playlistName then goto TRACKEXCLUDED end
+        local includeTrack = StrMatch(fileName, '.*/.gitkeep$') == nil
+
+        if includeTrack and exclusions then
+            local excludedPlaylists, excludedTracks = exclusions.playlists, exclusions.tracks
+
+            if excludedPlaylists then
+                --- Playlists must have a particular starting prefix in order to be excluded
+                for i = 1, #excludedPlaylists do
+                    local playlistName = excludedPlaylists[i]
+                    playlistName = 'music/' .. StrLower(playlistName)
+
+                    if StrSub(fileName, 1, #playlistName) == playlistName then
+                        includeTrack = false; break
+                    end
+                end
+            end
+
+            if excludedTracks and includeTrack then
+                -- Whereas specific track names can match more loosely, although it is recommended to try to macth the path as closely as possible
+                for i = 1, #exclusions.tracks do
+                    local trackName = exclusions.tracks[i]
+                    trackName = 'music/' .. StrLower(trackName)
+
+                    if StrMatch(fileName, trackName) then
+                        includeTrack = false; break
+                    end
+                end
+            end
         end
 
-        -- Whereas specific track names can match more loosely, although it is recommended to try to macth the path as closely as possible
-        for _, trackName in ipairs(exclusions.tracks) do
-            trackName = 'music/' .. trackName:lower()
-            if fileName:match(trackName) then goto TRACKEXCLUDED end
-        end
-
-        table.insert(result, fileName)
-
-        ::TRACKEXCLUDED::
+        if includeTrack then TableInsert(result, fileName) end
     end
 
     return result
@@ -145,14 +165,14 @@ end
 
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
-    if playlist.id == nil or playlist.priority == nil then
+    if not playlist.id or not playlist.priority then
         error(Strings.InvalidPlaylistFields)
     end
 
-    if playlist.tracks == nil then
+    if not playlist.tracks then
         playlist.tracks = getTracksFromDirectory(
             ("music/%s/"):format(playlist.id),
-            playlist.exclusions or {}
+            playlist.exclusions
         )
     end
 
@@ -172,7 +192,7 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
         playlist.playOneTrack = false
     end
 
-    if playlist.interruptMode == nil then
+    if not playlist.interruptMode then
         if playlist.priority <= PlaylistPriority.Special then
             playlist.interruptMode = INTERRUPT.Never
         elseif playlist.priority <= PlaylistPriority.BattleVanilla then
@@ -181,7 +201,7 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
             playlist.interruptMode = INTERRUPT.Me
         else
             debugLog(
-                Strings.CantAutoAssignInterruptModeStr:format(playlist.priority, playlist.id)
+                StrFormat(Strings.CantAutoAssignInterruptModeStr, playlist.priority, playlist.id)
             )
         end
     end
@@ -192,11 +212,11 @@ local function initTracksOrder(tracks, randomize)
 
     for i = #tracks, 1, -1 do
         if not fileExists(tracks[i]) then
-            table.remove(tracks, i)
+            TableRemove(tracks, i)
         end
     end
 
-    for i in ipairs(tracks) do
+    for i = 1, #tracks do
         tracksOrder[i] = i
     end
 
@@ -205,7 +225,7 @@ local function initTracksOrder(tracks, randomize)
         --- as it was an unnecessary call that wasn't part of the library and fucked up
         --- my alphabetization
         for i = #tracksOrder, 1, -1 do
-            local j = math.random(i)
+            local j = Random(i)
             tracksOrder[i], tracksOrder[j] = tracksOrder[j], tracksOrder[i]
         end
     end
@@ -218,7 +238,7 @@ local function isPlaylistActive(playlist)
 end
 
 ---@param playlists S3maphorePlaylist[]
----@param playback Playback
+---@param playback S3maphorePlayback
 ---@return S3maphorePlaylist|nil
 local function getActivePlaylistByPriority(playlists, playback)
     local newPlaylist = nil
@@ -373,7 +393,8 @@ local function makeReadOnly(inTable, copy, strict, visited)
             end
         end
 
-        for _, tk in ipairs(tableKeys) do
+        for i = 1, #tableKeys do
+            local tk = tableKeys[i]
             makeReadOnly(tk, copy, strict, visited)
         end
     end
@@ -392,7 +413,7 @@ local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
 end
 
 local function OMWIsInCombat(fightingActors)
-    return next(fightingActors) ~= nil and debug.isAIEnabled()
+    return next(fightingActors) ~= nil and isAIEnabled()
 end
 
 ---@class S3maphoreHelperModule

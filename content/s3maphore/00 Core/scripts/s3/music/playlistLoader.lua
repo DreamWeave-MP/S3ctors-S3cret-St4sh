@@ -84,10 +84,10 @@ end
 local playlistLoaderCo = coroutine.create(playlistCoroutineLoader)
 local playlistCount = 0
 
----@return boolean? canPlayback if true, loading has finished and playback can start
+---@return S3maphorePlaylistEnv? PlaylistEnvironment once non-nil, loading has finished and playback can start
 return function()
   local status = coroutine.status(playlistLoaderCo)
-  if status == 'dead' then return true end
+  if status == 'dead' then return end
 
   local ok, playlist = coroutine.resume(playlistLoaderCo)
 
@@ -98,6 +98,7 @@ return function()
     print(
       Strings.InitializationFinished:format(playlistCount)
     )
-    return true
+
+    return PlaylistEnvironment
   end
 end

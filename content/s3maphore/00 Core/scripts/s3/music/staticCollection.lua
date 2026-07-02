@@ -1,8 +1,6 @@
 ---@omw-context global
 
-local types = require 'openmw.types'
-local world = require 'openmw.world'
-
+---@type S3maphoreStaticCellChangeData
 local StaticCellChangeData = {
     staticList = {
         contentFiles = {},
@@ -11,18 +9,53 @@ local StaticCellChangeData = {
     nearestRegion = '',
 }
 
+--- Maps player ids back to whatever their previous cell was
+---@type table<string, string>
+local PreviousPlayerCells = {}
+
+--- Maps player ids back to the previously-running weather
+---@type table<string, string>
+local PreviousPlayerWeathers = {}
+
+--- Maps players to playlist initialization state
+---@type table<string, boolean>
+local PlayersInitialized = {}
+
 local NearestDoor
 local FieldNames = { 'recordIds', 'contentFiles', }
 local NullFunction = require 'scripts.s3.nullFunction'
 local liveCheckForRegion = NullFunction
 
-local DoorType = types.Door
-local SqLen = require 'openmw.util'.vector3(0, 0, 0).length2
+local pairs, StrFind, StrFormat, StrGsub, StrLower = pairs, string.find, string.format, string.gsub, string.lower
+
+---@type fun(cell: openmw.core.GCell): openmw.GObject[]
+local GetAll
+--- Hoisted copy of GameObject.sendEvent
+---@type fun(obj: openmw.Object, id: string, data: any)
+local SendEvent
+
+local Cells, DoorDestination, GetCurrentWeather, IsDoor,
+IsStatic, IsTeleportDoor, Players, SqLen
+
+do
+    local core = require 'openmw.core'
+    local types = require 'openmw.types'
+    local world = require 'openmw.world'
+
+    Cells, Players = world.cells, world.players
+    GetCurrentWeather = core.weather.getCurrent
+    IsStatic = types.Static.objectIsInstance
+    DoorDestination, IsDoor, IsTeleportDoor = types.Door.destCell, types.Door.objectIsInstance, types.Door.isTeleport
+    SqLen = require 'openmw.util'.vector3(0, 0, 0).length2
+end
 
 ---@diagnostic disable-next-line: undefined-field
 local clear = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
+
+---@param object openmw.GObject
+---@param target openmw.GObject
 local function checkForRegion(object, target)
-    if not DoorType.objectIsInstance(object) or not DoorType.isTeleport(object) then return end
+    if not IsDoor(object) or not IsTeleportDoor(object) then return end
 
     local targetPos, objectPos = target.position, object.position
     if not NearestDoor or SqLen(targetPos - objectPos) < SqLen(targetPos - NearestDoor.position) then
@@ -31,8 +64,8 @@ local function checkForRegion(object, target)
 end
 
 --- Given a cell object, check the hostility ratings of all actors inside of it
----@param senderCell openmw.core.GCell
-local function updateCellInfo(sender, senderCell)
+---@param cellId openmw.core.GCell
+local function updateCellInfo(sender, cellId)
     for i = 1, #FieldNames do
         local fieldName = FieldNames[i]
         clear(StaticCellChangeData.staticList[fieldName])
@@ -43,17 +76,17 @@ local function updateCellInfo(sender, senderCell)
     local addedStatics, addedContentFiles = StaticCellChangeData.staticList.recordIds,
         StaticCellChangeData.staticList.contentFiles
 
-    local nearestRegion = senderCell.region
+    local nearestRegion = cellId.region
     if not nearestRegion then
         NearestDoor = nil
         liveCheckForRegion = checkForRegion
     end
 
-    local objects = senderCell:getAll()
+    local objects = GetAll(cellId)
     for i = 1, #objects do
         local object = objects[i]
 
-        if types.Static.objectIsInstance(object) then
+        if IsStatic(object) then
             if not uniqueStaticIds[object.recordId] then
                 addedStatics[#addedStatics + 1] = object.recordId
                 uniqueStaticIds[object.recordId] = true
@@ -61,7 +94,7 @@ local function updateCellInfo(sender, senderCell)
 
             if not uniqueContentFiles[object.contentFile] then
                 if object.contentFile and object.contentFile ~= '' then
-                    addedContentFiles[#addedContentFiles + 1] = object.contentFile:lower()
+                    addedContentFiles[#addedContentFiles + 1] = StrLower(object.contentFile)
                     uniqueContentFiles[object.contentFile] = true
                 end
             end
@@ -72,7 +105,7 @@ local function updateCellInfo(sender, senderCell)
 
     if NearestDoor then
         -- Teleport doors *should* always have a target cell
-        local region = DoorType.destCell(NearestDoor).region
+        local region = DoorDestination(NearestDoor).region
 
         if region then
             nearestRegion = region
@@ -88,24 +121,30 @@ local function updateCellInfo(sender, senderCell)
     end
 end
 
-local Globals = world.mwscript.getGlobalVariables()
+---@param player openmw.GObject
+---@param playerId string
+local function playerTick(player, playerId)
+    local playerCell = player.cell
+    ---@cast playerCell openmw.core.GCell
 
----@enum WeatherType
-local WeatherType = {
-    [0] = 'clear',
-    [1] = 'cloudy',
-    [2] = 'foggy',
-    [3] = 'overcast',
-    [4] = 'rain',
-    [5] = 'thunder',
-    [6] = 'ash',
-    [7] = 'blight',
-    [8] = 'snow',
-    [9] = 'blizzard',
-}
+    local currentWeather = GetCurrentWeather(playerCell)
+    local lastKnownWeather = PreviousPlayerWeathers[playerId]
 
----@type table<string, string>
-local PreviousPlayerCells = {}
+    local weatherId
+    if currentWeather then weatherId = currentWeather.recordId end
+
+    if lastKnownWeather ~= weatherId then
+        SendEvent(player, 'S3maphoreWeatherChanged', weatherId)
+        PreviousPlayerWeathers[playerId] = weatherId
+    end
+
+    local currentCell, prevCell = playerCell.id, PreviousPlayerCells[playerId]
+    if prevCell ~= currentCell then
+        updateCellInfo(player, playerCell)
+        SendEvent(player, 'S3maphoreCellChanged', StaticCellChangeData)
+        PreviousPlayerCells[playerId] = currentCell
+    end
+end
 
 return {
     interfaceName = 'S3maphoreG',
@@ -113,14 +152,15 @@ return {
         findCellMatches = function(pattern)
             local cellStr = ''
 
-            for i = 1, #world.cells do
-                local cell = world.cells[i]
+            for i = 1, #Cells do
+                local cell = Cells[i]; local cellName = cell.name
 
-                if cell.name
-                    and cell.name ~= ''
-                    and cell.name:lower():find(pattern)
+                if
+                    cellName
+                    and cellName ~= ''
+                    and StrFind(StrLower(cellName), pattern)
                 then
-                    cellStr = ("%s['%s'] = true,\n"):format(cellStr, cell.name:lower():gsub("'", "\\'"))
+                    cellStr = StrFormat("%s['%s'] = true,\n", cellStr, StrGsub(StrLower(cellName), "'", "\\'"))
                 end
             end
 
@@ -129,32 +169,21 @@ return {
     },
 
     engineHandlers = {
-
         onUpdate = function()
-            if Globals.S3maphoreWeatherTracker ~= -1 then
-                local weatherName = WeatherType[Globals.S3maphoreWeatherTracker]
+            for i = 1, #Players do
+                local player = Players[i]; local playerId = player.id
 
-                for _, player in ipairs(world.players) do
-                    player:sendEvent('S3maphoreWeatherChanged', weatherName)
-                end
+                local initialized = PlayersInitialized[playerId] ~= nil
 
-                Globals.S3maphoreWeatherTracker = -1
-            end
-
-            for _, player in ipairs(world.players) do
-                local playerCell = player.cell
-                local playerId, currentCell = player.id, playerCell.id
-                local prevCell = PreviousPlayerCells[playerId]
-
-                if not prevCell or prevCell ~= currentCell then
-                    updateCellInfo(player, playerCell)
-                    player:sendEvent('S3maphoreCellChanged', StaticCellChangeData)
-                    PreviousPlayerCells[playerId] = currentCell
-                end
+                if initialized then playerTick(player, playerId) end
             end
         end,
-
     },
-
-    eventHandlers = {},
+    eventHandlers = {
+        S3maphoreInitializationComplete = function(pid)
+            PlayersInitialized[pid] = true
+            if not SendEvent then SendEvent = Players[1].sendEvent end
+            if not GetAll then GetAll = Cells[1].getAll end
+        end,
+    },
 }

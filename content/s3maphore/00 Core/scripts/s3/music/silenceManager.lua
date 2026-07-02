@@ -66,7 +66,7 @@ local function silenceActive(self)
     local silenceTrackRunning = not isMusicPlaying() and self.time > 0
 
     if silenceTrackRunning then
-        self.time = self.time - frameDuration(); print(self.time)
+        self.time = self.time - frameDuration()
     end
 
     return silenceTrackRunning

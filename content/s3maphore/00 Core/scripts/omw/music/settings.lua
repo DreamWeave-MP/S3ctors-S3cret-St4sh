@@ -1,3 +1,5 @@
+---@omw-context menu
+
 local async = require 'openmw.async'
 local storage = require 'openmw.storage'
 local vfs = require 'openmw.vfs'
@@ -45,7 +47,7 @@ local function stripWhitespace(str)
     return str:match("^%s*(.-)%s*$")
 end
 
-local playlistIds = padStrings(playlistIds)
+playlistIds = padStrings(playlistIds)
 
 I.Settings.registerPage({
     key = 'S3Music',

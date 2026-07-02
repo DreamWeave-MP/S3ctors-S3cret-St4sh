@@ -12,16 +12,23 @@ local types                                                      = require 'open
 
 local MusicManager                                               = require 'scripts.s3.music.musicManager'
 local MusicSettings                                              = require 'scripts.s3.music.musicSettings'
+
+---@type S3maphorePlaylistEnv
+local PlaylistEnv
 ---@type function?
 local PlaylistLoader                                             = require 'scripts.s3.music.playlistLoader'
-local PlaylistState                                              = require 'scripts.s3.music.playlistState'
+---@type PlaylistRules
+local PlaylistRules
+---@type PlaylistState
+local PlaylistState
+
 local SilenceManager                                             = require 'scripts.s3.music.silenceManager'
 local Strings                                                    = require 'scripts.s3.music.staticStrings'
 
 local activePlaylistSettings                                     = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicUtil                                                  = require 'scripts.s3.music.util'
 
-local nullFunction                                               = require 'scripts.s3.nullFunction'
+local NullFunction                                               = require 'scripts.s3.nullFunction'
 
 local error, next, pairs, Random, Remove, tostring               =
     error, next, pairs, math.random, table.remove, tostring
@@ -32,7 +39,7 @@ local AIFight, isDead, isNPC, isSoundEnabled, sendEvent          =
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback, updateActorChain, resolvePlaylist          = nullFunction, nullFunction, nullFunction
+local handlePlayback, updateActorChain, resolvePlaylist          = NullFunction, NullFunction, NullFunction
 local desiredPlaylist, resolverDirty, didTransition, wasExterior = nil, false, false, false
 
 local CachedCellGrid                                             = { x = 0, y = 0, }
@@ -93,7 +100,7 @@ end
 
 local function realResolvePlaylist()
     updatePlaylistState()
-    local newPlaylist = musicUtil.getActivePlaylistByPriority(MusicManager.registeredPlaylists, Playback)
+    local newPlaylist = musicUtil.getActivePlaylistByPriority(MusicManager.registeredPlaylists, PlaylistEnv.Playback)
 
     if newPlaylist == desiredPlaylist then return end
     desiredPlaylist = newPlaylist
@@ -102,16 +109,25 @@ end
 
 ---@type fun(_: number)
 currentUpdateHandler = function(_)
-    if not PlaylistLoader then error 'Playlist loader not found during initialization!' end
+    if not PlaylistLoader then error('Playlist loader not found during initialization!') end
 
-    if not PlaylistLoader() then return end
+    ---@type S3maphorePlaylistEnv?
+    local playlistEnv = PlaylistLoader()
+
+    if playlistEnv then
+        PlaylistEnv = playlistEnv
+        PlaylistState, PlaylistRules = PlaylistEnv.Playback.state, PlaylistEnv.Playback.rules
+    else
+        return
+    end
 
     PlaylistLoader = nil
     updateActorChain = realUpdateActorChain
     resolvePlaylist = realResolvePlaylist
     resolvePlaylist()
 
-    currentUpdateHandler = onSoundEnabledChanged
+    core.sendGlobalEvent('S3maphoreInitializationComplete', self.id)
+    currentUpdateHandler = NullFunction
 end
 
 ---@type S3maphoreStateChangeEventData
@@ -146,7 +162,7 @@ storage.playerSection('SettingsS3Music'):subscribe(
                 if MusicSettings.MusicEnabled then
                     currentUpdateHandler = onSoundEnabledChanged
                 else
-                    currentUpdateHandler = nullFunction
+                    currentUpdateHandler = NullFunction
 
                     if ambient.isMusicPlaying() then
                         ambient.stopMusic()
@@ -161,19 +177,6 @@ storage.playerSection('SettingsS3Music'):subscribe(
         end
     )
 )
-
-
----@type PlaylistRules
-local PlaylistRules = require 'scripts.s3.music.playlistRules'
-MusicManager.Rules = PlaylistRules
-
----@class Playback
----@field state PlaylistState
----@field rules PlaylistRules
-local Playback = {
-    rules = PlaylistRules,
-    state = PlaylistState,
-}
 local function updateCellHasCombatTargets()
     local nearbyCombatTargets = false
 
@@ -229,7 +232,7 @@ end
 
 local function playerDied()
     MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
-    currentUpdateHandler = nullFunction
+    currentUpdateHandler = NullFunction
 end
 
 --- If a set of fallback playlists is present, attempt to use them during track selection
@@ -582,14 +585,8 @@ return {
                 PlaylistState.currentGrid = nil
             end
 
-            --- Really we should check if the cell has changed, and then assign the currentFrameHandler
-            --- accordingly, BUT, edge cases might happen, and also, we want to do that check anyway
-            --- because if it is the same, we'll later do playlist resolution at this point in time
-            if not PlaylistLoader then
-                currentUpdateHandler = onSoundEnabledChanged
-            end
-
             resolvePlaylist()
+            currentUpdateHandler = onSoundEnabledChanged
         end,
 
         S3maphoreWeatherChanged = function(weatherName)
