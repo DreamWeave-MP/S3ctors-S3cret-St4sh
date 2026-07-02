@@ -244,7 +244,11 @@ local function onCombatTargetsChanged(eventData)
 end
 
 local function playerDied()
-    MusicManager.playSpecialTrack('music/special/mw_death.mp3', MusicManager.STATE.Died)
+    SendEvent(
+        self,
+        'S3maphoreSpecialTrack',
+        { trackPath = 'music/special/mw_death.mp3', reason = MusicManager.STATE.Died, }
+    )
     currentUpdateHandler = NullFunction
 end
 
@@ -542,7 +546,9 @@ return {
             resolvePlaylist()
         end,
 
-        S3maphoreSpecialTrack = MusicManager.playSpecialTrack,
+        S3maphoreSpecialTrack = function(eventData)
+            MusicManager.playSpecialTrack(eventData.trackPath, eventData.reason)
+        end,
 
         S3maphoreSetPlaylistActive = function(eventData)
             if MusicSettings.DebugEnable then
