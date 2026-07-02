@@ -100,6 +100,11 @@ return {
         onInactive = onInactive,
     },
     eventHandlers = {
+        Died = function()
+            for i = 1, #Players do
+                SendEvent(Players[i], 'S3maphoreClearTargetCache', self.id)
+            end
+        end,
         S3maphoreCheckCombat = updateCombatState,
     },
 }
