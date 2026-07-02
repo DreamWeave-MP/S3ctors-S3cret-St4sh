@@ -238,7 +238,6 @@ local function onCombatTargetsChanged(eventData)
 
     MusicManager.activePlaydeck = PlaylistState.isInCombat and MusicManager.battlePlaylists or
         MusicManager.explorePlaylists
-    print(MusicManager.activePlaydeck, MusicManager.battlePlaylists, MusicManager.explorePlaylists)
     resolvePlaylist()
 end
 
