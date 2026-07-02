@@ -1,1 +1,2 @@
+---@omw-context none
 return {}

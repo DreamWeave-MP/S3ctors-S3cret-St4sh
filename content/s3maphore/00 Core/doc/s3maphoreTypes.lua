@@ -92,6 +92,18 @@ tes3 = tes3
 ---@field reason S3maphoreStateChangeReason
 ---@field trackName string VFS path of the track being played
 
+---@class S3maphoreStaticCellChangeData
+---@field staticList S3maphoreStaticList
+---@field nearestRegion string
+
+---@class S3maphoreStaticList
+---@field contentFiles string[] array of unique content files which added things to the current cell (or active grid)
+---@field recordIds string[] array of unique static recordIds within the current cell (or active grid)
+
+---@class S3maphorePlayback
+---@field rules PlaylistRules
+---@field state PlaylistState
+
 ---@alias ServicesOffered table<ServiceType, boolean>
 
 ---@alias ServiceType
@@ -132,7 +144,7 @@ tes3 = tes3
 ---| 'daedra'
 ---| 'creatues'
 
----@alias ValidPlaylistCallback fun(playback: Playback?): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
+---@alias ValidPlaylistCallback fun(playback: S3maphorePlayback?): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
 
 ---@alias VampireType
 ---| 'quarra'
@@ -140,3 +152,15 @@ tes3 = tes3
 ---| 'berne'
 
 ---@alias VampireTypes VampireType[]
+
+---@alias WeatherType
+---| 0
+---| 1
+---| 2
+---| 3
+---| 4
+---| 5
+---| 6
+---| 7
+---| 8
+---| 9
