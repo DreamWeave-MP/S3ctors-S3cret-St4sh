@@ -28,6 +28,10 @@ local CachedCellGrid         = { x = 0, y = 0, }
 local NPCFightThreshold      = 90
 local CreatureFightThreshold = 83
 
+local Actors                  = nearby.actors
+local BATCH_SIZE              = 4
+local chainPosition           = 2
+
 ---@type fun(dt: number)
 local currentUpdateHandler
 
@@ -313,6 +317,19 @@ local didChangePlaylist = false
 
 local inExteriorBeforeCellChange = PlaylistState.cellIsExterior
 
+local function updateActorChain()
+    for _ = 1, BATCH_SIZE do
+        local actor = Actors[chainPosition]
+        if not actor then
+            chainPosition = 2
+            actor = Actors[chainPosition]
+            if not actor then break end
+        end
+        actor:sendEvent 'S3maphoreCheckCombat'
+        chainPosition = chainPosition + 1
+    end
+end
+
 handlePlayback = function(_)
     if queuedEvent.name then
         self:sendEvent(queuedEvent.name, queuedEvent.data)
@@ -466,6 +483,7 @@ return {
         end,
 
         onUpdate = function(dt)
+            updateActorChain()
             currentUpdateHandler(dt)
         end,
 
@@ -531,6 +549,7 @@ return {
 
         ---@param cellChangeData S3maphoreCellChangeData
         S3maphoreCellChanged = function(cellChangeData)
+            chainPosition = 2
             updateCellHasCombatTargets()
 
             PlaylistState.staticList = cellChangeData.staticList

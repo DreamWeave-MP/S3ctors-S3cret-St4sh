@@ -9,22 +9,14 @@ local Targets = {}
 local TargetChangeData = { actor = self, targets = Targets }
 
 ---@diagnostic disable-next-line: undefined-field
-local clearImpl = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
-local function clear()
-    clearImpl(Targets)
-end
+local clear = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
 
-local IsDeathFinished, IsInActorsProcessingRange, GetStance, GetTargets, IsFleeing, UnarmedStance
-
----@param eventId string
----@param eventData any
-local function emitToPlayers(eventId, eventData)
-    for i = 1, #Players do
-        Players[i]:sendEvent(eventId, eventData)
-    end
-end
+local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, UnarmedStance
+local SendEvent = self.sendEvent
 
 do
+    IsWorldPaused = require 'openmw.core'.isWorldPaused
+
     local I = require 'openmw.interfaces'
     local AI = I.AI
     GetTargets, IsFleeing = AI.getTargets, AI.isFleeing
@@ -38,17 +30,15 @@ do
     ---@param attack openmw.interfaces.Combat.AttackInfo
     local function s3maphoreAttackHandler(attack)
         if not attack.successful then return end
-        emitToPlayers('S3maphoreClearTargetCache', self.id)
+        for i = 1, #Players do
+            SendEvent(Players[i], 'S3maphoreClearTargetCache', self.id)
+        end
     end
 
     I.Combat.addOnHitHandler(s3maphoreAttackHandler)
 end
 
-local function emitTargetsChanged()
-    emitToPlayers('OMWMusicCombatTargetsChanged', TargetChangeData)
-end
-
-local function onUpdate(dt)
+local function updateCombatState()
     local startedWithTargets = next(Targets) ~= nil
     local isDead = IsDeathFinished(self) or not IsInActorsProcessingRange(self)
 
@@ -59,11 +49,11 @@ local function onUpdate(dt)
         shouldSkipFetch = (GetStance(self) == UnarmedStance)
             and not startedWithTargets
             and not IsFleeing()
-            and dt > 0
+            and not IsWorldPaused()
     end
 
     if shouldClear then
-        clear()
+        clear(Targets)
     end
 
     -- TODO: use events or engine handlers to detect when targets change
@@ -85,25 +75,31 @@ local function onUpdate(dt)
             end
         end
 
-        clear()
+        clear(Targets)
 
         for i = 1, numNewTargets do Targets[i] = newTargets[i] end
     end
 
     if changed then
-        emitTargetsChanged()
+        for i = 1, #Players do
+            SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', TargetChangeData)
+        end
     end
 end
-
 local function onInactive()
     if not next(Targets) then return end
-    clear()
-    emitTargetsChanged()
+    clear(Targets)
+
+    for i = 1, #Players do
+        SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', TargetChangeData)
+    end
 end
 
 return {
     engineHandlers = {
-        onUpdate = onUpdate,
         onInactive = onInactive,
+    },
+    eventHandlers = {
+        S3maphoreCheckCombat = updateCombatState,
     },
 }
