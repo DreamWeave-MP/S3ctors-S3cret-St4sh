@@ -233,34 +233,25 @@ local function initTracksOrder(tracks, randomize)
     return tracksOrder
 end
 
-local function isPlaylistActive(playlist)
-    return playlist.active and next(playlist.tracks) ~= nil
-end
-
----@param playlists S3maphorePlaylist[]
+---@param deck S3maphorePlaylist[]
 ---@param playback S3maphorePlayback
 ---@return S3maphorePlaylist|nil
-local function getActivePlaylistByPriority(playlists, playback)
-    local newPlaylist = nil
-
-    for _, playlist in pairs(playlists) do
-        if isPlaylistActive(playlist) then
-            -- a new playlist hasn't yet been selected
-            if newPlaylist == nil
-
-                -- the one found in this iteration has a higher priority
-                or playlist.priority < newPlaylist.priority
-                -- the one found in this iteration has the same priority but was registered later
-                or (playlist.priority == newPlaylist.priority and playlist.registrationOrder > newPlaylist.registrationOrder) then
-                -- Allow playing the playlist if its valid callback passes
-                if playlist.priority ~= PlaylistPriority.Never and playlist.isValidCallback(playback) then
-                    newPlaylist = playlist
-                end
-            end
+local function firstActivePlaylist(deck, playback)
+    for i = 1, #deck do
+        local playlist = deck[i]
+        if playlist.active and next(playlist.tracks) ~= nil and playlist.isValidCallback(playback) then
+            return playlist
         end
     end
+end
 
-    return newPlaylist
+---@param specialPlaylists S3maphorePlaylist[]
+---@param playback S3maphorePlayback
+---@param activePlaydeck S3maphorePlaylist[] sorted deck for the current combat state
+---@return S3maphorePlaylist|nil
+local function getActivePlaylistByPriority(specialPlaylists, playback, activePlaydeck)
+    return firstActivePlaylist(specialPlaylists, playback)
+        or firstActivePlaylist(activePlaydeck, playback)
 end
 
 ---@param groupName string
@@ -429,7 +420,6 @@ local utilModule = {
     initMissingPlaylistFields = initMissingPlaylistFields,
     initTracksOrder = initTracksOrder,
     isInCombat = isOpenMW and OMWIsInCombat,
-    isPlaylistActive = isPlaylistActive,
     makeReadOnly = makeReadOnly,
     setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
 }

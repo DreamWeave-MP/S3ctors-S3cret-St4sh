@@ -53,18 +53,11 @@ local MusicManager = {
   forceSkip = false,
   playlistsTracksOrder = musicUtil.getStoredTracksOrder(),
   registrationOrder = 0,
-  registeredPlaylists = {
-    Special = {
-      active = false,
-      id = 'Special',
-      isValidCallback = function()
-        return false
-      end,
-      playOneTrack = true,
-      priority = PlaylistPriority.Special,
-      tracks = {},
-    }
-  },
+  registeredPlaylists = {},
+  explorePlaylists = {},
+  battlePlaylists = {},
+  specialPlaylists = {},
+  activePlaydeck = nil,
 }
 
 if IsOpenMW then
@@ -156,6 +149,25 @@ function MusicManager.registerPlaylist(playlist)
   end
 
   MusicManager.registeredPlaylists[playlist.id] = playlist
+
+  local newDeck
+  if playlist.priority <= PlaylistPriority.Special then
+    newDeck = MusicManager.specialPlaylists
+  elseif playlist.priority <= PlaylistPriority.BattleVanilla then
+    newDeck = MusicManager.battlePlaylists
+  else
+    newDeck = MusicManager.explorePlaylists
+  end
+
+  local replaced
+  for i = 1, #newDeck do
+    if newDeck[i].id == playlist.id then
+      newDeck[i] = playlist; replaced = true; break
+    end
+  end
+  if not replaced then
+    newDeck[#newDeck + 1] = playlist
+  end
 
   local storedState = next(playlist.tracks) == nil and -1 or playlist.active
 
@@ -341,7 +353,7 @@ function MusicManager.playSpecialTrack(trackPath, reason)
   specialTrackInfo.trackChangeInfo.reason = reason or MusicManager.STATE.SpecialTrackPlaying
   specialTrackInfo.trackChangeInfo.trackName = trackPath
 
-  gameSelf:sendEvent('S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
+  MusicManager.callTrackChangedHandlers(specialTrackInfo.trackChangeInfo)
 end
 
 ---@return TimeOfDay
@@ -370,5 +382,14 @@ function MusicManager.updateBanner()
 end
 
 MusicManager.playlistTimeOfDay = IsOpenMW and OMWPlaylistTimeOfDay or MWSEPlaylistTimeOfDay
+MusicManager.registerPlaylist {
+    active = false,
+    id = 'Special',
+    isValidCallback = function() return false end,
+    playOneTrack = true,
+    priority = PlaylistPriority.Special,
+    tracks = {},
+}
+MusicManager.activePlaydeck = MusicManager.explorePlaylists
 
 return MusicManager
