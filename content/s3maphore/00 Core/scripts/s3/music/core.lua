@@ -24,19 +24,22 @@ local PlaylistState
 
 local SilenceManager                                             = require 'scripts.s3.music.silenceManager'
 local Strings                                                    = require 'scripts.s3.music.staticStrings'
+---@type CombatState
+local CombatState
 
 local activePlaylistSettings                                     = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicUtil                                                  = require 'scripts.s3.music.util'
 
 local NullFunction                                               = require 'scripts.s3.nullFunction'
 
-local error, next, pairs, Random, Remove, tostring, TableSort    =
-    error, next, pairs, math.random, table.remove, tostring, table.sort
+local error, next, pairs, Random, Remove, TableSort              =
+    error, next, pairs, math.random, table.remove, table.sort
 
 local StrFormat, StrLower                                        = string.format, string.lower
 
 local AIFight, IsDead, IsNPC, IsSoundEnabled, SendEvent          =
-    types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance, core.sound.isEnabled, self.sendEvent
+    types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance,
+    core.sound.isEnabled, self.sendEvent
 
 ---@type fun(dt: number)
 local currentUpdateHandler
@@ -56,6 +59,10 @@ local CreatureFightThreshold                                     = 83
 local Actors                                                     = nearby.actors
 local BATCH_SIZE                                                 = 4
 local chainPosition                                              = 2
+
+local function clearQueuedData()
+    for key in next, queuedEvent.data do queuedEvent.data[key] = nil end
+end
 
 local function checkSilenceManager()
     if not SilenceManager:silenceActive() then
@@ -142,6 +149,44 @@ currentUpdateHandler = function(_)
 
     resolvePlaylist()
 
+    CombatState = require 'scripts.s3.music.combatState' (MusicSettings, PlaylistRules, MusicManager, PlaylistState)
+
+    storage.playerSection('SettingsS3Music'):subscribe(
+        async:callback(
+            function(_, key)
+                if key == 'BannerEnabled' then
+                    MusicManager.updateBanner()
+                elseif key == 'MusicEnabled' then
+                    if MusicSettings.DebugEnable then
+                        musicUtil.debugLog('Music state changed to', MusicSettings.MusicEnabled)
+                    end
+
+                    MusicManager.forceSkip = false
+                    queuedEvent.name = nil
+                    clearQueuedData()
+
+                    if MusicSettings.MusicEnabled then
+                        currentUpdateHandler = onSoundEnabledChanged
+                    else
+                        currentUpdateHandler = NullFunction
+
+                        if ambient.isMusicPlaying() then
+                            ambient.stopMusic()
+                            MusicManager.currentPlaylist = nil
+                            MusicManager.currentTrack = nil
+
+                            queuedEvent.data.reason = MusicManager.STATE.Disabled
+                            SendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
+                        end
+                    end
+                elseif key == 'PlayerTargetedCombatOnly' or key == 'CombatLevelGap' or key == 'CombatHealthThreshold' then
+                    CombatState.recomputeState()
+                    resolvePlaylist()
+                end
+            end
+        )
+    )
+
     core.sendGlobalEvent('S3maphoreInitializationComplete', self.id)
     currentUpdateHandler = NullFunction
 end
@@ -153,42 +198,6 @@ local TrackChangeData = {
     reason = MusicManager.STATE.TrackChanged,
     trackName = '',
 }
-local function clearQueuedData()
-    for key in next, queuedEvent.data do queuedEvent.data[key] = nil end
-end
-
-storage.playerSection('SettingsS3Music'):subscribe(
-    async:callback(
-        function(_, key)
-            if key == 'BannerEnabled' then
-                MusicManager.updateBanner()
-            elseif key == 'MusicEnabled' then
-                if MusicSettings.DebugEnable then
-                    musicUtil.debugLog('Music state changed to', MusicSettings.MusicEnabled)
-                end
-
-                MusicManager.forceSkip = false
-                queuedEvent.name = nil
-                clearQueuedData()
-
-                if MusicSettings.MusicEnabled then
-                    currentUpdateHandler = onSoundEnabledChanged
-                else
-                    currentUpdateHandler = NullFunction
-
-                    if ambient.isMusicPlaying() then
-                        ambient.stopMusic()
-                        MusicManager.currentPlaylist = nil
-                        MusicManager.currentTrack = nil
-
-                        queuedEvent.data.reason = MusicManager.STATE.Disabled
-                        SendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
-                    end
-                end
-            end
-        end
-    )
-)
 local function updateCellHasCombatTargets()
     local nearbyCombatTargets = false
 
@@ -197,12 +206,11 @@ local function updateCellHasCombatTargets()
     for i = 2, #Actors do
         local actor = Actors[i]
 
-        local fightStat = AIFight(actor)
-        ---@cast fightStat openmw.types.AIStat
+        local fightValue = AIFight(actor).modified
 
         local fightLimit = IsNPC(actor) and NPCFightThreshold or CreatureFightThreshold
 
-        if fightStat.modified >= fightLimit and not IsDead(actor) then
+        if fightValue >= fightLimit and not IsDead(actor) then
             nearbyCombatTargets = true
             break
         end
@@ -211,36 +219,12 @@ local function updateCellHasCombatTargets()
     PlaylistState.cellHasCombatTargets = nearbyCombatTargets
 end
 
-local CombatTargetCacheKey
 ---@param eventData CombatTargetChangedData
 local function onCombatTargetsChanged(eventData)
     if IsDead(self) then return end
 
-    if next(eventData.targets) then
-        PlaylistState.combatTargets[eventData.actor.id] = eventData.actor
-    else
-        PlaylistState.combatTargets[eventData.actor.id] = nil
-        PlaylistRules.clearCombatCaches(eventData.actor.id)
-    end
-
+    CombatState.onTargetsChanged(eventData.actor, eventData.targets)
     updateCellHasCombatTargets()
-    PlaylistState.isInCombat = MusicSettings.BattleEnabled and musicUtil.isInCombat(PlaylistState.combatTargets)
-    PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
-
-    if PlaylistState.isInCombat then
-        CombatTargetCacheKey = tostring(PlaylistState.combatTargets)
-
-        for targetId, _ in pairs(PlaylistState.combatTargets) do
-            CombatTargetCacheKey = StrFormat('%s%s', CombatTargetCacheKey, targetId)
-        end
-
-        PlaylistRules.setCombatTargetCacheKey(CombatTargetCacheKey)
-    else
-        CombatTargetCacheKey = nil; PlaylistRules.setCombatTargetCacheKey()
-    end
-
-    MusicManager.activePlaydeck = PlaylistState.isInCombat and MusicManager.battlePlaylists or
-        MusicManager.explorePlaylists
     resolvePlaylist()
 end
 
@@ -614,11 +598,14 @@ return {
             resolvePlaylist()
         end,
 
-        S3maphoreClearTargetCache = function()
+        ---@param _ openmw.LObject
+        S3maphoreClearTargetCache = function(_)
             if MusicSettings.DebugEnable then
-                musicUtil.debugLog('clearing target cache for key', CombatTargetCacheKey)
+                musicUtil.debugLog('clearing target cache for hit event')
             end
 
+            CombatState.onHit()
+            resolvePlaylist()
             PlaylistRules.clearGlobalCombatTargetCache()
         end,
 

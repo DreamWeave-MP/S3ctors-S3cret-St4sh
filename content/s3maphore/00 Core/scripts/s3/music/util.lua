@@ -401,10 +401,6 @@ local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
     playlistsSection:set(playlistId, playlistTracksOrder)
 end
 
-local function OMWIsInCombat(fightingActors)
-    return next(fightingActors) ~= nil and isAIEnabled()
-end
-
 ---@class S3maphoreHelperModule
 local utilModule = {
     debugLog = debugLog,
@@ -417,7 +413,6 @@ local utilModule = {
     getUpdatingSettingsTable = getUpdatingSettingsTable,
     initMissingPlaylistFields = initMissingPlaylistFields,
     initTracksOrder = initTracksOrder,
-    isInCombat = isOpenMW and OMWIsInCombat,
     makeReadOnly = makeReadOnly,
     setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
 }
