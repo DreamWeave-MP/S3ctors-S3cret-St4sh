@@ -452,7 +452,6 @@ function PlaylistRules.dynamicStatThreshold(statThreshold)
             local normalizedStat = stat.current / stat.base
 
             if normalizedStat < (range.min or 0.0) or normalizedStat > (range.max or HUGE) then
-                PlaylistRules.state.isInCombat = false
                 goto FAILED
             end
         end
