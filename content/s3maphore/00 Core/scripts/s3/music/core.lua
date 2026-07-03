@@ -53,7 +53,6 @@ local NPCFightThreshold                                          = 90
 local CreatureFightThreshold                                     = 83
 
 local Actors                                                     = nearby.actors
-local BATCH_SIZE                                                 = 4
 local chainPosition                                              = 2
 
 local function checkSilenceManager()
@@ -67,8 +66,14 @@ local function onSoundEnabledChanged()
     currentUpdateHandler = checkSilenceManager
 end
 
-local function realUpdateActorChain()
-    for _ = 1, BATCH_SIZE do
+local function realUpdateActorChain(dt)
+    local fps = dt > 0 and (1 / dt) or 30
+    local budget
+    if fps <= 30 then budget = 8
+    elseif fps <= 60 then budget = 6
+    else budget = 4 end
+
+    for _ = 1, budget do
         local actor = Actors[chainPosition]
         if not actor then
             chainPosition = 2
@@ -502,7 +507,7 @@ return {
         end,
 
         onUpdate = function(dt)
-            updateActorChain()
+            updateActorChain(dt)
             currentUpdateHandler(dt)
         end,
 
