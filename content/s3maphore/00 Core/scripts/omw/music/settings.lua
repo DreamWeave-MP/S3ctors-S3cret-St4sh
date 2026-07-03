@@ -135,6 +135,29 @@ I.Settings.registerGroup({
             argument = { min = 0.0, max = 30.0, integer = false },
             default = 1.0,
         },
+        {
+            key = 'PlayerTargetedCombatOnly',
+            renderer = 'checkbox',
+            name = 'PlayerTargetedCombatOnly',
+            description = 'PlayerTargetedCombatOnlyDescription',
+            default = true,
+        },
+        {
+            key = 'CombatHealthThreshold',
+            renderer = 'number',
+            name = 'CombatHealthThreshold',
+            description = 'CombatHealthThresholdDescription',
+            argument = { min = 0.0, max = 1.0, integer = false },
+            default = 0.0,
+        },
+        {
+            key = 'CombatLevelGap',
+            renderer = 'number',
+            name = 'CombatLevelGap',
+            description = 'CombatLevelGapDescription',
+            argument = { min = 0, max = 1000, integer = true },
+            default = 0,
+        },
     },
 })
 

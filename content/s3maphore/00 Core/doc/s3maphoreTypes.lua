@@ -164,3 +164,8 @@ tes3 = tes3
 ---| 7
 ---| 8
 ---| 9
+
+---@class CombatState
+---@field onTargetsChanged fun(actor: GameObject, targets: GameObject[])
+---@field onHit fun(): boolean
+---@field onSettingChanged fun(setting: string): boolean

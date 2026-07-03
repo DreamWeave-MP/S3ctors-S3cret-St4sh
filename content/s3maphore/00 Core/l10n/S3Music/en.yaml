@@ -63,3 +63,20 @@ BattleSilenceMinDesc: The minimum possible duration for silence when a battle pl
 
 BattleSilenceMaxDuration: Maximum Battle Silence Duration
 BattleSilenceMaxDesc: The maxiumum possible duration for silence when a battle playlist is running.
+
+PlayerTargetedCombatOnly: Player-Targeted Combat Only
+PlayerTargetedCombatOnlyDescription: |
+  If enabled, only consider an actor to be in combat if they are actively targeting the player.
+  Prevents NPC-vs-NPC fights (e.g. guards vs bandits) from triggering battle music.
+
+CombatHealthThreshold: Combat Health Threshold
+CombatHealthThresholdDescription: |
+  If set above 0, combat music will stop when ALL active combat targets fall below this health ratio.
+  For example, a value of 0.25 means combat music stops once every enemy is below 25% health.
+  Set to 0 to disable.
+
+CombatLevelGap: Combat Level Gap
+CombatLevelGapDescription: |
+  Ignore combat targets whose level is more than this many levels below the player.
+  For example, a value of 10 means enemies 10+ levels weaker than you won't trigger battle music.
+  Set to 0 to disable.
