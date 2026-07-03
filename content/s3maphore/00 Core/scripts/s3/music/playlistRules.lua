@@ -175,19 +175,20 @@ function PlaylistRules.combatTargetType(targetTypeRules)
     for _, actor in pairs(PlaylistRules.state.combatTargets) do
         local targetIsNPC = types.NPC.objectIsInstance(actor)
         if targetIsNPC then
-            result = targetTypeRules.npc ~= nil
-
-            if not result then goto FAILED end
+            if targetTypeRules.npc then
+                result = true
+                break
+            end
         else
             local creatureRecord = actor.type.records[actor.recordId]
             local creatureType = validCreatureTypes[creatureRecord.type]
-            result = targetTypeRules[creatureType] ~= nil
 
-            if not result then goto FAILED end
+            if targetTypeRules[creatureType] then
+                result = true
+                break
+            end
         end
     end
-
-    ::FAILED::
 
     currentCombatTargetsCache[targetTypeRules] = result
 
