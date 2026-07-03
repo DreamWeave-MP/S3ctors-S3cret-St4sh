@@ -102,7 +102,7 @@ return {
     eventHandlers = {
         Died = function()
             for i = 1, #Players do
-                SendEvent(Players[i], 'S3maphoreClearTargetCache', self.id)
+                SendEvent(Players[i], 'S3maphoreClearTargetCache', self.object)
             end
         end,
         S3maphoreCheckCombat = updateCombatState,
