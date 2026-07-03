@@ -42,6 +42,8 @@ local AIFight, IsDead, IsNPC, IsSoundEnabled, SendEvent          =
 local currentUpdateHandler
 
 local handlePlayback, updateActorChain, resolvePlaylist          = NullFunction, NullFunction, NullFunction
+---@cast updateActorChain fun(dt: number)
+
 local desiredPlaylist, resolverDirty, didTransition, wasExterior = nil, false, false, false
 
 local CachedCellGrid                                             = { x = 0, y = 0, }
@@ -66,12 +68,17 @@ local function onSoundEnabledChanged()
     currentUpdateHandler = checkSilenceManager
 end
 
+---@param dt number
 local function realUpdateActorChain(dt)
     local fps = dt > 0 and (1 / dt) or 30
     local budget
-    if fps <= 30 then budget = 8
-    elseif fps <= 60 then budget = 6
-    else budget = 4 end
+    if fps <= 30 then
+        budget = 8
+    elseif fps <= 60 then
+        budget = 6
+    else
+        budget = 4
+    end
 
     for _ = 1, budget do
         local actor = Actors[chainPosition]
