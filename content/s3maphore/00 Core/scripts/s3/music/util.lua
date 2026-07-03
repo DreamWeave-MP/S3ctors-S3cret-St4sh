@@ -27,21 +27,19 @@ local ReadOnlyMT = {
 }
 
 local StrictReadOnlyMT = {
-    {
-        __index = function(inTable, key)
-            local found = inTable[key]
+    __index = function(inTable, key)
+        local found = inTable[key]
 
-            if found ~= nil then
-                return found
-            else
-                error(StrFormat('Failed to locate key %s in table %s!', key, inTable), 2)
-            end
-        end,
-        __newindex = function(inTable)
-            error(StrFormat('Write attempt to read-only table %s', inTable))
-        end,
-        __metatable = false,
-    }
+        if found ~= nil then
+            return found
+        else
+            error(StrFormat('Failed to locate key %s in table %s!', key, inTable), 2)
+        end
+    end,
+    __newindex = function(inTable)
+        error(StrFormat('Write attempt to read-only table %s', inTable))
+    end,
+    __metatable = false,
 }
 
 if isOpenMW then
