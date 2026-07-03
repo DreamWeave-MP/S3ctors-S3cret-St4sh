@@ -383,12 +383,12 @@ end
 
 MusicManager.playlistTimeOfDay = IsOpenMW and OMWPlaylistTimeOfDay or MWSEPlaylistTimeOfDay
 MusicManager.registerPlaylist {
-    active = false,
-    id = 'Special',
-    isValidCallback = function() return false end,
-    playOneTrack = true,
-    priority = PlaylistPriority.Special,
-    tracks = {},
+  active = false,
+  id = 'Special',
+  isValidCallback = function() return false end,
+  playOneTrack = true,
+  priority = PlaylistPriority.Special,
+  tracks = {},
 }
 MusicManager.activePlaydeck = MusicManager.explorePlaylists
 
