@@ -504,17 +504,17 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
 
         local actorName = actor.type.records[actor.recordId].name:lower()
 
-        local result = false
+        local actorResult = false
         for _, pattern in ipairs(validTargetPatterns) do
             if actorName:find(pattern, 1, true) ~= nil then
-                result = true
+                actorResult = true
                 break
             end
         end
 
-        S3maphoreGlobalCache[actor.recordId][validTargetPatterns] = result
+        S3maphoreGlobalCache[actor.recordId][validTargetPatterns] = actorResult
 
-        if result then break end
+        if actorResult then break end
 
         ::continue::
     end
