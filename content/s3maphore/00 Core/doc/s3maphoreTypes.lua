@@ -142,7 +142,7 @@ tes3 = tes3
 ---| 'humanoid'
 ---| 'undead'
 ---| 'daedra'
----| 'creatues'
+---| 'creatures'
 
 ---@alias ValidPlaylistCallback fun(playback: S3maphorePlayback?): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
 
