@@ -31,7 +31,7 @@ do
     local function s3maphoreAttackHandler(attack)
         if not attack.successful then return end
         for i = 1, #Players do
-            SendEvent(Players[i], 'S3maphoreClearTargetCache', self.id)
+            SendEvent(Players[i], 'S3maphoreClearTargetCache', self.object)
         end
     end
 
