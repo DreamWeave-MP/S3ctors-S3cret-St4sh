@@ -1,64 +1,64 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local ambient                                                    = require 'openmw.ambient'
-local async                                                      = require 'openmw.async'
-local core                                                       = require 'openmw.core'
-local input                                                      = require 'openmw.input'
-local nearby                                                     = require 'openmw.nearby'
-local self                                                       = require 'openmw.self'
-local storage                                                    = require 'openmw.storage'
-local types                                                      = require 'openmw.types'
+local ambient                                                       = require 'openmw.ambient'
+local async                                                         = require 'openmw.async'
+local core                                                          = require 'openmw.core'
+local input                                                         = require 'openmw.input'
+local nearby                                                        = require 'openmw.nearby'
+local self                                                          = require 'openmw.self'
+local storage                                                       = require 'openmw.storage'
+local types                                                         = require 'openmw.types'
 
-local MusicManager                                               = require 'scripts.s3.music.musicManager'
-local MusicSettings                                              = require 'scripts.s3.music.musicSettings'
+local MusicManager                                                  = require 'scripts.s3.music.musicManager'
+local MusicSettings                                                 = require 'scripts.s3.music.musicSettings'
 
 ---@type S3maphorePlaylistEnv
 local PlaylistEnv
 ---@type function?
-local PlaylistLoader                                             = require 'scripts.s3.music.playlistLoader'
+local PlaylistLoader                                                = require 'scripts.s3.music.playlistLoader'
 ---@type PlaylistRules
 local PlaylistRules
 ---@type PlaylistState
 local PlaylistState
 
-local SilenceManager                                             = require 'scripts.s3.music.silenceManager'
-local Strings                                                    = require 'scripts.s3.music.staticStrings'
+local SilenceManager                                                = require 'scripts.s3.music.silenceManager'
+local Strings                                                       = require 'scripts.s3.music.staticStrings'
 ---@type CombatState
 local CombatState
 
-local activePlaylistSettings                                     = storage.playerSection 'S3maphoreActivePlaylistSettings'
-local musicUtil                                                  = require 'scripts.s3.music.util'
+local activePlaylistSettings                                        = storage.playerSection 'S3maphoreActivePlaylistSettings'
+local musicUtil                                                     = require 'scripts.s3.music.util'
 
-local NullFunction                                               = require 'scripts.s3.nullFunction'
+local NullFunction                                                  = require 'scripts.s3.nullFunction'
 
-local error, next, pairs, Random, Remove, TableSort              =
-    error, next, pairs, math.random, table.remove, table.sort
+local Ceil, error, next, pairs, Max, Min, Random, Remove, TableSort =
+    math.ceil, error, next, pairs, math.max, math.min, math.random, table.remove, table.sort
 
-local StrFormat, StrLower                                        = string.format, string.lower
+local StrFormat, StrLower                                           = string.format, string.lower
 
-local AIFight, IsDead, IsNPC, IsSoundEnabled, SendEvent          =
+local AIFight, IsDead, IsNPC, IsSoundEnabled, SendEvent             =
     types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance,
     core.sound.isEnabled, self.sendEvent
 
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback, updateActorChain, resolvePlaylist          = NullFunction, NullFunction, NullFunction
+local handlePlayback, updateActorChain, resolvePlaylist             = NullFunction, NullFunction, NullFunction
 
-local desiredPlaylist, resolverDirty, didTransition, wasExterior = nil, false, false, false
+local desiredPlaylist, resolverDirty, didTransition, wasExterior    = nil, false, false, false
 
-local CachedCellGrid                                             = { x = 0, y = 0, }
+local CachedCellGrid                                                = { x = 0, y = 0, }
 
 ---@type QueuedEvent
-local queuedEvent                                                = { name = '', data = {} }
+local queuedEvent                                                   = { name = '', data = {} }
 
-local NPCFightThreshold                                          = 90
-local CreatureFightThreshold                                     = 83
+local NPCFightThreshold                                             = 90
+local CreatureFightThreshold                                        = 83
 
-local Actors                                                     = nearby.actors
-local BATCH_SIZE                                                 = 4
-local chainPosition                                              = 2
+local Actors                                                        = nearby.actors
+local MIN_BATCH_SIZE, MAX_BATCH_SIZE, TARGET_LATENCY, THIRTY_FRAMES = 4, 16, 1 / 3, 1 / 30
+local chainPosition                                                 = 2
 
 local function clearQueuedData()
     for key in next, queuedEvent.data do queuedEvent.data[key] = nil end
@@ -75,14 +75,24 @@ local function onSoundEnabledChanged()
     currentUpdateHandler = checkSilenceManager
 end
 
-local function realUpdateActorChain()
-    for _ = 1, BATCH_SIZE do
+---@param dt number
+local function realUpdateActorChain(dt)
+    local numActors = #Actors
+    if numActors < 2 then return end
+
+    dt = dt == 0 and THIRTY_FRAMES or dt
+
+    local batchSize = Max(
+        MIN_BATCH_SIZE, Min(
+            MAX_BATCH_SIZE, Ceil(
+                (numActors - 1) * dt / TARGET_LATENCY
+            )
+        )
+    )
+
+    for _ = 1, batchSize do
+        if chainPosition > numActors then chainPosition = 2 end
         local actor = Actors[chainPosition]
-        if not actor then
-            chainPosition = 2
-            actor = Actors[chainPosition]
-            if not actor then break end
-        end
         SendEvent(actor, 'S3maphoreCheckCombat')
         chainPosition = chainPosition + 1
     end
@@ -487,7 +497,7 @@ return {
         end,
 
         onUpdate = function(dt)
-            updateActorChain()
+            updateActorChain(dt)
             currentUpdateHandler(dt)
         end,
 
