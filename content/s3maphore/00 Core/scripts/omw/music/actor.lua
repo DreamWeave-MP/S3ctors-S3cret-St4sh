@@ -1,6 +1,6 @@
 ---@omw-context local
 
-local next, pairs, require = next, pairs, require
+local next, require = next, require
 
 local self = require 'openmw.self'
 local Players
@@ -9,7 +9,7 @@ local Targets = {}
 local TargetChangeData = { actor = self, targets = Targets }
 
 ---@diagnostic disable-next-line: undefined-field
-local clear = table.clear or function(t) for k in pairs(t) do t[k] = nil end end
+local clear = require 'scripts.s3.music.clear'
 
 local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, UnarmedStance
 local SendEvent = self.sendEvent
