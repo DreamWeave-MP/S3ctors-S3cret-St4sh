@@ -134,8 +134,15 @@ local function onHit()
     return PlaylistState.isInCombat ~= oldIsInCombat
 end
 
+---@param actorId string
+---@return boolean isInCombat
+local function actorIsInCombat(actorId)
+    return combatTargetIdx[actorId] ~= nil
+end
+
 ---@class CombatState
 local CombatState = {
+    actorIsInCombat = actorIsInCombat,
     onHit = onHit,
     onTargetsChanged = onTargetsChanged,
     recomputeState = recomputeState,
