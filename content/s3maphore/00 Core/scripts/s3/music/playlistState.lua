@@ -7,7 +7,7 @@
 ---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field cellHasCombatTargets boolean
 ---@field cellWaterLevel number? If the current cell has water, then, it is copied here
----@field combatTargets table<string, openmw.LObject> a read-only table of combat targets, where keys are actor IDs and values are the actors themselves
+---@field combatTargets openmw.LObject[] combat targets in insertion order
 ---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
 ---@field isExploring boolean whether the player is currently exploring or not. Distinct from isInCombat as settings may control it.
 ---@field isInCombat boolean whether the player is in combat or not

@@ -1,7 +1,7 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local assert, next, TableConcat, TableSort = assert, next, table.concat, table.sort
+local assert, TableConcat = assert, table.concat
 
 ---@type openmw.SelfObject
 local gameSelf = require 'openmw.self'
@@ -18,8 +18,10 @@ do
     IsAIEnabled = debug.isAIEnabled
 end
 
----@type table<string, openmw.LObject>
+---@type openmw.LObject[]
 local combatTargets
+---@type table<string, integer>
+local combatTargetIdx = {}
 ---@type table<string, boolean>
 local playerTargetedActors = {}
 
@@ -41,7 +43,9 @@ local function recomputeState()
     local currentLevel = MyLevel.current
     local threshold = MusicSettings.CombatHealthThreshold
 
-    for id, actor in next, combatTargets do
+    for i = 1, #combatTargets do
+        local actor = combatTargets[i]
+        local id = actor.id
         ids[#ids + 1] = id
 
         local skip = false
@@ -70,7 +74,6 @@ local function recomputeState()
 
     local cacheKey
     if ids[1] then
-        TableSort(ids)
         cacheKey = TableConcat(ids)
     end
 
@@ -92,7 +95,12 @@ end
 local function onTargetsChanged(actor, targets)
     if IsDead(gameSelf) then return end
 
-    if next(targets) then
+    if targets[1] ~= nil then
+        if not combatTargetIdx[actor.id] then
+            combatTargets[#combatTargets + 1] = actor
+            combatTargetIdx[actor.id] = #combatTargets
+        end
+
         local targetsPlayer = false
         for i = 1, #targets do
             if targets[i].id == gameSelf.id then
@@ -100,11 +108,17 @@ local function onTargetsChanged(actor, targets)
                 break
             end
         end
-
-        combatTargets[actor.id] = actor
         playerTargetedActors[actor.id] = targetsPlayer
     else
-        combatTargets[actor.id] = nil
+        local idx = combatTargetIdx[actor.id]
+        if idx then
+            local last = combatTargets[#combatTargets]
+            combatTargets[idx] = last
+            if last then combatTargetIdx[last.id] = idx end
+            combatTargets[#combatTargets] = nil
+            combatTargetIdx[actor.id] = nil
+        end
+
         playerTargetedActors[actor.id] = nil
         PlaylistRules.clearCombatCaches(actor.id)
     end
