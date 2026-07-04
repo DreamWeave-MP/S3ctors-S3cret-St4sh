@@ -10,9 +10,17 @@ return {
   unpair = function(z)
     local sqrtz = floor(sqrt(z))
     local sqz = sqrtz * sqrtz
-    local result1 = ((z - sqz) >= sqrtz) and { sqrtz, z - sqz - sqrtz } or { z - sqz, sqrtz }
-    local xx = result1[1] % 2 == 0 and result1[1] / 2 or (result1[1] + 1) / -2
-    local yy = result1[2] % 2 == 0 and result1[2] / 2 or (result1[2] + 1) / -2
+
+    local squareFirst = (z - sqz) >= sqrtz; local result1, result2
+
+    if squareFirst then
+      result1, result2 = sqrtz, z - sqz - sqrtz
+    else
+      result1, result2 = z - sqz, sqrtz
+    end
+
+    local xx = result1 % 2 == 0 and result1 / 2 or (result1 + 1) / -2
+    local yy = result2 % 2 == 0 and result2 / 2 or (result2 + 1) / -2
     return xx, yy
   end
 }
