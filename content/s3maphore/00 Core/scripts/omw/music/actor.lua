@@ -2,17 +2,17 @@
 
 local next, require = next, require
 
-local self = require 'openmw.self'
+local gameSelf = require 'openmw.self'
 local Players
 
 local Targets = {}
-local TargetChangeData = { actor = self, targets = Targets }
+local TargetChangeData = { actor = gameSelf, targets = Targets }
 
 ---@diagnostic disable-next-line: undefined-field
 local clear = require 'scripts.s3.music.clear'
 
 local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, UnarmedStance
-local SendEvent = self.sendEvent
+local SendEvent = gameSelf.sendEvent
 
 do
     IsWorldPaused = require 'openmw.core'.isWorldPaused
@@ -31,7 +31,7 @@ do
     local function s3maphoreAttackHandler(attack)
         if not attack.successful then return end
         for i = 1, #Players do
-            SendEvent(Players[i], 'S3maphoreClearTargetCache', self.object)
+            SendEvent(Players[i], 'S3maphoreClearTargetCache', gameSelf.object)
         end
     end
 
@@ -40,13 +40,13 @@ end
 
 local function updateCombatState()
     local startedWithTargets = next(Targets) ~= nil
-    local isDead = IsDeathFinished(self) or not IsInActorsProcessingRange(self)
+    local isDead = IsDeathFinished(gameSelf) or not IsInActorsProcessingRange(gameSelf)
 
     local shouldClear = isDead and startedWithTargets
     local shouldSkipFetch = isDead
 
     if not shouldSkipFetch then
-        shouldSkipFetch = (GetStance(self) == UnarmedStance)
+        shouldSkipFetch = (GetStance(gameSelf) == UnarmedStance)
             and not startedWithTargets
             and not IsFleeing()
             and not IsWorldPaused()
@@ -102,7 +102,7 @@ return {
     eventHandlers = {
         Died = function()
             for i = 1, #Players do
-                SendEvent(Players[i], 'S3maphoreClearTargetCache', self.object)
+                SendEvent(Players[i], 'S3maphoreClearTargetCache', gameSelf.object)
             end
         end,
         S3maphoreCheckCombat = updateCombatState,
