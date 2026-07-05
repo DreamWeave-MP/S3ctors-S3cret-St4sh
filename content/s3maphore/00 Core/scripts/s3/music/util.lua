@@ -8,7 +8,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 ---@type S3maphoreStaticStrings
 local Strings = require 'scripts.s3.music.staticStrings'
 
-local async, fileExists, isAIEnabled, musicSettings, pathsMatching, playlistsSection,
+local async, fileExists, musicSettings, pathsMatching, playlistsSection,
 storage, storageGet, vfs
 
 local error, getmetatable, next, pairs, pcall, rawget, rawset, setmetatable, type =
@@ -48,7 +48,6 @@ if isOpenMW then
     vfs = require 'openmw.vfs'
 
     fileExists = vfs.fileExists
-    isAIEnabled = require 'openmw.debug'.isAIEnabled
     musicSettings = storage.playerSection('SettingsS3Music')
     pathsMatching = vfs.pathsWithPrefix
     playlistsSection = storage.playerSection('S3MusicPlaylistsTrackOrder')
