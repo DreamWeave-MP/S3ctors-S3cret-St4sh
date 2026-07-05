@@ -72,6 +72,7 @@ if IsOpenMW then
   local I = require 'openmw.interfaces'
 
   activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
+  ---@diagnostic disable-next-line: param-type-mismatch
   activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
   --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
   --- In other words, this is the bit that responds to changes from the settings menu
