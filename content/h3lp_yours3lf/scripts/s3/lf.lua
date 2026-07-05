@@ -218,7 +218,9 @@ local instance = {
 }
 ---@cast instance S3lfObject
 
-local insert, pairs, sort = table.insert, pairs, table.sort
+local concat, insert, pairs, sort = table.concat, table.insert, pairs, table.sort
+
+local MakeReadOnly, SendEvent = util.makeReadOnly, gameSelf.sendEvent
 
 --- Sorts a table using an optional comparator function and returns an iterator over a sorted copy
 ---@generic K, V
@@ -262,9 +264,9 @@ local function alphabeticalParts()
 
   return (
     'S3GameGameSelf {\n Fields: { %s },\n Methods: { %s },\n UserData: { %s }\n}'):format(
-    table.concat(parts, ', '),
-    table.concat(methodParts, ', '),
-    table.concat(userDataParts, ', ')
+    concat(parts, ', '),
+    concat(methodParts, ', '),
+    concat(userDataParts, ', ')
   )
 end
 
@@ -272,7 +274,7 @@ local function instanceDisplay()
   local resultString = alphabeticalParts()
 
   for _, player in ipairs(localPlayers) do
-    player:sendEvent('S3LFDisplay', resultString)
+    SendEvent(player, 'S3LFDisplay', resultString)
   end
 end
 
@@ -281,7 +283,7 @@ function instance.distance(other)
 end
 
 function instance.sendObjectEvent(eventName, eventData)
-  gameSelf:sendEvent(eventName, eventData)
+  SendEvent(gameSelf, eventName, eventData)
 end
 
 local cellsVisited
@@ -537,7 +539,7 @@ if instance.actorType == 0 then
 
         rawset(instance, 'cell', currentCell)
 
-        gameSelf:sendEvent('S3LFCellChanged', currentCellId)
+        SendEvent(gameSelf, 'S3LFCellChanged', currentCellId)
       end,
     },
     eventHandlers = {
@@ -553,6 +555,8 @@ if instance.actorType == 0 then
           staticTargetData[incomingTargetData.actor.id] = incomingTargetData.actor
           eventName = 'S3CombatTargetAdded'
         end
+
+        staticTargetDataView = util.makeReadOnly(staticTargetData)
 
         gameSelf:sendEvent(eventName, incomingTargetData.actor)
       end,
