@@ -3,19 +3,19 @@
 local next, require = next, require
 
 local gameSelf = require 'openmw.self'
-local Players
 
+local clear = require 'scripts.s3.music.clear'
+
+local Players
 local Targets = {}
 local TargetChangeData = { actor = gameSelf, targets = Targets }
 
----@diagnostic disable-next-line: undefined-field
-local clear = require 'scripts.s3.music.clear'
-
-local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, UnarmedStance
+local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, SendGlobalEvent, UnarmedStance
 local SendEvent = gameSelf.sendEvent
 
 do
-    IsWorldPaused = require 'openmw.core'.isWorldPaused
+    local core = require 'openmw.core'
+    IsWorldPaused = core.isWorldPaused
 
     local I = require 'openmw.interfaces'
     local AI = I.AI
