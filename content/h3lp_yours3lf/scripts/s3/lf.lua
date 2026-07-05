@@ -528,8 +528,8 @@ if instance.actorType == 0 then
       onUpdate = function()
         rawset(instance, 'position', gameSelf.position)
 
-        local currentCell = gameSelf.cell
-        if currentCell == rawget(instance, 'cell') then return end
+        local currentCell, oldCell = gameSelf.cell, rawget(instance, 'cell')
+        if currentCell == oldCell then return end
 
         --- Even players actually will not have a nil cell in onUpdate
         ---@diagnostic disable-next-line: need-check-nil
@@ -539,7 +539,7 @@ if instance.actorType == 0 then
 
         rawset(instance, 'cell', currentCell)
 
-        SendEvent(gameSelf, 'S3LFCellChanged', currentCellId)
+        SendEvent(gameSelf, 'S3LFCellChanged', oldCell.id)
       end,
     },
     eventHandlers = {
