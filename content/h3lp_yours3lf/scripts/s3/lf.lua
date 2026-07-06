@@ -539,7 +539,7 @@ if instance.actorType == 0 then
 
         rawset(instance, 'cell', currentCell)
 
-        SendEvent(gameSelf, 'S3LFCellChanged', oldCell.id)
+        if oldCell then SendEvent(gameSelf, 'S3LFCellChanged', oldCell.id) end
       end,
     },
     eventHandlers = {
