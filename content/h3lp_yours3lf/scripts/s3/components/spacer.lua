@@ -4,6 +4,18 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 local v2 = util.vector2
 
+---Options for building a spacer layout. Not an `openmw.ui.Layout`: `type` is set
+---internally to `ui.TYPE.Widget`, and `layer`/`content` are not exposed.
+---@class H3.SpacerOpts
+---@field name? string Optional layout name for lookup from Content.
+---@field props? table Optional widget properties (e.g. `size = v2(8, 8)`).
+---@field external? table Optional external properties table. When present, takes precedence over `grow`/`stretch`.
+---@field events? table Optional event callbacks table.
+---@field userData? any Arbitrary user data attached to the returned layout.
+---@field template? openmw.ui.Template Optional widget template.
+---@field grow? number Convenience: if `external` is nil, sets `external.grow`. Ignored when `external` is provided.
+---@field stretch? number Convenience: if `external` is nil, sets `external.stretch`. Ignored when `external` is provided.
+
 ---Build an empty Widget spacer layout.
 ---Allocates fresh layout, props, and external tables. The
 ---spacer has no lifetime beyond the returned layout until a caller mounts it.
@@ -11,7 +23,9 @@ local v2 = util.vector2
 ---Shorthand: pass numbers to set `props.size` directly.
 ---  `spacer(8)`       -> `spacer({ props = { size = v2(8, 8) } })`  (square)
 ---  `spacer(8, 4)`    -> `spacer({ props = { size = v2(8, 4) } })` (width, height)
----@param opts? {name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template, grow?: number, stretch?: number}
+---@overload fun(size: number): openmw.ui.Layout
+---@overload fun(w: number, h: number): openmw.ui.Layout
+---@param opts? H3.SpacerOpts
 ---@return openmw.ui.Layout
 local function spacer(opts, h)
     if type(opts) == 'number' then
