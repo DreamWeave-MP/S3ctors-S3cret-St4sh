@@ -29,7 +29,7 @@ do
 
     ---@param attack openmw.interfaces.Combat.AttackInfo
     local function s3maphoreAttackHandler(attack)
-        if not attack.successful then return end
+        if not attack.successful or not next(Targets) then return end
         for i = 1, #Players do
             SendEvent(Players[i], 'S3maphoreClearTargetCache', gameSelf.object)
         end
