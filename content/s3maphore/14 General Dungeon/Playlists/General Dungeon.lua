@@ -3,14 +3,14 @@
 ---@type ValidPlaylistCallback
 local function generalDungeonRule()
     return not Playback.state.cellIsExterior
-        and Playback.state.cellHasCombatTargets
+        and Playback.state.cellPresence.cellHasHostileActors
         and not Playback.state.isInCombat
 end
 
 ---@type ValidPlaylistCallback
 local function combatDungeonRule()
     return not Playback.state.cellIsExterior
-        and Playback.state.cellHasCombatTargets
+        and Playback.state.cellPresence.cellHasHostileActors
         and Playback.state.isInCombat
 end
 
