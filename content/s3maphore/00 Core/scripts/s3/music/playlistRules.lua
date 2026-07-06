@@ -390,6 +390,8 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
             combatTargetLevelCache[actor.id] = targetLevel
         end
 
+        ---@cast targetLevel openmw.types.LevelStat
+
         local levelDifference, levelScale
         if levelRule.absolute then
             levelDifference = targetLevel.current - MyLevel.current
@@ -578,7 +580,7 @@ end
 ---@param staticRules IDPresenceMap
 ---@return boolean?
 function PlaylistRules.staticExact(staticRules)
-    local recordIds = PlaylistRules.state.staticList.recordIds
+    local recordIds = PlaylistRules.state.cellPresence.staticList.recordIds
     if not recordIds[1] then return end
 
     local cellName = PlaylistRules.state.cellName
@@ -619,7 +621,7 @@ end
 ---@param patterns string[]
 ---@return boolean?
 function PlaylistRules.staticMatch(patterns)
-    local recordIds = PlaylistRules.state.staticList.recordIds
+    local recordIds = PlaylistRules.state.cellPresence.staticList.recordIds
     if not recordIds[1] then return end
 
     local cellName = PlaylistRules.state.cellName
@@ -666,7 +668,7 @@ end
 ---@param inputContentFiles  IDPresenceMap
 ---@return boolean
 function PlaylistRules.staticContentFile(inputContentFiles)
-    local contentFiles = PlaylistRules.state.staticList.contentFiles
+    local contentFiles = PlaylistRules.state.cellPresence.staticList.contentFiles
     if not contentFiles[1] then return false end
     local cellName = PlaylistRules.state.cellName
 

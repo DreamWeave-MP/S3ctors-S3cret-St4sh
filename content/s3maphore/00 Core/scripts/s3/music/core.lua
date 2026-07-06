@@ -32,29 +32,33 @@ local musicUtil                                                     = require 's
 
 local NullFunction                                                  = require 'scripts.s3.nullFunction'
 
-local Ceil, error, next, pairs, Max, Min, Random, Remove, TableSort =
-    math.ceil, error, next, pairs, math.max, math.min, math.random, table.remove, table.sort
+local Ceil, error, next, pairs, Max, Min,
+Random, StrFormat, StrLower, Remove, TableSort                      =
+    math.ceil, error, next, pairs, math.max, math.min,
+    math.random, string.format, string.lower, table.remove, table.sort
 
-local StrFormat, StrLower                                           = string.format, string.lower
+local IsDead, IsSoundEnabled, SendEvent, SendGlobalEvent            =
+    types.Actor.isDead,
+    core.sound.isEnabled, self.sendEvent, core.sendGlobalEvent
 
-local AIFight, IsDead, IsNPC, IsSoundEnabled, SendEvent             =
-    types.Actor.stats.ai.fight, types.Actor.isDead, types.NPC.objectIsInstance,
-    core.sound.isEnabled, self.sendEvent
+local HasTag
 
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback, updateActorChain, resolvePlaylist             = NullFunction, NullFunction, NullFunction
+local handlePlayback, updateActorChain, resolvePlaylist             = NullFunction, NullFunction,
+    NullFunction
+---@cast updateActorChain fun(dt: number)
 
 local desiredPlaylist, resolverDirty, didTransition, wasExterior    = nil, false, false, false
 
-local CachedCellGrid                                                = { x = 0, y = 0, }
-
 ---@type QueuedEvent
-local queuedEvent                                                   = { name = '', data = {} }
+local queuedEvent                                                   = {
+    name = nil,
+    data = {}
+}
 
-local NPCFightThreshold                                             = 90
-local CreatureFightThreshold                                        = 83
+local CachedCellGrid                                                = { x = 0, y = 0, }
 
 local Actors                                                        = nearby.actors
 local MIN_BATCH_SIZE, MAX_BATCH_SIZE, TARGET_LATENCY, THIRTY_FRAMES = 4, 16, 1 / 3, 1 / 30
@@ -62,6 +66,32 @@ local chainPosition                                                 = 2
 
 local function clearQueuedData()
     for key in next, queuedEvent.data do queuedEvent.data[key] = nil end
+end
+
+--- Updates PlaylistState cell metadata from self.cell.
+--- Called from both S3LFCellChanged and the init handler.
+local function updateCellMetadata()
+    local thisCell = self.cell
+    ---@cast thisCell openmw.core.LCell
+
+    if not HasTag then HasTag = thisCell.hasTag end
+
+    local shouldUseName = thisCell.name ~= ''
+
+    PlaylistState.cellHasWater = thisCell.hasWater
+    PlaylistState.cellWaterLevel = thisCell.waterLevel
+    PlaylistState.cellIsExterior = thisCell.isExterior or HasTag(thisCell, 'QuasiExterior')
+    PlaylistState.cellName = StrLower(shouldUseName and thisCell.name or thisCell.id)
+    PlaylistState.cellId = thisCell.id
+
+    if thisCell.region then PlaylistState.nearestRegion = thisCell.region end
+
+    if thisCell.isExterior then
+        CachedCellGrid.x, CachedCellGrid.y = thisCell.gridX, thisCell.gridY
+        PlaylistState.currentGrid = CachedCellGrid
+    else
+        PlaylistState.currentGrid = nil
+    end
 end
 
 local function checkSilenceManager()
@@ -157,11 +187,9 @@ currentUpdateHandler = function(_)
     TableSort(MusicManager.battlePlaylists, priorityThenRegistration)
     TableSort(MusicManager.specialPlaylists, priorityThenRegistration)
 
-    resolvePlaylist()
-
     CombatState = require 'scripts.s3.music.combatState' (MusicSettings, PlaylistRules, MusicManager, PlaylistState)
 
-    storage.playerSection('SettingsS3Music'):subscribe(
+    storage.playerSection 'SettingsS3Music':subscribe(
         async:callback(
             function(_, key)
                 if key == 'BannerEnabled' then
@@ -197,7 +225,12 @@ currentUpdateHandler = function(_)
         )
     )
 
-    core.sendGlobalEvent('S3maphoreInitializationComplete', self.id)
+    SendGlobalEvent('S3maphoreInitializationComplete', self.id)
+    SendGlobalEvent('S3maphoreUpdatePresence', { self.object })
+
+    updateCellMetadata()
+
+    musicUtil.debugLog 'Coroutine load complete, initializing cell presence'
     currentUpdateHandler = NullFunction
 end
 
@@ -208,33 +241,14 @@ local TrackChangeData = {
     reason = MusicManager.STATE.TrackChanged,
     trackName = '',
 }
-local function updateCellHasCombatTargets()
-    local nearbyCombatTargets = false
-
-    -- Player is always at index 1, so if we start at 2
-    -- We can skip the identity check
-    for i = 2, #Actors do
-        local actor = Actors[i]
-
-        local fightValue = AIFight(actor).modified
-
-        local fightLimit = IsNPC(actor) and NPCFightThreshold or CreatureFightThreshold
-
-        if fightValue >= fightLimit and not IsDead(actor) then
-            nearbyCombatTargets = true
-            break
-        end
-    end
-
-    PlaylistState.cellHasCombatTargets = nearbyCombatTargets
-end
-
 ---@param eventData CombatTargetChangedData
 local function onCombatTargetsChanged(eventData)
     if IsDead(self) then return end
 
     CombatState.onTargetsChanged(eventData.actor, eventData.targets)
-    updateCellHasCombatTargets()
+    if PlaylistState.cellId ~= self.cell.id then return end
+
+    musicUtil.debugLog('Updating playlist due to combat target change:', eventData.actor)
     resolvePlaylist()
 end
 
@@ -405,8 +419,8 @@ handlePlayback = function(_)
             MusicManager.forceSkip = true
         elseif desiredPlaylist ~= MusicManager.currentPlaylist and didTransition then
             local isExterior     = PlaylistState.cellIsExterior
-            local friendlyEnter  = not PlaylistState.cellHasCombatTargets
-            local hostileEnter   = PlaylistState.cellHasCombatTargets
+            local friendlyEnter  = not PlaylistState.cellPresence.cellHasHostileActors
+            local hostileEnter   = PlaylistState.cellPresence.cellHasHostileActors
 
             local overworldCross = wasExterior and isExterior
                 and desiredPlaylist.priority <
@@ -528,6 +542,17 @@ return {
 
         OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
 
+        S3LFCellChanged = function(oldCellId)
+            chainPosition, didTransition, wasExterior = 2, true, PlaylistState.cellIsExterior
+
+            updateCellMetadata()
+
+            if not PlaylistLoader then
+                musicUtil.debugLog 'Requesting CellPresence update from PLAYER scope'
+                SendGlobalEvent('S3maphoreUpdatePresence', { self.object, oldCellId })
+            end
+        end,
+
         S3maphoreToggleMusic = function(enabled)
             MusicManager.overrideMusicEnabled(enabled)
             if MusicSettings.MusicEnabled then
@@ -553,6 +578,7 @@ return {
             end
 
             MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
+            if PlaylistState.cellId ~= self.cell.id then return end
             resolvePlaylist()
         end,
 
@@ -567,59 +593,43 @@ return {
             MusicManager.updateBanner()
         end,
 
-        ---@param cellChangeData S3maphoreCellChangeData
-        S3maphoreCellChanged = function(cellChangeData)
-            chainPosition = 2
-            wasExterior = PlaylistState.cellIsExterior
-            didTransition = true
-            updateCellHasCombatTargets()
-
-            PlaylistState.staticList = cellChangeData.staticList
-            if cellChangeData.nearestRegion then PlaylistState.nearestRegion = cellChangeData.nearestRegion end
-
-            local thisCell = self.cell
-            ---@cast thisCell openmw.core.LCell
-
-            local shouldUseName = thisCell.name ~= ''
-
-            PlaylistState.cellHasWater = thisCell.hasWater
-            PlaylistState.cellWaterLevel = thisCell.waterLevel
-            PlaylistState.cellIsExterior = thisCell.isExterior or thisCell:hasTag 'QuasiExterior'
-            PlaylistState.cellName = StrLower(shouldUseName and thisCell.name or thisCell.id)
-            PlaylistState.cellId = thisCell.id
-
-            if thisCell.isExterior then
-                CachedCellGrid.x, CachedCellGrid.y = thisCell.gridX, thisCell.gridY
-                PlaylistState.currentGrid = CachedCellGrid
-            else
-                PlaylistState.currentGrid = nil
-            end
-
+        S3maphoreCellPresenceUpdated = function()
+            musicUtil.debugLog 'Resolving playlist after cell presence update!'
             resolvePlaylist()
             currentUpdateHandler = onSoundEnabledChanged
         end,
 
         S3maphoreWeatherChanged = function(weatherName)
+            PlaylistState.weather = weatherName
+
             if MusicSettings.DebugEnable then
                 musicUtil.debugLog(StrFormat(Strings.WeatherChanged, weatherName))
             end
 
-            PlaylistState.weather = weatherName
+            if PlaylistState.cellId ~= self.cell.id then return end
+
             resolvePlaylist()
+            currentUpdateHandler = onSoundEnabledChanged
         end,
 
-        ---@param _ openmw.LObject
-        S3maphoreClearTargetCache = function(_)
+        ---@param hitObject openmw.LObject
+        S3maphoreClearTargetCache = function(hitObject)
+            if PlaylistLoader then return end
+
             if MusicSettings.DebugEnable then
-                musicUtil.debugLog('clearing target cache for hit event')
+                musicUtil.debugLog('Clearing target cache for hit event on', hitObject.recordId, ':', hitObject.id)
             end
 
             CombatState.onHit()
-            resolvePlaylist()
             PlaylistRules.clearGlobalCombatTargetCache()
+            resolvePlaylist()
         end,
 
-        S3maphoreTODChanged = realResolvePlaylist,
+        S3maphoreTODChanged = function()
+            if PlaylistState.cellId ~= self.cell.id then return end
+            resolvePlaylist()
+            currentUpdateHandler = onSoundEnabledChanged
+        end,
 
         S3maphoreTrackChanged = MusicManager.callTrackChangedHandlers,
     }

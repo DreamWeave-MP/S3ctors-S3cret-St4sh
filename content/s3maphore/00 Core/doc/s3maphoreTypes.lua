@@ -51,11 +51,6 @@ tes3 = tes3
 --- Player cell name/id mapped to the memory address of the table being looked up. Only used in the most expensive rulesets
 ---@alias S3maphoreCacheKey string
 
---- Event data transmitted back to the player when they change cells.
----@class S3maphoreCellChangeData
----@field staticList StaticList
----@field nearestRegion string? Defines the nearest (or current) region to the player's current cell. If one cannot be found, the previous region will be used.
-
 --- Special class for handling exterior grids.
 --- Used for special circumstances in which playlists should only run in *particular* exterior cells
 ---@class S3maphoreCellGrid
@@ -92,10 +87,6 @@ tes3 = tes3
 ---@field reason S3maphoreStateChangeReason
 ---@field trackName string VFS path of the track being played
 
----@class S3maphoreStaticCellChangeData
----@field staticList S3maphoreStaticList
----@field nearestRegion string
-
 ---@class S3maphoreStaticList
 ---@field contentFiles string[] array of unique content files which added things to the current cell (or active grid)
 ---@field recordIds string[] array of unique static recordIds within the current cell (or active grid)
@@ -127,10 +118,6 @@ tes3 = tes3
 ---| 'Potions'
 ---| 'Probes'
 ---| 'Weapon'
-
----@class StaticList
----@field recordIds string[] array of all unique static record ids in the current cell
----@field contentFiles string[] array of all unique content files which placed statics in this cell
 
 ---@class StatThresholdMap
 ---@field health NumericPresenceMapData?
@@ -164,6 +151,16 @@ tes3 = tes3
 ---| 7
 ---| 8
 ---| 9
+
+---@class CellPresence
+---@field byRecord table<string, number>
+---@field byType table<string, number>
+---@field byContentFile table<string, number>
+---@field staticList S3maphoreStaticList
+---@field nearestRegion string?
+---@field cellHasHostileActors boolean
+---@field areaHasHostileActors boolean
+---@field cellId string?
 
 ---@class CombatState
 ---@field onTargetsChanged fun(actor: GameObject, targets: GameObject[])
