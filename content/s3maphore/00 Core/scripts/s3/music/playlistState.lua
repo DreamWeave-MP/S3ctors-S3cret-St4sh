@@ -15,7 +15,7 @@
 ---@field isUnderwater boolean
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
 ---@field playlistTimeOfDay TimeOfDay the time of day for the current playlist
----@field weather WeatherType
+---@field weather string
 local PlaylistState = {
   cellHasWater = false,
   cellIsExterior = false,
