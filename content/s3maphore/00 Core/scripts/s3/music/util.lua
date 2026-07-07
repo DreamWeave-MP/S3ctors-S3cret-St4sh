@@ -13,7 +13,7 @@ local async, fileExists, musicSettings, pathsMatching, playlistsSection, storage
 local error, getmetatable, next, pairs, pcall, rawget, rawset, select, setmetatable, type =
   error, getmetatable, next, pairs, pcall, rawget, rawset, select, setmetatable, type
 
-local Random, print, StrFormat, StrLower, StrMatch, StrSub, TableConcat, TableInsert, TableRemove, tostring =
+local Random, print, StrFormat, StrLower, StrMatch, StrSub, TableConcat, TableInsert, TableRemove, ToString =
   math.random,
   print,
   string.format,
@@ -90,26 +90,56 @@ local function deepCopy(root, copies)
   return setmetatable(new, getmetatable(root))
 end
 
-local function deepToString(val, level, prefix)
+local function deepToString(root, maxDepth, prefix)
   prefix = prefix or ''
-  level = (level or 1) - 1
 
-  local ok, iter, t = pcall(pairs, val)
-  if level < 0 or not ok then return tostring(val) end
+  local out = {}
+  local outIndex = 1
 
-  local newPrefix = prefix .. '  '
-  local strs = { tostring(val) .. ' {\n' }
+  local indentCache = { prefix }
 
-  for k, v in iter, t do
-    strs[#strs + 1] = newPrefix
-      .. tostring(k)
-      .. ' = '
-      .. deepToString(v, level, newPrefix)
-      .. ',\n'
+  local function write(str)
+    out[outIndex] = str
+    outIndex = outIndex + 1
   end
 
-  strs[#strs + 1] = prefix .. '}'
-  return TableConcat(strs)
+  local function childIndent(indent)
+    local cached = indentCache[indent]
+    if cached then return cached end
+
+    cached = indent .. '  '
+    indentCache[indent] = cached
+    return cached
+  end
+
+  local function dump(value, depth, indent)
+    local ok, iter, state = pcall(pairs, value)
+
+    if depth < 0 or not ok then
+      write(ToString(value))
+      return
+    end
+
+    write(ToString(value))
+    write ' {\n'
+
+    local nextIndent = childIndent(indent)
+
+    for k, v in iter, state do
+      write(nextIndent)
+      write(ToString(k))
+      write ' = '
+      dump(v, depth - 1, nextIndent)
+      write ',\n'
+    end
+
+    write(indent)
+    write '}'
+  end
+
+  dump(root, (maxDepth or 1) - 1, prefix)
+
+  return TableConcat(out)
 end
 
 local function getPlaylistFilePaths()
