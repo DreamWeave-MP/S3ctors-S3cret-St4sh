@@ -59,22 +59,42 @@ local function float()
   return unsigned / 4294967296 -- Always in [0, 1)
 end
 
--- Handle both { min=X, max=Y } and direct args
----@param a integer|RangeTable
----@param b integer|boolean? optional max. If not provided, `a` should either be a RangeTable which provides the max, or a will be interpreted as the max. If true, rounds the result to the nearest whole number.
-local function range(a, b)
-  local min, max = a, b
+-- Direct args only — no table path to avoid allocation in hot paths.
+---@overload fun(max: integer): number
+---@overload fun(max: integer, shouldRound: true): integer
+---@overload fun(min: integer, max: integer): number
+---@overload fun(min: integer, max: integer, shouldRound: true): integer
+---@param a integer min. If b is nil, a is treated as max with min = 1.
+---@param b integer|boolean? optional max. If boolean, treated as shouldRound with a as max and min = 1.
+---@param c boolean? optional shouldRound when both a and b are numeric.
+---@return integer|number
+local function range(a, b, c)
+  local min, max, shouldRound
 
-  if type(a) == 'table' then
-    min, max = a.min or 1, a.max
-    assert(max, 'RangeTable requires a \'max\'')
-  elseif type(a) == 'number' and type(b) ~= 'number' then
-    max = a
+  if type(b) == 'boolean' then
+    -- range(max, true)
     min = 1
+    max = a
+    shouldRound = b
+  elseif c then
+    -- range(min, max, true)
+    min = a
+    max = b
+    shouldRound = true
+  elseif b then
+    -- range(min, max)
+    min = a
+    max = b
+    shouldRound = false
+  else
+    -- range(max)
+    min = 1
+    max = a
+    shouldRound = false
   end
 
   local result = min + float() * (max - min)
-  if b == true then
+  if shouldRound then
     return round(result)
   else
     return result
