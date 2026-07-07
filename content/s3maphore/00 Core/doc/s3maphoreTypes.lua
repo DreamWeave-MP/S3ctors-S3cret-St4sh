@@ -11,8 +11,8 @@ tes3 = tes3
 ---@field allowed string[]
 
 ---@class CombatTargetChangedData
----@field actor GameObject? Don't think this should ever be nil, but the `actor` field represents whomever has entered or exited combat
----@field targets GameObject[] List of targets whom this actor is in combat with. If the array is empty, the target has left combat for one or another reason.
+---@field actor openmw.LObject? Don't think this should ever be nil, but the `actor` field represents whomever has entered or exited combat
+---@field targets openmw.LObject[] List of targets whom this actor is in combat with. If the array is empty, the target has left combat for one or another reason.
 
 ---@alias CombatTargetTypeMatches table<TargetType, true>
 
@@ -163,6 +163,6 @@ tes3 = tes3
 ---@field cellId string?
 
 ---@class CombatState
----@field onTargetsChanged fun(actor: GameObject, targets: GameObject[])
+---@field onTargetsChanged fun(actor: openmw.LObject, targets: openmw.LObject[])
 ---@field onHit fun(): boolean
 ---@field onSettingChanged fun(setting: string): boolean
