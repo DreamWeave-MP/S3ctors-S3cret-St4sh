@@ -5,7 +5,6 @@ local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
 ---@type openmw.core
 local core = require 'openmw.core'
-local debug = require 'openmw.debug'
 local input = require 'openmw.input'
 local nearby = require 'openmw.nearby'
 local self = require 'openmw.self'
@@ -28,8 +27,9 @@ local PlaylistState
 
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local Strings = require 'scripts.s3.music.staticStrings'
+
 ---@type CombatState
-local CombatState
+local CombatState = require 'scripts.s3.music.combatState'
 
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicUtil = require 'scripts.s3.music.util'
@@ -52,12 +52,16 @@ local Ceil, error, next, pairs, Max, Min, StrFormat, StrLower, Remove, TableSort
   table.sort,
   type
 
-local IsDead, IsSoundEnabled, IsSwimming, SendEvent, SendGlobalEvent =
+local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic =
+  require('openmw.debug').isCollisionEnabled,
   types.Actor.isDead,
-  core.sound.isEnabled,
+  core.sound.isEnabled(),
+  ambient.isMusicPlaying,
   types.Actor.isSwimming,
   self.sendEvent,
-  core.sendGlobalEvent
+  core.sendGlobalEvent,
+  ambient.stopMusic,
+  ambient.streamMusic
 
 local ActiveEffects, LevitateEffect =
   types.Actor.activeEffects(self), core.magic.EFFECT_TYPE.Levitate
@@ -67,18 +71,22 @@ local HasTag
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback, onSoundEnabledChanged, resolvePlaylist, updateActorChain =
-  NullFunction, NullFunction, NullFunction, NullFunction
+local handlePlayback, resolvePlaylist, updateActorChain = NullFunction, NullFunction, NullFunction
 ---@cast updateActorChain fun(dt: number)
 
-local desiredPlaylist, resolverDirty, didTransition, wasExterior = nil, false, false, false
+local desiredPlaylist, resolverDirty, didTransition, waitingOnPresence, wasExterior =
+  nil, false, false, true, false
 
 ---@type QueuedEvent
 local queuedEvent = {
   backup = {},
-  data = {},
+  data = nil,
   name = nil,
 }
+
+--- Always actually use the `backup` table as `data` may be overwritten with
+--- non-table types. see `clearQueuedData`
+queuedEvent.data = queuedEvent.backup
 
 local PlaybackParams = {
   fadeOut = MusicSettings.FadeOutDuration,
@@ -131,21 +139,24 @@ end
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
 local function updatePlaylistState()
+  --- Explicitly advance the generator on each round-robin cycle to improve distribution
+  randomGen.int()
+
   local oldTod, newTod = PlaylistState.playlistTimeOfDay, MusicManager.playlistTimeOfDay()
   local TODChanged = oldTod and oldTod ~= newTod
   PlaylistState.playlistTimeOfDay = newTod
 
   local wasMoving, controls = PlaylistState.movementMode, self.controls
-  if IsSwimming(self) then
-    PlaylistState.movementMode = 'swimming'
-  elseif
-    not debug.isCollisionEnabled()
+  if
+    not CollisionEnabled()
     --- Magic effect enums are strings now
     --- This is why you use the enum values :)
     ---@diagnostic disable-next-line: param-type-mismatch
     or GetMagicEffect(ActiveEffects, LevitateEffect).magnitude > 0
   then
     PlaylistState.movementMode = 'flying'
+  elseif IsSwimming(self) then
+    PlaylistState.movementMode = 'swimming'
   elseif controls.sneak then
     PlaylistState.movementMode = 'sneaking'
   elseif controls.movement ~= 0 or controls.sideMovement ~= 0 then
@@ -170,17 +181,16 @@ local function updatePlaylistState()
   currentUpdateHandler = handlePlayback
 end
 
-local function checkSilenceManager()
-  currentUpdateHandler = SilenceManager:silenceActive() and onSoundEnabledChanged
-    or updatePlaylistState
-end
-onSoundEnabledChanged = function()
-  --- Explicitly re-seed the generator on each round-robin cycle to improve distribution
-  randomGen.int()
-
-  if not IsSoundEnabled() then return end
-
-  currentUpdateHandler = checkSilenceManager
+local initialUpdateFunction
+if IsSoundEnabled then
+  initialUpdateFunction = function()
+    if not SilenceManager:silenceActive() then currentUpdateHandler = updatePlaylistState end
+  end
+else
+  -- Normally, the silenceManager is the first step in the chain.
+  -- But, since sound can't be disabled at runtime we skip the SilenceManager update entirely
+  -- if it's not enabled to get fresher state
+  initialUpdateFunction = updatePlaylistState
 end
 
 ---@param dt number
@@ -239,13 +249,6 @@ currentUpdateHandler = function(_)
   TableSort(MusicManager.battlePlaylists, priorityThenRegistration)
   TableSort(MusicManager.specialPlaylists, priorityThenRegistration)
 
-  CombatState = require 'scripts.s3.music.combatState'(
-    MusicSettings,
-    PlaylistRules,
-    MusicManager,
-    PlaylistState
-  )
-
   storage.playerSection('SettingsS3Music'):subscribe(async:callback(function(_, key)
     if key == 'BannerEnabled' then
       MusicManager.updateBanner()
@@ -257,12 +260,12 @@ currentUpdateHandler = function(_)
       clearQueuedData()
 
       if MusicSettings.MusicEnabled then
-        currentUpdateHandler = onSoundEnabledChanged
+        currentUpdateHandler = initialUpdateFunction
       else
         currentUpdateHandler = NullFunction
 
-        if ambient.isMusicPlaying() then
-          ambient.stopMusic()
+        if IsMusicPlaying() then
+          StopMusic()
           MusicManager.currentPlaylist = nil
           MusicManager.currentTrack = nil
 
@@ -398,7 +401,7 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
 end
 
 handlePlayback = function(_)
-  currentUpdateHandler = onSoundEnabledChanged
+  currentUpdateHandler = initialUpdateFunction
 
   if queuedEvent.name then
     SendEvent(self, queuedEvent.name, queuedEvent.data)
@@ -407,7 +410,7 @@ handlePlayback = function(_)
     return
   end
 
-  local musicPlaying = ambient.isMusicPlaying()
+  local musicPlaying = IsMusicPlaying()
 
   -- Resolver flagged a new playlist this tick
   if resolverDirty then
@@ -415,7 +418,7 @@ handlePlayback = function(_)
 
     if not desiredPlaylist then
       if musicPlaying then
-        ambient.stopMusic()
+        StopMusic()
         MusicManager.currentPlaylist = nil
         MusicManager.currentTrack = nil
       end
@@ -497,7 +500,7 @@ MusicManager.addTrackChangedHandler(
     musicUtil.debugLog(Strings.TrackChanged, eventData.playlistId, eventData.trackName)
 
     PlaybackParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
-    ambient.streamMusic(eventData.trackName, PlaybackParams)
+    StreamMusic(eventData.trackName, PlaybackParams)
     MusicManager.updateBanner()
   end
 )
@@ -534,7 +537,7 @@ return {
     onSave = function()
       local playlistStates = {}
 
-      for playlistId, playlist in pairs(MusicManager.registeredPlaylists) do
+      for playlistId, playlist in next, MusicManager.registeredPlaylists do
         playlistStates[playlistId] = playlist.active
       end
 
@@ -569,7 +572,8 @@ return {
       if IsDead(self) then return end
 
       CombatState.onTargetsChanged(eventData.actor, eventData.targets)
-      if PlaylistState.cellId ~= self.cell.id then return end
+
+      if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
 
       musicUtil.debugLog('Updating playlist due to combat target change: %s', eventData.actor)
       resolvePlaylist()
@@ -580,21 +584,22 @@ return {
 
       updateCellMetadata()
 
-      if not PlaylistLoader then
-        musicUtil.debugLog 'Requesting CellPresence update from PLAYER scope'
-        SendGlobalEvent('S3maphoreUpdatePresence', { self.object, oldCellId })
-      end
+      if PlaylistLoader then return end
+
+      musicUtil.debugLog 'Requesting CellPresence update from PLAYER scope'
+      SendGlobalEvent('S3maphoreUpdatePresence', { self.object, oldCellId })
+      waitingOnPresence = true
     end,
 
     S3maphoreToggleMusic = function(enabled)
       MusicManager.overrideMusicEnabled(enabled)
-      if MusicSettings.MusicEnabled then resolvePlaylist() end
+      if not waitingOnPresence and MusicSettings.MusicEnabled then resolvePlaylist() end
     end,
 
     S3maphoreSkipTrack = function()
-      currentUpdateHandler = onSoundEnabledChanged
+      currentUpdateHandler = initialUpdateFunction
       MusicManager.skipTrack()
-      resolvePlaylist()
+      if not waitingOnPresence then resolvePlaylist() end
     end,
 
     S3maphoreSpecialTrack = function(eventData)
@@ -602,10 +607,12 @@ return {
     end,
 
     S3maphoreSetPlaylistActive = function(eventData)
+      if PlaylistLoader then error 'S3maphoreSetPlaylistActive called during initialization!' end
+
       musicUtil.debugLog(Strings.ChangingPlaylist, eventData.playlist, eventData.state)
 
       MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
-      if PlaylistState.cellId ~= self.cell.id then return end
+      if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
       resolvePlaylist()
     end,
 
@@ -617,20 +624,23 @@ return {
     end,
 
     S3maphoreCellPresenceUpdated = function()
+      waitingOnPresence = false
       musicUtil.debugLog 'Resolving playlist after cell presence update!'
       resolvePlaylist()
-      currentUpdateHandler = onSoundEnabledChanged
+      currentUpdateHandler = initialUpdateFunction
     end,
 
     S3maphoreWeatherChanged = function(weatherName)
+      if PlaylistLoader then error 'S3maphoreWeatherChanged called during initialization!' end
+
       PlaylistState.weather = weatherName
 
       musicUtil.debugLog(Strings.WeatherChanged, weatherName)
 
-      if PlaylistState.cellId ~= self.cell.id then return end
+      if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
 
       resolvePlaylist()
-      currentUpdateHandler = onSoundEnabledChanged
+      currentUpdateHandler = initialUpdateFunction
     end,
 
     ---@param hitObject openmw.LObject
@@ -650,10 +660,10 @@ return {
 
     ---@param flags S3maphoreStateChangedFlag
     S3maphoreStateChanged = function(flags)
-      if PlaylistState.cellId ~= self.cell.id then return end
+      if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
       musicUtil.debugLog('Performing playlist resolution after state change! Flags: %s', flags)
       resolvePlaylist()
-      currentUpdateHandler = onSoundEnabledChanged
+      currentUpdateHandler = initialUpdateFunction
     end,
 
     S3maphoreTrackChanged = MusicManager.callTrackChangedHandlers,

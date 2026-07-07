@@ -21,21 +21,22 @@ do
   IsAIEnabled = debug.isAIEnabled
 end
 
+---@type MusicManager
+local MusicManager = require 'scripts.s3.music.musicManager'
+---@type S3maphoreCoreSettings
+local MusicSettings = require 'scripts.s3.music.musicSettings'
+---@type PlaylistRules
+local PlaylistRules = require 'scripts.s3.music.playlistRules'
+---@type PlaylistState
+local PlaylistState = require 'scripts.s3.music.playlistState'
+
 ---@type openmw.LObject[]
-local combatTargets
+local combatTargets = {}
+PlaylistState.combatTargets = combatTargets
 ---@type table<string, integer>
 local combatTargetIdx = {}
 ---@type table<string, boolean>
 local playerTargetedActors = {}
-
----@type S3maphoreCoreSettings
-local MusicSettings
----@type PlaylistRules
-local PlaylistRules
----@type MusicManager
-local MusicManager
----@type PlaylistState
-local PlaylistState
 
 local function recomputeState()
   local ids = {}
@@ -141,16 +142,4 @@ local CombatState = {
   recomputeState = recomputeState,
 }
 
----@param musicSettings S3maphoreCoreSettings
----@param playlistRules PlaylistRules
----@param musicManager MusicManager
----@param playlistState PlaylistState
----@return CombatState
-return function(musicSettings, playlistRules, musicManager, playlistState)
-  MusicManager, MusicSettings, PlaylistRules, PlaylistState =
-    assert(musicManager), assert(musicSettings), assert(playlistRules), assert(playlistState)
-
-  combatTargets = PlaylistState.combatTargets
-
-  return CombatState
-end
+return CombatState
