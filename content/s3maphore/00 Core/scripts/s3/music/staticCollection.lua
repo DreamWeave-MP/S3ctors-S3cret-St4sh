@@ -3,7 +3,7 @@
 local clear = require 'scripts.s3.clear'
 local szudzik = require 'scripts.s3.szudzik'
 
-local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs, StrFind, StrFormat, StrGsub, StrLower, tableRemove =
+local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs, StrFind, StrFormat, StrGsub, StrLower, tableRemove, type =
   math.ceil,
   coroutine.create,
   coroutine.resume,
@@ -18,7 +18,8 @@ local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs,
   string.format,
   string.gsub,
   string.lower,
-  table.remove
+  table.remove,
+  type
 
 --- Maps player ids back to the previously-running weather
 ---@type table<string, string>
@@ -600,7 +601,13 @@ end
 updateFunction = normalUpdateHandler
 
 local function updatePresenceInfo(transitionInfo)
-  local player, oldCell = transitionInfo[1], transitionInfo[2]
+  local player, oldCell
+  if type(transitionInfo) == 'table' then
+    player, oldCell = transitionInfo[1], transitionInfo[2]
+  else
+    player = transitionInfo
+  end
+
   PreviousPlayerCells[player.id] = oldCell
 
   TransitioningPlayer, TransitionCell = player, player.cell
@@ -651,10 +658,12 @@ return {
   eventHandlers = {
     S3maphoreUpdatePresence = updatePresenceInfo,
 
-    S3maphoreInitializationComplete = function(pid)
-      PlayersInitialized[pid] = true
-      if not SendEvent then SendEvent = Players[1].sendEvent end
-      if not GetAll then GetAll = Cells[1].getAll end
+    ---@param player openmw.GObject
+    S3maphoreInitializationComplete = function(player)
+      PlayersInitialized[player.id] = true
+      if not SendEvent then SendEvent = player.sendEvent end
+      if not GetAll then GetAll = player.cell.getAll end
+      updatePresenceInfo(player)
     end,
   },
 }
