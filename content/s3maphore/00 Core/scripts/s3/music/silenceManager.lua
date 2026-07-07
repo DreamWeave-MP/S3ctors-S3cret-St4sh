@@ -51,7 +51,7 @@ local function updateSilenceParams(self, newPlaylist)
       self.time = 0
     end
 
-    musicUtil.debugLog('archetypal silence time is...', self.time)
+    musicUtil.debugLog('archetypal silence time is... %s', self.time)
   else
     self.time = 0
   end

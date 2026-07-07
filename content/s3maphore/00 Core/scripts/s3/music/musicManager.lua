@@ -155,11 +155,11 @@ function MusicManager.registerPlaylist(playlist)
   local playlistActiveKey = playlist.id .. 'Active'
 
   if activePlaylistSettings:get(playlistActiveKey) ~= nil then
-    musicUtil.debugLog('loaded playlist state from settings:', playlist.id)
+    musicUtil.debugLog('loaded playlist state from settings: %s', playlist.id)
 
     playlist.active = activePlaylistSettings:get(playlistActiveKey)
   else
-    musicUtil.debugLog('stored playlist state in settings:', playlist.id, storedState)
+    musicUtil.debugLog('stored playlist state in settings: %s %s', playlist.id, storedState)
 
     activePlaylistSettings:set(playlistActiveKey, storedState)
   end
@@ -288,7 +288,7 @@ function MusicManager.playSpecialTrack(trackPath, reason)
     return print(('Requested track %s does not exist!'):format(trackPath))
   end
 
-  musicUtil.debugLog(('playing special track: %s'):format(trackPath))
+  musicUtil.debugLog('playing special track: %s', trackPath)
 
   specialTrackInfo.tracks[1] = trackPath
 
