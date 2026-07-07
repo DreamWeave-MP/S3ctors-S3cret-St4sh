@@ -200,7 +200,7 @@ local function getItemActionDetails(itemData)
 			assert(count.min <= count.max, 'RangeTable requires min <= max')
 			-- Must use randomGen.range(_, true) for integer output;
 			-- getRangeValue returns floats (correct for positions, not counts).
-			count = randomGen.range(count, true)
+			count = randomGen.range(count.min or 1, count.max, true)
 		end
 
 		return count, itemData.chance
@@ -440,9 +440,9 @@ local actionHandlers = {
 					assert(count.max, 'RangeTable requires a "max"')
 					count.min = count.min or 1
 					assert(count.min <= count.max, 'RangeTable requires min <= max')
-					-- Must use randomGen.range(_, true) for integer output;
-					-- getRangeValue returns floats (correct for positions, not counts).
-					count = randomGen.range(count, true)
+				-- Must use randomGen.range(_, true) for integer output;
+				-- getRangeValue returns floats (correct for positions, not counts).
+				count = randomGen.range(count.min or 1, count.max, true)
 				end
 				chance = details.chance
 				positionOverride = details.position
@@ -513,7 +513,7 @@ local actionHandlers = {
 		elseif type(lockData) == 'table' then
 			lockData.min = lockData.min or 1
 			assert(lockData.min <= lockData.max, 'RangeTable requires min <= max')
-			level = randomGen.range(lockData, true)
+			level = randomGen.range(lockData.min or 1, lockData.max, true)
 		else
 			return false
 		end
@@ -650,7 +650,7 @@ local actionHandlers = {
 		local value = globalData.value
 
 		if type(value) == 'table' then
-			value = randomGen.range(value, true)
+			value = randomGen.range(value.min or 1, value.max, true)
 		end
 
 		globals[globalData.name] = value
