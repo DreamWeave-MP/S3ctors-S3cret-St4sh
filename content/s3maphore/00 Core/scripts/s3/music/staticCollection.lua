@@ -314,7 +314,7 @@ local function collectPresenceAndStatics(cell, cellKey)
 
     -- Combat check: does this cell contain any aggressive living actor (excluding the player)?
     if not cellHasHostile then
-      if (objType == NPCType or objType == CreatureType) and id ~= TransitioningPlayer.id then
+      if objType == NPCType or objType == CreatureType then
         local fightValue = AIFight(obj).modified
         local threshold = objType == NPCType and NPC_FIGHT_THRESHOLD or CREATURE_FIGHT_THRESHOLD
         if fightValue >= threshold and not IsDeadFn(obj) then cellHasHostile = true end
