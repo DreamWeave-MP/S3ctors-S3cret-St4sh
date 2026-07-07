@@ -581,6 +581,42 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
   return result
 end
 
+--- Returns true if any current combat target has a recordId with any of the given FlexTags.
+--- Iterates PlaylistState.combatTargets once, checking objectHasTag per target.
+---
+--- Example usage:
+---
+--- playlistRules.combatTargetTagged { 'npcassassin', 'npcbandit', 'npcfactioncamonnatong', }
+---@param tagTable string[]
+---@return boolean
+function PlaylistRules.combatTargetTagged(tagTable)
+  if not I.FlexTagL then
+    print '[ S3MAPHORE ]: FlexTag not installed — combatTargetTagged returning false'
+    return false
+  end
+
+  local currentCombatTargetsCache = ensureCombatCache()
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[tagTable]
+    if old ~= nil then return old end
+  end
+
+  local result = false
+  local combatTargets = PlaylistRules.state.combatTargets
+
+  for i = 1, #combatTargets do
+    local target = combatTargets[i]
+    if I.FlexTagL.objectHasTag(target.recordId, tagTable) then
+      result = true
+      break
+    end
+  end
+
+  if currentCombatTargetsCache then currentCombatTargetsCache[tagTable] = result end
+
+  return result
+end
+
 --- Checks whether any object matching the given record IDs is present in the current cell.
 --- Replaces former staticExact — same logic, broader scope (uses byRecord presence).
 --- Example usage:
@@ -801,6 +837,17 @@ function PlaylistRules.region(regionNames)
   local currentRegion = PlaylistRules.state.nearestRegion
 
   return currentRegion ~= nil and currentRegion ~= '' and regionNames[currentRegion] or false
+end
+
+--- Return whether the current weather matches a set
+---
+--- Example usage:
+---
+--- playlistRules.weatherType { 'rain' = true, 'overcast' = true, 'thunder' = true, }
+---@param weatherNames IDPresenceMap
+---@return boolean
+function PlaylistRules.weatherType(weatherNames)
+  return weatherNames[PlaylistRules.state.weather] or false
 end
 
 --- Returns whether the current exterior cell is on a particular node of the grid
