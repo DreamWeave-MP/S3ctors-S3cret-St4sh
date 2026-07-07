@@ -7,6 +7,7 @@
 ---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field cellWaterLevel number? If the current cell has water, then, it is copied here
 ---@field cellPresence CellPresence Object counts for the currently loaded cell (or active grid) — byRecord, byType, byContentFile, plus staticContentFiles, nearestRegion, cellHasHostileActors, and areaHasHostileActors
+---@field objectCount number Total objects in the current cell, computed from cellPresence.byType
 ---@field combatTargets openmw.LObject[] combat targets in insertion order
 ---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
 ---@field isExploring boolean whether the player is currently exploring or not. Distinct from isInCombat as settings may control it.
@@ -28,6 +29,7 @@ local PlaylistState = {
     nearestRegion = '',
     staticContentFiles = {},
   },
+  objectCount = 0,
   cellId = '',
   cellWaterLevel = nil,
   combatTargets = {},
@@ -58,6 +60,13 @@ do
     PlaylistState.nearestRegion = presence.nearestRegion or thisCell.region
 
     PlaylistState.cellPresence = presence
+
+    -- Compute total object count from byType so playlists can read PlaylistState.objectCount directly
+    local total = 0
+    for _, count in next, presence.byType do
+      total = total + count
+    end
+    PlaylistState.objectCount = total
 
     SendEvent(self, 'S3maphoreCellPresenceUpdated')
   end))
