@@ -1,6 +1,6 @@
 ---@omw-context global
 
-local clear = require 'scripts.s3.music.clear'
+local clear = require 'scripts.s3.clear'
 local szudzik = require 'scripts.s3.szudzik'
 
 local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error,

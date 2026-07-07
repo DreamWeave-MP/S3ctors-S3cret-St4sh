@@ -9,6 +9,7 @@ local Strings = {
     ChangingPlaylist = 'Setting playlist %s to %s',
     CombatTargetCacheStr = '%s%s',
     FailedToLoadPlaylist = 'Failed to load playlist file: %s\nErr: %s',
+    FailedToLoadTrackMetadata = 'Failed to load track metadata file: %s\nErr: %s',
     FallbackPlaylistDoesntExist =
     'Playlist %s requested to use tracks from backup playlist %s, but it isn\'t registered! Falling back to the default.',
     InitializationFinished = "[ S3MAPHORE ]: %d playlists loaded. Ready to play music!",

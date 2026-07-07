@@ -166,3 +166,18 @@ tes3 = tes3
 ---@field onTargetsChanged fun(actor: openmw.LObject, targets: openmw.LObject[])
 ---@field onHit fun(): boolean
 ---@field onSettingChanged fun(setting: string): boolean
+
+---@class S3maphoreMusicMetadataBase
+---@field title string Human-readable title
+---@field artist string?
+---@field album string?
+---@field year integer?
+---@field genre string?
+---@field description string?
+---@field source string?
+---@field composer string?
+---@field license string?
+
+---@class S3maphoreTrackMetadata: S3maphoreMusicMetadataBase
+
+---@class S3maphorePlaylistMetadata: S3maphoreMusicMetadataBase
