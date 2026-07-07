@@ -10,7 +10,7 @@ local Players
 local Targets = {}
 local TargetChangeData = { actor = gameSelf, targets = Targets }
 
-local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, SendGlobalEvent, UnarmedStance
+local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, UnarmedStance
 local SendEvent = gameSelf.sendEvent
 
 do
