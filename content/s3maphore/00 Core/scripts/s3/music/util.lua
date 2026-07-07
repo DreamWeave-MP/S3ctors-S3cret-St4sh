@@ -44,6 +44,7 @@ local StrictReadOnlyMT = {
   __metatable = false,
 }
 
+local DebugEnable
 if isOpenMW then
   async = require 'openmw.async'
   storage = require 'openmw.storage'
@@ -55,14 +56,18 @@ if isOpenMW then
   playlistsSection = storage.playerSection 'S3MusicPlaylistsTrackOrder'
   playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
   storageGet = musicSettings.get
+
+  DebugEnable = storageGet(musicSettings, 'DebugEnable')
+
+  musicSettings:subscribe(async:callback(function(_, key)
+    if key == 'DebugEnable' then DebugEnable = musicSettings:get 'DebugEnable' end
+  end))
 end
 
 ---@param message string
 ---@param ... any
 local function debugLog(message, ...)
-  if isOpenMW then
-    if not storageGet(musicSettings, 'DebugEnable') then return end
-  end
+  if isOpenMW and not DebugEnable then return end
 
   local msg = select('#', ...) > 0 and StrFormat(message, ...) or message
   print(StrFormat(Strings.LogFormatStr, msg))
