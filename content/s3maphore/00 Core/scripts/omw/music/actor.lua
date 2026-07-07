@@ -4,7 +4,7 @@ local next, require = next, require
 
 local gameSelf = require 'openmw.self'
 
-local clear = require 'scripts.s3.music.clear'
+local clear = require 'scripts.s3.clear'
 
 local Players
 local Targets = {}
