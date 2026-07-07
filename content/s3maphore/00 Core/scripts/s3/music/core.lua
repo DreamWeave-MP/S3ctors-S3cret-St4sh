@@ -227,8 +227,7 @@ currentUpdateHandler = function(_)
     end
   end))
 
-  SendGlobalEvent('S3maphoreInitializationComplete', self.id)
-  SendGlobalEvent('S3maphoreUpdatePresence', { self.object })
+  SendGlobalEvent('S3maphoreInitializationComplete', self.object)
 
   updateCellMetadata()
 
