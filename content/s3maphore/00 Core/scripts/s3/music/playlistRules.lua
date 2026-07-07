@@ -42,6 +42,18 @@ local PlaylistRules = {
 ---@type table<any, any>
 local S3maphoreGlobalCache = {}
 
+--- Returns the per-cell cache table, creating it if needed.
+---@param cellName string
+---@return table<any, any>
+local function ensureCellCache(cellName)
+  local cache = S3maphoreGlobalCache[cellName]
+  if not cache then
+    cache = {}
+    S3maphoreGlobalCache[cellName] = cache
+  end
+  return cache
+end
+
 --- Table of IDs mapped to target levels
 ---@type table<string, openmw.types.LevelStat>
 local combatTargetLevelCache = {}
