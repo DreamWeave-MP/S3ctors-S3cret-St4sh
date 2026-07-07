@@ -158,10 +158,6 @@ exclusions = {
 ##### PlaylistState Specification
 
 ```lua
----@class StaticList
----@field recordIds string[] array of all unique static record ids in the current cell
----@field contentFiles string[] array of all unique content files which placed statics in this cell
-
 ---@class PlaylistState
 ---@field playlistTimeOfDay TimeMap the time of day for the current playlist
 ---@field isInCombat boolean whether the player is in combat or not
@@ -169,7 +165,7 @@ exclusions = {
 ---@field cellName string lowercased name of the cell the player is in
 ---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field combatTargets FightingActors a read-only table of combat targets, where keys are actor IDs and values are booleans indicating if the actor is currently fighting
----@field staticList StaticList a list of all recordIds and content files placing objects in this cell. This is used in staticContentFile, staticMatch, and staticExact rules for playlists.
+---@field staticContentFiles string[] a list of content files which placed statics in this cell. This is used in staticContentFile and objectExact rules for playlists.
 ---@field weather WeatherType a string indicating the current weather name. Updated by an internal mwscript in 0.49-compatible versions.
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
 ---@field currentGrid S3maphoreCellGrid? The current exterior cell grid. Nil if not in an actual exterior.
@@ -279,18 +275,12 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
 --- an allowed static is present, or a disallowed one is present.
 --- Example usage:
 ---
---- playlistRules.staticExact { 'furn_de_ex_bench_01' = true, 'ex_ashl_tent_01' = false, }
+--- playlistRules.objectExact { 'furn_de_ex_bench_01' = true, 'ex_ashl_tent_01' = false, }
 ---@param staticRules IDPresenceMap
 ---@return boolean?
-function PlaylistRules.staticExact(staticRules)
+function PlaylistRules.objectExact(staticRules)
 
---- Checks the current cell's static list to see if it contains any object matching any of the input patterns
---- WARNING: This is the most expensive possible playlist filter. It is only available in interior cells as S3maphore will not track statics in exterior cells.
----
---- Example usage:
----
---- playlistRules.staticMatch { 'cave', 'py', }
----
+--- REMOVED — Replaced by tagger tag rules + music markers.
 ---@param patterns string[]
 ---@return boolean?
 function PlaylistRules.staticMatch(patterns)

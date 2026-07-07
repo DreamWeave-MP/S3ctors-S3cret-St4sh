@@ -151,7 +151,7 @@ local TombCellMatches = {
 local function caveTRRule(playback)
     return not playback.state.cellIsExterior
         and playback.rules.staticContentFile(TContentFiles)
-        and playback.rules.staticExact(Tilesets.Cave)
+        and playback.rules.objectExact(Tilesets.Cave)
 end
 
 ---@type ValidPlaylistCallback
@@ -269,7 +269,7 @@ return {
         isValidCallback = function()
             return not Playback.state.cellIsExterior
                 and Playback.rules.staticContentFile(TContentFiles)
-                and Playback.rules.staticExact(Tilesets.Dwemer)
+                and Playback.rules.objectExact(Tilesets.Dwemer)
         end,
     },
     {

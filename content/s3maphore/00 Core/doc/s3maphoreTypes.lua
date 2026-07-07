@@ -87,10 +87,6 @@ tes3 = tes3
 ---@field reason S3maphoreStateChangeReason
 ---@field trackName string VFS path of the track being played
 
----@class S3maphoreStaticList
----@field contentFiles string[] array of unique content files which added things to the current cell (or active grid)
----@field recordIds string[] array of unique static recordIds within the current cell (or active grid)
-
 ---@class S3maphorePlayback
 ---@field rules PlaylistRules
 ---@field state PlaylistState
@@ -156,7 +152,7 @@ tes3 = tes3
 ---@field byRecord table<string, number>
 ---@field byType table<string, number>
 ---@field byContentFile table<string, number>
----@field staticList S3maphoreStaticList
+---@field staticContentFiles string[]
 ---@field nearestRegion string?
 ---@field cellHasHostileActors boolean
 ---@field areaHasHostileActors boolean

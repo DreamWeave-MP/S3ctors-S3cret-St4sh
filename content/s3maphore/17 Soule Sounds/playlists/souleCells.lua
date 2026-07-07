@@ -253,10 +253,11 @@ local caveMatches = {
 
 ---@type ValidPlaylistCallback
 local function caveCellRule()
+    -- TODO: Replace staticMatch with tagger tag rule (staticMatch removed)
     return not Playback.state.cellIsExterior
         and (
             Playback.rules.cellNameExact(CaveCellNames)
-            or Playback.rules.staticExact(Tilesets.Cave)
+            or Playback.rules.objectExact(Tilesets.Cave)
             or Playback.rules.staticMatch(caveMatches)
         )
 end
@@ -581,6 +582,7 @@ local sewerTiles = {
 
 ---@type ValidPlaylistCallback
 local function sewersCellRule()
+    -- TODO: Replace staticMatch with tagger tag rule (staticMatch removed)
     return Playback.rules.cellNameExact(oldMournholdSewers)
         or Playback.rules.cellNameMatch(SewersCellMatches)
         or Playback.rules.staticMatch(sewerTiles)

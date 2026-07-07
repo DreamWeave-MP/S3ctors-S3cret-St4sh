@@ -11,6 +11,7 @@ local BarrowCavePatterns = {
 
 ---@type ValidPlaylistCallback
 local function barrowCaveTilesRule()
+    -- TODO: Replace with tagger tag rule (staticMatch removed)
     return not Playback.state.cellIsExterior
         and Playback.rules.staticMatch(BarrowCavePatterns)
 end
@@ -18,7 +19,7 @@ end
 ---@type ValidPlaylistCallback
 local function dwemerCellRule()
     return not Playback.state.cellIsExterior
-        and Playback.rules.staticExact(Tilesets.Dwemer)
+        and Playback.rules.objectExact(Tilesets.Dwemer)
 end
 
 ---@type IDPresenceMap
@@ -95,7 +96,7 @@ local EidolonCellMatches = {
 local function daedricCellRule()
     return not Playback.state.cellIsExterior
         and (
-            Playback.rules.staticExact(Tilesets.Daedric)
+            Playback.rules.objectExact(Tilesets.Daedric)
             or Playback.rules.cellNameExact(DaedricCellNames)
             or Playback.rules.cellNameMatch(EidolonCellMatches)
 
@@ -112,6 +113,7 @@ local IceCavePatterns = {
 
 ---@type ValidPlaylistCallback
 local function iceCaveTilesRule()
+    -- TODO: Replace with tagger tag rule (staticMatch removed)
     return not Playback.state.cellIsExterior
         and Playback.rules.staticMatch(IceCavePatterns)
 end
@@ -445,6 +447,7 @@ local tombTiles = {
 
 ---@type ValidPlaylistCallback
 local function tombCellRule()
+    -- TODO: Replace with tagger tag rule (staticMatch removed)
     return not Playback.state.cellIsExterior
         and Playback.rules.staticMatch(tombTiles)
 end
