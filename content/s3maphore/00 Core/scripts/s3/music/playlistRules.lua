@@ -751,6 +751,30 @@ function PlaylistRules.contentTag(tagTable)
   return result
 end
 
+--- Check if the count of objects of a given type in the current cell falls within a range.
+--- Reads from CellPresence.byType. Omitting min or max skips that bound.
+---
+--- Example usage:
+---
+--- playlistRules.typeCount { type = 'Container', min = 3, max = 10 }
+---@param typeRule { type: string, min?: number, max?: number }
+---@return boolean
+function PlaylistRules.typeCount(typeRule)
+  local cellName = PlaylistRules.state.cellName
+  local cellCache = ensureCellCache(cellName)
+  local old = cellCache[typeRule]
+  if old ~= nil then return old end
+
+  local count = PlaylistRules.state.cellPresence.byType[typeRule.type] or 0
+  local min = typeRule.min or 0
+  local max = typeRule.max or HUGE
+
+  local result = count >= min and count <= max
+
+  cellCache[typeRule] = result
+  return result
+end
+
 --- Checks whether the current gameHour matches a certain time of day or not
 --- Starts at the minHour, and ends at the maxHour.
 --- The below example using 8 and 12, will start at 8 am and end at 12 PM.
