@@ -136,18 +136,6 @@ tes3 = tes3
 
 ---@alias VampireTypes VampireType[]
 
----@alias WeatherType
----| 0
----| 1
----| 2
----| 3
----| 4
----| 5
----| 6
----| 7
----| 8
----| 9
-
 ---@class CellPresence
 ---@field byRecord table<string, number>
 ---@field byType table<string, number>
