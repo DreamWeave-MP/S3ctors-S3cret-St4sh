@@ -717,6 +717,40 @@ function PlaylistRules.cellContainsTagged(tagTable)
   return result
 end
 
+--- True if any content file with objects in the current cell has any of the given FlexTags.
+--- FlexTag can tag any string — content file names work the same as record IDs or cell names.
+--- Iterates CellPresence.byContentFile keys once, checking objectHasTag per content file.
+---
+--- Example usage:
+---
+--- playlistRules.contentTag { 'starwind-core', 'tamriel-rebuilt', }
+---@param tagTable string[]
+---@return boolean
+function PlaylistRules.contentTag(tagTable)
+  if not I.FlexTagL then
+    print '[ S3MAPHORE ]: FlexTag not installed — contentTag returning false'
+    return false
+  end
+
+  local cellName = PlaylistRules.state.cellName
+  local cellCache = ensureCellCache(cellName)
+  local old = cellCache[tagTable]
+  if old ~= nil then return old end
+
+  local result = false
+  local byContentFile = PlaylistRules.state.cellPresence.byContentFile
+
+  for contentFile in Next, byContentFile do
+    if I.FlexTagL.objectHasTag(contentFile, tagTable) then
+      result = true
+      break
+    end
+  end
+
+  cellCache[tagTable] = result
+  return result
+end
+
 --- Checks whether the current gameHour matches a certain time of day or not
 --- Starts at the minHour, and ends at the maxHour.
 --- The below example using 8 and 12, will start at 8 am and end at 12 PM.
