@@ -63,7 +63,7 @@ do
 
     -- Compute total object count from byType so playlists can read PlaylistState.objectCount directly
     local total = 0
-    for _, count in next, presence.byType do
+    for _, count in pairs(presence.byType) do
       total = total + count
     end
     PlaylistState.objectCount = total
