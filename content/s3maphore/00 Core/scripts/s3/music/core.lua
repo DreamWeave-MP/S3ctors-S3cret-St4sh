@@ -3,12 +3,16 @@
 
 local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
+---@type openmw.core
 local core = require 'openmw.core'
+local debug = require 'openmw.debug'
 local input = require 'openmw.input'
 local nearby = require 'openmw.nearby'
 local self = require 'openmw.self'
 local storage = require 'openmw.storage'
 local types = require 'openmw.types'
+
+local clear = require 'scripts.s3.clear'
 
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
@@ -32,36 +36,60 @@ local musicUtil = require 'scripts.s3.music.util'
 
 local NullFunction = require 'scripts.s3.nullFunction'
 
-local Ceil, error, next, pairs, Max, Min, Random, StrFormat, StrLower, Remove, TableSort =
+---@type Rand
+local randomGen = require 'scripts.s3.randomGen'
+
+local Ceil, error, next, pairs, Max, Min, StrFormat, StrLower, Remove, TableSort, type =
   math.ceil,
   error,
   next,
   pairs,
   math.max,
   math.min,
-  math.random,
   string.format,
   string.lower,
   table.remove,
-  table.sort
+  table.sort,
+  type
 
-local IsDead, IsSoundEnabled, SendEvent, SendGlobalEvent =
-  types.Actor.isDead, core.sound.isEnabled, self.sendEvent, core.sendGlobalEvent
+local IsDead, IsSoundEnabled, IsSwimming, SendEvent, SendGlobalEvent =
+  types.Actor.isDead,
+  core.sound.isEnabled,
+  types.Actor.isSwimming,
+  self.sendEvent,
+  core.sendGlobalEvent
 
+local ActiveEffects, LevitateEffect =
+  types.Actor.activeEffects(self), core.magic.EFFECT_TYPE.Levitate
+local GetMagicEffect = ActiveEffects.getEffect
 local HasTag
 
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback, updateActorChain, resolvePlaylist = NullFunction, NullFunction, NullFunction
+local handlePlayback, onSoundEnabledChanged, resolvePlaylist, updateActorChain =
+  NullFunction, NullFunction, NullFunction, NullFunction
 ---@cast updateActorChain fun(dt: number)
 
 local desiredPlaylist, resolverDirty, didTransition, wasExterior = nil, false, false, false
 
 ---@type QueuedEvent
 local queuedEvent = {
-  name = nil,
+  backup = {},
   data = {},
+  name = nil,
+}
+
+local PlaybackParams = {
+  fadeOut = MusicSettings.FadeOutDuration,
+}
+
+---@type S3maphorePlaybackChangeEventData
+local TrackChangeData = {
+  fadeOut = MusicSettings.FadeOutDuration,
+  playlistId = '',
+  reason = MusicManager.STATE.TrackChanged,
+  trackName = '',
 }
 
 local CachedCellGrid = { x = 0, y = 0 }
@@ -71,9 +99,8 @@ local MIN_BATCH_SIZE, MAX_BATCH_SIZE, TARGET_LATENCY, THIRTY_FRAMES = 4, 16, 1 /
 local chainPosition = 2
 
 local function clearQueuedData()
-  for key in next, queuedEvent.data do
-    queuedEvent.data[key] = nil
-  end
+  if type(queuedEvent.data) ~= 'table' then queuedEvent.data = queuedEvent.backup end
+  clear(queuedEvent.data)
 end
 
 --- Updates PlaylistState cell metadata from self.cell.
@@ -102,10 +129,55 @@ local function updateCellMetadata()
   end
 end
 
-local function checkSilenceManager()
-  if not SilenceManager:silenceActive() then currentUpdateHandler = handlePlayback end
+--- Updates the playlist state for this frame, before it is actively used in playlist selection
+local function updatePlaylistState()
+  local oldTod, newTod = PlaylistState.playlistTimeOfDay, MusicManager.playlistTimeOfDay()
+  local TODChanged = oldTod and oldTod ~= newTod
+  PlaylistState.playlistTimeOfDay = newTod
+
+  local wasMoving, controls = PlaylistState.movementMode, self.controls
+  if IsSwimming(self) then
+    PlaylistState.movementMode = 'swimming'
+  elseif
+    not debug.isCollisionEnabled()
+    --- Magic effect enums are strings now
+    --- This is why you use the enum values :)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    or GetMagicEffect(ActiveEffects, LevitateEffect).magnitude > 0
+  then
+    PlaylistState.movementMode = 'flying'
+  elseif controls.sneak then
+    PlaylistState.movementMode = 'sneaking'
+  elseif controls.movement ~= 0 or controls.sideMovement ~= 0 then
+    if controls.run then
+      PlaylistState.movementMode = 'running'
+    else
+      PlaylistState.movementMode = 'walking'
+    end
+  else
+    PlaylistState.movementMode = 'standing'
+  end
+  local movementChanged = wasMoving ~= PlaylistState.movementMode
+
+  if TODChanged or movementChanged then
+    queuedEvent.name = 'S3maphoreStateChanged'
+    local flags = 0
+    if TODChanged then flags = flags + MusicManager.STATE_FLAGS.TOD end
+    if movementChanged then flags = flags + MusicManager.STATE_FLAGS.MOVEMENT end
+    queuedEvent.data = flags
+  end
+
+  currentUpdateHandler = handlePlayback
 end
-local function onSoundEnabledChanged()
+
+local function checkSilenceManager()
+  currentUpdateHandler = SilenceManager:silenceActive() and onSoundEnabledChanged
+    or updatePlaylistState
+end
+onSoundEnabledChanged = function()
+  --- Explicitly re-seed the generator on each round-robin cycle to improve distribution
+  randomGen.int()
+
   if not IsSoundEnabled() then return end
 
   currentUpdateHandler = checkSilenceManager
@@ -129,26 +201,7 @@ local function realUpdateActorChain(dt)
   end
 end
 
---- Updates the playlist state for this frame, before it is actively used in playlist selection
-local function updatePlaylistState()
-  PlaylistState.playlistTimeOfDay = MusicManager.playlistTimeOfDay()
-
-  PlaylistState.isUnderwater = PlaylistState.cellHasWater
-    and self.type.isSwimming(self)
-    and self.position.z + self:getBoundingBox().halfSize.z * 2 < PlaylistState.cellWaterLevel -- - 100 -- Hardcoded value for now, but, PLEASE make this a s3tting later
-end
-
-local function checkTimeOfDay()
-  local newTOD = MusicManager.playlistTimeOfDay()
-
-  if newTOD == PlaylistState.playlistTimeOfDay then return end
-
-  PlaylistState.playlistTimeOfDay = newTOD
-  queuedEvent.name = 'S3maphoreTODChanged'
-end
-
 local function realResolvePlaylist()
-  updatePlaylistState()
   local newPlaylist = musicUtil.getActivePlaylistByPriority(
     MusicManager.specialPlaylists,
     PlaylistEnv.Playback,
@@ -235,33 +288,6 @@ currentUpdateHandler = function(_)
   currentUpdateHandler = NullFunction
 end
 
----@type S3maphoreStateChangeEventData
-local TrackChangeData = {
-  fadeOut = MusicSettings.FadeOutDuration,
-  playlistId = '',
-  reason = MusicManager.STATE.TrackChanged,
-  trackName = '',
-}
----@param eventData CombatTargetChangedData
-local function onCombatTargetsChanged(eventData)
-  if IsDead(self) then return end
-
-  CombatState.onTargetsChanged(eventData.actor, eventData.targets)
-  if PlaylistState.cellId ~= self.cell.id then return end
-
-  musicUtil.debugLog('Updating playlist due to combat target change: %s', eventData.actor)
-  resolvePlaylist()
-end
-
-local function playerDied()
-  SendEvent(
-    self,
-    'S3maphoreSpecialTrack',
-    { trackPath = 'music/special/mw_death.mp3', reason = MusicManager.STATE.Died }
-  )
-  currentUpdateHandler = NullFunction
-end
-
 --- If a set of fallback playlists is present, attempt to use them during track selection
 --- It should be noted that, for fallback playlists, their `active` parameter is ignored currently.
 ---@param newPlaylist S3maphorePlaylist
@@ -269,7 +295,7 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
   local fallbackData = newPlaylist.fallback
   if not fallbackData or not fallbackData.playlists then return newPlaylist.id end
 
-  local useOtherPlaylist = Random() <= (fallbackData.playlistChance or 0.5)
+  local useOtherPlaylist = randomGen.float() <= (fallbackData.playlistChance or 0.5)
 
   if not useOtherPlaylist then return newPlaylist.id end
 
@@ -279,7 +305,7 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
   end
 
   local numBackupPlaylists = #fallbackData.playlists
-  local selectedPlaylistIndex = Random(numBackupPlaylists)
+  local selectedPlaylistIndex = randomGen.range(numBackupPlaylists, true)
   local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
 
   if not MusicManager.registeredPlaylists[selectedPlaylistId] then
@@ -302,17 +328,17 @@ local function selectTrackFromPlaylist(playlistId)
   local playlistOrder = MusicManager.playlistsTracksOrder[playlist.id]
   local nextTrackIndex = Remove(playlistOrder)
 
-  if nextTrackIndex == nil then error(Strings.NextTrackIndexNil) end
+  if not nextTrackIndex then error(Strings.NextTrackIndexNil) end
 
   -- If there are no tracks left, fill playlist again.
-  if next(playlistOrder) == nil then
+  if not next(playlistOrder) then
     playlistOrder = musicUtil.initTracksOrder(playlist.tracks, playlist.randomize)
 
     if not playlist.cycleTracks then playlist.deactivateAfterEnd = true end
 
     -- If next track for randomized playist will be the same as one we want to play, swap it with random track.
     if playlist.randomize and #playlistOrder > 1 and playlistOrder[1] == nextTrackIndex then
-      local index = Random(2, #playlistOrder)
+      local index = randomGen.range(2, #playlistOrder, true)
       playlistOrder[1], playlistOrder[index] = playlistOrder[index], playlistOrder[1]
     end
 
@@ -328,10 +354,6 @@ local function selectTrackFromPlaylist(playlistId)
   return trackPath
 end
 
-local MusicParams = {
-  fadeOut = MusicSettings.FadeOutDuration,
-}
-
 ---@param newPlaylist S3maphorePlaylist
 local function switchPlaylist(newPlaylist)
   local nextPlaylist = getPlaylistIdForTrackSelection(newPlaylist)
@@ -345,7 +367,7 @@ local function switchPlaylist(newPlaylist)
 
   MusicManager.currentPlaylist = newPlaylist
   MusicManager.currentTrack = nextTrack
-  MusicParams.fadeOut = newPlaylist.fadeOut or MusicSettings.FadeOutDuration
+  PlaybackParams.fadeOut = newPlaylist.fadeOut or MusicSettings.FadeOutDuration
 end
 
 ---@param oldPlaylist S3maphorePlaylist?
@@ -376,7 +398,8 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
 end
 
 handlePlayback = function(_)
-  checkTimeOfDay()
+  currentUpdateHandler = onSoundEnabledChanged
+
   if queuedEvent.name then
     SendEvent(self, queuedEvent.name, queuedEvent.data)
     queuedEvent.name = nil
@@ -426,6 +449,7 @@ handlePlayback = function(_)
         MusicManager.forceSkip = true
       end
     end
+
     didTransition = false
   end
 
@@ -454,26 +478,26 @@ handlePlayback = function(_)
   else
     local nextTrack = selectTrackFromPlaylist(target.id)
     MusicManager.currentTrack = nextTrack
-    MusicParams.fadeOut = target.fadeOut or MusicSettings.FadeOutDuration
+    PlaybackParams.fadeOut = target.fadeOut or MusicSettings.FadeOutDuration
   end
 
-  for key in next, TrackChangeData do
-    TrackChangeData[key] = nil
-  end
-  TrackChangeData.fadeOut = MusicParams.fadeOut
+  clear(TrackChangeData)
+
+  TrackChangeData.fadeOut = PlaybackParams.fadeOut
   TrackChangeData.playlistId = target.id
   TrackChangeData.trackName = MusicManager.currentTrack
   TrackChangeData.reason = MusicManager.STATE.TrackChanged
+
   SendEvent(self, 'S3maphoreTrackChanged', TrackChangeData)
 end
 
 MusicManager.addTrackChangedHandler(
-  ---@param eventData S3maphoreStateChangeEventData
+  ---@param eventData S3maphorePlaybackChangeEventData
   function(eventData)
     musicUtil.debugLog(Strings.TrackChanged, eventData.playlistId, eventData.trackName)
 
-    MusicParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
-    ambient.streamMusic(eventData.trackName, MusicParams)
+    PlaybackParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
+    ambient.streamMusic(eventData.trackName, PlaybackParams)
     MusicManager.updateBanner()
   end
 )
@@ -530,9 +554,26 @@ return {
     end,
   },
   eventHandlers = {
-    Died = playerDied,
+    Died = function()
+      SendEvent(
+        self,
+        'S3maphoreSpecialTrack',
+        --- Expand this to allow registering deathHandlers to provide custom death tracks instead of hardcoding Soule's path
+        { trackPath = 'music/special/mw_death.mp3', reason = MusicManager.STATE.Died }
+      )
+      currentUpdateHandler = NullFunction
+    end,
 
-    OMWMusicCombatTargetsChanged = onCombatTargetsChanged,
+    ---@param eventData CombatTargetChangedData
+    OMWMusicCombatTargetsChanged = function(eventData)
+      if IsDead(self) then return end
+
+      CombatState.onTargetsChanged(eventData.actor, eventData.targets)
+      if PlaylistState.cellId ~= self.cell.id then return end
+
+      musicUtil.debugLog('Updating playlist due to combat target change: %s', eventData.actor)
+      resolvePlaylist()
+    end,
 
     S3LFCellChanged = function(oldCellId)
       chainPosition, didTransition, wasExterior = 2, true, PlaylistState.cellIsExterior
@@ -568,7 +609,7 @@ return {
       resolvePlaylist()
     end,
 
-    ---@param eventData S3maphoreStateChangeEventData
+    ---@param eventData S3maphorePlaybackChangeEventData
     S3maphoreMusicStopped = function(eventData)
       musicUtil.debugLog(Strings.MusicStopped, eventData.reason)
 
@@ -607,8 +648,10 @@ return {
       resolvePlaylist()
     end,
 
-    S3maphoreTODChanged = function()
+    ---@param flags S3maphoreStateChangedFlag
+    S3maphoreStateChanged = function(flags)
       if PlaylistState.cellId ~= self.cell.id then return end
+      musicUtil.debugLog('Performing playlist resolution after state change! Flags: %s', flags)
       resolvePlaylist()
       currentUpdateHandler = onSoundEnabledChanged
     end,

@@ -60,6 +60,19 @@ tes3 = tes3
 --- Lookup table for storing the results of location-based matches
 ---@alias S3maphoreMatchCache table<string, boolean>
 
+---@alias S3maphoreMovementMode
+---| 'standing'
+---| 'walking'
+---| 'running'
+---| 'sneaking'
+---| 'swimming'
+---| 'flying'
+
+--- Bitsum of state flags indicating what changed, sent directly as the data argument
+--- of the `S3maphoreStateChanged` event. Test individual flags with
+--- `util.bitAnd(flags, MusicManager.STATE_FLAGS.TOD) ~= 0`.
+---@alias S3maphoreStateChangedFlag integer
+
 ---@class S3maphorePlaylist
 ---@field id string name of the playlist
 ---@field priority number priority of the playlist, lower value means higher priority
@@ -81,7 +94,7 @@ tes3 = tes3
 ---@field playlists string[]? list of subdirectories to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
 ---@field tracks string[]? explicit list of tracks to ignore when constructing a playlist. the `music/` prefix is inferred, so this field works the same way as playlist IDs.
 
----@class S3maphoreStateChangeEventData
+---@class S3maphorePlaybackChangeEventData
 ---@field fadeOut number?
 ---@field playlistId string
 ---@field reason S3maphoreStateChangeReason

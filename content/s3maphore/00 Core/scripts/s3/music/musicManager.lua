@@ -18,7 +18,7 @@ local musicUtil = require 'scripts.s3.music.util'
 -- These are both still api-specific
 local PlaylistFileList = musicUtil.getPlaylistFilePaths()
 
----@alias TrackChangedHandler fun(eventData: S3maphoreStateChangeEventData): boolean?
+---@alias TrackChangedHandler fun(eventData: S3maphorePlaybackChangeEventData): boolean?
 ---@type TrackChangedHandler[]
 local TrackChangeHandlers = {}
 
@@ -27,6 +27,7 @@ local TrackChangeHandlers = {}
 ---@field STATE StateChangeReasons
 ---@field TIME_MAP TimeMap
 ---@field INTERRUPT InterruptModes
+---@field STATE_FLAGS StateChangedFlags
 ---@field currentPlaylist S3maphorePlaylist?
 ---@field currentTrack string?
 ---@field forceSkip boolean
@@ -38,11 +39,12 @@ local MusicManager = {
   STATE = require 'scripts.s3.music.enum.stateChangeReason',
   TIME_MAP = require 'scripts.s3.music.enum.timeMap',
   INTERRUPT = require 'scripts.s3.music.enum.interruptMode',
+  STATE_FLAGS = require 'scripts.s3.music.enum.stateChangedFlags',
   ---@param handler TrackChangedHandler
   addTrackChangedHandler = function(handler)
     TrackChangeHandlers[#TrackChangeHandlers + 1] = handler
   end,
-  ---@param eventData S3maphoreStateChangeEventData
+  ---@param eventData S3maphorePlaybackChangeEventData
   callTrackChangedHandlers = function(eventData)
     aux_util.callEventHandlers(TrackChangeHandlers, eventData)
   end,
