@@ -27,7 +27,7 @@ end
 ---@type ValidPlaylistCallback
 local function dwemerStaticRule()
     return not Playback.state.isInCombat
-        and Playback.rules.staticExact(Tilesets.Dwemer)
+        and Playback.rules.objectExact(Tilesets.Dwemer)
 end
 
 ---@type S3maphorePlaylist[]

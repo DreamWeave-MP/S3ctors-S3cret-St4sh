@@ -78,7 +78,7 @@ return {
         isValidCallback = function()
             return not Playback.state.cellIsExterior
                 and Playback.rules.staticContentFile(CyrContentFiles)
-                and Playback.rules.staticExact(Tilesets.Crypt)
+                and Playback.rules.objectExact(Tilesets.Crypt)
         end,
     },
     {
@@ -100,7 +100,7 @@ return {
         isValidCallback = function()
             return not Playback.state.cellIsExterior
                 and Playback.rules.staticContentFile(CyrContentFiles)
-                and Playback.rules.staticExact(Tilesets.Barrows)
+                and Playback.rules.objectExact(Tilesets.Barrows)
         end,
     },
     {
@@ -112,7 +112,7 @@ return {
         isValidCallback = function()
             return not Playback.state.cellIsExterior
                 and Playback.rules.staticContentFile(CyrContentFiles)
-                and Playback.rules.staticExact(Tilesets.Cave)
+                and Playback.rules.objectExact(Tilesets.Cave)
         end,
     },
     {
@@ -124,7 +124,7 @@ return {
         isValidCallback = function()
             return not Playback.state.cellIsExterior
                 and Playback.rules.staticContentFile(CyrContentFiles)
-                and Playback.rules.staticExact(Tilesets.Ayleid)
+                and Playback.rules.objectExact(Tilesets.Ayleid)
         end,
     },
     {

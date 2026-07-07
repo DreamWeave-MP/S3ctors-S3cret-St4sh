@@ -9,7 +9,7 @@ local NoTRPlugins = {
 local function museCaveRule()
     return not Playback.state.cellIsExterior
         and not Playback.rules.staticContentFile(NoTRPlugins)
-        and Playback.rules.staticExact(Tilesets.Cave)
+        and Playback.rules.objectExact(Tilesets.Cave)
 end
 
 ---@type S3maphorePlaylist[]

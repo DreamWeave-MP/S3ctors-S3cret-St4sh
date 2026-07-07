@@ -572,17 +572,14 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
     return result
 end
 
---- Checks the current cell's static list for whether
---- an allowed static is present, or a disallowed one is present.
+--- Checks whether any object matching the given record IDs is present in the current cell.
+--- Replaces former staticExact — same logic, broader scope (uses byRecord presence).
 --- Example usage:
 ---
---- playlistRules.staticExact { 'furn_de_ex_bench_01' = true, 'ex_ashl_tent_01' = false, }
+--- playlistRules.objectExact { 'furn_de_ex_bench_01' = true, 'ex_ashl_tent_01' = false, }
 ---@param staticRules IDPresenceMap
 ---@return boolean?
-function PlaylistRules.staticExact(staticRules)
-    local recordIds = PlaylistRules.state.cellPresence.staticList.recordIds
-    if not recordIds[1] then return end
-
+function PlaylistRules.objectExact(staticRules)
     local cellName = PlaylistRules.state.cellName
 
     local cellCache = S3maphoreGlobalCache[cellName]
@@ -594,14 +591,12 @@ function PlaylistRules.staticExact(staticRules)
     local old = cellCache[staticRules]
     if old ~= nil then return old end
 
+    local byRecord = PlaylistRules.state.cellPresence.byRecord
     local result = false
 
-    for i = 1, #recordIds do
-        local recordId = recordIds[i]
-        local staticRule = staticRules[recordId]
-
-        if staticRule ~= nil then
-            result = staticRule
+    for recordId, ruleVal in Next, staticRules do
+        if byRecord[recordId] then
+            result = ruleVal
             break
         end
     end
@@ -611,52 +606,20 @@ function PlaylistRules.staticExact(staticRules)
     return result
 end
 
---- Checks the current cell's static list to see if it contains any object matching any of the input patterns
---- WARNING: This is the most expensive possible playlist filter. It is only available in interior cells as S3maphore will not track statics in exterior cells.
----
---- Example usage:
----
---- playlistRules.staticMatch { 'cave', 'py', }
----
----@param patterns string[]
+--- REMOVED — Replaced by objectExact.
+---@param _staticRules IDPresenceMap
 ---@return boolean?
-function PlaylistRules.staticMatch(patterns)
-    local recordIds = PlaylistRules.state.cellPresence.staticList.recordIds
-    if not recordIds[1] then return end
+function PlaylistRules.staticExact(staticRules)
+    print('[ S3MAPHORE ]: staticExact deprecated — replace with objectExact in your playlist')
+    return PlaylistRules.objectExact(staticRules)
+end
 
-    local cellName = PlaylistRules.state.cellName
-
-    local cellCache = S3maphoreGlobalCache[cellName]
-    if not cellCache then
-        cellCache = {}
-        S3maphoreGlobalCache[cellName] = cellCache
-    end
-
-    local old = cellCache[patterns]
-    if old ~= nil then return old end
-
-    local result = false
-
-    for i = 1, #recordIds do
-        local static, matched = recordIds[i], false
-
-        for j = 1, #patterns do
-            local pattern = patterns[j]
-            if StrFind(static, pattern, 1, true) then
-                matched = true
-                break
-            end
-        end
-
-        if matched then
-            result = true
-            break
-        end
-    end
-
-    cellCache[patterns] = result
-
-    return result
+--- REMOVED — Replaced by tagger tag rules + music markers.
+--- See souleInteriors.lua and souleCells.lua for former call sites.
+---@param _patterns string[]
+---@return boolean?
+function PlaylistRules.staticMatch(_patterns)
+    Error 'staticMatch has been removed. Use tagger tag rules + music markers instead.'
 end
 
 --- Returns whether or not a given cell contains statics matching the given content file array
@@ -668,7 +631,7 @@ end
 ---@param inputContentFiles  IDPresenceMap
 ---@return boolean
 function PlaylistRules.staticContentFile(inputContentFiles)
-    local contentFiles = PlaylistRules.state.cellPresence.staticList.contentFiles
+    local contentFiles = PlaylistRules.state.cellPresence.staticContentFiles
     if not contentFiles[1] then return false end
     local cellName = PlaylistRules.state.cellName
 

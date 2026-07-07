@@ -6,7 +6,7 @@
 ---@field cellName string lowercased name of the cell the player is in
 ---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field cellWaterLevel number? If the current cell has water, then, it is copied here
----@field cellPresence CellPresence Object counts for the currently loaded cell (or active grid) — byRecord, byType, byContentFile, plus staticList, nearestRegion, cellHasHostileActors, and areaHasHostileActors
+---@field cellPresence CellPresence Object counts for the currently loaded cell (or active grid) — byRecord, byType, byContentFile, plus staticContentFiles, nearestRegion, cellHasHostileActors, and areaHasHostileActors
 ---@field combatTargets openmw.LObject[] combat targets in insertion order
 ---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
 ---@field isExploring boolean whether the player is currently exploring or not. Distinct from isInCombat as settings may control it.
@@ -26,10 +26,7 @@ local PlaylistState = {
     byRecord = {},
     byType = {},
     nearestRegion = '',
-    staticList = {
-      recordIds = {},
-      contentFiles = {},
-    }
+    staticContentFiles = {},
   },
   cellId = '',
   cellWaterLevel = nil,

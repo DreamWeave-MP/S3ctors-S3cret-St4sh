@@ -36,7 +36,7 @@ end
 ---@type ValidPlaylistCallback
 local function daedricTilesetRule()
     return not Playback.state.isInCombat
-        and Playback.rules.staticExact(Tilesets.Daedric)
+        and Playback.rules.objectExact(Tilesets.Daedric)
 end
 
 ---@type S3maphorePlaylist[]
