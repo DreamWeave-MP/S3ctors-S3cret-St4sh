@@ -3,6 +3,7 @@
 
 local core = require 'openmw.core'
 local gameSelf = require 'openmw.self'
+local I = require 'openmw.interfaces'
 local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 
@@ -663,6 +664,28 @@ function PlaylistRules.staticContentFile(inputContentFiles)
 
   cellCache[inputContentFiles] = result
 
+  return result
+end
+
+--- True if the current cell has any of the given FlexTags.
+--- Requires FlexTag installed with cell tags in ModTags YAML.
+---@param tagTable string[]
+---@return boolean
+function PlaylistRules.cellHasTag(tagTable)
+  if not I.FlexTagL then
+    print '[ S3MAPHORE ]: FlexTag not installed — cellHasTag returning false'
+    return false
+  end
+  local cellName = PlaylistRules.state.cellName
+  local cellCache = S3maphoreGlobalCache[cellName]
+  if not cellCache then
+    cellCache = {}
+    S3maphoreGlobalCache[cellName] = cellCache
+  end
+  local old = cellCache[tagTable]
+  if old ~= nil then return old end
+  local result = I.FlexTagL.objectHasTag(cellName, tagTable) or false
+  cellCache[tagTable] = result
   return result
 end
 
