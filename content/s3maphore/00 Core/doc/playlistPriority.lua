@@ -12,34 +12,34 @@
 --- 3. Remember to take advantage of the rules set forth by other playlists. Your position in the chain also implies what conditions have already been checked - for example, priority numbers below 200 can generally assume the player is in combat already.
 ---@class PlaylistPriority
 local PlaylistPriority = {
-    Never = math.huge,
-    Explore = 1000,
-    -- Reserve the upper 100 slots, so TR doesn't get all the first dibs - We need vanilla playlists, too!
+  Never = math.huge,
+  Explore = 1000,
+  -- Reserve the upper 100 slots, so TR doesn't get all the first dibs - We need vanilla playlists, too!
 
-    -- Regional
-    Region = 900,
+  -- Regional
+  Region = 900,
 
-    -- City
-    City = 800,
+  -- City
+  City = 800,
 
-    -- Cell matches
-    CellMatch = 700,
+  -- Cell matches
+  CellMatch = 700,
 
-    -- Tileset-based
-    Tileset = 600,
-    -- Exact cells
-    CellExact = 500,
-    -- Starwind playlists
+  -- Tileset-based
+  Tileset = 600,
+  -- Exact cells
+  CellExact = 500,
+  -- Starwind playlists
 
-    Faction = 400,
-    Class = 375,
-    MerchantType = 350,
-    -- -- Times of day
-    TimeOfDay = 300,
-    -- Combat Playlists
-    BattleVanilla = 200,
-    BattleMod = 190,
-    Special = 50,
+  Faction = 400,
+  Class = 375,
+  MerchantType = 350,
+  -- -- Times of day
+  TimeOfDay = 300,
+  -- Combat Playlists
+  BattleVanilla = 200,
+  BattleMod = 190,
+  Special = 50,
 }
 
 return PlaylistPriority

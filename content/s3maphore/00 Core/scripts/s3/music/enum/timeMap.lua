@@ -12,11 +12,9 @@
 ---@field [1] 'morning'
 ---@field [2] 'afternoon'
 ---@field [3] 'evening'
-return require 'scripts.s3.music.util'.makeReadOnly({
-        [0] = 'night',
-        [1] = 'morning',
-        [2] = 'afternoon',
-        [3] = 'evening',
-    },
-    false, true
-)
+return require('scripts.s3.music.util').makeReadOnly({
+  [0] = 'night',
+  [1] = 'morning',
+  [2] = 'afternoon',
+  [3] = 'evening',
+}, false, true)

@@ -9,13 +9,18 @@ local types = require 'openmw.types'
 local StaticStrings = require 'scripts.s3.music.staticStrings'
 
 local ActiveEffects, CreatureRecords, DynamicStats, GetGameTime, IsNPC, Level, NPCRecords =
-    types.Actor.activeEffects, types.Creature.records, types.NPC.stats.dynamic,
-    core.getGameTime, types.NPC.objectIsInstance, types.Actor.stats.level, types.NPC.records
+  types.Actor.activeEffects,
+  types.Creature.records,
+  types.NPC.stats.dynamic,
+  core.getGameTime,
+  types.NPC.objectIsInstance,
+  types.Actor.stats.level,
+  types.NPC.records
 
 local VAMPIRISM_EFFECT = core.magic.EFFECT_TYPE.Vampirism
 
 local Error, Floor, Next, StrFind, StrFormat, Type, HUGE =
-    error, math.floor, next, string.find, string.format, type, math.huge
+  error, math.floor, next, string.find, string.format, type, math.huge
 
 local Quests = gameSelf.type.quests(gameSelf)
 local MyLevel = gameSelf.type.stats.level(gameSelf)
@@ -25,8 +30,8 @@ local NearbyActors = nearby.actors
 ---@field combatTargetCacheKey S3maphoreCacheKey? Serialized string containing the ids of all combatants, used as a key for combat-related rule lookups
 ---@field state PlaylistState
 local PlaylistRules = {
-    combatTargetCacheKey = nil,
-    state = require 'scripts.s3.music.playlistState',
+  combatTargetCacheKey = nil,
+  state = require 'scripts.s3.music.playlistState',
 }
 
 --- Stores playlist rule lookups according to whatever is most relevant for that particular type,
@@ -43,36 +48,36 @@ local combatTargetLevelCache = {}
 --- Ensure the combat target cache table exists and return it, or nil if there is no cache key
 ---@return table<any, any>|nil
 local function ensureCombatCache()
-    local key = PlaylistRules.combatTargetCacheKey
-    if not key then return end
+  local key = PlaylistRules.combatTargetCacheKey
+  if not key then return end
 
-    local cache = S3maphoreGlobalCache[key]
-    if not cache then
-        cache = {}
-        S3maphoreGlobalCache[key] = cache
-    end
+  local cache = S3maphoreGlobalCache[key]
+  if not cache then
+    cache = {}
+    S3maphoreGlobalCache[key] = cache
+  end
 
-    return cache
+  return cache
 end
 
 --- Clear target-specific caches, used either when they exit combat or are hit
 ---@param removedTargetId string
 function PlaylistRules.clearPerTargetCaches(removedTargetId)
-    S3maphoreGlobalCache[removedTargetId] = nil
-    combatTargetLevelCache[removedTargetId] = nil
+  S3maphoreGlobalCache[removedTargetId] = nil
+  combatTargetLevelCache[removedTargetId] = nil
 end
 
 function PlaylistRules.clearGlobalCombatTargetCache()
-    if not PlaylistRules.combatTargetCacheKey then return end
-    S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = nil
+  if not PlaylistRules.combatTargetCacheKey then return end
+  S3maphoreGlobalCache[PlaylistRules.combatTargetCacheKey] = nil
 end
 
 --- When a target dies or is otherwised removed from the combat targets table, remove
 --- references to the old cache and any userdata objects cached for memory saving purposes
 ---@param removedTargetId string
 function PlaylistRules.clearCombatCaches(removedTargetId)
-    PlaylistRules.clearGlobalCombatTargetCache()
-    PlaylistRules.clearPerTargetCaches(removedTargetId)
+  PlaylistRules.clearGlobalCombatTargetCache()
+  PlaylistRules.clearPerTargetCaches(removedTargetId)
 end
 
 --- Returns whether the current cell name matches a pattern rule. Checks disallowed patterns first
@@ -82,44 +87,44 @@ end
 --- playlistRules.cellNameMatch { allowed = { 'mages', 'south wall', }, disallowed = { 'fighters', } }
 ---@param patterns CellMatchPatterns
 function PlaylistRules.cellNameMatch(patterns)
-    local cellName = PlaylistRules.state.cellName
+  local cellName = PlaylistRules.state.cellName
 
-    local cached = S3maphoreGlobalCache[cellName]
-    if cached then
-        local old = cached[patterns]
-        if old ~= nil then return old end
+  local cached = S3maphoreGlobalCache[cellName]
+  if cached then
+    local old = cached[patterns]
+    if old ~= nil then return old end
+  end
+
+  local result, found = false, false
+
+  local disallowed = patterns.disallowed or {}
+  for i = 1, #disallowed do
+    local pattern = disallowed[i]
+    if StrFind(cellName, pattern, 1, true) then
+      found = true
+      break
     end
+  end
 
-    local result, found = false, false
-
-    local disallowed = patterns.disallowed or {}
-    for i = 1, #disallowed do
-        local pattern = disallowed[i]
-        if StrFind(cellName, pattern, 1, true) then
-            found = true
-            break
-        end
+  if not found then
+    local allowed = patterns.allowed or {}
+    for i = 1, #allowed do
+      local pattern = allowed[i]
+      if StrFind(cellName, pattern, 1, true) then
+        result = true
+        break
+      end
     end
+  end
 
-    if not found then
-        local allowed = patterns.allowed or {}
-        for i = 1, #allowed do
-            local pattern = allowed[i]
-            if StrFind(cellName, pattern, 1, true) then
-                result = true
-                break
-            end
-        end
-    end
+  if not cached then
+    cached = {}
+    S3maphoreGlobalCache[cellName] = cached
+  end
 
-    if not cached then
-        cached = {}
-        S3maphoreGlobalCache[cellName] = cached
-    end
+  cached[patterns] = result
 
-    cached[patterns] = result
-
-    return result
+  return result
 end
 
 --- Returns whether or not the current cell exists in the cellNames map
@@ -129,9 +134,7 @@ end
 --- playlistRules.cellNameExact { 'balmora, caius cosades\'s house' = true, 'balmora, guild of mages' = true, }
 ---@param cellNames IDPresenceMap
 ---@return boolean
-function PlaylistRules.cellNameExact(cellNames)
-    return cellNames[PlaylistRules.state.cellName]
-end
+function PlaylistRules.cellNameExact(cellNames) return cellNames[PlaylistRules.state.cellName] end
 
 --- Returns whether the player is currently in combat with any actor out of the input set
 --- the playlistState provided to each `isValidCallback` includes a `combatTargets` field which is meant to be used as the first argument
@@ -142,37 +145,37 @@ end
 ---@param validTargets IDPresenceMap
 ---@return boolean
 function PlaylistRules.combatTargetExact(validTargets)
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache[validTargets]
-        if old ~= nil then return old end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[validTargets]
+    if old ~= nil then return old end
+  end
+
+  local result = false
+  local combatTargets = PlaylistRules.state.combatTargets
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+    local actorName = actor.type.records[actor.recordId].name:lower()
+
+    if validTargets[actorName] then
+      result = true
+      break
     end
+  end
 
-    local result = false
-    local combatTargets = PlaylistRules.state.combatTargets
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]
-        local actorName = actor.type.records[actor.recordId].name:lower()
+  currentCombatTargetsCache[validTargets] = result
 
-        if validTargets[actorName] then
-            result = true
-            break
-        end
-    end
-
-    currentCombatTargetsCache[validTargets] = result
-
-    return result
+  return result
 end
 
 local validCreatureTypes = {
-    [0] = 'creatures',
-    [1] = 'daedra',
-    [2] = 'undead',
-    [3] = 'humanoid',
+  [0] = 'creatures',
+  [1] = 'daedra',
+  [2] = 'undead',
+  [3] = 'humanoid',
 }
 
 --- Rule for checking whether combat targets match a specific type. This can be for NPCs, or specific subtypes of creatures, such as undead, or daedric.
@@ -187,40 +190,40 @@ local validCreatureTypes = {
 ---@param targetTypeRules CombatTargetTypeMatches
 ---@return boolean
 function PlaylistRules.combatTargetType(targetTypeRules)
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache[targetTypeRules]
-        if old ~= nil then return old end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[targetTypeRules]
+    if old ~= nil then return old end
+  end
+
+  local result = false
+  local combatTargets = PlaylistRules.state.combatTargets
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+
+    if IsNPC(actor) then
+      if targetTypeRules.npc then
+        result = true
+        break
+      end
+    else
+      local creatureRecord = CreatureRecords[actor.recordId]
+      ---@diagnostic disable-next-line: need-check-nil
+      local creatureType = validCreatureTypes[creatureRecord.type]
+
+      if targetTypeRules[creatureType] then
+        result = true
+        break
+      end
     end
+  end
 
-    local result = false
-    local combatTargets = PlaylistRules.state.combatTargets
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]
+  currentCombatTargetsCache[targetTypeRules] = result
 
-        if IsNPC(actor) then
-            if targetTypeRules.npc then
-                result = true
-                break
-            end
-        else
-            local creatureRecord = CreatureRecords[actor.recordId]
-            ---@diagnostic disable-next-line: need-check-nil
-            local creatureType = validCreatureTypes[creatureRecord.type]
-
-            if targetTypeRules[creatureType] then
-                result = true
-                break
-            end
-        end
-    end
-
-    currentCombatTargetsCache[targetTypeRules] = result
-
-    return result
+  return result
 end
 
 --- Checks whether any combat target's classes matches one of a hashset
@@ -232,33 +235,33 @@ end
 ---@param classes IDPresenceMap
 ---@return boolean
 function PlaylistRules.combatTargetClass(classes)
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache[classes]
-        if old ~= nil then return old end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[classes]
+    if old ~= nil then return old end
+  end
+
+  local result = false
+  local combatTargets = PlaylistRules.state.combatTargets
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+
+    if IsNPC(actor) then
+      local targetRecord = actor.type.records[actor.recordId]
+
+      if classes[targetRecord.class] then
+        result = true
+        break
+      end
     end
+  end
 
-    local result = false
-    local combatTargets = PlaylistRules.state.combatTargets
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]
+  currentCombatTargetsCache[classes] = result
 
-        if IsNPC(actor) then
-            local targetRecord = actor.type.records[actor.recordId]
-
-            if classes[targetRecord.class] then
-                result = true
-                break
-            end
-        end
-    end
-
-    currentCombatTargetsCache[classes] = result
-
-    return result
+  return result
 end
 
 --- Rule used to check if a nearby merchant does, or doesn't, offer a specific service.
@@ -274,45 +277,45 @@ end
 ---@param services ServicesOffered
 ---@return boolean
 function PlaylistRules.localMerchantType(services)
-    if PlaylistRules.state.isInCombat then return false end
+  if PlaylistRules.state.isInCombat then return false end
 
-    local cellName = PlaylistRules.state.cellName
+  local cellName = PlaylistRules.state.cellName
 
-    local currentCellCache = S3maphoreGlobalCache[cellName]
-    if not currentCellCache then
-        currentCellCache = {}
-        S3maphoreGlobalCache[cellName] = currentCellCache
+  local currentCellCache = S3maphoreGlobalCache[cellName]
+  if not currentCellCache then
+    currentCellCache = {}
+    S3maphoreGlobalCache[cellName] = currentCellCache
+  end
+
+  local old = currentCellCache[services]
+  if old ~= nil then return old end
+
+  local result = false
+
+  for i = 1, #NearbyActors do
+    local actor = NearbyActors[i]
+    local targetRecord = (IsNPC(actor) and NPCRecords or CreatureRecords)[actor.recordId]
+
+    ---@diagnostic disable-next-line: need-check-nil
+    local targetServices = targetRecord.servicesOffered
+
+    local matchedAll = true
+    for serviceName, offered in Next, services do
+      if targetServices[serviceName] ~= offered then
+        matchedAll = false
+        break
+      end
     end
 
-    local old = currentCellCache[services]
-    if old ~= nil then return old end
-
-    local result = false
-
-    for i = 1, #NearbyActors do
-        local actor = NearbyActors[i]
-        local targetRecord = (IsNPC(actor) and NPCRecords or CreatureRecords)[actor.recordId]
-
-        ---@diagnostic disable-next-line: need-check-nil
-        local targetServices = targetRecord.servicesOffered
-
-        local matchedAll = true
-        for serviceName, offered in Next, services do
-            if targetServices[serviceName] ~= offered then
-                matchedAll = false
-                break
-            end
-        end
-
-        if matchedAll then
-            result = true
-            break
-        end
+    if matchedAll then
+      result = true
+      break
     end
+  end
 
-    currentCellCache[services] = result
+  currentCellCache[services] = result
 
-    return result
+  return result
 end
 
 --- Rule for checking the rank of a target in the specified faction.
@@ -323,37 +326,40 @@ end
 --- playlistRules.combatTargetFaction { hlaalu = { min = 1 } }
 ---@param factionRules NumericPresenceMap
 function PlaylistRules.combatTargetFaction(factionRules)
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache[factionRules]
-        if old ~= nil then return old end
-    end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[factionRules]
+    if old ~= nil then return old end
+  end
 
-    local result, combatTargets = false, PlaylistRules.state.combatTargets
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]
-        local getFactionRank = actor.type.getFactionRank
+  local result, combatTargets = false, PlaylistRules.state.combatTargets
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+    local getFactionRank = actor.type.getFactionRank
 
-        if getFactionRank then
-            for factionName, rankRange in Next, factionRules do
-                local targetFactionRank = getFactionRank(actor, factionName)
+    if getFactionRank then
+      for factionName, rankRange in Next, factionRules do
+        local targetFactionRank = getFactionRank(actor, factionName)
 
-                if targetFactionRank <= (rankRange.max or HUGE) and targetFactionRank >= (rankRange.min or 1) then
-                    result = true
-                    break
-                end
-            end
+        if
+          targetFactionRank <= (rankRange.max or HUGE)
+          and targetFactionRank >= (rankRange.min or 1)
+        then
+          result = true
+          break
         end
-
-        if result then break end
+      end
     end
 
-    currentCombatTargetsCache[factionRules] = result
+    if result then break end
+  end
 
-    return result
+  currentCombatTargetsCache[factionRules] = result
+
+  return result
 end
 
 --- Sets a relative or absolute limit on combat target levels for triggering combat music.
@@ -371,88 +377,87 @@ end
 --- playlistRules.combatTargetLevelDifference { relative = { min = 0.5, max = 2.0 } }
 ---@param levelRule LevelDifferenceMap
 function PlaylistRules.combatTargetLevelDifference(levelRule)
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache[levelRule]
-        if old ~= nil then return old end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[levelRule]
+    if old ~= nil then return old end
+  end
+
+  local result = false
+  local combatTargets = PlaylistRules.state.combatTargets
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+    local targetLevel = combatTargetLevelCache[actor.id]
+    if not targetLevel then
+      targetLevel = Level(actor)
+      combatTargetLevelCache[actor.id] = targetLevel
     end
 
-    local result = false
-    local combatTargets = PlaylistRules.state.combatTargets
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]
-        local targetLevel = combatTargetLevelCache[actor.id]
-        if not targetLevel then
-            targetLevel = Level(actor)
-            combatTargetLevelCache[actor.id] = targetLevel
-        end
+    ---@cast targetLevel openmw.types.LevelStat
 
-        ---@cast targetLevel openmw.types.LevelStat
-
-        local levelDifference, levelScale
-        if levelRule.absolute then
-            levelDifference = targetLevel.current - MyLevel.current
-            levelScale = levelRule.absolute
-        elseif levelRule.relative then
-            levelDifference = targetLevel.current / MyLevel.current
-            levelScale = levelRule.relative
-        else
-            Error(
-                StrFormat(StaticStrings.InvalidLevelDifferenceRule, levelRule)
-            )
-        end
-
-        ---@diagnostic disable-next-line: need-check-nil
-        if levelDifference <= levelScale.max and levelDifference >= levelScale.min then
-            result = true
-            break
-        end
+    local levelDifference, levelScale
+    if levelRule.absolute then
+      levelDifference = targetLevel.current - MyLevel.current
+      levelScale = levelRule.absolute
+    elseif levelRule.relative then
+      levelDifference = targetLevel.current / MyLevel.current
+      levelScale = levelRule.relative
+    else
+      Error(StrFormat(StaticStrings.InvalidLevelDifferenceRule, levelRule))
     end
 
-    currentCombatTargetsCache[levelRule] = result
+    ---@diagnostic disable-next-line: need-check-nil
+    if levelDifference <= levelScale.max and levelDifference >= levelScale.min then
+      result = true
+      break
+    end
+  end
 
-    return result
+  currentCombatTargetsCache[levelRule] = result
+
+  return result
 end
 
 --- Rule for checking if the player is fighting vampires of any type, or clan.
 --- To check specific vampire clans, use the faction rule.
 ---@return boolean
 function PlaylistRules.fightingVampires()
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache.vampires
-        if old ~= nil then return old end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache.vampires
+    if old ~= nil then return old end
+  end
+
+  local result = false
+  local combatTargets = PlaylistRules.state.combatTargets
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+    local actorId = actor.id
+
+    local actorStatCache = S3maphoreGlobalCache[actorId]
+    if not actorStatCache then
+      actorStatCache = {}
+      S3maphoreGlobalCache[actorId] = actorStatCache
     end
 
-    local result = false
-    local combatTargets = PlaylistRules.state.combatTargets
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]; local actorId = actor.id
+    local activeEffects = actorStatCache.effects or ActiveEffects(actor)
+    if not actorStatCache.effects then actorStatCache.effects = activeEffects end
 
-        local actorStatCache = S3maphoreGlobalCache[actorId]
-        if not actorStatCache then
-            actorStatCache = {}
-            S3maphoreGlobalCache[actorId] = actorStatCache
-        end
-
-        local activeEffects = actorStatCache.effects or ActiveEffects(actor)
-        if not actorStatCache.effects then actorStatCache.effects = activeEffects end
-
-        if activeEffects:getEffect(VAMPIRISM_EFFECT).magnitude > 0 then
-            result = true
-            break
-        end
+    if activeEffects:getEffect(VAMPIRISM_EFFECT).magnitude > 0 then
+      result = true
+      break
     end
+  end
 
-    currentCombatTargetsCache.vampires = result
+  currentCombatTargetsCache.vampires = result
 
-    return result
+  return result
 end
 
 --- Checks whether or not an actor meets a specific threshold for any of the three dynamic stats - health, fatigue, or magicka.
@@ -468,51 +473,52 @@ end
 ---@param statThreshold StatThresholdMap decimal number encompassing how much health the target should have left in order for this playlist to be considered valid
 ---@return boolean
 function PlaylistRules.dynamicStatThreshold(statThreshold)
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache[statThreshold]
-        if old ~= nil then return old end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[statThreshold]
+    if old ~= nil then return old end
+  end
+
+  --- Iterate every actor
+  --- Confirm all of them fall within the threshold
+  --- if any one of them does not pass, then, bail on the whole thing
+  local result = true
+  local combatTargets = PlaylistRules.state.combatTargets
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+    local actorId = actor.id
+
+    local actorStatCache = S3maphoreGlobalCache[actorId]
+    if not actorStatCache then
+      actorStatCache = {}
+      S3maphoreGlobalCache[actorId] = actorStatCache
     end
 
-    --- Iterate every actor
-    --- Confirm all of them fall within the threshold
-    --- if any one of them does not pass, then, bail on the whole thing
-    local result = true
-    local combatTargets = PlaylistRules.state.combatTargets
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]; local actorId = actor.id
+    local passed = true
+    for statName, range in Next, statThreshold do
+      local stat = actorStatCache[statName] or DynamicStats[statName](actor)
+      if not actorStatCache[statName] then actorStatCache[statName] = stat end
 
-        local actorStatCache = S3maphoreGlobalCache[actorId]
-        if not actorStatCache then
-            actorStatCache = {}
-            S3maphoreGlobalCache[actorId] = actorStatCache
-        end
+      local normalizedStat = stat.current / stat.base
 
-        local passed = true
-        for statName, range in Next, statThreshold do
-            local stat = actorStatCache[statName] or DynamicStats[statName](actor)
-            if not actorStatCache[statName] then actorStatCache[statName] = stat end
-
-            local normalizedStat = stat.current / stat.base
-
-            if normalizedStat < (range.min or 0.0) or normalizedStat > (range.max or HUGE) then
-                passed = false
-                break
-            end
-        end
-
-        if not passed then
-            result = false
-            break
-        end
+      if normalizedStat < (range.min or 0.0) or normalizedStat > (range.max or HUGE) then
+        passed = false
+        break
+      end
     end
 
-    currentCombatTargetsCache[statThreshold] = result
+    if not passed then
+      result = false
+      break
+    end
+  end
 
-    return result
+  currentCombatTargetsCache[statThreshold] = result
+
+  return result
 end
 
 --- Finds any nearby combat target whose name matches any one string of a set
@@ -523,53 +529,54 @@ end
 ---@param validTargetPatterns string[]
 ---@return boolean
 function PlaylistRules.combatTargetMatch(validTargetPatterns)
-    if not PlaylistRules.state.isInCombat then return false end
+  if not PlaylistRules.state.isInCombat then return false end
 
-    local currentCombatTargetsCache = ensureCombatCache()
+  local currentCombatTargetsCache = ensureCombatCache()
 
-    if currentCombatTargetsCache then
-        local old = currentCombatTargetsCache[validTargetPatterns]
-        if old ~= nil then return old end
-    end
+  if currentCombatTargetsCache then
+    local old = currentCombatTargetsCache[validTargetPatterns]
+    if old ~= nil then return old end
+  end
 
-    local combatTargets = PlaylistRules.state.combatTargets
-    local result = false
+  local combatTargets = PlaylistRules.state.combatTargets
+  local result = false
 
-    for i = 1, #combatTargets do
-        local actor = combatTargets[i]; local actorId = actor.recordId
-        if not S3maphoreGlobalCache[actorId] then S3maphoreGlobalCache[actorId] = {} end
+  for i = 1, #combatTargets do
+    local actor = combatTargets[i]
+    local actorId = actor.recordId
+    if not S3maphoreGlobalCache[actorId] then S3maphoreGlobalCache[actorId] = {} end
 
-        local cachedResult = S3maphoreGlobalCache[actorId][validTargetPatterns]
+    local cachedResult = S3maphoreGlobalCache[actorId][validTargetPatterns]
 
-        if cachedResult ~= nil then
-            if cachedResult then
-                result = true
-                break
-            end
-        else
-            local actorName = actor.type.records[actorId].name:lower()
+    if cachedResult ~= nil then
+      if cachedResult then
+        result = true
+        break
+      end
+    else
+      local actorName = actor.type.records[actorId].name:lower()
 
-            local actorResult = false
-            for j = 1, #validTargetPatterns do
-                local pattern = validTargetPatterns[j]
-                if StrFind(actorName, pattern, 1, true) ~= nil then
-                    actorResult = true
-                    break
-                end
-            end
-
-            S3maphoreGlobalCache[actorId][validTargetPatterns] = actorResult
-
-            if actorResult then
-                result = true
-                break
-            end
+      local actorResult = false
+      for j = 1, #validTargetPatterns do
+        local pattern = validTargetPatterns[j]
+        if StrFind(actorName, pattern, 1, true) ~= nil then
+          actorResult = true
+          break
         end
+      end
+
+      S3maphoreGlobalCache[actorId][validTargetPatterns] = actorResult
+
+      if actorResult then
+        result = true
+        break
+      end
     end
+  end
 
-    currentCombatTargetsCache[validTargetPatterns] = result
+  currentCombatTargetsCache[validTargetPatterns] = result
 
-    return result
+  return result
 end
 
 --- Checks whether any object matching the given record IDs is present in the current cell.
@@ -580,38 +587,38 @@ end
 ---@param staticRules IDPresenceMap
 ---@return boolean?
 function PlaylistRules.objectExact(staticRules)
-    local cellName = PlaylistRules.state.cellName
+  local cellName = PlaylistRules.state.cellName
 
-    local cellCache = S3maphoreGlobalCache[cellName]
-    if not cellCache then
-        cellCache = {}
-        S3maphoreGlobalCache[cellName] = cellCache
+  local cellCache = S3maphoreGlobalCache[cellName]
+  if not cellCache then
+    cellCache = {}
+    S3maphoreGlobalCache[cellName] = cellCache
+  end
+
+  local old = cellCache[staticRules]
+  if old ~= nil then return old end
+
+  local byRecord = PlaylistRules.state.cellPresence.byRecord
+  local result = false
+
+  for recordId, ruleVal in Next, staticRules do
+    if byRecord[recordId] then
+      result = ruleVal
+      break
     end
+  end
 
-    local old = cellCache[staticRules]
-    if old ~= nil then return old end
+  cellCache[staticRules] = result
 
-    local byRecord = PlaylistRules.state.cellPresence.byRecord
-    local result = false
-
-    for recordId, ruleVal in Next, staticRules do
-        if byRecord[recordId] then
-            result = ruleVal
-            break
-        end
-    end
-
-    cellCache[staticRules] = result
-
-    return result
+  return result
 end
 
 --- REMOVED — Replaced by objectExact.
 ---@param _staticRules IDPresenceMap
 ---@return boolean?
 function PlaylistRules.staticExact(staticRules)
-    print('[ S3MAPHORE ]: staticExact deprecated — replace with objectExact in your playlist')
-    return PlaylistRules.objectExact(staticRules)
+  print '[ S3MAPHORE ]: staticExact deprecated — replace with objectExact in your playlist'
+  return PlaylistRules.objectExact(staticRules)
 end
 
 --- REMOVED — Replaced by tagger tag rules + music markers.
@@ -619,7 +626,7 @@ end
 ---@param _patterns string[]
 ---@return boolean?
 function PlaylistRules.staticMatch(_patterns)
-    Error 'staticMatch has been removed. Use tagger tag rules + music markers instead.'
+  Error 'staticMatch has been removed. Use tagger tag rules + music markers instead.'
 end
 
 --- Returns whether or not a given cell contains statics matching the given content file array
@@ -631,32 +638,32 @@ end
 ---@param inputContentFiles  IDPresenceMap
 ---@return boolean
 function PlaylistRules.staticContentFile(inputContentFiles)
-    local contentFiles = PlaylistRules.state.cellPresence.staticContentFiles
-    if not contentFiles[1] then return false end
-    local cellName = PlaylistRules.state.cellName
+  local contentFiles = PlaylistRules.state.cellPresence.staticContentFiles
+  if not contentFiles[1] then return false end
+  local cellName = PlaylistRules.state.cellName
 
-    local cellCache = S3maphoreGlobalCache[cellName]
-    if not cellCache then
-        cellCache = {}
-        S3maphoreGlobalCache[cellName] = cellCache
+  local cellCache = S3maphoreGlobalCache[cellName]
+  if not cellCache then
+    cellCache = {}
+    S3maphoreGlobalCache[cellName] = cellCache
+  end
+
+  local old = cellCache[inputContentFiles]
+  if old ~= nil then return old end
+
+  local result = false
+
+  for i = 1, #contentFiles do
+    local contentFile = contentFiles[i]
+    if inputContentFiles[contentFile] ~= nil then
+      result = true
+      break
     end
+  end
 
-    local old = cellCache[inputContentFiles]
-    if old ~= nil then return old end
+  cellCache[inputContentFiles] = result
 
-    local result = false
-
-    for i = 1, #contentFiles do
-        local contentFile = contentFiles[i]
-        if inputContentFiles[contentFile] ~= nil then
-            result = true
-            break
-        end
-    end
-
-    cellCache[inputContentFiles] = result
-
-    return result
+  return result
 end
 
 --- Checks whether the current gameHour matches a certain time of day or not
@@ -670,8 +677,8 @@ end
 ---@param maxHour integer
 ---@return boolean
 function PlaylistRules.timeOfDay(minHour, maxHour)
-    local gameHour = Floor(GetGameTime() / 3600) % 24
-    return gameHour < maxHour and gameHour >= minHour
+  local gameHour = Floor(GetGameTime() / 3600) % 24
+  return gameHour < maxHour and gameHour >= minHour
 end
 
 --- Return whether the current region matches a set
@@ -682,11 +689,9 @@ end
 ---@param regionNames IDPresenceMap
 ---@return boolean
 function PlaylistRules.region(regionNames)
-    local currentRegion = PlaylistRules.state.nearestRegion
+  local currentRegion = PlaylistRules.state.nearestRegion
 
-    return currentRegion ~= nil
-        and currentRegion ~= ''
-        and regionNames[currentRegion] or false
+  return currentRegion ~= nil and currentRegion ~= '' and regionNames[currentRegion] or false
 end
 
 --- Returns whether the current exterior cell is on a particular node of the grid
@@ -696,35 +701,31 @@ end
 --- playlistRules.exteriorGrid { { x = -2, y = -3 } }
 ---@param gridRules S3maphoreCellGrid[]
 function PlaylistRules.exteriorGrid(gridRules)
-    local currentGrid = PlaylistRules.state.currentGrid
-    if not currentGrid then return false end
+  local currentGrid = PlaylistRules.state.currentGrid
+  if not currentGrid then return false end
 
-    local exteriorGridCache = S3maphoreGlobalCache[PlaylistRules.state.cellId]
-    if exteriorGridCache ~= nil then
-        return exteriorGridCache
+  local exteriorGridCache = S3maphoreGlobalCache[PlaylistRules.state.cellId]
+  if exteriorGridCache ~= nil then return exteriorGridCache end
+
+  local result = false
+  for i = 1, #gridRules do
+    local gridRule = gridRules[i]
+    if gridRule.x == currentGrid.x and gridRule.y == currentGrid.y then
+      result = true
+      break
     end
+  end
 
-    local result = false
-    for i = 1, #gridRules do
-        local gridRule = gridRules[i]
-        if gridRule.x == currentGrid.x and gridRule.y == currentGrid.y then
-            result = true
-            break
-        end
-    end
+  S3maphoreGlobalCache[PlaylistRules.state.cellId] = result
 
-    S3maphoreGlobalCache[PlaylistRules.state.cellId] = result
-
-    return result
+  return result
 end
 
 local S3maphoreJournalCache = {}
 
 ---@private
 ---Clear the journal cache when a player gets a journal update
-function PlaylistRules.clearJournalCache()
-    S3maphoreJournalCache = {}
-end
+function PlaylistRules.clearJournalCache() S3maphoreJournalCache = {} end
 
 --- Playlist rule for checking a specific journal state
 ---
@@ -734,47 +735,38 @@ end
 ---@param journalDataMap NumericPresenceMap
 ---@return boolean
 function PlaylistRules.journal(journalDataMap)
-    local cachedResult = S3maphoreJournalCache[journalDataMap]
+  local cachedResult = S3maphoreJournalCache[journalDataMap]
 
-    if cachedResult ~= nil then
-        return cachedResult
+  if cachedResult ~= nil then return cachedResult end
+
+  local result = false
+
+  for questName, questRange in Next, journalDataMap do
+    local quest = Quests[questName]
+
+    if quest then
+      local questState = quest.stage
+
+      if questState <= (questRange.max or HUGE) and questState >= questRange.min then
+        result = true
+        break
+      end
     end
+  end
 
-    local result = false
+  S3maphoreJournalCache[journalDataMap] = result
 
-    for questName, questRange in Next, journalDataMap do
-        local quest = Quests[questName]
-
-        if quest then
-            local questState = quest.stage
-
-            if questState <= (questRange.max or HUGE) and questState >= questRange.min then
-                result = true
-                break
-            end
-        end
-    end
-
-    S3maphoreJournalCache[journalDataMap] = result
-
-    return result
+  return result
 end
 
 ---@param key S3maphoreCacheKey?
 function PlaylistRules.setCombatTargetCacheKey(key)
-    if key and Type(key) ~= 'string' then
-        Error(
-            'Invalid cache key provided!',
-            2
-        )
-    end
+  if key and Type(key) ~= 'string' then Error('Invalid cache key provided!', 2) end
 
-    local prev = PlaylistRules.combatTargetCacheKey
-    if prev and prev ~= key then
-        S3maphoreGlobalCache[prev] = nil
-    end
+  local prev = PlaylistRules.combatTargetCacheKey
+  if prev and prev ~= key then S3maphoreGlobalCache[prev] = nil end
 
-    PlaylistRules.combatTargetCacheKey = key
+  PlaylistRules.combatTargetCacheKey = key
 end
 
 return PlaylistRules
