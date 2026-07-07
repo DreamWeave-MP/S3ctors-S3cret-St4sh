@@ -1,162 +1,154 @@
-﻿---@module 'doc.playlistEnv'
+---@module 'doc.playlistEnv'
 
 ---@type string[]
 local BarrowCavePatterns = {
-    'furn_bm_t',
-    'in_bm_t_',
-    'in_bm_tomb',
-    '_rock_bm',
-    't_nor_dngbarrow'
+  'furn_bm_t',
+  'in_bm_t_',
+  'in_bm_tomb',
+  '_rock_bm',
+  't_nor_dngbarrow',
 }
 
 ---@type ValidPlaylistCallback
 local function barrowCaveTilesRule()
-    -- TODO: Replace with tagger tag rule (staticMatch removed)
-    return not Playback.state.cellIsExterior
-        and Playback.rules.staticMatch(BarrowCavePatterns)
+  -- TODO: Replace with tagger tag rule (staticMatch removed)
+  return not Playback.state.cellIsExterior and Playback.rules.staticMatch(BarrowCavePatterns)
 end
 
 ---@type ValidPlaylistCallback
 local function dwemerCellRule()
-    return not Playback.state.cellIsExterior
-        and Playback.rules.objectExact(Tilesets.Dwemer)
+  return not Playback.state.cellIsExterior and Playback.rules.objectExact(Tilesets.Dwemer)
 end
 
 ---@type IDPresenceMap
 local DaedricCellNames = {
-    ['addadshashanammu, shrine'] = true,
-    ['ald daedroth, antechamber'] = true,
-    ['ald daedroth, inner shrine'] = true,
-    ['ald daedroth, left wing'] = true,
-    ['ald daedroth, outer shrine'] = true,
-    ['ald daedroth, right wing'] = true,
-    ['ald sotha, lower level'] = true,
-    ['ald sotha, shrine'] = true,
-    ['ald sotha, upper level'] = true,
-    ['almurbalarammi, shrine'] = true,
-    ['ashalmawia, shrine, sunken vaults'] = true,
-    ['ashalmawia, shrine'] = true,
-    ['ashalmimilkala, shrine'] = true,
-    ['ashunartes, shrine'] = true,
-    ['ashurnibibi, shrine'] = true,
-    ['assalkushalit, shrine'] = true,
-    ['assarnatamat, shrine'] = true,
-    ['assurdirapal, inner shrine'] = true,
-    ['assurdirapal, shrine'] = true,
-    ['assurnabitashpi, shrine'] = true,
-    ['bal fell, east wing'] = true,
-    ['bal fell, inner shrine'] = true,
-    ['bal fell, outer shrine'] = true,
-    ['bal fell, west wing'] = true,
-    ['bal ur, shrine'] = true,
-    ['bal ur, underground'] = true,
-    ['dubdilla, uncharted caverns, lower'] = true,
-    ['dushariran, shrine'] = true,
-    ['ebernanit, shrine'] = true,
-    ['esutanamus, shrine'] = true,
-    ['forgotten vaults of anudnabia, forge of hilbongard'] = true,
-    ['ibar-dad'] = true,
-    ['kaushtarari, shrine'] = true,
-    ['kora-dur'] = true,
-    ['kushtashpi, shrine'] = true,
-    ['maelkashishi, shrine, forgotten galleries'] = true,
-    ['maelkashishi, shrine'] = true,
-    ['magas volar'] = true,
-    ['norenen-dur, basilica of divine whispers'] = true,
-    ['norenen-dur, citadel of myn dhrur'] = true,
-    ['norenen-dur, the grand stair'] = true,
-    ['norenen-dur, the wailingdelve'] = true,
-    ['norenen-dur'] = true,
-    ['omaren ancestral tomb'] = true,
-    ['onnissiralis, shrine'] = true,
-    ['ramimilk, shrine'] = true,
-    ['shashpilamat, shrine'] = true,
-    ['shashpilamat'] = true,
-    ['shrine of azura'] = true,
-    ['solstheim, mortrag glacier: entry'] = true,
-    ['solstheim, mortrag glacier: huntsman\'s hall'] = true,
-    ['solstheim, mortrag glacier: inner ring'] = true,
-    ['tusenend, shrine'] = true,
-    ['ularradallaku, shrine'] = true,
-    ['yansirramus, shrine'] = true,
-    ['yasammidan, shrine'] = true,
-    ['zaintiraris, shrine'] = true,
-    ['zergonipal, shrine'] = true,
+  ['addadshashanammu, shrine'] = true,
+  ['ald daedroth, antechamber'] = true,
+  ['ald daedroth, inner shrine'] = true,
+  ['ald daedroth, left wing'] = true,
+  ['ald daedroth, outer shrine'] = true,
+  ['ald daedroth, right wing'] = true,
+  ['ald sotha, lower level'] = true,
+  ['ald sotha, shrine'] = true,
+  ['ald sotha, upper level'] = true,
+  ['almurbalarammi, shrine'] = true,
+  ['ashalmawia, shrine, sunken vaults'] = true,
+  ['ashalmawia, shrine'] = true,
+  ['ashalmimilkala, shrine'] = true,
+  ['ashunartes, shrine'] = true,
+  ['ashurnibibi, shrine'] = true,
+  ['assalkushalit, shrine'] = true,
+  ['assarnatamat, shrine'] = true,
+  ['assurdirapal, inner shrine'] = true,
+  ['assurdirapal, shrine'] = true,
+  ['assurnabitashpi, shrine'] = true,
+  ['bal fell, east wing'] = true,
+  ['bal fell, inner shrine'] = true,
+  ['bal fell, outer shrine'] = true,
+  ['bal fell, west wing'] = true,
+  ['bal ur, shrine'] = true,
+  ['bal ur, underground'] = true,
+  ['dubdilla, uncharted caverns, lower'] = true,
+  ['dushariran, shrine'] = true,
+  ['ebernanit, shrine'] = true,
+  ['esutanamus, shrine'] = true,
+  ['forgotten vaults of anudnabia, forge of hilbongard'] = true,
+  ['ibar-dad'] = true,
+  ['kaushtarari, shrine'] = true,
+  ['kora-dur'] = true,
+  ['kushtashpi, shrine'] = true,
+  ['maelkashishi, shrine, forgotten galleries'] = true,
+  ['maelkashishi, shrine'] = true,
+  ['magas volar'] = true,
+  ['norenen-dur, basilica of divine whispers'] = true,
+  ['norenen-dur, citadel of myn dhrur'] = true,
+  ['norenen-dur, the grand stair'] = true,
+  ['norenen-dur, the wailingdelve'] = true,
+  ['norenen-dur'] = true,
+  ['omaren ancestral tomb'] = true,
+  ['onnissiralis, shrine'] = true,
+  ['ramimilk, shrine'] = true,
+  ['shashpilamat, shrine'] = true,
+  ['shashpilamat'] = true,
+  ['shrine of azura'] = true,
+  ['solstheim, mortrag glacier: entry'] = true,
+  ['solstheim, mortrag glacier: huntsman\'s hall'] = true,
+  ['solstheim, mortrag glacier: inner ring'] = true,
+  ['tusenend, shrine'] = true,
+  ['ularradallaku, shrine'] = true,
+  ['yansirramus, shrine'] = true,
+  ['yasammidan, shrine'] = true,
+  ['zaintiraris, shrine'] = true,
+  ['zergonipal, shrine'] = true,
 }
 
 ---@type CellMatchPatterns
 local EidolonCellMatches = {
-    allowed = {
-        'the eidolon of purity',
-    },
-    disallowed = {},
+  allowed = {
+    'the eidolon of purity',
+  },
+  disallowed = {},
 }
 
 ---@type ValidPlaylistCallback
 local function daedricCellRule()
-    return not Playback.state.cellIsExterior
-        and (
-            Playback.rules.objectExact(Tilesets.Daedric)
-            or Playback.rules.cellNameExact(DaedricCellNames)
-            or Playback.rules.cellNameMatch(EidolonCellMatches)
+  return not Playback.state.cellIsExterior
+    and (
+      Playback.rules.objectExact(Tilesets.Daedric)
+      or Playback.rules.cellNameExact(DaedricCellNames)
+      or Playback.rules.cellNameMatch(EidolonCellMatches)
 
-        )
+    )
 end
 
 ---@type string[]
 local IceCavePatterns = {
-    'bm_ic_',
-    -- 'bm_ic_rock',
-    -- 'bm_ic_room',
-    -- 'bm_ic_stalag'
+  'bm_ic_',
+  -- 'bm_ic_rock',
+  -- 'bm_ic_room',
+  -- 'bm_ic_stalag'
 }
 
 ---@type ValidPlaylistCallback
 local function iceCaveTilesRule()
-    -- TODO: Replace with tagger tag rule (staticMatch removed)
-    return not Playback.state.cellIsExterior
-        and Playback.rules.staticMatch(IceCavePatterns)
+  -- TODO: Replace with tagger tag rule (staticMatch removed)
+  return not Playback.state.cellIsExterior and Playback.rules.staticMatch(IceCavePatterns)
 end
 
 ---@type IDPresenceMap
 local sewerCellNames = {
-    ['falasmaryon, sewers'] = true,
-    ['hlormaren, sewers'] = true,
-    ['kogoruhn, nabith waterway'] = true,
-    ['molag mar, underworks'] = true,
-    ['vivec, arena underworks'] = true,
-    ['vivec, foreign quarter underworks'] = true,
-    ['vivec, hall underworks'] = true,
-    ['vivec, hlaalu underworks'] = true,
-    ['vivec, redoran underworks'] = true,
-    ['vivec, st. delyn underworks'] = true,
-    ['vivec, st. olms underworks'] = true,
-    ['vivec, telvanni underworks'] = true,
-    ['vivec, puzzle canal, level 1'] = true,
-    ['vivec, puzzle canal, level 2'] = true,
-    ['vivec, puzzle canal, level 3'] = true,
-    ['vivec, puzzle canal, level 4'] = true,
-    ['vivec, puzzle canal, level 5'] = true,
+  ['falasmaryon, sewers'] = true,
+  ['hlormaren, sewers'] = true,
+  ['kogoruhn, nabith waterway'] = true,
+  ['molag mar, underworks'] = true,
+  ['vivec, arena underworks'] = true,
+  ['vivec, foreign quarter underworks'] = true,
+  ['vivec, hall underworks'] = true,
+  ['vivec, hlaalu underworks'] = true,
+  ['vivec, redoran underworks'] = true,
+  ['vivec, st. delyn underworks'] = true,
+  ['vivec, st. olms underworks'] = true,
+  ['vivec, telvanni underworks'] = true,
+  ['vivec, puzzle canal, level 1'] = true,
+  ['vivec, puzzle canal, level 2'] = true,
+  ['vivec, puzzle canal, level 3'] = true,
+  ['vivec, puzzle canal, level 4'] = true,
+  ['vivec, puzzle canal, level 5'] = true,
 }
 
 ---@type CellMatchPatterns
 local sewerMatches = {
-    allowed = {
-        'sewers',
-    },
+  allowed = {
+    'sewers',
+  },
 
-    disallowed = {},
+  disallowed = {},
 }
 
 ---@type ValidPlaylistCallback
 local function sewerCellRule()
-    return not Playback.state.cellIsExterior
-        and
-        (
-            Playback.rules.cellNameExact(sewerCellNames)
-            or
-            Playback.rules.cellNameMatch(sewerMatches)
-        )
+  return not Playback.state.cellIsExterior
+    and (Playback.rules.cellNameExact(sewerCellNames) or Playback.rules.cellNameMatch(sewerMatches))
 end
 
 -- ---@type IDPresenceMap
@@ -430,70 +422,69 @@ end
 
 ---@type string[]
 local tombTiles = {
-    'ab_ex_deruin',
-    'dr_dung',
-    'in_velothilarge_',
-    'in_velothismall_',
-    'in_v_s_',
-    'in_v_l_',
-    't_ayl_dngruin',
-    't_bre_dngruin',
-    't_de_dngrtrongh',
-    't_he_dngdirenni',
-    't_imp_dngcolbarrow',
-    't_imp_dngcrypt',
-    't_imp_dngruin',
+  'ab_ex_deruin',
+  'dr_dung',
+  'in_velothilarge_',
+  'in_velothismall_',
+  'in_v_s_',
+  'in_v_l_',
+  't_ayl_dngruin',
+  't_bre_dngruin',
+  't_de_dngrtrongh',
+  't_he_dngdirenni',
+  't_imp_dngcolbarrow',
+  't_imp_dngcrypt',
+  't_imp_dngruin',
 }
 
 ---@type ValidPlaylistCallback
 local function tombCellRule()
-    -- TODO: Replace with tagger tag rule (staticMatch removed)
-    return not Playback.state.cellIsExterior
-        and Playback.rules.staticMatch(tombTiles)
+  -- TODO: Replace with tagger tag rule (staticMatch removed)
+  return not Playback.state.cellIsExterior and Playback.rules.staticMatch(tombTiles)
 end
 
 ---@type S3maphorePlaylist[]
 return {
-    {
-        id = 'ms/interior/barrow',
-        priority = PlaylistPriority.Tileset,
-        randomize = true,
+  {
+    id = 'ms/interior/barrow',
+    priority = PlaylistPriority.Tileset,
+    randomize = true,
 
-        isValidCallback = barrowCaveTilesRule,
-    },
-    {
-        id = 'ms/interior/dwemer',
-        priority = PlaylistPriority.Tileset,
-        randomize = true,
+    isValidCallback = barrowCaveTilesRule,
+  },
+  {
+    id = 'ms/interior/dwemer',
+    priority = PlaylistPriority.Tileset,
+    randomize = true,
 
-        isValidCallback = dwemerCellRule,
-    },
-    {
-        id = 'ms/interior/daedric',
-        priority = PlaylistPriority.CellExact,
-        randomize = true,
+    isValidCallback = dwemerCellRule,
+  },
+  {
+    id = 'ms/interior/daedric',
+    priority = PlaylistPriority.CellExact,
+    randomize = true,
 
-        isValidCallback = daedricCellRule,
-    },
-    {
-        id = 'ms/interior/ice cave',
-        priority = PlaylistPriority.Tileset,
-        randomize = true,
+    isValidCallback = daedricCellRule,
+  },
+  {
+    id = 'ms/interior/ice cave',
+    priority = PlaylistPriority.Tileset,
+    randomize = true,
 
-        isValidCallback = iceCaveTilesRule,
-    },
-    {
-        id = 'ms/interior/sewer',
-        priority = PlaylistPriority.CellExact,
-        randomize = true,
+    isValidCallback = iceCaveTilesRule,
+  },
+  {
+    id = 'ms/interior/sewer',
+    priority = PlaylistPriority.CellExact,
+    randomize = true,
 
-        isValidCallback = sewerCellRule,
-    },
-    {
-        id = 'ms/interior/tomb',
-        priority = PlaylistPriority.Tileset,
-        randomize = true,
+    isValidCallback = sewerCellRule,
+  },
+  {
+    id = 'ms/interior/tomb',
+    priority = PlaylistPriority.Tileset,
+    randomize = true,
 
-        isValidCallback = tombCellRule,
-    },
+    isValidCallback = tombCellRule,
+  },
 }

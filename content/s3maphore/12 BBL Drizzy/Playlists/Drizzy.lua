@@ -2,24 +2,23 @@
 
 ---@type CellMatchPatterns
 local DrizzyCells = {
-    allowed = {
-        'dagoth',
-    },
+  allowed = {
+    'dagoth',
+  },
 
-    disallowed = {},
+  disallowed = {},
 }
 
 ---@type S3maphorePlaylist[]
 return {
-    {
-        id = "s3/drizzy",
-        --- Override the Sixth House playlist
-        priority = PlaylistPriority.Faction - 1,
-        randomize = true,
+  {
+    id = 's3/drizzy',
+    --- Override the Sixth House playlist
+    priority = PlaylistPriority.Faction - 1,
+    randomize = true,
 
-        isValidCallback = function()
-            return not Playback.state.isInCombat
-                and Playback.rules.cellNameMatch(DrizzyCells)
-        end,
-    },
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.cellNameMatch(DrizzyCells)
+    end,
+  },
 }

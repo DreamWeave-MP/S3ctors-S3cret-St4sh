@@ -44,8 +44,7 @@ return {
     },
 
     isValidCallback = function(playback)
-      return not playback.state.isInCombat
-          and playback.rules.region(RedguardRegions)
+      return not playback.state.isInCombat and playback.rules.region(RedguardRegions)
     end,
   },
   {
@@ -59,8 +58,7 @@ return {
     },
 
     isValidCallback = function(playback)
-      return playback.state.isInCombat
-          and playback.rules.region(RedguardRegions)
+      return playback.state.isInCombat and playback.rules.region(RedguardRegions)
     end,
   },
   {
@@ -74,8 +72,7 @@ return {
     },
 
     isValidCallback = function(playback)
-      return not playback.state.isInCombat
-          and playback.rules.cellNameMatch(RGCityPatterns)
+      return not playback.state.isInCombat and playback.rules.cellNameMatch(RGCityPatterns)
     end,
-  }
+  },
 }

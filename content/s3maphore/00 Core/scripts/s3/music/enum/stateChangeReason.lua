@@ -24,4 +24,4 @@ local StateChangeReason = {
   TrackChanged = 'TRCH',
 }
 
-return require 'scripts.s3.music.util'.makeReadOnly(StateChangeReason, false, true)
+return require('scripts.s3.music.util').makeReadOnly(StateChangeReason, false, true)
