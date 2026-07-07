@@ -1,5 +1,7 @@
 ---@omw-context runtime
-local bitXor, bitAnd, floor, realTime
+
+local bitXor, bitAnd, realTime
+local floor, type = math.floor, type
 
 --- @param value number
 --- @param digits? number
@@ -8,10 +10,6 @@ local function round(value, digits)
   local mult = 10 ^ (digits or 0)
 
   return floor(value * mult + 0.5) / mult
-end
-
-do
-  floor = math.floor
 end
 
 if require 'scripts.s3.isOpenMW' then
