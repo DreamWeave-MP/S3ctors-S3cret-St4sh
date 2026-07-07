@@ -7,6 +7,7 @@ local assert, TableConcat = assert, table.concat
 local gameSelf = require 'openmw.self'
 ---@type openmw.types.Player
 local myType = gameSelf.type
+local gameSelfId = gameSelf.id
 
 local Health, IsDead, Level, MyLevel =
   myType.stats.dynamic.health,
@@ -97,7 +98,7 @@ local function onTargetsChanged(actor, targets)
 
     local targetsPlayer = false
     for i = 1, #targets do
-      if targets[i].id == gameSelf.id then
+      if targets[i].id == gameSelfId then
         targetsPlayer = true
         break
       end
