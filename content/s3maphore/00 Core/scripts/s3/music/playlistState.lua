@@ -1,5 +1,8 @@
 ---@omw-context player
 
+local gameSelf = require 'openmw.self'
+local DynamicStats = gameSelf.type.stats.dynamic
+
 ---@class PlaylistState
 ---@field cellHasWater boolean whether the current cell has water or not
 ---@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
@@ -12,14 +15,21 @@
 ---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
 ---@field isExploring boolean whether the player is currently exploring or not. Distinct from isInCombat as settings may control it.
 ---@field isInCombat boolean whether the player is in combat or not
----@field isUnderwater boolean
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
 ---@field playlistTimeOfDay TimeOfDay the time of day for the current playlist
+---@field dynamicStats { health: openmw.types.DynamicStat, magicka: openmw.types.DynamicStat, fatigue: openmw.types.DynamicStat }
+---@field movementMode S3maphoreMovementMode current player movement mode
 ---@field weather string
 local PlaylistState = {
   cellHasWater = false,
   cellIsExterior = false,
   cellName = '',
+  dynamicStats = {
+    health = DynamicStats.health(gameSelf),
+    magicka = DynamicStats.magicka(gameSelf),
+    fatigue = DynamicStats.fatigue(gameSelf),
+  },
+  movementMode = 'standing',
   cellPresence = {
     areaHasHostileActors = false,
     cellHasHostileActors = false,
@@ -36,21 +46,21 @@ local PlaylistState = {
   currentGrid = nil,
   isExploring = true,
   isInCombat = false,
-  isUnderwater = false,
 }
 
 do
   local async = require 'openmw.async'
-  local self = require 'openmw.self'
-  local SendEvent = self.sendEvent
   local presenceSection = require('openmw.storage').globalSection 'S3maphoreCellPresence'
 
+  local pairs = pairs
+  local SendEvent = gameSelf.sendEvent
+
   presenceSection:subscribe(async:callback(function(_, key)
-    if key ~= self.id then return end
+    if key ~= gameSelf.id then return end
 
-    local presence = presenceSection:get(self.id)
+    local presence = presenceSection:get(gameSelf.id)
 
-    local thisCell = self.cell
+    local thisCell = gameSelf.cell
     ---@cast thisCell openmw.core.LCell
 
     -- Only accept presence data written for the cell the player is actually in
@@ -68,7 +78,7 @@ do
     end
     PlaylistState.objectCount = total
 
-    SendEvent(self, 'S3maphoreCellPresenceUpdated')
+    SendEvent(gameSelf, 'S3maphoreCellPresenceUpdated')
   end))
 end
 
