@@ -1,9 +1,9 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
+local I = require 'openmw.interfaces'
 local core = require 'openmw.core'
 local gameSelf = require 'openmw.self'
-local I = require 'openmw.interfaces'
 local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 
@@ -102,11 +102,9 @@ end
 function PlaylistRules.cellNameMatch(patterns)
   local cellName = PlaylistRules.state.cellName
 
-  local cached = S3maphoreGlobalCache[cellName]
-  if cached then
-    local old = cached[patterns]
-    if old ~= nil then return old end
-  end
+  local cellCache = ensureCellCache(cellName)
+  local old = cellCache[patterns]
+  if old ~= nil then return old end
 
   local result, found = false, false
 
@@ -130,12 +128,7 @@ function PlaylistRules.cellNameMatch(patterns)
     end
   end
 
-  if not cached then
-    cached = {}
-    S3maphoreGlobalCache[cellName] = cached
-  end
-
-  cached[patterns] = result
+  cellCache[patterns] = result
 
   return result
 end
@@ -294,13 +287,8 @@ function PlaylistRules.localMerchantType(services)
 
   local cellName = PlaylistRules.state.cellName
 
-  local currentCellCache = S3maphoreGlobalCache[cellName]
-  if not currentCellCache then
-    currentCellCache = {}
-    S3maphoreGlobalCache[cellName] = currentCellCache
-  end
-
-  local old = currentCellCache[services]
+  local cellCache = ensureCellCache(cellName)
+  local old = cellCache[services]
   if old ~= nil then return old end
 
   local result = false
@@ -326,7 +314,7 @@ function PlaylistRules.localMerchantType(services)
     end
   end
 
-  currentCellCache[services] = result
+  cellCache[services] = result
 
   return result
 end
@@ -405,6 +393,7 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
     local actor = combatTargets[i]
     local targetLevel = combatTargetLevelCache[actor.id]
     if not targetLevel then
+      ---@diagnostic disable-next-line: cast-local-type
       targetLevel = Level(actor)
       combatTargetLevelCache[actor.id] = targetLevel
     end
@@ -602,12 +591,7 @@ end
 function PlaylistRules.objectExact(staticRules)
   local cellName = PlaylistRules.state.cellName
 
-  local cellCache = S3maphoreGlobalCache[cellName]
-  if not cellCache then
-    cellCache = {}
-    S3maphoreGlobalCache[cellName] = cellCache
-  end
-
+  local cellCache = ensureCellCache(cellName)
   local old = cellCache[staticRules]
   if old ~= nil then return old end
 
@@ -627,7 +611,7 @@ function PlaylistRules.objectExact(staticRules)
 end
 
 --- REMOVED — Replaced by objectExact.
----@param _staticRules IDPresenceMap
+---@param staticRules IDPresenceMap
 ---@return boolean?
 function PlaylistRules.staticExact(staticRules)
   print '[ S3MAPHORE ]: staticExact deprecated — replace with objectExact in your playlist'
@@ -655,12 +639,7 @@ function PlaylistRules.staticContentFile(inputContentFiles)
   if not contentFiles[1] then return false end
   local cellName = PlaylistRules.state.cellName
 
-  local cellCache = S3maphoreGlobalCache[cellName]
-  if not cellCache then
-    cellCache = {}
-    S3maphoreGlobalCache[cellName] = cellCache
-  end
-
+  local cellCache = ensureCellCache(cellName)
   local old = cellCache[inputContentFiles]
   if old ~= nil then return old end
 
@@ -681,6 +660,10 @@ end
 
 --- True if the current cell has any of the given FlexTags.
 --- Requires FlexTag installed with cell tags in ModTags YAML.
+---
+--- Example usage:
+---
+--- playlistRules.cellHasTag { 'ashlands', 'blight', }
 ---@param tagTable string[]
 ---@return boolean
 function PlaylistRules.cellHasTag(tagTable)
@@ -688,15 +671,48 @@ function PlaylistRules.cellHasTag(tagTable)
     print '[ S3MAPHORE ]: FlexTag not installed — cellHasTag returning false'
     return false
   end
+
   local cellName = PlaylistRules.state.cellName
-  local cellCache = S3maphoreGlobalCache[cellName]
-  if not cellCache then
-    cellCache = {}
-    S3maphoreGlobalCache[cellName] = cellCache
-  end
+  local cellCache = ensureCellCache(cellName)
   local old = cellCache[tagTable]
   if old ~= nil then return old end
+
   local result = I.FlexTagL.objectHasTag(cellName, tagTable) or false
+
+  cellCache[tagTable] = result
+
+  return result
+end
+
+--- True if any object in the current cell has a recordId with any of the given FlexTags.
+--- Iterates CellPresence.byRecord once, checking objectHasTag per recordId.
+---
+--- Example usage:
+---
+--- playlistRules.cellContainsTagged { 'WeaponDwemer', 'ArmorDwemer', }
+---@param tagTable string[]
+---@return boolean
+function PlaylistRules.cellContainsTagged(tagTable)
+  if not I.FlexTagL then
+    print '[ S3MAPHORE ]: FlexTag not installed — cellContainsTagged returning false'
+    return false
+  end
+
+  local cellName = PlaylistRules.state.cellName
+  local cellCache = ensureCellCache(cellName)
+  local old = cellCache[tagTable]
+  if old ~= nil then return old end
+
+  local result = false
+  local byRecord = PlaylistRules.state.cellPresence.byRecord
+
+  for recordId in Next, byRecord do
+    if I.FlexTagL.objectHasTag(recordId, tagTable) then
+      result = true
+      break
+    end
+  end
+
   cellCache[tagTable] = result
   return result
 end
