@@ -51,7 +51,7 @@ local function playlistCoroutineLoader()
       local ok, err = pcall(MusicManager.playlistMetadata.loadYamlFile, file)
       if not ok then print(Strings.FailedToLoadTrackMetadata:format(file, err)) end
     elseif file:match '%.lua$' then
-      musicUtil.debugLog('reading playlist file', file)
+      musicUtil.debugLog('reading playlist file: %s', file)
 
       local ok, fileHandle = pcall(vfs.open, file)
       if not ok then
@@ -94,7 +94,7 @@ return function()
   local ok, playlist = coResume(playlistLoaderCo)
 
   if ok and playlist then
-    musicUtil.debugLog('Registered playlist:', playlist.id)
+    musicUtil.debugLog('Registered playlist: %s', playlist.id)
     playlistCount = playlistCount + 1
   elseif coStatus(playlistLoaderCo) == 'dead' then
     print(Strings.InitializationFinished:format(playlistCount))

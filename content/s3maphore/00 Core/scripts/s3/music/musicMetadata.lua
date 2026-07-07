@@ -56,7 +56,9 @@ local function loadYamlFile(yamlFile)
       local meta, key = normalizeMetadata(rawMetadata), normalizePath(playlistId)
       ---@cast meta S3maphorePlaylistMetadata
 
-      if Playlists[key] then musicUtil.debugLog(yamlFile, 'Overriding playlist metadata:', key) end
+      if Playlists[key] then
+        musicUtil.debugLog('%s Overriding playlist metadata: %s', yamlFile, key)
+      end
 
       Playlists[key] = musicUtil.makeReadOnly(meta, false, false)
     end
@@ -69,7 +71,7 @@ local function loadYamlFile(yamlFile)
       local meta, key = normalizeMetadata(rawMetadata), normalizePath(trackPath)
       ---@cast meta S3maphoreTrackMetadata
 
-      if Tracks[key] then musicUtil.debugLog(yamlFile, 'Overriding track metadata:', key) end
+      if Tracks[key] then musicUtil.debugLog('%s Overriding track metadata: %s', yamlFile, key) end
 
       Tracks[key] = musicUtil.makeReadOnly(meta)
     end

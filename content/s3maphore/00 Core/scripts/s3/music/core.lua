@@ -197,9 +197,7 @@ currentUpdateHandler = function(_)
     if key == 'BannerEnabled' then
       MusicManager.updateBanner()
     elseif key == 'MusicEnabled' then
-      if MusicSettings.DebugEnable then
-        musicUtil.debugLog('Music state changed to', MusicSettings.MusicEnabled)
-      end
+      musicUtil.debugLog('Music state changed to: %s', MusicSettings.MusicEnabled)
 
       MusicManager.forceSkip = false
       queuedEvent.name = nil
@@ -252,7 +250,7 @@ local function onCombatTargetsChanged(eventData)
   CombatState.onTargetsChanged(eventData.actor, eventData.targets)
   if PlaylistState.cellId ~= self.cell.id then return end
 
-  musicUtil.debugLog('Updating playlist due to combat target change:', eventData.actor)
+  musicUtil.debugLog('Updating playlist due to combat target change: %s', eventData.actor)
   resolvePlaylist()
 end
 
@@ -286,10 +284,8 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
   local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
 
   if not MusicManager.registeredPlaylists[selectedPlaylistId] then
-    if selectedPlaylistId and MusicSettings.DebugEnable then
-      musicUtil.debugLog(
-        StrFormat(Strings.FallbackPlaylistDoesntExist, newPlaylist.id, selectedPlaylistId)
-      )
+    if selectedPlaylistId then
+      musicUtil.debugLog(Strings.FallbackPlaylistDoesntExist, newPlaylist.id, selectedPlaylistId)
     end
 
     return newPlaylist.id
@@ -369,17 +365,13 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
     return true
   end
 
-  if MusicSettings.DebugEnable then
-    musicUtil.debugLog(
-      StrFormat(
-        Strings.InterruptModeFallthrough,
-        oldPlaylist.id,
-        oldPlaylist.interruptMode,
-        newPlaylist.id,
-        newPlaylist.interruptMode
-      )
-    )
-  end
+  musicUtil.debugLog(
+    Strings.InterruptModeFallthrough,
+    oldPlaylist.id,
+    oldPlaylist.interruptMode,
+    newPlaylist.id,
+    newPlaylist.interruptMode
+  )
 
   return false
 end
@@ -479,9 +471,7 @@ end
 MusicManager.addTrackChangedHandler(
   ---@param eventData S3maphoreStateChangeEventData
   function(eventData)
-    if MusicSettings.DebugEnable then
-      musicUtil.debugLog(StrFormat(Strings.TrackChanged, eventData.playlistId, eventData.trackName))
-    end
+    musicUtil.debugLog(Strings.TrackChanged, eventData.playlistId, eventData.trackName)
 
     MusicParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
     ambient.streamMusic(eventData.trackName, MusicParams)
@@ -572,9 +562,7 @@ return {
     end,
 
     S3maphoreSetPlaylistActive = function(eventData)
-      if MusicSettings.DebugEnable then
-        musicUtil.debugLog(StrFormat(Strings.ChangingPlaylist, eventData.playlist, eventData.state))
-      end
+      musicUtil.debugLog(Strings.ChangingPlaylist, eventData.playlist, eventData.state)
 
       MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
       if PlaylistState.cellId ~= self.cell.id then return end
@@ -583,9 +571,7 @@ return {
 
     ---@param eventData S3maphoreStateChangeEventData
     S3maphoreMusicStopped = function(eventData)
-      if MusicSettings.DebugEnable then
-        musicUtil.debugLog(StrFormat(Strings.MusicStopped, eventData.reason))
-      end
+      musicUtil.debugLog(Strings.MusicStopped, eventData.reason)
 
       MusicManager.updateBanner()
     end,
@@ -599,9 +585,7 @@ return {
     S3maphoreWeatherChanged = function(weatherName)
       PlaylistState.weather = weatherName
 
-      if MusicSettings.DebugEnable then
-        musicUtil.debugLog(StrFormat(Strings.WeatherChanged, weatherName))
-      end
+      musicUtil.debugLog(Strings.WeatherChanged, weatherName)
 
       if PlaylistState.cellId ~= self.cell.id then return end
 
@@ -613,14 +597,11 @@ return {
     S3maphoreClearTargetCache = function(hitObject)
       if PlaylistLoader then return end
 
-      if MusicSettings.DebugEnable then
-        musicUtil.debugLog(
-          'Clearing target cache for hit event on',
-          hitObject.recordId,
-          ':',
-          hitObject.id
-        )
-      end
+      musicUtil.debugLog(
+        'Clearing target cache for hit event on %s: %s',
+        hitObject.recordId,
+        hitObject.id
+      )
 
       CombatState.onHit()
       PlaylistRules.clearGlobalCombatTargetCache()

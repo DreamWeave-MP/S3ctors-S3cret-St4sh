@@ -10,8 +10,8 @@ local Strings = require 'scripts.s3.music.staticStrings'
 
 local async, fileExists, musicSettings, pathsMatching, playlistsSection, storage, storageGet, vfs
 
-local error, getmetatable, next, pairs, pcall, rawget, rawset, setmetatable, type =
-  error, getmetatable, next, pairs, pcall, rawget, rawset, setmetatable, type
+local error, getmetatable, next, pairs, pcall, rawget, rawset, select, setmetatable, type =
+  error, getmetatable, next, pairs, pcall, rawget, rawset, select, setmetatable, type
 
 local Random, print, StrFormat, StrLower, StrMatch, StrSub, TableConcat, TableInsert, TableRemove, tostring =
   math.random,
@@ -57,20 +57,14 @@ if isOpenMW then
   storageGet = musicSettings.get
 end
 
+---@param message string
 ---@param ... any
-local function debugLog(...)
+local function debugLog(message, ...)
   if isOpenMW then
     if not storageGet(musicSettings, 'DebugEnable') then return end
-  else
   end
 
-  local args = { ... }
-  for i = 1, #args do
-    args[i] = tostring(args[i])
-  end
-
-  local msg = TableConcat(args, ' ')
-
+  local msg = select('#', ...) > 0 and StrFormat(message, ...) or message
   print(StrFormat(Strings.LogFormatStr, msg))
 end
 
@@ -202,7 +196,7 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
     elseif playlist.priority <= PlaylistPriority.Explore then
       playlist.interruptMode = INTERRUPT.Me
     else
-      debugLog(StrFormat(Strings.CantAutoAssignInterruptModeStr, playlist.priority, playlist.id))
+      debugLog(Strings.CantAutoAssignInterruptModeStr, playlist.priority, playlist.id)
     end
   end
 end
