@@ -15,17 +15,22 @@ local clear = require 'scripts.s3.clear'
 
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
+local TrackSelection = require 'scripts.s3.music.trackSelection'
 
 ---@type S3maphorePlaylistEnv
 local PlaylistEnv
 ---@type function?
 local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
----@type PlaylistRules
-local PlaylistRules
----@type PlaylistState
-local PlaylistState
+local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistState'
 
+--- updateCellMetadata for me, but not for thee
+---@diagnostic disable-next-line: invisible
+updateCellMetadata, PlaylistState.updateCellMetadata = PlaylistState.updateCellMetadata, nil
+
+---@type PlaylistRules
+local PlaylistRules = require 'scripts.s3.music.playlistRules'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
+
 local Strings = require 'scripts.s3.music.staticStrings'
 
 ---@type CombatState
@@ -39,18 +44,8 @@ local NullFunction = require 'scripts.s3.nullFunction'
 ---@type Rand
 local randomGen = require 'scripts.s3.randomGen'
 
-local Ceil, error, next, pairs, Max, Min, StrFormat, StrLower, Remove, TableSort, type =
-  math.ceil,
-  error,
-  next,
-  pairs,
-  math.max,
-  math.min,
-  string.format,
-  string.lower,
-  table.remove,
-  table.sort,
-  type
+local Ceil, error, pairs, Max, Min, next, TableSort, type =
+  math.ceil, error, pairs, math.max, math.min, next, table.sort, type
 
 local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic =
   require('openmw.debug').isCollisionEnabled,
@@ -66,7 +61,6 @@ local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, Send
 local ActiveEffects, LevitateEffect =
   types.Actor.activeEffects(self), core.magic.EFFECT_TYPE.Levitate
 local GetMagicEffect = ActiveEffects.getEffect
-local HasTag
 
 ---@type fun(dt: number)
 local currentUpdateHandler
@@ -100,8 +94,6 @@ local TrackChangeData = {
   trackName = '',
 }
 
-local CachedCellGrid = { x = 0, y = 0 }
-
 local Actors = nearby.actors
 local MIN_BATCH_SIZE, MAX_BATCH_SIZE, TARGET_LATENCY, THIRTY_FRAMES = 4, 16, 1 / 3, 1 / 30
 local chainPosition = 2
@@ -110,32 +102,6 @@ local function clearQueuedData()
   if type(queuedEvent.data) ~= 'table' then queuedEvent.data = queuedEvent.backup end
   clear(queuedEvent.data)
   queuedEvent.name = ''
-end
-
---- Updates PlaylistState cell metadata from self.cell.
---- Called from both S3LFCellChanged and the init handler.
-local function updateCellMetadata()
-  local thisCell = self.cell
-  ---@cast thisCell openmw.core.LCell
-
-  if not HasTag then HasTag = thisCell.hasTag end
-
-  local shouldUseName = thisCell.name ~= ''
-
-  PlaylistState.cellHasWater = thisCell.hasWater
-  PlaylistState.cellWaterLevel = thisCell.waterLevel
-  PlaylistState.cellIsExterior = thisCell.isExterior or HasTag(thisCell, 'QuasiExterior')
-  PlaylistState.cellName = StrLower(shouldUseName and thisCell.name or thisCell.id)
-  PlaylistState.cellId = thisCell.id
-
-  if thisCell.region then PlaylistState.nearestRegion = thisCell.region end
-
-  if thisCell.isExterior then
-    CachedCellGrid.x, CachedCellGrid.y = thisCell.gridX, thisCell.gridY
-    PlaylistState.currentGrid = CachedCellGrid
-  else
-    PlaylistState.currentGrid = nil
-  end
 end
 
 --- Updates the playlist state for this frame, before it is actively used in playlist selection
@@ -228,15 +194,9 @@ end
 currentUpdateHandler = function(_)
   if not PlaylistLoader then error 'Playlist loader not found during initialization!' end
 
-  ---@type S3maphorePlaylistEnv?
-  local playlistEnv = PlaylistLoader()
+  PlaylistEnv = PlaylistLoader()
 
-  if playlistEnv then
-    PlaylistEnv = playlistEnv
-    PlaylistState, PlaylistRules = PlaylistEnv.Playback.state, PlaylistEnv.Playback.rules
-  else
-    return
-  end
+  if not PlaylistEnv then return end
 
   PlaylistLoader, resolvePlaylist, updateActorChain = nil, realResolvePlaylist, realUpdateActorChain
   TableSort(MusicManager.explorePlaylists, MusicManager.priorityThenRegistration)
@@ -284,115 +244,6 @@ currentUpdateHandler = function(_)
   currentUpdateHandler = NullFunction
 end
 
---- If a set of fallback playlists is present, attempt to use them during track selection
---- It should be noted that, for fallback playlists, their `active` parameter is ignored currently.
----@param newPlaylist S3maphorePlaylist
-local function getPlaylistIdForTrackSelection(newPlaylist)
-  local fallbackData = newPlaylist.fallback
-  if not fallbackData or not fallbackData.playlists then return newPlaylist.id end
-
-  local useOtherPlaylist = randomGen.float() <= (fallbackData.playlistChance or 0.5)
-
-  if not useOtherPlaylist then return newPlaylist.id end
-
-  for i = #fallbackData.playlists, 1, -1 do
-    local playlistId = fallbackData.playlists[i]
-    if not MusicManager.registeredPlaylists[playlistId] then Remove(fallbackData.playlists, i) end
-  end
-
-  local numBackupPlaylists = #fallbackData.playlists
-  local selectedPlaylistIndex = randomGen.range(numBackupPlaylists, true)
-  local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
-
-  if not MusicManager.registeredPlaylists[selectedPlaylistId] then
-    if selectedPlaylistId then
-      musicUtil.debugLog(Strings.FallbackPlaylistDoesntExist, newPlaylist.id, selectedPlaylistId)
-    end
-
-    return newPlaylist.id
-  end
-
-  return selectedPlaylistId
-end
-
----@param playlistId string name of a playlist stored in registeredPlaylists table
-local function selectTrackFromPlaylist(playlistId)
-  local playlist = MusicManager.registeredPlaylists[playlistId]
-
-  if not playlist then error(StrFormat(Strings.PlaylistNotRegistered, playlistId)) end
-
-  local playlistOrder = MusicManager.playlistsTracksOrder[playlist.id]
-  local nextTrackIndex = Remove(playlistOrder)
-
-  if not nextTrackIndex then error(Strings.NextTrackIndexNil) end
-
-  -- If there are no tracks left, fill playlist again.
-  if not next(playlistOrder) then
-    playlistOrder = musicUtil.initTracksOrder(playlist.tracks, playlist.randomize)
-
-    if not playlist.cycleTracks then playlist.deactivateAfterEnd = true end
-
-    -- If next track for randomized playist will be the same as one we want to play, swap it with random track.
-    if playlist.randomize and #playlistOrder > 1 and playlistOrder[1] == nextTrackIndex then
-      local index = randomGen.range(2, #playlistOrder, true)
-      playlistOrder[1], playlistOrder[index] = playlistOrder[index], playlistOrder[1]
-    end
-
-    MusicManager.playlistsTracksOrder[playlist.id] = playlistOrder
-  end
-
-  musicUtil.setStoredTracksOrder(playlist.id, playlistOrder)
-
-  local trackPath = playlist.tracks[nextTrackIndex]
-
-  if not trackPath then error(StrFormat(Strings.NoTrackPath, nextTrackIndex, playlist.id)) end
-
-  return trackPath
-end
-
----@param newPlaylist S3maphorePlaylist
-local function switchPlaylist(newPlaylist)
-  local nextPlaylist = getPlaylistIdForTrackSelection(newPlaylist)
-  local nextTrack = selectTrackFromPlaylist(nextPlaylist)
-
-  if newPlaylist.playOneTrack then newPlaylist.deactivateAfterEnd = true end
-
-  if MusicManager.currentPlaylist and newPlaylist.id == MusicManager.currentPlaylist.id then
-    SilenceManager:updateSilenceParams(newPlaylist)
-  end
-
-  MusicManager.currentPlaylist = newPlaylist
-  MusicManager.currentTrack = nextTrack
-  PlaybackParams.fadeOut = newPlaylist.fadeOut or MusicSettings.FadeOutDuration
-end
-
----@param oldPlaylist S3maphorePlaylist?
----@param newPlaylist S3maphorePlaylist
----@return boolean canSwitchPlaylist
-local function canSwitchPlaylist(oldPlaylist, newPlaylist)
-  if not oldPlaylist then --- No playlist, eg no music playing, means we can switch
-    return true
-  elseif oldPlaylist.interruptMode == MusicManager.INTERRUPT.Never then --- But never interrupt a playlist that specifies it can't be interrupted
-    return false
-  elseif
-    MusicSettings.ForceFinishTrack and oldPlaylist.interruptMode == newPlaylist.interruptMode
-  then --- And also allow battle and explore playlist to flow nicely between themselves
-    return false
-  elseif oldPlaylist.interruptMode <= MusicManager.INTERRUPT.Other then --- And otherwise, if the interrupt mode changes then allow the new playlist
-    return true
-  end
-
-  musicUtil.debugLog(
-    Strings.InterruptModeFallthrough,
-    oldPlaylist.id,
-    oldPlaylist.interruptMode,
-    newPlaylist.id,
-    newPlaylist.interruptMode
-  )
-
-  return false
-end
-
 handlePlayback = function(_)
   currentUpdateHandler = initialUpdateFunction
 
@@ -421,7 +272,7 @@ handlePlayback = function(_)
 
     if
       desiredPlaylist ~= MusicManager.currentPlaylist
-      and canSwitchPlaylist(MusicManager.currentPlaylist, desiredPlaylist)
+      and TrackSelection.canSwitchPlaylist(MusicManager.currentPlaylist, desiredPlaylist)
     then
       MusicManager.forceSkip = true
     elseif desiredPlaylist ~= MusicManager.currentPlaylist and didTransition then
@@ -466,9 +317,9 @@ handlePlayback = function(_)
   end
 
   if target ~= MusicManager.currentPlaylist then
-    switchPlaylist(target)
+    TrackSelection.switchPlaylist(target, PlaybackParams)
   else
-    MusicManager.currentTrack = selectTrackFromPlaylist(target.id)
+    MusicManager.currentTrack = TrackSelection.selectTrackFromPlaylist(target.id)
     PlaybackParams.fadeOut = target.fadeOut or MusicSettings.FadeOutDuration
   end
 

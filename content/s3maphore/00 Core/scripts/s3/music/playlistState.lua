@@ -1,5 +1,7 @@
 ---@omw-context player
 
+local StrLower = string.lower
+
 local gameSelf = require 'openmw.self'
 local DynamicStats = gameSelf.type.stats.dynamic
 
@@ -51,6 +53,37 @@ local PlaylistState = {
   isExploring = true,
   isInCombat = false,
 }
+
+-- Cached cell grid for updateCellMetadata, avoids creating new table objects each call
+local CachedCellGrid = { x = 0, y = 0 }
+local HasTag
+
+--- Updates PlaylistState cell metadata from self.cell.
+--- Called from both S3LFCellChanged and the init handler.
+---@private
+function PlaylistState.updateCellMetadata()
+  local thisCell = gameSelf.cell
+  ---@cast thisCell openmw.core.LCell
+
+  if not HasTag then HasTag = thisCell.hasTag end
+
+  local shouldUseName = thisCell.name ~= ''
+
+  PlaylistState.cellHasWater = thisCell.hasWater
+  PlaylistState.cellWaterLevel = thisCell.waterLevel
+  PlaylistState.cellIsExterior = thisCell.isExterior or HasTag(thisCell, 'QuasiExterior')
+  PlaylistState.cellName = StrLower(shouldUseName and thisCell.name or thisCell.id)
+  PlaylistState.cellId = thisCell.id
+
+  if thisCell.region then PlaylistState.nearestRegion = thisCell.region end
+
+  if thisCell.isExterior then
+    CachedCellGrid.x, CachedCellGrid.y = thisCell.gridX, thisCell.gridY
+    PlaylistState.currentGrid = CachedCellGrid
+  else
+    PlaylistState.currentGrid = nil
+  end
+end
 
 do
   local async = require 'openmw.async'
