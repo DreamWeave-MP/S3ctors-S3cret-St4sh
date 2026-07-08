@@ -5,9 +5,6 @@ local isOpenMW = require 'scripts.s3.isOpenMW'
 ---@type PlaylistPriority
 local PlaylistPriority = require 'doc.playlistPriority'
 
----@type S3maphoreStaticStrings
-local Strings = require 'scripts.s3.music.staticStrings'
-
 local async, fileExists, musicSettings, pathsMatching, playlistsSection, storage, storageGet, vfs
 
 local error, getmetatable, next, pairs, pcall, rawget, rawset, select, setmetatable, type =
@@ -70,7 +67,7 @@ local function debugLog(message, ...)
   if isOpenMW and not DebugEnable then return end
 
   local msg = select('#', ...) > 0 and StrFormat(message, ...) or message
-  print(StrFormat(Strings.LogFormatStr, msg))
+  print(StrFormat('[ S3MAPHORE ]: %s', msg))
 end
 
 ---@param root table
@@ -157,8 +154,8 @@ end
 local function getAllPlaylistFiles()
   local result = {}
   for fileName in pathsMatching 'playlists/' do
-    local shortExt = fileName:sub(-4)
-    if shortExt == '.lua' or shortExt == '.yml' or fileName:sub(-5) == '.yaml' then
+    local shortExt = StrSub(fileName, -4)
+    if shortExt == '.lua' or shortExt == '.yml' or StrSub(fileName, -5) == '.yaml' then
       TableInsert(result, fileName)
     end
   end
@@ -209,10 +206,10 @@ end
 
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
-  if not playlist.id or not playlist.priority then error(Strings.InvalidPlaylistFields) end
+  if not playlist.id or not playlist.priority then error('Can not register playlist: \'id\' and \'priority\' are mandatory fields') end
 
   if not playlist.tracks then
-    playlist.tracks = getTracksFromDirectory(('music/%s/'):format(playlist.id), playlist.exclusions)
+    playlist.tracks = getTracksFromDirectory(StrFormat('music/%s/', playlist.id), playlist.exclusions)
   end
 
   if playlist.active == nil then playlist.active = true end
@@ -231,7 +228,7 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
     elseif playlist.priority <= PlaylistPriority.Explore then
       playlist.interruptMode = INTERRUPT.Me
     else
-      debugLog(Strings.CantAutoAssignInterruptModeStr, playlist.priority, playlist.id)
+      debugLog('Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!', playlist.priority, playlist.id)
     end
   end
 end
@@ -375,7 +372,7 @@ end
 ---@return ReadOnlyTable
 local function makeReadOnly(inTable, copy, strict, visited)
   if type(inTable) ~= 'table' then
-    error(('makeReadOnly: expected table, got %s'):format(type(inTable)), 2)
+    error(StrFormat('makeReadOnly: expected table, got %s', type(inTable)), 2)
   end
   visited = visited or {}
 

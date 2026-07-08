@@ -7,8 +7,6 @@ local gameSelf = require 'openmw.self'
 local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 
-local StaticStrings = require 'scripts.s3.music.staticStrings'
-
 local ActiveEffects, CreatureRecords, DynamicStats, GetGameTime, IsNPC, Level, NPCRecords =
   types.Actor.activeEffects,
   types.Creature.records,
@@ -20,8 +18,8 @@ local ActiveEffects, CreatureRecords, DynamicStats, GetGameTime, IsNPC, Level, N
 
 local VAMPIRISM_EFFECT = core.magic.EFFECT_TYPE.Vampirism
 
-local Error, Floor, Next, Pairs, StrFind, StrFormat, Type, HUGE =
-  error, math.floor, next, pairs, string.find, string.format, type, math.huge
+local Error, Floor, Next, Pairs, StrFind, StrFormat, StrLower, Type, HUGE =
+  error, math.floor, next, pairs, string.find, string.format, string.lower, type, math.huge
 
 local Quests = gameSelf.type.quests(gameSelf)
 local MyLevel = gameSelf.type.stats.level(gameSelf)
@@ -164,7 +162,7 @@ function PlaylistRules.combatTargetExact(validTargets)
   local combatTargets = PlaylistRules.state.combatTargets
   for i = 1, #combatTargets do
     local actor = combatTargets[i]
-    local actorName = actor.type.records[actor.recordId].name:lower()
+    local actorName = StrLower(actor.type.records[actor.recordId].name)
 
     if validTargets[actorName] then
       result = true
@@ -408,7 +406,7 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
       levelDifference = targetLevel.current / MyLevel.current
       levelScale = levelRule.relative
     else
-      Error(StrFormat(StaticStrings.InvalidLevelDifferenceRule, levelRule))
+      Error(StrFormat("Table %s for combatTargetLevelDifference rule does not contain either the relative OR absolute fields! You broke it!", levelRule))
     end
 
     ---@diagnostic disable-next-line: need-check-nil
@@ -556,7 +554,7 @@ function PlaylistRules.combatTargetMatch(validTargetPatterns)
         break
       end
     else
-      local actorName = actor.type.records[actorId].name:lower()
+      local actorName = StrLower(actor.type.records[actorId].name)
 
       local actorResult = false
       for j = 1, #validTargetPatterns do

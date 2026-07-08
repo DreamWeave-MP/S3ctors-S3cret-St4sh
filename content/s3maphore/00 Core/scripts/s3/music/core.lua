@@ -30,8 +30,6 @@ updateCellMetadata, PlaylistState.updateCellMetadata = PlaylistState.updateCellM
 local PlaylistRules = require 'scripts.s3.music.playlistRules'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 
-local Strings = require 'scripts.s3.music.staticStrings'
-
 ---@type CombatState
 local CombatState = require 'scripts.s3.music.combatState'
 
@@ -312,7 +310,7 @@ end
 MusicManager.addTrackChangedHandler(
   ---@param eventData S3maphorePlaybackChangeEventData
   function(eventData)
-    musicUtil.debugLog(Strings.TrackChanged, eventData.playlistId, eventData.trackName)
+    musicUtil.debugLog('Track changed! Current playlist is: %s Track: %s', eventData.playlistId, eventData.trackName)
 
     PlaybackParams.fadeOut = eventData.fadeOut or MusicSettings.FadeOutDuration
     StreamMusic(eventData.trackName, PlaybackParams)
@@ -431,7 +429,7 @@ return {
     S3maphoreSetPlaylistActive = function(eventData)
       if PlaylistLoader then error 'S3maphoreSetPlaylistActive called during initialization!' end
 
-      musicUtil.debugLog(Strings.ChangingPlaylist, eventData.playlist, eventData.state)
+      musicUtil.debugLog('Setting playlist %s to %s', eventData.playlist, eventData.state)
 
       MusicManager.setPlaylistActive(eventData.playlist, eventData.state)
       if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
@@ -440,7 +438,7 @@ return {
 
     ---@param eventData S3maphorePlaybackChangeEventData
     S3maphoreMusicStopped = function(eventData)
-      musicUtil.debugLog(Strings.MusicStopped, eventData.reason)
+      musicUtil.debugLog('Music stopped: %s', eventData.reason)
 
       MusicManager.updateBanner()
     end,
@@ -457,7 +455,7 @@ return {
 
       PlaylistState.weather = weatherName
 
-      musicUtil.debugLog(Strings.WeatherChanged, weatherName)
+      musicUtil.debugLog('Weather changed to %s', weatherName)
 
       if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
 

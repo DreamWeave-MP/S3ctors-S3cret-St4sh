@@ -3,13 +3,16 @@
 local coCreate, coResume, coStatus, coYield, pcall, print, type =
   coroutine.create, coroutine.resume, coroutine.status, coroutine.yield, pcall, print, type
 
+local StrFormat, StrMatch = string.format, string.match
+
 local util = require 'openmw.util'
 local vfs = require 'openmw.vfs'
 
 local musicUtil = require 'scripts.s3.music.util'
 
 local MusicManager = require 'scripts.s3.music.musicManager'
-local Strings = require 'scripts.s3.music.staticStrings'
+
+local FAILED_TO_LOAD_PLAYLIST = 'Failed to load playlist file: %s\nErr: %s'
 
 --- Takes any number of paramaters and deep prints them, if debug logging is enabled
 local function printOverride(...) musicUtil.debugLog(musicUtil.deepToString({ ... }, 3)) end
@@ -47,15 +50,15 @@ local function playlistCoroutineLoader()
   for fileIndex = 1, #files do
     local file = files[fileIndex]
 
-    if file:match '%.ya?ml$' then
+    if StrMatch(file, '%.ya?ml$') then
       local ok, err = pcall(MusicManager.playlistMetadata.loadYamlFile, file)
-      if not ok then print(Strings.FailedToLoadTrackMetadata:format(file, err)) end
-    elseif file:match '%.lua$' then
+      if not ok then print(StrFormat('Failed to load track metadata file: %s\nErr: %s', file, err)) end
+    elseif StrMatch(file, '%.lua$') then
       musicUtil.debugLog('reading playlist file: %s', file)
 
       local ok, fileHandle = pcall(vfs.open, file)
       if not ok then
-        print(Strings.FailedToLoadPlaylist:format(file, fileHandle))
+        print(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, fileHandle))
       else
         codeString = fileHandle:read '*a'
         fileHandle:close()
@@ -63,12 +66,12 @@ local function playlistCoroutineLoader()
         ok, result = pcall(util.loadCode, codeString, PlaylistEnvironment)
 
         if not ok or type(result) ~= 'function' then
-          print(Strings.FailedToLoadPlaylist:format(file, result))
+          print(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, result))
         else
           ok, result = pcall(result)
 
           if type(result) ~= 'table' then
-            print(Strings.FailedToLoadPlaylist:format(file, result))
+            print(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, result))
           else
             for playlistIndex = 1, #result do
               local playlist = result[playlistIndex]
@@ -97,7 +100,7 @@ return function()
     musicUtil.debugLog('Registered playlist: %s', playlist.id)
     playlistCount = playlistCount + 1
   elseif coStatus(playlistLoaderCo) == 'dead' then
-    print(Strings.InitializationFinished:format(playlistCount))
+    print(StrFormat('[ S3MAPHORE ]: %d playlists loaded. Ready to play music!', playlistCount))
 
     return PlaylistEnvironment
   end
