@@ -20,8 +20,8 @@ local ActiveEffects, CreatureRecords, DynamicStats, GetGameTime, IsNPC, Level, N
 
 local VAMPIRISM_EFFECT = core.magic.EFFECT_TYPE.Vampirism
 
-local Error, Floor, Next, StrFind, StrFormat, Type, HUGE =
-  error, math.floor, next, string.find, string.format, type, math.huge
+local Error, Floor, Next, Pairs, StrFind, StrFormat, Type, HUGE =
+  error, math.floor, next, pairs, string.find, string.format, type, math.huge
 
 local Quests = gameSelf.type.quests(gameSelf)
 local MyLevel = gameSelf.type.stats.level(gameSelf)
@@ -742,7 +742,7 @@ function PlaylistRules.cellContainsTagged(tagTable)
   local result = false
   local byRecord = PlaylistRules.state.cellPresence.byRecord
 
-  for recordId in Next, byRecord do
+  for recordId in Pairs(byRecord) do
     if I.FlexTagL.objectHasTag(recordId, tagTable) then
       result = true
       break
@@ -776,7 +776,7 @@ function PlaylistRules.contentTag(tagTable)
   local result = false
   local byContentFile = PlaylistRules.state.cellPresence.byContentFile
 
-  for contentFile in Next, byContentFile do
+  for contentFile in Pairs(byContentFile) do
     if I.FlexTagL.objectHasTag(contentFile, tagTable) then
       result = true
       break
