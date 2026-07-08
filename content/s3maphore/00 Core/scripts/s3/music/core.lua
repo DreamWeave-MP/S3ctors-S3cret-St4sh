@@ -633,7 +633,7 @@ return {
 
     ---@param hitObject openmw.LObject
     S3maphoreClearTargetCache = function(hitObject)
-      if PlaylistLoader then return end
+      if PlaylistLoader or not CombatState.actorIsInCombat(hitObject.id) then return end
 
       musicUtil.debugLog(
         'Clearing target cache for hit event on %s: %s',

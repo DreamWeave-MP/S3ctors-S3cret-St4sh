@@ -10,11 +10,11 @@ local Players
 local Targets = {}
 
 local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, UnarmedStance
-local SendEvent = gameSelf.sendEvent
+local SendEvent, SendGlobalEvent = gameSelf.sendEvent, nil
 
 do
   local core = require 'openmw.core'
-  IsWorldPaused = core.isWorldPaused
+  IsWorldPaused, SendGlobalEvent = core.isWorldPaused, core.sendGlobalEvent
 
   local I = require 'openmw.interfaces'
   local AI = I.AI
@@ -104,6 +104,8 @@ return {
       for i = 1, #Players do
         SendEvent(Players[i], 'S3maphoreClearTargetCache', gameSelf.object)
       end
+
+      SendGlobalEvent('S3maphoreDeathCountIncrement', gameSelf.recordId)
     end,
     S3maphoreCheckCombat = updateCombatState,
   },
