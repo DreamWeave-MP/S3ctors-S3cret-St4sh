@@ -1,13 +1,12 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local assert, TableConcat = assert, table.concat
+local assert, Ceil, Max, Min, TableConcat = assert, math.ceil, math.max, math.min, table.concat
 
 ---@type openmw.SelfObject
 local gameSelf = require 'openmw.self'
 ---@type openmw.types.Player
-local myType = gameSelf.type
-local gameSelfId = gameSelf.id
+local myType, gameSelfId, sendEvent = gameSelf.type, gameSelf.id, gameSelf.sendEvent
 
 local Health, IsDead, Level, MyLevel =
   myType.stats.dynamic.health,
@@ -29,6 +28,11 @@ local MusicSettings = require 'scripts.s3.music.musicSettings'
 local PlaylistRules = require 'scripts.s3.music.playlistRules'
 ---@type PlaylistState
 local PlaylistState = require 'scripts.s3.music.playlistState'
+
+--- Actor polling state for batch combat-target checks
+local Actors = require('openmw.nearby').actors
+local MIN_BATCH_SIZE, MAX_BATCH_SIZE, TARGET_LATENCY, THIRTY_FRAMES = 4, 16, 1 / 3, 1 / 30
+local chainPosition = 2
 
 ---@type openmw.LObject[]
 local combatTargets = {}
@@ -134,12 +138,40 @@ end
 ---@return boolean isInCombat
 local function actorIsInCombat(actorId) return combatTargetIdx[actorId] ~= nil end
 
+--- Batches per-frame combat target polling across nearby actors.
+--- Spreads the load across frames so we don't check all actors every tick.
+---@param dt number
+local function batchPoll(dt)
+  local numActors = #Actors
+  if numActors < 2 then return end
+
+  dt = dt == 0 and THIRTY_FRAMES or dt
+
+  local batchSize =
+    Max(MIN_BATCH_SIZE, Min(MAX_BATCH_SIZE, Ceil((numActors - 1) * dt / TARGET_LATENCY)))
+
+  for _ = 1, batchSize do
+    if chainPosition > numActors then chainPosition = 2 end
+    local actor = Actors[chainPosition]
+    sendEvent(actor, 'S3maphoreCheckCombat')
+    chainPosition = chainPosition + 1
+  end
+end
+
+--- Resets the actor polling cycle so the next batchPoll starts from the beginning.
+--- Call on cell transitions or any event that invalidates the current traversal position.
+local function resetPollCycle()
+  chainPosition = 2
+end
+
 ---@class CombatState
 local CombatState = {
   actorIsInCombat = actorIsInCombat,
+  batchPoll = batchPoll,
   onHit = onHit,
   onTargetsChanged = onTargetsChanged,
   recomputeState = recomputeState,
+  resetPollCycle = resetPollCycle,
 }
 
 return CombatState

@@ -6,7 +6,6 @@ local async = require 'openmw.async'
 ---@type openmw.core
 local core = require 'openmw.core'
 local input = require 'openmw.input'
-local nearby = require 'openmw.nearby'
 local self = require 'openmw.self'
 local storage = require 'openmw.storage'
 local types = require 'openmw.types'
@@ -44,8 +43,8 @@ local NullFunction = require 'scripts.s3.nullFunction'
 ---@type Rand
 local randomGen = require 'scripts.s3.randomGen'
 
-local Ceil, error, pairs, Max, Min, next, TableSort, type =
-  math.ceil, error, pairs, math.max, math.min, next, table.sort, type
+local error, pairs, next, TableSort, type =
+  error, pairs, next, table.sort, type
 
 local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic =
   require('openmw.debug').isCollisionEnabled,
@@ -65,8 +64,7 @@ local GetMagicEffect = ActiveEffects.getEffect
 ---@type fun(dt: number)
 local currentUpdateHandler
 
-local handlePlayback, resolvePlaylist, updateActorChain = NullFunction, NullFunction, NullFunction
----@cast updateActorChain fun(dt: number)
+local handlePlayback, resolvePlaylist = NullFunction, NullFunction
 
 local desiredPlaylist, resolverDirty, didTransition, waitingOnPresence, wasExterior =
   nil, false, false, true, false
@@ -93,10 +91,6 @@ local TrackChangeData = {
   reason = MusicManager.STATE.TrackChanged,
   trackName = '',
 }
-
-local Actors = nearby.actors
-local MIN_BATCH_SIZE, MAX_BATCH_SIZE, TARGET_LATENCY, THIRTY_FRAMES = 4, 16, 1 / 3, 1 / 30
-local chainPosition = 2
 
 local function clearQueuedData()
   if type(queuedEvent.data) ~= 'table' then queuedEvent.data = queuedEvent.backup end
@@ -160,24 +154,6 @@ else
   initialUpdateFunction = updatePlaylistState
 end
 
----@param dt number
-local function realUpdateActorChain(dt)
-  local numActors = #Actors
-  if numActors < 2 then return end
-
-  dt = dt == 0 and THIRTY_FRAMES or dt
-
-  local batchSize =
-    Max(MIN_BATCH_SIZE, Min(MAX_BATCH_SIZE, Ceil((numActors - 1) * dt / TARGET_LATENCY)))
-
-  for _ = 1, batchSize do
-    if chainPosition > numActors then chainPosition = 2 end
-    local actor = Actors[chainPosition]
-    SendEvent(actor, 'S3maphoreCheckCombat')
-    chainPosition = chainPosition + 1
-  end
-end
-
 local function realResolvePlaylist()
   local newPlaylist = musicUtil.getActivePlaylistByPriority(
     MusicManager.specialPlaylists,
@@ -198,7 +174,7 @@ currentUpdateHandler = function(_)
 
   if not PlaylistEnv then return end
 
-  PlaylistLoader, resolvePlaylist, updateActorChain = nil, realResolvePlaylist, realUpdateActorChain
+  PlaylistLoader, resolvePlaylist = nil, realResolvePlaylist
   TableSort(MusicManager.explorePlaylists, MusicManager.priorityThenRegistration)
   TableSort(MusicManager.battlePlaylists, MusicManager.priorityThenRegistration)
   TableSort(MusicManager.specialPlaylists, MusicManager.priorityThenRegistration)
@@ -369,7 +345,7 @@ return {
     end,
 
     onUpdate = function(dt)
-      updateActorChain(dt)
+      CombatState.batchPoll(dt)
       currentUpdateHandler(dt)
     end,
 
@@ -421,7 +397,8 @@ return {
     end,
 
     S3LFCellChanged = function(oldCellId)
-      chainPosition, didTransition, wasExterior = 2, true, PlaylistState.cellIsExterior
+      CombatState.resetPollCycle()
+      didTransition, wasExterior = true, PlaylistState.cellIsExterior
 
       updateCellMetadata()
 
