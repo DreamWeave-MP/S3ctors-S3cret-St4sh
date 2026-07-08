@@ -16,8 +16,34 @@ local PlaylistState = require 'scripts.s3.music.playlistState'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local musicUtil = require 'scripts.s3.music.util'
 
-local Floor, Insert, Max, StrFormat, TableSort, next, unpack =
-  math.floor, table.insert, math.max, string.format, table.sort, next, unpack
+--- Overkill, yes, but we're going to document making modifications to this file.
+--- If someone who doesn't know what they're doing tweaks it, because we told them to,
+--- and the mod breaks, guess whose fault that its for making flimsy code?
+--- So, yes, unfortunately, for robustness we not only wish to pcall this file,
+--- AND hardcode the default death track locally since we're about to import it, because if the import
+--- fails we need a fallback and the mod should still work!
+---
+--- 👏
+--- moddability
+--- 👏
+--- in
+--- 👏
+--- depth
+--- 👏
+
+local ok, DefaultDeathTrack = pcall(require, 'scripts.s3.music.defaultDeathTrack')
+
+if not ok then
+  print '[ S3MAPHORE ]: Failed loading default death track module, falling back to hardcoded literal path music/special/mw_death.mp3'
+  DefaultDeathTrack = 'music/special/mw_death.mp3'
+end
+
+--- Initializes to the default death track at module scope, but,
+--- overwritten by onLoad if any eventHandler/setDeathTrack call overwrote it
+local DeathTrackPath = DefaultDeathTrack
+
+local Floor, Insert, Max, StrFormat, TableSort, next, print, unpack =
+  math.floor, table.insert, math.max, string.format, table.sort, next, print, unpack
 
 local ReadOnlyPlaylistFileList =
   musicUtil.makeReadOnly(musicUtil.getPlaylistFilePaths(), false, false)
@@ -39,6 +65,9 @@ local TrackChangeHandlers = {}
 ---@field playlistTracksOrder table<string, string[]>
 ---@field registrationOrder integer
 ---@field registeredPlaylists table<string, S3maphorePlaylist>
+---@field getDeathTrack fun(): string
+---@field resetDeathTrack fun()
+---@field setDeathTrack fun(path: string)
 local MusicManager = {
   STATE = require 'scripts.s3.music.enum.stateChangeReason',
   TIME_MAP = require 'scripts.s3.music.enum.timeMap',
@@ -268,6 +297,18 @@ function MusicManager.overrideMusicEnabled(enabled)
 
   MusicSettings.MusicEnabled = enabled
 end
+
+function MusicManager.getDeathTrack() return DeathTrackPath end
+
+function MusicManager.setDeathTrack(path)
+  if not FileExists(path) then
+    return print(StrFormat('[ S3MAPHORE ]: Death track not found: %s', path))
+  end
+
+  DeathTrackPath = path
+end
+
+function MusicManager.resetDeathTrack() DeathTrackPath = DefaultDeathTrack end
 
 local function priorityThenRegistration(a, b)
   return a.priority < b.priority
