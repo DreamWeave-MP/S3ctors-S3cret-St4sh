@@ -9,9 +9,14 @@ local DynamicStats = gameSelf.type.stats.dynamic
 ---@field cellName string lowercased name of the cell the player is in
 ---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field cellWaterLevel number? If the current cell has water, then, it is copied here
----@field cellPresence CellPresence Object counts for the currently loaded cell (or active grid) — byRecord, byType, byContentFile, plus staticContentFiles, nearestRegion, cellHasHostileActors, and areaHasHostileActors
+---@field objectsByRecord table<string, integer> Map of recordId → instance count for the current cell/grid
+---@field objectsByType table<string, integer> Map of typeName → instance count for the current cell/grid
+---@field objectsByContentFile table<string, integer> Map of contentFile → instance count for the current cell/grid
+---@field staticObjectContentFiles string[] List of content files with statics in the current cell/grid
+---@field cellHasHostileActors boolean True if the player's current cell contains hostile actors
+---@field areaHasHostileActors boolean True if any cell in the current 3×3 grid contains hostile actors
 ---@field killCounts table<string, number> Record of all actors killed during this playthrough. The `TotalKills` field indicates the overall number of killed actors. Does not necessarily mean those actors were killed by the player, they're just dead.
----@field objectCount number Total objects in the current cell, computed from cellPresence.byType
+---@field objectCount number Total objects in the current cell, computed from objectsByType
 ---@field combatTargets openmw.LObject[] combat targets in insertion order
 ---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
 ---@field isExploring boolean whether the player is currently exploring or not. Distinct from isInCombat as settings may control it.
@@ -31,15 +36,12 @@ local PlaylistState = {
     fatigue = DynamicStats.fatigue(gameSelf),
   },
   movementMode = 'standing',
-  cellPresence = {
-    areaHasHostileActors = false,
-    cellHasHostileActors = false,
-    byContentFile = {},
-    byRecord = {},
-    byType = {},
-    nearestRegion = '',
-    staticContentFiles = {},
-  },
+  objectsByRecord = {},
+  objectsByType = {},
+  objectsByContentFile = {},
+  staticObjectContentFiles = {},
+  cellHasHostileActors = false,
+  areaHasHostileActors = false,
   killCounts = {},
   objectCount = 0,
   cellId = '',
@@ -70,7 +72,12 @@ do
 
       PlaylistState.nearestRegion = presence.nearestRegion or thisCell.region
 
-      PlaylistState.cellPresence = presence
+      PlaylistState.objectsByRecord = presence.byRecord
+      PlaylistState.objectsByType = presence.byType
+      PlaylistState.objectsByContentFile = presence.byContentFile
+      PlaylistState.staticObjectContentFiles = presence.staticContentFiles
+      PlaylistState.cellHasHostileActors = presence.cellHasHostileActors
+      PlaylistState.areaHasHostileActors = presence.areaHasHostileActors
 
       -- Compute total object count from byType so playlists can read PlaylistState.objectCount directly
       local total = 0

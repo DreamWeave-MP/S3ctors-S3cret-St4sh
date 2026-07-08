@@ -426,8 +426,8 @@ handlePlayback = function(_)
       MusicManager.forceSkip = true
     elseif desiredPlaylist ~= MusicManager.currentPlaylist and didTransition then
       local isExterior = PlaylistState.cellIsExterior
-      local friendlyEnter = not PlaylistState.cellPresence.cellHasHostileActors
-      local hostileEnter = PlaylistState.cellPresence.cellHasHostileActors
+      local friendlyEnter = not PlaylistState.cellHasHostileActors
+      local hostileEnter = PlaylistState.cellHasHostileActors
 
       local overworldCross = wasExterior
         and isExterior

@@ -631,7 +631,7 @@ function PlaylistRules.objectExact(staticRules)
   local old = cellCache[staticRules]
   if old ~= nil then return old end
 
-  local byRecord = PlaylistRules.state.cellPresence.byRecord
+  local byRecord = PlaylistRules.state.objectsByRecord
   local result = false
 
   for recordId, ruleVal in Next, staticRules do
@@ -671,7 +671,7 @@ end
 ---@param inputContentFiles  IDPresenceMap
 ---@return boolean
 function PlaylistRules.staticContentFile(inputContentFiles)
-  local contentFiles = PlaylistRules.state.cellPresence.staticContentFiles
+  local contentFiles = PlaylistRules.state.staticObjectContentFiles
   if not contentFiles[1] then return false end
   local cellName = PlaylistRules.state.cellName
 
@@ -740,7 +740,7 @@ function PlaylistRules.cellContainsTagged(tagTable)
   if old ~= nil then return old end
 
   local result = false
-  local byRecord = PlaylistRules.state.cellPresence.byRecord
+  local byRecord = PlaylistRules.state.objectsByRecord
 
   for recordId in Pairs(byRecord) do
     if I.FlexTagL.objectHasTag(recordId, tagTable) then
@@ -774,7 +774,7 @@ function PlaylistRules.contentTag(tagTable)
   if old ~= nil then return old end
 
   local result = false
-  local byContentFile = PlaylistRules.state.cellPresence.byContentFile
+  local byContentFile = PlaylistRules.state.objectsByContentFile
 
   for contentFile in Pairs(byContentFile) do
     if I.FlexTagL.objectHasTag(contentFile, tagTable) then
@@ -801,7 +801,7 @@ function PlaylistRules.typeCount(typeRule)
   local old = cellCache[typeRule]
   if old ~= nil then return old end
 
-  local count = PlaylistRules.state.cellPresence.byType[typeRule.type] or 0
+  local count = PlaylistRules.state.objectsByType[typeRule.type] or 0
   local min = typeRule.min or 0
   local max = typeRule.max or HUGE
 
