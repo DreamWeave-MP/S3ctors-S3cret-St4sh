@@ -1,6 +1,7 @@
 ---@omw-context player
 
-local activePlaylistSettings, ambient, core, gameSelf, vfs
+local gameSelf = require 'openmw.self'
+local activePlaylistSettings
 
 --- FIXME: This isn't API-agnostic, but, I don't care ATM
 local aux_util = require 'openmw_aux.util'
@@ -15,8 +16,11 @@ local PlaylistState = require 'scripts.s3.music.playlistState'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local musicUtil = require 'scripts.s3.music.util'
 
--- These are both still api-specific
-local PlaylistFileList = musicUtil.getPlaylistFilePaths()
+local Floor, Insert, Max, StrFormat, TableSort, next, unpack =
+  math.floor, table.insert, math.max, string.format, table.sort, next, unpack
+
+local ReadOnlyPlaylistFileList =
+  musicUtil.makeReadOnly(musicUtil.getPlaylistFilePaths(), false, false)
 
 ---@alias TrackChangedHandler fun(eventData: S3maphorePlaybackChangeEventData): boolean?
 ---@type TrackChangedHandler[]
@@ -61,20 +65,39 @@ local MusicManager = {
   activePlaydeck = nil,
 }
 
-if IsOpenMW then
-  local async = require 'openmw.async'
-  local storage = require 'openmw.storage'
+local specialTrackInfo = {
+  tracks = { '' },
+  trackChangeInfo = {
+    playlistId = 'Special',
+    trackName = '',
+    reason = MusicManager.STATE.SpecialTrackPlaying, -- assigned after MusicManager.STATE exists
+    fadeOut = MusicSettings.FadeOutDuration,
+  },
+  trackOrder = { 1 },
+}
 
-  ambient = require 'openmw.ambient'
-  core = require 'openmw.core'
-  gameSelf = require 'openmw.self'
-  vfs = require 'openmw.vfs'
+local FileExists, GetGameTime, IsMusicPlaying, SendEvent, StopMusic
+if IsOpenMW then
+  local ambient, async, core, storage, vfs =
+    require 'openmw.ambient',
+    require 'openmw.async',
+    require 'openmw.core',
+    require 'openmw.storage',
+    require 'openmw.vfs'
 
   local I = require 'openmw.interfaces'
 
+  FileExists = vfs.fileExists
+  GetGameTime = core.getGameTime
+  IsMusicPlaying = ambient.isMusicPlaying
+  SendEvent = gameSelf.sendEvent
+  StopMusic = ambient.stopMusic
+
   activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
+
   ---@diagnostic disable-next-line: param-type-mismatch
   activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
+
   --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
   --- In other words, this is the bit that responds to changes from the settings menu
   activePlaylistSettings:subscribe(async:callback(function(_, key)
@@ -105,7 +128,7 @@ function MusicManager.registerPlaylist(playlist)
   if
     not existingOrder
     or next(existingOrder) == nil
-    or math.max(unpack(existingOrder)) > #playlist.tracks
+    or Max(unpack(existingOrder)) > #playlist.tracks
   then
     local fallback = playlist.fallback
 
@@ -127,7 +150,7 @@ function MusicManager.registerPlaylist(playlist)
   end
 
   playlist.registrationOrder = MusicManager.registrationOrder
-  if MusicManager.registeredPlaylists[playlist.id] == nil then
+  if not MusicManager.registeredPlaylists[playlist.id] then
     MusicManager.registrationOrder = MusicManager.registrationOrder + 1
   end
 
@@ -150,9 +173,10 @@ function MusicManager.registerPlaylist(playlist)
       break
     end
   end
+
   if not replaced then newDeck[#newDeck + 1] = playlist end
 
-  local storedState = next(playlist.tracks) == nil and -1 or playlist.active
+  local storedState = not next(playlist.tracks) and -1 or playlist.active
 
   local playlistActiveKey = playlist.id .. 'Active'
 
@@ -173,14 +197,14 @@ end
 ---@param id string the ID of the playlist to unregister
 ---@param state boolean whether or not the playlist should be active in the list of registered playlists
 function MusicManager.setPlaylistActive(id, state)
-  if id == nil then error 'Playlist ID is nil' end
+  if not id then error 'Playlist ID is nil' end
 
   local playlist = MusicManager.registeredPlaylists[id]
   if playlist then
     playlist.active = state
     activePlaylistSettings:set(playlist.id .. 'Active', playlist.active)
   else
-    error(('Playlist \'%s\' is not registered.'):format(id))
+    error(StrFormat('Playlist \'%s\' is not registered.', id))
   end
 end
 
@@ -212,14 +236,13 @@ end
 function MusicManager.getRegisteredPlaylists()
   local readOnlyPlaylists = {}
 
-  for k, v in pairs(MusicManager.registeredPlaylists) do
-    readOnlyPlaylists[k] = musicUtil.makeReadOnly(v, true, true)
+  for k, v in next, MusicManager.registeredPlaylists do
+    readOnlyPlaylists[k] = musicUtil.makeReadOnly(v, true)
   end
 
   return musicUtil.makeReadOnly(readOnlyPlaylists)
 end
 
-local ReadOnlyPlaylistFileList = musicUtil.makeReadOnly(PlaylistFileList, true, true)
 --- Returns a read-only array of all recognized playlist files (files with the .lua extension under the VFS directory, Playlists/ )
 ---@return ReadOnlyTable playlistFiles
 function MusicManager.listPlaylistFiles() return ReadOnlyPlaylistFileList end
@@ -227,14 +250,14 @@ function MusicManager.listPlaylistFiles() return ReadOnlyPlaylistFileList end
 --- Stops the currently playing track, if any.
 --- The onFrame handler will naturally switch to the next track or playlist
 function MusicManager.skipTrack()
-  if ambient.isMusicPlaying() then ambient.stopMusic() end
+  if IsMusicPlaying() then StopMusic() end
 end
 
 --- Tells whether or not music playback is completely disabled
 ---@return boolean canPlayMusic
 function MusicManager.getEnabled() return MusicSettings.MusicEnabled end
 
-function MusicManager.getState() return musicUtil.makeReadOnly(PlaylistState, true, true) end
+function MusicManager.getState() return musicUtil.makeReadOnly(PlaylistState, true) end
 
 ---@return number duration of current silence track
 function MusicManager.silenceTime() return SilenceManager.time end
@@ -246,48 +269,40 @@ function MusicManager.overrideMusicEnabled(enabled)
   MusicSettings.MusicEnabled = enabled
 end
 
+local function priorityThenRegistration(a, b)
+  return a.priority < b.priority
+    or (a.priority == b.priority and a.registrationOrder < b.registrationOrder)
+end
+
+MusicManager.priorityThenRegistration = priorityThenRegistration
+
 --- Returns a string listing all the currently registered playlists, mapped to their (descending) priority.
 --- Mostly intended to be used via the `luap` console.
 ---@return string
 function MusicManager.listPlaylistsByPriority()
   local sortedPlaylists = {}
-  for _, playlist in pairs(MusicManager.registeredPlaylists) do
-    table.insert(sortedPlaylists, playlist)
+
+  for _, playlist in next, MusicManager.registeredPlaylists do
+    Insert(sortedPlaylists, playlist)
   end
 
-  table.sort(
-    sortedPlaylists,
-    function(a, b)
-      return a.priority < b.priority
-        or (a.priority == b.priority and a.registrationOrder < b.registrationOrder)
-    end
-  )
+  TableSort(sortedPlaylists, priorityThenRegistration)
 
   local playlistsByName = ''
 
-  for _, v in pairs(sortedPlaylists) do
-    playlistsByName = string.format('%s%s: %s\n', playlistsByName, v.id, v.priority)
+  for i = 1, #sortedPlaylists do
+    local v = sortedPlaylists[i]
+    playlistsByName = StrFormat('%s%s: %s\n', playlistsByName, v.id, v.priority)
   end
 
   return playlistsByName
 end
 
-local specialTrackInfo = {
-  tracks = { '' },
-  trackChangeInfo = {
-    playlistId = 'Special',
-    trackName = '',
-    reason = MusicManager.STATE.SpecialTrackPlaying,
-    fadeOut = MusicSettings.FadeOutDuration,
-  },
-  trackOrder = { 1 },
-}
-
 ---@param trackPath string VFS path of the track to play
 ---@param reason S3maphoreStateChangeReason
 function MusicManager.playSpecialTrack(trackPath, reason)
-  if not vfs.fileExists(trackPath) then
-    return print(('Requested track %s does not exist!'):format(trackPath))
+  if not FileExists(trackPath) then
+    return print(StrFormat('Requested track %s does not exist!', trackPath))
   end
 
   musicUtil.debugLog('playing special track: %s', trackPath)
@@ -310,18 +325,18 @@ function MusicManager.playSpecialTrack(trackPath, reason)
   specialTrackInfo.trackChangeInfo.reason = reason or MusicManager.STATE.SpecialTrackPlaying
   specialTrackInfo.trackChangeInfo.trackName = trackPath
 
-  gameSelf:sendEvent('S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
+  SendEvent(gameSelf, 'S3maphoreTrackChanged', specialTrackInfo.trackChangeInfo)
 end
 
 ---@return TimeOfDay
 local function MWSEPlaylistTimeOfDay()
-  local dayPortion = math.floor(tes3.worldController.hour.value / 6)
+  local dayPortion = Floor(tes3.worldController.hour.value / 6)
   return MusicManager.TIME_MAP[dayPortion]
 end
 
 ---@return TimeOfDay
 local function OMWPlaylistTimeOfDay()
-  local dayPortion = math.floor(core.getGameTime() / 3600 % 24 / 6)
+  local dayPortion = Floor(GetGameTime() / 3600 % 24 / 6)
   return MusicManager.TIME_MAP[dayPortion]
 end
 
@@ -331,10 +346,8 @@ function MusicManager.updateBanner()
 
   if playlistName and trackMetadata and MusicSettings.BannerEnabled then
     MusicBanner.layout.props.visible = true
-    MusicBanner.layout.content[1].props.text = ('%s\n\n%s'):format(
-      playlistName,
-      trackMetadata.title
-    )
+    MusicBanner.layout.content[1].props.text =
+      StrFormat('%s\n\n%s', playlistName, trackMetadata.title)
   else
     MusicBanner.layout.props.visible = false
   end
