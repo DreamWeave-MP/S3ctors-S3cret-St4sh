@@ -6,14 +6,19 @@
 local INTERRUPT = require 'scripts.s3.music.enum.interruptMode'
 local musicUtil = require 'scripts.s3.music.util'
 
+---@type Rand
+local randomGen = require 'scripts.s3.randomGen'
+
 local SilenceData
-local frameDuration, isMusicPlaying
+local getRealTime, isMusicPlaying
 
 if require 'scripts.s3.isOpenMW' then
-  frameDuration = require('openmw.core').getRealFrameDuration
+  getRealTime = require('openmw.core').getRealTime
   isMusicPlaying = require('openmw.ambient').isMusicPlaying
 else
 end
+
+local Float, Max, type = randomGen.float, math.max, type
 
 --- Given the currently-running playlist and settings,
 --- determine whether there should be a silence played
@@ -28,9 +33,9 @@ local function updateSilenceParams(self, newPlaylist)
 
   if not self.GlobalSilenceToggle then
     self.time = 0
-  elseif silenceParams and math.random() <= (silenceParams.chance or 1) then
+  elseif silenceParams and Float() <= (silenceParams.chance or 1) then
     if type(silenceParams) == 'table' then
-      self.time = math.random(silenceParams.min or 0, silenceParams.max or 30)
+      self.time = randomGen.range(silenceParams.min or 0, silenceParams.max or 30, true)
     else
       error(
         ('Invalid silence parameters on playlist %s, given silence parameter %s'):format(
@@ -39,13 +44,13 @@ local function updateSilenceParams(self, newPlaylist)
         )
       )
     end
-  elseif math.random() <= (self.GlobalSilenceChance or 1) then
+  elseif Float() <= (self.GlobalSilenceChance or 1) then
     local playlistArchetype = newPlaylist.interruptMode
 
     if playlistArchetype == INTERRUPT.Me then
-      self.time = math.random(self.ExploreSilenceMin, self.ExploreSilenceMax)
+      self.time = randomGen.range(self.ExploreSilenceMin, self.ExploreSilenceMax, true)
     elseif playlistArchetype == INTERRUPT.Other then
-      self.time = math.random(self.BattleSilenceMin, self.BattleSilenceMax)
+      self.time = randomGen.range(self.BattleSilenceMin, self.BattleSilenceMax, true)
     else
       -- Special playlists must always define their own silence parameters
       self.time = 0
@@ -59,9 +64,13 @@ end
 
 ---@return boolean beQuiet whether or not a silence track is presently active
 local function silenceActive(self)
+  local now = getRealTime()
+  local elapsed = now - (self.lastTime or now)
+  self.lastTime = now
+
   local silenceTrackRunning = not isMusicPlaying() and self.time > 0
 
-  if silenceTrackRunning then self.time = self.time - frameDuration() end
+  if silenceTrackRunning then self.time = Max(0, self.time - elapsed) end
 
   return silenceTrackRunning
 end
@@ -74,6 +83,7 @@ end
 ---@field BattleSilenceMin integer minimum duration of silence tracks for battle playlists
 ---@field BattleSilenceMax integer maximum duration of silence tracks for battle playlists
 ---@field time number current remaining duration for silence
+---@field lastTime number timestamp of the last silenceActive call, for wall-clock elapsed computation
 ---@field silenceActive fun(): boolean Whether or not a silence track is currently running
 ---@field updateSilenceParams fun(self, newPlaylist: S3maphorePlaylist)
 SilenceData =
