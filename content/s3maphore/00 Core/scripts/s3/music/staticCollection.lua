@@ -29,6 +29,9 @@ local PreviousPlayerWeathers = {}
 ---@type table<string, boolean>
 local PlayersInitialized = {}
 
+---@type table<string, integer>
+local GlobalKillCounts = {}
+
 local pendingAdditions, previousGridCenters, seenContentFiles, seenIds, cellObjectIds =
   {}, {}, {}, {}, {}
 
@@ -654,6 +657,19 @@ return {
       presenceChanged = true
     end,
     onUpdate = function() updateFunction() end,
+
+    onLoad = function(data)
+      if data.KillCounts then
+        GlobalKillCounts = data.KillCounts
+        StorageSet(PresenceSection, 'GlobalKillCounts', GlobalKillCounts)
+      end
+    end,
+
+    onSave = function()
+      return {
+        KillCounts = GlobalKillCounts,
+      }
+    end,
   },
   eventHandlers = {
     S3maphoreUpdatePresence = updatePresenceInfo,
@@ -664,6 +680,12 @@ return {
       if not SendEvent then SendEvent = player.sendEvent end
       if not GetAll then GetAll = player.cell.getAll end
       updatePresenceInfo(player)
+    end,
+
+    S3maphoreDeathCountIncrement = function(killedRecordId)
+      GlobalKillCounts[killedRecordId] = (GlobalKillCounts[killedRecordId] or 0) + 1
+      GlobalKillCounts.TotalKills = (GlobalKillCounts.TotalKills or 0) + 1
+      StorageSet(PresenceSection, 'GlobalKillCounts', GlobalKillCounts)
     end,
   },
 }

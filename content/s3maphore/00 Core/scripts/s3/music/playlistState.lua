@@ -10,6 +10,7 @@ local DynamicStats = gameSelf.type.stats.dynamic
 ---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field cellWaterLevel number? If the current cell has water, then, it is copied here
 ---@field cellPresence CellPresence Object counts for the currently loaded cell (or active grid) — byRecord, byType, byContentFile, plus staticContentFiles, nearestRegion, cellHasHostileActors, and areaHasHostileActors
+---@field killCounts table<string, number> Record of all actors killed during this playthrough. The `TotalKills` field indicates the overall number of killed actors. Does not necessarily mean those actors were killed by the player, they're just dead.
 ---@field objectCount number Total objects in the current cell, computed from cellPresence.byType
 ---@field combatTargets openmw.LObject[] combat targets in insertion order
 ---@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
@@ -39,6 +40,7 @@ local PlaylistState = {
     nearestRegion = '',
     staticContentFiles = {},
   },
+  killCounts = {},
   objectCount = 0,
   cellId = '',
   cellWaterLevel = nil,
@@ -53,32 +55,35 @@ do
   local presenceSection = require('openmw.storage').globalSection 'S3maphoreCellPresence'
 
   local pairs = pairs
-  local SendEvent = gameSelf.sendEvent
+  local SendEvent, StorageGet = gameSelf.sendEvent, presenceSection.get
 
   presenceSection:subscribe(async:callback(function(_, key)
-    if key ~= gameSelf.id then return end
+    if key == gameSelf.id then
+      local presence = StorageGet(presenceSection, key)
 
-    local presence = presenceSection:get(gameSelf.id)
+      local thisCell = gameSelf.cell
+      ---@cast thisCell openmw.core.LCell
 
-    local thisCell = gameSelf.cell
-    ---@cast thisCell openmw.core.LCell
+      -- Only accept presence data written for the cell the player is actually in
+      -- This prevents stale writes from a previous cell from corrupting PlaylistState
+      if not presence or presence.cellId ~= thisCell.id then return end
 
-    -- Only accept presence data written for the cell the player is actually in
-    -- This prevents stale writes from a previous cell from corrupting PlaylistState
-    if not presence or presence.cellId ~= thisCell.id then return end
+      PlaylistState.nearestRegion = presence.nearestRegion or thisCell.region
 
-    PlaylistState.nearestRegion = presence.nearestRegion or thisCell.region
+      PlaylistState.cellPresence = presence
 
-    PlaylistState.cellPresence = presence
+      -- Compute total object count from byType so playlists can read PlaylistState.objectCount directly
+      local total = 0
+      for _, count in pairs(presence.byType) do
+        total = total + count
+      end
 
-    -- Compute total object count from byType so playlists can read PlaylistState.objectCount directly
-    local total = 0
-    for _, count in pairs(presence.byType) do
-      total = total + count
+      PlaylistState.objectCount = total
+
+      SendEvent(gameSelf, 'S3maphoreCellPresenceUpdated')
+    elseif key == 'GlobalKillCounts' then
+      PlaylistState.killCounts = StorageGet(presenceSection, key)
     end
-    PlaylistState.objectCount = total
-
-    SendEvent(gameSelf, 'S3maphoreCellPresenceUpdated')
   end))
 end
 
