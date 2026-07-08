@@ -406,8 +406,7 @@ handlePlayback = function(_)
   if queuedEvent.name then
     SendEvent(self, queuedEvent.name, queuedEvent.data)
     queuedEvent.name = nil
-    clearQueuedData()
-    return
+    return clearQueuedData()
   end
 
   local musicPlaying = IsMusicPlaying()
