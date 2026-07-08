@@ -81,7 +81,7 @@ local desiredPlaylist, resolverDirty, didTransition, waitingOnPresence, wasExter
 local queuedEvent = {
   backup = {},
   data = nil,
-  name = nil,
+  name = '',
 }
 
 --- Always actually use the `backup` table as `data` may be overwritten with
@@ -109,6 +109,7 @@ local chainPosition = 2
 local function clearQueuedData()
   if type(queuedEvent.data) ~= 'table' then queuedEvent.data = queuedEvent.backup end
   clear(queuedEvent.data)
+  queuedEvent.name = ''
 end
 
 --- Updates PlaylistState cell metadata from self.cell.
@@ -237,17 +238,10 @@ currentUpdateHandler = function(_)
     return
   end
 
-  PlaylistLoader = nil
-  updateActorChain = realUpdateActorChain
-  resolvePlaylist = realResolvePlaylist
-
-  local function priorityThenRegistration(a, b)
-    return a.priority < b.priority
-      or (a.priority == b.priority and a.registrationOrder > b.registrationOrder)
-  end
-  TableSort(MusicManager.explorePlaylists, priorityThenRegistration)
-  TableSort(MusicManager.battlePlaylists, priorityThenRegistration)
-  TableSort(MusicManager.specialPlaylists, priorityThenRegistration)
+  PlaylistLoader, resolvePlaylist, updateActorChain = nil, realResolvePlaylist, realUpdateActorChain
+  TableSort(MusicManager.explorePlaylists, MusicManager.priorityThenRegistration)
+  TableSort(MusicManager.battlePlaylists, MusicManager.priorityThenRegistration)
+  TableSort(MusicManager.specialPlaylists, MusicManager.priorityThenRegistration)
 
   storage.playerSection('SettingsS3Music'):subscribe(async:callback(function(_, key)
     if key == 'BannerEnabled' then
@@ -256,7 +250,6 @@ currentUpdateHandler = function(_)
       musicUtil.debugLog('Music state changed to: %s', MusicSettings.MusicEnabled)
 
       MusicManager.forceSkip = false
-      queuedEvent.name = nil
       clearQueuedData()
 
       if MusicSettings.MusicEnabled then
@@ -403,10 +396,8 @@ end
 handlePlayback = function(_)
   currentUpdateHandler = initialUpdateFunction
 
-  if queuedEvent.name then
-    SendEvent(self, queuedEvent.name, queuedEvent.data)
-    queuedEvent.name = nil
-    return clearQueuedData()
+  if queuedEvent.name ~= '' then
+    return SendEvent(self, queuedEvent.name, queuedEvent.data) or clearQueuedData()
   end
 
   local musicPlaying = IsMusicPlaying()
@@ -471,15 +462,13 @@ handlePlayback = function(_)
     desiredPlaylist = nil
     MusicManager.currentPlaylist = nil
     MusicManager.currentTrack = nil
-    resolvePlaylist()
-    return
+    return resolvePlaylist()
   end
 
   if target ~= MusicManager.currentPlaylist then
     switchPlaylist(target)
   else
-    local nextTrack = selectTrackFromPlaylist(target.id)
-    MusicManager.currentTrack = nextTrack
+    MusicManager.currentTrack = selectTrackFromPlaylist(target.id)
     PlaybackParams.fadeOut = target.fadeOut or MusicSettings.FadeOutDuration
   end
 
