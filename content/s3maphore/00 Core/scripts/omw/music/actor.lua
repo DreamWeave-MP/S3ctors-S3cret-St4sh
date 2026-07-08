@@ -8,7 +8,6 @@ local clear = require 'scripts.s3.clear'
 
 local Players
 local Targets = {}
-local TargetChangeData = { actor = gameSelf, targets = Targets }
 
 local IsDeathFinished, IsInActorsProcessingRange, IsWorldPaused, GetStance, GetTargets, IsFleeing, UnarmedStance
 local SendEvent = gameSelf.sendEvent
@@ -83,7 +82,7 @@ local function updateCombatState()
 
   if changed then
     for i = 1, #Players do
-      SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', TargetChangeData)
+      SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', { actor = gameSelf, targets = Targets })
     end
   end
 end
@@ -92,7 +91,7 @@ local function onInactive()
   clear(Targets)
 
   for i = 1, #Players do
-    SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', TargetChangeData)
+    SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', { actor = gameSelf, targets = Targets })
   end
 end
 
