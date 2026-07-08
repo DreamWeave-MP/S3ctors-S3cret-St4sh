@@ -4,7 +4,6 @@
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
-local Strings = require 'scripts.s3.music.staticStrings'
 local musicUtil = require 'scripts.s3.music.util'
 local randomGen = require 'scripts.s3.randomGen'
 
@@ -32,7 +31,7 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
 
   if not MusicManager.registeredPlaylists[selectedPlaylistId] then
     if selectedPlaylistId then
-      musicUtil.debugLog(Strings.FallbackPlaylistDoesntExist, newPlaylist.id, selectedPlaylistId)
+      musicUtil.debugLog("Playlist %s requested to use tracks from backup playlist %s, but it isn't registered! Falling back to the default.", newPlaylist.id, selectedPlaylistId)
     end
 
     return newPlaylist.id
@@ -45,12 +44,12 @@ end
 local function selectTrackFromPlaylist(playlistId)
   local playlist = MusicManager.registeredPlaylists[playlistId]
 
-  if not playlist then error(StrFormat(Strings.PlaylistNotRegistered, playlistId)) end
+  if not playlist then error(StrFormat("Playlist %s has not been registered!", playlistId)) end
 
   local playlistOrder = MusicManager.playlistsTracksOrder[playlist.id]
   local nextTrackIndex = Remove(playlistOrder)
 
-  if not nextTrackIndex then error(Strings.NextTrackIndexNil) end
+  if not nextTrackIndex then error('Can not fetch track: nextTrackIndex is nil') end
 
   -- If there are no tracks left, fill playlist again.
   if not next(playlistOrder) then
@@ -71,7 +70,7 @@ local function selectTrackFromPlaylist(playlistId)
 
   local trackPath = playlist.tracks[nextTrackIndex]
 
-  if not trackPath then error(StrFormat(Strings.NoTrackPath, nextTrackIndex, playlist.id)) end
+  if not trackPath then error(StrFormat("Can not fetch track with index %s from playlist '%s'.", nextTrackIndex, playlist.id)) end
 
   return trackPath
 end
@@ -110,7 +109,7 @@ local function canSwitchPlaylist(oldPlaylist, newPlaylist)
   end
 
   musicUtil.debugLog(
-    Strings.InterruptModeFallthrough,
+    'Playlist Interrupt Modes Fell Through!\nOld Playlist: %s Interrupt Mode: %s\nNew Playlist: %s InterruptMode: %s',
     oldPlaylist.id,
     oldPlaylist.interruptMode,
     newPlaylist.id,
