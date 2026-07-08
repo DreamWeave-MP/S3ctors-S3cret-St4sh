@@ -57,6 +57,9 @@ tes3 = tes3
 ---@field x integer
 ---@field y integer
 
+---@class S3maphorePlaybackParamsTable
+---@field fadeOut number
+
 --- Lookup table for storing the results of location-based matches
 ---@alias S3maphoreMatchCache table<string, boolean>
 
