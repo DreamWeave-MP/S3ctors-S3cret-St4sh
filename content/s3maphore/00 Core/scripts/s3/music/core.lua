@@ -531,6 +531,7 @@ return {
 
       return {
         playlistStates = playlistStates,
+        deathTrack = MusicManager.getDeathTrack(),
       }
     end,
 
@@ -542,6 +543,8 @@ return {
           activePlaylistSettings:set(playlistId .. 'Active', playlistState)
         end
       end
+
+      if data.deathTrack then MusicManager.setDeathTrack(data.deathTrack) end
     end,
   },
   eventHandlers = {
@@ -549,8 +552,7 @@ return {
       SendEvent(
         self,
         'S3maphoreSpecialTrack',
-        --- Expand this to allow registering deathHandlers to provide custom death tracks instead of hardcoding Soule's path
-        { trackPath = 'music/special/mw_death.mp3', reason = MusicManager.STATE.Died }
+        { trackPath = MusicManager.getDeathTrack(), reason = MusicManager.STATE.Died }
       )
       currentUpdateHandler = NullFunction
     end,
@@ -593,6 +595,10 @@ return {
     S3maphoreSpecialTrack = function(eventData)
       MusicManager.playSpecialTrack(eventData.trackPath, eventData.reason)
     end,
+
+    S3maphoreSetDeathTrack = MusicManager.setDeathTrack,
+
+    S3maphoreResetDeathTrack = MusicManager.resetDeathTrack,
 
     S3maphoreSetPlaylistActive = function(eventData)
       if PlaylistLoader then error 'S3maphoreSetPlaylistActive called during initialization!' end
