@@ -237,7 +237,8 @@ function MusicManager.registerPlaylist(playlist)
 
   if not replaced then newDeck[#newDeck + 1] = playlist end
 
-  local storedState = not next(playlist.tracks) and -1 or playlist.active
+  local storedState = playlist.active
+  if not next(playlist.tracks) then storedState = false end
 
   local playlistActiveKey = playlist.id .. 'Active'
 

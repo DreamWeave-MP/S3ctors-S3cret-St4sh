@@ -212,7 +212,7 @@ musicSettings:subscribe(async:callback(function(_, key)
   if not targetPlaylist then return end
 
   local currentState = activePlaylistState:get(targetPlaylist .. 'Active')
-  local noTracks = currentState == -1
+  local noTracks = not currentState
 
   activePlaylistSettings:set('PlaylistActiveState', noTracks and false or currentState)
 
