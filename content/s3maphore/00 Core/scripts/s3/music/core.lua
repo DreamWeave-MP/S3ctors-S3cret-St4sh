@@ -14,6 +14,7 @@ local clear = require 'scripts.s3.clear'
 
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
+local PlaylistPriority = require 'doc.playlistPriority'
 local TrackSelection = require 'scripts.s3.music.trackSelection'
 
 ---@type S3maphorePlaylistEnv
@@ -41,7 +42,8 @@ local musicUtil = require 'scripts.s3.music.util'
 ---@type Rand
 local randomGen = require 'scripts.s3.randomGen'
 
-local error, pairs, next, TableSort, type = error, pairs, next, table.sort, type
+local error, pairs, next, StrFormat, TableSort, type =
+  error, pairs, next, string.format, table.sort, type
 
 local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic =
   require('openmw.debug').isCollisionEnabled,
@@ -325,7 +327,73 @@ StateMachine:start 'init_player'
 return {
   interfaceName = 'S3maphore',
 
-  interface = MusicManager,
+  ---@type openmw.interfaces.S3maphore
+  interface = {
+    actorIsInCombat = CombatState.actorIsInCombat,
+
+    --- Constants
+    const = setmetatable({
+      STATE = MusicManager.STATE,
+      TIME_MAP = MusicManager.TIME_MAP,
+      INTERRUPT = MusicManager.INTERRUPT,
+      STATE_FLAGS = MusicManager.STATE_FLAGS,
+    }, {
+      __newindex = function(_, k)
+        error(StrFormat('I.S3maphore.const is read-only (attempted to set %s)', k), 2)
+      end,
+    }),
+
+    --- Playback control
+    getEnabled = MusicManager.getEnabled,
+    overrideMusicEnabled = MusicManager.overrideMusicEnabled,
+    playSpecialTrack = MusicManager.playSpecialTrack,
+    setPlaylistActive = MusicManager.setPlaylistActive,
+    skipTrack = MusicManager.skipTrack,
+
+    --- Introspection
+    getCurrentPlaylist = MusicManager.getCurrentPlaylist,
+    getCurrentTrack = MusicManager.getCurrentTrack,
+    getCurrentTrackInfo = MusicManager.getCurrentTrackInfo,
+    getRegisteredPlaylists = MusicManager.getRegisteredPlaylists,
+    getState = MusicManager.getState,
+    listPlaylistFiles = MusicManager.listPlaylistFiles,
+    listPlaylistsByPriority = MusicManager.listPlaylistsByPriority,
+    silenceTime = MusicManager.silenceTime,
+
+    --- Registration and hooks
+    addTrackChangedHandler = MusicManager.addTrackChangedHandler,
+    registerPlaylist = function(playlist)
+      MusicManager.registerPlaylist(playlist)
+
+      if PlaylistLoader then return end
+
+      if playlist.priority <= PlaylistPriority.Special then
+        TableSort(MusicManager.specialPlaylists, MusicManager.priorityThenRegistration)
+      elseif playlist.priority <= PlaylistPriority.BattleVanilla then
+        TableSort(MusicManager.battlePlaylists, MusicManager.priorityThenRegistration)
+      else
+        TableSort(MusicManager.explorePlaylists, MusicManager.priorityThenRegistration)
+      end
+    end,
+
+    --- Death track
+    getDeathTrack = MusicManager.getDeathTrack,
+    resetDeathTrack = MusicManager.resetDeathTrack,
+    setDeathTrack = MusicManager.setDeathTrack,
+
+    --- Metadata, state, and direct queries
+    playlistMetadata = MusicManager.playlistMetadata,
+    playlistTimeOfDay = MusicManager.playlistTimeOfDay,
+    rules = PlaylistRules,
+    --- Light proxy for state to keep interface callers from
+    --- writing or wasting allocations copying read-only versions
+    state = setmetatable({}, {
+      __index = PlaylistState,
+      __newindex = function(_, k)
+        error(StrFormat('S3maphore state is read-only (attempted to set %s)', k), 2)
+      end,
+    }),
+  },
 
   engineHandlers = {
 

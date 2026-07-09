@@ -1,11 +1,5 @@
 ---@omw-context none
 
----@alias TimeOfDay
----| 'night'
----| 'morning'
----| 'afternoon'
----| 'evening'
-
 --- Meant to be used in conjunction with the output of MusicManager.playlistTimeOfDay OR PlaylistState.playlistTimeOfDay
 ---@class TimeMap: StrictReadOnlyTable
 ---@field [0] 'night'

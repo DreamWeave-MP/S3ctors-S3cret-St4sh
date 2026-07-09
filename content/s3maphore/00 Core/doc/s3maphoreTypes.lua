@@ -16,6 +16,12 @@ tes3 = tes3
 
 ---@alias CombatTargetTypeMatches table<TargetType, true>
 
+---@alias TimeOfDay
+---| 'night'
+---| 'morning'
+---| 'afternoon'
+---| 'evening'
+
 --- Alias for defining S3maphore rules for object record ids allowing or disallowing playlist selection
 ---@alias IDPresenceMap table<string, boolean>
 
@@ -181,3 +187,75 @@ tes3 = tes3
 ---@class S3maphoreTrackMetadata: S3maphoreMusicMetadataBase
 
 ---@class S3maphorePlaylistMetadata: S3maphoreMusicMetadataBase
+
+---@class S3maphoreMusicMetadataRegistry
+---@field getPlaylistDisplayName fun(id: string): string
+---@field getPlaylistMetadata fun(id: string): S3maphorePlaylistMetadata?
+---@field getTrackMetadata fun(trackPath: string): S3maphoreTrackMetadata?
+---@field loadYamlFile fun(path: string)
+---@field iterPlaylists fun(): fun(state: table<string, S3maphorePlaylistMetadata>, key: string?): string, S3maphorePlaylistMetadata
+---@field iterTracks fun(): fun(state: table<string, S3maphoreTrackMetadata>, key: string?): string, S3maphoreTrackMetadata
+
+---@class openmw.interfaces
+---@field S3maphore? openmw.interfaces.S3maphore
+
+---@alias TrackChangedHandler fun(eventData: S3maphorePlaybackChangeEventData): boolean?
+
+---S3maphore music manager interface.
+---
+---Registered in Player context. Available from any context after the player script has initialized.
+---
+---Example usage:
+---
+---```lua
+---local I = require('openmw.interfaces')
+---
+---- Skip the current track
+---I.S3maphore.skipTrack()
+---
+---- Query current combat state
+---local inCombat = I.S3maphore.state.isInCombat
+---
+---- Check what the player is fighting
+---local undead = I.S3maphore.rules.combatTargetType { undead = true }
+---
+---- Register a custom playlist with region rules
+---I.S3maphore.registerPlaylist {
+---    id = 'MyRegionMusic',
+---    priority = 900,
+---    tracks = { 'music/my/ashlands.mp3', 'music/my/bittercoast.mp3' },
+---    isValidCallback = function(playback)
+---        return playback.rules.region { ['ashlands region'] = true }
+---    end,
+---}
+---
+---- Listen for track changes
+---I.S3maphore.addTrackChangedHandler(function(eventData)
+---    print(('Now playing: %s from %s'):format(eventData.trackName, eventData.playlistId))
+---end)
+---```
+---@class openmw.interfaces.S3maphore
+---@field skipTrack fun() Skip the currently playing track. The state machine naturally picks the next track or playlist.
+---@field playSpecialTrack fun(trackPath: string, reason: S3maphoreStateChangeReason?) Play a one-off track, overriding normal playback until the track ends.
+---@field overrideMusicEnabled fun(enabled: boolean?) Toggle music playback. Without an argument, inverts the current state.
+---@field getEnabled fun(): boolean Whether music playback is currently enabled.
+---@field setPlaylistActive fun(id: string, state: boolean) Enable or disable a registered playlist by ID.
+---@field getCurrentTrack fun(): string? VFS path of the currently playing track, or nil if nothing is playing.
+---@field getCurrentTrackInfo fun(): S3maphorePlaylistMetadata?, S3maphoreTrackMetadata? Display metadata for the current playlist and track. Returns nil, nil if nothing is playing.
+---@field getCurrentPlaylist fun(): ReadOnlyTable? Read-only snapshot of the currently active playlist, or nil.
+---@field getRegisteredPlaylists fun(): ReadOnlyTable Read-only map of all registered playlists (id → playlist).
+---@field listPlaylistFiles fun(): ReadOnlyTable Read-only array of recognized playlist file paths under the Playlists/ VFS directory.
+---@field listPlaylistsByPriority fun(): string Formatted string of registered playlists sorted by priority (lowest first), intended for `luap` console inspection.
+---@field getState fun(): ReadOnlyTable Read-only snapshot of the current PlaylistState. Prefer the `state` field for live read-only access.
+---@field silenceTime fun(): number Current silence duration from the active playlist's silenceBetweenTracks params.
+---@field registerPlaylist fun(playlist: S3maphorePlaylist) Register a playlist, auto-assigning tracks from folders, setting track order, and persisting activation state.
+---@field addTrackChangedHandler fun(handler: TrackChangedHandler) Register a callback invoked on every track change.
+---@field getDeathTrack fun(): string The current death track VFS path. Defaults to `music/special/mw_death.mp3`.
+---@field setDeathTrack fun(path: string) Set the death track VFS path. Silently no-ops if the file does not exist.
+---@field resetDeathTrack fun() Restore the death track to the default `music/special/mw_death.mp3`.
+---@field playlistTimeOfDay fun(): TimeOfDay Current time-of-day bucket (night/morning/afternoon/evening), determined by the game clock.
+---@field playlistMetadata S3maphoreMusicMetadataRegistry Metadata registry for playlist display names, track info, and YAML loading.
+---@field const { STATE: StateChangeReasons, TIME_MAP: TimeMap, INTERRUPT: InterruptModes, STATE_FLAGS: StateChangedFlags } Constant enums for playback reasons, time-of-day buckets, interrupt modes, and state-change flag bitmasks.
+---@field state PlaylistState Live read-only proxy over the current S3maphore runtime state. All fields forward to the real PlaylistState; writes throw.
+---@field rules PlaylistRules All playlist rule functions for environment queries. Uses the same cached lookups as playlist isValidCallbacks.
+---@field actorIsInCombat fun(actorId: string): boolean Whether S3maphore currently tracks the given actor as a combat target.
