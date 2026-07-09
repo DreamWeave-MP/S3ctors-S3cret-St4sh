@@ -113,6 +113,16 @@ tes3 = tes3
 ---@field rules PlaylistRules
 ---@field state PlaylistState
 
+---@class CombatState
+---@field actorIsInCombat fun(actorId: string): boolean Whether S3maphore currently tracks the given actor as a combat target.
+---@field batchPoll fun(dt: number) Batch per-frame combat target polling across nearby actors.
+---@field getCombatTargets fun(): ReadOnlyTable Live read-only array of current combat targets.
+---@field isInCombat fun(): boolean Whether the player is in combat, independent of music settings. Raw combat-target check; does not consider BattleEnabled.
+---@field onHit fun(): boolean Handle a hit event; returns whether combat state changed as a result.
+---@field onTargetsChanged fun(actor: openmw.LObject, targets: openmw.LObject[]) Handle target list changes.
+---@field recomputeState fun() Recompute the internal combat state and update PlaylistState accordingly.
+---@field resetPollCycle fun() Reset actor polling to start from the beginning (call on cell transitions).
+
 ---@alias ServicesOffered table<ServiceType, boolean>
 
 ---@alias ServiceType
@@ -167,11 +177,6 @@ tes3 = tes3
 ---@field cellHasHostileActors boolean
 ---@field areaHasHostileActors boolean
 ---@field cellId string?
-
----@class CombatState
----@field onTargetsChanged fun(actor: openmw.LObject, targets: openmw.LObject[])
----@field onHit fun(): boolean
----@field onSettingChanged fun(setting: string): boolean
 
 ---@class S3maphoreMusicMetadataBase
 ---@field title string Human-readable title
@@ -259,3 +264,5 @@ tes3 = tes3
 ---@field state PlaylistState Live read-only proxy over the current S3maphore runtime state. All fields forward to the real PlaylistState; writes throw.
 ---@field rules PlaylistRules All playlist rule functions for environment queries. Uses the same cached lookups as playlist isValidCallbacks.
 ---@field actorIsInCombat fun(actorId: string): boolean Whether S3maphore currently tracks the given actor as a combat target.
+---@field getCombatTargets fun(): ReadOnlyTable Live read-only array of current combat targets.
+---@field isInCombat fun(): boolean Whether the player is in combat, independent of music settings. See also `state.isInCombat` (settings-adjusted).

@@ -333,6 +333,8 @@ return {
   ---@type openmw.interfaces.S3maphore
   interface = {
     actorIsInCombat = CombatState.actorIsInCombat,
+    getCombatTargets = CombatState.getCombatTargets,
+    isInCombat = CombatState.isInCombat,
 
     --- Constants
     const = setmetatable({
