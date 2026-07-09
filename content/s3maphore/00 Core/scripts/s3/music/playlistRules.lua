@@ -852,9 +852,7 @@ end
 --- playlistRules.weatherType { 'rain' = true, 'overcast' = true, 'thunder' = true, }
 ---@param weatherNames IDPresenceMap
 ---@return boolean
-function PlaylistRules.weatherType(weatherNames)
-  return weatherNames[PlaylistState.weather] or false
-end
+function PlaylistRules.weatherType(weatherNames) return weatherNames[PlaylistState.weather] or false end
 
 --- Returns whether the current exterior cell is on a particular node of the grid
 ---
