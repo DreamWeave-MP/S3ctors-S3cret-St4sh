@@ -1,10 +1,12 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local assert, Ceil, Max, Min, TableConcat = assert, math.ceil, math.max, math.min, table.concat
+local assert, Ceil, Max, Min, rawset, TableConcat =
+  assert, math.ceil, math.max, math.min, rawset, table.concat
 
 ---@type openmw.SelfObject
 local gameSelf = require 'openmw.self'
+
 ---@type openmw.types.Player
 local myType, gameSelfId, sendEvent = gameSelf.type, gameSelf.id, gameSelf.sendEvent
 
@@ -20,13 +22,18 @@ do
   IsAIEnabled = debug.isAIEnabled
 end
 
+local clear = require 'scripts.s3.clear'
+
 ---@type MusicManager
 local MusicManager = require 'scripts.s3.music.musicManager'
+
 ---@type S3maphoreCoreSettings
 local MusicSettings = require 'scripts.s3.music.musicSettings'
 local PlaylistModule = require 'scripts.s3.music.playlistRules'
+
 local setCombatTargetCacheKey = PlaylistModule.setCombatTargetCacheKey
 local clearCombatCaches = PlaylistModule.clearCombatCaches
+
 ---@type PlaylistState
 local PlaylistState = require 'scripts.s3.music.playlistState'
 
@@ -38,10 +45,17 @@ local chainPosition = 2
 ---@type openmw.LObject[]
 local combatTargets = {}
 PlaylistState.combatTargets = combatTargets
+
 ---@type table<string, integer>
 local combatTargetIdx = {}
+
 ---@type table<string, boolean>
 local playerTargetedActors = {}
+
+local CombatTargetsProxy = setmetatable({}, {
+  __newindex = function() error('combat targets is read-only', 2) end,
+  __metatable = false,
+})
 
 local function recomputeState()
   local ids = {}
@@ -139,6 +153,21 @@ end
 ---@return boolean isInCombat
 local function actorIsInCombat(actorId) return combatTargetIdx[actorId] ~= nil end
 
+---@return boolean
+local function isInCombat() return combatTargets[1] ~= nil and IsAIEnabled() end
+
+--- Returns a read-only snapshot of current combat targets.
+---@return ReadOnlyTable
+local function getCombatTargets()
+  clear(CombatTargetsProxy)
+
+  for i = 1, #combatTargets do
+    rawset(CombatTargetsProxy, i, combatTargets[i])
+  end
+
+  return CombatTargetsProxy
+end
+
 --- Batches per-frame combat target polling across nearby actors.
 --- Spreads the load across frames so we don't check all actors every tick.
 ---@param dt number
@@ -163,10 +192,12 @@ end
 --- Call on cell transitions or any event that invalidates the current traversal position.
 local function resetPollCycle() chainPosition = 2 end
 
----@class CombatState
+---@type CombatState
 local CombatState = {
   actorIsInCombat = actorIsInCombat,
   batchPoll = batchPoll,
+  getCombatTargets = getCombatTargets,
+  isInCombat = isInCombat,
   onHit = onHit,
   onTargetsChanged = onTargetsChanged,
   recomputeState = recomputeState,
