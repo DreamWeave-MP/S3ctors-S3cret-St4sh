@@ -113,7 +113,7 @@ local function iterPlaylists() return next, Playlists, nil end
 ---@return nil initIndex
 local function iterTracks() return next, Tracks, nil end
 
----@class S3maphoreMusicMetadataRegistry
+---@type S3maphoreMusicMetadataRegistry
 local MetadataRegistry = {
   getPlaylistDisplayName = getPlaylistDisplayName,
   getPlaylistMetadata = getPlaylistMetadata,

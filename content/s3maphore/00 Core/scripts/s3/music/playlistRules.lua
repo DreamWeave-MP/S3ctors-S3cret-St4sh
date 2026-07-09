@@ -25,7 +25,7 @@ local Quests = gameSelf.type.quests(gameSelf)
 local MyLevel = gameSelf.type.stats.level(gameSelf)
 local NearbyActors = nearby.actors
 
----@class PlaylistRules: StrictReadOnlyTable helper functions for running playlist behaviors
+---@class PlaylistRules helper functions for running playlist behaviors
 ---@field combatTargetCacheKey S3maphoreCacheKey? Serialized string containing the ids of all combatants, used as a key for combat-related rule lookups
 ---@field state PlaylistState
 local PlaylistRules = {
