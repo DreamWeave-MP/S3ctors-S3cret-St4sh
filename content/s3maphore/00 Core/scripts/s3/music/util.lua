@@ -206,10 +206,13 @@ end
 
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
-  if not playlist.id or not playlist.priority then error('Can not register playlist: \'id\' and \'priority\' are mandatory fields') end
+  if not playlist.id or not playlist.priority then
+    error 'Can not register playlist: \'id\' and \'priority\' are mandatory fields'
+  end
 
   if not playlist.tracks then
-    playlist.tracks = getTracksFromDirectory(StrFormat('music/%s/', playlist.id), playlist.exclusions)
+    playlist.tracks =
+      getTracksFromDirectory(StrFormat('music/%s/', playlist.id), playlist.exclusions)
   end
 
   if playlist.active == nil then playlist.active = true end
@@ -228,7 +231,11 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
     elseif playlist.priority <= PlaylistPriority.Explore then
       playlist.interruptMode = INTERRUPT.Me
     else
-      debugLog('Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!', playlist.priority, playlist.id)
+      debugLog(
+        'Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!',
+        playlist.priority,
+        playlist.id
+      )
     end
   end
 end
