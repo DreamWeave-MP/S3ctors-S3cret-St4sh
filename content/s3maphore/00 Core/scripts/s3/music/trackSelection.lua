@@ -31,7 +31,11 @@ local function getPlaylistIdForTrackSelection(newPlaylist)
 
   if not MusicManager.registeredPlaylists[selectedPlaylistId] then
     if selectedPlaylistId then
-      musicUtil.debugLog("Playlist %s requested to use tracks from backup playlist %s, but it isn't registered! Falling back to the default.", newPlaylist.id, selectedPlaylistId)
+      musicUtil.debugLog(
+        'Playlist %s requested to use tracks from backup playlist %s, but it isn\'t registered! Falling back to the default.',
+        newPlaylist.id,
+        selectedPlaylistId
+      )
     end
 
     return newPlaylist.id
@@ -44,12 +48,12 @@ end
 local function selectTrackFromPlaylist(playlistId)
   local playlist = MusicManager.registeredPlaylists[playlistId]
 
-  if not playlist then error(StrFormat("Playlist %s has not been registered!", playlistId)) end
+  if not playlist then error(StrFormat('Playlist %s has not been registered!', playlistId)) end
 
   local playlistOrder = MusicManager.playlistsTracksOrder[playlist.id]
   local nextTrackIndex = Remove(playlistOrder)
 
-  if not nextTrackIndex then error('Can not fetch track: nextTrackIndex is nil') end
+  if not nextTrackIndex then error 'Can not fetch track: nextTrackIndex is nil' end
 
   -- If there are no tracks left, fill playlist again.
   if not next(playlistOrder) then
@@ -70,7 +74,15 @@ local function selectTrackFromPlaylist(playlistId)
 
   local trackPath = playlist.tracks[nextTrackIndex]
 
-  if not trackPath then error(StrFormat("Can not fetch track with index %s from playlist '%s'.", nextTrackIndex, playlist.id)) end
+  if not trackPath then
+    error(
+      StrFormat(
+        'Can not fetch track with index %s from playlist \'%s\'.',
+        nextTrackIndex,
+        playlist.id
+      )
+    )
+  end
 
   return trackPath
 end

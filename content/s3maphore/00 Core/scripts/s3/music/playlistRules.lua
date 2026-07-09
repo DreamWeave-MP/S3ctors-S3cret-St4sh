@@ -406,7 +406,12 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
       levelDifference = targetLevel.current / MyLevel.current
       levelScale = levelRule.relative
     else
-      Error(StrFormat("Table %s for combatTargetLevelDifference rule does not contain either the relative OR absolute fields! You broke it!", levelRule))
+      Error(
+        StrFormat(
+          'Table %s for combatTargetLevelDifference rule does not contain either the relative OR absolute fields! You broke it!',
+          levelRule
+        )
+      )
     end
 
     ---@diagnostic disable-next-line: need-check-nil
