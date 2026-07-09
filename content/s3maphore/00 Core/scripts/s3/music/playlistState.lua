@@ -3,7 +3,6 @@
 local StrLower = string.lower
 
 local gameSelf = require 'openmw.self'
-local DynamicStats = gameSelf.type.stats.dynamic
 
 ---@class PlaylistState
 ---@field cellHasWater boolean whether the current cell has water or not
@@ -25,18 +24,18 @@ local DynamicStats = gameSelf.type.stats.dynamic
 ---@field isInCombat boolean whether the player is in combat or not
 ---@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
 ---@field playlistTimeOfDay TimeOfDay the time of day for the current playlist
----@field dynamicStats { health: openmw.types.DynamicStat, magicka: openmw.types.DynamicStat, fatigue: openmw.types.DynamicStat }
+---@field normalizedHealth number current / base, updated per frame, rounded to two decimals
+---@field normalizedMagicka number current / base, updated per frame, rounded to two decimals
+---@field normalizedFatigue number current / base, updated per frame, rounded to two decimals
 ---@field movementMode S3maphoreMovementMode current player movement mode
 ---@field weather string
 local PlaylistState = {
   cellHasWater = false,
   cellIsExterior = false,
   cellName = '',
-  dynamicStats = {
-    health = DynamicStats.health(gameSelf),
-    magicka = DynamicStats.magicka(gameSelf),
-    fatigue = DynamicStats.fatigue(gameSelf),
-  },
+  normalizedHealth = 1.0,
+  normalizedMagicka = 1.0,
+  normalizedFatigue = 1.0,
   movementMode = 'standing',
   objectsByRecord = {},
   objectsByType = {},
