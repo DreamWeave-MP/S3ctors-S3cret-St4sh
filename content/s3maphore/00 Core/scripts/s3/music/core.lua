@@ -58,6 +58,12 @@ local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, Send
 local ActiveEffects, LevitateEffect =
   types.Actor.activeEffects(self), core.magic.EFFECT_TYPE.Levitate
 local GetMagicEffect = ActiveEffects.getEffect
+local DynamicStats = self.type.stats.dynamic
+local healthStat = DynamicStats.health(self)
+local magickaStat = DynamicStats.magicka(self)
+local fatigueStat = DynamicStats.fatigue(self)
+
+local function roundToHundredths(n) return math.floor(n * 100 + 0.5) / 100 end
 
 ---@type fun(dt: number)
 local currentUpdateHandler
@@ -128,6 +134,10 @@ local function updatePlaylistState()
     PlaylistState.movementMode = 'standing'
   end
   local movementChanged = wasMoving ~= PlaylistState.movementMode
+
+  PlaylistState.normalizedHealth = roundToHundredths(healthStat.current / healthStat.base)
+  PlaylistState.normalizedMagicka = roundToHundredths(magickaStat.current / magickaStat.base)
+  PlaylistState.normalizedFatigue = roundToHundredths(fatigueStat.current / fatigueStat.base)
 
   if TODChanged or movementChanged then
     queuedEvent.name = 'S3maphoreStateChanged'
