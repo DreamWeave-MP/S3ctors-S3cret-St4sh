@@ -26,6 +26,7 @@ local MyLevel = gameSelf.type.stats.level(gameSelf)
 local NearbyActors = nearby.actors
 
 local PlaylistState = require 'scripts.s3.music.playlistState'
+local clear = require 'scripts.s3.clear'
 
 ---@class PlaylistRules helper functions for running playlist behaviors
 local PlaylistRules = {}
@@ -70,24 +71,27 @@ local function ensureCombatCache()
   return cache
 end
 
+---@hidden
 --- Clear target-specific caches, used either when they exit combat or are hit
 ---@param removedTargetId string
-function PlaylistRules.clearPerTargetCaches(removedTargetId)
+local function clearPerTargetCaches(removedTargetId)
   S3maphoreGlobalCache[removedTargetId] = nil
   combatTargetLevelCache[removedTargetId] = nil
 end
 
-function PlaylistRules.clearGlobalCombatTargetCache()
+---@hidden
+local function clearGlobalCombatTargetCache()
   if not combatTargetCacheKey then return end
   S3maphoreGlobalCache[combatTargetCacheKey] = nil
 end
 
+---@hidden
 --- When a target dies or is otherwised removed from the combat targets table, remove
 --- references to the old cache and any userdata objects cached for memory saving purposes
 ---@param removedTargetId string
-function PlaylistRules.clearCombatCaches(removedTargetId)
-  PlaylistRules.clearGlobalCombatTargetCache()
-  PlaylistRules.clearPerTargetCaches(removedTargetId)
+local function clearCombatCaches(removedTargetId)
+  clearGlobalCombatTargetCache()
+  clearPerTargetCaches(removedTargetId)
 end
 
 --- Returns whether the current cell name matches a pattern rule. Checks disallowed patterns first
@@ -881,9 +885,9 @@ end
 
 local S3maphoreJournalCache = {}
 
----@private
+---@hidden
 ---Clear the journal cache when a player gets a journal update
-function PlaylistRules.clearJournalCache() S3maphoreJournalCache = {} end
+local function clearJournalCache() clear(S3maphoreJournalCache) end
 
 --- Playlist rule for checking a specific journal state
 ---
@@ -917,8 +921,9 @@ function PlaylistRules.journal(journalDataMap)
   return result
 end
 
+---@hidden
 ---@param key S3maphoreCacheKey?
-function PlaylistRules.setCombatTargetCacheKey(key)
+local function setCombatTargetCacheKey(key)
   if key and Type(key) ~= 'string' then Error('Invalid cache key provided!', 2) end
 
   local prev = combatTargetCacheKey
@@ -927,4 +932,10 @@ function PlaylistRules.setCombatTargetCacheKey(key)
   combatTargetCacheKey = key
 end
 
-return PlaylistRules
+return {
+  rules = PlaylistRules,
+  clearJournalCache = clearJournalCache,
+  clearGlobalCombatTargetCache = clearGlobalCombatTargetCache,
+  setCombatTargetCacheKey = setCombatTargetCacheKey,
+  clearCombatCaches = clearCombatCaches,
+}

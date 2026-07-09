@@ -27,8 +27,11 @@ local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistStat
 ---@diagnostic disable-next-line: invisible
 updateCellMetadata, PlaylistState.updateCellMetadata = PlaylistState.updateCellMetadata, nil
 
+local PlaylistModule = require 'scripts.s3.music.playlistRules'
 ---@type PlaylistRules
-local PlaylistRules = require 'scripts.s3.music.playlistRules'
+local PlaylistRules = PlaylistModule.rules
+local clearJournalCache = PlaylistModule.clearJournalCache
+local clearGlobalCombatTargetCache = PlaylistModule.clearGlobalCombatTargetCache
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local StateMachine = require('scripts.s3.statemachine').new()
 StateMachine:state('idle', {})
@@ -398,8 +401,7 @@ return {
   engineHandlers = {
 
     onQuestUpdate = function()
-      ---@diagnostic disable-next-line: invisible
-      PlaylistRules.clearJournalCache()
+      clearJournalCache()
       resolvePlaylist()
     end,
 
@@ -546,7 +548,7 @@ return {
       )
 
       CombatState.onHit()
-      PlaylistRules.clearGlobalCombatTargetCache()
+      clearGlobalCombatTargetCache()
       resolvePlaylist()
     end,
 

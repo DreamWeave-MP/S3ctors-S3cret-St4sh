@@ -24,8 +24,9 @@ end
 local MusicManager = require 'scripts.s3.music.musicManager'
 ---@type S3maphoreCoreSettings
 local MusicSettings = require 'scripts.s3.music.musicSettings'
----@type PlaylistRules
-local PlaylistRules = require 'scripts.s3.music.playlistRules'
+local PlaylistModule = require 'scripts.s3.music.playlistRules'
+local setCombatTargetCacheKey = PlaylistModule.setCombatTargetCacheKey
+local clearCombatCaches = PlaylistModule.clearCombatCaches
 ---@type PlaylistState
 local PlaylistState = require 'scripts.s3.music.playlistState'
 
@@ -87,7 +88,7 @@ local function recomputeState()
   PlaylistState.isExploring = MusicSettings.ExploreEnabled and not PlaylistState.isInCombat
   MusicManager.activePlaydeck = PlaylistState.isInCombat and MusicManager.battlePlaylists
     or MusicManager.explorePlaylists
-  PlaylistRules.setCombatTargetCacheKey(cacheKey)
+  setCombatTargetCacheKey(cacheKey)
 end
 
 ---@param actor openmw.LObject
@@ -120,7 +121,7 @@ local function onTargetsChanged(actor, targets)
     end
 
     playerTargetedActors[actor.id] = nil
-    PlaylistRules.clearCombatCaches(actor.id)
+    clearCombatCaches(actor.id)
   end
 
   recomputeState()
