@@ -52,7 +52,9 @@ local function playlistCoroutineLoader()
 
     if StrMatch(file, '%.ya?ml$') then
       local ok, err = pcall(MusicManager.playlistMetadata.loadYamlFile, file)
-      if not ok then print(StrFormat('Failed to load track metadata file: %s\nErr: %s', file, err)) end
+      if not ok then
+        print(StrFormat('Failed to load track metadata file: %s\nErr: %s', file, err))
+      end
     elseif StrMatch(file, '%.lua$') then
       musicUtil.debugLog('reading playlist file: %s', file)
 

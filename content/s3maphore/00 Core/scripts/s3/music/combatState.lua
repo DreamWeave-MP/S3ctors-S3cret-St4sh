@@ -160,9 +160,7 @@ end
 
 --- Resets the actor polling cycle so the next batchPoll starts from the beginning.
 --- Call on cell transitions or any event that invalidates the current traversal position.
-local function resetPollCycle()
-  chainPosition = 2
-end
+local function resetPollCycle() chainPosition = 2 end
 
 ---@class CombatState
 local CombatState = {
