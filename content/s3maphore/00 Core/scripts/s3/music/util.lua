@@ -410,8 +410,14 @@ local function makeReadOnly(inTable, copy, strict, visited)
     end
   end
 
-  local MT = strict and StrictReadOnlyMT or ReadOnlyMT
-  return setmetatable(res, MT)
+  local currentMT = getmetatable(res)
+
+  if currentMT == nil then
+    local MT = strict and StrictReadOnlyMT or ReadOnlyMT
+    return setmetatable(res, MT)
+  end
+
+  return res
 end
 
 local function OMWGetStoredTracksOrder()
