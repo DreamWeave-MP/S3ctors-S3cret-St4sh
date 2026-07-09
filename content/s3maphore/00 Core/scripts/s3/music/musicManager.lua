@@ -48,7 +48,6 @@ local Floor, Insert, Max, StrFormat, TableSort, next, print, unpack =
 local ReadOnlyPlaylistFileList =
   musicUtil.makeReadOnly(musicUtil.getPlaylistFilePaths(), false, false)
 
----@alias TrackChangedHandler fun(eventData: S3maphorePlaybackChangeEventData): boolean?
 ---@type TrackChangedHandler[]
 local TrackChangeHandlers = {}
 
@@ -150,6 +149,39 @@ end
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
+  local existing = MusicManager.registeredPlaylists[playlist.id]
+  if existing then
+    local oldDeck, newDeck
+    if existing.priority <= PlaylistPriority.Special then
+      oldDeck = 'special'
+    elseif existing.priority <= PlaylistPriority.BattleVanilla then
+      oldDeck = 'battle'
+    else
+      oldDeck = 'explore'
+    end
+    if playlist.priority <= PlaylistPriority.Special then
+      newDeck = 'special'
+    elseif playlist.priority <= PlaylistPriority.BattleVanilla then
+      newDeck = 'battle'
+    else
+      newDeck = 'explore'
+    end
+    if oldDeck ~= newDeck then
+      error(
+        StrFormat(
+          'Cannot change playlist "%s" from %s deck (priority %d) to %s deck (priority %d). '
+            .. 'Re-registering a playlist under a different priority bracket is not supported.',
+          playlist.id,
+          oldDeck,
+          existing.priority,
+          newDeck,
+          playlist.priority
+        ),
+        2
+      )
+    end
+  end
+
   musicUtil.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
 
   local existingOrder = MusicManager.playlistsTracksOrder[playlist.id]
