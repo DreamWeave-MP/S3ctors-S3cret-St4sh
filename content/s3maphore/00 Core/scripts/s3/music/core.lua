@@ -45,8 +45,8 @@ local musicUtil = require 'scripts.s3.music.util'
 ---@type Rand
 local randomGen = require 'scripts.s3.randomGen'
 
-local error, pairs, next, StrFormat, TableSort, type =
-  error, pairs, next, string.format, table.sort, type
+local error, pairs, next, Remove, StrFormat, TableSort, type =
+  error, pairs, next, table.remove, string.format, table.sort, type
 
 local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic =
   require('openmw.debug').isCollisionEnabled,
@@ -166,6 +166,31 @@ local function realResolvePlaylist()
   resolverDirty = true
 end
 
+--- Validate all registered playlists' fallback references after loading completes.
+--- Strips unregistered fallback playlist IDs and logs each removal so mod authors
+--- can detect configuration errors immediately rather than at track-selection time.
+local function validatePlaylistReferences()
+  local dirty = false
+  for playlistId, playlist in next, MusicManager.registeredPlaylists do
+    local fallback = playlist.fallback
+    if fallback and fallback.playlists then
+      for i = #fallback.playlists, 1, -1 do
+        local fallbackId = fallback.playlists[i]
+        if not MusicManager.registeredPlaylists[fallbackId] then
+          musicUtil.debugLog(
+            'Removed unregistered fallback playlist "%s" from "%s"\'s fallback list.',
+            fallbackId,
+            playlistId
+          )
+          Remove(fallback.playlists, i)
+          dirty = true
+        end
+      end
+    end
+  end
+  if dirty then musicUtil.debugLog 'Fallback reference cleanup completed.' end
+end
+
 StateMachine:state('init_player', function()
   if not PlaylistLoader then error 'Playlist loader not found during initialization!' end
 
@@ -214,6 +239,8 @@ StateMachine:state('init_player', function()
   SendGlobalEvent('S3maphoreInitializationComplete', self.object)
 
   updateCellMetadata()
+
+  validatePlaylistReferences()
 
   musicUtil.debugLog 'Coroutine load complete, initializing cell presence'
   StateMachine:transition 'idle'

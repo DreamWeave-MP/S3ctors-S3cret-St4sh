@@ -9,36 +9,47 @@ local randomGen = require 'scripts.s3.randomGen'
 
 local error, next, Remove, StrFormat = error, next, table.remove, string.format
 
---- If a set of fallback playlists is present, attempt to use them during track selection
---- It should be noted that, for fallback playlists, their `active` parameter is ignored currently.
+--- Maximum depth for recursive fallback resolution.
+--- Fallback chains are validated eagerly at startup in core.lua, so the hot path
+--- never needs to check registration — just pick one, check active, recurse or return.
+local MAX_FALLBACK_DEPTH = 10
+
+--- Resolve a playlist ID through its fallback chain.
+--- Startup validation guarantees all fallback playlist IDs exist in registeredPlaylists.
 ---@param newPlaylist S3maphorePlaylist
-local function getPlaylistIdForTrackSelection(newPlaylist)
+---@param depth integer? internal recursion depth counter
+local function getPlaylistIdForTrackSelection(newPlaylist, depth)
+  depth = (depth or 0) + 1
+
+  if depth > MAX_FALLBACK_DEPTH then
+    musicUtil.debugLog(
+      'Fallback chain exceeded max depth (%d) for playlist "%s". Breaking to prevent infinite recursion.',
+      MAX_FALLBACK_DEPTH,
+      newPlaylist.id
+    )
+    return newPlaylist.id
+  end
+
   local fallbackData = newPlaylist.fallback
   if not fallbackData or not fallbackData.playlists then return newPlaylist.id end
 
   local useOtherPlaylist = randomGen.float() <= (fallbackData.playlistChance or 0.5)
-
   if not useOtherPlaylist then return newPlaylist.id end
 
-  for i = #fallbackData.playlists, 1, -1 do
-    local playlistId = fallbackData.playlists[i]
-    if not MusicManager.registeredPlaylists[playlistId] then Remove(fallbackData.playlists, i) end
-  end
-
   local numBackupPlaylists = #fallbackData.playlists
+  if numBackupPlaylists == 0 then return newPlaylist.id end
+
   local selectedPlaylistIndex = randomGen.range(numBackupPlaylists, true)
   local selectedPlaylistId = fallbackData.playlists[selectedPlaylistIndex]
+  local selectedPlaylist = MusicManager.registeredPlaylists[selectedPlaylistId]
 
-  if not MusicManager.registeredPlaylists[selectedPlaylistId] then
-    if selectedPlaylistId then
-      musicUtil.debugLog(
-        'Playlist %s requested to use tracks from backup playlist %s, but it isn\'t registered! Falling back to the default.',
-        newPlaylist.id,
-        selectedPlaylistId
-      )
-    end
+  -- Skip inactive fallback playlists
+  if not selectedPlaylist.active then return newPlaylist.id end
 
-    return newPlaylist.id
+  -- Recurse into nested fallback chains
+  local fallback = selectedPlaylist.fallback
+  if fallback and fallback.playlists then
+    return getPlaylistIdForTrackSelection(selectedPlaylist, depth)
   end
 
   return selectedPlaylistId
@@ -90,18 +101,22 @@ end
 ---@param newPlaylist S3maphorePlaylist
 ---@param playbackParams S3maphorePlaybackParamsTable
 local function switchPlaylist(newPlaylist, playbackParams)
-  local nextPlaylist = getPlaylistIdForTrackSelection(newPlaylist)
-  local nextTrack = selectTrackFromPlaylist(nextPlaylist)
+  -- Resolve fallback chain before reading playlist state, so currentPlaylist
+  -- always matches the playlist that actually produced currentTrack.
+  local resolvedPlaylistId = getPlaylistIdForTrackSelection(newPlaylist)
+  local resolvedPlaylist = MusicManager.registeredPlaylists[resolvedPlaylistId]
+  local nextTrack = selectTrackFromPlaylist(resolvedPlaylistId)
 
+  -- playOneTrack/deactivateAfterEnd still governed by the original playlist's intent
   if newPlaylist.playOneTrack then newPlaylist.deactivateAfterEnd = true end
 
   if MusicManager.currentPlaylist and newPlaylist.id == MusicManager.currentPlaylist.id then
     SilenceManager:updateSilenceParams(newPlaylist)
   end
 
-  MusicManager.currentPlaylist = newPlaylist
+  MusicManager.currentPlaylist = resolvedPlaylist
   MusicManager.currentTrack = nextTrack
-  playbackParams.fadeOut = newPlaylist.fadeOut or MusicSettings.FadeOutDuration
+  playbackParams.fadeOut = resolvedPlaylist.fadeOut or MusicSettings.FadeOutDuration
 end
 
 ---@param oldPlaylist S3maphorePlaylist?
