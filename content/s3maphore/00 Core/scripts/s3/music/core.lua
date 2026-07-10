@@ -32,6 +32,7 @@ local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistStat
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local TrackSelection = require 'scripts.s3.music.trackSelection'
 local musicUtil = require 'scripts.s3.music.util'
+local PlaylistEditor = require 'scripts.s3.music.playlistEditor'
 ---@type Rand
 local randomGen = require 'scripts.s3.randomGen'
 
@@ -455,7 +456,7 @@ return {
     onKeyPress = function(key)
       if key.code == input.KEY.F8 then
         if key.withShift then
-          SendEvent(self, 'S3maphoreToggleMusic')
+          PlaylistEditor.toggle()
         else
           SendEvent(self, 'S3maphoreSkipTrack')
         end
