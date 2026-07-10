@@ -5,7 +5,7 @@ local core = require 'openmw.core'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
-local v2 = util.vector2
+local vector2 = util.vector2
 
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 
@@ -24,7 +24,7 @@ function M.makeLeftPanel()
     props = {
       resource = WHITE_TEXTURE,
       color = PANEL_COLORS.left,
-      relativeSize = v2(1 / 3, 1),
+      relativeSize = vector2(1 / 3, 1),
     },
   }
 end
@@ -36,7 +36,7 @@ function M.makeTopRightPanel()
     props = {
       resource = WHITE_TEXTURE,
       color = PANEL_COLORS.top,
-      relativeSize = v2(1, 1 / 3),
+      relativeSize = vector2(1, 1 / 3),
     },
   }
 end
@@ -48,7 +48,7 @@ function M.makeBottomRightPanel()
     props = {
       resource = WHITE_TEXTURE,
       color = PANEL_COLORS.bottom,
-      relativeSize = v2(1, 2 / 3),
+      relativeSize = vector2(1, 2 / 3),
     },
   }
 end
@@ -70,15 +70,15 @@ function M.show()
     name = 'S3maphore_PlaylistEditor',
     template = I.MWUI.templates.bordersThick,
     props = {
-      relativeSize = v2(0.75, 0.75),
-      relativePosition = v2(0.5, 0.5),
-      anchor = v2(0.5, 0.5),
+      relativeSize = vector2(0.75, 0.75),
+      relativePosition = vector2(0.5, 0.5),
+      anchor = vector2(0.5, 0.5),
     },
     content = ui.content {
       {
         template = I.MWUI.templates.bordersThick,
         props = {
-          relativeSize = v2(1, 1),
+          relativeSize = vector2(1, 1),
         },
         content = ui.content {
           {
@@ -86,7 +86,7 @@ function M.show()
             name = 'S3maphore_PlaylistEditor_Main',
             props = {
               horizontal = true,
-              relativeSize = v2(1, 1),
+              relativeSize = vector2(1, 1),
               autoSize = false,
             },
             content = ui.content {
@@ -96,7 +96,7 @@ function M.show()
                 name = 'S3maphore_PlaylistEditor_Right',
                 props = {
                   horizontal = false,
-                  relativeSize = v2(2 / 3, 1),
+                  relativeSize = vector2(2 / 3, 1),
                   autoSize = false,
                 },
                 content = ui.content {
