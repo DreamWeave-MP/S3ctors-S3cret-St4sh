@@ -1,6 +1,9 @@
 ---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
+local error, floor, pairs, next, Remove, StrFormat, TableSort, type =
+  error, math.floor, pairs, next, table.remove, string.format, table.sort, type
+
 local ambient = require 'openmw.ambient'
 local async = require 'openmw.async'
 ---@type openmw.core
@@ -10,45 +13,43 @@ local self = require 'openmw.self'
 local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 
-local clear = require 'scripts.s3.clear'
+local s3lf = require('openmw.interfaces').s3.lf
 
+local Magic = require 'scripts.s3.spellUtil'
+local StateMachine = require('scripts.s3.statemachine').new()
+local clear = require 'scripts.s3.clear'
+StateMachine:state('idle', {})
+
+---@type CombatState
+local CombatState = require 'scripts.s3.music.combatState'
 local MusicManager = require 'scripts.s3.music.musicManager'
 local MusicSettings = require 'scripts.s3.music.musicSettings'
+---@type function?
+local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
+local PlaylistModule = require 'scripts.s3.music.playlistRules'
 local PlaylistPriority = require 'doc.playlistPriority'
+local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistState'
+local SilenceManager = require 'scripts.s3.music.silenceManager'
 local TrackSelection = require 'scripts.s3.music.trackSelection'
+local musicUtil = require 'scripts.s3.music.util'
+---@type Rand
+local randomGen = require 'scripts.s3.randomGen'
 
 ---@type S3maphorePlaylistEnv
 local PlaylistEnv
----@type function?
-local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
-local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistState'
 
 --- updateCellMetadata for me, but not for thee
 ---@diagnostic disable-next-line: invisible
 updateCellMetadata, PlaylistState.updateCellMetadata = PlaylistState.updateCellMetadata, nil
 
-local PlaylistModule = require 'scripts.s3.music.playlistRules'
 ---@type PlaylistRules
 local PlaylistRules = PlaylistModule.rules
 local clearJournalCache = PlaylistModule.clearJournalCache
 local clearGlobalCombatTargetCache = PlaylistModule.clearGlobalCombatTargetCache
-local SilenceManager = require 'scripts.s3.music.silenceManager'
-local StateMachine = require('scripts.s3.statemachine').new()
-StateMachine:state('idle', {})
-
----@type CombatState
-local CombatState = require 'scripts.s3.music.combatState'
 
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
-local musicUtil = require 'scripts.s3.music.util'
 
----@type Rand
-local randomGen = require 'scripts.s3.randomGen'
-
-local error, pairs, next, Remove, StrFormat, TableSort, type =
-  error, pairs, next, table.remove, string.format, table.sort, type
-
-local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic =
+local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic, GetSelectedSpell, GetStance =
   require('openmw.debug').isCollisionEnabled,
   types.Actor.isDead,
   core.sound.isEnabled(),
@@ -57,19 +58,16 @@ local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, Send
   self.sendEvent,
   core.sendGlobalEvent,
   ambient.stopMusic,
-  ambient.streamMusic
+  ambient.streamMusic,
+  types.Actor.getSelectedSpell,
+  types.Actor.getStance
 
 local ActiveEffects, LevitateEffect =
   types.Actor.activeEffects(self), core.magic.EFFECT_TYPE.Levitate
 local GetMagicEffect = ActiveEffects.getEffect
-local DynamicStats = self.type.stats.dynamic
-local healthStat = DynamicStats.health(self)
-local magickaStat = DynamicStats.magicka(self)
-local fatigueStat = DynamicStats.fatigue(self)
 
-local function roundToHundredths(n) return math.floor(n * 100 + 0.5) / 100 end
-
-local resolvePlaylist = function() end
+local lastSelectedSpell, lastStance = GetSelectedSpell(self), GetStance(self)
+local lastSpellSchool = lastSelectedSpell and Magic:getSpellSchool(lastSelectedSpell)
 
 local desiredPlaylist, resolverDirty, didTransition, waitingOnPresence, wasExterior =
   nil, false, false, true, false
@@ -96,6 +94,10 @@ local TrackChangeData = {
   reason = MusicManager.STATE.TrackChanged,
   trackName = '',
 }
+
+local function roundToHundredths(n) return floor(n * 100 + 0.5) / 100 end
+
+local resolvePlaylist = function() end
 
 local function clearQueuedData()
   if type(queuedEvent.data) ~= 'table' then queuedEvent.data = queuedEvent.backup end
@@ -139,15 +141,27 @@ StateMachine:state('update_playlist_state', function()
   end
   local movementChanged = wasMoving ~= PlaylistState.movementMode
 
-  PlaylistState.normalizedHealth = roundToHundredths(healthStat.current / healthStat.base)
-  PlaylistState.normalizedMagicka = roundToHundredths(magickaStat.current / magickaStat.base)
-  PlaylistState.normalizedFatigue = roundToHundredths(fatigueStat.current / fatigueStat.base)
+  PlaylistState.normalizedHealth = roundToHundredths(s3lf.health.current / s3lf.health.base)
+  PlaylistState.normalizedMagicka = roundToHundredths(s3lf.magicka.current / s3lf.magicka.base)
+  PlaylistState.normalizedFatigue = roundToHundredths(s3lf.fatigue.current / s3lf.fatigue.base)
 
-  if TODChanged or movementChanged then
+  local currentSpell = GetSelectedSpell(self)
+  local currentSpellSchool = currentSpell and Magic:getSpellSchool(currentSpell)
+  local spellSchoolChanged = lastSpellSchool ~= currentSpellSchool
+  lastSpellSchool = currentSpellSchool
+  PlaylistState.selectedSpellSchool = currentSpellSchool
+
+  local currentStance = GetStance(self)
+  local stanceChanged = lastStance ~= currentStance
+  lastStance = currentStance
+
+  if TODChanged or movementChanged or spellSchoolChanged or stanceChanged then
     queuedEvent.name = 'S3maphoreStateChanged'
     local flags = 0
     if TODChanged then flags = flags + MusicManager.STATE_FLAGS.TOD end
     if movementChanged then flags = flags + MusicManager.STATE_FLAGS.MOVEMENT end
+    if spellSchoolChanged then flags = flags + MusicManager.STATE_FLAGS.SPELL_SCHOOL end
+    if stanceChanged then flags = flags + MusicManager.STATE_FLAGS.STANCE end
     queuedEvent.data = flags
   end
 
