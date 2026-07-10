@@ -29,6 +29,7 @@ local gameSelf = require 'openmw.self'
 ---@field normalizedFatigue number current / base, updated per frame, rounded to two decimals
 ---@field movementMode S3maphoreMovementMode current player movement mode
 ---@field weather string
+---@field selectedSpellSchool string? the magic school of the currently selected spell, e.g. "destruction". nil when no spell is selected.
 local PlaylistState = {
   cellHasWater = false,
   cellIsExterior = false,
@@ -51,6 +52,7 @@ local PlaylistState = {
   currentGrid = nil,
   isExploring = true,
   isInCombat = false,
+  selectedSpellSchool = nil,
 }
 
 -- Cached cell grid for updateCellMetadata, avoids creating new table objects each call
