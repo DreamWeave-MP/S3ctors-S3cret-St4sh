@@ -105,13 +105,15 @@ local function clearQueuedData()
   queuedEvent.name = ''
 end
 
-StateMachine:state('update_playlist_state', function()
+StateMachine:state('update_playlist_state', function(dt)
   -- When sound is enabled, check silence before doing state work.
   -- When sound is disabled, skip the check entirely and proceed to state update.
   if IsSoundEnabled and SilenceManager:silenceActive() then return end
 
   --- Explicitly advance the generator on each round-robin cycle to improve distribution
   randomGen.int()
+
+  if dt == 0 then return StateMachine:jump 'handle_playback' end
 
   local oldTod, newTod = PlaylistState.playlistTimeOfDay, MusicManager.playlistTimeOfDay()
   local TODChanged = oldTod and oldTod ~= newTod
