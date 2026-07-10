@@ -1,5 +1,6 @@
 ---@omw-context player
 
+local I = require 'openmw.interfaces'
 local core = require 'openmw.core'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -67,34 +68,42 @@ function M.show()
   rootElement = ui.create {
     layer = 'HUD',
     name = 'S3maphore_PlaylistEditor',
+    template = I.MWUI.templates.bordersThick,
     props = {
       relativeSize = v2(0.75, 0.75),
       relativePosition = v2(0.5, 0.5),
       anchor = v2(0.5, 0.5),
-      visible = true,
     },
     content = ui.content {
       {
-        type = ui.TYPE.Flex,
-        name = 'S3maphore_PlaylistEditor_Main',
+        template = I.MWUI.templates.bordersThick,
         props = {
-          horizontal = true,
           relativeSize = v2(1, 1),
-          autoSize = false,
         },
         content = ui.content {
-          M.makeLeftPanel(),
           {
             type = ui.TYPE.Flex,
-            name = 'S3maphore_PlaylistEditor_Right',
+            name = 'S3maphore_PlaylistEditor_Main',
             props = {
-              horizontal = false,
-              relativeSize = v2(2 / 3, 1),
+              horizontal = true,
+              relativeSize = v2(1, 1),
               autoSize = false,
             },
             content = ui.content {
-              M.makeTopRightPanel(),
-              M.makeBottomRightPanel(),
+              M.makeLeftPanel(),
+              {
+                type = ui.TYPE.Flex,
+                name = 'S3maphore_PlaylistEditor_Right',
+                props = {
+                  horizontal = false,
+                  relativeSize = v2(2 / 3, 1),
+                  autoSize = false,
+                },
+                content = ui.content {
+                  M.makeTopRightPanel(),
+                  M.makeBottomRightPanel(),
+                },
+              },
             },
           },
         },
