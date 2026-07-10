@@ -14,8 +14,43 @@ local PANEL_COLORS = {
   bottom = util.color.rgb(0, 0, 1),
 }
 
----@class S3maphorePlaylistEditor
 local M = {}
+
+function M.makeLeftPanel()
+  return {
+    name = 'S3maphore_PlaylistEditor_Left',
+    type = ui.TYPE.Image,
+    props = {
+      resource = WHITE_TEXTURE,
+      color = PANEL_COLORS.left,
+      relativeSize = v2(1 / 3, 1),
+    },
+  }
+end
+
+function M.makeTopRightPanel()
+  return {
+    name = 'S3maphore_PlaylistEditor_TopRight',
+    type = ui.TYPE.Image,
+    props = {
+      resource = WHITE_TEXTURE,
+      color = PANEL_COLORS.top,
+      relativeSize = v2(1, 1 / 3),
+    },
+  }
+end
+
+function M.makeBottomRightPanel()
+  return {
+    name = 'S3maphore_PlaylistEditor_BottomRight',
+    type = ui.TYPE.Image,
+    props = {
+      resource = WHITE_TEXTURE,
+      color = PANEL_COLORS.bottom,
+      relativeSize = v2(1, 2 / 3),
+    },
+  }
+end
 
 ---@type openmw.ui.Element?
 local rootElement
@@ -48,15 +83,7 @@ function M.show()
           autoSize = false,
         },
         content = ui.content {
-          {
-            name = 'S3maphore_PlaylistEditor_Left',
-            type = ui.TYPE.Image,
-            props = {
-              resource = WHITE_TEXTURE,
-              color = PANEL_COLORS.left,
-              relativeSize = v2(1 / 3, 1),
-            },
-          },
+          M.makeLeftPanel(),
           {
             type = ui.TYPE.Flex,
             name = 'S3maphore_PlaylistEditor_Right',
@@ -66,24 +93,8 @@ function M.show()
               autoSize = false,
             },
             content = ui.content {
-              {
-                name = 'S3maphore_PlaylistEditor_TopRight',
-                type = ui.TYPE.Image,
-                props = {
-                  resource = WHITE_TEXTURE,
-                  color = PANEL_COLORS.top,
-                  relativeSize = v2(1, 1 / 3),
-                },
-              },
-              {
-                name = 'S3maphore_PlaylistEditor_BottomRight',
-                type = ui.TYPE.Image,
-                props = {
-                  resource = WHITE_TEXTURE,
-                  color = PANEL_COLORS.bottom,
-                  relativeSize = v2(1, 2 / 3),
-                },
-              },
+              M.makeTopRightPanel(),
+              M.makeBottomRightPanel(),
             },
           },
         },
