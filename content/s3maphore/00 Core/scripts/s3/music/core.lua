@@ -424,6 +424,8 @@ return {
       __newindex = function(_, k)
         error(StrFormat('S3maphore state is read-only (attempted to set %s)', k), 2)
       end,
+
+      __pairs = function() return next, PlaylistState, nil end,
     }),
   },
 
