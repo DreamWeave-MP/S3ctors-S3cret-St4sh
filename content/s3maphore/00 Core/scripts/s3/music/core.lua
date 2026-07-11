@@ -13,6 +13,7 @@ local self = require 'openmw.self'
 local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 
+local I = require 'openmw.interfaces'
 local s3lf = require('openmw.interfaces').s3.lf
 
 local Magic = require 'scripts.s3.spellUtil'
@@ -609,5 +610,12 @@ return {
     end,
 
     S3maphoreTrackChanged = MusicManager.callTrackChangedHandlers,
+
+    ---@param eventData { oldMode: string, newMode: string, arg: any }
+    UiModeChanged = function(eventData)
+      if eventData.oldMode == I.UI.MODE.Interface and PlaylistEditor.isVisible() then
+        PlaylistEditor.hide()
+      end
+    end,
   },
 }
