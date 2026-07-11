@@ -10,6 +10,8 @@ local vector2 = util.vector2
 
 local MusicManager = require 'scripts.s3.music.musicManager'
 
+local Constants = require 'scripts.omw.mwui.constants'
+
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 
 local PANEL_COLORS = {
@@ -17,6 +19,14 @@ local PANEL_COLORS = {
   top = util.color.rgb(0, 1, 0),
   bottom = util.color.rgb(0, 0, 1),
 }
+
+---@param color openmw.util.Color
+---@param factor number
+---@return openmw.util.Color
+local function darken(color, factor)
+  local c = color:asRgb()
+  return util.color.rgb(c.x * factor, c.y * factor, c.z * factor)
+end
 
 local WINDOW_RELATIVE = vector2(0.75, 0.75)
 local ROW_PX = 13
@@ -85,7 +95,7 @@ local function makeCategoryTab(name)
     template = I.MWUI.templates.textHeader,
     props = {
       text = name,
-      textColor = selected and util.color.rgb(1, 1, 1) or util.color.rgb(0.55, 0.55, 0.55),
+      textColor = selected and Constants.headerColor or darken(Constants.headerColor, 0.55),
       textAlignH = ui.ALIGNMENT.Center,
     },
     events = selected and {} or {
@@ -143,7 +153,7 @@ function M.makePlaylistPage()
           props = {
             text = '  ' .. getPlaylistDisplayName(playlist),
             textSize = 13,
-            textColor = util.color.rgb(0.75, 0.75, 0.75),
+            textColor = Constants.normalColor,
           },
         },
       },
@@ -176,7 +186,7 @@ function M.makePageControls()
         props = {
           text = '< Prev',
           textSize = 13,
-          textColor = isFirst and util.color.rgb(0.3, 0.3, 0.3) or util.color.rgb(0.8, 0.8, 0.8),
+          textColor = isFirst and darken(Constants.normalColor, 0.4) or Constants.normalColor,
         },
         events = isFirst and {} or {
           onMouseClick = async:callback(function()
@@ -191,7 +201,7 @@ function M.makePageControls()
         props = {
           text = '  ' .. (state.currentPage + 1) .. '/' .. tp .. '  ',
           textSize = 13,
-          textColor = util.color.rgb(0.6, 0.6, 0.6),
+          textColor = darken(Constants.normalColor, 0.8),
         },
       },
       {
@@ -200,7 +210,7 @@ function M.makePageControls()
         props = {
           text = 'Next >',
           textSize = 13,
-          textColor = isLast and util.color.rgb(0.3, 0.3, 0.3) or util.color.rgb(0.8, 0.8, 0.8),
+          textColor = isLast and darken(Constants.normalColor, 0.4) or Constants.normalColor,
         },
         events = not isLast and {
           onMouseClick = async:callback(function()
