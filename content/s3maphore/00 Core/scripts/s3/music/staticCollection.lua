@@ -689,9 +689,5 @@ return {
       GlobalKillCounts.TotalKills = (GlobalKillCounts.TotalKills or 0) + 1
       StorageSet(PresenceSection, 'GlobalKillCounts', GlobalKillCounts)
     end,
-
-    S3maphorePlaylistEditorOpened = function() world.pause 'S3maphorePlaylistEditor' end,
-
-    S3maphorePlaylistEditorClosed = function() world.unpause 'S3maphorePlaylistEditor' end,
   },
 }
