@@ -20,11 +20,20 @@ local M = {}
 function M.makeLeftPanel()
   return {
     name = 'S3maphore_PlaylistEditor_Left',
-    type = ui.TYPE.Image,
     props = {
-      resource = WHITE_TEXTURE,
-      color = PANEL_COLORS.left,
       relativeSize = vector2(1 / 3, 1),
+    },
+    content = ui.content {
+      {
+        type = ui.TYPE.Image,
+        props = {
+          resource = WHITE_TEXTURE,
+          color = PANEL_COLORS.left,
+          relativeSize = vector2(1, 1),
+          position = vector2(8, 8),
+          size = vector2(-16, -16),
+        },
+      },
     },
   }
 end
