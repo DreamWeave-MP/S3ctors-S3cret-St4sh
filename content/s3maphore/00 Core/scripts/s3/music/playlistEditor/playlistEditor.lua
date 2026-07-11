@@ -37,6 +37,14 @@ local function computePageSize()
   return math.max(1, math.floor(listPx / ROW_PX))
 end
 
+---@return number
+local function computeInset()
+  local y = ui.screenSize().y
+  if y <= 720 then return 4 end
+  if y >= 2160 then return 16 end
+  return 8
+end
+
 local M = {}
 
 local function getPlaylistDisplayName(playlist)
@@ -206,6 +214,7 @@ function M.makePageControls()
 end
 
 function M.makeLeftPanel()
+  local inset = computeInset()
   return {
     name = 'S3maphore_PlaylistEditor_Left',
     props = {
@@ -218,8 +227,8 @@ function M.makeLeftPanel()
           resource = WHITE_TEXTURE,
           color = PANEL_COLORS.left,
           relativeSize = vector2(1, 1),
-          position = vector2(8, 8),
-          size = vector2(-16, -16),
+          position = vector2(inset, inset),
+          size = vector2(-inset * 2, -inset * 2),
         },
         content = ui.content {
           {
