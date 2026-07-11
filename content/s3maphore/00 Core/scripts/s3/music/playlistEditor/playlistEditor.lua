@@ -14,11 +14,11 @@ local Constants = require 'scripts.omw.mwui.constants'
 
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 
-local PANEL_COLORS = {
-  left = util.color.rgb(1, 0, 0),
-  top = util.color.rgb(0, 1, 0),
-  bottom = util.color.rgb(0, 0, 1),
-}
+---@return number
+local function menuAlpha()
+  ---@diagnostic disable-next-line: undefined-field
+  return ui._getMenuTransparency()
+end
 
 ---@param color openmw.util.Color
 ---@param factor number
@@ -232,54 +232,20 @@ function M.makeLeftPanel()
     },
     content = ui.content {
       {
-        type = ui.TYPE.Image,
+        type = ui.TYPE.Flex,
         props = {
-          resource = WHITE_TEXTURE,
-          color = PANEL_COLORS.left,
+          horizontal = false,
           relativeSize = vector2(1, 1),
+          autoSize = false,
           position = vector2(inset, inset),
           size = vector2(-inset * 2, -inset * 2),
         },
         content = ui.content {
-          {
-            type = ui.TYPE.Flex,
-            props = {
-              horizontal = false,
-              relativeSize = vector2(1, 1),
-              autoSize = false,
-            },
-            content = ui.content {
-              M.makeCategoryTabs(),
-              M.makePlaylistPage(),
-              M.makePageControls(),
-            },
-          },
+          M.makeCategoryTabs(),
+          M.makePlaylistPage(),
+          M.makePageControls(),
         },
       },
-    },
-  }
-end
-
-function M.makeTopRightPanel()
-  return {
-    name = 'S3maphore_PlaylistEditor_TopRight',
-    type = ui.TYPE.Image,
-    props = {
-      resource = WHITE_TEXTURE,
-      color = PANEL_COLORS.top,
-      relativeSize = vector2(1, 1 / 3),
-    },
-  }
-end
-
-function M.makeBottomRightPanel()
-  return {
-    name = 'S3maphore_PlaylistEditor_BottomRight',
-    type = ui.TYPE.Image,
-    props = {
-      resource = WHITE_TEXTURE,
-      color = PANEL_COLORS.bottom,
-      relativeSize = vector2(1, 2 / 3),
     },
   }
 end
@@ -301,6 +267,16 @@ function M.makeLayout()
           relativeSize = vector2(1, 1),
         },
         content = ui.content {
+          {
+            name = 'S3maphore_PlaylistEditor_Background',
+            type = ui.TYPE.Image,
+            props = {
+              resource = WHITE_TEXTURE,
+              color = util.color.rgb(0, 0, 0),
+              alpha = menuAlpha(),
+              relativeSize = vector2(1, 1),
+            },
+          },
           {
             type = ui.TYPE.Flex,
             name = 'S3maphore_PlaylistEditor_Main',
@@ -326,14 +302,12 @@ function M.makeLayout()
                   autoSize = false,
                 },
                 content = ui.content {
-                  M.makeTopRightPanel(),
                   {
                     template = I.MWUI.templates.horizontalLine,
                     props = {
                       relativeSize = vector2(1, 0),
                     },
                   },
-                  M.makeBottomRightPanel(),
                 },
               },
             },
