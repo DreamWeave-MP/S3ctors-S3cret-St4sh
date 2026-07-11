@@ -1,6 +1,7 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
+local async = require 'openmw.async'
 local core = require 'openmw.core'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -68,11 +69,11 @@ local function makeCategoryTab(name)
       textAlignH = ui.ALIGNMENT.Center,
     },
     events = selected and {} or {
-      onMouseClick = function()
+      onMouseClick = async:callback(function()
         state.selectedCategory = name
         state.currentPage = 0
         M.refresh()
-      end,
+      end),
     },
   }
 end
@@ -148,10 +149,10 @@ function M.makePageControls()
           textColor = isFirst and util.color.rgb(0.3, 0.3, 0.3) or util.color.rgb(0.8, 0.8, 0.8),
         },
         events = isFirst and {} or {
-          onMouseClick = function()
+          onMouseClick = async:callback(function()
             state.currentPage = state.currentPage - 1
             M.refresh()
-          end,
+          end),
         },
       },
       {
@@ -172,10 +173,10 @@ function M.makePageControls()
           textColor = isLast and util.color.rgb(0.3, 0.3, 0.3) or util.color.rgb(0.8, 0.8, 0.8),
         },
         events = not isLast and {
-          onMouseClick = function()
+          onMouseClick = async:callback(function()
             state.currentPage = state.currentPage + 1
             M.refresh()
-          end,
+          end),
         },
       },
     },
