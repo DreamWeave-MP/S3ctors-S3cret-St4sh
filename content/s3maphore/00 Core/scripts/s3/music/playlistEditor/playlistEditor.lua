@@ -55,6 +55,18 @@ local function computeInset()
   return 8
 end
 
+--- Reads the per-side inset (border thickness) of an MWUI border template from
+--- its slot size, so layout stays correct if another mod overrides the template.
+---@param template openmw.ui.Template
+---@return number
+local function borderInset(template)
+  local content = template and template.content
+  if not content then return 0 end
+  local slot = content[#content]
+  if not slot or not slot.props or not slot.props.size then return 0 end
+  return math.max(-slot.props.size.x, -slot.props.size.y, 0)
+end
+
 local M = {}
 
 local function getPlaylistDisplayName(playlist)
@@ -97,6 +109,7 @@ local function makeCategoryTab(name)
       text = name,
       textColor = selected and Constants.headerColor or darken(Constants.headerColor, 0.55),
       textAlignH = ui.ALIGNMENT.Center,
+      textAlignV = ui.ALIGNMENT.Center,
     },
     events = selected and {} or {
       onMouseClick = async:callback(function()
@@ -116,9 +129,20 @@ local function makeCategorySeparator()
 end
 
 function M.makeCategoryTabs()
+  local tabBorder = borderInset(I.MWUI.templates.borders)
+  ---@diagnostic disable-next-line: undefined-field
+  local lineHeight = ui._getDefaultFontSize()
   return {
+    ---@diagnostic disable-next-line: undefined-field
+    template = I.MWUI.templates.borders,
     type = ui.TYPE.Flex,
-    props = { horizontal = true, relativeSize = vector2(1, 0) },
+    props = {
+      horizontal = true,
+      relativeSize = vector2(1, 0),
+      autoSize = false,
+      align = ui.ALIGNMENT.Center,
+      size = vector2(0, math.ceil(lineHeight * 1.2) + tabBorder * 2),
+    },
     content = ui.content {
       { external = { grow = 1 } },
       makeCategoryTab 'Explore',
@@ -141,21 +165,14 @@ function M.makePlaylistPage()
   for i = 1, #playlists do
     local playlist = playlists[i]
     items[#items + 1] = {
-      type = ui.TYPE.Container,
+      type = ui.TYPE.Text,
+      template = I.MWUI.templates.textNormal,
       props = {
         relativeSize = vector2(1, rowHeight),
-        autoSize = false,
-      },
-      content = ui.content {
-        {
-          type = ui.TYPE.Text,
-          template = I.MWUI.templates.textNormal,
-          props = {
-            text = '  ' .. getPlaylistDisplayName(playlist),
-            textSize = 13,
-            textColor = Constants.normalColor,
-          },
-        },
+        text = '  ' .. getPlaylistDisplayName(playlist),
+        textSize = 13,
+        textColor = Constants.normalColor,
+        textAlignV = ui.ALIGNMENT.Center,
       },
     }
   end
@@ -166,7 +183,6 @@ function M.makePlaylistPage()
       relativeSize = vector2(1, 1),
       autoSize = false,
     },
-    external = { grow = 1 },
     content = ui.content(items),
   }
 end
@@ -212,7 +228,7 @@ function M.makePageControls()
           textSize = 13,
           textColor = isLast and darken(Constants.normalColor, 0.4) or Constants.normalColor,
         },
-        events = not isLast and {
+        events = isLast and {} or {
           onMouseClick = async:callback(function()
             state.currentPage = state.currentPage + 1
             M.refresh()
@@ -242,8 +258,25 @@ function M.makeLeftPanel()
         },
         content = ui.content {
           M.makeCategoryTabs(),
-          M.makePlaylistPage(),
-          M.makePageControls(),
+          {
+            type = ui.TYPE.Flex,
+            props = { size = vector2(0, 4) },
+          },
+          {
+            ---@diagnostic disable-next-line: undefined-field
+            template = I.MWUI.templates.borders,
+            type = ui.TYPE.Flex,
+            props = {
+              horizontal = false,
+              relativeSize = vector2(1, 1),
+              autoSize = false,
+            },
+            external = { grow = 1 },
+            content = ui.content {
+              M.makePlaylistPage(),
+              M.makePageControls(),
+            },
+          },
         },
       },
     },
