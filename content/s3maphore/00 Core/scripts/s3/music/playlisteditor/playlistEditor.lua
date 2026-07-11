@@ -92,6 +92,12 @@ function M.show()
             content = ui.content {
               M.makeLeftPanel(),
               {
+                template = I.MWUI.templates.verticalLine,
+                props = {
+                  relativeSize = vector2(0, 1),
+                },
+              },
+              {
                 type = ui.TYPE.Flex,
                 name = 'S3maphore_PlaylistEditor_Right',
                 props = {
@@ -101,6 +107,12 @@ function M.show()
                 },
                 content = ui.content {
                   M.makeTopRightPanel(),
+                  {
+                    template = I.MWUI.templates.horizontalLine,
+                    props = {
+                      relativeSize = vector2(1, 0),
+                    },
+                  },
                   M.makeBottomRightPanel(),
                 },
               },
