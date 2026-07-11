@@ -245,7 +245,7 @@ end
 
 function M.makeLayout()
   return {
-    layer = 'HUD',
+    layer = 'Windows',
     name = 'S3maphore_PlaylistEditor',
     template = I.MWUI.templates.bordersThick,
     props = {
