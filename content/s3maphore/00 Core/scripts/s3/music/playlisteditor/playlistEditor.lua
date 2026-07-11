@@ -51,6 +51,8 @@ function M.makeCategorySection(name, playlists)
     type = ui.TYPE.Flex,
     props = {
       horizontal = false,
+      relativeSize = vector2(1, 1 / 3),
+      autoSize = false,
       arrange = ui.ALIGNMENT.Start,
     },
     content = ui.content(children),
@@ -78,6 +80,8 @@ function M.makeLeftPanel(musicManager)
             type = ui.TYPE.Flex,
             props = {
               horizontal = false,
+              relativeSize = vector2(1, 1),
+              autoSize = false,
             },
             content = ui.content {
               M.makeCategorySection('Explore', musicManager.explorePlaylists),
