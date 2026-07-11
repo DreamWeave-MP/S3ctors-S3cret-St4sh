@@ -321,12 +321,14 @@ end
 function M.show()
   if M.isVisible() then return end
   core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
+  I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
   rootElement = ui.create(M.makeLayout())
 end
 
 function M.hide()
   if not M.isVisible() then return end
   core.sendGlobalEvent 'S3maphorePlaylistEditorClosed'
+  I.UI.removeMode(I.UI.MODE.Interface)
   assert(rootElement):destroy()
   rootElement = nil
 end
