@@ -18,12 +18,24 @@ local PANEL_COLORS = {
   bottom = util.color.rgb(0, 0, 1),
 }
 
-local PAGE_SIZE = 8
+local WINDOW_RELATIVE = vector2(0.75, 0.75)
+local ROW_PX = 13
+local TABS_PX = 24
+local CONTROLS_PX = 20
 
 local state = {
   selectedCategory = 'Explore',
   currentPage = 0,
+  pageSize = 8,
 }
+
+---@return number
+local function computePageSize()
+  local screen = ui.screenSize()
+  local windowPx = screen.y * WINDOW_RELATIVE.y
+  local listPx = windowPx - TABS_PX - CONTROLS_PX
+  return math.max(1, math.floor(listPx / ROW_PX))
+end
 
 local M = {}
 
@@ -42,12 +54,12 @@ local function getCategoryPlaylists()
   end
 end
 
-local function totalPages() return math.max(math.ceil(#getCategoryPlaylists() / PAGE_SIZE), 1) end
+local function totalPages() return math.max(math.ceil(#getCategoryPlaylists() / state.pageSize), 1) end
 
 local function pagePlaylists()
   local all = getCategoryPlaylists()
-  local start = state.currentPage * PAGE_SIZE + 1
-  local finish = math.min(start + PAGE_SIZE - 1, #all)
+  local start = state.currentPage * state.pageSize + 1
+  local finish = math.min(start + state.pageSize - 1, #all)
 
   local page = {}
 
@@ -107,15 +119,25 @@ end
 
 function M.makePlaylistPage()
   local playlists, items = pagePlaylists(), {}
+  local rowHeight = state.pageSize > 0 and (1 / state.pageSize) or 1
   for i = 1, #playlists do
     local playlist = playlists[i]
     items[#items + 1] = {
-      type = ui.TYPE.Text,
-      template = I.MWUI.templates.textNormal,
+      type = ui.TYPE.Container,
       props = {
-        text = '  ' .. getPlaylistDisplayName(playlist),
-        textSize = 13,
-        textColor = util.color.rgb(0.75, 0.75, 0.75),
+        relativeSize = vector2(1, rowHeight),
+        autoSize = false,
+      },
+      content = ui.content {
+        {
+          type = ui.TYPE.Text,
+          template = I.MWUI.templates.textNormal,
+          props = {
+            text = '  ' .. getPlaylistDisplayName(playlist),
+            textSize = 13,
+            textColor = util.color.rgb(0.75, 0.75, 0.75),
+          },
+        },
       },
     }
   end
@@ -312,6 +334,8 @@ end
 
 function M.refresh()
   if not M.isVisible() then return end
+  state.pageSize = computePageSize()
+  if state.currentPage >= totalPages() then state.currentPage = totalPages() - 1 end
   local old = rootElement
   rootElement = nil
   old:destroy()
@@ -322,6 +346,7 @@ function M.show()
   if M.isVisible() then return end
   core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
   I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
+  state.pageSize = computePageSize()
   rootElement = ui.create(M.makeLayout())
 end
 
