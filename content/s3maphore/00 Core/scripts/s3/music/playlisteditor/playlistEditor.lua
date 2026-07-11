@@ -7,6 +7,8 @@ local util = require 'openmw.util'
 
 local vector2 = util.vector2
 
+local MusicManager = require 'scripts.s3.music.musicManager'
+
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 
 local PANEL_COLORS = {
@@ -17,7 +19,45 @@ local PANEL_COLORS = {
 
 local M = {}
 
-function M.makeLeftPanel()
+local function getPlaylistDisplayName(playlist)
+  local meta = MusicManager.playlistMetadata.getPlaylistMetadata(playlist.id)
+  return meta and meta.title or playlist.id
+end
+
+function M.makeCategorySection(name, playlists)
+  local children = {
+    {
+      type = ui.TYPE.Text,
+      template = I.MWUI.templates.textHeader,
+      props = {
+        text = name,
+        textSize = 22,
+      },
+    },
+  }
+
+  for _, playlist in ipairs(playlists) do
+    children[#children + 1] = {
+      type = ui.TYPE.Text,
+      template = I.MWUI.templates.textNormal,
+      props = {
+        text = '  ' .. getPlaylistDisplayName(playlist),
+        textSize = 16,
+      },
+    }
+  end
+
+  return {
+    type = ui.TYPE.Flex,
+    props = {
+      horizontal = false,
+      arrange = ui.ALIGNMENT.Start,
+    },
+    content = ui.content(children),
+  }
+end
+
+function M.makeLeftPanel(musicManager)
   return {
     name = 'S3maphore_PlaylistEditor_Left',
     props = {
@@ -32,6 +72,19 @@ function M.makeLeftPanel()
           relativeSize = vector2(1, 1),
           position = vector2(8, 8),
           size = vector2(-16, -16),
+        },
+        content = ui.content {
+          {
+            type = ui.TYPE.Flex,
+            props = {
+              horizontal = false,
+            },
+            content = ui.content {
+              M.makeCategorySection('Explore', musicManager.explorePlaylists),
+              M.makeCategorySection('Battle', musicManager.battlePlaylists),
+              M.makeCategorySection('Special', musicManager.specialPlaylists),
+            },
+          },
         },
       },
     },
@@ -99,7 +152,7 @@ function M.show()
               autoSize = false,
             },
             content = ui.content {
-              M.makeLeftPanel(),
+              M.makeLeftPanel(MusicManager),
               {
                 template = I.MWUI.templates.verticalLine,
                 props = {
