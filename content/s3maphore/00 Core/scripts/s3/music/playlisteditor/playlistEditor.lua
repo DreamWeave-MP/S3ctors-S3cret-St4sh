@@ -17,6 +17,13 @@ local PANEL_COLORS = {
   bottom = util.color.rgb(0, 0, 1),
 }
 
+local PAGE_SIZE = 8
+
+local state = {
+  selectedCategory = 'Explore',
+  currentPage = 0,
+}
+
 local M = {}
 
 local function getPlaylistDisplayName(playlist)
@@ -24,42 +31,158 @@ local function getPlaylistDisplayName(playlist)
   return meta and meta.title or playlist.id
 end
 
-function M.makeCategorySection(name, playlists)
-  local children = {
-    {
-      type = ui.TYPE.Text,
-      template = I.MWUI.templates.textHeader,
-      props = {
-        text = name,
-        textSize = 22,
-      },
+local function getCategoryPlaylists()
+  if state.selectedCategory == 'Explore' then
+    return MusicManager.explorePlaylists
+  elseif state.selectedCategory == 'Battle' then
+    return MusicManager.battlePlaylists
+  else
+    return MusicManager.specialPlaylists
+  end
+end
+
+local function totalPages() return math.max(math.ceil(#getCategoryPlaylists() / PAGE_SIZE), 1) end
+
+local function pagePlaylists()
+  local all = getCategoryPlaylists()
+  local start = state.currentPage * PAGE_SIZE + 1
+  local finish = math.min(start + PAGE_SIZE - 1, #all)
+
+  local page = {}
+
+  for i = start, finish do
+    page[#page + 1] = all[i]
+  end
+
+  return page
+end
+
+local function makeCategoryTab(name)
+  local selected = name == state.selectedCategory
+  return {
+    type = ui.TYPE.Text,
+    template = I.MWUI.templates.textHeader,
+    props = {
+      text = name,
+      textColor = selected and util.color.rgb(1, 1, 1) or util.color.rgb(0.55, 0.55, 0.55),
+      textAlignH = ui.ALIGNMENT.Center,
+    },
+    events = selected and {} or {
+      onMouseClick = function()
+        state.selectedCategory = name
+        state.currentPage = 0
+        M.refresh()
+      end,
     },
   }
+end
 
-  for _, playlist in ipairs(playlists) do
-    children[#children + 1] = {
+local function makeCategorySeparator()
+  return {
+    template = I.MWUI.templates.verticalLine,
+    props = { relativeSize = vector2(0, 1) },
+  }
+end
+
+function M.makeCategoryTabs()
+  return {
+    type = ui.TYPE.Flex,
+    props = { horizontal = true, relativeSize = vector2(1, 0) },
+    content = ui.content {
+      { external = { grow = 1 } },
+      makeCategoryTab 'Explore',
+      { external = { grow = 1 } },
+      makeCategorySeparator(),
+      { external = { grow = 1 } },
+      makeCategoryTab 'Battle',
+      { external = { grow = 1 } },
+      makeCategorySeparator(),
+      { external = { grow = 1 } },
+      makeCategoryTab 'Special',
+      { external = { grow = 1 } },
+    },
+  }
+end
+
+function M.makePlaylistPage()
+  local playlists, items = pagePlaylists(), {}
+  for i = 1, #playlists do
+    local playlist = playlists[i]
+    items[#items + 1] = {
       type = ui.TYPE.Text,
       template = I.MWUI.templates.textNormal,
       props = {
         text = '  ' .. getPlaylistDisplayName(playlist),
-        textSize = 16,
+        textSize = 13,
+        textColor = util.color.rgb(0.75, 0.75, 0.75),
       },
     }
   end
-
   return {
     type = ui.TYPE.Flex,
     props = {
       horizontal = false,
-      relativeSize = vector2(1, 1 / 3),
+      relativeSize = vector2(1, 1),
       autoSize = false,
-      arrange = ui.ALIGNMENT.Start,
     },
-    content = ui.content(children),
+    external = { grow = 1 },
+    content = ui.content(items),
   }
 end
 
-function M.makeLeftPanel(musicManager)
+function M.makePageControls()
+  local tp = totalPages()
+  local isFirst = state.currentPage <= 0
+  local isLast = state.currentPage >= tp - 1
+
+  return {
+    type = ui.TYPE.Flex,
+    props = { horizontal = true },
+    content = ui.content {
+      {
+        type = ui.TYPE.Text,
+        template = I.MWUI.templates.textNormal,
+        props = {
+          text = '< Prev',
+          textSize = 13,
+          textColor = isFirst and util.color.rgb(0.3, 0.3, 0.3) or util.color.rgb(0.8, 0.8, 0.8),
+        },
+        events = isFirst and {} or {
+          onMouseClick = function()
+            state.currentPage = state.currentPage - 1
+            M.refresh()
+          end,
+        },
+      },
+      {
+        type = ui.TYPE.Text,
+        template = I.MWUI.templates.textNormal,
+        props = {
+          text = '  ' .. (state.currentPage + 1) .. '/' .. tp .. '  ',
+          textSize = 13,
+          textColor = util.color.rgb(0.6, 0.6, 0.6),
+        },
+      },
+      {
+        type = ui.TYPE.Text,
+        template = I.MWUI.templates.textNormal,
+        props = {
+          text = 'Next >',
+          textSize = 13,
+          textColor = isLast and util.color.rgb(0.3, 0.3, 0.3) or util.color.rgb(0.8, 0.8, 0.8),
+        },
+        events = not isLast and {
+          onMouseClick = function()
+            state.currentPage = state.currentPage + 1
+            M.refresh()
+          end,
+        },
+      },
+    },
+  }
+end
+
+function M.makeLeftPanel()
   return {
     name = 'S3maphore_PlaylistEditor_Left',
     props = {
@@ -84,9 +207,9 @@ function M.makeLeftPanel(musicManager)
               autoSize = false,
             },
             content = ui.content {
-              M.makeCategorySection('Explore', musicManager.explorePlaylists),
-              M.makeCategorySection('Battle', musicManager.battlePlaylists),
-              M.makeCategorySection('Special', musicManager.specialPlaylists),
+              M.makeCategoryTabs(),
+              M.makePlaylistPage(),
+              M.makePageControls(),
             },
           },
         },
@@ -119,19 +242,8 @@ function M.makeBottomRightPanel()
   }
 end
 
----@type openmw.ui.Element?
-local rootElement
-
-function M.isVisible()
-  return rootElement and rootElement.layout and rootElement.layout.props.visible ~= false
-end
-
-function M.show()
-  if M.isVisible() then return end
-
-  core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
-
-  rootElement = ui.create {
+function M.makeLayout()
+  return {
     layer = 'HUD',
     name = 'S3maphore_PlaylistEditor',
     template = I.MWUI.templates.bordersThick,
@@ -156,7 +268,7 @@ function M.show()
               autoSize = false,
             },
             content = ui.content {
-              M.makeLeftPanel(MusicManager),
+              M.makeLeftPanel(),
               {
                 template = I.MWUI.templates.verticalLine,
                 props = {
@@ -190,11 +302,30 @@ function M.show()
   }
 end
 
+---@type openmw.ui.Element?
+local rootElement
+
+function M.isVisible()
+  return rootElement and rootElement.layout and rootElement.layout.props.visible ~= false
+end
+
+function M.refresh()
+  if not M.isVisible() then return end
+  local old = rootElement
+  rootElement = nil
+  old:destroy()
+  rootElement = ui.create(M.makeLayout())
+end
+
+function M.show()
+  if M.isVisible() then return end
+  core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
+  rootElement = ui.create(M.makeLayout())
+end
+
 function M.hide()
   if not M.isVisible() then return end
-
   core.sendGlobalEvent 'S3maphorePlaylistEditorClosed'
-
   assert(rootElement):destroy()
   rootElement = nil
 end
