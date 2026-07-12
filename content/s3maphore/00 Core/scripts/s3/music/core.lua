@@ -30,10 +30,10 @@ local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
 local PlaylistModule = require 'scripts.s3.music.playlistRules'
 local PlaylistPriority = require 'doc.playlistPriority'
 local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistState'
+local PlaylistEditor = require 'scripts.s3.music.playlistEditor'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local TrackSelection = require 'scripts.s3.music.trackSelection'
 local musicUtil = require 'scripts.s3.music.util'
-local PlaylistEditor = require 'scripts.s3.music.playlistEditor'
 ---@type Rand
 local randomGen = require 'scripts.s3.randomGen'
 

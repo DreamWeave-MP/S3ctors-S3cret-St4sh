@@ -28,7 +28,7 @@ local PlaylistEnvironment = {
   PlaylistPriority = require 'doc.playlistPriority',
   Tilesets = require 'doc.tilesets',
   Playback = {
-    rules = require 'scripts.s3.music.playlistRules'.rules,
+    rules = require('scripts.s3.music.playlistRules').rules,
     state = require 'scripts.s3.music.playlistState',
   },
   --- Don't interfaces HAVE to be tables?

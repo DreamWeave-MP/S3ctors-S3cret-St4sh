@@ -360,15 +360,12 @@ rootElement.layout.props.visible = false
 rootElement:update()
 
 ---@type openmw.ui.Element
-local leftElement = rootElement.layout.content.S3maphore_PlaylistEditor_Window.content.S3maphore_PlaylistEditor_Main.content.S3maphore_PlaylistEditor_Left
+local leftElement =
+  rootElement.layout.content.S3maphore_PlaylistEditor_Window.content.S3maphore_PlaylistEditor_Main.content.S3maphore_PlaylistEditor_Left
 
-function M.init()
-  ready = true
-end
+function M.init() ready = true end
 
-function M.isVisible()
-  return rootElement.layout.props.visible
-end
+function M.isVisible() return rootElement.layout.props.visible end
 
 local function updateLeftPanel()
   leftElement.content = M.makeLeftPanel().content
