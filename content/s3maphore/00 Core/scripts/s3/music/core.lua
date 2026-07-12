@@ -217,6 +217,7 @@ StateMachine:state('init_player', function()
   if not PlaylistEnv then return end
 
   PlaylistLoader, resolvePlaylist = nil, realResolvePlaylist
+  PlaylistEditor.init()
   TableSort(MusicManager.explorePlaylists, MusicManager.priorityThenRegistration)
   TableSort(MusicManager.battlePlaylists, MusicManager.priorityThenRegistration)
   TableSort(MusicManager.specialPlaylists, MusicManager.priorityThenRegistration)

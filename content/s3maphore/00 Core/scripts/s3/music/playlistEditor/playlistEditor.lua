@@ -295,6 +295,7 @@ function M.makeLayout()
     },
     content = ui.content {
       {
+        name = 'S3maphore_PlaylistEditor_Window',
         template = I.MWUI.templates.bordersThick,
         props = {
           relativeSize = vector2(1, 1),
@@ -351,29 +352,43 @@ function M.makeLayout()
   }
 end
 
+local ready = false
+
 ---@type openmw.ui.Element
 local rootElement = ui.create(M.makeLayout())
 rootElement.layout.props.visible = false
 rootElement:update()
 
+---@type openmw.ui.Element
+local leftElement = rootElement.layout.content.S3maphore_PlaylistEditor_Window.content.S3maphore_PlaylistEditor_Main.content.S3maphore_PlaylistEditor_Left
+
+function M.init()
+  ready = true
+end
+
 function M.isVisible()
   return rootElement.layout.props.visible
+end
+
+local function updateLeftPanel()
+  leftElement.content = M.makeLeftPanel().content
+  rootElement:update()
 end
 
 function M.refresh()
   if not M.isVisible() then return end
   state.pageSize = computePageSize()
   if state.currentPage >= totalPages() then state.currentPage = totalPages() - 1 end
-  rootElement.layout = M.makeLayout()
-  rootElement.layout.props.visible = true
-  rootElement:update()
+  updateLeftPanel()
 end
 
 function M.show()
-  if M.isVisible() then return end
+  if not ready or M.isVisible() then return end
   core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
   I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
   state.pageSize = computePageSize()
+  if state.currentPage >= totalPages() then state.currentPage = totalPages() - 1 end
+  updateLeftPanel()
   rootElement.layout.props.visible = true
   rootElement:update()
 end
@@ -387,6 +402,7 @@ function M.hide()
 end
 
 function M.toggle()
+  if not ready then return end
   if M.isVisible() then
     M.hide()
   else
