@@ -1,1 +1,1 @@
-return require('scripts.s3.music.playlistEditor.playlistEditor')
+return require 'scripts.s3.music.playlistEditor.playlistEditor'
