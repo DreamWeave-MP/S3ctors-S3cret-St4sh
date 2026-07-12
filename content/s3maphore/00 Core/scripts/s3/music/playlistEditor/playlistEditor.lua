@@ -351,21 +351,22 @@ function M.makeLayout()
   }
 end
 
----@type openmw.ui.Element?
-local rootElement
+---@type openmw.ui.Element
+local rootElement = ui.create(M.makeLayout())
+rootElement.layout.props.visible = false
+rootElement:update()
 
 function M.isVisible()
-  return rootElement and rootElement.layout and rootElement.layout.props.visible ~= false
+  return rootElement.layout.props.visible
 end
 
 function M.refresh()
   if not M.isVisible() then return end
   state.pageSize = computePageSize()
   if state.currentPage >= totalPages() then state.currentPage = totalPages() - 1 end
-  local old = rootElement
-  rootElement = nil
-  old:destroy()
-  rootElement = ui.create(M.makeLayout())
+  rootElement.layout = M.makeLayout()
+  rootElement.layout.props.visible = true
+  rootElement:update()
 end
 
 function M.show()
@@ -373,15 +374,16 @@ function M.show()
   core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
   I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
   state.pageSize = computePageSize()
-  rootElement = ui.create(M.makeLayout())
+  rootElement.layout.props.visible = true
+  rootElement:update()
 end
 
 function M.hide()
   if not M.isVisible() then return end
   core.sendGlobalEvent 'S3maphorePlaylistEditorClosed'
   I.UI.removeMode(I.UI.MODE.Interface)
-  assert(rootElement):destroy()
-  rootElement = nil
+  rootElement.layout.props.visible = false
+  rootElement:update()
 end
 
 function M.toggle()
