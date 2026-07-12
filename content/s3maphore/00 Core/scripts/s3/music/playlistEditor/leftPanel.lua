@@ -22,6 +22,8 @@ local state = {
   pageSize = 8,
 }
 
+local activeTab, clicked
+
 ---@param color openmw.util.Color
 ---@param factor number
 ---@return openmw.util.Color
@@ -100,22 +102,36 @@ end
 
 local function makeCategoryTab(name)
   local selected = name == state.selectedCategory
-  local baseColor = selected and Constants.headerColor or darken(Constants.headerColor, 0.55)
-  local hoverColor = selected and Constants.headerColor or darken(Constants.headerColor, 0.85)
+  local baseColor = darken(Constants.headerColor, 0.55)
+  local hoverColor = darken(Constants.headerColor, 0.85)
+  local activeColor = darken(Constants.headerColor, 0.7)
+  local color
+  if selected then
+    color = Constants.headerColor
+  elseif name == activeTab then
+    color = clicked and activeColor or hoverColor
+  else
+    color = baseColor
+  end
   local events = {}
   if not selected then
-    events.mouseClick = async:callback(function()
-      state.selectedCategory = name
-      state.currentPage = 0
+    events.mousePress = async:callback(function()
+      activeTab, clicked = name, true
       rebuild()
     end)
-    events.focusGain = async:callback(function(_, layout)
-      layout.props.textColor = hoverColor
-      leftElement:update()
+    events.mouseRelease = async:callback(function()
+      state.selectedCategory = name
+      state.currentPage = 0
+      activeTab, clicked = name, false
+      rebuild()
     end)
-    events.focusLoss = async:callback(function(_, layout)
-      layout.props.textColor = baseColor
-      leftElement:update()
+    events.focusGain = async:callback(function()
+      activeTab, clicked = name, false
+      rebuild()
+    end)
+    events.focusLoss = async:callback(function()
+      activeTab, clicked = nil, false
+      rebuild()
     end)
   end
   return {
@@ -123,7 +139,7 @@ local function makeCategoryTab(name)
     template = I.MWUI.templates.textHeader,
     props = {
       text = name,
-      textColor = baseColor,
+      textColor = color,
       textAlignH = ui.ALIGNMENT.Center,
       textAlignV = ui.ALIGNMENT.Center,
     },
@@ -298,9 +314,7 @@ end
 
 leftElement = ui.create(M.makeLayout())
 
-function M.getElement()
-  return leftElement
-end
+function M.getElement() return leftElement end
 
 M.rebuild = rebuild
 
