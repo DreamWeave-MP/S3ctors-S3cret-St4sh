@@ -11,6 +11,8 @@ local MusicManager = require 'scripts.s3.music.musicManager'
 
 local Constants = require 'scripts.omw.mwui.constants'
 
+local DisplayTier = require 'scripts.s3.music.playlistEditor.displayTier'
+
 local WINDOW_RELATIVE = vector2(0.75, 0.75)
 local ROW_PX = 13
 local TABS_PX = 24
@@ -42,9 +44,12 @@ end
 
 ---@return number
 local function computeInset()
-  local y = ui.screenSize().y
-  if y <= 720 then return 4 end
-  if y >= 2160 then return 16 end
+  local tier = DisplayTier.getTier()
+  if tier == DisplayTier.DisplayTier.Small then
+    return 4
+  elseif tier == DisplayTier.DisplayTier.Ultra then
+    return 16
+  end
   return 8
 end
 
@@ -317,5 +322,7 @@ leftElement = ui.create(M.makeLayout())
 function M.getElement() return leftElement end
 
 M.rebuild = rebuild
+
+function M.onViewportResized(_, _) rebuild() end
 
 return M
