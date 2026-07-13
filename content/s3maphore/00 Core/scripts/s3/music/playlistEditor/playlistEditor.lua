@@ -9,6 +9,7 @@ local vector2 = util.vector2
 
 local WHITE_TEXTURE = ui.texture { path = 'white' }
 
+local DisplayTier = require 'scripts.s3.music.playlistEditor.displayTier'
 local LeftPanel = require 'scripts.s3.music.playlistEditor.leftPanel'
 
 ---@return number
@@ -111,6 +112,7 @@ function M.show()
   if not ready or M.isVisible() then return end
   core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
   I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
+  DisplayTier.refreshDisplayTier(ui.screenSize().y)
   LeftPanel.rebuild()
   rootElement.layout.props.visible = true
   rootElement:update()
@@ -132,5 +134,7 @@ function M.toggle()
     M.show()
   end
 end
+
+function M.onViewportResized(width, height) LeftPanel.onViewportResized(width, height) end
 
 return M

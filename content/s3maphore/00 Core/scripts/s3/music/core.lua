@@ -30,6 +30,7 @@ local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
 local PlaylistModule = require 'scripts.s3.music.playlistRules'
 local PlaylistPriority = require 'doc.playlistPriority'
 local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistState'
+local DisplayTier = require 'scripts.s3.music.playlistEditor.displayTier'
 local PlaylistEditor = require 'scripts.s3.music.playlistEditor'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local TrackSelection = require 'scripts.s3.music.trackSelection'
@@ -373,7 +374,7 @@ MusicManager.addTrackChangedHandler(
 
 StateMachine:start 'init_player'
 
-return {
+local scriptInterface = {
   interfaceName = 'S3maphore',
 
   ---@type openmw.interfaces.S3maphore
@@ -465,6 +466,8 @@ return {
       elseif key.code == input.KEY.F4 then
       end
     end,
+
+    onViewportResized = function(width, height) PlaylistEditor.onViewportResized(width, height) end,
 
     onUpdate = function(dt)
       CombatState.batchPoll(dt)
@@ -620,3 +623,12 @@ return {
     end,
   },
 }
+
+if core.API_REVISION >= 137 then
+  scriptInterface.engineHandlers.onViewportResized = function(width, height)
+    DisplayTier.refreshDisplayTier(height)
+    PlaylistEditor.onViewportResized(width, height)
+  end
+end
+
+return scriptInterface
