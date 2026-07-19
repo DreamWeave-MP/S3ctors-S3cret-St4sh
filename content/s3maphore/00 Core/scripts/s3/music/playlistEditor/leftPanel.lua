@@ -55,6 +55,23 @@ local function computeInset()
   return 8
 end
 
+---@return number textSize
+local function computePlaylistTextSize()
+  ---@diagnostic disable-next-line: undefined-field
+  local base = ui._getDefaultFontSize()
+  local tier = DisplayTier.getTier()
+
+  local minimum = 16
+
+  if tier == DisplayTier.DisplayTier.Small then
+    minimum = 14
+  elseif tier == DisplayTier.DisplayTier.Ultra then
+    minimum = 18
+  end
+
+  return max(minimum, ceil(base * 1.2))
+end
+
 --- Reads the per-side inset (border thickness) of an MWUI border template from
 --- its slot size, so layout stays correct if another mod overrides the template.
 ---@param template openmw.ui.Template
@@ -196,20 +213,25 @@ end
 function LeftPanel.makePlaylistPage()
   local playlists, items = pagePlaylists(), {}
   local rowHeight = state.pageSize > 0 and (1 / state.pageSize) or 1
+
+  local playlistTextSize = computePlaylistTextSize()
+
   for i = 1, #playlists do
     local playlist = playlists[i]
+
     items[#items + 1] = {
       type = ui.TYPE.Text,
       template = I.MWUI.templates.textNormal,
       props = {
         relativeSize = vector2(1, rowHeight),
         text = '  ' .. getPlaylistDisplayName(playlist),
-        textSize = 13,
+        textSize = playlistTextSize,
         textColor = Constants.normalColor,
         textAlignV = ui.ALIGNMENT.Center,
       },
     }
   end
+
   return {
     type = ui.TYPE.Flex,
     props = {
