@@ -5,6 +5,8 @@ local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local ceil, floor, max, min = math.ceil, math.floor, math.max, math.min
+
 local vector2 = util.vector2
 
 local MusicManager = require 'scripts.s3.music.musicManager'
@@ -39,7 +41,7 @@ local function computePageSize()
   local screen = ui.screenSize()
   local windowPx = screen.y * WINDOW_RELATIVE.y
   local listPx = windowPx - TABS_PX - CONTROLS_PX
-  return math.max(1, math.floor(listPx / ROW_PX))
+  return max(1, floor(listPx / ROW_PX))
 end
 
 ---@return number
@@ -62,7 +64,7 @@ local function borderInset(template)
   if not content then return 0 end
   local slot = content[#content]
   if not slot or not slot.props or not slot.props.size then return 0 end
-  return math.max(-slot.props.size.x, -slot.props.size.y, 0)
+  return max(-slot.props.size.x, -slot.props.size.y, 0)
 end
 
 local function getPlaylistDisplayName(playlist)
@@ -80,12 +82,12 @@ local function getCategoryPlaylists()
   end
 end
 
-local function totalPages() return math.max(math.ceil(#getCategoryPlaylists() / state.pageSize), 1) end
+local function totalPages() return max(ceil(#getCategoryPlaylists() / state.pageSize), 1) end
 
 local function pagePlaylists()
   local all = getCategoryPlaylists()
   local start = state.currentPage * state.pageSize + 1
-  local finish = math.min(start + state.pageSize - 1, #all)
+  local finish = min(start + state.pageSize - 1, #all)
 
   local page = {}
 
@@ -96,12 +98,12 @@ local function pagePlaylists()
   return page
 end
 
-local M = {}
+local LeftPanel = {}
 
 local leftElement
 
 local function rebuild()
-  leftElement.layout = M.makeLayout()
+  leftElement.layout = LeftPanel.makeLayout()
   leftElement:update()
 end
 
@@ -159,12 +161,13 @@ local function makeCategorySeparator()
   }
 end
 
-function M.makeCategoryTabs()
+function LeftPanel.makeCategoryTabs()
   local tabBorder = borderInset(I.MWUI.templates.borders)
+
   ---@diagnostic disable-next-line: undefined-field
   local lineHeight = ui._getDefaultFontSize()
+
   return {
-    ---@diagnostic disable-next-line: undefined-field
     template = I.MWUI.templates.borders,
     type = ui.TYPE.Flex,
     props = {
@@ -172,7 +175,7 @@ function M.makeCategoryTabs()
       relativeSize = vector2(1, 0),
       autoSize = false,
       align = ui.ALIGNMENT.Center,
-      size = vector2(0, math.ceil(lineHeight * 1.2) + tabBorder * 2),
+      size = vector2(0, ceil(lineHeight * 1.2) + tabBorder * 2),
     },
     content = ui.content {
       { external = { grow = 1 } },
@@ -190,7 +193,7 @@ function M.makeCategoryTabs()
   }
 end
 
-function M.makePlaylistPage()
+function LeftPanel.makePlaylistPage()
   local playlists, items = pagePlaylists(), {}
   local rowHeight = state.pageSize > 0 and (1 / state.pageSize) or 1
   for i = 1, #playlists do
@@ -218,7 +221,7 @@ function M.makePlaylistPage()
   }
 end
 
-function M.makePageControls()
+function LeftPanel.makePageControls()
   local tp = totalPages()
   local isFirst = state.currentPage <= 0
   local isLast = state.currentPage >= tp - 1
@@ -270,9 +273,7 @@ function M.makePageControls()
   }
 end
 
---- Compiled left-panel layout. No `layer` field: intended to be embedded in the
---- root editor element's content.
-function M.makeLayout()
+function LeftPanel.makeLayout()
   state.pageSize = computePageSize()
   local inset = computeInset()
   return {
@@ -284,31 +285,27 @@ function M.makeLayout()
       {
         type = ui.TYPE.Flex,
         props = {
-          horizontal = false,
-          relativeSize = vector2(1, 1),
+          align = ui.ALIGNMENT.Center,
           autoSize = false,
+          horizontal = false,
           position = vector2(inset, inset),
+          relativeSize = vector2(1, 1),
           size = vector2(-inset * 2, -inset * 2),
         },
         content = ui.content {
-          M.makeCategoryTabs(),
+          LeftPanel.makeCategoryTabs(),
+          { external = { grow = 0.025 } },
           {
-            type = ui.TYPE.Flex,
-            props = { size = vector2(0, 4) },
-          },
-          {
-            ---@diagnostic disable-next-line: undefined-field
             template = I.MWUI.templates.borders,
             type = ui.TYPE.Flex,
             props = {
               horizontal = false,
-              relativeSize = vector2(1, 1),
+              relativeSize = vector2(1, 0.95),
               autoSize = false,
             },
-            external = { grow = 1 },
             content = ui.content {
-              M.makePlaylistPage(),
-              M.makePageControls(),
+              LeftPanel.makePlaylistPage(),
+              LeftPanel.makePageControls(),
             },
           },
         },
@@ -317,12 +314,12 @@ function M.makeLayout()
   }
 end
 
-leftElement = ui.create(M.makeLayout())
+leftElement = ui.create(LeftPanel.makeLayout())
 
-function M.getElement() return leftElement end
+function LeftPanel.getElement() return leftElement end
 
-M.rebuild = rebuild
+LeftPanel.rebuild = rebuild
 
-function M.onViewportResized(_, _) rebuild() end
+function LeftPanel.onViewportResized(_, _) rebuild() end
 
-return M
+return LeftPanel
