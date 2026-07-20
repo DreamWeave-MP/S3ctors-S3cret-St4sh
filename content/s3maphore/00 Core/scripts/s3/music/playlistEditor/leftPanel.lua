@@ -27,6 +27,9 @@ local state = {
 
 local activeTab, clicked
 
+---@type fun(): number
+local computePageSize
+
 ---@param color openmw.util.Color
 ---@param factor number
 ---@return openmw.util.Color
@@ -111,6 +114,9 @@ local LeftPanel = {}
 local leftElement
 
 local function rebuild()
+  state.pageSize = computePageSize()
+  local maxPage = totalPages() - 1
+  if state.currentPage > maxPage then state.currentPage = maxPage end
   leftElement.layout = LeftPanel.makeLayout()
   leftElement:update()
 end
@@ -186,7 +192,7 @@ local function getSubsectionHeight()
 end
 
 ---@return number
-local function computePageSize()
+computePageSize = function()
   local screen = ui.screenSize()
   local windowPx = screen.y * WINDOW_RELATIVE.y
   local inset = computeInset()
@@ -320,8 +326,6 @@ function LeftPanel.makePageControls()
 end
 
 function LeftPanel.makeLayout()
-  state.pageSize = computePageSize()
-
   local inset = computeInset()
 
   return {
