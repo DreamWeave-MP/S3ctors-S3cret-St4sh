@@ -5,7 +5,7 @@ local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
-local ceil, floor, max, min = math.ceil, math.floor, math.max, math.min
+local ceil, floor, format, max, min = math.ceil, math.floor, string.format, math.max, math.min
 
 local vector2 = util.vector2
 
@@ -19,6 +19,8 @@ local WINDOW_RELATIVE = vector2(0.75, 0.75)
 local ROW_PX = 13
 local TABS_PX = 24
 local CONTROLS_PX = 20
+local PLAYLIST_PAGE_HEIGHT = 0.975
+local SPACER_HEIGHT = (1 - PLAYLIST_PAGE_HEIGHT) / 2
 
 local state = {
   selectedCategory = 'Explore',
@@ -40,7 +42,7 @@ end
 local function computePageSize()
   local screen = ui.screenSize()
   local windowPx = screen.y * WINDOW_RELATIVE.y
-  local listPx = windowPx - TABS_PX - CONTROLS_PX
+  local listPx = (windowPx - TABS_PX - CONTROLS_PX) * PLAYLIST_PAGE_HEIGHT
   return max(1, floor(listPx / ROW_PX))
 end
 
@@ -129,6 +131,7 @@ local function makeCategoryTab(name)
   local baseColor = darken(Constants.headerColor, 0.55)
   local hoverColor = darken(Constants.headerColor, 0.85)
   local activeColor = darken(Constants.headerColor, 0.7)
+
   local color
   if selected then
     color = Constants.headerColor
@@ -137,27 +140,33 @@ local function makeCategoryTab(name)
   else
     color = baseColor
   end
+
   local events = {}
+
   if not selected then
     events.mousePress = async:callback(function()
       activeTab, clicked = name, true
       rebuild()
     end)
+
     events.mouseRelease = async:callback(function()
       state.selectedCategory = name
       state.currentPage = 0
       activeTab, clicked = name, false
       rebuild()
     end)
+
     events.focusGain = async:callback(function()
       activeTab, clicked = name, false
       rebuild()
     end)
+
     events.focusLoss = async:callback(function()
       activeTab, clicked = nil, false
       rebuild()
     end)
   end
+
   return {
     type = ui.TYPE.Text,
     template = I.MWUI.templates.textHeader,
@@ -178,12 +187,16 @@ local function makeCategorySeparator()
   }
 end
 
-function LeftPanel.makeCategoryTabs()
+local function getSubsectionHeight()
   local tabBorder = borderInset(I.MWUI.templates.borders)
 
   ---@diagnostic disable-next-line: undefined-field
   local lineHeight = ui._getDefaultFontSize()
 
+  return vector2(0, ceil(lineHeight * 1.2) + tabBorder * 2)
+end
+
+function LeftPanel.makeCategoryTabs()
   return {
     template = I.MWUI.templates.borders,
     type = ui.TYPE.Flex,
@@ -192,7 +205,7 @@ function LeftPanel.makeCategoryTabs()
       relativeSize = vector2(1, 0),
       autoSize = false,
       align = ui.ALIGNMENT.Center,
-      size = vector2(0, ceil(lineHeight * 1.2) + tabBorder * 2),
+      size = getSubsectionHeight(),
     },
     content = ui.content {
       { external = { grow = 1 } },
@@ -233,10 +246,14 @@ function LeftPanel.makePlaylistPage()
   end
 
   return {
+    template = I.MWUI.templates.borders,
     type = ui.TYPE.Flex,
+    external = {
+      grow = PLAYLIST_PAGE_HEIGHT,
+      stretch = 1,
+    },
     props = {
       horizontal = false,
-      relativeSize = vector2(1, 1),
       autoSize = false,
     },
     content = ui.content(items),
@@ -244,13 +261,18 @@ function LeftPanel.makePlaylistPage()
 end
 
 function LeftPanel.makePageControls()
-  local tp = totalPages()
+  local pageCount = totalPages()
   local isFirst = state.currentPage <= 0
-  local isLast = state.currentPage >= tp - 1
+  local isLast = state.currentPage >= pageCount - 1
 
   return {
     type = ui.TYPE.Flex,
-    props = { horizontal = true },
+    props = {
+      autoSize = false,
+      horizontal = true,
+      size = getSubsectionHeight(),
+      relativeSize = util.vector2(1, 0),
+    },
     content = ui.content {
       {
         type = ui.TYPE.Text,
@@ -271,7 +293,7 @@ function LeftPanel.makePageControls()
         type = ui.TYPE.Text,
         template = I.MWUI.templates.textNormal,
         props = {
-          text = '  ' .. (state.currentPage + 1) .. '/' .. tp .. '  ',
+          text = format('  %d / %d  ', state.currentPage + 1, pageCount),
           textSize = 13,
           textColor = darken(Constants.normalColor, 0.8),
         },
@@ -297,7 +319,9 @@ end
 
 function LeftPanel.makeLayout()
   state.pageSize = computePageSize()
+
   local inset = computeInset()
+
   return {
     name = 'S3maphore_PlaylistEditor_Left',
     props = {
@@ -309,27 +333,16 @@ function LeftPanel.makeLayout()
         props = {
           align = ui.ALIGNMENT.Center,
           autoSize = false,
-          horizontal = false,
           position = vector2(inset, inset),
           relativeSize = vector2(1, 1),
           size = vector2(-inset * 2, -inset * 2),
         },
         content = ui.content {
           LeftPanel.makeCategoryTabs(),
-          { external = { grow = 0.025 } },
-          {
-            template = I.MWUI.templates.borders,
-            type = ui.TYPE.Flex,
-            props = {
-              horizontal = false,
-              relativeSize = vector2(1, 0.95),
-              autoSize = false,
-            },
-            content = ui.content {
-              LeftPanel.makePlaylistPage(),
-              LeftPanel.makePageControls(),
-            },
-          },
+          { external = { grow = SPACER_HEIGHT } },
+          LeftPanel.makePlaylistPage(),
+          { external = { grow = SPACER_HEIGHT } },
+          LeftPanel.makePageControls(),
         },
       },
     },
