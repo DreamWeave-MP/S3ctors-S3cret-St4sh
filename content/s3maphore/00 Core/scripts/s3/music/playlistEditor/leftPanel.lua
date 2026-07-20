@@ -16,9 +16,6 @@ local Constants = require 'scripts.omw.mwui.constants'
 local DisplayTier = require 'scripts.s3.music.playlistEditor.displayTier'
 
 local WINDOW_RELATIVE = vector2(0.75, 0.75)
-local ROW_PX = 13
-local TABS_PX = 24
-local CONTROLS_PX = 20
 local PLAYLIST_PAGE_HEIGHT = 0.975
 local SPACER_HEIGHT = (1 - PLAYLIST_PAGE_HEIGHT) / 2
 
@@ -36,14 +33,6 @@ local activeTab, clicked
 local function darken(color, factor)
   local c = color:asRgb()
   return util.color.rgb(c.x * factor, c.y * factor, c.z * factor)
-end
-
----@return number
-local function computePageSize()
-  local screen = ui.screenSize()
-  local windowPx = screen.y * WINDOW_RELATIVE.y
-  local listPx = (windowPx - TABS_PX - CONTROLS_PX) * PLAYLIST_PAGE_HEIGHT
-  return max(1, floor(listPx / ROW_PX))
 end
 
 ---@return number
@@ -194,6 +183,19 @@ local function getSubsectionHeight()
   local lineHeight = ui._getDefaultFontSize()
 
   return vector2(0, ceil(lineHeight * 1.2) + tabBorder * 2)
+end
+
+---@return number
+local function computePageSize()
+  local screen = ui.screenSize()
+  local windowPx = screen.y * WINDOW_RELATIVE.y
+  local inset = computeInset()
+  local subsection = getSubsectionHeight().y
+  local playlistPagePx = (windowPx - inset * 2 - subsection * 2) * PLAYLIST_PAGE_HEIGHT
+  local tabBorder = borderInset(I.MWUI.templates.borders)
+  local rowPx = computePlaylistTextSize()
+  local listPx = playlistPagePx - tabBorder * 2
+  return max(1, floor(listPx / rowPx))
 end
 
 function LeftPanel.makeCategoryTabs()
