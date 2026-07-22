@@ -38,61 +38,66 @@ do
   I.Combat.addOnHitHandler(s3maphoreAttackHandler)
 end
 
+local function syncTargets(newTargets)
+  local n, nn = #Targets, #newTargets
+
+  if nn == n then
+    local changed = false
+
+    for i = 1, n do
+      local old, new = Targets[i], newTargets[i]
+      Targets[i] = new
+      if old ~= new then changed = true end
+    end
+
+    return changed
+  end
+
+  clear(Targets)
+
+  for i = 1, nn do
+    Targets[i] = newTargets[i]
+  end
+
+  return true
+end
+
+local function notifyTargetsChanged()
+  local targetData = { actor = gameSelf, targets = Targets }
+
+  for i = 1, #Players do
+    SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', targetData)
+  end
+end
+
 local function updateCombatState()
   local startedWithTargets = next(Targets) ~= nil
   local isDead = IsDeathFinished(gameSelf) or not IsInActorsProcessingRange(gameSelf)
 
-  local shouldClear = isDead and startedWithTargets
-  local shouldSkipFetch = isDead
-
-  if not shouldSkipFetch then
-    shouldSkipFetch = (GetStance(gameSelf) == UnarmedStance)
-      and not startedWithTargets
-      and not IsFleeing()
-      and not IsWorldPaused()
+  if isDead then
+    if startedWithTargets then
+      clear(Targets)
+      notifyTargetsChanged()
+    end
+    return
   end
 
-  if shouldClear then clear(Targets) end
-
-  -- TODO: use events or engine handlers to detect when targets change
-
-  local changed = shouldClear
-
-  if not shouldSkipFetch then
-    local newTargets = GetTargets 'Combat'
-    local numOldTargets, numNewTargets = #Targets, #newTargets
-
-    if numNewTargets ~= numOldTargets then
-      changed = true
-    else
-      for i = 1, numOldTargets do
-        if Targets[i] ~= newTargets[i] then
-          changed = true
-          break
-        end
-      end
-    end
-
-    clear(Targets)
-
-    for i = 1, numNewTargets do
-      Targets[i] = newTargets[i]
-    end
+  if
+    (GetStance(gameSelf) == UnarmedStance)
+    and not startedWithTargets
+    and not IsFleeing()
+    and not IsWorldPaused()
+  then
+    return
   end
 
-  if changed then
-    for i = 1, #Players do
-      SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', { actor = gameSelf, targets = Targets })
-    end
-  end
+  if syncTargets(GetTargets 'Combat') then notifyTargetsChanged() end
 end
+
 local function onInactive()
   if not next(Targets) then return end
   clear(Targets)
-
-  for i = 1, #Players do
-    SendEvent(Players[i], 'OMWMusicCombatTargetsChanged', { actor = gameSelf, targets = Targets })
-  end
+  notifyTargetsChanged()
 end
 
 return {
@@ -101,11 +106,10 @@ return {
   },
   eventHandlers = {
     Died = function()
+      SendGlobalEvent('S3maphoreDeathCountIncrement', gameSelf.recordId)
       for i = 1, #Players do
         SendEvent(Players[i], 'S3maphoreClearTargetCache', gameSelf.object)
       end
-
-      SendGlobalEvent('S3maphoreDeathCountIncrement', gameSelf.recordId)
     end,
     S3maphoreCheckCombat = updateCombatState,
   },
