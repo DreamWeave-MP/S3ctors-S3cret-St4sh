@@ -1,0 +1,14 @@
+Horiz0nPageName: Horiz0n - Hantering av visningsavstånd
+Horiz0nPageDesc: Dynamisk hantering av visningsavstånd för att spara bildfrekvens när det behövs och skapa vackra vyer annars
+
+Horiz0nManagerSettingsName: Steginställningar
+Horiz0nManagerSettingsDesc: Aktivera eller inaktivera hantering av visningsavstånd och relaterade inställningar.
+
+Horiz0nMaxViewDistName: Maximalt visningsavstånd
+Horiz0nMaxViewDistDesc: |
+  Anger den övre gränsen för Horiz0ns automatiska hantering av visningsavstånd.
+  Standard: 25,0
+
+Horiz0nToggleName: Aktivera eller inaktivera hantering av visningsavstånd
+Horiz0nToggleOn: Aktivera
+Horiz0nToggleOff: Inaktivera

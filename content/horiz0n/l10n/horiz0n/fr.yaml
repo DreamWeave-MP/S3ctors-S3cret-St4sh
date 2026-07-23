@@ -1,0 +1,14 @@
+Horiz0nPageName: Horiz0n - Gestion de la distance d'affichage
+Horiz0nPageDesc: Gestion dynamique de la distance d'affichage pour économiser des images par seconde lorsque nécessaire et créer de magnifiques panoramas autrement
+
+Horiz0nManagerSettingsName: Configuration des étapes
+Horiz0nManagerSettingsDesc: Activer ou désactiver la gestion de la distance d'affichage et les paramètres associés.
+
+Horiz0nMaxViewDistName: Distance d'affichage maximale
+Horiz0nMaxViewDistDesc: |
+  Définit la limite supérieure de la gestion automatique de la distance d'affichage de Horiz0n.
+  Par défaut : 25,0
+
+Horiz0nToggleName: Activer ou désactiver la gestion de la distance d'affichage
+Horiz0nToggleOn: Activer
+Horiz0nToggleOff: Désactiver
