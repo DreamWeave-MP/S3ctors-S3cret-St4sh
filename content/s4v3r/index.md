@@ -3,9 +3,6 @@ title: S4V3R
 description: Lightweight, combat-aware autosave management with optional start save functionality.
 date: 2026-07-22
 
-nexus_id: 59665
-nexus_group_id: 7702380
-
 taxonomies:
   tags:
     - Quality-Of-Life
@@ -13,6 +10,9 @@ taxonomies:
     - Gameplay
 
 extra:
+  nexus_id: 59665
+  nexus_group_id: 7702380
+
   install_info:
     data_directories:
       - .
