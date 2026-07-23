@@ -1,0 +1,37 @@
+CombatSaveToggleName: Enable Combat Saves
+CombatSaveToggleDesc: |
+  Whether or not to save when combat starts or stops.
+
+  Default: Yes
+
+DebugEnableName: Enable Logging
+DebugEnableDesc: |
+  Print debug messages to the console (openmw.log or F10).
+
+  Default: No
+
+MaxSaveSlotsName: Max Saves
+MaxSaveSlotsDesc: |
+  Maximum number of saves to keep. When this number is reached, the oldest existing save is overwritten.
+
+  Default: 9
+  Min: 1
+  Max: 100
+
+S4V3RDesc: Automatically saves the game at regular intervals and optionally when combat starts or stops.
+S4V3RName: S4V3R
+S4V3ROptions: Options
+
+SaveIntervalName: Save Interval
+SaveIntervalDesc: |
+  Time interval between saves in minutes.
+
+  Default: 10
+  Min: 1
+  max: 60
+
+StartSaveToggleName: Enable Start Saves
+StartSaveToggleDesc: |
+  Whether or not to save the game when character creation finishes.
+
+  Default: Yes
