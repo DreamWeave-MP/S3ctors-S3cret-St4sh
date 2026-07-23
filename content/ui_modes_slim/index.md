@@ -24,6 +24,8 @@ extra:
 
 Streamlined version of UI Modes, focused on streamlined menu interactions
 
+<!-- more -->
+
 **Requires OpenMW 0.49 or newer!**
 
 Features (each feature can be separately enabled or disabled in mod settings):
