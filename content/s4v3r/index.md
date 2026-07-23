@@ -22,6 +22,8 @@ extra:
   version: 1.0
 ---
 
+{{ image(src="/img/s4v3r.png", alt="Saver - OpenMW Autosaves", style="border-radius: 8px;") }}
+
 S4V3R is a brutally opinionated autosave manager with simplistic options and an extremely lightweight performance footprint.
 
 <!-- more -->
