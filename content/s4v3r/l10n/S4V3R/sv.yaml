@@ -1,0 +1,37 @@
+CombatSaveToggleName: Aktivera stridssparningar
+CombatSaveToggleDesc: |
+  Anger om spelet ska sparas när strid börjar eller slutar.
+
+  Standard: Ja
+
+DebugEnableName: Aktivera loggning
+DebugEnableDesc: |
+  Skriver ut felsökningsmeddelanden till konsolen (openmw.log eller F10).
+
+  Standard: Nej
+
+MaxSaveSlotsName: Maximalt antal sparningar
+MaxSaveSlotsDesc: |
+  Maximalt antal sparningar som ska behållas. När detta antal har nåtts skrivs den äldsta sparningen över.
+
+  Standard: 9
+  Min: 1
+  Max: 100
+
+S4V3RDesc: Sparar automatiskt spelet med regelbundna intervall och, om aktiverat, när strid börjar eller slutar.
+S4V3RName: S4V3R
+S4V3ROptions: Alternativ
+
+SaveIntervalName: Sparintervall
+SaveIntervalDesc: |
+  Tidsintervall mellan sparningar i minuter.
+
+  Standard: 10
+  Min: 1
+  Max: 60
+
+StartSaveToggleName: Aktivera startsparningar
+StartSaveToggleDesc: |
+  Anger om spelet ska sparas när karaktärsskapandet är klart.
+
+  Standard: Ja
