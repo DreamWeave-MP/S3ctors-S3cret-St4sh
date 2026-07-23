@@ -18,6 +18,10 @@ extra:
   version: 0.5
 ---
 
+With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
+
+<!-- more -->
+
 <div align="center">
   <figure>
     <img src="../img/t4rg3t5.png" alt="targets icon" width="512" height="512" />
@@ -36,8 +40,6 @@ extra:
 </div>
 
 ## Overview
-
-With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
 
 Target indicators also grow in size dynamically according to how far away your target is. Additionally, it is impossible to target enemies which are offscreen, and the mod does not use any raycasts unless the `CheckLOS` setting is enabled - what this means for you is no bad targets, and high performance (as much as can be expected from updating a UI element every frame, anyway).
 

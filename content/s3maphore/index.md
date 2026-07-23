@@ -31,6 +31,10 @@ extra:
   version: 0.63
 ---
 
+Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.
+
+<!-- more -->
+
 <div align="center">
 
   <figure>
@@ -41,8 +45,6 @@ extra:
   <br>
   <br>
 </div>
-
-Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.
 
 I simply decided existing music solutions were not good enough after OpenMW's music system was dehardcoded. The underlying playlist mechanism used by OpenMW is very powerful - but due to a disagreement about playlist conflict resolution, the public API for music playlists was removed. Since that time, version 0.49 has straightforwardly not been living up to its true potential.
 

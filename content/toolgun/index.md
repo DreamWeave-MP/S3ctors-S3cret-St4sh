@@ -20,6 +20,8 @@ extra:
 
 Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose built for OpenMW. Fix floaters, rotate or scale objects to your liking, and then save them all back into a REAL mod you can share with the world after!
 
+<!-- more -->
+
 {{ install_instructions(describe=true) }}
 
 With that out of the way...
