@@ -14,7 +14,7 @@ MaxSaveSlotsName: Max Saves
 MaxSaveSlotsDesc: |
   Maximum number of saves to keep. When this number is reached, the oldest existing save is overwritten.
 
-  Default: 9
+  Default: 10
   Min: 1
   Max: 100
 
@@ -26,7 +26,7 @@ SaveIntervalName: Save Interval
 SaveIntervalDesc: |
   Time interval between saves in minutes.
 
-  Default: 10
+  Default: 9
   Min: 1
   max: 60
 
