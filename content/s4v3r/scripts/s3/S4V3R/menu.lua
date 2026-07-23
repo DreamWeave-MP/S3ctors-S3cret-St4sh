@@ -40,6 +40,13 @@ do
     permanentStorage = true,
     settings = {
       {
+        key = 'S4V3RActive',
+        name = 'S4V3RActiveName',
+        description = 'S4V3RActiveDesc',
+        default = true,
+        renderer = 'checkbox',
+      },
+      {
         key = 'SaveInterval',
         name = 'SaveIntervalName',
         description = 'SaveIntervalDesc',
