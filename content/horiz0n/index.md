@@ -3,9 +3,6 @@ title: Horiz0n
 description: View distance manager implemented in OpenMW-Lua to maximize framerate *and* viewing distance whenever possible.
 date: 2026-07-23
 
-nexus_id: 59668
-nexus_group_id: 7703223
-
 taxonomies:
   tags:
     - Qualify-Of-Life
@@ -13,6 +10,9 @@ taxonomies:
     - OpenMW-Lua
 
 extra:
+  nexus_id: 59668
+  nexus_group_id: 7703223
+
   install_info:
     data_directories:
       - .
