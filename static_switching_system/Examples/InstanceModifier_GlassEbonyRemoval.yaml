@@ -1,0 +1,110 @@
+log_name: Glass and Ebony Removal
+
+# Removes all glass and ebony weapons and armor from world placements and
+# container inventories. After installing this module, these items are only
+# obtainable through quest rewards, vendor purchases, or scripted spawns.
+
+
+instances:
+  # Rule 1: Delete placed glass/ebony weapons and armor from the world.
+  # record_id substring match catches everything with "glass" or "ebony"
+  # in the record ID regardless of display name.
+  # object_type filter restricts to weapons and armor only.
+  - conditions:
+      - record_id:
+          - glass
+          - ebony
+      - object_type:
+          - Weapon
+          - Armor
+    actions:
+      - delete: true
+
+  # Rule 2: Purge glass/ebony items from container inventories.
+  # Array form applies math.huge as the remove count — caps at whatever
+  # quantity the container actually holds, removes all of each.
+  - conditions:
+      - object_type: Container
+    actions:
+      - remove:
+          # Glass weapons
+          - glass arrow
+          - glass claymore
+          - glass claymore_magebane
+          - glass dagger
+          - glass dagger_dae_cursed
+          - glass_dagger_enamor
+          - glass firesword
+          - glass frostsword
+          - glass halberd
+          - glass jinkblade
+          - glass longsword
+          - glass netch dagger
+          - glass poisonsword
+          - glass staff
+          - glass stormblade
+          - glass stormsword
+          - glass throwing knife
+          - glass throwing star
+          - glass war axe
+          # Glass armor
+          - glass_boots
+          - glass_bracer_left
+          - glass_bracer_right
+          - glass_cuirass
+          - glass_greaves
+          - glass_helm
+          - glass_pauldron_left
+          - glass_pauldron_right
+          - glass_shield
+          - glass_towershield
+          # Ebony weapons
+          - bm_ebonyarrow_s
+          - bm_ebonylongsword_s
+          - bm_ebony_staff_necro
+          - ebony arrow
+          - ebony arrow_sadri
+          - ebony_bow_auriel
+          - ebony_bow_auriel_x
+          - ebony broadsword
+          - ebony broadsword_dae_cursed
+          - ebony_dagger_mehrunes
+          - ebony dart
+          - ebony dart_db_unique
+          - ebony longsword
+          - ebony mace
+          - ebony scimitar
+          - ebony scimitar_her
+          - ebony shortsword
+          - ebony shortsword_soscean
+          - ebony spear
+          - ebony spear_blessed_unique
+          - ebony spear_hrce_unique
+          - ebony staff
+          - ebony staff caper
+          - ebony_staff_tges
+          - ebony_staff_trebonius
+          - ebony throwing star
+          - ebony war axe
+          - ebony war axe_elanande
+          - ebony wizard's staff
+          # Ebony armor
+          - ebony_boots
+          - ebony_bracer_left
+          - ebony_bracer_left_tgeb
+          - ebony_bracer_right
+          - ebony_bracer_right_tgeb
+          - ebony_closed_helm
+          - ebony_closed_helm_fghl
+          - ebony_cuirass
+          - ebony_cuirass_soscean
+          - ebony_greaves
+          - ebony_pauldron_left
+          - ebony_pauldron_right
+          - ebony_shield
+          - ebony_shield_auriel
+          - ebony_shield_auriel_x
+          - ebony_towershield
+          # Bloodmoon unique items
+          - glass dagger_symmachus_unique
+          - glass dagger_symmachus_unique_x

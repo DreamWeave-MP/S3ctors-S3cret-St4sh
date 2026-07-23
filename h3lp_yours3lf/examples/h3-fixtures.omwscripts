@@ -1,0 +1,6 @@
+# Opt-in H3lp Yours3lf OpenMW-Lua fixture probes.
+# Do not include in normal H3 manifests/plugins; use only for lifecycle/event/save/UI smoke tests.
+GLOBAL: scripts/s3/fixtures/probe_global.lua
+PLAYER: scripts/s3/fixtures/probe_player.lua
+MENU: scripts/s3/fixtures/probe_menu.lua
+CUSTOM: scripts/s3/fixtures/probe_local.lua

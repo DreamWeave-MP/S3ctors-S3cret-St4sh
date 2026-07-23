@@ -1,0 +1,4 @@
+GLOBAL: scripts/s3ui/global.lua
+PLAYER: scripts/s3ui/player.lua
+NPC: scripts/s3ui/travel/follower.lua
+CREATURE: scripts/s3ui/travel/follower.lua

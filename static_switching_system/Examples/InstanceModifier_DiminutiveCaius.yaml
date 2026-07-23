@@ -1,0 +1,44 @@
+log_name: Diminutive Armored Caius
+
+# Medium-complexity instance modifier: two conditions, two action types
+# (equip + transform), with absolute transform_type.
+#
+# Caius Cosades gets:
+#   1. A full Imperial Steel armor set, an Imperial Shield, and an
+#      Imperial Broadsword — all forced-equipped via UseItem.
+#   2. His scale set to an absolute 0.1 — one-tenth his normal size.
+#
+# once: true so the tiny armored look persists across saves.
+#
+# Conditions use BOTH record_id and content_file_target — redundant for
+# Vanilla, but shows how to combine broad and narrow matching.
+# content_file_target scopes the reference number to a specific content
+# file, so only the exact placed reference is matched — no ambiguity
+# if another plugin happens to have the same local refnum.
+instances:
+  - conditions:
+      - record_id: "caius cosades"
+      - content_file_target:
+          Morrowind.esm:
+            - 67647
+    once: true
+    actions:
+      # Full Imperial Steel armor set + shield + broadsword.
+      # Each equip entry has count 1 and no chance (implicit 100%).
+      - equip:
+          "imperial helmet armor": 1
+          "imperial cuirass_armor": 1
+          "imperial left pauldron": 1
+          "imperial right pauldron": 1
+          imperial_greaves: 1
+          "imperial boots": 1
+          "imperial left gauntlet": 1
+          "imperial right gauntlet": 1
+          "imperial shield": 1
+          "imperial broadsword": 1
+      # Absolute scale of 0.1 — one-tenth his original size.
+      # transform_type defaults to relative when omitted, so we
+      # explicitly set absolute to replace his scale outright.
+      - transform:
+          transform_type: absolute
+          scale: 0.1

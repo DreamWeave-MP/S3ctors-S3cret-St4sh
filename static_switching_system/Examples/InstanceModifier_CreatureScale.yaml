@@ -1,0 +1,21 @@
+log_name: Wild Creature Size Randomizer
+
+# Simplest possible instance modifier: one condition, one action.
+#
+# Every time a creature object becomes active (cell loads, object spawns),
+# its scale is multiplied by a random value between 0.5x and 2.0x of its
+# current scale. Because transform_type defaults to relative, the scale
+# range is applied as a multiplier on the existing scale.
+#
+# With once: true, the random scale is recorded in the once-cache
+# and persists across save/load — you won't get a different-sized
+# guar every time you enter the cell.
+instances:
+  - conditions:
+      - object_type: Creature
+    once: true
+    actions:
+      - transform:
+          scale:
+            min: 0.5
+            max: 2.0

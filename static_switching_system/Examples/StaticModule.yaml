@@ -1,0 +1,18 @@
+log_name: "an example file"
+
+# Omit replace_names, exterior_cells, and replace_regions to apply replace_meshes in every cell.
+replace_names:
+  - "dagoth ur"
+
+replace_regions:
+  - "ashlands region"
+
+exterior_cells:
+  - x: 0
+    y: 0
+  - x: 0
+    y: -1
+
+replace_meshes:
+  "totallyFake1.nif": "some_real/file1.nif"
+  "totallyFake2.nif": "some_real/file2.nif"

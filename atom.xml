@@ -1,0 +1,649 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <title>S3ctor&#x27;s S3cret St4sh</title>
+    <link rel="self" type="application/atom+xml" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2026-07-23T00:00:00+00:00</updated>
+    <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/atom.xml</id>
+    <entry xml:lang="en">
+        <title>Horiz0n</title>
+        <published>2026-07-23T00:00:00+00:00</published>
+        <updated>2026-07-23T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/horiz0n/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/horiz0n/</id>
+        
+        <summary type="html">&lt;p&gt;I was discussing the concept of occlusion culling with someone recently.&lt;&#x2F;p&gt;
+&lt;p&gt;I told them that the engine has no defense against extremely draw-call bound areas, such as Old Ebonheart.&lt;&#x2F;p&gt;
+&lt;p&gt;However, I kept thinking about it, and eventually realized that was bullshit - because we DO have frustum and distance cull. These are the oldest tricks in the book for optimizing framerates in Morrowind, going all the way back to the classic &lt;code&gt;Morrowind FPS Optimizer&lt;&#x2F;code&gt; app from however long ago.&lt;&#x2F;p&gt;
+&lt;p&gt;The problem that I found with prior approaches was that they were &lt;em&gt;all&lt;&#x2F;em&gt; dedicated to the idea of &lt;em&gt;saving&lt;&#x2F;em&gt; your framerate at all times. You&#x27;d get your frames back, but they wouldn&#x27;t expand your view distance back out when the headroom returned.&lt;&#x2F;p&gt;
+&lt;p&gt;Thus was born, Horiz0n.&lt;&#x2F;p&gt;
+
+  
+  
+    
+    
+  
+  &lt;img src=&quot;https:&#x2F;&#x2F;DreamWeave-MP.github.io&#x2F;S3ctors-S3cret-St4sh&#x2F;img&#x2F;horiz0n.png&quot; alt=&quot;Horiz0n - View Distance Manager&quot; class=&quot;center&quot; style=&quot;border-radius: 8px;&quot; decoding=&quot;async&quot; loading=&quot;lazy&quot;&#x2F;&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>S4V3R</title>
+        <published>2026-07-22T00:00:00+00:00</published>
+        <updated>2026-07-22T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/s4v3r/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/s4v3r/</id>
+        
+        <summary type="html">
+  
+  
+    
+    
+  
+  &lt;img src=&quot;https:&#x2F;&#x2F;DreamWeave-MP.github.io&#x2F;S3ctors-S3cret-St4sh&#x2F;img&#x2F;s4v3r.png&quot; alt=&quot;Saver - OpenMW Autosaves&quot; class=&quot;center&quot; style=&quot;border-radius: 8px;&quot; decoding=&quot;async&quot; loading=&quot;lazy&quot;&#x2F;&gt;
+
+&lt;p&gt;S4V3R is a brutally opinionated autosave manager with simplistic options and an extremely lightweight performance footprint.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>example config</title>
+        <published>2026-07-01T00:00:00+00:00</published>
+        <updated>2026-07-01T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/cod3x/examples/openmw-mod/README/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/cod3x/examples/openmw-mod/README/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/cod3x/examples/openmw-mod/README/">&lt;h1 id=&quot;cod3x-luals-example-config&quot;&gt;Cod3x LuaLS example config&lt;&#x2F;h1&gt;
+&lt;p&gt;Copy &lt;code&gt;.luarc.json&lt;&#x2F;code&gt; from this directory into the root folder of your OpenMW-Lua
+mod project, then replace &lt;code&gt;&#x2F;absolute&#x2F;path&#x2F;to&#x2F;Cod3x&lt;&#x2F;code&gt; with the folder where you
+extracted Cod3x.&lt;&#x2F;p&gt;
+&lt;p&gt;Use forward slashes in paths, even on Windows:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color: #F6F6F4; background-color: #282A36;&quot;&gt;&lt;code data-lang=&quot;json&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;{&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;    &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E1F1;&quot;&gt;runtime.version&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #F286C4;&quot;&gt;:&lt;&#x2F;span&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #E7EE98;&quot;&gt;LuaJIT&lt;&#x2F;span&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;    &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E1F1;&quot;&gt;workspace.library&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #F286C4;&quot;&gt;:&lt;&#x2F;span&gt;&lt;span&gt; [&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt;        &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #E7EE98;&quot;&gt;C:&#x2F;Modding&#x2F;Tools&#x2F;Cod3x&lt;&#x2F;span&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;    ],&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;    &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E1F1;&quot;&gt;runtime.plugin&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #F286C4;&quot;&gt;:&lt;&#x2F;span&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #E7EE98;&quot;&gt;C:&#x2F;Modding&#x2F;Tools&#x2F;Cod3x&#x2F;omw_context_plugin.lua&lt;&#x2F;span&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;    &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E1F1;&quot;&gt;language.fixIndent&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #F286C4;&quot;&gt;:&lt;&#x2F;span&gt;&lt;span style=&quot;color: #BF9EEE;&quot;&gt; false&lt;&#x2F;span&gt;&lt;span&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;    &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E1F1;&quot;&gt;typeFormat.config&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #F286C4;&quot;&gt;:&lt;&#x2F;span&gt;&lt;span&gt; {&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;        &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E1F1;&quot;&gt;format_line&lt;&#x2F;span&gt;&lt;span style=&quot;color: #97E2F2;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #F286C4;&quot;&gt;:&lt;&#x2F;span&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: #E7EE98;&quot;&gt;false&lt;&#x2F;span&gt;&lt;span style=&quot;color: #DEE492;&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;    }&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;}&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;&lt;code&gt;language.fixIndent&lt;&#x2F;code&gt; and &lt;code&gt;typeFormat.config.format_line&lt;&#x2F;code&gt; are LuaLS settings used
+to disable VSCode&#x2F;VSCodium on-type formatting while keeping Cod3x&#x27;s virtual
+LuaLS transforms enabled.  The current LuaLS docs list them at
+&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;luals.github.io&#x2F;wiki&#x2F;settings&#x2F;#languagefixindent&quot;&gt;https:&#x2F;&#x2F;luals.github.io&#x2F;wiki&#x2F;settings&#x2F;#languagefixindent&lt;&#x2F;a&gt; and
+&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;luals.github.io&#x2F;wiki&#x2F;settings&#x2F;#typeformatconfig&quot;&gt;https:&#x2F;&#x2F;luals.github.io&#x2F;wiki&#x2F;settings&#x2F;#typeformatconfig&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;This file is meant for your mod workspace, not your OpenMW install directory.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Cod3x</title>
+        <published>2026-05-21T00:00:00+00:00</published>
+        <updated>2026-05-21T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/cod3x/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/cod3x/</id>
+        
+        <summary type="html">&lt;p&gt;context-aware diagnostics for &lt;code&gt;require(&#x27;openmw.*&#x27;)&lt;&#x2F;code&gt; calls.&lt;&#x2F;p&gt;
+&lt;p&gt;Add the stubs directory to &lt;code&gt;workspace.library&lt;&#x2F;code&gt;, select LuaJIT, and load the
+context plugin with &lt;code&gt;runtime.plugin&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;p&gt;Cod3x also ships an example config at
+&lt;code&gt;examples&#x2F;openmw-mod&#x2F;.luarc.json&lt;&#x2F;code&gt;. Copy that file into your mod project root
+and replace &lt;code&gt;&#x2F;absolute&#x2F;path&#x2F;to&#x2F;Cod3x&lt;&#x2F;code&gt; with the folder where you extracted Cod3x.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>P37z</title>
+        <published>2025-12-05T00:00:00+00:00</published>
+        <updated>2025-12-05T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/p37z/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/p37z/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/p37z/"></content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Starwind Map Expansion</title>
+        <published>2025-11-25T00:00:00+00:00</published>
+        <updated>2025-11-25T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/starwind_map_expansion/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/starwind_map_expansion/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/starwind_map_expansion/"></content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Talk To The H4ND</title>
+        <published>2025-11-19T00:00:00+00:00</published>
+        <updated>2025-11-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/talk_to_the_hand/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/talk_to_the_hand/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/talk_to_the_hand/"></content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Sh4des</title>
+        <published>2025-08-17T00:00:00+00:00</published>
+        <updated>2025-08-17T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/sh4des/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/sh4des/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/sh4des/"></content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Beta Icons Restored and Reimagined</title>
+        <published>2025-07-11T00:00:00+00:00</published>
+        <updated>2025-07-11T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/birr/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/birr/</id>
+        
+        <summary type="html">&lt;p&gt;Beta Icons Restored and Reimagined provides an alternate glimpse into what might have been. It&#x27;s based on the &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;tcrf.net&#x2F;Prerelease:The_Elder_Scrolls_III:_Morrowind&#x2F;Art_and_Textures&quot;&gt;Beta skill icons&lt;&#x2F;a&gt;, which you can find here for reference. However, the beta icons had problems of their own. For one, the rune backgrounds used obfuscated the art a lot for spell icons. Remember, these are displayed at 32x32px for the big spell icons and 16x16px for the small ones. Thus, I took the color palettes of the beta skill icons and extended them to the spell, attribute, and dynamic stat icons. The result is a full suite of character icon replacements (293 in total), best suited for use with &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.nexusmods.com&#x2F;morrowind&#x2F;mods&#x2F;45174&quot;&gt;Monochrome UI&lt;&#x2F;a&gt;. See below for a preview of all the new icons!&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>FlexTag</title>
+        <published>2025-07-01T00:00:00+00:00</published>
+        <updated>2025-07-01T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/flextag/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/flextag/</id>
+        
+        <summary type="html">&lt;p&gt;FlexTag is a lightweight, zero-overhead tagging framework for Morrowind on OpenMW. It lets mods ask questions like &quot;is this cell a dungeon?&quot; or &quot;does this NPC belong to the Camonna Tong?&quot; — without hardcoding IDs or guessing.&lt;&#x2F;p&gt;
+&lt;p&gt;Nothing happens in-game just by installing FlexTag. It&#x27;s a dependency. Other mods use it.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;built-in-tags&quot;&gt;Built-In Tags&lt;&#x2F;h2&gt;
+&lt;p&gt;FlexTag ships with six tag datasets covering the vanilla game and its DLCs:&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Static Switching System</title>
+        <published>2025-06-17T00:00:00+00:00</published>
+        <updated>2025-06-17T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/static_switching_system/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/static_switching_system/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/static_switching_system/"></content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Hawk3ye</title>
+        <published>2025-06-08T00:00:00+00:00</published>
+        <updated>2025-06-08T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/hawk3ye/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/hawk3ye/</id>
+        
+        <summary type="html">
+  
+  
+    
+    
+  
+  &lt;img src=&quot;https:&#x2F;&#x2F;DreamWeave-MP.github.io&#x2F;S3ctors-S3cret-St4sh&#x2F;img&#x2F;Hawk3ye.webp&quot; alt=&quot;Hawkeye - OpenMW Zooming&quot; class=&quot;center&quot; style=&quot;border-radius: 8px;&quot; decoding=&quot;async&quot; loading=&quot;lazy&quot;&#x2F;&gt;
+
+&lt;p&gt;Hawk3ye was inspired by &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.nexusmods.com&#x2F;morrowind&#x2F;mods&#x2F;57046?tab=description&quot;&gt;Zoom To See&lt;&#x2F;a&gt;. However, when eyeing it for my own personal setup, I found the mod was broken and wasn&#x27;t really very satisfying overall. So, I refactored it for greater reliability and mod compatibility.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>I Am Basket</title>
+        <published>2025-06-06T00:00:00+00:00</published>
+        <updated>2025-06-06T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/i_am_basket/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/i_am_basket/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/i_am_basket/">&lt;p&gt;Whoops, didn&#x27;t feel like writing this one!&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>S3maphore</title>
+        <published>2025-06-06T00:00:00+00:00</published>
+        <updated>2025-06-06T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/s3maphore/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/s3maphore/</id>
+        
+        <summary type="html">&lt;p&gt;Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Fargoth Assassins</title>
+        <published>2025-05-13T00:00:00+00:00</published>
+        <updated>2025-05-13T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/fargoth_assassins/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/fargoth_assassins/</id>
+        
+        <summary type="html">&lt;p&gt;Well, by now the jig is up.&lt;&#x2F;p&gt;
+&lt;p&gt;This mod is a small extension for AFFA&#x27;s mod, &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.nexusmods.com&#x2F;morrowind&#x2F;mods&#x2F;52751&quot;&gt;Fargoth Says Hello&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>H3lp Yours3lf</title>
+        <published>2025-04-27T00:00:00+00:00</published>
+        <updated>2025-04-27T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/</id>
+        
+        <summary type="html">&lt;p&gt;Sometimes, you just have to h3lp yours3lf.&lt;&#x2F;p&gt;
+&lt;p&gt;H3lp Yours3lf is a collection of scripting modules built for openmw. It contains multiple individual interfaces which authors can use to improve performance and ergonomics in their OpenMW-Lua scripts. Additionally, H3lp Yours3lf includes some helper functions for more exotic behaviors, such as detecting the context in which a given script is running.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>CHIM Climbing</title>
+        <published>2025-04-03T00:00:00+00:00</published>
+        <updated>2025-04-03T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/chim_climbing/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/chim_climbing/</id>
+        
+        <summary type="html">&lt;p&gt;CHIM Climbing is my own long-awaited attempt at porting the movement mechanics from the classic &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.nexusmods.com&#x2F;morrowind&#x2F;mods&#x2F;47378?BH=0&quot;&gt;CHIM&lt;&#x2F;a&gt; mod I worked on many years ago into OpenMW-Lua. The climbing module is strictly related to, well, climbing!
+This first version focuses exclusively on the concept of mantling, You can now climb and clamber over surfaces which you wouldn&#x27;t have previously had access to.&lt;&#x2F;p&gt;
+&lt;p&gt;The next major release of this mod will include a full Daggerfall-style climbing system, as was implemented in the original mod, but far less jank.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Luamics</title>
+        <published>2025-03-19T00:00:00+00:00</published>
+        <updated>2025-03-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/luamics/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/luamics/</id>
+        
+        <summary type="html">&lt;p&gt;Luamics is a simple global script that adds a chance for any chest encountered in-game to be replaced by a mimic chest. Mimic chests will retain their original loot, and spawn at a rate of 5%. Chests which are scripted, owned, or have &lt;code&gt;trader&lt;&#x2F;code&gt; in their record id are ineligible to be converted to mimics, so the script &lt;em&gt;should&lt;&#x2F;em&gt; be relatively safe. Should be, that is.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Pr0f1l3r</title>
+        <published>2025-03-19T00:00:00+00:00</published>
+        <updated>2025-03-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/pr0f1l3r/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/pr0f1l3r/</id>
+        
+        <content type="html" xml:base="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/pr0f1l3r/"></content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>UI Modes Slim</title>
+        <published>2025-03-19T00:00:00+00:00</published>
+        <updated>2025-03-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/ui_modes_slim/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/ui_modes_slim/</id>
+        
+        <summary type="html">&lt;p&gt;Streamlined version of UI Modes, focused on streamlined menu interactions&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Monochrome User Interface Supplement</title>
+        <published>2024-08-19T00:00:00+00:00</published>
+        <updated>2024-08-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/monochrome_ui_supplement/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/monochrome_ui_supplement/</id>
+        
+        <summary type="html">&lt;p&gt;Monochrome UI supplement is, well... a monochrome UI supplement.&lt;&#x2F;p&gt;
+&lt;p&gt;Specifically, this mod replaces some of the built-in textures openmw provides and changes the default text color of Lua widgets. When Monochrome UI first released, there were no Lua widgets and replacing these built-in textures required invasive (and unsafe) modifications to one&#x27;s game. Now, we can replace both much more easily.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>S3ui</title>
+        <published>2024-06-06T00:00:00+00:00</published>
+        <updated>2024-06-06T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/s3ui/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/s3ui/</id>
+        
+        <summary type="html">&lt;p&gt;S3ui is an early replacement OpenMW UI experiment. It currently registers a player-context prototype inventory window toggled with the hardcoded I key.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Baldurwind</title>
+        <published>2024-04-13T00:00:00+00:00</published>
+        <updated>2024-04-13T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/baldurwind/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/baldurwind/</id>
+        
+        <summary type="html">&lt;p&gt;Baldurwind is a mechanical total conversion for OpenMW. More features are planned, but in essence, Baldurwind&#x27;s goal is to convert Morrowind into turn-based, party RPG!&lt;&#x2F;p&gt;
+&lt;p&gt;The idea was inspired due to the sheer popularity of Baldur&#x27;s Gate 3 (obviously) and some of my longstanding grievances with the combat system. There&#x27;s not enough audiovisual feedback in typical Morrowind combat, so instead of removing hit chance (as I did in another mod), I designed some mechanics which enable the game to (in my opinion) more properly lean into that idea.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>CHIM 2090</title>
+        <published>2024-04-13T00:00:00+00:00</published>
+        <updated>2024-04-13T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/chim_2090/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/chim_2090/</id>
+        
+        <summary type="html">&lt;h1 id=&quot;overview&quot;&gt;Overview&lt;&#x2F;h1&gt;
+&lt;p&gt;CHIM 2090 is a modernized interpretation of the MWScript classic, CHIM Movement and Stamina. It has a hard requirement for OpenMW 0.50, due to extensive use of its onHit feature.&lt;&#x2F;p&gt;
+&lt;p&gt;At its core, CHIM is a highly advanced damage scaing mod, taking many factors into account. There are four core systems in CHIM:&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Transmog Menu</title>
+        <published>2024-04-11T00:00:00+00:00</published>
+        <updated>2024-04-11T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/transmog/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/transmog/</id>
+        
+        <summary type="html">&lt;p&gt;The Transmog Menu is originally derived from &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.nexusmods.com&#x2F;morrowind&#x2F;mods&#x2F;47713&quot;&gt;Cosmetic Overrides for MWSE&lt;&#x2F;a&gt;. However, that mod does all its work in an MCM, and I wanted to go all-out here.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Crassified Navigation</title>
+        <published>2024-01-24T00:00:00+00:00</published>
+        <updated>2024-01-24T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/crass_nav/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/crass_nav/</id>
+        
+        <summary type="html">&lt;h1 id=&quot;uncle-crassius-doesn-t-need-a-map-why-should-you&quot;&gt;Uncle Crassius Doesn&#x27;t Need A Map. Why Should You?&lt;&#x2F;h1&gt;
+&lt;p&gt;Crassified Navigation is a simple mod, but meant to be as cursed as possible. It&#x27;s effectively an OpenMW port of the mod &lt;code&gt;Get Lost&lt;&#x2F;code&gt;, spawned by a user request in MMC. But it comes with an extra cursed twist, being that as much of the operative Lua code as possible is embedded directly into the mod&#x27;s omwaddon.&lt;&#x2F;p&gt;
+&lt;p&gt;Nevertheless, it works just as well and easily as anything else.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Toolgun</title>
+        <published>2023-10-17T00:00:00+00:00</published>
+        <updated>2023-10-17T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/toolgun/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/toolgun/</id>
+        
+        <summary type="html">&lt;p&gt;Toolgun is a port of the eponymous swiss-army-revolver from Garry&#x27;s Mod, purpose built for OpenMW. Fix floaters, rotate or scale objects to your liking, and then save them all back into a REAL mod you can share with the world after!&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Starwind PVP</title>
+        <published>2023-10-11T00:00:00+00:00</published>
+        <updated>2023-10-11T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/starwind_pvp/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/starwind_pvp/</id>
+        
+        <summary type="html">&lt;p&gt;Presently contained in this archive are only the assets developed for it.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Starwind Community Patch Project</title>
+        <published>2023-07-19T00:00:00+00:00</published>
+        <updated>2023-07-19T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/sw_cpp/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/sw_cpp/</id>
+        
+        <summary type="html">&lt;h1 style=&quot;font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;&quot;&gt;Brought to you by the Starwind Team and all the players on &lt;a href=&quot;https:&#x2F;&#x2F;discord.gg&#x2F;wcMj2b2svh&quot;&gt;The Starwind Initiative&lt;&#x2F;a&gt;&lt;&#x2F;h1&gt;
+&lt;p&gt;The Starwind Community patch project was born as a fix for crashes we found after someone made a &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.nexusmods.com&#x2F;morrowind&#x2F;mods&#x2F;52567&quot;&gt;bunch of normal maps for everything&lt;&#x2F;a&gt;, including Starwind. Technically, these crashes are an engine bug, but it&#x27;s also because the meshes are broken as well. Thus, SW_CPP was born.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Starwind Merged Plugin Project</title>
+        <published>2023-04-26T00:00:00+00:00</published>
+        <updated>2023-04-26T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/sw_merged/"/>
+        <id>https://DreamWeave-MP.github.io/S3ctors-S3cret-St4sh/sw_merged/</id>
+        
+        <summary type="html">&lt;h1 style=&quot;font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;&quot;&gt;Brought to you by the Starwind Team and all the players on &lt;a href=&quot;https:&#x2F;&#x2F;discord.gg&#x2F;wcMj2b2svh&quot;&gt;The Starwind Initiative&lt;&#x2F;a&gt;&lt;&#x2F;h1&gt;
+&lt;p&gt;The Starwind Merged Plugin Project began as an effort to consolidate the Starwind ESM files, to eventually make them entirely indepentent of Morrowind.esm and friends. At this time, the merged plugin project primarily focuses on the vanilla ESM files, with additional content stripped out.&lt;&#x2F;p&gt;</summary>
+        
+    </entry>
+</feed>

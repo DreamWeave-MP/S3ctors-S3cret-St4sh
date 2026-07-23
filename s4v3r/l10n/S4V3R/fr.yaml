@@ -1,0 +1,39 @@
+CombatSaveToggleName: Activer les sauvegardes de combat
+CombatSaveToggleDesc: |
+  Détermine s'il faut sauvegarder ou non lorsque le combat commence ou se termine.
+
+  Par défaut : Oui
+
+DebugEnableName: Activer les journaux
+DebugEnableDesc: |
+  Affiche les messages de débogage dans la console (openmw.log ou F10).
+
+  Par défaut : Non
+
+MaxSaveSlotsName: Nombre maximal de sauvegardes
+MaxSaveSlotsDesc: |
+  Nombre maximal de sauvegardes à conserver. Lorsque cette limite est atteinte, la sauvegarde la plus ancienne est remplacée.
+
+  Par défaut : 10
+  Min : 1
+  Max : 100
+
+S4V3RActiveDesc: "Indique s'il faut effectuer des sauvegardes automatiques ou non.S4V3RDesc: Sauvegarde automatiquement le jeu à intervalles réguliers et, en option, lorsque le combat commence ou se termine."
+S4V3RActiveName : Désactiver/Activer
+S4V3RDesc: Sauvegarde automatiquement le jeu à intervalles réguliers et, en option, lorsque le combat commence ou se termine.
+S4V3RName: S4V3R
+S4V3ROptions: Paramètres
+
+SaveIntervalName: Intervalle de sauvegarde
+SaveIntervalDesc: |
+  Intervalle de temps entre les sauvegardes, en minutes.
+
+  Par défaut : 9
+  Min : 1
+  Max : 60
+
+StartSaveToggleName: Activer les sauvegardes de début
+StartSaveToggleDesc: |
+  Détermine s'il faut sauvegarder ou non lorsque la création du personnage est terminée.
+
+  Par défaut : Oui

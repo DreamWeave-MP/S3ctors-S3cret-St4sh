@@ -1,0 +1,184 @@
+log_name: Tomb Spice-Up
+
+# Every tomb visit feels slightly different. Candles flicker out at
+# random, urns and skulls spin in their sockets, bone piles are never
+# quite where you left them.
+#
+# cell_match: tomb matches any cell whose name or id contains "tomb".
+# This covers ancestral tombs, tombs, and related interiors.
+#
+# once: per_cell means every fresh cell load re-rolls the transform
+# values and disable/enable chance. Save and re-enter for a new mood.
+
+instances:
+  # Rule 1: Random transform on tomb clutter.
+  # Every candle, skull, urn, bone, lantern, and mummy wrap gets a
+  # random scale (0.6x to 1.4x) and a random Z rotation.
+  - conditions:
+      - cell_match: tomb
+      - record_id:
+          - candle
+          - skull
+          - ^urn_
+          - bone
+          - lantern
+          - ^web_
+    once: per_cell
+    actions:
+      - transform:
+          rotate:
+            z: { min: 0, max: 360 }
+
+  - conditions:
+      - cell_match: tomb
+      - record_id:
+          - skull
+          - bone
+          - ^web_
+    once: per_cell
+    actions:
+      - transform:
+          scale: { min: 0.6, max: 1.4 }
+
+  # Rule 3: Candle roulette. Each visit, candles have a 50% chance to
+  # be dark. Once disabled, objects stay disabled — onObjectActive does
+  # not fire for disabled objects across cell loads, so the SSS can't
+  # re-enable them. Use once=true for a one-time roll per save.
+  - conditions:
+      - cell_match: tomb
+      - record_id: 
+          - candle
+          - brazier
+          - sconce
+    once: true
+    actions:
+      - disable: { chance: 0.5 }
+
+  # Rule 4: Tomb Loot Shuffle.
+  # Every container in a tomb has a small chance to hold bonus loot.
+  # Rolled once per save per container — first visit is the only visit
+  # that matters for loot. Gives tomb exploring a small unpredictable
+  # payoff without over-rewarding repeat visits.
+  - conditions:
+      - cell_match: tomb
+      - object_type: Container
+    once: true
+    actions:
+      - add:
+          gold_001: { count: 25, chance: 0.3 }
+          ingred_diamond_01: { chance: 0.02 }
+          ingred_emerald_01: { chance: 0.02 }
+          ingred_pearl_01: { chance: 0.02 }
+          ingred_ruby_01: { chance: 0.02 }
+          sc_healing: { chance: 0.05 }
+          sc_vitality: { chance: 0.04 }
+          sc_ekashslocksplitter: { chance: 0.03 }
+          pick_apprentice_01: { count: 3, chance: 0.05 }
+          probe_apprentice_01: { count: 3, chance: 0.03 }
+          p_restore_health_c: { chance: 0.05 }
+          p_restore_fatigue_c: { chance: 0.05 }
+
+  # Rule 5: Harder Bonewalkers.
+  # Standard bonewalkers have a 30% chance to be replaced with
+  # greater bonewalkers. Rolled per cell visit.
+  - conditions:
+      - cell_match: tomb
+      - object_type: Creature
+      - record_id: ^bonewalker$
+    once: per_cell
+    actions:
+      - replace:
+          bonewalker_greater: 0.3
+
+  # Rule 6: Harder Skeletons.
+  # Basic skeletons have a 30% chance to be upgraded to skeleton
+  # warriors (more health, better weapons).
+  - conditions:
+      - cell_match: tomb
+      - object_type: Creature
+      - record_id: ^skeleton$
+    once: per_cell
+    actions:
+      - replace:
+          'skeleton warrior': 0.3
+
+  # ── Main-Quest Tomb Corruption ───────────────────────────────────────────
+  #
+  # Three-phase lifecycle for tomb spawners tied to the main quest:
+  #
+  #   Phase 1 (always):  in_tomb_all_lev+0 → in_tomb_all_lev+2
+  #   Phase 2 (journal 30-69):  in_tomb_all_lev+0 or +2 → in_6th_all_lev+2
+  #   Phase 3 (journal 70+):    in_6th_all_lev+2 → in_tomb_all_lev+2
+  #
+  # The unconditional upgrade runs first on every first visit. Then the
+  # journal gates determine whether the +2 spawner gets corrupted by the
+  # Sixth House or stays clean. Since in_tomb_all_lev+0 is disabled after
+  # Phase 1, the Phase-2 rule also matches +2 directly — and +0 as a
+  # fallback in case Phase 1 didn't fire for some reason.
+  #
+  # Sixth House lists are vanilla (Morrowind.esm) with Calc_From_All_Levels,
+  # so corprus_stalker/ash_slave scale to player level even for low-level
+  # explorers who rush Caius's quests.
+  #
+  # A1_4_MainQuest stages:
+  #   0–19  Report to Caius
+  #   20    Caius reveals the Sixth House
+  #   30–69 Corprus / Nerevarine / Hortator
+  #   70+   Dagoth Ur defeated
+
+  # Rule 7: Basic upgrade (always-on).
+  # Every first-visit tomb gets the +2 tier. Rolled once — the original
+  # +0 is disabled and won't trigger onObjectActive again.
+  - conditions:
+      - cell_match: tomb
+      - object_type: LevelledCreature
+      - record_id: ^in_tomb_all_lev%+0$
+    once: true
+    actions:
+      - replace:
+          in_tomb_all_lev+2: 1.0
+
+  # Rule 7a: Sixth House Corruption (a1 >= 50, c3 < 50).
+  # Targets the +2 from Rule 7. The not condition on c3_destroydagoth
+  # keeps the corruption contained to the pre-Dagoth-Ur phase — once
+  # c3 finishes, Rule 7b cleans up permanently without re-corruption.
+  # Replaces with in_6th_all_lev+2 — corprus_stalker(3), ash_slave(3),
+  # corprus_lame(10), ash_zombie(10), ash_ghoul(17), ascended_sleeper(27).
+  - conditions:
+      - cell_match: tomb
+      - object_type: LevelledCreature
+      - record_id: ^in_tomb_all_lev%+2$
+      - has_journal:
+          quest: a1_v_vivecinformants
+          index: 50
+      - not:
+          has_journal:
+            quest: c3_destroydagoth
+            index: 50
+    actions:
+      - replace:
+          in_6th_all_lev+2: 1.0
+
+  # Rule 7b: Sixth House Cleanup (journal >= 70).
+  # Once Dagoth Ur falls, corrupted lists return to normal +2 spawners.
+  - conditions:
+      - cell_match: tomb
+      - object_type: LevelledCreature
+      - record_id: ^in_6th_all_lev%+2$
+      - has_journal:
+          quest: c3_destroydagoth
+          index: 50
+    actions:
+      - replace:
+          in_tomb_all_lev+2: 1.0
+
+  # Rule 8: Diseased Rats.
+  # Tomb rats have a 60% chance to spawn diseased.
+  - conditions:
+      - cell_match: tomb
+      - object_type: Creature
+      - record_id: ^rat$
+    once: per_cell
+    actions:
+      - replace:
+          rat_diseased: 0.6
