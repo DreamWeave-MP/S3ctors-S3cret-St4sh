@@ -14,7 +14,7 @@ MaxSaveSlotsName: Nombre maximal de sauvegardes
 MaxSaveSlotsDesc: |
   Nombre maximal de sauvegardes à conserver. Lorsque cette limite est atteinte, la sauvegarde la plus ancienne est remplacée.
 
-  Par défaut : 9
+  Par défaut : 10
   Min : 1
   Max : 100
 
@@ -26,7 +26,7 @@ SaveIntervalName: Intervalle de sauvegarde
 SaveIntervalDesc: |
   Intervalle de temps entre les sauvegardes, en minutes.
 
-  Par défaut : 10
+  Par défaut : 9
   Min : 1
   Max : 60
 

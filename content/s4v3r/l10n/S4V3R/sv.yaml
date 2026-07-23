@@ -14,7 +14,7 @@ MaxSaveSlotsName: Maximalt antal sparningar
 MaxSaveSlotsDesc: |
   Maximalt antal sparningar som ska behållas. När detta antal har nåtts skrivs den äldsta sparningen över.
 
-  Standard: 9
+  Standard: 10
   Min: 1
   Max: 100
 
@@ -26,7 +26,7 @@ SaveIntervalName: Sparintervall
 SaveIntervalDesc: |
   Tidsintervall mellan sparningar i minuter.
 
-  Standard: 10
+  Standard: 9
   Min: 1
   Max: 60
 
