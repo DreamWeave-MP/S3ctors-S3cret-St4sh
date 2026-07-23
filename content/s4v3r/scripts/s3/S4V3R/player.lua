@@ -50,29 +50,15 @@ local currentUpdateHandler = nullFunction
 local actorsInCombat, saveCompletionHandlers = {}, {}
 local isInCombat, saveSlot, sinceLastSave = false, 1, 0
 
-local CombatSavesEnabled, SaveInterval, MaxSaveSlots, StartSaveEnabled =
+local CombatSavesEnabled, SaveInterval, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
   StorageGet(playerStorage, 'CombatSaveToggle'),
   StorageGet(playerStorage, 'SaveInterval') * Minute,
   StorageGet(playerStorage, 'MaxSaveSlots'),
-  StorageGet(playerStorage, 'StartSaveToggle')
+  StorageGet(playerStorage, 'StartSaveToggle'),
+  StorageGet(playerStorage, 'S4V3RActive')
 
 ---@type S4V3RSaveInfo
 local SaveEventData = { '', 1, SaveClass.AUTO }
-
-playerStorage:subscribe(require('openmw.async'):callback(function(_, key)
-  local value = StorageGet(playerStorage, key)
-
-  if key == 'MaxSaves' then
-    MaxSaveSlots = value
-    if saveSlot > MaxSaveSlots then saveSlot = 1 end
-  elseif key == 'SaveInterval' then
-    SaveInterval = value * Minute
-  elseif key == 'CombatSaveToggle' then
-    CombatSavesEnabled = value
-  elseif key == 'StartSaveToggle' then
-    StartSaveEnabled = value
-  end
-end))
 
 ---@return boolean? allowedToSave
 local function allowedToSave()
@@ -135,6 +121,24 @@ local function chargenCheck()
   currentUpdateHandler, chargenDone = autoSaveHandler, true
 end
 
+playerStorage:subscribe(require('openmw.async'):callback(function(_, key)
+  local value = StorageGet(playerStorage, key)
+
+  if key == 'MaxSaves' then
+    MaxSaveSlots = value
+    if saveSlot > MaxSaveSlots then saveSlot = 1 end
+  elseif key == 'SaveInterval' then
+    SaveInterval = value * Minute
+  elseif key == 'CombatSaveToggle' then
+    CombatSavesEnabled = value
+  elseif key == 'StartSaveToggle' then
+    StartSaveEnabled = value
+  elseif key == 'S4V3RActive' then
+    currentUpdateHandler, S4V3RActive = value and chargenCheck or nullFunction, value
+    DebugLog('S4V3R has been %s!', S4V3RActive and 'enabled' or 'disabled')
+  end
+end))
+
 ---@class openmw.interfaces
 ---@field S4V3R S4V3RInterface
 
@@ -171,6 +175,8 @@ return {
           data.chargenDone or false, data.saveSlot or 1, data.sinceLastSave or 0
       end
 
+      if not S4V3RActive then return end
+
       currentUpdateHandler = chargenDone and autoSaveHandler or chargenCheck
     end,
     ---@return S4V3RStoredData
@@ -192,7 +198,8 @@ return {
 
       isInCombat = Next(actorsInCombat) ~= nil
 
-      local shouldSkipSave = not CombatSavesEnabled
+      local shouldSkipSave = not S4V3RActive
+        or not CombatSavesEnabled
         or not chargenDone
         or wasInCombat == isInCombat
         or IsDead(self)
@@ -219,7 +226,8 @@ return {
     end,
     UiModeChanged = function(modeChangeData)
       if
-        modeChangeData.newMode
+        not S4V3RActive
+        or modeChangeData.newMode
         or not StartSaveEnabled
         or modeChangeData.oldMode ~= ClassReviewMenu
       then
