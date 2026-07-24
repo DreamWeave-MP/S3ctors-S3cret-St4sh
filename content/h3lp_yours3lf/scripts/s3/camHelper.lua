@@ -1,67 +1,95 @@
 ---@omw-context player
 
-local camera = require 'openmw.camera'
-local types = require 'openmw.types'
-local ui = require 'openmw.ui'
-local util = require 'openmw.util'
+local Forward, GetCamPosition, GetCamYaw, GetViewDistance, IdentityTransform, IsNPC, Remap, RotateZ, ScreenSize, Vector3, Vector3Dot, Vector3Normalize, WorldToViewport
 
-local function isObjectBehindCamera(object)
-    local cameraPos = camera.getPosition()
-    local cameraForward = util.transform.identity
-        * util.transform.rotateZ(camera.getYaw())
-        * util.vector3(0, 1, 0)
+local NPC_HEIGHT_OFFSET = 1.6
 
-    -- Direction vector from camera to object
-    local toObject = object.position - cameraPos
+do
+  local camera = require 'openmw.camera'
+  GetCamPosition, GetCamYaw, GetViewDistance, WorldToViewport =
+    camera.getPosition, camera.getYaw, camera.getViewDistance, camera.worldToViewportVector
 
-    -- Normalize both vectors
-    cameraForward = cameraForward:normalize()
-    toObject = toObject:normalize()
+  local types = require 'openmw.types'
+  IsNPC = types.NPC.objectIsInstance
 
-    -- Calculate the dot product
-    local dotProduct = cameraForward:dot(toObject)
+  local ui = require 'openmw.ui'
+  ScreenSize = ui.screenSize
 
-    -- If the dot product is negative, the object is behind the camera
-    return dotProduct < 0
+  ---@class mathlib
+  --- Optional integration with Rubic0n math extensions
+  ---@field remap fun(value: number, lowin: number, highin: number, lowout: number, highout: number): number
+
+  local util = require 'openmw.util'
+  IdentityTransform, Remap, RotateZ, Vector3 =
+    util.transform.identity, math.remap or util.remap, util.transform.rotateZ, util.vector3
+
+  Forward = Vector3(0, 1, 0)
+  Vector3Dot, Vector3Normalize = Forward.dot, Forward.normalize
 end
 
-local OFFSET = 1.6
-local function targetPosition(object)
-    local box = object:getBoundingBox()
+---@param position openmw.util.Vector3
+---@return boolean
+local function isPositionBehindCamera(position)
+  local cameraPos = GetCamPosition()
+  local cameraForward = IdentityTransform * RotateZ(GetCamYaw()) * Forward
 
-    if types.NPC.objectIsInstance(object) then
-        return object.position + util.vector3(0, 0, box.halfSize.z * OFFSET)
-    else
-        return box.center
-    end
+  -- Direction vector from camera to object
+  local toObject = position - cameraPos
+
+  -- Normalize both vectors
+  cameraForward, toObject = Vector3Normalize(cameraForward), Vector3Normalize(toObject)
+
+  -- Calculate the dot product
+  local dotProduct = Vector3Dot(cameraForward, toObject)
+
+  -- If the dot product is negative, the object is behind the camera
+  return dotProduct < 0
 end
 
----@param object GameObject object whose position will be checked
+---@param object openmw.Object
+---@param position openmw.util.Vector3
+local function targetPosition(object, position)
+  local box = object:getBoundingBox()
+
+  if IsNPC(object) then
+    return Vector3(position.x, position.y, position.z + box.halfSize.z * NPC_HEIGHT_OFFSET)
+  else
+    return box.center
+  end
+end
+
+---@param object openmw.Object object whose position will be checked
 ---@return openmw.util.Vector3? viewportPos If the object is onscreen, the identified screenSize position is returned. If not, then nil. Viewpos is NOT normalized.
 local function objectIsOnscreen(object)
-    local checkPos = targetPosition(object)
-    local viewportPos = camera.worldToViewportVector(checkPos)
-    local screenSize = ui.screenSize()
+  local objectPos = object.position
 
-    local validX = viewportPos.x > 0 and viewportPos.x < screenSize.x
-    local validY = viewportPos.y > 0 and viewportPos.y < screenSize.y
-    local withinViewDistance = viewportPos.z <= camera.getViewDistance()
+  local checkPos = targetPosition(object, objectPos)
+  local viewportPos = WorldToViewport(checkPos)
+  local screenSize = ScreenSize()
 
-    if not validX or not validY or not withinViewDistance then return end
+  local viewX, viewY, viewZ, screenX, screenY =
+    viewportPos.x, viewportPos.y, viewportPos.z, screenSize.x, screenSize.y
 
-    if isObjectBehindCamera(object) then return end
+  local validX = viewX > 0 and viewX < screenX
+  local validY = viewY > 0 and viewY < screenY
+  local withinViewDistance = viewZ <= GetViewDistance()
 
-    local normalizedX = util.remap(viewportPos.x, 0, screenSize.x, 0.0, 1.0)
-    local normalizedY = util.remap(viewportPos.y, 0, screenSize.y, 0.0, 1.0)
+  if not validX or not validY or not withinViewDistance then return end
 
-    return util.vector3(normalizedX, normalizedY, viewportPos.z)
+  if isPositionBehindCamera(objectPos) then return end
+
+  local normalizedX = Remap(viewX, 0, screenX, 0.0, 1.0)
+  local normalizedY = Remap(viewY, 0, screenY, 0.0, 1.0)
+
+  return Vector3(normalizedX, normalizedY, viewZ)
 end
 
 return {
-    interfaceName = 'S3CamHelper',
-    interface = {
-        isObjectBehindCamera = isObjectBehindCamera,
-        objectIsOnscreen = objectIsOnscreen,
-        targetPosition = targetPosition,
-    }
+  interfaceName = 'S3CamHelper',
+  interface = {
+    isPositionBehindCamera = isPositionBehindCamera,
+    objectIsOnscreen = objectIsOnscreen,
+    targetPosition = targetPosition,
+    version = 2,
+  },
 }
