@@ -10,6 +10,12 @@ DebugEnableDesc: |
 
   Standard: Nej
 
+DeleteSavesName: Ironman-läge
+DeleteSavesDesc: |
+  Ta bort alla sparfiler som S4V3R har skapat för den här spelaren när spelaren dör.
+
+  Standard: Nej
+
 MaxSaveSlotsName: Maximalt antal sparningar
 MaxSaveSlotsDesc: |
   Maximalt antal sparningar som ska behållas. När detta antal har nåtts skrivs den äldsta sparningen över.

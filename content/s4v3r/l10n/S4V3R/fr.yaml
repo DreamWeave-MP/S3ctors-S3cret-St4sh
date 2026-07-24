@@ -10,6 +10,12 @@ DebugEnableDesc: |
 
   Par défaut : Non
 
+DeleteSavesName: Mode Ironman
+DeleteSavesDesc: |
+  Supprimer toutes les sauvegardes créées par S4V3R pour ce joueur à sa mort.
+
+  Par défaut : Non
+
 MaxSaveSlotsName: Nombre maximal de sauvegardes
 MaxSaveSlotsDesc: |
   Nombre maximal de sauvegardes à conserver. Lorsque cette limite est atteinte, la sauvegarde la plus ancienne est remplacée.

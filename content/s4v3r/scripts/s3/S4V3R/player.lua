@@ -50,8 +50,9 @@ local currentUpdateHandler = nullFunction
 local actorsInCombat, saveCompletionHandlers = {}, {}
 local isInCombat, saveSlot, sinceLastSave = false, 1, 0
 
-local CombatSavesEnabled, SaveInterval, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
+local CombatSavesEnabled, DeleteSavesOnDeath, SaveInterval, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
   StorageGet(playerStorage, 'CombatSaveToggle'),
+  StorageGet(playerStorage, 'DeleteSavesOnDeath'),
   StorageGet(playerStorage, 'SaveInterval') * Minute,
   StorageGet(playerStorage, 'MaxSaveSlots'),
   StorageGet(playerStorage, 'StartSaveToggle'),
@@ -190,6 +191,10 @@ return {
     onUpdate = function() currentUpdateHandler() end,
   },
   eventHandlers = {
+    Died = function()
+      if not DeleteSavesOnDeath then return end
+      SendMenuEvent(self, 'S4V3R_MENU_DELETE_ALL_SAVES')
+    end,
     OMWMusicCombatTargetsChanged = function(targetData)
       local actor, targetInCombat, wasInCombat =
         targetData.actor, not not targetData.targets[1], isInCombat
