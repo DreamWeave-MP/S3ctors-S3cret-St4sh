@@ -45,6 +45,11 @@ do
         description = 'S4V3RActiveDesc',
         default = true,
         renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
       },
       {
         key = 'SaveInterval',
@@ -70,6 +75,11 @@ do
         description = 'CombatSaveToggleDesc',
         default = true,
         renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
       },
       {
         key = 'StartSaveToggle',
@@ -84,6 +94,11 @@ do
         description = 'DebugEnableDesc',
         default = false,
         renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
       },
     },
   }

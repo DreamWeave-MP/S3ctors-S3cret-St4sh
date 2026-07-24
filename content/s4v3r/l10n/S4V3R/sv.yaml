@@ -23,6 +23,8 @@ S4V3RActiveName: Inaktivera/Aktivera
 S4V3RDesc: Sparar automatiskt spelet med regelbundna intervall och, om aktiverat, när strid börjar eller slutar.
 S4V3RName: S4V3R
 S4V3ROptions: Alternativ
+S4V3RToggleOn: Aktivera
+S4V3RToggleOff: Inaktivera
 
 SaveIntervalName: Sparintervall
 SaveIntervalDesc: |

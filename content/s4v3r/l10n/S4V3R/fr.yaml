@@ -23,6 +23,8 @@ S4V3RActiveName : Désactiver/Activer
 S4V3RDesc: Sauvegarde automatiquement le jeu à intervalles réguliers et, en option, lorsque le combat commence ou se termine.
 S4V3RName: S4V3R
 S4V3ROptions: Paramètres
+S4V3RToggleOn: Activer
+S4V3RToggleOff: Désactiver
 
 SaveIntervalName: Intervalle de sauvegarde
 SaveIntervalDesc: |
