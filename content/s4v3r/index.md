@@ -19,7 +19,7 @@ extra:
     content_files:
       - S4V3R.esp
 
-  version: 1.1
+  version: 1.2
 ---
 
 {{ image(src="/img/s4v3r.png", alt="Saver - OpenMW Autosaves", style="border-radius: 8px;") }}
@@ -43,6 +43,10 @@ It tries to offer the most sane defaults it can:
 All of the above options are configurable. With the default settings, this gives you about an hour and a half of backups, alongside your combat saves.
 
 As of version 1.1, S4V3R also offers an Ironman option which will delete all saves which S4V3R generated upon your death. Naturally, this is disabled by default.
+
+As of version 1.2, S4V3R will NOT make combat start/end saves when the target is not in combat with you directly. Additionally, this feature is extended to support Sosnoviy Bor's [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053) as well.
+
+If you have FDU installed, then S4V3R will also account for your followers being targeted by enemies.
 
 Note that combat saves don't consume your autosave budget, nor does your start save  - so with the defaults, you have a rolling total of 13 saves.
 

@@ -10,13 +10,24 @@
 ---@field saveSlot integer
 ---@field sinceLastSave number
 
+local I = require 'openmw.interfaces'
+---@class openmw.interfaces
+---@field FollowerDetectionUtil FDU
+
+---@class FDU
+---Returns State of each current follower.
+---Script scope: Global, NPC, Creature, Player
+---@field getFollowerList fun(): table<string, table>
+
 local CallEventHandlers, ClassReviewMenu, GetRealFrameDuration, GetUIMode, Minute, Regions
+local hasFDU = false
+
 do
-  local I = require 'openmw.interfaces'
   ClassReviewMenu, GetUIMode = I.UI.MODE.ChargenClassReview, I.UI.getMode
   Minute = require('openmw_aux.time').minute
 
   local core = require 'openmw.core'
+  hasFDU = core.contentFiles.has 'FollowerDetectionUtil.omwscripts'
   GetRealFrameDuration, Regions = core.getRealFrameDuration, core.regions.records
 
   CallEventHandlers = require('openmw_aux.util').callEventHandlers
@@ -199,13 +210,37 @@ return {
       local actor, targetInCombat, wasInCombat =
         targetData.actor, not not targetData.targets[1], isInCombat
 
-      actorsInCombat[actor.id] = targetInCombat and actor or nil
+      local followerList = hasFDU and I.FollowerDetectionUtil.getFollowerList() or nil
 
+      if followerList and followerList[actor.id] then return end
+
+      local fightingMe = false
+      if targetInCombat then
+        local myId = self.id
+
+        for i = 1, #targetData.targets do
+          local targetId = targetData.targets[i].id
+
+          if targetId == myId then
+            fightingMe = true
+            break
+          end
+
+          if followerList and followerList[targetId] then
+            fightingMe = true
+            break
+          end
+        end
+      end
+
+      local wasFightingMe = actorsInCombat[actor.id] ~= nil
+      actorsInCombat[actor.id] = fightingMe and actor or nil
       isInCombat = Next(actorsInCombat) ~= nil
 
       local shouldSkipSave = not S4V3RActive
         or not CombatSavesEnabled
         or not chargenDone
+        or not (fightingMe or wasFightingMe)
         or wasInCombat == isInCombat
         or IsDead(self)
 
