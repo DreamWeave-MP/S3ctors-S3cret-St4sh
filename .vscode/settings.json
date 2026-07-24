@@ -8,6 +8,13 @@
         "s3maphore/00 Core/scripts/*"
     ],
     "yaml.schemas": {
-        "./static_switching_system/Scripts/staticSwitcher/schema/replacerSchema.json": "*/scripts/staticSwitcher/data/*.yaml"
-    }
+        "./content/static_switching_system/Scripts/staticSwitcher/schema/replacerSchema.json": "*/scripts/staticSwitcher/data/*.yaml"
+    },
+    "yaml.format": {
+        "enable": true,
+        "printWidth": 120,
+        "singleQuote": false,
+        "bracketSpacing": true
+    },
+    "yaml.keyOrdering": false
 }
