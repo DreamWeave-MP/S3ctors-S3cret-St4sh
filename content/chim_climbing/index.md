@@ -11,7 +11,8 @@ taxonomies:
 
 extra:
   install_info:
-    - .
+    data_directories:
+      - .
   content_files:
     - Chim_Climbing.omwscripts
 
