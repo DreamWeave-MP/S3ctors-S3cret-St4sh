@@ -11,13 +11,16 @@ taxonomies:
     - OpenMW-Lua
 
 extra:
+  nexus_id: 56417
+  nexus_group_id: 3321511
+
   install_info:
     data_directories:
       - .
     content_files:
       - H3lp Yours3lf.esp
 
-  version: 0.5
+  version: 0.8
 ---
 Sometimes, you just have to h3lp yours3lf.
 
