@@ -38,7 +38,7 @@ I.Settings.registerGroup {
       argument = {
         integer = false,
         min = 1.0,
-        max = 50.0,
+        max = 100.0,
       },
     },
   },
