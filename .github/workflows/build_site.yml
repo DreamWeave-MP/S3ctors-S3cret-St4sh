@@ -111,6 +111,8 @@ jobs:
       - name: Upload to NexusMods
         uses: Nexus-Mods/upload-action@main
         with:
+          archive_existing_version: true
+          primary_mod_manager_download: true
           api_key: ${{ secrets.NEXUS_API_KEY }}
           file_id: ${{ matrix.mod.nexus_group_id }}
           filename: dist/${{ matrix.mod.slug }}.zip
