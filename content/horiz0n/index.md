@@ -19,7 +19,7 @@ extra:
     content_files:
       - Horiz0n.esp
 
-  version: 1.0
+  version: 1.1
 ---
 
 I was discussing the concept of occlusion culling with someone recently.
@@ -59,7 +59,10 @@ Interiors are ignored intentionally because they usually hit your framerate limi
 
 The steps are all relatively small, and the 30Hz tickrate ensures that transitions generally aren't too noticeable.
 
-There are only two settings, which allow you to enable or disable Horiz0n in-game, and change the maximum viewing distance.
+As of version 1.1, there are three settings:
+- Minimum View Distance
+- Maximum View Distance
+- Disable/Enable the entire mod
 
 By default, the max view distance is 25 cells, as view distance is extremely cheap outside of the active grid.
 
