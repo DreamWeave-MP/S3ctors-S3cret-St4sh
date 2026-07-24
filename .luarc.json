@@ -41,6 +41,11 @@
             "./content/ui_modes_slim/?.lua"
         ]
     },
+    "workspace": {
+        "excludeDir": [
+            "content/triad_tools"
+        ]
+    },
     "workspace.library": [
         "content/cod3x/?.lua",
         "content/s3maphore/?.lua",
