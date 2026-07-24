@@ -116,3 +116,4 @@ jobs:
           filename: dist/${{ matrix.mod.slug }}.zip
           version: ${{ matrix.mod.version }}
           display_name: ${{ matrix.mod.title }}
+          update_mod_version: true
