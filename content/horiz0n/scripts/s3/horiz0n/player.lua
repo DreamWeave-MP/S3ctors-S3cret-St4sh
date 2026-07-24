@@ -10,7 +10,8 @@ local getRealFrameDuration, horiz0nSettings, setViewDistance =
 
 local CELL_SIZE = 8192
 local MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE =
-  CELL_SIZE / 4, CELL_SIZE * horiz0nSettings:get 'Horiz0nMaxViewDistance'
+  CELL_SIZE * horiz0nSettings:get 'Horiz0nMinViewDistance',
+  CELL_SIZE * horiz0nSettings:get 'Horiz0nMaxViewDistance'
 
 setViewDistance(MIN_VIEW_DISTANCE)
 
@@ -80,6 +81,13 @@ horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, key)
 
     if MAX_VIEW_DISTANCE < viewDistance then
       viewDistance = MAX_VIEW_DISTANCE
+      setViewDistance(viewDistance)
+    end
+  elseif key == 'Horiz0nMinViewDistance' then
+    MIN_VIEW_DISTANCE = CELL_SIZE * value
+
+    if MIN_VIEW_DISTANCE > viewDistance then
+      viewDistance = MIN_VIEW_DISTANCE
       setViewDistance(viewDistance)
     end
   end

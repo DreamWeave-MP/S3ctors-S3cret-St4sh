@@ -6,8 +6,15 @@ Horiz0nManagerSettingsDesc: Aktivera eller inaktivera hantering av visningsavst�
 
 Horiz0nMaxViewDistName: Maximalt visningsavstånd
 Horiz0nMaxViewDistDesc: |
-  Anger den övre gränsen för Horiz0ns automatiska hantering av visningsavstånd.
-  Standard: 25,0
+  Anger den övre gränsen för Horiz0ns automatiska hantering av visningsavståndet.
+  Standard: 25.0
+  Intervall: 1.0 - 100.0
+
+Horiz0nMinViewDistName: Minimalt visningsavstånd
+Horiz0nMinViewDistDesc: |
+  Anger den nedre gränsen för Horiz0ns automatiska hantering av visningsavståndet.
+  Standard: 0.25
+  Intervall: 0.01 - 1.0
 
 Horiz0nToggleName: Aktivera eller inaktivera hantering av visningsavstånd
 Horiz0nToggleOn: Aktivera

@@ -4,10 +4,17 @@ Horiz0nPageDesc: Dynamic view distance management to save frames when needed and
 Horiz0nManagerSettingsName: Step Configuration
 Horiz0nManagerSettingsDesc: Toggle view distance management and related parameters.
 
-Horiz0nMaxViewDistName: Max Viewing Distance
+Horiz0nMaxViewDistName: Maximum View Distance
 Horiz0nMaxViewDistDesc: |
   Sets the upper limit for Horiz0n's automatic view distance management.
   Default: 25.0
+  Range: 1.0 - 100.0
+
+Horiz0nMinViewDistName: Minimum View Distance
+Horiz0nMinViewDistDesc: |
+  Sets the lower limit for Horiz0n's automatic view distance management.
+  Default: 0.25
+  Range: 0.01 - 1.0
 
 Horiz0nToggleName: Toggle view distance management
 Horiz0nToggleOn: Enable

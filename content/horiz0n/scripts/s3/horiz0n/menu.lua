@@ -30,6 +30,18 @@ I.Settings.registerGroup {
       },
     },
     {
+      key = 'Horiz0nMinViewDistance',
+      renderer = 'number',
+      name = 'Horiz0nMinViewDistName',
+      description = 'Horiz0nMinViewDistDesc',
+      default = 0.25,
+      argument = {
+        integer = false,
+        max = 1.0,
+        min = 0.01,
+      },
+    },
+    {
       key = 'Horiz0nMaxViewDistance',
       renderer = 'number',
       name = 'Horiz0nMaxViewDistName',
