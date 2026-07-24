@@ -29,3 +29,7 @@
 ---@field _isLoadingComplete fun(): boolean @private
 ---@field markLoadingComplete fun() @private
 ---@field syncToStorage fun() @private
+
+---@class openmw.interfaces
+---@field FlexTagG FlexTag.Interface
+---@field FlexTagL FlexTag.Interface
