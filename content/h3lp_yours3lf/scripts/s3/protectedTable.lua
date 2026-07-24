@@ -4,9 +4,11 @@ local async = require 'openmw.async'
 local gameSelf = require 'openmw.self'
 local storage = require 'openmw.storage'
 
-local LogMessage = require 'scripts.s3.logmessage'
+local assert, rawset, next, pairs, tostring, type = assert, rawset, next, pairs, tostring, type
+local StrFormat = string.format
+local TableConcat, TableInsert, TableSort = table.concat, table.insert, table.sort
 
-local assert, rawset, pairs, type = assert, rawset, pairs, type
+local StorageGet, StorageSet = storage.globalSection('SettingsOMWCombat').get, nil
 
 local isPlayer, ui
 do
@@ -14,31 +16,35 @@ do
   isPlayer = types.Player.objectIsInstance(gameSelf)
 
   ---@omw-context-begin player
-  if isPlayer then
-    ui = require 'openmw.ui'
-  end
+  if isPlayer then ui = require 'openmw.ui' end
   ---@omw-context-end player
 end
 
 local function pairsByKeys(t, f)
   local a = {}
-  for n in pairs(t) do table.insert(a, n) end
-  table.sort(a, f)
+  for n in pairs(t) do
+    TableInsert(a, n)
+  end
+
+  TableSort(a, f)
+
   local i = 0
   local iter = function()
     i = i + 1
+
     if a[i] == nil then
-      return nil
+      return
     else
       return a[i], t[a[i]]
     end
   end
+
   return iter
 end
 
 ---@type ShadowTableSubscriptionHandler
 local function defaultSubscribeHandler(shadowSettings, group, _, key)
-  shadowSettings[key] = group:get(key)
+  shadowSettings[key] = StorageGet(group, key)
 end
 
 ---@alias IndexFunction fun(key: string): any
@@ -78,16 +84,18 @@ local function new(constructorData)
 
   assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
   local testKey, testValue = next(requestedGroup:asTable())
+
   ---@diagnostic disable-next-line: undefined-field
-  local groupIsWritable = pcall(requestedGroup.set, requestedGroup, testKey, testValue)
+  StorageSet = requestedGroup.set
+
+  local groupIsWritable = pcall(StorageSet, requestedGroup, testKey, testValue)
 
   local methods, proxy, shadowSettings, state = {}, {}, {}, {}
 
   requestedGroup:subscribe(
     async:callback(
-      function(group, key)
-        defaultSubscribeHandler(shadowSettings, requestedGroup, group, key)
-      end)
+      function(group, key) defaultSubscribeHandler(shadowSettings, requestedGroup, group, key) end
+    )
   )
 
   if constructorData.subscribeHandler then
@@ -107,7 +115,7 @@ local function new(constructorData)
   function methods.debugLog(...)
     if not shadowSettings.DebugEnable then return end
 
-    print(constructorData.logPrefix, table.concat({ ... }, ' '))
+    print(constructorData.logPrefix, TableConcat({ ... }, ' '))
   end
 
   ---@omw-context-begin player
@@ -115,7 +123,7 @@ local function new(constructorData)
     function methods.notifyPlayer(...)
       if not shadowSettings.MessageEnable then return end
 
-      ui.showMessage(constructorData.logPrefix .. ' ' .. table.concat({ ... }, ' '))
+      ui.showMessage(constructorData.logPrefix .. ' ' .. TableConcat({ ... }, ' '))
     end
   end
   ---@omw-context-end player
@@ -123,12 +131,9 @@ local function new(constructorData)
   function methods.interface(handlerFunction)
     assert(type(handlerFunction) == 'function')
 
-    return setmetatable({},
-      {
-        __index = function(_, key)
-          return handlerFunction(key)
-        end
-      })
+    return setmetatable({}, {
+      __index = function(_, key) return handlerFunction(key) end,
+    })
   end
 
   local meta = {
@@ -145,64 +150,69 @@ local function new(constructorData)
       result = state[key]
       if result ~= nil then return result end
 
-      local savedValue = requestedGroup:get(key)
+      local savedValue = StorageGet(requestedGroup, key)
       shadowSettings[key] = savedValue
 
       return savedValue
     end,
     __newindex = function(_, key, value)
       if key == 'state' and type(value) == 'table' then
-        for k in pairs(state) do state[k] = nil end
-        for k, v in pairs(value) do state[k] = v end
+        for k in pairs(state) do
+          state[k] = nil
+        end
+
+        for k, v in pairs(value) do
+          state[k] = v
+        end
       elseif state[key] ~= nil and type(value) ~= 'function' then
         state[key] = value
-      elseif type(value) ~= 'function' or
-          (type(value) ~= 'table' and key == 'state') then
+      elseif type(value) ~= 'function' or (type(value) ~= 'table' and key == 'state') then
         if groupIsWritable then
           shadowSettings[key] = value
+
           ---@cast requestedGroup openmw.storage.MutableStorageSection
-          requestedGroup:set(key, value)
+          StorageSet(requestedGroup, key, value)
         else
           error(
-            (
-              [[%s Unauthorized table access when updating '%s' to '%s'.
-This table is not writable and values must be updated through its associated storage group: '%s'.]]
-            ):format(
+            ([[%s Unauthorized table access when updating '%s' to '%s'.
+This table is not writable and values must be updated through its associated storage group: '%s'.]]):format(
               constructorData.logPrefix,
-              tostring(key), tostring(value), constructorData.inputGroupName or 'NO NAME PROVIDED'),
-            2)
+              tostring(key),
+              tostring(value),
+              constructorData.inputGroupName or 'NO NAME PROVIDED'
+            ),
+            2
+          )
         end
       else
         rawset(methods, key, value)
       end
     end,
     __tostring = function(_)
-      local members = {}
-      local methodParts = {}
-      local stateParts = {}
+      local members, methodParts, stateParts = {}, {}, {}
 
       for key, value in pairsByKeys(requestedGroup:asTable()) do
-        members[#members + 1] = string.format('        %s = %s', tostring(key), tostring(value))
+        members[#members + 1] = StrFormat('        %s = %s', tostring(key), tostring(value))
       end
 
       for key, value in pairsByKeys(state) do
-        stateParts[#stateParts + 1] = string.format('        %s = %s', tostring(key), tostring(value))
+        stateParts[#stateParts + 1] = StrFormat('        %s = %s', tostring(key), tostring(value))
       end
 
       for key, _ in pairsByKeys(methods) do
-        methodParts[#methodParts + 1] = string.format('        %s', tostring(key))
+        methodParts[#methodParts + 1] = StrFormat('        %s', tostring(key))
       end
 
-      for _, table in ipairs { members, methodParts, stateParts } do
-        if next(table) == nil then table[1] = '        None' end
-      end
+      if next(members) == nil then members[1] = '        None' end
+      if next(methodParts) == nil then methodParts[1] = '        None' end
+      if next(stateParts) == nil then stateParts[1] = '        None' end
 
-      return string.format(
+      return StrFormat(
         '%sManager {\n    Members:\n%s\n    Methods:\n%s\n    State:\n%s\n    }',
         managerString,
-        table.concat(members, ',\n'),
-        table.concat(methodParts, ',\n'),
-        table.concat(stateParts, ',\n')
+        TableConcat(members, ',\n'),
+        TableConcat(methodParts, ',\n'),
+        TableConcat(stateParts, ',\n')
       )
     end,
     __call = function()
@@ -213,7 +223,7 @@ This table is not writable and values must be updated through its associated sto
         keys[#keys + 1] = key
       end
 
-      table.sort(keys)
+      TableSort(keys)
 
       local i = 0
 
@@ -231,19 +241,38 @@ This table is not writable and values must be updated through its associated sto
   return proxy
 end
 
----@class ProtectedTableInterface
----@field help nil hidden __index method to display help string in the in-game console
----@field new fun(ProtectedTableConstructor: ProtectedTableConstructor): ProtectedTable
 local ProtectedTableInterface = {
   interfaceName = 'S3ProtectedTable',
-  interface = setmetatable(
-    {
-      new = new,
-    },
-    {
-      __index = function(_, key)
-        if key == 'help' then
-          LogMessage [[
+  --- Local-scope interface for building stateful game
+  --- systems which respond to setting values without
+  --- the boilerplate bullshit of rewriting :subscribe handlers
+  --- all the time
+  ---
+  --- Usage:
+  --- ```lua
+  --- local LockOnManager = I.S3ProtectedTable.new {
+  ---  -- Name of a setting group to read from. Uses global storage by default.
+  ---  inputGroupName = ModInfo.groupName,
+  ---  -- Prefix to use in log messages if your storage section includes a `DebugEnable` key,
+  ---  -- Its value is `true`, and you use the log function PT provides
+  ---  logPrefix = ModInfo.logPrefix,
+  ---  -- Overrides the `inputGroupName` in the ProtectedTable's __tostring method
+  ---  managerName = ModInfo.name,
+  ---  -- Optionally provide your own subscribe handler
+  ---  -- PT wraps it in async:callback for you
+  ---  subscribeHandler = false,
+  ---  -- Provide a writable player section instead of a read-only
+  ---  -- global section if needed
+  ---  storageSection = require('openmw.storage').playerSection(ModInfo.groupName),
+  ---}
+  --- ```
+  ---
+  ---@class ProtectedTableInterface
+  ---@field help string Display help string in the in-game console
+  ---@field new fun(ProtectedTableConstructor: ProtectedTableConstructor): ProtectedTable
+  interface = {
+    new = new,
+    help = [[
         The ProtectedTable constructor takes three required arguments:
         logPrefix: string applied as a prefix when using the built-in debugLog function
         inputGroupName: A settings group to which this table will attached
@@ -253,12 +282,11 @@ local ProtectedTableInterface = {
         subscribeHandler: overrides the built-in subscription handler for more advanced change handling, such as changing a UI element when the user sets a different size.
 
         To make a new ProtectedTable bound to a settings group, simply call the interface: I.S3ProtectedTable.new { logPrefix = '[ SW4Mounts ]', inputGroupName = 'SettingsGlobalSW4Mounts' }
-        ]]
-          return ''
-        end
-      end,
-    }
-  )
+        ]],
+  },
 }
+
+---@class openmw.interfaces
+---@field S3ProtectedTable ProtectedTableInterface
 
 return ProtectedTableInterface
