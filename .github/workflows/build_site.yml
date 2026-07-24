@@ -4,6 +4,16 @@ on:
     tags: '*'
     branches:
       - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 name: Build and deploy GH Pages
 jobs:
   build-site:
@@ -19,10 +29,21 @@ jobs:
         run: |
           ./buildSite --repository ${{ github.repository }} --changelog
 
-      - name: build_and_deploy
-        uses: shalzz/zola-deploy-action@v0.22.1
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Zola + upload Pages artifact
+        uses: getzola/github-pages@066755243e69f508fd1a74739fbf1a65f656c790
+        with:
+          zola_version: v0.22.1
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-site
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   release_cleanup:
     uses: DreamWeave-MP/StroggForge/.github/workflows/createRelease.yml@v6
@@ -31,6 +52,8 @@ jobs:
   build-mods:
     needs: release_cleanup
     runs-on: ubuntu-latest
+    outputs:
+      nexus-matrix: ${{ steps.nexus-matrix.outputs.matrix }}
     steps:
       - name: checkout
         uses: actions/checkout@v6
@@ -39,22 +62,57 @@ jobs:
 
       - name: Build Releases
         run: |
-          # Changelog generator script needs to be able to read the repo url
-          ARGS="--repository ${{ github.repository }} --build --changelog "
+          ARGS="--repository ${{ github.repository }} --build --changelog --release ${{ needs.release_cleanup.outputs.release_name }} "
 
-          if [ ${{ needs.release_cleanup.outputs.release_name }} != 'development' ]; then
-            # This is sensitive to having multiple hyphens in the tag name, so don't do it - use underscores instead
-            # the format is $MODNAME-$VERSION for multi-page sites, or just $VERSION for single-page sites
+          if [ "${{ needs.release_cleanup.outputs.release_name }}" != 'development' ]; then
+            # Sensitive to multiple hyphens in tag name — use underscores in mod names instead
             ARGS+="--tag $( echo ${{ needs.release_cleanup.outputs.release_name }} | cut -f 1 -d '-') "
           fi
 
           ./buildSite $ARGS
 
+      - name: Set Nexus upload matrix
+        id: nexus-matrix
+        run: |
+          matrix=$(jq -c '[.mods[] | select(.nexus_group_id) | {slug, nexus_group_id, version, title}]' dist/*.modManifest)
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - name: Upload releases
         uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ inputs.github_token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ needs.release_cleanup.outputs.release_name }}
           prerelease: ${{ github.ref_type != 'tag' }}
-          files: dist/*.zip
+          files: |
+            dist/*.zip
+            dist/*.modManifest
+
+  nexus-upload:
+    needs: build-mods
+    if: github.ref_type == 'tag' && needs.build-mods.outputs.nexus-matrix != '' && needs.build-mods.outputs.nexus-matrix != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mod: ${{ fromJson(needs.build-mods.outputs.nexus-matrix) }}
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Upload to NexusMods
+        uses: Nexus-Mods/upload-action@main
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_group_id: ${{ matrix.mod.nexus_group_id }}
+          filename: dist/${{ matrix.mod.slug }}.zip
+          version: ${{ matrix.mod.version }}
+          display_name: ${{ matrix.mod.title }}
