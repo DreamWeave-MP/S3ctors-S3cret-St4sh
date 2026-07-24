@@ -9,14 +9,17 @@ taxonomies:
     - OpenMW 0.50
 
 extra:
+  nexus_id: 57703
+  nexus_group_id: 6591580
   install_info:
     data_directories:
       - .
     content_files:
       - T4rg3t5.esp
 
-  version: 0.5
+  version: 0.6
 ---
+T4rg3ts is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
 
 With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
 
