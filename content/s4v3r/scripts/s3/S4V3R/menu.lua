@@ -106,6 +106,13 @@ do
         },
       },
       {
+        key = 'SavePrefix',
+        name = 'SavePrefixName',
+        description = 'SavePrefixDesc',
+        default = '',
+        renderer = 'textLine',
+      },
+      {
         key = 'DebugEnable',
         name = 'DebugEnableName',
         description = 'DebugEnableDesc',
@@ -200,6 +207,7 @@ return {
         CombatSaveFiles[1] = nil
         StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
       end
+
       if saves[combatEndSave] then
         DeleteGame(saveDir, combatEndSave)
         CombatSaveFiles[2] = nil

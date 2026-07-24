@@ -61,10 +61,11 @@ local currentUpdateHandler = nullFunction
 local actorsInCombat, saveCompletionHandlers = {}, {}
 local isInCombat, saveSlot, sinceLastSave = false, 1, 0
 
-local CombatSavesEnabled, DeleteSavesOnDeath, SaveInterval, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
+local CombatSavesEnabled, DeleteSavesOnDeath, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
   StorageGet(playerStorage, 'CombatSaveToggle'),
   StorageGet(playerStorage, 'DeleteSavesOnDeath'),
   StorageGet(playerStorage, 'SaveInterval') * Minute,
+  StorageGet(playerStorage, 'SavePrefix'),
   StorageGet(playerStorage, 'MaxSaveSlots'),
   StorageGet(playerStorage, 'StartSaveToggle'),
   StorageGet(playerStorage, 'S4V3RActive')
@@ -120,7 +121,7 @@ local function autoSaveHandler()
 
   local location = getCurrentLocation(self.cell)
 
-  emitSaveEvent(Format('%s: %s, %s', ModInfo.Name, saveSlot, location), SaveClass.AUTO)
+  emitSaveEvent(Format('%s%s, %s', SavePrefix, saveSlot, location), SaveClass.AUTO)
 
   saveSlot = saveSlot == MaxSaveSlots and 1 or saveSlot + 1
 end
@@ -141,6 +142,8 @@ playerStorage:subscribe(require('openmw.async'):callback(function(_, key)
     if saveSlot > MaxSaveSlots then saveSlot = 1 end
   elseif key == 'SaveInterval' then
     SaveInterval = value * Minute
+  elseif key == 'SavePrefix' then
+    SavePrefix = value
   elseif key == 'CombatSaveToggle' then
     CombatSavesEnabled = value
   elseif key == 'StartSaveToggle' then
@@ -251,7 +254,8 @@ return {
       DebugLog 'Combat state changed! Triggering autosave . . .'
       local location = getCurrentLocation(self.cell)
 
-      local saveName = Format('S4V3R Combat %s Save, %s', isInCombat and 'Start' or 'End', location)
+      local saveName =
+        Format('%sCombat %s Save, %s', SavePrefix, isInCombat and 'Start' or 'End', location)
 
       local saveType = isInCombat and SaveClass.COMBAT_START or SaveClass.COMBAT_END
       emitSaveEvent(saveName, saveType)

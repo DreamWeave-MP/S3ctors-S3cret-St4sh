@@ -25,7 +25,7 @@ MaxSaveSlotsDesc: |
   Max : 100
 
 S4V3RActiveDesc: "Indique s'il faut effectuer des sauvegardes automatiques ou non.S4V3RDesc: Sauvegarde automatiquement le jeu à intervalles réguliers et, en option, lorsque le combat commence ou se termine."
-S4V3RActiveName : Désactiver/Activer
+S4V3RActiveName: Désactiver/Activer
 S4V3RDesc: Sauvegarde automatiquement le jeu à intervalles réguliers et, en option, lorsque le combat commence ou se termine.
 S4V3RName: S4V3R
 S4V3ROptions: Paramètres
@@ -39,6 +39,9 @@ SaveIntervalDesc: |
   Par défaut : 9
   Min : 1
   Max : 60
+
+SavePrefixName: Préfixe du nom de sauvegarde
+SavePrefixDesc: Préfixe utilisé dans les noms de sauvegarde. Vide par défaut.
 
 StartSaveToggleName: Activer les sauvegardes de début
 StartSaveToggleDesc: |
