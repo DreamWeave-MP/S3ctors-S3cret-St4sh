@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Diminutive Armored Caius
 
 # Medium-complexity instance modifier: two conditions, two action types

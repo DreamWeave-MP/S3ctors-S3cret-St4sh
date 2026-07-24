@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Wildlife Size and Variety Pack
 
 # Most complex instance modifier: multiple rules, OR-list conditions,

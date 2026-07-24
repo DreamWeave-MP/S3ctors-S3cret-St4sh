@@ -1,9 +1,9 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Glass and Ebony Removal
 
 # Removes all glass and ebony weapons and armor from world placements and
 # container inventories. After installing this module, these items are only
 # obtainable through quest rewards, vendor purchases, or scripted spawns.
-
 
 instances:
   # Rule 1: Delete placed glass/ebony weapons and armor from the world.

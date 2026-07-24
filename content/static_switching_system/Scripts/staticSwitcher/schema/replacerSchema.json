@@ -125,6 +125,14 @@
                     "description": "A record ID to apply with a count of one."
                 },
                 {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/recordId"
+                    },
+                    "minItems": 1,
+                    "description": "Array of record IDs to apply with the action's default count (1 for add/equip, math.huge for remove)."
+                },
+                {
                     "type": "object",
                     "patternProperties": {
                         "^.*$": {
@@ -295,11 +303,11 @@
                 },
                 "add_tag": {
                     "type": "string",
-                    "description": "Tagger tag to assign to the target object. Requires Tagger mod."
+                    "description": "FlexTag tag to assign to the target object. Requires FlexTag mod."
                 },
                 "remove_tag": {
                     "type": "string",
-                    "description": "Tagger tag to remove from the target object. Requires Tagger mod."
+                    "description": "FlexTag tag to remove from the target object. Requires FlexTag mod."
                 },
                 "add": {
                     "$ref": "#/definitions/itemAction",
@@ -555,6 +563,31 @@
                     "required": [
                         "playsound"
                     ]
+                },
+                {
+                    "required": [
+                        "teleport"
+                    ]
+                },
+                {
+                    "required": [
+                        "global_set"
+                    ]
+                },
+                {
+                    "required": [
+                        "add_lua_script"
+                    ]
+                },
+                {
+                    "required": [
+                        "activate_by_player"
+                    ]
+                },
+                {
+                    "required": [
+                        "remove_lua_script"
+                    ]
                 }
             ],
             "additionalProperties": false
@@ -761,11 +794,11 @@
                 },
                 "has_tag": {
                     "$ref": "#/definitions/stringOrStringList",
-                    "description": "Tagger tag(s) on the object. Requires Tagger mod. Match any."
+                    "description": "FlexTag tag(s) on the object. Requires FlexTag mod. Match any."
                 },
                 "cell_tag": {
                     "$ref": "#/definitions/stringOrStringList",
-                    "description": "Tagger tag(s) on the object's cell. Requires Tagger mod. Match any."
+                    "description": "FlexTag tag(s) on the object's cell. Requires FlexTag mod. Match any."
                 },
                 "is_dead": {
                     "type": "boolean",
@@ -1102,8 +1135,18 @@
                     "minItems": 1
                 },
                 "once": {
-                    "type": "boolean",
-                    "description": "Whether to process this rule only once per object."
+                    "oneOf": [
+                        {
+                            "type": "boolean",
+                            "description": "When true, the rule applies only once per object per save. Applied actions persist across save/load."
+                        },
+                        {
+                            "type": "string",
+                            "enum": ["per_cell"],
+                            "description": "The rule re-rolls every cell load. Applied actions do not persist across save/load."
+                        }
+                    ],
+                    "description": "When to process this rule. true persists across saves; \"per_cell\" re-rolls each cell load."
                 }
             },
             "required": [

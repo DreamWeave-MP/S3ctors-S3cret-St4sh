@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Caius Cosades Daily Schedule
 priority: remodel
 
@@ -34,9 +35,9 @@ instances:
       - teleport:
           cell: "balmora, south wall cornerclub"
           position:
-            x:	771
-            y:	754
-            z:	-250
+            x: 771
+            y: 754
+            z: -250
     once: per_cell
 
   # Then he goes home for the night
@@ -54,8 +55,8 @@ instances:
             y: -192
             z: 70
           rotation:
-            x: 1.6758620738983	
-            y: -0.27589106559753	
+            x: 1.6758620738983
+            y: -0.27589106559753
             z: -0.028718255460262
 
     once: per_cell

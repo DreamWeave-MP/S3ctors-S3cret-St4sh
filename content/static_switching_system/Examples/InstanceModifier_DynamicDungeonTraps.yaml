@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Dynamic Dungeon Traps
 priority: balance
 
@@ -7,16 +8,16 @@ instances:
       - cell_tag: CellDungeon
       - locked: false
     actions:
-      - lock_level: {min: 1, max: 20}
+      - lock_level: { min: 1, max: 20 }
     once: true
 
   - conditions:
       - object_type: [Door, Container]
       - cell_tag: CellDungeon
-      - locked: {min: 30}
-      - player_level: {max: 4}
+      - locked: { min: 30 }
+      - player_level: { max: 4 }
     actions:
-      - lock_level: {min: 1, max: 20}
+      - lock_level: { min: 1, max: 20 }
     once: true
 
   - conditions:
@@ -24,7 +25,7 @@ instances:
       - cell_tag: CellDungeon
       - locked: true
       - has_trap: false
-      - player_level: {min: 5, max: 14}
+      - player_level: { min: 5, max: 14 }
     actions:
       - chance: 0.3
         trap:
@@ -36,20 +37,21 @@ instances:
       - object_type: Container
       - cell_tag: CellDungeon
       - locked: true
-      - player_level: {min: 5, max: 14}
+      - player_level: { min: 5, max: 14 }
     actions:
       - chance: 0.5
         add:
-          gold_001: {min: 10, max: 50}
+          gold_001:
+            count: { min: 10, max: 50 }
     once: true
 
   - conditions:
       - object_type: [Door, Container]
       - cell_tag: CellDungeon
       - locked: true
-      - player_level: {min: 15, max: 24}
+      - player_level: { min: 15, max: 24 }
     actions:
-      - lock_level: {min: 30, max: 60}
+      - lock_level: { min: 30, max: 60 }
     once: true
 
   - conditions:
@@ -57,7 +59,7 @@ instances:
       - cell_tag: CellDungeon
       - locked: true
       - has_trap: false
-      - player_level: {min: 15, max: 24}
+      - player_level: { min: 15, max: 24 }
     actions:
       - chance: 0.5
         trap:
@@ -71,20 +73,21 @@ instances:
       - object_type: Container
       - cell_tag: CellDungeon
       - locked: true
-      - player_level: {min: 15, max: 24}
+      - player_level: { min: 15, max: 24 }
     actions:
       - chance: 0.6
         add:
-          gold_001: {min: 50, max: 200}
+          gold_001:
+            count: { min: 50, max: 200 }
     once: true
 
   - conditions:
       - object_type: [Door, Container]
       - cell_tag: CellDungeon
       - locked: true
-      - player_level: {min: 25}
+      - player_level: { min: 25 }
     actions:
-      - lock_level: {min: 60, max: 100}
+      - lock_level: { min: 60, max: 100 }
     once: true
 
   - conditions:
@@ -92,7 +95,7 @@ instances:
       - cell_tag: CellDungeon
       - locked: true
       - has_trap: false
-      - player_level: {min: 25}
+      - player_level: { min: 25 }
     actions:
       - chance: 0.7
         trap:
@@ -109,11 +112,12 @@ instances:
       - object_type: Container
       - cell_tag: CellDungeon
       - locked: true
-      - player_level: {min: 25}
+      - player_level: { min: 25 }
     actions:
       - chance: 0.8
         add:
-          gold_001: {min: 200, max: 500}
+          gold_001:
+            count: { min: 200, max: 500 }
     once: true
 
   - conditions:
@@ -121,7 +125,7 @@ instances:
       - cell_tag: CellDungeon
       - locked: true
       - has_key: true
-      - player_level: {min: 25}
+      - player_level: { min: 25 }
     actions:
       - chance: 0.3
         key: false

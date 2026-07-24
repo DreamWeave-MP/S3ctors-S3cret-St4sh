@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Tomb Spice-Up
 
 # Every tomb visit feels slightly different. Candles flicker out at
@@ -46,7 +47,7 @@ instances:
   # re-enable them. Use once=true for a one-time roll per save.
   - conditions:
       - cell_match: tomb
-      - record_id: 
+      - record_id:
           - candle
           - brazier
           - sconce
@@ -100,7 +101,7 @@ instances:
     once: per_cell
     actions:
       - replace:
-          'skeleton warrior': 0.3
+          "skeleton warrior": 0.3
 
   # ── Main-Quest Tomb Corruption ───────────────────────────────────────────
   #
