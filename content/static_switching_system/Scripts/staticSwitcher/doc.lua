@@ -135,8 +135,8 @@
 ---@field key false|table<string, SSSChanceRange>[]? sets or removes key; each entry is `{recordId: chance}`; first passing entry wins
 ---@field trap false|table<string, SSSChanceRange>[]? sets or removes trap; each entry is `{recordId: chance}`; first passing entry wins
 ---@field set_ownership {owner?: string, faction?: string, factionRank?: integer}? sets ownership on the target object
----@field add_tag string? assigns a Tagger tag to the target object
----@field remove_tag string? removes a Tagger tag from the target object
+---@field add_tag string? assigns a FlexTag tag to the target object
+---@field remove_tag string? removes a FlexTag tag from the target object
 ---@field playsound string|{id?: string, file?: string, chance?: SSSChanceRange, volume?: number, pitch?: number, loop?: boolean, timeOffset?: number}? plays a 3D positional sound at the target
 ---@field add_lua_script string? attaches a Lua script (VFS path) to the target object
 ---@field activate_by_player boolean? activates the target object as if the player used it
@@ -180,8 +180,8 @@
 ---@field has_name boolean?
 ---@field has_lua_script string|string[]? Lua script path(s) attached to the object. Exact match.
 ---@field has_mwscript string|string[]? MWScript record ID(s) on the object. Exact, case-insensitive match. Returns false when no MWScript is attached.
----@field has_tag string|string[]? Tagger tag(s) on the object. Requires Tagger mod. Match any.
----@field cell_tag string|string[]? Tagger tag(s) on the object's cell. Requires Tagger mod. Match any.
+---@field has_tag string|string[]? FlexTag tag(s) on the object. Requires FlexTag mod. Match any.
+---@field cell_tag string|string[]? FlexTag tag(s) on the object's cell. Requires FlexTag mod. Match any.
 ---@field is_dead boolean? Whether the target actor is dead. Non-actors return false.
 ---@field creature_type string|number|(string|number)[]? Target creature type (creatures/daedra/undead/humanoid). Non-creatures return false.
 ---@field has_enchantment boolean? Whether the target object has an enchantment.

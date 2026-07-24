@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: "an example file"
 
 # Omit replace_names, exterior_cells, and replace_regions to apply replace_meshes in every cell.

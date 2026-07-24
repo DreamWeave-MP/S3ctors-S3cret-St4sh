@@ -1,10 +1,11 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Mudcrab Reinforcements
 priority: balance
 
 instances:
   - conditions:
       - record_id: mudcrab
-      - player_level: {min: 10, max: 19}
+      - player_level: { min: 10, max: 19 }
       - is_dead: false
     actions:
       - chance: 0.1
@@ -12,8 +13,8 @@ instances:
           mudcrab:
             count: 5
             position:
-              x: {min: -300, max: 300}
-              y: {min: -300, max: 300}
+              x: { min: -300, max: 300 }
+              y: { min: -300, max: 300 }
     once: per_cell
 
   - conditions:
@@ -26,6 +27,6 @@ instances:
           mudcrab:
             count: 10
             position:
-              x: {min: -300, max: 300}
-              y: {min: -300, max: 300}
+              x: { min: -300, max: 300 }
+              y: { min: -300, max: 300 }
     once: per_cell

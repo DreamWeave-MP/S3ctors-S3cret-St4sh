@@ -1,9 +1,9 @@
 ---@omw-context global
 
 local core = require 'openmw.core'
-local world = require 'openmw.world'
 local types = require 'openmw.types'
 local util = require 'openmw.util'
+local world = require 'openmw.world'
 
 local randomGen = require 'scripts.s3.randomGen'
 
@@ -11,8 +11,8 @@ local BatchCache = require 'Scripts.staticSwitcher.batchCache'
 
 local WarnLog
 do
-	local logger = require 'Scripts.staticSwitcher.logger'
-	WarnLog = logger.warn
+  local logger = require 'Scripts.staticSwitcher.logger'
+  WarnLog = logger.warn
 end
 
 local StrFormat = string.format
@@ -21,9 +21,9 @@ local next, pairs, pcall, type = next, pairs, pcall, type
 
 local addTag, removeTag
 local I = require 'openmw.interfaces'
-if I.TaggerG then
-	addTag = I.TaggerG.addTag
-	removeTag = I.TaggerG.removeTag
+if I.FlexTagG then
+  addTag = I.FlexTagG.addTag
+  removeTag = I.FlexTagG.removeTag
 end
 
 local rotateX = util.transform.rotateX
@@ -39,11 +39,9 @@ local Player = world.players[1]
 ---@param object openmw.GObject
 ---@return openmw.core.Inventory? inventory
 local function getObjectInventory(object)
-	if not ContainerObjectIsInstance(object) and not ActorObjectIsInstance(object) then
-		return
-	end
+  if not ContainerObjectIsInstance(object) and not ActorObjectIsInstance(object) then return end
 
-	return object.type.inventory(object)
+  return object.type.inventory(object)
 end
 
 ---@param object openmw.GObject
@@ -51,17 +49,13 @@ end
 ---@param count integer
 ---@return boolean wasAdded
 local function addItemToInventory(object, recordId, count)
-	if count < 1 then
-		return false
-	end
+  if count < 1 then return false end
 
-	local inventory = getObjectInventory(object)
-	if not inventory then
-		return false
-	end
+  local inventory = getObjectInventory(object)
+  if not inventory then return false end
 
-	world.createObject(recordId, count):moveInto(inventory)
-	return true
+  world.createObject(recordId, count):moveInto(inventory)
+  return true
 end
 
 ---@param object openmw.GObject
@@ -69,36 +63,28 @@ end
 ---@param count integer
 ---@return boolean wasRemoved
 local function removeItemFromInventory(object, recordId, count)
-	if count < 1 then
-		return false
-	end
+  if count < 1 then return false end
 
-	local inventory = getObjectInventory(object)
-	if not inventory then
-		return false
-	end
+  local inventory = getObjectInventory(object)
+  if not inventory then return false end
 
-	local availableCount = inventory:countOf(recordId)
-	if availableCount < 1 then
-		return false
-	end
+  local availableCount = inventory:countOf(recordId)
+  if availableCount < 1 then return false end
 
-	local remainingCount = math.min(count, availableCount)
-	local items = inventory:findAll(recordId)
+  local remainingCount = math.min(count, availableCount)
+  local items = inventory:findAll(recordId)
 
-	for i = 1, #items do
-		local itemStack = items[i]
-		local removeCount = math.min(remainingCount, itemStack.count)
+  for i = 1, #items do
+    local itemStack = items[i]
+    local removeCount = math.min(remainingCount, itemStack.count)
 
-		itemStack:remove(removeCount)
-		remainingCount = remainingCount - removeCount
+    itemStack:remove(removeCount)
+    remainingCount = remainingCount - removeCount
 
-		if remainingCount <= 0 then
-			return true
-		end
-	end
+    if remainingCount <= 0 then return true end
+  end
 
-	return false
+  return false
 end
 
 ---@param actor openmw.GObject
@@ -106,24 +92,18 @@ end
 ---@param count integer
 ---@return openmw.GObject? item
 local function getOrCreateInventoryItem(actor, recordId, count)
-	if count < 1 or not ActorObjectIsInstance(actor) then
-		return
-	end
+  if count < 1 or not ActorObjectIsInstance(actor) then return end
 
-	local inventory = getObjectInventory(actor)
-	if not inventory then
-		return
-	end
+  local inventory = getObjectInventory(actor)
+  if not inventory then return end
 
-	local item = inventory:find(recordId)
-	if item then
-		return item
-	end
+  local item = inventory:find(recordId)
+  if item then return item end
 
-	item = world.createObject(recordId, count)
-	item:moveInto(inventory)
+  item = world.createObject(recordId, count)
+  item:moveInto(inventory)
 
-	return item
+  return item
 end
 
 ---@param actor openmw.GObject
@@ -131,32 +111,26 @@ end
 ---@param count integer
 ---@return boolean wasEquipped
 local function equipInventoryItem(actor, recordId, count)
-	local item = getOrCreateInventoryItem(actor, recordId, count)
-	if not item then
-		return false
-	end
+  local item = getOrCreateInventoryItem(actor, recordId, count)
+  if not item then return false end
 
-	core.sendGlobalEvent('UseItem', { object = item, actor = actor, force = true })
-	return true
+  core.sendGlobalEvent('UseItem', { object = item, actor = actor, force = true })
+  return true
 end
 
 ---@param actor openmw.GObject
 ---@param recordId RecordId
 ---@return integer count
 local function countEquippedItems(actor, recordId)
-	if not ActorObjectIsInstance(actor) then
-		return 0
-	end
+  if not ActorObjectIsInstance(actor) then return 0 end
 
-	local count = 0
+  local count = 0
 
-	for _, item in pairs(actor.type.getEquipment(actor)) do
-		if item.recordId == recordId then
-			count = count + 1
-		end
-	end
+  for _, item in pairs(actor.type.getEquipment(actor)) do
+    if item.recordId == recordId then count = count + 1 end
+  end
 
-	return count
+  return count
 end
 
 ---@param actor openmw.GObject
@@ -164,79 +138,71 @@ end
 ---@param count integer
 ---@return boolean wasUnequipped
 local function unequipInventoryItem(actor, recordId, count)
-	if count < 1 or countEquippedItems(actor, recordId) < count then
-		return false
-	end
+  if count < 1 or countEquippedItems(actor, recordId) < count then return false end
 
-	local remainingCount = count
+  local remainingCount = count
 
-	for _, item in pairs(actor.type.getEquipment(actor)) do
-		if item.recordId == recordId then
-			core.sendGlobalEvent('UseItem', { object = item, actor = actor, force = true })
-			remainingCount = remainingCount - 1
+  for _, item in pairs(actor.type.getEquipment(actor)) do
+    if item.recordId == recordId then
+      core.sendGlobalEvent('UseItem', { object = item, actor = actor, force = true })
+      remainingCount = remainingCount - 1
 
-			if remainingCount <= 0 then
-				return true
-			end
-		end
-	end
+      if remainingCount <= 0 then return true end
+    end
+  end
 
-	return false
+  return false
 end
 
 ---@param itemData integer|SSSItemActionDetails
 ---@return integer count
 ---@return SSSChanceRange? chance
 local function getItemActionDetails(itemData)
-	if type(itemData) == 'table' then
-		if not itemData.count and not itemData.chance then
-			return 0
-		end
+  if type(itemData) == 'table' then
+    if not itemData.count and not itemData.chance then return 0 end
 
-		local count = itemData.count or 1
-		if type(count) == 'table' then
-			assert(count.max, 'RangeTable requires a "max"')
-			count.min = count.min or 1
-			assert(count.min <= count.max, 'RangeTable requires min <= max')
-			-- Must use randomGen.range(_, true) for integer output;
-			-- getRangeValue returns floats (correct for positions, not counts).
-			count = randomGen.range(count.min or 1, count.max, true)
-		end
+    local count = itemData.count or 1
+    if type(count) == 'table' then
+      assert(count.max, 'RangeTable requires a "max"')
+      count.min = count.min or 1
+      assert(count.min <= count.max, 'RangeTable requires min <= max')
+      -- Must use randomGen.range(_, true) for integer output;
+      -- getRangeValue returns floats (correct for positions, not counts).
+      count = randomGen.range(count.min or 1, count.max, true)
+    end
 
-		return count, itemData.chance
-	end
+    return count, itemData.chance
+  end
 
-	return itemData
+  return itemData
 end
 
 ---@param chance SSSChanceRange?
 ---@return boolean shouldApply
 local function shouldApplyChance(chance)
-	if not chance then
-		return true
-	end
+  if not chance then return true end
 
-	if type(chance) == 'number' then
-		if chance <= 0 then
-			return false
-		elseif chance >= 1 then
-			return true
-		end
+  if type(chance) == 'number' then
+    if chance <= 0 then
+      return false
+    elseif chance >= 1 then
+      return true
+    end
 
-		return randomGen.float() <= chance
-	end
+    return randomGen.float() <= chance
+  end
 
-	assert(chance.max, 'Chance range table is missing required "max" field')
+  assert(chance.max, 'Chance range table is missing required "max" field')
 
-	if chance.max <= 0 then
-		return false
-	elseif chance.min and chance.min >= 1 then
-		return true
-	end
+  if chance.max <= 0 then
+    return false
+  elseif chance.min and chance.min >= 1 then
+    return true
+  end
 
-	local roll = randomGen.float()
+  local roll = randomGen.float()
 
-	return roll >= (chance.min or 0) and roll <= chance.max
+  return roll >= (chance.min or 0) and roll <= chance.max
 end
 
 ---@param object openmw.GObject
@@ -245,41 +211,41 @@ end
 ---@param arrayItemCount integer? Default count to use for each element in the array form.
 ---@return boolean wasApplied
 local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
-	local actionType = type(itemAction)
+  local actionType = type(itemAction)
 
-	if actionType == 'string' then
-		return itemHandler(object, itemAction, 1)
-	elseif actionType == 'table' then
-		local firstKey = next(itemAction)
+  if actionType == 'string' then
+    return itemHandler(object, itemAction, 1)
+  elseif actionType == 'table' then
+    local firstKey = next(itemAction)
 
-		-- Array of record IDs: apply the same count to each.
-		if firstKey and type(firstKey) == 'number' then
-			local wasApplied = false
-			local count = arrayItemCount or 1
-			local numItems = #itemAction
+    -- Array of record IDs: apply the same count to each.
+    if firstKey and type(firstKey) == 'number' then
+      local wasApplied = false
+      local count = arrayItemCount or 1
+      local numItems = #itemAction
 
-			for i = 1, numItems do
-				wasApplied = itemHandler(object, itemAction[i], count) or wasApplied
-			end
+      for i = 1, numItems do
+        wasApplied = itemHandler(object, itemAction[i], count) or wasApplied
+      end
 
-			return wasApplied
-		end
+      return wasApplied
+    end
 
-		-- Map of record IDs to counts: existing behavior.
-		local wasApplied = false
+    -- Map of record IDs to counts: existing behavior.
+    local wasApplied = false
 
-		for recordId, itemData in pairs(itemAction) do
-			local count, chance = getItemActionDetails(itemData)
+    for recordId, itemData in pairs(itemAction) do
+      local count, chance = getItemActionDetails(itemData)
 
-			if count >= 1 and shouldApplyChance(chance) then
-				wasApplied = itemHandler(object, recordId, count) or wasApplied
-			end
-		end
+      if count >= 1 and shouldApplyChance(chance) then
+        wasApplied = itemHandler(object, recordId, count) or wasApplied
+      end
+    end
 
-		return wasApplied
-	end
+    return wasApplied
+  end
 
-	return false
+  return false
 end
 
 ---
@@ -287,18 +253,18 @@ end
 ---@param numberOrTable number|SSSNumericRange
 ---@return number
 local function getRangeValue(numberOrTable)
-	local actionDataType = type(numberOrTable)
+  local actionDataType = type(numberOrTable)
 
-	if actionDataType == 'number' then
-		return numberOrTable
-	elseif actionDataType == 'table' then
-		assert(numberOrTable.max, 'An upper bound is required when selecting a numeric range!')
-		return randomGen.range(numberOrTable.min or 0, numberOrTable.max)
-	elseif actionDataType == 'nil' then
-		return 0
-	else
-		error('Incorrect type provided to getRangeValue: ' .. actionDataType)
-	end
+  if actionDataType == 'number' then
+    return numberOrTable
+  elseif actionDataType == 'table' then
+    assert(numberOrTable.max, 'An upper bound is required when selecting a numeric range!')
+    return randomGen.range(numberOrTable.min or 0, numberOrTable.max)
+  elseif actionDataType == 'nil' then
+    return 0
+  else
+    error('Incorrect type provided to getRangeValue: ' .. actionDataType)
+  end
 end
 
 ---
@@ -308,24 +274,18 @@ end
 ---@param currentTransform openmw.util.Transform
 ---@return openmw.util.Transform
 local function getRotationValue(isRelative, rotateActionDetails, currentTransform)
-	local rootTransform = isRelative and currentTransform or util.transform.identity
+  local rootTransform = isRelative and currentTransform or util.transform.identity
 
-	local z = rotateActionDetails.z
-	if z then
-		rootTransform = rotateZ(rad(getRangeValue(z))) * rootTransform
-	end
+  local z = rotateActionDetails.z
+  if z then rootTransform = rotateZ(rad(getRangeValue(z))) * rootTransform end
 
-	local y = rotateActionDetails.y
-	if y then
-		rootTransform = rotateY(rad(getRangeValue(y))) * rootTransform
-	end
+  local y = rotateActionDetails.y
+  if y then rootTransform = rotateY(rad(getRangeValue(y))) * rootTransform end
 
-	local x = rotateActionDetails.x
-	if x then
-		rootTransform = rotateX(rad(getRangeValue(x))) * rootTransform
-	end
+  local x = rotateActionDetails.x
+  if x then rootTransform = rotateX(rad(getRangeValue(x))) * rootTransform end
 
-	return rootTransform
+  return rootTransform
 end
 
 ---
@@ -334,389 +294,353 @@ end
 ---@param referenceScale number
 ---@return number
 local function getScaleValue(scaleAction, referenceScale)
-	local scaleType = type(scaleAction)
+  local scaleType = type(scaleAction)
 
-	if scaleType == 'number' then
-		return referenceScale * scaleAction
-	elseif scaleType == 'table' then
-		return referenceScale * randomGen.range(scaleAction.min or 1.0, scaleAction.max)
-	end
+  if scaleType == 'number' then
+    return referenceScale * scaleAction
+  elseif scaleType == 'table' then
+    return referenceScale * randomGen.range(scaleAction.min or 1.0, scaleAction.max)
+  end
 
-	error('Invalid type for scale parameter: ' .. scaleType)
+  error('Invalid type for scale parameter: ' .. scaleType)
 end
 
 ---@type table<string, function>
 local actionHandlers = {
-	['transform'] = function(_, transformAction, newTransform, newPos, targetScale)
-		local wasModified = false
-		local useRelativeTransform = transformAction.transform_type == nil
-			or transformAction.transform_type == 'relative'
+  ['transform'] = function(_, transformAction, newTransform, newPos, targetScale)
+    local wasModified = false
+    local useRelativeTransform = transformAction.transform_type == nil
+      or transformAction.transform_type == 'relative'
 
-		local scaleAction = transformAction.scale
-		if scaleAction then
-			local referenceScale = useRelativeTransform and targetScale or 1.0
-			targetScale = getScaleValue(scaleAction, referenceScale)
-			wasModified = true
-		end
+    local scaleAction = transformAction.scale
+    if scaleAction then
+      local referenceScale = useRelativeTransform and targetScale or 1.0
+      targetScale = getScaleValue(scaleAction, referenceScale)
+      wasModified = true
+    end
 
-		local rotateAction = transformAction.rotate
-		if rotateAction then
-			newTransform = getRotationValue(useRelativeTransform, rotateAction, newTransform)
-			wasModified = true
-		end
+    local rotateAction = transformAction.rotate
+    if rotateAction then
+      newTransform = getRotationValue(useRelativeTransform, rotateAction, newTransform)
+      wasModified = true
+    end
 
-		local positionAction = transformAction.position
-		if positionAction then
-			local actionTargetPos = util.vector3(
-				getRangeValue(positionAction.x),
-				getRangeValue(positionAction.y),
-				getRangeValue(positionAction.z)
-			)
+    local positionAction = transformAction.position
+    if positionAction then
+      local actionTargetPos = util.vector3(
+        getRangeValue(positionAction.x),
+        getRangeValue(positionAction.y),
+        getRangeValue(positionAction.z)
+      )
 
-			if useRelativeTransform then
-				newPos = newPos + actionTargetPos
-			else
-				newPos = actionTargetPos
-			end
+      if useRelativeTransform then
+        newPos = newPos + actionTargetPos
+      else
+        newPos = actionTargetPos
+      end
 
-			wasModified = true
-		end
+      wasModified = true
+    end
 
-		return wasModified, newTransform, newPos, targetScale
-	end,
-	['replace'] = function(_, replaceActionData)
-		for replaceId, replaceChance in pairs(replaceActionData) do
-			if randomGen.float() <= replaceChance then
-				local result, replacement = pcall(world.createObject, replaceId)
+    return wasModified, newTransform, newPos, targetScale
+  end,
+  ['replace'] = function(_, replaceActionData)
+    for replaceId, replaceChance in pairs(replaceActionData) do
+      if randomGen.float() <= replaceChance then
+        local result, replacement = pcall(world.createObject, replaceId)
 
-				if result then
-					return replacement
-				end
-			end
-		end
-	end,
-	['add'] = function(object, addActionData)
-		return applyItemAction(object, addActionData, addItemToInventory, 1)
-	end,
-	['remove'] = function(object, removeActionData)
-		return applyItemAction(object, removeActionData, removeItemFromInventory, math.huge)
-	end,
-	['equip'] = function(object, equipActionData)
-		return applyItemAction(object, equipActionData, equipInventoryItem, 1)
-	end,
-	['unequip'] = function(object, unequipActionData)
-		return applyItemAction(object, unequipActionData, unequipInventoryItem, 1)
-	end,
-	['disable'] = function(_, disableAction)
-		if disableAction == true then
-			return true
-		end
-		if type(disableAction) == 'table' then
-			if not disableAction.chance then
-				return true
-			end
-			return randomGen.float() <= disableAction.chance
-		end
-		return false
-	end,
-	['delete'] = function(_, deleteAction, replaceAction, replaceActionSucceeded)
-		return deleteAction and (not replaceAction or replaceActionSucceeded)
-	end,
-	['create'] = function(triggerObject, createActionData)
-		local totalCreated = 0
-		local createdObjects = {}
+        if result then return replacement end
+      end
+    end
+  end,
+  ['add'] = function(object, addActionData)
+    return applyItemAction(object, addActionData, addItemToInventory, 1)
+  end,
+  ['remove'] = function(object, removeActionData)
+    return applyItemAction(object, removeActionData, removeItemFromInventory, math.huge)
+  end,
+  ['equip'] = function(object, equipActionData)
+    return applyItemAction(object, equipActionData, equipInventoryItem, 1)
+  end,
+  ['unequip'] = function(object, unequipActionData)
+    return applyItemAction(object, unequipActionData, unequipInventoryItem, 1)
+  end,
+  ['disable'] = function(_, disableAction)
+    if disableAction == true then return true end
+    if type(disableAction) == 'table' then
+      if not disableAction.chance then return true end
+      return randomGen.float() <= disableAction.chance
+    end
+    return false
+  end,
+  ['delete'] = function(_, deleteAction, replaceAction, replaceActionSucceeded)
+    return deleteAction and (not replaceAction or replaceActionSucceeded)
+  end,
+  ['create'] = function(triggerObject, createActionData)
+    local totalCreated = 0
+    local createdObjects = {}
 
-		for recordId, details in pairs(createActionData) do
-			local count, chance, positionOverride, rotateOverride, scaleOverride, transformType
-			local detailsType = type(details)
+    for recordId, details in pairs(createActionData) do
+      local count, chance, positionOverride, rotateOverride, scaleOverride, transformType
+      local detailsType = type(details)
 
-			if detailsType == 'string' then
-				count = 1
-			elseif detailsType == 'number' then
-				count = math.floor(details)
-			elseif detailsType == 'table' then
-				count = details.count or 1
-				if type(count) == 'table' then
-					assert(count.max, 'RangeTable requires a "max"')
-					count.min = count.min or 1
-					assert(count.min <= count.max, 'RangeTable requires min <= max')
-				-- Must use randomGen.range(_, true) for integer output;
-				-- getRangeValue returns floats (correct for positions, not counts).
-				count = randomGen.range(count.min or 1, count.max, true)
-				end
-				chance = details.chance
-				positionOverride = details.position
-				rotateOverride = details.rotate
-				scaleOverride = details.scale
-				transformType = details.transform_type
-			end
+      if detailsType == 'string' then
+        count = 1
+      elseif detailsType == 'number' then
+        count = math.floor(details)
+      elseif detailsType == 'table' then
+        count = details.count or 1
+        if type(count) == 'table' then
+          assert(count.max, 'RangeTable requires a "max"')
+          count.min = count.min or 1
+          assert(count.min <= count.max, 'RangeTable requires min <= max')
+          -- Must use randomGen.range(_, true) for integer output;
+          -- getRangeValue returns floats (correct for positions, not counts).
+          count = randomGen.range(count.min or 1, count.max, true)
+        end
+        chance = details.chance
+        positionOverride = details.position
+        rotateOverride = details.rotate
+        scaleOverride = details.scale
+        transformType = details.transform_type
+      end
 
-			if count and count >= 1 then
-				if chance and not shouldApplyChance(chance) then
-					-- pool missed
-				else
-					local useRelativeTransform = transformType == nil or transformType == 'relative'
-					local baseTransform = triggerObject.rotation
-					local basePos = triggerObject.position
-					local baseScale = triggerObject.scale
-					local baseCell = triggerObject.cell
+      if count and count >= 1 then
+        if chance and not shouldApplyChance(chance) then
+          -- pool missed
+        else
+          local useRelativeTransform = transformType == nil or transformType == 'relative'
+          local baseTransform = triggerObject.rotation
+          local basePos = triggerObject.position
+          local baseScale = triggerObject.scale
+          local baseCell = triggerObject.cell
 
-					for _ = 1, count do
-						local newPos = basePos
-						local newTransform = baseTransform
-						local targetScale = baseScale
+          for _ = 1, count do
+            local newPos = basePos
+            local newTransform = baseTransform
+            local targetScale = baseScale
 
-						if positionOverride then
-							local offset = util.vector3(
-								getRangeValue(positionOverride.x),
-								getRangeValue(positionOverride.y),
-								getRangeValue(positionOverride.z)
-							)
-							if useRelativeTransform then
-								newPos = newPos + offset
-							else
-								newPos = offset
-							end
-						end
+            if positionOverride then
+              local offset = util.vector3(
+                getRangeValue(positionOverride.x),
+                getRangeValue(positionOverride.y),
+                getRangeValue(positionOverride.z)
+              )
+              if useRelativeTransform then
+                newPos = newPos + offset
+              else
+                newPos = offset
+              end
+            end
 
-						if rotateOverride then
-							newTransform = getRotationValue(useRelativeTransform, rotateOverride, newTransform)
-						end
+            if rotateOverride then
+              newTransform = getRotationValue(useRelativeTransform, rotateOverride, newTransform)
+            end
 
-						if scaleOverride then
-							local referenceScale = useRelativeTransform and targetScale or 1.0
-							targetScale = getScaleValue(scaleOverride, referenceScale)
-						end
+            if scaleOverride then
+              local referenceScale = useRelativeTransform and targetScale or 1.0
+              targetScale = getScaleValue(scaleOverride, referenceScale)
+            end
 
-						local obj = world.createObject(recordId)
-						obj:teleport(baseCell, newPos, newTransform)
-						if scaleOverride then
-							obj:setScale(targetScale)
-						end
-						totalCreated = totalCreated + 1
-						createdObjects[totalCreated] = obj
-					end
-				end
-			end
-		end
+            local obj = world.createObject(recordId)
+            obj:teleport(baseCell, newPos, newTransform)
+            if scaleOverride then obj:setScale(targetScale) end
+            totalCreated = totalCreated + 1
+            createdObjects[totalCreated] = obj
+          end
+        end
+      end
+    end
 
-		return totalCreated, createdObjects
-	end,
-	['lock_level'] = function(object, lockData)
-		if not object.type.lock then
-			return false
-		end
+    return totalCreated, createdObjects
+  end,
+  ['lock_level'] = function(object, lockData)
+    if not object.type.lock then return false end
 
-		local level
-		if type(lockData) == 'number' then
-			level = lockData
-		elseif type(lockData) == 'table' then
-			lockData.min = lockData.min or 1
-			assert(lockData.min <= lockData.max, 'RangeTable requires min <= max')
-			level = randomGen.range(lockData.min or 1, lockData.max, true)
-		else
-			return false
-		end
+    local level
+    if type(lockData) == 'number' then
+      level = lockData
+    elseif type(lockData) == 'table' then
+      lockData.min = lockData.min or 1
+      assert(lockData.min <= lockData.max, 'RangeTable requires min <= max')
+      level = randomGen.range(lockData.min or 1, lockData.max, true)
+    else
+      return false
+    end
 
-		if level <= 0 then
-			object.type.unlock(object)
-		else
-			object.type.lock(object, level)
-		end
+    if level <= 0 then
+      object.type.unlock(object)
+    else
+      object.type.lock(object, level)
+    end
 
-		return true
-	end,
-	['playsound'] = function(object, soundData)
-		local soundId, soundFile, chance, volume, pitch, doLoop, timeOffset
+    return true
+  end,
+  ['playsound'] = function(object, soundData)
+    local soundId, soundFile, chance, volume, pitch, doLoop, timeOffset
 
-		if type(soundData) == 'string' then
-			soundId = soundData
-		elseif type(soundData) == 'table' then
-			soundId = soundData.id
-			soundFile = soundData.file
-			chance = soundData.chance
-			volume = soundData.volume
-			pitch = soundData.pitch
-			doLoop = soundData.loop
-			timeOffset = soundData.timeOffset
-		end
+    if type(soundData) == 'string' then
+      soundId = soundData
+    elseif type(soundData) == 'table' then
+      soundId = soundData.id
+      soundFile = soundData.file
+      chance = soundData.chance
+      volume = soundData.volume
+      pitch = soundData.pitch
+      doLoop = soundData.loop
+      timeOffset = soundData.timeOffset
+    end
 
-		if not soundId and not soundFile then
-			return false
-		end
+    if not soundId and not soundFile then return false end
 
-		if chance and not shouldApplyChance(chance) then
-			return false
-		end
+    if chance and not shouldApplyChance(chance) then return false end
 
-		local options
-		if volume or pitch or doLoop or timeOffset then
-			options = {}
-			if volume then
-				options.volume = volume
-			end
-			if pitch then
-				options.pitch = pitch
-			end
-			if doLoop then
-				options.loop = doLoop
-			end
-			if timeOffset then
-				options.timeOffset = timeOffset
-			end
-		end
+    local options
+    if volume or pitch or doLoop or timeOffset then
+      options = {}
+      if volume then options.volume = volume end
+      if pitch then options.pitch = pitch end
+      if doLoop then options.loop = doLoop end
+      if timeOffset then options.timeOffset = timeOffset end
+    end
 
-		if soundFile then
-			core.sound.playSoundFile3d(soundFile, object, options)
-		else
-			core.sound.playSound3d(soundId, object, options)
-		end
+    if soundFile then
+      core.sound.playSoundFile3d(soundFile, object, options)
+    else
+      core.sound.playSound3d(soundId, object, options)
+    end
 
-		return true
-	end,
-	['set_ownership'] = function(object, ownershipData)
-		local madeChange = false
-		local owner = object.owner
+    return true
+  end,
+  ['set_ownership'] = function(object, ownershipData)
+    local madeChange = false
+    local owner = object.owner
 
-		if ownershipData.owner then
-			owner.recordId = ownershipData.owner
-			madeChange = true
-		end
-		if ownershipData.faction then
-			owner.factionId = ownershipData.faction
-			madeChange = true
-		end
-		if ownershipData.factionRank then
-			owner.factionRank = ownershipData.factionRank
-			madeChange = true
-		end
+    if ownershipData.owner then
+      owner.recordId = ownershipData.owner
+      madeChange = true
+    end
+    if ownershipData.faction then
+      owner.factionId = ownershipData.faction
+      madeChange = true
+    end
+    if ownershipData.factionRank then
+      owner.factionRank = ownershipData.factionRank
+      madeChange = true
+    end
 
-		return madeChange
-	end,
-	['key'] = function(object, keyData)
-		if not object.type.setKeyRecord then
-			return false
-		end
+    return madeChange
+  end,
+  ['key'] = function(object, keyData)
+    if not object.type.setKeyRecord then return false end
 
-		if keyData == false then
-			object.type.setKeyRecord(object, nil)
-			return true
-		end
+    if keyData == false then
+      object.type.setKeyRecord(object, nil)
+      return true
+    end
 
-		for i = 1, #keyData do
-			local keyId, chance = next(keyData[i])
-			if shouldApplyChance(chance) then
-				object.type.setKeyRecord(object, keyId)
-				return true
-			end
-		end
+    for i = 1, #keyData do
+      local keyId, chance = next(keyData[i])
+      if shouldApplyChance(chance) then
+        object.type.setKeyRecord(object, keyId)
+        return true
+      end
+    end
 
-		return false
-	end,
-	['trap'] = function(object, trapData)
-		if not object.type.setTrapSpell then
-			return false
-		end
+    return false
+  end,
+  ['trap'] = function(object, trapData)
+    if not object.type.setTrapSpell then return false end
 
-		if trapData == false then
-			object.type.setTrapSpell(object, nil)
-			return true
-		end
+    if trapData == false then
+      object.type.setTrapSpell(object, nil)
+      return true
+    end
 
-		for i = 1, #trapData do
-			local trapId, chance = next(trapData[i])
-			if shouldApplyChance(chance) then
-				object.type.setTrapSpell(object, trapId)
-				return true
-			end
-		end
+    for i = 1, #trapData do
+      local trapId, chance = next(trapData[i])
+      if shouldApplyChance(chance) then
+        object.type.setTrapSpell(object, trapId)
+        return true
+      end
+    end
 
-		return false
-	end,
-	['add_lua_script'] = function(object, scriptPath)
-		object:addScript(scriptPath)
-		return true
-	end,
-	['activate_by_player'] = function(object)
-		object:activateBy(Player)
-		return true
-	end,
-	['remove_lua_script'] = function(object, scriptPath)
-		object:removeScript(scriptPath)
-		return true
-	end,
-	['global_set'] = function(_, globalData)
-		local globals = BatchCache.globalVariables()
-		local value = globalData.value
+    return false
+  end,
+  ['add_lua_script'] = function(object, scriptPath)
+    object:addScript(scriptPath)
+    return true
+  end,
+  ['activate_by_player'] = function(object)
+    object:activateBy(Player)
+    return true
+  end,
+  ['remove_lua_script'] = function(object, scriptPath)
+    object:removeScript(scriptPath)
+    return true
+  end,
+  ['global_set'] = function(_, globalData)
+    local globals = BatchCache.globalVariables()
+    local value = globalData.value
 
-		if type(value) == 'table' then
-			value = randomGen.range(value.min or 1, value.max, true)
-		end
+    if type(value) == 'table' then value = randomGen.range(value.min or 1, value.max, true) end
 
-		globals[globalData.name] = value
-		return true
-	end,
-	['teleport'] = function(object, teleportData)
-		local cell = teleportData.cell
-		local pos = teleportData.position
-		local rot = teleportData.rotation
-		local onGround = teleportData.onGround
+    globals[globalData.name] = value
+    return true
+  end,
+  ['teleport'] = function(object, teleportData)
+    local cell = teleportData.cell
+    local pos = teleportData.position
+    local rot = teleportData.rotation
+    local onGround = teleportData.onGround
 
-		local targetCell = object.cell
+    local targetCell = object.cell
 
-		if cell then
-			local cellType = type(cell)
-			if cellType == 'string' then
-				targetCell = world.getCellByName(cell)
-			elseif cellType == 'table' then
-				targetCell = world.getExteriorCell(cell.x, cell.y)
-			end
+    if cell then
+      local cellType = type(cell)
+      if cellType == 'string' then
+        targetCell = world.getCellByName(cell)
+      elseif cellType == 'table' then
+        targetCell = world.getExteriorCell(cell.x, cell.y)
+      end
 
-			if not targetCell then
-				WarnLog(StrFormat('teleport: cell not found for %s', object.id))
-				return false
-			end
-		end
+      if not targetCell then
+        WarnLog(StrFormat('teleport: cell not found for %s', object.id))
+        return false
+      end
+    end
 
-		local targetPos = object.position
-		local targetRot = object.rotation
+    local targetPos = object.position
+    local targetRot = object.rotation
 
-		if pos then
-			targetPos = util.vector3(
-				pos.x and getRangeValue(pos.x) or targetPos.x,
-				pos.y and getRangeValue(pos.y) or targetPos.y,
-				pos.z and getRangeValue(pos.z) or targetPos.z
-			)
-		end
+    if pos then
+      targetPos = util.vector3(
+        pos.x and getRangeValue(pos.x) or targetPos.x,
+        pos.y and getRangeValue(pos.y) or targetPos.y,
+        pos.z and getRangeValue(pos.z) or targetPos.z
+      )
+    end
 
-		if rot then
-			targetRot = getRotationValue(true, rot, targetRot)
-		end
+    if rot then targetRot = getRotationValue(true, rot, targetRot) end
 
-		local options = { rotation = targetRot }
-		if onGround then
-			options.onGround = true
-		end
+    local options = { rotation = targetRot }
+    if onGround then options.onGround = true end
 
-		object:teleport(targetCell, targetPos, options)
-		return true
-	end,
-	['add_tag'] = function(object, tag)
-		if not addTag then
-			return false
-		end
+    object:teleport(targetCell, targetPos, options)
+    return true
+  end,
+  ['add_tag'] = function(object, tag)
+    if not addTag then return false end
 
-		addTag(object, tag)
-		return true
-	end,
-	['remove_tag'] = function(object, tag)
-		if not removeTag then
-			return false
-		end
+    addTag(object, tag)
+    return true
+  end,
+  ['remove_tag'] = function(object, tag)
+    if not removeTag then return false end
 
-		removeTag(object, tag)
-		return true
-	end,
+    removeTag(object, tag)
+    return true
+  end,
 }
 
 return actionHandlers

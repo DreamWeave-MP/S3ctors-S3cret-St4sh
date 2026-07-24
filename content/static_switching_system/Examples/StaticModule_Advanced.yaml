@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
 log_name: Improved Creature Meshes with Exclusions
 
 # Global unconditional static mesh replacement — no replace_names, exterior_cells,
