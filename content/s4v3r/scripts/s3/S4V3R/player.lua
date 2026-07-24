@@ -123,7 +123,7 @@ local function autoSaveHandler()
 
   emitSaveEvent(Format('%s%s, %s', SavePrefix, saveSlot, location), SaveClass.AUTO)
 
-  saveSlot = saveSlot == MaxSaveSlots and 1 or saveSlot + 1
+  saveSlot = saveSlot >= MaxSaveSlots and 1 or saveSlot + 1
 end
 
 local function chargenCheck()
