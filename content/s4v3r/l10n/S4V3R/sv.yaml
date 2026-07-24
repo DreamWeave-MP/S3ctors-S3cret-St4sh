@@ -40,6 +40,9 @@ SaveIntervalDesc: |
   Min: 1
   Max: 60
 
+SavePrefixName: Prefix för sparnamn
+SavePrefixDesc: Prefix som används i sparnamn. Tomt som standard.
+
 StartSaveToggleName: Aktivera startsparningar
 StartSaveToggleDesc: |
   Anger om spelet ska sparas när karaktärsskapandet är klart.

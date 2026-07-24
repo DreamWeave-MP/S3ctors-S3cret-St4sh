@@ -40,6 +40,9 @@ SaveIntervalDesc: |
   Min: 1
   max: 60
 
+SavePrefixName: Save Name Prefix
+SavePrefixDesc: Prefix used in save names. Empty by default.
+
 StartSaveToggleName: Enable Start Saves
 StartSaveToggleDesc: |
   Whether or not to save the game when character creation finishes.
