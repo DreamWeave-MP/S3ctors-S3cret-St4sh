@@ -124,7 +124,7 @@ end
 playerStorage:subscribe(require('openmw.async'):callback(function(_, key)
   local value = StorageGet(playerStorage, key)
 
-  if key == 'MaxSaves' then
+  if key == 'MaxSaveSlots' then
     MaxSaveSlots = value
     if saveSlot > MaxSaveSlots then saveSlot = 1 end
   elseif key == 'SaveInterval' then
