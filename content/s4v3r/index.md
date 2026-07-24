@@ -19,7 +19,7 @@ extra:
     content_files:
       - S4V3R.esp
 
-  version: 1.31
+  version: 1.32
 ---
 
 {{ image(src="/img/s4v3r.png", alt="Saver - OpenMW Autosaves", style="border-radius: 8px;") }}
