@@ -42,6 +42,8 @@ It tries to offer the most sane defaults it can:
 
 All of the above options are configurable. With the default settings, this gives you about an hour and a half of backups, alongside your combat saves.
 
+As of version 1.1, S4V3R also offers an Ironman option which will delete all saves which S4V3R generated upon your death. Naturally, this is disabled by default.
+
 Note that combat saves don't consume your autosave budget, nor does your start save  - so with the defaults, you have a rolling total of 13 saves.
 
 # Interop for Scripters
