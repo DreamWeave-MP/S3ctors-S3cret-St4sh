@@ -88,7 +88,7 @@ do
     },
   }
 end
-local function saveNameToFilePath(saveName) return GSub(saveName .. '.omwsave', '[:\', ]', '_') end
+local function saveNameToFilePath(saveName) return GSub(saveName, '[:\',. ]', '_') end
 
 ---@param saveInfo S4V3RSaveInfo
 local function saveGame(saveInfo)
@@ -117,12 +117,17 @@ local function saveGame(saveInfo)
 
     StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
   elseif saveType == SaveClass.GAME_START then
-    saveSlotString, saveToDelete = 'S4V3R_START_SAVE', 'Start_Save.omwsave'
+    saveSlotString, saveToDelete = 'S4V3R_START_SAVE', 'Start_Save'
   end
 
-  if saveDir and saveToDelete and GetSaves(saveDir)[saveToDelete] then
-    DebugLog('Deleting existing save file: %s', saveToDelete)
-    DeleteGame(saveDir, saveToDelete)
+  if saveDir then
+    if saveToDelete then
+      saveToDelete = saveToDelete .. '.omwsave'
+      if GetSaves(saveDir)[saveToDelete] then
+        DebugLog('Deleting existing save file: %s', saveToDelete)
+        DeleteGame(saveDir, saveToDelete)
+      end
+    end
   end
 
   SaveGame(saveName, saveSlotString)
