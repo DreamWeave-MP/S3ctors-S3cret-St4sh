@@ -84,12 +84,20 @@ local function objectIsOnscreen(object)
   return Vector3(normalizedX, normalizedY, viewZ)
 end
 
+--- Player-scoped interface for easily determining whether an
+--- object is onscreen or not.
+---@class H3CamHelperInterface
+local Interface = {
+  isPositionBehindCamera = isPositionBehindCamera,
+  objectIsOnscreen = objectIsOnscreen,
+  targetPosition = targetPosition,
+  version = 2,
+}
+
+---@class openmw.interfaces
+---@field S3CamHelper H3CamHelperInterface
+
 return {
   interfaceName = 'S3CamHelper',
-  interface = {
-    isPositionBehindCamera = isPositionBehindCamera,
-    objectIsOnscreen = objectIsOnscreen,
-    targetPosition = targetPosition,
-    version = 2,
-  },
+  interface = Interface,
 }
