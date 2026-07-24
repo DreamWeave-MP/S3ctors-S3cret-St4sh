@@ -112,7 +112,7 @@ jobs:
         uses: Nexus-Mods/upload-action@main
         with:
           api_key: ${{ secrets.NEXUS_API_KEY }}
-          file_group_id: ${{ matrix.mod.nexus_group_id }}
+          file_id: ${{ matrix.mod.nexus_group_id }}
           filename: dist/${{ matrix.mod.slug }}.zip
           version: ${{ matrix.mod.version }}
           display_name: ${{ matrix.mod.title }}
