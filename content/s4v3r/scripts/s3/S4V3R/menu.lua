@@ -213,6 +213,8 @@ return {
         CombatSaveFiles[2] = nil
         StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
       end
+
+      require('openmw.core').quit()
     end,
     S4V3R_MENU_TriggerSave = saveGame,
   },
