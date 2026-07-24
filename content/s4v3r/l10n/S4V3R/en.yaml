@@ -10,6 +10,12 @@ DebugEnableDesc: |
 
   Default: No
 
+DeleteSavesName: Ironman Mode
+DeleteSavesDesc: |
+  Delete all saves S4V3R has made for this player upon dying.
+
+  Default: No
+
 MaxSaveSlotsName: Max Saves
 MaxSaveSlotsDesc: |
   Maximum number of saves to keep. When this number is reached, the oldest existing save is overwritten.

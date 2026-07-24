@@ -1,11 +1,12 @@
 ---@omw-context menu
 
 local DebugLog = require 'scripts.s3.S4V3R.debugLog'
+local ModInfo = require 'scripts.s3.S4V3R.modInfo'
 
 ---@type SaveClasses
 local SaveClass = require 'scripts.s3.S4V3R.saveClass'
 
-local GSub = string.gsub
+local pairs, GSub = pairs, string.gsub
 
 local SavedSlots = require('openmw.storage').playerSection 'S4V3RSavedSlots'
 local StorageGetCopy, StorageSet = SavedSlots.getCopy, SavedSlots.set
@@ -23,7 +24,6 @@ do
     menu.deleteGame, menu.getCurrentSaveDir, menu.getSaves, menu.saveGame
 
   local I = require 'openmw.interfaces'
-  local ModInfo = require 'scripts.s3.S4V3R.modInfo'
 
   I.Settings.registerPage {
     key = ModInfo.Name,
@@ -87,6 +87,23 @@ do
         description = 'StartSaveToggleDesc',
         default = true,
         renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
+      },
+      {
+        key = 'DeleteSavesOnDeath',
+        name = 'DeleteSavesName',
+        description = 'DeleteSavesDesc',
+        default = false,
+        renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
       },
       {
         key = 'DebugEnable',
@@ -150,6 +167,45 @@ end
 
 return {
   eventHandlers = {
+    S4V3R_MENU_DELETE_ALL_SAVES = function()
+      if
+        not require('openmw.storage').playerSection(ModInfo.GroupName):get 'DeleteSavesOnDeath'
+      then
+        return
+      end
+
+      local saveDir = GetCurrentSaveDir()
+      if not saveDir then return end
+
+      local saves = GetSaves(saveDir)
+
+      for _, saveFilePath in pairs(SaveSlotsToFilenames) do
+        local toDelete = saveFilePath .. '.omwsave'
+        if saves[toDelete] then
+          DebugLog('Removing save file due to Ironman setting: %s', saveFilePath)
+          DeleteGame(saveDir, toDelete)
+        end
+      end
+
+      SaveSlotsToFilenames = {}
+      StorageSet(SavedSlots, 'AutoSlots', SaveSlotsToFilenames)
+
+      if saves['Start_Save.omwsave'] then DeleteGame(saveDir, 'Start_Save.omwsave') end
+
+      local combatStartSave, combatEndSave =
+        CombatSaveFiles[1] .. '.omwsave', CombatSaveFiles[2] .. '.omwsave'
+
+      if saves[combatStartSave] then
+        DeleteGame(saveDir, combatStartSave)
+        CombatSaveFiles[1] = nil
+        StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
+      end
+      if saves[combatEndSave] then
+        DeleteGame(saveDir, combatEndSave)
+        CombatSaveFiles[2] = nil
+        StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
+      end
+    end,
     S4V3R_MENU_TriggerSave = saveGame,
   },
 }
