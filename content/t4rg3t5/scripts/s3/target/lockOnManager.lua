@@ -723,12 +723,14 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
 
   s3lf.sendObjectEvent('S3TargetLockOnto', targetChangeData.actor)
 
-  local myYaw, theirYaw = GetYaw(s3lf.rotation), GetYaw(targetChangeData.actor.rotation)
+  if GetCamMode() == camera.MODE.FirstPerson then
+    local myYaw, theirYaw = GetYaw(s3lf.rotation), GetYaw(targetChangeData.actor.rotation)
 
-  theirYaw = theirYaw - Rad(180)
-  local difference = theirYaw - myYaw
+    theirYaw = theirYaw - Rad(180)
+    local difference = theirYaw - myYaw
 
-  s3lf.controls.yawChange = Atan2(Sin(difference), Cos(difference))
+    s3lf.controls.yawChange = Atan2(Sin(difference), Cos(difference))
+  end
 end
 
 function LockOnManager.bounceOnHit(target)
