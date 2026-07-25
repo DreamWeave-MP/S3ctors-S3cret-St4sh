@@ -462,7 +462,7 @@ function LockOnManager:onFrame()
     if not I.S3CamHelper.objectIsOnscreen(targetObject) then
       s3lf.sendObjectEvent 'S3TargetLockOnto'
     else
-      local LOStest = CastRay(camera.getPosition(), GetBoundingBox(targetObject).center, RayOpts)
+      local LOStest = CastRay(GetCamPosition(), GetBoundingBox(targetObject).center, RayOpts)
 
       if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
         s3lf.sendObjectEvent 'S3TargetLockOnto'
