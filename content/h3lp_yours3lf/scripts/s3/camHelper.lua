@@ -20,8 +20,7 @@ do
   ---@field remap fun(value: number, lowin: number, highin: number, lowout: number, highout: number): number
 
   local util = require 'openmw.util'
-  IdentityTransform, Remap, RotateZ, Vector3 =
-    util.transform.identity, math.remap or util.remap, util.transform.rotateZ, util.vector3
+  Remap, RotateZ, Vector3 = math.remap or util.remap, util.transform.rotateZ, util.vector3
 
   Forward = Vector3(0, 1, 0)
   Vector3Dot, Vector3Normalize = Forward.dot, Forward.normalize
@@ -31,7 +30,7 @@ end
 ---@return boolean
 local function isPositionBehindCamera(position)
   local cameraPos = GetCamPosition()
-  local cameraForward = IdentityTransform * RotateZ(GetCamYaw()) * Forward
+  local cameraForward = RotateZ(GetCamYaw()) * Forward
 
   -- Direction vector from camera to object
   local toObject = position - cameraPos
