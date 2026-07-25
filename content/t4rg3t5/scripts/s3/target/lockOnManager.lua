@@ -3,6 +3,7 @@
 local async = require 'openmw.async'
 local aux_util = require 'openmw_aux.util'
 local camera = require 'openmw.camera'
+local core = require 'openmw.core'
 local gameSelf = require 'openmw.self'
 local input = require 'openmw.input'
 local nearby = require 'openmw.nearby'
@@ -23,6 +24,7 @@ local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, ShowCrossh
   camera.setYaw,
   camera.showCrosshair,
   camera.getTrackedPosition
+local GetFrameDuration = core.getRealFrameDuration
 local SetCamStaticPosition, GetCamMode, SetCamMode, CamInstantTransition =
   camera.setStaticPosition, camera.getMode, camera.setMode, camera.instantTransition
 local GetFocalOffset, SetFocalOffset =
@@ -66,6 +68,7 @@ local CenterVector2 = Vector2(0.5, 0.5)
 local ZeroVector2 = Vector2(0, 0)
 local Vec2Len = CenterVector2.length
 local UpVec3 = Vector3(0, 0, 1)
+local ZeroVector3 = Vector3(0, 0, 0)
 local Vec3Cross = UpVec3.cross
 
 ---@type fun(element: openmw.ui.Element)
@@ -78,7 +81,7 @@ local NPC_HEIGHT_OFFSET = 1.6
 local CAM_DISTANCE = 120
 local CAM_HEIGHT = 25
 local CAM_SIDE_OFFSET = 90
-local CAM_SIDE_LERP_SPEED = 0.1
+local CAM_POSITION_RESPONSIVENESS = 6.0
 
 local EPS = 0.001
 
@@ -134,7 +137,9 @@ LockOnManager.state = {
   isThirdPersonLock = false,
   prevCameraMode = nil,
   prevFocalOffset = nil,
-  cameraSide = 1,
+  cameraPosition = nil,
+  cameraVelocity = nil,
+  frameDt = 0,
 }
 
 ---@alias MarkerTransform openmw.util.Vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
@@ -227,16 +232,35 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   local rightCamPos = basePos + right * CAM_SIDE_OFFSET
   local blocked = CastRay(targetPos, rightCamPos, RayOpts).hit
   local desiredSide = blocked and -1 or 1
-  local currentSide = LockOnManager.state.cameraSide or desiredSide
-  currentSide = currentSide + (desiredSide - currentSide) * CAM_SIDE_LERP_SPEED
-  if Abs(desiredSide - currentSide) < 0.01 then currentSide = desiredSide end
-  LockOnManager.state.cameraSide = currentSide
 
-  local desiredPos = basePos + right * CAM_SIDE_OFFSET * currentSide
+  local desiredPos = basePos + right * CAM_SIDE_OFFSET * desiredSide
 
-  SetCamStaticPosition(desiredPos)
+  local state = LockOnManager.state
+  local dt = state.frameDt
+  local pos = state.cameraPosition
+  local vel = state.cameraVelocity
 
-  local camLookDir = Vec3Normalize(targetPos - desiredPos)
+  if not pos then
+    pos = GetCamPosition()
+    vel = ZeroVector3
+  end
+
+  local safeDt = dt
+  if safeDt > 0.1 then safeDt = 0.1 end
+
+  local omega = CAM_POSITION_RESPONSIVENESS
+  local omega2 = omega * omega
+  local diff = pos - desiredPos
+  local springForce = diff * (-omega2) + vel * (-2 * omega)
+  vel = vel + springForce * safeDt
+  pos = pos + vel * safeDt
+
+  state.cameraPosition = pos
+  state.cameraVelocity = vel
+
+  SetCamStaticPosition(pos)
+
+  local camLookDir = Vec3Normalize(targetPos - pos)
   SetCamYaw(Atan2(camLookDir.x, camLookDir.y))
   SetCamPitch(Atan2(-camLookDir.z, Sqrt(camLookDir.x * camLookDir.x + camLookDir.y * camLookDir.y)))
 
@@ -397,6 +421,8 @@ local function disable3PCamera()
   LockOnManager.state.isThirdPersonLock = false
   LockOnManager.state.prevCameraMode = nil
   LockOnManager.state.prevFocalOffset = nil
+  LockOnManager.state.cameraPosition = nil
+  LockOnManager.state.cameraVelocity = nil
 end
 
 ---@param target openmw.LObject
@@ -409,6 +435,8 @@ local function enable3PCamera(target)
       LockOnManager.state.prevCameraMode = mode
       LockOnManager.state.prevFocalOffset = GetFocalOffset()
       I.Camera.disableModeControl(ModInfo.name)
+      LockOnManager.state.cameraPosition = GetCamPosition()
+      LockOnManager.state.cameraVelocity = ZeroVector3
     end
     SetCamMode(camera.MODE.Static, true)
     LockOnManager.state.isThirdPersonLock = true
@@ -544,6 +572,7 @@ function LockOnManager:getIconColor()
 end
 
 function LockOnManager:onFrameBegin()
+  self.state.frameDt = GetFrameDuration()
   if GetUIMode() or not LockOnManager.getMarkerVisibility() then return end
 
   local mouseMoveThisFrame = Vector2(input.getMouseMoveX(), input.getMouseMoveY())
