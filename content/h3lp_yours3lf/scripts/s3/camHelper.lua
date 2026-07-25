@@ -76,7 +76,7 @@ local function objectIsOnscreen(object)
 
   if not validX or not validY or not withinViewDistance then return end
 
-  if isPositionBehindCamera(objectPos) then return end
+  if isPositionBehindCamera(checkPos) then return end
 
   local normalizedX = Remap(viewX, 0, screenX, 0.0, 1.0)
   local normalizedY = Remap(viewY, 0, screenY, 0.0, 1.0)
