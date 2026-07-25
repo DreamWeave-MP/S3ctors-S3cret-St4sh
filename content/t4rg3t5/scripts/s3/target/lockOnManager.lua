@@ -70,6 +70,7 @@ local Vec2Len = CenterVector2.length
 local UpVec3 = Vector3(0, 0, 1)
 local ZeroVector3 = Vector3(0, 0, 0)
 local Vec3Cross = UpVec3.cross
+local Vec3Len = UpVec3.length
 
 ---@type fun(element: openmw.ui.Element)
 local UIUpdate
@@ -81,7 +82,14 @@ local NPC_HEIGHT_OFFSET = 1.6
 local CAM_DISTANCE = 120
 local CAM_HEIGHT = 25
 local CAM_SIDE_OFFSET = 90
+local CAM_MIN_DISTANCE = 30
+local CAM_COLLISION_RATIO = 0.85
 local CAM_POSITION_RESPONSIVENESS = 6.0
+
+local SHOULDER_BAD = 80
+local SHOULDER_GOOD = 100
+local TARGET_BAD = CAM_DISTANCE * 0.5
+local TARGET_GOOD = CAM_DISTANCE * 0.8
 
 local EPS = 0.001
 
@@ -227,13 +235,51 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   local lookDir = Vec3Normalize(targetPos - orbitCenter)
   local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
 
-  local basePos = orbitCenter - lookDir * CAM_DISTANCE + UpVec3 * CAM_HEIGHT
+  local leftRight = right * CAM_SIDE_OFFSET
 
-  local rightCamPos = basePos + right * CAM_SIDE_OFFSET
-  local blocked = CastRay(targetPos, rightCamPos, RayOpts).hit
-  local desiredSide = blocked and -1 or 1
+  local effectiveDist = CAM_DISTANCE
+  local desiredSide = 1
 
-  local desiredPos = basePos + right * CAM_SIDE_OFFSET * desiredSide
+  local distRay = CastRay(orbitCenter, orbitCenter - lookDir * CAM_DISTANCE, RayOpts)
+  if distRay.hit then
+    effectiveDist = Max(Vec3Len(distRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
+    if effectiveDist <= CAM_MIN_DISTANCE * 1.25 then
+      local retBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+      local primaryRay = CastRay(orbitCenter, retBase + leftRight, RayOpts)
+      local otherRay = CastRay(orbitCenter, retBase - leftRight, RayOpts)
+      local primaryDist = primaryRay.hit and Vec3Len(primaryRay.hitPos - orbitCenter) or 9999
+      local otherDist = otherRay.hit and Vec3Len(otherRay.hitPos - orbitCenter) or 9999
+      if primaryDist < SHOULDER_BAD and otherDist > SHOULDER_GOOD then
+        desiredSide = -1
+        effectiveDist = CAM_DISTANCE
+      end
+    end
+  end
+
+  local adjBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+  local adjPos = adjBase + leftRight * desiredSide
+
+  local shoulderCheck = CastRay(targetPos, adjPos, RayOpts)
+  if shoulderCheck.hit then
+    local primaryDist = Vec3Len(shoulderCheck.hitPos - targetPos)
+    local otherSide = -desiredSide
+    local otherPos = adjBase + leftRight * otherSide
+    local otherCheck = CastRay(targetPos, otherPos, RayOpts)
+    local otherDist = otherCheck.hit and Vec3Len(otherCheck.hitPos - targetPos) or 9999
+    if primaryDist < TARGET_BAD and otherDist > TARGET_GOOD then
+      desiredSide = otherSide
+      local newBase = orbitCenter - lookDir * CAM_DISTANCE + UpVec3 * CAM_HEIGHT
+      local newRay = CastRay(orbitCenter, newBase + leftRight * desiredSide, RayOpts)
+      if newRay.hit then
+        effectiveDist = Max(Vec3Len(newRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
+      else
+        effectiveDist = CAM_DISTANCE
+      end
+    end
+  end
+
+  local finalBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+  local desiredPos = finalBase + leftRight * desiredSide
 
   local state = LockOnManager.state
   local dt = state.frameDt
@@ -251,7 +297,7 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   local omega = CAM_POSITION_RESPONSIVENESS
   local omega2 = omega * omega
   local diff = pos - desiredPos
-  local springForce = diff * (-omega2) + vel * (-2 * omega)
+  local springForce = diff * -omega2 + vel * (-2 * omega)
   vel = vel + springForce * safeDt
   pos = pos + vel * safeDt
 
@@ -722,6 +768,7 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
     ActiveCombatTargets[#ActiveCombatTargets + 1] = targetChangeData.actor
   else
     local targetId = targetChangeData.actor.id
+
     for i = #ActiveCombatTargets, 1, -1 do
       local toRemove = ActiveCombatTargets[i]
 
@@ -736,6 +783,10 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
     not LockOnManager.LockOnCombatStart
     or LockOnManager.getMarkerVisibility()
     or not targetIsFighting
+    or not I.S3CamHelper.objectIsOnscreen(
+      targetChangeData.actor,
+      LockOnManager.state.npcHeightOffset
+    )
   then
     return
   end
