@@ -15,12 +15,13 @@ local s3lf, GetUIMode = I.s3.lf, I.UI.getMode
 
 local CastRay = nearby.castRay
 local GetBoundingBox, Vec3Normalize = s3lf.getBoundingBox, s3lf.position.normalize
-local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, GetTrackedPosition =
+local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, ShowCrosshair, GetTrackedPosition =
   camera.getPitch,
   camera.getPosition,
   camera.getYaw,
   camera.setPitch,
   camera.setYaw,
+  camera.showCrosshair,
   camera.getTrackedPosition
 local SetCamStaticPosition, GetCamMode, SetCamMode, CamInstantTransition =
   camera.setStaticPosition, camera.getMode, camera.setMode, camera.instantTransition
@@ -37,8 +38,8 @@ local GetPitch, GetStance, GetYaw, Health, IsActor, IsDead =
 
 local RGBColor = util.color.rgb
 
+local CAM_FP = camera.MODE.FirstPerson
 local SLOT_WEAPON = s3lf.EQUIPMENT_SLOT.CarriedRight
-
 local STANCE_NONE, STANCE_SPELL, STANCE_WEAPON =
   s3lf.STANCE.Nothing, s3lf.STANCE.Spell, s3lf.STANCE.Weapon
 
@@ -253,20 +254,21 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   end
 end
 
----@param markerUpdateData MarkerUpdateInfo
-function LockOnManager:updateMarker(markerUpdateData)
+---@param transform openmw.util.Vector3
+---@param drawUpdate boolean
+function LockOnManager:updateMarker(transform, drawUpdate)
   local element = assert(
     self.getLockOnMarker(),
     'LockOnManager: Failed to locate lock on marker to set its position!'
   )
 
-  local elementSize = self:getIconSize(markerUpdateData.transform.z) + self.state.bouncedSize
+  local elementSize = self:getIconSize(transform.z) + self.state.bouncedSize
   element.layout.props.size = Vector2(elementSize, elementSize)
   element.layout.props.color = self:getIconColor()
 
   --- Vector swizzles are legit but documenting them sucks
   ---@diagnostic disable-next-line: undefined-field
-  element.layout.props.relativePosition = markerUpdateData.transform.xy
+  element.layout.props.relativePosition = transform.xy
 
   local configuredTexture = LockOnManager.TargetLockIcon
   if configuredTexture ~= LockOnManager.state.currentTexture then
@@ -276,7 +278,7 @@ function LockOnManager:updateMarker(markerUpdateData)
       ui.texture { path = LockOnManager.getLockOnFileName(configuredTexture) }
   end
 
-  if markerUpdateData.doUpdate ~= true then return end
+  if not drawUpdate then return end
 
   UIUpdate(element)
 end
@@ -402,7 +404,7 @@ local function enable3PCamera(target)
   assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!')
 
   local mode = GetCamMode()
-  if mode ~= camera.MODE.FirstPerson then
+  if mode ~= CAM_FP then
     if not LockOnManager.state.isThirdPersonLock then
       LockOnManager.state.prevCameraMode = mode
       LockOnManager.state.prevFocalOffset = GetFocalOffset()
@@ -611,7 +613,7 @@ function LockOnManager:onFrame()
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
-        if GetCamMode() ~= camera.MODE.FirstPerson then
+        if GetCamMode() ~= CAM_FP then
           if not LockOnManager.state.isThirdPersonLock then
             enable3PCamera(LockOnManager.state.targetObject)
           end
@@ -622,19 +624,16 @@ function LockOnManager:onFrame()
         end
       end
 
-      LockOnManager:updateMarker {
-        transform = normalizedPos,
-        doUpdate = true,
-      }
-      camera.showCrosshair(false)
+      LockOnManager:updateMarker(normalizedPos, true)
+      ShowCrosshair(false)
     else
       LockOnManager.setMarkerVisibility(false)
-      camera.showCrosshair(true)
+      ShowCrosshair(true)
     end
   else
     if markerIsVisible then
       LockOnManager.setMarkerVisibility(false)
-      camera.showCrosshair(true)
+      ShowCrosshair(true)
     end
 
     if LockOnManager.state.isThirdPersonLock then disable3PCamera() end
@@ -735,7 +734,7 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
 
   s3lf.sendObjectEvent('S3TargetLockOnto', targetChangeData.actor)
 
-  if GetCamMode() == camera.MODE.FirstPerson then
+  if GetCamMode() == CAM_FP then
     local myYaw, theirYaw = GetYaw(s3lf.rotation), GetYaw(targetChangeData.actor.rotation)
 
     theirYaw = theirYaw - Rad(180)
