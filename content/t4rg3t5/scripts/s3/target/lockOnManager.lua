@@ -381,38 +381,44 @@ function LockOnManager.toggleLockOnMarkerDisplay()
   end
 end
 
+local function disable3PCamera()
+  I.Camera.enableModeControl(ModInfo.name)
+
+  local prevMode = LockOnManager.state.prevCameraMode
+  local prevOffset = LockOnManager.state.prevFocalOffset
+
+  SetCamMode(prevMode or camera.MODE.ThirdPerson, true)
+  CamInstantTransition()
+
+  if prevOffset then SetFocalOffset(prevOffset) end
+
+  LockOnManager.state.isThirdPersonLock = false
+  LockOnManager.state.prevCameraMode = nil
+  LockOnManager.state.prevFocalOffset = nil
+end
+
+---@param target openmw.LObject
+local function enable3PCamera(target)
+  assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!')
+
+  local mode = GetCamMode()
+  if mode ~= camera.MODE.FirstPerson then
+    if not LockOnManager.state.isThirdPersonLock then
+      LockOnManager.state.prevCameraMode = mode
+      LockOnManager.state.prevFocalOffset = GetFocalOffset()
+      I.Camera.disableModeControl(ModInfo.name)
+    end
+    SetCamMode(camera.MODE.Static, true)
+    LockOnManager.state.isThirdPersonLock = true
+  end
+end
+
 ---@param target openmw.LObject?
 function LockOnManager.setTarget(target)
   if target then
-    assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!')
-
-    local mode = GetCamMode()
-    if mode ~= camera.MODE.FirstPerson then
-      if not LockOnManager.state.isThirdPersonLock then
-        LockOnManager.state.prevCameraMode = mode
-        LockOnManager.state.prevFocalOffset = GetFocalOffset()
-        I.Camera.disableModeControl(ModInfo.name)
-      end
-      SetCamMode(camera.MODE.Static, true)
-      LockOnManager.state.isThirdPersonLock = true
-    end
-  else
-    -- Restore camera on unlock
-    if LockOnManager.state.isThirdPersonLock then
-      I.Camera.enableModeControl(ModInfo.name)
-
-      local prevMode = LockOnManager.state.prevCameraMode
-      local prevOffset = LockOnManager.state.prevFocalOffset
-
-      SetCamMode(prevMode or camera.MODE.ThirdPerson, true)
-      CamInstantTransition()
-
-      if prevOffset then SetFocalOffset(prevOffset) end
-
-      LockOnManager.state.isThirdPersonLock = false
-      LockOnManager.state.prevCameraMode = nil
-      LockOnManager.state.prevFocalOffset = nil
-    end
+    enable3PCamera(target)
+  elseif LockOnManager.state.isThirdPersonLock then
+    disable3PCamera()
   end
 
   LockOnManager.state.targetObject = target
@@ -605,7 +611,11 @@ function LockOnManager:onFrame()
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
-        if LockOnManager.state.isThirdPersonLock then
+        if GetCamMode() ~= camera.MODE.FirstPerson then
+          if not LockOnManager.state.isThirdPersonLock then
+            enable3PCamera(LockOnManager.state.targetObject)
+          end
+
           LockOnManager.trackTargetThirdPerson(targetObject)
         else
           LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
@@ -626,6 +636,8 @@ function LockOnManager:onFrame()
       LockOnManager.setMarkerVisibility(false)
       camera.showCrosshair(true)
     end
+
+    if LockOnManager.state.isThirdPersonLock then disable3PCamera() end
   end
 
   return LockOnManager.canLockOn()
