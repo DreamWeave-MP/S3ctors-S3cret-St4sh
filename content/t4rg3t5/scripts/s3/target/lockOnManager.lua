@@ -61,6 +61,8 @@ local UIUpdate
 
 local MaxRot, MaxPitchRot = Rad(12.0), Rad(10.0)
 
+local NPC_HEIGHT_OFFSET = 1.6
+
 local EPS = 0.001
 
 local RayOpts = { ignore = { gameSelf } }
@@ -102,6 +104,7 @@ local LockOnManager = I.S3ProtectedTable.new {
 LockOnManager.state = {
   targetObject = nil,
   targetHealth = nil,
+  npcHeightOffset = nil,
   lockOnMarker = nil,
   currentTexture = nil,
   canDoLockOn = false,
@@ -154,7 +157,7 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   if not targetObject then return end
 
   local playerPos = GetCamPosition()
-  local targetPos = I.S3CamHelper.targetPosition(targetObject, targetObject.position)
+  local targetPos = I.S3CamHelper.targetPosition(targetObject, targetObject.position, LockOnManager.state.npcHeightOffset)
   local toTarget = Vec3Normalize(targetPos - playerPos)
 
   local currentYaw, currentPitch = GetCamYaw(), GetCamPitch()
@@ -313,6 +316,9 @@ function LockOnManager.setTarget(target)
 
   LockOnManager.state.targetObject = target
   LockOnManager.state.targetHealth = target and Health(target) or nil
+  LockOnManager.state.npcHeightOffset = target and IsActor(target)
+    and GetBoundingBox(target).halfSize.z * NPC_HEIGHT_OFFSET
+    or nil
 end
 
 --- Responds to the 'SW4_TargetLock' action, engaging or disengaging target locking as appropriate
@@ -459,10 +465,12 @@ function LockOnManager:onFrame()
   local targetObject = LockOnManager.getTargetObject()
 
   if self.CheckLOS and targetObject then
-    if not I.S3CamHelper.objectIsOnscreen(targetObject) then
+    local stablePos = I.S3CamHelper.targetPosition(targetObject, targetObject.position, LockOnManager.state.npcHeightOffset)
+
+    if not I.S3CamHelper.objectIsOnscreen(targetObject, LockOnManager.state.npcHeightOffset) then
       s3lf.sendObjectEvent 'S3TargetLockOnto'
     else
-      local LOStest = CastRay(GetCamPosition(), GetBoundingBox(targetObject).center, RayOpts)
+      local LOStest = CastRay(GetCamPosition(), stablePos, RayOpts)
 
       if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
         s3lf.sendObjectEvent 'S3TargetLockOnto'
@@ -486,7 +494,7 @@ function LockOnManager:onFrame()
       LockOnManager.setMarkerVisibility(true)
     end
 
-    local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject)
+    local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, LockOnManager.state.npcHeightOffset)
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
