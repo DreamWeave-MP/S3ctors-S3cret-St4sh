@@ -47,22 +47,25 @@ end
 
 ---@param object openmw.Object
 ---@param position openmw.util.Vector3
-local function targetPosition(object, position)
-  local box = object:getBoundingBox()
-
+---@param npcHeightOffset? number Pre-computed NPC height offset. When provided, skips bounding-box
+--- query, avoiding jitter from animation-driven halfSize changes.
+local function targetPosition(object, position, npcHeightOffset)
   if IsNPC(object) then
-    return Vector3(position.x, position.y, position.z + box.halfSize.z * NPC_HEIGHT_OFFSET)
+    local offset = npcHeightOffset or (object:getBoundingBox().halfSize.z * NPC_HEIGHT_OFFSET)
+    return Vector3(position.x, position.y, position.z + offset)
   else
-    return box.center
+    return object:getBoundingBox().center
   end
 end
 
 ---@param object openmw.Object object whose position will be checked
+---@param npcHeightOffset? number Pre-computed NPC height offset. When provided, skips bounding-box
+--- query for the height adjustment, matching the captured-offset behavior in targetPosition.
 ---@return openmw.util.Vector3? viewportPos If the object is onscreen, the identified screenSize position is returned. If not, then nil. Viewpos is NOT normalized.
-local function objectIsOnscreen(object)
+local function objectIsOnscreen(object, npcHeightOffset)
   local objectPos = object.position
 
-  local checkPos = targetPosition(object, objectPos)
+  local checkPos = targetPosition(object, objectPos, npcHeightOffset)
   local viewportPos = WorldToViewport(checkPos)
   local screenSize = ScreenSize()
 
