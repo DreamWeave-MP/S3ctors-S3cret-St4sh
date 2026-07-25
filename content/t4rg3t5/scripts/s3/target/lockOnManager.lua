@@ -85,6 +85,7 @@ local CAM_SIDE_OFFSET = 90
 local CAM_MIN_DISTANCE = 30
 local CAM_COLLISION_RATIO = 0.85
 local CAM_POSITION_RESPONSIVENESS = 6.0
+local CAM_LOOK_RESPONSIVENESS = 8.0
 
 local SHOULDER_BAD = 80
 local SHOULDER_GOOD = 100
@@ -147,6 +148,8 @@ LockOnManager.state = {
   prevFocalOffset = nil,
   cameraPosition = nil,
   cameraVelocity = nil,
+  lookTarget = nil,
+  lookTargetVelocity = nil,
   frameDt = 0,
 }
 
@@ -306,7 +309,26 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
 
   SetCamStaticPosition(pos)
 
-  local camLookDir = Vec3Normalize(targetPos - pos)
+  local desiredLookTarget = targetPos
+  local lookTarget = state.lookTarget
+  local lookVel = state.lookTargetVelocity
+
+  if not lookTarget then
+    lookTarget = targetPos
+    lookVel = ZeroVector3
+  end
+
+  local lookOmega = CAM_LOOK_RESPONSIVENESS
+  local lookOmega2 = lookOmega * lookOmega
+  local lookDiff = lookTarget - desiredLookTarget
+  local lookForce = lookDiff * -lookOmega2 + lookVel * (-2 * lookOmega)
+  lookVel = lookVel + lookForce * safeDt
+  lookTarget = lookTarget + lookVel * safeDt
+
+  state.lookTarget = lookTarget
+  state.lookTargetVelocity = lookVel
+
+  local camLookDir = Vec3Normalize(lookTarget - pos)
   SetCamYaw(Atan2(camLookDir.x, camLookDir.y))
   SetCamPitch(Atan2(-camLookDir.z, Sqrt(camLookDir.x * camLookDir.x + camLookDir.y * camLookDir.y)))
 
@@ -469,6 +491,8 @@ local function disable3PCamera()
   LockOnManager.state.prevFocalOffset = nil
   LockOnManager.state.cameraPosition = nil
   LockOnManager.state.cameraVelocity = nil
+  LockOnManager.state.lookTarget = nil
+  LockOnManager.state.lookTargetVelocity = nil
 end
 
 ---@param target openmw.LObject
@@ -483,6 +507,12 @@ local function enable3PCamera(target)
       I.Camera.disableModeControl(ModInfo.name)
       LockOnManager.state.cameraPosition = GetCamPosition()
       LockOnManager.state.cameraVelocity = ZeroVector3
+      LockOnManager.state.lookTarget = I.S3CamHelper.targetPosition(
+        target,
+        target.position,
+        LockOnManager.state.npcHeightOffset
+      )
+      LockOnManager.state.lookTargetVelocity = ZeroVector3
     end
     SetCamMode(camera.MODE.Static, true)
     LockOnManager.state.isThirdPersonLock = true
