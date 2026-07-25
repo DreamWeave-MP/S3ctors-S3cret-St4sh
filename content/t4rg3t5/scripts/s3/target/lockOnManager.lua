@@ -86,6 +86,7 @@ local CAM_MIN_DISTANCE = 30
 local CAM_COLLISION_RATIO = 0.85
 local CAM_POSITION_RESPONSIVENESS = 6.0
 local CAM_LOOK_RESPONSIVENESS = 8.0
+local CAM_LOOK_BIAS = 0.8
 
 local SHOULDER_BAD = 80
 local SHOULDER_GOOD = 100
@@ -245,7 +246,8 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
 
   local distRay = CastRay(orbitCenter, orbitCenter - lookDir * CAM_DISTANCE, RayOpts)
   if distRay.hit then
-    effectiveDist = Max(Vec3Len(distRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
+    effectiveDist =
+      Max(Vec3Len(distRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
     if effectiveDist <= CAM_MIN_DISTANCE * 1.25 then
       local retBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
       local primaryRay = CastRay(orbitCenter, retBase + leftRight, RayOpts)
@@ -274,7 +276,8 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
       local newBase = orbitCenter - lookDir * CAM_DISTANCE + UpVec3 * CAM_HEIGHT
       local newRay = CastRay(orbitCenter, newBase + leftRight * desiredSide, RayOpts)
       if newRay.hit then
-        effectiveDist = Max(Vec3Len(newRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
+        effectiveDist =
+          Max(Vec3Len(newRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
       else
         effectiveDist = CAM_DISTANCE
       end
@@ -309,7 +312,7 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
 
   SetCamStaticPosition(pos)
 
-  local desiredLookTarget = targetPos
+  local desiredLookTarget = orbitCenter + (targetPos - orbitCenter) * CAM_LOOK_BIAS
   local lookTarget = state.lookTarget
   local lookVel = state.lookTargetVelocity
 
@@ -507,11 +510,8 @@ local function enable3PCamera(target)
       I.Camera.disableModeControl(ModInfo.name)
       LockOnManager.state.cameraPosition = GetCamPosition()
       LockOnManager.state.cameraVelocity = ZeroVector3
-      LockOnManager.state.lookTarget = I.S3CamHelper.targetPosition(
-        target,
-        target.position,
-        LockOnManager.state.npcHeightOffset
-      )
+      LockOnManager.state.lookTarget =
+        I.S3CamHelper.targetPosition(target, target.position, LockOnManager.state.npcHeightOffset)
       LockOnManager.state.lookTargetVelocity = ZeroVector3
     end
     SetCamMode(camera.MODE.Static, true)
