@@ -15,8 +15,17 @@ local s3lf, GetUIMode = I.s3.lf, I.UI.getMode
 
 local CastRay = nearby.castRay
 local GetBoundingBox, Vec3Normalize = s3lf.getBoundingBox, s3lf.position.normalize
-local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw =
-  camera.getPitch, camera.getPosition, camera.getYaw, camera.setPitch, camera.setYaw
+local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, GetTrackedPosition =
+  camera.getPitch,
+  camera.getPosition,
+  camera.getYaw,
+  camera.setPitch,
+  camera.setYaw,
+  camera.getTrackedPosition
+local SetCamStaticPosition, GetCamMode, SetCamMode, CamInstantTransition =
+  camera.setStaticPosition, camera.getMode, camera.setMode, camera.instantTransition
+local GetFocalOffset, SetFocalOffset =
+  camera.getFocalPreferredOffset, camera.setFocalPreferredOffset
 
 local GetPitch, GetStance, GetYaw, Health, IsActor, IsDead =
   s3lf.rotation.getPitch,
@@ -55,6 +64,8 @@ local Vector2, Vector3 = util.vector2, util.vector3
 local CenterVector2 = Vector2(0.5, 0.5)
 local ZeroVector2 = Vector2(0, 0)
 local Vec2Len = CenterVector2.length
+local UpVec3 = Vector3(0, 0, 1)
+local Vec3Cross = UpVec3.cross
 
 ---@type fun(element: openmw.ui.Element)
 local UIUpdate
@@ -62,6 +73,11 @@ local UIUpdate
 local MaxRot, MaxPitchRot = Rad(12.0), Rad(10.0)
 
 local NPC_HEIGHT_OFFSET = 1.6
+
+local CAM_DISTANCE = 120
+local CAM_HEIGHT = 25
+local CAM_SIDE_OFFSET = 90
+local CAM_SIDE_LERP_SPEED = 0.1
 
 local EPS = 0.001
 
@@ -114,6 +130,10 @@ LockOnManager.state = {
   bouncedSize = 0,
   bounceUpOrDown = true,
   trackTarget = true,
+  isThirdPersonLock = false,
+  prevCameraMode = nil,
+  prevFocalOffset = nil,
+  cameraSide = 1,
 }
 
 ---@alias MarkerTransform openmw.util.Vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
@@ -157,7 +177,11 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   if not targetObject then return end
 
   local playerPos = GetCamPosition()
-  local targetPos = I.S3CamHelper.targetPosition(targetObject, targetObject.position, LockOnManager.state.npcHeightOffset)
+  local targetPos = I.S3CamHelper.targetPosition(
+    targetObject,
+    targetObject.position,
+    LockOnManager.state.npcHeightOffset
+  )
   local toTarget = Vec3Normalize(targetPos - playerPos)
 
   local currentYaw, currentPitch = GetCamYaw(), GetCamPitch()
@@ -181,6 +205,52 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   if Abs(playerYaw) >= EPS then s3lf.controls.yawChange = playerYaw end
 
   if Abs(playerPitch) >= EPS then s3lf.controls.pitchChange = playerPitch end
+end
+
+--- Replacement over-the-shoulder camera implementation for 3P
+---@param targetObject openmw.LObject
+function LockOnManager.trackTargetThirdPerson(targetObject)
+  local targetPos = I.S3CamHelper.targetPosition(
+    targetObject,
+    targetObject.position,
+    LockOnManager.state.npcHeightOffset
+  )
+
+  local orbitCenter = GetTrackedPosition()
+
+  local lookDir = Vec3Normalize(targetPos - orbitCenter)
+  local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
+
+  local basePos = orbitCenter - lookDir * CAM_DISTANCE + UpVec3 * CAM_HEIGHT
+
+  local rightCamPos = basePos + right * CAM_SIDE_OFFSET
+  local blocked = CastRay(targetPos, rightCamPos, RayOpts).hit
+  local desiredSide = blocked and -1 or 1
+  local currentSide = LockOnManager.state.cameraSide or desiredSide
+  currentSide = currentSide + (desiredSide - currentSide) * CAM_SIDE_LERP_SPEED
+  if Abs(desiredSide - currentSide) < 0.01 then currentSide = desiredSide end
+  LockOnManager.state.cameraSide = currentSide
+
+  local desiredPos = basePos + right * CAM_SIDE_OFFSET * currentSide
+
+  SetCamStaticPosition(desiredPos)
+
+  local camLookDir = Vec3Normalize(targetPos - desiredPos)
+  SetCamYaw(Atan2(camLookDir.x, camLookDir.y))
+  SetCamPitch(Atan2(-camLookDir.z, Sqrt(camLookDir.x * camLookDir.x + camLookDir.y * camLookDir.y)))
+
+  if LockOnManager.shouldTrack() then
+    local toTarget = Vec3Normalize(targetPos - orbitCenter)
+    local yaw = Atan2(toTarget.x, toTarget.y)
+    local pitch = Atan2(-toTarget.z, Sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
+
+    local rot = s3lf.rotation
+    local yawChange, pitchChange =
+      LockOnManager.getAngleDiff(yaw, pitch, GetYaw(rot), GetPitch(rot))
+
+    if Abs(yawChange) >= EPS then s3lf.controls.yawChange = yawChange end
+    if Abs(pitchChange) >= EPS then s3lf.controls.pitchChange = pitchChange end
+  end
 end
 
 ---@param markerUpdateData MarkerUpdateInfo
@@ -273,6 +343,7 @@ function LockOnManager:selectNearestTarget(goLeft)
       if not checkLOSRay.hitObject or checkLOSRay.hitObject ~= actor then return false end
     end
 
+    ---@diagnostic disable-next-line: undefined-field
     return Vec2Len(screenPos.xy - CenterVector2)
   end)
 
@@ -312,12 +383,43 @@ end
 
 ---@param target openmw.LObject?
 function LockOnManager.setTarget(target)
-  if target then assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!') end
+  if target then
+    assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!')
+
+    local mode = GetCamMode()
+    if mode ~= camera.MODE.FirstPerson then
+      if not LockOnManager.state.isThirdPersonLock then
+        LockOnManager.state.prevCameraMode = mode
+        LockOnManager.state.prevFocalOffset = GetFocalOffset()
+        I.Camera.disableModeControl(ModInfo.name)
+      end
+      SetCamMode(camera.MODE.Static, true)
+      LockOnManager.state.isThirdPersonLock = true
+    end
+  else
+    -- Restore camera on unlock
+    if LockOnManager.state.isThirdPersonLock then
+      I.Camera.enableModeControl(ModInfo.name)
+
+      local prevMode = LockOnManager.state.prevCameraMode
+      local prevOffset = LockOnManager.state.prevFocalOffset
+
+      SetCamMode(prevMode or camera.MODE.ThirdPerson, true)
+      CamInstantTransition()
+
+      if prevOffset then SetFocalOffset(prevOffset) end
+
+      LockOnManager.state.isThirdPersonLock = false
+      LockOnManager.state.prevCameraMode = nil
+      LockOnManager.state.prevFocalOffset = nil
+    end
+  end
 
   LockOnManager.state.targetObject = target
   LockOnManager.state.targetHealth = target and Health(target) or nil
-  LockOnManager.state.npcHeightOffset = target and IsActor(target)
-    and GetBoundingBox(target).halfSize.z * NPC_HEIGHT_OFFSET
+  LockOnManager.state.npcHeightOffset = target
+      and IsActor(target)
+      and GetBoundingBox(target).halfSize.z * NPC_HEIGHT_OFFSET
     or nil
 end
 
@@ -465,7 +567,11 @@ function LockOnManager:onFrame()
   local targetObject = LockOnManager.getTargetObject()
 
   if self.CheckLOS and targetObject then
-    local stablePos = I.S3CamHelper.targetPosition(targetObject, targetObject.position, LockOnManager.state.npcHeightOffset)
+    local stablePos = I.S3CamHelper.targetPosition(
+      targetObject,
+      targetObject.position,
+      LockOnManager.state.npcHeightOffset
+    )
 
     if not I.S3CamHelper.objectIsOnscreen(targetObject, LockOnManager.state.npcHeightOffset) then
       s3lf.sendObjectEvent 'S3TargetLockOnto'
@@ -494,11 +600,16 @@ function LockOnManager:onFrame()
       LockOnManager.setMarkerVisibility(true)
     end
 
-    local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, LockOnManager.state.npcHeightOffset)
+    local normalizedPos =
+      I.S3CamHelper.objectIsOnscreen(targetObject, LockOnManager.state.npcHeightOffset)
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
-        LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
+        if LockOnManager.state.isThirdPersonLock then
+          LockOnManager.trackTargetThirdPerson(targetObject)
+        else
+          LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
+        end
       end
 
       LockOnManager:updateMarker {
