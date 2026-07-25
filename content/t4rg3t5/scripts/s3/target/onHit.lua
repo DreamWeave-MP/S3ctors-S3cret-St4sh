@@ -1,25 +1,17 @@
-local storage = require 'openmw.storage'
-local types = require 'openmw.types'
+---@omw-context local
 
-local I = require 'openmw.interfaces'
-local Combat = I.Combat
+do
+  local I = require 'openmw.interfaces'
+  local Me, TargetIsPlayer = I.s3.lf.object, require('openmw.types').Player.objectIsInstance
+  local SendEvent = Me.sendEvent
 
-local ModInfo = require 'scripts.s3.target.modinfo'
-local LockOnSection = storage.globalSection('SettingsGlobal' .. ModInfo.name .. 'LockOnGroup')
-local ErrorMessage =
-'The S3lf interface is required to use T4rg3t5! You can get it here: https://www.nexusmods.com/morrowind/mods/56417'
-Combat.addOnHitHandler(
-    function(attackInfo)
-        if
-            not attackInfo.successful
-            or not attackInfo.attacker
-            or not types.Player.objectIsInstance(attackInfo.attacker)
-            or not LockOnSection:get('EnableHitBounce')
-        then
-            return
-        end
+  ---@param attackInfo openmw.interfaces.Combat.AttackInfo
+  local function T4AttackHandler(attackInfo)
+    local attacker = attackInfo.attacker
+    if not attackInfo.successful or not attacker or not TargetIsPlayer(attacker) then return end
 
-        assert(I.s3.lf.object, ErrorMessage)
-        attackInfo.attacker:sendEvent('S3TargetLockHit', I.s3.lf.object)
-    end
-)
+    SendEvent(attacker, 'S3TargetLockHit', Me)
+  end
+
+  I.Combat.addOnHitHandler(T4AttackHandler)
+end

@@ -1,3 +1,5 @@
+---@omw-context player
+
 local async = require 'openmw.async'
 local aux_util = require 'openmw_aux.util'
 local camera = require 'openmw.camera'
@@ -6,26 +8,70 @@ local input = require 'openmw.input'
 local nearby = require 'openmw.nearby'
 local types = require 'openmw.types'
 local ui = require 'openmw.ui'
----@type openmw.util
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
-local s3lf = I.s3.lf
+local s3lf, GetUIMode = I.s3.lf, I.UI.getMode
+
+local CastRay = nearby.castRay
+local GetBoundingBox, Vec3Normalize = s3lf.getBoundingBox, s3lf.position.normalize
+local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw =
+  camera.getPitch, camera.getPosition, camera.getYaw, camera.setPitch, camera.setYaw
+
+local GetPitch, GetStance, GetYaw, Health, IsActor, IsDead =
+  s3lf.rotation.getPitch,
+  types.Actor.getStance,
+  s3lf.rotation.getYaw,
+  types.Actor.stats.dynamic.health,
+  types.Actor.objectIsInstance,
+  types.Actor.isDead
+
+local RGBColor = util.color.rgb
+
+local SLOT_WEAPON = s3lf.EQUIPMENT_SLOT.CarriedRight
+
+local STANCE_NONE, STANCE_SPELL, STANCE_WEAPON =
+  s3lf.STANCE.Nothing, s3lf.STANCE.Spell, s3lf.STANCE.Weapon
 
 local ModInfo = require 'scripts.s3.target.modinfo'
 
-local CenterVector2 = util.vector2(0.5, 0.5)
-local ZeroVector2 = util.vector2(0, 0)
+local Abs, Atan2, Cos, Max, Min, Rad, Sin, Sqrt =
+  math.abs, math.atan2, math.cos, math.max, math.min, math.rad, math.sin, math.sqrt
 
-local MaxRot = math.rad(12.0)
-local MaxPitchRot = math.rad(10.0)
+local StrFormat, TableRemove = string.format, table.remove
 
-local function isWielding()
-    return s3lf.getStance() ~= s3lf.STANCE.Nothing
-end
+local Clamp, NormalizeAngle, Remap, Round =
+    --- Use Rubic0n extensions or OpenMW built-ins
+  --- But why the fuck doesn't my rubic0nMeta folder work?
+  ---@diagnostic disable-next-line: undefined-field
+math.clamp or util.clamp,
+  ---@diagnostic disable-next-line: undefined-field
+  math.normalizeAngle or util.normalizeAngle,
+  math.remap or util.remap,
+  ---@diagnostic disable-next-line: undefined-field
+  math.round or util.round
+
+local Vector2, Vector3 = util.vector2, util.vector3
+local CenterVector2 = Vector2(0.5, 0.5)
+local ZeroVector2 = Vector2(0, 0)
+local Vec2Len = CenterVector2.length
+
+---@type fun(element: openmw.ui.Element)
+local UIUpdate
+
+local MaxRot, MaxPitchRot = Rad(12.0), Rad(10.0)
+
+local EPS = 0.001
+
+local RayOpts = { ignore = { gameSelf } }
+
+local ActiveCombatTargets = {}
+
+local function isWielding() return s3lf.getStance() ~= STANCE_NONE end
 
 --- TODO: Make a subscript function to reconstruct the vectors for the size remapping instead of reconstructing vectors on every call expensive!
 --- Refer to globalSettings.lua for field default values
+---
 ---@class LockOnManager:ProtectedTable
 ---@field SwitchOnDeadTarget boolean whether or not to automatically select the nearest (screen-space) target when the current one dies
 ---@field CheckLOS boolean whether to use line-of-sight when deciding whether to break a target lock
@@ -34,12 +80,12 @@ end
 ---@field TargetMaxSize integer maximum size of the target lock icon
 ---@field TargetMinDistance integer Distance from the target to the camera at which the target lock icon will be minimum size
 ---@field TargetMaxDistance integer Distance from the target to the camera at which the target lock icon will be maximum size
----@field TargetColorF util.color Color applied to the target icon when target has >= 100% health. Mixes with TargetColorVH below 100%.
----@field TargetColorVH util.color Color applied to the target icon when target has 60% - 80% health. Mixes with TargetColorH below 80%.
----@field TargetColorH util.color Color applied to the target icon when target has 40% - 60% health. Mixes with TargetColorW below 60%.
----@field TargetColorW util.color Color applied to the target icon when target has 20% - 40% health. Mixes with TargetColorVW below 40%.
----@field TargetColorVW util.color Color applied to the target icon when target has 0% - 20% health. Mixes with TargetColorD below 20%.
----@field TargetColorD util.color Color applied to the target icon when target has <= 0% health.
+---@field TargetColorF openmw.util.Color Color applied to the target icon when target has >= 100% health. Mixes with TargetColorVH below 100%.
+---@field TargetColorVH openmw.util.Color Color applied to the target icon when target has 60% - 80% health. Mixes with TargetColorH below 80%.
+---@field TargetColorH openmw.util.Color Color applied to the target icon when target has 40% - 60% health. Mixes with TargetColorW below 60%.
+---@field TargetColorW openmw.util.Color Color applied to the target icon when target has 20% - 40% health. Mixes with TargetColorVW below 40%.
+---@field TargetColorVW openmw.util.Color Color applied to the target icon when target has 0% - 20% health. Mixes with TargetColorD below 20%.
+---@field TargetColorD openmw.util.Color Color applied to the target icon when target has <= 0% health.
 ---@field EnableFlickSwitch boolean Whether or not to allow changing targets by quickly flicking the mouse
 ---@field FlickSwitchDistance number how far the mouse has to move to flick-switch targets
 ---@field EnableHitBounce boolean Whether or not to dynamically increase the icon size when a target has been hit
@@ -47,590 +93,559 @@ end
 ---@field DisableLockWhenSheathing boolean whether to un-set the locked target when sheathing your own weapon
 ---@field LockOnCombatStart boolean whether or not to automatically lock onto whatever target started combat with you
 local LockOnManager = I.S3ProtectedTable.new {
-    inputGroupName = 'SettingsGlobal' .. ModInfo.name .. 'LockOnGroup',
-    logPrefix = ModInfo.logPrefix,
-    modName = ModInfo.name,
-    subscribeHandler = false,
+  inputGroupName = ModInfo.groupName,
+  logPrefix = ModInfo.logPrefix,
+  managerName = ModInfo.name,
+  storageSection = require('openmw.storage').playerSection(ModInfo.groupName),
 }
 
 LockOnManager.state = {
-    targetObject = nil,
-    targetHealth = nil,
-    lockOnMarker = nil,
-    currentTexture = nil,
-    canDoLockOn = false,
-    flickTriggered = false,
-    cumulativeXMove = 0,
-    isBouncing = false,
-    bouncedSize = 0,
-    bounceUpOrDown = true,
-    trackTarget = true,
+  targetObject = nil,
+  targetHealth = nil,
+  lockOnMarker = nil,
+  currentTexture = nil,
+  canDoLockOn = false,
+  flickTriggered = false,
+  cumulativeXMove = 0,
+  isBouncing = false,
+  bouncedSize = 0,
+  bounceUpOrDown = true,
+  trackTarget = true,
 }
 
----@alias MarkerTransform util.vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
+---@alias MarkerTransform openmw.util.Vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
 
 ---@class MarkerUpdateInfo
 ---@field doUpdate boolean? whether to redraw or not
 ---@field transform MarkerTransform Onscreen position to place the marker at
 
 function LockOnManager.getLockOnFileName(baseName)
-    return ('textures/s3/crosshair/%s.dds'):format(baseName)
+  return StrFormat('textures/s3/crosshair/%s.dds', baseName)
 end
 
-function LockOnManager.canLockOn()
-    return LockOnManager.state.canDoLockOn
-end
+function LockOnManager.canLockOn() return LockOnManager.state.canDoLockOn end
 
-function LockOnManager.setCanLockOn(state)
-    assert(type(state) == 'boolean')
-    LockOnManager.state.canDoLockOn = state
-end
+---@param state boolean
+function LockOnManager.setCanLockOn(state) LockOnManager.state.canDoLockOn = state end
 
-function LockOnManager.setTrackingState(state)
-    assert(type(state) == 'boolean')
-    LockOnManager.state.trackTarget = state
-end
+---@param state boolean
+function LockOnManager.setTrackingState(state) LockOnManager.state.trackTarget = state end
 
-function LockOnManager.shouldTrack()
-    return LockOnManager.state.trackTarget
-end
+---@return boolean shouldTrack
+function LockOnManager.shouldTrack() return LockOnManager.state.trackTarget end
 
+---@param desiredYaw number
+---@param desiredPitch number
+---@param currentYaw number
+---@param currentPitch number
 function LockOnManager.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch)
-    local yawDiff = util.normalizeAngle(desiredYaw - currentYaw)
-    local pitchDiff = util.normalizeAngle(desiredPitch - currentPitch)
+  local yawDiff = NormalizeAngle(desiredYaw - currentYaw)
+  local pitchDiff = NormalizeAngle(desiredPitch - currentPitch)
 
-    local finalYaw = util.clamp(yawDiff * 0.6, -MaxRot, MaxRot)
-    local finalPitch = util.clamp(pitchDiff * 0.4, -MaxPitchRot, MaxPitchRot)
+  local finalYaw = Clamp(yawDiff * 0.6, -MaxRot, MaxRot)
+  local finalPitch = Clamp(pitchDiff * 0.4, -MaxPitchRot, MaxPitchRot)
 
-    return finalYaw, finalPitch
+  return finalYaw, finalPitch
 end
 
+---@param targetObject openmw.LObject
+---@param shouldTrack boolean
 function LockOnManager.trackTarget(targetObject, shouldTrack)
-    if not targetObject then return end
+  if not targetObject then return end
 
-    local playerPos = camera.getPosition()
-    local targetPos = I.S3CamHelper.targetPosition(targetObject)
-    local toTarget = (targetPos - playerPos):normalize()
+  local playerPos = GetCamPosition()
+  local targetPos = I.S3CamHelper.targetPosition(targetObject, targetObject.position)
+  local toTarget = Vec3Normalize(targetPos - playerPos)
 
-    local currentYaw = camera.getYaw()
-    local currentPitch = camera.getPitch()
+  local currentYaw, currentPitch = GetCamYaw(), GetCamPitch()
 
-    local desiredYaw = math.atan2(toTarget.x, toTarget.y)
-    local desiredPitch = math.atan2(-toTarget.z, math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
+  local desiredYaw = Atan2(toTarget.x, toTarget.y)
+  local desiredPitch = Atan2(-toTarget.z, Sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
 
-    local camYaw, camPitch = LockOnManager.getAngleDiff(
-        desiredYaw,
-        desiredPitch,
-        currentYaw,
-        currentPitch
-    )
+  local camYaw, camPitch =
+    LockOnManager.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch)
 
-    local eps = 0.001
+  if Abs(camYaw) >= EPS then SetCamYaw(currentYaw + camYaw) end
 
-    if math.abs(camYaw) >= eps then
-        camera.setYaw(currentYaw + camYaw)
-    end
+  if Abs(camPitch) >= EPS then SetCamPitch(currentPitch + camPitch) end
 
-    if math.abs(camPitch) >= eps then
-        camera.setPitch(currentPitch + camPitch)
-    end
+  if not shouldTrack then return end
 
-    if not shouldTrack then return end
+  local rotation = s3lf.rotation
+  local playerYaw, playerPitch =
+    LockOnManager.getAngleDiff(desiredYaw, desiredPitch, GetYaw(rotation), GetPitch(rotation))
 
-    local rotation = s3lf.rotation
-    local playerYaw, playerPitch = LockOnManager.getAngleDiff(
-        desiredYaw,
-        desiredPitch,
-        rotation:getYaw(),
-        rotation:getPitch()
-    )
+  if Abs(playerYaw) >= EPS then s3lf.controls.yawChange = playerYaw end
 
-    if math.abs(playerYaw) >= eps then
-        s3lf.controls.yawChange = playerYaw
-    end
-
-    if math.abs(playerPitch) >= eps then
-        s3lf.controls.pitchChange = playerPitch
-    end
+  if Abs(playerPitch) >= EPS then s3lf.controls.pitchChange = playerPitch end
 end
 
 ---@param markerUpdateData MarkerUpdateInfo
 function LockOnManager:updateMarker(markerUpdateData)
-    local element = self.getLockOnMarker()
-    assert(element, 'LockOnManager: Failed to locate lock on marker to set its position!')
+  local element = assert(
+    self.getLockOnMarker(),
+    'LockOnManager: Failed to locate lock on marker to set its position!'
+  )
 
-    local elementSize = self:getIconSize(markerUpdateData.transform.z) + self.state.bouncedSize
-    element.layout.props.size = util.vector2(elementSize, elementSize)
-    element.layout.props.color = self:getIconColor()
-    element.layout.props.relativePosition = markerUpdateData.transform.xy
+  local elementSize = self:getIconSize(markerUpdateData.transform.z) + self.state.bouncedSize
+  element.layout.props.size = Vector2(elementSize, elementSize)
+  element.layout.props.color = self:getIconColor()
 
-    local configuredTexture = LockOnManager.TargetLockIcon
-    if configuredTexture ~= LockOnManager.state.currentTexture then
-        LockOnManager.state.currentTexture = configuredTexture
-        element.layout.props.resource = ui.texture { path = LockOnManager.getLockOnFileName(configuredTexture) }
-    end
+  --- Vector swizzles are legit but documenting them sucks
+  ---@diagnostic disable-next-line: undefined-field
+  element.layout.props.relativePosition = markerUpdateData.transform.xy
 
-    if markerUpdateData.doUpdate ~= true then return end
-    element:update()
+  local configuredTexture = LockOnManager.TargetLockIcon
+  if configuredTexture ~= LockOnManager.state.currentTexture then
+    LockOnManager.state.currentTexture = configuredTexture
+
+    element.layout.props.resource =
+      ui.texture { path = LockOnManager.getLockOnFileName(configuredTexture) }
+  end
+
+  if markerUpdateData.doUpdate ~= true then return end
+
+  UIUpdate(element)
 end
 
-function LockOnManager.getLockOnMarker()
-    return LockOnManager.state.lockOnMarker
-end
+function LockOnManager.getLockOnMarker() return LockOnManager.state.lockOnMarker end
 
----@return GameObject lockTarget
-function LockOnManager.getTargetObject()
-    return LockOnManager.state.targetObject
-end
+---@return openmw.LObject lockTarget
+function LockOnManager.getTargetObject() return LockOnManager.state.targetObject end
 
 --- Returns false if the target doesn't exist, or isn't an NPC/Creature
 ---@return boolean isActor
 function LockOnManager.targetIsActor()
-    local target = LockOnManager.getTargetObject()
-    if not target then return false end
+  local target = LockOnManager.getTargetObject()
+  if not target then return false end
 
-    return types.Actor.objectIsInstance(target)
+  return IsActor(target)
 end
 
+---@return boolean isMarkerVisible
 function LockOnManager.getMarkerVisibility()
-    local marker = LockOnManager.getLockOnMarker()
-    if marker == nil then return false end
+  local marker = LockOnManager.getLockOnMarker()
+  if marker == nil then return false end
 
-    local visibility = true
+  local visibility = true
 
-    if marker.layout.props.visible ~= nil then
-        visibility = marker.layout.props.visible
-    end
+  if marker.layout.props.visible ~= nil then visibility = marker.layout.props.visible end
 
-    return visibility
+  return visibility
 end
 
 ---@param goLeft boolean? whether to check the right or left side of screen space. Nil indicates both sides should be checked.
 function LockOnManager:selectNearestTarget(goLeft)
-    local result = aux_util.findMinScore(nearby.actors, function(actor)
-        if actor.recordId == 'player'
-            or actor == self.state.targetObject
-            or actor.type.isDead(actor)
-            or actor.type.getStance(actor) == actor.type.STANCE.Nothing
-        then
-            return false
-        end
+  local result = aux_util.findMinScore(ActiveCombatTargets, function(actor)
+    if
+      actor.recordId == 'player'
+      or actor == self.state.targetObject
+      or IsDead(actor)
+      or GetStance(actor) == actor.type.STANCE.Nothing
+    then
+      return false
+    end
 
-        local screenPos = I.S3CamHelper.objectIsOnscreen(actor)
+    local screenPos = I.S3CamHelper.objectIsOnscreen(actor)
 
-        if not screenPos
-            or screenPos.z > self.TargetMaxDistance
-            or (goLeft == true and screenPos.x > 0.5)
-            or (goLeft == false and screenPos.x < 0.5) then
-            return false
-        end
+    if
+      not screenPos
+      or screenPos.z > self.TargetMaxDistance
+      or (goLeft == true and screenPos.x > 0.5)
+      or (goLeft == false and screenPos.x < 0.5)
+    then
+      return false
+    end
 
-        local LOSCheckPos = util.vector3(actor.position.x, actor.position.y,
-            actor.position.z + actor:getBoundingBox().halfSize.z * 2)
+    local LOSCheckPos = Vector3(
+      actor.position.x,
+      actor.position.y,
+      actor.position.z + GetBoundingBox(actor).halfSize.z * 2
+    )
 
-        local checkLOSRay = nearby.castRay(camera.getPosition(), LOSCheckPos, {
-            ignore = {
-                gameSelf,
-            }
-        })
+    local checkLOSRay = CastRay(GetCamPosition(), LOSCheckPos, RayOpts)
 
-        -- What if there's no hit...?
-        if checkLOSRay.hit then
-            if not checkLOSRay.hitObject or checkLOSRay.hitObject ~= actor then
-                return false
-            end
-        end
+    -- What if there's no hit...?
+    if checkLOSRay.hit then
+      if not checkLOSRay.hitObject or checkLOSRay.hitObject ~= actor then return false end
+    end
 
-        return (screenPos.xy - util.vector2(0.5, 0.5)):length()
-    end)
+    return Vec2Len(screenPos.xy - CenterVector2)
+  end)
 
-    if not result then return end
+  if not result then return end
 
-    s3lf:sendEvent('S3TargetLockOnto', result)
+  s3lf.sendObjectEvent('S3TargetLockOnto', result)
 
-    return result
+  return result
 end
 
 --- Depending on whether it already exists or not, creates the lock on marker
 --- or simply toggles its visibility
----@return nil
 function LockOnManager.toggleLockOnMarkerDisplay()
-    local marker = LockOnManager.getLockOnMarker()
+  local marker = LockOnManager.getLockOnMarker()
 
-    if not marker then
-        LockOnManager.state.currentTexture = LockOnManager.getLockOnFileName(LockOnManager.TargetLockIcon)
-        LockOnManager.state.lockOnMarker = ui.create {
-            layer = 'HUD',
-            type = ui.TYPE.Image,
-            props = {
-                anchor = CenterVector2,
-                relativePosition = ZeroVector2,
-                size = ZeroVector2,
-                resource = ui.texture { path = LockOnManager.state.currentTexture },
-                visible = false,
-            },
-        }
-    else
-        LockOnManager.setMarkerVisibility(false)
-    end
+  if not marker then
+    LockOnManager.state.currentTexture =
+      LockOnManager.getLockOnFileName(LockOnManager.TargetLockIcon)
+
+    LockOnManager.state.lockOnMarker = ui.create {
+      layer = 'HUD',
+      type = ui.TYPE.Image,
+      props = {
+        anchor = CenterVector2,
+        relativePosition = ZeroVector2,
+        size = ZeroVector2,
+        resource = ui.texture { path = LockOnManager.state.currentTexture },
+        visible = false,
+      },
+    }
+
+    UIUpdate = LockOnManager.state.lockOnMarker.update
+  else
+    LockOnManager.setMarkerVisibility(false)
+  end
 end
 
----@param target GameObject?
+---@param target openmw.LObject?
 function LockOnManager.setTarget(target)
-    if target then
-        assert(types.Actor.objectIsInstance(target), 'LockOnManager.setTarget only accepts actor types!!')
-    end
+  if target then assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!') end
 
-    LockOnManager.state.targetObject = target
-    LockOnManager.state.targetHealth = target and target.type.stats.dynamic.health(target) or nil
+  LockOnManager.state.targetObject = target
+  LockOnManager.state.targetHealth = target and Health(target) or nil
 end
 
 --- Responds to the 'SW4_TargetLock' action, engaging or disengaging target locking as appropriate
 --- Toggle type action, but, maybe we could make it a hold??
 function LockOnManager.lockOnHandler()
-    if LockOnManager.getMarkerVisibility() then
-        s3lf:sendEvent 'S3TargetLockOnto'
-        LockOnManager.toggleLockOnMarkerDisplay()
-        return
-    end
+  if LockOnManager.getMarkerVisibility() then
+    s3lf.sendObjectEvent 'S3TargetLockOnto'
+    return LockOnManager.toggleLockOnMarkerDisplay()
+  end
 
-    LockOnManager:selectNearestTarget()
+  LockOnManager:selectNearestTarget()
 end
 
 --- sets marker visibility. Always triggers a redraw
 ---@param state boolean whether or not the marker should be visible
 ---@return boolean? changed whether or not the state actually updated (due to the marker not existing)
 function LockOnManager.setMarkerVisibility(state)
-    local marker = LockOnManager.getLockOnMarker()
-    if not marker then return end
+  local marker = LockOnManager.getLockOnMarker()
+  if not marker then return end
 
-    if state then
-        LockOnManager.state.trackTarget = true
-    end
+  if state then LockOnManager.state.trackTarget = true end
 
-    local markerState = LockOnManager.state
-    markerState.isBouncing = false
-    markerState.bouncedSize = 0
-    markerState.bounceUpOrDown = true
+  local markerState = LockOnManager.state
+  markerState.isBouncing = false
+  markerState.bouncedSize = 0
+  markerState.bounceUpOrDown = true
 
-    marker.layout.props.visible = state
-    marker:update()
-    return true
+  marker.layout.props.visible = state
+  UIUpdate(marker)
+  return true
 end
 
 ---@param targetIsActor boolean whether or not the target is an actor
 ---@return boolean? updated whether or not the marker was hidden due to the target being dead
 function LockOnManager.checkForDeadTarget(targetIsActor)
-    local targetObject = LockOnManager.getTargetObject()
+  local targetObject = LockOnManager.getTargetObject()
 
-    if not targetObject or not targetIsActor then return end
-    if not targetObject.type.isDead(targetObject) then return end
+  if not targetObject or not targetIsActor then return end
+  if not IsDead(targetObject) then return end
 
-    if LockOnManager.setMarkerVisibility(false) then
-        s3lf:sendEvent 'S3TargetLockOnto'
-        return true
-    end
+  if LockOnManager.setMarkerVisibility(false) then
+    s3lf.sendObjectEvent 'S3TargetLockOnto'
+    return true
+  end
 end
 
 --- Given both the old and new ranges, map a numeric value from one to the other and round it.
 ---@param inputValue number
----@param oldRange util.vector2
----@param newRange util.vector2
+---@param oldRange openmw.util.Vector2
+---@param newRange openmw.util.Vector2
 local function remapFromRange(inputValue, oldRange, newRange)
-    return util.round(
-        math.max(
-            math.min(
-                util.remap(
-                    inputValue,
-                    oldRange.x,
-                    oldRange.y,
-                    newRange.x,
-                    newRange.y
-                ),
-                newRange.y
-            ),
-            newRange.x
-        )
+  return Round(
+    Max(
+      Min(Remap(inputValue, oldRange.x, oldRange.y, newRange.x, newRange.y), newRange.y),
+      newRange.x
     )
+  )
 end
 
 ---@param distanceFromCamera number distance in todd units from targeted object to the camera
 ---@return number iconSize rounded icon size, remapped from the camera distance range to the size range
 function LockOnManager:getIconSize(distanceFromCamera)
-    local markerSizeRange = util.vector2(self.TargetMinSize, self.TargetMaxSize)
-    local markerDistanceRange = util.vector2(self.TargetMinDistance, self.TargetMaxDistance)
-    return remapFromRange(distanceFromCamera, markerDistanceRange, markerSizeRange)
+  local markerSizeRange = Vector2(self.TargetMinSize, self.TargetMaxSize)
+  local markerDistanceRange = Vector2(self.TargetMinDistance, self.TargetMaxDistance)
+  return remapFromRange(distanceFromCamera, markerDistanceRange, markerSizeRange)
 end
 
 function LockOnManager:getIconColor()
-    --- Figure out which of the existing log functions is most appropriate to use when this happens, as it shouldn't
-    if self.state.targetHealth == nil then
-        return self.TargetColorD
-    end
+  --- Figure out which of the existing log functions is most appropriate to use when this happens, as it shouldn't
+  if self.state.targetHealth == nil then return self.TargetColorD end
 
-    local normalizedHealth = self.state.targetHealth.current / self.state.targetHealth.base
+  local normalizedHealth = self.state.targetHealth.current / self.state.targetHealth.base
 
-    if normalizedHealth >= 1.0 then
-        return self.TargetColorF
-    elseif normalizedHealth < 0.0 then
-        return self.TargetColorD
-    end
+  if normalizedHealth >= 1.0 then
+    return self.TargetColorF
+  elseif normalizedHealth < 0.0 then
+    return self.TargetColorD
+  end
 
-    local targetColorMin, targetColorMax
+  local targetColorMin, targetColorMax, bandLow, bandHigh
 
-    if normalizedHealth < 1.0 and normalizedHealth >= 0.8 then
-        targetColorMin = self.TargetColorVH:asRgb()
-        targetColorMax = self.TargetColorF:asRgb()
-    elseif normalizedHealth < 0.8 and normalizedHealth >= 0.6 then
-        targetColorMin = self.TargetColorH:asRgb()
-        targetColorMax = self.TargetColorVH:asRgb()
-    elseif normalizedHealth < 0.6 and normalizedHealth >= 0.4 then
-        targetColorMin = self.TargetColorW:asRgb()
-        targetColorMax = self.TargetColorH:asRgb()
-    elseif normalizedHealth < 0.4 and normalizedHealth >= 0.2 then
-        targetColorMin = self.TargetColorVW:asRgb()
-        targetColorMax = self.TargetColorW:asRgb()
-    elseif normalizedHealth < 0.2 and normalizedHealth >= 0.0 then
-        targetColorMin = self.TargetColorD:asRgb()
-        targetColorMax = self.TargetColorVW:asRgb()
-    end
+  if normalizedHealth < 1.0 and normalizedHealth >= 0.8 then
+    targetColorMin = self.TargetColorVH:asRgb()
+    targetColorMax = self.TargetColorF:asRgb()
+    bandLow, bandHigh = 0.8, 1.0
+  elseif normalizedHealth < 0.8 and normalizedHealth >= 0.6 then
+    targetColorMin = self.TargetColorH:asRgb()
+    targetColorMax = self.TargetColorVH:asRgb()
+    bandLow, bandHigh = 0.6, 0.8
+  elseif normalizedHealth < 0.6 and normalizedHealth >= 0.4 then
+    targetColorMin = self.TargetColorW:asRgb()
+    targetColorMax = self.TargetColorH:asRgb()
+    bandLow, bandHigh = 0.4, 0.6
+  elseif normalizedHealth < 0.4 and normalizedHealth >= 0.2 then
+    targetColorMin = self.TargetColorVW:asRgb()
+    targetColorMax = self.TargetColorW:asRgb()
+    bandLow, bandHigh = 0.2, 0.4
+  elseif normalizedHealth < 0.2 and normalizedHealth >= 0.0 then
+    targetColorMin = self.TargetColorD:asRgb()
+    targetColorMax = self.TargetColorVW:asRgb()
+    bandLow, bandHigh = 0.0, 0.2
+  end
 
-    local colorMix = {}
-    colorMix[#colorMix + 1] = util.remap(normalizedHealth, 0.0, 1.0, targetColorMin.x, targetColorMax.x)
-    colorMix[#colorMix + 1] = util.remap(normalizedHealth, 0.0, 1.0, targetColorMin.y, targetColorMax.y)
-    colorMix[#colorMix + 1] = util.remap(normalizedHealth, 0.0, 1.0, targetColorMin.z, targetColorMax.z)
+  local colorMix = {}
+  colorMix[#colorMix + 1] =
+    Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.x, targetColorMax.x)
+  colorMix[#colorMix + 1] =
+    Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.y, targetColorMax.y)
+  colorMix[#colorMix + 1] =
+    Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.z, targetColorMax.z)
 
-    return util.color.rgb(colorMix[1], colorMix[2], colorMix[3])
+  return RGBColor(colorMix[1], colorMix[2], colorMix[3])
 end
 
 function LockOnManager:onFrameBegin()
-    if I.UI.getMode() or not LockOnManager.getMarkerVisibility() then return end
+  if GetUIMode() or not LockOnManager.getMarkerVisibility() then return end
 
-    local mouseMoveThisFrame = util.vector2(input.getMouseMoveX(), input.getMouseMoveY())
+  local mouseMoveThisFrame = Vector2(input.getMouseMoveX(), input.getMouseMoveY())
 
-    self.state.cumulativeXMove = self.state.cumulativeXMove + mouseMoveThisFrame.x
+  self.state.cumulativeXMove = self.state.cumulativeXMove + mouseMoveThisFrame.x
 
-    if
-        self.EnableFlickSwitch
-        and self.getMarkerVisibility()
-        and math.abs(self.state.cumulativeXMove) >= self.FlickSwitchDistance
-        and not self.state.flickTriggered
-    then
-        self:selectNearestTarget(self.state.cumulativeXMove < 0)
-        self.state.flickTriggered = true
-    end
+  if
+    self.EnableFlickSwitch
+    and self.getMarkerVisibility()
+    and Abs(self.state.cumulativeXMove) >= self.FlickSwitchDistance
+    and not self.state.flickTriggered
+  then
+    self:selectNearestTarget(self.state.cumulativeXMove < 0)
+    self.state.flickTriggered = true
+  end
 
-    if mouseMoveThisFrame:length() == 0 then
-        self.state.cumulativeXMove = 0
-        self.state.flickTriggered = false
-    end
+  if Vec2Len(mouseMoveThisFrame) == 0 then
+    self.state.cumulativeXMove = 0
+    self.state.flickTriggered = false
+  end
 end
 
 function LockOnManager:onFrame()
-    local targetIsActor = LockOnManager.targetIsActor()
-    local targetWasDead = LockOnManager.checkForDeadTarget(targetIsActor)
+  local targetIsActor = LockOnManager.targetIsActor()
+  local targetWasDead = LockOnManager.checkForDeadTarget(targetIsActor)
 
-    if targetWasDead and self.SwitchOnDeadTarget then
-        self:selectNearestTarget()
-    end
+  if targetWasDead and self.SwitchOnDeadTarget then self:selectNearestTarget() end
 
-    local targetObject = LockOnManager.getTargetObject()
+  local targetObject = LockOnManager.getTargetObject()
 
-    if self.CheckLOS and targetObject then
-        if not I.S3CamHelper.objectIsOnscreen(targetObject) then
-            s3lf:sendEvent 'S3TargetLockOnto'
-        else
-            local LOStest = nearby.castRay(
-                camera.getPosition(),
-                targetObject:getBoundingBox().center,
-                { ignore = { gameSelf, } }
-            )
-
-            if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
-                s3lf:sendEvent 'S3TargetLockOnto'
-            end
-        end
-    end
-
-    local uiMode = I.UI.getMode()
-    local validMode = not uiMode or uiMode == 'MainMenu'
-
-    LockOnManager.setCanLockOn(
-        targetObject ~= nil and (
-            (targetIsActor and isWielding())
-        )
-        and validMode
-    )
-
-    local markerExists = LockOnManager.getLockOnMarker() ~= nil
-    local markerIsVisible = LockOnManager.getMarkerVisibility()
-
-    if LockOnManager.canLockOn() then
-        assert(targetObject)
-        if not markerExists then
-            LockOnManager.toggleLockOnMarkerDisplay()
-        elseif not markerIsVisible then
-            LockOnManager.setMarkerVisibility(true)
-        end
-
-        local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject)
-
-        if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
-            if s3lf.canMove() then
-                LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
-            end
-
-            LockOnManager:updateMarker {
-                transform = normalizedPos,
-                doUpdate = true,
-            }
-            camera.showCrosshair(false)
-        else
-            LockOnManager.setMarkerVisibility(false)
-            camera.showCrosshair(true)
-        end
+  if self.CheckLOS and targetObject then
+    if not I.S3CamHelper.objectIsOnscreen(targetObject) then
+      s3lf.sendObjectEvent 'S3TargetLockOnto'
     else
-        if markerIsVisible then
-            LockOnManager.setMarkerVisibility(false)
-            camera.showCrosshair(true)
-        end
+      local LOStest = CastRay(camera.getPosition(), GetBoundingBox(targetObject).center, RayOpts)
+
+      if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
+        s3lf.sendObjectEvent 'S3TargetLockOnto'
+      end
+    end
+  end
+
+  local uiMode = GetUIMode()
+  local validMode = not uiMode or uiMode == 'MainMenu'
+
+  LockOnManager.setCanLockOn(targetObject ~= nil and (targetIsActor and isWielding()) and validMode)
+
+  local markerExists = LockOnManager.getLockOnMarker() ~= nil
+  local markerIsVisible = LockOnManager.getMarkerVisibility()
+
+  if LockOnManager.canLockOn() then
+    assert(targetObject)
+    if not markerExists then
+      LockOnManager.toggleLockOnMarkerDisplay()
+    elseif not markerIsVisible then
+      LockOnManager.setMarkerVisibility(true)
     end
 
-    return LockOnManager.canLockOn()
+    local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject)
+
+    if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
+      if s3lf.canMove() then
+        LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
+      end
+
+      LockOnManager:updateMarker {
+        transform = normalizedPos,
+        doUpdate = true,
+      }
+      camera.showCrosshair(false)
+    else
+      LockOnManager.setMarkerVisibility(false)
+      camera.showCrosshair(true)
+    end
+  else
+    if markerIsVisible then
+      LockOnManager.setMarkerVisibility(false)
+      camera.showCrosshair(true)
+    end
+  end
+
+  return LockOnManager.canLockOn()
 end
 
 --- Checks whether the lock-on icon is currently "bouncing" from a hit
 ---@return boolean isBouncing whether or not a target has already been hit and started a "bounce"
-function LockOnManager.isBouncing()
-    return LockOnManager.state.isBouncing
-end
+function LockOnManager.isBouncing() return LockOnManager.state.isBouncing end
 
 function LockOnManager:startBounce()
-    if self.state.isBouncing or not self.getMarkerVisibility() then return end
+  if self.state.isBouncing or not self.getMarkerVisibility() then return end
 
-    self.state.isBouncing = true
+  self.state.isBouncing = true
 end
 
 function LockOnManager:bounce()
-    if not self.isBouncing() or not self.getMarkerVisibility() then return end
+  if not self.isBouncing() or not self.getMarkerVisibility() then return end
 
-    local state = LockOnManager.state
+  local state = LockOnManager.state
 
-    if state.bounceUpOrDown then
-        state.bouncedSize = state.bouncedSize + 1
-    else
-        state.bouncedSize = state.bouncedSize - 1
-    end
+  if state.bounceUpOrDown then
+    state.bouncedSize = state.bouncedSize + 1
+  else
+    state.bouncedSize = state.bouncedSize - 1
+  end
 
-    if state.bouncedSize == LockOnManager.HitBounceSize then
-        state.bounceUpOrDown = false
-    elseif state.bouncedSize == 0 then
-        state.isBouncing = false
-        state.bounceUpOrDown = true
-    end
+  if state.bouncedSize == LockOnManager.HitBounceSize then
+    state.bounceUpOrDown = false
+  elseif state.bouncedSize == 0 then
+    state.isBouncing = false
+    state.bounceUpOrDown = true
+  end
 end
 
 --- Handle late-stage actions such as un-targeting when the weapon is sheathed,
 --- bouncing, and other stuff that depends on earlier frame interactions
 function LockOnManager:onFrameEnd()
-    self:bounce()
+  self:bounce()
 
-    if
-        self.DisableLockWhenSheathing
-        and not isWielding()
-        and self.getTargetObject()
-    then
-        s3lf:sendEvent 'S3TargetLockOnto'
-    end
+  if self.DisableLockWhenSheathing and not isWielding() and self.getTargetObject() then
+    s3lf.sendObjectEvent 'S3TargetLockOnto'
+  end
 end
 
 ---@class TargetChangeData
----@field targets GameObject[]
----@field actor GameObject
+---@field targets openmw.LObject[]
+---@field actor openmw.LObject
 
 ---@param targetChangeData TargetChangeData
 function LockOnManager.lockOnCombatStart(targetChangeData)
-    if
-        not LockOnManager.LockOnCombatStart
-        or LockOnManager.getMarkerVisibility()
-        or next(targetChangeData.targets) == nil
-    then
-        return
+  local targetIsFighting = not not targetChangeData.targets[1]
+
+  if targetIsFighting then
+    ActiveCombatTargets[#ActiveCombatTargets + 1] = targetChangeData.actor
+  else
+    local targetId = targetChangeData.actor.id
+    for i = #ActiveCombatTargets, 1, -1 do
+      local toRemove = ActiveCombatTargets[i]
+
+      if toRemove.id == targetId then
+        TableRemove(ActiveCombatTargets, i)
+        break
+      end
     end
+  end
 
-    local targetIsMe = false
-    for _, target in ipairs(targetChangeData.targets) do
-        if target.id == s3lf.id then
-            targetIsMe = true
-            break
-        end
+  if
+    not LockOnManager.LockOnCombatStart
+    or LockOnManager.getMarkerVisibility()
+    or not targetIsFighting
+  then
+    return
+  end
+
+  local targetIsMe = false
+  for i = 1, #targetChangeData.targets do
+    local target = targetChangeData.targets[i]
+
+    if target.id == s3lf.id then
+      targetIsMe = true
+      break
     end
+  end
 
-    local hasWeapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight) ~= nil
-    local hasSpell = s3lf.getSelectedEnchantedItem() ~= nil or s3lf.getSelectedSpell() ~= nil
-    if
-        not targetIsMe
-        or (not hasWeapon and not hasSpell)
-    then
-        return
-    end
+  local hasWeapon = s3lf.getEquipment(SLOT_WEAPON) ~= nil
+  local hasSpell = s3lf.getSelectedEnchantedItem() ~= nil or s3lf.getSelectedSpell() ~= nil
 
-    if not isWielding() then
-        local stance = hasWeapon and s3lf.STANCE.Weapon or s3lf.STANCE.Spell
+  if not targetIsMe or (not hasWeapon and not hasSpell) then return end
 
-        s3lf.setStance(stance)
-    end
+  if not isWielding() then
+    local stance = hasWeapon and STANCE_WEAPON or STANCE_SPELL
 
-    s3lf:sendEvent('S3TargetLockOnto', targetChangeData.actor)
+    s3lf.setStance(stance)
+  end
 
-    local myYaw, theirYaw = s3lf.rotation:getYaw(), targetChangeData.actor.rotation:getYaw()
+  s3lf.sendObjectEvent('S3TargetLockOnto', targetChangeData.actor)
 
-    theirYaw = theirYaw - math.rad(180)
-    local difference = theirYaw - myYaw
+  local myYaw, theirYaw = GetYaw(s3lf.rotation), GetYaw(targetChangeData.actor.rotation)
 
-    s3lf.controls.yawChange = math.atan2(
-        math.sin(difference),
-        math.cos(difference)
-    )
+  theirYaw = theirYaw - Rad(180)
+  local difference = theirYaw - myYaw
+
+  s3lf.controls.yawChange = Atan2(Sin(difference), Cos(difference))
 end
 
 function LockOnManager.bounceOnHit(target)
-    if
+  if
     --- Maybe we also want to bail if the marker isn't visible... ?
-        not LockOnManager.EnableHitBounce
-        or LockOnManager.isBouncing()
-    then
-        return
-    end
+    not LockOnManager.EnableHitBounce or LockOnManager.isBouncing()
+  then
+    return
+  end
 
-    local targetObject = LockOnManager.getTargetObject()
+  local targetObject = LockOnManager.getTargetObject()
 
-    --- Don't screw around and switch targets when we hit someone else on accident, but have a locked-on target already.
-    if targetObject and targetObject ~= target then
-        return
-    end
+  --- Don't screw around and switch targets when we hit someone else on accident, but have a locked-on target already.
+  if targetObject and targetObject ~= target then return end
 
-    LockOnManager:startBounce()
+  LockOnManager:startBounce()
 end
 
 input.registerTriggerHandler('S3TargetLock', async:callback(LockOnManager.lockOnHandler))
 
 return {
-    engineHandlers = {
-        onFrame = function()
-            LockOnManager:onFrameBegin()
-            LockOnManager:onFrame()
-            LockOnManager:onFrameEnd()
-        end,
-    },
-    eventHandlers = {
-        OMWMusicCombatTargetsChanged = LockOnManager.lockOnCombatStart,
-        S3TargetLockOnto = LockOnManager.setTarget,
-        S3TargetLockHit = LockOnManager.bounceOnHit,
-    },
-    interfaceName = 'S3LockOn',
-    interface = {
-        version = 1,
-        Manager = LockOnManager,
-    },
+  engineHandlers = {
+    onFrame = function()
+      LockOnManager:onFrameBegin()
+      LockOnManager:onFrame()
+      LockOnManager:onFrameEnd()
+    end,
+  },
+  eventHandlers = {
+    OMWMusicCombatTargetsChanged = LockOnManager.lockOnCombatStart,
+    S3TargetLockOnto = LockOnManager.setTarget,
+    S3TargetLockHit = LockOnManager.bounceOnHit,
+  },
+  interfaceName = 'S3LockOn',
+  interface = {
+    version = 1,
+    Manager = LockOnManager,
+  },
 }
