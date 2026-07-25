@@ -777,7 +777,7 @@ return {
   },
   interfaceName = 'S3LockOn',
   interface = {
-    version = 1,
+    version = 2,
     Manager = LockOnManager,
   },
 }
