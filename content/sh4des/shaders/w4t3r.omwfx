@@ -19,19 +19,19 @@ uniform_float uWaveScale {
 }
 
 uniform_float uWaveSpeed {
-    default = 0.025;
+    default = 4.0;
     min = 0.0;
-    max = 0.2;
-    step = 0.001;
+    max = 20.0;
+    step = 0.1;
     display_name = "#{S3Shaders:WaterWaveSpeedName}";
     description = "#{S3Shaders:WaterWaveSpeedDesc}";
     static = true;
 }
 
 uniform_float uDistortionStrength {
-    default = 0.003;
+    default = 0.008;
     min = 0.0;
-    max = 0.02;
+    max = 0.05;
     step = 0.0001;
     display_name = "#{S3Shaders:WaterDistortionName}";
     description = "#{S3Shaders:WaterDistortionDesc}";
@@ -255,12 +255,20 @@ fragment water {
 
         // --------------------------------------------------------
         // Procedural water normal from world-space coordinates
+        //
+        // Two octaves:
+        //   Primary: broad swell wave, full amplitude
+        //   Ripple:  3-4× spatial frequency, 35% amplitude for surface detail
+        //
+        // World-locked, camera-independent. Time-based animation via
+        // omw.simulationTime × uWaveSpeed (~4.0 default = 0.64 Hz).
         // --------------------------------------------------------
 
         vec2 p = waterPos.xy * uWaveScale;
 
         float time = omw.simulationTime * uWaveSpeed;
 
+        // Primary swell
         float waveX = sin(
             p.x * 6.2831853
             + time
@@ -273,8 +281,25 @@ fragment water {
             + sin(p.x * 2.0)
         );
 
+        // Secondary ripple: higher spatial frequency, lower amplitude
+        float rippleX = sin(
+            p.x * 20.42
+            + time * 2.5
+            + sin(p.y * 7.0)
+        ) * 0.35;
+
+        float rippleY = sin(
+            p.y * 24.78
+            - time * 1.8
+            + sin(p.x * 5.0)
+        ) * 0.35;
+
         vec3 waterNormal = normalize(
-            vec3(waveX, waveY, 1.0)
+            vec3(
+                waveX + rippleX,
+                waveY + rippleY,
+                1.0
+            )
         );
 
         if (uDebugMode == 5)
@@ -402,5 +427,5 @@ technique {
     author = "S3ctor";
     description = "Faest water shader";
     passes = water;
-    version = "0.2";
+    version = "0.3";
 }
