@@ -56,12 +56,22 @@ uniform_float uMaxWaterDepth {
 }
 
 uniform_float uReflectionStrength {
-    default = 0.35;
+    default = 1.0;
     min = 0.0;
     max = 1.0;
     step = 0.01;
     display_name = "#{S3Shaders:WaterReflectionName}";
     description = "#{S3Shaders:WaterReflectionDesc}";
+    static = true;
+}
+
+uniform_float uReflectionOffset {
+    default = 0.05;
+    min = 0.0;
+    max = 0.5;
+    step = 0.001;
+    display_name = "#{S3Shaders:WaterReflectionOffsetName}";
+    description = "#{S3Shaders:WaterReflectionOffsetDesc}";
     static = true;
 }
 
@@ -367,37 +377,61 @@ fragment water {
         }
 
         // --------------------------------------------------------
-        // Cheap pseudo-reflection
-        // Reflect view direction around water normal, approximate
-        // screen-space offset, one scene-color sample
+        // Cheap screen-space reflection approximation
+        //
+        // Not true SSR. A true SSR would march the reflected ray
+        // through screen space and compare against the depth buffer.
+        // The previous implementation projected an arbitrary point at
+        // uReflectionDistance along the reflected ray — that does
+        // not guarantee correspondence to scene geometry.
+        //
+        // Instead, derive a stable screen-space offset from the
+        // reflected direction. Use a damped normal so high-frequency
+        // ripple detail does not excessively destabilize reflected
+        // UVs.
         // --------------------------------------------------------
+
+        vec3 reflectionNormal = normalize(
+            vec3(
+                waterNormal.xy * 0.35,
+                1.0
+            )
+        );
 
         vec3 reflectDir = reflect(
             -viewDir,
-            waterNormal
+            reflectionNormal
         );
 
-        vec2 reflectOffset = reflectDir.xy
-            * uDistortionStrength
-            * 2.0;
+        vec2 reflectedUV = uv
+            + reflectDir.xy * uReflectionOffset;
 
-        vec2 reflectedUV = uv + reflectOffset;
-
-        vec3 reflectedColor = omw_GetLastShader(reflectedUV).rgb;
+        vec3 reflectedColor =
+            omw_GetLastShader(reflectedUV).rgb;
 
         // --------------------------------------------------------
-        // Fresnel (x^5 polynomial approximation)
+        // Fresnel with artistic floor
+        //
+        // The physical x^5 Fresnel for water drops below 1% at all
+        // but the most grazing angles (cosθ > 0.7 → F < 0.003).
+        // That makes reflections invisible for gameplay angles.
+        //
+        // We apply a minimum floor so the reflection is always
+        // present at a visible weight. Above the floor the physical
+        // curve still provides the natural horizon brightening.
         // --------------------------------------------------------
 
-        float fresnel = 1.0 - clamp(
+        float cosTheta = clamp(
             dot(viewDir, waterNormal),
             0.0,
             1.0
         );
 
-        float fresnel2 = fresnel * fresnel;
-        float fresnel4 = fresnel2 * fresnel2;
-        fresnel = fresnel4 * fresnel;
+        float fresnelPhys = 1.0 - cosTheta;
+        fresnelPhys = fresnelPhys * fresnelPhys
+            * fresnelPhys * fresnelPhys * fresnelPhys;
+
+        float fresnel = max(0.15, fresnelPhys);
 
         // --------------------------------------------------------
         // Blend: refraction + reflection via Fresnel
@@ -410,13 +444,40 @@ fragment water {
         );
 
         // --------------------------------------------------------
-        // Depth-based water tint
+        // Sun specular highlight
         // --------------------------------------------------------
+
+        vec3 sunDir = normalize(omw.sunPos.xyz);
+        vec3 halfVec = normalize(viewDir + sunDir);
+        float spec = pow(
+            max(dot(waterNormal, halfVec), 0.0),
+            64.0
+        );
+        waterColor += omw.sunColor.xyz * spec * 0.4 * omw.sunVis;
+
+        // --------------------------------------------------------
+        // View-angle-adjusted water tint
+        //
+        // At grazing angles the optical path through the water
+        // column is longer, producing stronger tint. A small floor
+        // prevents zero-tint in ankle-deep water.
+        // --------------------------------------------------------
+
+        float viewDepth = waterDepth
+            / max(dot(-viewDir, vec3(0.0, 0.0, 1.0)), 0.01);
+
+        float tintDepth = clamp(
+            viewDepth / uMaxWaterDepth,
+            0.0,
+            1.0
+        );
+
+        float tintAmount = tintDepth * 0.9 + 0.05;
 
         waterColor = mix(
             waterColor,
             uWaterTint,
-            depthFactor * 0.75
+            tintAmount
         );
 
         // --------------------------------------------------------
@@ -437,5 +498,5 @@ technique {
     author = "S3ctor";
     description = "Faest water shader";
     passes = water;
-    version = "0.3";
+    version = "0.4";
 }
