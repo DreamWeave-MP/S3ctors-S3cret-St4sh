@@ -116,12 +116,6 @@ fragment water {
         }
 
         // --------------------------------------------------------
-        // Cache scene color — one texture fetch, reused everywhere
-        // --------------------------------------------------------
-
-        vec3 sceneColor = omw_GetLastShader(uv).rgb;
-
-        // --------------------------------------------------------
         // World-space ray reconstruction
         //
         // Use an UNNORMALIZED ray direction. The plane intersection
@@ -149,35 +143,55 @@ fragment water {
         // Quick reject: ray pointing away from water plane
         if (t <= 0.0)
         {
-            omw_FragColor = vec4(sceneColor, 1.0);
+            omw_FragColor = omw_GetLastShader(uv);
             return;
         }
 
         vec3 waterPos = omw.eyePos.xyz + ray * t;
 
         // --------------------------------------------------------
-        // Water mask: compare scene geometry depth vs water plane
+        // Cache scene color — one texture fetch, reused everywhere
+        // --------------------------------------------------------
+
+        vec3 sceneColor = omw_GetLastShader(uv).rgb;
+
+        // --------------------------------------------------------
+        // Water mask: derive scene depth from linear depth + ray
         //
         // Both sceneWorldPos and waterPos lie on the same view ray.
         // The difference along the ray is:
         //
         //   tDiff = tScene - t
-        //         = (sceneWorldPos.z - eyePos.z) / ray.z -
-        //           (waterHeight    - eyePos.z) / ray.z
-        //         = (sceneWorldPos.z - waterHeight) / ray.z
         //
-        // This avoids a length() call (no sqrt) by exploiting the
-        // shared ray parameter space.
+        // Instead of omw_GetWorldPosFromUV(uv) (1 depth tex + 2
+        // mat4×vec4 + 1 perspective divide), we derive tScene from
+        // omw_GetLinearDepth(uv) and the existing ray. The z
+        // component of the ray in view space (rayViewZ) relates
+        // linear depth to the ray parameter tScene:
+        //
+        //   rayViewZ = (viewMatrix * vec4(ray, 0)).z
+        //   tScene = -linearDepth / rayViewZ     (camera at view origin, looking down -Z)
+        //   tDiff = tScene - t
+        //
+        // This eliminates 2 mat4×vec4 multiplies and 1 perspective
+        // divide per pixel, replacing them with ~8 scalar ops.
         //
         //   tDiff > 0: scene is behind water plane → water effect
         //   tDiff < 0: scene is in front of water plane → passthrough
         // --------------------------------------------------------
 
-        vec3 sceneWorldPos = omw_GetWorldPosFromUV(uv);
+        float linearDepth = omw_GetLinearDepth(uv);
 
-        float tDiff = (
-            sceneWorldPos.z - omw.waterHeight
-        ) / ray.z;
+        float rayViewZ = (
+            omw.viewMatrix[0].z * ray.x
+            + omw.viewMatrix[1].z * ray.y
+            + omw.viewMatrix[2].z * ray.z
+        );
+
+        float tScene = -linearDepth / rayViewZ;
+        float tDiff = tScene - t;
+
+        float sceneWorldPosZ = omw.eyePos.z + ray.z * tScene;
 
         float waterMask = smoothstep(
             -uWaterWorldTolerance,
@@ -224,7 +238,7 @@ fragment water {
 
         float waterDepth = max(
             0.0,
-            omw.waterHeight - sceneWorldPos.z
+            omw.waterHeight - sceneWorldPosZ
         );
 
         float depthFactor = clamp(
@@ -276,9 +290,7 @@ fragment water {
         // View direction
         // --------------------------------------------------------
 
-        vec3 viewDir = normalize(
-            omw.eyePos.xyz - waterPos
-        );
+        vec3 viewDir = normalize(-ray);
 
         // --------------------------------------------------------
         // Refraction
@@ -312,7 +324,7 @@ fragment water {
         // --------------------------------------------------------
 
         float refractedLinearDepth = omw_GetLinearDepth(refractedUV);
-        float waterLinearDepth = omw_GetLinearDepth(uv);
+        float waterLinearDepth = linearDepth;
 
         if (refractedLinearDepth < waterLinearDepth - 0.5)
         {
