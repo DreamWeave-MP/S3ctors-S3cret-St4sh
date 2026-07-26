@@ -1,3 +1,10 @@
+Horiz0nAdjustFramerateName: Fréquence d'ajustement de la distance d'affichage
+Horiz0nAdjustFramerateDesc: |
+  Modifie l'intervalle de temps auquel Horiz0n met à jour votre distance d'affichage.
+  Il est *FORTEMENT* recommandé de conserver la valeur par défaut, mais ce paramètre est disponible pour assurer la cohérence et permettre la personnalisation.
+  Par défaut : 30
+  Plage : 10 - 144
+
 Horiz0nPageName: Horiz0n - Gestion de la distance d'affichage
 Horiz0nPageDesc: Gestion dynamique de la distance d'affichage pour économiser des images par seconde lorsque nécessaire et créer de magnifiques panoramas autrement
 
@@ -16,6 +23,33 @@ Horiz0nMinViewDistDesc: |
   Par défaut : 0.25
   Plage : 0.01 - 1.0
 
+Horiz0nPercentAdjustNormalName: Seuil de réduction de la distance d'affichage
+Horiz0nPercentAdjustNormalDesc: |
+  Horiz0n réduit la distance d'affichage lorsque le temps d'image actuel est supérieur de ce pourcentage au meilleur temps d'image enregistré.
+  Par défaut : 10 %
+  Plage : 1 % - 10 %
+
+Horiz0nPercentAdjustSevereName: Seuil de réduction importante
+Horiz0nPercentAdjustSevereDesc: |
+  Horiz0n multiplie la réduction de la distance d'affichage lorsque le temps d'image actuel est supérieur de ce pourcentage au meilleur temps d'image enregistré.
+  Par défaut : 30 %
+  Plage : 10 % - 100 %
+
 Horiz0nToggleName: Activer ou désactiver la gestion de la distance d'affichage
 Horiz0nToggleOn: Activer
 Horiz0nToggleOff: Désactiver
+
+Horiz0nViewDistanceSevereMultName: Multiplicateur de réduction importante
+Horiz0nViewDistanceSevereMultDesc: |
+  Multiplie la réduction de la distance d'affichage lorsque le temps d'image est nettement supérieur au meilleur temps d'image enregistré.
+  Des valeurs plus élevées permettent à Horiz0n de rétablir les performances plus rapidement dans les zones exigeantes, mais rendent les changements de distance d'affichage plus visibles.
+  Par défaut : 2,0
+  Plage : 1,0 - 5,0
+
+Horiz0nViewDistanceStepName: Ajustement de la distance d'affichage
+Horiz0nViewDistanceStepDesc: |
+  Définit l'ampleur des changements de distance d'affichage effectués par Horiz0n à chaque ajustement.
+  Des valeurs plus faibles rendent les changements de distance d'affichage plus fluides, mais plus lents.
+  Des valeurs plus élevées accélèrent les ajustements, mais les rendent plus visibles.
+  Par défaut : 16
+  Plage : 8 - 24

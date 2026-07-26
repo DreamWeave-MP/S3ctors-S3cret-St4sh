@@ -1,3 +1,10 @@
+Horiz0nAdjustFramerateName: View Distance Adjustment Framerate
+Horiz0nAdjustFramerateDesc: |
+  Change the time interval at which Horiz0n updates your view distance.
+  It is *STRONGLY* recommended to keep the default value, but this setting is exposed for consistency and customization.
+  Default: 30
+  Range: 10 - 144
+
 Horiz0nPageName: Horiz0n - View Distance Manager
 Horiz0nPageDesc: Dynamic view distance management to save frames when needed and create beautiful vistas otherwise
 
@@ -16,6 +23,33 @@ Horiz0nMinViewDistDesc: |
   Default: 0.25
   Range: 0.01 - 1.0
 
+Horiz0nPercentAdjustNormalName: View Distance Decrease Threshold
+Horiz0nPercentAdjustNormalDesc: |
+  Horiz0n lowers the view distance when the current frametime is this much worse than the best recorded frametime.
+  Default: 10%
+  Range: 1% - 10%
+
+Horiz0nPercentAdjustSevereName: Severe Decrease Threshold
+Horiz0nPercentAdjustSevereDesc: |
+  Horiz0n multiplies the view distance decrease when the current frametime is this much worse than the best recorded frametime.
+  Default: 30%
+  Range: 10% - 100%
+
 Horiz0nToggleName: Toggle view distance management
 Horiz0nToggleOn: Enable
 Horiz0nToggleOff: Disable
+
+Horiz0nViewDistanceSevereMultName: Severe Adjustment Multiplier
+Horiz0nViewDistanceSevereMultDesc: |
+  Multiplies the view distance adjustment when frametime is significantly worse than the best recorded frametime.
+  Higher values allow Horiz0n to recover performance more quickly in demanding areas, but make view distance changes more noticeable.
+  Default: 2.0
+  Range: 1.0 - 5.0
+
+Horiz0nViewDistanceStepName: View Distance Adjustment
+Horiz0nViewDistanceStepDesc: |
+  Sets how much Horiz0n changes the view distance with each adjustment.
+  Lower values make view distance changes smoother but slower.
+  Higher values make adjustments faster but more noticeable.
+  Default: 16
+  Range: 8 - 24
