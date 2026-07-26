@@ -65,6 +65,16 @@ uniform_float uReflectionStrength {
     static = true;
 }
 
+uniform_float uRippleStrength {
+    default = 0.35;
+    min = 0.0;
+    max = 1.0;
+    step = 0.01;
+    display_name = "#{S3Shaders:WaterRippleStrengthName}";
+    description = "#{S3Shaders:WaterRippleStrengthDesc}";
+    static = true;
+}
+
 uniform_float uWaterWorldTolerance {
     default = 2.0;
     min = 0.01;
@@ -281,18 +291,18 @@ fragment water {
             + sin(p.x * 2.0)
         );
 
-        // Secondary ripple: higher spatial frequency, lower amplitude
+        // Secondary ripple: higher spatial frequency, user-controlled amplitude
         float rippleX = sin(
             p.x * 20.42
             + time * 2.5
             + sin(p.y * 7.0)
-        ) * 0.35;
+        ) * uRippleStrength;
 
         float rippleY = sin(
             p.y * 24.78
             - time * 1.8
             + sin(p.x * 5.0)
-        ) * 0.35;
+        ) * uRippleStrength;
 
         vec3 waterNormal = normalize(
             vec3(
