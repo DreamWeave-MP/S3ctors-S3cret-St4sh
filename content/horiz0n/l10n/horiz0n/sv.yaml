@@ -1,3 +1,10 @@
+Horiz0nAdjustFramerateName: Uppdateringsfrekvens för visningsavstånd
+Horiz0nAdjustFramerateDesc: |
+  Ändrar tidsintervallet för hur ofta Horiz0n uppdaterar ditt visningsavstånd.
+  Det rekommenderas *STARKT* att behålla standardvärdet, men inställningen finns tillgänglig för konsekvens och anpassning.
+  Standard: 30
+  Intervall: 10 - 144
+
 Horiz0nPageName: Horiz0n - Hantering av visningsavstånd
 Horiz0nPageDesc: Dynamisk hantering av visningsavstånd för att spara bildfrekvens när det behövs och skapa vackra vyer annars
 
@@ -16,6 +23,33 @@ Horiz0nMinViewDistDesc: |
   Standard: 0.25
   Intervall: 0.01 - 1.0
 
+Horiz0nPercentAdjustNormalName: Tröskel för minskat visningsavstånd
+Horiz0nPercentAdjustNormalDesc: |
+  Horiz0n minskar visningsavståndet när den aktuella bildtiden är så här mycket sämre än den bästa registrerade bildtiden.
+  Standard: 10 %
+  Intervall: 1 % - 10 %
+
+Horiz0nPercentAdjustSevereName: Tröskel för kraftig minskning
+Horiz0nPercentAdjustSevereDesc: |
+  Horiz0n multiplicerar minskningen av visningsavståndet när den aktuella bildtiden är så här mycket sämre än den bästa registrerade bildtiden.
+  Standard: 30 %
+  Intervall: 10 % - 100 %
+
 Horiz0nToggleName: Aktivera eller inaktivera hantering av visningsavstånd
 Horiz0nToggleOn: Aktivera
 Horiz0nToggleOff: Inaktivera
+
+Horiz0nViewDistanceSevereMultName: Multiplikator för kraftig justering
+Horiz0nViewDistanceSevereMultDesc: |
+  Multiplicerar justeringen av visningsavståndet när bildtiden är betydligt sämre än den bästa registrerade bildtiden.
+  Högre värden gör att Horiz0n kan återställa prestandan snabbare i krävande områden, men gör förändringarna av visningsavståndet mer märkbara.
+  Standard: 2,0
+  Intervall: 1,0 - 5,0
+
+Horiz0nViewDistanceStepName: Justering av visningsavstånd
+Horiz0nViewDistanceStepDesc: |
+  Anger hur mycket Horiz0n ändrar visningsavståndet vid varje justering.
+  Lägre värden gör förändringarna av visningsavståndet mjukare men långsammare.
+  Högre värden gör justeringarna snabbare men mer märkbara.
+  Standard: 16
+  Intervall: 8 - 24
