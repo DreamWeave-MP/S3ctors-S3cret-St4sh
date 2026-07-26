@@ -79,11 +79,19 @@ fragment water {
     void main() {
         vec2 uv = gl_FragCoord.xy / omw.resolution;
 
+        // --------------------------------------------------------
+        // Early out: water disabled
+        // --------------------------------------------------------
+
         if (!omw.isWaterEnabled)
         {
             omw_FragColor = omw_GetLastShader(uv);
             return;
         }
+
+        // --------------------------------------------------------
+        // Underwater path
+        // --------------------------------------------------------
 
         if (omw.isUnderwater)
         {
@@ -108,19 +116,18 @@ fragment water {
         }
 
         // --------------------------------------------------------
-        // Water mask: reconstruct world position from depth and
-        // compare against waterHeight in world-space Z.
+        // Cache scene color — one texture fetch, reused everywhere
+        // --------------------------------------------------------
+
+        vec3 sceneColor = omw_GetLastShader(uv).rgb;
+
+        // --------------------------------------------------------
+        // World-space ray reconstruction
         //
-        // OpenMW's water surface (with refraction on, the default)
-        // renders in the opaque bin with depth writes enabled, so
-        // the depth buffer contains the water surface depth.
-        //
-        // World-space comparison is numerically stable (no NDC
-        // precision issues, handles reverse-Z internally).
-        //
-        // We do a cheap ray-plane intersection first to get waterPos
-        // for later shading, and also as a quick reject for pixels
-        // that are looking away from the water plane (sky).
+        // Use an UNNORMALIZED ray direction. The plane intersection
+        // formula P = eye + ray * ((H - eye.z) / ray.z) is invariant
+        // under scaling of ray — the scale cancels in the division.
+        // This avoids a rsqrt + multiply per pixel.
         // --------------------------------------------------------
 
         vec2 ndc = uv * 2.0 - 1.0;
@@ -130,10 +137,10 @@ fragment water {
 
         farView /= farView.w;
 
-        vec3 ray = normalize(
-            (omw.invViewMatrix
-                * vec4(farView.xyz, 0.0)).xyz
-        );
+        vec3 ray = (
+            omw.invViewMatrix
+                * vec4(farView.xyz, 0.0)
+        ).xyz;
 
         float t = (
             omw.waterHeight - omw.eyePos.z
@@ -142,40 +149,35 @@ fragment water {
         // Quick reject: ray pointing away from water plane
         if (t <= 0.0)
         {
-            omw_FragColor = omw_GetLastShader(uv);
+            omw_FragColor = vec4(sceneColor, 1.0);
             return;
         }
 
         vec3 waterPos = omw.eyePos.xyz + ray * t;
 
-        // Reconstruct scene world position from depth and compare
+        // --------------------------------------------------------
+        // Water mask: compare scene geometry depth vs water plane
         //
-        // Classify a pixel as water by comparing the distance along
-        // the view ray to the scene geometry vs. to the water plane.
+        // Both sceneWorldPos and waterPos lie on the same view ray.
+        // The difference along the ray is:
         //
-        //   t = distance to water plane intersection
-        //   tScene = distance to visible scene geometry
+        //   tDiff = tScene - t
+        //         = (sceneWorldPos.z - eyePos.z) / ray.z -
+        //           (waterHeight    - eyePos.z) / ray.z
+        //         = (sceneWorldPos.z - waterHeight) / ray.z
         //
-        //   If t < tScene: water plane is in front of scene geometry
-        //     → pixel is underwater → apply water effect
+        // This avoids a length() call (no sqrt) by exploiting the
+        // shared ray parameter space.
         //
-        //   If t > tScene: scene geometry is in front of water plane
-        //     → pixel is above water → passthrough
-        //
-        //   If t ≈ tScene: shoreline edge → soft blend
-        //
-        // This works whether or not the water surface writes depth:
-        //   - Water writes depth → tScene ≈ t at water surface
-        //   - No water depth → tScene > t for underwater terrain
-        //
-        // Either way, pixels below the waterline get the effect.
+        //   tDiff > 0: scene is behind water plane → water effect
+        //   tDiff < 0: scene is in front of water plane → passthrough
         // --------------------------------------------------------
 
         vec3 sceneWorldPos = omw_GetWorldPosFromUV(uv);
 
-        float tScene = length(sceneWorldPos - omw.eyePos.xyz);
-
-        float tDiff = tScene - t;  // positive = underwater
+        float tDiff = (
+            sceneWorldPos.z - omw.waterHeight
+        ) / ray.z;
 
         float waterMask = smoothstep(
             -uWaterWorldTolerance,
@@ -199,13 +201,12 @@ fragment water {
 
         if (waterMask <= 0.001)
         {
-            omw_FragColor = omw_GetLastShader(uv);
+            omw_FragColor = vec4(sceneColor, 1.0);
             return;
         }
 
         // --------------------------------------------------------
         // Debug: water world position
-        // (waterPos already computed above for the water mask)
         // --------------------------------------------------------
 
         if (uDebugMode == 2)
@@ -219,7 +220,6 @@ fragment water {
 
         // --------------------------------------------------------
         // Water depth (distance from water surface to scene geometry)
-        // sceneWorldPos was already computed above for the water mask
         // --------------------------------------------------------
 
         float waterDepth = max(
@@ -241,7 +241,6 @@ fragment water {
 
         // --------------------------------------------------------
         // Procedural water normal from world-space coordinates
-        // Two octaves of sine waves, world-locked, camera-independent
         // --------------------------------------------------------
 
         vec2 p = waterPos.xy * uWaveScale;
@@ -283,18 +282,14 @@ fragment water {
 
         // --------------------------------------------------------
         // Refraction
-        // Screen-space distortion from water normal, one scene sample
+        // Screen-space distortion from water normal
+        // No explicit UV clamping needed — omw_SamplerLastShader
+        // uses CLAMP_TO_EDGE (confirmed in postprocessor.cpp:457)
         // --------------------------------------------------------
 
         vec2 refractedUV = uv
             + waterNormal.xy
             * uDistortionStrength;
-
-        refractedUV = clamp(
-            refractedUV,
-            vec2(0.0),
-            vec2(1.0)
-        );
 
         vec3 refractedColor = omw_GetLastShader(refractedUV).rgb;
 
@@ -306,26 +301,22 @@ fragment water {
 
         // --------------------------------------------------------
         // Depth-aware refraction rejection
-        // Sample depth at the refracted UV and compare against
-        // the water-plane depth to reject foreground pulls.
+        //
+        // If the refracted sample is CLOSER than the water surface,
+        // it's foreground geometry (e.g. a tree branch overhanging
+        // the water). Reject by falling back to the cached scene
+        // color at the original UV.
+        //
+        // Using omw_GetLinearDepth for a Z-convention-independent
+        // comparison — correct for both standard and reverse-Z.
         // --------------------------------------------------------
 
-        vec4 waterClip = omw.projectionMatrix
-            * (omw.viewMatrix
-                * vec4(waterPos, 1.0));
+        float refractedLinearDepth = omw_GetLinearDepth(refractedUV);
+        float waterLinearDepth = omw_GetLinearDepth(uv);
 
-        float waterNDCZ = waterClip.z / waterClip.w;
-
-        float refractedDepth = omw_GetDepth(refractedUV);
-#if (OMW_REVERSE_Z == 1)
-        float refractedNDCZ = 1.0 - refractedDepth;
-#else
-        float refractedNDCZ = refractedDepth * 2.0 - 1.0;
-#endif
-
-        if (refractedNDCZ > waterNDCZ + 0.001)
+        if (refractedLinearDepth < waterLinearDepth - 0.5)
         {
-            refractedColor = omw_GetLastShader(uv).rgb;
+            refractedColor = sceneColor;
         }
 
         // --------------------------------------------------------
@@ -343,11 +334,7 @@ fragment water {
             * uDistortionStrength
             * 2.0;
 
-        vec2 reflectedUV = clamp(
-            uv + reflectOffset,
-            vec2(0.0),
-            vec2(1.0)
-        );
+        vec2 reflectedUV = uv + reflectOffset;
 
         vec3 reflectedColor = omw_GetLastShader(reflectedUV).rgb;
 
@@ -386,10 +373,8 @@ fragment water {
         );
 
         // --------------------------------------------------------
-        // Blend with original scene at water mask edges
+        // Blend with cached scene color at mask edges
         // --------------------------------------------------------
-
-        vec3 sceneColor = omw_GetLastShader(uv).rgb;
 
         vec3 finalColor = mix(
             sceneColor,
