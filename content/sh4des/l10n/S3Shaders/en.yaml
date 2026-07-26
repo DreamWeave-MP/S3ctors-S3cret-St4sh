@@ -1,2 +1,26 @@
 LumaStandardName: Luma Standard
 LumaStandardDesc: Cycle between luma coefficients used in the BT709, CCIR601, or SMPTE 240M standards
+
+WaterDebugModeName: Debug Mode
+WaterDebugModeDesc: "0: off, 1: water mask, 2: world position, 4: depth, 5: normals, 6: refraction"
+
+WaterWaveScaleName: Wave Scale
+WaterWaveScaleDesc: Scale of the procedural water waves
+
+WaterWaveSpeedName: Wave Speed
+WaterWaveSpeedDesc: Animation speed of the water waves
+
+WaterDistortionName: Distortion Strength
+WaterDistortionDesc: "Strength of the screen-space refraction distortion"
+
+WaterTintName: Water Tint
+WaterTintDesc: "Base color of the water (RGB)"
+
+WaterMaxDepthName: Max Water Depth
+WaterMaxDepthDesc: "Maximum water depth for depth-based tinting, in world units"
+
+WaterReflectionName: Reflection Strength
+WaterReflectionDesc: "Strength of the pseudo-reflection effect"
+
+WaterWorldToleranceName: World Tolerance
+WaterWorldToleranceDesc: "World-space Z tolerance for water mask classification (default 2.0)"
