@@ -22,5 +22,8 @@ WaterMaxDepthDesc: "Maximum water depth for depth-based tinting, in world units"
 WaterReflectionName: Reflection Strength
 WaterReflectionDesc: "Strength of the pseudo-reflection effect"
 
+WaterRippleStrengthName: Ripple Strength
+WaterRippleStrengthDesc: "Amplitude of the high-frequency surface ripple (0 = calm, 1 = max)"
+
 WaterWorldToleranceName: World Tolerance
 WaterWorldToleranceDesc: "World-space Z tolerance for water mask classification (default 2.0)"
