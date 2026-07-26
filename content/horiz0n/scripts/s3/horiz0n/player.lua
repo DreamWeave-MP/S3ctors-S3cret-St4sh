@@ -127,4 +127,21 @@ return {
       }
     end,
   },
+  eventHandlers = {
+    ---@param _ string old cell ID
+    S3LFCellChanged = function(_)
+      if not ENABLE then return end
+
+      local currentlyOutdoors, activelyAdjusting =
+        isOutdoors(), frameFunction == tick or frameFunction == initFunction
+
+      if currentlyOutdoors and not activelyAdjusting then
+        frameFunction = initFunction
+        setViewDistance(viewDistance)
+      elseif not currentlyOutdoors and activelyAdjusting then
+        setViewDistance(MAX_VIEW_DISTANCE)
+        frameFunction = nullFunction
+      end
+    end,
+  },
 }
