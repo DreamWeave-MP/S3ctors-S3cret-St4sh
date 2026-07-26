@@ -20,10 +20,7 @@ WaterMaxDepthName: Max Water Depth
 WaterMaxDepthDesc: "Maximum water depth for depth-based tinting, in world units"
 
 WaterReflectionName: Reflection Strength
-WaterReflectionDesc: "Strength of the screen-space reflection (Fresnel-weighted)"
-
-WaterReflectionOffsetName: Reflection Offset
-WaterReflectionOffsetDesc: "Screen-space offset scale for the reflected-direction UV displacement (higher = more displacement)"
+WaterReflectionDesc: "Strength of the world-space depth-mirrored reflection (Fresnel-weighted)"
 
 WaterRippleStrengthName: Ripple Strength
 WaterRippleStrengthDesc: "Amplitude of the high-frequency surface ripple (0 = calm, 1 = max)"
