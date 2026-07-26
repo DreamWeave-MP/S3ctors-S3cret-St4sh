@@ -152,6 +152,7 @@ LockOnManager.state = {
   lookTarget = nil,
   lookTargetVelocity = nil,
   frameDt = 0,
+  goLeft = false,
 }
 
 ---@alias MarkerTransform openmw.util.Vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
@@ -404,45 +405,52 @@ function LockOnManager.getMarkerVisibility()
   return visibility
 end
 
+---@param actor openmw.LObject
+function LockOnManager.selectNearestTargetImpl(actor)
+  if
+    actor.recordId == 'player'
+    or actor == LockOnManager.state.targetObject
+    or IsDead(actor)
+    or GetStance(actor) == STANCE_NONE
+  then
+    return false
+  end
+
+  local screenPos = I.S3CamHelper.objectIsOnscreen(actor)
+
+  local goLeft = LockOnManager.state.goLeft
+
+  if
+    not screenPos
+    or screenPos.z > LockOnManager.TargetMaxDistance
+    or (goLeft == true and screenPos.x > 0.5)
+    or (goLeft == false and screenPos.x < 0.5)
+  then
+    return false
+  end
+
+  local LOSCheckPos = Vector3(
+    actor.position.x,
+    actor.position.y,
+    actor.position.z + GetBoundingBox(actor).halfSize.z * 2
+  )
+
+  local checkLOSRay = CastRay(GetCamPosition(), LOSCheckPos, RayOpts)
+
+  -- What if there's no hit...?
+  if checkLOSRay.hit then
+    if not checkLOSRay.hitObject or checkLOSRay.hitObject ~= actor then return false end
+  end
+
+  ---@diagnostic disable-next-line: undefined-field
+  return Vec2Len(screenPos.xy - CenterVector2)
+end
+
 ---@param goLeft boolean? whether to check the right or left side of screen space. Nil indicates both sides should be checked.
-function LockOnManager:selectNearestTarget(goLeft)
-  local result = aux_util.findMinScore(ActiveCombatTargets, function(actor)
-    if
-      actor.recordId == 'player'
-      or actor == self.state.targetObject
-      or IsDead(actor)
-      or GetStance(actor) == actor.type.STANCE.Nothing
-    then
-      return false
-    end
+function LockOnManager.selectNearestTarget(goLeft)
+  LockOnManager.state.goLeft = goLeft
 
-    local screenPos = I.S3CamHelper.objectIsOnscreen(actor)
-
-    if
-      not screenPos
-      or screenPos.z > self.TargetMaxDistance
-      or (goLeft == true and screenPos.x > 0.5)
-      or (goLeft == false and screenPos.x < 0.5)
-    then
-      return false
-    end
-
-    local LOSCheckPos = Vector3(
-      actor.position.x,
-      actor.position.y,
-      actor.position.z + GetBoundingBox(actor).halfSize.z * 2
-    )
-
-    local checkLOSRay = CastRay(GetCamPosition(), LOSCheckPos, RayOpts)
-
-    -- What if there's no hit...?
-    if checkLOSRay.hit then
-      if not checkLOSRay.hitObject or checkLOSRay.hitObject ~= actor then return false end
-    end
-
-    ---@diagnostic disable-next-line: undefined-field
-    return Vec2Len(screenPos.xy - CenterVector2)
-  end)
+  local result = aux_util.findMinScore(ActiveCombatTargets, LockOnManager.selectNearestTargetImpl)
 
   if not result then return end
 
@@ -543,7 +551,7 @@ function LockOnManager.lockOnHandler()
     return LockOnManager.toggleLockOnMarkerDisplay()
   end
 
-  LockOnManager:selectNearestTarget()
+  LockOnManager.selectNearestTarget()
 end
 
 --- sets marker visibility. Always triggers a redraw
@@ -661,7 +669,7 @@ function LockOnManager:onFrameBegin()
     and Abs(self.state.cumulativeXMove) >= self.FlickSwitchDistance
     and not self.state.flickTriggered
   then
-    self:selectNearestTarget(self.state.cumulativeXMove < 0)
+    self.selectNearestTarget(self.state.cumulativeXMove < 0)
     self.state.flickTriggered = true
   end
 
@@ -675,7 +683,7 @@ function LockOnManager:onFrame()
   local targetIsActor = LockOnManager.targetIsActor()
   local targetWasDead = LockOnManager.checkForDeadTarget(targetIsActor)
 
-  if targetWasDead and self.SwitchOnDeadTarget then self:selectNearestTarget() end
+  if targetWasDead and self.SwitchOnDeadTarget then self.selectNearestTarget() end
 
   local targetObject = LockOnManager.getTargetObject()
 
