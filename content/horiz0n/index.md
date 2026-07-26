@@ -19,7 +19,7 @@ extra:
     content_files:
       - Horiz0n.esp
 
-  version: 1.1
+  version: 1.2
 ---
 
 I was discussing the concept of occlusion culling with someone recently.
@@ -59,9 +59,14 @@ Interiors are ignored intentionally because they usually hit your framerate limi
 
 The steps are all relatively small, and the 30Hz tickrate ensures that transitions generally aren't too noticeable.
 
-As of version 1.1, there are three settings:
+As of version 1.2, all of Horiz0n's internal tuning parameters are exposed:
 - Minimum View Distance
 - Maximum View Distance
+- Adjustment Framerate
+- Normal Frametime Decrease Adjustment
+- Severe Frametime Decrease Adjustment
+- View Distance Step
+- Severe View Distance Step Multiplier
 - Disable/Enable the entire mod
 
 By default, the max view distance is 25 cells, as view distance is extremely cheap outside of the active grid.
@@ -69,6 +74,8 @@ By default, the max view distance is 25 cells, as view distance is extremely che
 This setting is exposed for those who wish to use extreme view distances on either end.
 
 Personally, I cap it to 5 cells.
+
+Additionally, 1.2 and onward interop with [H3lp Yours3lf](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/) to ensure view distance is always maxed whilst indoors, to avoid unneccessary blind spots in dungeons.
 
 Also, I recommend using it with [Hawk3ye](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/hawk3ye/), as the zoom effect produces a very fun interaction with Horiz0n that causes your view distance to *literally* increase when you zoom in, due to Hawk3ye changing your field of view. Try it out!
 
