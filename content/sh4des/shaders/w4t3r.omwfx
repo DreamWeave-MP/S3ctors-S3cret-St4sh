@@ -39,7 +39,7 @@ uniform_float uDistortionStrength {
 }
 
 uniform_vec3 uWaterTint {
-    default = vec3(0.04, 0.12, 0.16);
+    default = vec3(0.08, 0.28, 0.35);
     display_name = "#{S3Shaders:WaterTintName}";
     description = "#{S3Shaders:WaterTintDesc}";
     static = true;
@@ -472,7 +472,7 @@ fragment water {
             1.0
         );
 
-        float tintAmount = tintDepth * 0.9 + 0.05;
+        float tintAmount = tintDepth * 0.5 + 0.02;
 
         waterColor = mix(
             waterColor,
