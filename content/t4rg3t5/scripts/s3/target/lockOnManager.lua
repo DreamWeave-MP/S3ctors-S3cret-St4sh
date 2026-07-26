@@ -101,6 +101,19 @@ local ActiveCombatTargets = {}
 
 local function isWielding() return s3lf.getStance() ~= STANCE_NONE end
 
+--- Given both the old and new ranges, map a numeric value from one to the other and round it.
+---@param inputValue number
+---@param oldRange openmw.util.Vector2
+---@param newRange openmw.util.Vector2
+local function remapFromRange(inputValue, oldRange, newRange)
+  return Round(
+    Max(
+      Min(Remap(inputValue, oldRange.x, oldRange.y, newRange.x, newRange.y), newRange.y),
+      newRange.x
+    )
+  )
+end
+
 --- TODO: Make a subscript function to reconstruct the vectors for the size remapping instead of reconstructing vectors on every call expensive!
 --- Refer to globalSettings.lua for field default values
 ---
@@ -486,53 +499,53 @@ function LockOnManager.toggleLockOnMarkerDisplay()
   end
 end
 
-local function disable3PCamera()
+function LockOnManager:disable3PCamera()
   I.Camera.enableModeControl(ModInfo.name)
 
-  local prevMode = LockOnManager.state.prevCameraMode
-  local prevOffset = LockOnManager.state.prevFocalOffset
+  local prevMode = self.state.prevCameraMode
+  local prevOffset = self.state.prevFocalOffset
 
   SetCamMode(prevMode or camera.MODE.ThirdPerson, true)
   CamInstantTransition()
 
   if prevOffset then SetFocalOffset(prevOffset) end
 
-  LockOnManager.state.isThirdPersonLock = false
-  LockOnManager.state.prevCameraMode = nil
-  LockOnManager.state.prevFocalOffset = nil
-  LockOnManager.state.cameraPosition = nil
-  LockOnManager.state.cameraVelocity = nil
-  LockOnManager.state.lookTarget = nil
-  LockOnManager.state.lookTargetVelocity = nil
+  self.state.isThirdPersonLock = false
+  self.state.prevCameraMode = nil
+  self.state.prevFocalOffset = nil
+  self.state.cameraPosition = nil
+  self.state.cameraVelocity = nil
+  self.state.lookTarget = nil
+  self.state.lookTargetVelocity = nil
 end
 
 ---@param target openmw.LObject
-local function enable3PCamera(target)
+function LockOnManager:enable3PCamera(target)
   assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!')
 
   local mode = GetCamMode()
   if mode ~= CAM_FP then
-    if not LockOnManager.state.isThirdPersonLock then
-      LockOnManager.state.prevCameraMode = mode
-      LockOnManager.state.prevFocalOffset = GetFocalOffset()
+    if not self.state.isThirdPersonLock then
+      self.state.prevCameraMode = mode
+      self.state.prevFocalOffset = GetFocalOffset()
       I.Camera.disableModeControl(ModInfo.name)
-      LockOnManager.state.cameraPosition = GetCamPosition()
-      LockOnManager.state.cameraVelocity = ZeroVector3
-      LockOnManager.state.lookTarget =
-        I.S3CamHelper.targetPosition(target, target.position, LockOnManager.state.npcHeightOffset)
-      LockOnManager.state.lookTargetVelocity = ZeroVector3
+      self.state.cameraPosition = GetCamPosition()
+      self.state.cameraVelocity = ZeroVector3
+      self.state.lookTarget =
+        I.S3CamHelper.targetPosition(target, target.position, self.state.npcHeightOffset)
+      self.state.lookTargetVelocity = ZeroVector3
     end
     SetCamMode(camera.MODE.Static, true)
-    LockOnManager.state.isThirdPersonLock = true
+    self.state.isThirdPersonLock = true
   end
 end
 
 ---@param target openmw.LObject?
 function LockOnManager.setTarget(target)
   if target then
-    enable3PCamera(target)
+    LockOnManager:enable3PCamera(target)
   elseif LockOnManager.state.isThirdPersonLock then
-    disable3PCamera()
+    LockOnManager:disable3PCamera()
   end
 
   LockOnManager.state.targetObject = target
@@ -585,19 +598,6 @@ function LockOnManager.checkForDeadTarget(targetIsActor)
     s3lf.sendObjectEvent 'S3TargetLockOnto'
     return true
   end
-end
-
---- Given both the old and new ranges, map a numeric value from one to the other and round it.
----@param inputValue number
----@param oldRange openmw.util.Vector2
----@param newRange openmw.util.Vector2
-local function remapFromRange(inputValue, oldRange, newRange)
-  return Round(
-    Max(
-      Min(Remap(inputValue, oldRange.x, oldRange.y, newRange.x, newRange.y), newRange.y),
-      newRange.x
-    )
-  )
 end
 
 ---@param distanceFromCamera number distance in todd units from targeted object to the camera
@@ -680,21 +680,18 @@ function LockOnManager:onFrameBegin()
 end
 
 function LockOnManager:onFrame()
-  local targetIsActor = LockOnManager.targetIsActor()
-  local targetWasDead = LockOnManager.checkForDeadTarget(targetIsActor)
+  local targetIsActor = self.targetIsActor()
+  local targetWasDead = self.checkForDeadTarget(targetIsActor)
 
   if targetWasDead and self.SwitchOnDeadTarget then self.selectNearestTarget() end
 
-  local targetObject = LockOnManager.getTargetObject()
+  local targetObject = self.getTargetObject()
 
   if self.CheckLOS and targetObject then
-    local stablePos = I.S3CamHelper.targetPosition(
-      targetObject,
-      targetObject.position,
-      LockOnManager.state.npcHeightOffset
-    )
+    local stablePos =
+      I.S3CamHelper.targetPosition(targetObject, targetObject.position, self.state.npcHeightOffset)
 
-    if not I.S3CamHelper.objectIsOnscreen(targetObject, LockOnManager.state.npcHeightOffset) then
+    if not I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset) then
       s3lf.sendObjectEvent 'S3TargetLockOnto'
     else
       local LOStest = CastRay(GetCamPosition(), stablePos, RayOpts)
@@ -708,51 +705,48 @@ function LockOnManager:onFrame()
   local uiMode = GetUIMode()
   local validMode = not uiMode or uiMode == 'MainMenu'
 
-  LockOnManager.setCanLockOn(targetObject ~= nil and (targetIsActor and isWielding()) and validMode)
+  self.setCanLockOn(targetObject ~= nil and (targetIsActor and isWielding()) and validMode)
 
-  local markerExists = LockOnManager.getLockOnMarker() ~= nil
-  local markerIsVisible = LockOnManager.getMarkerVisibility()
+  local markerExists = self.getLockOnMarker() ~= nil
+  local markerIsVisible = self.getMarkerVisibility()
 
-  if LockOnManager.canLockOn() then
+  if self.canLockOn() then
     assert(targetObject)
     if not markerExists then
-      LockOnManager.toggleLockOnMarkerDisplay()
+      self.toggleLockOnMarkerDisplay()
     elseif not markerIsVisible then
-      LockOnManager.setMarkerVisibility(true)
+      self.setMarkerVisibility(true)
     end
 
-    local normalizedPos =
-      I.S3CamHelper.objectIsOnscreen(targetObject, LockOnManager.state.npcHeightOffset)
+    local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset)
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
         if GetCamMode() ~= CAM_FP then
-          if not LockOnManager.state.isThirdPersonLock then
-            enable3PCamera(LockOnManager.state.targetObject)
-          end
+          if not self.state.isThirdPersonLock then self:enable3PCamera(self.state.targetObject) end
 
-          LockOnManager.trackTargetThirdPerson(targetObject)
+          self.trackTargetThirdPerson(targetObject)
         else
-          LockOnManager.trackTarget(targetObject, LockOnManager.shouldTrack())
+          self.trackTarget(targetObject, self.shouldTrack())
         end
       end
 
-      LockOnManager:updateMarker(normalizedPos, true)
+      self:updateMarker(normalizedPos, true)
       ShowCrosshair(false)
     else
-      LockOnManager.setMarkerVisibility(false)
+      self.setMarkerVisibility(false)
       ShowCrosshair(true)
     end
   else
     if markerIsVisible then
-      LockOnManager.setMarkerVisibility(false)
+      self.setMarkerVisibility(false)
       ShowCrosshair(true)
     end
 
-    if LockOnManager.state.isThirdPersonLock then disable3PCamera() end
+    if LockOnManager.state.isThirdPersonLock then self:disable3PCamera() end
   end
 
-  return LockOnManager.canLockOn()
+  return self.canLockOn()
 end
 
 --- Checks whether the lock-on icon is currently "bouncing" from a hit
