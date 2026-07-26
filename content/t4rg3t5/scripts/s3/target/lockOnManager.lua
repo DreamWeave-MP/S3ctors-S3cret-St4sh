@@ -349,7 +349,7 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   end
 end
 
----@param transform openmw.util.Vector3
+---@param transform MarkerTransform
 ---@param drawUpdate boolean
 function LockOnManager:updateMarker(transform, drawUpdate)
   local element = assert(
