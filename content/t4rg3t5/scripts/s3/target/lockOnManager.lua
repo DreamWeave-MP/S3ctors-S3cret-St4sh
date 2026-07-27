@@ -81,19 +81,10 @@ local MaxRot, MaxPitchRot = Rad(12.0), Rad(10.0)
 
 local NPC_HEIGHT_OFFSET = 1.6
 
-local CAM_DISTANCE = 120
-local CAM_HEIGHT = 25
-local CAM_SIDE_OFFSET = 90
-local CAM_MIN_DISTANCE = 30
 local CAM_COLLISION_RATIO = 0.85
-local CAM_POSITION_RESPONSIVENESS = 6.0
-local CAM_LOOK_RESPONSIVENESS = 8.0
-local CAM_LOOK_BIAS = 0.8
 
 local SHOULDER_BAD = 80
 local SHOULDER_GOOD = 100
-local TARGET_BAD = CAM_DISTANCE * 0.5
-local TARGET_GOOD = CAM_DISTANCE * 0.8
 
 local EPS = 0.001
 
@@ -139,6 +130,13 @@ end
 ---@field HitBounceSize number How much the icon size should increase/decrease when bouncing
 ---@field DisableLockWhenSheathing boolean whether to un-set the locked target when sheathing your own weapon
 ---@field LockOnCombatStart boolean whether or not to automatically lock onto whatever target started combat with you
+---@field CameraDistance integer Base orbit distance from the player center
+---@field CameraHeight integer Vertical offset of the camera orbit
+---@field CameraSideOffset integer Horizontal shoulder offset strength
+---@field CameraMinDistance integer Minimum orbit distance when collision-pinned
+---@field CameraResponsiveness integer Critically-damped position spring frequency in rad/s
+---@field CameraLookResponsiveness integer Critically-damped look-target spring frequency in rad/s
+---@field CameraLookBias integer Look-target bias toward target vs player center, 0-100 percent
 local LockOnManager = I.S3ProtectedTable.new {
   inputGroupName = ModInfo.groupName,
   logPrefix = ModInfo.logPrefix,
@@ -249,20 +247,28 @@ end
 ---@return number effectiveDist
 ---@return number desiredSide
 function LockOnManager.computeOrbitParams(orbitCenter, targetPos)
+  local cameraDistance = LockOnManager.CameraDistance
+  local cameraHeight = LockOnManager.CameraHeight
+  local cameraSideOffset = LockOnManager.CameraSideOffset
+  local cameraMinDistance = LockOnManager.CameraMinDistance
+
+  local targetBad = cameraDistance * 0.5
+  local targetGood = cameraDistance * 0.8
+
   local lookDir = Vec3Normalize(targetPos - orbitCenter)
   local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
-  local shoulderOffset = right * CAM_SIDE_OFFSET
+  local shoulderOffset = right * cameraSideOffset
 
-  local effectiveDist = CAM_DISTANCE
+  local effectiveDist = cameraDistance
   local desiredSide = 1
 
-  local distRay = CastRay(orbitCenter, orbitCenter - lookDir * CAM_DISTANCE, RayOpts)
+  local distRay = CastRay(orbitCenter, orbitCenter - lookDir * cameraDistance, RayOpts)
   if distRay.hit then
     effectiveDist =
-      Max(Vec3Len(distRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
+      Max(Vec3Len(distRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, cameraMinDistance)
 
-    if effectiveDist <= CAM_MIN_DISTANCE * 1.25 then
-      local collisionBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+    if effectiveDist <= cameraMinDistance * 1.25 then
+      local collisionBase = orbitCenter - lookDir * effectiveDist + UpVec3 * cameraHeight
 
       local primaryRay = CastRay(orbitCenter, collisionBase + shoulderOffset, RayOpts)
       local otherRay = CastRay(orbitCenter, collisionBase - shoulderOffset, RayOpts)
@@ -272,12 +278,12 @@ function LockOnManager.computeOrbitParams(orbitCenter, targetPos)
 
       if primaryDist < SHOULDER_BAD and otherDist > SHOULDER_GOOD then
         desiredSide = -1
-        effectiveDist = CAM_DISTANCE
+        effectiveDist = cameraDistance
       end
     end
   end
 
-  local targetSideBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+  local targetSideBase = orbitCenter - lookDir * effectiveDist + UpVec3 * cameraHeight
   local targetSidePos = targetSideBase + shoulderOffset * desiredSide
   local shoulderCheck = CastRay(targetPos, targetSidePos, RayOpts)
 
@@ -290,17 +296,17 @@ function LockOnManager.computeOrbitParams(orbitCenter, targetPos)
     local otherCheck = CastRay(targetPos, otherPos, RayOpts)
     local otherDist = otherCheck.hit and Vec3Len(otherCheck.hitPos - targetPos) or 9999
 
-    if primaryDist < TARGET_BAD and otherDist > TARGET_GOOD then
+    if primaryDist < targetBad and otherDist > targetGood then
       desiredSide = otherSide
 
-      local newBase = orbitCenter - lookDir * CAM_DISTANCE + UpVec3 * CAM_HEIGHT
+      local newBase = orbitCenter - lookDir * cameraDistance + UpVec3 * cameraHeight
       local newRay = CastRay(orbitCenter, newBase + shoulderOffset * desiredSide, RayOpts)
 
       if newRay.hit then
         effectiveDist =
-          Max(Vec3Len(newRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
+          Max(Vec3Len(newRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, cameraMinDistance)
       else
-        effectiveDist = CAM_DISTANCE
+        effectiveDist = cameraDistance
       end
     end
   end
@@ -315,10 +321,12 @@ end
 ---@param desiredSide number
 ---@return openmw.util.Vector3
 function LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
+  local cameraSideOffset = LockOnManager.CameraSideOffset
+  local cameraHeight = LockOnManager.CameraHeight
   local lookDir = Vec3Normalize(targetPos - orbitCenter)
   local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
-  local shoulderOffset = right * CAM_SIDE_OFFSET
-  local base = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+  local shoulderOffset = right * cameraSideOffset
+  local base = orbitCenter - lookDir * effectiveDist + UpVec3 * cameraHeight
   return base + shoulderOffset * desiredSide
 end
 
@@ -353,7 +361,9 @@ end
 ---@return openmw.util.Vector3 newLookTarget
 ---@return openmw.util.Vector3 newLookVel
 function LockOnManager.springLookTarget(lookTarget, lookVel, orbitCenter, targetPos, dt)
-  local desiredLookTarget = orbitCenter + (targetPos - orbitCenter) * CAM_LOOK_BIAS
+  local cameraLookBias = LockOnManager.CameraLookBias / 100
+  local cameraLookResponsiveness = LockOnManager.CameraLookResponsiveness
+  local desiredLookTarget = orbitCenter + (targetPos - orbitCenter) * cameraLookBias
 
   if not lookTarget then
     lookTarget = targetPos
@@ -365,7 +375,7 @@ function LockOnManager.springLookTarget(lookTarget, lookVel, orbitCenter, target
     lookVel or ZeroVector3,
     desiredLookTarget,
     dt,
-    CAM_LOOK_RESPONSIVENESS
+    cameraLookResponsiveness
   )
 end
 
@@ -418,7 +428,7 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
     state.cameraVelocity,
     desiredPos,
     state.frameDt,
-    CAM_POSITION_RESPONSIVENESS
+    LockOnManager.CameraResponsiveness
   )
   SetCamStaticPosition(state.cameraPosition)
 
