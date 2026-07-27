@@ -239,21 +239,17 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   if Abs(playerPitch) >= EPS then s3lf.controls.pitchChange = playerPitch end
 end
 
---- Replacement over-the-shoulder camera implementation for 3P
----@param targetObject openmw.LObject
-function LockOnManager.trackTargetThirdPerson(targetObject)
-  local targetPos = I.S3CamHelper.targetPosition(
-    targetObject,
-    targetObject.position,
-    LockOnManager.state.npcHeightOffset
-  )
-
-  local orbitCenter = GetTrackedPosition()
-
+--- Compute the effective camera distance and shoulder side for the lock-on camera orbit.
+--- Uses backward raycasts for collision avoidance and two-threshold
+--- hysteresis for shoulder switching
+---@param orbitCenter openmw.util.Vector3
+---@param targetPos openmw.util.Vector3
+---@return number effectiveDist
+---@return number desiredSide
+function LockOnManager.computeOrbitParams(orbitCenter, targetPos)
   local lookDir = Vec3Normalize(targetPos - orbitCenter)
   local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
-
-  local leftRight = right * CAM_SIDE_OFFSET
+  local shoulderOffset = right * CAM_SIDE_OFFSET
 
   local effectiveDist = CAM_DISTANCE
   local desiredSide = 1
@@ -262,12 +258,16 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   if distRay.hit then
     effectiveDist =
       Max(Vec3Len(distRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
+
     if effectiveDist <= CAM_MIN_DISTANCE * 1.25 then
-      local retBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
-      local primaryRay = CastRay(orbitCenter, retBase + leftRight, RayOpts)
-      local otherRay = CastRay(orbitCenter, retBase - leftRight, RayOpts)
+      local collisionBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+
+      local primaryRay = CastRay(orbitCenter, collisionBase + shoulderOffset, RayOpts)
+      local otherRay = CastRay(orbitCenter, collisionBase - shoulderOffset, RayOpts)
+
       local primaryDist = primaryRay.hit and Vec3Len(primaryRay.hitPos - orbitCenter) or 9999
       local otherDist = otherRay.hit and Vec3Len(otherRay.hitPos - orbitCenter) or 9999
+
       if primaryDist < SHOULDER_BAD and otherDist > SHOULDER_GOOD then
         desiredSide = -1
         effectiveDist = CAM_DISTANCE
@@ -275,20 +275,25 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
     end
   end
 
-  local adjBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
-  local adjPos = adjBase + leftRight * desiredSide
+  local targetSideBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+  local targetSidePos = targetSideBase + shoulderOffset * desiredSide
+  local shoulderCheck = CastRay(targetPos, targetSidePos, RayOpts)
 
-  local shoulderCheck = CastRay(targetPos, adjPos, RayOpts)
   if shoulderCheck.hit then
     local primaryDist = Vec3Len(shoulderCheck.hitPos - targetPos)
+
     local otherSide = -desiredSide
-    local otherPos = adjBase + leftRight * otherSide
+    local otherPos = targetSideBase + shoulderOffset * otherSide
+
     local otherCheck = CastRay(targetPos, otherPos, RayOpts)
     local otherDist = otherCheck.hit and Vec3Len(otherCheck.hitPos - targetPos) or 9999
+
     if primaryDist < TARGET_BAD and otherDist > TARGET_GOOD then
       desiredSide = otherSide
+
       local newBase = orbitCenter - lookDir * CAM_DISTANCE + UpVec3 * CAM_HEIGHT
-      local newRay = CastRay(orbitCenter, newBase + leftRight * desiredSide, RayOpts)
+      local newRay = CastRay(orbitCenter, newBase + shoulderOffset * desiredSide, RayOpts)
+
       if newRay.hit then
         effectiveDist =
           Max(Vec3Len(newRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, CAM_MIN_DISTANCE)
@@ -298,68 +303,135 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
     end
   end
 
-  local finalBase = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
-  local desiredPos = finalBase + leftRight * desiredSide
+  return effectiveDist, desiredSide
+end
 
-  local state = LockOnManager.state
-  local dt = state.frameDt
-  local pos = state.cameraPosition
-  local vel = state.cameraVelocity
+--- Convert orbit parameters into a final desired camera world position.
+---@param orbitCenter openmw.util.Vector3
+---@param targetPos openmw.util.Vector3
+---@param effectiveDist number
+---@param desiredSide number
+---@return openmw.util.Vector3
+function LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
+  local lookDir = Vec3Normalize(targetPos - orbitCenter)
+  local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
+  local shoulderOffset = right * CAM_SIDE_OFFSET
+  local base = orbitCenter - lookDir * effectiveDist + UpVec3 * CAM_HEIGHT
+  return base + shoulderOffset * desiredSide
+end
 
-  if not pos then
-    pos = GetCamPosition()
-    vel = ZeroVector3
-  end
-
-  local safeDt = dt
-  if safeDt > 0.1 then safeDt = 0.1 end
-
-  local omega = CAM_POSITION_RESPONSIVENESS
+--- Step a critically-damped spring toward a target position, frame-rate independent.
+---@param pos openmw.util.Vector3
+---@param vel openmw.util.Vector3
+---@param target openmw.util.Vector3
+---@param dt number
+---@param omega number Spring natural frequency in rad/s
+---@return openmw.util.Vector3 newPos
+---@return openmw.util.Vector3 newVel
+function LockOnManager.criticallyDampedSpring(pos, vel, target, dt, omega)
+  local safeDt = dt > 0.1 and 0.1 or dt
   local omega2 = omega * omega
-  local diff = pos - desiredPos
+  local diff = pos - target
   local springForce = diff * -omega2 + vel * (-2 * omega)
+
   vel = vel + springForce * safeDt
   pos = pos + vel * safeDt
 
-  state.cameraPosition = pos
-  state.cameraVelocity = vel
+  return pos, vel
+end
 
-  SetCamStaticPosition(pos)
-
+--- Spring the look-target toward a point between the orbit center and the target,
+--- biased toward the target by CAM_LOOK_BIAS. The look-target springs independently
+--- from the camera position, which gives the camera a subtle trailing feel.
+---@param lookTarget openmw.util.Vector3?
+---@param lookVel openmw.util.Vector3?
+---@param orbitCenter openmw.util.Vector3
+---@param targetPos openmw.util.Vector3
+---@param dt number
+---@return openmw.util.Vector3 newLookTarget
+---@return openmw.util.Vector3 newLookVel
+function LockOnManager.springLookTarget(lookTarget, lookVel, orbitCenter, targetPos, dt)
   local desiredLookTarget = orbitCenter + (targetPos - orbitCenter) * CAM_LOOK_BIAS
-  local lookTarget = state.lookTarget
-  local lookVel = state.lookTargetVelocity
 
   if not lookTarget then
     lookTarget = targetPos
     lookVel = ZeroVector3
   end
 
-  local lookOmega = CAM_LOOK_RESPONSIVENESS
-  local lookOmega2 = lookOmega * lookOmega
-  local lookDiff = lookTarget - desiredLookTarget
-  local lookForce = lookDiff * -lookOmega2 + lookVel * (-2 * lookOmega)
-  lookVel = lookVel + lookForce * safeDt
-  lookTarget = lookTarget + lookVel * safeDt
+  return LockOnManager.criticallyDampedSpring(
+    lookTarget,
+    lookVel or ZeroVector3,
+    desiredLookTarget,
+    dt,
+    CAM_LOOK_RESPONSIVENESS
+  )
+end
 
-  state.lookTarget = lookTarget
-  state.lookTargetVelocity = lookVel
+--- Orient the camera's yaw and pitch to look at a world-space target position.
+---@param cameraPos openmw.util.Vector3
+---@param lookTarget openmw.util.Vector3
+function LockOnManager.lookToward(cameraPos, lookTarget)
+  local viewDir = Vec3Normalize(lookTarget - cameraPos)
+  SetCamYaw(Atan2(viewDir.x, viewDir.y))
+  SetCamPitch(Atan2(-viewDir.z, Sqrt(viewDir.x * viewDir.x + viewDir.y * viewDir.y)))
+end
 
-  local camLookDir = Vec3Normalize(lookTarget - pos)
-  SetCamYaw(Atan2(camLookDir.x, camLookDir.y))
-  SetCamPitch(Atan2(-camLookDir.z, Sqrt(camLookDir.x * camLookDir.x + camLookDir.y * camLookDir.y)))
+--- Rotate the player character's yaw and pitch toward the lock-on target.
+---@param targetPos openmw.util.Vector3
+---@param orbitCenter openmw.util.Vector3
+function LockOnManager.rotatePlayerTowardTarget(targetPos, orbitCenter)
+  local toTarget = Vec3Normalize(targetPos - orbitCenter)
+  local yaw = Atan2(toTarget.x, toTarget.y)
+  local pitch = Atan2(-toTarget.z, Sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
+  local rot = s3lf.rotation
+  local yawChange, pitchChange = LockOnManager.getAngleDiff(yaw, pitch, GetYaw(rot), GetPitch(rot))
+  if Abs(yawChange) >= EPS then s3lf.controls.yawChange = yawChange end
+  if Abs(pitchChange) >= EPS then s3lf.controls.pitchChange = pitchChange end
+end
+
+--- Replacement over-the-shoulder camera implementation for 3P.
+---@param targetObject openmw.LObject
+function LockOnManager.trackTargetThirdPerson(targetObject)
+  local targetPos = I.S3CamHelper.targetPosition(
+    targetObject,
+    targetObject.position,
+    LockOnManager.state.npcHeightOffset
+  )
+  local orbitCenter = GetTrackedPosition()
+  local state = LockOnManager.state
+
+  local effectiveDist, desiredSide = LockOnManager.computeOrbitParams(orbitCenter, targetPos)
+  local desiredPos =
+    LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
+
+  if not state.cameraPosition then
+    state.cameraPosition = GetCamPosition()
+    state.cameraVelocity = ZeroVector3
+    state.lookTarget = targetPos
+    state.lookTargetVelocity = ZeroVector3
+  end
+
+  state.cameraPosition, state.cameraVelocity = LockOnManager.criticallyDampedSpring(
+    state.cameraPosition,
+    state.cameraVelocity,
+    desiredPos,
+    state.frameDt,
+    CAM_POSITION_RESPONSIVENESS
+  )
+  SetCamStaticPosition(state.cameraPosition)
+
+  state.lookTarget, state.lookTargetVelocity = LockOnManager.springLookTarget(
+    state.lookTarget,
+    state.lookTargetVelocity,
+    orbitCenter,
+    targetPos,
+    state.frameDt
+  )
+
+  LockOnManager.lookToward(state.cameraPosition, state.lookTarget)
 
   if LockOnManager.shouldTrack() then
-    local toTarget = Vec3Normalize(targetPos - orbitCenter)
-    local yaw = Atan2(toTarget.x, toTarget.y)
-    local pitch = Atan2(-toTarget.z, Sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
-
-    local rot = s3lf.rotation
-    local yawChange, pitchChange =
-      LockOnManager.getAngleDiff(yaw, pitch, GetYaw(rot), GetPitch(rot))
-
-    if Abs(yawChange) >= EPS then s3lf.controls.yawChange = yawChange end
-    if Abs(pitchChange) >= EPS then s3lf.controls.pitchChange = pitchChange end
+    LockOnManager.rotatePlayerTowardTarget(targetPos, orbitCenter)
   end
 end
 
