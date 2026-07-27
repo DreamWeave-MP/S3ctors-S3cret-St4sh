@@ -30,6 +30,8 @@ local SetCamStaticPosition, GetCamMode, SetCamMode, CamInstantTransition =
 local GetFocalOffset, SetFocalOffset =
   camera.getFocalPreferredOffset, camera.setFocalPreferredOffset
 
+local GetMouseMoveX, GetMouseMoveY = input.getMouseMoveX, input.getMouseMoveY
+
 local GetPitch, GetStance, GetYaw, Health, IsActor, IsDead =
   s3lf.rotation.getPitch,
   types.Actor.getStance,
@@ -731,7 +733,7 @@ function LockOnManager:onFrameBegin()
   self.state.frameDt = GetFrameDuration()
   if GetUIMode() or not LockOnManager.getMarkerVisibility() then return end
 
-  local mouseMoveThisFrame = Vector2(input.getMouseMoveX(), input.getMouseMoveY())
+  local mouseMoveThisFrame = Vector2(GetMouseMoveX(), GetMouseMoveY())
 
   self.state.cumulativeXMove = self.state.cumulativeXMove + mouseMoveThisFrame.x
 
