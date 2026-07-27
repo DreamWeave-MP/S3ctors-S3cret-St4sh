@@ -129,6 +129,64 @@ do
         'LockOnCombatStartDesc',
         false
       ),
+
+      Setting(
+        'CameraDistance',
+        'number',
+        { integer = true, min = 50, max = 500 },
+        'CameraDistanceName',
+        'CameraDistanceDesc',
+        120
+      ),
+      Setting(
+        'CameraHeight',
+        'number',
+        { integer = true, min = -50, max = 100 },
+        'CameraHeightName',
+        'CameraHeightDesc',
+        25
+      ),
+      Setting(
+        'CameraSideOffset',
+        'number',
+        { integer = true, min = 0, max = 200 },
+        'CameraSideOffsetName',
+        'CameraSideOffsetDesc',
+        90
+      ),
+      Setting(
+        'CameraMinDistance',
+        'number',
+        { integer = true, min = 15, max = 200 },
+        'CameraMinDistanceName',
+        'CameraMinDistanceDesc',
+        30
+      ),
+      Setting(
+        'CameraResponsiveness',
+        'number',
+        { integer = true, min = 1, max = 30 },
+        'CameraResponsivenessName',
+        'CameraResponsivenessDesc',
+        6
+      ),
+      Setting(
+        'CameraLookResponsiveness',
+        'number',
+        { integer = true, min = 1, max = 30 },
+        'CameraLookResponsivenessName',
+        'CameraLookResponsivenessDesc',
+        8
+      ),
+      Setting(
+        'CameraLookBias',
+        'number',
+        { integer = true, min = 0, max = 100 },
+        'CameraLookBiasName',
+        'CameraLookBiasDesc',
+        80
+      ),
+
       Setting(
         'TargetMinSize',
         'number',
@@ -231,6 +289,13 @@ do
     'TargetColorW',
     'TargetColorVW',
     'TargetColorD',
+    'CameraDistance',
+    'CameraHeight',
+    'CameraSideOffset',
+    'CameraMinDistance',
+    'CameraResponsiveness',
+    'CameraLookResponsiveness',
+    'CameraLookBias',
   }
 
   local LockOnGroup = require('openmw.storage').playerSection(ModInfo.groupName)

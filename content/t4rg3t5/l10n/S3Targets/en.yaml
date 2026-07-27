@@ -73,3 +73,24 @@ TargetMinDistanceDesc: Distance from the locked target at which the icon will be
 
 TargetMinSizeName: Minimum Target Size
 TargetMinSizeDesc: Size of the targeting icon at minimum distance.
+
+CameraDistanceName: Camera Orbit Distance
+CameraDistanceDesc: How far the lock-on camera orbits from the player center. Higher values pull the camera further back.
+
+CameraHeightName: Camera Height Offset
+CameraHeightDesc: Vertical offset of the lock-on camera from the player center. Higher values look down at the target from above.
+
+CameraSideOffsetName: Shoulder Offset Strength
+CameraSideOffsetDesc: How far the camera sits to the side of the player. Higher values give a stronger over-the-shoulder feel. Set to 0 for a dead-center camera.
+
+CameraMinDistanceName: Minimum Orbit Distance
+CameraMinDistanceDesc: Minimum distance the camera maintains from the player when collision-pinned against walls or obstacles. Prevents the camera from clipping through the player model.
+
+CameraResponsivenessName: Camera Responsiveness
+CameraResponsivenessDesc: How quickly the camera position snaps toward its target orbit point. Lower values give a smoother, floatier feel. Higher values feel snappier and more direct.
+
+CameraLookResponsivenessName: Look Responsiveness
+CameraLookResponsivenessDesc: How quickly the camera's look direction catches up to the target. Lower values create a trailing effect. Higher values keep the target centered more aggressively.
+
+CameraLookBiasName: Look Bias
+CameraLookBiasDesc: How much the camera focuses on the target versus the player center. 100% looks directly at the target. 0% looks at the player center. Values around 80% give natural framing with some target focus.
