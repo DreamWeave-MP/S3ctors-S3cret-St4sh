@@ -168,12 +168,12 @@ local conditionHandlers = {
   has_tag = function(object, tagName)
     if not hasTag then return false end
 
-    return hasTag(object, tagName)
+    return hasTag(object, tagName) or false
   end,
   cell_tag = function(object, tagName)
     if not hasTag then return false end
 
-    return hasTag(object.cell, tagName)
+    return hasTag(object.cell, tagName) or false
   end,
   is_dead = function(object, shouldBeDead)
     if not types.Actor.objectIsInstance(object) then return false end
