@@ -459,7 +459,8 @@ local scriptInterface = {
     onKeyPress = function(key)
       if key.code == input.KEY.F8 then
         if key.withShift then
-          PlaylistEditor.toggle()
+          -- PlaylistEditor.toggle()
+          MusicManager.overrideMusicEnabled()
         else
           SendEvent(self, 'S3maphoreSkipTrack')
         end
