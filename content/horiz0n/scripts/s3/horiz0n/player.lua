@@ -13,8 +13,6 @@ local MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE =
   CELL_SIZE * horiz0nSettings:get 'Horiz0nMinViewDistance',
   CELL_SIZE * horiz0nSettings:get 'Horiz0nMaxViewDistance'
 
-setViewDistance(MIN_VIEW_DISTANCE)
-
 local ENABLE, BAD_FRAME_RATIO, OKAYISH_FRAME_RATIO, SEVERE_MULT, VD_STEP, UPDATE_INTERVAL =
   horiz0nSettings:get 'Horiz0nToggle',
   1 + horiz0nSettings:get 'Horiz0nPercentAdjustSevere' / 100,
@@ -22,6 +20,8 @@ local ENABLE, BAD_FRAME_RATIO, OKAYISH_FRAME_RATIO, SEVERE_MULT, VD_STEP, UPDATE
   horiz0nSettings:get 'Horiz0nViewDistanceSevereMult',
   horiz0nSettings:get 'Horiz0nViewDistanceStep',
   1 / horiz0nSettings:get 'Horiz0nAdjustFramerate'
+
+if ENABLE then setViewDistance(MIN_VIEW_DISTANCE) end
 
 local viewDistance = MIN_VIEW_DISTANCE
 
