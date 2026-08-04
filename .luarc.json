@@ -19,6 +19,7 @@
             "./content/chim_2090/?.lua",
             "./content/chim_climbing/?.lua",
             "./content/crass_nav/?.lua",
+            "./content/dr1p/?.lua",
             "./content/fargoth_assassins/?.lua",
             "./content/h3lp_yours3lf/?.lua",
             "./content/hawk3ye/?.lua",
@@ -48,6 +49,7 @@
     },
     "workspace.library": [
         "content/cod3x/?.lua",
+        "content/dr1p/?.lua",
         "content/s3maphore/?.lua",
         "rubic0nMeta/?.lua"
     ]
