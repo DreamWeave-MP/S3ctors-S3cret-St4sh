@@ -21,7 +21,7 @@ for name, index in next, Skeleton do
   SkeletonTypesToNames[index] = name
 end
 
-local BodyPartRecords, DeepToString, FirstPersonMode, GetCameraMode, IdentityTransform, IsPlayer, ReloadLua, SetCameraMode, ThirdPersonMode, TransformMove, TransformRotateX, TransformRotateY, TransformRotateZ, TransformScale
+local BodyPartRecords, DeepToString, FirstPersonMode, GetCameraMode, IdentityTransform, IsPlayer, ReloadLua, RaceRecords, SetCameraMode, ThirdPersonMode, TransformMove, TransformRotateX, TransformRotateY, TransformRotateZ, TransformScale
 
 local ringMesh
 do
@@ -43,6 +43,7 @@ do
     transform.scale
 
   s3lf = require('openmw.interfaces').s3.lf
+  RaceRecords = s3lf.races.records
 
   IsPlayer = s3lf.actorType == 0
 
@@ -85,8 +86,9 @@ local RingAttachInfo = {
 ---@return SkeletonVariant
 local function getSkeletonType()
   local isFirstPerson = GetCameraMode() == FirstPersonMode
-  local isFemale = not s3lf.isMale
-  local isBeast = s3lf.races.records[s3lf.race].isBeast
+  local actorRecord = s3lf.record
+  local isFemale = not actorRecord.isMale
+  local isBeast = RaceRecords[actorRecord.race].isBeast
 
   if isFirstPerson then
     if isBeast then
@@ -202,7 +204,7 @@ local function addRing(handSide, finger, useHeadTransform)
   local basePlacement = getBasePlacement(handSide, finger)
   if not basePlacement then return end
 
-  local raceMap = RacePlacement[s3lf.race]
+  local raceMap = RacePlacement[s3lf.record.race]
   ---@type DR1PTransform?
   local racePlacement
   if raceMap then
