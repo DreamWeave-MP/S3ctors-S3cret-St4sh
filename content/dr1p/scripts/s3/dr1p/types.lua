@@ -27,6 +27,36 @@
 ---@alias SlotBoneMap table<SlotIndex, SlotBoneBinding>
 ---@alias SlotIndex HandSide | AuxSlot
 
+---@class DR1PInterface
+---@field AuxSlot AuxSlots
+---@field BodyType BodyTypes
+---@field Finger FingerIndices
+---@field Hand HandSides
+---@field Skeleton SkeletonVariants
+---@field addRing fun(handSide: HandSide, finger: FingerIndex, useHeadTransform: boolean)
+---@field getSkeletonType fun(): SkeletonVariant
+---@field getSkeletonTypeName fun(): string
+
+---@class DR1PAttachInfo
+---@field autoTransform boolean
+---@field boneName string
+---@field loop boolean
+---@field transform openmw.util.Transform
+---@field useAmbientLight boolean
+---@field vfxId string
+
+---@class DR1PRuntime
+---@field addRing fun(handSide: HandSide, finger: FingerIndex, useHeadTransform: boolean)
+---@field getSkeletonType fun(): SkeletonVariant
+---@field getSkeletonTypeName fun(): string
+
+---@class DR1PInterfaceDefinition
+---@field interfaceName string
+---@field interface DR1PInterface
+
+---@class openmw.interfaces
+---@field DR1P DR1PInterface
+
 ---@alias HandSide
 ---| 1 # Left
 ---| 2 # Right
