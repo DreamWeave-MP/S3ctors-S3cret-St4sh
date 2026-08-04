@@ -1,254 +1,35 @@
 ---@omw-context player
 
-local s3lf
+local require = require
 
-local error, next, print, require, type, StrFormat =
-  error, next, print, require, type, string.format
-
-local BoneNames = require 'scripts.s3.dr1p.boneNames'
 local Enum = require 'scripts.s3.dr1p.enum'
-local AuxSlot, BodyType, Finger, Hand, Skeleton =
-  Enum.AuxSlot, Enum.BodyType, Enum.Finger, Enum.Hand, Enum.Skeleton
-
-local BasePlacement = require 'scripts.s3.dr1p.basePlacement'
-local GearPlacement = require 'scripts.s3.dr1p.gearPlacement'
-local HeadPlacement = require 'scripts.s3.dr1p.headPlacement'
-local RacePlacement = require 'scripts.s3.dr1p.racePlacement'
+local MakeInterface = require 'scripts.s3.dr1p.interface'
+local MakeRuntime = require 'scripts.s3.dr1p.runtime'
 local StateMachine = require 'scripts.s3.statemachine'
 
----@type string[]
-local SkeletonTypesToNames = {}
+local s3lf = require('openmw.interfaces').s3.lf
+local camera = require 'openmw.camera'
+local storage = require 'openmw.storage'
 
-for name, index in next, Skeleton do
-  SkeletonTypesToNames[index] = name
-end
+local FirstPersonMode, GetCameraMode, ReloadLua, SetCameraMode, ThirdPersonMode =
+  camera.MODE.FirstPerson,
+  camera.getMode,
+  require('openmw.debug').reloadLua,
+  camera.setMode,
+  camera.MODE.ThirdPerson
 
-local BodyPartRecords, DeepToString, FirstPersonMode, GetCameraMode, IdentityTransform, IsPlayer, ReloadLua, RaceRecords, SetCameraMode, ThirdPersonMode, TransformMove, TransformRotateX, TransformRotateY, TransformRotateZ, TransformScale
-
-local ringMesh
-do
-  local aux_util = require 'openmw_aux.util'
-  DeepToString = aux_util.deepToString
-
-  local types = require 'openmw.types'
-  ringMesh = types.Clothing.records.exquisite_ring_01.model
-  BodyPartRecords = types.BodyPart.records
-
-  local util = require 'openmw.util'
-  local transform = util.transform
-  IdentityTransform, TransformMove, TransformRotateX, TransformRotateY, TransformRotateZ, TransformScale =
-    transform.identity,
-    transform.move,
-    transform.rotateX,
-    transform.rotateY,
-    transform.rotateZ,
-    transform.scale
-
-  s3lf = require('openmw.interfaces').s3.lf
-  RaceRecords = s3lf.races.records
-
-  IsPlayer = s3lf.actorType == 0
-
-  if IsPlayer then
-    local camera = require 'openmw.camera'
-    FirstPersonMode, GetCameraMode, SetCameraMode, ThirdPersonMode =
-      camera.MODE.FirstPerson, camera.getMode, camera.setMode, camera.MODE.ThirdPerson
-
-    ReloadLua = require('openmw.debug').reloadLua
-  end
-end
-
----@type SlotBoneMap
-local SlotToBoneNames = {
-  [Hand.Left] = {
-    [Finger.Thumb] = BoneNames[1],
-    [Finger.Index] = BoneNames[2],
-    [Finger.Middle] = BoneNames[3],
-    [Finger.Ring] = BoneNames[4],
-    [Finger.Pinky] = BoneNames[5],
-  },
-  [Hand.Right] = {
-    [Finger.Thumb] = BoneNames[6],
-    [Finger.Index] = BoneNames[7],
-    [Finger.Middle] = BoneNames[8],
-    [Finger.Ring] = BoneNames[9],
-    [Finger.Pinky] = BoneNames[10],
-  },
-  [AuxSlot.Amulet] = BoneNames[11],
-  [AuxSlot.Belt] = BoneNames[12],
-}
-
-local RingAttachInfo = {
-  autoTransform = false,
-  boneName = '',
-  loop = true,
-  transform = IdentityTransform,
-  useAmbientLight = false,
-  vfxId = '',
-}
-
----@return SkeletonVariant
-local function getSkeletonType()
-  local isFirstPerson = GetCameraMode() == FirstPersonMode
-  local actorRecord = s3lf.record
-  local isFemale = not actorRecord.isMale
-  local isBeast = RaceRecords[actorRecord.race].isBeast
-
-  if isFirstPerson then
-    if isBeast then
-      return Skeleton.BeastFirst
-    elseif isFemale then
-      return Skeleton.FemaleFirst
-    else
-      return Skeleton.HumanoidFirst
-    end
-  else
-    if isBeast then
-      return Skeleton.BeastThird
-    elseif isFemale then
-      return Skeleton.FemaleThird
-    else
-      return Skeleton.HumanoidThird
-    end
-  end
-end
-
----@return string
-local function getSkeletonTypeName() return SkeletonTypesToNames[getSkeletonType()] end
-
---- Gets the final relative transform for ring placment,
---- Per-finger, per-race, and optionally, per-item
----@param handSide HandSide
----@param finger FingerIndex
----@return DR1PTransform? basePlacement
-local function getBasePlacement(handSide, finger)
-  local skeletonType = getSkeletonType()
-
-  local skeletonPlacement = BasePlacement[skeletonType]
-  if not skeletonPlacement then return end
-
-  local handPlacement = skeletonPlacement[handSide]
-  if not handPlacement then return end
-
-  local fingerPlacement = handPlacement[finger]
-  if not fingerPlacement then return end
-
-  return fingerPlacement[BodyType.Vanilla]
-end
-
-local CompiledPlacements = {}
----@param placement DR1PTransform
----@return openmw.util.Transform
-local function compilePlacement(placement)
-  local compiled = CompiledPlacements[placement]
-  if compiled then return compiled end
-
-  local transform = IdentityTransform
-
-  local pos = placement.pos
-  --- Cod3x bug
-  ---@diagnostic disable-next-line: redundant-parameter, param-type-mismatch
-  if pos then transform = transform * TransformMove(pos.x, pos.y, pos.z) end
-
-  local rot = placement.rot
-  if rot then
-    transform = transform
-      * TransformRotateZ(rot.z)
-      * TransformRotateY(rot.y)
-      * TransformRotateX(rot.x)
-  end
-
-  local scale = placement.scale
-  if scale then transform = transform * TransformScale(scale.x, scale.y, scale.z) end
-
-  CompiledPlacements[placement] = transform
-  return transform
-end
-
----@param basePlacement DR1PTransform?
----@param racePlacement DR1PTransform?
----@param headPlacement DR1PTransform?
----@param gearPlacement DR1PTransform?
----@param useHeadTransform boolean
----@return openmw.util.Transform
-local function composeTransforms(
-  basePlacement,
-  racePlacement,
-  headPlacement,
-  gearPlacement,
-  useHeadTransform
-)
-  local transform = IdentityTransform
-
-  if basePlacement then transform = transform * compilePlacement(basePlacement) end
-  if racePlacement then transform = transform * compilePlacement(racePlacement) end
-  if useHeadTransform and headPlacement then
-    transform = transform * compilePlacement(headPlacement)
-  end
-  if gearPlacement then transform = transform * compilePlacement(gearPlacement) end
-
-  return transform
-end
-
----@param handSide HandSide
----@param finger FingerIndex
----@param useHeadTransform boolean
-local function addRing(handSide, finger, useHeadTransform)
-  local slotBoneBinding = SlotToBoneNames[handSide]
-  if not slotBoneBinding then
-    error('Invalid handSide provided to DR1P.addRing: ' .. handSide .. ' !', 2)
-  end
-
-  local boneName
-  if type(slotBoneBinding) == 'table' then
-    boneName = slotBoneBinding[finger]
-  else
-    boneName = slotBoneBinding
-  end
-
-  if not boneName then error('Invalid finger provided to DR1P.addRing: ' .. finger .. ' !', 2) end
-
-  RingAttachInfo.vfxId = StrFormat('DR1P-%s-%s', s3lf.id, boneName)
-  RingAttachInfo.boneName = boneName
-
-  local basePlacement = getBasePlacement(handSide, finger)
-  if not basePlacement then return end
-
-  local raceMap = RacePlacement[s3lf.record.race]
-  ---@type DR1PTransform?
-  local racePlacement
-  if raceMap then
-    local handPlacement = raceMap[handSide]
-
-    if handPlacement then
-      ---@cast handPlacement RaceFingerPlacementMap
-      racePlacement = handPlacement[finger]
-    end
-  end
-
-  local headPlacement
-  if useHeadTransform then
-    local headModel = BodyPartRecords[s3lf.head].model
-    headPlacement = HeadPlacement[headModel]
-  end
-
-  local transform = composeTransforms(
-    basePlacement,
-    racePlacement,
-    headPlacement,
-    GearPlacement[ringMesh],
-    useHeadTransform
-  )
-
-  RingAttachInfo.transform = transform
-
-  s3lf.addVfx(ringMesh, RingAttachInfo)
-end
+---@type DR1PRuntime
+local Runtime = MakeRuntime(function() return GetCameraMode() == FirstPersonMode end)
+---@type DR1PInterfaceDefinition
+local PublicInterface = MakeInterface(Runtime)
 
 local wasFirstPerson = false
+---@type openmw.camera.Mode
 local detourMode, restoreMode
 local cameraRebuild = StateMachine.new()
 
+---@param newDetourMode openmw.camera.Mode
+---@param newRestoreMode openmw.camera.Mode
 local function beginRebuild(newDetourMode, newRestoreMode)
   detourMode = newDetourMode
   restoreMode = newRestoreMode
@@ -264,7 +45,7 @@ cameraRebuild:state('idle', function()
 end)
 
 cameraRebuild:state('perspective_barrier', function()
-  addRing(Hand.Left, Finger.Index, false)
+  Runtime.addRing(Enum.Hand.Left, Enum.Finger.Index, false)
   cameraRebuild:transition 'idle'
 end)
 
@@ -286,13 +67,13 @@ cameraRebuild:state('restore', {
 
 cameraRebuild:state('restore_barrier', function()
   wasFirstPerson = restoreMode == FirstPersonMode
-  addRing(Hand.Left, Finger.Index, false)
+  Runtime.addRing(Enum.Hand.Left, Enum.Finger.Index, false)
   cameraRebuild:jump 'idle'
 end)
 
 cameraRebuild:start 'idle'
 
-local section = require('openmw.storage').playerSection 'DR1PTESTSTORAGE'
+local section = storage.playerSection 'DR1PTESTSTORAGE'
 
 if section:get 'RELOAD' then
   if GetCameraMode() == FirstPersonMode then
@@ -317,14 +98,6 @@ return {
       ReloadLua()
     end,
   },
-  interfaceName = 'DR1P',
-  interface = {
-    addRing = addRing,
-    getSkeletonType = getSkeletonType,
-    getSkeletonTypeName = getSkeletonTypeName,
-    BodyType = Enum.BodyType,
-    Finger = Enum.Finger,
-    Hand = Enum.Hand,
-    Skeleton = Enum.Skeleton,
-  },
+  interfaceName = PublicInterface.interfaceName,
+  interface = PublicInterface.interface,
 }
