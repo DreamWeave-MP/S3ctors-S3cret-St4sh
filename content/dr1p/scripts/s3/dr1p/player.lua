@@ -9,6 +9,7 @@ local Enum = require 'scripts.s3.dr1p.enum'
 local Finger, Hand, Skeleton = Enum.Finger, Enum.Hand, Enum.Skeleton
 
 local Placement = require 'scripts.s3.dr1p.basePlacement'
+local StateMachine = require 'scripts.s3.statemachine'
 
 ---@type string[]
 local SkeletonTypesToNames = {}
@@ -68,12 +69,6 @@ local RingAttachInfo = {
   transform = Transform.identity,
   useAmbientLight = false,
   vfxId = '',
-}
-
-local RebuildState = {
-  barrier = false,
-  mode = nil,
-  restoreMode = nil,
 }
 
 ---@return SkeletonVariant
@@ -177,6 +172,52 @@ local function addRing(handSide, finger)
 end
 
 local wasFirstPerson = false
+local detourMode, restoreMode
+local cameraRebuild = StateMachine.new()
+
+local function beginRebuild(newDetourMode, newRestoreMode)
+  detourMode = newDetourMode
+  restoreMode = newRestoreMode
+  cameraRebuild:jump 'detour'
+end
+
+cameraRebuild:state('idle', function()
+  local isFirstPerson = GetCameraMode() == FirstPersonMode
+  if isFirstPerson == wasFirstPerson then return end
+
+  wasFirstPerson = isFirstPerson
+  cameraRebuild:transition 'perspective_barrier'
+end)
+
+cameraRebuild:state('perspective_barrier', function()
+  addRing(Hand.Left, Finger.Thumb)
+  cameraRebuild:transition 'idle'
+end)
+
+cameraRebuild:state('detour', {
+  on_enter = function() SetCameraMode(detourMode, true) end,
+  tick = function()
+    if GetCameraMode() == detourMode then cameraRebuild:transition 'detour_barrier' end
+  end,
+})
+
+cameraRebuild:state('detour_barrier', function() cameraRebuild:transition 'restore' end)
+
+cameraRebuild:state('restore', {
+  on_enter = function() SetCameraMode(restoreMode, true) end,
+  tick = function()
+    if GetCameraMode() == restoreMode then cameraRebuild:transition 'restore_barrier' end
+  end,
+})
+
+cameraRebuild:state('restore_barrier', function()
+  wasFirstPerson = restoreMode == FirstPersonMode
+  addRing(Hand.Left, Finger.Index)
+  cameraRebuild:jump 'idle'
+end)
+
+cameraRebuild:start 'idle'
+
 local section = require('openmw.storage').playerSection 'DR1PTESTSTORAGE'
 
 if section:get 'RELOAD' then
@@ -191,56 +232,15 @@ end
 
 return {
   eventHandlers = {
-    DR1PSetFirst = function()
-      SetCameraMode(FirstPersonMode, true)
-      RebuildState.barrier = false
-      RebuildState.mode = FirstPersonMode
-      RebuildState.restoreMode = ThirdPersonMode
-    end,
-    DR1PSetThird = function()
-      SetCameraMode(ThirdPersonMode, true)
-      RebuildState.barrier = false
-      RebuildState.mode = ThirdPersonMode
-      RebuildState.restoreMode = FirstPersonMode
-    end,
+    DR1PSetFirst = function() beginRebuild(FirstPersonMode, ThirdPersonMode) end,
+    DR1PSetThird = function() beginRebuild(ThirdPersonMode, FirstPersonMode) end,
   },
   engineHandlers = {
-    onFrame = function()
-      local mode = RebuildState.mode
-      if not mode or GetCameraMode() ~= mode then return end
-
-      if not RebuildState.barrier then
-        RebuildState.barrier = true
-        return
-      end
-
-      if RebuildState.restoreMode then
-        RebuildState.mode = RebuildState.restoreMode
-        RebuildState.restoreMode = nil
-        RebuildState.barrier = false
-        SetCameraMode(RebuildState.mode, true)
-      else
-        wasFirstPerson = mode == FirstPersonMode
-        addRing(Hand.Left, Finger.Index)
-        RebuildState.barrier = false
-        RebuildState.mode = nil
-      end
-    end,
+    onFrame = function() cameraRebuild:tick() end,
     onKeyPress = function(key)
       if key.symbol ~= ' ' or not key.withShift then return end
       section:set('RELOAD', true)
       ReloadLua()
-    end,
-    onUpdate = function()
-      if RebuildState.mode then return end
-
-      local isFirstPerson = GetCameraMode() == FirstPersonMode
-
-      if isFirstPerson == wasFirstPerson then return end
-
-      wasFirstPerson = isFirstPerson
-
-      addRing(Hand.Left, Finger.Thumb)
     end,
   },
   interfaceName = 'DR1P',
