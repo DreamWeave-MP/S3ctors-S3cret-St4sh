@@ -3,7 +3,7 @@
 local Dr1pEnum = require 'scripts.s3.dr1p.enum'
 local AuxSlot, Finger, Hand = Dr1pEnum.AuxSlot, Dr1pEnum.Finger, Dr1pEnum.Hand
 
----@type table<string, DR1PPlacementMap>
+---@type table<string, RacePlacementMap>
 local RacePlacement = {
   ['redguard'] = {
     [Hand.Left] = {

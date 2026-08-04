@@ -6,9 +6,12 @@ local error, next, print, require, StrFormat = error, next, print, require, stri
 
 local BoneNames = require 'scripts.s3.dr1p.boneNames'
 local Enum = require 'scripts.s3.dr1p.enum'
-local Finger, Hand, Skeleton = Enum.Finger, Enum.Hand, Enum.Skeleton
+local BodyType, Finger, Hand, Skeleton = Enum.BodyType, Enum.Finger, Enum.Hand, Enum.Skeleton
 
-local Placement = require 'scripts.s3.dr1p.basePlacement'
+local BasePlacement = require 'scripts.s3.dr1p.basePlacement'
+local GearPlacement = require 'scripts.s3.dr1p.gearPlacement'
+local HeadPlacement = require 'scripts.s3.dr1p.headPlacement'
+local RacePlacement = require 'scripts.s3.dr1p.racePlacement'
 local StateMachine = require 'scripts.s3.statemachine'
 
 ---@type string[]
@@ -18,7 +21,7 @@ for name, index in next, Skeleton do
   SkeletonTypesToNames[index] = name
 end
 
-local DeepToString, FirstPersonMode, GetCameraMode, IsPlayer, ReloadLua, SetCameraMode, ThirdPersonMode, Transform, Vector3
+local BodyPartRecords, DeepToString, FirstPersonMode, GetCameraMode, IdentityTransform, IsPlayer, ReloadLua, SetCameraMode, ThirdPersonMode, TransformMove, TransformRotateX, TransformRotateY, TransformRotateZ, TransformScale
 
 local ringMesh
 do
@@ -27,9 +30,17 @@ do
 
   local types = require 'openmw.types'
   ringMesh = types.Clothing.records.exquisite_ring_01.model
+  BodyPartRecords = types.BodyPart.records
 
   local util = require 'openmw.util'
-  Transform, Vector3 = util.transform, util.vector3
+  local transform = util.transform
+  IdentityTransform, TransformMove, TransformRotateX, TransformRotateY, TransformRotateZ, TransformScale =
+    transform.identity,
+    transform.move,
+    transform.rotateX,
+    transform.rotateY,
+    transform.rotateZ,
+    transform.scale
 
   s3lf = require('openmw.interfaces').s3.lf
 
@@ -66,7 +77,7 @@ local RingAttachInfo = {
   autoTransform = false,
   boneName = '',
   loop = true,
-  transform = Transform.identity,
+  transform = IdentityTransform,
   useAmbientLight = false,
   vfxId = '',
 }
@@ -103,11 +114,11 @@ local function getSkeletonTypeName() return SkeletonTypesToNames[getSkeletonType
 --- Per-finger, per-race, and optionally, per-item
 ---@param handSide HandSide
 ---@param finger FingerIndex
----@return DR1PTransform? ringOffset
-local function getRingPlacement(handSide, finger)
+---@return DR1PTransform? basePlacement
+local function getBasePlacement(handSide, finger)
   local skeletonType = getSkeletonType()
 
-  local skeletonPlacement = Placement[skeletonType]
+  local skeletonPlacement = BasePlacement[skeletonType]
   if not skeletonPlacement then return end
 
   local handPlacement = skeletonPlacement[handSide]
@@ -116,15 +127,67 @@ local function getRingPlacement(handSide, finger)
   local fingerPlacement = handPlacement[finger]
   if not fingerPlacement then return end
 
-  -- Only handle bodies for now, not equipment
-  local ringPlacement = fingerPlacement[Enum.BodyType.Vanilla]
+  return fingerPlacement[BodyType.Vanilla]
+end
 
-  return ringPlacement
+local CompiledPlacements = {}
+---@param placement DR1PTransform
+---@return openmw.util.Transform
+local function compilePlacement(placement)
+  local compiled = CompiledPlacements[placement]
+  if compiled then return compiled end
+
+  local transform = IdentityTransform
+
+  local pos = placement.pos
+  --- Cod3x bug
+  ---@diagnostic disable-next-line: redundant-parameter, param-type-mismatch
+  if pos then transform = transform * TransformMove(pos.x, pos.y, pos.z) end
+
+  local rot = placement.rot
+  if rot then
+    transform = transform
+      * TransformRotateZ(rot.z)
+      * TransformRotateY(rot.y)
+      * TransformRotateX(rot.x)
+  end
+
+  local scale = placement.scale
+  if scale then transform = transform * TransformScale(scale.x, scale.y, scale.z) end
+
+  CompiledPlacements[placement] = transform
+  return transform
+end
+
+---@param basePlacement DR1PTransform?
+---@param racePlacement DR1PTransform?
+---@param headPlacement DR1PTransform?
+---@param gearPlacement DR1PTransform?
+---@param useHeadTransform boolean
+---@return openmw.util.Transform
+local function composeTransforms(
+  basePlacement,
+  racePlacement,
+  headPlacement,
+  gearPlacement,
+  useHeadTransform
+)
+  local transform = IdentityTransform
+
+  if basePlacement then transform = transform * compilePlacement(basePlacement) end
+  if racePlacement then transform = transform * compilePlacement(racePlacement) end
+  if useHeadTransform and headPlacement then
+    transform = transform * compilePlacement(headPlacement)
+  end
+  if gearPlacement then transform = transform * compilePlacement(gearPlacement) end
+
+  return transform
 end
 
 ---@param handSide HandSide
 ---@param finger FingerIndex
-local function addRing(handSide, finger)
+---@param useHeadTransform boolean
+local function addRing(handSide, finger, useHeadTransform)
   local fingerBoneMap = FingersToBoneNames[handSide]
   if not fingerBoneMap then
     error('Invalid handSide provided to DR1P.addRing: ' .. handSide .. ' !', 2)
@@ -136,31 +199,34 @@ local function addRing(handSide, finger)
   RingAttachInfo.vfxId = StrFormat('DR1P-%s-%s', s3lf.id, boneName)
   RingAttachInfo.boneName = boneName
 
-  local ringPlacement = getRingPlacement(handSide, finger)
-  if not ringPlacement then return end
+  local basePlacement = getBasePlacement(handSide, finger)
+  if not basePlacement then return end
 
-  local transform = Transform.identity
+  local raceMap = RacePlacement[s3lf.race]
+  ---@type DR1PTransform?
+  local racePlacement
+  if raceMap then
+    local handPlacement = raceMap[handSide]
 
-  if ringPlacement.pos then
-    local pos = ringPlacement.pos
-
-    transform = transform * Transform.move(Vector3(pos.x, pos.y, pos.z))
+    if handPlacement then
+      ---@cast handPlacement RaceFingerPlacementMap
+      racePlacement = handPlacement[finger]
+    end
   end
 
-  if ringPlacement.rot then
-    local rot = ringPlacement.rot
-
-    transform = transform
-      * Transform.rotateZ(rot.z)
-      * Transform.rotateY(rot.y)
-      * Transform.rotateX(rot.x)
+  local headPlacement
+  if useHeadTransform then
+    local headModel = BodyPartRecords[s3lf.head].model
+    headPlacement = HeadPlacement[headModel]
   end
 
-  if ringPlacement.scale then
-    local scale = ringPlacement.scale
-
-    transform = transform * Transform.scale(scale.x, scale.y, scale.z)
-  end
+  local transform = composeTransforms(
+    basePlacement,
+    racePlacement,
+    headPlacement,
+    GearPlacement[ringMesh],
+    useHeadTransform
+  )
 
   RingAttachInfo.transform = transform
 
@@ -186,7 +252,7 @@ cameraRebuild:state('idle', function()
 end)
 
 cameraRebuild:state('perspective_barrier', function()
-  addRing(Hand.Left, Finger.Thumb)
+  addRing(Hand.Left, Finger.Thumb, false)
   cameraRebuild:transition 'idle'
 end)
 
@@ -208,7 +274,7 @@ cameraRebuild:state('restore', {
 
 cameraRebuild:state('restore_barrier', function()
   wasFirstPerson = restoreMode == FirstPersonMode
-  addRing(Hand.Left, Finger.Index)
+  addRing(Hand.Left, Finger.Index, false)
   cameraRebuild:jump 'idle'
 end)
 
