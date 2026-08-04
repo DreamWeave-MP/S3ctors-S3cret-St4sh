@@ -2,11 +2,13 @@
 
 local s3lf
 
-local error, next, print, require, StrFormat = error, next, print, require, string.format
+local error, next, print, require, type, StrFormat =
+  error, next, print, require, type, string.format
 
 local BoneNames = require 'scripts.s3.dr1p.boneNames'
 local Enum = require 'scripts.s3.dr1p.enum'
-local BodyType, Finger, Hand, Skeleton = Enum.BodyType, Enum.Finger, Enum.Hand, Enum.Skeleton
+local AuxSlot, BodyType, Finger, Hand, Skeleton =
+  Enum.AuxSlot, Enum.BodyType, Enum.Finger, Enum.Hand, Enum.Skeleton
 
 local BasePlacement = require 'scripts.s3.dr1p.basePlacement'
 local GearPlacement = require 'scripts.s3.dr1p.gearPlacement'
@@ -56,8 +58,8 @@ do
   end
 end
 
----@type table<HandSide, table<FingerIndex, string>>
-local FingersToBoneNames = {
+---@type SlotBoneMap
+local SlotToBoneNames = {
   [Hand.Left] = {
     [Finger.Thumb] = BoneNames[1],
     [Finger.Index] = BoneNames[2],
@@ -72,6 +74,8 @@ local FingersToBoneNames = {
     [Finger.Ring] = BoneNames[9],
     [Finger.Pinky] = BoneNames[10],
   },
+  [AuxSlot.Amulet] = BoneNames[11],
+  [AuxSlot.Belt] = BoneNames[12],
 }
 
 local RingAttachInfo = {
@@ -190,12 +194,18 @@ end
 ---@param finger FingerIndex
 ---@param useHeadTransform boolean
 local function addRing(handSide, finger, useHeadTransform)
-  local fingerBoneMap = FingersToBoneNames[handSide]
-  if not fingerBoneMap then
+  local slotBoneBinding = SlotToBoneNames[handSide]
+  if not slotBoneBinding then
     error('Invalid handSide provided to DR1P.addRing: ' .. handSide .. ' !', 2)
   end
 
-  local boneName = fingerBoneMap[finger]
+  local boneName
+  if type(slotBoneBinding) == 'table' then
+    boneName = slotBoneBinding[finger]
+  else
+    boneName = slotBoneBinding
+  end
+
   if not boneName then error('Invalid finger provided to DR1P.addRing: ' .. finger .. ' !', 2) end
 
   RingAttachInfo.vfxId = StrFormat('DR1P-%s-%s', s3lf.id, boneName)

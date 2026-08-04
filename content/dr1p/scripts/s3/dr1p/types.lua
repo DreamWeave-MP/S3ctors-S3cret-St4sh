@@ -23,6 +23,9 @@
 ---@alias HandPlacementMap table<HandSide, FingerPlacementMap>
 ---@alias RaceFingerPlacementMap table<FingerIndex, DR1PTransform>
 ---@alias RacePlacementMap table<number, DR1PTransform | RaceFingerPlacementMap>
+---@alias SlotBoneBinding table<FingerIndex, string> | string
+---@alias SlotBoneMap table<SlotIndex, SlotBoneBinding>
+---@alias SlotIndex HandSide | AuxSlot
 
 ---@alias HandSide
 ---| 1 # Left
