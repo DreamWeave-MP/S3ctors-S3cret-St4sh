@@ -254,7 +254,7 @@ cameraRebuild:state('idle', function()
 end)
 
 cameraRebuild:state('perspective_barrier', function()
-  addRing(Hand.Left, Finger.Thumb, false)
+  addRing(Hand.Left, Finger.Index, false)
   cameraRebuild:transition 'idle'
 end)
 
