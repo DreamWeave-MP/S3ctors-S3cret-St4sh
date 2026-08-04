@@ -21,6 +21,8 @@
 ---@alias DR1PPlacementMap HandPlacementMap | AuxPlacementMap
 ---@alias FingerPlacementMap table<FingerIndex, BaseDR1PPlacementMap>
 ---@alias HandPlacementMap table<HandSide, FingerPlacementMap>
+---@alias RaceFingerPlacementMap table<FingerIndex, DR1PTransform>
+---@alias RacePlacementMap table<number, DR1PTransform | RaceFingerPlacementMap>
 
 ---@alias HandSide
 ---| 1 # Left
