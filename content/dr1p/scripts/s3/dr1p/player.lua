@@ -77,8 +77,6 @@ local function getSkeletonType()
   local isFemale = not s3lf.isMale
   local isBeast = s3lf.races.records[s3lf.race].isBeast
 
-  print(isFemale, isBeast, isFirstPerson)
-
   if isFirstPerson then
     if isBeast then
       return Skeleton.BeastFirst
@@ -165,8 +163,6 @@ local function addRing(handSide, finger)
   end
 
   RingAttachInfo.transform = transform
-
-  print(DeepToString(ringPlacement, 3), transform)
 
   s3lf.addVfx(ringMesh, RingAttachInfo)
 end
