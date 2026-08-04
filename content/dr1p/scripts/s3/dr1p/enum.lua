@@ -1,0 +1,56 @@
+---@omw-context none
+
+---@class DR1PEnum
+local Dr1pEnum = {
+  ---@class AuxSlots
+  AuxSlot = {
+    Belt = 3,
+    Amulet = 4,
+  },
+
+  ---@class BodyTypes
+  ---@field Vanilla 1
+  BodyType = {
+    Vanilla = 1,
+  },
+
+  ---@class FingerIndices
+  ---@field Thumb 1
+  ---@field Index 2
+  ---@field Middle 3
+  ---@field Ring 4
+  ---@field Pinky 5
+  Finger = {
+    Thumb = 1,
+    Index = 2,
+    Middle = 3,
+    Ring = 4,
+    Pinky = 5,
+  },
+
+  ---@class HandSides
+  ---@field Left 1
+  ---@field Right 2
+  Hand = {
+    Left = 1,
+    Right = 2,
+  },
+
+  ---@class SkeletonVariants
+  ---@field FemaleFirst 1
+  ---@field HumanoidThird 2
+  ---@field HumanoidFirst 3
+  ---@field FemaleThird 4
+  ---@field BeastThird 5
+  ---@field BeastFirst 6
+  Skeleton = {
+    FemaleFirst = 1,
+    HumanoidThird = 2,
+    HumanoidFirst = 3,
+    FemaleThird = 4,
+    BeastThird = 5,
+    BeastFirst = 6,
+  },
+}
+
+return Dr1pEnum
