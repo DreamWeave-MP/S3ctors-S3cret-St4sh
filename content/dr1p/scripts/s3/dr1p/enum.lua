@@ -13,6 +13,8 @@ local Dr1pEnum = {
   },
 
   ---@class AuxSlots
+  ---@field Belt AuxSlot
+  ---@field Amulet AuxSlot
   AuxSlot = {
     Belt = 3,
     Amulet = 4,
@@ -70,6 +72,14 @@ local Dr1pEnum = {
     Position = 1,
     Rotation = 2,
     Scale = 3,
+  },
+
+  ---@class VisibilityPolicies
+  ---@field All 1
+  ---@field ThirdPerson 2
+  Visibility = {
+    All = 1,
+    ThirdPerson = 2,
   },
 }
 
