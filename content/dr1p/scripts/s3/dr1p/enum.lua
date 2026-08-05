@@ -13,11 +13,11 @@ local Dr1pEnum = {
   },
 
   ---@class AuxSlots
-  ---@field Belt AuxSlot
   ---@field Amulet AuxSlot
+  ---@field Belt AuxSlot
   AuxSlot = {
-    Belt = 3,
-    Amulet = 4,
+    Amulet = 3,
+    Belt = 4,
   },
 
   ---@class BodyTypes

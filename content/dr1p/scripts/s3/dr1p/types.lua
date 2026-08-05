@@ -13,8 +13,8 @@
 ---| 5 # Pinky
 
 ---@alias AuxSlot
----| 3 # Belt
----| 4 # Amulet
+---| 3 # Amulet
+---| 4 # Belt
 
 ---@alias AuxPlacementMap table<AuxSlot, BaseDR1PPlacementMap>
 ---@alias BaseDR1PPlacementMap table<BodyType, DR1PTransform>
