@@ -2,7 +2,7 @@
 
 local require = require
 
-local Enum = require 'scripts.s3.dr1p.enum'
+local MakeEquipmentTracker = require 'scripts.s3.dr1p.equipment'
 local MakeInterface = require 'scripts.s3.dr1p.interface'
 local MakeRuntime = require 'scripts.s3.dr1p.runtime'
 local StateMachine = require 'scripts.s3.statemachine'
@@ -20,6 +20,10 @@ local FirstPersonMode, GetCameraMode, ReloadLua, SetCameraMode, ThirdPersonMode 
 
 ---@type DR1PRuntime
 local Runtime = MakeRuntime(function() return GetCameraMode() == FirstPersonMode end)
+
+---@type DR1PEquipmentTracker
+local Equipment = MakeEquipmentTracker(Runtime)
+
 ---@type DR1PInterfaceDefinition
 local PublicInterface = MakeInterface(Runtime)
 
@@ -36,17 +40,25 @@ local function beginRebuild(newDetourMode, newRestoreMode)
   cameraRebuild:jump 'detour'
 end
 
-cameraRebuild:state('idle', function()
+cameraRebuild:state('equipment_check', function()
+  Equipment.checkNextSlot()
+  cameraRebuild:transition 'camera_check'
+end)
+
+cameraRebuild:state('camera_check', function()
   local isFirstPerson = GetCameraMode() == FirstPersonMode
-  if isFirstPerson == wasFirstPerson then return end
+  if isFirstPerson == wasFirstPerson then
+    cameraRebuild:transition 'equipment_check'
+    return
+  end
 
   wasFirstPerson = isFirstPerson
   cameraRebuild:transition 'perspective_barrier'
 end)
 
 cameraRebuild:state('perspective_barrier', function()
-  Runtime.addRing(Enum.Hand.Left, Enum.Finger.Index, false)
-  cameraRebuild:transition 'idle'
+  Equipment.reapplyTrackedVfx()
+  cameraRebuild:transition 'equipment_check'
 end)
 
 cameraRebuild:state('detour', {
@@ -67,11 +79,11 @@ cameraRebuild:state('restore', {
 
 cameraRebuild:state('restore_barrier', function()
   wasFirstPerson = restoreMode == FirstPersonMode
-  Runtime.addRing(Enum.Hand.Left, Enum.Finger.Index, false)
-  cameraRebuild:jump 'idle'
+  Equipment.reapplyTrackedVfx()
+  cameraRebuild:jump 'equipment_check'
 end)
 
-cameraRebuild:start 'idle'
+cameraRebuild:start 'equipment_check'
 
 local section = storage.playerSection 'DR1PTESTSTORAGE'
 
@@ -91,12 +103,14 @@ return {
     DR1PSetThird = function() beginRebuild(ThirdPersonMode, FirstPersonMode) end,
   },
   engineHandlers = {
+    onLoad = function(data) Equipment.onLoad(data and data.equipment) end,
     onFrame = function() cameraRebuild:tick() end,
     onKeyPress = function(key)
       if key.symbol ~= ' ' or not key.withShift then return end
       section:set('RELOAD', true)
       ReloadLua()
     end,
+    onSave = function() return { equipment = Equipment.onSave() } end,
   },
   interfaceName = PublicInterface.interfaceName,
   interface = PublicInterface.interface,

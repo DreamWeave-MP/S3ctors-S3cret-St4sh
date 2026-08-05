@@ -15,8 +15,8 @@ local s3lf = require('openmw.interfaces').s3.lf
 
 local types = require 'openmw.types'
 local BodyPartRecords = types.BodyPart.records
+local ClothingRecords = types.Clothing.records
 local RaceRecords = s3lf.races.records
-local ringMesh = types.Clothing.records.exquisite_ring_01.model
 
 local util = require 'openmw.util'
 local transform = util.transform
@@ -114,10 +114,12 @@ return function(getIsFirstPerson)
     return fingerPlacement[BodyType.Vanilla]
   end
 
+  ---@param item openmw.Object
   ---@param handSide HandSide
   ---@param finger FingerIndex
   ---@param useHeadTransform boolean
-  local function addRing(handSide, finger, useHeadTransform)
+  ---@return string?
+  local function addRing(item, handSide, finger, useHeadTransform)
     local slotBoneBinding = SlotToBoneNames[handSide]
     if not slotBoneBinding then
       error('Invalid handSide provided to DR1P.addRing: ' .. handSide .. ' !', 2)
@@ -131,6 +133,8 @@ return function(getIsFirstPerson)
     end
 
     if not boneName then error('Invalid finger provided to DR1P.addRing: ' .. finger .. ' !', 2) end
+
+    local ringMesh = ClothingRecords[item.recordId].model
 
     RingAttachInfo.vfxId = StrFormat('DR1P-%s-%s', s3lf.id, boneName)
     RingAttachInfo.boneName = boneName
@@ -165,6 +169,7 @@ return function(getIsFirstPerson)
 
     RingAttachInfo.transform = result
     s3lf.addVfx(ringMesh, RingAttachInfo)
+    return RingAttachInfo.vfxId
   end
 
   return {
