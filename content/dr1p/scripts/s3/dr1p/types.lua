@@ -41,6 +41,13 @@
 ---@alias SlotBoneBinding table<FingerIndex, string> | string
 ---@alias SlotBoneMap table<SlotIndex, SlotBoneBinding>
 ---@alias SlotIndex HandSide | AuxSlot
+---@alias TransformPosition 1
+---@alias TransformRotation 2
+---@alias TransformScale 3
+---@alias Vec3X 1
+---@alias Vec3Y 2
+---@alias Vec3Z 3
+
 ---@class DR1PInterface
 ---@field AuxSlot AuxSlots
 ---@field BodyType BodyTypes
@@ -84,11 +91,11 @@
 ---@field DR1P DR1PInterface
 
 ---@class DR1PTransform
----@field pos DR1PVec3
----@field rot DR1PVec3 In radians
----@field scale DR1PVec3
+---@field [TransformPosition] DR1PVec3 Position
+---@field [TransformRotation] DR1PVec3 Rotation In radians
+---@field [TransformScale] DR1PVec3 Scale
 
 ---@class DR1PVec3
----@field x number
----@field y number
----@field z number
+---@field [Vec3X] number X Axis
+---@field [Vec3Y] number Y Axis
+---@field [Vec3Z] number Z Axis

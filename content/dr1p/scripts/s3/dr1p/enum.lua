@@ -2,6 +2,16 @@
 
 ---@class DR1PEnum
 local Dr1pEnum = {
+  ---@class Axes
+  ---@field X Vec3X
+  ---@field Y Vec3Y
+  ---@field Z Vec3Z
+  Axis = {
+    X = 1,
+    Y = 2,
+    Z = 3,
+  },
+
   ---@class AuxSlots
   AuxSlot = {
     Belt = 3,
@@ -50,6 +60,16 @@ local Dr1pEnum = {
     FemaleThird = 4,
     BeastThird = 5,
     BeastFirst = 6,
+  },
+
+  ---@class TransformComponents
+  ---@field Position TransformPosition
+  ---@field Rotation TransformRotation
+  ---@field Scale TransformScale
+  Transform = {
+    Position = 1,
+    Rotation = 2,
+    Scale = 3,
   },
 }
 

@@ -9,7 +9,7 @@ local HeadPlacement = require 'scripts.s3.dr1p.headPlacement'
 local RacePlacement = require 'scripts.s3.dr1p.racePlacement'
 local SlotToBoneNames = require 'scripts.s3.dr1p.slots'
 
-local BodyType, Skeleton = Enum.BodyType, Enum.Skeleton
+local Axis, BodyType, Skeleton, Transform = Enum.Axis, Enum.BodyType, Enum.Skeleton, Enum.Transform
 
 local s3lf = require('openmw.interfaces').s3.lf
 
@@ -38,17 +38,20 @@ local function compilePlacement(placement)
 
   local result = IdentityTransform
 
-  local pos = placement.pos
+  local pos = placement[Transform.Position]
   ---@diagnostic disable-next-line: redundant-parameter, param-type-mismatch
-  if pos then result = result * TransformMove(pos.x, pos.y, pos.z) end
+  if pos then result = result * TransformMove(pos[Axis.X], pos[Axis.Y], pos[Axis.Z]) end
 
-  local rot = placement.rot
+  local rot = placement[Transform.Rotation]
   if rot then
-    result = result * TransformRotateZ(rot.z) * TransformRotateY(rot.y) * TransformRotateX(rot.x)
+    result = result
+      * TransformRotateZ(rot[Axis.Z])
+      * TransformRotateY(rot[Axis.Y])
+      * TransformRotateX(rot[Axis.X])
   end
 
-  local scale = placement.scale
-  if scale then result = result * TransformScale(scale.x, scale.y, scale.z) end
+  local scale = placement[Transform.Scale]
+  if scale then result = result * TransformScale(scale[Axis.X], scale[Axis.Y], scale[Axis.Z]) end
 
   CompiledPlacements[placement] = result
   return result
