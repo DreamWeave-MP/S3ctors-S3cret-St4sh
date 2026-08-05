@@ -103,14 +103,13 @@ return {
     DR1PSetThird = function() beginRebuild(ThirdPersonMode, FirstPersonMode) end,
   },
   engineHandlers = {
-    onLoad = function(data) Equipment.onLoad(data and data.equipment) end,
+    onLoad = function(_) Equipment.reset() end,
     onFrame = function() cameraRebuild:tick() end,
     onKeyPress = function(key)
       if key.symbol ~= ' ' or not key.withShift then return end
       section:set('RELOAD', true)
       ReloadLua()
     end,
-    onSave = function() return { equipment = Equipment.onSave() } end,
   },
   interfaceName = PublicInterface.interfaceName,
   interface = PublicInterface.interface,

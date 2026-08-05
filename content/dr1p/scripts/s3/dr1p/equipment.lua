@@ -1,6 +1,6 @@
 ---@omw-context local | player
 
-local require, type = require, type
+local require = require
 
 local Enum = require 'scripts.s3.dr1p.enum'
 local s3lf = require('openmw.interfaces').s3.lf
@@ -97,28 +97,11 @@ return function(runtime)
     end
   end
 
-  local function onSave()
-    local vfxIds = {}
-    for slotIndex = 1, SlotCount do
-      vfxIds[slotIndex] = trackedVfxIds[slotIndex] or false
-    end
-
-    return {
-      version = 1,
-      vfxIds = vfxIds,
-    }
-  end
-
-  ---@param data? table
-  local function onLoad(data)
-    local savedVfxIds = data and data.version == 1 and data.vfxIds
-
+  local function reset()
     for slotIndex = 1, SlotCount do
       trackedItems[slotIndex] = false
       trackedItemIds[slotIndex] = false
-
-      local savedVfxId = savedVfxIds and savedVfxIds[slotIndex]
-      trackedVfxIds[slotIndex] = type(savedVfxId) == 'string' and savedVfxId or false
+      trackedVfxIds[slotIndex] = false
     end
 
     nextPollIndex = 1
@@ -127,8 +110,7 @@ return function(runtime)
 
   return {
     checkNextSlot = checkNextSlot,
-    onLoad = onLoad,
-    onSave = onSave,
     reapplyTrackedVfx = reapplyTrackedVfx,
+    reset = reset,
   }
 end

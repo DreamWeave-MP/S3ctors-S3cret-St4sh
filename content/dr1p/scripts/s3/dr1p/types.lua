@@ -56,9 +56,8 @@
 
 ---@class DR1PEquipmentTracker
 ---@field checkNextSlot fun()
----@field onLoad fun(data?: table)
----@field onSave fun(): table
 ---@field reapplyTrackedVfx fun()
+---@field reset fun()
 
 ---@class DR1PInterfaceDefinition
 ---@field interfaceName string
