@@ -95,27 +95,6 @@ local Placements = {
         },
       },
     },
-    -- Doing belts before right hands means it's no longer an array
-    -- Also we don't have belt meshes yet anyway
-    -- [AuxSlot.Belt] = {
-    --   [BodyType.Vanilla] = {
-    --     [Transform.Position] = {
-    --       [Axis.X] = 0,
-    --       [Axis.Y] = 0,
-    --       [Axis.Z] = 0,
-    --     },
-    --     [Transform.Rotation] = {
-    --       [Axis.X] = Radians(0),
-    --       [Axis.Y] = Radians(0),
-    --       [Axis.Z] = Radians(0),
-    --     },
-    --     [Transform.Scale] = {
-    --       [Axis.X] = 1,
-    --       [Axis.Y] = 1,
-    --       [Axis.Z] = 1,
-    --     },
-    --   },
-    -- },
   },
   [Skeleton.FemaleThird] = {
     [Hand.Left] = {
