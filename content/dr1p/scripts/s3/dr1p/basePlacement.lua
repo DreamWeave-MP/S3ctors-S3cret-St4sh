@@ -272,6 +272,117 @@ local Placements = {
       },
     },
   },
+  [Skeleton.BeastThird] = {
+    [Hand.Left] = {
+      [Finger.Thumb] = {
+        [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 0.95,
+            [Axis.Y] = -0.250,
+            [Axis.Z] = 0.05,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(180),
+            [Axis.Y] = Radians(90),
+            [Axis.Z] = Radians(00),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.5,
+            [Axis.Z] = 0.5,
+          },
+        },
+      },
+      [Finger.Index] = {
+        [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.00,
+            [Axis.Z] = 1.00,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.40,
+            [Axis.Y] = 0.40,
+            [Axis.Z] = 0.40,
+          },
+        },
+      },
+    },
+    [Hand.Right] = {
+      [Finger.Index] = {
+        [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.00,
+            [Axis.Z] = 1.00,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.40,
+            [Axis.Y] = 0.40,
+            [Axis.Z] = 0.40,
+          },
+        },
+      },
+    },
+    [AuxSlot.Amulet] = {
+      [BodyType.Vanilla] = {
+        [Transform.Position] = {
+          [Axis.X] = -2.3,
+          [Axis.Y] = 6,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(90),
+          [Axis.Y] = Radians(95),
+          [Axis.Z] = Radians(50),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1,
+          [Axis.Z] = 1,
+        },
+      },
+    },
+    [AuxSlot.Belt] = {
+      [BodyType.Vanilla] = {
+        [Transform.Position] = {
+          [Axis.X] = 2,
+          [Axis.Y] = 1,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(180),
+          [Axis.Y] = Radians(90),
+          [Axis.Z] = Radians(00),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1.1,
+          [Axis.Z] = 1.1,
+        },
+      },
+    },
+  },
 }
 
 return Placements
