@@ -1,8 +1,14 @@
 ---@omw-context none
 
 local Dr1pEnum = require 'scripts.s3.dr1p.enum'
-local AuxSlot, BodyType, Finger, Hand, Skeleton =
-  Dr1pEnum.AuxSlot, Dr1pEnum.BodyType, Dr1pEnum.Finger, Dr1pEnum.Hand, Dr1pEnum.Skeleton
+local AuxSlot, Axis, BodyType, Finger, Hand, Skeleton, Transform =
+  Dr1pEnum.AuxSlot,
+  Dr1pEnum.Axis,
+  Dr1pEnum.BodyType,
+  Dr1pEnum.Finger,
+  Dr1pEnum.Hand,
+  Dr1pEnum.Skeleton,
+  Dr1pEnum.Transform
 
 local Radians = math.rad
 
@@ -12,39 +18,39 @@ local Placements = {
     [Hand.Left] = {
       [Finger.Thumb] = {
         [BodyType.Vanilla] = {
-          pos = {
-            x = 0.6,
-            y = -0.55,
-            z = 0.10,
+          [Transform.Position] = {
+            [Axis.X] = 0.6,
+            [Axis.Y] = -0.55,
+            [Axis.Z] = 0.10,
           },
-          rot = {
-            x = Radians(-150),
-            y = Radians(75),
-            z = Radians(-60),
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(-150),
+            [Axis.Y] = Radians(75),
+            [Axis.Z] = Radians(-60),
           },
-          scale = {
-            x = 0.5,
-            y = 0.55,
-            z = 0.5,
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.55,
+            [Axis.Z] = 0.5,
           },
         },
       },
       [Finger.Index] = {
         [BodyType.Vanilla] = {
-          pos = {
-            x = 1,
-            y = 0.75,
-            z = -0.2,
+          [Transform.Position] = {
+            [Axis.X] = 1,
+            [Axis.Y] = 0.75,
+            [Axis.Z] = -0.2,
           },
-          rot = {
-            x = Radians(-50),
-            y = Radians(-90),
-            z = Radians(0),
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(-50),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
           },
-          scale = {
-            x = 0.5,
-            y = 0.5,
-            z = 0.5,
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.5,
+            [Axis.Z] = 0.5,
           },
         },
       },
@@ -52,39 +58,39 @@ local Placements = {
     [Hand.Right] = {
       [Finger.Thumb] = {
         [BodyType.Vanilla] = {
-          pos = {
-            x = 0.2,
-            y = -0.25,
-            z = -0.35,
+          [Transform.Position] = {
+            [Axis.X] = 0.2,
+            [Axis.Y] = -0.25,
+            [Axis.Z] = -0.35,
           },
-          rot = {
-            x = Radians(-165),
-            y = Radians(120),
-            z = Radians(-75),
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(-165),
+            [Axis.Y] = Radians(120),
+            [Axis.Z] = Radians(-75),
           },
-          scale = {
-            x = 0.5,
-            y = 0.55,
-            z = 0.5,
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.55,
+            [Axis.Z] = 0.5,
           },
         },
       },
       [Finger.Index] = {
         [BodyType.Vanilla] = {
-          pos = {
-            x = 1,
-            y = 0.75,
-            z = -0.2,
+          [Transform.Position] = {
+            [Axis.X] = 1,
+            [Axis.Y] = 0.75,
+            [Axis.Z] = -0.2,
           },
-          rot = {
-            x = Radians(-50),
-            y = Radians(-90),
-            z = Radians(0),
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(-50),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
           },
-          scale = {
-            x = 0.5,
-            y = 0.5,
-            z = 0.5,
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.5,
+            [Axis.Z] = 0.5,
           },
         },
       },
@@ -93,23 +99,27 @@ local Placements = {
     -- Also we don't have belt meshes yet anyway
     -- [AuxSlot.Belt] = {
     --   [BodyType.Vanilla] = {
-    --     pos = {
-    --       x = 0,
-    --       y = 0,
-    --       z = 0,
+    --     [Transform.Position] = {
+    --       [Axis.X] = 0,
+    --       [Axis.Y] = 0,
+    --       [Axis.Z] = 0,
     --     },
-    --     rot = {
-    --       x = Radians(0),
-    --       y = Radians(0),
-    --       z = Radians(0),
+    --     [Transform.Rotation] = {
+    --       [Axis.X] = Radians(0),
+    --       [Axis.Y] = Radians(0),
+    --       [Axis.Z] = Radians(0),
     --     },
-    --     scale = {
-    --       x = 1,
-    --       y = 1,
-    --       z = 1,
+    --     [Transform.Scale] = {
+    --       [Axis.X] = 1,
+    --       [Axis.Y] = 1,
+    --       [Axis.Z] = 1,
     --     },
     --   },
     -- },
+  },
+  [Skeleton.FemaleThird] = {
+    [Hand.Left] = {},
+    [Hand.Right] = {},
   },
 }
 
