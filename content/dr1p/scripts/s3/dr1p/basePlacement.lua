@@ -326,8 +326,8 @@ local Placements = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
-            [Axis.Y] = -0.00,
-            [Axis.Z] = 1.00,
+            [Axis.Y] = -0.5,
+            [Axis.Z] = -1.00,
           },
 
           [Transform.Rotation] = {
