@@ -23,6 +23,21 @@
 ---@alias HandPlacementMap table<HandSide, FingerPlacementMap>
 ---@alias RaceFingerPlacementMap table<FingerIndex, DR1PTransform>
 ---@alias RacePlacementMap table<number, DR1PTransform | RaceFingerPlacementMap>
+
+---@alias HandSide
+---| 1 # Left
+---| 2 # Right
+
+---@alias SkeletonDR1PPlacementMap table<SkeletonVariant, DR1PPlacementMap>
+
+---@alias SkeletonVariant
+---| 1 # FemaleFirst - base_anim_female.1st
+---| 2 # HumanoidThird - xbase_anim
+---| 3 # HumanoidFirst - xbase_anim.1st
+---| 4 # FemaleThird - xbase_anim_female
+---| 5 # BeastThird - xbase_animkna
+---| 6 # BeastFirst - xbase_animkna.1st
+
 ---@alias SlotBoneBinding table<FingerIndex, string> | string
 ---@alias SlotBoneMap table<SlotIndex, SlotBoneBinding>
 ---@alias SlotIndex HandSide | AuxSlot
@@ -65,20 +80,6 @@
 
 ---@class openmw.interfaces
 ---@field DR1P DR1PInterface
-
----@alias HandSide
----| 1 # Left
----| 2 # Right
-
----@alias SkeletonDR1PPlacementMap table<SkeletonVariant, DR1PPlacementMap>
-
----@alias SkeletonVariant
----| 1 # FemaleFirst - base_anim_female.1st
----| 2 # HumanoidThird - xbase_anim
----| 3 # HumanoidFirst - xbase_anim.1st
----| 4 # FemaleThird - xbase_anim_female
----| 5 # BeastThird - xbase_animkna
----| 6 # BeastFirst - xbase_animkna.1st
 
 ---@class DR1PTransform
 ---@field pos DR1PVec3
