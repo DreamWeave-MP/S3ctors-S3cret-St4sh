@@ -414,8 +414,8 @@ local Placements = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
-            [Axis.Y] = -0.00,
-            [Axis.Z] = 1.00,
+            [Axis.Y] = 0,
+            [Axis.Z] = 0.00,
           },
 
           [Transform.Rotation] = {
@@ -437,8 +437,8 @@ local Placements = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
-            [Axis.Y] = -0.00,
-            [Axis.Z] = 1.00,
+            [Axis.Y] = 0,
+            [Axis.Z] = 0,
           },
 
           [Transform.Rotation] = {
