@@ -20,7 +20,7 @@ extra:
     content_files:
       - H3lp Yours3lf.esp
 
-  version: 0.81
+  version: 0.82
 ---
 Sometimes, you just have to h3lp yours3lf.
 
