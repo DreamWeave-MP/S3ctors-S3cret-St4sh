@@ -43,6 +43,7 @@ return function(runtime)
   ---@type table<number, string|false>
   local trackedVfxIds = { false, false, false, false, false, false }
 
+  local pendingVfxRemovals = {}
   local nextPollIndex = 1
   local forceCheck = true
 
@@ -96,7 +97,7 @@ return function(runtime)
     end
   end
 
-  local function reset()
+  local function resetRuntimeState()
     for slotIndex = 1, SlotCount do
       trackedItems[slotIndex] = false
       trackedItemIds[slotIndex] = false
@@ -107,9 +108,48 @@ return function(runtime)
     forceCheck = true
   end
 
+  local function onSave()
+    local vfxIds = {}
+    for slotIndex = 1, SlotCount do
+      vfxIds[slotIndex] = trackedVfxIds[slotIndex] or pendingVfxRemovals[slotIndex] or false
+    end
+
+    return {
+      version = 1,
+      vfxIds = vfxIds,
+    }
+  end
+
+  ---@param data? table
+  local function onLoad(data)
+    pendingVfxRemovals = {}
+
+    local savedVfxIds = data and data.version == 1 and data.vfxIds
+    if savedVfxIds then
+      for slotIndex = 1, SlotCount do
+        local vfxId = savedVfxIds[slotIndex]
+        if vfxId then pendingVfxRemovals[slotIndex] = vfxId end
+      end
+    end
+
+    resetRuntimeState()
+  end
+
+  local function flushPendingVfxRemovals()
+    for slotIndex = 1, SlotCount do
+      local vfxId = pendingVfxRemovals[slotIndex]
+      if vfxId then
+        RemoveVfx(vfxId)
+        pendingVfxRemovals[slotIndex] = false
+      end
+    end
+  end
+
   return {
     checkNextSlot = checkNextSlot,
+    flushPendingVfxRemovals = flushPendingVfxRemovals,
+    onLoad = onLoad,
+    onSave = onSave,
     reapplyTrackedVfx = reapplyTrackedVfx,
-    reset = reset,
   }
 end
