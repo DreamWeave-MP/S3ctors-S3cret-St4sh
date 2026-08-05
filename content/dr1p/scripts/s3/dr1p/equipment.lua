@@ -28,9 +28,8 @@ local Slots = {
   { equipmentSlot = EquipmentSlots.RightGauntlet },
 }
 
-local SlotCount = #Slots
 local PollableSlots = { 1, 2 }
-local PollableSlotCount = #PollableSlots
+local PollableSlotCount, SlotCount = #PollableSlots, #Slots
 
 ---@param runtime DR1PRuntime
 ---@return DR1PEquipmentTracker
