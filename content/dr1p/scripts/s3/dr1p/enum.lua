@@ -48,6 +48,16 @@ local Dr1pEnum = {
     Right = 2,
   },
 
+  ---@class ModelPolicies
+  ---@field OptionalSkinReplacement 1
+  ---@field Original 3
+  ---@field SkinReplacement 2
+  ModelPolicy = {
+    OptionalSkinReplacement = 1,
+    Original = 3,
+    SkinReplacement = 2,
+  },
+
   ---@class SkeletonVariants
   ---@field FemaleFirst 1
   ---@field HumanoidThird 2

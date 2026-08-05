@@ -34,6 +34,7 @@ local Slots = {
   },
   {
     equipmentSlot = EquipmentSlots.Belt,
+    attachmentSlot = AuxSlot.Belt,
     useHeadTransform = false,
     visibility = Visibility.ThirdPerson,
   },
@@ -49,13 +50,13 @@ local Slots = {
   },
 }
 
-local PollableSlots = { 1, 2, 3 }
+local PollableSlots = { 1, 2, 3, 4 }
 local PollableSlotCount, SlotCount = #PollableSlots, #Slots
 
 ---@param runtime DR1PRuntime
 ---@return DR1PEquipmentTracker
 return function(runtime)
-  local AddAmulet, AddRing = runtime.addAmulet, runtime.addRing
+  local AddAmulet, AddBelt, AddRing = runtime.addAmulet, runtime.addBelt, runtime.addRing
   local GetIsFirstPerson = runtime.getIsFirstPerson
 
   ---@type table<number, string|false>
@@ -86,6 +87,7 @@ return function(runtime)
   local function addVfx(slot, item)
     local attachmentSlot = slot.attachmentSlot
     if attachmentSlot == AuxSlot.Amulet then return AddAmulet(item.recordId) end
+    if attachmentSlot == AuxSlot.Belt then return AddBelt(item.recordId) end
     if attachmentSlot ~= Hand.Left and attachmentSlot ~= Hand.Right then return end
 
     ---@cast attachmentSlot HandSide

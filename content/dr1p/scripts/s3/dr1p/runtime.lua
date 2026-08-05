@@ -9,10 +9,11 @@ local HeadPlacement = require 'scripts.s3.dr1p.headPlacement'
 local RacePlacement = require 'scripts.s3.dr1p.racePlacement'
 local SlotToBoneNames = require 'scripts.s3.dr1p.slots'
 
-local Axis, AuxSlot, BodyType, Skeleton, Transform =
-  Enum.Axis, Enum.AuxSlot, Enum.BodyType, Enum.Skeleton, Enum.Transform
+local Axis, AuxSlot, BodyType, ModelPolicy, Skeleton, Transform =
+  Enum.Axis, Enum.AuxSlot, Enum.BodyType, Enum.ModelPolicy, Enum.Skeleton, Enum.Transform
 
 local s3lf = require('openmw.interfaces').s3.lf
+local VfsFileExists = require('openmw.vfs').fileExists
 
 local types = require 'openmw.types'
 local BodyPartRecords = types.BodyPart.records
@@ -31,6 +32,10 @@ local IdentityTransform, TransformMove, TransformRotateX, TransformRotateY, Tran
 
 ---@type table<DR1PTransform, openmw.util.Transform>
 local CompiledPlacements = {}
+local ResolvedModels = {
+  [ModelPolicy.OptionalSkinReplacement] = {},
+  [ModelPolicy.SkinReplacement] = {},
+}
 
 ---@param placement DR1PTransform
 ---@return openmw.util.Transform
@@ -57,6 +62,30 @@ local function compilePlacement(placement)
 
   CompiledPlacements[placement] = result
   return result
+end
+
+---@param originalModel string
+---@param modelPolicy ModelPolicy
+---@return string?
+local function resolveModel(originalModel, modelPolicy)
+  if modelPolicy == ModelPolicy.Original then return originalModel end
+
+  local resolvedModels = ResolvedModels[modelPolicy]
+  local cachedModel = resolvedModels[originalModel]
+  if cachedModel then return cachedModel end
+
+  local modelStem, modelExtension = originalModel:match '^(.*)(%.[^./]+)$'
+  local replacementModel = StrFormat('%s_skin%s', modelStem, modelExtension)
+
+  if VfsFileExists(replacementModel) then
+    resolvedModels[originalModel] = replacementModel
+    return replacementModel
+  end
+
+  if modelPolicy == ModelPolicy.OptionalSkinReplacement then
+    resolvedModels[originalModel] = originalModel
+    return originalModel
+  end
 end
 
 ---@param getIsFirstPerson fun(): boolean
@@ -116,6 +145,7 @@ return function(getIsFirstPerson)
     local fingerPlacement = handPlacement[finger]
     if not fingerPlacement then return end
 
+    ---@cast fingerPlacement BaseDR1PPlacementMap
     return fingerPlacement[BodyType.Vanilla]
   end
 
@@ -155,11 +185,20 @@ return function(getIsFirstPerson)
   ---@param boneName string
   ---@param basePlacement DR1PTransform?
   ---@param racePlacement DR1PTransform?
+  ---@param modelPolicy ModelPolicy
   ---@param useHeadTransform boolean
   ---@return string?
-  local function addAttachment(recordId, boneName, basePlacement, racePlacement, useHeadTransform)
+  local function addAttachment(
+    recordId,
+    boneName,
+    basePlacement,
+    racePlacement,
+    modelPolicy,
+    useHeadTransform
+  )
     if not basePlacement then return end
-    local mesh = ClothingRecords[recordId].model
+    local mesh = resolveModel(ClothingRecords[recordId].model, modelPolicy)
+    if not mesh then return end
 
     AttachInfo.vfxId = StrFormat('DR1P-%s-%s', s3lf.id, boneName)
     AttachInfo.boneName = boneName
@@ -202,6 +241,7 @@ return function(getIsFirstPerson)
       boneName,
       getHandBasePlacement(handSide, finger),
       getHandRacePlacement(handSide, finger),
+      ModelPolicy.Original,
       useHeadTransform
     )
   end
@@ -219,12 +259,32 @@ return function(getIsFirstPerson)
       amuletBone,
       getAuxBasePlacement(AuxSlot.Amulet),
       getAuxRacePlacement(AuxSlot.Amulet),
+      ModelPolicy.OptionalSkinReplacement,
       true
+    )
+  end
+
+  ---@param recordId string
+  ---@return string?
+  local function addBelt(recordId)
+    if getIsFirstPerson() then return end
+
+    local beltBone = SlotToBoneNames[AuxSlot.Belt]
+    ---@cast beltBone string
+
+    return addAttachment(
+      recordId,
+      beltBone,
+      getAuxBasePlacement(AuxSlot.Belt),
+      getAuxRacePlacement(AuxSlot.Belt),
+      ModelPolicy.SkinReplacement,
+      false
     )
   end
 
   return {
     addAmulet = addAmulet,
+    addBelt = addBelt,
     addRing = addRing,
     getIsFirstPerson = getIsFirstPerson,
     getSkeletonType = getSkeletonType,

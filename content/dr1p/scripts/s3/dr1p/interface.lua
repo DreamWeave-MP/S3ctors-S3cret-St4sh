@@ -9,6 +9,7 @@ return function(runtime)
     interfaceName = 'DR1P',
     interface = {
       addAmulet = runtime.addAmulet,
+      addBelt = runtime.addBelt,
       addRing = runtime.addRing,
       AuxSlot = Enum.AuxSlot,
       BodyType = Enum.BodyType,

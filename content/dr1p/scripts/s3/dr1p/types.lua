@@ -28,6 +28,11 @@
 ---| 1 # Left
 ---| 2 # Right
 
+---@alias ModelPolicy
+---| 1 # OptionalSkinReplacement
+---| 2 # SkinReplacement
+---| 3 # Original
+
 ---@alias SkeletonDR1PPlacementMap table<SkeletonVariant, DR1PPlacementMap>
 
 ---@alias SkeletonVariant
@@ -60,6 +65,7 @@
 ---@field Skeleton SkeletonVariants
 ---@field addRing fun(item: openmw.Object, handSide: HandSide, finger: FingerIndex, useHeadTransform: boolean): string?
 ---@field addAmulet fun(recordId: string): string?
+---@field addBelt fun(recordId: string): string?
 ---@field getSkeletonType fun(): SkeletonVariant
 ---@field getSkeletonTypeName fun(): string
 
@@ -74,6 +80,7 @@
 ---@class DR1PRuntime
 ---@field addRing fun(item: openmw.Object, handSide: HandSide, finger: FingerIndex, useHeadTransform: boolean): string?
 ---@field addAmulet fun(recordId: string): string?
+---@field addBelt fun(recordId: string): string?
 ---@field getSkeletonType fun(): SkeletonVariant
 ---@field getSkeletonTypeName fun(): string
 ---@field getIsFirstPerson fun(): boolean
