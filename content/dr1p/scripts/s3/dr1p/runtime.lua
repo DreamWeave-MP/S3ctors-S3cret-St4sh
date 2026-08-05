@@ -9,7 +9,8 @@ local HeadPlacement = require 'scripts.s3.dr1p.headPlacement'
 local RacePlacement = require 'scripts.s3.dr1p.racePlacement'
 local SlotToBoneNames = require 'scripts.s3.dr1p.slots'
 
-local Axis, BodyType, Skeleton, Transform = Enum.Axis, Enum.BodyType, Enum.Skeleton, Enum.Transform
+local Axis, AuxSlot, BodyType, Skeleton, Transform =
+  Enum.Axis, Enum.AuxSlot, Enum.BodyType, Enum.Skeleton, Enum.Transform
 
 local s3lf = require('openmw.interfaces').s3.lf
 
@@ -30,6 +31,7 @@ local IdentityTransform, TransformMove, TransformRotateX, TransformRotateY, Tran
 
 ---@type table<DR1PTransform, openmw.util.Transform>
 local CompiledPlacements = {}
+
 ---@param placement DR1PTransform
 ---@return openmw.util.Transform
 local function compilePlacement(placement)
@@ -61,7 +63,7 @@ end
 ---@return DR1PRuntime
 return function(getIsFirstPerson)
   ---@type DR1PAttachInfo
-  local RingAttachInfo = {
+  local AttachInfo = {
     autoTransform = false,
     boneName = '',
     loop = true,
@@ -104,7 +106,7 @@ return function(getIsFirstPerson)
   ---@param handSide HandSide
   ---@param finger FingerIndex
   ---@return DR1PTransform? basePlacement
-  local function getBasePlacement(handSide, finger)
+  local function getHandBasePlacement(handSide, finger)
     local skeletonPlacement = BasePlacement[getSkeletonType()]
     if not skeletonPlacement then return end
 
@@ -117,44 +119,50 @@ return function(getIsFirstPerson)
     return fingerPlacement[BodyType.Vanilla]
   end
 
-  ---@param item openmw.Object
+  ---@param auxSlot AuxSlot
+  ---@return DR1PTransform? basePlacement
+  local function getAuxBasePlacement(auxSlot)
+    local skeletonPlacement = BasePlacement[getSkeletonType()]
+    if not skeletonPlacement then return end
+
+    local auxPlacement = skeletonPlacement[auxSlot]
+    if not auxPlacement then return end
+
+    return auxPlacement[BodyType.Vanilla]
+  end
+
   ---@param handSide HandSide
   ---@param finger FingerIndex
+  ---@return DR1PTransform? racePlacement
+  local function getHandRacePlacement(handSide, finger)
+    local raceMap = RacePlacement[s3lf.record.race]
+    if not raceMap then return end
+
+    local handPlacement = raceMap[handSide]
+    if not handPlacement then return end
+
+    return handPlacement[finger]
+  end
+
+  ---@param auxSlot AuxSlot
+  ---@return DR1PTransform? racePlacement
+  local function getAuxRacePlacement(auxSlot)
+    local raceMap = RacePlacement[s3lf.record.race]
+    return raceMap and raceMap[auxSlot]
+  end
+
+  ---@param recordId string
+  ---@param boneName string
+  ---@param basePlacement DR1PTransform?
+  ---@param racePlacement DR1PTransform?
   ---@param useHeadTransform boolean
   ---@return string?
-  local function addRing(item, handSide, finger, useHeadTransform)
-    local slotBoneBinding = SlotToBoneNames[handSide]
-    if not slotBoneBinding then
-      error('Invalid handSide provided to DR1P.addRing: ' .. handSide .. ' !', 2)
-    end
-
-    local boneName
-    if type(slotBoneBinding) == 'table' then
-      boneName = slotBoneBinding[finger]
-    else
-      boneName = slotBoneBinding
-    end
-
-    if not boneName then error('Invalid finger provided to DR1P.addRing: ' .. finger .. ' !', 2) end
-
-    local ringMesh = ClothingRecords[item.recordId].model
-
-    RingAttachInfo.vfxId = StrFormat('DR1P-%s-%s', s3lf.id, boneName)
-    RingAttachInfo.boneName = boneName
-
-    local basePlacement = getBasePlacement(handSide, finger)
+  local function addAttachment(recordId, boneName, basePlacement, racePlacement, useHeadTransform)
     if not basePlacement then return end
+    local mesh = ClothingRecords[recordId].model
 
-    local raceMap = RacePlacement[s3lf.record.race]
-    ---@type DR1PTransform?
-    local racePlacement
-    if raceMap then
-      local handPlacement = raceMap[handSide]
-      if handPlacement then
-        ---@cast handPlacement RaceFingerPlacementMap
-        racePlacement = handPlacement[finger]
-      end
-    end
+    AttachInfo.vfxId = StrFormat('DR1P-%s-%s', s3lf.id, boneName)
+    AttachInfo.boneName = boneName
 
     local headPlacement
     if useHeadTransform then
@@ -167,16 +175,58 @@ return function(getIsFirstPerson)
     if racePlacement then result = result * compilePlacement(racePlacement) end
     if useHeadTransform and headPlacement then result = result * compilePlacement(headPlacement) end
 
-    local gearPlacement = GearPlacement[ringMesh]
+    local gearPlacement = GearPlacement[mesh]
     if gearPlacement then result = result * compilePlacement(gearPlacement) end
 
-    RingAttachInfo.transform = result
-    s3lf.addVfx(ringMesh, RingAttachInfo)
-    return RingAttachInfo.vfxId
+    AttachInfo.transform = result
+    s3lf.addVfx(mesh, AttachInfo)
+    return AttachInfo.vfxId
+  end
+
+  ---@param item openmw.Object
+  ---@param handSide HandSide
+  ---@param finger FingerIndex
+  ---@param useHeadTransform boolean
+  ---@return string?
+  local function addRing(item, handSide, finger, useHeadTransform)
+    local slotBoneBinding = SlotToBoneNames[handSide]
+    if type(slotBoneBinding) ~= 'table' then
+      error('Invalid handSide provided to DR1P.addRing: ' .. handSide .. ' !', 2)
+    end
+
+    local boneName = slotBoneBinding[finger]
+    if not boneName then error('Invalid finger provided to DR1P.addRing: ' .. finger .. ' !', 2) end
+
+    return addAttachment(
+      item.recordId,
+      boneName,
+      getHandBasePlacement(handSide, finger),
+      getHandRacePlacement(handSide, finger),
+      useHeadTransform
+    )
+  end
+
+  ---@param recordId string
+  ---@return string?
+  local function addAmulet(recordId)
+    if getIsFirstPerson() then return end
+
+    local amuletBone = SlotToBoneNames[AuxSlot.Amulet]
+    ---@cast amuletBone string
+
+    return addAttachment(
+      recordId,
+      amuletBone,
+      getAuxBasePlacement(AuxSlot.Amulet),
+      getAuxRacePlacement(AuxSlot.Amulet),
+      true
+    )
   end
 
   return {
+    addAmulet = addAmulet,
     addRing = addRing,
+    getIsFirstPerson = getIsFirstPerson,
     getSkeletonType = getSkeletonType,
     getSkeletonTypeName = getSkeletonTypeName,
   }

@@ -48,6 +48,10 @@
 ---@alias Vec3Y 2
 ---@alias Vec3Z 3
 
+---@alias Visibility
+---| 1 # All
+---| 2 # ThirdPerson
+
 ---@class DR1PInterface
 ---@field AuxSlot AuxSlots
 ---@field BodyType BodyTypes
@@ -55,6 +59,7 @@
 ---@field Hand HandSides
 ---@field Skeleton SkeletonVariants
 ---@field addRing fun(item: openmw.Object, handSide: HandSide, finger: FingerIndex, useHeadTransform: boolean): string?
+---@field addAmulet fun(recordId: string): string?
 ---@field getSkeletonType fun(): SkeletonVariant
 ---@field getSkeletonTypeName fun(): string
 
@@ -68,13 +73,17 @@
 
 ---@class DR1PRuntime
 ---@field addRing fun(item: openmw.Object, handSide: HandSide, finger: FingerIndex, useHeadTransform: boolean): string?
+---@field addAmulet fun(recordId: string): string?
 ---@field getSkeletonType fun(): SkeletonVariant
 ---@field getSkeletonTypeName fun(): string
+---@field getIsFirstPerson fun(): boolean
 
 ---@class DR1PTrackedSlot
+---@field attachmentSlot SlotIndex?
 ---@field equipmentSlot number
----@field handSide HandSide?
 ---@field finger FingerIndex?
+---@field useHeadTransform boolean
+---@field visibility Visibility
 
 ---@class DR1PEquipmentTracker
 ---@field checkNextSlot fun()
