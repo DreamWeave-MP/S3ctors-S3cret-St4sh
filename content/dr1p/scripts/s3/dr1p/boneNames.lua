@@ -6,7 +6,8 @@
 ---@field [3] 'Bip01 L Finger2' Left Middle
 ---@field [4] 'Bip01 L Finger3' Left Ring
 ---@field [5] 'Bip01 L Finger4' Left Pinky
----@field [6] 'Bip01 R Finger0' Right Thumb
+--- Maybe using this bone sucks but it animates better so let's try it
+---@field [6] 'Bip01 R Finger01' Right Thumb
 ---@field [7] 'Bip01 R Finger1' Right Index
 ---@field [8] 'Bip01 R Finger2' Right Middle
 ---@field [9] 'Bip01 R Finger3' Right Ring
@@ -19,7 +20,7 @@ local BoneNames = {
   'Bip01 L Finger2',
   'Bip01 L Finger3',
   'Bip01 L Finger4',
-  'Bip01 R Finger0',
+  'Bip01 R Finger01',
   'Bip01 R Finger1',
   'Bip01 R Finger2',
   'Bip01 R Finger3',
