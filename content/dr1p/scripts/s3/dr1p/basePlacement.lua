@@ -49,6 +49,46 @@ local Placements = {
         },
       },
     },
+    [Hand.Right] = {
+      [Finger.Thumb] = {
+        [BodyType.Vanilla] = {
+          pos = {
+            x = 0.2,
+            y = -0.25,
+            z = -0.35,
+          },
+          rot = {
+            x = Radians(-165),
+            y = Radians(120),
+            z = Radians(-75),
+          },
+          scale = {
+            x = 0.5,
+            y = 0.55,
+            z = 0.5,
+          },
+        },
+      },
+      [Finger.Index] = {
+        [BodyType.Vanilla] = {
+          pos = {
+            x = 1,
+            y = 0.75,
+            z = -0.2,
+          },
+          rot = {
+            x = Radians(-50),
+            y = Radians(-90),
+            z = Radians(0),
+          },
+          scale = {
+            x = 0.5,
+            y = 0.5,
+            z = 0.5,
+          },
+        },
+      },
+    },
     -- Doing belts before right hands means it's no longer an array
     -- Also we don't have belt meshes yet anyway
     -- [AuxSlot.Belt] = {
