@@ -170,6 +170,29 @@ local Placements = {
             [Axis.Y] = -0.00,
             [Axis.Z] = 1.00,
           },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+          [Transform.Scale] = {
+            [Axis.X] = 0.40,
+            [Axis.Y] = 0.40,
+            [Axis.Z] = 0.40,
+          },
+        },
+      },
+    },
+    [Hand.Right] = {
+      [Finger.Index] = {
+        [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.00,
+            [Axis.Z] = 1.00,
+          },
+
           [Transform.Rotation] = {
             [Axis.X] = Radians(00),
             [Axis.Y] = Radians(-90),
