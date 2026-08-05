@@ -176,6 +176,7 @@ local Placements = {
             [Axis.Y] = Radians(-90),
             [Axis.Z] = Radians(0),
           },
+
           [Transform.Scale] = {
             [Axis.X] = 0.40,
             [Axis.Y] = 0.40,
@@ -198,6 +199,7 @@ local Placements = {
             [Axis.Y] = Radians(-90),
             [Axis.Z] = Radians(0),
           },
+
           [Transform.Scale] = {
             [Axis.X] = 0.40,
             [Axis.Y] = 0.40,
