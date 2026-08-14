@@ -22,8 +22,10 @@ local Dr1pEnum = {
 
   ---@class BodyTypes
   ---@field Vanilla 1
+  ---@field BetterBodies 2
   BodyType = {
     Vanilla = 1,
+    BetterBodies = 2,
   },
 
   ---@class FingerIndices
