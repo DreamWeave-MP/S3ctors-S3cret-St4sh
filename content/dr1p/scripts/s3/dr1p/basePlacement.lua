@@ -422,9 +422,49 @@ local Placements = {
           [Axis.Z] = 1,
         },
       },
+
+      [BodyType.BetterBodies] = {
+        [Transform.Position] = {
+          [Axis.X] = -2.3,
+          [Axis.Y] = 6,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(90),
+          [Axis.Y] = Radians(95),
+          [Axis.Z] = Radians(50),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1,
+          [Axis.Z] = 1,
+        },
+      },
     },
     [AuxSlot.Belt] = {
       [BodyType.Vanilla] = {
+        [Transform.Position] = {
+          [Axis.X] = 2,
+          [Axis.Y] = 1,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(180),
+          [Axis.Y] = Radians(90),
+          [Axis.Z] = Radians(00),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1.1,
+          [Axis.Z] = 1.1,
+        },
+      },
+
+      [BodyType.BetterBodies] = {
         [Transform.Position] = {
           [Axis.X] = 2,
           [Axis.Y] = 1,
