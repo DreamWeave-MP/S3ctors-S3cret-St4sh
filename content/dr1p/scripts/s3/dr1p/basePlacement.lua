@@ -283,6 +283,26 @@ local Placements = {
           [Transform.Position] = {
             [Axis.X] = 0.95,
             [Axis.Y] = -0.250,
+            [Axis.Z] = 0.6,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(180),
+            [Axis.Y] = Radians(90),
+            [Axis.Z] = Radians(00),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.6,
+            [Axis.Y] = 0.6,
+            [Axis.Z] = 0.6,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
+          [Transform.Position] = {
+            [Axis.X] = 0.95,
+            [Axis.Y] = -0.250,
             [Axis.Z] = 0.05,
           },
 
