@@ -303,6 +303,25 @@ local Placements = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
+            [Axis.Y] = -0.20,
+            [Axis.Z] = -0.00,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.50,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.50,
+          },
+        },
+        [BodyType.BetterBodies] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
             [Axis.Y] = -0.00,
             [Axis.Z] = 1.00,
           },
@@ -324,6 +343,25 @@ local Placements = {
     [Hand.Right] = {
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.535,
+            [Axis.Z] = 0.10,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.50,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.50,
+          },
+        },
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
             [Axis.Y] = -0.5,
