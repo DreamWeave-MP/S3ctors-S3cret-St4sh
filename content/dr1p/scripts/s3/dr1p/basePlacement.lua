@@ -446,7 +446,7 @@ local Placements = {
     [AuxSlot.Belt] = {
       [BodyType.Vanilla] = {
         [Transform.Position] = {
-          [Axis.X] = 2,
+          [Axis.X] = 4,
           [Axis.Y] = 1,
           [Axis.Z] = 0,
         },
