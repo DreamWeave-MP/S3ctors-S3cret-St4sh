@@ -23,11 +23,13 @@ local Placements = {
             [Axis.Y] = -0.55,
             [Axis.Z] = 0.10,
           },
+
           [Transform.Rotation] = {
             [Axis.X] = Radians(-150),
             [Axis.Y] = Radians(75),
             [Axis.Z] = Radians(-60),
           },
+
           [Transform.Scale] = {
             [Axis.X] = 0.5,
             [Axis.Y] = 0.55,
@@ -35,8 +37,29 @@ local Placements = {
           },
         },
       },
+
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.325,
+            [Axis.Z] = 0,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(0),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.55,
+            [Axis.Y] = 0.55,
+            [Axis.Z] = 0.55,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1,
             [Axis.Y] = 0.75,
@@ -55,6 +78,7 @@ local Placements = {
         },
       },
     },
+
     [Hand.Right] = {
       [Finger.Thumb] = {
         [BodyType.Vanilla] = {
@@ -78,15 +102,37 @@ local Placements = {
       [Finger.Index] = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.325,
+            [Axis.Z] = 0,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(0),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.55,
+            [Axis.Y] = 0.55,
+            [Axis.Z] = 0.55,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
+          [Transform.Position] = {
             [Axis.X] = 1,
             [Axis.Y] = 0.75,
             [Axis.Z] = -0.2,
           },
+
           [Transform.Rotation] = {
             [Axis.X] = Radians(-50),
             [Axis.Y] = Radians(-90),
             [Axis.Z] = Radians(0),
           },
+
           [Transform.Scale] = {
             [Axis.X] = 0.5,
             [Axis.Y] = 0.5,
@@ -96,6 +142,7 @@ local Placements = {
       },
     },
   },
+
   [Skeleton.FemaleThird] = {
     [Hand.Left] = {
       [Finger.Thumb] = {
@@ -118,9 +165,50 @@ local Placements = {
             [Axis.Z] = 0.5,
           },
         },
+
+        [BodyType.BetterBodies] = {
+          [Transform.Position] = {
+            [Axis.X] = 0.95,
+            [Axis.Y] = -0.250,
+            [Axis.Z] = 0.05,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(180),
+            [Axis.Y] = Radians(90),
+            [Axis.Z] = Radians(00),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.5,
+            [Axis.Z] = 0.5,
+          },
+        },
       },
+
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.325,
+            [Axis.Z] = 0,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.5,
+            [Axis.Z] = 0.5,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
             [Axis.Y] = -0.00,
@@ -141,9 +229,30 @@ local Placements = {
         },
       },
     },
+
     [Hand.Right] = {
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.325,
+            [Axis.Z] = 0,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.50,
+            [Axis.Y] = 0.50,
+            [Axis.Z] = 0.50,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
             [Axis.Y] = -0.325,
@@ -164,8 +273,29 @@ local Placements = {
         },
       },
     },
+
     [AuxSlot.Amulet] = {
       [BodyType.Vanilla] = {
+        [Transform.Position] = {
+          [Axis.X] = -2.3,
+          [Axis.Y] = 7,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(85),
+          [Axis.Y] = Radians(95),
+          [Axis.Z] = Radians(50),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1,
+          [Axis.Z] = 1,
+        },
+      },
+
+      [BodyType.BetterBodies] = {
         [Transform.Position] = {
           [Axis.X] = -2.3,
           [Axis.Y] = 6,
@@ -173,7 +303,7 @@ local Placements = {
         },
 
         [Transform.Rotation] = {
-          [Axis.X] = Radians(90),
+          [Axis.X] = Radians(85),
           [Axis.Y] = Radians(95),
           [Axis.Z] = Radians(50),
         },
@@ -185,8 +315,29 @@ local Placements = {
         },
       },
     },
+
     [AuxSlot.Belt] = {
       [BodyType.Vanilla] = {
+        [Transform.Position] = {
+          [Axis.X] = 4,
+          [Axis.Y] = 1,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(180),
+          [Axis.Y] = Radians(90),
+          [Axis.Z] = Radians(00),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1.1,
+          [Axis.Z] = 1.1,
+        },
+      },
+
+      [BodyType.BetterBodies] = {
         [Transform.Position] = {
           [Axis.X] = 2,
           [Axis.Y] = 1,
@@ -207,6 +358,7 @@ local Placements = {
       },
     },
   },
+
   [Skeleton.HumanoidFirst] = {
     [Hand.Left] = {
       [Finger.Thumb] = {
@@ -230,8 +382,29 @@ local Placements = {
           },
         },
       },
+
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
+            [Axis.Y] = -0.20,
+            [Axis.Z] = 0,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.50,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.50,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
             [Axis.Y] = -0.00,
@@ -257,6 +430,26 @@ local Placements = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
+            [Axis.Y] = -0.535,
+            [Axis.Z] = 0.1,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.50,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.50,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
+          [Transform.Position] = {
+            [Axis.X] = 1.25,
             [Axis.Y] = -0.00,
             [Axis.Z] = -0.1,
           },
@@ -276,6 +469,7 @@ local Placements = {
       },
     },
   },
+
   [Skeleton.HumanoidThird] = {
     [Hand.Left] = {
       [Finger.Thumb] = {
@@ -319,6 +513,7 @@ local Placements = {
           },
         },
       },
+
       [Finger.Index] = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
@@ -339,6 +534,7 @@ local Placements = {
             [Axis.Z] = 0.50,
           },
         },
+
         [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
@@ -360,6 +556,7 @@ local Placements = {
         },
       },
     },
+
     [Hand.Right] = {
       [Finger.Index] = {
         [BodyType.Vanilla] = {
@@ -381,6 +578,7 @@ local Placements = {
             [Axis.Z] = 0.50,
           },
         },
+
         [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
@@ -402,6 +600,7 @@ local Placements = {
         },
       },
     },
+
     [AuxSlot.Amulet] = {
       [BodyType.Vanilla] = {
         [Transform.Position] = {
@@ -411,9 +610,9 @@ local Placements = {
         },
 
         [Transform.Rotation] = {
-          [Axis.X] = Radians(90),
+          [Axis.X] = Radians(85),
           [Axis.Y] = Radians(95),
-          [Axis.Z] = Radians(50),
+          [Axis.Z] = Radians(45),
         },
 
         [Transform.Scale] = {
@@ -431,7 +630,7 @@ local Placements = {
         },
 
         [Transform.Rotation] = {
-          [Axis.X] = Radians(90),
+          [Axis.X] = Radians(85),
           [Axis.Y] = Radians(95),
           [Axis.Z] = Radians(50),
         },
@@ -443,6 +642,7 @@ local Placements = {
         },
       },
     },
+
     [AuxSlot.Belt] = {
       [BodyType.Vanilla] = {
         [Transform.Position] = {
@@ -485,6 +685,7 @@ local Placements = {
       },
     },
   },
+
   [Skeleton.BeastFirst] = {
     [Hand.Left] = {
       [Finger.Thumb] = {
@@ -507,9 +708,50 @@ local Placements = {
             [Axis.Z] = 0.5,
           },
         },
+
+        [BodyType.BetterBodies] = {
+          [Transform.Position] = {
+            [Axis.X] = 0.95,
+            [Axis.Y] = -0.250,
+            [Axis.Z] = 0.05,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(180),
+            [Axis.Y] = Radians(90),
+            [Axis.Z] = Radians(00),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.5,
+            [Axis.Z] = 0.5,
+          },
+        },
       },
+
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 2,
+            [Axis.Y] = -0.25,
+            [Axis.Z] = 0.00,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.60,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.60,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
             [Axis.Y] = 0,
@@ -530,9 +772,30 @@ local Placements = {
         },
       },
     },
+
     [Hand.Right] = {
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 2.25,
+            [Axis.Y] = -0.25,
+            [Axis.Z] = 0.00,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.60,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.60,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
             [Axis.Y] = 0,
@@ -554,6 +817,7 @@ local Placements = {
       },
     },
   },
+
   [Skeleton.BeastThird] = {
     [Hand.Left] = {
       [Finger.Thumb] = {
@@ -576,12 +840,33 @@ local Placements = {
             [Axis.Z] = 0.5,
           },
         },
+
+        [BodyType.BetterBodies] = {
+          [Transform.Position] = {
+            [Axis.X] = 0.95,
+            [Axis.Y] = -0.250,
+            [Axis.Z] = 0.05,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(180),
+            [Axis.Y] = Radians(90),
+            [Axis.Z] = Radians(00),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.5,
+            [Axis.Y] = 0.5,
+            [Axis.Z] = 0.5,
+          },
+        },
       },
+
       [Finger.Index] = {
         [BodyType.Vanilla] = {
           [Transform.Position] = {
-            [Axis.X] = 1.25,
-            [Axis.Y] = 0,
+            [Axis.X] = 2,
+            [Axis.Y] = -0.25,
             [Axis.Z] = 0.00,
           },
 
@@ -592,16 +877,37 @@ local Placements = {
           },
 
           [Transform.Scale] = {
-            [Axis.X] = 0.40,
-            [Axis.Y] = 0.40,
-            [Axis.Z] = 0.40,
+            [Axis.X] = 0.60,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.60,
           },
         },
       },
     },
+
     [Hand.Right] = {
       [Finger.Index] = {
         [BodyType.Vanilla] = {
+          [Transform.Position] = {
+            [Axis.X] = 2.25,
+            [Axis.Y] = -0.25,
+            [Axis.Z] = 0,
+          },
+
+          [Transform.Rotation] = {
+            [Axis.X] = Radians(00),
+            [Axis.Y] = Radians(-90),
+            [Axis.Z] = Radians(0),
+          },
+
+          [Transform.Scale] = {
+            [Axis.X] = 0.60,
+            [Axis.Y] = 0.60,
+            [Axis.Z] = 0.60,
+          },
+        },
+
+        [BodyType.BetterBodies] = {
           [Transform.Position] = {
             [Axis.X] = 1.25,
             [Axis.Y] = 0,
@@ -622,8 +928,29 @@ local Placements = {
         },
       },
     },
+
     [AuxSlot.Amulet] = {
       [BodyType.Vanilla] = {
+        [Transform.Position] = {
+          [Axis.X] = -2.3,
+          [Axis.Y] = 6,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(85),
+          [Axis.Y] = Radians(95),
+          [Axis.Z] = Radians(45),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1,
+          [Axis.Z] = 1,
+        },
+      },
+
+      [BodyType.BetterBodies] = {
         [Transform.Position] = {
           [Axis.X] = -2.3,
           [Axis.Y] = 6,
@@ -643,8 +970,29 @@ local Placements = {
         },
       },
     },
+
     [AuxSlot.Belt] = {
       [BodyType.Vanilla] = {
+        [Transform.Position] = {
+          [Axis.X] = 2,
+          [Axis.Y] = 1,
+          [Axis.Z] = 0,
+        },
+
+        [Transform.Rotation] = {
+          [Axis.X] = Radians(180),
+          [Axis.Y] = Radians(90),
+          [Axis.Z] = Radians(00),
+        },
+
+        [Transform.Scale] = {
+          [Axis.X] = 1,
+          [Axis.Y] = 1.1,
+          [Axis.Z] = 1.1,
+        },
+      },
+
+      [BodyType.BetterBodies] = {
         [Transform.Position] = {
           [Axis.X] = 2,
           [Axis.Y] = 1,
