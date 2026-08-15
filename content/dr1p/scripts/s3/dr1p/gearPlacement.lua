@@ -33,9 +33,9 @@ local GearPlacement = {
     },
 
     [Transform.Rotation] = {
-      [Axis.X] = Radians(-5),
+      [Axis.X] = Radians(0),
       [Axis.Y] = Radians(5),
-      [Axis.Z] = Radians(-20),
+      [Axis.Z] = Radians(-15),
     },
 
     [Transform.Scale] = {
@@ -53,9 +53,9 @@ local GearPlacement = {
     },
 
     [Transform.Rotation] = {
-      [Axis.X] = Radians(-5),
+      [Axis.X] = Radians(0),
       [Axis.Y] = Radians(5),
-      [Axis.Z] = Radians(20),
+      [Axis.Z] = Radians(25),
     },
 
     [Transform.Scale] = {
@@ -73,9 +73,9 @@ local GearPlacement = {
     },
 
     [Transform.Rotation] = {
-      [Axis.X] = Radians(-5),
+      [Axis.X] = Radians(0),
       [Axis.Y] = Radians(0),
-      [Axis.Z] = Radians(-5),
+      [Axis.Z] = Radians(0),
     },
 
     [Transform.Scale] = {
@@ -93,9 +93,9 @@ local GearPlacement = {
     },
 
     [Transform.Rotation] = {
-      [Axis.X] = Radians(-5),
+      [Axis.X] = Radians(0),
       [Axis.Y] = Radians(0),
-      [Axis.Z] = Radians(-5),
+      [Axis.Z] = Radians(0),
     },
 
     [Transform.Scale] = {
@@ -113,9 +113,9 @@ local GearPlacement = {
     },
 
     [Transform.Rotation] = {
-      [Axis.X] = Radians(-5),
+      [Axis.X] = Radians(0),
       [Axis.Y] = Radians(0),
-      [Axis.Z] = Radians(-10),
+      [Axis.Z] = Radians(-5),
     },
 
     [Transform.Scale] = {
