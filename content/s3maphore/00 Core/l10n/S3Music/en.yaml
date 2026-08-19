@@ -1,5 +1,5 @@
 Music: "S3maphore"
-settingsPageDescription: "Enable and disable playback, specific playlists, battle music, and playlist override behavior."
+settingsPageDescription: "Enable and disable playback, battle music, and playlist override behavior."
 
 musicSettings: "Music Configuration"
 
@@ -9,22 +9,8 @@ DebugEnabledDescription: "Whether to show debug messages in F10/openmw.log"
 MusicEnabled: "Enable Music"
 MusicEnabledDescription: "Whether or not S3maphore will play any music.\nUseful when overriding its builtin behavior to allow something else to control music playback."
 
-PlaylistSelection: "Enable/Disable Playlists"
-
-CurrentPlaylistSelection: "Current Playlist"
-CurrentPlaylistSelectionDescription: "Playlist currently selected in the scroller.\nPlaylists are sorted alphabetically.\nResetting this group will cause all playlists to revert to their default active states."
-
-PlaylistActivity: ""
-
-PlaylistActiveState: "Playlist State"
-PlaylistActiveStateDescription: "Whether or not the playlist will be selected for playback at all.\n\nWARNING: This does not mean the playlist will be played immediately, it simply means it *can* be played under the conditions it defines.\n\nNOTE: If this option is disabled, it means you have not loaded any tracks this playlist defines and it would never play anyway."
-
 BannerEnabled: "Show Track Info"
 BannerEnabledDescription: "Displays the current playlist and track name at the top of the screen, if localizations for the playlist are available."
-
-ResetAllPlaylists: "Reset All Playlists"
-ResetAllPlaylistsDescription: "Set all playlists back to their default active states."
-ResetButtonLabel: "Reset"
 
 BattleEnabled: "Enable Battle Music"
 BattleEnabledDescription: "If false, all battle playlists will be skipped."

@@ -1,5 +1,5 @@
 Music: "S3maphore"
-settingsPageDescription: "Aktivera och inaktivera uppspelning, specifika spellistor, stridsmusik och beteende för åsidosättande av spellistor."
+settingsPageDescription: "Aktivera och inaktivera uppspelning, stridsmusik och beteende för åsidosättande av spellistor."
 
 musicSettings: "Musikinställningar"
 
@@ -9,22 +9,8 @@ DebugEnabledDescription: "Huruvida felsökningsmeddelanden visas eller inte i F1
 MusicEnabled: "Aktivera musik"
 MusicEnabledDescription: "Huruvida S3maphore kommer spela någon musik eller inte.\nAnvändbart när man åsidosätter det inbyggda beteendet för att låta något annat styra musikuppspelningen."
 
-PlaylistSelection: "Aktivera/Inaktivera spellistor"
-
-CurrentPlaylistSelection: "Aktuell spellista"
-CurrentPlaylistSelectionDescription: "Playlist currently selected in the scroller.\nPlaylists are sorted alphabetically.\nResetting this group will cause all playlists to revert to their default active states." # will return to this later, need to find a good word for "scroller"
-
-PlaylistActivity: ""
-
-PlaylistActiveState: "Spellistans status" # could probably be translated better if I had more context.
-PlaylistActiveStateDescription: "Om spellistan överhuvudtaget ska väljas för uppspelning eller inte.\n\nVARNING: Detta betyder inte att spellistan kommer att spelas upp omedelbart, det betyder bara att den *kan* spelas upp under de villkor som den definierar.\n\nOBS: Om det här alternativet är inaktiverat betyder det att du inte har laddat några spår som den här spellistan definierar och att den aldrig skulle spelas upp ändå."
-
 BannerEnabled: "Visa spårinfo"
 BannerEnabledDescription: "Visar aktuell spellista och spårnamn längst upp på skärmen, om språklokaliseringar för spellistan finns tillgängliga." # I assume "localizations" is reffering to i10n yaml-files?
-
-ResetAllPlaylists: "Återställ alla spellistor"
-ResetAllPlaylistsDescription: "Återställ alla spellistor till deras förinställda aktiva tillstånd."
-ResetButtonLabel: "Återställ"
 
 BattleEnabled: "Aktivera stridsmusik"
 BattleEnabledDescription: "Om inaktiv kommer alla stridsspellistor att hoppas över."
