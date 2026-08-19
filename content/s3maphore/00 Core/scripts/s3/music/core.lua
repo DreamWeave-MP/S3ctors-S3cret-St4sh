@@ -468,8 +468,6 @@ local scriptInterface = {
       end
     end,
 
-    onViewportResized = function(width, height) PlaylistEditor.onViewportResized(width, height) end,
-
     onUpdate = function(dt)
       CombatState.batchPoll(dt)
       StateMachine:tick(dt)
@@ -625,11 +623,11 @@ local scriptInterface = {
   },
 }
 
--- if core.API_REVISION >= 137 then
---   scriptInterface.engineHandlers.onViewportResized = function(width, height)
---     DisplayTier.refreshDisplayTier(height)
---     PlaylistEditor.onViewportResized(width, height)
---   end
--- end
+if core.API_REVISION >= 137 then
+  scriptInterface.engineHandlers.onViewportResized = function(width, height)
+    DisplayTier.refreshDisplayTier(height)
+    PlaylistEditor.onViewportResized(width, height)
+  end
+end
 
 return scriptInterface
