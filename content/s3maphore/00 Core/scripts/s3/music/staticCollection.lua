@@ -1,7 +1,5 @@
 ---@omw-context global
 
-local world = require 'openmw.world'
-
 local clear = require 'scripts.s3.clear'
 local szudzik = require 'scripts.s3.szudzik'
 
