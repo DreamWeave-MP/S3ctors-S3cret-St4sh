@@ -11,6 +11,7 @@ taxonomies:
 
 extra:
   nexus_id: 56836
+  nexus_group_id: 3323002
 
   install_info:
     data_directories:
