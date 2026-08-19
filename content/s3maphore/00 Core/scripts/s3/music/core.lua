@@ -625,11 +625,11 @@ local scriptInterface = {
   },
 }
 
-if core.API_REVISION >= 137 then
-  scriptInterface.engineHandlers.onViewportResized = function(width, height)
-    DisplayTier.refreshDisplayTier(height)
-    PlaylistEditor.onViewportResized(width, height)
-  end
-end
+-- if core.API_REVISION >= 137 then
+--   scriptInterface.engineHandlers.onViewportResized = function(width, height)
+--     DisplayTier.refreshDisplayTier(height)
+--     PlaylistEditor.onViewportResized(width, height)
+--   end
+-- end
 
 return scriptInterface
