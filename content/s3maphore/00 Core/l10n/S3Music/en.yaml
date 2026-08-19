@@ -15,6 +15,9 @@ BannerEnabledDescription: "Displays the current playlist and track name at the t
 BattleEnabled: "Enable Battle Music"
 BattleEnabledDescription: "If false, all battle playlists will be skipped."
 
+ExploreEnabled: "Enable Explore Music"
+ExploreEnabledDescription: "If false, all explore playlists will be skipped."
+
 NoInterrupt: "Finish Previous Track"
 NoInterruptDescription: "Allow finishing the previous song when the current playlist changes.\n\nOnly affects playlists with the same interrupt priority, so entering a Dwemer dungeon while an Ashlands track is playing,\nwill mean the Dwemer track does not start, until the Ashland one has finished.\n\nGenerally playlists will interrupt one another in order of Explore -> Battle -> Special, if their interrupt modes are different."
 
