@@ -661,6 +661,8 @@ return {
     onUpdate = function() updateFunction() end,
 
     onLoad = function(data)
+      if not data then return end
+
       if data.KillCounts then
         GlobalKillCounts = data.KillCounts
         StorageSet(PresenceSection, 'GlobalKillCounts', GlobalKillCounts)
