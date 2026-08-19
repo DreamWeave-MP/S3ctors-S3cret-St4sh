@@ -61,6 +61,7 @@ local exteriorSnapshot = {
   byContentFile = nil,
   staticContentFiles = nil,
   nearestRegion = nil,
+  cellObjectIds = nil,
   cellHasHostileActors = false,
   areaHasHostileActors = false,
 }
@@ -166,12 +167,14 @@ local function saveExteriorSnapshot()
   exteriorSnapshot.nearestRegion = CellPresence.nearestRegion
   exteriorSnapshot.cellHasHostileActors = CellPresence.cellHasHostileActors
   exteriorSnapshot.areaHasHostileActors = CellPresence.areaHasHostileActors
+  exteriorSnapshot.cellObjectIds = cellObjectIds
   exteriorSnapshotValid = true
 
   CellPresence.byRecord = {}
   CellPresence.byType = {}
   CellPresence.byContentFile = {}
   CellPresence.staticContentFiles = {}
+  cellObjectIds = {}
 end
 
 --- Restores the exterior snapshot into CellPresence.
@@ -184,6 +187,7 @@ local function restoreExteriorSnapshot()
   CellPresence.nearestRegion = exteriorSnapshot.nearestRegion
   CellPresence.cellHasHostileActors = exteriorSnapshot.cellHasHostileActors
   CellPresence.areaHasHostileActors = exteriorSnapshot.areaHasHostileActors
+  cellObjectIds = exteriorSnapshot.cellObjectIds
   exteriorSnapshotValid = false
 end
 
