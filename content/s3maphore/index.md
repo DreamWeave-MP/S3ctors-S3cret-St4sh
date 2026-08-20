@@ -21,8 +21,20 @@ extra:
         - 01 Tamriel Rebuilt Playlists
         - 02 Project Cyrodiil Playlists
         - 03 Muse Expansion Playlists
+        - "# Extended/Unsupported"
+        - 04 Vindsvept Solstheim
+        - 05 Secrets of the Crystal City
         - 06 Songbook of the North
+        - 08 Redguard Music
+        - 09 Nordic Lands
         - 10 Inns and Taverns
+        - 11 Daggerfall Guild Themes
+        - 14 General Dungeon
+        - 15 Provincial Music
+        - 18 Better Music System Redone
+        - "# Shitpost Playlists"
+        - 12 BBL Drizzy
+        - 16 Bgi Inor
         - "# Starwind only!"
         - 07 Starwind Playlists
 
@@ -40,24 +52,46 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 
   <figure>
     <img src="../img/S3maphoreBanner.png" alt="semaphore icon" width="512" height="608" />
-    <figcaption><h2 class="notoc">Brought to You by the Love and Passion of Modding-OpenMW.com</h2></figcaption>
+    <figcaption><h2 class="notoc">Brought to You by the DreamWeave-MP</h2></figcaption>
   </figure>
 
   <br>
   <br>
 </div>
 
-I simply decided existing music solutions were not good enough after OpenMW's music system was dehardcoded. The underlying playlist mechanism used by OpenMW is very powerful - but due to a disagreement about playlist conflict resolution, the public API for music playlists was removed. Since that time, version 0.49 has straightforwardly not been living up to its true potential.
+## Requirements
+
+<div align="center"><a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="H3lp Yours3lf"></a><br></div>
+
+## Introduction
+
+In order to understand how S3maphore works, you need to understand three basic ideas:
+
+1. __Playlist__ - Just like in real life, S3maphore playlists are contextual. You may have a Spotify playlist for working out, long drives, or having a bad day - S3maphore playlists can run indoors, outdoors, in hostile areas, in bad weather, or even if you're using a specific type of magic.
+2. __Priority__ - If two playlists should play at the same time, priority decides which one wins. Battle playlists don't have special powers - it's just a combat check in the rule and a really high priority value, so they win when you're actually fighting.
+3. __Playdeck__ - S3maphore loads every playlist it can find in your OpenMW install and orders them by priority - like a big deck of cards. When conditions change, it deals the topmost playlist whose conditions are met.
+
+Playlists are the atom, priority resolves conflicts, and the deck puts both into practice.
+
+That's all you need to really understand this mod. No file shuffling, config digging, or command-line wizardry is required.
+
+## Backstory
+
+During OpenMW 0.49's development, music playback was dehardcoded and the groundwork for an incredibly powerful system was laid in OpenMW.
+
+However, the public API was removed before release, and nothing has ever replaced it.
 
 S3maphore fixes that. Why call it S3maphore?
 
-In computing, a semaphore is a synchronization primitive designed to allow concurrent access to systems which may really only have one consumer at a time. This definition and application both date back to mid-nineteenth century, when the semaphore was first developed as a safety measure for signalling train drivers on railways.
+In computing, a semaphore is a synchronization primitive designed to allow concurrent access to systems which may really only have one consumer at a time.
+
+This definition and application both date back to mid-nineteenth century, when the semaphore was first developed as a safety measure for signalling train drivers on railways.
 
 This one is no different - S3maphore is a full replacement for OpenMW's builtin music handling that can be configured or permutated in any way you can imagine.
 
-If you imagine one that it doesn't offer, let's fix that together.
+Should you imagine one which it does not address, please let me know so we can improve it together.
 
-S3maphore works through a system of playlists, similarly to Dynamic Music or MUSE. However, unlike both, S3maphore is an open-ended system, which allows playlist creators to define *any* conditions under which a playlist should run. For more details, view the <a href="#playlist-creation">Playlist Creation</a> section.
+## Installation
 
 If you just want to install the mod, stop here. For Lua scripters or playlist developers, view the table of contents for more details.
 
