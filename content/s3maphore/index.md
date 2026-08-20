@@ -61,7 +61,11 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 
 ## Requirements
 
-<div align="center"><a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="H3lp Yours3lf"></a><br></div>
+<div align="center">
+    <a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="H3lp Yours3lf"></a>
+    <a href="https://openmw.org/downloads"><img src="../img/openmwRequired.svg" alt="OpenMW 0.51"></a>
+    <br>
+</div>
 
 ## Introduction
 
@@ -81,7 +85,9 @@ During OpenMW 0.49's development, music playback was dehardcoded and the groundw
 
 However, the public API was removed before release, and nothing has ever replaced it.
 
-S3maphore fixes that. Why call it S3maphore?
+Music and programming are my two biggest passions in life. The solution seemed obvious - so S3maphore was made to fix that.
+
+Why call it S3maphore?
 
 In computing, a semaphore is a synchronization primitive designed to allow concurrent access to systems which may really only have one consumer at a time.
 
@@ -93,19 +99,138 @@ Should you imagine one which it does not address, please let me know so we can i
 
 ## Installation
 
-If you just want to install the mod, stop here. For Lua scripters or playlist developers, view the table of contents for more details.
+### For Most Users
 
-{{ install_instructions(describe=true) }}
+Here's the honest truth: installing S3maphore is not hard. If you already know how to install any other OpenMW mod, you already know how to install this one - same mod manager, same drag-and-drop, nothing special going on under the hood.
+
+Only two things separate you from a working setup:
+
+Knowing how to install an OpenMW mod at all. If you don't, watch this for the short version or this for the long one. This is genuinely the only technical skill required.
+Knowing what music you actually want to hear. That part's on you - but the compatibility list below will get you most of the way there.
+
+Got both of those covered? Here's all you do:
+
+1. Install H3lp Yours3lf (see Requirements above) - it has to go in first.
+2. Install 00 Core. This is the foundation of the whole mod - vanilla Explore/Battle, standalone, works with zero other mods installed.
+3. Add 01 Tamriel Rebuilt Playlists through 03 Muse Expansion Playlists if you want broader coverage. Recommended for most people, but not required for any of the above to work.
+4. Download whichever actual music mods you want from the compatibility list below (found one that's missing? Let me know!).
+5. Enable S3maphore.esp in your content list, same as any other plugin.
+
+The numbers on the module folders (00, 01, 02...) are just there to keep things sorted in your mod manager - they don't control load order or affect anything in-game. Install whatever subset you want, in whatever order you want.
+
+You genuinely cannot break your game by installing extra modules you don't need. If S3maphore loads a playlist and can't find any matching tracks for it, that playlist is just quietly ignored - no conflicts, no crashes, nothing to troubleshoot. When in doubt, install more rather than less; you can always prune later.
+
+To add your own tracks - nothing has changed. Vanilla Morrowind Explore and Battle playlists still work the same way they always did: drop new files into Music\Explore or Music\Battle and the game picks them up. S3maphore extends this to every playlist in the deck that chooses to support it - most do. Deviations from this default are called out in the module list below.
 
 ### Compatibility With Other Music Mods
 
-Dynamic Music and MUSE soundbanks are not natively supported. However, you can convert either to a S3maphore playlist in minutes by using this document.
-Any mods which simply add to or replace music Morrowind already provides (EG, in the `Explore`, `Special`, or `Battle` folders) are natively compatible with zero extra work.
+Dynamic Music and MUSE soundbanks are not natively supported. I have done my best to port every MUSE module and Dynamic Music soundbank I could, but, 100% coverage cannot be guaranteed by me alone. Your bug reports are so valuable!
 
-S3maphore ships a set of BAIN modules with Playlist Arrays which can be used in conjunction with tracks provided by other mods. Where appropriate, these modules are folder-based and will allow you to extend them yourself.
+Any mods which simply add to or replace music Morrowind already provides (EG, in the `Battle`, `Explore`, or `Special` folders) are natively compatible with zero extra work.
 
-- [01 Tamriel Rebuilt Playlists](https://www.nexusmods.com/morrowind/mods/47254)
-- [02 Project Cyrodiil Playlists](https://www.nexusmods.com/morrowind/mods/55779)
+For example - Tamriel Rebuilt inclues an optional TRMusic addon. It adds new songs to both `Music/Explore` and `Music/Battle`. You install it the same way you always did. Nothing to see here.
+
+Every `.lua` file, in every module, is called a playlist *array*. This is just because it can have more than one playlist in it. Each playlist in the array points at either a folder to load tracks from, or a set of specific tracks to play.
+
+If a playlist is loaded, but no matching tracks are found, it's simply ignored. This means you can never encounter compatibility issues by installing S3maphore modules you don't actually need.
+
+Compatibility with Dynamic Music mods is provided on a case-by-case basis as they tend to be more specialized.
+
+Some mods use MWScript to play music - I'm not bothering to document those as their compatibility surface is unchanged by this mod.
+
+### How Modules Work
+
+You know how playlists work already. But most playlists also need actual music tracks to go along with them - either from another mod, or you. A few modules include their own music.
+
+Every folder in this mod is a *module*: it contains one or more `.lua` files, which may have one or more playlists in them.
+
+Modules come in one of three flavors:
+
+- __*Playlist-Only*__ - These modules only include playlist arrays and *MUST* be paired with a music mod, or your own tracks, to actually work.
+- __*Standalone*__ - These modules were made specifically for S3maphore and include both playlists *and* tracks. No accompanying mod is needed for these modules.
+- __*Pure Replacement*__ - The rarest case. In some circumstances, old mods provided something akin to __*Playlist-Only*__ S3maphore modules. __*Pure Replacement*__ modules for S3maphore replace these and may or may not include their own tracks.
+
+All playlist modules include empty folders where you can put your own songs. The vanilla `Explore` and `Battle` playlists, for example, work exactly like they always did - drop a new `.mp3` into `Music\Explore` or `Music\Battle`, and the game picks it up. S3maphore extends this to every playlist in the deck that chooses to do so. Not every playlist works this way, but most do.
+
+If a playlist is loaded but no matching tracks are found, it's simply ignored. Installing a module you don't need can never cause compatibility problems - you'll just never hear it.
+
+### The Modules
+
+Compatibility is defined at the module level, not the playlist level. Each entry below tells you what folders to enable, what playlists they provide, where your own tracks go, and which mod actually provides the tracks you're __expected__ to use.
+
+#### Required
+The engine itself. Includes the built-in `Explore` and `Battle` playlists, which are yours to move, remove, or replace at your leisure.
+
+Natively compatible with any mod that adds music to those folders.
+
+- 00 Core:
+  Type: __*Standalone*__
+    Playlists:
+        Explore: `Music\Explore`
+        Battle: `Music\Battle`
+    Compatible with:
+        - [0 A.D Music For Morrowind](https://www.nexusmods.com/morrowind/mods/45113)
+        - [AMAR - Swordsman - A Music and Ambience Replacer](https://www.nexusmods.com/morrowind/mods/57456) NOTE: This one includes a large number of silence tracks which I recommend deleting.
+        - [Battle for Wesnoth Music for Morrowind](https://www.nexusmods.com/morrowind/mods/45540)
+        - [Luigi's More Music for Morrowind](https://www.nexusmods.com/morrowind/mods/53432)
+        - [Morrowind Music Overdose](https://www.nexusmods.com/morrowind/mods/44084)
+        - [Morrowind Music Overdose II](https://www.nexusmods.com/morrowind/mods/44083)
+        - [Morrowind Music Overdose III](https://www.nexusmods.com/morrowind/mods/43410)
+        - [Morrowind Music Overdose IV](https://www.nexusmods.com/morrowind/mods/43407)
+        - [Stronghold Music](https://www.nexusmods.com/morrowind/mods/50326)
+        - [Tamriel Rebuilt - TRMusic Addon](https://www.nexusmods.com/morrowind/mods/42145)
+        - [Vindsvept Fantasy Music Overhaul](https://www.nexusmods.com/morrowind/mods/45089) WARNING: This one is actually not recommended in favor of `04 Vindsvept Solstheim` but it still works
+        - [Witcher 3 Music Overhaul](https://www.nexusmods.com/morrowind/mods/52562)
+        - [Witcher Music](https://www.nexusmods.com/morrowind/mods/45369)
+        # Starwind-Only
+        - [Alternate Cantina Music For Starwind](https://www.nexusmods.com/morrowind/mods/52171)
+        - [Alternate music for Starwind](https://www.nexusmods.com/morrowind/mods/52090)
+        - [Starwind - KOTOR Music](https://www.nexusmods.com/morrowind/mods/53453)
+        - [Starwind Music Replacer - Star Wars Conquest Mount and Blade soundtrack](https://www.nexusmods.com/morrowind/mods/52370)
+
+#### Recommended
+
+- 01 Tamriel Rebuilt Playlists:
+    Type: __*Playlist-Only*__
+    Requires: [Tamriel Rebuilt - Original Soundtrack](https://www.nexusmods.com/morrowind/mods/47254)
+    Playlists (folder-derived — each reads from `Music\<playlist id>\`, with two shared fallback dirs `Music\ms\general\trairdepths` and `Music\ms\general\tr dungeon`):
+      - ms/region/aanthirin
+      - ms/region/armun ashlands region
+      - ms/region/grey meadows region
+      - ms/region/lan orethan
+      - ms/region/mournhold hills
+      - ms/region/seas
+      - ms/region/telvannis
+      - ms/region/velothis upper
+      - ms/region/sacred lands region
+      - ms/region/telvanni isles
+      - ms/cell/imperialcity
+      - ms/cell/mourncity
+      - ms/cell/telcity
+      - ms/interior/tr dwemer
+      - ms/interior/tr cave
+      - ms/interior/tr tomb
+      - ms/region/alt orethan region _(disabled — serves as the Lan Orethan fallback target)_
+      - sacred lands region fallback _(cascade-only — no tracks of its own)_
+      - Tamriel Rebuilt - Thirr _(track-listed — reads `thirr*.mp3` from `Music\ms\region\aanthirin`)_
+
+- 02 Project Cyrodiil Playlists:
+    Type: __*Playlist-Only*__
+    Requires: [Project Cyrodiil Music - Anvil and Sutch](https://www.nexusmods.com/morrowind/mods/55779)
+    Playlists (folder-derived — each reads from `Music\<playlist id>\`):
+      - ms/interior/cyrodiil tombs imperial — Abecean Shores: Imperial Crypts
+      - ms/interior/cyrodiil tombs colovian — Abecean Shores: Colovian Barrows
+      - ms/interior/cyrodiil caves — Abecean Shores: Caves
+      - ms/interior/cyrodiil ayleid — Abecean Shores: Ayleid
+      - ms/cell/cyrodiil sutch — Abecean Shores: Kingdom of Sutch
+      - ms/cell/cyrodiil anvil — Abecean Shores: Kingdom of Anvil
+      - ms/cell/nine divine temples — Abecean Shores: Divine Temples
+      - ms/region/cyrodiil brennan bluffs — Abecean Shores: Brennan Bluffs
+      - ms/region/cyrodiil strident coast — Abecean Shores: Strident Coast
+      - ms/region/cyrodiil stirk isle — Abecean Shores: Stirk Isle
+
+#### Extended
+#### Shitpost
 
 ## Usage
 
