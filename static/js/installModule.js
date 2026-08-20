@@ -17,12 +17,12 @@ function normalizePath(path) {
 
 function loadModInstallPath() {
     const cachedPath = localStorage.getItem('modInstallPath');
+    const configSection = document.getElementById('config-code');
+    const installInput = document.getElementById('install-path-input');
 
-    if (!cachedPath) {
+    if (!cachedPath || !configSection || !installInput) {
         return;
     }
-
-    let configSection = document.getElementById('config-code');
 
     let normalized = normalizePath(
         configSection.textContent.replace(pathRegex, cachedPath)
@@ -34,7 +34,6 @@ function loadModInstallPath() {
 
     configSection.textContent = normalized;
 
-    let installInput = document.getElementById('install-path-input')
     installInput.placeholder = cachedPath;
 }
 
