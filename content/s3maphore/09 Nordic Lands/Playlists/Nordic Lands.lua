@@ -1,3 +1,5 @@
+---@omw-context player
+
 ---@type CellMatchPatterns
 local NordTownPatterns = {
   allowed = {
@@ -51,12 +53,12 @@ return {
     randomize = true,
 
     tracks = {
-      'Music/MS/cell/NordTown/SECity2.mp3',
-      'Music/MS/cell/Nordtown/SECity4.mp3',
+      'music/ms/cell/nordtown/secity2.mp3',
+      'music/ms/cell/nordtown/secity4.mp3',
     },
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.cellNameMatch(NordTownPatterns)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.cellNameMatch(NordTownPatterns)
     end,
   },
   {
@@ -65,19 +67,19 @@ return {
     randomize = true,
 
     tracks = {
-      'Music/MS/region/nd1_njol.mp3',
-      'Music/MS/region/nd2_utanlands.mp3',
-      'Music/MS/region/nd3_draumr.mp3',
-      'Music/MS/region/nd4_jata.mp3',
-      'Music/MS/region/nd5_ginnung01.mp3',
-      'Music/MS/region/nd6_ginnung02.mp3',
-      'Music/MS/region/nd7_jafnan.mp3',
-      'Music/MS/region/nd9_ek_elska_thik.mp3',
-      'Music/MS/region/nd10_himinbjörg.mp3',
+      'music/ms/region/nd1_njol.mp3',
+      'music/ms/region/nd2_utanlands.mp3',
+      'music/ms/region/nd3_draumr.mp3',
+      'music/ms/region/nd4_jata.mp3',
+      'music/ms/region/nd5_ginnung01.mp3',
+      'music/ms/region/nd6_ginnung02.mp3',
+      'music/ms/region/nd7_jafnan.mp3',
+      'music/ms/region/nd9_ek_elska_thik.mp3',
+      'music/ms/region/nd10_himinbjörg.mp3',
     },
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.region(NLSkyrimRegionNames)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.region(NLSkyrimRegionNames)
     end,
   },
   {
@@ -86,19 +88,19 @@ return {
     randomize = true,
 
     tracks = {
-      'Music/MS/region/nd1_njol.mp3',
-      'Music/MS/region/nd2_utanlands.mp3',
-      'Music/MS/region/nd3_draumr.mp3',
-      'Music/MS/region/nd4_jata.mp3',
-      'Music/MS/region/nd5_ginnung01.mp3',
-      'Music/MS/region/nd6_ginnung02.mp3',
-      'Music/MS/region/nd7_jafnan.mp3',
-      'Music/MS/region/nd9_ek_elska_thik.mp3',
-      'Music/MS/region/nd10_himinbjörg.mp3',
+      'music/ms/region/nd1_njol.mp3',
+      'music/ms/region/nd2_utanlands.mp3',
+      'music/ms/region/nd3_draumr.mp3',
+      'music/ms/region/nd4_jata.mp3',
+      'music/ms/region/nd5_ginnung01.mp3',
+      'music/ms/region/nd6_ginnung02.mp3',
+      'music/ms/region/nd7_jafnan.mp3',
+      'music/ms/region/nd9_ek_elska_thik.mp3',
+      'music/ms/region/nd10_himinbjörg.mp3',
     },
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.region(NLSolstheimRegionNames)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.region(NLSolstheimRegionNames)
     end,
   },
 }
