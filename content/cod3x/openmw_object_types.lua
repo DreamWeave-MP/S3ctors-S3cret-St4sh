@@ -51,6 +51,7 @@ local LObject = {}
 ---@field startingCell openmw.core.GCell? The object's original cell. Returns nil if `cell` of the object is nil.
 ---@field cell openmw.core.GCell? The cell where the object currently is. During loading a game and for objects in an inventory or a container `cell` is nil.
 ---@field enabled boolean Whether the object is enabled or disabled. Global scripts can set the value. Items in containers or inventories can't be disabled.
+---@field saveState boolean Whether this object has been modified and will be written to the save game. Global scripts can set the value; local scripts are read-only.
 local GObject = {}
 
 ---The object handle for the object a local script is attached to.
