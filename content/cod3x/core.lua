@@ -873,11 +873,11 @@ function WritableInventory:resolve() end
 ---@field id string Unique object instance ID (not record ID). Stable across frames; usable as a table key.
 ---@field contentFile? string Lowercase content file name that defines this object. Nil for dynamically created objects.
 ---@field enabled boolean Whether the object is enabled. **GObject**: settable. Items in containers cannot be disabled.
----@field position util.Vector3 Current world position (read-only; use `teleport` on GObject to move).
+---@field position openmw.util.Vector3 Current world position (read-only; use `teleport` on GObject to move).
 ---@field scale number Current scale (read-only; use `setScale` on GObject).
----@field rotation util.Transform Current rotation (read-only; use `teleport` on GObject to change).
----@field startingPosition util.Vector3 Original position from the content file.
----@field startingRotation util.Transform Original rotation from the content file.
+---@field rotation openmw.util.Transform Current rotation (read-only; use `teleport` on GObject to change).
+---@field startingPosition openmw.util.Vector3 Original position from the content file.
+---@field startingRotation openmw.util.Transform Original rotation from the content file.
 ---@field owner ObjectOwner Ownership information. Fields are settable from global and self scripts.
 ---@field cell? Cell The cell the object is in. Nil during loading or when inside a container/inventory. Typed as `LCell` on LObject/SelfObject, `GCell` on GObject.
 ---@field parentContainer? GameObject The container or actor holding this object. Nil if in a cell.
@@ -902,7 +902,7 @@ function GameObject:sendEvent(eventName, eventData) end
 function GameObject:activateBy(actor) end
 
 --- Return the axis-aligned bounding box in world coordinates.
----@return util.Box
+---@return openmw.util.Box
 function GameObject:getBoundingBox() end
 
 -- ============================================================
@@ -1103,4 +1103,3 @@ function core.l10n(context, fallbackLocale) end
 function core.getFormId(contentFile, index) end
 
 return core
-
