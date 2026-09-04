@@ -574,6 +574,8 @@ function Skill.record(recordId) end
 ---@field sleepList string Leveled creature list used when sleeping outdoors here.
 ---@field sounds RegionSoundRef[] Ambient sound references.
 ---@field weatherProbabilities table<string, number> Maps weather record IDs to probability (0–100), should sum to 100.
+function RegionRecord:setProbability(weatherId, value) end
+function RegionRecord:resetProbability() end
 
 ---@class Regions
 --- Read-only list of all RegionRecords.
