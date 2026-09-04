@@ -1002,6 +1002,11 @@ function Actor.activeSpells(actor) end
 ---@return boolean True if spell is active, false otherwise.
 function ActorActiveSpells:isSpellActive(recordOrId) end
 
+---Get the active spell by active spell ID.
+---@param id string Active spell ID
+---@return openmw.core.ActiveSpell|nil
+function ActorActiveSpells:getByActiveSpellId(id) end
+
 ---Remove an active spell based on active spell ID (see openmw.core.ActiveSpell.activeSpellId). Can only be used in global scripts or on self. Can only be used to remove spells with the temporary flag set (see openmw.core.ActiveSpell.temporary).
 ---@param id string Active spell ID.
 function ActorActiveSpells:remove(id) end
