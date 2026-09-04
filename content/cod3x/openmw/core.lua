@@ -112,14 +112,14 @@ local ContentFiles = {}
 ---@field name string Name of the cell (can be empty string).
 ---@field displayName string Human-readable cell name (takes into account *.cel file localizations). Can be an empty string.
 ---@field id string Unique record ID of the cell, based on cell name for interiors and the worldspace for exteriors, or the formID of the cell for ESM4 cells.
----@field region string Region of the cell (can be nil).
+---@field region string|nil Region of the cell (can be nil).
 ---@field isExterior boolean Whether the cell is an exterior cell. "Exterior" means grid of cells where the player can seamless walk from one cell to another without teleports. QuasiExterior (interior with sky) is not an exterior.
 ---@field isQuasiExterior boolean (DEPRECATED, use `hasTag("QuasiExterior")`) Whether the cell is a quasi exterior (like interior but with the sky and the weather).
----@field gridX number Index of the cell by X (only for exteriors).
----@field gridY number Index of the cell by Y (only for exteriors).
----@field worldSpaceId string Id of the world space (can be nil).
+---@field gridX number|nil Index of the cell by X (only for exteriors).
+---@field gridY number|nil Index of the cell by Y (only for exteriors).
+---@field worldSpaceId string|nil Id of the world space (can be nil).
 ---@field hasWater boolean True if the cell contains water.
----@field waterLevel number The water level of the cell. (nil if cell has no water).
+---@field waterLevel number|nil The water level of the cell. (nil if cell has no water).
 ---@field hasSky boolean True if in this cell sky should be rendered.
 ---@field pathGrid openmw.core.PathGrid The cell's PathGrid if it has one.
 local Cell = {}
