@@ -213,4 +213,10 @@ function camera.viewportToWorldVector(normalizedScreenPos) end
 ---@return openmw.util.Vector3
 function camera.worldToViewportVector(worldPos) end
 
+---Returns the result of the last internal focus query.
+---Updated by the crosshair, telekinesis checks and GUI mode.
+---Out-of-reach targets keep the hit but lose hitObject. Cleared when a game is loaded.
+---@return openmw.nearby.RayCastingResult
+function camera.getFocusRay() end
+
 return camera
