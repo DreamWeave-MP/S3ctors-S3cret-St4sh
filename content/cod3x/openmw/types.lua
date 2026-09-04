@@ -211,6 +211,17 @@ function NpcStats.reputation(actor) end
 ---@class openmw.types.Item
 local Item = {}
 
+---@class openmw.types.ItemLevelledList
+local ItemLevelledList = {}
+
+---@class openmw.types.ItemLevelledListRecord
+---@field id string Record id
+---@field chanceNone number Chance this list won't spawn anything [0-1]
+---@field calculateFromAllLevels boolean Calculate from all levels <= player level, not just the closest below player
+---@field calculateForEach boolean Select a random item for each instance in a stack instead of creating a stack of one single item
+---@field items openmw.types.LevelledListItem[]
+local ItemLevelledListRecord = {}
+
 ---@class openmw.types.ItemData
 ---@field condition number|nil The item's current condition. Time remaining for lights (setting this to `-1` will make it last forever). Uses left for repairs, lockpicks and probes. Current health for weapons and armor. Can be `nil` for items without condition. Can only be changed from global scripts or on self.
 ---@field enchantmentCharge number|nil The item's current enchantment charge. Unenchanted items will always return a value of `nil`. Setting this to `nil` will reset the charge of the item. Can only be changed from global scripts or on self.
@@ -1305,6 +1316,26 @@ function Item.isCarriable(object) end
 ---@param item openmw.Object
 ---@return openmw.types.ItemData|nil
 function Item.itemData(item) end
+
+---@type openmw.types.ItemLevelledList
+Item.levelledItems = nil
+
+---Creates an ItemLevelledListRecord without adding it to the world database.
+---@param list openmw.types.RecordDraft<openmw.types.ItemLevelledListRecord>
+---@return openmw.types.RecordDraft<openmw.types.ItemLevelledListRecord>
+function ItemLevelledList.createRecordDraft(list) end
+
+---@type openmw.types.RecordList<openmw.types.ItemLevelledListRecord>
+ItemLevelledList.records = nil
+
+---@param objectOrRecordId openmw.Object|string
+---@return openmw.types.ItemLevelledListRecord|nil
+function ItemLevelledList.record(objectOrRecordId) end
+
+---@param listRecord openmw.types.ItemLevelledListRecord
+---@param maxLevel number
+---@return string|nil
+function ItemLevelledListRecord.getRandomId(listRecord, maxLevel) end
 
 --------------------------------------------------------------------------------
 ---@type openmw.types.Creature
