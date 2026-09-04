@@ -217,21 +217,40 @@ local function parseContextExpression(raw)
   return parsed
 end
 
+local stripLineComment
+
 --- Extract and parse the ---@omw-context value from a file's text.
 --- Returns nil if the annotation is absent.
 ---@param text string
 ---@return table?
 local function parseContextSet(text)
-  local raw = text:match '%-%-%-%s*@omw%-context%s+([^\r\n]+)'
-  if not raw then return nil end
+  local longBracketLevel
+  for line in (text .. '\n'):gmatch '([^\n]*)\n' do
+    if not longBracketLevel then
+      local raw = line:match '^%s*%-%-%-%s*@omw%-context%s+([^\r\n]+)'
+      if raw then return parseContextExpression(raw) end
+    end
 
-  return parseContextExpression(raw)
+    local _, nextLongBracketLevel = stripLineComment(line, longBracketLevel)
+    longBracketLevel = nextLongBracketLevel
+  end
+
+  return nil
 end
 
 --- Return true if a file is a LuaLS doc/meta annotation file.
 ---@param text string
 ---@return boolean
-local function hasMetaAnnotation(text) return text:match '%-%-%-%s*@meta%f[%W]' ~= nil end
+local function hasMetaAnnotation(text)
+  local longBracketLevel
+  for line in (text .. '\n'):gmatch '([^\n]*)\n' do
+    if not longBracketLevel and line:match '^%s*%-%-%-%s*@meta%f[%W]' then return true end
+    local _, nextLongBracketLevel = stripLineComment(line, longBracketLevel)
+    longBracketLevel = nextLongBracketLevel
+  end
+
+  return false
+end
 
 --- Return true if context annotations should be enforced for this URI.
 ---@param uri string?
@@ -242,33 +261,92 @@ local function isContextRequiredForUri(uri)
   return uri:find('/cod3x/', 1, true) == nil
 end
 
---- Return the line prefix before a Lua line comment, ignoring -- inside strings.
+--- Return code outside Lua strings and comments, preserving byte offsets.
 ---@param line string
----@return string
-local function stripLineComment(line)
-  local quote = nil
-  local escaped = false
+---@param longBracketLevel integer?
+---@return string, integer?
+stripLineComment = function(line, longBracketLevel)
+  local masked = {}
+  for i = 1, #line do masked[i] = line:sub(i, i) end
 
-  for i = 1, #line do
-    local ch = line:sub(i, i)
-    local nextCh = line:sub(i + 1, i + 1)
+  local function mask(startPos, endPos)
+    for i = startPos, endPos do masked[i] = ' ' end
+  end
 
-    if quote then
-      if escaped then
-        escaped = false
-      elseif ch == '\\' then
-        escaped = true
-      elseif ch == quote then
-        quote = nil
+  local function longBracketAt(pos)
+    local equals = line:sub(pos):match '^%[(=*)%['
+    if not equals then return nil, nil end
+    return #equals, pos + #equals + 1
+  end
+
+  local function longBracketClose(pos, level)
+    return line:find(']' .. string.rep('=', level) .. ']', pos, true)
+  end
+
+  local i = 1
+  while i <= #line do
+    if longBracketLevel then
+      local closeStart, closeFinish = longBracketClose(i, longBracketLevel)
+      if not closeStart then
+        mask(i, #line)
+        return table.concat(masked), longBracketLevel
       end
-    elseif ch == '"' or ch == '\'' then
-      quote = ch
-    elseif ch == '-' and nextCh == '-' then
-      return line:sub(1, i - 1)
+
+      mask(i, closeFinish)
+      i = closeFinish + 1
+      longBracketLevel = nil
+    else
+      local ch = line:sub(i, i)
+      local nextCh = line:sub(i + 1, i + 1)
+
+      if ch == '-' and nextCh == '-' then
+        local level, openFinish = longBracketAt(i + 2)
+        if level then
+          mask(i, openFinish)
+          i = openFinish + 1
+          longBracketLevel = level
+        else
+          mask(i, #line)
+          return table.concat(masked), nil
+        end
+      elseif ch == '"' or ch == '\'' then
+        local quote = ch
+        local escaped = false
+        local finish = #line
+        local prefix = line:sub(1, i - 1)
+        local isRequireArgument = prefix:match '^require%s*$'
+          or prefix:match '[^%w_]require%s*$'
+          or prefix:match '^require%s*%(%s*$'
+          or prefix:match '[^%w_]require%s*%(%s*$'
+        for j = i + 1, #line do
+          local current = line:sub(j, j)
+          if escaped then
+            escaped = false
+          elseif current == '\\' then
+            escaped = true
+          elseif current == quote then
+            finish = j
+            break
+          end
+        end
+
+        if not isRequireArgument then mask(i, finish) end
+        i = finish + 1
+      else
+        local level, openFinish
+        if ch == '[' then level, openFinish = longBracketAt(i) end
+        if level then
+          mask(i, openFinish)
+          i = openFinish + 1
+          longBracketLevel = level
+        else
+          i = i + 1
+        end
+      end
     end
   end
 
-  return line
+  return table.concat(masked), longBracketLevel
 end
 
 --- Parse a scoped context pragma from a comment-only line.
@@ -773,9 +851,13 @@ local function makePoisonDiffs(text, ctx)
   local pendingNextOverride = nil
   local lineStart = 1
   local previousLineText = nil
+  local longBracketLevel
 
   for lineText in (text .. '\n'):gmatch '([^\n]*)\n' do
-    if lineText:match '^%s*%-%-' then
+    local code, nextLongBracketLevel = stripLineComment(lineText, longBracketLevel)
+    local isCommentLine = not longBracketLevel and lineText:match '^%s*%-%-' ~= nil
+
+    if isCommentLine then
       local pragma, pragmaCtx = parseScopedContextPragma(lineText)
       if pragma == 'next' then
         pendingNextOverride = pragmaCtx
@@ -785,7 +867,6 @@ local function makePoisonDiffs(text, ctx)
         table.remove(overrideStack)
       end
     else
-      local code = stripLineComment(lineText)
       if code:match '%S' then
         local effectiveCtx = pendingNextOverride or overrideStack[#overrideStack] or ctx
         pendingNextOverride = nil
@@ -845,6 +926,7 @@ local function makePoisonDiffs(text, ctx)
       end
     end
 
+    longBracketLevel = nextLongBracketLevel
     lineStart = lineStart + #lineText + 1
     previousLineText = lineText
   end
