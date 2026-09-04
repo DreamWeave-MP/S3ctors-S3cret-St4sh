@@ -83,6 +83,24 @@ local Stats = {}
 ---@class openmw.core.Weather
 local Weather = {}
 
+---@class openmw.core.MOON_PHASE
+---@field Full number
+---@field WaningGibbous number
+---@field ThirdQuarter number
+---@field WaningCrescent number
+---@field New number
+---@field WaxingCrescent number
+---@field FirstQuarter number
+---@field WaxingGibbous number
+local MOON_PHASE = {}
+
+---@class openmw.core.Moon
+---@field name string The moon's name. For Morrowind, "Masser" or "Secunda".
+---@field phase number One of openmw.core.MOON_PHASE.
+---@field phaseValue number MWScript-compatible phase value: 0 new, 1 crescent, 2 quarter, 3 gibbous, or 4 full.
+---@field alpha number The alpha of the moon between 0 and 1. 0 when the moon is not visible in the sky.
+local Moon = {}
+
 
 ---Functions working with the list of currently loaded content files.
 ---@class openmw.core.ContentFiles
@@ -1194,6 +1212,14 @@ core.weather = nil
 ---end
 ---@type openmw.core.WeatherRecord[]
 Weather.records = nil
+
+---@type openmw.core.MOON_PHASE
+Weather.MOON_PHASE = nil
+
+---Get all moons in the current sky.
+---@param cell openmw.core.Cell The cell to get moons for.
+---@return openmw.core.Moon[]|nil
+function Weather.getCurrentMoons(cell) end
 
 ---Get the current weather
 ---@param cell openmw.core.Cell The cell to get the current weather for
