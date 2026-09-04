@@ -48,7 +48,8 @@ local CONSOLE_COLOR = {}
 ---@class openmw.ui.SettingsPageOptions
 ---@field name string Name of the page, displayed in the list, used for search
 ---@field searchHints string Additional keywords used in search, not displayed anywhere
----@field element openmw.ui.Element The page's UI, which will be attached to the settings tab. The root widget has to have a fixed size. Set the `size` field in `props`, `relativeSize` is ignored.
+---@field element? openmw.ui.Element The page's UI, which will be attached to the settings tab. The root widget has to have a fixed size. Set the `size` field in `props`, `relativeSize` is ignored.
+---@field layout? openmw.ui.Layout Layout used to create the page's UI when `element` is not provided.
 local SettingsPageOptions = {}
 
 ---Layout
@@ -268,7 +269,7 @@ function Element:destroy() end
 
 ---Access or replace the element's layout
 ---  Note: Is reset to `nil` on `destroy`
----@type openmw.ui.Layout
+---@type openmw.ui.Layout|nil
 Element.layout = nil
 
 ---Register a new texture resource. Can be used to manually atlas UI textures.
