@@ -18,6 +18,8 @@
 ---@field Crimes openmw.interfaces.Crimes Built-in contexts: global.
 ---@field Controls openmw.interfaces.Controls Built-in contexts: player.
 ---@field GamepadControls openmw.interfaces.GamepadControls Built-in contexts: player.
+---@field Projectiles openmw.interfaces.Projectiles Built-in contexts: global|local.
+---@field SpellCasting openmw.interfaces.SpellCasting Built-in contexts: global|local.
 local interfaces = {}
 
 ---@param self openmw.interfaces
