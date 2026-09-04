@@ -126,8 +126,8 @@ local PathGridPoint = {}
 ---@class openmw.core.ActiveSpell
 ---@field name string The spell or item display name
 ---@field id string Record id of the spell or item used to cast the spell
----@field item openmw.Object The enchanted item used to cast the spell, or nil if the spell was not cast from an enchanted item. Note that if the spell was cast for a single-use enchantment such as a scroll, this will be nil.
----@field caster openmw.Object The caster object, or nil if the spell has no defined caster
+---@field item openmw.Object|nil The enchanted item used to cast the spell, or nil if the spell was not cast from an enchanted item. Note that if the spell was cast for a single-use enchantment such as a scroll, this will be nil.
+---@field caster openmw.Object|nil The caster object, or nil if the spell has no defined caster
 ---@field fromEquipment boolean If set, this spell is tied to an equipped item and can only be ended by unequipping the item.
 ---@field temporary boolean If set, this spell effect is temporary and should end on its own. Either after a single application or after its duration has run out.
 ---@field affectsBaseValues boolean If set, this spell affects the base values of affected stats, rather than modifying current values.
@@ -138,15 +138,15 @@ local ActiveSpell = {}
 
 ---@class openmw.core.ActiveSpellEffect
 ---@field index number Index of this effect within the original list of MagicEffectWithParams of the spell/enchantment/potion this effect came from.
----@field affectedSkill string Optional skill ID
----@field affectedAttribute string Optional attribute ID
+---@field affectedSkill string|nil Optional skill ID
+---@field affectedAttribute string|nil Optional attribute ID
 ---@field id string Magic effect id
 ---@field name string Localized name of the effect
----@field magnitudeThisFrame number The magnitude of the effect in the current frame. This will be a new random number between minMagnitude and maxMagnitude every frame. Or nil if the effect has no magnitude.
----@field minMagnitude number The minimum magnitude of this effect, or nil if the effect has no magnitude.
----@field maxMagnitude number The maximum magnitude of this effect, or nil if the effect has no magnitude.
----@field duration number Total duration in seconds of this spell effect, should not be confused with remaining duration. Or nil if the effect is not temporary.
----@field durationLeft number Remaining duration in seconds of this spell effect, or nil if the effect is not temporary.
+---@field magnitudeThisFrame number|nil The magnitude of the effect in the current frame. This will be a new random number between minMagnitude and maxMagnitude every frame. Or nil if the effect has no magnitude.
+---@field minMagnitude number|nil The minimum magnitude of this effect, or nil if the effect has no magnitude.
+---@field maxMagnitude number|nil The maximum magnitude of this effect, or nil if the effect has no magnitude.
+---@field duration number|nil Total duration in seconds of this spell effect, should not be confused with remaining duration. Or nil if the effect is not temporary.
+---@field durationLeft number|nil Remaining duration in seconds of this spell effect, or nil if the effect is not temporary.
 local ActiveSpellEffect = {}
 
 ---`core.magic.ENCHANTMENT_TYPE`
@@ -390,8 +390,8 @@ local MagicEffect = {}
 ---@class openmw.core.MagicEffectWithParams
 ---@field effect openmw.core.MagicEffect MagicEffect
 ---@field id string ID of the associated MagicEffect
----@field affectedSkill string Optional skill ID
----@field affectedAttribute string Optional attribute ID
+---@field affectedSkill string|nil Optional skill ID
+---@field affectedAttribute string|nil Optional attribute ID
 ---@field range number
 ---@field area number
 ---@field magnitudeMin number
