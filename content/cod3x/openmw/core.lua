@@ -925,7 +925,7 @@ Magic.effects = nil
 ---end
 ---local mgef = core.magic.effects.records[core.magic.EFFECT_TYPE.Reflect]
 ---print('Reflect Icon: '..tostring(mgef.icon))
----@type table<number, openmw.core.MagicEffect>
+---@type table<string, openmw.core.MagicEffect>
 Effects.records = nil
 
 ---@type openmw.core.Enchantments
