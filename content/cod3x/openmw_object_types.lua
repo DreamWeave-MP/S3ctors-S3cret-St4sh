@@ -9,8 +9,8 @@ local ObjectOwner = {}
 
 ---Either a table with options or a openmw.util.Vector3 rotation.
 ---@class openmw.TeleportOptions
----@field rotation openmw.util.Transform New rotation; if missing, then the current rotation is used.
----@field onGround boolean If true, adjust destination position to the ground.
+---@field rotation? openmw.util.Transform New rotation; if missing, then the current rotation is used.
+---@field onGround? boolean If true, adjust destination position to the ground.
 local TeleportOptions = {}
 
 ---List of OpenMW objects. Implements [iterables#List](iterables.html#List) of #Object.
