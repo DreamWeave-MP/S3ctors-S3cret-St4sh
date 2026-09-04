@@ -254,7 +254,7 @@
 ---@field temporary boolean If true, will end on its own after duration or single application.
 ---@field affectsBaseValues boolean If true, affects base values rather than current values.
 ---@field stackable boolean If true, can be applied multiple times from the same source.
----@field activeSpellId number Uniquely identifies this spell within the affected actor's active spell list.
+---@field activeSpellId string Uniquely identifies this spell within the affected actor's active spell list.
 ---@field effects ActiveSpellEffect[] Active effects of this spell.
 
 ---@class ActiveEffect
@@ -272,7 +272,7 @@
 
 ---@class Effects
 --- Map from MagicEffectId value to MagicEffect.
----@field records table<number, MagicEffect>
+---@field records table<string, MagicEffect>
 
 ---@class Enchantments
 --- Read-only list of all Enchantment records. May be indexed by recordId or numeric index.
