@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context global
 
 ---Provides an interface to the game world for global scripts.
 ---@class openmw.world

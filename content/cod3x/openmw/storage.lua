@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context all
 
 ---Contains functions to work with permanent Lua storage.
 ---local storage = require('openmw.storage')

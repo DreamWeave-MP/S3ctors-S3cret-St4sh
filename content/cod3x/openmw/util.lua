@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context all
 
 ---Defines utility functions and classes like 3D vectors, that don't depend on the game world.
 ---@class openmw.util

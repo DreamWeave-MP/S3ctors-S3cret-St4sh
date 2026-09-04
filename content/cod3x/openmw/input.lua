@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context player|menu
 
 ---Most mods should prefer to use the actions/triggers API over the direct input device methods.
 ---Actions have one value on each frame (resolved just before the `onFrame` engine handler),

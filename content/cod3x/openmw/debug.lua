@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context player
 
 ---Provides an interface to the engine debug utils.
 ---@class openmw.debug

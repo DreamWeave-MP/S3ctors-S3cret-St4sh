@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context local|player
 
 ---Provides full access to the object the script is attached to.
 ---All fields and function of `openmw.SelfObject` are also available for `openmw.self`.

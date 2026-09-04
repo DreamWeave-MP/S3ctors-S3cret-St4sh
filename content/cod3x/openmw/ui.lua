@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context player|menu
 
 ---Controls user interface.
 ---local ui = require('openmw.ui')

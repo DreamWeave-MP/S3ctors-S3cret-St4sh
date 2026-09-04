@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context local|player
 
 ---Defines functions that allow control of character animations.
 ---Note that for some methods, such as openmw.animation.playBlended you should use the associated methods on the

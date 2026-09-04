@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context player|menu
 
 ---Controls background 2D sounds specific to a given player.
 ---@class openmw.ambient

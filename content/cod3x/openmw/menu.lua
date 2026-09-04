@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context menu
 
 ---Provides interfaces to interact with menu elements.
 ---@class openmw.menu

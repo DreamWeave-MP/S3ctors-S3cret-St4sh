@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context runtime
 
 ---Utility functions for formatting game time.
 ---@class openmw_aux.calendar

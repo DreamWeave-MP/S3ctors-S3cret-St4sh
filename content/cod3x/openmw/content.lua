@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context load
 
 ---Allows for manipulation of the data loaded from content files while the game is first started.
 ---Records can be created and deleted using this package as if a content file had done so.

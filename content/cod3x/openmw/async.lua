@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context all
 
 ---Contains timers and coroutine utilities. All functions require
 ---the package itself as a first argument.
