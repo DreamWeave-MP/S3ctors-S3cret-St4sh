@@ -12,14 +12,26 @@ local content = {}
 ---@class openmw.content.ActivatorContent
 local ActivatorContent = {}
 
+---@class openmw.content.ApparatusContent
+local ApparatusContent = {}
+
+---@class openmw.content.AttributeContent
+local AttributeContent = {}
+
 ---@class openmw.content.BookContent
 local BookContent = {}
+
+---@class openmw.content.ClassContent
+local ClassContent = {}
 
 ---@class openmw.content.DoorContent
 local DoorContent = {}
 
 ---@class openmw.content.EnchantmentContent
 local EnchantmentContent = {}
+
+---@class openmw.content.FactionContent
+local FactionContent = {}
 
 ---@class openmw.content.GMSTContent
 local GMSTContent = {}
@@ -29,6 +41,12 @@ local GlobalContent = {}
 
 ---@class openmw.content.IngredientContent
 local IngredientContent = {}
+
+---@class openmw.content.LevCreatureContent
+local LevCreatureContent = {}
+
+---@class openmw.content.LevItemContent
+local LevItemContent = {}
 
 ---@class openmw.content.LightContent
 local LightContent = {}
@@ -51,6 +69,12 @@ local ProbeContent = {}
 ---@class openmw.content.RepairContent
 local RepairContent = {}
 
+---@class openmw.content.RaceContent
+local RaceContent = {}
+
+---@class openmw.content.SkillContent
+local SkillContent = {}
+
 ---@class openmw.content.SoundContent
 local SoundContent = {}
 
@@ -72,6 +96,18 @@ content.activators = nil
 ---@type openmw.types.ActivatorRecord[]
 ActivatorContent.records = nil
 
+---@type openmw.content.ApparatusContent
+content.apparatuses = nil
+
+---@type openmw.types.RecordList<openmw.types.ApparatusRecord>
+ApparatusContent.records = nil
+
+---@type openmw.content.AttributeContent
+content.attributes = nil
+
+---@type openmw.types.RecordList<openmw.core.AttributeRecord>
+AttributeContent.records = nil
+
 ---@type openmw.content.BookContent
 content.books = nil
 
@@ -79,6 +115,12 @@ content.books = nil
 ---content.books.records.MyBook = { template = content.books.records['bk_lustyargonianmaid'], text = content.books.records['bk_BoethiahPillowBook'].text }
 ---@type openmw.types.BookRecord[]
 BookContent.records = nil
+
+---@type openmw.content.ClassContent
+content.classes = nil
+
+---@type openmw.types.RecordList<openmw.types.ClassRecord>
+ClassContent.records = nil
 
 ---@type openmw.content.DoorContent
 content.doors = nil
@@ -98,6 +140,12 @@ EnchantmentContent.TYPE = nil
 ---content.enchantments.records.MyEnchantment = { type = content.enchantments.TYPE.CastOnUse, charge = 1, cost = 1, effects = { { id = 'FortifySkill', affectedSkill = 'enchant', duration = 5, magnitudeMin = 50, magnitudeMax = 100 } } }
 ---@type openmw.core.Enchantment[]
 EnchantmentContent.records = nil
+
+---@type openmw.content.FactionContent
+content.factions = nil
+
+---@type openmw.types.RecordList<openmw.core.FactionRecord>
+FactionContent.records = nil
 
 ---@type openmw.content.GMSTContent
 content.gameSettings = nil
@@ -127,6 +175,18 @@ content.ingredients = nil
 ---content.ingredients.records.MyIngredient = { template = content.ingredients.records['ingred_ectoplasm_01'], name = 'Soylent', effects = { { id = 'vampirism' } } }
 ---@type openmw.types.IngredientRecord[]
 IngredientContent.records = nil
+
+---@type openmw.content.LevCreatureContent
+content.levelledCreatures = nil
+
+---@type openmw.types.RecordList<openmw.types.LevelledCreatureRecord>
+LevCreatureContent.records = nil
+
+---@type openmw.content.LevItemContent
+content.levelledItems = nil
+
+---@type openmw.types.RecordList<openmw.types.ItemLevelledListRecord>
+LevItemContent.records = nil
 
 ---@type openmw.content.LightContent
 content.lights = nil
@@ -183,6 +243,18 @@ content.repairs = nil
 ---content.repairs.records.MyRepair = { template = content.repairs.records['hammer_repair'], name = 'Hammer Time' }
 ---@type openmw.types.RepairRecord[]
 RepairContent.records = nil
+
+---@type openmw.content.RaceContent
+content.races = nil
+
+---@type openmw.types.RecordList<openmw.types.RaceRecord>
+RaceContent.records = nil
+
+---@type openmw.content.SkillContent
+content.skills = nil
+
+---@type openmw.types.RecordList<openmw.core.SkillRecord>
+SkillContent.records = nil
 
 ---@type openmw.content.SpellContent
 content.spells = nil
