@@ -269,6 +269,7 @@
 ---@class Spells
 --- Read-only list of all Spell records. May be indexed by recordId or numeric index.
 ---@field records Spell[]
+function Spells.createRecordDraft(spell) end
 
 ---@class Effects
 --- Map from MagicEffectId value to MagicEffect.
@@ -277,6 +278,7 @@
 ---@class Enchantments
 --- Read-only list of all Enchantment records. May be indexed by recordId or numeric index.
 ---@field records Enchantment[]
+function Enchantments.createRecordDraft(enchantment) end
 
 ---@class Magic
 ---@field ENCHANTMENT_TYPE EnchantmentType
