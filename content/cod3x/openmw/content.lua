@@ -81,7 +81,7 @@ local SpellContent = {}
 ---@class openmw.content.StaticContent
 local StaticContent = {}
 
----@type openmw.core.SpellRange
+---@type openmw.core.SpellRangeValues
 content.RANGE = nil
 
 ---@type openmw.content.ActivatorContent
@@ -132,7 +132,7 @@ DoorContent.records = nil
 ---@type openmw.content.EnchantmentContent
 content.enchantments = nil
 
----@type openmw.core.EnchantmentType
+---@type openmw.core.EnchantmentTypeValues
 EnchantmentContent.TYPE = nil
 
 ---A mutable list of all openmw.core.Enchantments.
@@ -258,7 +258,7 @@ SkillContent.records = nil
 ---@type openmw.content.SpellContent
 content.spells = nil
 
----@type openmw.core.SpellType
+---@type openmw.core.SpellTypeValues
 SpellContent.TYPE = nil
 
 ---A mutable list of all openmw.core.Spells.
