@@ -28,6 +28,9 @@ local Races = {}
 
 ---Common functions for Creature, NPC, and Player.
 ---@class openmw.types.Actor
+---@field runSpeed fun(actor: openmw.Object): number (Deprecated) Use `getRunSpeed`.
+---@field walkSpeed fun(actor: openmw.Object): number (Deprecated) Use `getWalkSpeed`.
+---@field currentSpeed fun(actor: openmw.Object): number (Deprecated) Use `getCurrentSpeed`.
 local Actor = {}
 
 ---@class openmw.types.EQUIPMENT_SLOT
@@ -700,6 +703,8 @@ local ActivatorRecord = {}
 
 ---@class openmw.types.Container: openmw.types.Lockable
 ---@field baseType openmw.types.Lockable Lockable
+---@field encumbrance fun(object: openmw.Object): number (Deprecated) Use `getEncumbrance`.
+---@field capacity fun(object: openmw.Object): number (Deprecated) Use `getCapacity`.
 local Container = {}
 
 ---@class openmw.types.ContainerRecord
