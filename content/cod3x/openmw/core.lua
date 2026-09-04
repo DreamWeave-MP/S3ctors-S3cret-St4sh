@@ -436,6 +436,7 @@ local Skill = {}
 ---@field name string Human-readable name
 ---@field description string Human-readable description
 ---@field icon string VFS path to the icon
+---@field werewolfValue number Value for werewolf players
 local AttributeRecord = {}
 
 ---@class openmw.core.SkillRecord
@@ -447,6 +448,7 @@ local AttributeRecord = {}
 ---@field school openmw.core.MagicSchoolData Optional magic school
 ---@field attribute string The id of the skill's governing attribute
 ---@field skillGain table Table of the 4 possible skill gain values. See [SkillProgression#SkillUseType](interface_skill_progression.html#SkillUseType).
+---@field werewolfValue number Value for werewolf players
 local SkillRecord = {}
 
 ---@class openmw.core.MagicSchoolData
