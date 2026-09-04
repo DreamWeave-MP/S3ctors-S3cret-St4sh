@@ -32,12 +32,12 @@ camera.MODE = nil
 function camera.getMode() end
 
 ---Return the mode the camera will switch to after the end of the current animation. Can be nil.
----@return openmw.camera.Mode
+---@return openmw.camera.Mode|nil
 function camera.getQueuedMode() end
 
 ---Change openmw.camera.MODE; if the second (optional, true by default) argument is set to false, the switching can be delayed (see `getQueuedMode`).
 ---@param mode openmw.camera.Mode
----@param force boolean
+---@param force? boolean Whether to force the switch immediately. Defaults to false.
 function camera.setMode(mode, force) end
 
 ---If set to true then after switching from Preview to ThirdPerson the player character turns to the camera view direction. Otherwise, the camera turns to the character view direction.

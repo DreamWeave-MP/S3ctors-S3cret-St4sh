@@ -616,11 +616,16 @@ local WeaponRecord = {}
 local Apparatus = {}
 
 ---Apparatus.TYPE
+---@alias openmw.types.ApparatusTypeMortarPestle 0
+---@alias openmw.types.ApparatusTypeAlembic 1
+---@alias openmw.types.ApparatusTypeCalcinator 2
+---@alias openmw.types.ApparatusTypeRetort 3
+---@alias openmw.types.ApparatusType openmw.types.ApparatusTypeMortarPestle|openmw.types.ApparatusTypeAlembic|openmw.types.ApparatusTypeCalcinator|openmw.types.ApparatusTypeRetort
 ---@class openmw.types.ApparatusTYPE
----@field MortarPestle number
----@field Alembic number
----@field Calcinator number
----@field Retort number
+---@field MortarPestle openmw.types.ApparatusTypeMortarPestle
+---@field Alembic openmw.types.ApparatusTypeAlembic
+---@field Calcinator openmw.types.ApparatusTypeCalcinator
+---@field Retort openmw.types.ApparatusTypeRetort
 local ApparatusTYPE = {}
 
 ---@class openmw.types.ApparatusRecord
@@ -629,7 +634,7 @@ local ApparatusTYPE = {}
 ---@field model string VFS path to the model
 ---@field mwscript string|nil MWScript on this apparatus (can be nil)
 ---@field icon string VFS path to the icon
----@field type number The type of apparatus. See Apparatus.TYPE
+---@field type openmw.types.ApparatusType The type of apparatus. See Apparatus.TYPE
 ---@field weight number
 ---@field value number
 ---@field quality number The quality of the apparatus
@@ -740,12 +745,12 @@ local StaticRecord = {}
 ---@class openmw.types.LevelledCreature
 local LevelledCreature = {}
 
----@class openmw.types.LevelledCreatureRecord
+---@class openmw.types.CreatureLevelledListRecord
 ---@field id string Record id
 ---@field chanceNone number Chance this list won't spawn anything [0-1]
 ---@field calculateFromAllLevels boolean Calculate from all levels <= player level, not just the closest below player
 ---@field creatures openmw.types.LevelledListItem[]
-local LevelledCreatureRecord = {}
+local CreatureLevelledListRecord = {}
 
 ---@class openmw.types.LevelledListItem
 ---@field id string Item id
@@ -2207,7 +2212,7 @@ types.LevelledCreature = nil
 
 ---A read-only list of all LevelledCreatureRecords in the world database.
 ---Implements a List of LevelledCreatureRecord.
----@type openmw.types.RecordList<openmw.types.LevelledCreatureRecord>
+---@type openmw.types.RecordList<openmw.types.CreatureLevelledListRecord>
 LevelledCreature.records = nil
 
 ---Whether the object is a LevelledCreature.
@@ -2217,13 +2222,18 @@ function LevelledCreature.objectIsInstance(object) end
 
 ---Returns the read-only LevelledCreatureRecord of a levelled creature
 ---@param objectOrRecordId openmw.Object|string
----@return openmw.types.LevelledCreatureRecord|nil
+---@return openmw.types.CreatureLevelledListRecord|nil
 function LevelledCreature.record(objectOrRecordId) end
 
+---Creates a CreatureLevelledListRecord without adding it to the world database.
+---@param list openmw.types.RecordDraft<openmw.types.CreatureLevelledListRecord>
+---@return openmw.types.RecordDraft<openmw.types.CreatureLevelledListRecord>
+function LevelledCreature.createRecordDraft(list) end
+
 ---Picks a random id from the levelled list.
----@param listRecord openmw.types.LevelledCreatureRecord The list
+---@param listRecord openmw.types.CreatureLevelledListRecord The list
 ---@param MaxLvl number The maximum level to select entries for
----@return string An id
-function LevelledCreatureRecord.getRandomId(listRecord, MaxLvl) end
+---@return string|nil An id
+function CreatureLevelledListRecord.getRandomId(listRecord, MaxLvl) end
 
 return types

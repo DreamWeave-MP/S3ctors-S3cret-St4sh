@@ -18,17 +18,23 @@
 local input = {}
 
 ---String id of a CONTROL_SWITCH
----@class openmw.input.ControlSwitch
-local ControlSwitch = {}
+---@alias openmw.input.ControlSwitchControls "playercontrols"
+---@alias openmw.input.ControlSwitchFighting "playerfighting"
+---@alias openmw.input.ControlSwitchJumping "playerjumping"
+---@alias openmw.input.ControlSwitchLooking "playerlooking"
+---@alias openmw.input.ControlSwitchMagic "playermagic"
+---@alias openmw.input.ControlSwitchViewMode "playerviewswitch"
+---@alias openmw.input.ControlSwitchVanityMode "vanitymode"
+---@alias openmw.input.ControlSwitch openmw.input.ControlSwitchControls|openmw.input.ControlSwitchFighting|openmw.input.ControlSwitchJumping|openmw.input.ControlSwitchLooking|openmw.input.ControlSwitchMagic|openmw.input.ControlSwitchViewMode|openmw.input.ControlSwitchVanityMode
 
 ---@class openmw.input.CONTROL_SWITCH
----@field Controls openmw.input.ControlSwitch Ability to move
----@field Fighting openmw.input.ControlSwitch Ability to attack
----@field Jumping openmw.input.ControlSwitch Ability to jump
----@field Looking openmw.input.ControlSwitch Ability to change view direction
----@field Magic openmw.input.ControlSwitch Ability to use magic
----@field ViewMode openmw.input.ControlSwitch Ability to toggle 1st/3rd person view
----@field VanityMode openmw.input.ControlSwitch Vanity view if the player doesn't touch controls for a long time
+---@field Controls openmw.input.ControlSwitchControls Ability to move
+---@field Fighting openmw.input.ControlSwitchFighting Ability to attack
+---@field Jumping openmw.input.ControlSwitchJumping Ability to jump
+---@field Looking openmw.input.ControlSwitchLooking Ability to change view direction
+---@field Magic openmw.input.ControlSwitchMagic Ability to use magic
+---@field ViewMode openmw.input.ControlSwitchViewMode Ability to toggle 1st/3rd person view
+---@field VanityMode openmw.input.ControlSwitchVanityMode Vanity view if the player doesn't touch controls for a long time
 local CONTROL_SWITCH = {}
 
 ---(DEPRECATED, use actions with matching keys)
@@ -45,6 +51,7 @@ local CONTROL_SWITCH = {}
 ---@field Use number
 ---@field Jump number
 ---@field AutoMove number
+---@field Rest number
 ---@field Journal number
 ---@field Run number
 ---@field CycleSpellLeft number
@@ -116,8 +123,7 @@ local CONTROLLER_BUTTON = {}
 local CONTROLLER_AXIS = {}
 
 ---Numeric id of a KEY
----@class openmw.input.KeyCode
-local KeyCode = {}
+---@alias openmw.input.KeyCode integer
 
 ---@class openmw.input.KEY
 ---@field _0 openmw.input.KeyCode

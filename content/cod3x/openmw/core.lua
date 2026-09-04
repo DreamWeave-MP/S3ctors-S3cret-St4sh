@@ -444,8 +444,8 @@ local MagicEffectWithParams = {}
 
 ---Magic effect that is currently active on an actor.
 ---@class openmw.core.ActiveEffect
----@field affectedSkill string Optional skill ID
----@field affectedAttribute string Optional attribute ID
+---@field affectedSkill string|nil Optional skill ID
+---@field affectedAttribute string|nil Optional attribute ID
 ---@field id string Effect id string
 ---@field name string Localized name of the effect
 ---@field magnitude number Current magnitude of the effect. Will be set to 0 when the effect is removed or expires.

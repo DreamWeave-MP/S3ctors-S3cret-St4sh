@@ -95,6 +95,9 @@ ActivatorContent.records = nil
 ---@type openmw.content.ApparatusContent
 content.apparatuses = nil
 
+---@type openmw.types.ApparatusTYPE
+ApparatusContent.TYPE = nil
+
 ---@type openmw.types.RecordList<openmw.types.ApparatusRecord>
 ApparatusContent.records = nil
 
@@ -175,7 +178,7 @@ IngredientContent.records = nil
 ---@type openmw.content.LevCreatureContent
 content.levelledCreatures = nil
 
----@type openmw.types.RecordList<openmw.types.LevelledCreatureRecord>
+---@type openmw.types.RecordList<openmw.types.CreatureLevelledListRecord>
 LevCreatureContent.records = nil
 
 ---@type openmw.content.LevItemContent

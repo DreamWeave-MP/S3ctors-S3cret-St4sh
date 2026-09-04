@@ -22,7 +22,7 @@ function SpellCasting.explodeSpell(spellCast, options) end
 
 ---@param spellCast openmw.interfaces.SpellCastInfo
 ---@param target openmw.Object
----@param range number One of the values from `openmw.core.magic.RANGE`.
+---@param range openmw.core.SpellRange One of the values from `openmw.core.magic.RANGE`.
 function SpellCasting.inflict(spellCast, target, range) end
 
 return SpellCasting

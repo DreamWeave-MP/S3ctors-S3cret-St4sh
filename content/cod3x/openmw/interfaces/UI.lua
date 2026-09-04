@@ -38,7 +38,7 @@ function UI.registerWindow(windowName, showFn, hideFn) end
 function UI.getWindowsForMode(mode) end
 
 ---Get current mode (nil if all windows are closed), equivalent to `I.UI.modes[#I.UI.modes]`
----@return string
+---@return string|nil
 function UI.getMode() end
 
 ---Drop all active modes and set mode.
@@ -81,7 +81,7 @@ function UI.isWindowVisible(windowName) end
 ---showHudElement = function(name, bool) end,
 ---hudElements,  -- map from element name to its visibility
 ---@param message string Message to display
----@param options table Options (none yet)
+---@param options? table Options (none yet)
 function UI.showInteractiveMessage(message, options) end
 
 return UI
