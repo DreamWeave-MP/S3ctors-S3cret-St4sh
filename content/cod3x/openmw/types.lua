@@ -1816,6 +1816,11 @@ types.Ingredient = nil
 ---@type openmw.types.RecordList<openmw.types.IngredientRecord>
 Ingredient.records = nil
 
+---Creates an IngredientRecord without adding it to the world database.
+---@param ingredient openmw.types.RecordDraft<openmw.types.IngredientRecord>
+---@return openmw.types.RecordDraft<openmw.types.IngredientRecord>
+function Ingredient.createRecordDraft(ingredient) end
+
 ---Whether the object is an Ingredient.
 ---@param object openmw.Object
 ---@return boolean
