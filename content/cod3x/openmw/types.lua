@@ -880,6 +880,28 @@ function Actor.getStance(actor) end
 ---@param stance number
 function Actor.setStance(actor, stance) end
 
+---Sets whether the actor is knocked down.
+---Available in global and local scripts. Can only be used on self in local scripts.
+---@param actor openmw.GObject|openmw.SelfObject
+---@param value boolean
+function Actor.setKnockedDown(actor, value) end
+
+---Is the actor knocked down.
+---@param actor openmw.Object
+---@return boolean
+function Actor.getKnockedDown(actor) end
+
+---Sets whether the actor is in hit recovery.
+---Available in global and local scripts. Can only be used on self in local scripts.
+---@param actor openmw.GObject|openmw.SelfObject
+---@param value boolean
+function Actor.setHitRecovery(actor, value) end
+
+---Is the actor in hit recovery.
+---@param actor openmw.Object
+---@return boolean
+function Actor.getHitRecovery(actor) end
+
 ---Returns `true` if the item is equipped on the actor.
 ---@param actor openmw.Object
 ---@param item openmw.Object
