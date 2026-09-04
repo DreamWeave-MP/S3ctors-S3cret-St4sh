@@ -118,6 +118,9 @@ local MouseWheelEvent = {}
 
 ---A texture ready to be used by UI widgets
 ---@class openmw.ui.TextureResource
+---@field path string Path to the texture file
+---@field offset openmw.util.Vector2 Offset of this resource in the texture. (0, 0) by default
+---@field size openmw.util.Vector2 Size of the resource in the texture. (0, 0) by default. 0 means the whole texture size is used.
 local TextureResource = {}
 
 ---Table with arguments passed to ui.texture.
