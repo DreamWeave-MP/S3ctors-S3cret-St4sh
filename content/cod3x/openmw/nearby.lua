@@ -27,7 +27,7 @@ local RayCastingResult = {}
 
 ---A table of parameters for nearby.castRay
 ---@class openmw.nearby.CastRayOptions
----@field ignore any An openmw.LObject or openmw.ObjectList<openmw.LObject> to ignore (specify here the source of the ray, or other objects which should not collide)
+---@field ignore? any An openmw.LObject or openmw.ObjectList<openmw.LObject> to ignore (specify here the source of the ray, or other objects which should not collide)
 ---@field collisionType? number Object types to work with (see openmw.nearby.COLLISION_TYPE)
 ---@field radius? number The radius of the ray (zero by default). If not zero then castRay actually casts a sphere with given radius. NOTE: currently `ignore` is not supported if `radius>0`.
 local CastRayOptions = {}
