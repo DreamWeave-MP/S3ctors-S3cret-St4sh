@@ -184,6 +184,12 @@ function ui.content(table) end
 ---@return openmw.ui.Element
 function ui.create(layout, options) end
 
+---Returns currently rendered Lua UI root Elements in this Lua context.
+---If `layer` is provided, only Elements attached to that layer are returned.
+---@param layer? string Optional layer name
+---@return openmw.ui.Element[]
+function ui.getElements(layer) end
+
 ---Adds a settings page to main menu setting's Scripts tab.
 ---@param page openmw.ui.SettingsPageOptions
 function ui.registerSettingsPage(page) end
