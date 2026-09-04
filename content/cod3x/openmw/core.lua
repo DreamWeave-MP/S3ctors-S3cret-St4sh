@@ -670,15 +670,15 @@ local MWScriptRecord = {}
 ---@field glareView number Strength of the sun glare [0, 1]
 ---@field rainSpeed number The speed at which rain falls
 ---@field rainEntranceSpeed number The number of seconds between rain particle batches being created
----@field rainEffect string Will return nil if weather has no rainEffect
+---@field rainEffect string|nil Will return nil if weather has no rainEffect
 ---@field rainMaxRaindrops number The maximum number of rain particle batches to create every rainEntranceSpeed
 ---@field rainDiameter number The area around the player to spawn rain in
 ---@field rainMaxHeight number The maximum height relative to the player to spawn rain at
 ---@field rainMinHeight number The minimum height relative to the player to spawn rain at
----@field rainLoopSoundID string
+---@field rainLoopSoundID string|nil
 ---@field thunderSoundID table A read-only array containing the recordIds of the thunder sounds
----@field ambientLoopSoundID string
----@field particleEffect string Will return nil if weather has no particleEffect
+---@field ambientLoopSoundID string|nil
+---@field particleEffect string|nil Will return nil if weather has no particleEffect
 ---@field distantLandFogFactor number
 ---@field distantLandFogOffset number
 ---@field sunDiscSunsetColor openmw.util.Color
