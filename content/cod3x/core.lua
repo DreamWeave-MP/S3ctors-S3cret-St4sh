@@ -1059,6 +1059,7 @@ function SelfObject:enableAI(v) end
 ---@field factions Factions
 ---@field mwscripts MWScripts
 ---@field weather Weather
+---@field MOON_PHASE MOON_PHASE
 local core = {}
 
 --- Terminate the game and quit to the OS. For testing purposes only.
