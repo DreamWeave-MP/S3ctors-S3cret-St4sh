@@ -5,9 +5,9 @@
 
 ---Object owner information
 ---@class openmw.ObjectOwner
----@field recordId string NPC who owns the object (nil if missing). Global and self scripts can set the value.
----@field factionId string Faction who owns the object (nil if missing). Global and self scripts can set the value.
----@field factionRank number Rank required to be allowed to pick up the object (`nil` if any rank is allowed). Global and self scripts can set the value.
+---@field recordId string|nil NPC who owns the object (nil if missing). Global and self scripts can set the value.
+---@field factionId string|nil Faction who owns the object (nil if missing). Global and self scripts can set the value.
+---@field factionRank number|nil Rank required to be allowed to pick up the object (`nil` if any rank is allowed). Global and self scripts can set the value.
 local ObjectOwner = {}
 
 ---Either a table with options or a openmw.util.Vector3 rotation.
