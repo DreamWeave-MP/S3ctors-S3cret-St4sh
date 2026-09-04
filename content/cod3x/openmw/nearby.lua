@@ -24,9 +24,9 @@ local COLLISION_TYPE = {}
 ---Result of raycasting
 ---@class openmw.nearby.RayCastingResult
 ---@field hit boolean Is there a collision? (true/false)
----@field hitPos openmw.util.Vector3 Position of the collision point (nil if no collision)
----@field hitNormal openmw.util.Vector3 Normal to the surface in the collision point (nil if no collision)
----@field hitObject openmw.LObject The object the ray has collided with (can be nil)
+---@field hitPos openmw.util.Vector3|nil Position of the collision point (nil if no collision)
+---@field hitNormal openmw.util.Vector3|nil Normal to the surface in the collision point (nil if no collision)
+---@field hitObject openmw.LObject|nil The object the ray has collided with (can be nil)
 local RayCastingResult = {}
 
 ---A table of parameters for nearby.castRay
@@ -84,8 +84,8 @@ local FIND_PATH_STATUS = {}
 
 ---A table of parameters identifying navmesh
 ---@class openmw.nearby.AgentBounds
----@field shapeType_ openmw.nearby.COLLISION_SHAPE_TYPE
----@field halfExtents_ openmw.util.Vector3
+---@field shapeType openmw.nearby.COLLISION_SHAPE_TYPE
+---@field halfExtents openmw.util.Vector3
 local AgentBounds = {}
 
 ---A table of parameters to specify relative path cost per each area type
