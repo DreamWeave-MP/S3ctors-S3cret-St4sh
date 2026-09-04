@@ -13,11 +13,16 @@
 local storage = {}
 
 ---`storage.LIFE_TIME`
----@class openmw.storage.LifeTime
----@field Persistent number "0" Data is stored for the whole game session and remains on disk after quitting the game
----@field GameSession number "1" Data is stored for the whole game session
----@field Temporary number "2" Data is stored until script context reset
-local LifeTime = {}
+---@alias openmw.storage.LifeTimePersistent 0
+---@alias openmw.storage.LifeTimeGameSession 1
+---@alias openmw.storage.LifeTimeTemporary 2
+---@alias openmw.storage.LifeTime openmw.storage.LifeTimePersistent|openmw.storage.LifeTimeGameSession|openmw.storage.LifeTimeTemporary
+
+---@class openmw.storage.LIFE_TIME
+---@field Persistent openmw.storage.LifeTimePersistent Data is stored for the whole game session and remains on disk after quitting the game.
+---@field GameSession openmw.storage.LifeTimeGameSession Data is stored for the whole game session.
+---@field Temporary openmw.storage.LifeTimeTemporary Data is stored until script context reset.
+local LifeTimeValues = {}
 
 ---A map `key -> value` that represents a storage section.
 ---@class openmw.storage.StorageSection
@@ -37,7 +42,7 @@ local MutableStorageSection = {}
 
 ---Common storage module surface valid in every script context.
 ---@class openmw.storage.All
----@field LIFE_TIME openmw.storage.LifeTime Possible LifeTime values
+---@field LIFE_TIME openmw.storage.LIFE_TIME Possible LifeTime values.
 ---@field globalSection fun(sectionName: string): openmw.storage.StorageSection Get a section of the global storage.
 local StorageAll = {}
 
@@ -61,8 +66,9 @@ local StoragePlayerMenu = {}
 ---@alias openmw.storage.Runtime openmw.storage.All
 
 ---Possible LifeTime values
----@type openmw.storage.LifeTime
+---@type openmw.storage.LIFE_TIME
 storage.LIFE_TIME = nil
+---@type openmw.storage.LIFE_TIME
 StorageAll.LIFE_TIME = nil
 
 ---Get a section of the global storage; can be used by any script, but only global scripts can change values.
@@ -159,7 +165,7 @@ function MutableStorageSection:removeOnExit() end
 ---local storage = require('openmw.storage')
 ---local myModData = storage.globalSection('MyModExample')
 ---myModData:setLifeTime(storage.LIFE_TIME.Temporary)
----@param lifeTime openmw.storage.LifeTime Section life time
+---@param lifeTime openmw.storage.LifeTime Section life time; use a value from `openmw.storage.LIFE_TIME`.
 function MutableStorageSection:setLifeTime(lifeTime) end
 
 ---Set a value by a string key; can not be used for global storage from a local script.

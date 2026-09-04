@@ -242,13 +242,16 @@ local KeyboardEvent = {}
 ---@field pressure number Pressure of the finger.
 local TouchEvent = {}
 
----@class openmw.input.ActionType
+---@alias openmw.input.ActionTypeBoolean 0
+---@alias openmw.input.ActionTypeNumber 1
+---@alias openmw.input.ActionTypeRange 2
+---@alias openmw.input.ActionType openmw.input.ActionTypeBoolean|openmw.input.ActionTypeNumber|openmw.input.ActionTypeRange
 local ActionType = {}
 
 ---@class openmw.input.ACTION_TYPE
----@field Boolean openmw.input.ActionType Input action with value of true or false
----@field Number openmw.input.ActionType Input action with a numeric value
----@field Range openmw.input.ActionType Input action with a numeric value between 0 and 1 (inclusive)
+---@field Boolean openmw.input.ActionTypeBoolean Input action with value of true or false.
+---@field Number openmw.input.ActionTypeNumber Input action with a numeric value.
+---@field Range openmw.input.ActionTypeRange Input action with a numeric value between 0 and 1 (inclusive).
 local ACTION_TYPE = {}
 
 ---@class openmw.input.ActionInfo

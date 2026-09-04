@@ -21,40 +21,52 @@ local SkillProgression = {}
 ---Make a copy so we don't change the caller's table
 ---Compute use value if it was not supplied directly
 ---If there are no handlers, then there won't be any effect, so skip calculations
----@class openmw.interfaces.SkillProgression.SkillLevelUpSource
----@field Book string book
----@field Jail string jail
----@field Trainer string trainer
----@field Usage string usage
+---@alias openmw.interfaces.SkillProgression.SkillLevelUpSourceBook "book"
+---@alias openmw.interfaces.SkillProgression.SkillLevelUpSourceJail "jail"
+---@alias openmw.interfaces.SkillProgression.SkillLevelUpSourceTrainer "trainer"
+---@alias openmw.interfaces.SkillProgression.SkillLevelUpSourceUsage "usage"
+---@alias openmw.interfaces.SkillProgression.SkillLevelUpSource openmw.interfaces.SkillProgression.SkillLevelUpSourceBook|openmw.interfaces.SkillProgression.SkillLevelUpSourceJail|openmw.interfaces.SkillProgression.SkillLevelUpSourceTrainer|openmw.interfaces.SkillProgression.SkillLevelUpSourceUsage
+
+---@class openmw.interfaces.SkillProgression.SkillLevelUpSourceValues
+---@field Book openmw.interfaces.SkillProgression.SkillLevelUpSourceBook
+---@field Jail openmw.interfaces.SkillProgression.SkillLevelUpSourceJail
+---@field Trainer openmw.interfaces.SkillProgression.SkillLevelUpSourceTrainer
+---@field Usage openmw.interfaces.SkillProgression.SkillLevelUpSourceUsage
 local SkillLevelUpSource = {}
 
 ---Table of skill use types defined by Morrowind.
 ---Each entry corresponds to an index into the available skill gain values
 ---of a openmw.core.SkillRecord
----@class openmw.interfaces.SkillProgression.SkillUseType
----@field Armor_HitByOpponent number 0
----@field Block_Success number 0
----@field Spellcast_Success number 0
----@field Weapon_SuccessfulHit number 0
----@field Alchemy_CreatePotion number 0
----@field Alchemy_UseIngredient number 1
----@field Enchant_Recharge number 0
----@field Enchant_UseMagicItem number 1
----@field Enchant_CreateMagicItem number 2
----@field Enchant_CastOnStrike number 3
----@field Acrobatics_Jump number 0
----@field Acrobatics_Fall number 1
----@field Mercantile_Success number 0
----@field Mercantile_Bribe number 1
----@field Security_DisarmTrap number 0
----@field Security_PickLock number 1
----@field Sneak_AvoidNotice number 0
----@field Sneak_PickPocket number 1
----@field Speechcraft_Success number 0
----@field Speechcraft_Fail number 1
----@field Armorer_Repair number 0
----@field Athletics_RunOneSecond number 0
----@field Athletics_SwimOneSecond number 1
+---@alias openmw.interfaces.SkillProgression.SkillUseTypeZero 0
+---@alias openmw.interfaces.SkillProgression.SkillUseTypeOne 1
+---@alias openmw.interfaces.SkillProgression.SkillUseTypeTwo 2
+---@alias openmw.interfaces.SkillProgression.SkillUseTypeThree 3
+---@alias openmw.interfaces.SkillProgression.SkillUseType openmw.interfaces.SkillProgression.SkillUseTypeZero|openmw.interfaces.SkillProgression.SkillUseTypeOne|openmw.interfaces.SkillProgression.SkillUseTypeTwo|openmw.interfaces.SkillProgression.SkillUseTypeThree
+
+---@class openmw.interfaces.SkillProgression.SkillUseTypeValues
+---@field Armor_HitByOpponent openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Block_Success openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Spellcast_Success openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Weapon_SuccessfulHit openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Alchemy_CreatePotion openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Alchemy_UseIngredient openmw.interfaces.SkillProgression.SkillUseTypeOne
+---@field Enchant_Recharge openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Enchant_UseMagicItem openmw.interfaces.SkillProgression.SkillUseTypeOne
+---@field Enchant_CreateMagicItem openmw.interfaces.SkillProgression.SkillUseTypeTwo
+---@field Enchant_CastOnStrike openmw.interfaces.SkillProgression.SkillUseTypeThree
+---@field Acrobatics_Jump openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Acrobatics_Fall openmw.interfaces.SkillProgression.SkillUseTypeOne
+---@field Mercantile_Success openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Mercantile_Bribe openmw.interfaces.SkillProgression.SkillUseTypeOne
+---@field Security_DisarmTrap openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Security_PickLock openmw.interfaces.SkillProgression.SkillUseTypeOne
+---@field Sneak_AvoidNotice openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Sneak_PickPocket openmw.interfaces.SkillProgression.SkillUseTypeOne
+---@field Speechcraft_Success openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Speechcraft_Fail openmw.interfaces.SkillProgression.SkillUseTypeOne
+---@field Armorer_Repair openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Athletics_RunOneSecond openmw.interfaces.SkillProgression.SkillUseTypeZero
+---@field Athletics_SwimOneSecond openmw.interfaces.SkillProgression.SkillUseTypeOne
 local SkillUseType = {}
 
 ---Interface version
@@ -63,10 +75,10 @@ SkillProgression.version = nil
 
 ---These are shared by multiple skills
 ---Skill-specific use types
----@type openmw.interfaces.SkillProgression.SkillUseType
+---@type openmw.interfaces.SkillProgression.SkillUseTypeValues
 SkillProgression.SKILL_USE_TYPES = nil
 
----@type openmw.interfaces.SkillProgression.SkillLevelUpSource
+---@type openmw.interfaces.SkillProgression.SkillLevelUpSourceValues
 SkillProgression.SKILL_INCREASE_SOURCES = nil
 
 ---Add new skill level up handler for this actor.

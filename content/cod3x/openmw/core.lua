@@ -80,20 +80,29 @@ local Stats = {}
 ---@class openmw.core.Weather
 local Weather = {}
 
+---@alias openmw.core.MoonPhaseFull 0
+---@alias openmw.core.MoonPhaseWaningGibbous 1
+---@alias openmw.core.MoonPhaseThirdQuarter 2
+---@alias openmw.core.MoonPhaseWaningCrescent 3
+---@alias openmw.core.MoonPhaseNew 4
+---@alias openmw.core.MoonPhaseWaxingCrescent 5
+---@alias openmw.core.MoonPhaseFirstQuarter 6
+---@alias openmw.core.MoonPhaseWaxingGibbous 7
+---@alias openmw.core.MoonPhase openmw.core.MoonPhaseFull|openmw.core.MoonPhaseWaningGibbous|openmw.core.MoonPhaseThirdQuarter|openmw.core.MoonPhaseWaningCrescent|openmw.core.MoonPhaseNew|openmw.core.MoonPhaseWaxingCrescent|openmw.core.MoonPhaseFirstQuarter|openmw.core.MoonPhaseWaxingGibbous
 ---@class openmw.core.MOON_PHASE
----@field Full number
----@field WaningGibbous number
----@field ThirdQuarter number
----@field WaningCrescent number
----@field New number
----@field WaxingCrescent number
----@field FirstQuarter number
----@field WaxingGibbous number
+---@field Full openmw.core.MoonPhaseFull
+---@field WaningGibbous openmw.core.MoonPhaseWaningGibbous
+---@field ThirdQuarter openmw.core.MoonPhaseThirdQuarter
+---@field WaningCrescent openmw.core.MoonPhaseWaningCrescent
+---@field New openmw.core.MoonPhaseNew
+---@field WaxingCrescent openmw.core.MoonPhaseWaxingCrescent
+---@field FirstQuarter openmw.core.MoonPhaseFirstQuarter
+---@field WaxingGibbous openmw.core.MoonPhaseWaxingGibbous
 local MOON_PHASE = {}
 
 ---@class openmw.core.Moon
 ---@field name string The moon's name. For Morrowind, "Masser" or "Secunda".
----@field phase number One of openmw.core.MOON_PHASE.
+---@field phase openmw.core.MoonPhase One of openmw.core.MOON_PHASE.
 ---@field phaseValue number MWScript-compatible phase value: 0 new, 1 crescent, 2 quarter, 3 gibbous, or 4 full.
 ---@field alpha number The alpha of the moon between 0 and 1. 0 when the moon is not visible in the sky.
 local Moon = {}
@@ -164,12 +173,18 @@ local ActiveSpell = {}
 local ActiveSpellEffect = {}
 
 ---`core.magic.ENCHANTMENT_TYPE`
----@class openmw.core.EnchantmentType
----@field CastOnce number Enchantment can be cast once, destroying the enchanted item.
----@field CastOnStrike number Enchantment is cast on strike, if there is enough charge.
----@field CastOnUse number Enchantment is cast when used, if there is enough charge.
----@field ConstantEffect number Enchantment is always active when equipped.
-local EnchantmentType = {}
+---@alias openmw.core.EnchantmentTypeCastOnce 0
+---@alias openmw.core.EnchantmentTypeCastOnStrike 1
+---@alias openmw.core.EnchantmentTypeCastOnUse 2
+---@alias openmw.core.EnchantmentTypeConstantEffect 3
+---@alias openmw.core.EnchantmentType openmw.core.EnchantmentTypeCastOnce|openmw.core.EnchantmentTypeCastOnStrike|openmw.core.EnchantmentTypeCastOnUse|openmw.core.EnchantmentTypeConstantEffect
+
+---@class openmw.core.EnchantmentTypeValues
+---@field CastOnce openmw.core.EnchantmentTypeCastOnce Enchantment can be cast once, destroying the enchanted item.
+---@field CastOnStrike openmw.core.EnchantmentTypeCastOnStrike Enchantment is cast on strike, if there is enough charge.
+---@field CastOnUse openmw.core.EnchantmentTypeCastOnUse Enchantment is cast when used, if there is enough charge.
+---@field ConstantEffect openmw.core.EnchantmentTypeConstantEffect Enchantment is always active when equipped.
+local EnchantmentTypeValues = {}
 
 ---local function getRecord(item)
 ---end
@@ -177,7 +192,7 @@ local EnchantmentType = {}
 ---end
 ---@class openmw.core.Enchantment
 ---@field id string Enchantment id
----@field type number EnchantmentType
+---@field type openmw.core.EnchantmentType
 ---@field autocalcFlag boolean (DEPRECATED, use isAutocalc) If set, the casting cost should be computed based on the effect list rather than read from the cost field
 ---@field isAutocalc boolean If set, the casting cost should be computed based on the effect list rather than read from the cost field
 ---@field cost number
@@ -190,11 +205,16 @@ local Enchantment = {}
 local Inventory = {}
 
 ---`core.magic.RANGE`
----@class openmw.core.SpellRange
----@field Self number Applied on self
----@field Touch number On touch
----@field Target number Ranged spell
-local SpellRange = {}
+---@alias openmw.core.SpellRangeSelf 0
+---@alias openmw.core.SpellRangeTouch 1
+---@alias openmw.core.SpellRangeTarget 2
+---@alias openmw.core.SpellRange openmw.core.SpellRangeSelf|openmw.core.SpellRangeTouch|openmw.core.SpellRangeTarget
+
+---@class openmw.core.SpellRangeValues
+---@field Self openmw.core.SpellRangeSelf Applied on self.
+---@field Touch openmw.core.SpellRangeTouch On touch.
+---@field Target openmw.core.SpellRangeTarget Ranged spell.
+local SpellRangeValues = {}
 
 ---`core.magic.EFFECT_TYPE`
 ---@class openmw.core.MagicEffectId
@@ -344,19 +364,27 @@ local SpellRange = {}
 local MagicEffectId = {}
 
 ---`core.magic.SPELL_TYPE`
----@class openmw.core.SpellType
----@field Spell number Normal spell, must be cast and costs mana
----@field Ability number Innate ability, always in effect
----@field Blight number Blight disease
----@field Disease number Common disease
----@field Curse number Curse
----@field Power number Power, can be used once a day
-local SpellType = {}
+---@alias openmw.core.SpellTypeSpell 0
+---@alias openmw.core.SpellTypeAbility 1
+---@alias openmw.core.SpellTypeBlight 2
+---@alias openmw.core.SpellTypeDisease 3
+---@alias openmw.core.SpellTypeCurse 4
+---@alias openmw.core.SpellTypePower 5
+---@alias openmw.core.SpellType openmw.core.SpellTypeSpell|openmw.core.SpellTypeAbility|openmw.core.SpellTypeBlight|openmw.core.SpellTypeDisease|openmw.core.SpellTypeCurse|openmw.core.SpellTypePower
+
+---@class openmw.core.SpellTypeValues
+---@field Spell openmw.core.SpellTypeSpell Normal spell, must be cast and costs mana.
+---@field Ability openmw.core.SpellTypeAbility Innate ability, always in effect.
+---@field Blight openmw.core.SpellTypeBlight Blight disease.
+---@field Disease openmw.core.SpellTypeDisease Common disease.
+---@field Curse openmw.core.SpellTypeCurse Curse.
+---@field Power openmw.core.SpellTypePower Power, can be used once a day.
+local SpellTypeValues = {}
 
 ---@class openmw.core.Spell
 ---@field id string Spell id
 ---@field name string Spell name
----@field type number SpellType
+---@field type openmw.core.SpellType
 ---@field cost number
 ---@field effects openmw.core.MagicEffectWithParams[] The effects (MagicEffectWithParams) of the spell
 ---@field alwaysSucceedFlag boolean If set, the spell should ignore skill checks and always succeed.
@@ -502,8 +530,8 @@ local DialogueRecord = {}
 local DialogueRecordInfo = {}
 
 ---@class openmw.core.DialogueInfoCondition
----@field operator openmw.core.DialogueConditionOperator The openmw.core.DialogueConditionOperator to use in the comparison
----@field type openmw.core.DialogueConditionType The condition's DialogueConditionType
+---@field operator openmw.core.DialogueConditionOperator The openmw.core.DialogueConditionOperator to use in the comparison.
+---@field type openmw.core.DialogueConditionType The condition's DialogueConditionType.
 ---@field value number The value to compare to
 ---@field recordId string The record ID to use in the comparison
 ---@field variableName string The name of the global or local mwscript variable to compare to
@@ -511,102 +539,197 @@ local DialogueRecordInfo = {}
 local DialogueInfoCondition = {}
 
 ---`core.dialogue.CONDITION_OPERATOR`
----@class openmw.core.DialogueConditionOperator
----@field Equal number ==
----@field NotEqual number !=
----@field Greater number Greater-than comparison operator
----@field GreaterEqual number Greater-than-or-equal comparison operator
----@field Less number Less-than comparison operator
----@field LessEqual number Less-than-or-equal comparison operator
+---@alias openmw.core.DialogueConditionOperatorEqual 48
+---@alias openmw.core.DialogueConditionOperatorNotEqual 49
+---@alias openmw.core.DialogueConditionOperatorGreater 50
+---@alias openmw.core.DialogueConditionOperatorGreaterEqual 51
+---@alias openmw.core.DialogueConditionOperatorLess 52
+---@alias openmw.core.DialogueConditionOperatorLessEqual 53
+---@alias openmw.core.DialogueConditionOperator openmw.core.DialogueConditionOperatorEqual|openmw.core.DialogueConditionOperatorNotEqual|openmw.core.DialogueConditionOperatorGreater|openmw.core.DialogueConditionOperatorGreaterEqual|openmw.core.DialogueConditionOperatorLess|openmw.core.DialogueConditionOperatorLessEqual
+
+---@class openmw.core.DialogueConditionOperatorValues
+---@field Equal openmw.core.DialogueConditionOperatorEqual ==
+---@field NotEqual openmw.core.DialogueConditionOperatorNotEqual !=
+---@field Greater openmw.core.DialogueConditionOperatorGreater Greater-than comparison operator
+---@field GreaterEqual openmw.core.DialogueConditionOperatorGreaterEqual Greater-than-or-equal comparison operator
+---@field Less openmw.core.DialogueConditionOperatorLess Less-than comparison operator
+---@field LessEqual openmw.core.DialogueConditionOperatorLessEqual Less-than-or-equal comparison operator
 local DialogueConditionOperator = {}
 
 ---`core.dialogue.CONDITION_TYPE`
----@class openmw.core.DialogueConditionType
----@field FacReactionLowest number Lowest faction reaction from the speaker's primary faction to the player's factions
----@field FacReactionHighest number Highest faction reaction from the speaker's primary faction to the player's factions
----@field RankRequirement number Check whether the player can advance in the speaker's primary faction
----@field Reputation number The speaker's reputation
----@field HealthPercent number The speaker's health percentage
----@field PcReputation number The player's reputation
----@field PcLevel number The player's level
----@field PcHealthPercent number The player's health percentage
----@field PcMagicka number The player's current magicka
----@field PcFatigue number The player's current fatigue
----@field PcStrength number The player's current strength
----@field PcBlock number The player's current block
----@field PcArmorer number The player's current armorer
----@field PcMediumArmor number The player's current medium armor
----@field PcHeavyArmor number The player's current heavy armor
----@field PcBluntWeapon number The player's current blunt weapon
----@field PcLongBlade number The player's current long blade
----@field PcAxe number The player's current axe
----@field PcSpear number The player's current spear
----@field PcAthletics number The player's current athletics
----@field PcEnchant number The player's current enchant
----@field PcDestruction number The player's current destruction
----@field PcAlteration number The player's current alteration
----@field PcIllusion number The player's current illusion
----@field PcConjuration number The player's current conjuration
----@field PcMysticism number The player's current mysticism
----@field PcRestoration number The player's current restoration
----@field PcAlchemy number The player's current alchemy
----@field PcUnarmored number The player's current unarmored
----@field PcSecurity number The player's current security
----@field PcSneak number The player's current sneak
----@field PcAcrobatics number The player's current acrobatics
----@field PcLightArmor number The player's current light armor
----@field PcShortBlade number The player's current short blade
----@field PcMarksman number The player's current marksman
----@field PcMercantile number The player's current mercantile
----@field PcSpeechcraft number The player's current speechcraft
----@field PcHandToHand number The player's current hand to hand
----@field PcGender number The player's gender
----@field PcExpelled number Check whether the player has been expelled from the speaker's primary faction
----@field PcCommonDisease number Check if the player has a common disease
----@field PcBlightDisease number Check if the player has a blight disease
----@field PcClothingModifier number Check the combined value of the player's outfit
----@field PcCrimeLevel number The player's bounty
----@field SameGender number Check if the speaker's gender matches the player's
----@field SameRace number Check if the speaker's race matches the player's
----@field SameFaction number Check if the player is a member of the speaker's primary faction
----@field FactionRankDifference number The difference between the player's rank in the speaker's primary faction and the speaker's
----@field Detected number Whether the speaker has detected the player
----@field Alarmed number Whether the speaker was alarmed by the player's crime
----@field Choice number The choice index
----@field PcIntelligence number The player's current intelligence
----@field PcWillpower number The player's current willpower
----@field PcAgility number The player's current agility
----@field PcSpeed number The player's current speed
----@field PcEndurance number The player's current endurance
----@field PcPersonality number The player's current personality
----@field PcLuck number The player's current luck
----@field PcCorprus number Whether the player is affected by the Corprus magic effect
----@field Weather number Checks the scriptId of the weather in the player's cell
----@field PcVampire number Whether the player is affected by the Vampirism magic effect
----@field Level number The speaker's level
----@field Attacked number Whether the speaker was attacked
----@field TalkedToPc number Whether the speaker has talked to the player before
----@field PcHealth number The player's current health
----@field CreatureTarget number Whether the speaker is targeting a creature
----@field FriendHit number The number of times the player has hit the speaker follower
----@field Fight number The speaker's current fight
----@field Hello number The speaker's current hello
----@field Alarm number The speaker's current alarm
----@field Flee number The speaker's current flee
----@field ShouldAttack number Whether the speaker would start combat with the player
----@field Werewolf number Whether the speaker is in werewolf form
----@field PcWerewolfKills number The number of werewolves killed by the player
----@field Global number A comparison to the DialogueInfoCondition.variableName global variable
----@field Local number A comparison to the speaker's DialogueInfoCondition.variableName local variable
----@field Journal number A comparison to the player's DialogueInfoCondition.recordId journal index
----@field Item number The number of copies of DialogueInfoCondition.recordId the player is carrying
----@field Dead number The number of dead actors of the given DialogueInfoCondition.recordId
----@field NotId number The speaker's recordId should not match DialogueInfoCondition.recordId
----@field NotFaction number The speaker's faction ID should not match DialogueInfoCondition.recordId
----@field NotClass number The speaker's class should not match DialogueInfoCondition.recordId
----@field NotRace number The speaker's race should not match DialogueInfoCondition.recordId
----@field NotCell number The player's cell name should not start with DialogueInfoCondition.cellName
----@field NotLocal number A comparison to the speaker's DialogueInfoCondition.variableName local variable
+---@alias openmw.core.DialogueConditionTypeFacReactionLowest 0
+---@alias openmw.core.DialogueConditionTypeFacReactionHighest 1
+---@alias openmw.core.DialogueConditionTypeRankRequirement 2
+---@alias openmw.core.DialogueConditionTypeReputation 3
+---@alias openmw.core.DialogueConditionTypeHealthPercent 4
+---@alias openmw.core.DialogueConditionTypePcReputation 5
+---@alias openmw.core.DialogueConditionTypePcLevel 6
+---@alias openmw.core.DialogueConditionTypePcHealthPercent 7
+---@alias openmw.core.DialogueConditionTypePcMagicka 8
+---@alias openmw.core.DialogueConditionTypePcFatigue 9
+---@alias openmw.core.DialogueConditionTypePcStrength 10
+---@alias openmw.core.DialogueConditionTypePcBlock 11
+---@alias openmw.core.DialogueConditionTypePcArmorer 12
+---@alias openmw.core.DialogueConditionTypePcMediumArmor 13
+---@alias openmw.core.DialogueConditionTypePcHeavyArmor 14
+---@alias openmw.core.DialogueConditionTypePcBluntWeapon 15
+---@alias openmw.core.DialogueConditionTypePcLongBlade 16
+---@alias openmw.core.DialogueConditionTypePcAxe 17
+---@alias openmw.core.DialogueConditionTypePcSpear 18
+---@alias openmw.core.DialogueConditionTypePcAthletics 19
+---@alias openmw.core.DialogueConditionTypePcEnchant 20
+---@alias openmw.core.DialogueConditionTypePcDestruction 21
+---@alias openmw.core.DialogueConditionTypePcAlteration 22
+---@alias openmw.core.DialogueConditionTypePcIllusion 23
+---@alias openmw.core.DialogueConditionTypePcConjuration 24
+---@alias openmw.core.DialogueConditionTypePcMysticism 25
+---@alias openmw.core.DialogueConditionTypePcRestoration 26
+---@alias openmw.core.DialogueConditionTypePcAlchemy 27
+---@alias openmw.core.DialogueConditionTypePcUnarmored 28
+---@alias openmw.core.DialogueConditionTypePcSecurity 29
+---@alias openmw.core.DialogueConditionTypePcSneak 30
+---@alias openmw.core.DialogueConditionTypePcAcrobatics 31
+---@alias openmw.core.DialogueConditionTypePcLightArmor 32
+---@alias openmw.core.DialogueConditionTypePcShortBlade 33
+---@alias openmw.core.DialogueConditionTypePcMarksman 34
+---@alias openmw.core.DialogueConditionTypePcMercantile 35
+---@alias openmw.core.DialogueConditionTypePcSpeechcraft 36
+---@alias openmw.core.DialogueConditionTypePcHandToHand 37
+---@alias openmw.core.DialogueConditionTypePcGender 38
+---@alias openmw.core.DialogueConditionTypePcExpelled 39
+---@alias openmw.core.DialogueConditionTypePcCommonDisease 40
+---@alias openmw.core.DialogueConditionTypePcBlightDisease 41
+---@alias openmw.core.DialogueConditionTypePcClothingModifier 42
+---@alias openmw.core.DialogueConditionTypePcCrimeLevel 43
+---@alias openmw.core.DialogueConditionTypeSameGender 44
+---@alias openmw.core.DialogueConditionTypeSameRace 45
+---@alias openmw.core.DialogueConditionTypeSameFaction 46
+---@alias openmw.core.DialogueConditionTypeFactionRankDifference 47
+---@alias openmw.core.DialogueConditionTypeDetected 48
+---@alias openmw.core.DialogueConditionTypeAlarmed 49
+---@alias openmw.core.DialogueConditionTypeChoice 50
+---@alias openmw.core.DialogueConditionTypePcIntelligence 51
+---@alias openmw.core.DialogueConditionTypePcWillpower 52
+---@alias openmw.core.DialogueConditionTypePcAgility 53
+---@alias openmw.core.DialogueConditionTypePcSpeed 54
+---@alias openmw.core.DialogueConditionTypePcEndurance 55
+---@alias openmw.core.DialogueConditionTypePcPersonality 56
+---@alias openmw.core.DialogueConditionTypePcLuck 57
+---@alias openmw.core.DialogueConditionTypePcCorprus 58
+---@alias openmw.core.DialogueConditionTypeWeather 59
+---@alias openmw.core.DialogueConditionTypePcVampire 60
+---@alias openmw.core.DialogueConditionTypeLevel 61
+---@alias openmw.core.DialogueConditionTypeAttacked 62
+---@alias openmw.core.DialogueConditionTypeTalkedToPc 63
+---@alias openmw.core.DialogueConditionTypePcHealth 64
+---@alias openmw.core.DialogueConditionTypeCreatureTarget 65
+---@alias openmw.core.DialogueConditionTypeFriendHit 66
+---@alias openmw.core.DialogueConditionTypeFight 67
+---@alias openmw.core.DialogueConditionTypeHello 68
+---@alias openmw.core.DialogueConditionTypeAlarm 69
+---@alias openmw.core.DialogueConditionTypeFlee 70
+---@alias openmw.core.DialogueConditionTypeShouldAttack 71
+---@alias openmw.core.DialogueConditionTypeWerewolf 72
+---@alias openmw.core.DialogueConditionTypePcWerewolfKills 73
+---@alias openmw.core.DialogueConditionTypeGlobal 74
+---@alias openmw.core.DialogueConditionTypeLocal 75
+---@alias openmw.core.DialogueConditionTypeJournal 76
+---@alias openmw.core.DialogueConditionTypeItem 77
+---@alias openmw.core.DialogueConditionTypeDead 78
+---@alias openmw.core.DialogueConditionTypeNotId 79
+---@alias openmw.core.DialogueConditionTypeNotFaction 80
+---@alias openmw.core.DialogueConditionTypeNotClass 81
+---@alias openmw.core.DialogueConditionTypeNotRace 82
+---@alias openmw.core.DialogueConditionTypeNotCell 83
+---@alias openmw.core.DialogueConditionTypeNotLocal 84
+---@alias openmw.core.DialogueConditionType openmw.core.DialogueConditionTypeFacReactionLowest|openmw.core.DialogueConditionTypeFacReactionHighest|openmw.core.DialogueConditionTypeRankRequirement|openmw.core.DialogueConditionTypeReputation|openmw.core.DialogueConditionTypeHealthPercent|openmw.core.DialogueConditionTypePcReputation|openmw.core.DialogueConditionTypePcLevel|openmw.core.DialogueConditionTypePcHealthPercent|openmw.core.DialogueConditionTypePcMagicka|openmw.core.DialogueConditionTypePcFatigue|openmw.core.DialogueConditionTypePcStrength|openmw.core.DialogueConditionTypePcBlock|openmw.core.DialogueConditionTypePcArmorer|openmw.core.DialogueConditionTypePcMediumArmor|openmw.core.DialogueConditionTypePcHeavyArmor|openmw.core.DialogueConditionTypePcBluntWeapon|openmw.core.DialogueConditionTypePcLongBlade|openmw.core.DialogueConditionTypePcAxe|openmw.core.DialogueConditionTypePcSpear|openmw.core.DialogueConditionTypePcAthletics|openmw.core.DialogueConditionTypePcEnchant|openmw.core.DialogueConditionTypePcDestruction|openmw.core.DialogueConditionTypePcAlteration|openmw.core.DialogueConditionTypePcIllusion|openmw.core.DialogueConditionTypePcConjuration|openmw.core.DialogueConditionTypePcMysticism|openmw.core.DialogueConditionTypePcRestoration|openmw.core.DialogueConditionTypePcAlchemy|openmw.core.DialogueConditionTypePcUnarmored|openmw.core.DialogueConditionTypePcSecurity|openmw.core.DialogueConditionTypePcSneak|openmw.core.DialogueConditionTypePcAcrobatics|openmw.core.DialogueConditionTypePcLightArmor|openmw.core.DialogueConditionTypePcShortBlade|openmw.core.DialogueConditionTypePcMarksman|openmw.core.DialogueConditionTypePcMercantile|openmw.core.DialogueConditionTypePcSpeechcraft|openmw.core.DialogueConditionTypePcHandToHand|openmw.core.DialogueConditionTypePcGender|openmw.core.DialogueConditionTypePcExpelled|openmw.core.DialogueConditionTypePcCommonDisease|openmw.core.DialogueConditionTypePcBlightDisease|openmw.core.DialogueConditionTypePcClothingModifier|openmw.core.DialogueConditionTypePcCrimeLevel|openmw.core.DialogueConditionTypeSameGender|openmw.core.DialogueConditionTypeSameRace|openmw.core.DialogueConditionTypeSameFaction|openmw.core.DialogueConditionTypeFactionRankDifference|openmw.core.DialogueConditionTypeDetected|openmw.core.DialogueConditionTypeAlarmed|openmw.core.DialogueConditionTypeChoice|openmw.core.DialogueConditionTypePcIntelligence|openmw.core.DialogueConditionTypePcWillpower|openmw.core.DialogueConditionTypePcAgility|openmw.core.DialogueConditionTypePcSpeed|openmw.core.DialogueConditionTypePcEndurance|openmw.core.DialogueConditionTypePcPersonality|openmw.core.DialogueConditionTypePcLuck|openmw.core.DialogueConditionTypePcCorprus|openmw.core.DialogueConditionTypeWeather|openmw.core.DialogueConditionTypePcVampire|openmw.core.DialogueConditionTypeLevel|openmw.core.DialogueConditionTypeAttacked|openmw.core.DialogueConditionTypeTalkedToPc|openmw.core.DialogueConditionTypePcHealth|openmw.core.DialogueConditionTypeCreatureTarget|openmw.core.DialogueConditionTypeFriendHit|openmw.core.DialogueConditionTypeFight|openmw.core.DialogueConditionTypeHello|openmw.core.DialogueConditionTypeAlarm|openmw.core.DialogueConditionTypeFlee|openmw.core.DialogueConditionTypeShouldAttack|openmw.core.DialogueConditionTypeWerewolf|openmw.core.DialogueConditionTypePcWerewolfKills|openmw.core.DialogueConditionTypeGlobal|openmw.core.DialogueConditionTypeLocal|openmw.core.DialogueConditionTypeJournal|openmw.core.DialogueConditionTypeItem|openmw.core.DialogueConditionTypeDead|openmw.core.DialogueConditionTypeNotId|openmw.core.DialogueConditionTypeNotFaction|openmw.core.DialogueConditionTypeNotClass|openmw.core.DialogueConditionTypeNotRace|openmw.core.DialogueConditionTypeNotCell|openmw.core.DialogueConditionTypeNotLocal
+
+---@class openmw.core.DialogueConditionTypeValues
+---@field FacReactionLowest openmw.core.DialogueConditionTypeFacReactionLowest Lowest faction reaction from the speaker's primary faction to the player's factions
+---@field FacReactionHighest openmw.core.DialogueConditionTypeFacReactionHighest Highest faction reaction from the speaker's primary faction to the player's factions
+---@field RankRequirement openmw.core.DialogueConditionTypeRankRequirement Check whether the player can advance in the speaker's primary faction
+---@field Reputation openmw.core.DialogueConditionTypeReputation The speaker's reputation
+---@field HealthPercent openmw.core.DialogueConditionTypeHealthPercent The speaker's health percentage
+---@field PcReputation openmw.core.DialogueConditionTypePcReputation The player's reputation
+---@field PcLevel openmw.core.DialogueConditionTypePcLevel The player's level
+---@field PcHealthPercent openmw.core.DialogueConditionTypePcHealthPercent The player's health percentage
+---@field PcMagicka openmw.core.DialogueConditionTypePcMagicka The player's current magicka
+---@field PcFatigue openmw.core.DialogueConditionTypePcFatigue The player's current fatigue
+---@field PcStrength openmw.core.DialogueConditionTypePcStrength The player's current strength
+---@field PcBlock openmw.core.DialogueConditionTypePcBlock The player's current block
+---@field PcArmorer openmw.core.DialogueConditionTypePcArmorer The player's current armorer
+---@field PcMediumArmor openmw.core.DialogueConditionTypePcMediumArmor The player's current medium armor
+---@field PcHeavyArmor openmw.core.DialogueConditionTypePcHeavyArmor The player's current heavy armor
+---@field PcBluntWeapon openmw.core.DialogueConditionTypePcBluntWeapon The player's current blunt weapon
+---@field PcLongBlade openmw.core.DialogueConditionTypePcLongBlade The player's current long blade
+---@field PcAxe openmw.core.DialogueConditionTypePcAxe The player's current axe
+---@field PcSpear openmw.core.DialogueConditionTypePcSpear The player's current spear
+---@field PcAthletics openmw.core.DialogueConditionTypePcAthletics The player's current athletics
+---@field PcEnchant openmw.core.DialogueConditionTypePcEnchant The player's current enchant
+---@field PcDestruction openmw.core.DialogueConditionTypePcDestruction The player's current destruction
+---@field PcAlteration openmw.core.DialogueConditionTypePcAlteration The player's current alteration
+---@field PcIllusion openmw.core.DialogueConditionTypePcIllusion The player's current illusion
+---@field PcConjuration openmw.core.DialogueConditionTypePcConjuration The player's current conjuration
+---@field PcMysticism openmw.core.DialogueConditionTypePcMysticism The player's current mysticism
+---@field PcRestoration openmw.core.DialogueConditionTypePcRestoration The player's current restoration
+---@field PcAlchemy openmw.core.DialogueConditionTypePcAlchemy The player's current alchemy
+---@field PcUnarmored openmw.core.DialogueConditionTypePcUnarmored The player's current unarmored
+---@field PcSecurity openmw.core.DialogueConditionTypePcSecurity The player's current security
+---@field PcSneak openmw.core.DialogueConditionTypePcSneak The player's current sneak
+---@field PcAcrobatics openmw.core.DialogueConditionTypePcAcrobatics The player's current acrobatics
+---@field PcLightArmor openmw.core.DialogueConditionTypePcLightArmor The player's current light armor
+---@field PcShortBlade openmw.core.DialogueConditionTypePcShortBlade The player's current short blade
+---@field PcMarksman openmw.core.DialogueConditionTypePcMarksman The player's current marksman
+---@field PcMercantile openmw.core.DialogueConditionTypePcMercantile The player's current mercantile
+---@field PcSpeechcraft openmw.core.DialogueConditionTypePcSpeechcraft The player's current speechcraft
+---@field PcHandToHand openmw.core.DialogueConditionTypePcHandToHand The player's current hand to hand
+---@field PcGender openmw.core.DialogueConditionTypePcGender The player's gender
+---@field PcExpelled openmw.core.DialogueConditionTypePcExpelled Check whether the player has been expelled from the speaker's primary faction
+---@field PcCommonDisease openmw.core.DialogueConditionTypePcCommonDisease Check if the player has a common disease
+---@field PcBlightDisease openmw.core.DialogueConditionTypePcBlightDisease Check if the player has a blight disease
+---@field PcClothingModifier openmw.core.DialogueConditionTypePcClothingModifier Check the combined value of the player's outfit
+---@field PcCrimeLevel openmw.core.DialogueConditionTypePcCrimeLevel The player's bounty
+---@field SameGender openmw.core.DialogueConditionTypeSameGender Check if the speaker's gender matches the player's
+---@field SameRace openmw.core.DialogueConditionTypeSameRace Check if the speaker's race matches the player's
+---@field SameFaction openmw.core.DialogueConditionTypeSameFaction Check if the player is a member of the speaker's primary faction
+---@field FactionRankDifference openmw.core.DialogueConditionTypeFactionRankDifference The difference between the player's rank in the speaker's primary faction and the speaker's
+---@field Detected openmw.core.DialogueConditionTypeDetected Whether the speaker has detected the player
+---@field Alarmed openmw.core.DialogueConditionTypeAlarmed Whether the speaker was alarmed by the player's crime
+---@field Choice openmw.core.DialogueConditionTypeChoice The choice index
+---@field PcIntelligence openmw.core.DialogueConditionTypePcIntelligence The player's current intelligence
+---@field PcWillpower openmw.core.DialogueConditionTypePcWillpower The player's current willpower
+---@field PcAgility openmw.core.DialogueConditionTypePcAgility The player's current agility
+---@field PcSpeed openmw.core.DialogueConditionTypePcSpeed The player's current speed
+---@field PcEndurance openmw.core.DialogueConditionTypePcEndurance The player's current endurance
+---@field PcPersonality openmw.core.DialogueConditionTypePcPersonality The player's current personality
+---@field PcLuck openmw.core.DialogueConditionTypePcLuck The player's current luck
+---@field PcCorprus openmw.core.DialogueConditionTypePcCorprus Whether the player is affected by the Corprus magic effect
+---@field Weather openmw.core.DialogueConditionTypeWeather Checks the scriptId of the weather in the player's cell
+---@field PcVampire openmw.core.DialogueConditionTypePcVampire Whether the player is affected by the Vampirism magic effect
+---@field Level openmw.core.DialogueConditionTypeLevel The speaker's level
+---@field Attacked openmw.core.DialogueConditionTypeAttacked Whether the speaker was attacked
+---@field TalkedToPc openmw.core.DialogueConditionTypeTalkedToPc Whether the speaker has talked to the player before
+---@field PcHealth openmw.core.DialogueConditionTypePcHealth The player's current health
+---@field CreatureTarget openmw.core.DialogueConditionTypeCreatureTarget Whether the speaker is targeting a creature
+---@field FriendHit openmw.core.DialogueConditionTypeFriendHit The number of times the player has hit the speaker follower
+---@field Fight openmw.core.DialogueConditionTypeFight The speaker's current fight
+---@field Hello openmw.core.DialogueConditionTypeHello The speaker's current hello
+---@field Alarm openmw.core.DialogueConditionTypeAlarm The speaker's current alarm
+---@field Flee openmw.core.DialogueConditionTypeFlee The speaker's current flee
+---@field ShouldAttack openmw.core.DialogueConditionTypeShouldAttack Whether the speaker would start combat with the player
+---@field Werewolf openmw.core.DialogueConditionTypeWerewolf Whether the speaker is in werewolf form
+---@field PcWerewolfKills openmw.core.DialogueConditionTypePcWerewolfKills The number of werewolves killed by the player
+---@field Global openmw.core.DialogueConditionTypeGlobal A comparison to the DialogueInfoCondition.variableName global variable
+---@field Local openmw.core.DialogueConditionTypeLocal A comparison to the speaker's DialogueInfoCondition.variableName local variable
+---@field Journal openmw.core.DialogueConditionTypeJournal A comparison to the player's DialogueInfoCondition.recordId journal index
+---@field Item openmw.core.DialogueConditionTypeItem The number of copies of DialogueInfoCondition.recordId the player is carrying
+---@field Dead openmw.core.DialogueConditionTypeDead The number of dead actors of the given DialogueInfoCondition.recordId
+---@field NotId openmw.core.DialogueConditionTypeNotId The speaker's recordId should not match DialogueInfoCondition.recordId
+---@field NotFaction openmw.core.DialogueConditionTypeNotFaction The speaker's faction ID should not match DialogueInfoCondition.recordId
+---@field NotClass openmw.core.DialogueConditionTypeNotClass The speaker's class should not match DialogueInfoCondition.recordId
+---@field NotRace openmw.core.DialogueConditionTypeNotRace The speaker's race should not match DialogueInfoCondition.recordId
+---@field NotCell openmw.core.DialogueConditionTypeNotCell The player's cell name should not start with DialogueInfoCondition.cellName
+---@field NotLocal openmw.core.DialogueConditionTypeNotLocal A comparison to the speaker's DialogueInfoCondition.variableName local variable
 local DialogueConditionType = {}
 
 ---Region data record
@@ -840,7 +963,7 @@ function GCell:getAll(type) end
 function PathGrid:getPoints() end
 
 ---Possible EnchantmentType values
----@type openmw.core.EnchantmentType
+---@type openmw.core.EnchantmentTypeValues
 Magic.ENCHANTMENT_TYPE = nil
 
 ---The number of items with the given recordId.
@@ -897,7 +1020,7 @@ function Land.getTextureAt(position, cellOrId) end
 core.magic = nil
 
 ---Possible SpellRange values
----@type openmw.core.SpellRange
+---@type openmw.core.SpellRangeValues
 Magic.RANGE = nil
 
 ---Possible MagicEffectId values
@@ -905,7 +1028,7 @@ Magic.RANGE = nil
 Magic.EFFECT_TYPE = nil
 
 ---Possible SpellType values
----@type openmw.core.SpellType
+---@type openmw.core.SpellTypeValues
 Magic.SPELL_TYPE = nil
 
 ---@type openmw.core.Spells
@@ -1182,11 +1305,11 @@ DialogueRecordInfo.resultScript = nil
 DialogueRecordInfo.conditions = nil
 
 ---Possible DialogueConditionOperator values
----@type openmw.core.DialogueConditionOperator
+---@type openmw.core.DialogueConditionOperatorValues
 Dialogue.CONDITION_OPERATOR = nil
 
 ---Possible DialogueConditionType values
----@type openmw.core.DialogueConditionType
+---@type openmw.core.DialogueConditionTypeValues
 Dialogue.CONDITION_TYPE = nil
 
 ---@type openmw.core.Regions

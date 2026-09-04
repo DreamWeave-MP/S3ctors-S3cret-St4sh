@@ -5,8 +5,8 @@
 ---end)
 ---@class openmw.interfaces.Combat
 ---@field version number
----@field ATTACK_SOURCE_TYPES openmw.interfaces.Combat.AttackSourceType Available attack source types
----@field ATTACK_TYPES openmw.interfaces.Combat.AttackType Available attack types
+---@field ATTACK_SOURCE_TYPES openmw.interfaces.Combat.AttackSourceTypeValues Available attack source types
+---@field ATTACK_TYPES openmw.interfaces.Combat.AttackTypeValues Available attack types
 local Combat = {}
 
 ---@class openmw.interfaces.Combat.AttackInfo
@@ -25,28 +25,38 @@ local Combat = {}
 local AttackInfo = {}
 
 ---Table of possible attack source types
----@class openmw.interfaces.Combat.AttackSourceType
----@field Magic string
----@field Melee string
----@field Ranged string
----@field Unspecified string
+---@alias openmw.interfaces.Combat.AttackSourceTypeMagic "Magic"
+---@alias openmw.interfaces.Combat.AttackSourceTypeMelee "Melee"
+---@alias openmw.interfaces.Combat.AttackSourceTypeRanged "Ranged"
+---@alias openmw.interfaces.Combat.AttackSourceTypeUnspecified "Unspecified"
+---@alias openmw.interfaces.Combat.AttackSourceType openmw.interfaces.Combat.AttackSourceTypeMagic|openmw.interfaces.Combat.AttackSourceTypeMelee|openmw.interfaces.Combat.AttackSourceTypeRanged|openmw.interfaces.Combat.AttackSourceTypeUnspecified
+
+---@class openmw.interfaces.Combat.AttackSourceTypeValues
+---@field Magic openmw.interfaces.Combat.AttackSourceTypeMagic
+---@field Melee openmw.interfaces.Combat.AttackSourceTypeMelee
+---@field Ranged openmw.interfaces.Combat.AttackSourceTypeRanged
+---@field Unspecified openmw.interfaces.Combat.AttackSourceTypeUnspecified
 local AttackSourceType = {}
 
 ---Table of possible attack types
----@class openmw.interfaces.Combat.AttackType
----@field Chop number
----@field Slash number
----@field Thrust number
+---@alias openmw.interfaces.Combat.AttackTypeChop 2
+---@alias openmw.interfaces.Combat.AttackTypeSlash 3
+---@alias openmw.interfaces.Combat.AttackTypeThrust 4
+---@alias openmw.interfaces.Combat.AttackType openmw.interfaces.Combat.AttackTypeChop|openmw.interfaces.Combat.AttackTypeSlash|openmw.interfaces.Combat.AttackTypeThrust
+---@class openmw.interfaces.Combat.AttackTypeValues
+---@field Chop openmw.interfaces.Combat.AttackTypeChop
+---@field Slash openmw.interfaces.Combat.AttackTypeSlash
+---@field Thrust openmw.interfaces.Combat.AttackTypeThrust
 local AttackType = {}
 
 ---Interface version
 ---@type number
 Combat.version = nil
 
----@type openmw.interfaces.Combat.AttackSourceType
+---@type openmw.interfaces.Combat.AttackSourceTypeValues
 Combat.ATTACK_SOURCE_TYPES = nil
 
----@type openmw.interfaces.Combat.AttackType
+---@type openmw.interfaces.Combat.AttackTypeValues
 Combat.ATTACK_TYPES = nil
 
 ---Add new onHit handler for this actor
