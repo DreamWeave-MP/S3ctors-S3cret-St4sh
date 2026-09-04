@@ -40,6 +40,10 @@
 ---   g) blocks LuaLS module resolution for the same offending modules via
 ---      ResolveRequire returning {}
 ---
+--- The plugin does not validate context compatibility between arbitrary user
+--- modules. LuaLS may process an importing file before the imported file, and
+--- its plugin API has no reliable post-resolution diagnostic hook.
+---
 --- IMPORTANT: OnSetText diffs are virtual LuaLS transforms.  They must not be
 --- applied to source files.  VSCode/VSCodium's LuaLS on-type formatting path can
 --- compute edits against this transformed text and leak shifted offsets into the
@@ -165,14 +169,34 @@ local STORAGE_MEMBER_AVAILABILITY = {
   allGlobalSections = { global = true },
 }
 
+local INTERFACE_MEMBER_AVAILABILITY = {
+  Activation = { global = true },
+  AnimationController = { ['local'] = true, player = true },
+  AI = { ['local'] = true },
+  Camera = { player = true },
+  Combat = { global = true, ['local'] = true, player = true },
+  MWUI = { menu = true, player = true },
+  Settings = { global = true, menu = true, player = true },
+  UI = { player = true },
+  ItemUsage = { global = true },
+  SkillProgression = { player = true },
+  Crimes = { global = true },
+  Controls = { player = true },
+  GamepadControls = { player = true },
+  Projectiles = { global = true },
+  SpellCasting = { global = true, ['local'] = true, player = true },
+}
+
 local MEMBER_AVAILABILITY = {
   ['openmw.core'] = CORE_MEMBER_AVAILABILITY,
   ['openmw.storage'] = STORAGE_MEMBER_AVAILABILITY,
+  ['openmw.interfaces'] = INTERFACE_MEMBER_AVAILABILITY,
 }
 
 local MISSING_CONTEXT_POISON = '__OMW_CONTEXT_ERROR_missing_omw_context_add_none_if_api_agnostic__'
 local INVALID_CONTEXT_POISON = '__OMW_CONTEXT_ERROR_invalid_omw_context__'
 
+local normalizeModuleName
 local fileCache = {}
 
 --- Parse an OpenMW context expression.
@@ -367,7 +391,7 @@ end
 --- Normalize a module name passed by LuaLS.
 ---@param moduleName string
 ---@return string
-local function normalizeModuleName(moduleName) return (moduleName:gsub('/', '.')) end
+normalizeModuleName = function(moduleName) return (moduleName:gsub('/', '.')) end
 
 --- Return true if a module is an OpenMW module require.
 ---@param moduleName string
@@ -550,6 +574,26 @@ local function storageSectionReturnTypeForContext(ctx, memberName)
   return nil
 end
 
+local INTERFACE_SURFACES = {
+  global = 'Global',
+  ['local'] = 'Local',
+  player = 'Player',
+  menu = 'Menu',
+}
+
+local function interfaceTypeForContext(ctx)
+  if not ctx or ctx.invalid or ctx.none then return nil end
+
+  local surfaces = {}
+  for _, context in ipairs(CONCRETE_CONTEXTS) do
+    local surface = INTERFACE_SURFACES[context]
+    if ctx.set[context] and surface then surfaces[#surfaces + 1] = 'openmw.interfaces.' .. surface end
+  end
+
+  if #surfaces == 0 then return nil end
+  return table.concat(surfaces, '|')
+end
+
 --- Return the type to inject for a local require alias in the effective context.
 ---@param ctx table?
 ---@param moduleName string
@@ -566,6 +610,8 @@ local function moduleAliasTypeForContext(ctx, moduleName)
     local surface = storageSurfaceForContext(ctx)
     return surface and 'openmw.storage.' .. surface or nil
   end
+
+  if moduleName == 'openmw.interfaces' then return interfaceTypeForContext(ctx) end
 
   if isOpenMwModule(moduleName) then return moduleName end
 
@@ -733,6 +779,12 @@ local function localRequireAliasModule(code)
   return alias, exactOpenMwRequireRhsModule(code, rhsStart)
 end
 
+local function contextLabel(context)
+  if not context then return 'missing_context' end
+  if context.invalid then return 'invalid_' .. context.raw:gsub('%W', '_') end
+  return context.raw:gsub('%W', '_')
+end
+
 --- Add type annotations before known chained require return values.
 ---@param diffs table[]
 ---@param code string
@@ -846,6 +898,7 @@ local function makePoisonDiffs(text, ctx)
   local diffs = {}
   local coreAliases = {}
   local storageAliases = {}
+  local interfaceAliases = {}
   local scopedAllowedModules = {}
   local overrideStack = {}
   local pendingNextOverride = nil
@@ -898,6 +951,19 @@ local function makePoisonDiffs(text, ctx)
             effectiveCtx,
             storageAliases,
             'openmw.storage'
+          )
+        end
+
+        if not shouldReject(effectiveCtx, 'openmw.interfaces') then
+          recordModuleAliases(code, interfaceAliases, 'openmw.interfaces')
+          addDirectModuleMemberDiffs(diffs, code, lineStart, effectiveCtx, 'openmw.interfaces')
+          addAliasModuleMemberDiffs(
+            diffs,
+            code,
+            lineStart,
+            effectiveCtx,
+            interfaceAliases,
+            'openmw.interfaces'
           )
         end
 

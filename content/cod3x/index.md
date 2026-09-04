@@ -57,6 +57,13 @@ and [`typeFormat.config`](https://luals.github.io/wiki/settings/#typeformatconfi
 LuaLS also defines these keys in its upstream config template as
 `Lua.language.fixIndent` and `Lua.typeFormat.config`.
 
+Cod3x validates OpenMW API availability and interface surfaces in the current
+file. It cannot reliably validate whether an arbitrary user module's
+`---@omw-context` is compatible with every importer: LuaLS may process an
+importer before the imported module, and its plugin API has no reliable
+post-resolution diagnostic hook. Give shared modules the broadest context they
+actually support, or keep context-specific code in separate modules.
+
 Declare the OpenMW script context near the top of each script:
 
 ```lua
