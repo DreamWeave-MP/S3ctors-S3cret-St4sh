@@ -35,7 +35,7 @@ function camera.getMode() end
 ---@return openmw.camera.Mode|nil
 function camera.getQueuedMode() end
 
----Change openmw.camera.MODE; if the second (optional, true by default) argument is set to false, the switching can be delayed (see `getQueuedMode`).
+---Change openmw.camera.MODE; if the second (optional, false by default) argument is set to false, the switching can be delayed (see `getQueuedMode`).
 ---@param mode openmw.camera.Mode
 ---@param force? boolean Whether to force the switch immediately. Defaults to false.
 function camera.setMode(mode, force) end
