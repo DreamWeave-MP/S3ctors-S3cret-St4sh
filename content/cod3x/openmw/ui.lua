@@ -110,6 +110,12 @@ local Element = {}
 ---@field button number Mouse button which triggered the event. Matches the arguments of openmw_input.input.isMouseButtonPressed (`nil` for none, 1 for left, 3 for right).
 local MouseEvent = {}
 
+---Mouse wheel event, passed as an argument to mouseWheel UI events.
+---@class openmw.ui.MouseWheelEvent
+---@field position openmw.util.Vector2 Absolute position of the mouse cursor
+---@field delta openmw.util.Vector2 The wheel delta on the X and Y axis.
+local MouseWheelEvent = {}
+
 ---A texture ready to be used by UI widgets
 ---@class openmw.ui.TextureResource
 local TextureResource = {}
