@@ -269,6 +269,7 @@ local CreatureAttack = {}
 ---@field primaryFaction string|nil Faction ID of the NPCs default faction. Nil if no faction
 ---@field primaryFactionRank number|nil Faction rank of the NPCs default faction. Nil if no faction
 ---@field isEssential boolean whether the creature is essential
+---@field isPersistent boolean If true, the creature will not despawn after death.
 ---@field isRespawning boolean whether the creature respawns after death
 ---@field bloodType number integer representing the blood type of the Creature. Used to generate the correct blood vfx.
 local CreatureRecord = {}
@@ -325,6 +326,7 @@ local GenderedNumber = {}
 ---@field servicesOffered table<string, boolean> The services of the NPC, in a table. Value is if the service is provided or not, and they are indexed by: Spells, Spellmaking, Enchanting, Training, Repair, Barter, Weapon, Armor, Clothing, Books, Ingredients, Picks, Probes, Lights, Apparatus, RepairItems, Misc, Potions, MagicItems, Travel.
 ---@field travelDestinations openmw.types.TravelDestination[] A list of TravelDestinations for this NPC.
 ---@field isEssential boolean whether the NPC is essential
+---@field isPersistent boolean If true, the NPC will not despawn after death.
 ---@field isRespawning boolean whether the NPC respawns after death
 ---@field isAutocalc boolean If true, the actor's stats will be automatically calculated based on level and class.
 ---@field bloodType number integer representing the blood type of the NPC. Used to generate the correct blood vfx.
