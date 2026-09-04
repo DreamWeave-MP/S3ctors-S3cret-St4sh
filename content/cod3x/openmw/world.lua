@@ -1,16 +1,11 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/world.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global
-
 ---Provides an interface to the game world for global scripts.
 ---@class openmw.world
 local world = {}
 
 ---@class openmw.world.VFX
 local VFX = {}
-
 
 ---Functions related to MWScript.
 ---@class openmw.world.MWScriptFunctions

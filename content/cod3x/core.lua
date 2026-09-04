@@ -1,13 +1,5 @@
 ---@meta
 
--- openmw.core
--- Functions and types available in local, global, and menu scripts.
--- @usage local core = require('openmw.core')
-
--- ============================================================
--- Magic
--- ============================================================
-
 ---@class MagicEffectId
 ---@field WaterBreathing string
 ---@field SwiftSwim string
@@ -289,10 +281,6 @@ function Enchantments.createRecordDraft(enchantment) end
 ---@field effects Effects
 ---@field enchantments Enchantments
 
--- ============================================================
--- Sound
--- ============================================================
-
 ---@class SoundRecord
 ---@field id string Sound ID.
 ---@field fileName string Normalized path to the sound file in VFS.
@@ -364,10 +352,6 @@ function Sound.stopSay(object) end
 ---@return boolean
 function Sound.isSayActive(object) end
 
--- ============================================================
--- Stats
--- ============================================================
-
 ---@class MagicSchoolData
 ---@field name string Human-readable name.
 ---@field areaSound string VFS path to area sound.
@@ -413,10 +397,6 @@ function Skill.record(recordId) end
 ---@class Stats
 ---@field Attribute Attribute
 ---@field Skill Skill
-
--- ============================================================
--- Dialogue
--- ============================================================
 
 ---@class DialogueConditionOperator
 ---@field Equal number `==`
@@ -561,10 +541,6 @@ function Skill.record(recordId) end
 ---@field CONDITION_OPERATOR DialogueConditionOperator
 ---@field CONDITION_TYPE DialogueConditionType
 
--- ============================================================
--- Regions
--- ============================================================
-
 ---@class RegionSoundRef
 ---@field soundId string Sound record ID.
 ---@field chance number Multiplicative percentage (0–100) to play the sound.
@@ -582,10 +558,6 @@ function RegionRecord:resetProbability() end
 ---@class Regions
 --- Read-only list of all RegionRecords.
 ---@field records RegionRecord[]
-
--- ============================================================
--- Factions
--- ============================================================
 
 ---@class FactionRank
 ---@field name string Rank display name.
@@ -608,10 +580,6 @@ function RegionRecord:resetProbability() end
 --- Read-only list of all FactionRecords.
 ---@field records FactionRecord[]
 
--- ============================================================
--- MWScripts
--- ============================================================
-
 ---@class MWScriptRecord
 ---@field id string MWScript ID.
 ---@field text string Script content.
@@ -619,10 +587,6 @@ function RegionRecord:resetProbability() end
 ---@class MWScripts
 --- Read-only list of all MWScriptRecords.
 ---@field records MWScriptRecord[]
-
--- ============================================================
--- Weather
--- ============================================================
 
 ---@class MOON_PHASE
 ---@field Full number
@@ -737,10 +701,6 @@ function Weather.getCurrentWindSpeed(cell) end
 ---@return util.Vector3? Nil if the cell is inactive or has no weather.
 function Weather.getCurrentStormDirection(cell) end
 
--- ============================================================
--- ContentFiles
--- ============================================================
-
 ---@class ContentFiles
 --- The current load order (list of content file names).
 ---@field list string[]
@@ -755,10 +715,6 @@ function ContentFiles:indexOf(contentFile) end
 ---@param contentFile string
 ---@return boolean
 function ContentFiles:has(contentFile) end
-
--- ============================================================
--- Land
--- ============================================================
 
 ---@class Land
 local Land = {}
@@ -776,15 +732,6 @@ function Land.getHeightAt(position, cellOrId) end
 ---@return string? texturePath Texture path, or nil if not defined.
 ---@return string? pluginName Plugin name, or nil if retrieval failed.
 function Land.getTextureAt(position, cellOrId) end
-
--- ============================================================
--- GameObject hierarchy
---
---   GameObject    (base: read-only fields, non-mutating methods)
---   ├── LObject   (local scripts, non-self objects — purely read-only)
---   │   └── SelfObject  (the `self` object — adds controls, AI, etc.)
---   └── GObject   (global scripts — adds writable fields and mutation methods)
--- ============================================================
 
 ---@class TeleportOptions
 ---@field rotation? util.Transform New rotation. If omitted, the current rotation is kept.
@@ -892,12 +839,6 @@ function WritableInventory:resolve() end
 --- List of GameObjects. Behaves as an array; supports `#`, numeric indexing, `ipairs`, and `pairs`.
 ---@class ObjectList : GameObject[]
 
--- ============================================================
--- Base GameObject
--- All fields below are available on LObject, GObject, and SelfObject.
--- Fields marked "(GObject only)" are only settable from global scripts.
--- ============================================================
-
 ---@class GameObject
 ---@field id string Unique object instance ID (not record ID). Stable across frames; usable as a table key.
 ---@field contentFile? string Lowercase content file name that defines this object. Nil for dynamically created objects.
@@ -935,20 +876,8 @@ function GameObject:activateBy(actor) end
 ---@return openmw.util.Box
 function GameObject:getBoundingBox() end
 
--- ============================================================
--- LObject
--- Used in local scripts to reference objects other than `self`.
--- All fields are read-only; mutation methods are not available.
--- ============================================================
-
 ---@class LObject : GameObject
 ---@field cell? LCell
-
--- ============================================================
--- GObject
--- Used in global scripts. Inherits all fields from GameObject
--- and adds writable fields plus all mutation methods.
--- ============================================================
 
 ---@class GObject : GameObject
 ---@field cell? GCell
@@ -999,13 +928,6 @@ function GObject:remove(count) end
 ---@usage money:split(50):moveInto(types.Container.content(chest))
 function GObject:split(count) end
 
--- ============================================================
--- SelfObject
--- The object a local script is attached to. Extends LObject
--- with actor controls, AI helpers, and the ATTACK_TYPE enum.
--- Exposed as the `openmw.self` module value.
--- ============================================================
-
 ---@class ATTACK_TYPE
 ---@field NoAttack number
 ---@field Any number
@@ -1042,10 +964,6 @@ function SelfObject:isActive() end
 --- Enable or disable the standard AI for this actor (enabled by default).
 ---@param v boolean
 function SelfObject:enableAI(v) end
-
--- ============================================================
--- core module
--- ============================================================
 
 ---@class core
 ---@field API_REVISION number Incremented every time the Lua API changes.

@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/storage.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global|menu|local|player|load
-
 ---Contains functions to work with permanent Lua storage.
 ---local storage = require('openmw.storage')
 ---local myModData = storage.globalSection('MyModExample')

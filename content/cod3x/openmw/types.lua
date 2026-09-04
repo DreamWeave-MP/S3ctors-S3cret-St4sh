@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/types.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global|local|player
-
 ---Defines functions for specific types of game objects.
 ---@class openmw.types
 local types = {}
@@ -28,7 +24,6 @@ local PlayerJournal = {}
 
 ---@class openmw.types.Races
 local Races = {}
-
 
 ---Common functions for Creature, NPC, and Player.
 ---@class openmw.types.Actor

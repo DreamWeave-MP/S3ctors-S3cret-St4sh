@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/input.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: menu|player
-
 ---Most mods should prefer to use the actions/triggers API over the direct input device methods.
 ---Actions have one value on each frame (resolved just before the `onFrame` engine handler),
 --- while Triggers don't have a value, but can occur multiple times on each frame.

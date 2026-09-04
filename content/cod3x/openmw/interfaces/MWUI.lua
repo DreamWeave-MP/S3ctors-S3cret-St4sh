@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").MWUI.
--- Source: files/data/scripts/omw/mwui/init.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: menu|player
-
 ---@class openmw.interfaces.MWUI
 ---@field templates openmw.interfaces.MWUI.Templates
 ---@field version number

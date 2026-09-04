@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").Activation.
--- Source: files/data/scripts/omw/activationhandlers.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: global
-
 ---@class openmw.interfaces.Activation
 ---@field version number
 local Activation = {}

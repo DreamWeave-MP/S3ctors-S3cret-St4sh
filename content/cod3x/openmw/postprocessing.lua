@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/postprocessing.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: player
-
 ---Provides an interface to postprocessing shaders.
 ---@class openmw.postprocessing
 local postprocessing = {}

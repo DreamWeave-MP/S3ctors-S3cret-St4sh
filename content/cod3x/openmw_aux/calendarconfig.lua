@@ -1,9 +1,5 @@
 ---@meta
 
--- LuaLS stubs for OpenMW's Lua auxiliary calendar configuration.
--- Runtime behavior is provided by OpenMW resources/vfs/openmw_aux/calendarconfig.lua.
--- OpenMW script contexts: global|menu|local|player
-
 ---Calendar configuration used by `openmw_aux.calendar`.
 ---@class openmw_aux.calendarconfig
 ---@field monthsDuration integer[] Number of days in each month.

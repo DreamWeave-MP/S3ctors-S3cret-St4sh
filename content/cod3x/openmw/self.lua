@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/self.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: local
-
 ---Provides full access to the object the script is attached to.
 ---All fields and function of `openmw.SelfObject` are also available for `openmw.self`.
 ---local types = require('openmw.types')

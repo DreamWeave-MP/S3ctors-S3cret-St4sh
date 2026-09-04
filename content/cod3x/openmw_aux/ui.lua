@@ -1,9 +1,5 @@
 ---@meta
 
--- LuaLS stubs for OpenMW's Lua auxiliary UI helpers.
--- Runtime behavior is provided by OpenMW resources/vfs/openmw_aux/ui.lua.
--- OpenMW script contexts: menu|player
-
 ---Utility functions for OpenMW UI layouts and elements.
 ---@class openmw_aux.ui
 local ui = {}

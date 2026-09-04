@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").Settings.
--- Source: files/data/scripts/omw/settings/player.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: global|menu|player
-
 ----- In a player script
 ---local storage = require('openmw.storage')
 ---local I = require('openmw.interfaces')

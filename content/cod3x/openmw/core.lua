@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/core.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global|menu|local|player|load
-
 ---Defines functions and types that are available in local, global, menu, and load scripts.
 ---@class openmw.core
 local core = {}
@@ -100,7 +96,6 @@ local MOON_PHASE = {}
 ---@field phaseValue number MWScript-compatible phase value: 0 new, 1 crescent, 2 quarter, 3 gibbous, or 4 full.
 ---@field alpha number The alpha of the moon between 0 and 1. 0 when the moon is not visible in the sky.
 local Moon = {}
-
 
 ---Functions working with the list of currently loaded content files.
 ---@class openmw.core.ContentFiles

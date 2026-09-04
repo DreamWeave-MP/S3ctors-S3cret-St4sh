@@ -1,9 +1,5 @@
 ---@meta
 
--- LuaLS stubs for OpenMW's Lua auxiliary calendar helpers.
--- Runtime behavior is provided by OpenMW resources/vfs/openmw_aux/calendar.lua.
--- OpenMW script contexts: global|menu|local|player
-
 ---Utility functions for formatting game time.
 ---@class openmw_aux.calendar
 ---@field monthCount number The number of months in a year.

@@ -1,9 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").Combat.
--- Source: files/data/scripts/omw/combat/interface.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
 ---Basic combat interface
 ---I.Combat.addOnHitHandler(function(attack)
 ---end)

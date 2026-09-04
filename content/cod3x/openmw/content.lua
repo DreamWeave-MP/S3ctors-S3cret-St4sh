@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/content.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: load
-
 ---Allows for manipulation of the data loaded from content files while the game is first started.
 ---Records can be created and deleted using this package as if a content file had done so.
 ---@class openmw.content
@@ -83,7 +79,6 @@ local SpellContent = {}
 
 ---@class openmw.content.StaticContent
 local StaticContent = {}
-
 
 ---@type openmw.core.SpellRange
 content.RANGE = nil

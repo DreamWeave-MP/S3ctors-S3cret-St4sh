@@ -1,8 +1,5 @@
 ---@meta
 
--- Non-runtime LuaLS capability types for OpenMW object handles.
--- These classes describe which operations are available in each script context.
-
 ---Object owner information
 ---@class openmw.ObjectOwner
 ---@field recordId string|nil NPC who owns the object (nil if missing). Global and self scripts can set the value.
