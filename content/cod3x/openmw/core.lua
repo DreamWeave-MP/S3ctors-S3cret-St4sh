@@ -458,6 +458,7 @@ local SkillRecord = {}
 ---@field castSound string VFS path to the cast sound
 ---@field failureSound string VFS path to the failure sound
 ---@field hitSound string VFS path to the hit sound
+---@field autoCalcMax number Maximum number of spells of this school to auto calculate
 local MagicSchoolData = {}
 
 ---Depending on which store this read-only dialogue record is from, it may either be a journal, topic, greeting, persuasion or voice.
