@@ -450,37 +450,6 @@ local BodyPartRecord = {}
 ---@field baseType openmw.types.Item Item
 local Book = {}
 
----Book.SKILL
----@class openmw.types.BookSKILL
----@field acrobatics string "acrobatics"
----@field alchemy string "alchemy"
----@field alteration string "alteration"
----@field armorer string "armorer"
----@field athletics string "athletics"
----@field axe string "axe"
----@field block string "block"
----@field bluntWeapon string "bluntweapon"
----@field conjuration string "conjuration"
----@field destruction string "destruction"
----@field enchant string "enchant"
----@field handToHand string "handtohand"
----@field heavyArmor string "heavyarmor"
----@field illusion string "illusion"
----@field lightArmor string "lightarmor"
----@field longBlade string "longblade"
----@field marksman string "marksman"
----@field mediumArmor string "mediumarmor"
----@field mercantile string "mercantile"
----@field mysticism string "mysticism"
----@field restoration string "restoration"
----@field security string "security"
----@field shortBlade string "shortblade"
----@field sneak string "sneak"
----@field spear string "spear"
----@field speechcraft string "speechcraft"
----@field unarmored string "unarmored"
-local BookSKILL = {}
-
 ---@class openmw.types.BookRecord
 ---@field id string The record ID of the book
 ---@field name string Name of the book
@@ -1761,10 +1730,6 @@ Book.records = nil
 ---@param object openmw.Object
 ---@return boolean
 function Book.objectIsInstance(object) end
-
----DEPRECATED, use openmw.core.Skill
----@type openmw.types.BookSKILL
-Book.SKILL = nil
 
 ---Returns the read-only BookRecord of a book
 ---@param objectOrRecordId openmw.Object|string
