@@ -1,0 +1,23 @@
+{
+  "runtime": {
+    "version": "LuaJIT",
+    "pathStrict": true,
+    "path": [
+      "./?.lua",
+      "./?/init.lua"
+    ],
+    "plugin": "../../content/cod3x/omw_context_plugin.lua"
+  },
+  "workspace.library": [
+    "../../content/cod3x",
+    "./stubs"
+  ],
+  "diagnostics": {
+    "neededFileStatus": {
+      "type-check": "Any!"
+    },
+    "unusedLocalExclude": [
+      "_*"
+    ]
+  }
+}
