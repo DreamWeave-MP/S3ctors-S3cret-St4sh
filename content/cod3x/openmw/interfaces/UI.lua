@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").UI.
--- Source: files/data/scripts/omw/ui.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: player
-
 ---@class openmw.interfaces.UI
 ---@field version number
 ---@field MODE table

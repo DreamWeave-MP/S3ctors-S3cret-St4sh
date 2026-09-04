@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/util.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global|menu|local|player|load
-
 ---Defines utility functions and classes like 3D vectors, that don't depend on the game world.
 ---@class openmw.util
 local util = {}

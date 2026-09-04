@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").GamepadControls.
--- Source: files/data/scripts/omw/input/gamepadcontrols.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: player
-
 ---Gamepad control interface
 ---@class openmw.interfaces.GamepadControls
 ---@field version number

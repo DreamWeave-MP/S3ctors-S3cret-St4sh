@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/menu.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: menu
-
 ---Provides interfaces to interact with menu elements.
 ---@class openmw.menu
 local menu = {}

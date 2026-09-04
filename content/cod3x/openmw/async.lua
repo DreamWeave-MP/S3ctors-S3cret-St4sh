@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/async.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global|menu|local|player|load
-
 ---Contains timers and coroutine utilities. All functions require
 ---the package itself as a first argument.
 ---@class openmw.async

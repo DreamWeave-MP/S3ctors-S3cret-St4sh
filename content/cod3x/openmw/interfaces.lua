@@ -1,9 +1,5 @@
 ---@meta
 
--- LuaLS stub for the dynamic OpenMW script interface registry.
--- The runtime table is populated by scripts that return { interfaceName = ..., interface = ... }.
--- Built-in OpenMW interfaces are listed as mandatory fields; mods may extend this class in sidecar stubs.
-
 ---@class openmw.interfaces: table<string, any>
 ---@field Activation openmw.interfaces.Activation Built-in contexts: global.
 ---@field AnimationController openmw.interfaces.AnimationController Built-in contexts: local.

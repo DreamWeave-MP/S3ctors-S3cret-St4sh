@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").Camera.
--- Source: files/data/scripts/omw/camera/camera.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: player
-
 ---@class openmw.interfaces.Camera
 ---@field version number
 local Camera = {}

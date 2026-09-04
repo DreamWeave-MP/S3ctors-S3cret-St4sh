@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/animation.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: local
-
 ---Defines functions that allow control of character animations.
 ---Note that for some methods, such as openmw.animation.playBlended you should use the associated methods on the
 ---[AnimationController](interface_animation.html) interface rather than invoking this API directly.

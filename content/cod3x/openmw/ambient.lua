@@ -1,16 +1,11 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/ambient.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: menu|player
-
 ---Controls background 2D sounds specific to a given player.
 ---@class openmw.ambient
 local ambient = {}
 
 ---@class openmw.ambient.Sound
 local Sound = {}
-
 
 ---Play a 2D sound
 ---};

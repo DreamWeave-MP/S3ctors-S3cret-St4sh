@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").SkillProgression.
--- Source: files/data/scripts/omw/skillhandlers.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: player
-
 ---Allows to extend or override built-in skill progression mechanics.
 ----- Make jail time hurt sneak skill instead of benefitting it
 ---I.SkillProgression.addSkillLevelUpHandler(function(skillid, source, options)

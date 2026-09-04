@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/markup.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global|menu|local|player|load
-
 ---Allows to work with markup languages.
 ---@class openmw.markup
 local markup = {}

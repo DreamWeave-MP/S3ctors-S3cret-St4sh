@@ -1,9 +1,5 @@
 ---@meta
 
--- LuaLS stubs for OpenMW's Lua auxiliary timers.
--- Runtime behavior is provided by OpenMW resources/vfs/openmw_aux/time.lua.
--- OpenMW script contexts: global|menu|local|player
-
 ---Utility functions for timers.
 ---@class openmw_aux.time
 ---@field second number One simulation/game second.

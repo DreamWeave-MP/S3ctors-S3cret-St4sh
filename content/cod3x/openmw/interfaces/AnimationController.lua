@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").AnimationController.
--- Source: files/data/scripts/omw/mechanics/animationcontroller.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: local
-
 ---Animation controller interface
 ---local I = require('openmw.interfaces')
 ----- play spellcast animation

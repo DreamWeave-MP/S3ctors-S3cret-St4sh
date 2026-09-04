@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/nearby.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: local
-
 ---Provides read-only access to the nearest area of the game world.
 ---@class openmw.nearby
 local nearby = {}

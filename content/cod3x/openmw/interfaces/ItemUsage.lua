@@ -1,11 +1,5 @@
 ---@meta
 
--- Dedicated LuaLS stub for require("openmw.interfaces").ItemUsage.
--- Source: files/data/scripts/omw/usehandlers.lua
--- Runtime availability depends on script context, OpenMW version, and active content files.
-
--- OpenMW script contexts: global
-
 ---Allows to extend or override built-in item usage mechanics.
 ---Note: at the moment it can override item usage in inventory
 ---(dragging an item on the character's model), but

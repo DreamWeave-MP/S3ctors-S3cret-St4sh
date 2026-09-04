@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/vfs.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: global|menu|local|player|load
-
 ---Provides read-only access to data directories via VFS.
 ---Interface is very similar to "io" library.
 ---@class openmw.vfs

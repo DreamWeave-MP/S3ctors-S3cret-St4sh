@@ -1,9 +1,5 @@
 ---@meta
 
--- This file was mechanically drafted from files/lua_api/openmw/ui.lua.
--- It uses LuaLS/LLS annotations and stub bodies only; runtime behavior is provided by OpenMW.
--- OpenMW script contexts: menu|player
-
 ---Controls user interface.
 ---local ui = require('openmw.ui')
 ---@class openmw.ui

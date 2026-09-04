@@ -1,9 +1,5 @@
 ---@meta
 
--- LuaLS stubs for OpenMW's Lua auxiliary utilities.
--- Runtime behavior is provided by OpenMW resources/vfs/openmw_aux/util.lua.
--- OpenMW script contexts: global|menu|local|player
-
 ---Utility functions implemented in Lua rather than C++.
 ---@class openmw_aux.util
 local util = {}
