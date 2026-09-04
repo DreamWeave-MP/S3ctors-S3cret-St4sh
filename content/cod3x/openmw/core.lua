@@ -116,7 +116,7 @@ local ContentFiles = {}
 ---@field hasWater boolean True if the cell contains water.
 ---@field waterLevel number|nil The water level of the cell. (nil if cell has no water).
 ---@field hasSky boolean True if in this cell sky should be rendered.
----@field pathGrid openmw.core.PathGrid The cell's PathGrid if it has one.
+---@field pathGrid openmw.core.PathGrid|nil The cell's PathGrid if it has one.
 local Cell = {}
 
 ---@class openmw.core.LCell: openmw.core.Cell
