@@ -85,7 +85,7 @@ local AVAILABILITY = {
   ['openmw.core'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
   ['openmw.markup'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
   ['openmw.storage'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  ['openmw.types'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
+  ['openmw.types'] = { global = true, ['local'] = true, player = true },
   ['openmw.util'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
   ['openmw.vfs'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
 
