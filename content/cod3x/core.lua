@@ -145,24 +145,39 @@
 ---@field SummonCreature04 string
 ---@field SummonCreature05 string
 
----@class SpellRange
----@field Self number Applied on self.
----@field Touch number On touch.
----@field Target number Ranged spell.
+---@alias SpellRangeSelf 0
+---@alias SpellRangeTouch 1
+---@alias SpellRangeTarget 2
+---@alias SpellRange SpellRangeSelf|SpellRangeTouch|SpellRangeTarget
 
----@class SpellType
----@field Spell number Normal spell; must be cast and costs mana.
----@field Ability number Innate ability; always in effect.
----@field Blight number Blight disease.
----@field Disease number Common disease.
----@field Curse number Curse.
----@field Power number Power; can be used once a day.
+---@class SpellRangeValues
+---@field Self SpellRangeSelf Applied on self.
+---@field Touch SpellRangeTouch On touch.
+---@field Target SpellRangeTarget Ranged spell.
 
----@class EnchantmentType
----@field CastOnce number Destroys the enchanted item on use.
----@field CastOnStrike number Cast on strike if there is enough charge.
----@field CastOnUse number Cast on use if there is enough charge.
----@field ConstantEffect number Always active when equipped.
+---@alias SpellTypeSpell 0
+---@alias SpellTypeAbility 1
+---@alias SpellTypeBlight 2
+---@alias SpellTypeDisease 3
+---@alias SpellTypeCurse 4
+---@alias SpellTypePower 5
+---@alias SpellType SpellTypeSpell|SpellTypeAbility|SpellTypeBlight|SpellTypeDisease|SpellTypeCurse|SpellTypePower
+
+---@class SpellTypeValues
+---@field Spell SpellTypeSpell Normal spell; must be cast and costs mana.
+---@field Ability SpellTypeAbility Innate ability; always in effect.
+---@field Blight SpellTypeBlight Blight disease.
+---@field Disease SpellTypeDisease Common disease.
+---@field Curse SpellTypeCurse Curse.
+---@field Power SpellTypePower Power; can be used once a day.
+
+---@alias EnchantmentType 0|1|2|3
+
+---@class EnchantmentTypeValues
+---@field CastOnce EnchantmentType Destroys the enchanted item on use.
+---@field CastOnStrike EnchantmentType Cast on strike if there is enough charge.
+---@field CastOnUse EnchantmentType Cast on use if there is enough charge.
+---@field ConstantEffect EnchantmentType Always active when equipped.
 
 ---@class MagicEffectWithParams
 ---@field effect MagicEffect The full effect record.
@@ -187,11 +202,8 @@
 ---@field continuousVfx boolean Whether the VFX should loop.
 ---@field hasDuration boolean Whether the effect has a duration.
 ---@field hasMagnitude boolean Whether the effect depends on a magnitude.
----@field hasAttribute boolean Whether the effect can affect an attribute.
----@field hasSkill boolean Whether the effect can affect a skill.
----@field hasNoTarget boolean Whether the effect cannot have a target.
----@field hasNoDuration boolean Whether the effect cannot have a duration.
----@field hasNoMagnitude boolean Whether the effect cannot have a magnitude.
+---@field hasAttribute boolean Whether the effect requires an attribute parameter.
+---@field hasSkill boolean Whether the effect requires a skill parameter.
 ---@field isAppliedOnce boolean Whether applied fully on cast rather than continuously over the duration.
 ---@field casterLinked boolean If true, ends immediately when the caster dies or is not an actor.
 ---@field nonRecastable boolean If true, cannot be re-applied until it has ended (e.g. bound equipment).
@@ -204,6 +216,14 @@
 ---@field hitSound string Sound identifier on hit.
 ---@field areaSound string Sound identifier for AOE spells.
 ---@field boltSound string Projectile sound identifier for ranged spells.
+---@field onSelf boolean Whether the effect can be cast on self.
+---@field onTouch boolean Whether the effect can be cast on touch.
+---@field onTarget boolean Whether the effect can be cast on target.
+---@field unreflectable boolean Whether the effect cannot be reflected.
+---@field allowsSpellmaking boolean Whether the effect is available for spellmaking.
+---@field allowsEnchanting boolean Whether the effect is available for enchanting.
+---@field negativeLight boolean Whether the effect casts negative light.
+---@field speed number Projectile speed.
 
 ---@class Enchantment
 ---@field id string
@@ -273,10 +293,10 @@ function Spells.createRecordDraft(spell) end
 function Enchantments.createRecordDraft(enchantment) end
 
 ---@class Magic
----@field ENCHANTMENT_TYPE EnchantmentType
----@field RANGE SpellRange
+---@field ENCHANTMENT_TYPE EnchantmentTypeValues
+---@field RANGE SpellRangeValues
 ---@field EFFECT_TYPE MagicEffectId
----@field SPELL_TYPE SpellType
+---@field SPELL_TYPE SpellTypeValues
 ---@field spells Spells
 ---@field effects Effects
 ---@field enchantments Enchantments
@@ -494,8 +514,8 @@ function Skill.record(recordId) end
 ---@field NotLocal number Comparison to the speaker's named local variable (inverted condition).
 
 ---@class DialogueInfoCondition
----@field operator DialogueConditionOperator
----@field type DialogueConditionType
+---@field operator number
+---@field type number
 ---@field value number Value to compare against.
 ---@field recordId string Record ID used in the comparison.
 ---@field variableName string Name of the global or local mwscript variable.
@@ -588,19 +608,29 @@ function RegionRecord:resetProbability() end
 --- Read-only list of all MWScriptRecords.
 ---@field records MWScriptRecord[]
 
+---@alias MoonPhaseFull 0
+---@alias MoonPhaseWaningGibbous 1
+---@alias MoonPhaseThirdQuarter 2
+---@alias MoonPhaseWaningCrescent 3
+---@alias MoonPhaseNew 4
+---@alias MoonPhaseWaxingCrescent 5
+---@alias MoonPhaseFirstQuarter 6
+---@alias MoonPhaseWaxingGibbous 7
+---@alias MoonPhase MoonPhaseFull|MoonPhaseWaningGibbous|MoonPhaseThirdQuarter|MoonPhaseWaningCrescent|MoonPhaseNew|MoonPhaseWaxingCrescent|MoonPhaseFirstQuarter|MoonPhaseWaxingGibbous
+
 ---@class MOON_PHASE
----@field Full number
----@field WaningGibbous number
----@field ThirdQuarter number
----@field WaningCrescent number
----@field New number
----@field WaxingCrescent number
----@field FirstQuarter number
----@field WaxingGibbous number
+---@field Full MoonPhaseFull
+---@field WaningGibbous MoonPhaseWaningGibbous
+---@field ThirdQuarter MoonPhaseThirdQuarter
+---@field WaningCrescent MoonPhaseWaningCrescent
+---@field New MoonPhaseNew
+---@field WaxingCrescent MoonPhaseWaxingCrescent
+---@field FirstQuarter MoonPhaseFirstQuarter
+---@field WaxingGibbous MoonPhaseWaxingGibbous
 
 ---@class Moon
 ---@field name string The moon's name.
----@field phase number One of MOON_PHASE.
+---@field phase MoonPhase One of MOON_PHASE.
 ---@field phaseValue number MWScript-compatible phase value.
 ---@field alpha number Visibility from 0 to 1.
 
@@ -632,6 +662,7 @@ function RegionRecord:resetProbability() end
 ---@field rainEffect? string Nil if the weather has no rain effect.
 ---@field rainMaxRaindrops number Maximum rain particle batches per `rainEntranceSpeed`.
 ---@field rainDiameter number Area around the player to spawn rain in.
+---@field rainThreshold number Minimum height of rain particles relative to the player.
 ---@field rainMaxHeight number Maximum height relative to the player to spawn rain.
 ---@field rainMinHeight number Minimum height relative to the player to spawn rain.
 ---@field rainLoopSoundID string
@@ -928,12 +959,19 @@ function GObject:remove(count) end
 ---@usage money:split(50):moveInto(types.Container.content(chest))
 function GObject:split(count) end
 
+---@alias AttackTypeNoAttack 0
+---@alias AttackTypeAny 1
+---@alias AttackTypeChop 2
+---@alias AttackTypeSlash 3
+---@alias AttackTypeThrust 4
+---@alias AttackType AttackTypeNoAttack|AttackTypeAny|AttackTypeChop|AttackTypeSlash|AttackTypeThrust
+
 ---@class ATTACK_TYPE
----@field NoAttack number
----@field Any number
----@field Chop number
----@field Slash number
----@field Thrust number
+---@field NoAttack AttackTypeNoAttack
+---@field Any AttackTypeAny
+---@field Chop AttackTypeChop
+---@field Slash AttackTypeSlash
+---@field Thrust AttackTypeThrust
 
 --- Mutable movement and action controls for the actor this script is attached to.
 --- All fields are read/write.
@@ -945,7 +983,7 @@ function GObject:split(count) end
 ---@field run boolean `true` to run, `false` to walk.
 ---@field sneak boolean `true` to sneak.
 ---@field jump boolean `true` to initiate a jump.
----@field use ATTACK_TYPE Activates the readied weapon/spell. Hold to charge. Set to `ATTACK_TYPE.NoAttack` to release.
+---@field use AttackType Activates the readied weapon/spell. Hold to charge. Set to `ATTACK_TYPE.NoAttack` to release.
 
 ---@class SelfObject : LObject
 --- The object this local script is attached to (read-only reference).

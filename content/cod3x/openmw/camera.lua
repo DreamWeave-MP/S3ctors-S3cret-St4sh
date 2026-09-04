@@ -6,19 +6,25 @@
 local camera = {}
 
 ---Camera mode; see openmw.camera.MODE for possible values
----@class openmw.camera.Mode
+---@alias openmw.camera.ModeStatic 0
+---@alias openmw.camera.ModeFirstPerson 1
+---@alias openmw.camera.ModeThirdPerson 2
+---@alias openmw.camera.ModeVanity 3
+---@alias openmw.camera.ModePreview 4
+---@alias openmw.camera.Mode openmw.camera.ModeStatic|openmw.camera.ModeFirstPerson|openmw.camera.ModeThirdPerson|openmw.camera.ModeVanity|openmw.camera.ModePreview
+---@class openmw.camera.ModeValues
 local Mode = {}
 
 ---@class openmw.camera.MODE Camera modes.
----@field Static openmw.camera.Mode Camera doesn't track player; player inputs doesn't affect camera; use `setStaticPosition` to move the camera.
----@field FirstPerson openmw.camera.Mode First person mode.
----@field ThirdPerson openmw.camera.Mode Third person mode; player character turns to the view direction.
----@field Vanity openmw.camera.Mode Similar to Preview; camera slowly moves around the player.
----@field Preview openmw.camera.Mode Third person mode, but player character doesn't turn to the view direction.
+---@field Static openmw.camera.ModeStatic Camera doesn't track player; player inputs doesn't affect camera; use `setStaticPosition` to move the camera.
+---@field FirstPerson openmw.camera.ModeFirstPerson First person mode.
+---@field ThirdPerson openmw.camera.ModeThirdPerson Third person mode; player character turns to the view direction.
+---@field Vanity openmw.camera.ModeVanity Similar to Preview; camera slowly moves around the player.
+---@field Preview openmw.camera.ModePreview Third person mode, but player character doesn't turn to the view direction.
 local MODE = {}
 
 ---Camera modes.
----@type openmw.camera.MODE
+---@type openmw.camera.ModeValues
 camera.MODE = nil
 
 ---Return the current openmw.camera.MODE.

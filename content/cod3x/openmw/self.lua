@@ -12,14 +12,19 @@
 ---@field ATTACK_TYPE openmw.self.AttackTypeConstants Attack type constants. Use with `controls.use`.
 local self = {}
 
----@alias openmw.self.ATTACK_TYPE integer
+---@alias openmw.self.AttackTypeNoAttack 0
+---@alias openmw.self.AttackTypeAny 1
+---@alias openmw.self.AttackTypeChop 2
+---@alias openmw.self.AttackTypeSlash 3
+---@alias openmw.self.AttackTypeThrust 4
+---@alias openmw.self.ATTACK_TYPE openmw.self.AttackTypeNoAttack|openmw.self.AttackTypeAny|openmw.self.AttackTypeChop|openmw.self.AttackTypeSlash|openmw.self.AttackTypeThrust
 
 ---@class openmw.self.AttackTypeConstants
----@field NoAttack openmw.self.ATTACK_TYPE
----@field Any openmw.self.ATTACK_TYPE
----@field Chop openmw.self.ATTACK_TYPE
----@field Slash openmw.self.ATTACK_TYPE
----@field Thrust openmw.self.ATTACK_TYPE
+---@field NoAttack openmw.self.AttackTypeNoAttack
+---@field Any openmw.self.AttackTypeAny
+---@field Chop openmw.self.AttackTypeChop
+---@field Slash openmw.self.AttackTypeSlash
+---@field Thrust openmw.self.AttackTypeThrust
 local ATTACK_TYPE = {}
 
 ---Allows to view and/or modify controls of an actor. All fields are mutable.

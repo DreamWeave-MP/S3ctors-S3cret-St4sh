@@ -7,21 +7,33 @@
 local ui = {}
 
 ---Alignment values (details depend on the specific property). For horizontal alignment the order is left to right, for vertical alignment the order is top to bottom.
+---@alias openmw.ui.AlignmentStart 0
+---@alias openmw.ui.AlignmentCenter 1
+---@alias openmw.ui.AlignmentEnd 2
+---@alias openmw.ui.Alignment openmw.ui.AlignmentStart|openmw.ui.AlignmentCenter|openmw.ui.AlignmentEnd
 ---@class openmw.ui.ALIGNMENT
----@field Start any
----@field Center any
----@field End any
+---@field Start openmw.ui.AlignmentStart
+---@field Center openmw.ui.AlignmentCenter
+---@field End openmw.ui.AlignmentEnd
 local ALIGNMENT = {}
 
 ---All available widget types
+---@alias openmw.ui.WidgetTypeWidget "LuaWidget"
+---@alias openmw.ui.WidgetTypeText "LuaText"
+---@alias openmw.ui.WidgetTypeTextEdit "LuaTextEdit"
+---@alias openmw.ui.WidgetTypeWindow "LuaWindow"
+---@alias openmw.ui.WidgetTypeImage "LuaImage"
+---@alias openmw.ui.WidgetTypeFlex "LuaFlex"
+---@alias openmw.ui.WidgetTypeContainer "LuaContainer"
+---@alias openmw.ui.WidgetType openmw.ui.WidgetTypeWidget|openmw.ui.WidgetTypeText|openmw.ui.WidgetTypeTextEdit|openmw.ui.WidgetTypeWindow|openmw.ui.WidgetTypeImage|openmw.ui.WidgetTypeFlex|openmw.ui.WidgetTypeContainer
 ---@class openmw.ui.TYPE
----@field Widget any Base widget type
----@field Text any Display text
----@field TextEdit any Accepts user text input
----@field Window any Can be moved and resized by the user
----@field Image any Displays an image
----@field Flex any Aligns widgets in a row or column
----@field Container any Automatically wraps around its contents
+---@field Widget openmw.ui.WidgetTypeWidget Base widget type
+---@field Text openmw.ui.WidgetTypeText Display text
+---@field TextEdit openmw.ui.WidgetTypeTextEdit Accepts user text input
+---@field Window openmw.ui.WidgetTypeWindow Can be moved and resized by the user
+---@field Image openmw.ui.WidgetTypeImage Displays an image
+---@field Flex openmw.ui.WidgetTypeFlex Aligns widgets in a row or column
+---@field Container openmw.ui.WidgetTypeContainer Automatically wraps around its contents
 local TYPE = {}
 
 ---Predefined colors for console output
@@ -41,7 +53,7 @@ local SettingsPageOptions = {}
 
 ---Layout
 ---@class openmw.ui.Layout
----@field type any Type of the widget, one of the values in #TYPE. Must match the type in #Template if both are present
+---@field type openmw.ui.WidgetType Type of the widget, one of the values in #TYPE. Must match the type in #Template if both are present
 ---@field layer? string Optional layout to display in. Only applies for the root widget. Note: if the #Element isn't attached to anything, it won't be visible!
 ---@field name? string Optional name of the layout. Allows access by name from Content
 ---@field props table Optional table of widget properties
@@ -56,7 +68,7 @@ local Layout = {}
 ---@class openmw.ui.Template
 ---@field props table
 ---@field content openmw.ui.Content
----@field type any One of the values in #TYPE, serves as the default value for the #Layout
+---@field type openmw.ui.WidgetType One of the values in #TYPE, serves as the default value for the #Layout
 local Template = {}
 
 ---@class openmw.ui.Layer
@@ -171,7 +183,7 @@ function ui.setConsoleSelectedObject(obj) end
 function ui.screenSize() end
 
 ---Converts a given table of tables into an openmw.ui.Content
----@param table table
+---@param table (openmw.ui.Layout|openmw.ui.Element)[]
 ---@return openmw.ui.Content
 function ui.content(table) end
 

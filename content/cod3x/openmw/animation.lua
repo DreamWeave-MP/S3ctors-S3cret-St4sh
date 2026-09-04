@@ -8,51 +8,79 @@
 local animation = {}
 
 ---`animation.PRIORITY`
----@class openmw.animation.Priority
----@field Default number "0"
----@field WeaponLowerBody number "1"
----@field SneakIdleLowerBody number "2"
----@field SwimIdle number "3"
----@field Jump number "4"
----@field Movement number "5"
----@field Hit number "6"
----@field Weapon number "7"
----@field Block number "8"
----@field Knockdown number "9"
----@field Torch number "10"
----@field Storm number "11"
----@field Death number "12"
----@field Scripted number "13" Special priority used by scripted animations. When any animation with this priority is present, all animations without this priority are paused.
+---@alias openmw.animation.PriorityDefault 0
+---@alias openmw.animation.PriorityWeaponLowerBody 1
+---@alias openmw.animation.PrioritySneakIdleLowerBody 2
+---@alias openmw.animation.PrioritySwimIdle 3
+---@alias openmw.animation.PriorityJump 4
+---@alias openmw.animation.PriorityMovement 5
+---@alias openmw.animation.PriorityHit 6
+---@alias openmw.animation.PriorityWeapon 7
+---@alias openmw.animation.PriorityBlock 8
+---@alias openmw.animation.PriorityKnockdown 9
+---@alias openmw.animation.PriorityTorch 10
+---@alias openmw.animation.PriorityStorm 11
+---@alias openmw.animation.PriorityDeath 12
+---@alias openmw.animation.PriorityScripted 13
+---@alias openmw.animation.Priority openmw.animation.PriorityDefault|openmw.animation.PriorityWeaponLowerBody|openmw.animation.PrioritySneakIdleLowerBody|openmw.animation.PrioritySwimIdle|openmw.animation.PriorityJump|openmw.animation.PriorityMovement|openmw.animation.PriorityHit|openmw.animation.PriorityWeapon|openmw.animation.PriorityBlock|openmw.animation.PriorityKnockdown|openmw.animation.PriorityTorch|openmw.animation.PriorityStorm|openmw.animation.PriorityDeath|openmw.animation.PriorityScripted
+
+---@class openmw.animation.PriorityValues
+---@field Default openmw.animation.PriorityDefault
+---@field WeaponLowerBody openmw.animation.PriorityWeaponLowerBody
+---@field SneakIdleLowerBody openmw.animation.PrioritySneakIdleLowerBody
+---@field SwimIdle openmw.animation.PrioritySwimIdle
+---@field Jump openmw.animation.PriorityJump
+---@field Movement openmw.animation.PriorityMovement
+---@field Hit openmw.animation.PriorityHit
+---@field Weapon openmw.animation.PriorityWeapon
+---@field Block openmw.animation.PriorityBlock
+---@field Knockdown openmw.animation.PriorityKnockdown
+---@field Torch openmw.animation.PriorityTorch
+---@field Storm openmw.animation.PriorityStorm
+---@field Death openmw.animation.PriorityDeath
+---@field Scripted openmw.animation.PriorityScripted Special priority used by scripted animations. When any animation with this priority is present, all animations without this priority are paused.
 local Priority = {}
 
 ---`animation.BLEND_MASK`
----@class openmw.animation.BlendMask
----@field LowerBody number "1" All bones from 'Bip01 pelvis' and below
----@field Torso number "2" All bones from 'Bip01 Spine1' and up, excluding arms
----@field LeftArm number "4" All bones from 'Bip01 L Clavicle' and out
----@field RightArm number "8" All bones from 'Bip01 R Clavicle' and out
----@field UpperBody number "14" All bones from 'Bip01 Spine1' and up, including arms
----@field All number "15" All bones
+---@alias openmw.animation.BlendMaskLowerBody 1
+---@alias openmw.animation.BlendMaskTorso 2
+---@alias openmw.animation.BlendMaskLeftArm 4
+---@alias openmw.animation.BlendMaskRightArm 8
+---@alias openmw.animation.BlendMaskUpperBody 14
+---@alias openmw.animation.BlendMaskAll 15
+---@alias openmw.animation.BlendMask openmw.animation.BlendMaskLowerBody|openmw.animation.BlendMaskTorso|openmw.animation.BlendMaskLeftArm|openmw.animation.BlendMaskRightArm|openmw.animation.BlendMaskUpperBody|openmw.animation.BlendMaskAll
+---@class openmw.animation.BlendMaskValues
+---@field LowerBody openmw.animation.BlendMaskLowerBody
+---@field Torso openmw.animation.BlendMaskTorso
+---@field LeftArm openmw.animation.BlendMaskLeftArm
+---@field RightArm openmw.animation.BlendMaskRightArm
+---@field UpperBody openmw.animation.BlendMaskUpperBody
+---@field All openmw.animation.BlendMaskAll
 local BlendMask = {}
 
 ---`animation.BONE_GROUP`
----@class openmw.animation.BoneGroup
----@field LowerBody number "1" All bones from 'Bip01 pelvis' and below
----@field Torso number "2" All bones from 'Bip01 Spine1' and up, excluding arms
----@field LeftArm number "3" All bones from 'Bip01 L Clavicle' and out
----@field RightArm number "4" All bones from 'Bip01 R Clavicle' and out
+---@alias openmw.animation.BoneGroupLowerBody 0
+---@alias openmw.animation.BoneGroupTorso 1
+---@alias openmw.animation.BoneGroupLeftArm 2
+---@alias openmw.animation.BoneGroupRightArm 3
+---@alias openmw.animation.BoneGroup openmw.animation.BoneGroupLowerBody|openmw.animation.BoneGroupTorso|openmw.animation.BoneGroupLeftArm|openmw.animation.BoneGroupRightArm
+---@class openmw.animation.BoneGroupValues
+---@field LowerBody openmw.animation.BoneGroupLowerBody
+---@field Torso openmw.animation.BoneGroupTorso
+---@field LeftArm openmw.animation.BoneGroupLeftArm
+---@field RightArm openmw.animation.BoneGroupRightArm
 local BoneGroup = {}
 
 ---Possible Priority values
----@type openmw.animation.Priority
+---@type openmw.animation.PriorityValues
 animation.PRIORITY = nil
 
 ---Possible BlendMask values
----@type openmw.animation.BlendMask
+---@type openmw.animation.BlendMaskValues
 animation.BLEND_MASK = nil
 
 ---Possible BoneGroup values
----@type openmw.animation.BoneGroup
+---@type openmw.animation.BoneGroupValues
 animation.BONE_GROUP = nil
 
 ---Check if the object has an animation object or not
@@ -179,7 +207,7 @@ function animation.hasBone(actor, boneName) end
 
 ---Get the current active animation for a bone group
 ---@param actor openmw.Object
----@param boneGroup number Bone group enum, see openmw.animation.BONE_GROUP
+---@param boneGroup openmw.animation.BoneGroup Bone group enum, see openmw.animation.BONE_GROUP
 ---@return string
 function animation.getActiveGroup(actor, boneGroup) end
 
