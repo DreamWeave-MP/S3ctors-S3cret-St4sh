@@ -2210,8 +2210,8 @@ function Static.record(objectOrRecordId) end
 ---@type openmw.types.LevelledCreature
 types.LevelledCreature = nil
 
----A read-only list of all LevelledCreatureRecords in the world database.
----Implements a List of LevelledCreatureRecord.
+---A read-only list of all CreatureLevelledListRecords in the world database.
+---Implements a List of CreatureLevelledListRecord.
 ---@type openmw.types.RecordList<openmw.types.CreatureLevelledListRecord>
 LevelledCreature.records = nil
 
@@ -2220,7 +2220,7 @@ LevelledCreature.records = nil
 ---@return boolean
 function LevelledCreature.objectIsInstance(object) end
 
----Returns the read-only LevelledCreatureRecord of a levelled creature
+---Returns the read-only CreatureLevelledListRecord of a levelled creature
 ---@param objectOrRecordId openmw.Object|string
 ---@return openmw.types.CreatureLevelledListRecord|nil
 function LevelledCreature.record(objectOrRecordId) end
