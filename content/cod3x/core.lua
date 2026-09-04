@@ -620,6 +620,22 @@ function Skill.record(recordId) end
 -- Weather
 -- ============================================================
 
+---@class MOON_PHASE
+---@field Full number
+---@field WaningGibbous number
+---@field ThirdQuarter number
+---@field WaningCrescent number
+---@field New number
+---@field WaxingCrescent number
+---@field FirstQuarter number
+---@field WaxingGibbous number
+
+---@class Moon
+---@field name string The moon's name.
+---@field phase number One of MOON_PHASE.
+---@field phaseValue number MWScript-compatible phase value.
+---@field alpha number Visibility from 0 to 1.
+
 ---@class TimeOfDayInterpolatorFloat
 ---@field sunrise number
 ---@field sunset number
@@ -883,7 +899,8 @@ function WritableInventory:resolve() end
 ---@field rotation openmw.util.Transform Current rotation (read-only; use `teleport` on GObject to change).
 ---@field startingPosition openmw.util.Vector3 Original position from the content file.
 ---@field startingRotation openmw.util.Transform Original rotation from the content file.
----@field owner ObjectOwner Ownership information. Fields are settable from global and self scripts.
+---@field owner ObjectOwner? Ownership information. Fields are settable from global and self scripts.
+---@field saveState boolean Whether this object is written to the save game. Global scripts can set this; local scripts are read-only.
 ---@field cell? Cell The cell the object is in. Nil during loading or when inside a container/inventory. Typed as `LCell` on LObject/SelfObject, `GCell` on GObject.
 ---@field parentContainer? GameObject The container or actor holding this object. Nil if in a cell.
 ---@field type any Object type table from `openmw.types` (e.g. `types.NPC`, `types.Weapon`).
