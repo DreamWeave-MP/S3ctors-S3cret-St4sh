@@ -21,7 +21,7 @@ local ObjectList = {}
 ---Player, actors, items, and statics are game objects.
 ---@class openmw.Object: userdata
 ---@field id string The unique id of this object (not record id), can be used as a key in a table.
----@field contentFile string Lowercase file name of the content file that defines this object; nil for dynamically created objects.
+---@field contentFile string|nil Lowercase file name of the content file that defines this object; nil for dynamically created objects.
 ---@field position openmw.util.Vector3 Object position.
 ---@field scale number Object scale.
 ---@field rotation openmw.util.Transform Object rotation.
@@ -31,11 +31,11 @@ local ObjectList = {}
 ---@field startingRotation openmw.util.Transform The object original rotation
 ---@field owner openmw.ObjectOwner Ownership information
 ---@field cell openmw.core.Cell? The cell where the object currently is. During loading a game and for objects in an inventory or a container `cell` is nil.
----@field parentContainer openmw.Object Container or actor that contains (or has in inventory) this object. It is nil if the object is in a cell.
+---@field parentContainer openmw.Object? Container or actor that contains (or has in inventory) this object. It is nil if the object is in a cell.
 ---@field type any Type of the object (one of the tables from the package openmw.types.types).
 ---@field count number Count (>1 means a stack of objects).
 ---@field recordId string Returns record ID of the object in lowercase.
----@field globalVariable string Global Variable associated with this object (read only).
+---@field globalVariable string|nil Global Variable associated with this object (read only).
 local Object = {}
 
 ---A read-only object handle available from local scripts for nearby objects.
@@ -107,7 +107,7 @@ function GObject:setScale(scale) end
 ---If the worldspace has multiple cells (i.e. an exterior), the destination cell is calculated using `position`.
 ---@param cellOrName any A cell to define the destination worldspace; can be either Cell, or cell name, or an empty string (empty string means the default exterior worldspace).
 ---@param position openmw.util.Vector3 New position.
----@param options? openmw.TeleportOptions (optional) Either table TeleportOptions or openmw.util.Transform rotation.
+---@param options? openmw.TeleportOptions|openmw.util.Transform (optional) Either table TeleportOptions or openmw.util.Transform rotation.
 function GObject:teleport(cellOrName, position, options) end
 
 ---Moves an object into a container or an inventory. Enables if was disabled.

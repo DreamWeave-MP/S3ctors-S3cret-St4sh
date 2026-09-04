@@ -46,7 +46,7 @@ function menu.getCurrentSaveDir() end
 
 ---Save the game
 ---@param description string human readable description of the save
----@param slotName string name of the save slot
+---@param slotName? string name of the save slot
 function menu.saveGame(description, slotName) end
 
 ---All the saves for the given directory
