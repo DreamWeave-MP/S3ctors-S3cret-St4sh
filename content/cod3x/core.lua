@@ -684,6 +684,10 @@ function Skill.record(recordId) end
 ---@field records WeatherRecord[]
 local Weather = {}
 
+---@param cell Cell
+---@return Moon[]?
+function Weather.getCurrentMoons(cell) end
+
 --- Get the current weather for a cell.
 ---@param cell Cell
 ---@return WeatherRecord? Nil if the cell is inactive or has no weather.
