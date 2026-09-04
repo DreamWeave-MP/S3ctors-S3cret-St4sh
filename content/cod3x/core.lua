@@ -195,6 +195,11 @@
 ---@field continuousVfx boolean Whether the VFX should loop.
 ---@field hasDuration boolean Whether the effect has a duration.
 ---@field hasMagnitude boolean Whether the effect depends on a magnitude.
+---@field hasAttribute boolean Whether the effect can affect an attribute.
+---@field hasSkill boolean Whether the effect can affect a skill.
+---@field hasNoTarget boolean Whether the effect cannot have a target.
+---@field hasNoDuration boolean Whether the effect cannot have a duration.
+---@field hasNoMagnitude boolean Whether the effect cannot have a magnitude.
 ---@field isAppliedOnce boolean Whether applied fully on cast rather than continuously over the duration.
 ---@field casterLinked boolean If true, ends immediately when the caster dies or is not an actor.
 ---@field nonRecastable boolean If true, cannot be re-applied until it has ended (e.g. bound equipment).
