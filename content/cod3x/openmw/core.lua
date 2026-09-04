@@ -597,6 +597,14 @@ local DialogueConditionType = {}
 ---@field weatherProbabilities table A table mapping WeatherRecord.recordIds to their probability (0–100), should sum to 100. `"clear"`, `"cloudy"`, `"foggy"`, `"overcast"`, `"rain"`, `"thunderstorm"`, `"ashstorm"`, `"blight"`, `"snow"`, `"blizzard"`
 local RegionRecord = {}
 
+---Set one weather probability entry for this region at runtime.
+---@param weatherId string Weather id to modify.
+---@param value number New probability value.
+function RegionRecord:setProbability(weatherId, value) end
+
+---Reset this region's runtime weather probabilities to defaults from the loaded records.
+function RegionRecord:resetProbability() end
+
 ---Region sound reference
 ---@class openmw.core.RegionSoundRef
 ---@field soundId string Sound record ID
