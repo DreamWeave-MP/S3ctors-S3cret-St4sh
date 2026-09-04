@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context runtime
 
 ---Utility functions for timers.
 ---@class openmw_aux.time

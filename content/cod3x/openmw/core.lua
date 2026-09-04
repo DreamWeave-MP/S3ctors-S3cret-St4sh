@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context all
 
 ---Defines functions and types that are available in local, global, menu, and load scripts.
 ---@class openmw.core
@@ -376,6 +377,8 @@ local Spell = {}
 ---@field continuousVfx boolean Whether the magic effect's vfx should loop or not
 ---@field hasDuration boolean If set, the magic effect has a duration. As an example, divine intervention has no duration while fire damage does.
 ---@field hasMagnitude boolean If set, the magic effect depends on a magnitude. As an example, cure common disease has no magnitude while chameleon does.
+---@field hasAttribute boolean True if the effect requires an attribute parameter.
+---@field hasSkill boolean True if the effect requires a skill parameter.
 ---@field isAppliedOnce boolean If set, the magic effect is applied fully on cast, rather than being continuously applied over the effect's duration. For example, chameleon is applied once, while fire damage is continuously applied for the duration.
 ---@field casterLinked boolean If set, it is implied the magic effect links back to the caster in some way and should end immediately or never be applied if the caster dies or is not an actor.
 ---@field nonRecastable boolean If set, this effect cannot be re-applied until it has ended. This is used by bound equipment spells.
@@ -388,6 +391,14 @@ local Spell = {}
 ---@field hitSound string Identifier of the sound used on hit
 ---@field areaSound string Identifier of the sound used for AOE spells
 ---@field boltSound string Identifier of the projectile sound used for ranged spells
+---@field onSelf boolean True if the effect can be cast on self.
+---@field onTouch boolean True if the effect can be cast on touch.
+---@field onTarget boolean True if the effect can be cast on target.
+---@field unreflectable boolean True if the effect cannot be reflected.
+---@field allowsSpellmaking boolean True if the effect is available for spellmaking.
+---@field allowsEnchanting boolean True if the effect is available for enchanting.
+---@field negativeLight boolean True if the effect casts negative light.
+---@field speed number Projectile speed.
 ---@field hasAttribute boolean True if the effect requires an attribute parameter
 ---@field hasSkill boolean True if the effect requires a skill parameter
 ---@field onSelf boolean True if the effect can be cast on self
@@ -668,6 +679,7 @@ local MWScriptRecord = {}
 ---@field rainEffect string|nil Will return nil if weather has no rainEffect
 ---@field rainMaxRaindrops number The maximum number of rain particle batches to create every rainEntranceSpeed
 ---@field rainDiameter number The area around the player to spawn rain in
+---@field rainThreshold number The minimum height of rain particles relative to the player
 ---@field rainMaxHeight number The maximum height relative to the player to spawn rain at
 ---@field rainMinHeight number The minimum height relative to the player to spawn rain at
 ---@field rainLoopSoundID string|nil

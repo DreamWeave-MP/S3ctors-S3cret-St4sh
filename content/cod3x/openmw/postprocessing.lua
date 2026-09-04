@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context player
 
 ---Provides an interface to postprocessing shaders.
 ---@class openmw.postprocessing

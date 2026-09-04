@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context all
 
 ---Provides read-only access to data directories via VFS.
 ---Interface is very similar to "io" library.

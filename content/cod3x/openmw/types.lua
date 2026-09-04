@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context global|local|player
 
 ---Defines functions for specific types of game objects.
 ---@class openmw.types

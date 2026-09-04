@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context runtime
 
 ---Calendar configuration used by `openmw_aux.calendar`.
 ---@class openmw_aux.calendarconfig

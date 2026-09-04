@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context player|menu
 
 ---Utility functions for OpenMW UI layouts and elements.
 ---@class openmw_aux.ui

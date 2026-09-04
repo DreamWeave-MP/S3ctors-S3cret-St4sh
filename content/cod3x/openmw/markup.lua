@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context all
 
 ---Allows to work with markup languages.
 ---@class openmw.markup

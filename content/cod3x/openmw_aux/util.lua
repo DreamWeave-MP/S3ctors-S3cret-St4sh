@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context runtime
 
 ---Utility functions implemented in Lua rather than C++.
 ---@class openmw_aux.util

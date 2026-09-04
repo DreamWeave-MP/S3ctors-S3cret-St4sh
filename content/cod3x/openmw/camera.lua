@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context player
 
 ---Controls camera.
 ---@class openmw.camera

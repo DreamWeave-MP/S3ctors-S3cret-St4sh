@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context local|player
 
 ---Provides read-only access to the nearest area of the game world.
 ---@class openmw.nearby
