@@ -12,12 +12,12 @@
 ---@alias openmw_aux.calendarconfig.Config openmw_aux.calendarconfig
 
 ---@type openmw_aux.calendarconfig
-local calendarconfig = {}
-
-calendarconfig.monthsDuration = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
-calendarconfig.daysInWeek = 7
-calendarconfig.startingYear = 2008
-calendarconfig.startingYearDay = 151
-calendarconfig.startingWeekDay = 0
+local calendarconfig = {
+  monthsDuration = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+  daysInWeek = 7,
+  startingYear = 2008,
+  startingYearDay = 151,
+  startingWeekDay = 0,
+}
 
 return calendarconfig

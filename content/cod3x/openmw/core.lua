@@ -427,16 +427,6 @@ local Spell = {}
 ---@field allowsEnchanting boolean True if the effect is available for enchanting.
 ---@field negativeLight boolean True if the effect casts negative light.
 ---@field speed number Projectile speed.
----@field hasAttribute boolean True if the effect requires an attribute parameter
----@field hasSkill boolean True if the effect requires a skill parameter
----@field onSelf boolean True if the effect can be cast on self
----@field onTouch boolean True if the effect can be cast on touch
----@field onTarget boolean True if the effect can be cast on target
----@field unreflectable boolean True if the effect cannot be reflected
----@field allowsSpellmaking boolean True if the effect is available for spellmaking
----@field allowsEnchanting boolean True if the effect is available for enchanting
----@field negativeLight boolean True if the effect casts negative light
----@field speed number Projectile speed
 local MagicEffect = {}
 
 ---@class openmw.core.MagicEffectWithParams
