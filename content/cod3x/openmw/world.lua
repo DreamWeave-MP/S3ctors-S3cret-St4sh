@@ -129,6 +129,19 @@ function world.getPausedTags() end
 ---@return openmw.GObject
 function world.getObjectByFormId(formId) end
 
+---Find all objects within a given range of a world position.
+---@param position openmw.util.Vector3 The world position
+---@param range number The range
+---@return openmw.ObjectList<openmw.GObject>
+function world.getObjectsInRange(position, range) end
+
+---Returns all objects with the given record ID.
+---@param recordId string Record ID
+---@param worldSpaceId? string ID of the world space to search
+---@param loadedOnly? boolean When true, only cells that have previously been loaded are searched.
+---@return openmw.ObjectList<openmw.GObject>
+function world.getObjectsByRecordId(recordId, worldSpaceId, loadedOnly) end
+
 ---Create a new instance of the given record.
 ---After creation the object is in the disabled state. Use :teleport to place to the world or :moveInto to put it into a container or an inventory.
 ---Note that dynamically created creatures, NPCs, and container inventories will not respawn.
