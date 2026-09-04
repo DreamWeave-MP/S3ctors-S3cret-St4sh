@@ -5,6 +5,9 @@
         "showWord": false
     },
     "diagnostics": {
+        "neededFileStatus": {
+            "type-check": "Any!"
+        },
         "unusedLocalExclude": [
             "_*"
         ]

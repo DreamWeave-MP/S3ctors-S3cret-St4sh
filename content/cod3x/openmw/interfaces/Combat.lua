@@ -51,6 +51,25 @@ local AttackSourceType = {}
 ---@field Thrust openmw.interfaces.Combat.AttackTypeThrust
 local AttackType = {}
 
+---@class openmw.interfaces.Combat.Global
+---@field version number
+---@field ATTACK_SOURCE_TYPES openmw.interfaces.Combat.AttackSourceTypeValues
+---@field ATTACK_TYPES openmw.interfaces.Combat.AttackTypeValues
+---@field adjustDamageForArmor fun(Damage: number, actor?: openmw.Object): number
+---@field adjustDamageForDifficulty fun(attack: openmw.interfaces.Combat.AttackInfo, defendant?: openmw.Object)
+---@field getArmorRating fun(actor?: openmw.Object): number
+---@field getArmorSkill fun(item: openmw.Object): string|nil
+---@field getSkillAdjustedArmorRating fun(item: openmw.Object, actor?: openmw.Object): number
+---@field getEffectiveArmorRating fun(item: openmw.Object, actor?: openmw.Object): number
+---@field pickRandomArmor fun(actor?: openmw.Object): openmw.Object|nil
+
+---@class openmw.interfaces.Combat.Local: openmw.interfaces.Combat.Global
+---@field addOnHitHandler fun(handler: fun(...): any)
+---@field applyArmor fun(attack: openmw.interfaces.Combat.AttackInfo)
+---@field applyStagger fun(attack: openmw.interfaces.Combat.AttackInfo, rawHealthDamage: number)
+---@field spawnBloodEffect fun(position: openmw.util.Vector3)
+---@field onHit fun(attackInfo: openmw.interfaces.Combat.AttackInfo)
+
 ---Interface version
 ---@type number
 Combat.version = nil

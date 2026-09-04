@@ -39,3 +39,9 @@ LuaLS transforms enabled.  The current LuaLS docs list them at
 <https://luals.github.io/wiki/settings/#typeformatconfig>.
 
 This file is meant for your mod workspace, not your OpenMW install directory.
+
+Cod3x validates OpenMW API availability and interface surfaces in the current
+file. It cannot reliably validate whether an arbitrary user module's
+`---@omw-context` is compatible with every importer because LuaLS may process
+an importer before the imported module and does not provide a reliable
+post-resolution diagnostic hook.
