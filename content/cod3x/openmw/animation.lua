@@ -96,7 +96,7 @@ function animation.skipAnimationThisFrame(actor) end
 ---Get the absolute position within the animation track of the given text key
 ---@param actor openmw.Object
 ---@param text string key
----@return number
+---@return number|nil
 function animation.getTextKeyTime(actor, text) end
 
 ---Check if the given animation group is currently playing
@@ -108,7 +108,7 @@ function animation.isPlaying(actor, groupName) end
 ---Get the current absolute time of the given animation group if it is playing, or -1 if it is not playing.
 ---@param actor openmw.Object
 ---@param groupName string
----@return number
+---@return number|nil
 function animation.getCurrentTime(actor, groupName) end
 
 ---Check whether the animation is a looping animation or not. This is determined by a combination
@@ -192,6 +192,11 @@ function animation.playQueued(actor, groupName, options) end
 ---@param groupName string
 ---@param options table A table of play options. Can contain: * `loops` - a number >= 0, the number of times the animation should loop after the first play (default: 0). * `priority` - Either a single #Priority value that will be assigned to all bone groups. Or a table mapping bone groups to its priority (default: PRIORITY.Default). * `blendMask` - A mask of which bone groups to include in the animation (Default: BLEND_MASK.All). * `autoDisable` - If true, the animation will be immediately  removed upon finishing, which means information will not be possible to query once completed. (Default: true) * `speed` - a floating point number >= 0, the speed at which the animation should play (default: 1) * `startKey` - the animation key at which the animation should start (default: "start") * `stopKey` - the animation key at which the animation should end (default: "stop") * `startPoint` - a floating point number 0 <= value <= 1, starting completion of the animation (default: 0) * `forceLoop` - a boolean, to set if the animation should loop even if it's not a looping animation (default: false)
 function animation.playBlended(actor, groupName, options) end
+
+---Adds a spell-cast glow to the actor.
+---@param actor openmw.SelfObject
+---@param options table Options containing `color` and `duration`.
+function animation.addGlow(actor, options) end
 
 ---Check if the actor's animation has the given animation group or not.
 ---@param actor openmw.Object

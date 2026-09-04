@@ -175,8 +175,12 @@ function ui.printToConsole(msg, color) end
 function ui.setConsoleMode(mode) end
 
 ---Set selected object for console.
----@param obj openmw.Object
+---@param obj openmw.Object|nil Object to select, or nil to clear the selection.
 function ui.setConsoleSelectedObject(obj) end
+
+---Return the current in-game console mode.
+---@return string
+function ui.getConsoleMode() end
 
 ---Returns the size of the OpenMW window in pixels as a 2D vector.
 ---@return openmw.util.Vector2

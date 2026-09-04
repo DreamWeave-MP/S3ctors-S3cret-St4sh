@@ -12,6 +12,7 @@ local Combat = {}
 ---@class openmw.interfaces.Combat.AttackInfo
 ---@field damage table A table mapping a stat name (health, fatigue, or magicka) to a number. For example, {health = 50, fatigue = 10} will cause 50 damage to health and 10 to fatigue (before adjusting for armor and difficulty). This field is ignored for failed attacks.
 ---@field strength number A number between 0 and 1 representing the attack strength. This field is ignored for failed attacks.
+---@field windUp number A number that is -1 when there is no wind-up animation, or between 0 and 1 representing how far along the attack was in its wind-up phase.
 ---@field successful boolean Whether the attack was successful or not.
 ---@field sourceType openmw.interfaces.Combat.AttackSourceType What class of attack this is.
 ---@field type openmw.interfaces.Combat.AttackType|nil (Optional) Attack variant if applicable. For melee attacks this represents chop vs thrust vs slash. For unarmed creatures this implies which of its 3 possible attacks were used. For other attacks this field can be ignored.
@@ -21,14 +22,15 @@ local Combat = {}
 ---@field hitPos openmw.util.Vector3|nil (Optional) Where on the victim the attack is landing. Used to spawn blood effects. Blood effects are skipped if nil.
 ---@field ignoreArmor boolean|nil (Optional) Whether to ignore armor.
 ---@field ignoreDifficulty boolean|nil (Optional) Whether to ignore difficulty scaling.
+---@field ignoreStagger boolean|nil (Optional) Whether to ignore stagger (knockdown and hit recovery).
 ---@field muteSound boolean|nil (Optional) If true, does not play miss or damage sounds.
 local AttackInfo = {}
 
 ---Table of possible attack source types
----@alias openmw.interfaces.Combat.AttackSourceTypeMagic "Magic"
----@alias openmw.interfaces.Combat.AttackSourceTypeMelee "Melee"
----@alias openmw.interfaces.Combat.AttackSourceTypeRanged "Ranged"
----@alias openmw.interfaces.Combat.AttackSourceTypeUnspecified "Unspecified"
+---@alias openmw.interfaces.Combat.AttackSourceTypeMagic "magic"
+---@alias openmw.interfaces.Combat.AttackSourceTypeMelee "melee"
+---@alias openmw.interfaces.Combat.AttackSourceTypeRanged "ranged"
+---@alias openmw.interfaces.Combat.AttackSourceTypeUnspecified "unspecified"
 ---@alias openmw.interfaces.Combat.AttackSourceType openmw.interfaces.Combat.AttackSourceTypeMagic|openmw.interfaces.Combat.AttackSourceTypeMelee|openmw.interfaces.Combat.AttackSourceTypeRanged|openmw.interfaces.Combat.AttackSourceTypeUnspecified
 
 ---@class openmw.interfaces.Combat.AttackSourceTypeValues
@@ -39,9 +41,9 @@ local AttackInfo = {}
 local AttackSourceType = {}
 
 ---Table of possible attack types
----@alias openmw.interfaces.Combat.AttackTypeChop 2
----@alias openmw.interfaces.Combat.AttackTypeSlash 3
----@alias openmw.interfaces.Combat.AttackTypeThrust 4
+---@alias openmw.interfaces.Combat.AttackTypeChop 0
+---@alias openmw.interfaces.Combat.AttackTypeSlash 1
+---@alias openmw.interfaces.Combat.AttackTypeThrust 2
 ---@alias openmw.interfaces.Combat.AttackType openmw.interfaces.Combat.AttackTypeChop|openmw.interfaces.Combat.AttackTypeSlash|openmw.interfaces.Combat.AttackTypeThrust
 ---@class openmw.interfaces.Combat.AttackTypeValues
 ---@field Chop openmw.interfaces.Combat.AttackTypeChop
@@ -85,6 +87,11 @@ function Combat.adjustDamageForDifficulty(attack, defendant) end
 ---hit sound.
 ---@param attack openmw.interfaces.Combat.AttackInfo
 function Combat.applyArmor(attack) end
+
+---Applies stagger (knockdown or hit recovery) to the character.
+---@param attack openmw.interfaces.Combat.AttackInfo
+---@param rawHealthDamage number The health damage caused by the attack before armor reduction.
+function Combat.applyStagger(attack, rawHealthDamage) end
 
 ---Computes this character's armor rating.
 ---Note that this interface function is read by the engine to update the UI.

@@ -5,7 +5,7 @@
 ---@field AnimationController openmw.interfaces.AnimationController Built-in contexts: local.
 ---@field AI openmw.interfaces.AI Built-in contexts: local.
 ---@field Camera openmw.interfaces.Camera Built-in contexts: player.
----@field Combat openmw.interfaces.Combat
+---@field Combat openmw.interfaces.Combat Built-in contexts: global|local.
 ---@field MWUI openmw.interfaces.MWUI Built-in contexts: menu|player.
 ---@field Settings openmw.interfaces.Settings Built-in contexts: global|menu|player.
 ---@field UI openmw.interfaces.UI Built-in contexts: player.

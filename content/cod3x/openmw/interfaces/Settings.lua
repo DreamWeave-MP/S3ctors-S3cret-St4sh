@@ -32,14 +32,14 @@ local GroupOptions = {}
 ---@field key string A unique key
 ---@field l10n string A localization context (an argument of core.l10n)
 ---@field name string A key from the localization context
----@field description string A key from the localization context (optional, can be `nil`)
+---@field description? string A key from the localization context (optional, can be `nil`)
 local PageOptions = {}
 
 ---Table of setting options
 ---@class openmw.interfaces.Settings.SettingOptions
 ---@field key string A unique key
 ---@field name string A key from the localization context
----@field description string A key from the localization context (optional, can be `nil`)
+---@field description? string A key from the localization context (optional, can be `nil`)
 ---@field default any A default value
 ---@field renderer string A renderer key (see the "Setting Renderers" page)
 ---@field argument any An argument for the renderer
