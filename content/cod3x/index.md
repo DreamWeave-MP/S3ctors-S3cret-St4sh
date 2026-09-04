@@ -10,7 +10,9 @@ taxonomies:
     - Documentation
 
 extra:
-  version: 0.1
+  nexus_id: 59122
+  nexus_group_id: 7468718
+  version: 0.2
 ---
 context-aware diagnostics for `require('openmw.*')` calls.
 
