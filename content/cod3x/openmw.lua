@@ -1,4 +1,5 @@
 ---@meta
+---@omw-context none
 
 -- Convenience index for OpenMW LuaLS stubs. Runtime code should require modules directly.
 ---@class openmw
