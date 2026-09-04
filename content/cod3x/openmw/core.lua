@@ -1223,17 +1223,17 @@ function Weather.getCurrentMoons(cell) end
 
 ---Get the current weather
 ---@param cell openmw.core.Cell The cell to get the current weather for
----@return openmw.core.WeatherRecord Can be nil if the cell is inactive or has no weather
+---@return openmw.core.WeatherRecord|nil Can be nil if the cell is inactive or has no weather
 function Weather.getCurrent(cell) end
 
 ---Get the next weather if any
 ---@param cell openmw.core.Cell The cell to get the next weather for
----@return openmw.core.WeatherRecord Can be nil
+---@return openmw.core.WeatherRecord|nil Can be nil
 function Weather.getNext(cell) end
 
 ---Get current weather transition value
 ---@param cell openmw.core.Cell The cell to get the transition value for
----@return number Can be nil if the cell is inactive or has no weather
+---@return number|nil Can be nil if the cell is inactive or has no weather
 function Weather.getTransition(cell) end
 
 ---Change the weather
@@ -1243,27 +1243,27 @@ function Weather.changeWeather(regionId, weather) end
 
 ---Get the current direction of the light of the sun.
 ---@param cell openmw.core.Cell The cell to get the sun direction for
----@return openmw.util.Vector4 Can be nil if the cell is inactive
+---@return openmw.util.Vector4|nil Can be nil if the cell is inactive
 function Weather.getCurrentSunLightDirection(cell) end
 
 ---Get the current sun visibility taking weather transition into account.
 ---@param cell openmw.core.Cell The cell to get the sun visibility for
----@return number Can be nil if the cell is inactive or has no weather
+---@return number|nil Can be nil if the cell is inactive or has no weather
 function Weather.getCurrentSunVisibility(cell) end
 
 ---Get the current sun percentage taking weather transition into account.
 ---@param cell openmw.core.Cell The cell to get the sun percentage for
----@return number Can be nil if the cell is inactive or has no weather
+---@return number|nil Can be nil if the cell is inactive or has no weather
 function Weather.getCurrentSunPercentage(cell) end
 
 ---Get the current wind speed taking weather transition into account.
 ---@param cell openmw.core.Cell The cell to get the wind speed for
----@return number Can be nil if the cell is inactive or has no weather
+---@return number|nil Can be nil if the cell is inactive or has no weather
 function Weather.getCurrentWindSpeed(cell) end
 
 ---Get the current storm direction taking weather transition into account.
 ---@param cell openmw.core.Cell The cell to get the storm direction for
----@return openmw.util.Vector3 Can be nil if the cell is inactive or has no weather
+---@return openmw.util.Vector3|nil Can be nil if the cell is inactive or has no weather
 function Weather.getCurrentStormDirection(cell) end
 
 return core
