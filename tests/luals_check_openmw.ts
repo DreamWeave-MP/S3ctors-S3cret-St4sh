@@ -9,7 +9,7 @@ const code = "\u001b[35m(undefined-global)\u001b[0m";
 const output = [
   `${ansi}tests/omw_context_luals/cases/global_interfaces.lua:11:37${reset} [${warning}] Undefined global \`__OMW_CONTEXT_ERROR_global_cannot_use_openmw_interfaces_AnimationController__\`. ${code}`,
   "    local interfaces = require 'openmw.interfaces'",
-  `${ansi}tests/omw_context_luals/cases/player_interfaces.lua:17:48${reset} [${warning}] Cannot assign integer to parameter string.",
+  `${ansi}tests/omw_context_luals/cases/player_interfaces.lua:17:48${reset} [${warning}] Cannot assign integer to parameter string.`,
   "- integer cannot match string",
   "- Type number cannot match string \u001b[35m(param-type-mismatch)\u001b[0m",
   "    local result = interfaces.MyMod.doThing(42)",
