@@ -405,7 +405,7 @@ return {
       'Music/Undercity/Undercity 2.mp3',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(UndercityCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(UndercityCellNames) end,
   },
   {
     id = 'Sounds of Starwind - Nar Shaddaa Market',
@@ -415,8 +415,8 @@ return {
       'Music/Nar Shaddaa Ambience.mp3',
     },
 
-    isValidCallback = function(playback)
-      return playback.state.cellName == 'nar shaddaa, makacheesa market'
+    isValidCallback = function()
+      return Playback.state.cellName == 'nar shaddaa, makacheesa market'
     end,
   },
   {
@@ -430,7 +430,7 @@ return {
       'Music/Kashyyk3.wav',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(KashyykCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(KashyykCellNames) end,
   },
   {
     id = 'Sounds of Starwind - Tatooine Settlement',
@@ -442,8 +442,8 @@ return {
       'Music/Sandriver2.mp3',
     },
 
-    isValidCallback = function(playback)
-      return playback.rules.cellNameExact(TatooineCivilizedCellNames)
+    isValidCallback = function()
+      return Playback.rules.cellNameExact(TatooineCivilizedCellNames)
     end,
   },
   {
@@ -457,8 +457,8 @@ return {
       'Music/Tatooine3.wav',
     },
 
-    isValidCallback = function(playback)
-      return playback.rules.cellNameExact(TatooineDangerousCellNames)
+    isValidCallback = function()
+      return Playback.rules.cellNameExact(TatooineDangerousCellNames)
     end,
   },
   {
@@ -472,7 +472,7 @@ return {
       'Music/Dantooine3.wav',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(DantooineCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(DantooineCellNames) end,
   },
   {
     id = 'Sounds of Starwind - Korriban',
@@ -484,7 +484,7 @@ return {
       'Music/Korriban2.mp3',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(KorribanCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(KorribanCellNames) end,
   },
   {
     id = 'Sounds of Starwind - Manaan',
@@ -496,7 +496,7 @@ return {
       'Music/Manaan3.wav',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(ManaanCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(ManaanCellNames) end,
   },
   {
     id = 'Sounds of Starwind - Taris',
@@ -507,7 +507,7 @@ return {
       'Music/Taris3.mp3',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(TarisCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(TarisCellNames) end,
   },
   {
     id = 'Sounds of Starwind - Taris Ruined Plaza',
@@ -517,7 +517,7 @@ return {
       'Music/Shadetheme.mp3',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(TarisRuinedPlazaCells) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(TarisRuinedPlazaCells) end,
   },
   {
     id = 'sounds of starwind/cantina',
@@ -527,7 +527,7 @@ return {
       'Music/SSW/Cantinabackground.mp3',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(CantinaCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(CantinaCellNames) end,
   },
   {
     id = 'sounds of starwind/endar spire',
@@ -537,6 +537,6 @@ return {
       'Music/Endar Spire.mp3',
     },
 
-    isValidCallback = function(playback) return playback.rules.cellNameExact(EndarSpireCellNames) end,
+    isValidCallback = function() return Playback.rules.cellNameExact(EndarSpireCellNames) end,
   },
 }

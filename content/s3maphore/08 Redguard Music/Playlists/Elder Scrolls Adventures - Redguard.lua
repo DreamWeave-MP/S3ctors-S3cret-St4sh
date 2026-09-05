@@ -43,8 +43,8 @@ return {
       'Music/redguardmusic/03. Theme 2.mp3',
     },
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.region(RedguardRegions)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.region(RedguardRegions)
     end,
   },
   {
@@ -57,8 +57,8 @@ return {
       'Music/redguardmusic/05. Theme 4.mp3',
     },
 
-    isValidCallback = function(playback)
-      return playback.state.isInCombat and playback.rules.region(RedguardRegions)
+    isValidCallback = function()
+      return Playback.state.isInCombat and Playback.rules.region(RedguardRegions)
     end,
   },
   {
@@ -71,8 +71,8 @@ return {
       'Music/redguardmusic/03. Theme 2.mp3',
     },
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.cellNameMatch(RGCityPatterns)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.cellNameMatch(RGCityPatterns)
     end,
   },
 }

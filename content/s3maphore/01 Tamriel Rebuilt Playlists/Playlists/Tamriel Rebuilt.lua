@@ -148,17 +148,17 @@ local TombCellMatches = {
 }
 
 ---@type ValidPlaylistCallback
-local function caveTRRule(playback)
-  return not playback.state.cellIsExterior
-    and playback.rules.staticContentFile(TContentFiles)
-    and playback.rules.objectExact(Tilesets.Cave)
+local function caveTRRule()
+  return not Playback.state.cellIsExterior
+    and Playback.rules.staticContentFile(TContentFiles)
+    and Playback.rules.objectExact(Tilesets.Cave)
 end
 
 ---@type ValidPlaylistCallback
-local function tombTRRule(playback)
-  return not playback.state.cellIsExterior
-    and playback.rules.staticContentFile(TContentFiles)
-    and playback.rules.cellNameMatch(TombCellMatches)
+local function tombTRRule()
+  return not Playback.state.cellIsExterior
+    and Playback.rules.staticContentFile(TContentFiles)
+    and Playback.rules.cellNameMatch(TombCellMatches)
 end
 
 ---@type PlaylistFallback

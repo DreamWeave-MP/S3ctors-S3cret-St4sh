@@ -15,7 +15,7 @@ local VampireBossNames = {
 
 ---@type ValidPlaylistCallback
 local function vampireBossRule(playback)
-  return playback.state.isInCombat and playback.rules.combatTargetExact(VampireBossNames)
+  return Playback.state.isInCombat and Playback.rules.combatTargetExact(VampireBossNames)
 end
 
 ---@type S3maphorePlaylist[]

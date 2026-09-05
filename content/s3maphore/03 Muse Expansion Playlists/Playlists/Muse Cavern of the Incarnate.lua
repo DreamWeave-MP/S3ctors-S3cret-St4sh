@@ -5,7 +5,7 @@ local IncarnateCells = {
 
 ---@type ValidPlaylistCallback
 local function incarnateCellRule(playback)
-  return not playback.state.cellIsExterior and playback.rules.cellNameExact(IncarnateCells)
+  return not Playback.state.cellIsExterior and Playback.rules.cellNameExact(IncarnateCells)
 end
 
 ---@type S3maphorePlaylist[]

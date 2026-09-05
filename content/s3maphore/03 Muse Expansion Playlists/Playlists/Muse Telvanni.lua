@@ -71,8 +71,8 @@ return {
     priority = PlaylistPriority.Faction,
     randomize = true,
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.cellNameMatch(TelvanniMatches)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.cellNameMatch(TelvanniMatches)
     end,
   },
   {
@@ -80,8 +80,8 @@ return {
     priority = PlaylistPriority.BattleMod,
     randomize = true,
 
-    isValidCallback = function(playback)
-      return playback.state.isInCombat and playback.rules.combatTargetExact(TelvanniCombatTargets)
+    isValidCallback = function()
+      return Playback.state.isInCombat and Playback.rules.combatTargetExact(TelvanniCombatTargets)
     end,
   },
 }

@@ -55,7 +55,7 @@ local EmpireEnemyNames = {
 }
 
 ---@type ValidPlaylistCallback
-local function empireEnemyRule(playback) return playback.rules.combatTargetExact(EmpireEnemyNames) end
+local function empireEnemyRule() return Playback.rules.combatTargetExact(EmpireEnemyNames) end
 
 ---@type CellMatchPatterns
 local EmpireCellMatches = {
@@ -111,10 +111,10 @@ local ImperialCellMatches = {
 }
 
 ---@type ValidPlaylistCallback
-local function empireCellRule(playback) return playback.rules.cellNameMatch(EmpireCellMatches) end
+local function empireCellRule() return Playback.rules.cellNameMatch(EmpireCellMatches) end
 
 ---@type ValidPlaylistCallback
-local function imperialCellRule(playback) return playback.rules.cellNameMatch(ImperialCellMatches) end
+local function imperialCellRule() return Playback.rules.cellNameMatch(ImperialCellMatches) end
 
 ---@type S3maphorePlaylist[]
 return {

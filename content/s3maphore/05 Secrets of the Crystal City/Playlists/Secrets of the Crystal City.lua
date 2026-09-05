@@ -34,7 +34,7 @@ local CrystalCityCells = {
   ['massama, uxith-kei garrison'] = true,
 }
 
-local function crystalCityRule(playback) return playback.rules.cellNameExact(CrystalCityCells) end
+local function crystalCityRule() return Playback.rules.cellNameExact(CrystalCityCells) end
 
 ---@type S3maphorePlaylist[]
 return {

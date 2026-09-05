@@ -40,8 +40,8 @@ return {
     priority = PlaylistPriority.Region,
     randomize = true,
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.region(SolstheimRegions)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.region(SolstheimRegions)
     end,
   },
 }

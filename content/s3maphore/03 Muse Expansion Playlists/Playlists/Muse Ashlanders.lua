@@ -11,7 +11,7 @@ local AshlanderCellNames = {
 }
 
 ---@type ValidPlaylistCallback
-local function ashlanderCellRule(playback) return playback.rules.cellNameMatch(AshlanderCellNames) end
+local function ashlanderCellRule() return Playback.rules.cellNameMatch(AshlanderCellNames) end
 
 ---@type IDPresenceMap
 local MuseAshlanderEnemyNames = {
@@ -137,7 +137,7 @@ local MuseAshlanderEnemyNames = {
 
 ---@type ValidPlaylistCallback
 local function ashlanderEnemyRule(playback)
-  return playback.state.isInCombat and playback.rules.combatTargetExact(MuseAshlanderEnemyNames)
+  return Playback.state.isInCombat and Playback.rules.combatTargetExact(MuseAshlanderEnemyNames)
 end
 
 ---@type S3maphorePlaylist[]
