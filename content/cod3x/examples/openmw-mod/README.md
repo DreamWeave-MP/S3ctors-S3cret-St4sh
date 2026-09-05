@@ -27,14 +27,17 @@ Use forward slashes in paths, even on Windows:
     "runtime.plugin": "C:/Modding/Tools/Cod3x/omw_context_plugin.lua",
     "language.fixIndent": false,
     "typeFormat.config": {
-        "format_line": "false"
+        "format_line": "false",
+        "auto_complete_end": "false",
+        "auto_complete_table_sep": "false"
     }
 }
 ```
 
 `language.fixIndent` and `typeFormat.config.format_line` are LuaLS settings used
 to disable VSCode/VSCodium on-type formatting while keeping Cod3x's virtual
-LuaLS transforms enabled.  The current LuaLS docs list them at
+LuaLS transforms enabled. The two `auto_complete` settings disable the other
+on-type edits that can use transformed document coordinates. The current LuaLS docs list them at
 <https://luals.github.io/wiki/settings/#languagefixindent> and
 <https://luals.github.io/wiki/settings/#typeformatconfig>.
 

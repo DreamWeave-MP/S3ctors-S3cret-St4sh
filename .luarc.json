@@ -45,6 +45,12 @@
             "./content/ui_modes_slim/?.lua"
         ]
     },
+    "language.fixIndent": false,
+    "typeFormat.config": {
+        "format_line": "false",
+        "auto_complete_end": "false",
+        "auto_complete_table_sep": "false"
+    },
     "workspace": {
         "excludeDir": [
             "content/triad_tools"
