@@ -36,8 +36,8 @@ tes3 = tes3
 ---@alias NumericPresenceMap table<string, NumericPresenceMapData>
 
 ---@class NumericPresenceMapData
----@field min integer? if omitted, uses 0.0
----@field max integer? If omitted, then math.huge is used
+---@field min number? if omitted, uses 0.0
+---@field max number? If omitted, then math.huge is used
 
 --- Data type used to bridge one playlist into another, or to extend
 ---@class PlaylistFallback
@@ -46,9 +46,9 @@ tes3 = tes3
 ---@field tracks string[]? tracks to manually add to a given playlist. Used for folder-based playlists; not necessary for any others
 
 ---@class PlaylistSilenceParams
----@field min integer minimum possible duration for this silence track
----@field max integer maximum possible duration for this silence track
----@field chance number probablility that this playlist will use silence between tracks
+---@field min integer? minimum possible duration for this silence track; defaults to 0
+---@field max integer? maximum possible duration for this silence track; defaults to 30
+---@field chance number? probability that this playlist will use silence between tracks; defaults to 1
 
 ---@class QueuedEvent
 ---@field name string? the name of the event to send. If nil, no event will be sent.
@@ -87,13 +87,13 @@ tes3 = tes3
 ---@field priority number priority of the playlist, lower value means higher priority
 ---@field tracks string[]? list of tracks in the playlist. If not provided, tracks will be loaded from the music/ subdirectory with the same name as the playlist ID.
 ---@field randomize boolean? if true, tracks will be played in random order. Defaults to false.
----@field active boolean? if true, the playlist is active and will be played. Defaults to false
+---@field active boolean? if true, the playlist is active and will be played. Defaults to true
 ---@field cycleTracks boolean? if true, the playlist will cycle through tracks. Defaults to true
 ---@field playOneTrack boolean? if true, the playlist will play only one track and then deactivate. Defaults to false
 ---@field registrationOrder number? the order in which the playlist was registered, used for sorting playlists by priority. Do not provide in the playlist definition, it will be assigned automatically.
 ---@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
 ---@field interruptMode InterruptMode? whether a given playlist may be interrupted by another. `INTERRUPT.Override` always overrides the current playlist when selected, including a current playlist using `INTERRUPT.Never` or when Finish Previous Track is enabled.
----@field isValidCallback ValidPlaylistCallback? The function used to determine whether or not a playlist should execute on this particular frame. NOTE: This field is only optional in the event that the playlist's priority is NOT `PlaylistPriority.Never`
+---@field isValidCallback ValidPlaylistCallback The function used to determine whether or not a playlist should execute on this particular frame.
 ---@field fallback PlaylistFallback?
 ---@field fadeOut number? Optional duration supplied by a playlist which indicates how long the fadeout between tracks should be. If not present then the global fadeOut setting is used.
 ---@field silenceBetweenTracks PlaylistSilenceParams?
@@ -161,7 +161,7 @@ tes3 = tes3
 ---| 'daedra'
 ---| 'creatures'
 
----@alias ValidPlaylistCallback fun(): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
+---@alias ValidPlaylistCallback fun(playback: S3maphorePlayback): boolean? a function that returns true if the playlist is valid for the current context.
 
 ---@alias VampireType
 ---| 'quarra'
@@ -232,8 +232,8 @@ tes3 = tes3
 ---    id = 'MyRegionMusic',
 ---    priority = 900,
 ---    tracks = { 'music/my/ashlands.mp3', 'music/my/bittercoast.mp3' },
----    isValidCallback = function()
----        return Playback.rules.region { ['ashlands region'] = true }
+---    isValidCallback = function(playback)
+---        return playback.rules.region { ['ashlands region'] = true }
 ---    end,
 ---}
 ---
