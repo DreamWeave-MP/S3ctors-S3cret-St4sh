@@ -74,6 +74,7 @@ local lastSpellSchool = lastSelectedSpell and Magic:getSpellSchool(lastSelectedS
 
 local desiredPlaylist, resolverDirty, didTransition, waitingOnPresence, wasExterior =
   nil, false, false, true, false
+local presenceGeneration, playbackEpoch = 0, 0
 
 ---@type QueuedEvent
 local queuedEvent = {
@@ -93,6 +94,8 @@ local PlaybackParams = {
 ---@type S3maphorePlaybackChangeEventData
 local TrackChangeData = {
   fadeOut = MusicSettings.FadeOutDuration,
+  cellId = '',
+  playbackEpoch = 0,
   playlistId = '',
   reason = MusicManager.STATE.TrackChanged,
   trackName = '',
@@ -106,6 +109,13 @@ local function clearQueuedData()
   if type(queuedEvent.data) ~= 'table' then queuedEvent.data = queuedEvent.backup end
   clear(queuedEvent.data)
   queuedEvent.name = ''
+end
+
+local function requestPresence(oldCellId)
+  presenceGeneration = presenceGeneration + 1
+  playbackEpoch = playbackEpoch + 1
+  waitingOnPresence = true
+  SendGlobalEvent('S3maphoreUpdatePresence', { self.object, oldCellId, presenceGeneration })
 end
 
 StateMachine:state('update_playlist_state', function(dt)
@@ -251,6 +261,7 @@ StateMachine:state('init_player', function()
         MusicManager.currentPlaylist = nil
         MusicManager.currentTrack = nil
         desiredPlaylist, resolverDirty = nil, false
+        playbackEpoch = playbackEpoch + 1
       end
     elseif
       key == 'PlayerTargetedCombatOnly'
@@ -262,7 +273,9 @@ StateMachine:state('init_player', function()
     end
   end))
 
-  SendGlobalEvent('S3maphoreInitializationComplete', self.object)
+  presenceGeneration = presenceGeneration + 1
+  playbackEpoch = playbackEpoch + 1
+  SendGlobalEvent('S3maphoreInitializationComplete', { self.object, nil, presenceGeneration })
 
   updateCellMetadata()
 
@@ -357,6 +370,8 @@ StateMachine:state('handle_playback', function()
   clear(TrackChangeData)
 
   TrackChangeData.fadeOut = PlaybackParams.fadeOut
+  TrackChangeData.cellId = self.cell.id
+  TrackChangeData.playbackEpoch = playbackEpoch
   TrackChangeData.playlistId = target.id
   TrackChangeData.trackName = MusicManager.currentTrack
   TrackChangeData.reason = MusicManager.STATE.TrackChanged
@@ -536,8 +551,7 @@ local scriptInterface = {
       if PlaylistLoader then return end
 
       musicUtil.debugLog 'Requesting CellPresence update from PLAYER scope'
-      SendGlobalEvent('S3maphoreUpdatePresence', { self.object, oldCellId })
-      waitingOnPresence = true
+      requestPresence(oldCellId)
     end,
 
     S3maphoreToggleMusic = function(enabled)
@@ -578,8 +592,8 @@ local scriptInterface = {
       MusicManager.updateBanner()
     end,
 
-    S3maphoreCellPresenceUpdated = function(cellId)
-      if cellId ~= self.cell.id then return end
+    S3maphoreCellPresenceUpdated = function(presence)
+      if presence.cellId ~= self.cell.id or presence.generation ~= presenceGeneration then return end
 
       waitingOnPresence = false
       musicUtil.debugLog 'Resolving playlist after cell presence update!'
@@ -623,7 +637,21 @@ local scriptInterface = {
       if MusicSettings.MusicEnabled then StateMachine:transition 'update_playlist_state' end
     end,
 
-    S3maphoreTrackChanged = MusicManager.callTrackChangedHandlers,
+    S3maphoreTrackChanged = function(eventData)
+      if not MusicSettings.MusicEnabled then return end
+
+      if eventData.reason == MusicManager.STATE.TrackChanged
+        and (
+          waitingOnPresence
+          or eventData.cellId ~= self.cell.id
+          or eventData.playbackEpoch ~= playbackEpoch
+        )
+      then
+        return
+      end
+
+      MusicManager.callTrackChangedHandlers(eventData)
+    end,
 
     ---@param eventData { oldMode: string, newMode: string, arg: any }
     UiModeChanged = function(eventData)
