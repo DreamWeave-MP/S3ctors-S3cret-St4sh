@@ -37,8 +37,8 @@ With T4rgets, an enemy's health is displayed according to the color of the icon.
 ## Requirements
 
 <div align="center">
-  <a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="Download OpenMW"></a>
-  <a href="https://openmw.org/downloads"><img src="../img/openmwRequired.svg" alt="H3lp Yours3lf"></a>
+  <a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="H3lp Yours3lf"></a>
+  <a href="https://openmw.org/downloads"><img src="../img/openmwRequired.svg" alt="Download OpenMW"></a>
   <br>
 </div>
 
