@@ -344,7 +344,7 @@ S3maphore works by calling every `isValidCallback`, for every playlist which is 
 
 Use S3maphore's open ended nature to your advantage, but *please* keep in mind that every playlist is running its callbacks every single frame. You are sharing not-a-lot of space with a lot of neighbors who are very much in a hurry.
 
-If you do run into performance bottlenecks with your playlists, please let me know and I will do everything I can to help make your playlists functional. Later iterations of S3maphore are likely to rely on my helper library, [H3lp Yours3lf](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/h3lp_yours3lf), for additional optimizations!
+If you do run into performance bottlenecks with your playlists, please let me know and I will do everything I can to help make your playlists functional. Later iterations of S3maphore are likely to rely on my helper library, [H3lp Yours3lf](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/), for additional optimizations!
 
 #### Playlist Environment Specification
 
@@ -444,22 +444,27 @@ The `Special` playlist is, well, a special case - it comes with no tracks, and i
 S3maphore includes a selection of `Player` events which indicate the changing of tracks and responds to some to modify its behavior.
 
 1. S3maphoreSkipTrack - `()` - skips the current track
-1. S3maphoreToggleMusic - `({ state: boolean })` - set whether music plays or not. Will immediately stop playback when disabling.
+1. S3maphoreToggleMusic - `(boolean)` - set whether music plays or not. Will immediately stop playback when disabling.
 1. S3maphoreSetPlaylistActive - `({ playlist: string, state: boolean })` - Enables or disables a playlist
-1. S3maphoreSpecialTrack - `({ trackPath: string, reason: S3maphoreTrackChangeReason })` - plays one specific track from the `special` playlist which will not be interrupted, but may be overridden by other playlists in the `Special` priority class.
-1. S3maphoreTrackChanged - `(S3maphoreStateChangeEventData)` - Emitted whenever the currently playing track changes, due to the previous one being skipped, or a new playlist starting, or a new track from the same playlist starting.
-1. S3maphoreMusicStopped - `({ reason: S3maphoreTrackChangeReason })` - Emitted when music stops, due to being disabled, no playlist being valid for this frame, or just the player dying.
+1. S3maphoreSpecialTrack - `({ trackPath: string, reason: S3maphoreStateChangeReason? })` - plays one specific track from the `special` playlist which will not be interrupted, but may be overridden by other playlists in the `Special` priority class.
+1. S3maphoreTrackChanged - `(S3maphorePlaybackChangeEventData)` - Emitted whenever S3maphore accepts a normal or special track change. Normal track changes include cell and playback sequencing fields so stale deferred events can be rejected; consumers should treat those fields as read-only metadata.
+1. S3maphoreMusicStopped - `({ reason: S3maphoreStateChangeReason })` - Emitted when music stops because playback was disabled or no playlist is valid for the current frame.
 
-### S3maphoreStateChangeEventData Specification
+### S3maphorePlaybackChangeEventData Specification
 
 ```lua
----@class S3maphoreStateChangeEventData
+---@class S3maphorePlaybackChangeEventData
+---@field fadeOut number?
+---@field cellId string? Cell in which a normal track change was requested.
+---@field playbackEpoch integer? Internal sequencing value for normal deferred track changes.
 ---@field playlistId string
 ---@field trackName string VFS path of the track being played
 ---@field reason S3maphoreStateChangeReason
 ```
 
-See the interface documentation immediately below for the `S3maphoreTrackChangeReason` specification.
+See the interface documentation immediately below for the `S3maphoreStateChangeReason` specification.
+
+The cell-presence events used to refresh contextual state are internal synchronization events. Do not send them or depend on their payloads.
 
 ### Interface
 
@@ -477,35 +482,35 @@ function S3maphore.playSpecialTrack(trackPath, reason)
 ---@return string
 function S3maphore.listPlaylistsByPriority()
 
---- Disable or enable music playback (via setting, which persists through boot cycles)
----@param enabled boolean
-function MusicManager.overrideMusicEnabled(enabled)
+--- Disable or enable music playback (via a setting, which persists through boot cycles)
+---@param enabled boolean?
+function S3maphore.overrideMusicEnabled(enabled)
 
 --- Whether or not S3maphore's music playback is enabled
-function MusicManager.getEnabled()
+function S3maphore.getEnabled()
 
 --- Returns a read-only array of all recognized playlist files (files with the .lua extension under the VFS directory, Playlists/ )
----@return userdata playlistFiles
-function MusicManager.listPlaylistFiles()
+---@return ReadOnlyTable playlistFiles
+function S3maphore.listPlaylistFiles()
 
 --- Returns a read-only list of read-only playlist structs for introspection. To modify playlists in any way, use other functions.
-function MusicManager.getRegisteredPlaylists()
+function S3maphore.getRegisteredPlaylists()
 
 --- Returns a read-only copy of the current playlist, or nil
 ---@return userdata? readOnlyPlaylist
-function MusicManager.getCurrentPlaylist()
+function S3maphore.getCurrentPlaylist()
 
---- Returns l10n-localized playlist and track names for the current playlist. If a localization for the track does not exist, return nil
----@return string? playlistName, string? trackName
-function MusicManager.getCurrentTrackInfo()
+--- Returns l10n-localized metadata for the current playlist and track. Returns nil, nil if nothing is playing.
+---@return S3maphorePlaylistMetadata? playlistMetadata, S3maphoreTrackMetadata? trackMetadata
+function S3maphore.getCurrentTrackInfo()
 
 --- Returns the path of the currently playing track
 ---@return string?
-function MusicManager.getCurrentTrack()
+function S3maphore.getCurrentTrack()
 
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
-function MusicManager.registerPlaylist(playlist)
+function S3maphore.registerPlaylist(playlist)
 
 --- Used as the `reason` argument in S3maphore Events
 ---@enum S3maphoreStateChangeReason
@@ -513,7 +518,9 @@ S3maphore.STATE = util.makeReadOnly {
     Died = 'DIED',
     Disabled = 'DSBL',
     NoPlaylist = 'NPLS',
+    PlaylistChanged = 'PLCH',
     SpecialTrackPlaying = 'SPTR',
+    TrackChanged = 'TRCH',
 },
 
 --- Meant to be used in conjunction with the output of MusicManager.playlistTimeOfDay OR PlaylistState.playlistTimeOfDay
