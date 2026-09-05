@@ -33,7 +33,7 @@ Please do not try to use the merged plugin project with any other Starwind mods.
 
 ## History
 
-Over time as The Starwind Initiative matured, we collected lots of minor bug fixes we needed to implement for multiplayer and wanted to make sure they were available to all Starwind players. Everything built here is available in the [Starwind-Builder](https://gitlab.com/modding-openmw/Starwind-Builder) repo, which is also used for deploying all content patches for TSI.
+Over time as The Starwind Initiative matured, we collected lots of minor bug fixes we needed to implement for multiplayer and wanted to make sure they were available to all Starwind players. Everything built here is available in the [Starwind-Builder](https://github.com/DreamWeave-MP/Starwind-Builder/) repo, which is also used for deploying all content patches for TSI.
 
 ## Credits
 

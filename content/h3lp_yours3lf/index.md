@@ -95,7 +95,7 @@ Every `s3lf` object also includes a `display()` method, which will show a neatly
 
 `s3lf` objects may call the display method anywhere they see fit, but the result will only be visible if a player is nearby (as it is printed to the console directly, using the `nearby` module to locate nearby players.)
 
-If your mod uses the `s3lf` interface and it is not available, it is recommended you link back to the [mod page](https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/s3lf) in your error outputs so the user can get ahold of it themselves.
+If your mod uses the `s3lf` interface and it is not available, it is recommended you link back to the [H3lp Yours3lf mod page](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/) in your error outputs so the user can get ahold of it themselves.
 
 ## ProtectedTable
 
