@@ -144,7 +144,6 @@ end
 function PlaylistRules.cellNameExact(cellNames) return cellNames[PlaylistState.cellName] end
 
 --- Returns whether the player is currently in combat with any actor out of the input set
---- the playlistState provided to each `isValidCallback` includes a `combatTargets` field which is meant to be used as the first argument
 ---
 --- Exmple usage:
 ---
@@ -417,8 +416,10 @@ function PlaylistRules.combatTargetLevelDifference(levelRule)
       )
     end
 
-    ---@diagnostic disable-next-line: need-check-nil
-    if levelDifference <= levelScale.max and levelDifference >= levelScale.min then
+    if
+      levelDifference <= (levelScale.max or HUGE)
+      and levelDifference >= (levelScale.min or -HUGE)
+    then
       result = true
       break
     end
@@ -642,8 +643,11 @@ function PlaylistRules.objectExact(staticRules)
 
   for recordId, ruleVal in Next, staticRules do
     if byRecord[recordId] then
-      result = ruleVal
-      break
+      if not ruleVal then
+        result = false
+        break
+      end
+      result = true
     end
   end
 
@@ -907,7 +911,7 @@ function PlaylistRules.journal(journalDataMap)
     if quest then
       local questState = quest.stage
 
-      if questState <= (questRange.max or HUGE) and questState >= questRange.min then
+      if questState <= (questRange.max or HUGE) and questState >= (questRange.min or 0) then
         result = true
         break
       end
