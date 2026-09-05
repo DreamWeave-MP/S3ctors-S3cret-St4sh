@@ -579,7 +579,7 @@ transitionUpdateHandler = function()
     cellTransitionCoroutine = nil
     updateFunction = normalUpdateHandler
     Print(StrFormat('[ S3MAPHORE ]: Fatal presence collection error: %s', err))
-    Quit()
+    return Quit()
   end
 
   if CoStatus(cellTransitionCoroutine) == 'dead' then
