@@ -1,0 +1,120 @@
+[color=#d4d4d8]OpenMW Lua is powerful, but its editor support has always been a little behind the engine. The official documentation is useful, yet it cannot tell your editor which APIs are available in each kind of script.[/color]
+
+[color=#d4d4d8]Cod3x fixes that.[/color]
+
+[center][size=5][b][color=#b48cff]Make your editor understand OpenMW before OpenMW teaches you the hard way.[/color][/b][/size][/center]
+
+[heading][center][color=#b48cff]Installation[/color][/center][/heading]
+
+[color=#d4d4d8]Cod3x is not a normal OpenMW mod. Do not enable it in the OpenMW launcher. It is a set of Lua Language Server (LuaLS) annotations and a LuaLS plugin for your editor.[/color]
+
+[color=#d4d4d8]You need an editor with LuaLS support. For VSCode and its forks, install the Lua Language Server extension.[/color]
+
+[color=#d4d4d8]Download Cod3x manually from Nexus and extract it somewhere stable.[/color]
+
+[color=#d4d4d8]For example:[/color]
+[code]C:/Modding/Tools/Cod3x/
+/home/you/Modding/Tools/Cod3x/[/code]
+
+[color=#d4d4d8]The folder should contain files like:[/color]
+[code]openmw.lua
+openmw/
+openmw_aux.lua
+omw_context_plugin.lua
+examples/
+.luarc.json[/code]
+
+[color=#d4d4d8]Copy [font=Courier New].luarc.json[/font] from [font=Courier New]examples/openmw-mod/[/font] into the root folder of your Lua mod. Open it and replace both [font=Courier New]/absolute/path/to/Cod3x[/font] values with the location where you extracted Cod3x.[/color]
+
+[code]{
+  "runtime.version": "LuaJIT",
+  "workspace.library": ["/absolute/path/to/Cod3x"],
+  "runtime.plugin": "/absolute/path/to/Cod3x/omw_context_plugin.lua"
+}[/code]
+
+[heading][center][color=#b48cff]Context-aware OpenMW diagnostics[/color][/center][/heading]
+
+[color=#d4d4d8]OpenMW scripts do not all run in the same context. A global script, local script, player script, menu script, and load script each have different API access. Tell Cod3x which kind of script you are writing:[/color]
+
+[code]---@omw-context player[/code]
+
+[color=#d4d4d8]Supported contexts:[/color]
+[list]
+[*][font=Courier New]global[/font] — one script for the game world[/*]
+[*][font=Courier New]local[/font] — a script attached to an object or actor[/*]
+[*][font=Courier New]player[/font] — a player-specific script[/*]
+[*][font=Courier New]menu[/font] — a menu script[/*]
+[*][font=Courier New]load[/font] — a content-loading script[/*]
+[/list]
+
+[color=#d4d4d8]Cod3x also provides abstract contexts for shared code:[/color]
+[list]
+[*][font=Courier New]runtime[/font] — code that can run in global, local, player, or menu scripts[/*]
+[*][font=Courier New]all[/font] — code that can run in every OpenMW script context, including [font=Courier New]load[/font][/*]
+[*][font=Courier New]none[/font] — a file that intentionally uses no OpenMW APIs[/*]
+[/list]
+
+[color=#d4d4d8]For example, a utility shared by runtime scripts can use:[/color]
+[code]---@omw-context runtime
+local core = require('openmw.core')[/code]
+
+[color=#d4d4d8]You can also combine contexts when a module is shared by more than one script type:[/color]
+[code]---@omw-context global | player[/code]
+
+[color=#d4d4d8]From there, Cod3x checks OpenMW API usage against the declared context and warns you about mistakes before you launch the game.[/color]
+
+[color=#d4d4d8]For example, [font=Courier New]openmw.world[/font] is a global-script API. Cod3x flags it when it is used from a player script instead of waiting for OpenMW to complain later.[/color]
+
+[img]https://i.imgur.com/1tcE8nd.png[/img]
+
+[heading][center][color=#b48cff]Scoped contexts[/color][/center][/heading]
+
+[color=#d4d4d8]A file's context is its default. Use [font=Courier New]omw-context-next[/font] to override the next line, or [font=Courier New]omw-context-begin[/font] and [font=Courier New]omw-context-end[/font] to override a block:[/color]
+
+[code]---@omw-context global | player
+local core = require('openmw.core')
+
+---@omw-context-next player
+local camera = require('openmw.camera')
+
+---@omw-context-begin player
+local input = require('openmw.input')
+local ui = require('openmw.ui')
+---@omw-context-end[/code]
+
+[color=#d4d4d8]Scoped contexts are assertions for LuaLS. Use them where the code really only runs in that context.[/color]
+
+[heading][center][color=#b48cff]What Cod3x gives you[/color][/center][/heading]
+
+[list]
+[*]Better autocomplete for OpenMW Lua APIs[/*]
+[*]Useful hover documentation in your editor[/*]
+[*]More accurate function parameters and return values[/*]
+[*]Correct nilability information instead of mystery [font=Courier New]unknown[/font] types[/*]
+[*]Context-aware warnings for modules, interfaces, and selected API members[/*]
+[*]LuaLS-native support for OpenMW objects, records, constants, and enums[/*]
+[*]Type checking for your own mod interfaces[/*]
+[/list]
+
+[heading][center][color=#b48cff]Type your own mod interfaces[/color][/center][/heading]
+
+[color=#d4d4d8]You can add your own interfaces to [font=Courier New]openmw.interfaces[/font] in a project-local LuaLS metadata file. Keep this file in your workspace; OpenMW does not load it.[/color]
+
+[code]---@meta
+
+---@class openmw.interfaces
+---@field MyMod? openmw.interfaces.MyMod
+
+---@class openmw.interfaces.MyMod
+---@field version string
+---@field doThing fun(target: unknown): boolean[/code]
+
+[color=#d4d4d8]Cod3x checks OpenMW APIs used directly in each file. It cannot verify that context annotations on your own modules agree with every module that imports them, so give shared modules the broadest context they actually support.[/color]
+
+[size=4][b][color=#b48cff]Requirements[/color][/b][/size]
+[color=#d4d4d8]Cod3x targets OpenMW 0.52. Older OpenMW versions may differ in their available APIs and interfaces.[/color]
+
+[size=4][b][color=#b48cff]Shout outs[/color][/b][/size]
+[color=#d4d4d8]To everyone in the OpenMW community, and to all the earlier annotation projects that helped show this was worth building.[/color]
+
+[center][size=3][color=#d4d4d8][img]https://i.imgur.com/z5EI8Ln.png[/img][/color][/size][/center]
