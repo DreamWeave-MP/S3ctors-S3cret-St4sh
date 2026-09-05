@@ -123,7 +123,11 @@ end
 ---@param newPlaylist S3maphorePlaylist
 ---@return boolean canSwitchPlaylist
 local function canSwitchPlaylist(oldPlaylist, newPlaylist)
-  if not oldPlaylist then
+  if newPlaylist.interruptMode == MusicManager.INTERRUPT.Override then
+    return true
+  elseif not oldPlaylist then
+    return true
+  elseif oldPlaylist.interruptMode == MusicManager.INTERRUPT.Override then
     return true
   elseif oldPlaylist.interruptMode == MusicManager.INTERRUPT.Never then
     return false
