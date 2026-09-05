@@ -12,7 +12,7 @@ taxonomies:
 extra:
   nexus_id: 59122
   nexus_group_id: 7468718
-  version: 0.2
+  version: 0.4
 ---
 
 # Cod3x
