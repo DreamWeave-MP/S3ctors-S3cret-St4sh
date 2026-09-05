@@ -137,17 +137,37 @@ content.gameSettings.records.fJumpAcrobaticsBase = 1024
 
 ## VS Code and VSCodium
 
-If pressing Enter causes incorrect indentation, disable LuaLS on-type
-formatting for the workspace:
+If pressing Enter causes incorrect indentation or inserts text in the wrong
+place, disable LuaLS on-type formatting for the workspace. In `.luarc.json`,
+use the unprefixed settings:
 
 ```json
 {
   "language.fixIndent": false,
   "typeFormat.config": {
-    "format_line": "false"
+    "format_line": "false",
+    "auto_complete_end": "false",
+    "auto_complete_table_sep": "false"
   }
 }
 ```
+
+When putting these settings in VS Code's `settings.json`, prefix them with
+`Lua.`:
+
+```json
+{
+  "Lua.language.fixIndent": false,
+  "Lua.typeFormat.config": {
+    "format_line": "false",
+    "auto_complete_end": "false",
+    "auto_complete_table_sep": "false"
+  }
+}
+```
+
+Keep Cod3x's virtual transforms enabled. They improve context-aware checking,
+but they must not be used as the source document for editor formatting.
 
 ## Type your own interfaces
 

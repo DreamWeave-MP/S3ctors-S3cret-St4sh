@@ -6,6 +6,8 @@
     "runtime.plugin": "/absolute/path/to/Cod3x/omw_context_plugin.lua",
     "language.fixIndent": false,
     "typeFormat.config": {
-        "format_line": "false"
+        "format_line": "false",
+        "auto_complete_end": "false",
+        "auto_complete_table_sep": "false"
     }
 }
