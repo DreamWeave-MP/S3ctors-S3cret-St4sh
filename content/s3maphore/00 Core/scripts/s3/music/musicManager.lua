@@ -375,6 +375,8 @@ end
 ---@param trackPath string VFS path of the track to play
 ---@param reason S3maphoreStateChangeReason
 function MusicManager.playSpecialTrack(trackPath, reason)
+  if not MusicSettings.MusicEnabled then return end
+
   if not FileExists(trackPath) then
     return print(StrFormat('Requested track %s does not exist!', trackPath))
   end

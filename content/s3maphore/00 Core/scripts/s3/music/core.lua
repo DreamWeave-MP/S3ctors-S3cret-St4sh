@@ -233,7 +233,11 @@ StateMachine:state('init_player', function()
       clearQueuedData()
 
       if MusicSettings.MusicEnabled then
-        StateMachine:transition 'update_playlist_state'
+        if not waitingOnPresence then
+          desiredPlaylist, resolverDirty = nil, false
+          resolvePlaylist()
+          StateMachine:transition 'update_playlist_state'
+        end
       else
         StateMachine:jump 'idle'
 
@@ -276,6 +280,8 @@ StateMachine:state('handle_playback', function()
     clearQueuedData()
     return
   end
+
+  if waitingOnPresence then return end
 
   local musicPlaying = IsMusicPlaying()
 
@@ -540,6 +546,8 @@ local scriptInterface = {
     end,
 
     S3maphoreSkipTrack = function()
+      if not MusicSettings.MusicEnabled then return end
+
       StateMachine:transition 'update_playlist_state'
       MusicManager.skipTrack()
       if not waitingOnPresence then resolvePlaylist() end
@@ -576,7 +584,7 @@ local scriptInterface = {
       waitingOnPresence = false
       musicUtil.debugLog 'Resolving playlist after cell presence update!'
       resolvePlaylist()
-      StateMachine:transition 'update_playlist_state'
+      if MusicSettings.MusicEnabled then StateMachine:transition 'update_playlist_state' end
     end,
 
     S3maphoreWeatherChanged = function(weatherName)
@@ -589,7 +597,7 @@ local scriptInterface = {
       if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
 
       resolvePlaylist()
-      StateMachine:transition 'update_playlist_state'
+      if MusicSettings.MusicEnabled then StateMachine:transition 'update_playlist_state' end
     end,
 
     ---@param hitObject openmw.LObject
@@ -612,7 +620,7 @@ local scriptInterface = {
       if waitingOnPresence or PlaylistState.cellId ~= self.cell.id then return end
       musicUtil.debugLog('Performing playlist resolution after state change! Flags: %s', flags)
       resolvePlaylist()
-      StateMachine:transition 'update_playlist_state'
+      if MusicSettings.MusicEnabled then StateMachine:transition 'update_playlist_state' end
     end,
 
     S3maphoreTrackChanged = MusicManager.callTrackChangedHandlers,
