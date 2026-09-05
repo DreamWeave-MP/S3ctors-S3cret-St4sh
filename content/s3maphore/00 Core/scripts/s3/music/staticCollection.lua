@@ -3,7 +3,7 @@
 local clear = require 'scripts.s3.clear'
 local szudzik = require 'scripts.s3.szudzik'
 
-local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs, Print, StrFind, StrFormat, StrGsub, StrLower, tableRemove, type =
+local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs, Print, StrFind, StrFormat, StrGsub, StrLower, tableRemove =
   math.ceil,
   coroutine.create,
   coroutine.resume,
@@ -19,8 +19,7 @@ local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs,
   string.format,
   string.gsub,
   string.lower,
-  table.remove,
-  type
+  table.remove
 
 --- Maps player ids back to the previously-running weather
 ---@type table<string, string>
@@ -49,6 +48,7 @@ local CellPresence = {
   areaHasHostileActors = false,
   cellHasHostileActors = false,
   cellId = nil,
+  generation = nil,
 }
 
 ---@type table <string, string>
@@ -73,7 +73,7 @@ local TOTAL_OBJECT_BUDGET = 16
 local TARGET_TRANSITION_FRAMES, EXTERIOR_TRANSITION_MULT = 15, 3
 local MIN_BATCH_SIZE, MAX_BATCH_SIZE = 24, 48
 local cellTransitionCoroutine, normalUpdateHandler, transitionUpdateHandler, updateFunction
-local TransitioningPlayer, TransitionCell
+local TransitioningPlayer, TransitionCell, TransitionGeneration
 
 local TypesToNames = {}
 
@@ -563,6 +563,7 @@ local function cellTransitionCoroutineHandler()
 
   -- Stamp the source cell so the player-side subscriber can reject stale writes
   CellPresence.cellId = TransitionCell.id
+  CellPresence.generation = TransitionGeneration
 
   -- Mark presence changed so the next normal update flushes to storage
   presenceChanged = true
@@ -612,16 +613,11 @@ end
 updateFunction = normalUpdateHandler
 
 local function updatePresenceInfo(transitionInfo)
-  local player, oldCell
-  if type(transitionInfo) == 'table' then
-    player, oldCell = transitionInfo[1], transitionInfo[2]
-  else
-    player = transitionInfo
-  end
+  local player, oldCell, generation = transitionInfo[1], transitionInfo[2], transitionInfo[3]
 
   PreviousPlayerCells[player.id] = oldCell
 
-  TransitioningPlayer, TransitionCell = player, player.cell
+  TransitioningPlayer, TransitionCell, TransitionGeneration = player, player.cell, generation
   startCellTransition()
 end
 
@@ -684,12 +680,13 @@ return {
   eventHandlers = {
     S3maphoreUpdatePresence = updatePresenceInfo,
 
-    ---@param player openmw.GObject
-    S3maphoreInitializationComplete = function(player)
+    ---@param transitionInfo { [1]: openmw.GObject, [2]: string?, [3]: integer }
+    S3maphoreInitializationComplete = function(transitionInfo)
+      local player = transitionInfo[1]
       PlayersInitialized[player.id] = true
       if not SendEvent then SendEvent = player.sendEvent end
       if not GetAll then GetAll = player.cell.getAll end
-      updatePresenceInfo(player)
+      updatePresenceInfo(transitionInfo)
     end,
 
     S3maphoreDeathCountIncrement = function(killedRecordId)

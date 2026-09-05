@@ -92,6 +92,7 @@ do
 
   local pairs = pairs
   local SendEvent, StorageGet = gameSelf.sendEvent, presenceSection.get
+  local PresenceUpdatedData = { cellId = '', generation = 0 }
 
   presenceSection:subscribe(async:callback(function(_, key)
     if key == gameSelf.id then
@@ -121,7 +122,9 @@ do
 
       PlaylistState.objectCount = total
 
-      SendEvent(gameSelf, 'S3maphoreCellPresenceUpdated', presence.cellId)
+      PresenceUpdatedData.cellId = presence.cellId
+      PresenceUpdatedData.generation = presence.generation
+      SendEvent(gameSelf, 'S3maphoreCellPresenceUpdated', PresenceUpdatedData)
     elseif key == 'GlobalKillCounts' then
       PlaylistState.killCounts = StorageGet(presenceSection, key)
     end

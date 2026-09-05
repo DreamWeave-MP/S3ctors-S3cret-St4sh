@@ -105,6 +105,8 @@ tes3 = tes3
 
 ---@class S3maphorePlaybackChangeEventData
 ---@field fadeOut number?
+---@field cellId string? Cell in which a normal track change was requested.
+---@field playbackEpoch integer? Playback generation for rejecting stale deferred track changes.
 ---@field playlistId string
 ---@field reason S3maphoreStateChangeReason
 ---@field trackName string VFS path of the track being played
@@ -177,6 +179,7 @@ tes3 = tes3
 ---@field cellHasHostileActors boolean
 ---@field areaHasHostileActors boolean
 ---@field cellId string?
+---@field generation integer?
 
 ---@class S3maphoreMusicMetadataBase
 ---@field title string Human-readable title
