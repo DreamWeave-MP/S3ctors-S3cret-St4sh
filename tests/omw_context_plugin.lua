@@ -1,5 +1,7 @@
 local function loadPlugin()
-  dofile 'content/cod3x/omw_context_plugin.lua'
+  local source = debug.getinfo(1, 'S').source
+  local root = source:match '^@(.+)/tests/omw_context_plugin%.lua$'
+  dofile(root and root .. '/content/cod3x/omw_context_plugin.lua' or 'content/cod3x/omw_context_plugin.lua')
 end
 
 local function diffs(text)
