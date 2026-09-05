@@ -239,12 +239,14 @@ StateMachine:state('init_player', function()
 
         if IsMusicPlaying() then
           StopMusic()
-          MusicManager.currentPlaylist = nil
-          MusicManager.currentTrack = nil
 
           queuedEvent.data.reason = MusicManager.STATE.Disabled
           SendEvent(self, 'S3maphoreMusicStopped', queuedEvent.data)
         end
+
+        MusicManager.currentPlaylist = nil
+        MusicManager.currentTrack = nil
+        desiredPlaylist, resolverDirty = nil, false
       end
     elseif
       key == 'PlayerTargetedCombatOnly'
@@ -282,11 +284,10 @@ StateMachine:state('handle_playback', function()
     resolverDirty = false
 
     if not desiredPlaylist then
-      if musicPlaying then
-        StopMusic()
-        MusicManager.currentPlaylist = nil
-        MusicManager.currentTrack = nil
-      end
+      if musicPlaying then StopMusic() end
+
+      MusicManager.currentPlaylist = nil
+      MusicManager.currentTrack = nil
 
       clearQueuedData()
       queuedEvent.data.reason = MusicManager.STATE.NoPlaylist
