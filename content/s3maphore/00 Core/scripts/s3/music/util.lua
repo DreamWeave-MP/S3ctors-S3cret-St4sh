@@ -210,6 +210,10 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
     error 'Can not register playlist: \'id\' and \'priority\' are mandatory fields'
   end
 
+  if type(playlist.isValidCallback) ~= 'function' then
+    error(StrFormat('Can not register playlist %s: \'isValidCallback\' is mandatory', playlist.id))
+  end
+
   if not playlist.tracks then
     playlist.tracks =
       getTracksFromDirectory(StrFormat('music/%s/', playlist.id), playlist.exclusions)
