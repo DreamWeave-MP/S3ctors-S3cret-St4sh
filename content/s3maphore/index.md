@@ -229,6 +229,80 @@ Natively compatible with any mod that adds music to those folders.
     - ms/region/cyrodiil strident coast — Abecean Shores: Strident Coast
     - ms/region/cyrodiil stirk isle — Abecean Shores: Stirk Isle
 
+#### MUSE Expansions
+
+These are S3maphore playlist definitions for Scipio219's MUSE expansions. They do not include the music itself. Install the original expansion from Nexus, then enable the matching playlist module here. Every path below is relative to the `Music` folder in your OpenMW data directory.
+
+- **Ashlander** — [Nexus](https://www.nexusmods.com/morrowind/mods/51255)
+  - `Muse Ashlanders.lua`
+    - `Music/ms/cell/ashlander`
+    - `Music/ms/combat/ashlander`
+  - `Muse Cavern of the Incarnate.lua`
+    - `Music/ms/cell/incarnate`
+- **Dwemer** — [Nexus](https://www.nexusmods.com/morrowind/mods/51169)
+  - `Muse Dwemer.lua`
+    - `Music/ms/cell/dwemer`
+    - `Music/ms/combat/dwemer`
+- **Sixth House** — [Nexus](https://www.nexusmods.com/morrowind/mods/51082)
+  - `Muse Sixth House.lua`
+    - `Music/ms/cell/6thhouse`
+    - `Music/ms/combat/dagoth`
+    - `Music/ms/combat/dagoth ur`
+- **Tomb** — [Nexus](https://www.nexusmods.com/morrowind/mods/51407)
+  - `Muse Tombs.lua`
+    - `Music/ms/cell/tomb`
+    - `Music/ms/combat/tomb`
+- **Daedric** — [Nexus](https://www.nexusmods.com/morrowind/mods/51993)
+  - `Muse Daedric.lua`
+    - `Music/ms/cell/daedric`
+    - `Music/ms/combat/daedric`
+- **Empire** — [Nexus](https://www.nexusmods.com/morrowind/mods/52814)
+  - `Muse Empire.lua`
+    - `Music/ms/cell/empire`
+    - `Music/ms/cell/imperial`
+    - `Music/ms/combat/empire`
+- **Hlaalu** — [Nexus](https://www.nexusmods.com/morrowind/mods/54639)
+  - `Muse Hlaalu.lua`
+    - `Music/ms/cell/hlaalu`
+    - `Music/ms/combat/hlaalu`
+- **Redoran** — [Nexus](https://www.nexusmods.com/morrowind/mods/55082)
+  - `Muse Redoran.lua`
+    - `Music/ms/cell/redoran`
+    - `Music/ms/combat/redoran`
+- **Telvanni** — [Nexus](https://www.nexusmods.com/morrowind/mods/55730)
+  - `Muse Telvanni.lua`
+    - `Music/ms/cell/telvanni`
+    - `Music/ms/combat/telvanni`
+- **Temple** — [Nexus](https://www.nexusmods.com/morrowind/mods/57875)
+  - `Muse Temple.lua`
+    - `Music/ms/cell/temple`
+    - `Music/ms/combat/temple`
+  - `Muse Almalexia.lua`
+    - `Music/ms/cell/almalexia`
+    - `Music/ms/combat/almalexia`
+  - `Muse Vivec.lua` — broad Vivec coverage; excludes the palace track below
+    - `Music/ms/cell/vivec`
+  - `Muse Vivec Palace.lua`
+    - `Music/ms/cell/vivec/vivecpalace.mp3`
+    - `Music/ms/combat/vivec`
+
+The following playlist files are also included for MUSE-compatible content and are not separate Scipio219 expansion downloads:
+
+- `Muse Caves.lua`
+  - `Music/ms/cell/cave`
+- `Muse Mournhold and Solstheim.lua`
+  - `Music/ms/cell/mournhold`
+  - `Music/ms/cell/solstheim pack`
+- `Muse Regions.lua`
+  - `Music/ms/region/ashlands pack`
+  - `Music/ms/region/ascadian isles region`
+  - `Music/ms/region/azura's coast region`
+  - `Music/ms/region/bitter coast region`
+  - `Music/ms/region/grazelands region`
+  - `Music/ms/region/red mountain region`
+  - `Music/ms/region/sheogorad region`
+  - `Music/ms/region/west gash region`
+
 #### Extended
 #### Shitpost
 
