@@ -84,43 +84,60 @@
 ---     editor actions for inserting or correcting ---@omw-context annotations.
 ---
 
-local AVAILABILITY = {
-  ['openmw.async'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  ['openmw.core'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  ['openmw.markup'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  ['openmw.storage'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  ['openmw.types'] = { global = true, ['local'] = true, player = true },
-  ['openmw.util'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  ['openmw.vfs'] = { global = true, ['local'] = true, player = true, menu = true, load = true },
-
-  ['openmw.interfaces'] = { global = true, ['local'] = true, player = true, menu = true },
-  ['openmw_aux.calendar'] = { global = true, ['local'] = true, player = true, menu = true },
-  ['openmw_aux.calendarconfig'] = { global = true, ['local'] = true, player = true, menu = true },
-  ['openmw_aux.time'] = { global = true, ['local'] = true, player = true, menu = true },
-  ['openmw_aux.util'] = { global = true, ['local'] = true, player = true, menu = true },
-
-  ['openmw.content'] = { load = true },
-
-  ['openmw.world'] = { global = true },
-
-  ['openmw.animation'] = { ['local'] = true, player = true },
-  ['openmw.nearby'] = { ['local'] = true, player = true },
-  ['openmw.self'] = { ['local'] = true, player = true },
-
-  ['openmw.ambient'] = { player = true, menu = true },
-  ['openmw.input'] = { player = true, menu = true },
-  ['openmw.ui'] = { player = true, menu = true },
-  ['openmw_aux.ui'] = { player = true, menu = true },
-
-  ['openmw.camera'] = { player = true },
-  ['openmw.debug'] = { player = true },
-  ['openmw.postprocessing'] = { player = true },
-
-  ['openmw.menu'] = { menu = true },
-}
-
 local CONCRETE_CONTEXTS = { 'global', 'local', 'player', 'menu', 'load' }
 local RUNTIME_CONTEXTS = { 'global', 'local', 'player', 'menu' }
+local function contextSet(...)
+  local result = {}
+  for index = 1, select('#', ...) do result[select(index, ...)] = true end
+  return result
+end
+
+local EVERY_CONTEXT = contextSet('global', 'local', 'player', 'menu', 'load')
+local OBJECT_CONTEXT = contextSet('global', 'local', 'player')
+local RUNTIME_CONTEXT = contextSet('global', 'local', 'player', 'menu')
+local ACTOR_CONTEXT = contextSet('local', 'player')
+local FRAME_CONTEXT = contextSet('local', 'player', 'menu')
+local PLAYER_MENU_CONTEXT = contextSet('player', 'menu')
+local LOCAL_CONTEXT = contextSet('local')
+local PLAYER_CONTEXT = contextSet('player')
+local MENU_CONTEXT = contextSet('menu')
+local GLOBAL_CONTEXT = contextSet('global')
+local LOAD_CONTEXT = contextSet('load')
+local SETTINGS_CONTEXT = contextSet('global', 'menu', 'player')
+
+local AVAILABILITY = {
+  ['openmw.async'] = EVERY_CONTEXT,
+  ['openmw.core'] = EVERY_CONTEXT,
+  ['openmw.markup'] = EVERY_CONTEXT,
+  ['openmw.storage'] = EVERY_CONTEXT,
+  ['openmw.types'] = OBJECT_CONTEXT,
+  ['openmw.util'] = EVERY_CONTEXT,
+  ['openmw.vfs'] = EVERY_CONTEXT,
+
+  ['openmw.interfaces'] = RUNTIME_CONTEXT,
+  ['openmw_aux.calendar'] = RUNTIME_CONTEXT,
+  ['openmw_aux.calendarconfig'] = RUNTIME_CONTEXT,
+  ['openmw_aux.time'] = RUNTIME_CONTEXT,
+  ['openmw_aux.util'] = RUNTIME_CONTEXT,
+
+  ['openmw.content'] = LOAD_CONTEXT,
+  ['openmw.world'] = GLOBAL_CONTEXT,
+
+  ['openmw.animation'] = ACTOR_CONTEXT,
+  ['openmw.nearby'] = ACTOR_CONTEXT,
+  ['openmw.self'] = ACTOR_CONTEXT,
+
+  ['openmw.ambient'] = PLAYER_MENU_CONTEXT,
+  ['openmw.input'] = PLAYER_MENU_CONTEXT,
+  ['openmw.ui'] = PLAYER_MENU_CONTEXT,
+  ['openmw_aux.ui'] = PLAYER_MENU_CONTEXT,
+
+  ['openmw.camera'] = PLAYER_CONTEXT,
+  ['openmw.debug'] = PLAYER_CONTEXT,
+  ['openmw.postprocessing'] = PLAYER_CONTEXT,
+  ['openmw.menu'] = MENU_CONTEXT,
+}
+
 local VALID_CONTEXTS = {
   global = true,
   ['local'] = true,
@@ -133,58 +150,58 @@ local VALID_CONTEXTS = {
 }
 
 local CORE_MEMBER_AVAILABILITY = {
-  API_REVISION = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  contentFiles = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  getFormId = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  getGameDifficulty = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  l10n = { global = true, ['local'] = true, player = true, menu = true, load = true },
+  API_REVISION = EVERY_CONTEXT,
+  contentFiles = EVERY_CONTEXT,
+  getFormId = EVERY_CONTEXT,
+  getGameDifficulty = EVERY_CONTEXT,
+  l10n = EVERY_CONTEXT,
 
-  dialogue = { global = true, ['local'] = true, player = true, menu = true },
-  factions = { global = true, ['local'] = true, player = true, menu = true },
-  getGMST = { global = true, ['local'] = true, player = true, menu = true },
-  getGameTime = { global = true, ['local'] = true, player = true, menu = true },
-  getGameTimeScale = { global = true, ['local'] = true, player = true, menu = true },
-  getRealTime = { global = true, ['local'] = true, player = true, menu = true },
-  getSimulationTime = { global = true, ['local'] = true, player = true, menu = true },
-  getSimulationTimeScale = { global = true, ['local'] = true, player = true, menu = true },
-  isWorldPaused = { global = true, ['local'] = true, player = true, menu = true },
-  land = { global = true, ['local'] = true, player = true, menu = true },
-  magic = { global = true, ['local'] = true, player = true, menu = true },
-  mwscripts = { global = true, ['local'] = true, player = true, menu = true },
-  quit = { global = true, ['local'] = true, player = true, menu = true },
-  regions = { global = true, ['local'] = true, player = true, menu = true },
-  sendGlobalEvent = { global = true, ['local'] = true, player = true, menu = true },
-  sound = { global = true, ['local'] = true, player = true, menu = true },
-  stats = { global = true, ['local'] = true, player = true, menu = true },
-  weather = { global = true, ['local'] = true, player = true, menu = true },
+  dialogue = RUNTIME_CONTEXT,
+  factions = RUNTIME_CONTEXT,
+  getGMST = RUNTIME_CONTEXT,
+  getGameTime = RUNTIME_CONTEXT,
+  getGameTimeScale = RUNTIME_CONTEXT,
+  getRealTime = RUNTIME_CONTEXT,
+  getSimulationTime = RUNTIME_CONTEXT,
+  getSimulationTimeScale = RUNTIME_CONTEXT,
+  isWorldPaused = RUNTIME_CONTEXT,
+  land = RUNTIME_CONTEXT,
+  magic = RUNTIME_CONTEXT,
+  mwscripts = RUNTIME_CONTEXT,
+  quit = RUNTIME_CONTEXT,
+  regions = RUNTIME_CONTEXT,
+  sendGlobalEvent = RUNTIME_CONTEXT,
+  sound = RUNTIME_CONTEXT,
+  stats = RUNTIME_CONTEXT,
+  weather = RUNTIME_CONTEXT,
 
-  getRealFrameDuration = { ['local'] = true, player = true, menu = true },
+  getRealFrameDuration = FRAME_CONTEXT,
 }
 
 local STORAGE_MEMBER_AVAILABILITY = {
-  LIFE_TIME = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  globalSection = { global = true, ['local'] = true, player = true, menu = true, load = true },
-  playerSection = { player = true, menu = true },
-  allPlayerSections = { player = true, menu = true },
-  allGlobalSections = { global = true },
+  LIFE_TIME = EVERY_CONTEXT,
+  globalSection = EVERY_CONTEXT,
+  playerSection = PLAYER_MENU_CONTEXT,
+  allPlayerSections = PLAYER_MENU_CONTEXT,
+  allGlobalSections = GLOBAL_CONTEXT,
 }
 
 local INTERFACE_MEMBER_AVAILABILITY = {
-  Activation = { global = true },
-  AnimationController = { ['local'] = true, player = true },
-  AI = { ['local'] = true },
-  Camera = { player = true },
-  Combat = { global = true, ['local'] = true, player = true },
-  MWUI = { menu = true, player = true },
-  Settings = { global = true, menu = true, player = true },
-  UI = { player = true },
-  ItemUsage = { global = true },
-  SkillProgression = { player = true },
-  Crimes = { global = true },
-  Controls = { player = true },
-  GamepadControls = { player = true },
-  Projectiles = { global = true },
-  SpellCasting = { global = true, ['local'] = true, player = true },
+  Activation = GLOBAL_CONTEXT,
+  AnimationController = ACTOR_CONTEXT,
+  AI = LOCAL_CONTEXT,
+  Camera = PLAYER_CONTEXT,
+  Combat = OBJECT_CONTEXT,
+  MWUI = PLAYER_MENU_CONTEXT,
+  Settings = SETTINGS_CONTEXT,
+  UI = PLAYER_CONTEXT,
+  ItemUsage = GLOBAL_CONTEXT,
+  SkillProgression = PLAYER_CONTEXT,
+  Crimes = GLOBAL_CONTEXT,
+  Controls = PLAYER_CONTEXT,
+  GamepadControls = PLAYER_CONTEXT,
+  Projectiles = GLOBAL_CONTEXT,
+  SpellCasting = OBJECT_CONTEXT,
 }
 
 local MEMBER_AVAILABILITY = {
