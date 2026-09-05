@@ -266,6 +266,18 @@ Some mods use MWScript to play music directly. S3maphore does not change that in
 
 [heading][center][color=#b48cff]USAGE[/color][/center][/heading]
 
+[size=4][b]Adding your own music[/b][/size]
+
+Most S3maphore playlists are folder-based. The empty [font=Courier New]Music[/font] folders included with each playlist module are intentional drop zones for your own tracks. You do not need to edit Lua to add music.
+
+For example, a track placed here will be available to the Hlaalu playlist:
+
+[code]03 Muse Expansion Playlists/Music/ms/cell/hlaalu/my-hlaalu-track.mp3[/code]
+
+You can also place the same [font=Courier New]Music/...[/font] path in a separate OpenMW data directory. S3maphore searches the OpenMW virtual file system, so your music does not need to be copied into the S3maphore folder. This is also how playlist-only modules use tracks supplied by other music mods.
+
+Some playlists use an explicit list of tracks instead of accepting everything in a folder. The folder list for each module tells you which paths it uses. If a playlist cannot be toggled in the settings menu, S3maphore did not find any of its registered tracks.
+
 [list]
 [*][b]F8[/b] — skip the current track.[/*]
 [*][b]Shift+F8[/b] — toggle S3maphore music on or off.[/*]
