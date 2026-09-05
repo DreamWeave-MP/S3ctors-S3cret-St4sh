@@ -43,7 +43,7 @@ tes3 = tes3
 ---@class PlaylistFallback
 ---@field playlistChance number? optional float between 1 and 0 indicating the chance for a fallback playlist to be selected. If not present, the chance is always 50%
 ---@field playlists string[]? array of fallback playlists from which to select tracks. No default values and not required.
----@field tracks string[]? tracks to manually add to a given playlist. Used for folder-based playlists; not necessary for any others
+---@field tracks string[]? relative tracks to append under the music/ VFS directory
 
 ---@class PlaylistSilenceParams
 ---@field min integer? minimum possible duration for this silence track; defaults to 0
