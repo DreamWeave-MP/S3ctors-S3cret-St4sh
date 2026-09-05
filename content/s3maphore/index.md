@@ -286,10 +286,8 @@ These are S3maphore playlist definitions for Scipio219's MUSE expansions. They d
     - `Music/ms/cell/vivec/vivecpalace.mp3`
     - `Music/ms/combat/vivec`
 
-The following playlist files are also included for MUSE-compatible content and are not separate Scipio219 expansion downloads:
+The following playlist files are also included for MUSE-compatible content. They are not separate Scipio219 expansion downloads.
 
-- `Muse Caves.lua`
-  - `Music/ms/cell/cave`
 - `Muse Mournhold and Solstheim.lua`
   - `Music/ms/cell/mournhold`
   - `Music/ms/cell/solstheim pack`
@@ -302,6 +300,43 @@ The following playlist files are also included for MUSE-compatible content and a
   - `Music/ms/region/red mountain region`
   - `Music/ms/region/sheogorad region`
   - `Music/ms/region/west gash region`
+- `Muse Caves.lua`
+  - `Music/ms/cell/cave`
+- `Muse Vampire.lua`
+  - `Music/ms/combat/vampire`
+
+#### Morrow Winds
+
+[Morrow Winds](https://www.nexusmods.com/morrowind/mods/51734) is a separate music pack. Install it separately, then enable the S3maphore playlists for its music:
+
+- `Muse Hlaalu.lua` — `Music/MS/cell/Hlaalu`
+- `Muse Empire.lua` — `Music/MS/cell/Imperial`
+- `Muse Mournhold and Solstheim.lua` — `Music/MS/cell/Mournhold` and Solstheim
+- `Muse Redoran.lua` — `Music/MS/cell/Redoran`
+- `Muse Telvanni.lua` — `Music/MS/cell/Telvanni`
+- `Muse Vivec.lua` — `Music/MS/cell/Vivec`
+- `Muse Regions.lua` — the Ashlands, Ascadian Isles, Azura's Coast, Bitter Coast, Grazelands, Red Mountain, Sheogorad, and West Gash region folders
+- `Muse Caves.lua` — Cave interiors
+- `Muse Daedric.lua` — Daedric interiors
+- `Muse Dwemer.lua` — Dwemer interiors
+- `Muse Tombs.lua` — Tomb interiors
+- `Muse Sixth House.lua` — `Music/MS/combat/Dagoth Ur`
+
+#### CaptainCreepy Music Pack
+
+[CaptainCreepy Music Pack](https://www.nexusmods.com/morrowind/mods/51769) is also a separate music pack. Its `00 CORE` option matches these S3maphore playlists:
+
+- `Muse Hlaalu.lua` — `Music/MS/cell/Hlaalu`
+- `Muse Empire.lua` — `Music/MS/cell/Imperial`
+- `Muse Redoran.lua` — `Music/MS/cell/Redoran`
+- `Muse Telvanni.lua` — `Music/MS/cell/Telvanni`
+- `Muse Vivec.lua` — `Music/MS/cell/Vivec`
+- `Muse Regions.lua` — the Ashlands, Ascadian Isles, Azura's Coast, Red Mountain, Sheogorad, and West Gash region folders
+- `Muse Mournhold and Solstheim.lua` — Solstheim
+- `Muse Daedric.lua` — Daedric interiors
+- `Muse Vampire.lua` — `Music/MS/combat/Vampire`
+
+The optional `01 TAVERNS` folder is supported by `10 Inns and Taverns`. The optional `02 VAMPIRE COMBAT` folder is supported by `Muse Vampire.lua`.
 
 #### Extended
 #### Shitpost
