@@ -302,38 +302,86 @@ local function isContextRequiredForUri(uri)
   return uri:find('/cod3x/', 1, true) == nil
 end
 
+local function findShortCommentOutsideString(line)
+  local quote
+  local escaped = false
+
+  for index = 1, #line do
+    local character = line:sub(index, index)
+    if quote then
+      if escaped then
+        escaped = false
+      elseif character == '\\' then
+        escaped = true
+      elseif character == quote then
+        quote = nil
+      end
+    elseif character == '"' or character == "'" then
+      quote = character
+    elseif character == '-' and line:sub(index + 1, index + 1) == '-' then
+      return index
+    end
+  end
+
+  return nil
+end
+
+local function maskCharacters(masked, startPos, endPos)
+  for index = startPos, endPos do masked[index] = ' ' end
+end
+
+local function longBracketAt(line, pos)
+  local equals = line:sub(pos):match '^%[(=*)%['
+  if not equals then return nil, nil end
+  return #equals, pos + #equals + 1
+end
+
+local function longBracketClose(line, pos, level)
+  return line:find(']' .. string.rep('=', level) .. ']', pos, true)
+end
+
 --- Return code outside Lua strings and comments, preserving byte offsets.
 ---@param line string
 ---@param longBracketLevel integer?
 ---@return string, integer?
 stripLineComment = function(line, longBracketLevel)
+  if not longBracketLevel then
+    local commentStart = line:find('--', 1, true)
+    local doubleQuoteStart = line:find('"', 1, true)
+    local singleQuoteStart = line:find("'", 1, true)
+    local quoteStart = doubleQuoteStart
+    if not quoteStart or (singleQuoteStart and singleQuoteStart < quoteStart) then quoteStart = singleQuoteStart end
+    local longBracketStart = line:find '%[=*%['
+
+    if commentStart and quoteStart and quoteStart > commentStart then quoteStart = nil end
+    if commentStart and longBracketStart and longBracketStart > commentStart and longBracketStart ~= commentStart + 2 then
+      longBracketStart = nil
+    end
+
+    if not quoteStart and not longBracketStart then
+      if commentStart then return line:sub(1, commentStart - 1), nil end
+      return line, nil
+    end
+
+    if commentStart and not longBracketStart then
+      local outsideCommentStart = findShortCommentOutsideString(line)
+      if outsideCommentStart then return line:sub(1, outsideCommentStart - 1), nil end
+    end
+  end
+
   local masked = {}
   for i = 1, #line do masked[i] = line:sub(i, i) end
-
-  local function mask(startPos, endPos)
-    for i = startPos, endPos do masked[i] = ' ' end
-  end
-
-  local function longBracketAt(pos)
-    local equals = line:sub(pos):match '^%[(=*)%['
-    if not equals then return nil, nil end
-    return #equals, pos + #equals + 1
-  end
-
-  local function longBracketClose(pos, level)
-    return line:find(']' .. string.rep('=', level) .. ']', pos, true)
-  end
 
   local i = 1
   while i <= #line do
     if longBracketLevel then
-      local closeStart, closeFinish = longBracketClose(i, longBracketLevel)
+      local closeStart, closeFinish = longBracketClose(line, i, longBracketLevel)
       if not closeStart then
-        mask(i, #line)
+        maskCharacters(masked, i, #line)
         return table.concat(masked), longBracketLevel
       end
 
-      mask(i, closeFinish)
+      maskCharacters(masked, i, closeFinish)
       i = closeFinish + 1
       longBracketLevel = nil
     else
@@ -341,13 +389,13 @@ stripLineComment = function(line, longBracketLevel)
       local nextCh = line:sub(i + 1, i + 1)
 
       if ch == '-' and nextCh == '-' then
-        local level, openFinish = longBracketAt(i + 2)
+        local level, openFinish = longBracketAt(line, i + 2)
         if level then
-          mask(i, openFinish)
+          maskCharacters(masked, i, openFinish)
           i = openFinish + 1
           longBracketLevel = level
         else
-          mask(i, #line)
+          maskCharacters(masked, i, #line)
           return table.concat(masked), nil
         end
       elseif ch == '"' or ch == '\'' then
@@ -371,13 +419,13 @@ stripLineComment = function(line, longBracketLevel)
           end
         end
 
-        if not isRequireArgument then mask(i, finish) end
+        if not isRequireArgument then maskCharacters(masked, i, finish) end
         i = finish + 1
       else
         local level, openFinish
-        if ch == '[' then level, openFinish = longBracketAt(i) end
+        if ch == '[' then level, openFinish = longBracketAt(line, i) end
         if level then
-          mask(i, openFinish)
+          maskCharacters(masked, i, openFinish)
           i = openFinish + 1
           longBracketLevel = level
         else
