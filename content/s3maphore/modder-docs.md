@@ -24,7 +24,7 @@ S3maphore's playlists are *similar*, but not identical, to existing solutions. T
    1. `isValidCallback` - `function(playback: Playback): boolean` - A function which returns true/false to indicate whether or not a given playlist should run in this specific context. Only optional when using `PlaylistPriority.Never`
    1. `fadeOut` - `number` - optional duration for the fadeOut time between tracks in a playlist.
    1. `silenceBetweenTracks` - `PlaylistSilenceParams` - Parameters for determining how long, if at all, fake silence tracks are used in a playlist. See below for a more detailed description of the `PlaylistSilenceParams` type.
-   1. `interruptMode` - `InterruptMode` - This field determines whether or not a playlist may be interrupted by another, based on the archetypes used by vanilla playlists. Valid values are `INTERRUPT.Me`, `INTERRUPT.Other`, and `INTERRUPT.Never`.
+   1. `interruptMode` - `InterruptMode` - This field determines whether or not a playlist may be interrupted by another, based on the archetypes used by vanilla playlists. Valid values are `INTERRUPT.Me`, `INTERRUPT.Other`, `INTERRUPT.Never`, and `INTERRUPT.Override`.
    1. `fallback` - `PlaylistFallback` - Selection of fallback tracks and playlists which can be used alongside this playlist. See below for details of the `PlaylistFallback` type.
    1. `exclusions` - `S3maphorePlaylistExclusions` - Selection of tracks and sub-directories which will NOT be played by this particular list
 2. S3maphore replaces OpenMW's builtin music script almost in its entirety. This means that conflicts between the two are mostly-impossible and limitations such as needing to manually set/know the duration of specific tracks is no longer necessary.
@@ -77,6 +77,47 @@ exclusions = {
     },
 }
 ```
+
+### Interrupt modes
+
+Interrupt modes control whether S3maphore may switch away from the currently playing playlist when a different playlist becomes the best valid choice:
+
+- `INTERRUPT.Me` — the playlist may be interrupted. This is the default for Explore playlists.
+- `INTERRUPT.Other` — the playlist may be interrupted by a playlist with a different interrupt mode. This is the default for Battle playlists.
+- `INTERRUPT.Never` — the playlist may not be interrupted. This is the default for Special playlists.
+- `INTERRUPT.Override` — the playlist always overrides the currently playing playlist when it is selected. It bypasses `INTERRUPT.Never`, the `Finish Previous Track` setting, and the normal same-mode interruption check.
+
+`INTERRUPT.Override` only bypasses the interruption gate. The playlist must still be active, have tracks, pass its `isValidCallback`, and win normal playlist priority resolution. Once an override playlist is no longer the best valid choice, it can be replaced by the next playlist normally.
+
+Override playlists do not receive archetypal global silence. Define `silenceBetweenTracks` on the playlist if a scripted sequence should include silence between tracks.
+
+Use this mode for scripted moments such as quest stages, boss entrances, or one-shot musical cues. Pair it with `playOneTrack = true` when the playlist should play one track and then deactivate itself:
+
+```lua
+local QuestStages = {
+    MyQuest = { min = 10, },
+}
+
+---@type S3maphorePlaylist[]
+return {
+    {
+        id = 'quest/my-quest-moment',
+        priority = PlaylistPriority.Special,
+        interruptMode = INTERRUPT.Override,
+        tracks = {
+            'music/quest/my-quest-moment.mp3',
+        },
+        playOneTrack = true,
+        isValidCallback = function(playback)
+            return playback.rules.journal(QuestStages)
+        end,
+    },
+}
+```
+
+Do not use `INTERRUPT.Override` for ordinary Explore or Battle playlists unless they are intentionally meant to cut across any music currently playing. It is a forceful tool for deliberate transitions, not a replacement for choosing an appropriate priority.
+
+Playlist files receive `INTERRUPT` from the built-in playlist environment. External scripts can access the same values through `I.S3maphore.const.INTERRUPT`.
 
 ### PlaylistState Specification
 
