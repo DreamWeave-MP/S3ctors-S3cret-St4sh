@@ -120,11 +120,11 @@ function makeTeaser(body, terms) {
   return teaser.join("");
 }
 
-function formatSearchResultItem(item, terms) {
+function formatSearchResultItem(item, terms, url) {
   var li = document.createElement("li");
   li.className = "search-result-item";
   li.innerHTML = `
-    <a href="${item.item.url}" class="search-result-link">
+    <a href="${url || item.item.url}" class="search-result-link">
       <div>
         <div class="search-result-title">${item.item.title}</div>
         <div class="search-result-excerpt">${makeTeaser(item.item.body, terms)}</div>
@@ -165,6 +165,48 @@ function initSearch() {
   var fuse;
   var currentTerm = "";
   var selectedIndex = -1;
+  var searchRoot = $searchInput.getAttribute("data-search-root");
+  if (window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1") {
+    searchRoot = $searchInput.getAttribute("data-search-root-local") || searchRoot;
+  }
+
+  function localizeSearchUrl(ref) {
+    var resultUrl = new URL(ref, window.location.href);
+    if (window.location.hostname != "localhost" && window.location.hostname != "127.0.0.1") {
+      return resultUrl.toString();
+    }
+
+    var localRoot = $searchInput.getAttribute("data-search-root-local");
+    if (!localRoot) {
+      return resultUrl.toString();
+    }
+
+    var localRootPath = new URL(localRoot, window.location.href).pathname;
+    var localRootIndex = resultUrl.pathname.indexOf(localRootPath);
+    if (localRootIndex < 0) {
+      return resultUrl.toString();
+    }
+
+    resultUrl.protocol = window.location.protocol;
+    resultUrl.host = window.location.host;
+    resultUrl.pathname = resultUrl.pathname.slice(localRootIndex);
+    return resultUrl.toString();
+  }
+
+  function isInSearchScope(ref) {
+    if (!searchRoot) {
+      return true;
+    }
+
+    try {
+      var resultPath = new URL(localizeSearchUrl(ref), window.location.href).pathname;
+      var rootPath = new URL(searchRoot, window.location.href).pathname;
+      var rootPrefix = rootPath.endsWith('/') ? rootPath : rootPath + '/';
+      return resultPath === rootPath || resultPath.startsWith(rootPrefix);
+    } catch (error) {
+      return false;
+    }
+  }
   
   var initIndex = async function () {
     if (fuse === undefined) {
@@ -228,7 +270,7 @@ function initSearch() {
         }
 
         var results = (await initIndex()).search(term).filter(function (r) {
-          return r.item.body !== "";
+          return r.item.body !== "" && isInSearchScope(r.item.url);
         });
 
         if (results.length === 0) {
@@ -243,7 +285,7 @@ function initSearch() {
             continue;
           }
           $searchResultsItems.appendChild(
-            formatSearchResultItem(results[i], term.split(" ")),
+            formatSearchResultItem(results[i], term.split(" "), localizeSearchUrl(results[i].item.url)),
           );
         }
       }, 150),

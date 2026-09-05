@@ -34,8 +34,10 @@
     <script type="text/javascript" src="{{ get_url(path="js/elasticSearch.js") }}"></script>
   {%- endif -%}
 {%- endif -%}
+{% block page_feature_scripts %}
 {% if page and not section %}<script src="{{ get_url(path='js/installModule.js') }}" defer></script>{% endif %}
 {% if page and page.toc and page.extra.use_toc | default(value=true) %}<script src="{{ get_url(path='js/backToToc.js') }}" defer></script>{% endif %}
+{% endblock page_feature_scripts %}
 {% endblock %}
 
 {% block header %}

@@ -28,3 +28,25 @@ The rest of the [Morrowind community](https://discord.gg/pqkUvKfG3q), for whom t
 The [MWSE team](https://mwse.github.io/MWSE/#authors), who are all really cool folks that carried our community for years while OpenMW was waking itself up. You all constantly inspire me to break my own limits, and the engine's.  
 
 AltheaR, whose zealous moderation on Nexus inspired the creation of this repository. None of this would have happened without you.  
+
+## API documentation pages
+
+The Mod Template has an opt-in Cod3x layout for API references, framework guides, and other code-heavy pages. Put docs in a Zola section and select the docs templates in its frontmatter:
+
+```yaml
+template: docs/section.html
+page_template: docs/page.html
+
+extra:
+  api_docs: true
+  docs_root: true
+  docs_project_name: S3maphore
+  docs_short_title: S3maphore Docs
+  docs_project_path: '@/s3maphore/index.md'
+  docs_repository_url: https://github.com/OWNER/REPOSITORY/tree/main/content/s3maphore
+  docs_sidebar_label: Documentation
+```
+
+Declare the consumer metadata once on the documentation root. Child pages and sections inherit the selected docs templates through `page_template`; they do not need to repeat the project name, root URL, or search scope. Zola accepts YAML frontmatter as shown above as well as TOML.
+
+API docs get a recursive collapsible project sidebar, a current-page table of contents, breadcrumbs, responsive three-column layout, and copy buttons for fenced code blocks. Guide pages are task-first: lead with the goal and a working example, then explain variations, pitfalls, and related reference. API reference pages are lookup-first: lead with the symbol or item name, signature, and one-sentence summary, then document behavior, parameters, returns, caveats, examples, and related items.
