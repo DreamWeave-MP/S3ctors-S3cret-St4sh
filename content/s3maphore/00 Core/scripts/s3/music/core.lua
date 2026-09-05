@@ -74,6 +74,7 @@ local lastSpellSchool = lastSelectedSpell and Magic:getSpellSchool(lastSelectedS
 
 local desiredPlaylist, resolverDirty, didTransition, waitingOnPresence, wasExterior =
   nil, false, false, true, false
+local journalDirty = false
 local presenceGeneration, playbackEpoch = 0, 0
 
 ---@type QueuedEvent
@@ -125,6 +126,11 @@ StateMachine:state('update_playlist_state', function(dt)
 
   --- Explicitly advance the generator on each round-robin cycle to improve distribution
   randomGen.int()
+
+  if journalDirty then
+    journalDirty = false
+    resolvePlaylist()
+  end
 
   if dt == 0 then return StateMachine:jump 'handle_playback' end
 
@@ -473,9 +479,10 @@ local scriptInterface = {
 
   engineHandlers = {
 
-    onQuestUpdate = function()
+    onQuestUpdate = function(_, _)
       clearJournalCache()
-      resolvePlaylist()
+      journalDirty = true
+      if MusicSettings.MusicEnabled then StateMachine:transition 'update_playlist_state' end
     end,
 
     onKeyPress = function(key)
