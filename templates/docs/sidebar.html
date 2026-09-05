@@ -1,0 +1,39 @@
+{% macro render(section, current_url, active_paths, root=false, root_label="Documentation") %}
+    {% set section_current = section.permalink == current_url %}
+    {% set section_ancestor = section.relative_path in active_paths %}
+    {% set section_open = section_current or section_ancestor %}
+    {% set_global has_overview_page = false %}
+    {% for child_page in section.pages %}
+        {% if child_page.slug == "overview" %}
+            {% set_global has_overview_page = true %}
+        {% endif %}
+    {% endfor %}
+    {% if root %}
+        <a class="docs-sidebar__home{% if section_current %} is-current{% endif %}" href="{{ section.permalink | safe }}"{% if section_current %} aria-current="page"{% endif %}>{{ root_label }}</a>
+        {{ docs_sidebar::entries(section=section, current_url=current_url, active_paths=active_paths) }}
+    {% else %}
+        <details{% if section_open %} open{% endif %}>
+            <summary{% if section_current %} class="is-current"{% elif section_ancestor %} class="is-ancestor"{% endif %}>{{ section.title }}</summary>
+            {% if section.content and not has_overview_page %}
+            <a class="docs-sidebar__overview{% if section_current %} is-current{% endif %}" href="{{ section.permalink | safe }}"{% if section_current %} aria-current="page"{% endif %}>Overview</a>
+            {% endif %}
+            {{ docs_sidebar::entries(section=section, current_url=current_url, active_paths=active_paths) }}
+        </details>
+    {% endif %}
+{% endmacro render %}
+
+{% macro entries(section, current_url, active_paths) %}
+    <ul>
+    {% for child_page in section.pages %}
+        <li>
+            <a href="{{ child_page.permalink | safe }}"{% if child_page.permalink == current_url %} class="is-current" aria-current="page"{% endif %}>{{ child_page.title }}</a>
+        </li>
+    {% endfor %}
+    {% for subsection_path in section.subsections %}
+        {% set subsection = get_section(path=subsection_path) %}
+        <li class="docs-sidebar__section">
+            {{ docs_sidebar::render(section=subsection, current_url=current_url, active_paths=active_paths) }}
+        </li>
+    {% endfor %}
+    </ul>
+{% endmacro entries %}

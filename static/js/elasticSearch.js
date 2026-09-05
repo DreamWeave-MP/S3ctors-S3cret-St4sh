@@ -121,9 +121,9 @@ function makeTeaser(body, terms) {
   return teaser.join("");
 }
 
-function formatSearchResultItem(item, terms) {
+function formatSearchResultItem(item, terms, url) {
   return '<div class="search-results__item">'
-  + `<a href="${item.ref}">${item.doc.title}</a>`
+  + `<a href="${url || item.ref}">${item.doc.title}</a>`
   + `<div>${makeTeaser(item.doc.body, terms)}</div>`
   + '</div>';
 }
@@ -143,6 +143,48 @@ function initSearch() {
   };
   var currentTerm = "";
   var index;
+  var searchRoot = $searchInput.getAttribute("data-search-root");
+  if (window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1") {
+    searchRoot = $searchInput.getAttribute("data-search-root-local") || searchRoot;
+  }
+
+  function localizeSearchUrl(ref) {
+    var resultUrl = new URL(ref, window.location.href);
+    if (window.location.hostname != "localhost" && window.location.hostname != "127.0.0.1") {
+      return resultUrl.toString();
+    }
+
+    var localRoot = $searchInput.getAttribute("data-search-root-local");
+    if (!localRoot) {
+      return resultUrl.toString();
+    }
+
+    var localRootPath = new URL(localRoot, window.location.href).pathname;
+    var localRootIndex = resultUrl.pathname.indexOf(localRootPath);
+    if (localRootIndex < 0) {
+      return resultUrl.toString();
+    }
+
+    resultUrl.protocol = window.location.protocol;
+    resultUrl.host = window.location.host;
+    resultUrl.pathname = resultUrl.pathname.slice(localRootIndex);
+    return resultUrl.toString();
+  }
+
+  function isInSearchScope(ref) {
+    if (!searchRoot) {
+      return true;
+    }
+
+    try {
+      var resultPath = new URL(localizeSearchUrl(ref), window.location.href).pathname;
+      var rootPath = new URL(searchRoot, window.location.href).pathname;
+      var rootPrefix = rootPath.endsWith('/') ? rootPath : rootPath + '/';
+      return resultPath === rootPath || resultPath.startsWith(rootPrefix);
+    } catch (error) {
+      return false;
+    }
+  }
   
   var initIndex = async function () {
     if (index === undefined) {
@@ -184,7 +226,9 @@ function initSearch() {
       return;
     }
 
-    var results = (await initIndex()).search(term, options);
+    var results = (await initIndex()).search(term, options).filter(function(result) {
+      return isInSearchScope(result.ref);
+    });
     if (results.length === 0) {
       $searchResults.style.display = "none";
       return;
@@ -192,7 +236,7 @@ function initSearch() {
 
     for (var i = 0; i < Math.min(results.length, MAX_ITEMS); i++) {
       var item = document.createElement("li");
-      item.innerHTML = formatSearchResultItem(results[i], term.split(" "));
+      item.innerHTML = formatSearchResultItem(results[i], term.split(" "), localizeSearchUrl(results[i].ref));
       $searchResultsItems.appendChild(item);
     }
   }, 150));
