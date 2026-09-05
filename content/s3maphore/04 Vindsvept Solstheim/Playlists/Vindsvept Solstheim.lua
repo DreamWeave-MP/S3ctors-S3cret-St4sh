@@ -40,16 +40,16 @@ local function isinfierRegionRule() return Playback.state.nearestRegion == 'isin
 
 ---@type ValidPlaylistCallback
 local function lakeCellRule(playback)
-  return not playback.state.isInCombat and playback.rules.cellNameMatch(LakeMatches)
+  return not Playback.state.isInCombat and Playback.rules.cellNameMatch(LakeMatches)
 end
 
 ---@type ValidPlaylistCallback
 local function moesringRegionRule(playback)
-  return playback.state.nearestRegion == 'moesring mountains region'
+  return Playback.state.nearestRegion == 'moesring mountains region'
 end
 
 ---@type ValidPlaylistCallback
-local function solstheimTownRule(playback) return playback.rules.cellNameMatch(TownMatches) end
+local function solstheimTownRule() return Playback.rules.cellNameMatch(TownMatches) end
 
 ---@type S3maphorePlaylist[]
 return {

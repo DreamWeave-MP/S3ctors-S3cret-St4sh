@@ -10,12 +10,12 @@ local AlmalexiaCombatTargets = {
 
 ---@type ValidPlaylistCallback
 local function almalexiaCellRule(playback)
-  return not playback.state.cellIsExterior and playback.rules.cellNameExact(AlmalexiaCells)
+  return not Playback.state.cellIsExterior and Playback.rules.cellNameExact(AlmalexiaCells)
 end
 
 ---@type ValidPlaylistCallback
 local function almalexiaCombatRule(playback)
-  return playback.state.isInCombat and playback.rules.combatTargetExact(AlmalexiaCombatTargets)
+  return Playback.state.isInCombat and Playback.rules.combatTargetExact(AlmalexiaCombatTargets)
 end
 
 ---@type S3maphorePlaylist[]

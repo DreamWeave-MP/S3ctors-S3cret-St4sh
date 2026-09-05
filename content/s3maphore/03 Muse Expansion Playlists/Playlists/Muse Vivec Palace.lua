@@ -10,12 +10,12 @@ local VivecCombatTargets = {
 
 ---@type ValidPlaylistCallback
 local function vivecCellRule(playback)
-  return not playback.state.cellIsExterior and playback.rules.cellNameExact(VivecCells)
+  return not Playback.state.cellIsExterior and Playback.rules.cellNameExact(VivecCells)
 end
 
 ---@type ValidPlaylistCallback
 local function vivecCombatRule(playback)
-  return playback.state.isInCombat and playback.rules.combatTargetExact(VivecCombatTargets)
+  return Playback.state.isInCombat and Playback.rules.combatTargetExact(VivecCombatTargets)
 end
 
 ---@type S3maphorePlaylist[]

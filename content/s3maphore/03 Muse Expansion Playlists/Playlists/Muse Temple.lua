@@ -45,8 +45,8 @@ local TempleCombatTargets = {
 }
 
 ---@type ValidPlaylistCallback
-local function templeCellRule(playback)
-  return not playback.state.isInCombat and playback.rules.cellNameMatch(TempleCellNames)
+local function templeCellRule()
+  return not Playback.state.isInCombat and Playback.rules.cellNameMatch(TempleCellNames)
 end
 
 ---@type S3maphorePlaylist[]
@@ -63,8 +63,8 @@ return {
     priority = PlaylistPriority.BattleMod,
     randomize = true,
 
-    isValidCallback = function(playback)
-      return playback.state.isInCombat and playback.rules.combatTargetExact(TempleCombatTargets)
+    isValidCallback = function()
+      return Playback.state.isInCombat and Playback.rules.combatTargetExact(TempleCombatTargets)
     end,
   },
 }

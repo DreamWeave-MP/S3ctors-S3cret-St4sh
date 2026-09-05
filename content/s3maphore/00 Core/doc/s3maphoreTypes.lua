@@ -161,7 +161,7 @@ tes3 = tes3
 ---| 'daedra'
 ---| 'creatures'
 
----@alias ValidPlaylistCallback fun(playback: S3maphorePlayback?): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
+---@alias ValidPlaylistCallback fun(): boolean? a function that returns true if the playlist is valid for the current context. If not provided, the playlist will always be valid.
 
 ---@alias VampireType
 ---| 'quarra'
@@ -232,8 +232,8 @@ tes3 = tes3
 ---    id = 'MyRegionMusic',
 ---    priority = 900,
 ---    tracks = { 'music/my/ashlands.mp3', 'music/my/bittercoast.mp3' },
----    isValidCallback = function(playback)
----        return playback.rules.region { ['ashlands region'] = true }
+---    isValidCallback = function()
+---        return Playback.rules.region { ['ashlands region'] = true }
 ---    end,
 ---}
 ---

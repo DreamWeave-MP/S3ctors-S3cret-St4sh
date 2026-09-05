@@ -23,8 +23,8 @@ return {
       },
     },
 
-    isValidCallback = function(playback)
-      return not playback.state.isInCombat and playback.rules.cellNameMatch(VivecMatches)
+    isValidCallback = function()
+      return not Playback.state.isInCombat and Playback.rules.cellNameMatch(VivecMatches)
     end,
   },
 }

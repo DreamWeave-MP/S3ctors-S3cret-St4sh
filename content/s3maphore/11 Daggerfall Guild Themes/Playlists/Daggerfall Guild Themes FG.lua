@@ -10,9 +10,9 @@ local fgMatches = {
 
 ---@type ValidPlaylistCallback
 local function fgOrCellRule(playback)
-  return not playback.state.isInCombat
-    and not playback.state.cellIsExterior
-    and (playback.rules.cellNameMatch(fgMatches))
+  return not Playback.state.isInCombat
+    and not Playback.state.cellIsExterior
+    and (Playback.rules.cellNameMatch(fgMatches))
 end
 
 ---@type S3maphorePlaylist[]

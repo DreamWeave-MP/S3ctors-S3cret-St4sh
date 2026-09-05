@@ -20,7 +20,7 @@ local DwemerEnemyNames = {
 }
 
 ---@type ValidPlaylistCallback
-local function dwarvenEnemyRule(playback) return playback.rules.combatTargetExact(DwemerEnemyNames) end
+local function dwarvenEnemyRule() return Playback.rules.combatTargetExact(DwemerEnemyNames) end
 
 ---@type ValidPlaylistCallback
 local function dwemerStaticRule()

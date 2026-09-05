@@ -673,7 +673,7 @@ end
 ---
 --- Example usage:
 ---
---- playback.rules.staticContentFile { ['starwind enhanced.esm'] = true, }
+--- Playback.rules.staticContentFile { ['starwind enhanced.esm'] = true, }
 ---@param inputContentFiles  IDPresenceMap
 ---@return boolean
 function PlaylistRules.staticContentFile(inputContentFiles)
@@ -891,7 +891,7 @@ local function clearJournalCache() clear(S3maphoreJournalCache) end
 ---
 --- Example usage:
 ---
---- playback.rules.journal { A1_V_VivecInformants = { min = 50, max = 55, }, }
+--- Playback.rules.journal { A1_V_VivecInformants = { min = 50, max = 55, }, }
 ---@param journalDataMap NumericPresenceMap
 ---@return boolean
 function PlaylistRules.journal(journalDataMap)

@@ -129,21 +129,21 @@ local SixthHouseCells = {
 
 ---@type ValidPlaylistCallback
 local function sixthHouseCellRule(playback)
-  return not playback.state.isInCombat and playback.rules.cellNameExact(SixthHouseCells)
+  return not Playback.state.isInCombat and Playback.rules.cellNameExact(SixthHouseCells)
 end
 
 ---@type ValidPlaylistCallback
 local function sixthHouseEnemyRule(playback)
-  return playback.state.isInCombat
+  return Playback.state.isInCombat
     and (
-      playback.rules.combatTargetExact(SixthHouseEnemies)
-      or playback.rules.cellNameMatch(GenericDagoth)
+      Playback.rules.combatTargetExact(SixthHouseEnemies)
+      or Playback.rules.cellNameMatch(GenericDagoth)
     )
 end
 
 ---@type ValidPlaylistCallback
 local function theManHimselfRule(playback)
-  return playback.state.isInCombat and playback.rules.combatTargetExact(DagothUr)
+  return Playback.state.isInCombat and Playback.rules.combatTargetExact(DagothUr)
 end
 
 ---@type S3maphorePlaylist[]
