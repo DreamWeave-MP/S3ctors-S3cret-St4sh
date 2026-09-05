@@ -121,7 +121,7 @@ do
 
       PlaylistState.objectCount = total
 
-      SendEvent(gameSelf, 'S3maphoreCellPresenceUpdated')
+      SendEvent(gameSelf, 'S3maphoreCellPresenceUpdated', presence.cellId)
     elseif key == 'GlobalKillCounts' then
       PlaylistState.killCounts = StorageGet(presenceSection, key)
     end

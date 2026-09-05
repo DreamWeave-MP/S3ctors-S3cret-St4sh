@@ -569,7 +569,9 @@ local scriptInterface = {
       MusicManager.updateBanner()
     end,
 
-    S3maphoreCellPresenceUpdated = function()
+    S3maphoreCellPresenceUpdated = function(cellId)
+      if cellId ~= self.cell.id then return end
+
       waitingOnPresence = false
       musicUtil.debugLog 'Resolving playlist after cell presence update!'
       resolvePlaylist()
