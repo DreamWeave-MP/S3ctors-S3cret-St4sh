@@ -355,7 +355,7 @@ Finally, pressing F8 will always skip the current track if one is playing - if t
 
 ### For Playlist Authors
 
-The full [S3maphore modder documentation](@/s3maphore/modder-docs.md) covers playlist creation, playlist rules, events, localization, and the public interface.
+The [S3maphore documentation](@/s3maphore/docs/_index.md) covers playlist creation, playlist rules, batched combat checks, events, metadata, settings, and the public interface.
 
 ### Settings
 
