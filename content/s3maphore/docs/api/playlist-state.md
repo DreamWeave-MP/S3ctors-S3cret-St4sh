@@ -80,6 +80,24 @@ These normalized values describe the player. [The `dynamicStatThreshold` rule](@
 | --- | --- | --- |
 | `killCounts` | `table<string, number>` | Global counts of actors that have died during the playthrough. `TotalKills` is the aggregate. This does not prove that the player caused the death. |
 
+### Kill counts
+
+S3maphore builds `killCounts` from observed actor-death events rather than a hardcoded list of creatures or NPCs. Each actor record ID is a key whose value is the number of observed deaths for that record. `TotalKills` contains the aggregate count across all record IDs.
+
+The map is part of the global script's save data and is restored when the save is loaded. Treat it as read-only. A missing record ID means no death has been recorded for it yet; use `or 0` when comparing counts:
+
+```lua
+local function hasRecordedDeath(recordId, minimum)
+    return (Playback.state.killCounts[recordId] or 0) >= minimum
+end
+
+isValidCallback = function()
+    return hasRecordedDeath('dagoth_ur', 1)
+end
+```
+
+These are world/death observations, not a player-kill ledger. Counts may include actors killed by other actors, scripted effects, or other causes that produce the same death event.
+
 State tables are read-only at the top level. Treat nested maps and arrays as engine-owned data: read them, do not mutate them or retain assumptions about their identity between updates.
 
 ## Example: combine state and rules
