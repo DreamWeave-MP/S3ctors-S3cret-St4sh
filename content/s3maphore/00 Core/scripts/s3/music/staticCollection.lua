@@ -3,7 +3,7 @@
 local clear = require 'scripts.s3.clear'
 local szudzik = require 'scripts.s3.szudzik'
 
-local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs, StrFind, StrFormat, StrGsub, StrLower, tableRemove, type =
+local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs, Print, StrFind, StrFormat, StrGsub, StrLower, tableRemove, type =
   math.ceil,
   coroutine.create,
   coroutine.resume,
@@ -14,6 +14,7 @@ local Ceil, CoCreate, CoResume, CoStatus, CoYield, Error, Max, Min, Next, Pairs,
   math.min,
   next,
   pairs,
+  print,
   string.find,
   string.format,
   string.gsub,
@@ -81,6 +82,7 @@ local GetAll
 --- Hoisted copy of GameObject.sendEvent
 ---@type fun(obj: openmw.Object, id: string, data: any)
 local SendEvent
+local Quit
 
 local Cells, DoorDestination, GetCurrentWeather, GetExteriorCell, IsDoor, IsTeleportDoor, Players, PresenceSection, SqLen, StaticType, StorageSet, NPCType, CreatureType, AIFight, IsDeadFn
 
@@ -93,6 +95,7 @@ do
   local types = require 'openmw.types'
   local world = require 'openmw.world'
 
+  Quit = core.quit
   for k, v in Pairs(types) do
     TypesToNames[v] = k
   end
@@ -575,7 +578,8 @@ transitionUpdateHandler = function()
   if not success then
     cellTransitionCoroutine = nil
     updateFunction = normalUpdateHandler
-    Error(err)
+    Print(StrFormat('[ S3MAPHORE ]: Fatal presence collection error: %s', err))
+    Quit()
   end
 
   if CoStatus(cellTransitionCoroutine) == 'dead' then
