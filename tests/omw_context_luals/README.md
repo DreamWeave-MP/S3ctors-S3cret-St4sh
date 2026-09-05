@@ -4,6 +4,7 @@ Run from the repository root:
 
 ```sh
 python3 tests/omw_context_luals/check.py
+bun tests/luals_check_openmw.ts
 ```
 
 The fixture owns its workspace root so the relative plugin and library paths
