@@ -17,6 +17,12 @@ return {
     priority = PlaylistPriority.CellMatch,
     randomize = true,
 
+    exclusions = {
+      tracks = {
+        'ms/cell/vivec/vivecpalace',
+      },
+    },
+
     isValidCallback = function(playback)
       return not playback.state.isInCombat and playback.rules.cellNameMatch(VivecMatches)
     end,
