@@ -600,7 +600,9 @@ local scriptInterface = {
     end,
 
     S3maphoreCellPresenceUpdated = function(presence)
-      if presence.cellId ~= self.cell.id or presence.generation ~= presenceGeneration then return end
+      if presence.cellId ~= self.cell.id or presence.generation ~= presenceGeneration then
+        return
+      end
 
       waitingOnPresence = false
       musicUtil.debugLog 'Resolving playlist after cell presence update!'
@@ -647,7 +649,8 @@ local scriptInterface = {
     S3maphoreTrackChanged = function(eventData)
       if not MusicSettings.MusicEnabled then return end
 
-      if eventData.reason == MusicManager.STATE.TrackChanged
+      if
+        eventData.reason == MusicManager.STATE.TrackChanged
         and (
           waitingOnPresence
           or eventData.cellId ~= self.cell.id
