@@ -126,6 +126,16 @@ return {
     end,
   },
   {
+    -- 'Project Cyrodiil - Abecean Shores/Divine Temples',
+    id = 'ms/cell/nine divine temples',
+    priority = PlaylistPriority.CellMatch,
+    randomize = true,
+
+    isValidCallback = function()
+      return not Playback.state.cellIsExterior and Playback.rules.cellNameMatch(TemplePatterns)
+    end,
+  },
+  {
     -- 'Project Cyrodiil - Abecean Shores/Kingdom of Sutch',
     id = 'ms/cell/cyrodiil sutch',
     priority = PlaylistPriority.CellMatch,
@@ -156,15 +166,5 @@ return {
     randomize = true,
 
     isValidCallback = function() return Playback.rules.region(StirkRegions) end,
-  },
-  {
-    -- 'Project Cyrodiil - Abecean Shores/Divine Temples',
-    id = 'ms/cell/nine divine temples',
-    priority = PlaylistPriority.CellMatch,
-    randomize = true,
-
-    isValidCallback = function()
-      return not Playback.state.cellIsExterior and Playback.rules.cellNameMatch(TemplePatterns)
-    end,
   },
 }
