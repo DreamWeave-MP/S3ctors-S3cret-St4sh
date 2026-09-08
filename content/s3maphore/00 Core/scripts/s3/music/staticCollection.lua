@@ -298,42 +298,44 @@ local function collectPresenceAndStatics(cell, cellKey)
     local id, objType, recordId, contentFile = obj.id, obj.type, obj.recordId, obj.contentFile
     local typeName = TypesToNames[objType]
 
-    if cellKey then
-      local idx = #objIds + 1
-      objIds[idx] = id
-      objRecordIds[idx] = recordId
-      objTypes[idx] = typeName
-      objContentFiles[idx] = contentFile
-    end
-
-    seenIds[id] = true
-
-    recordDeltas[recordId] = (recordDeltas[recordId] or 0) + 1
-    typeDeltas[typeName] = (typeDeltas[typeName] or 0) + 1
-    if contentFile then
-      contentFileDeltas[contentFile] = (contentFileDeltas[contentFile] or 0) + 1
-    end
-
-    -- Static list population — interiors only.
-    -- Exterior staticContentFiles is rebuilt from cellObjectIds by rebuildStaticListFromCellObjectIds.
-    if not cellKey and objType == StaticType then
-      if contentFile and not seenContentFiles[contentFile] then
-        outContentFiles[#outContentFiles + 1] = contentFile
-        seenContentFiles[contentFile] = true
+    if typeName then
+      if cellKey then
+        local idx = #objIds + 1
+        objIds[idx] = id
+        objRecordIds[idx] = recordId
+        objTypes[idx] = typeName
+        objContentFiles[idx] = contentFile
       end
-    end
 
-    -- Combat check: does this cell contain any aggressive living actor (excluding the player)?
-    if not cellHasHostile then
-      if objType == NPCType or objType == CreatureType then
-        local fightValue = AIFight(obj).modified
-        local threshold = objType == NPCType and NPC_FIGHT_THRESHOLD or CREATURE_FIGHT_THRESHOLD
-        if fightValue >= threshold and not IsDeadFn(obj) then cellHasHostile = true end
+      seenIds[id] = true
+
+      recordDeltas[recordId] = (recordDeltas[recordId] or 0) + 1
+      typeDeltas[typeName] = (typeDeltas[typeName] or 0) + 1
+      if contentFile then
+        contentFileDeltas[contentFile] = (contentFileDeltas[contentFile] or 0) + 1
       end
-    end
 
-    -- Door tracking for interior cells without an own region
-    if not cellKey and not cell.region then nearestDoor = checkForRegion(obj, nearestDoor) end
+      -- Static list population — interiors only.
+      -- Exterior staticContentFiles is rebuilt from cellObjectIds by rebuildStaticListFromCellObjectIds.
+      if not cellKey and objType == StaticType then
+        if contentFile and not seenContentFiles[contentFile] then
+          outContentFiles[#outContentFiles + 1] = contentFile
+          seenContentFiles[contentFile] = true
+        end
+      end
+
+      -- Combat check: does this cell contain any aggressive living actor (excluding the player)?
+      if not cellHasHostile then
+        if objType == NPCType or objType == CreatureType then
+          local fightValue = AIFight(obj).modified
+          local threshold = objType == NPCType and NPC_FIGHT_THRESHOLD or CREATURE_FIGHT_THRESHOLD
+          if fightValue >= threshold and not IsDeadFn(obj) then cellHasHostile = true end
+        end
+      end
+
+      -- Door tracking for interior cells without an own region
+      if not cellKey and not cell.region then nearestDoor = checkForRegion(obj, nearestDoor) end
+    end
 
     untilYield = untilYield - 1
     if untilYield == 0 then
