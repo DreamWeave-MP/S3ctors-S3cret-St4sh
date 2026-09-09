@@ -23,4 +23,4 @@ S3maphore is an open playlist engine for OpenMW. This manual separates the fast 
 
 Start with **Getting Started** if this is your first S3maphore playlist. Use **Playlist Authoring** when you are shaping a larger music pack. The **API Reference** is the lookup room for the [PlaylistEnvironment](@/s3maphore/docs/api/playlist-environment.md), metadata, settings, loading, events, state, and rules. **Examples** show the pieces working together.
 
-If your mod currently polls actors from `onUpdate`, read the [batched combat check event](@/s3maphore/docs/api/events.md#s3maphorecheckcombat). S3maphore already performs the player-side polling; an actor-local handler can replace per-actor update work without adding another scheduler.
+If your mod currently polls actors from `onUpdate`, read the [shared actor-polling hook](@/s3maphore/docs/api/events.md#s3maphorecheckcombat). S3maphore already performs the player-side traversal; an actor-local handler can replace per-actor update work without adding another scheduler.
