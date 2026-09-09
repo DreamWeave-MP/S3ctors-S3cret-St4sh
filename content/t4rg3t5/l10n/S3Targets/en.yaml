@@ -1,5 +1,8 @@
 CheckLOSName: Use Line-of-Sight Checks
-CheckLOSDesc: If enabled, uses line of sight to break target locking if you can\t see the enemy. DISabled by default to improve performance.
+CheckLOSDesc: If enabled, continuously checks line of sight after a target is acquired and breaks the lock when the target remains obstructed. Disabled by default to improve performance.
+
+ThirdPersonLockCameraName: Third-Person Lock Camera
+ThirdPersonLockCameraDesc: If enabled, uses T4rg3t5's dedicated third-person camera while a target is locked. Disable this to keep targeting and the target marker while allowing another camera mod to control the view.
 
 DisableLockWhenSheathingName: Remove Target When Sheathing
 DisableLockWhenSheathingDesc: If enabled, your currently locked target will be unset when you sheath your weapon.
