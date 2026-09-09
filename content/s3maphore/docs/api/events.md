@@ -69,11 +69,11 @@ end)
 
 Emitted when playback stops because music was disabled or no playlist was valid during resolution.
 
-## Batched combat checks
+## Shared actor polling
 
 ### `S3maphoreCheckCombat`
 
-`S3maphoreCheckCombat` is an advanced event for sharing S3maphore's actor-combat polling architecture with other mods. It is sent to one nearby actor at a time and has no payload or return value.
+Despite its name, `S3maphoreCheckCombat` is not a combat notification or a request for a combat result. It is a scheduler hook: S3maphore emits it while its player-side, round-robin traversal visits selected nearby actors. An actor-local script can use that visit to refresh lightweight actor-owned state without installing its own per-actor `onUpdate` handler. The name comes from S3maphore's primary use for the hook: checking each actor's AI combat targets.
 
 The expensive operation here is asking every actor's AI system for its combat targets. Putting that query in an `onUpdate` handler on every actor scales with the number of loaded actors. S3maphore already provides the player-side polling and batching:
 
@@ -82,7 +82,7 @@ The expensive operation here is asking every actor's AI system for its combat ta
 3. The local actor script checks its AI targets.
 4. The actor sends `OMWMusicCombatTargetsChanged` to nearby players only when its target list changes.
 
-The batch size is calculated from the player's `dt` and clamped between 4 and 16 actors. The target is to revisit the actor list roughly every one-third of a second. A downstream mod does not need to send these requests or implement its own scheduler. Add an `S3maphoreCheckCombat` handler to an actor-local script and S3maphore will invoke it as each nearby actor is polled:
+The batch size is calculated from the player's `dt` and clamped between 4 and 16 actors. The target is to revisit the actor list roughly every one-third of a second. A downstream mod does not send these requests or implement another scheduler. Add a `S3maphoreCheckCombat` handler to an actor-local script and S3maphore will invoke it when that actor is visited:
 
 ```lua
 local AI = require('openmw.interfaces').AI
@@ -101,11 +101,11 @@ return {
 }
 ```
 
-The actor-local systems that care about combat can read `inCombat` or react when that value changes. The event handler's return value is discarded; the useful result is the state update.
+The actor-local systems that care about this state can read `inCombat` or react when that value changes. The event handler's return value is discarded; replace the local variable with the state or notification your mod actually needs.
 
-This is a direct replacement for **per-actor** `onUpdate`. The downstream script only supplies the actor-side handler; S3maphore supplies the scheduler, round-robin traversal, and bounded request batches. The important rule is that expensive actor queries are event-driven and bounded instead of running once per actor every frame.
+Use this as a replacement for **per-actor** `onUpdate` only when the work can tolerate a bounded, approximate cadence. It is not a generic timer and does not prove that an actor has entered or left combat.
 
-The S3maphore actor script skips unnecessary AI queries for dead, out-of-range, idle, unarmed actors. When a query is needed, it uses `AI.getTargets('Combat')`. Results are reported through `OMWMusicCombatTargetsChanged`:
+For its built-in use, the S3maphore actor script skips unnecessary AI queries for dead, out-of-range, idle, or unarmed actors. When a query is needed, it uses `AI.getTargets('Combat')` and reports changes through `OMWMusicCombatTargetsChanged`:
 
 ```lua
 return {
@@ -120,7 +120,7 @@ return {
 
 `data.actor` is the actor that was checked and `data.targets` is its current combat-target array. Treat both the payload and target array as read-only; the actor script owns the underlying table. The event is sent to nearby players, so a player script can maintain its own combat projection without re-querying every actor.
 
-This contract requires S3maphore's local actor script to be loaded for the actors being checked. `S3maphoreCheckCombat` is deliberately narrow: it carries no custom request data and only asks S3maphore's actor handler to refresh combat state. Use a separate event name for unrelated actor work.
+This contract requires S3maphore's local actor script to be loaded for the actors being checked. The event carries no custom request data, no return value, and no per-dispatch combat payload. Use `I.S3maphore` or the documented state/events when you need combat information; use a separate event name when you need unrelated actor work.
 
 ## State reevaluation
 
