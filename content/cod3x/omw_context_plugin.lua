@@ -88,7 +88,9 @@ local CONCRETE_CONTEXTS = { 'global', 'local', 'player', 'menu', 'load' }
 local RUNTIME_CONTEXTS = { 'global', 'local', 'player', 'menu' }
 local function contextSet(...)
   local result = {}
-  for index = 1, select('#', ...) do result[select(index, ...)] = true end
+  for index = 1, select('#', ...) do
+    result[select(index, ...)] = true
+  end
   return result
 end
 
@@ -98,11 +100,11 @@ local RUNTIME_CONTEXT = contextSet('global', 'local', 'player', 'menu')
 local ACTOR_CONTEXT = contextSet('local', 'player')
 local FRAME_CONTEXT = contextSet('local', 'player', 'menu')
 local PLAYER_MENU_CONTEXT = contextSet('player', 'menu')
-local LOCAL_CONTEXT = contextSet('local')
-local PLAYER_CONTEXT = contextSet('player')
-local MENU_CONTEXT = contextSet('menu')
-local GLOBAL_CONTEXT = contextSet('global')
-local LOAD_CONTEXT = contextSet('load')
+local LOCAL_CONTEXT = contextSet 'local'
+local PLAYER_CONTEXT = contextSet 'player'
+local MENU_CONTEXT = contextSet 'menu'
+local GLOBAL_CONTEXT = contextSet 'global'
+local LOAD_CONTEXT = contextSet 'load'
 local SETTINGS_CONTEXT = contextSet('global', 'menu', 'player')
 
 local AVAILABILITY = {
@@ -316,7 +318,7 @@ local function findShortCommentOutsideString(line)
       elseif character == quote then
         quote = nil
       end
-    elseif character == '"' or character == "'" then
+    elseif character == '"' or character == '\'' then
       quote = character
     elseif character == '-' and line:sub(index + 1, index + 1) == '-' then
       return index
@@ -327,7 +329,9 @@ local function findShortCommentOutsideString(line)
 end
 
 local function maskCharacters(masked, startPos, endPos)
-  for index = startPos, endPos do masked[index] = ' ' end
+  for index = startPos, endPos do
+    masked[index] = ' '
+  end
 end
 
 local function longBracketAt(line, pos)
@@ -348,13 +352,20 @@ stripLineComment = function(line, longBracketLevel)
   if not longBracketLevel then
     local commentStart = line:find('--', 1, true)
     local doubleQuoteStart = line:find('"', 1, true)
-    local singleQuoteStart = line:find("'", 1, true)
+    local singleQuoteStart = line:find('\'', 1, true)
     local quoteStart = doubleQuoteStart
-    if not quoteStart or (singleQuoteStart and singleQuoteStart < quoteStart) then quoteStart = singleQuoteStart end
+    if not quoteStart or (singleQuoteStart and singleQuoteStart < quoteStart) then
+      quoteStart = singleQuoteStart
+    end
     local longBracketStart = line:find '%[=*%['
 
     if commentStart and quoteStart and quoteStart > commentStart then quoteStart = nil end
-    if commentStart and longBracketStart and longBracketStart > commentStart and longBracketStart ~= commentStart + 2 then
+    if
+      commentStart
+      and longBracketStart
+      and longBracketStart > commentStart
+      and longBracketStart ~= commentStart + 2
+    then
       longBracketStart = nil
     end
 
@@ -370,7 +381,9 @@ stripLineComment = function(line, longBracketLevel)
   end
 
   local masked = {}
-  for i = 1, #line do masked[i] = line:sub(i, i) end
+  for i = 1, #line do
+    masked[i] = line:sub(i, i)
+  end
 
   local i = 1
   while i <= #line do
@@ -423,7 +436,9 @@ stripLineComment = function(line, longBracketLevel)
         i = finish + 1
       else
         local level, openFinish
-        if ch == '[' then level, openFinish = longBracketAt(line, i) end
+        if ch == '[' then
+          level, openFinish = longBracketAt(line, i)
+        end
         if level then
           maskCharacters(masked, i, openFinish)
           i = openFinish + 1
@@ -647,7 +662,7 @@ local INTERFACE_SURFACES = {
 }
 
 local function interfaceTypeForContext(ctx)
-  if not ctx or ctx.invalid or ctx.none then return nil end
+  if not ctx or ctx.invalid or ctx.none then return end
 
   local surfaces = {}
   for _, context in ipairs(CONCRETE_CONTEXTS) do
@@ -655,7 +670,7 @@ local function interfaceTypeForContext(ctx)
     if ctx.set[context] and surface then surfaces[#surfaces + 1] = 'openmw.interfaces.' .. surface end
   end
 
-  if #surfaces == 0 then return nil end
+  if #surfaces == 0 then return end
   return table.concat(surfaces, '|')
 end
 
