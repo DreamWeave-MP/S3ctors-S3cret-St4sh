@@ -369,6 +369,7 @@ StateMachine:state('handle_playback', function()
   if target ~= MusicManager.currentPlaylist then
     TrackSelection.switchPlaylist(target, PlaybackParams)
   else
+    SilenceManager:updateSilenceParams(target)
     MusicManager.currentTrack = TrackSelection.selectTrackFromPlaylist(target.id)
     PlaybackParams.fadeOut = target.fadeOut or MusicSettings.FadeOutDuration
   end
