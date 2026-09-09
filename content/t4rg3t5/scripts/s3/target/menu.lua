@@ -6,7 +6,7 @@ do
 
   local I = require 'openmw.interfaces'
 
-  local ModInfo = require 'scripts.s3.target.modInfo'
+  local ModInfo = require 'scripts.s3.target.modinfo'
 
   local iconNames = {}
 
@@ -81,6 +81,14 @@ do
         true
       ),
       Setting('CheckLOS', 'checkbox', {}, 'CheckLOSName', 'CheckLOSDesc', false),
+      Setting(
+        'ThirdPersonLockCamera',
+        'checkbox',
+        {},
+        'ThirdPersonLockCameraName',
+        'ThirdPersonLockCameraDesc',
+        true
+      ),
       Setting(
         'EnableFlickSwitch',
         'checkbox',
@@ -281,6 +289,7 @@ do
   local settingNames = {
     'TargetLockIcon',
     'SwitchOnDeadTarget',
+    'ThirdPersonLockCamera',
     'FlickSwitchDistance',
     'EnableFlickSwitch',
     'TargetColorF',
