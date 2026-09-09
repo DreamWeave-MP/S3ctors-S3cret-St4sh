@@ -16,7 +16,7 @@ extra:
     content_files:
       - FlexTag.esp
 
-  version: 1.0.0
+  version: 1.0.1
 
 aliases:
   - /tagger/
