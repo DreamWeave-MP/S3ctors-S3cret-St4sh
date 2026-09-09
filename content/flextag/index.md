@@ -10,6 +10,9 @@ taxonomies:
     - Dependencies
 
 extra:
+  nexus_id: 59488
+  nexus_group_id: 7603883
+
   install_info:
     data_directories:
       - .
