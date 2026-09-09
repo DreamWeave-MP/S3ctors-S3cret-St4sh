@@ -110,8 +110,8 @@ local function switchPlaylist(newPlaylist, playbackParams)
   -- playOneTrack/deactivateAfterEnd still governed by the original playlist's intent
   if newPlaylist.playOneTrack then newPlaylist.deactivateAfterEnd = true end
 
-  if MusicManager.currentPlaylist and newPlaylist.id == MusicManager.currentPlaylist.id then
-    SilenceManager:updateSilenceParams(newPlaylist)
+  if MusicManager.currentPlaylist and resolvedPlaylist.id == MusicManager.currentPlaylist.id then
+    SilenceManager:updateSilenceParams(resolvedPlaylist)
   end
 
   MusicManager.currentPlaylist = resolvedPlaylist
