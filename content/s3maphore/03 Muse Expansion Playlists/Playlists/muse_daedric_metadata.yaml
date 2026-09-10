@@ -1,0 +1,50 @@
+playlists:
+  "ms/cell/daedric": "MUSE - Daedric Ruins"
+  "ms/combat/daedric": "MUSE - Daedric Enemies"
+
+tracks:
+  "music/ms/cell/daedric/exploration1.mp3":
+    title: "Exploration 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/cell/daedric/exploration2.mp3":
+    title: "Exploration 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/cell/daedric/exploration3.mp3":
+    title: "Exploration 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/cell/daedric/exploration4.mp3":
+    title: "Exploration 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/cell/daedric/exploration5.mp3":
+    title: "Exploration 5"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/combat/daedric/combat1.mp3":
+    title: "Combat 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/combat/daedric/combat2.mp3":
+    title: "Combat 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/combat/daedric/combat3.mp3":
+    title: "Combat 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"
+  "music/ms/combat/daedric/combat4.mp3":
+    title: "Combat 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Daedric"

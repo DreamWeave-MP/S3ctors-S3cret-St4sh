@@ -1,0 +1,15 @@
+playlists:
+  "ms/cell/vivec/vivecpalace": "Vivec Palace"
+  "ms/combat/vivec": "Vivec Combat"
+
+tracks:
+  "music/ms/cell/vivec/vivecpalace.mp3":
+    title: "Vivec Palace"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Temple"
+  "music/ms/combat/vivec/viveccombat.mp3":
+    title: "Vivec Combat"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Temple"

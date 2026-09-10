@@ -1,0 +1,9 @@
+playlists:
+  "s3/explore/cyrodiil": "Cyrodiil Exploration"
+  "s3/explore/skyrim": "Skyrim Exploration"
+  "s3/explore/mainland": "Mainland Exploration"
+  "s3/explore/solstheim": "Solstheim Exploration"
+  "s3/battle/cyrodiil": "Cyrodiil Battle"
+  "s3/battle/skyrim": "Skyrim Battle"
+  "s3/battle/mainland": "Mainland Battle"
+  "s3/battle/solstheim": "Solstheim Battle"

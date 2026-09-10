@@ -1,0 +1,45 @@
+playlists:
+  "ms/cell/telvanni": "Telvanni"
+  "ms/combat/telvanni": "Telvanni Combat"
+
+tracks:
+  "music/ms/cell/telvanni/exploration1.mp3":
+    title: "Exploration 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"
+  "music/ms/cell/telvanni/exploration2.mp3":
+    title: "Exploration 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"
+  "music/ms/cell/telvanni/exploration3.mp3":
+    title: "Exploration 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"
+  "music/ms/cell/telvanni/exploration4.mp3":
+    title: "Exploration 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"
+  "music/ms/cell/telvanni/exploration5.mp3":
+    title: "Exploration 5"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"
+  "music/ms/combat/telvanni/combat1.mp3":
+    title: "Combat 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"
+  "music/ms/combat/telvanni/combat2.mp3":
+    title: "Combat 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"
+  "music/ms/combat/telvanni/combat3.mp3":
+    title: "Combat 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Telvanni"

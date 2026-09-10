@@ -1,0 +1,435 @@
+playlists: {}
+
+tracks:
+  "music/ms/cell/hlaalu/mwr-commonplace-public-murder.mp3":
+    title: "Commonplace Public Murder"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/hlaalu/mwr-reach-heaven-by-violence.mp3":
+    title: "Reach Heaven by Violence (Sermon 32)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/hlaalu/mwr-roads-heading-east.mp3":
+    title: "Roads Heading East"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/hlaalu/mwr-tense-city-alleyways.mp3":
+    title: "Tense City Alleyways"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/hlaalu/mwr-those-who-walk-the-third-way.mp3":
+    title: "Those Who Walk the Third Way"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/mournhold/mwr-gods-at-hand.mp3":
+    title: "Gods At Hand (Ayem, Seht and Vehk)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/mournhold/mwr-narsis-to-necrom.mp3":
+    title: "Narsis to Necrom"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/mournhold/mwr-those-who-walk-the-third-way.mp3":
+    title: "Those Who Walk the Third Way"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/redoran/mwr-an-agressive-society.mp3":
+    title: "An Agressive Society (Sermon 23)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/redoran/mwr-bone-resin-and-chitin.mp3":
+    title: "Bone, Resin and Chitin"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/redoran/mwr-reach-heaven-by-violence.mp3":
+    title: "Reach Heaven by Violence (Sermon 32)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/redoran/mwr-tense-city-alleyways.mp3":
+    title: "Tense City Alleyways"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/redoran/mwr-those-who-walk-the-third-way.mp3":
+    title: "Those Who Walk the Third Way"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/telvanni/mwr-eastern-erudition.mp3":
+    title: "Eastern Erudition (Sermon 29)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/telvanni/mwr-magic-of-mystery.mp3":
+    title: "Magic of Mystery (Sermon 21)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/telvanni/mwr-ruthless-eastern-undying-sorcerers.mp3":
+    title: "Ruthless, Eastern, Undying Sorcerers"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/telvanni/mwr-tense-city-alleyways.mp3":
+    title: "Tense City Alleyways"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/telvanni/mwr-those-who-walk-the-third-way.mp3":
+    title: "Those Who Walk the Third Way"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-a-divinely-protean-god-hero.mp3":
+    title: "A Divinely Protean God-Hero"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-a-red-year-irreparable.mp3":
+    title: "A Red Year Irreparable"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-cantons-of-his-city.mp3":
+    title: "Cantons of His City (Sermon 25)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-charting-zero-deaths-amaranth.mp3":
+    title: "Charting Zero Deaths, Amaranth (Mighty Kings, Usurp RULE)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-gods-at-hand.mp3":
+    title: "Gods At Hand (Ayem, Seht and Vehk)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-roads-heading-east.mp3":
+    title: "Roads Heading East"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-the-mercy-seat.mp3":
+    title: "The Mercy Seat"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-the-ministry-looms-overhead.mp3":
+    title: "The Ministry Looms Overhead"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/cell/vivec/mwr-those-who-walk-the-third-way.mp3":
+    title: "Those Who Walk the Third Way"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ascadian isles region/mwr-roads-heading-east.mp3":
+    title: "Roads Heading East"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ascadian isles region/mwr-the-mercy-seat.mp3":
+    title: "The Mercy Seat"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ascadian isles region/mwr-those-who-walk-the-third-way.mp3":
+    title: "Those Who Walk the Third Way"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ashlands pack/mwr-ash-and-rocks-insects-and-mountains.mp3":
+    title: "Ash and Rocks, Insects and Mountains"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ashlands pack/mwr-follow-the-frame-maker.mp3":
+    title: "Follow The Frame-maker; The Scarab"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ashlands pack/mwr-people-of-the-ashlands.mp3":
+    title: "People of the Ashlands"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ashlands pack/mwr-striding-across-the-wastes.mp3":
+    title: "Striding Across The Wastes"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ashlands pack/mwr-suffering-the-backbone-of-thriving.mp3":
+    title: "Suffering, The Backbone of Thriving (Sermon 35)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ashlands pack/mwr-the-primordial-antecedent-triune.mp3":
+    title: "The Primordial, Antecedent Triune"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/ashlands pack/mwr-the-way-of-veloth.mp3":
+    title: "The Way of Veloth"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/azura's coast region/mwr-reach-heaven-by-violence.mp3":
+    title: "Reach Heaven by Violence (Sermon 32)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/azura's coast region/mwr-suffering-the-backbone-of-thriving.mp3":
+    title: "Suffering, The Backbone of Thriving (Sermon 35)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/bitter coast region/mwr-a-hamlet-by-the-water.mp3":
+    title: "A Hamlet By The Water"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/bitter coast region/mwr-roads-heading-east.mp3":
+    title: "Roads Heading East"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/bitter coast region/mwr-suffering-the-backbone-of-thriving.mp3":
+    title: "Suffering, The Backbone of Thriving (Sermon 35)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/grazelands region/mwr-the-mercy-seat.mp3":
+    title: "The Mercy Seat"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/grazelands region/mwr-the-moons-in-the-grazelands.mp3":
+    title: "The Moons In The Grazelands"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/grazelands region/mwr-the-way-of-veloth.mp3":
+    title: "The Way of Veloth"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/red mountain region/mwr-red-mountain-of-prophecy.mp3":
+    title: "Red Mountain of Prophecy (Sermon 11)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/red mountain region/mwr-slavery-and-prayer.mp3":
+    title: "Slavery and Prayer"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/red mountain region/mwr-the-battle-for-royalty.mp3":
+    title: "The Battle For Royalty (Sermon 36)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/sheogorad region/mwr-mushroom-wilderness.mp3":
+    title: "Mushroom Wilderness"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/sheogorad region/mwr-suffering-the-backbone-of-thriving.mp3":
+    title: "Suffering, The Backbone of Thriving (Sermon 35)"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/sheogorad region/mwr-the-way-of-veloth.mp3":
+    title: "The Way of Veloth"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/west gash region/mwr-a-more-diverse-province-you-wont-find.mp3":
+    title: "A more Diverse Province You Won't Find"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/west gash region/mwr-mushroom-wilderness.mp3":
+    title: "Mushroom Wilderness"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"
+  "music/ms/region/west gash region/mwr-roads-heading-east.mp3":
+    title: "Roads Heading East"
+    artist: "Kvetching Mananaut"
+    composer: "Kvetching Mananaut"
+    album: "The Morrow Winds Of Resdanya"
+    year: 2022
+    source: "MUSE The Morrow Winds Of Resdanya - A Morrowind Inspired Music Album Implementation"
+    license: "All rights reserved"

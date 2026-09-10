@@ -1,0 +1,12 @@
+playlists:
+  "Daggerfall Guild Themes FG":
+    title: "Daggerfall Guild Themes — Fighters Guild"
+    source: "Dynamic Music - Daggerfall Guild Themes (OpenMW Only)"
+    composer: "Eric Heberling"
+
+tracks:
+  "music/em_dynamicmusic/fighter_1.mp3":
+    title: "Fighters Guild Theme"
+    source: "Dynamic Music - Daggerfall Guild Themes (OpenMW Only)"
+    description: "Original Daggerfall guild theme by Eric Heberling."
+    composer: "Eric Heberling"

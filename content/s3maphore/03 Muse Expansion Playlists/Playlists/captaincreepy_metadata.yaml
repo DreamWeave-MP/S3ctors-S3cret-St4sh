@@ -1,0 +1,216 @@
+playlists: {}
+
+tracks:
+  "music/battle/combat01 - captain creepy.mp3":
+    title: "Combat 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Hun Lovaas."
+  "music/battle/combat02 - captain creepy.mp3":
+    title: "Combat 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Hun Lovaas."
+  "music/battle/combat03 - captain creepy.mp3":
+    title: "Combat 3"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Hun Lovaas."
+  "music/battle/combat04 - captain creepy.mp3":
+    title: "Combat 4"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Hun Lovaas."
+  "music/battle/combat05 - captain creepy.mp3":
+    title: "Combat 5"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Hun Lovaas."
+  "music/ms/cell/hlaalu/city3 - captain creepy.mp3":
+    title: "Hlaalu City 3"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/imperial/fortdawnguard01 - captain creepy.mp3":
+    title: "Fort Dawnguard 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/imperial/fortdawnguard02 - captain creepy.mp3":
+    title: "Fort Dawnguard 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/imperial/palace1 - captain creepy.mp3":
+    title: "Imperial Palace 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/imperial/palace2 - captain creepy.mp3":
+    title: "Imperial Palace 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/redoran/city1 - captain creepy.mp3":
+    title: "Redoran City 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/redoran/palace1 - captain creepy.mp3":
+    title: "Redoran Palace 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/taverns/tavern01 - captain creepy.mp3":
+    title: "Tavern 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Around the Fire."
+  "music/ms/cell/taverns/tavern02 - captain creepy.mp3":
+    title: "Tavern 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Around the Fire."
+  "music/ms/cell/taverns/tavern03 - captain creepy.mp3":
+    title: "Tavern 3"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Around the Fire."
+  "music/ms/cell/taverns/tavern04 - captain creepy.mp3":
+    title: "Tavern 4"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Around the Fire."
+  "music/ms/cell/taverns/tavern05 - captain creepy.mp3":
+    title: "Tavern 5"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+    description: "Originally written for Around the Fire."
+  "music/ms/cell/telvanni/under the stars - captain creepy.mp3":
+    title: "Under the Stars"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/cell/vivec/city3 - captain creepy.mp3":
+    title: "Vivec City 3"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/combat/vampire/harkoncombat01 - captain creepy.mp3":
+    title: "Harkon Combat 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/interior/daedric/soulcairntrack01 - captain creepy.mp3":
+    title: "Soul Cairn Track 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/interior/daedric/soulcairntrack02 - captain creepy.mp3":
+    title: "Soul Cairn Track 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/ascadian isles region/city2 - captain creepy.mp3":
+    title: "Ascadian Isles City 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/ashlands pack/dim wilderness - captain creepy.mp3":
+    title: "Dim Wilderness"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/azura's coast region/cityn1 - captain creepy.mp3":
+    title: "Azura's Coast City N1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/azura's coast region/day01 - captain creepy.mp3":
+    title: "Azura's Coast Day 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/red mountain region/volkiharcastle01 - captain creepy.mp3":
+    title: "Volkihar Castle 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/red mountain region/volkiharcastle02 - captain creepy.mp3":
+    title: "Volkihar Castle 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/sheogorad region/day01 - captain creepy.mp3":
+    title: "Sheogorad Day 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/sheogorad region/falmervalley01 - captain creepy.mp3":
+    title: "Falmer Valley 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/sheogorad region/falmervalley02 - captain creepy.mp3":
+    title: "Falmer Valley 2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/sheogorad region/heartland's verse - captain creepy.mp3":
+    title: "Heartland's Verse"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/sheogorad region/the creek - captain creepy.mp3":
+    title: "The Creek"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/solstheim pack/cityn2 - captain creepy.mp3":
+    title: "Solstheim City N2"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/solstheim pack/falmervalley01 - captain creepy.mp3":
+    title: "Solstheim Falmer Valley 1"
+    artist: "CaptainCreepy"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/solstheim pack/the mountain pass - captain creepy.mp3":
+    title: "The Mountain Pass"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/west gash region/the creek - captain creepy.mp3":
+    title: "The Creek"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/west gash region/the mountain pass - captain creepy.mp3":
+    title: "The Mountain Pass"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
+  "music/ms/region/west gash region/the western trail - captain creepy.mp3":
+    title: "The Western Trail"
+    artist: "CaptainCreepy"
+    album: "Still"
+    source: "CaptainCreepy Music Pack for MUSE 2"
+    composer: "CaptainCreepy"
