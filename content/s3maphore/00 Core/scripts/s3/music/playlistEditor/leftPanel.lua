@@ -1,6 +1,7 @@
+---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local I = require 'openmw.interfaces'
+local Interfaces = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -9,6 +10,7 @@ local ceil, floor, format, max, min = math.ceil, math.floor, string.format, math
 
 local vector2 = util.vector2
 
+local Catalog = require 'scripts.s3.music.playlistCatalog'
 local MusicManager = require 'scripts.s3.music.musicManager'
 
 local Constants = require 'scripts.omw.mwui.constants'
@@ -25,7 +27,7 @@ local state = {
   pageSize = 8,
 }
 
-local activeTab, clicked
+local activeTab, clicked, selectionHandler
 
 ---@type fun(): number
 local computePageSize
@@ -79,19 +81,12 @@ local function borderInset(template)
 end
 
 local function getPlaylistDisplayName(playlist)
-  local meta = MusicManager.playlistMetadata.getPlaylistMetadata(playlist.id)
-  return meta and meta.title or playlist.id
+  local id = tostring(playlist.id)
+  local meta = MusicManager.playlistMetadata.getPlaylistMetadata(id)
+  return meta and meta.title or id
 end
 
-local function getCategoryPlaylists()
-  if state.selectedCategory == 'Explore' then
-    return MusicManager.explorePlaylists
-  elseif state.selectedCategory == 'Battle' then
-    return MusicManager.battlePlaylists
-  else
-    return MusicManager.specialPlaylists
-  end
-end
+local function getCategoryPlaylists() return Catalog.rows(state.selectedCategory) end
 
 local function totalPages() return max(ceil(#getCategoryPlaylists() / state.pageSize), 1) end
 
@@ -109,12 +104,20 @@ local function pagePlaylists()
   return page
 end
 
+local function selectPlaylist(playlist)
+  if selectionHandler then selectionHandler(playlist.id) end
+end
+
 local LeftPanel = {}
 
 local leftElement
 
 local function rebuild()
   state.pageSize = computePageSize()
+  local playlists = getCategoryPlaylists()
+  if not state.selectedId and playlists[1] and playlists[1].selectable then
+    selectPlaylist(playlists[1])
+  end
   local maxPage = totalPages() - 1
   if state.currentPage > maxPage then state.currentPage = maxPage end
   leftElement.layout = LeftPanel.makeLayout()
@@ -164,7 +167,7 @@ local function makeCategoryTab(name)
 
   return {
     type = ui.TYPE.Text,
-    template = I.MWUI.templates.textHeader,
+    template = Interfaces.MWUI.templates.textHeader,
     props = {
       text = name,
       textColor = color,
@@ -177,13 +180,13 @@ end
 
 local function makeCategorySeparator()
   return {
-    template = I.MWUI.templates.verticalLine,
+    template = Interfaces.MWUI.templates.verticalLine,
     props = { relativeSize = vector2(0, 1) },
   }
 end
 
 local function getSubsectionHeight()
-  local tabBorder = borderInset(I.MWUI.templates.borders)
+  local tabBorder = borderInset(Interfaces.MWUI.templates.borders)
 
   ---@diagnostic disable-next-line: undefined-field
   local lineHeight = ui._getDefaultFontSize()
@@ -198,7 +201,7 @@ computePageSize = function()
   local inset = computeInset()
   local subsection = getSubsectionHeight().y
   local playlistPagePx = (windowPx - inset * 2 - subsection * 2) * PLAYLIST_PAGE_HEIGHT
-  local tabBorder = borderInset(I.MWUI.templates.borders)
+  local tabBorder = borderInset(Interfaces.MWUI.templates.borders)
   local rowPx = computePlaylistTextSize()
   local listPx = playlistPagePx - tabBorder * 2
   return max(1, floor(listPx / rowPx))
@@ -206,7 +209,7 @@ end
 
 function LeftPanel.makeCategoryTabs()
   return {
-    template = I.MWUI.templates.borders,
+    template = Interfaces.MWUI.templates.borders,
     type = ui.TYPE.Flex,
     props = {
       horizontal = true,
@@ -227,6 +230,10 @@ function LeftPanel.makeCategoryTabs()
       { external = { grow = 1 } },
       makeCategoryTab 'Special',
       { external = { grow = 1 } },
+      makeCategorySeparator(),
+      { external = { grow = 1 } },
+      makeCategoryTab 'Missing',
+      { external = { grow = 1 } },
     },
   }
 end
@@ -242,19 +249,25 @@ function LeftPanel.makePlaylistPage()
 
     items[#items + 1] = {
       type = ui.TYPE.Text,
-      template = I.MWUI.templates.textNormal,
+      template = Interfaces.MWUI.templates.textNormal,
       props = {
         relativeSize = vector2(1, rowHeight),
-        text = '  ' .. getPlaylistDisplayName(playlist),
+        text = (playlist.id == state.selectedId and '> ' or '  ') .. getPlaylistDisplayName(
+          playlist
+        ) .. (playlist.status and ' [' .. playlist.status .. ']' or ''),
         textSize = playlistTextSize,
-        textColor = Constants.normalColor,
+        textColor = playlist.id == state.selectedId and Constants.headerColor
+          or Constants.normalColor,
         textAlignV = ui.ALIGNMENT.Center,
       },
+      events = playlist.selectable and {
+        mouseClick = async:callback(function() selectPlaylist(playlist) end),
+      } or {},
     }
   end
 
   return {
-    template = I.MWUI.templates.borders,
+    template = Interfaces.MWUI.templates.borders,
     type = ui.TYPE.Flex,
     external = {
       grow = PLAYLIST_PAGE_HEIGHT,
@@ -284,7 +297,7 @@ function LeftPanel.makePageControls()
     content = ui.content {
       {
         type = ui.TYPE.Text,
-        template = I.MWUI.templates.textNormal,
+        template = Interfaces.MWUI.templates.textNormal,
         props = {
           text = '< Prev',
           textSize = 13,
@@ -299,7 +312,7 @@ function LeftPanel.makePageControls()
       },
       {
         type = ui.TYPE.Text,
-        template = I.MWUI.templates.textNormal,
+        template = Interfaces.MWUI.templates.textNormal,
         props = {
           text = format('  %d / %d  ', state.currentPage + 1, pageCount),
           textSize = 13,
@@ -308,7 +321,7 @@ function LeftPanel.makePageControls()
       },
       {
         type = ui.TYPE.Text,
-        template = I.MWUI.templates.textNormal,
+        template = Interfaces.MWUI.templates.textNormal,
         props = {
           text = 'Next >',
           textSize = 13,
@@ -358,6 +371,23 @@ end
 leftElement = ui.create(LeftPanel.makeLayout())
 
 function LeftPanel.getElement() return leftElement end
+
+function LeftPanel.setSelectionHandler(handler) selectionHandler = handler end
+
+function LeftPanel.setSelection(id, category)
+  state.selectedId = id
+  if category then state.selectedCategory = category end
+  local playlists = getCategoryPlaylists()
+  for index = 1, #playlists do
+    local playlist = playlists[index]
+    if playlist.id == id then
+      state.currentPage = floor((index - 1) / state.pageSize)
+      break
+    end
+  end
+end
+
+function LeftPanel.getSelectedId() return state.selectedId end
 
 LeftPanel.rebuild = rebuild
 

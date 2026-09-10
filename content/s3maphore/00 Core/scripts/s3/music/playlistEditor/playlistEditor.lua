@@ -1,6 +1,7 @@
+---@module 'doc.s3maphoreTypes'
 ---@omw-context player
 
-local I = require 'openmw.interfaces'
+local Interfaces = require 'openmw.interfaces'
 local core = require 'openmw.core'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -11,6 +12,7 @@ local WHITE_TEXTURE = ui.texture { path = 'white' }
 
 local DisplayTier = require 'scripts.s3.music.playlistEditor.displayTier'
 local LeftPanel = require 'scripts.s3.music.playlistEditor.leftPanel'
+local RightPanel = require 'scripts.s3.music.playlistEditor.rightPanel'
 
 ---@return number
 local function menuAlpha()
@@ -18,13 +20,13 @@ local function menuAlpha()
   return ui._getMenuTransparency()
 end
 
-local M = {}
+local PlaylistEditor = {}
 
-function M.makeLayout(leftElement)
+function PlaylistEditor.makeLayout(leftElement, rightElement)
   return {
     layer = 'Windows',
     name = 'S3maphore_PlaylistEditor',
-    template = I.MWUI.templates.bordersThick,
+    template = Interfaces.MWUI.templates.bordersThick,
     props = {
       relativeSize = vector2(0.75, 0.75),
       relativePosition = vector2(0.5, 0.5),
@@ -33,7 +35,7 @@ function M.makeLayout(leftElement)
     content = ui.content {
       {
         name = 'S3maphore_PlaylistEditor_Window',
-        template = I.MWUI.templates.bordersThick,
+        template = Interfaces.MWUI.templates.bordersThick,
         props = {
           relativeSize = vector2(1, 1),
         },
@@ -59,7 +61,7 @@ function M.makeLayout(leftElement)
             content = ui.content {
               leftElement,
               {
-                template = I.MWUI.templates.verticalLine,
+                template = Interfaces.MWUI.templates.verticalLine,
                 props = {
                   relativeSize = vector2(0, 1),
                 },
@@ -73,12 +75,7 @@ function M.makeLayout(leftElement)
                   autoSize = false,
                 },
                 content = ui.content {
-                  {
-                    template = I.MWUI.templates.horizontalLine,
-                    props = {
-                      relativeSize = vector2(1, 0),
-                    },
-                  },
+                  rightElement,
                 },
               },
             },
@@ -93,48 +90,60 @@ local ready = false
 
 ---@type openmw.ui.Element
 local leftElement = LeftPanel.getElement()
+local rightElement = RightPanel.getElement()
+LeftPanel.setSelectionHandler(RightPanel.select)
+RightPanel.setSelectionHandler(function(id, category)
+  LeftPanel.setSelection(id, category)
+  LeftPanel.rebuild()
+end)
 
 ---@type openmw.ui.Element
-local rootElement = ui.create(M.makeLayout(leftElement))
+local rootElement = ui.create(PlaylistEditor.makeLayout(leftElement, rightElement))
 rootElement.layout.props.visible = false
 rootElement:update()
 
-function M.init() ready = true end
+function PlaylistEditor.init() ready = true end
 
-function M.isVisible() return rootElement.layout.props.visible end
+function PlaylistEditor.isVisible() return rootElement.layout.props.visible end
 
-function M.refresh()
-  if not M.isVisible() then return end
+function PlaylistEditor.refresh()
+  if not PlaylistEditor.isVisible() then return end
   LeftPanel.rebuild()
+  RightPanel.refresh()
 end
 
-function M.show()
-  if not ready or M.isVisible() then return end
+function PlaylistEditor.show()
+  if not ready or PlaylistEditor.isVisible() then return end
   core.sendGlobalEvent 'S3maphorePlaylistEditorOpened'
-  I.UI.setMode(I.UI.MODE.Interface, { windows = {} })
+  Interfaces.UI.setMode(Interfaces.UI.MODE.Interface, { windows = {} })
   DisplayTier.refreshDisplayTier(ui.screenSize().y)
   LeftPanel.rebuild()
+  RightPanel.refresh()
   rootElement.layout.props.visible = true
   rootElement:update()
 end
 
-function M.hide()
-  if not M.isVisible() then return end
+function PlaylistEditor.hide()
+  if not PlaylistEditor.isVisible() then return end
+  if RightPanel.hasUnsavedChanges() then
+    RightPanel.requestClose(PlaylistEditor.hide)
+    return
+  end
   core.sendGlobalEvent 'S3maphorePlaylistEditorClosed'
-  I.UI.removeMode(I.UI.MODE.Interface)
+  Interfaces.UI.removeMode(Interfaces.UI.MODE.Interface)
   rootElement.layout.props.visible = false
   rootElement:update()
 end
 
-function M.toggle()
+function PlaylistEditor.toggle()
   if not ready then return end
-  if M.isVisible() then
-    M.hide()
+  if PlaylistEditor.isVisible() then
+    PlaylistEditor.hide()
   else
-    M.show()
+    PlaylistEditor.show()
   end
 end
 
-function M.onViewportResized(width, height) LeftPanel.onViewportResized(width, height) end
+function PlaylistEditor.onViewportResized(width, height) LeftPanel.onViewportResized(width, height) end
 
-return M
+return PlaylistEditor

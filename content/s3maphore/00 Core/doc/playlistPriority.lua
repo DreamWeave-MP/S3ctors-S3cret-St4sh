@@ -10,7 +10,6 @@
 --- Builtin modules populate around the edges to give space for everyone in the middle.
 --- 2. Where possible, slot vanilla playlists above DLC or other modded regional/etc playlists in the priority chain
 --- 3. Remember to take advantage of the rules set forth by other playlists. Your position in the chain also implies what conditions have already been checked - for example, priority numbers below 200 can generally assume the player is in combat already.
----@class PlaylistPriority
 local PlaylistPriority = {
   Never = math.huge,
   Explore = 1000,

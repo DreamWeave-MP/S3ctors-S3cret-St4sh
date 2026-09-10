@@ -6,6 +6,140 @@ tes3 = tes3
 ---@class StrictReadOnlyTable: table A table, but, one which may not be written to or have its metatable changed. This version will throw if one indexes the table with a key which doesn't exist.
 ---@class UpdatingSettingTable: table<any, any> A table which is constructed with an explicit association with a player storage section. Values inside this table automatically update according to changes in the storage group.
 
+---@class PlaylistPriority
+---@class S3maphoreTilesets
+---@class PlaylistRules
+---@class S3maphoreHelperModule
+---@class S3maphorePlaylistEnv
+
+---@class S3maphoreCoreSettings: UpdatingSettingTable
+---@field BannerEnabled boolean
+---@field BattleEnabled boolean
+---@field DebugEnable boolean
+---@field ExploreEnabled boolean
+---@field ForceFinishTrack boolean
+---@field ForcePlaylistChangeOnFriendlyExteriorTransition boolean
+---@field ForcePlaylistChangeOnHostileExteriorTransition boolean
+---@field ForcePlaylistChangeOnOverworldTransition boolean
+---@field FadeOutDuration number
+---@field MusicEnabled boolean
+---@field PlayerTargetedCombatOnly boolean
+---@field ScanAdjacentExteriorCells boolean
+---@field CombatHealthThreshold number
+---@field CombatLevelGap integer
+
+---@class InterruptModes: StrictReadOnlyTable
+---@field Me 0
+---@field Other 1
+---@field Never 2
+---@field Override 3
+
+---@class TimeMap: StrictReadOnlyTable
+---@field [0] 'night'
+---@field [1] 'morning'
+---@field [2] 'afternoon'
+---@field [3] 'evening'
+
+---@class StateChangedFlags: StrictReadOnlyTable
+---@field TOD 1
+---@field MOVEMENT 2
+---@field SPELL_SCHOOL 4
+---@field STANCE 8
+
+---@class StateChangeReasons: StrictReadOnlyTable
+---@field Died 'DIED'
+---@field Disabled 'DSBL'
+---@field NoPlaylist 'NPLS'
+---@field PlaylistChanged 'PLCH'
+---@field SpecialTrackPlaying 'SPTR'
+---@field TrackChanged 'TRCH'
+
+---@class S3maphorePlaylistEditorWorking
+---@field kind string
+---@field source string?
+---@field properties table<string, any>
+---@field condition table?
+
+---@class S3maphorePlaylistEditorPendingAction
+---@field kind 'select'|'new'|'close'
+---@field id string?
+---@field callback fun()?
+
+---@class S3maphorePlaylistEditorState
+---@field selectedId string?
+---@field tab string
+---@field working S3maphorePlaylistEditorWorking?
+---@field exportText string?
+---@field newMode boolean
+---@field newCategory string
+---@field conditionPickerPath number[]?
+---@field conditionPage integer
+---@field trackPage integer
+---@field pickerPage integer
+---@field trackPicker boolean
+---@field trackSearch string
+---@field newId string?
+---@field trackInput string?
+---@field saved S3maphorePlaylistEditorWorking?
+---@field readOnlyMessage string?
+---@field pending S3maphorePlaylistEditorPendingAction?
+
+---@class MusicManager
+---@field Rules PlaylistRules
+---@field STATE StateChangeReasons
+---@field TIME_MAP TimeMap
+---@field INTERRUPT InterruptModes
+---@field STATE_FLAGS StateChangedFlags
+---@field currentPlaylist S3maphorePlaylist?
+---@field currentTrack string?
+---@field forceSkip boolean
+---@field playlistMetadata S3maphoreMusicMetadataRegistry
+---@field playlistTracksOrder table<string, string[]>
+---@field registrationOrder integer
+---@field registeredPlaylists table<string, S3maphorePlaylist>
+---@field getDeathTrack fun(): string
+---@field resetDeathTrack fun()
+---@field setDeathTrack fun(path: string)
+
+---@class SilenceData: UpdatingSettingTable
+---@field GlobalSilenceToggle boolean
+---@field GlobalSilenceChance number
+---@field ExploreSilenceMin integer
+---@field ExploreSilenceMax integer
+---@field BattleSilenceMin integer
+---@field BattleSilenceMax integer
+---@field time number
+---@field lastTime number
+---@field silenceActive fun(): boolean
+---@field updateSilenceParams fun(self, newPlaylist: S3maphorePlaylist)
+
+---@class PlaylistState
+---@field cellHasWater boolean
+---@field cellIsExterior boolean
+---@field cellName string
+---@field cellId string
+---@field cellWaterLevel number?
+---@field objectsByRecord table<string, integer>
+---@field objectsByType table<string, integer>
+---@field objectsByContentFile table<string, integer>
+---@field staticObjectContentFiles string[]
+---@field cellHasHostileActors boolean
+---@field areaHasHostileActors boolean
+---@field killCounts table<string, number>
+---@field objectCount number
+---@field combatTargets openmw.LObject[]
+---@field currentGrid ExteriorGrid?
+---@field isExploring boolean
+---@field isInCombat boolean
+---@field nearestRegion string?
+---@field playlistTimeOfDay TimeOfDay
+---@field normalizedHealth number
+---@field normalizedMagicka number
+---@field normalizedFatigue number
+---@field movementMode S3maphoreMovementMode
+---@field weather string
+---@field selectedSpellSchool string?
+
 ---@class CellMatchPatterns
 ---@field disallowed string[]
 ---@field allowed string[]
@@ -259,7 +393,7 @@ tes3 = tes3
 ---@field playSpecialTrack fun(trackPath: string, reason: S3maphoreStateChangeReason?) Play a one-off track, overriding normal playback until the track ends.
 ---@field overrideMusicEnabled fun(enabled: boolean?) Toggle music playback. Without an argument, inverts the current state.
 ---@field getEnabled fun(): boolean Whether music playback is currently enabled.
----@field setPlaylistActive fun(id: string, state: boolean) Enable or disable a registered playlist by ID.
+---@field setPlaylistActive fun(id: string, state: boolean) Enable or disable a registered playlist by ID for the current runtime session.
 ---@field getCurrentTrack fun(): string? VFS path of the currently playing track, or nil if nothing is playing.
 ---@field getCurrentTrackInfo fun(): S3maphorePlaylistMetadata?, S3maphoreTrackMetadata? Display metadata for the current playlist and track. Returns nil, nil if nothing is playing.
 ---@field getCurrentPlaylist fun(): ReadOnlyTable? Read-only snapshot of the currently active playlist, or nil.

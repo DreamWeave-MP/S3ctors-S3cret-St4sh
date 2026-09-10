@@ -75,17 +75,6 @@ local function silenceActive(self)
   return silenceTrackRunning
 end
 
----@class SilenceData: UpdatingSettingTable
----@field GlobalSilenceToggle boolean whether or not silence "tracks" are used
----@field GlobalSilenceChance number player-configured chance for a silence track to play between each track
----@field ExploreSilenceMin integer minimum duration of silence tracks for explore playlists
----@field ExploreSilenceMax integer maximum duration of silence tracks for explore playlists
----@field BattleSilenceMin integer minimum duration of silence tracks for battle playlists
----@field BattleSilenceMax integer maximum duration of silence tracks for battle playlists
----@field time number current remaining duration for silence
----@field lastTime number timestamp of the last silenceActive call, for wall-clock elapsed computation
----@field silenceActive fun(): boolean Whether or not a silence track is currently running
----@field updateSilenceParams fun(self, newPlaylist: S3maphorePlaylist)
 SilenceData =
   musicUtil.getUpdatingSettingsTable('SettingsS3MusicSilenceConfig', 'S3maphore.s3.mcm', {
     silenceActive = silenceActive,

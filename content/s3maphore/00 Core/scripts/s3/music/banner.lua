@@ -4,14 +4,14 @@ local Constants = require 'scripts.omw.mwui.constants'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
-local I = require 'openmw.interfaces'
+local Interfaces = require 'openmw.interfaces'
 
 local bannerSizePct = util.vector2(0.15, 0.08)
 local BannerSize = ui.screenSize():emul(bannerSizePct)
 local SongBanner = ui.create {
   layer = 'HUD',
   name = 'S3maphore_TrackBanner',
-  template = I.MWUI.templates.boxTransparent,
+  template = Interfaces.MWUI.templates.boxTransparent,
   props = {
     relativePosition = util.vector2(0.5, 0),
     anchor = util.vector2(0.5, 0),
@@ -20,7 +20,7 @@ local SongBanner = ui.create {
   content = ui.content {
     {
       name = 'SW4_CursorBannerText',
-      template = I.MWUI.textHeader,
+      template = Interfaces.MWUI.textHeader,
       type = ui.TYPE.Text,
       props = {
         autoSize = false,

@@ -391,7 +391,7 @@ S3maphore's main settings group is a `Player` scoped storage section called `Set
 
 1. `Battle Silence Max Duration` - `Number` - Maximum duration for playback to stop between tracks, during Battle playlists. Randomly selected between this and the minimum value.
 
-There also is another `Player` scoped storage section of note - `S3maphoreActivePlaylistSettings`. All playlists registered by S3maphore can have their active states set by other scripts by setting the key `${PLAYLISTNAME}Active` to `true` or `false`. S3maphore will then automatically respond to this change and disable/enable the playlist accordingly. Every playlist can also be permanently toggled on or off in the settings menu manually.
+Playlist activation is runtime state. `S3maphore.setPlaylistActive(id, state)` can enable or disable a registered playlist during the current session; registration restores the playlist's declared `active` value on the next load. S3maphore does not persist activation independently by playlist ID.
 
 {% credits(default=true) %}
 All code was written by Dave Corley under the GPL3 license. Please enjoy my mod, hack away as you please, and respect the freedoms of your fellow modders and players in the meantime.  

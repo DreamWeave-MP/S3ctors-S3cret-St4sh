@@ -59,6 +59,16 @@ assertRegistrationError(PlaylistPriority.Explore, 'Me', 'invalid interruptMode')
 assertRegistrationError(PlaylistPriority.Explore, {}, 'invalid interruptMode')
 assertRegistrationError(PlaylistPriority.Explore, false, 'invalid interruptMode')
 
+assert(
+  util.makeTracksSignature({ 'a', 'b' }, false) ~= util.makeTracksSignature({ 'x', 'y' }, false)
+)
+assert(
+  util.makeTracksSignature({ 'a', 'b' }, false) ~= util.makeTracksSignature({ 'b', 'a' }, false)
+)
+assert(
+  util.makeTracksSignature({ 'a', 'b' }, false) ~= util.makeTracksSignature({ 'a', 'b' }, true)
+)
+
 local emptyIdPlaylist = makePlaylist(PlaylistPriority.Explore, INTERRUPT.Me)
 emptyIdPlaylist.id = ''
 local ok, err = pcall(util.initMissingPlaylistFields, emptyIdPlaylist, INTERRUPT)

@@ -1,8 +1,6 @@
 ---@omw-context player
 
 local gameSelf = require 'openmw.self'
-local activePlaylistSettings
-
 --- FIXME: This isn't API-agnostic, but, I don't care ATM
 local aux_util = require 'openmw_aux.util'
 
@@ -51,22 +49,6 @@ local ReadOnlyPlaylistFileList =
 ---@type TrackChangedHandler[]
 local TrackChangeHandlers = {}
 
----@class MusicManager
----@field Rules PlaylistRules
----@field STATE StateChangeReasons
----@field TIME_MAP TimeMap
----@field INTERRUPT InterruptModes
----@field STATE_FLAGS StateChangedFlags
----@field currentPlaylist S3maphorePlaylist?
----@field currentTrack string?
----@field forceSkip boolean
----@field playlistMetadata S3maphoreMusicMetadataRegistry
----@field playlistTracksOrder table<string, string[]>
----@field registrationOrder integer
----@field registeredPlaylists table<string, S3maphorePlaylist>
----@field getDeathTrack fun(): string
----@field resetDeathTrack fun()
----@field setDeathTrack fun(path: string)
 local MusicManager = {
   STATE = require 'scripts.s3.music.enum.stateChangeReason',
   TIME_MAP = require 'scripts.s3.music.enum.timeMap',
@@ -92,6 +74,11 @@ local MusicManager = {
   specialPlaylists = {},
   activePlaydeck = nil,
 }
+local playlistDecks = {
+  MusicManager.explorePlaylists,
+  MusicManager.battlePlaylists,
+  MusicManager.specialPlaylists,
+}
 
 local specialTrackInfo = {
   tracks = { '' },
@@ -106,49 +93,20 @@ local specialTrackInfo = {
 
 local FileExists, GetGameTime, IsMusicPlaying, SendEvent, StopMusic
 if IsOpenMW then
-  local ambient, async, core, storage, vfs =
-    require 'openmw.ambient',
-    require 'openmw.async',
-    require 'openmw.core',
-    require 'openmw.storage',
-    require 'openmw.vfs'
-
-  local I = require 'openmw.interfaces'
+  local ambient, core, vfs = require 'openmw.ambient', require 'openmw.core', require 'openmw.vfs'
 
   FileExists = vfs.fileExists
   GetGameTime = core.getGameTime
   IsMusicPlaying = ambient.isMusicPlaying
   SendEvent = gameSelf.sendEvent
   StopMusic = ambient.stopMusic
-
-  activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
-
-  ---@diagnostic disable-next-line: param-type-mismatch
-  activePlaylistSettings:setLifeTime(storage.LIFE_TIME.GameSession)
-
-  --- Catches changes to the hidden storage group managing playlist activation and sets the corresponding playlist's active state to match
-  --- In other words, this is the bit that responds to changes from the settings menu
-  activePlaylistSettings:subscribe(async:callback(function(_, key)
-    if not key then return end
-    local playlistAssignedState = activePlaylistSettings:get(key)
-    local playlistName = key:gsub('Active$', '')
-
-    if not I.S3maphore then return end
-
-    local targetPlaylist = MusicManager.registeredPlaylists[playlistName]
-
-    if not targetPlaylist then return end
-
-    if targetPlaylist.active ~= playlistAssignedState then
-      targetPlaylist.active = playlistAssignedState
-    end
-  end))
 else
 end
 
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
+  if type(playlist) == 'table' then playlist = musicUtil.deepCopy(playlist) end
   musicUtil.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
 
   local existing = MusicManager.registeredPlaylists[playlist.id]
@@ -184,25 +142,26 @@ function MusicManager.registerPlaylist(playlist)
     end
   end
 
+  local fallback = playlist.fallback
+  if fallback and fallback.tracks then
+    for i = 1, #fallback.tracks do
+      playlist.tracks[#playlist.tracks + 1] = 'music/' .. fallback.tracks[i]
+    end
+  end
+  for i = #playlist.tracks, 1, -1 do
+    if not FileExists(playlist.tracks[i]) then table.remove(playlist.tracks, i) end
+  end
+  local signature = musicUtil.makeTracksSignature(playlist.tracks, playlist.randomize)
+  local previousSignature = musicUtil.getTracksSignature
+    and musicUtil.getTracksSignature(playlist.id)
   local existingOrder = MusicManager.playlistsTracksOrder[playlist.id]
+  if previousSignature ~= signature then existingOrder = nil end
 
   if
     not existingOrder
     or next(existingOrder) == nil
     or Max(unpack(existingOrder)) > #playlist.tracks
   then
-    local fallback = playlist.fallback
-
-    if fallback then
-      local fallbackTracks = fallback.tracks
-
-      if fallbackTracks and #fallbackTracks > 0 then
-        for i = 1, #fallbackTracks do
-          playlist.tracks[#playlist.tracks + 1] = 'music/' .. fallbackTracks[i]
-        end
-      end
-    end
-
     local newPlaylistOrder = musicUtil.initTracksOrder(playlist.tracks, playlist.randomize)
     MusicManager.playlistsTracksOrder[playlist.id] = newPlaylistOrder
     musicUtil.setStoredTracksOrder(playlist.id, newPlaylistOrder)
@@ -210,7 +169,9 @@ function MusicManager.registerPlaylist(playlist)
     MusicManager.playlistsTracksOrder[playlist.id] = existingOrder
   end
 
-  playlist.registrationOrder = MusicManager.registrationOrder
+  if musicUtil.setTracksSignature then musicUtil.setTracksSignature(playlist.id, signature) end
+  playlist.registrationOrder = existing and existing.registrationOrder
+    or MusicManager.registrationOrder
   if not MusicManager.registeredPlaylists[playlist.id] then
     MusicManager.registrationOrder = MusicManager.registrationOrder + 1
   end
@@ -240,16 +201,24 @@ function MusicManager.registerPlaylist(playlist)
   local storedState = playlist.active
   if not next(playlist.tracks) then storedState = false end
 
-  local playlistActiveKey = playlist.id .. 'Active'
+  playlist.active = storedState
+end
 
-  if activePlaylistSettings:get(playlistActiveKey) ~= nil then
-    musicUtil.debugLog('loaded playlist state from settings: %s', playlist.id)
-
-    playlist.active = activePlaylistSettings:get(playlistActiveKey)
-  else
-    musicUtil.debugLog('stored playlist state in settings: %s %s', playlist.id, storedState)
-
-    activePlaylistSettings:set(playlistActiveKey, storedState)
+function MusicManager.unregisterPlaylist(id)
+  if id == 'Special' then error 'Cannot remove the runtime Special playlist' end
+  for deckIndex = 1, #playlistDecks do
+    local deck = playlistDecks[deckIndex]
+    for i = #deck, 1, -1 do
+      if deck[i].id == id then table.remove(deck, i) end
+    end
+  end
+  MusicManager.registeredPlaylists[id] = nil
+  MusicManager.playlistsTracksOrder[id] = nil
+  musicUtil.setStoredTracksOrder(id, nil)
+  if musicUtil.setTracksSignature then musicUtil.setTracksSignature(id, nil) end
+  if MusicManager.currentPlaylist and MusicManager.currentPlaylist.id == id then
+    MusicManager.currentPlaylist, MusicManager.currentTrack = nil, nil
+    MusicManager.skipTrack()
   end
 end
 
@@ -264,7 +233,6 @@ function MusicManager.setPlaylistActive(id, state)
   local playlist = MusicManager.registeredPlaylists[id]
   if playlist then
     playlist.active = state
-    activePlaylistSettings:set(playlist.id .. 'Active', playlist.active)
   else
     error(StrFormat('Playlist \'%s\' is not registered.', id))
   end

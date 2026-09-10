@@ -5,32 +5,6 @@ local Pairs, StrLower = pairs, string.lower
 local MusicSettings = require 'scripts.s3.music.musicSettings'
 local gameSelf = require 'openmw.self'
 
----@class PlaylistState
----@field cellHasWater boolean whether the current cell has water or not
----@field cellIsExterior boolean whether the player is in an exterior cell or not (includes fake exteriors such as starwind)
----@field cellName string lowercased name of the cell the player is in
----@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
----@field cellWaterLevel number? If the current cell has water, then, it is copied here
----@field objectsByRecord table<string, integer> Map of recordId → instance count in the selected presence scope
----@field objectsByType table<string, integer> Map of typeName → instance count in the selected presence scope
----@field objectsByContentFile table<string, integer> Map of contentFile → instance count in the selected presence scope
----@field staticObjectContentFiles string[] List of content files with statics in the selected presence scope
----@field cellHasHostileActors boolean True if the player's current cell contains hostile actors
----@field areaHasHostileActors boolean True if any cell in the current 3×3 grid contains hostile actors
----@field killCounts table<string, number> Record of all actors killed during this playthrough. The `TotalKills` field indicates the overall number of killed actors. Does not necessarily mean those actors were killed by the player, they're just dead.
----@field objectCount number Total objects in the current cell, computed from objectsByType
----@field combatTargets openmw.LObject[] combat targets in insertion order
----@field currentGrid ExteriorGrid? The current exterior cell grid. Nil if not in an actual exterior.
----@field isExploring boolean whether the player is currently exploring or not. Distinct from isInCombat as settings may control it.
----@field isInCombat boolean whether the player is in combat or not
----@field nearestRegion string? The current region the player is in. This is determined by either checking the current region of the player's current cell, OR, reading all load door's target cell's regions in the current cell. The first cell which is found to have a region will match and be assigned to the PlaylistState.
----@field playlistTimeOfDay TimeOfDay the time of day for the current playlist
----@field normalizedHealth number current / base, updated per frame, rounded to two decimals
----@field normalizedMagicka number current / base, updated per frame, rounded to two decimals
----@field normalizedFatigue number current / base, updated per frame, rounded to two decimals
----@field movementMode S3maphoreMovementMode current player movement mode
----@field weather string
----@field selectedSpellSchool string? the magic school of the currently selected spell, e.g. "destruction". nil when no spell is selected.
 local PlaylistState = {
   cellHasWater = false,
   cellIsExterior = false,
