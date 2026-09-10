@@ -81,9 +81,7 @@ local MaxRot, MaxPitchRot = Rad(12.0), Rad(10.0)
 local NPC_HEIGHT_OFFSET = 1.6
 
 local CAM_COLLISION_RATIO = 0.85
-
-local SHOULDER_BAD = 80
-local SHOULDER_GOOD = 100
+local CAM_COLLISION_SKIN = 1
 
 local EPS = 0.001
 local LOCK_INVALID_GRACE = 0.25
@@ -273,18 +271,54 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   if Abs(playerPitch) >= EPS then s3lf.controls.pitchChange = playerPitch end
 end
 
---- Compute the effective camera distance and shoulder side for the lock-on camera orbit.
---- Uses backward raycasts for collision avoidance and two-threshold
---- hysteresis for shoulder switching
+local function resolveCameraCandidate(
+  orbitCenter,
+  lookDir,
+  shoulderOffset,
+  cameraDistance,
+  cameraHeight,
+  cameraMinDistance,
+  side
+)
+  local candidate = orbitCenter
+    - lookDir * cameraDistance
+    + UpVec3 * cameraHeight
+    + shoulderOffset * side
+  local candidateVector = candidate - orbitCenter
+  local candidateDistance = Vec3Len(candidateVector)
+  local ray = CastRay(orbitCenter, candidate, RayOpts)
+
+  if not ray.hit then return candidate, cameraDistance end
+
+  local hitDistance = Vec3Len(ray.hitPos - orbitCenter)
+  local safeDistance =
+    Max(hitDistance * CAM_COLLISION_RATIO - CAM_COLLISION_SKIN, cameraMinDistance)
+  safeDistance = Min(safeDistance, Max(hitDistance - CAM_COLLISION_SKIN, 0))
+  local scale = safeDistance / candidateDistance
+  return orbitCenter + candidateVector * scale, cameraDistance * scale
+end
+
+local function resolveTargetVisibility(targetPos, cameraPosition, targetObject)
+  if not targetObject then return 9999 end
+
+  local ray = CastRay(cameraPosition, targetPos, RayOpts)
+  if not ray.hit or ray.hitObject == targetObject then return 9999 end
+
+  return Vec3Len(ray.hitPos - targetPos)
+end
+
+--- Compute the collision-corrected camera position and shoulder side for the lock-on camera orbit.
 ---@param orbitCenter openmw.util.Vector3
 ---@param targetPos openmw.util.Vector3
----@return number effectiveDist
+---@param targetObject openmw.LObject?
+---@return number effectiveDist approximate unobstructed distance for compatibility
 ---@return number desiredSide
-function LockOnManager.computeOrbitParams(orbitCenter, targetPos)
+---@return openmw.util.Vector3 desiredPosition collision-corrected camera position
+function LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
   local cameraDistance = LockOnManager.CameraDistance
   local cameraHeight = LockOnManager.CameraHeight
-  local cameraSideOffset = LockOnManager.CameraSideOffset
   local cameraMinDistance = LockOnManager.CameraMinDistance
+  local cameraSideOffset = LockOnManager.CameraSideOffset
 
   local targetBad = cameraDistance * 0.5
   local targetGood = cameraDistance * 0.8
@@ -293,59 +327,41 @@ function LockOnManager.computeOrbitParams(orbitCenter, targetPos)
   local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
   local shoulderOffset = right * cameraSideOffset
 
-  local effectiveDist = cameraDistance
+  local rightPosition, rightDistance = resolveCameraCandidate(
+    orbitCenter,
+    lookDir,
+    shoulderOffset,
+    cameraDistance,
+    cameraHeight,
+    cameraMinDistance,
+    1
+  )
+  local leftPosition, leftDistance = resolveCameraCandidate(
+    orbitCenter,
+    lookDir,
+    shoulderOffset,
+    cameraDistance,
+    cameraHeight,
+    cameraMinDistance,
+    -1
+  )
+
+  local rightTargetDistance = resolveTargetVisibility(targetPos, rightPosition, targetObject)
+  local leftTargetDistance = resolveTargetVisibility(targetPos, leftPosition, targetObject)
+
   local desiredSide = 1
-
-  local distRay = CastRay(orbitCenter, orbitCenter - lookDir * cameraDistance, RayOpts)
-  if distRay.hit then
-    effectiveDist =
-      Max(Vec3Len(distRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, cameraMinDistance)
-
-    if effectiveDist <= cameraMinDistance * 1.25 then
-      local collisionBase = orbitCenter - lookDir * effectiveDist + UpVec3 * cameraHeight
-
-      local primaryRay = CastRay(orbitCenter, collisionBase + shoulderOffset, RayOpts)
-      local otherRay = CastRay(orbitCenter, collisionBase - shoulderOffset, RayOpts)
-
-      local primaryDist = primaryRay.hit and Vec3Len(primaryRay.hitPos - orbitCenter) or 9999
-      local otherDist = otherRay.hit and Vec3Len(otherRay.hitPos - orbitCenter) or 9999
-
-      if primaryDist < SHOULDER_BAD and otherDist > SHOULDER_GOOD then
-        desiredSide = -1
-        effectiveDist = cameraDistance
-      end
-    end
+  if
+    (rightDistance < targetBad or rightTargetDistance < targetBad)
+    and leftDistance > targetGood
+    and leftTargetDistance > targetGood
+  then
+    desiredSide = -1
   end
 
-  local targetSideBase = orbitCenter - lookDir * effectiveDist + UpVec3 * cameraHeight
-  local targetSidePos = targetSideBase + shoulderOffset * desiredSide
-  local shoulderCheck = CastRay(targetPos, targetSidePos, RayOpts)
+  local desiredPosition = desiredSide == 1 and rightPosition or leftPosition
+  local effectiveDist = desiredSide == 1 and rightDistance or leftDistance
 
-  if shoulderCheck.hit then
-    local primaryDist = Vec3Len(shoulderCheck.hitPos - targetPos)
-
-    local otherSide = -desiredSide
-    local otherPos = targetSideBase + shoulderOffset * otherSide
-
-    local otherCheck = CastRay(targetPos, otherPos, RayOpts)
-    local otherDist = otherCheck.hit and Vec3Len(otherCheck.hitPos - targetPos) or 9999
-
-    if primaryDist < targetBad and otherDist > targetGood then
-      desiredSide = otherSide
-
-      local newBase = orbitCenter - lookDir * cameraDistance + UpVec3 * cameraHeight
-      local newRay = CastRay(orbitCenter, newBase + shoulderOffset * desiredSide, RayOpts)
-
-      if newRay.hit then
-        effectiveDist =
-          Max(Vec3Len(newRay.hitPos - orbitCenter) * CAM_COLLISION_RATIO, cameraMinDistance)
-      else
-        effectiveDist = cameraDistance
-      end
-    end
-  end
-
-  return effectiveDist, desiredSide
+  return effectiveDist, desiredSide, desiredPosition
 end
 
 --- Convert orbit parameters into a final desired camera world position.
@@ -447,9 +463,13 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   local orbitCenter = GetTrackedPosition()
   local state = LockOnManager.state
 
-  local effectiveDist, desiredSide = LockOnManager.computeOrbitParams(orbitCenter, targetPos)
-  local desiredPos =
-    LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
+  local effectiveDist, desiredSide, desiredPos =
+    LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
+  -- Preserve compatibility with Manager overrides using the previous two-return contract.
+  if not desiredPos then
+    desiredPos =
+      LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
+  end
 
   if not state.cameraPosition then
     state.cameraPosition = GetCamPosition()
