@@ -68,6 +68,8 @@ Combat Auto-Lock: Automatically locks onto enemies who initiate combat with you
   
 ![Combat Auto-Lock](../img/t4rg3t5/autoTarget.webp)
 
+T4rg3t5 controls vanilla crosshair visibility as part of its target-lock presentation: the vanilla crosshair is hidden during a semantic target lock and shown while unlocked. It is intentionally not designed to coexist with other crosshair mods, and it does not restore an unknown previous visibility state.
+
 ### Visual Target Indicators
 
 1. Dynamic Lock Icons: Customizable target markers that scale with distance
