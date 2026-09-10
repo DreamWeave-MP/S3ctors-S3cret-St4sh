@@ -19,7 +19,7 @@ ExploreEnabled: "Aktivera utforskarmusik"
 ExploreEnabledDescription: "Om inaktiv kommer alla utforska-spellistor att hoppas över."
 
 ScanAdjacentExteriorCells: "Använd närliggande exteriöra celler för platsmusik"
-ScanAdjacentExteriorCellsDescription: "När aktiverad undersöker objektbaserade spellistregler det laddade exteriöra 3×3-området. När inaktiverad kan endast objekt i spelarens aktuella exteriöra cell aktivera platsbaserad musik."
+ScanAdjacentExteriorCellsDescription: "När aktiverad kan närliggande platser och ruiner i omgivande exteriöra celler utlösa platsmusik. När inaktiverad kan endast platser i spelarens aktuella exteriöra cell göra det."
 
 NoInterrupt: "Avsluta föregående spår"
 NoInterruptDescription: "Gör att föregående spår avslutas när aktuell spellista ändras.\n\nPåverkar endast spellistor med samma avbrottsprioritet, så om du går in i en Dwemer-dungeon medan ett Ashlands-spår spelas upp \nkommer Dwemer-spåret inte att starta förrän Ashland-spåret har avslutats.\n\nGenerellt kommer spellistor att avbryta varandra i ordningen Utforska -> Strid -> Special, om deras avbrottslägen är olika."

@@ -31,7 +31,7 @@ Think of it as a mailbox between two jobs: a global script scans world content, 
 
 For an interior, S3maphore scans the current cell. For an actual exterior, it scans the current cell and the surrounding 3×3 grid. The center cell supplies `cellHasHostileActors`; any hostile actor in the nine-cell area makes `areaHasHostileActors` true.
 
-The collector always scans the exterior 3×3. `currentExteriorCellObjects` is a derived projection of the already-collected center cell, not a second collection path. The player chooses whether playlist object rules use the aggregate maps or this center-cell projection.
+The collector always scans the exterior 3×3. `currentExteriorCellObjects` exposes the already-collected object presence for the center exterior cell. It is not produced by a second scan. The player chooses whether playlist object rules use the aggregate maps or this center-cell view.
 
 Interior visits preserve an exterior snapshot so returning through the same door can avoid a complete rescan. When the exterior grid changes, old cells are removed and the new 3×3 is rebuilt.
 
