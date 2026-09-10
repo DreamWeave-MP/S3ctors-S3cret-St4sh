@@ -79,7 +79,6 @@ math.clamp or util.clamp,
 local Vector2, Vector3 = util.vector2, util.vector3
 local CenterVector2 = Vector2(0.5, 0.5)
 local ZeroVector2 = Vector2(0, 0)
-local Vec2Len = CenterVector2.length
 local UpVec3 = Vector3(0, 0, 1)
 local ZeroVector3 = Vector3(0, 0, 0)
 local Vec3Cross = UpVec3.cross
@@ -108,20 +107,6 @@ local ActiveCombatTargets = {}
 
 local function isWielding() return s3lf.getStance() ~= STANCE_NONE end
 
---- Given both the old and new ranges, map a numeric value from one to the other and round it.
----@param inputValue number
----@param oldRange openmw.util.Vector2
----@param newRange openmw.util.Vector2
-local function remapFromRange(inputValue, oldRange, newRange)
-  return Round(
-    Max(
-      Min(Remap(inputValue, oldRange.x, oldRange.y, newRange.x, newRange.y), newRange.y),
-      newRange.x
-    )
-  )
-end
-
---- TODO: Make a subscript function to reconstruct the vectors for the size remapping instead of reconstructing vectors on every call expensive!
 --- Refer to globalSettings.lua for field default values
 ---
 ---@class LockOnManager:ProtectedTable
@@ -169,6 +154,7 @@ LockOnManager.state = {
   targetHealth = nil,
   npcHeightOffset = nil,
   targetHalfHeight = nil,
+  markerVisible = false,
   lockInvalidTime = 0,
   lockOnMarker = nil,
   currentTexture = nil,
@@ -318,11 +304,6 @@ function LockOnManager:ensureTargetingEnabled()
   return false
 end
 
-function LockOnManager.canLockOn() return LockOnManager.state.canDoLockOn end
-
----@param state boolean
-function LockOnManager.setCanLockOn(state) LockOnManager.state.canDoLockOn = state end
-
 ---@param state boolean
 function LockOnManager.setTrackingState(state) LockOnManager.state.trackTarget = state end
 
@@ -357,7 +338,7 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   local frameDt = LockOnManager.state.frameDt
   local playerPos = GetCamPosition()
   local targetPos = getTrackingTargetPosition(targetObject)
-  local toTarget = Vec3Normalize(targetPos - playerPos)
+  local toTarget = targetPos - playerPos
 
   local currentYaw, currentPitch = GetCamYaw(), GetCamPitch()
 
@@ -396,16 +377,13 @@ local function resolveCameraCandidate(
   cameraMinDistance,
   side
 )
-  local candidate = orbitCenter
-    - lookDir * cameraDistance
-    + UpVec3 * cameraHeight
-    + shoulderOffset * side
-  local candidateVector = candidate - orbitCenter
-  local candidateDistance = Vec3Len(candidateVector)
+  local candidateVector = lookDir * -cameraDistance + UpVec3 * cameraHeight + shoulderOffset * side
+  local candidate = orbitCenter + candidateVector
   local ray = CastRay(orbitCenter, candidate, RayOpts)
 
   if not ray.hit then return candidate, cameraDistance end
 
+  local candidateDistance = Vec3Len(candidateVector)
   local hitDistance = Vec3Len(ray.hitPos - orbitCenter)
   local safeDistance =
     Max(hitDistance * CAM_COLLISION_RATIO - CAM_COLLISION_SKIN, cameraMinDistance)
@@ -414,20 +392,21 @@ local function resolveCameraCandidate(
   return orbitCenter + candidateVector * scale, cameraDistance * scale
 end
 
-local function resolveTargetVisibility(targetPos, cameraPosition, targetObject)
-  if not targetObject then return 9999 end
+local function getTargetObstructionDistanceSquared(targetPos, cameraPosition, targetObject)
+  if not targetObject then return end
 
   local ray = CastRay(cameraPosition, targetPos, RayOpts)
-  if not ray.hit or ray.hitObject == targetObject then return 9999 end
+  if not ray.hit or ray.hitObject == targetObject then return end
 
-  return Vec3Len(ray.hitPos - targetPos)
+  local offset = ray.hitPos - targetPos
+  return offset.x * offset.x + offset.y * offset.y + offset.z * offset.z
 end
 
 --- Compute the collision-corrected camera position and shoulder side for the lock-on camera orbit.
 ---@param orbitCenter openmw.util.Vector3
 ---@param targetPos openmw.util.Vector3
 ---@param targetObject openmw.LObject?
----@return number effectiveDist approximate unobstructed distance for compatibility
+---@return number effectiveDist effective camera distance
 ---@return number desiredSide
 ---@return openmw.util.Vector3 desiredPosition collision-corrected camera position
 function LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
@@ -439,63 +418,57 @@ function LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
 
   local targetBad = cameraDistance * 0.5
   local targetGood = cameraDistance * 0.8
+  local targetBadSquared = targetBad * targetBad
+  local targetGoodSquared = targetGood * targetGood
 
   local lookDir = getLookDirection(orbitCenter, targetPos)
   local right = getCameraRight(lookDir)
   local shoulderOffset = right * cameraSideOffset
 
-  local rightPosition, rightDistance = resolveCameraCandidate(
-    orbitCenter,
-    lookDir,
-    shoulderOffset,
-    cameraDistance,
-    cameraHeight,
-    cameraMinDistance,
-    1
-  )
-  local leftPosition, leftDistance = resolveCameraCandidate(
-    orbitCenter,
-    lookDir,
-    shoulderOffset,
-    cameraDistance,
-    cameraHeight,
-    cameraMinDistance,
-    -1
-  )
-
-  local rightTargetDistance = resolveTargetVisibility(targetPos, rightPosition, targetObject)
-  local leftTargetDistance = resolveTargetVisibility(targetPos, leftPosition, targetObject)
-
-  local rightScore = Min(rightDistance, rightTargetDistance)
-  local leftScore = Min(leftDistance, leftTargetDistance)
   local desiredSide = state.cameraSide or 1
-  if desiredSide == 1 then
-    if rightScore < targetBad and leftScore > targetGood then desiredSide = -1 end
-  elseif leftScore < targetBad and rightScore > targetGood then
-    desiredSide = 1
+  local currentPosition, currentDistance = resolveCameraCandidate(
+    orbitCenter,
+    lookDir,
+    shoulderOffset,
+    cameraDistance,
+    cameraHeight,
+    cameraMinDistance,
+    desiredSide
+  )
+
+  local currentIsBad = currentDistance < targetBad
+  if not currentIsBad then
+    local obstructionDistanceSquared =
+      getTargetObstructionDistanceSquared(targetPos, currentPosition, targetObject)
+    currentIsBad = obstructionDistanceSquared ~= nil
+      and obstructionDistanceSquared < targetBadSquared
   end
+
+  if currentIsBad then
+    local alternateSide = -desiredSide
+    local alternatePosition, alternateDistance = resolveCameraCandidate(
+      orbitCenter,
+      lookDir,
+      shoulderOffset,
+      cameraDistance,
+      cameraHeight,
+      cameraMinDistance,
+      alternateSide
+    )
+
+    if alternateDistance > targetGood then
+      local obstructionDistanceSquared =
+        getTargetObstructionDistanceSquared(targetPos, alternatePosition, targetObject)
+
+      if not obstructionDistanceSquared or obstructionDistanceSquared > targetGoodSquared then
+        state.cameraSide = alternateSide
+        return alternateDistance, alternateSide, alternatePosition
+      end
+    end
+  end
+
   state.cameraSide = desiredSide
-
-  local desiredPosition = desiredSide == 1 and rightPosition or leftPosition
-  local effectiveDist = desiredSide == 1 and rightDistance or leftDistance
-
-  return effectiveDist, desiredSide, desiredPosition
-end
-
---- Convert orbit parameters into a final desired camera world position.
----@param orbitCenter openmw.util.Vector3
----@param targetPos openmw.util.Vector3
----@param effectiveDist number
----@param desiredSide number
----@return openmw.util.Vector3
-function LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
-  local cameraSideOffset = LockOnManager.CameraSideOffset
-  local cameraHeight = LockOnManager.CameraHeight
-  local lookDir = getLookDirection(orbitCenter, targetPos)
-  local right = getCameraRight(lookDir)
-  local shoulderOffset = right * cameraSideOffset
-  local base = orbitCenter - lookDir * effectiveDist + UpVec3 * cameraHeight
-  return base + shoulderOffset * desiredSide
+  return currentDistance, desiredSide, currentPosition
 end
 
 --- Step an analytical critically-damped spring toward a target position.
@@ -552,7 +525,7 @@ end
 ---@param cameraPos openmw.util.Vector3
 ---@param lookTarget openmw.util.Vector3
 function LockOnManager.lookToward(cameraPos, lookTarget)
-  local viewDir = Vec3Normalize(lookTarget - cameraPos)
+  local viewDir = lookTarget - cameraPos
   SetCamYaw(Atan2(viewDir.x, viewDir.y))
   SetCamPitch(Atan2(-viewDir.z, Sqrt(viewDir.x * viewDir.x + viewDir.y * viewDir.y)))
 end
@@ -561,7 +534,7 @@ end
 ---@param targetPos openmw.util.Vector3
 ---@param orbitCenter openmw.util.Vector3
 function LockOnManager.rotatePlayerTowardTarget(targetPos, orbitCenter)
-  local toTarget = Vec3Normalize(targetPos - orbitCenter)
+  local toTarget = targetPos - orbitCenter
   local yaw = Atan2(toTarget.x, toTarget.y)
   local pitch = Atan2(-toTarget.z, Sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
   local rot = s3lf.rotation
@@ -579,13 +552,8 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   local orbitCenter = GetTrackedPosition()
   local state = LockOnManager.state
 
-  local effectiveDist, desiredSide, desiredPos =
+  local _, _, desiredPos =
     LockOnManager.computeOrbitParams(orbitCenter, trackingTargetPos, targetObject)
-  -- Preserve compatibility with Manager overrides using the previous two-return contract.
-  if not desiredPos then
-    desiredPos =
-      LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
-  end
 
   if not state.cameraPosition then
     state.cameraPosition = GetCamPosition()
@@ -662,16 +630,7 @@ function LockOnManager.targetIsActor()
 end
 
 ---@return boolean isMarkerVisible
-function LockOnManager.getMarkerVisibility()
-  local marker = LockOnManager.getLockOnMarker()
-  if marker == nil then return false end
-
-  local visibility = true
-
-  if marker.layout.props.visible ~= nil then visibility = marker.layout.props.visible end
-
-  return visibility
-end
+function LockOnManager.getMarkerVisibility() return LockOnManager.state.markerVisible end
 
 ---@param actor openmw.LObject
 function LockOnManager.selectNearestTargetImpl(actor)
@@ -711,8 +670,9 @@ function LockOnManager.selectNearestTargetImpl(actor)
     if not checkLOSRay.hitObject or checkLOSRay.hitObject ~= actor then return false end
   end
 
-  ---@diagnostic disable-next-line: undefined-field
-  return Vec2Len(screenPos.xy - CenterVector2)
+  local dx = screenPos.x - 0.5
+  local dy = screenPos.y - 0.5
+  return dx * dx + dy * dy
 end
 
 ---@param goLeft boolean? whether to check the right or left side of screen space. Nil indicates both sides should be checked.
@@ -743,7 +703,7 @@ function LockOnManager.ensureLockOnMarker()
       relativePosition = ZeroVector2,
       size = ZeroVector2,
       resource = ui.texture { path = LockOnManager.state.currentTexture },
-      visible = false,
+      visible = LockOnManager.state.markerVisible,
     },
   }
 
@@ -872,43 +832,43 @@ function LockOnManager.lockOnHandler()
   LockOnManager.selectNearestTarget()
 end
 
---- sets marker visibility. Always triggers a redraw
+--- Sets marker visibility when it changes.
 ---@param state boolean whether or not the marker should be visible
----@return boolean? changed whether or not the state actually updated (due to the marker not existing)
+---@return boolean changed whether or not the visibility state changed
 function LockOnManager.setMarkerVisibility(state)
-  local marker = LockOnManager.getLockOnMarker()
-  if not marker then return end
-
-  if state then LockOnManager.state.trackTarget = true end
-
   local markerState = LockOnManager.state
+  if state then markerState.trackTarget = true end
+  if markerState.markerVisible == state then return false end
+
+  markerState.markerVisible = state
   markerState.isBouncing = false
   markerState.bouncedSize = 0
   markerState.bounceElapsed = 0
+
+  local marker = LockOnManager.getLockOnMarker()
+  if not marker then return true end
 
   marker.layout.props.visible = state
   UIUpdate(marker)
   return true
 end
 
----@param targetIsActor boolean whether or not the target is an actor
----@return boolean? targetWasDead whether or not the current target was dead and cleared
-function LockOnManager.checkForDeadTarget(targetIsActor)
-  local targetObject = LockOnManager.getTargetObject()
-
-  if not targetObject or not targetIsActor then return end
-  if not IsDead(targetObject) then return end
-
-  changeAndNotifyTarget()
-  return true
-end
-
 ---@param distanceFromCamera number distance in todd units from targeted object to the camera
 ---@return number iconSize rounded icon size, remapped from the camera distance range to the size range
 function LockOnManager:getIconSize(distanceFromCamera)
-  local markerSizeRange = Vector2(self.TargetMinSize, self.TargetMaxSize)
-  local markerDistanceRange = Vector2(self.TargetMinDistance, self.TargetMaxDistance)
-  return remapFromRange(distanceFromCamera, markerDistanceRange, markerSizeRange)
+  return Round(
+    Clamp(
+      Remap(
+        distanceFromCamera,
+        self.TargetMinDistance,
+        self.TargetMaxDistance,
+        self.TargetMinSize,
+        self.TargetMaxSize
+      ),
+      self.TargetMinSize,
+      self.TargetMaxSize
+    )
+  )
 end
 
 function LockOnManager:getIconColor()
@@ -925,120 +885,116 @@ function LockOnManager:getIconColor()
 
   local targetColorMin, targetColorMax, bandLow, bandHigh
 
-  if normalizedHealth < 1.0 and normalizedHealth >= 0.8 then
+  if normalizedHealth >= 0.8 then
     targetColorMin = self.TargetColorVH:asRgb()
     targetColorMax = self.TargetColorF:asRgb()
     bandLow, bandHigh = 0.8, 1.0
-  elseif normalizedHealth < 0.8 and normalizedHealth >= 0.6 then
+  elseif normalizedHealth >= 0.6 then
     targetColorMin = self.TargetColorH:asRgb()
     targetColorMax = self.TargetColorVH:asRgb()
     bandLow, bandHigh = 0.6, 0.8
-  elseif normalizedHealth < 0.6 and normalizedHealth >= 0.4 then
+  elseif normalizedHealth >= 0.4 then
     targetColorMin = self.TargetColorW:asRgb()
     targetColorMax = self.TargetColorH:asRgb()
     bandLow, bandHigh = 0.4, 0.6
-  elseif normalizedHealth < 0.4 and normalizedHealth >= 0.2 then
+  elseif normalizedHealth >= 0.2 then
     targetColorMin = self.TargetColorVW:asRgb()
     targetColorMax = self.TargetColorW:asRgb()
     bandLow, bandHigh = 0.2, 0.4
-  elseif normalizedHealth < 0.2 and normalizedHealth >= 0.0 then
+  else
     targetColorMin = self.TargetColorD:asRgb()
     targetColorMax = self.TargetColorVW:asRgb()
     bandLow, bandHigh = 0.0, 0.2
   end
 
-  local colorMix = {}
-  colorMix[#colorMix + 1] =
-    Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.x, targetColorMax.x)
-  colorMix[#colorMix + 1] =
-    Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.y, targetColorMax.y)
-  colorMix[#colorMix + 1] =
+  return RGBColor(
+    Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.x, targetColorMax.x),
+    Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.y, targetColorMax.y),
     Remap(normalizedHealth, bandLow, bandHigh, targetColorMin.z, targetColorMax.z)
-
-  return RGBColor(colorMix[1], colorMix[2], colorMix[3])
+  )
 end
 
 function LockOnManager:onFrameBegin()
-  self.state.frameDt = GetFrameDuration()
-  if GetUIMode() or not self.getTargetObject() or not self.getMarkerVisibility() then return end
+  local state = self.state
+  state.frameDt = GetFrameDuration()
 
-  local mouseMoveThisFrame = Vector2(GetMouseMoveX(), GetMouseMoveY())
-
-  self.state.cumulativeXMove = self.state.cumulativeXMove + mouseMoveThisFrame.x
-
-  if
-    self.EnableFlickSwitch
-    and self.getMarkerVisibility()
-    and Abs(self.state.cumulativeXMove) >= self.FlickSwitchDistance
-    and not self.state.flickTriggered
-  then
-    self.selectNearestTarget(self.state.cumulativeXMove < 0)
-    self.state.flickTriggered = true
+  if not self.EnableFlickSwitch then
+    state.cumulativeXMove = 0
+    state.flickTriggered = false
+    return
   end
 
-  if Vec2Len(mouseMoveThisFrame) == 0 then
-    self.state.cumulativeXMove = 0
-    self.state.flickTriggered = false
+  if GetUIMode() or not state.targetObject or not state.markerVisible then return end
+
+  local mouseX, mouseY = GetMouseMoveX(), GetMouseMoveY()
+  state.cumulativeXMove = state.cumulativeXMove + mouseX
+
+  if Abs(state.cumulativeXMove) >= self.FlickSwitchDistance and not state.flickTriggered then
+    self.selectNearestTarget(state.cumulativeXMove < 0)
+    state.flickTriggered = true
+  end
+
+  if mouseX == 0 and mouseY == 0 then
+    state.cumulativeXMove = 0
+    state.flickTriggered = false
   end
 end
 
 function LockOnManager:onFrame()
-  local targetObject = self.getTargetObject()
+  local state = self.state
+  local targetObject = state.targetObject
   if targetObject and not targetObject:isValid() then
     changeAndNotifyTarget()
     return false
   end
 
-  local targetIsActor = self.targetIsActor()
-  local targetWasDead = self.checkForDeadTarget(targetIsActor)
-
-  if targetWasDead and self.SwitchOnDeadTarget then self.selectNearestTarget() end
-
-  targetObject = self.getTargetObject()
+  if targetObject and IsDead(targetObject) then
+    changeAndNotifyTarget()
+    if self.SwitchOnDeadTarget then self.selectNearestTarget() end
+    targetObject = state.targetObject
+  end
 
   local uiMode = GetUIMode()
   local validMode = not uiMode or uiMode == 'MainMenu'
   local normalizedPos
   if targetObject and validMode then
-    normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset)
+    normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, state.npcHeightOffset)
 
     local trackingValid = normalizedPos and normalizedPos.z <= self.TargetMaxDistance
     if trackingValid and self.CheckLOS then
-      local stablePos = I.S3CamHelper.targetPosition(
-        targetObject,
-        targetObject.position,
-        self.state.npcHeightOffset
-      )
+      local stablePos =
+        I.S3CamHelper.targetPosition(targetObject, targetObject.position, state.npcHeightOffset)
       local LOStest = CastRay(GetCamPosition(), stablePos, RayOpts)
       trackingValid = not LOStest.hit or LOStest.hitObject == targetObject
     end
 
     if trackingValid then
-      self.state.lockInvalidTime = 0
+      state.lockInvalidTime = 0
     else
-      self.state.lockInvalidTime = self.state.lockInvalidTime + Max(self.state.frameDt, 0)
+      state.lockInvalidTime = state.lockInvalidTime + Max(state.frameDt, 0)
 
       local lockLossDelay =
         Clamp(self.LockLossDelay or DEFAULT_LOCK_LOSS_DELAY, 0, MAX_LOCK_LOSS_DELAY)
-      if self.state.lockInvalidTime >= lockLossDelay then
+      if state.lockInvalidTime >= lockLossDelay then
         changeAndNotifyTarget()
-        targetObject = self.getTargetObject()
+        targetObject = state.targetObject
         normalizedPos = nil
       end
     end
   end
 
-  self.setCanLockOn(targetObject ~= nil and (targetIsActor and isWielding()) and validMode)
+  local canLockOn = targetObject ~= nil and isWielding() and validMode
+  state.canDoLockOn = canLockOn
 
   local markerExists = self.getLockOnMarker() ~= nil
-  local markerIsVisible = self.getMarkerVisibility()
+  local markerIsVisible = state.markerVisible
 
-  if self.canLockOn() then
+  if canLockOn then
     assert(targetObject)
     if not self.ThirdPersonLockCamera then self:endLockCamera() end
     if not markerExists then self.ensureLockOnMarker() end
 
-    if not self.getMarkerVisibility() then self.setMarkerVisibility(true) end
+    if not state.markerVisible then self.setMarkerVisibility(true) end
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
@@ -1067,7 +1023,7 @@ function LockOnManager:onFrame()
     self:endLockCamera()
   end
 
-  return self.canLockOn()
+  return canLockOn
 end
 
 --- Checks whether the lock-on icon is currently "bouncing" from a hit
@@ -1075,16 +1031,17 @@ end
 function LockOnManager.isBouncing() return LockOnManager.state.isBouncing end
 
 function LockOnManager:startBounce()
-  if self.state.isBouncing or not self.getMarkerVisibility() then return end
+  local state = self.state
+  if state.isBouncing or not state.markerVisible then return end
 
-  self.state.isBouncing = true
-  self.state.bounceElapsed = 0
+  state.isBouncing = true
+  state.bounceElapsed = 0
 end
 
 function LockOnManager:bounce()
-  if not self.isBouncing() or not self.getMarkerVisibility() then return end
-
   local state = LockOnManager.state
+  if not state.isBouncing or not state.markerVisible then return end
+
   state.bounceElapsed = state.bounceElapsed + Max(state.frameDt, 0)
 
   local progress = state.bounceElapsed / HIT_BOUNCE_DURATION
@@ -1127,16 +1084,20 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
 
   if not actorIsValid then return end
 
+  local targetId = actor.id
   if targetIsFighting then
-    ActiveCombatTargets[#ActiveCombatTargets + 1] = actor
-  else
-    local targetId = actor.id
-
-    for i = #ActiveCombatTargets, 1, -1 do
+    local alreadyActive = false
+    for i = 1, #ActiveCombatTargets do
       if ActiveCombatTargets[i].id == targetId then
-        TableRemove(ActiveCombatTargets, i)
+        alreadyActive = true
         break
       end
+    end
+
+    if not alreadyActive then ActiveCombatTargets[#ActiveCombatTargets + 1] = actor end
+  else
+    for i = #ActiveCombatTargets, 1, -1 do
+      if ActiveCombatTargets[i].id == targetId then TableRemove(ActiveCombatTargets, i) end
     end
   end
 
