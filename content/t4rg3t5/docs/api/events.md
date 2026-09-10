@@ -35,7 +35,7 @@ See the [target event observer example](@/t4rg3t5/docs/examples/target-event-obs
 
 ## `S3TargetLockHit`
 
-Carries an object hit by the player and drives target-marker hit feedback. Most mods can ignore this; send it only when integrating another hit source with T4rg3t5's marker effects.
+Carries the object hit by the player and drives target-marker hit feedback. Most mods can ignore this; send it only when integrating another hit source with T4rg3t5's marker effects.
 
 ## `S3TargetLock` trigger
 

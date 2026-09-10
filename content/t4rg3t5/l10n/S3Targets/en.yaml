@@ -66,16 +66,16 @@ TargetLockToggleName: Enabled
 TargetLockToggleDesc: If set to false, target locking is completely disabled. Recommended to leave enabled.
 
 TargetMaxDistanceName: Maximum Target Distance
-TargetMaxDistanceDesc: Distance from the locked target at which the icon will be at minimum size.
+TargetMaxDistanceDesc: Maximum lock-on distance; the marker reaches its maximum configured size here.
 
 TargetMaxSizeName: Maximum Target Size
-TargetMaxSizeDesc: Distance from the locked target at which the icon will be at maximum size.
+TargetMaxSizeDesc: Size of the targeting icon at TargetMaxDistance.
 
 TargetMinDistanceName: Minimum Target Distance
-TargetMinDistanceDesc: Distance from the locked target at which the icon will be at minimum size.
+TargetMinDistanceDesc: Distance from the locked target at which the icon reaches its minimum configured size.
 
 TargetMinSizeName: Minimum Target Size
-TargetMinSizeDesc: Size of the targeting icon at minimum distance.
+TargetMinSizeDesc: Size of the targeting icon at or below TargetMinDistance.
 
 CameraDistanceName: Camera Orbit Distance
 CameraDistanceDesc: How far the lock-on camera orbits from the player center. Higher values pull the camera further back.
