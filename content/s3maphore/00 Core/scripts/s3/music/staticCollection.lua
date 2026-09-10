@@ -84,6 +84,17 @@ local Cells, DoorDestination, GetCurrentWeather, GetExteriorCell, IsDoor, IsTele
 local NPC_FIGHT_THRESHOLD = 90
 local CREATURE_FIGHT_THRESHOLD = 83
 
+---@param object openmw.GObject
+---@return boolean
+local function isHostileActor(object)
+  local objectType = object.type
+  if objectType ~= NPCType and objectType ~= CreatureType then return false end
+
+  local fightValue = AIFight(object).modified
+  local threshold = objectType == NPCType and NPC_FIGHT_THRESHOLD or CREATURE_FIGHT_THRESHOLD
+  return fightValue >= threshold and not IsDeadFn(object)
+end
+
 do
   local core = require 'openmw.core'
   local storage = require 'openmw.storage'
@@ -302,13 +313,7 @@ local function collectPresenceAndStatics(cell, cellKey)
       end
 
       -- Combat check: does this cell contain any aggressive living actor (excluding the player)?
-      if not cellHasHostile then
-        if objType == NPCType or objType == CreatureType then
-          local fightValue = AIFight(obj).modified
-          local threshold = objType == NPCType and NPC_FIGHT_THRESHOLD or CREATURE_FIGHT_THRESHOLD
-          if fightValue >= threshold and not IsDeadFn(obj) then cellHasHostile = true end
-        end
-      end
+      if not cellHasHostile and isHostileActor(obj) then cellHasHostile = true end
 
       -- Door tracking for interior cells without an own region
       if not cellKey and not cell.region then nearestDoor = checkForRegion(obj, nearestDoor) end
@@ -413,7 +418,22 @@ local function flushPendingAdditions(budget)
           end
           if not found then staticContentFiles[#staticContentFiles + 1] = contentFile end
         end
+
+        if isHostileActor(obj) then
+          cellData.hasHostileActors = true
+          CellPresence.areaHasHostileActors = true
+          if CellPresence.currentExteriorCellObjects == presence then
+            CellPresence.cellHasHostileActors = true
+          end
+        end
       end
+    elseif
+      not TransitionCell.isExterior
+      and objCell.id == TransitionCell.id
+      and isHostileActor(obj)
+    then
+      CellPresence.cellHasHostileActors = true
+      CellPresence.areaHasHostileActors = true
     end
 
     tableRemove(pendingAdditions)
