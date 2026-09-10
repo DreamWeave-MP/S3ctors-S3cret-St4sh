@@ -48,8 +48,17 @@ local STANCE_NONE, STANCE_SPELL, STANCE_WEAPON =
 
 local ModInfo = require 'scripts.s3.target.modinfo'
 
-local Abs, Atan2, Cos, Exp, Max, Min, Rad, Sin, Sqrt =
-  math.abs, math.atan2, math.cos, math.exp, math.max, math.min, math.rad, math.sin, math.sqrt
+local Abs, Atan2, Cos, Exp, Log, Max, Min, Rad, Sin, Sqrt =
+  math.abs,
+  math.atan2,
+  math.cos,
+  math.exp,
+  math.log,
+  math.max,
+  math.min,
+  math.rad,
+  math.sin,
+  math.sqrt
 
 local StrFormat, TableRemove = string.format, table.remove
 
@@ -76,7 +85,10 @@ local Vec3Len = UpVec3.length
 ---@type fun(element: openmw.ui.Element)
 local UIUpdate
 
-local MaxRot, MaxPitchRot = Rad(12.0), Rad(10.0)
+-- Preserve the old 60 FPS response (0.6/0.4 gain, 12°/10° caps) in time-based form.
+local CameraYawResponse, CameraPitchResponse = -Log(0.4) * 60, -Log(0.6) * 60
+local MaxYawRate, MaxPitchRate = Rad(12.0 * 60), Rad(10.0 * 60)
+local HIT_BOUNCE_DURATION = 0.15
 
 local NPC_HEIGHT_OFFSET = 1.6
 
@@ -156,7 +168,7 @@ LockOnManager.state = {
   cumulativeXMove = 0,
   isBouncing = false,
   bouncedSize = 0,
-  bounceUpOrDown = true,
+  bounceElapsed = 0,
   trackTarget = true,
   isThirdPersonLock = false,
   prevCameraMode = nil,
@@ -227,12 +239,18 @@ function LockOnManager.shouldTrack() return LockOnManager.state.trackTarget end
 ---@param desiredPitch number
 ---@param currentYaw number
 ---@param currentPitch number
-function LockOnManager.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch)
+---@param dt number? elapsed real time in seconds
+function LockOnManager.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch, dt)
+  dt = dt or 1 / 60
+  if dt <= 0 then return 0, 0 end
+
   local yawDiff = NormalizeAngle(desiredYaw - currentYaw)
   local pitchDiff = NormalizeAngle(desiredPitch - currentPitch)
+  local yawAlpha = 1 - Exp(-CameraYawResponse * dt)
+  local pitchAlpha = 1 - Exp(-CameraPitchResponse * dt)
 
-  local finalYaw = Clamp(yawDiff * 0.6, -MaxRot, MaxRot)
-  local finalPitch = Clamp(pitchDiff * 0.4, -MaxPitchRot, MaxPitchRot)
+  local finalYaw = Clamp(yawDiff * yawAlpha, -MaxYawRate * dt, MaxYawRate * dt)
+  local finalPitch = Clamp(pitchDiff * pitchAlpha, -MaxPitchRate * dt, MaxPitchRate * dt)
 
   return finalYaw, finalPitch
 end
@@ -242,6 +260,7 @@ end
 function LockOnManager.trackTarget(targetObject, shouldTrack)
   if not targetObject then return end
 
+  local frameDt = LockOnManager.state.frameDt
   local playerPos = GetCamPosition()
   local targetPos = I.S3CamHelper.targetPosition(
     targetObject,
@@ -256,7 +275,7 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   local desiredPitch = Atan2(-toTarget.z, Sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
 
   local camYaw, camPitch =
-    LockOnManager.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch)
+    LockOnManager.getAngleDiff(desiredYaw, desiredPitch, currentYaw, currentPitch, frameDt)
 
   if Abs(camYaw) >= EPS then SetCamYaw(currentYaw + camYaw) end
 
@@ -265,8 +284,13 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
   if not shouldTrack then return end
 
   local rotation = s3lf.rotation
-  local playerYaw, playerPitch =
-    LockOnManager.getAngleDiff(desiredYaw, desiredPitch, GetYaw(rotation), GetPitch(rotation))
+  local playerYaw, playerPitch = LockOnManager.getAngleDiff(
+    desiredYaw,
+    desiredPitch,
+    GetYaw(rotation),
+    GetPitch(rotation),
+    frameDt
+  )
 
   if Abs(playerYaw) >= EPS then s3lf.controls.yawChange = playerYaw end
 
@@ -451,7 +475,8 @@ function LockOnManager.rotatePlayerTowardTarget(targetPos, orbitCenter)
   local yaw = Atan2(toTarget.x, toTarget.y)
   local pitch = Atan2(-toTarget.z, Sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y))
   local rot = s3lf.rotation
-  local yawChange, pitchChange = LockOnManager.getAngleDiff(yaw, pitch, GetYaw(rot), GetPitch(rot))
+  local yawChange, pitchChange =
+    LockOnManager.getAngleDiff(yaw, pitch, GetYaw(rot), GetPitch(rot), LockOnManager.state.frameDt)
   if Abs(yawChange) >= EPS then s3lf.controls.yawChange = yawChange end
   if Abs(pitchChange) >= EPS then s3lf.controls.pitchChange = pitchChange end
 end
@@ -762,7 +787,7 @@ function LockOnManager.setMarkerVisibility(state)
   local markerState = LockOnManager.state
   markerState.isBouncing = false
   markerState.bouncedSize = 0
-  markerState.bounceUpOrDown = true
+  markerState.bounceElapsed = 0
 
   marker.layout.props.visible = state
   UIUpdate(marker)
@@ -954,24 +979,26 @@ function LockOnManager:startBounce()
   if self.state.isBouncing or not self.getMarkerVisibility() then return end
 
   self.state.isBouncing = true
+  self.state.bounceElapsed = 0
 end
 
 function LockOnManager:bounce()
   if not self.isBouncing() or not self.getMarkerVisibility() then return end
 
   local state = LockOnManager.state
+  state.bounceElapsed = state.bounceElapsed + Max(state.frameDt, 0)
 
-  if state.bounceUpOrDown then
-    state.bouncedSize = state.bouncedSize + 1
-  else
-    state.bouncedSize = state.bouncedSize - 1
+  local progress = state.bounceElapsed / HIT_BOUNCE_DURATION
+  if progress >= 1 then
+    state.bouncedSize = 0
+    state.isBouncing = false
+    return
   end
 
-  if state.bouncedSize == LockOnManager.HitBounceSize then
-    state.bounceUpOrDown = false
-  elseif state.bouncedSize == 0 then
-    state.isBouncing = false
-    state.bounceUpOrDown = true
+  if progress < 0.5 then
+    state.bouncedSize = LockOnManager.HitBounceSize * progress * 2
+  else
+    state.bouncedSize = LockOnManager.HitBounceSize * (2 - progress * 2)
   end
 end
 
