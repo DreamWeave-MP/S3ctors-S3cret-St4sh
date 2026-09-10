@@ -101,7 +101,7 @@ Playlist IDs and track paths are normalized to lowercase, forward-slash paths wi
 
 If multiple YAML files define the same normalized playlist ID or track path, the later-loaded entry replaces the earlier one and S3maphore logs an override message. Keep one metadata owner per key unless an intentional override is part of the mod's design.
 
-Malformed YAML or invalid metadata tables are reported while the rest of the playlist load continues. A metadata table without a string `title` is invalid.
+Malformed playlist or metadata files abort S3maphore initialization. S3maphore does not continue with a partially loaded music configuration. A metadata table without a string `title` is invalid.
 
 ## Reading metadata from Lua
 
@@ -127,7 +127,7 @@ The registry also provides iterators for tooling and UI:
 | `getTrackMetadata(path)` | Track metadata table, or `nil`. |
 | `iterPlaylists()` | Iterator over normalized playlist IDs and metadata. |
 | `iterTracks()` | Iterator over normalized VFS paths and metadata. |
-| `loadYamlFile(path)` | Loads or reloads one metadata file. Advanced, loader-facing operation; ordinary integrations should let S3maphore discover metadata automatically. |
+| `loadYamlFile(path)` | Loads or reloads one metadata file. Advanced, loader-facing operation; malformed input raises an error. Ordinary integrations should let S3maphore discover metadata automatically. |
 
 `I.S3maphore.getCurrentTrackInfo()` returns the metadata for the current playlist and track as two values. The track banner appears only when both metadata entries are available and track information is enabled; it does not fall back to the playlist ID or track path. See [I.S3maphore](@/s3maphore/docs/api/interface.md) for the interface method and [Events](@/s3maphore/docs/api/events.md) for track-change notifications.
 

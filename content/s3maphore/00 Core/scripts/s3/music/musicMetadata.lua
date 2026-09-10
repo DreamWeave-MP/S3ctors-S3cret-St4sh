@@ -39,7 +39,7 @@ end
 --- Load a YAML file from Playlists/ and merge its data.
 --- Both the "playlists" and "tracks" sections support string-or-table values
 --- (string is normalized to { title = string }).
---- Throws on malformed YAML — caller should wrap in pcall.
+--- Throws on malformed YAML or metadata shapes.
 ---
 --- Note: duplicate playlist/track keys across multiple YAML files are
 --- resolved by last-writer-wins, where the order is alphabetical.
@@ -47,10 +47,22 @@ end
 local function loadYamlFile(yamlFile)
   ---@type table<string, any>?
   local data = markup.loadYaml(yamlFile)
-  if type(data) ~= 'table' then return end
+  if type(data) ~= 'table' then
+    error(
+      StrFormat(
+        'Failed to load metadata file %s: expected a YAML table, got %s',
+        yamlFile,
+        type(data)
+      )
+    )
+  end
 
   ---@type table<string, string|table>?
   local playlistSection = data.playlists
+  if playlistSection ~= nil and type(playlistSection) ~= 'table' then
+    error(StrFormat('Invalid metadata file %s: playlists must be a table', yamlFile))
+  end
+
   if type(playlistSection) == 'table' then
     for playlistId, rawMetadata in next, playlistSection do
       local meta, key = normalizeMetadata(rawMetadata), normalizePath(playlistId)
@@ -66,6 +78,10 @@ local function loadYamlFile(yamlFile)
 
   ---@type table<string, string|table>?
   local trackSection = data.tracks
+  if trackSection ~= nil and type(trackSection) ~= 'table' then
+    error(StrFormat('Invalid metadata file %s: tracks must be a table', yamlFile))
+  end
+
   if type(trackSection) == 'table' then
     for trackPath, rawMetadata in next, trackSection do
       local meta, key = normalizeMetadata(rawMetadata), normalizePath(trackPath)

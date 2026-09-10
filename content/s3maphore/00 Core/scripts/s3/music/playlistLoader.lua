@@ -1,12 +1,12 @@
 ---@omw-context player
 
-local coCreate, coResume, coStatus, coYield, error, pcall, print, type, ToString =
+local coCreate, coResume, coStatus, coYield, error, next, print, type, ToString =
   coroutine.create,
   coroutine.resume,
   coroutine.status,
   coroutine.yield,
   error,
-  pcall,
+  next,
   print,
   type,
   tostring
@@ -52,45 +52,73 @@ local PlaylistEnvironment = {
   print = printOverride,
 }
 
+local currentFile = 'Playlists/ discovery'
+
 local function playlistCoroutineLoader()
   local files = musicUtil.getAllPlaylistFiles()
-  local result, codeString
 
   for fileIndex = 1, #files do
     local file = files[fileIndex]
+    currentFile = file
 
     if StrMatch(file, '%.ya?ml$') then
-      local ok, err = pcall(MusicManager.playlistMetadata.loadYamlFile, file)
-      if not ok then
-        print(StrFormat('Failed to load track metadata file: %s\nErr: %s', file, err))
-      end
+      MusicManager.playlistMetadata.loadYamlFile(file)
     elseif StrMatch(file, '%.lua$') then
       musicUtil.debugLog('reading playlist file: %s', file)
 
-      local ok, fileHandle = pcall(vfs.open, file)
-      if not ok then
-        print(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, fileHandle))
-      else
-        codeString = fileHandle:read '*a'
-        fileHandle:close()
+      local fileHandle, openError = vfs.open(file)
+      if not fileHandle then
+        error(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, ToString(openError)))
+      end
 
-        ok, result = pcall(util.loadCode, codeString, PlaylistEnvironment)
+      local codeString, readError = fileHandle:read '*a'
+      local closed, closeError = fileHandle:close()
 
-        if not ok or type(result) ~= 'function' then
-          print(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, result))
-        else
-          ok, result = pcall(result)
+      if codeString == nil then
+        error(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, ToString(readError)))
+      end
 
-          if type(result) ~= 'table' then
-            print(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, result))
-          else
-            for playlistIndex = 1, #result do
-              local playlist = result[playlistIndex]
-              MusicManager.registerPlaylist(playlist)
-              coYield(playlist)
-            end
-          end
+      if not closed then error(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, ToString(closeError))) end
+
+      local playlistChunk = util.loadCode(codeString, PlaylistEnvironment)
+      if type(playlistChunk) ~= 'function' then
+        error(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, 'chunk did not compile to a function'))
+      end
+
+      local result = playlistChunk()
+      if type(result) ~= 'table' then
+        error(StrFormat(FAILED_TO_LOAD_PLAYLIST, file, 'chunk must return a playlist table'))
+      end
+
+      local playlistCount = #result
+      for key in next, result do
+        if type(key) ~= 'number' or key < 1 or key % 1 ~= 0 or key > playlistCount then
+          error(
+            StrFormat(
+              FAILED_TO_LOAD_PLAYLIST,
+              file,
+              StrFormat(
+                'playlist return value must be a contiguous array; invalid key %s',
+                ToString(key)
+              )
+            )
+          )
         end
+      end
+
+      for playlistIndex = 1, playlistCount do
+        local playlist = result[playlistIndex]
+        if type(playlist) ~= 'table' then
+          error(
+            StrFormat(
+              FAILED_TO_LOAD_PLAYLIST,
+              file,
+              StrFormat('playlist %d must be a table, got %s', playlistIndex, type(playlist))
+            )
+          )
+        end
+        MusicManager.registerPlaylist(playlist)
+        coYield(playlist)
       end
     end
   end
@@ -105,16 +133,21 @@ return function()
   local status = coStatus(playlistLoaderCo)
   if status == 'dead' then return end
 
-  local ok, playlist = coResume(playlistLoaderCo)
+  local ok, failure = coResume(playlistLoaderCo)
 
   if not ok then
-    print(StrFormat('[ S3MAPHORE ]: Fatal playlist initialization error: %s', ToString(playlist)))
+    local message = StrFormat(
+      'S3maphore playlist initialization failed while processing %s:\n%s',
+      ToString(currentFile),
+      ToString(failure)
+    )
+    print(StrFormat('[ S3MAPHORE ]: Fatal initialization error: %s', message))
     Quit()
-    error(StrFormat('S3maphore playlist initialization failed:\n%s', ToString(playlist)), 0)
+    error(message, 0)
   end
 
-  if playlist then
-    musicUtil.debugLog('Registered playlist: %s', playlist.id)
+  if failure then
+    musicUtil.debugLog('Registered playlist: %s', failure.id)
     playlistCount = playlistCount + 1
   elseif coStatus(playlistLoaderCo) == 'dead' then
     print(StrFormat('[ S3MAPHORE ]: %d playlists loaded. Ready to play music!', playlistCount))
