@@ -86,6 +86,7 @@ local SHOULDER_BAD = 80
 local SHOULDER_GOOD = 100
 
 local EPS = 0.001
+local LOCK_INVALID_GRACE = 0.25
 
 local RayOpts = { ignore = { gameSelf } }
 
@@ -148,6 +149,7 @@ LockOnManager.state = {
   targetObject = nil,
   targetHealth = nil,
   npcHeightOffset = nil,
+  lockInvalidTime = 0,
   lockOnMarker = nil,
   currentTexture = nil,
   canDoLockOn = false,
@@ -184,6 +186,7 @@ function LockOnManager:clearTarget()
   state.targetObject = nil
   state.targetHealth = nil
   state.npcHeightOffset = nil
+  state.lockInvalidTime = 0
   state.canDoLockOn = false
   state.flickTriggered = false
   state.cumulativeXMove = 0
@@ -673,6 +676,7 @@ function LockOnManager.setTarget(target)
   state.targetObject = target
   state.targetHealth = Health(target)
   state.npcHeightOffset = boundingBox.halfSize.z * NPC_HEIGHT_OFFSET
+  state.lockInvalidTime = 0
 
   LockOnManager.ensureLockOnMarker()
   LockOnManager:enable3PCamera(target)
@@ -814,25 +818,35 @@ function LockOnManager:onFrame()
 
   targetObject = self.getTargetObject()
 
-  if self.CheckLOS and targetObject then
-    local stablePos =
-      I.S3CamHelper.targetPosition(targetObject, targetObject.position, self.state.npcHeightOffset)
+  local uiMode = GetUIMode()
+  local validMode = not uiMode or uiMode == 'MainMenu'
+  local normalizedPos
+  if targetObject and validMode then
+    normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset)
 
-    if not I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset) then
-      changeAndNotifyTarget()
-    else
+    local trackingValid = normalizedPos and normalizedPos.z <= self.TargetMaxDistance
+    if trackingValid and self.CheckLOS then
+      local stablePos = I.S3CamHelper.targetPosition(
+        targetObject,
+        targetObject.position,
+        self.state.npcHeightOffset
+      )
       local LOStest = CastRay(GetCamPosition(), stablePos, RayOpts)
+      trackingValid = not LOStest.hit or LOStest.hitObject == targetObject
+    end
 
-      if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
+    if trackingValid then
+      self.state.lockInvalidTime = 0
+    else
+      self.state.lockInvalidTime = self.state.lockInvalidTime + Max(self.state.frameDt, 0)
+
+      if self.state.lockInvalidTime >= LOCK_INVALID_GRACE then
         changeAndNotifyTarget()
+        targetObject = self.getTargetObject()
+        normalizedPos = nil
       end
     end
   end
-
-  targetObject = self.getTargetObject()
-
-  local uiMode = GetUIMode()
-  local validMode = not uiMode or uiMode == 'MainMenu'
 
   self.setCanLockOn(targetObject ~= nil and (targetIsActor and isWielding()) and validMode)
 
@@ -844,8 +858,6 @@ function LockOnManager:onFrame()
     if not markerExists then self.ensureLockOnMarker() end
 
     if not self.getMarkerVisibility() then self.setMarkerVisibility(true) end
-
-    local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset)
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
