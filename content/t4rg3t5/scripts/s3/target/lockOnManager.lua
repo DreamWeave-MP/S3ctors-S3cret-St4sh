@@ -16,13 +16,12 @@ local s3lf, GetUIMode = I.s3.lf, I.UI.getMode
 
 local CastRay = nearby.castRay
 local GetBoundingBox, Vec3Normalize = s3lf.getBoundingBox, s3lf.position.normalize
-local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, ShowCrosshair, GetTrackedPosition =
+local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, GetTrackedPosition =
   camera.getPitch,
   camera.getPosition,
   camera.getYaw,
   camera.setPitch,
   camera.setYaw,
-  camera.showCrosshair,
   camera.getTrackedPosition
 local GetFrameDuration = core.getRealFrameDuration
 local SetCamStaticPosition, GetCamMode, SetCamMode, CamInstantTransition =
@@ -111,6 +110,7 @@ end
 --- Refer to globalSettings.lua for field default values
 ---
 ---@class LockOnManager:ProtectedTable
+---@field TargetLockToggle boolean whether or not targeting is enabled
 ---@field SwitchOnDeadTarget boolean whether or not to automatically select the nearest (screen-space) target when the current one dies
 ---@field CheckLOS boolean whether to use line-of-sight when deciding whether to break a target lock
 ---@field TargetLockIcon string baseName of the texture file used for the lock-on icon
@@ -176,6 +176,36 @@ LockOnManager.state = {
 
 function LockOnManager.getLockOnFileName(baseName)
   return StrFormat('textures/s3/crosshair/%s.dds', baseName)
+end
+
+function LockOnManager:clearTarget()
+  local state = self.state
+
+  state.targetObject = nil
+  state.targetHealth = nil
+  state.npcHeightOffset = nil
+  state.canDoLockOn = false
+  state.flickTriggered = false
+  state.cumulativeXMove = 0
+
+  self.setMarkerVisibility(false)
+  if state.isThirdPersonLock then self:disable3PCamera() end
+end
+
+local function notifyTargetChanged(target) s3lf.sendObjectEvent('S3TargetLockOnto', target) end
+
+local function changeAndNotifyTarget(target)
+  if not LockOnManager.setTarget(target) then return false end
+
+  notifyTargetChanged(target)
+  return true
+end
+
+function LockOnManager:ensureTargetingEnabled()
+  if self.TargetLockToggle then return true end
+
+  changeAndNotifyTarget()
+  return false
 end
 
 function LockOnManager.canLockOn() return LockOnManager.state.canDoLockOn end
@@ -485,7 +515,7 @@ function LockOnManager.getTargetObject() return LockOnManager.state.targetObject
 ---@return boolean isActor
 function LockOnManager.targetIsActor()
   local target = LockOnManager.getTargetObject()
-  if not target then return false end
+  if not target or not target:isValid() then return false end
 
   return IsActor(target)
 end
@@ -505,7 +535,8 @@ end
 ---@param actor openmw.LObject
 function LockOnManager.selectNearestTargetImpl(actor)
   if
-    actor.recordId == 'player'
+    not actor:isValid()
+    or actor.recordId == 'player'
     or actor == LockOnManager.state.targetObject
     or IsDead(actor)
     or GetStance(actor) == STANCE_NONE
@@ -545,42 +576,38 @@ end
 
 ---@param goLeft boolean? whether to check the right or left side of screen space. Nil indicates both sides should be checked.
 function LockOnManager.selectNearestTarget(goLeft)
+  if not LockOnManager.TargetLockToggle then return end
+
   LockOnManager.state.goLeft = goLeft
 
   local result = aux_util.findMinScore(ActiveCombatTargets, LockOnManager.selectNearestTargetImpl)
 
-  if not result then return end
-
-  s3lf.sendObjectEvent('S3TargetLockOnto', result)
+  if result then changeAndNotifyTarget(result) end
 
   return result
 end
 
---- Depending on whether it already exists or not, creates the lock on marker
---- or simply toggles its visibility
-function LockOnManager.toggleLockOnMarkerDisplay()
+function LockOnManager.ensureLockOnMarker()
   local marker = LockOnManager.getLockOnMarker()
 
-  if not marker then
-    LockOnManager.state.currentTexture =
-      LockOnManager.getLockOnFileName(LockOnManager.TargetLockIcon)
+  if marker then return marker end
 
-    LockOnManager.state.lockOnMarker = ui.create {
-      layer = 'HUD',
-      type = ui.TYPE.Image,
-      props = {
-        anchor = CenterVector2,
-        relativePosition = ZeroVector2,
-        size = ZeroVector2,
-        resource = ui.texture { path = LockOnManager.state.currentTexture },
-        visible = false,
-      },
-    }
+  LockOnManager.state.currentTexture = LockOnManager.getLockOnFileName(LockOnManager.TargetLockIcon)
 
-    UIUpdate = LockOnManager.state.lockOnMarker.update
-  else
-    LockOnManager.setMarkerVisibility(false)
-  end
+  LockOnManager.state.lockOnMarker = ui.create {
+    layer = 'HUD',
+    type = ui.TYPE.Image,
+    props = {
+      anchor = CenterVector2,
+      relativePosition = ZeroVector2,
+      size = ZeroVector2,
+      resource = ui.texture { path = LockOnManager.state.currentTexture },
+      visible = false,
+    },
+  }
+
+  UIUpdate = LockOnManager.state.lockOnMarker.update
+  return LockOnManager.state.lockOnMarker
 end
 
 function LockOnManager:disable3PCamera()
@@ -625,27 +652,39 @@ function LockOnManager:enable3PCamera(target)
 end
 
 ---@param target openmw.LObject?
+---@return boolean changed
 function LockOnManager.setTarget(target)
-  if target then
-    LockOnManager:enable3PCamera(target)
-  elseif LockOnManager.state.isThirdPersonLock then
-    LockOnManager:disable3PCamera()
+  local state = LockOnManager.state
+  local previousTarget = state.targetObject
+
+  if target == nil then
+    if previousTarget == nil then return false end
+
+    LockOnManager:clearTarget()
+    return true
   end
 
-  LockOnManager.state.targetObject = target
-  LockOnManager.state.targetHealth = target and Health(target) or nil
-  LockOnManager.state.npcHeightOffset = target
-      and IsActor(target)
-      and GetBoundingBox(target).halfSize.z * NPC_HEIGHT_OFFSET
-    or nil
+  if not LockOnManager.TargetLockToggle then return false end
+  if not target:isValid() or not IsActor(target) then return false end
+  if target == previousTarget then return false end
+
+  local boundingBox = GetBoundingBox(target)
+
+  state.targetObject = target
+  state.targetHealth = Health(target)
+  state.npcHeightOffset = boundingBox.halfSize.z * NPC_HEIGHT_OFFSET
+
+  LockOnManager.ensureLockOnMarker()
+  LockOnManager:enable3PCamera(target)
+  return true
 end
 
 --- Responds to the 'SW4_TargetLock' action, engaging or disengaging target locking as appropriate
 --- Toggle type action, but, maybe we could make it a hold??
 function LockOnManager.lockOnHandler()
-  if LockOnManager.getMarkerVisibility() then
-    s3lf.sendObjectEvent 'S3TargetLockOnto'
-    return LockOnManager.toggleLockOnMarkerDisplay()
+  if LockOnManager.getTargetObject() then
+    changeAndNotifyTarget()
+    return
   end
 
   LockOnManager.selectNearestTarget()
@@ -671,17 +710,15 @@ function LockOnManager.setMarkerVisibility(state)
 end
 
 ---@param targetIsActor boolean whether or not the target is an actor
----@return boolean? updated whether or not the marker was hidden due to the target being dead
+---@return boolean? targetWasDead whether or not the current target was dead and cleared
 function LockOnManager.checkForDeadTarget(targetIsActor)
   local targetObject = LockOnManager.getTargetObject()
 
   if not targetObject or not targetIsActor then return end
   if not IsDead(targetObject) then return end
 
-  if LockOnManager.setMarkerVisibility(false) then
-    s3lf.sendObjectEvent 'S3TargetLockOnto'
-    return true
-  end
+  changeAndNotifyTarget()
+  return true
 end
 
 ---@param distanceFromCamera number distance in todd units from targeted object to the camera
@@ -741,7 +778,7 @@ end
 
 function LockOnManager:onFrameBegin()
   self.state.frameDt = GetFrameDuration()
-  if GetUIMode() or not LockOnManager.getMarkerVisibility() then return end
+  if GetUIMode() or not self.getTargetObject() or not self.getMarkerVisibility() then return end
 
   local mouseMoveThisFrame = Vector2(GetMouseMoveX(), GetMouseMoveY())
 
@@ -764,27 +801,35 @@ function LockOnManager:onFrameBegin()
 end
 
 function LockOnManager:onFrame()
+  local targetObject = self.getTargetObject()
+  if targetObject and not targetObject:isValid() then
+    changeAndNotifyTarget()
+    return false
+  end
+
   local targetIsActor = self.targetIsActor()
   local targetWasDead = self.checkForDeadTarget(targetIsActor)
 
   if targetWasDead and self.SwitchOnDeadTarget then self.selectNearestTarget() end
 
-  local targetObject = self.getTargetObject()
+  targetObject = self.getTargetObject()
 
   if self.CheckLOS and targetObject then
     local stablePos =
       I.S3CamHelper.targetPosition(targetObject, targetObject.position, self.state.npcHeightOffset)
 
     if not I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset) then
-      s3lf.sendObjectEvent 'S3TargetLockOnto'
+      changeAndNotifyTarget()
     else
       local LOStest = CastRay(GetCamPosition(), stablePos, RayOpts)
 
       if not LOStest.hit or not LOStest.hitObject or LOStest.hitObject ~= targetObject then
-        s3lf.sendObjectEvent 'S3TargetLockOnto'
+        changeAndNotifyTarget()
       end
     end
   end
+
+  targetObject = self.getTargetObject()
 
   local uiMode = GetUIMode()
   local validMode = not uiMode or uiMode == 'MainMenu'
@@ -796,11 +841,9 @@ function LockOnManager:onFrame()
 
   if self.canLockOn() then
     assert(targetObject)
-    if not markerExists then
-      self.toggleLockOnMarkerDisplay()
-    elseif not markerIsVisible then
-      self.setMarkerVisibility(true)
-    end
+    if not markerExists then self.ensureLockOnMarker() end
+
+    if not self.getMarkerVisibility() then self.setMarkerVisibility(true) end
 
     local normalizedPos = I.S3CamHelper.objectIsOnscreen(targetObject, self.state.npcHeightOffset)
 
@@ -816,16 +859,11 @@ function LockOnManager:onFrame()
       end
 
       self:updateMarker(normalizedPos, true)
-      ShowCrosshair(false)
     else
       self.setMarkerVisibility(false)
-      ShowCrosshair(true)
     end
   else
-    if markerIsVisible then
-      self.setMarkerVisibility(false)
-      ShowCrosshair(true)
-    end
+    if markerIsVisible then self.setMarkerVisibility(false) end
 
     if LockOnManager.state.isThirdPersonLock then self:disable3PCamera() end
   end
@@ -868,7 +906,7 @@ function LockOnManager:onFrameEnd()
   self:bounce()
 
   if self.DisableLockWhenSheathing and not isWielding() and self.getTargetObject() then
-    s3lf.sendObjectEvent 'S3TargetLockOnto'
+    changeAndNotifyTarget()
   end
 end
 
@@ -879,25 +917,33 @@ end
 ---@param targetChangeData TargetChangeData
 function LockOnManager.lockOnCombatStart(targetChangeData)
   local targetIsFighting = not not targetChangeData.targets[1]
+  local actor = targetChangeData.actor
+  local actorIsValid = actor:isValid()
+
+  for i = #ActiveCombatTargets, 1, -1 do
+    if not ActiveCombatTargets[i]:isValid() then TableRemove(ActiveCombatTargets, i) end
+  end
+
+  if not actorIsValid then return end
 
   if targetIsFighting then
-    ActiveCombatTargets[#ActiveCombatTargets + 1] = targetChangeData.actor
+    ActiveCombatTargets[#ActiveCombatTargets + 1] = actor
   else
-    local targetId = targetChangeData.actor.id
+    local targetId = actor.id
 
     for i = #ActiveCombatTargets, 1, -1 do
-      local toRemove = ActiveCombatTargets[i]
-
-      if toRemove.id == targetId then
+      if ActiveCombatTargets[i].id == targetId then
         TableRemove(ActiveCombatTargets, i)
         break
       end
     end
   end
 
+  if not LockOnManager.TargetLockToggle then return end
+
   if
     not LockOnManager.LockOnCombatStart
-    or LockOnManager.getMarkerVisibility()
+    or LockOnManager.getTargetObject()
     or not targetIsFighting
     or not I.S3CamHelper.objectIsOnscreen(
       targetChangeData.actor,
@@ -928,7 +974,7 @@ function LockOnManager.lockOnCombatStart(targetChangeData)
     s3lf.setStance(stance)
   end
 
-  s3lf.sendObjectEvent('S3TargetLockOnto', targetChangeData.actor)
+  changeAndNotifyTarget(targetChangeData.actor)
 
   if GetCamMode() == CAM_FP then
     local myYaw, theirYaw = GetYaw(s3lf.rotation), GetYaw(targetChangeData.actor.rotation)
@@ -961,6 +1007,8 @@ input.registerTriggerHandler('S3TargetLock', async:callback(LockOnManager.lockOn
 return {
   engineHandlers = {
     onFrame = function()
+      if not LockOnManager:ensureTargetingEnabled() then return end
+
       LockOnManager:onFrameBegin()
       LockOnManager:onFrame()
       LockOnManager:onFrameEnd()
