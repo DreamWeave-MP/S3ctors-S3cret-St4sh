@@ -163,6 +163,30 @@ do
         90
       ),
       Setting(
+        'CameraPreferredShoulder',
+        'select',
+        { items = { 'Right', 'Left' } },
+        'CameraPreferredShoulderName',
+        'CameraPreferredShoulderDesc',
+        'Right'
+      ),
+      Setting(
+        'CameraFOV',
+        'number',
+        { integer = true, min = 0, max = 120 },
+        'CameraFOVName',
+        'CameraFOVDesc',
+        0
+      ),
+      Setting(
+        'TargetFramingHeight',
+        'number',
+        { integer = true, min = 0, max = 100 },
+        'TargetFramingHeightName',
+        'TargetFramingHeightDesc',
+        80
+      ),
+      Setting(
         'CameraMinDistance',
         'number',
         { integer = true, min = 15, max = 200 },
@@ -193,6 +217,14 @@ do
         'CameraLookBiasName',
         'CameraLookBiasDesc',
         80
+      ),
+      Setting(
+        'LockLossDelay',
+        'number',
+        { integer = false, min = 0, max = 1 },
+        'LockLossDelayName',
+        'LockLossDelayDesc',
+        0.25
       ),
 
       Setting(
@@ -301,10 +333,14 @@ do
     'CameraDistance',
     'CameraHeight',
     'CameraSideOffset',
+    'CameraPreferredShoulder',
+    'CameraFOV',
     'CameraMinDistance',
     'CameraResponsiveness',
     'CameraLookResponsiveness',
     'CameraLookBias',
+    'TargetFramingHeight',
+    'LockLossDelay',
   }
 
   local LockOnGroup = require('openmw.storage').playerSection(ModInfo.groupName)

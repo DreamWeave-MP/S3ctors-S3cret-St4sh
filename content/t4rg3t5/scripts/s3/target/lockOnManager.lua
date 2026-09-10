@@ -29,6 +29,7 @@ local SetCamStaticPosition, GetCamMode, SetCamMode, CamInstantTransition =
   camera.setStaticPosition, camera.getMode, camera.setMode, camera.instantTransition
 local GetFocalOffset, SetFocalOffset =
   camera.getFocalPreferredOffset, camera.setFocalPreferredOffset
+local GetFieldOfView, SetFieldOfView = camera.getFieldOfView, camera.setFieldOfView
 
 local GetMouseMoveX, GetMouseMoveY = input.getMouseMoveX, input.getMouseMoveY
 
@@ -39,6 +40,7 @@ local GetPitch, GetStance, GetYaw, Health, IsActor, IsDead =
   types.Actor.stats.dynamic.health,
   types.Actor.objectIsInstance,
   types.Actor.isDead
+local IsNPC = types.NPC.objectIsInstance
 
 local RGBColor = util.color.rgb
 
@@ -97,7 +99,8 @@ local CAM_COLLISION_RATIO = 0.85
 local CAM_COLLISION_SKIN = 1
 
 local EPS = 0.001
-local LOCK_INVALID_GRACE = 0.25
+local DEFAULT_LOCK_LOSS_DELAY = 0.25
+local MAX_LOCK_LOSS_DELAY = 1
 
 local RayOpts = { ignore = { gameSelf } }
 
@@ -146,10 +149,14 @@ end
 ---@field CameraDistance integer Base orbit distance from the player center
 ---@field CameraHeight integer Vertical offset of the camera orbit
 ---@field CameraSideOffset integer Horizontal shoulder offset strength
+---@field CameraPreferredShoulder string Shoulder to prefer when a lock camera session begins
+---@field CameraFOV integer Vertical field of view in degrees while the lock camera is active, or 0 to inherit
 ---@field CameraMinDistance integer Minimum orbit distance when collision-pinned
 ---@field CameraResponsiveness integer Critically-damped position spring frequency in rad/s
 ---@field CameraLookResponsiveness integer Critically-damped look-target spring frequency in rad/s
 ---@field CameraLookBias integer Look-target bias toward target vs player center, 0-100 percent
+---@field TargetFramingHeight integer Percentage of target height used by the lock camera's look target
+---@field LockLossDelay number Seconds a temporarily invalid target remains locked
 local LockOnManager = I.S3ProtectedTable.new {
   inputGroupName = ModInfo.groupName,
   logPrefix = ModInfo.logPrefix,
@@ -161,6 +168,7 @@ LockOnManager.state = {
   targetObject = nil,
   targetHealth = nil,
   npcHeightOffset = nil,
+  targetHalfHeight = nil,
   lockInvalidTime = 0,
   lockOnMarker = nil,
   currentTexture = nil,
@@ -174,6 +182,8 @@ LockOnManager.state = {
   isThirdPersonLock = false,
   prevCameraMode = nil,
   prevFocalOffset = nil,
+  prevFieldOfView = nil,
+  appliedFieldOfView = nil,
   cameraPosition = nil,
   cameraVelocity = nil,
   lookTarget = nil,
@@ -182,6 +192,82 @@ LockOnManager.state = {
   goLeft = false,
   cameraSide = 1,
 }
+
+local function getPreferredCameraSide()
+  return LockOnManager.CameraPreferredShoulder == 'Left' and -1 or 1
+end
+
+local function getTrackingTargetPosition(targetObject)
+  return I.S3CamHelper.targetPosition(
+    targetObject,
+    targetObject.position,
+    LockOnManager.state.npcHeightOffset
+  )
+end
+
+local function getCameraFramingPosition(targetObject)
+  local state = LockOnManager.state
+  local framing = Clamp(LockOnManager.TargetFramingHeight or 80, 0, 100) / 100
+
+  if IsNPC(targetObject) then
+    local position = targetObject.position
+    local halfHeight = state.targetHalfHeight
+    if not halfHeight then halfHeight = GetBoundingBox(targetObject).halfSize.z end
+    return Vector3(position.x, position.y, position.z + halfHeight * 2 * framing)
+  end
+
+  local boundingBox = GetBoundingBox(targetObject)
+  local halfHeight = state.targetHalfHeight or boundingBox.halfSize.z
+  local center = boundingBox.center
+  return Vector3(center.x, center.y, center.z + (framing - 0.5) * halfHeight * 2)
+end
+
+local function getLookDirection(origin, target)
+  local offset = target - origin
+  if Vec3Len(offset) <= EPS then
+    local yaw = GetCamYaw()
+    return Vector3(Sin(yaw), Cos(yaw), 0)
+  end
+
+  return Vec3Normalize(offset)
+end
+
+local function getCameraRight(lookDirection)
+  local right = Vec3Cross(lookDirection, UpVec3)
+  if Vec3Len(right) <= EPS then
+    local yaw = GetCamYaw()
+    return Vector3(Cos(yaw), -Sin(yaw), 0)
+  end
+
+  return Vec3Normalize(right)
+end
+
+local function releaseLockCameraFOV()
+  local state = LockOnManager.state
+  local ownsFieldOfView = state.prevFieldOfView
+    and state.appliedFieldOfView
+    and Abs(GetFieldOfView() - state.appliedFieldOfView) <= EPS
+
+  if ownsFieldOfView then SetFieldOfView(state.prevFieldOfView) end
+  state.prevFieldOfView = nil
+  state.appliedFieldOfView = nil
+end
+
+local function updateLockCameraFOV()
+  local state = LockOnManager.state
+  local configuredFOV = Clamp(LockOnManager.CameraFOV or 0, 0, 120)
+
+  if configuredFOV == 0 then
+    if state.prevFieldOfView then releaseLockCameraFOV() end
+    return
+  end
+
+  if not state.prevFieldOfView then state.prevFieldOfView = GetFieldOfView() end
+
+  local targetFOV = Rad(configuredFOV)
+  state.appliedFieldOfView = targetFOV
+  if Abs(GetFieldOfView() - targetFOV) > EPS then SetFieldOfView(targetFOV) end
+end
 
 -- T4RG3T5 owns vanilla crosshair presentation while enabled; it does not restore prior state.
 local function updateCrosshairPresentation()
@@ -205,11 +291,11 @@ function LockOnManager:clearTarget()
   state.targetObject = nil
   state.targetHealth = nil
   state.npcHeightOffset = nil
+  state.targetHalfHeight = nil
   state.lockInvalidTime = 0
   state.canDoLockOn = false
   state.flickTriggered = false
   state.cumulativeXMove = 0
-  state.cameraSide = 1
   updateCrosshairPresentation()
 
   self.setMarkerVisibility(false)
@@ -270,11 +356,7 @@ function LockOnManager.trackTarget(targetObject, shouldTrack)
 
   local frameDt = LockOnManager.state.frameDt
   local playerPos = GetCamPosition()
-  local targetPos = I.S3CamHelper.targetPosition(
-    targetObject,
-    targetObject.position,
-    LockOnManager.state.npcHeightOffset
-  )
+  local targetPos = getTrackingTargetPosition(targetObject)
   local toTarget = Vec3Normalize(targetPos - playerPos)
 
   local currentYaw, currentPitch = GetCamYaw(), GetCamPitch()
@@ -358,8 +440,8 @@ function LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
   local targetBad = cameraDistance * 0.5
   local targetGood = cameraDistance * 0.8
 
-  local lookDir = Vec3Normalize(targetPos - orbitCenter)
-  local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
+  local lookDir = getLookDirection(orbitCenter, targetPos)
+  local right = getCameraRight(lookDir)
   local shoulderOffset = right * cameraSideOffset
 
   local rightPosition, rightDistance = resolveCameraCandidate(
@@ -409,8 +491,8 @@ end
 function LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveDist, desiredSide)
   local cameraSideOffset = LockOnManager.CameraSideOffset
   local cameraHeight = LockOnManager.CameraHeight
-  local lookDir = Vec3Normalize(targetPos - orbitCenter)
-  local right = Vec3Normalize(Vec3Cross(lookDir, UpVec3))
+  local lookDir = getLookDirection(orbitCenter, targetPos)
+  local right = getCameraRight(lookDir)
   local shoulderOffset = right * cameraSideOffset
   local base = orbitCenter - lookDir * effectiveDist + UpVec3 * cameraHeight
   return base + shoulderOffset * desiredSide
@@ -492,16 +574,13 @@ end
 --- Replacement over-the-shoulder camera implementation for 3P.
 ---@param targetObject openmw.LObject
 function LockOnManager.trackTargetThirdPerson(targetObject)
-  local targetPos = I.S3CamHelper.targetPosition(
-    targetObject,
-    targetObject.position,
-    LockOnManager.state.npcHeightOffset
-  )
+  local trackingTargetPos = getTrackingTargetPosition(targetObject)
+  local framingTargetPos = getCameraFramingPosition(targetObject)
   local orbitCenter = GetTrackedPosition()
   local state = LockOnManager.state
 
   local effectiveDist, desiredSide, desiredPos =
-    LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
+    LockOnManager.computeOrbitParams(orbitCenter, trackingTargetPos, targetObject)
   -- Preserve compatibility with Manager overrides using the previous two-return contract.
   if not desiredPos then
     desiredPos =
@@ -511,7 +590,7 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
   if not state.cameraPosition then
     state.cameraPosition = GetCamPosition()
     state.cameraVelocity = ZeroVector3
-    state.lookTarget = targetPos
+    state.lookTarget = framingTargetPos
     state.lookTargetVelocity = ZeroVector3
   end
 
@@ -528,14 +607,14 @@ function LockOnManager.trackTargetThirdPerson(targetObject)
     state.lookTarget,
     state.lookTargetVelocity,
     orbitCenter,
-    targetPos,
+    framingTargetPos,
     state.frameDt
   )
 
   LockOnManager.lookToward(state.cameraPosition, state.lookTarget)
 
   if LockOnManager.shouldTrack() then
-    LockOnManager.rotatePlayerTowardTarget(targetPos, orbitCenter)
+    LockOnManager.rotatePlayerTowardTarget(trackingTargetPos, orbitCenter)
   end
 end
 
@@ -689,6 +768,8 @@ function LockOnManager:endLockCamera()
     if prevOffset then SetFocalOffset(prevOffset) end
   end
 
+  releaseLockCameraFOV()
+
   state.isThirdPersonLock = false
   state.prevCameraMode = nil
   state.prevFocalOffset = nil
@@ -712,15 +793,18 @@ function LockOnManager:beginLockCamera(target)
 
   self.state.prevCameraMode = mode
   self.state.prevFocalOffset = GetFocalOffset()
+  self.state.prevFieldOfView = nil
+  self.state.appliedFieldOfView = nil
+  if Clamp(self.CameraFOV or 0, 0, 120) > 0 then self.state.prevFieldOfView = GetFieldOfView() end
   I.Camera.disableModeControl(ModInfo.name)
   self.state.cameraPosition = GetCamPosition()
   self.state.cameraVelocity = ZeroVector3
-  self.state.lookTarget =
-    I.S3CamHelper.targetPosition(target, target.position, self.state.npcHeightOffset)
+  self.state.lookTarget = getCameraFramingPosition(target)
   self.state.lookTargetVelocity = ZeroVector3
 
   SetCamMode(camera.MODE.Static, true)
   self.state.isThirdPersonLock = true
+  updateLockCameraFOV()
   return true
 end
 
@@ -740,6 +824,7 @@ function LockOnManager:updateLockCamera(target)
 
   if not self.state.isThirdPersonLock and not self:beginLockCamera(target) then return false end
 
+  updateLockCameraFOV()
   self:trackTargetThirdPerson(target)
   return true
 end
@@ -763,9 +848,12 @@ function LockOnManager.setTarget(target)
 
   local boundingBox = GetBoundingBox(target)
 
+  if not previousTarget then state.cameraSide = getPreferredCameraSide() end
+
   state.targetObject = target
   state.targetHealth = Health(target)
   state.npcHeightOffset = boundingBox.halfSize.z * NPC_HEIGHT_OFFSET
+  state.targetHalfHeight = boundingBox.halfSize.z
   state.lockInvalidTime = 0
   updateCrosshairPresentation()
 
@@ -930,7 +1018,9 @@ function LockOnManager:onFrame()
     else
       self.state.lockInvalidTime = self.state.lockInvalidTime + Max(self.state.frameDt, 0)
 
-      if self.state.lockInvalidTime >= LOCK_INVALID_GRACE then
+      local lockLossDelay =
+        Clamp(self.LockLossDelay or DEFAULT_LOCK_LOSS_DELAY, 0, MAX_LOCK_LOSS_DELAY)
+      if self.state.lockInvalidTime >= lockLossDelay then
         changeAndNotifyTarget()
         targetObject = self.getTargetObject()
         normalizedPos = nil

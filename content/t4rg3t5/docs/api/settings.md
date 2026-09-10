@@ -34,10 +34,14 @@ Settings:set('CheckLOS', true)
 | `CameraDistance` | integer | `120` | Base camera distance from the player. |
 | `CameraHeight` | integer | `25` | Camera height offset. |
 | `CameraSideOffset` | integer | `90` | Horizontal shoulder offset. |
+| `CameraPreferredShoulder` | string | `Right` | Shoulder preferred when a new target lock begins; collision and visibility can still switch sides. |
+| `CameraFOV` | integer | `0` | Vertical lock-camera field of view in degrees; `0` inherits the current FOV. T4rg3t5 restores the previous FOV when its camera ends unless another camera has changed it. |
 | `CameraMinDistance` | integer | `30` | Minimum collision-pinned camera distance. |
 | `CameraResponsiveness` | integer | `6` | Third-person camera spring responsiveness. |
 | `CameraLookResponsiveness` | integer | `8` | Look-target spring responsiveness. |
 | `CameraLookBias` | integer | `80` | Percentage bias from player center toward the target. |
+| `TargetFramingHeight` | integer | `80` | Height on the target that the lock camera looks toward, from feet (`0`) to head (`100`). |
+| `LockLossDelay` | number | `0.25` | Seconds a temporarily invalid target remains locked before the lock breaks. |
 | `TargetMinSize` | integer | `32` | Marker size at or beyond the minimum-size distance. |
 | `TargetMinDistance` | integer | `256` | Distance at which the marker reaches minimum size. |
 | `TargetMaxSize` | integer | `128` | Marker size at or below the maximum-size distance. |

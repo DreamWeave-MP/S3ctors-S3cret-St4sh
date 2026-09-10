@@ -86,6 +86,12 @@ CameraHeightDesc: Vertical offset of the lock-on camera from the player center. 
 CameraSideOffsetName: Shoulder Offset Strength
 CameraSideOffsetDesc: How far the camera sits to the side of the player. Higher values give a stronger over-the-shoulder feel. Set to 0 for a dead-center camera.
 
+CameraPreferredShoulderName: Preferred Shoulder
+CameraPreferredShoulderDesc: Shoulder preferred when a new target lock begins. T4rg3t5 can still switch sides when collision or visibility requires it.
+
+CameraFOVName: Lock Camera FOV
+CameraFOVDesc: Vertical field of view in degrees while the lock camera is active. Set to 0 to inherit the current field of view.
+
 CameraMinDistanceName: Minimum Orbit Distance
 CameraMinDistanceDesc: Minimum distance the camera maintains from the player when collision-pinned against walls or obstacles. Prevents the camera from clipping through the player model.
 
@@ -97,3 +103,9 @@ CameraLookResponsivenessDesc: How quickly the camera's look direction catches up
 
 CameraLookBiasName: Look Bias
 CameraLookBiasDesc: How much the camera focuses on the target versus the player center. 100% looks directly at the target. 0% looks at the player center. Values around 80% give natural framing with some target focus.
+
+TargetFramingHeightName: Target Framing Height
+TargetFramingHeightDesc: Height on the target that the lock camera looks toward. 0% is the feet, 50% is the center, and 100% is head height.
+
+LockLossDelayName: Lock Loss Delay
+LockLossDelayDesc: How long a temporarily invalid target can remain locked before the lock breaks. Set to 0 for an immediate loss; the default is 0.25 seconds.
