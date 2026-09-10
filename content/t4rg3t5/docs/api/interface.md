@@ -22,6 +22,8 @@ if Manager then
 end
 ```
 
+The current interface version is `2`.
+
 ## Manager
 
 `I.S3LockOn.Manager` exposes T4rg3t5's supported live state and settings through a H3lp Yours3lf `ProtectedTable`.
@@ -37,7 +39,7 @@ See [Settings](@/t4rg3t5/docs/api/settings.md) for configurable fields and the [
 | `getTargetObject` | `fun() → openmw.LObject?` | Returns the semantic target, or `nil`; validate the handle before use. |
 | `targetIsActor` | `fun() → boolean` | Returns whether the current target is a valid actor. |
 | `getMarkerVisibility` | `fun() → boolean` | Returns marker presentation state; do not use it as lock state. |
-| `selectNearestTarget` | `fun(goLeft?) → openmw.LObject?` | Selects the nearest valid target, optionally restricted by screen side. |
+| `selectNearestTarget` | `fun(goLeft?) → openmw.LObject?` | Selects the nearest eligible combat target; `true` restricts the search to the left side, `false` to the right, and `nil` to both sides. |
 | `shouldTrack` | `fun() → boolean` | Returns whether player-facing tracking is enabled. |
 | `setTrackingState` | `fun(state: boolean)` | Temporarily enables or disables player-facing tracking. |
 | `getLockOnFileName` | `fun(baseName: string) → string` | Returns the VFS path for a marker texture. |

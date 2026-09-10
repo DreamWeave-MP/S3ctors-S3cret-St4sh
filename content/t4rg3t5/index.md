@@ -1,6 +1,6 @@
 ---
 title: T4rg3t5
-description: T4rg3ts is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
+description: T4rg3t5 is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
 
 taxonomies:
   tags:
@@ -19,9 +19,9 @@ extra:
 
   version: 0.6
 ---
-T4rg3ts is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
+T4rg3t5 is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
 
-With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
+The marker color tracks health continuously across six configurable colors, from full health to dead.
 
 <!-- more -->
 
@@ -46,9 +46,11 @@ With T4rgets, an enemy's health is displayed according to the color of the icon.
 
 Target indicators also grow in size dynamically according to how far away your target is. Targets blocked from view are rejected when you lock on. `CheckLOS` can additionally keep checking visibility after a target is acquired. Offscreen candidates are rejected as well.
 
+T4rg3t5 listens to OpenMW's combat-target updates instead of scanning every actor in the world.
+
 T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators.
 
-Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (mostly) useless.
+Assign a keybinding under **Settings → T4rg3t5 → Target Lock Core**, or the mod will be (mostly) useless.
 
 For integrations, see the [T4rg3t5 documentation](@/t4rg3t5/docs/_index.md).
 
@@ -56,7 +58,7 @@ For integrations, see the [T4rg3t5 documentation](@/t4rg3t5/docs/_index.md).
 
 ### Smart Target Acquisition
 
-- Automatic Target Selection: Finds the nearest valid enemy in your field of view
+- Automatic Target Selection: Finds the nearest eligible combat target in your field of view
   
 ![Target Switching](../img/t4rg3t5/targetSwitching.webp)
 
