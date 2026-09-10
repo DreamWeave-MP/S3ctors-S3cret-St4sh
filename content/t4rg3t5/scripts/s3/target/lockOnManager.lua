@@ -48,8 +48,8 @@ local STANCE_NONE, STANCE_SPELL, STANCE_WEAPON =
 
 local ModInfo = require 'scripts.s3.target.modinfo'
 
-local Abs, Atan2, Cos, Max, Min, Rad, Sin, Sqrt =
-  math.abs, math.atan2, math.cos, math.max, math.min, math.rad, math.sin, math.sqrt
+local Abs, Atan2, Cos, Exp, Max, Min, Rad, Sin, Sqrt =
+  math.abs, math.atan2, math.cos, math.exp, math.max, math.min, math.rad, math.sin, math.sqrt
 
 local StrFormat, TableRemove = string.format, table.remove
 
@@ -364,7 +364,7 @@ function LockOnManager.computeDesiredPosition(orbitCenter, targetPos, effectiveD
   return base + shoulderOffset * desiredSide
 end
 
---- Step a critically-damped spring toward a target position, frame-rate independent.
+--- Step an analytical critically-damped spring toward a target position.
 ---@param pos openmw.util.Vector3
 ---@param vel openmw.util.Vector3
 ---@param target openmw.util.Vector3
@@ -373,15 +373,16 @@ end
 ---@return openmw.util.Vector3 newPos
 ---@return openmw.util.Vector3 newVel
 function LockOnManager.criticallyDampedSpring(pos, vel, target, dt, omega)
-  local safeDt = dt > 0.1 and 0.1 or dt
-  local omega2 = omega * omega
-  local diff = pos - target
-  local springForce = diff * -omega2 + vel * (-2 * omega)
+  if dt <= 0 then return pos, vel end
 
-  vel = vel + springForce * safeDt
-  pos = pos + vel * safeDt
+  local offset = pos - target
+  local j = vel + offset * omega
+  local decay = Exp(-omega * dt)
 
-  return pos, vel
+  local newPosition = target + (offset + j * dt) * decay
+  local newVelocity = (vel - j * omega * dt) * decay
+
+  return newPosition, newVelocity
 end
 
 --- Spring the look-target toward a point between the orbit center and the target,
