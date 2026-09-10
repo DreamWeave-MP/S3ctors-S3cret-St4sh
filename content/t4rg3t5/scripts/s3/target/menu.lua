@@ -233,7 +233,7 @@ do
         { items = iconNames, l10n = ModInfo.l10nName },
         'TargetLockIconName',
         'TargetLockIconDesc',
-        'starburst'
+        'Starburst'
       ),
       Setting(
         'TargetColorF',

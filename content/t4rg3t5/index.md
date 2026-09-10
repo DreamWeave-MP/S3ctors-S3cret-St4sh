@@ -27,7 +27,7 @@ With T4rgets, an enemy's health is displayed according to the color of the icon.
 
 <div align="center">
   <figure>
-    <img src="../img/t4rg3t5.png" alt="targets icon" width="512" height="512" />
+    <img src="t4rg3t5.png" alt="targets icon" width="512" height="512" />
     <figcaption><h2 class="notoc">Morrowind Lock-On Targeting System</h2></figcaption>
   </figure>
   <br>
@@ -44,11 +44,13 @@ With T4rgets, an enemy's health is displayed according to the color of the icon.
 
 ## Overview
 
-Target indicators also grow in size dynamically according to how far away your target is. Additionally, it is impossible to target enemies which are offscreen, and the mod does not use any raycasts unless the `CheckLOS` setting is enabled - what this means for you is no bad targets, and high performance (as much as can be expected from updating a UI element every frame, anyway).
+Target indicators also grow in size dynamically according to how far away your target is. Targets blocked from view are rejected when you lock on. `CheckLOS` can additionally keep checking visibility after a target is acquired. Offscreen candidates are rejected as well.
 
-T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators. Additionally, it's very easy to create new target lock icons for T4rg3t5 for your own mods or personal use.
+T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators.
 
 Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (mostly) useless.
+
+For integrations, see the [T4rg3t5 documentation](@/t4rg3t5/docs/_index.md).
 
 ## Core Features
 
@@ -109,36 +111,3 @@ T4rg3t5 controls vanilla crosshair visibility as part of its target-lock present
     - Breaks lock when targets move out of sight
 
     - Releases lock when sheathing weapons
-
-## For Modders
-
-### Events
-
-Target locking always happens by way of sending an event. If you wish to modify this behavior somehow, you may create an eventHandler for the `S3TargetLockOnto` event. This will allow you to prevent target locking in some circumstances, change the target, do some specific behavior when a target is locked, etc. In the eventData is *only* the targeted actor, which is nil if the target lock has been broken for any reason.
-
-### Triggers
-
-You can also engage target locking manually from any `PLAYER` script by calling `input.activateTrigger('S3TargetLockOn')`. This will either disable or enable locking as appropriate.
-If you care to check whether a target is already selected or not, then use `I.S3LockOn.Manager.getMarkerVisibility()`.
-
-### ProtectedTable
-
-T4rg3t5 uses `H3lp Yours3lf`'s protected table interface, which offers many conveniences - such as displaying all the associated setting values by simply trying to print the table. Try the following the console and explore for yourself:
-
-```lua
-luap
-I.S3LockOn.Manager
-```
-
-### Making New Icons
-
-Making new Icons for T4rg3t5 is dead simple. The recommended way is to use GIMP, but any image editor should be able to handle this task.
-
-1. First, pick or create a source image.
-1. Open it in GIMP
-1. Use Colors -> Threshold to flatten all the colors to pure black/white. Make sure to adjust the values to find ones that fit your image.
-1. Either delete the black pixels, or lighten them, using Colors -> Levels to increase the white levels of these pixels, so that the script's coloration works better.
-1. Use Image -> Scale Image to resize the image to 128x128
-1. Export as DDS without mipmaps OR compression to a subfolder, `textures/s3/crosshair`
-
-<!-- data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABlBMVEUAAAD///+l2Z/dAAAAAXRSTlMAQObYZgAAAGlJREFUKM+FUVsKACAMsvtfuo85XSU0IkL30AV8YlUkGBkHXlj43Uv5PaVp9yFDopP6SB0JAnVVRcvl063cHB4qYtiTqEMYnGFRc20ksA5u+LTS5OPel0pgc3OJr5+bQWTSjyN9utf7jQ38qQDY40DqPgAAAABJRU5ErkJggg== -->
