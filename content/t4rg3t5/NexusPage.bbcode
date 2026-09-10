@@ -1,52 +1,73 @@
 
-[center]T4rg3ts is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation. With T4rgets, an enemy's health is displayed according to the color of the icon. Each enemy has five phases from full to wounded to dead, with the actual icon color mixing between the two nearest colors. This means you always know how healthy the enemy is in combat!
 
-Target indicators also grow in size dynamically according to how far away your target is. Additionally, it is impossible to target enemies which are offscreen, and the mod does not use any raycasts unless the CheckLOS setting is enabled - what this means for you is no bad targets, and high performance (as much as can be expected from updating a UI element every frame, anyway).
+[center][size=6][b][color=#d29cff]T4RG3T5[/color][/b][/size]
 
-T4rg3t5 comes with a full suite of 31 icons to use for lock-on indicators. Additionally, it's very easy to create new target lock icons for T4rg3t5 for your own mods or personal use.
+[size=4][i][color=#b44cff]Dark Souls-style lock-on targeting for OpenMW.[/color][/i][/size]
 
-Please make sure to assign a keybinding for T4rg3t5 to use, or the mod will be (mostly) useless.
-Also, please see [url=https://modding-openmw.gitlab.io/s3ctors-s3cret-st4sh/t4rg3t5]The St4sh[/url]﻿ for demonstrative gifs, additional install instructions, and detailed modders' usage notes.[/center]
-[size=5]Core Features[/size]
+T4rg3t5 is a full lock-on targeting system built around fast target acquisition, readable combat feedback, and a proper third-person combat camera.
 
-Smart Target Acquisition
+Lock onto an eligible combat target and T4rg3t5 handles facing, target switching, visibility, range, marker feedback, and camera composition around the fight. Initial acquisition always checks visibility, offscreen targets are rejected, and optional continuous line-of-sight checking can break a lock if your target stays hidden.
+
+The target marker tracks health continuously across six configurable colors, scales with distance, and bounces on successful hits. T4rg3t5 ships with 31 marker icons, and adding your own is dead simple.
+
+[color=#8f3fc7][b]Target acquisition listens to OpenMW's combat-target updates instead of scanning every actor in the world. The hot path also came through the barbershop for a fade.[/b][/color]
+
+[b][color=#d29cff]Assign a keybinding under Settings → T4rg3t5 → Target Lock Core, or the mod will be (mostly) useless.[/color][/b]
+
+For animated examples, full settings documentation, integration notes, and modder-facing API docs, see [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/t4rg3t5/][color=#b44cff][b]T4rg3t5 in the S3cret St4sh[/b][/color][/url].
+[/center]
+
+[size=5][b][color=#8f3fc7]Third-Person Lock Camera[/color][/b][/size]
+
+T4rg3t5 1.0 includes a completely rebuilt third-person lock camera designed around the same basic combat language as Souls-style targeting: keep the player and target readable, keep the fight centered, and get the camera out of its own damn way.
+
 [list]
-[*]Automatic Target Selection: Finds the nearest valid enemy in your field of view[/*]
+[*][b][color=#b44cff]Collision-Aware Orbit[/color][/b] — The camera pulls in around walls and obstacles instead of clipping straight through them.[/*]
+[*][b][color=#b44cff]Automatic Shoulder Switching[/color][/b] — Starts on your preferred shoulder and can swap sides when collision or visibility makes the other side better.[/*]
+[*][b][color=#b44cff]Independent Camera Smoothing[/color][/b] — Camera movement and target look response are sprung separately for smoother tracking without turning the view into soup.[/*]
+[*][b][color=#b44cff]Configurable Composition[/color][/b] — Tune orbit distance, height, shoulder offset, target framing, look bias, responsiveness, and minimum collision distance.[/*]
+[*][b][color=#b44cff]Optional Lock FOV[/color][/b] — Give the combat camera its own field of view, or leave it at 0 to inherit your existing FOV.[/*]
+[*][b][color=#b44cff]Graceful Lock Loss[/color][/b] — Configure how long a temporarily invalid target can remain locked before T4rg3t5 gives up on it.[/*]
 [/list]
+
+[size=5][b][color=#8f3fc7]Smart Targeting[/color][/b][/size]
+
 [list]
-[*]Line-of-Sight Checking: Ensures targets are actually visible and not behind obstacles [/*]
-[*]Flick Switching: Quickly change targets by flicking the mouse left or right [/*]
+[*][b][color=#b44cff]Automatic Target Selection[/color][/b] — Locks onto the nearest eligible combat target in your field of view.[/*]
+[*][b][color=#b44cff]Visibility-Aware Acquisition[/color][/b] — Targets behind obstacles are rejected when you try to lock on.[/*]
+[*][b][color=#b44cff]Optional Continuous LOS[/color][/b] — Keep checking visibility after acquisition and break the lock when a target stays obstructed.[/*]
+[*][b][color=#b44cff]Flick Switching[/color][/b] — Flick the mouse left or right to switch targets in that screen direction.[/*]
+[*][b][color=#b44cff]Combat Auto-Lock[/color][/b] — Optionally lock onto enemies who initiate combat with you.[/*]
+[*][b][color=#b44cff]Dead-Target Switching[/color][/b] — Automatically move to another eligible target when the current one dies.[/*]
+[*][b][color=#b44cff]Range and Screen Validation[/color][/b] — Locks gracefully break when targets remain invalid, too far away, or offscreen.[/*]
 [/list]
 
-Combat Auto-Lock: Automatically locks onto enemies who initiate combat with you
+[size=5][b][color=#8f3fc7]Combat Tracking[/color][/b][/size]
 
-Visual Target Indicators
-
-[list=1]
-[*]Distance Scaling: Icons grow/shrink based on target distance[/*]
-[*]Hit Feedback: Icons "bounce" when you successfully hit locked targets[/*]
-[*]Dynamic Lock Icons: Customizable target markers that scale with distance [/*]
-[*]Health-Based Coloring: Icon color changes based on enemy health status:
 [list]
-[*]Full Health (100%+): Primary color [/*]
-[*]Very Healthy (80-100%): Mix with full health color [/*]
-[*]Healthy (60-80%): Distinct healthy state [/*]
-[*]Wounded (40-60%): Noticeable wound indication [/*]
-[*]Very Wounded (20-40%): Critical condition warning [/*]
-[*]Dead/Dying (0-20%): Near death state[/*]
-[/list]
-[/*]
+[*][b][color=#b44cff]Auto-Facing[/color][/b] — Your character turns toward the locked target while tracking is active.[/*]
+[*][b][color=#b44cff]Weapon and Spell Awareness[/color][/b] — Combat tracking respects whether your character is actually readied to fight.[/*]
+[*][b][color=#b44cff]Sheathing Behavior[/color][/b] — Locks can automatically clear when you put your weapon away.[/*]
+[*][b][color=#b44cff]First- and Third-Person Support[/color][/b] — Use normal target tracking in first person or the full custom combat camera in third person.[/*]
 [/list]
 
-Intelligent Automation
-[list=1]
-[*]Auto-Facing: Character automatically turns to face locked targets [/*]
-[*]Weapon Awareness: Only allows locking when wielding weapons [/*]
-[*]Smart Target Management:
+[size=5][b][color=#8f3fc7]Visual Target Indicators[/color][/b][/size]
+
 [list]
-[*]Automatically switches targets when current target dies[/*]
-[*]Breaks lock when targets move out of sight[/*]
-[*]Releases lock when sheathing weapons[/*]
+[*][b][color=#b44cff]Distance Scaling[/color][/b] — Marker size changes smoothly with target distance.[/*]
+[*][b][color=#b44cff]Hit Feedback[/color][/b] — The marker bounces when the locked target is successfully hit.[/*]
+[*][b][color=#b44cff]Health-Based Coloring[/color][/b] — Marker color continuously interpolates across six configurable health colors, from full health to dead.[/*]
+[*][b][color=#b44cff]31 Included Icons[/color][/b] — Pick from the bundled marker set or drop in your own DDS texture.[/*]
+[*][b][color=#b44cff]Fully Configurable Presentation[/color][/b] — Tune marker size, distance scaling, colors, and icon choice from the settings menu.[/*]
 [/list]
-[/*]
-[/list]
+
+[size=5][b][color=#8f3fc7]For Mod Authors[/color][/b][/size]
+
+T4rg3t5 1.0 has a documented player interface, live settings surface, target-change event protocol, trigger support, and examples for integrating other OpenMW-Lua mods.
+
+[color=#8f3fc7]The stable contract is intentionally small:[/color] use the Manager for live state and settings, and use the target event for target changes. The rest of the camera and frame machinery is implementation detail. Poke at it if you like; just don't build your house there.
+
+Full documentation lives in [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/t4rg3t5/docs/][color=#b44cff][b]the S3cret St4sh[/b][/color][/url].
+
+[center][url=https://www.patreon.com/c/S3kshun8][img width=85]https://c14.patreon.com/fhd_Patreon_Symbol_6fff9723d3.png[/img][/url]    [url=https://ko-fi.com/magicaldave][img width=147]https://storage.ko-fi.com/cdn/brandasset/logo_white_stroke_small.png[/img][/url][/center]
+
