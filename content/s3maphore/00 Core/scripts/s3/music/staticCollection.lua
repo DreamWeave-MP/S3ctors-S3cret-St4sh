@@ -80,14 +80,40 @@ local GetAll
 local SendEvent
 local Quit
 
-local Cells, DoorDestination, GetCurrentWeather, GetExteriorCell, IsDoor, IsTeleportDoor, Players, PresenceSection, SqLen, StaticType, StorageSet, NPCType, CreatureType
+local Cells, DoorDestination, GetCurrentWeather, GetExteriorCell, IsDoor, IsTeleportDoor, Players, Player, PresenceSection, SqLen, StaticType, StorageSet, NPCType, CreatureType
+
+---@alias S3GameObjectType
+---| openmw.types.Actor
+---| openmw.types.Item
+---| openmw.types.Creature
+---| openmw.types.NPC
+---| openmw.types.Player
+---| openmw.types.Armor
+---| openmw.types.BodyPart
+---| openmw.types.Book
+---| openmw.types.Clothing
+---| openmw.types.Ingredient
+---| openmw.types.Lockable
+---| openmw.types.Light
+---| openmw.types.Miscellaneous
+---| openmw.types.Potion
+---| openmw.types.Weapon
+---| openmw.types.Apparatus
+---| openmw.types.Lockpick
+---| openmw.types.Probe
+---| openmw.types.Repair
+---| openmw.types.Activator
+---| openmw.types.Container
+---| openmw.types.Door
+---| openmw.types.Static
+---| openmw.types.LevelledCreature
 
 ---@param object openmw.GObject
+---@param objectType S3GameObjectType
 ---@return boolean
-local function isHostileActor(object)
-  local objectType = object.type
+local function isHostileActor(object, objectType)
   if objectType ~= NPCType and objectType ~= CreatureType then return false end
-  return IsHostile(object, Players[1])
+  return IsHostile(object, Player)
 end
 
 do
@@ -101,7 +127,7 @@ do
     TypesToNames[v] = k
   end
 
-  Cells, Players = world.cells, world.players
+  Cells, Players, Player = world.cells, world.players, world.players[1]
   GetCurrentWeather = core.weather.getCurrent
   GetExteriorCell = world.getExteriorCell
   DoorDestination, IsDoor, IsTeleportDoor =
@@ -306,7 +332,7 @@ local function collectPresenceAndStatics(cell, cellKey)
       end
 
       -- Combat check: does this cell contain any aggressive living actor (excluding the player)?
-      if not cellHasHostile and isHostileActor(obj) then cellHasHostile = true end
+      if not cellHasHostile and isHostileActor(obj, objType) then cellHasHostile = true end
 
       -- Door tracking for interior cells without an own region
       if not cellKey and not cell.region then nearestDoor = checkForRegion(obj, nearestDoor) end
@@ -359,8 +385,6 @@ local function collectPresenceAndStatics(cell, cellKey)
 end
 
 local function flushPendingAdditions(budget)
-  if budget <= 0 or not pendingAdditions[1] then return end
-
   local byRecord, byType, byContentFile =
     CellPresence.byRecord, CellPresence.byType, CellPresence.byContentFile
   local processed = 0
@@ -412,7 +436,7 @@ local function flushPendingAdditions(budget)
           if not found then staticContentFiles[#staticContentFiles + 1] = contentFile end
         end
 
-        if isHostileActor(obj) then
+        if isHostileActor(obj, objType) then
           cellData.hasHostileActors = true
           CellPresence.areaHasHostileActors = true
           if CellPresence.currentExteriorCellObjects == presence then
@@ -423,7 +447,7 @@ local function flushPendingAdditions(budget)
     elseif
       not TransitionCell.isExterior
       and objCell.id == TransitionCell.id
-      and isHostileActor(obj)
+      and isHostileActor(obj, objType)
     then
       CellPresence.cellHasHostileActors = true
       CellPresence.areaHasHostileActors = true
@@ -610,7 +634,7 @@ normalUpdateHandler = function()
 
   -- Don't flush or write storage during a cell transition
   if not cellTransitionCoroutine then
-    flushPendingAdditions(TOTAL_OBJECT_BUDGET)
+    if pendingAdditions[1] then flushPendingAdditions(TOTAL_OBJECT_BUDGET) end
 
     if presenceChanged and not pendingAdditions[1] then
       StorageSet(PresenceSection, TransitioningPlayer.id, CellPresence)
@@ -660,9 +684,8 @@ return {
         return
       end
 
-      local player = Players[1]
-      local oldCell = PreviousPlayerCells[player.id]
-      if not oldCell or player.cell.id == oldCell then return end
+      local oldCell = PreviousPlayerCells[Player.id]
+      if not oldCell or Player.cell.id == oldCell then return end
 
       seenIds[objectId] = true
 
