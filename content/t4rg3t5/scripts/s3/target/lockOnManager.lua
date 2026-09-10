@@ -114,6 +114,7 @@ end
 ---@field TargetLockToggle boolean whether or not targeting is enabled
 ---@field SwitchOnDeadTarget boolean whether or not to automatically select the nearest (screen-space) target when the current one dies
 ---@field CheckLOS boolean whether to use line-of-sight when deciding whether to break a target lock
+---@field ThirdPersonLockCamera boolean whether to use the custom third-person lock camera
 ---@field TargetLockIcon string baseName of the texture file used for the lock-on icon
 ---@field TargetMinSize integer minimum size of the target lock icon
 ---@field TargetMaxSize integer maximum size of the target lock icon
@@ -192,7 +193,7 @@ function LockOnManager:clearTarget()
   state.cumulativeXMove = 0
 
   self.setMarkerVisibility(false)
-  if state.isThirdPersonLock then self:disable3PCamera() end
+  self:endLockCamera()
 end
 
 local function notifyTargetChanged(target) s3lf.sendObjectEvent('S3TargetLockOnto', target) end
@@ -613,45 +614,76 @@ function LockOnManager.ensureLockOnMarker()
   return LockOnManager.state.lockOnMarker
 end
 
-function LockOnManager:disable3PCamera()
+function LockOnManager:endLockCamera()
+  local state = self.state
+  if not state.isThirdPersonLock then return false end
+
+  local prevMode = state.prevCameraMode
+  local prevOffset = state.prevFocalOffset
+  local stillInStaticMode = GetCamMode() == camera.MODE.Static
+
   I.Camera.enableModeControl(ModInfo.name)
 
-  local prevMode = self.state.prevCameraMode
-  local prevOffset = self.state.prevFocalOffset
+  if stillInStaticMode and I.Camera.isModeControlEnabled() then
+    SetCamMode(prevMode or camera.MODE.ThirdPerson, true)
+    CamInstantTransition()
 
-  SetCamMode(prevMode or camera.MODE.ThirdPerson, true)
-  CamInstantTransition()
+    if prevOffset then SetFocalOffset(prevOffset) end
+  end
 
-  if prevOffset then SetFocalOffset(prevOffset) end
-
-  self.state.isThirdPersonLock = false
-  self.state.prevCameraMode = nil
-  self.state.prevFocalOffset = nil
-  self.state.cameraPosition = nil
-  self.state.cameraVelocity = nil
-  self.state.lookTarget = nil
-  self.state.lookTargetVelocity = nil
+  state.isThirdPersonLock = false
+  state.prevCameraMode = nil
+  state.prevFocalOffset = nil
+  state.cameraPosition = nil
+  state.cameraVelocity = nil
+  state.lookTarget = nil
+  state.lookTargetVelocity = nil
+  return true
 end
 
 ---@param target openmw.LObject
-function LockOnManager:enable3PCamera(target)
-  assert(IsActor(target), 'LockOnManager.setTarget only accepts actor types!!')
+function LockOnManager:beginLockCamera(target)
+  if self.state.isThirdPersonLock or not self.ThirdPersonLockCamera then return false end
 
   local mode = GetCamMode()
-  if mode ~= CAM_FP then
-    if not self.state.isThirdPersonLock then
-      self.state.prevCameraMode = mode
-      self.state.prevFocalOffset = GetFocalOffset()
-      I.Camera.disableModeControl(ModInfo.name)
-      self.state.cameraPosition = GetCamPosition()
-      self.state.cameraVelocity = ZeroVector3
-      self.state.lookTarget =
-        I.S3CamHelper.targetPosition(target, target.position, self.state.npcHeightOffset)
-      self.state.lookTargetVelocity = ZeroVector3
-    end
-    SetCamMode(camera.MODE.Static, true)
-    self.state.isThirdPersonLock = true
+  if mode == CAM_FP or mode == camera.MODE.Static or not I.Camera.isModeControlEnabled() then
+    return false
   end
+
+  assert(IsActor(target), 'LockOnManager.beginLockCamera only accepts actor types!!')
+
+  self.state.prevCameraMode = mode
+  self.state.prevFocalOffset = GetFocalOffset()
+  I.Camera.disableModeControl(ModInfo.name)
+  self.state.cameraPosition = GetCamPosition()
+  self.state.cameraVelocity = ZeroVector3
+  self.state.lookTarget =
+    I.S3CamHelper.targetPosition(target, target.position, self.state.npcHeightOffset)
+  self.state.lookTargetVelocity = ZeroVector3
+
+  SetCamMode(camera.MODE.Static, true)
+  self.state.isThirdPersonLock = true
+  return true
+end
+
+---@param target openmw.LObject
+---@return boolean active whether the custom lock camera is active and updated
+function LockOnManager:updateLockCamera(target)
+  if not self.ThirdPersonLockCamera then
+    self:endLockCamera()
+    return false
+  end
+
+  local mode = GetCamMode()
+  if self.state.isThirdPersonLock and mode ~= camera.MODE.Static then
+    self:endLockCamera()
+    return false
+  end
+
+  if not self.state.isThirdPersonLock and not self:beginLockCamera(target) then return false end
+
+  self:trackTargetThirdPerson(target)
+  return true
 end
 
 ---@param target openmw.LObject?
@@ -679,7 +711,6 @@ function LockOnManager.setTarget(target)
   state.lockInvalidTime = 0
 
   LockOnManager.ensureLockOnMarker()
-  LockOnManager:enable3PCamera(target)
   return true
 end
 
@@ -855,18 +886,25 @@ function LockOnManager:onFrame()
 
   if self.canLockOn() then
     assert(targetObject)
+    if not self.ThirdPersonLockCamera then self:endLockCamera() end
     if not markerExists then self.ensureLockOnMarker() end
 
     if not self.getMarkerVisibility() then self.setMarkerVisibility(true) end
 
     if normalizedPos and normalizedPos.z <= self.TargetMaxDistance then
       if s3lf.canMove() then
-        if GetCamMode() ~= CAM_FP then
-          if not self.state.isThirdPersonLock then self:enable3PCamera(self.state.targetObject) end
-
-          self.trackTargetThirdPerson(targetObject)
+        if self.ThirdPersonLockCamera then
+          if
+            not self:updateLockCamera(targetObject)
+            and GetCamMode() ~= camera.MODE.Static
+            and I.Camera.isModeControlEnabled()
+          then
+            self.trackTarget(targetObject, self.shouldTrack())
+          end
         else
-          self.trackTarget(targetObject, self.shouldTrack())
+          if GetCamMode() ~= camera.MODE.Static and I.Camera.isModeControlEnabled() then
+            self.trackTarget(targetObject, self.shouldTrack())
+          end
         end
       end
 
@@ -877,7 +915,7 @@ function LockOnManager:onFrame()
   else
     if markerIsVisible then self.setMarkerVisibility(false) end
 
-    if LockOnManager.state.isThirdPersonLock then self:disable3PCamera() end
+    self:endLockCamera()
   end
 
   return self.canLockOn()
