@@ -38,7 +38,7 @@ Cell and state changes still trigger resolution. These controls affect whether t
 
 | Key | Default | Effect |
 | --- | ---: | --- |
-| `ScanAdjacentExteriorCells` | `true` | When enabled, object-based playlist rules inspect the loaded exterior 3×3 area. When disabled, they inspect only objects in the player's current exterior cell. |
+| `ScanAdjacentExteriorCells` | `true` | When enabled, object-based playlist rules inspect the scanned exterior 3×3 area. When disabled, they inspect only objects in the player's current exterior cell. |
 
 The collector continues tracking the exterior 3×3 in either mode. Changing this setting only changes which already-collected object projection playlist selection uses, so it takes effect without a rescan. Hostility, weather, region, combat, and cell identity semantics are unchanged.
 

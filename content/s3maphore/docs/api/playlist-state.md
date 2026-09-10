@@ -50,7 +50,7 @@ end
 
 Counts are counts of instances, not merely presence flags. A lookup such as `state.objectsByRecord['some_id']` returns the number of instances, or `nil` when the record is absent. The built-in [presence rules](@/s3maphore/docs/api/rules/presence.md) apply the common checks for you.
 
-For actual exterior cells, the default `ScanAdjacentExteriorCells = true` uses the loaded 3×3 area. Set it to `false` to let object-based playlist rules use only the player's current exterior cell. The collector continues maintaining the 3×3 data so changing the setting takes effect immediately without a rescan. Interior and quasi-exterior object scope remains the current cell.
+For actual exterior cells, the default `ScanAdjacentExteriorCells = true` uses the scanned 3×3 area. Set it to `false` to let object-based playlist rules use only the player's current exterior cell. The collector continues maintaining the 3×3 data so changing the setting takes effect immediately without a rescan. Interior and quasi-exterior object scope remains the current cell.
 
 ## Hostility and combat
 
