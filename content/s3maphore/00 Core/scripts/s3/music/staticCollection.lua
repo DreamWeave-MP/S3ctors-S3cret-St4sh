@@ -1,5 +1,6 @@
 ---@omw-context global
 
+local IsHostile = require 'scripts.s3.isHostile'
 local clear = require 'scripts.s3.clear'
 local szudzik = require 'scripts.s3.szudzik'
 
@@ -79,20 +80,14 @@ local GetAll
 local SendEvent
 local Quit
 
-local Cells, DoorDestination, GetCurrentWeather, GetExteriorCell, IsDoor, IsTeleportDoor, Players, PresenceSection, SqLen, StaticType, StorageSet, NPCType, CreatureType, AIFight, IsDeadFn
-
-local NPC_FIGHT_THRESHOLD = 90
-local CREATURE_FIGHT_THRESHOLD = 83
+local Cells, DoorDestination, GetCurrentWeather, GetExteriorCell, IsDoor, IsTeleportDoor, Players, PresenceSection, SqLen, StaticType, StorageSet, NPCType, CreatureType
 
 ---@param object openmw.GObject
 ---@return boolean
 local function isHostileActor(object)
   local objectType = object.type
   if objectType ~= NPCType and objectType ~= CreatureType then return false end
-
-  local fightValue = AIFight(object).modified
-  local threshold = objectType == NPCType and NPC_FIGHT_THRESHOLD or CREATURE_FIGHT_THRESHOLD
-  return fightValue >= threshold and not IsDeadFn(object)
+  return IsHostile(object, Players[1])
 end
 
 do
@@ -118,8 +113,6 @@ do
   SqLen = require('openmw.util').vector3(0, 0, 0).length2
   StaticType = types.Static
   NPCType, CreatureType = types.NPC, types.Creature
-  AIFight = types.Actor.stats.ai.fight
-  IsDeadFn = types.Actor.isDead
 end
 
 ---@param player openmw.GObject
