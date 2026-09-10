@@ -225,6 +225,7 @@ return {
   {
     id = 'ms/region/alt orethan region',
     priority = PlaylistPriority.Never,
+    interruptMode = INTERRUPT.Me,
     randomize = true,
 
     isValidCallback = function() return false end,

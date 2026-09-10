@@ -1,10 +1,19 @@
 ---@omw-context player
 
-local coCreate, coResume, coStatus, coYield, pcall, print, type =
-  coroutine.create, coroutine.resume, coroutine.status, coroutine.yield, pcall, print, type
+local coCreate, coResume, coStatus, coYield, error, pcall, print, type, ToString =
+  coroutine.create,
+  coroutine.resume,
+  coroutine.status,
+  coroutine.yield,
+  error,
+  pcall,
+  print,
+  type,
+  tostring
 
 local StrFormat, StrMatch = string.format, string.match
 
+local Quit = require('openmw.core').quit
 local util = require 'openmw.util'
 local vfs = require 'openmw.vfs'
 
@@ -98,7 +107,13 @@ return function()
 
   local ok, playlist = coResume(playlistLoaderCo)
 
-  if ok and playlist then
+  if not ok then
+    print(StrFormat('[ S3MAPHORE ]: Fatal playlist initialization error: %s', ToString(playlist)))
+    Quit()
+    error(StrFormat('S3maphore playlist initialization failed:\n%s', ToString(playlist)), 0)
+  end
+
+  if playlist then
     musicUtil.debugLog('Registered playlist: %s', playlist.id)
     playlistCount = playlistCount + 1
   elseif coStatus(playlistLoaderCo) == 'dead' then

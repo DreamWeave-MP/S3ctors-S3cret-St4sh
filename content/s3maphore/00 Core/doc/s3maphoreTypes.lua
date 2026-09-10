@@ -92,7 +92,7 @@ tes3 = tes3
 ---@field playOneTrack boolean? if true, the playlist will play only one track and then deactivate. Defaults to false
 ---@field registrationOrder number? the order in which the playlist was registered, used for sorting playlists by priority. Do not provide in the playlist definition, it will be assigned automatically.
 ---@field deactivateAfterEnd boolean? if true, the playlist will be deactivated after the current track ends. Defaults to false.
----@field interruptMode InterruptMode? whether a given playlist may be interrupted by another. `INTERRUPT.Override` always overrides the current playlist when selected, including a current playlist using `INTERRUPT.Never` or when Finish Previous Track is enabled.
+---@field interruptMode InterruptMode? whether a given playlist may be interrupted by another. It is optional while authoring; registration assigns a default or rejects the playlist. `INTERRUPT.Override` always overrides the current playlist when selected, including a current playlist using `INTERRUPT.Never` or when Finish Previous Track is enabled.
 ---@field isValidCallback ValidPlaylistCallback The function used to determine whether or not a playlist should execute on this particular frame.
 ---@field fallback PlaylistFallback?
 ---@field fadeOut number? Optional duration supplied by a playlist which indicates how long the fadeout between tracks should be. If not present then the global fadeOut setting is used.
