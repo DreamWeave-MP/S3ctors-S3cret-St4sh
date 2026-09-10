@@ -16,12 +16,13 @@ local s3lf, GetUIMode = I.s3.lf, I.UI.getMode
 
 local CastRay = nearby.castRay
 local GetBoundingBox, Vec3Normalize = s3lf.getBoundingBox, s3lf.position.normalize
-local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, GetTrackedPosition =
+local GetCamPitch, GetCamPosition, GetCamYaw, SetCamPitch, SetCamYaw, ShowCrosshair, GetTrackedPosition =
   camera.getPitch,
   camera.getPosition,
   camera.getYaw,
   camera.setPitch,
   camera.setYaw,
+  camera.showCrosshair,
   camera.getTrackedPosition
 local GetFrameDuration = core.getRealFrameDuration
 local SetCamStaticPosition, GetCamMode, SetCamMode, CamInstantTransition =
@@ -182,6 +183,12 @@ LockOnManager.state = {
   cameraSide = 1,
 }
 
+-- T4RG3T5 owns vanilla crosshair presentation while enabled; it does not restore prior state.
+local function updateCrosshairPresentation()
+  local state = LockOnManager.state
+  ShowCrosshair(not state.targetObject)
+end
+
 ---@alias MarkerTransform openmw.util.Vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
 
 ---@class MarkerUpdateInfo
@@ -203,6 +210,7 @@ function LockOnManager:clearTarget()
   state.flickTriggered = false
   state.cumulativeXMove = 0
   state.cameraSide = 1
+  updateCrosshairPresentation()
 
   self.setMarkerVisibility(false)
   self:endLockCamera()
@@ -759,6 +767,7 @@ function LockOnManager.setTarget(target)
   state.targetHealth = Health(target)
   state.npcHeightOffset = boundingBox.halfSize.z * NPC_HEIGHT_OFFSET
   state.lockInvalidTime = 0
+  updateCrosshairPresentation()
 
   LockOnManager.ensureLockOnMarker()
   return true
