@@ -206,12 +206,70 @@ end
 
 ---@param playlist S3maphorePlaylist
 local function initMissingPlaylistFields(playlist, INTERRUPT)
+  if type(playlist) ~= 'table' then error 'Can not register playlist: playlist must be a table' end
+
   if not playlist.id or not playlist.priority then
     error 'Can not register playlist: \'id\' and \'priority\' are mandatory fields'
   end
 
+  if type(playlist.id) ~= 'string' then
+    error(
+      StrFormat('Can not register playlist: \'id\' must be a string, got %s', type(playlist.id))
+    )
+  end
+
+  if playlist.id == '' then error 'Can not register playlist: \'id\' must not be empty' end
+
+  if type(playlist.priority) ~= 'number' or playlist.priority ~= playlist.priority then
+    error(StrFormat('Can not register playlist %s: \'priority\' must be a number', playlist.id))
+  end
+
+  if
+    playlist.priority > PlaylistPriority.Explore and playlist.priority ~= PlaylistPriority.Never
+  then
+    error(
+      StrFormat(
+        'Can not register playlist %s: priority %s is above PlaylistPriority.Explore',
+        playlist.id,
+        playlist.priority
+      )
+    )
+  end
+
   if type(playlist.isValidCallback) ~= 'function' then
     error(StrFormat('Can not register playlist %s: \'isValidCallback\' is mandatory', playlist.id))
+  end
+
+  if playlist.interruptMode == nil then
+    if playlist.priority <= PlaylistPriority.Special then
+      playlist.interruptMode = INTERRUPT.Never
+    elseif playlist.priority <= PlaylistPriority.BattleVanilla then
+      playlist.interruptMode = INTERRUPT.Other
+    elseif playlist.priority <= PlaylistPriority.Explore then
+      playlist.interruptMode = INTERRUPT.Me
+    else
+      error(
+        StrFormat(
+          'Can not register playlist %s: PlaylistPriority.Never requires an explicit interruptMode',
+          playlist.id
+        )
+      )
+    end
+  end
+
+  if
+    playlist.interruptMode ~= INTERRUPT.Me
+    and playlist.interruptMode ~= INTERRUPT.Other
+    and playlist.interruptMode ~= INTERRUPT.Never
+    and playlist.interruptMode ~= INTERRUPT.Override
+  then
+    error(
+      StrFormat(
+        'Can not register playlist %s: invalid interruptMode %s',
+        playlist.id,
+        ToString(playlist.interruptMode)
+      )
+    )
   end
 
   if not playlist.tracks then
@@ -226,22 +284,6 @@ local function initMissingPlaylistFields(playlist, INTERRUPT)
   if playlist.cycleTracks == nil then playlist.cycleTracks = true end
 
   if playlist.playOneTrack == nil then playlist.playOneTrack = false end
-
-  if not playlist.interruptMode then
-    if playlist.priority <= PlaylistPriority.Special then
-      playlist.interruptMode = INTERRUPT.Never
-    elseif playlist.priority <= PlaylistPriority.BattleVanilla then
-      playlist.interruptMode = INTERRUPT.Other
-    elseif playlist.priority <= PlaylistPriority.Explore then
-      playlist.interruptMode = INTERRUPT.Me
-    else
-      debugLog(
-        'Invalid Playlist Priority: %s for playlist: %s, cannot automatically assign interrupt mode!',
-        playlist.priority,
-        playlist.id
-      )
-    end
-  end
 end
 
 local function initTracksOrder(tracks, randomize)

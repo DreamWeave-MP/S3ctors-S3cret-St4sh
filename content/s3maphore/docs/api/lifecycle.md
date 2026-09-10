@@ -17,7 +17,7 @@ S3maphore scans the VFS `Playlists/` directory for:
 - `.lua` playlist files
 - `.yaml` and `.yml` metadata files
 
-Lua files run in the [PlaylistEnvironment](@/s3maphore/docs/api/playlist-environment.md) and must return an array of playlist tables. Metadata files merge into the [playlist metadata registry](@/s3maphore/docs/api/metadata.md). Loading is coroutine-based, so large music collections are processed across update steps instead of blocking one frame.
+Lua files run in the [PlaylistEnvironment](@/s3maphore/docs/api/playlist-environment.md) and must return an array of playlist tables. Metadata files merge into the [playlist metadata registry](@/s3maphore/docs/api/metadata.md). Loading is coroutine-based, so large music collections are processed across update steps instead of blocking one frame. Playlist registration validates the fields required by playback; invalid playlist data aborts initialization instead of being skipped.
 
 Playback waits until playlist loading is complete and the initial cell-presence state is available. Do not assume that every playlist has been registered immediately when another script first initializes.
 

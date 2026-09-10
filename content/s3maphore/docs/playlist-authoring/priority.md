@@ -44,7 +44,7 @@ If `interruptMode` is omitted, S3maphore assigns it from the priority band:
 | `<= PlaylistPriority.Special` | `INTERRUPT.Never` |
 | `<= PlaylistPriority.BattleVanilla` | `INTERRUPT.Other` |
 | `<= PlaylistPriority.Explore` | `INTERRUPT.Me` |
-| `> PlaylistPriority.Explore` | No automatic assignment; avoid this range unless you also set `interruptMode`. |
+| `> PlaylistPriority.Explore` | Invalid, except for the `PlaylistPriority.Never` sentinel, which requires an explicit `interruptMode`. |
 
 This default is a convenience, not a rule. Set `interruptMode` explicitly when the playlist's interruption behavior matters. `Override` is never assigned automatically.
 

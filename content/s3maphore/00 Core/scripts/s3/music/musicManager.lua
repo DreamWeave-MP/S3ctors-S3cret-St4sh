@@ -149,6 +149,8 @@ end
 --- initialize any missing playlist fields and assign track order for the playlist, and global registration order.
 ---@param playlist S3maphorePlaylist
 function MusicManager.registerPlaylist(playlist)
+  musicUtil.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
+
   local existing = MusicManager.registeredPlaylists[playlist.id]
   if existing then
     local oldDeck, newDeck
@@ -181,8 +183,6 @@ function MusicManager.registerPlaylist(playlist)
       )
     end
   end
-
-  musicUtil.initMissingPlaylistFields(playlist, MusicManager.INTERRUPT)
 
   local existingOrder = MusicManager.playlistsTracksOrder[playlist.id]
 
