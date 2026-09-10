@@ -17,7 +17,7 @@ extra:
     content_files:
       - T4rg3t5.esp
 
-  version: 0.6
+  version: 1.0
 ---
 T4rg3t5 is a comprehensive Dark Souls-style lock-on targeting system for OpenMW that provides precise enemy tracking, visual target indicators, and intelligent combat automation.
 
