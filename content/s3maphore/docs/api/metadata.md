@@ -42,6 +42,18 @@ tracks:
     license: CC BY-SA 4.0
 ```
 
+Metadata fields describe provenance as well as display text. `title` is the
+human-facing display title; prefer the canonical release title when one is
+known, otherwise use a stable descriptive or filename-derived title. `artist`
+is the credited artist or project, `composer` is the composer when known, and
+`album` is the actual musical album or release containing the track—not merely
+the name of a mod. `source` identifies the originating game, mod, or package.
+For tracks, it should identify the source of the exact VFS asset; for
+playlists, it identifies the package or content set defining the logical
+playlist.
+`license` is recorded only when the exact license or usage terms are known;
+S3maphore does not infer licenses from a source or artist.
+
 The playlist key is the playlist's `id`. The track key is the track's full VFS path. Both keys are normalized before lookup, so use the same paths and IDs you use in the playlist definition.
 
 String values are shorthand for a title-only metadata table:
@@ -57,15 +69,15 @@ Table values must contain a string `title`. The supported fields are:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `title` | `string` | Display name. Required for table values. |
-| `artist` | `string?` | Performing artist. |
-| `album` | `string?` | Album or collection name. |
+| `title` | `string` | Human-facing display title; prefer a known canonical release title, otherwise use a stable descriptive or filename-derived title. Required for table values. |
+| `artist` | `string?` | Credited artist or project name. |
+| `album` | `string?` | Actual musical album or release containing the track. |
 | `year` | `integer?` | Release year. |
 | `genre` | `string?` | Genre label. |
 | `description` | `string?` | Longer description. |
-| `source` | `string?` | Mod, collection, or source attribution. |
-| `composer` | `string?` | Composer name. |
-| `license` | `string?` | License or usage terms. |
+| `source` | `string?` | Originating game, mod, or package; for tracks, the source of the exact VFS asset, and for playlists, the package or content set defining the logical playlist. |
+| `composer` | `string?` | Composer, when known. |
+| `license` | `string?` | Exact known license or usage terms; do not infer. |
 
 ## Adding metadata to an existing playlist
 

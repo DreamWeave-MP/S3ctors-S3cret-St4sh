@@ -1,0 +1,50 @@
+playlists:
+  "ms/cell/dwemer": "MUSE - Dwemer Ruins"
+  "ms/combat/dwemer": "MUSE - Dwemer Enemies"
+
+tracks:
+  "music/ms/cell/dwemer/exploration1.mp3":
+    title: "Exploration 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/cell/dwemer/exploration2.mp3":
+    title: "Exploration 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/cell/dwemer/exploration3.mp3":
+    title: "Exploration 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/cell/dwemer/exploration4.mp3":
+    title: "Exploration 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/cell/dwemer/exploration5.mp3":
+    title: "Exploration 5"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/combat/dwemer/combat1.mp3":
+    title: "Combat 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/combat/dwemer/combat2.mp3":
+    title: "Combat 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/combat/dwemer/combat3.mp3":
+    title: "Combat 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"
+  "music/ms/combat/dwemer/combat4.mp3":
+    title: "Combat 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Dwemer"

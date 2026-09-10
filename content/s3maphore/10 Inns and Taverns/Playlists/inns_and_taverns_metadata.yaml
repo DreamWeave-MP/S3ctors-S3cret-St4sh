@@ -1,0 +1,18 @@
+playlists:
+  "ms/cell/taverns": "Inns and Taverns - Vanilla"
+  "ms/cell/tavern": "Inns and Taverns - Vanilla"
+  "ms/cell/special/taverns": "Taverns"
+
+tracks:
+  "music/ms/cell/special/taverns/a winter's tale (skyrim).mp3":
+    title: "A Winter's Tale"
+    artist: "Jeremy Soule"
+    composer: "Jeremy Soule"
+    album: "The Elder Scrolls V: Skyrim Soundtrack"
+    source: "The Elder Scrolls V: Skyrim"
+  "music/ms/cell/special/taverns/out of the cold (skyrim).mp3":
+    title: "Out of the Cold"
+    artist: "Jeremy Soule"
+    composer: "Jeremy Soule"
+    album: "The Elder Scrolls V: Skyrim Soundtrack"
+    source: "The Elder Scrolls V: Skyrim"

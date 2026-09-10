@@ -1,0 +1,55 @@
+playlists:
+  "ms/cell/6thhouse": "MUSE - Sixth House Dungeons"
+  "ms/combat/dagoth": "MUSE - Sixth House Enemies"
+  "ms/combat/dagoth ur": "MUSE - Sixth House Enemies"
+
+tracks:
+  "music/ms/cell/6thhouse/exploration1.mp3":
+    title: "Exploration 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/cell/6thhouse/exploration2.mp3":
+    title: "Exploration 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/cell/6thhouse/exploration3.mp3":
+    title: "Exploration 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/cell/6thhouse/exploration4.mp3":
+    title: "Exploration 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/cell/6thhouse/exploration5.mp3":
+    title: "Exploration 5"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/combat/dagoth ur/finalbattle.mp3":
+    title: "Final Battle"
+  "music/ms/combat/dagoth ur/here be dragons, game version (guild wars 2).mp3":
+    title: "Here Be Dragons, Game Version (Guild Wars 2)"
+  "music/ms/combat/dagoth/combat1.mp3":
+    title: "Combat 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/combat/dagoth/combat2.mp3":
+    title: "Combat 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/combat/dagoth/combat3.mp3":
+    title: "Combat 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"
+  "music/ms/combat/dagoth/combat4.mp3":
+    title: "Combat 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Sixth House"

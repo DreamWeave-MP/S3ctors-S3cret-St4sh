@@ -1,0 +1,17 @@
+playlists:
+  "Daggerfall Guild Themes MG":
+    title: "Daggerfall Guild Themes — Mages Guild"
+    source: "Dynamic Music - Daggerfall Guild Themes (OpenMW Only)"
+    composer: "Eric Heberling"
+
+tracks:
+  "music/em_dynamicmusic/mage_2.mp3":
+    title: "Mages Guild Theme"
+    source: "Dynamic Music - Daggerfall Guild Themes (OpenMW Only)"
+    description: "Original Daggerfall guild theme by Eric Heberling."
+    composer: "Eric Heberling"
+  "music/em_dynamicmusic/mage_3.mp3":
+    title: "Mages Guild Theme"
+    source: "Dynamic Music - Daggerfall Guild Themes (OpenMW Only)"
+    description: "Original Daggerfall guild theme by Eric Heberling."
+    composer: "Eric Heberling"

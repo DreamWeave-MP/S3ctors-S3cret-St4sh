@@ -1,0 +1,95 @@
+playlists:
+  "Explore": "Explore"
+  "Battle": "Battle"
+
+tracks:
+  "music/explore/morrowind title.mp3":
+    title: "Nerevar Rising"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/explore/mx_explore_1.mp3":
+    title: "Over the Next Hill"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/explore/mx_explore_2.mp3":
+    title: "Peaceful Waters"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/explore/mx_explore_3.mp3":
+    title: "The Road Most Travelled"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/explore/mx_explore_4.mp3":
+    title: "Blessing of Vivec"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/explore/mx_explore_5.mp3":
+    title: "Silt Sunrise"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/explore/mx_explore_6.mp3":
+    title: "Shed Your Travails"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/explore/mx_explore_7.mp3":
+    title: "Caprice"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/battle/mw battle1.mp3":
+    title: "Bright Spears Dark Blood"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/battle/mw battle2.mp3":
+    title: "Knight's Charge"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/battle/mw battle3.mp3":
+    title: "Dance of Swords"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/battle/mw battle 4.mp3":
+    title: "Hunter's Pursuit"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/battle/mw battle5.mp3":
+    title: "Ambush"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/battle/mw battle 7.mp3":
+    title: "Stormclouds on the Battlefield"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"
+  "music/battle/mw battle 8.mp3":
+    title: "Drumbeats of the Dunmer"
+    artist: "Jeremy Soule"
+    album: "The Elder Scrolls III: Morrowind Soundtrack"
+    source: "The Elder Scrolls III: Morrowind"
+    composer: "Jeremy Soule"

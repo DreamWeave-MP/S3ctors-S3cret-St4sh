@@ -1,0 +1,35 @@
+playlists:
+  "Elder Scrolls Adventures - Redguard: Regions":
+    title: "The Elder Scrolls Adventures: Redguard — Regions"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"
+  "Elder Scrolls Adventures - Redguard: Combat":
+    title: "The Elder Scrolls Adventures: Redguard — Combat"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"
+  "Elder Scrolls Advnetures - Redguard: Cities":
+    title: "The Elder Scrolls Adventures: Redguard — Cities"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"
+
+tracks:
+  "music/redguardmusic/01. main theme.mp3":
+    title: "01. Main Theme"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"
+  "music/redguardmusic/02. theme 1.mp3":
+    title: "02. Theme 1"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"
+  "music/redguardmusic/03. theme 2.mp3":
+    title: "03. Theme 2"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"
+  "music/redguardmusic/04. theme 3.mp3":
+    title: "04. Theme 3"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"
+  "music/redguardmusic/05. theme 4.mp3":
+    title: "05. Theme 4"
+    source: "The Elder Scrolls Adventures: Redguard"
+    composer: "Chip Ellinghaus and Grant Slawson"

@@ -74,6 +74,13 @@ return {
     id = 'ms/interior/cyrodiil tombs imperial',
     priority = PlaylistPriority.Tileset,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/interior/cyrodiil tombs imperial/silence %(10s%).mp3',
+        'ms/interior/cyrodiil tombs imperial/silence %(15s%).mp3',
+        'ms/interior/cyrodiil tombs imperial/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function()
       return not Playback.state.cellIsExterior
@@ -86,6 +93,13 @@ return {
     id = 'ms/region/cyrodiil brennan bluffs',
     priority = PlaylistPriority.Region,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/region/cyrodiil brennan bluffs/silence %(10s%).mp3',
+        'ms/region/cyrodiil brennan bluffs/silence %(15s%).mp3',
+        'ms/region/cyrodiil brennan bluffs/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function() return Playback.state.nearestRegion == 'gilded hills region' end,
   },
@@ -94,6 +108,13 @@ return {
     id = 'ms/interior/cyrodiil tombs colovian',
     priority = PlaylistPriority.Tileset,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/interior/cyrodiil tombs colovian/silence %(10s%).mp3',
+        'ms/interior/cyrodiil tombs colovian/silence %(15s%).mp3',
+        'ms/interior/cyrodiil tombs colovian/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function()
       return not Playback.state.cellIsExterior
@@ -106,6 +127,13 @@ return {
     id = 'ms/interior/cyrodiil caves',
     priority = PlaylistPriority.Tileset,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/interior/cyrodiil caves/silence %(10s%).mp3',
+        'ms/interior/cyrodiil caves/silence %(15s%).mp3',
+        'ms/interior/cyrodiil caves/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function()
       return not Playback.state.cellIsExterior
@@ -118,6 +146,13 @@ return {
     id = 'ms/interior/cyrodiil ayleid',
     priority = PlaylistPriority.Tileset,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/interior/cyrodiil ayleid/silence %(10s%).mp3',
+        'ms/interior/cyrodiil ayleid/silence %(15s%).mp3',
+        'ms/interior/cyrodiil ayleid/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function()
       return not Playback.state.cellIsExterior
@@ -130,6 +165,13 @@ return {
     id = 'ms/cell/nine divine temples',
     priority = PlaylistPriority.CellMatch,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/cell/nine divine temples/silence %(10s%).mp3',
+        'ms/cell/nine divine temples/silence %(15s%).mp3',
+        'ms/cell/nine divine temples/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function()
       return not Playback.state.cellIsExterior and Playback.rules.cellNameMatch(TemplePatterns)
@@ -140,6 +182,13 @@ return {
     id = 'ms/cell/cyrodiil sutch',
     priority = PlaylistPriority.CellMatch,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/cell/cyrodiil sutch/silence %(10s%).mp3',
+        'ms/cell/cyrodiil sutch/silence %(15s%).mp3',
+        'ms/cell/cyrodiil sutch/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function() return Playback.rules.cellNameMatch(SutchPatterns) end,
   },
@@ -148,6 +197,13 @@ return {
     id = 'ms/cell/cyrodiil anvil',
     priority = PlaylistPriority.CellMatch,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/cell/cyrodiil anvil/silence %(10s%).mp3',
+        'ms/cell/cyrodiil anvil/silence %(15s%).mp3',
+        'ms/cell/cyrodiil anvil/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function() return Playback.rules.cellNameMatch(AnvilPatterns) end,
   },
@@ -156,6 +212,13 @@ return {
     id = 'ms/region/cyrodiil strident coast',
     priority = PlaylistPriority.Region,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/region/cyrodiil strident coast/silence %(10s%).mp3',
+        'ms/region/cyrodiil strident coast/silence %(15s%).mp3',
+        'ms/region/cyrodiil strident coast/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function() return Playback.rules.region(goldCoastRegions) end,
   },
@@ -164,6 +227,13 @@ return {
     id = 'ms/region/cyrodiil stirk isle',
     priority = PlaylistPriority.Region,
     randomize = true,
+    exclusions = {
+      tracks = {
+        'ms/region/cyrodiil stirk isle/silence %(10s%).mp3',
+        'ms/region/cyrodiil stirk isle/silence %(15s%).mp3',
+        'ms/region/cyrodiil stirk isle/silence %(5s%).mp3',
+      },
+    },
 
     isValidCallback = function() return Playback.rules.region(StirkRegions) end,
   },

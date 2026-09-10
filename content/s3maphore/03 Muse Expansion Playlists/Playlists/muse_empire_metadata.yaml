@@ -1,0 +1,46 @@
+playlists:
+  "ms/cell/empire": "MUSE - Empire Settlement"
+  "ms/cell/imperial": "MUSE - Empire Settlement"
+  "ms/combat/empire": "MUSE - Empire Enemies"
+
+tracks:
+  "music/ms/cell/empire/exploration1.mp3":
+    title: "Exploration 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"
+  "music/ms/cell/empire/exploration2.mp3":
+    title: "Exploration 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"
+  "music/ms/cell/empire/exploration3.mp3":
+    title: "Exploration 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"
+  "music/ms/cell/empire/exploration4.mp3":
+    title: "Exploration 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"
+  "music/ms/cell/empire/exploration5.mp3":
+    title: "Exploration 5"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"
+  "music/ms/combat/empire/combat1.mp3":
+    title: "Combat 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"
+  "music/ms/combat/empire/combat2.mp3":
+    title: "Combat 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"
+  "music/ms/combat/empire/combat3.mp3":
+    title: "Combat 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Empire"

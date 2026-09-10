@@ -1,0 +1,17 @@
+playlists:
+  "Nordic Lands - Towns": "Nordic Lands - Towns"
+  "Nordic Lands - Skyrim Regions": "Nordic Lands - Skyrim Regions"
+  "Nordic Lands - Solstheim Regions": "Nordic Lands - Solstheim Regions"
+
+tracks:
+  "music/ms/cell/nordtown/secity2.mp3": "secity2"
+  "music/ms/cell/nordtown/secity4.mp3": "secity4"
+  "music/ms/region/nd10_himinbjörg.mp3": "nd10_himinbjörg"
+  "music/ms/region/nd1_njol.mp3": "nd1_njol"
+  "music/ms/region/nd2_utanlands.mp3": "nd2_utanlands"
+  "music/ms/region/nd3_draumr.mp3": "nd3_draumr"
+  "music/ms/region/nd4_jata.mp3": "nd4_jata"
+  "music/ms/region/nd5_ginnung01.mp3": "nd5_ginnung01"
+  "music/ms/region/nd6_ginnung02.mp3": "nd6_ginnung02"
+  "music/ms/region/nd7_jafnan.mp3": "nd7_jafnan"
+  "music/ms/region/nd9_ek_elska_thik.mp3": "nd9_ek_elska_thik"

@@ -1,0 +1,53 @@
+playlists:
+  "shotn/city":
+    title: "City"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+  "shotn/wilds":
+    title: "Wilds"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+  "shotn/combat-city":
+    title: "City Combat"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+  "shotn/combat-wilds":
+    title: "Wilds Combat"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+
+tracks:
+  "music/shotn/city/northern blood.mp3":
+    title: "Northern Blood"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+    license: "Creative Commons Attribution-ShareAlike"
+  "music/shotn/city/warchants.mp3":
+    title: "Warchants"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+    license: "Creative Commons Attribution-ShareAlike"
+  "music/shotn/wilds/beneath the permafrost.mp3":
+    title: "Beneath the Permafrost"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+    license: "Creative Commons Attribution-ShareAlike"
+  "music/shotn/wilds/throat of the world.mp3":
+    title: "Throat of the World"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+    license: "Creative Commons Attribution-ShareAlike"
+  "music/shotn/wilds/under the northern stars.mp3":
+    title: "Under the Northern Stars"
+    source: "Songbook of the North"
+    artist: "Ancestral Warchants"
+    composer: "Juan Carlos Hernández Suárez"
+    license: "Creative Commons Attribution-ShareAlike"

@@ -1,0 +1,105 @@
+playlists:
+  "Vindswept Solstheim - Lake":
+    title: "Vindsvept — Lake"
+    artist: "Vindsvept"
+    source: "Vindsvept Solstheim"
+    composer: "Vindsvept"
+  "Vindsvept Solstheim - Town":
+    title: "Vindsvept — Town"
+    artist: "Vindsvept"
+    source: "Vindsvept Solstheim"
+    composer: "Vindsvept"
+  "Vindsvept Soltheim - Moesring":
+    title: "Vindsvept — Moesring"
+    artist: "Vindsvept"
+    source: "Vindsvept Solstheim"
+    composer: "Vindsvept"
+  "Vindsvept Solstheim/Hirstaang":
+    title: "Vindsvept — Hirstaang"
+    artist: "Vindsvept"
+    source: "Vindsvept Solstheim"
+    composer: "Vindsvept"
+  "Vindsvept Solstheim/Isinfier Plains":
+    title: "Vindsvept — Isinfier Plains"
+    artist: "Vindsvept"
+    source: "Vindsvept Solstheim"
+    composer: "Vindsvept"
+  "Vindsvept Solstheim/Felsaad Coast":
+    title: "Vindsvept — Felsaad Coast"
+    artist: "Vindsvept"
+    source: "Vindsvept Solstheim"
+    composer: "Vindsvept"
+
+tracks:
+  "music/vindsvept/celtic folk music - vindsvept - lake of light.mp3":
+    title: "Lake of Light"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/celtic folk music - vindsvept - nightfall.mp3":
+    title: "Nightfall"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/emotional far east music - vindsvept - clarity.mp3":
+    title: "Clarity"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/emotional folk music - vindsvept - hugins flight.mp3":
+    title: "Hugin's Flight"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/emotional folk music - vindsvept - munins return.mp3":
+    title: "Munin's Return"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/emotional folk music - vindsvept - reverie.mp3":
+    title: "Reverie"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/emotional folk music - vindsvept - wayworn.mp3":
+    title: "Wayworn"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/folk music - vindsvept - what lies beyond.mp3":
+    title: "What Lies Beyond"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/harp ambient music - vindsvept - the fae.mp3":
+    title: "The Fae"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/orchestral music - vindsvept - bringer of rain.mp3":
+    title: "Bringer of Rain"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/relaxing folk music - vindsvept - frozen in time.mp3":
+    title: "Frozen in Time"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"
+  "music/vindsvept/tavern folk music - vindsvept - hearthfire.mp3":
+    title: "Hearthfire"
+    artist: "Vindsvept"
+    album: "The Youtube Collection"
+    source: "Vindsvept Solstheim for Dynamic Music (OpenMW)"
+    composer: "Vindsvept"

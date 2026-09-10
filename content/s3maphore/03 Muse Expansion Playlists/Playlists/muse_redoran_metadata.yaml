@@ -1,0 +1,45 @@
+playlists:
+  "ms/cell/redoran": "MUSE - Redoran Settlement"
+  "ms/combat/redoran": "MUSE - Redoran Enemies"
+
+tracks:
+  "music/ms/cell/redoran/exploration1.mp3":
+    title: "Exploration 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"
+  "music/ms/cell/redoran/exploration2.mp3":
+    title: "Exploration 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"
+  "music/ms/cell/redoran/exploration3.mp3":
+    title: "Exploration 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"
+  "music/ms/cell/redoran/exploration4.mp3":
+    title: "Exploration 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"
+  "music/ms/cell/redoran/exploration5.mp3":
+    title: "Exploration 5"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"
+  "music/ms/combat/redoran/combat1.mp3":
+    title: "Combat 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"
+  "music/ms/combat/redoran/combat2.mp3":
+    title: "Combat 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"
+  "music/ms/combat/redoran/combat3.mp3":
+    title: "Combat 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Redoran"

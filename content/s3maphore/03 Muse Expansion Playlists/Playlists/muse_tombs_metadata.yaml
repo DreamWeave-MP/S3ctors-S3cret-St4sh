@@ -1,0 +1,50 @@
+playlists:
+  "ms/cell/tomb": "MUSE - Tomb Cells"
+  "ms/combat/tomb": "MUSE - Tomb Enemies"
+
+tracks:
+  "music/ms/cell/tomb/exploration1.mp3":
+    title: "Exploration 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/cell/tomb/exploration2.mp3":
+    title: "Exploration 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/cell/tomb/exploration3.mp3":
+    title: "Exploration 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/cell/tomb/exploration4.mp3":
+    title: "Exploration 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/cell/tomb/exploration5.mp3":
+    title: "Exploration 5"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/combat/tomb/combat1.mp3":
+    title: "Combat 1"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/combat/tomb/combat2.mp3":
+    title: "Combat 2"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/combat/tomb/combat3.mp3":
+    title: "Combat 3"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
+  "music/ms/combat/tomb/combat4.mp3":
+    title: "Combat 4"
+    artist: "Scipio219"
+    composer: "Scipio219"
+    source: "MUSE Music Expansion - Tombs"
