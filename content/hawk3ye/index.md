@@ -43,6 +43,8 @@ Hawk3ye uses events to trigger zooming, and takes advantage of OpenMW's more adv
 
 Hawk3ye uses one core event to control zooming - `Hawk3yeToggle`. It is provided a single argument which is a `ZoomType` (enum available in Hawk3ye's interface). To interrupt or prevent zooming, register a handler for this event and return `false` from that function.
 
+When `T4rg3t5.esp` is loaded before `Hawk3ye.esp`, Hawk3ye also listens for T4rg3t5's `S3TargetLockOnto` notification. An active zoom is suspended while T4rg3t5 owns a target lock and resumes after the lock clears. Keep T4rg3t5 earlier in the content-file load order to enable this integration.
+
 #### ZoomType Specification
 
 ```lua

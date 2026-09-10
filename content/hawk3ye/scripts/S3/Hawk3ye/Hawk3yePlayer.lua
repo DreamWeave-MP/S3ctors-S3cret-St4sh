@@ -1,3 +1,5 @@
+---@omw-context player
+
 local async = require 'openmw.async'
 local camera = require 'openmw.camera'
 local core = require 'openmw.core'
@@ -8,9 +10,17 @@ local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
 
-local MOD_NAME = "Hawk3ye"
+local MOD_NAME = 'Hawk3ye'
+local T4_CONTENT_FILE = 'T4rg3t5.esp'
+local HAWK_CONTENT_FILE = 'Hawk3ye.esp'
 
 local zoomActive = false
+local targetLocked = false
+local zoomSuspended = false
+
+local t4ContentIndex = core.contentFiles.indexOf(T4_CONTENT_FILE)
+local hawkContentIndex = core.contentFiles.indexOf(HAWK_CONTENT_FILE)
+local t4LoadedBeforeHawk = t4ContentIndex and hawkContentIndex and t4ContentIndex < hawkContentIndex
 
 ---@type number FOV defined in settings.cfg
 local DefaultFOV = camera.getBaseFieldOfView()
@@ -21,7 +31,7 @@ local currentFOV = camera.getFieldOfView()
 ---@type number preferred camera distance in third person. Used to prevent changing view distance when zoomed.
 local prevCamDistance = I.Camera.getTargetThirdPersonDistance()
 
-local settings = storage.playerSection("Settings" .. MOD_NAME)
+local settings = storage.playerSection('Settings' .. MOD_NAME)
 
 local ToggleEventName = 'Hawk3yeToggle'
 local ToggleSettingName = 'enabled'
@@ -31,12 +41,14 @@ local CameraDisableTag = 'Hawk3yeCameraDisableTag'
 
 local ZoomDuration = settings:get(DurationSettingName)
 local ZoomEnabled = settings:get(ToggleSettingName)
-local ZoomFov = math.rad(
-    settings:get(FOVSettingName)
-)
+local ZoomFov = math.rad(settings:get(FOVSettingName))
 
 local function updateFOVRange()
-    I.Settings.updateRendererArgument('Settings' .. MOD_NAME, FOVSettingName, { max = (math.deg(DefaultFOV) - 1) })
+  I.Settings.updateRendererArgument(
+    'Settings' .. MOD_NAME,
+    FOVSettingName,
+    { max = (math.deg(DefaultFOV) - 1) }
+  )
 end
 updateFOVRange()
 
@@ -44,131 +56,152 @@ updateFOVRange()
 --- When emitting your own Hawk3yeToggle events.
 ---@enum ZoomType
 local ZoomState = {
-    RESET = 1,
-    DISABLE = 2,
-    ENABLE = 3,
+  RESET = 1,
+  DISABLE = 2,
+  ENABLE = 3,
 }
 
 local ReadOnlyStates = util.makeReadOnly(ZoomState)
 
-settings:subscribe(
-    async:callback(
-        function(_, key)
-            if not key or key == FOVSettingName then
-                ZoomFov = math.rad(
-                    settings:get(FOVSettingName)
-                )
-            end
+settings:subscribe(async:callback(function(_, key)
+  if not key or key == FOVSettingName then ZoomFov = math.rad(settings:get(FOVSettingName)) end
 
-            if not key or key == DurationSettingName then
-                ZoomDuration = settings:get(DurationSettingName)
-            end
+  if not key or key == DurationSettingName then ZoomDuration = settings:get(DurationSettingName) end
 
-            if not key or key == ToggleSettingName then
-                ZoomEnabled = settings:get(ToggleSettingName)
-            end
-        end
-    )
-)
+  if not key or key == ToggleSettingName then ZoomEnabled = settings:get(ToggleSettingName) end
+end))
 
 input.registerTriggerHandler(
-    MOD_NAME .. 'ToggleTrigger',
-    async:callback(
-        function()
-            self:sendEvent(ToggleEventName, zoomActive and ZoomState.DISABLE or ZoomState.ENABLE)
-        end
-    )
+  MOD_NAME .. 'ToggleTrigger',
+  async:callback(
+    function() self:sendEvent(ToggleEventName, zoomActive and ZoomState.DISABLE or ZoomState.ENABLE) end
+  )
 )
 
 input.registerActionHandler(
-    MOD_NAME .. 'HoldAction',
-    async:callback(
-        function(pressed)
-            self:sendEvent(ToggleEventName, pressed and ZoomState.ENABLE or ZoomState.DISABLE)
-        end
-    )
+  MOD_NAME .. 'HoldAction',
+  async:callback(
+    function(pressed)
+      self:sendEvent(ToggleEventName, pressed and ZoomState.ENABLE or ZoomState.DISABLE)
+    end
+  )
 )
 
 ---@return boolean canZoom Whether or not the player is currently able to zoom in
 local function canZoom()
-    return ZoomEnabled and not I.UI.getMode() and not core.isWorldPaused()
+  return ZoomEnabled and not targetLocked and not I.UI.getMode() and not core.isWorldPaused()
+end
+
+local function suspendZoom()
+  if not zoomActive then return end
+
+  zoomActive = false
+  I.Camera.enableModeControl(CameraDisableTag)
+  currentFOV = DefaultFOV
+  camera.setFieldOfView(currentFOV)
+end
+
+local function resumeZoom()
+  if not ZoomEnabled or targetLocked then return end
+
+  zoomActive = true
+  I.Camera.disableModeControl(CameraDisableTag)
 end
 
 local function updateZoom(dt)
-    local targetFOV = zoomActive and ZoomFov or DefaultFOV
+  local targetFOV = zoomActive and ZoomFov or DefaultFOV
 
-    if math.abs(currentFOV - targetFOV) > 0.001 then
-        local smoothing = 5.0 / ZoomDuration
+  if math.abs(currentFOV - targetFOV) > 0.001 then
+    local smoothing = 5.0 / ZoomDuration
 
-        currentFOV = currentFOV + (targetFOV - currentFOV) * (1.0 - math.exp(-smoothing * dt))
+    currentFOV = currentFOV + (targetFOV - currentFOV) * (1.0 - math.exp(-smoothing * dt))
 
-        camera.setFieldOfView(currentFOV)
-    end
+    camera.setFieldOfView(currentFOV)
+  end
 end
 
 return {
-    interfaceName = MOD_NAME,
-    interface = {
+  interfaceName = MOD_NAME,
+  interface = {
 
-        ---@return boolean isZoomed Whether or not the zoom action is currently engaged. It cannot be overridden
-        isZoomed = function()
-            return zoomActive
-        end,
+    ---@return boolean isZoomed Whether or not the zoom action is currently engaged. It cannot be overridden
+    isZoomed = function() return zoomActive end,
 
-        canZoom = canZoom,
+    canZoom = canZoom,
 
-        ZoomStates = ReadOnlyStates,
-    },
+    ZoomStates = ReadOnlyStates,
+  },
 
-    eventHandlers = {
+  eventHandlers = {
 
-        UiModeChanged = function(data)
-            if data.newMode then
-                self:sendEvent(ToggleEventName, ZoomState.RESET)
-            elseif data.oldMode == I.UI.MODE.MainMenu then
-                DefaultFOV = camera.getBaseFieldOfView()
-            end
-        end,
+    UiModeChanged = function(data)
+      if data.newMode then
+        self:sendEvent(ToggleEventName, ZoomState.RESET)
+      elseif data.oldMode == I.UI.MODE.MainMenu then
+        DefaultFOV = camera.getBaseFieldOfView()
+      end
+    end,
 
-        ---@param zoomType ZoomType Whether or not to enage zoom
-        Hawk3yeToggle = function(zoomType)
-            zoomActive = zoomType == ZoomState.ENABLE
+    ---@param zoomType ZoomType Whether or not to enage zoom
+    Hawk3yeToggle = function(zoomType)
+      if zoomType == ZoomState.ENABLE and targetLocked then return end
 
-            if zoomActive then
-                I.Camera.disableModeControl(CameraDisableTag)
-            else
-                I.Camera.enableModeControl(CameraDisableTag)
-            end
+      zoomActive = zoomType == ZoomState.ENABLE
 
-            if zoomType == ZoomState.RESET then
-                currentFOV = camera.getBaseFieldOfView()
-                DefaultFOV = currentFOV
+      if zoomActive then
+        I.Camera.disableModeControl(CameraDisableTag)
+      else
+        I.Camera.enableModeControl(CameraDisableTag)
+      end
 
-                camera.setFieldOfView(currentFOV)
+      if zoomType == ZoomState.RESET then
+        currentFOV = camera.getBaseFieldOfView()
+        DefaultFOV = currentFOV
 
-                updateFOVRange()
-            end
-        end,
-    },
+        camera.setFieldOfView(currentFOV)
 
-    engineHandlers = {
-        onFrame = function(dt)
-            if not canZoom() then return end
+        updateFOVRange()
+      end
+    end,
 
-            updateZoom(dt)
+    S3TargetLockOnto = function(target)
+      if not t4LoadedBeforeHawk then return end
 
-            local currentCamDistance = I.Camera.getTargetThirdPersonDistance()
-            if zoomActive and prevCamDistance ~= currentCamDistance then
-                camera.setPreferredThirdPersonDistance(prevCamDistance)
-            else
-                prevCamDistance = currentCamDistance
-            end
-        end,
-
-        onKeyPress = function(key)
-            if key.symbol == input.KEY.Escape and zoomActive then
-                self:sendEvent(ToggleEventName, ZoomState.DISABLE)
-            end
+      if target then
+        targetLocked = true
+        if zoomActive then
+          zoomSuspended = true
+          suspendZoom()
         end
-    }
+        return
+      end
+
+      targetLocked = false
+      if zoomSuspended then
+        zoomSuspended = false
+        resumeZoom()
+      end
+    end,
+  },
+
+  engineHandlers = {
+    onFrame = function(dt)
+      if not canZoom() then return end
+
+      updateZoom(dt)
+
+      local currentCamDistance = I.Camera.getTargetThirdPersonDistance()
+      if zoomActive and prevCamDistance ~= currentCamDistance then
+        camera.setPreferredThirdPersonDistance(prevCamDistance)
+      else
+        prevCamDistance = currentCamDistance
+      end
+    end,
+
+    onKeyPress = function(key)
+      if key.symbol == input.KEY.Escape and zoomActive then
+        self:sendEvent(ToggleEventName, ZoomState.DISABLE)
+      end
+    end,
+  },
 }
