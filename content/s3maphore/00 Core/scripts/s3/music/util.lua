@@ -5,7 +5,7 @@ local isOpenMW = require 'scripts.s3.isOpenMW'
 ---@type PlaylistPriority
 local PlaylistPriority = require 'doc.playlistPriority'
 
-local async, fileExists, musicSettings, pathsMatching, playlistsSection, storage, storageGet, vfs
+local async, fileExists, musicSettings, pathsMatching, playlistsSection, signatureSection, storage, storageGet, vfs
 
 local error, getmetatable, next, pairs, pcall, rawget, rawset, select, setmetatable, type =
   error, getmetatable, next, pairs, pcall, rawget, rawset, select, setmetatable, type
@@ -52,6 +52,8 @@ if isOpenMW then
   pathsMatching = vfs.pathsWithPrefix
   playlistsSection = storage.playerSection 'S3MusicPlaylistsTrackOrder'
   playlistsSection:setLifeTime(storage.LIFE_TIME.GameSession)
+  signatureSection = storage.playerSection 'S3MusicPlaylistTrackSignatures'
+  signatureSection:setLifeTime(storage.LIFE_TIME.GameSession)
   storageGet = musicSettings.get
 
   DebugEnable = storageGet(musicSettings, 'DebugEnable')
@@ -310,9 +312,13 @@ local function initTracksOrder(tracks, randomize)
   return tracksOrder
 end
 
+local function makeTracksSignature(tracks, randomize)
+  return TableConcat(tracks, '\0') .. '\0randomize=' .. tostring(randomize)
+end
+
 ---@param deck S3maphorePlaylist[]
 ---@param playback S3maphorePlayback
----@return S3maphorePlaylist|nil
+---@return S3maphorePlaylist?
 local function firstActivePlaylist(deck, playback)
   for i = 1, #deck do
     local playlist = deck[i]
@@ -325,7 +331,7 @@ end
 ---@param specialPlaylists S3maphorePlaylist[]
 ---@param playback S3maphorePlayback
 ---@param activePlaydeck S3maphorePlaylist[] sorted deck for the current combat state
----@return S3maphorePlaylist|nil
+---@return S3maphorePlaylist?
 local function getActivePlaylistByPriority(specialPlaylists, playback, activePlaydeck)
   return firstActivePlaylist(specialPlaylists, playback)
     or firstActivePlaylist(activePlaydeck, playback)
@@ -482,7 +488,12 @@ local function OMWSetStoredTracksOrder(playlistId, playlistTracksOrder)
   playlistsSection:set(playlistId, playlistTracksOrder)
 end
 
----@class S3maphoreHelperModule
+local function OMWGetTracksSignature(playlistId) return signatureSection:get(playlistId) end
+
+local function OMWSetTracksSignature(playlistId, signature)
+  signatureSection:set(playlistId, signature)
+end
+
 local utilModule = {
   debugLog = debugLog,
   deepCopy = deepCopy,
@@ -491,10 +502,13 @@ local utilModule = {
   getAllPlaylistFiles = getAllPlaylistFiles,
   getPlaylistFilePaths = getPlaylistFilePaths,
   getStoredTracksOrder = isOpenMW and OMWGetStoredTracksOrder,
+  getTracksSignature = isOpenMW and OMWGetTracksSignature,
+  setTracksSignature = isOpenMW and OMWSetTracksSignature,
   getTracksFromDirectory = getTracksFromDirectory,
   getUpdatingSettingsTable = getUpdatingSettingsTable,
   initMissingPlaylistFields = initMissingPlaylistFields,
   initTracksOrder = initTracksOrder,
+  makeTracksSignature = makeTracksSignature,
   makeReadOnly = makeReadOnly,
   setStoredTracksOrder = isOpenMW and OMWSetStoredTracksOrder,
 }

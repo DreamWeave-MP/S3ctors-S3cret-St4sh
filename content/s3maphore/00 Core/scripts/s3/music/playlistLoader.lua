@@ -19,6 +19,7 @@ local vfs = require 'openmw.vfs'
 
 local musicUtil = require 'scripts.s3.music.util'
 
+local Catalog = require 'scripts.s3.music.playlistCatalog'
 local MusicManager = require 'scripts.s3.music.musicManager'
 
 local FAILED_TO_LOAD_PLAYLIST = 'Failed to load playlist file: %s\nErr: %s'
@@ -26,7 +27,6 @@ local FAILED_TO_LOAD_PLAYLIST = 'Failed to load playlist file: %s\nErr: %s'
 --- Takes any number of paramaters and deep prints them, if debug logging is enabled
 local function printOverride(...) musicUtil.debugLog(musicUtil.deepToString({ ... }, 3)) end
 
----@class S3maphorePlaylistEnv
 local PlaylistEnvironment = {
   playSpecialTrack = MusicManager.playSpecialTrack,
   skipTrack = MusicManager.skipTrack,
@@ -117,7 +117,7 @@ local function playlistCoroutineLoader()
             )
           )
         end
-        MusicManager.registerPlaylist(playlist)
+        Catalog.registerSource(playlist, string.lower(file:gsub('\\', '/')))
         coYield(playlist)
       end
     end
@@ -150,6 +150,7 @@ return function()
     musicUtil.debugLog('Registered playlist: %s', failure.id)
     playlistCount = playlistCount + 1
   elseif coStatus(playlistLoaderCo) == 'dead' then
+    Catalog.finishLoading()
     print(StrFormat('[ S3MAPHORE ]: %d playlists loaded. Ready to play music!', playlistCount))
 
     return PlaylistEnvironment

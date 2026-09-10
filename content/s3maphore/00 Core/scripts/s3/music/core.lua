@@ -13,7 +13,7 @@ local self = require 'openmw.self'
 local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 
-local I = require 'openmw.interfaces'
+local Interfaces = require 'openmw.interfaces'
 local s3lf = require('openmw.interfaces').s3.lf
 
 local Magic = require 'scripts.s3.spellUtil'
@@ -32,6 +32,7 @@ local PlaylistPriority = require 'doc.playlistPriority'
 local PlaylistState, updateCellMetadata, refreshObjectPresenceScope =
   require 'scripts.s3.music.playlistState'
 local DisplayTier = require 'scripts.s3.music.playlistEditor.displayTier'
+local PlaylistCatalog = require 'scripts.s3.music.playlistCatalog'
 local PlaylistEditor = require 'scripts.s3.music.playlistEditor'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
 local TrackSelection = require 'scripts.s3.music.trackSelection'
@@ -55,7 +56,6 @@ local clearJournalCache = PlaylistModule.clearJournalCache
 local clearGlobalCombatTargetCache = PlaylistModule.clearGlobalCombatTargetCache
 local clearCellCache = PlaylistModule.clearCellCache
 
-local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
 local musicSettingsSection = storage.playerSection 'SettingsS3Music'
 
 local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic, GetSelectedSpell, GetStance =
@@ -454,7 +454,7 @@ local scriptInterface = {
     --- Registration and hooks
     addTrackChangedHandler = MusicManager.addTrackChangedHandler,
     registerPlaylist = function(playlist)
-      MusicManager.registerPlaylist(playlist)
+      PlaylistCatalog.registerTransient(playlist)
 
       if PlaylistLoader then return end
 
@@ -505,6 +505,7 @@ local scriptInterface = {
           SendEvent(self, 'S3maphoreSkipTrack')
         end
       elseif key.code == input.KEY.F4 then
+        PlaylistEditor.toggle()
       end
     end,
 
@@ -514,14 +515,8 @@ local scriptInterface = {
     end,
 
     onSave = function()
-      local playlistStates = {}
-
-      for playlistId, playlist in next, MusicManager.registeredPlaylists do
-        playlistStates[playlistId] = playlist.active
-      end
-
       return {
-        playlistStates = playlistStates,
+        playlistEditor = PlaylistCatalog.save(),
         deathTrack = MusicManager.getDeathTrack(),
       }
     end,
@@ -529,16 +524,18 @@ local scriptInterface = {
     onLoad = function(data)
       if not data then return end
 
-      if data.playlistStates then
-        for playlistId, playlistState in pairs(data.playlistStates) do
-          activePlaylistSettings:set(playlistId .. 'Active', playlistState)
-        end
-      end
+      PlaylistCatalog.load(data.playlistEditor)
 
       if data.deathTrack then MusicManager.setDeathTrack(data.deathTrack) end
     end,
   },
   eventHandlers = {
+    S3maphoreCatalogChanged = function()
+      if PlaylistLoader or waitingOnPresence then return end
+      playbackEpoch = playbackEpoch + 1
+      resolvePlaylist()
+      PlaylistEditor.refresh()
+    end,
     Died = function()
       SendEvent(
         self,
@@ -677,7 +674,7 @@ local scriptInterface = {
 
     ---@param eventData { oldMode: string, newMode: string, arg: any }
     UiModeChanged = function(eventData)
-      if eventData.oldMode == I.UI.MODE.Interface and PlaylistEditor.isVisible() then
+      if eventData.oldMode == Interfaces.UI.MODE.Interface and PlaylistEditor.isVisible() then
         PlaylistEditor.hide()
       end
     end,
