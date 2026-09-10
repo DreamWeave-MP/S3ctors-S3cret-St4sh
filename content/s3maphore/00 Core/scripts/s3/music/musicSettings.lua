@@ -14,6 +14,7 @@ local musicUtil = require 'scripts.s3.music.util'
 ---@field FadeOutDuration number
 ---@field MusicEnabled boolean
 ---@field PlayerTargetedCombatOnly boolean
+---@field ScanAdjacentExteriorCells boolean
 ---@field CombatHealthThreshold number
 ---@field CombatLevelGap integer
 local MusicSettings = musicUtil.getUpdatingSettingsTable 'SettingsS3Music'

@@ -170,11 +170,23 @@ tes3 = tes3
 
 ---@alias VampireTypes VampireType[]
 
+---@class CellObjectPresence
+---@field byRecord table<string, number>
+---@field byType table<string, number>
+---@field byContentFile table<string, number>
+---@field staticContentFiles string[]
+
+---@class ExteriorCellData
+---@field ids string[]
+---@field presence CellObjectPresence
+---@field hasHostileActors boolean
+
 ---@class CellPresence
 ---@field byRecord table<string, number>
 ---@field byType table<string, number>
 ---@field byContentFile table<string, number>
 ---@field staticContentFiles string[]
+---@field currentExteriorCellObjects CellObjectPresence? Object projection for the current exterior cell
 ---@field nearestRegion string?
 ---@field cellHasHostileActors boolean
 ---@field areaHasHostileActors boolean

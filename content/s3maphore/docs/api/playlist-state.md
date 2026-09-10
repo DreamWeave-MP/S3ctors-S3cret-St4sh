@@ -42,13 +42,15 @@ end
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `objectsByRecord` | `table<string, integer>` | Record ID to instance count in the current cell or exterior 3×3 grid. |
-| `objectsByType` | `table<string, integer>` | OpenMW type name to instance count, such as `Static`, `Container`, `NPC`, or `Creature`. |
-| `objectsByContentFile` | `table<string, integer>` | Content file to object count. |
-| `staticObjectContentFiles` | `string[]` | Content files that contributed static objects. |
-| `objectCount` | `number` | Total object count, computed from `objectsByType`. |
+| `objectsByRecord` | `table<string, integer>` | Record ID to instance count in the current cell or exterior 3×3 grid, according to `ScanAdjacentExteriorCells`. |
+| `objectsByType` | `table<string, integer>` | OpenMW type name to instance count, such as `Static`, `Container`, `NPC`, or `Creature`, in the selected presence scope. |
+| `objectsByContentFile` | `table<string, integer>` | Content file to object count in the selected presence scope. |
+| `staticObjectContentFiles` | `string[]` | Content files that contributed static objects in the selected presence scope. |
+| `objectCount` | `number` | Total object count in the selected scope, computed from `objectsByType`. |
 
 Counts are counts of instances, not merely presence flags. A lookup such as `state.objectsByRecord['some_id']` returns the number of instances, or `nil` when the record is absent. The built-in [presence rules](@/s3maphore/docs/api/rules/presence.md) apply the common checks for you.
+
+For actual exterior cells, the default `ScanAdjacentExteriorCells = true` uses the loaded 3×3 area. Set it to `false` to let object-based playlist rules use only the player's current exterior cell. The collector continues maintaining the 3×3 data so changing the setting takes effect immediately without a rescan. Interior and quasi-exterior object scope remains the current cell.
 
 ## Hostility and combat
 

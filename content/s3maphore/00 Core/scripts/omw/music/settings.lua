@@ -49,6 +49,13 @@ I.Settings.registerGroup {
       default = true,
     },
     {
+      key = 'ScanAdjacentExteriorCells',
+      renderer = 'checkbox',
+      name = 'ScanAdjacentExteriorCells',
+      description = 'ScanAdjacentExteriorCellsDescription',
+      default = true,
+    },
+    {
       key = 'BannerEnabled',
       renderer = 'checkbox',
       name = 'BannerEnabled',

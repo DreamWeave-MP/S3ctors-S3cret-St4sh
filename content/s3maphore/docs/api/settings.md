@@ -34,6 +34,14 @@ These settings decide whether a newly resolved contextual playlist may force a t
 
 Cell and state changes still trigger resolution. These controls affect whether the resolved playlist can force an interruption during the transition; they do not change playlist priority or callback rules.
 
+## Presence scope
+
+| Key | Default | Effect |
+| --- | ---: | --- |
+| `ScanAdjacentExteriorCells` | `true` | When enabled, object-based playlist rules inspect the loaded exterior 3×3 area. When disabled, they inspect only objects in the player's current exterior cell. |
+
+The collector continues tracking the exterior 3×3 in either mode. Changing this setting only changes which already-collected object projection playlist selection uses, so it takes effect without a rescan. Hostility, weather, region, combat, and cell identity semantics are unchanged.
+
 ## Combat settings
 
 | Key | Default | Effect |

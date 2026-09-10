@@ -52,6 +52,9 @@ local function ensureCellCache(cellName)
   return cache
 end
 
+---@hidden
+local function clearCellCache() S3maphoreGlobalCache[PlaylistState.cellName] = nil end
+
 --- Table of IDs mapped to target levels
 ---@type table<string, openmw.types.LevelStat>
 local combatTargetLevelCache = {}
@@ -624,7 +627,7 @@ function PlaylistRules.combatTargetTagged(tagTable)
   return result
 end
 
---- Checks whether any object matching the given record IDs is present in the current cell.
+--- Checks whether any object matching the given record IDs is present in the selected presence scope.
 --- Replaces former staticExact — same logic, broader scope (uses byRecord presence).
 --- Example usage:
 ---
@@ -672,7 +675,7 @@ function PlaylistRules.staticMatch(_patterns)
   Error 'staticMatch has been removed. Use tagger tag rules + music markers instead.'
 end
 
---- Returns whether or not a given cell contains statics matching the given content file array
+--- Returns whether the selected presence scope contains statics matching the given content file array
 --- Automatically lowercases all input content file names!
 ---
 --- Example usage:
@@ -730,8 +733,8 @@ function PlaylistRules.cellHasTag(tagTable)
   return result
 end
 
---- True if any object in the current cell has a recordId with any of the given FlexTags.
---- Iterates CellPresence.byRecord once, checking objectHasTag per recordId.
+--- True if any object in the selected presence scope has a recordId with any of the given FlexTags.
+--- Iterates the selected byRecord map once, checking objectHasTag per recordId.
 ---
 --- Example usage:
 ---
@@ -763,9 +766,9 @@ function PlaylistRules.cellContainsTagged(tagTable)
   return result
 end
 
---- True if any content file with objects in the current cell has any of the given FlexTags.
+--- True if any content file with objects in the selected presence scope has any of the given FlexTags.
 --- FlexTag can tag any string — content file names work the same as record IDs or cell names.
---- Iterates CellPresence.byContentFile keys once, checking objectHasTag per content file.
+--- Iterates the selected byContentFile map once, checking objectHasTag per content file.
 ---
 --- Example usage:
 ---
@@ -797,8 +800,8 @@ function PlaylistRules.contentTag(tagTable)
   return result
 end
 
---- Check if the count of objects of a given type in the current cell falls within a range.
---- Reads from CellPresence.byType. Omitting min or max skips that bound.
+--- Check if the count of objects of a given type in the selected presence scope falls within a range.
+--- Reads from the selected byType map. Omitting min or max skips that bound.
 ---
 --- Example usage:
 ---
@@ -938,6 +941,7 @@ return {
   rules = PlaylistRules,
   clearJournalCache = clearJournalCache,
   clearGlobalCombatTargetCache = clearGlobalCombatTargetCache,
+  clearCellCache = clearCellCache,
   setCombatTargetCacheKey = setCombatTargetCacheKey,
   clearCombatCaches = clearCombatCaches,
 }

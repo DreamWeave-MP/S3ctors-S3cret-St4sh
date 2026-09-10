@@ -8,7 +8,7 @@ api_docs = true
 kind = "PlaylistRules"
 +++
 
-Presence rules read the maps produced by [CellPresence](@/s3maphore/docs/api/cell-presence.md) and projected into [PlaylistState](@/s3maphore/docs/api/playlist-state.md). Object maps cover the current interior or exterior 3×3 scan.
+Presence rules read the maps produced by [CellPresence](@/s3maphore/docs/api/cell-presence.md) and projected into [PlaylistState](@/s3maphore/docs/api/playlist-state.md). For actual exterior cells, object maps cover the current exterior 3×3 scan by default, or only the current cell when `ScanAdjacentExteriorCells` is disabled. Interior and quasi-exterior object maps cover the current cell.
 
 ## `objectExact`
 
@@ -39,7 +39,7 @@ Compatibility wrapper for `objectExact`. Existing playlists can keep using it, b
 
 {{ api_signature(value="Playback.rules.staticContentFile(contentFiles) -> boolean") }}
 
-Returns `true` when a static object in the current scan came from any content file present as a key in `contentFiles`. Content-file names are normalized to lowercase by the collector, so use lowercase keys.
+Returns `true` when a static object in the selected presence scope came from any content file present as a key in `contentFiles`. Content-file names are normalized to lowercase by the collector, so use lowercase keys.
 
 ```lua
 local ExpansionStatics = {
@@ -92,7 +92,7 @@ end
 
 {{ api_signature(value="Playback.rules.cellContainsTagged(tagTable) -> boolean") }}
 
-Returns `true` when any record ID in the current cell or grid has any supplied FlexTag.
+Returns `true` when any record ID in the selected presence scope has any supplied FlexTag.
 
 ```lua
 local DwemerTags = { 'WeaponDwemer', 'ArmorDwemer' }

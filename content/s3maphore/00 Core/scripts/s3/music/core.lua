@@ -29,7 +29,8 @@ local MusicSettings = require 'scripts.s3.music.musicSettings'
 local PlaylistLoader = require 'scripts.s3.music.playlistLoader'
 local PlaylistModule = require 'scripts.s3.music.playlistRules'
 local PlaylistPriority = require 'doc.playlistPriority'
-local PlaylistState, updateCellMetadata = require 'scripts.s3.music.playlistState'
+local PlaylistState, updateCellMetadata, refreshObjectPresenceScope =
+  require 'scripts.s3.music.playlistState'
 local DisplayTier = require 'scripts.s3.music.playlistEditor.displayTier'
 local PlaylistEditor = require 'scripts.s3.music.playlistEditor'
 local SilenceManager = require 'scripts.s3.music.silenceManager'
@@ -44,13 +45,18 @@ local PlaylistEnv
 --- updateCellMetadata for me, but not for thee
 ---@diagnostic disable-next-line: invisible
 updateCellMetadata, PlaylistState.updateCellMetadata = PlaylistState.updateCellMetadata, nil
+---@diagnostic disable-next-line: invisible
+refreshObjectPresenceScope, PlaylistState.refreshObjectPresenceScope =
+  PlaylistState.refreshObjectPresenceScope, nil
 
 ---@type PlaylistRules
 local PlaylistRules = PlaylistModule.rules
 local clearJournalCache = PlaylistModule.clearJournalCache
 local clearGlobalCombatTargetCache = PlaylistModule.clearGlobalCombatTargetCache
+local clearCellCache = PlaylistModule.clearCellCache
 
 local activePlaylistSettings = storage.playerSection 'S3maphoreActivePlaylistSettings'
+local musicSettingsSection = storage.playerSection 'SettingsS3Music'
 
 local CollisionEnabled, IsDead, IsSoundEnabled, IsMusicPlaying, IsSwimming, SendEvent, SendGlobalEvent, StopMusic, StreamMusic, GetSelectedSpell, GetStance =
   require('openmw.debug').isCollisionEnabled,
@@ -239,7 +245,7 @@ StateMachine:state('init_player', function()
   TableSort(MusicManager.battlePlaylists, MusicManager.priorityThenRegistration)
   TableSort(MusicManager.specialPlaylists, MusicManager.priorityThenRegistration)
 
-  storage.playerSection('SettingsS3Music'):subscribe(async:callback(function(_, key)
+  musicSettingsSection:subscribe(async:callback(function(_, key)
     if key == 'BannerEnabled' then
       MusicManager.updateBanner()
     elseif key == 'MusicEnabled' then
@@ -275,6 +281,10 @@ StateMachine:state('init_player', function()
       or key == 'CombatHealthThreshold'
     then
       CombatState.recomputeState()
+      resolvePlaylist()
+    elseif key == 'ScanAdjacentExteriorCells' then
+      refreshObjectPresenceScope(musicSettingsSection:get(key) ~= false)
+      clearCellCache()
       resolvePlaylist()
     end
   end))
@@ -606,6 +616,7 @@ local scriptInterface = {
       end
 
       waitingOnPresence = false
+      clearCellCache()
       musicUtil.debugLog 'Resolving playlist after cell presence update!'
       resolvePlaylist()
       if MusicSettings.MusicEnabled then StateMachine:transition 'update_playlist_state' end
