@@ -167,6 +167,7 @@ LockOnManager.state = {
   lookTargetVelocity = nil,
   frameDt = 0,
   goLeft = false,
+  cameraSide = 1,
 }
 
 ---@alias MarkerTransform openmw.util.Vector3 info about the marker; z element is distance from camera, xy are normalized screenpos of target
@@ -189,6 +190,7 @@ function LockOnManager:clearTarget()
   state.canDoLockOn = false
   state.flickTriggered = false
   state.cumulativeXMove = 0
+  state.cameraSide = 1
 
   self.setMarkerVisibility(false)
   self:endLockCamera()
@@ -319,6 +321,7 @@ function LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
   local cameraHeight = LockOnManager.CameraHeight
   local cameraMinDistance = LockOnManager.CameraMinDistance
   local cameraSideOffset = LockOnManager.CameraSideOffset
+  local state = LockOnManager.state
 
   local targetBad = cameraDistance * 0.5
   local targetGood = cameraDistance * 0.8
@@ -349,14 +352,15 @@ function LockOnManager.computeOrbitParams(orbitCenter, targetPos, targetObject)
   local rightTargetDistance = resolveTargetVisibility(targetPos, rightPosition, targetObject)
   local leftTargetDistance = resolveTargetVisibility(targetPos, leftPosition, targetObject)
 
-  local desiredSide = 1
-  if
-    (rightDistance < targetBad or rightTargetDistance < targetBad)
-    and leftDistance > targetGood
-    and leftTargetDistance > targetGood
-  then
-    desiredSide = -1
+  local rightScore = Min(rightDistance, rightTargetDistance)
+  local leftScore = Min(leftDistance, leftTargetDistance)
+  local desiredSide = state.cameraSide or 1
+  if desiredSide == 1 then
+    if rightScore < targetBad and leftScore > targetGood then desiredSide = -1 end
+  elseif leftScore < targetBad and rightScore > targetGood then
+    desiredSide = 1
   end
+  state.cameraSide = desiredSide
 
   local desiredPosition = desiredSide == 1 and rightPosition or leftPosition
   local effectiveDist = desiredSide == 1 and rightDistance or leftDistance
