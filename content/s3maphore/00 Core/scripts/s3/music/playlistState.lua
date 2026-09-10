@@ -1,7 +1,8 @@
 ---@omw-context player
 
-local StrLower = string.lower
+local Pairs, StrLower = pairs, string.lower
 
+local MusicSettings = require 'scripts.s3.music.musicSettings'
 local gameSelf = require 'openmw.self'
 
 ---@class PlaylistState
@@ -10,10 +11,10 @@ local gameSelf = require 'openmw.self'
 ---@field cellName string lowercased name of the cell the player is in
 ---@field cellId string engine-level identifier for cells. Should generally not be used in favor of cellNames as the only way to determine cell ids is to check in-engine using `cell.id`. It is made available in PlaylistState mostly for caching purposes, but may be used regardless.
 ---@field cellWaterLevel number? If the current cell has water, then, it is copied here
----@field objectsByRecord table<string, integer> Map of recordId → instance count for the current cell/grid
----@field objectsByType table<string, integer> Map of typeName → instance count for the current cell/grid
----@field objectsByContentFile table<string, integer> Map of contentFile → instance count for the current cell/grid
----@field staticObjectContentFiles string[] List of content files with statics in the current cell/grid
+---@field objectsByRecord table<string, integer> Map of recordId → instance count in the selected presence scope
+---@field objectsByType table<string, integer> Map of typeName → instance count in the selected presence scope
+---@field objectsByContentFile table<string, integer> Map of contentFile → instance count in the selected presence scope
+---@field staticObjectContentFiles string[] List of content files with statics in the selected presence scope
 ---@field cellHasHostileActors boolean True if the player's current cell contains hostile actors
 ---@field areaHasHostileActors boolean True if any cell in the current 3×3 grid contains hostile actors
 ---@field killCounts table<string, number> Record of all actors killed during this playthrough. The `TotalKills` field indicates the overall number of killed actors. Does not necessarily mean those actors were killed by the player, they're just dead.
@@ -58,6 +59,31 @@ local PlaylistState = {
 -- Cached cell grid for updateCellMetadata, avoids creating new table objects each call
 local CachedCellGrid = { x = 0, y = 0 }
 local HasTag
+local CurrentPresence
+
+---@private
+---@param scanAdjacentExteriorCells boolean
+function PlaylistState.refreshObjectPresenceScope(scanAdjacentExteriorCells)
+  if not CurrentPresence then return end
+
+  local source = CurrentPresence
+  if gameSelf.cell.isExterior and not scanAdjacentExteriorCells then
+    source = CurrentPresence.currentExteriorCellObjects
+  end
+
+  PlaylistState.objectsByRecord = source.byRecord
+  PlaylistState.objectsByType = source.byType
+  PlaylistState.objectsByContentFile = source.byContentFile
+  PlaylistState.staticObjectContentFiles = source.staticContentFiles
+
+  local total = 0
+  for _, count in Pairs(source.byType) do
+    total = total + count
+  end
+  PlaylistState.objectCount = total
+end
+
+local refreshObjectPresenceScope = PlaylistState.refreshObjectPresenceScope
 
 --- Updates PlaylistState cell metadata from self.cell.
 --- Called from both S3LFCellChanged and the init handler.
@@ -107,20 +133,10 @@ do
 
       PlaylistState.nearestRegion = presence.nearestRegion or thisCell.region
 
-      PlaylistState.objectsByRecord = presence.byRecord
-      PlaylistState.objectsByType = presence.byType
-      PlaylistState.objectsByContentFile = presence.byContentFile
-      PlaylistState.staticObjectContentFiles = presence.staticContentFiles
+      CurrentPresence = presence
+      refreshObjectPresenceScope(MusicSettings.ScanAdjacentExteriorCells ~= false)
       PlaylistState.cellHasHostileActors = presence.cellHasHostileActors
       PlaylistState.areaHasHostileActors = presence.areaHasHostileActors
-
-      -- Compute total object count from byType so playlists can read PlaylistState.objectCount directly
-      local total = 0
-      for _, count in pairs(presence.byType) do
-        total = total + count
-      end
-
-      PlaylistState.objectCount = total
 
       PresenceUpdatedData.cellId = presence.cellId
       PresenceUpdatedData.generation = presence.generation

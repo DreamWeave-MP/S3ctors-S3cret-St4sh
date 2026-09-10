@@ -20,6 +20,7 @@ Think of it as a mailbox between two jobs: a global script scans world content, 
 | `byType` | `table<string, integer>` | OpenMW type name to instance count. |
 | `byContentFile` | `table<string, integer>` | Content file to object count. |
 | `staticContentFiles` | `string[]` | Content files that contributed static objects. |
+| `currentExteriorCellObjects` | `CellObjectPresence?` | Object-derived fields for only the current exterior cell. Used by the player-side scope setting; `nil` for interiors. |
 | `nearestRegion` | `string?` | Region found on the cell, or through an interior teleport door. |
 | `cellHasHostileActors` | `boolean` | Hostile living actor in the player's current cell. |
 | `areaHasHostileActors` | `boolean` | Hostile living actor anywhere in the scanned exterior area. |
@@ -29,6 +30,8 @@ Think of it as a mailbox between two jobs: a global script scans world content, 
 ## Scan scope
 
 For an interior, S3maphore scans the current cell. For an actual exterior, it scans the current cell and the surrounding 3×3 grid. The center cell supplies `cellHasHostileActors`; any hostile actor in the nine-cell area makes `areaHasHostileActors` true.
+
+The collector always scans the exterior 3×3. `currentExteriorCellObjects` is a derived projection of the already-collected center cell, not a second collection path. The player chooses whether playlist object rules use the aggregate maps or this center-cell projection.
 
 Interior visits preserve an exterior snapshot so returning through the same door can avoid a complete rescan. When the exterior grid changes, old cells are removed and the new 3×3 is rebuilt.
 
@@ -46,7 +49,7 @@ The player-side subscriber accepts a record only when `presence.cellId` matches 
 | `cellHasHostileActors` | `cellHasHostileActors` |
 | `areaHasHostileActors` | `areaHasHostileActors` |
 
-`PlaylistState.objectCount` is calculated from `byType` after the mapping.
+`PlaylistState.objectCount` is calculated from the selected `byType` map after the mapping. The selected object maps use the 3×3 aggregate by default and switch to `currentExteriorCellObjects` when `ScanAdjacentExteriorCells` is disabled.
 
 ## Timing and stale data
 

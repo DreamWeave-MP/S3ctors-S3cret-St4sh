@@ -32,11 +32,8 @@ local PlayersInitialized = {}
 ---@type table<string, integer>
 local GlobalKillCounts = {}
 
-local pendingAdditions, previousGridCenters, seenContentFiles, seenIds, cellObjectIds =
+local pendingAdditions, previousGridCenters, seenContentFiles, seenIds, exteriorCellData =
   {}, {}, {}, {}, {}
-
--- Reusable per-cell delta scratch — cleared at the start of each collectPresenceAndStatics call
-local recordDeltas, typeDeltas, contentFileDeltas = {}, {}, {}
 
 ---@type CellPresence
 local CellPresence = {
@@ -44,6 +41,7 @@ local CellPresence = {
   byType = {},
   byContentFile = {},
   staticContentFiles = {},
+  currentExteriorCellObjects = nil,
   nearestRegion = nil,
   areaHasHostileActors = false,
   cellHasHostileActors = false,
@@ -60,11 +58,8 @@ local exteriorSnapshot = {
   byRecord = nil,
   byType = nil,
   byContentFile = nil,
-  staticContentFiles = nil,
   nearestRegion = nil,
-  cellObjectIds = nil,
-  cellHasHostileActors = false,
-  areaHasHostileActors = false,
+  exteriorCellData = nil,
 }
 local exteriorSnapshotValid = false
 
@@ -155,29 +150,27 @@ local function clearCellPresence()
   CellPresence.cellHasHostileActors = false
   CellPresence.areaHasHostileActors = false
   CellPresence.cellId = nil
-  clear(cellObjectIds)
+  clear(exteriorCellData)
+  CellPresence.currentExteriorCellObjects = nil
 end
 
 --- Saves the current CellPresence state as the exterior snapshot.
 --- Swaps in fresh empty tables so the interior sweep can populate them
 --- without corrupting the saved exterior data.
---- previousGridCenters and cellObjectIds are NOT touched — preserved for exterior diff on exit.
+--- previousGridCenters and exteriorCellData are NOT touched — preserved for exterior diff on exit.
 local function saveExteriorSnapshot()
   exteriorSnapshot.byRecord = CellPresence.byRecord
   exteriorSnapshot.byType = CellPresence.byType
   exteriorSnapshot.byContentFile = CellPresence.byContentFile
-  exteriorSnapshot.staticContentFiles = CellPresence.staticContentFiles
   exteriorSnapshot.nearestRegion = CellPresence.nearestRegion
-  exteriorSnapshot.cellHasHostileActors = CellPresence.cellHasHostileActors
-  exteriorSnapshot.areaHasHostileActors = CellPresence.areaHasHostileActors
-  exteriorSnapshot.cellObjectIds = cellObjectIds
+  exteriorSnapshot.exteriorCellData = exteriorCellData
   exteriorSnapshotValid = true
 
   CellPresence.byRecord = {}
   CellPresence.byType = {}
   CellPresence.byContentFile = {}
   CellPresence.staticContentFiles = {}
-  cellObjectIds = {}
+  exteriorCellData = {}
 end
 
 --- Restores the exterior snapshot into CellPresence.
@@ -186,18 +179,15 @@ local function restoreExteriorSnapshot()
   CellPresence.byRecord = exteriorSnapshot.byRecord
   CellPresence.byType = exteriorSnapshot.byType
   CellPresence.byContentFile = exteriorSnapshot.byContentFile
-  CellPresence.staticContentFiles = exteriorSnapshot.staticContentFiles
   CellPresence.nearestRegion = exteriorSnapshot.nearestRegion
-  CellPresence.cellHasHostileActors = exteriorSnapshot.cellHasHostileActors
-  CellPresence.areaHasHostileActors = exteriorSnapshot.areaHasHostileActors
-  cellObjectIds = exteriorSnapshot.cellObjectIds
+  exteriorCellData = exteriorSnapshot.exteriorCellData
   exteriorSnapshotValid = false
 end
 
---- Repopulates seenIds from cellObjectIds so onObjectActive doesn't double-count
+--- Repopulates seenIds from exteriorCellData so onObjectActive doesn't double-count
 --- objects that are already tracked from the preserved exterior state.
 local function repopulateSeenIds()
-  for _, cellData in Next, cellObjectIds do
+  for _, cellData in Next, exteriorCellData do
     local ids = cellData.ids
     for j = 1, #ids do
       seenIds[ids[j]] = true
@@ -205,62 +195,60 @@ local function repopulateSeenIds()
   end
 end
 
---- Rebuilds staticContentFiles from cellObjectIds — the authoritative record of what's
+--- Rebuilds staticContentFiles from exteriorCellData — the authoritative record of what's
 --- in the current 3×3. Called after exterior diff/sweep/gap-fill to ensure
 --- staticContentFiles reflects exactly the current grid, including kept cells' statics.
-local function rebuildStaticListFromCellObjectIds()
+local function rebuildStaticListFromExteriorCellData()
   local outContentFiles = CellPresence.staticContentFiles
   clear(outContentFiles)
   clear(seenContentFiles)
 
-  for _, cellData in Next, cellObjectIds do
-    local numEntries = #cellData.ids
-    for j = 1, numEntries do
-      if cellData.objectTypes[j] == 'Static' then
-        local contentFile = cellData.contentFiles[j]
+  for _, cellData in Next, exteriorCellData do
+    local staticContentFiles = cellData.presence.staticContentFiles
+    for i = 1, #staticContentFiles do
+      local contentFile = staticContentFiles[i]
 
-        if contentFile and not seenContentFiles[contentFile] then
-          outContentFiles[#outContentFiles + 1] = contentFile
-          seenContentFiles[contentFile] = true
-        end
+      if not seenContentFiles[contentFile] then
+        outContentFiles[#outContentFiles + 1] = contentFile
+        seenContentFiles[contentFile] = true
       end
     end
   end
 end
 
----@param recordId string
----@param objectType string
----@param contentFile string?
-local function removeFromPresence(recordId, objectType, contentFile)
+---@param target table<string, integer>
+---@param key string
+---@param count integer
+---@param mapName string
+local function subtractCount(target, key, count, mapName)
+  local current = target[key]
+  if not current or current < count then
+    Error(StrFormat('subtractCount: %s[%s] is below the requested count', mapName, key))
+  end
+
+  if current == count then
+    target[key] = nil
+  else
+    target[key] = current - count
+  end
+end
+
+---@param cellData table
+local function removeCellPresence(cellData)
+  local presence = cellData.presence
   local byContentFile, byRecord, byType =
     CellPresence.byContentFile, CellPresence.byRecord, CellPresence.byType
 
-  local recordCount = byRecord[recordId]
-  if not recordCount then Error(StrFormat('removeFromPresence: byRecord[%s] is nil', recordId)) end
-  if recordCount <= 1 then
-    byRecord[recordId] = nil
-  else
-    byRecord[recordId] = recordCount - 1
+  for recordId, count in Next, presence.byRecord do
+    subtractCount(byRecord, recordId, count, 'byRecord')
   end
 
-  local typeCount = byType[objectType]
-  if not typeCount then Error(StrFormat('removeFromPresence: byType[%s] is nil', objectType)) end
-  if typeCount <= 1 then
-    byType[objectType] = nil
-  else
-    byType[objectType] = typeCount - 1
+  for typeName, count in Next, presence.byType do
+    subtractCount(byType, typeName, count, 'byType')
   end
 
-  if contentFile then
-    local contentFileCount = byContentFile[contentFile]
-    if not contentFileCount then
-      Error(StrFormat('removeFromPresence: byContentFile[%s] is nil', contentFile))
-    end
-    if contentFileCount <= 1 then
-      byContentFile[contentFile] = nil
-    else
-      byContentFile[contentFile] = contentFileCount - 1
-    end
+  for contentFile, count in Next, presence.byContentFile do
+    subtractCount(byContentFile, contentFile, count, 'byContentFile')
   end
 end
 
@@ -272,11 +260,14 @@ local function collectPresenceAndStatics(cell, cellKey)
   CoYield()
 
   local nearestDoor
-  local objIds, objRecordIds, objTypes, objContentFiles
-
-  if cellKey then
-    objIds, objRecordIds, objTypes, objContentFiles = {}, {}, {}, {}
-  end
+  local cellPresence = {
+    byRecord = {},
+    byType = {},
+    byContentFile = {},
+    staticContentFiles = {},
+  }
+  local cellData = cellKey and { ids = {}, presence = cellPresence, hasHostileActors = false }
+  local seenCellStaticContentFiles = {}
 
   local numObjects = #objects
   local targetFrames = cell.isExterior and TARGET_TRANSITION_FRAMES * EXTERIOR_TRANSITION_MULT
@@ -286,42 +277,28 @@ local function collectPresenceAndStatics(cell, cellKey)
 
   local untilYield = batchSize
 
-  -- Per-cell accumulators — cleared and reused across cells, committed to CellPresence only after the full cell loop
-  clear(recordDeltas)
-  clear(typeDeltas)
-  clear(contentFileDeltas)
   local cellHasHostile
 
-  local outContentFiles = CellPresence.staticContentFiles
   for i = 1, numObjects do
     local obj = objects[i]
     local id, objType, recordId, contentFile = obj.id, obj.type, obj.recordId, obj.contentFile
     local typeName = TypesToNames[objType]
 
     if typeName then
-      if cellKey then
-        local idx = #objIds + 1
-        objIds[idx] = id
-        objRecordIds[idx] = recordId
-        objTypes[idx] = typeName
-        objContentFiles[idx] = contentFile
-      end
+      if cellKey then cellData.ids[#cellData.ids + 1] = id end
 
       seenIds[id] = true
 
-      recordDeltas[recordId] = (recordDeltas[recordId] or 0) + 1
-      typeDeltas[typeName] = (typeDeltas[typeName] or 0) + 1
+      cellPresence.byRecord[recordId] = (cellPresence.byRecord[recordId] or 0) + 1
+      cellPresence.byType[typeName] = (cellPresence.byType[typeName] or 0) + 1
       if contentFile then
-        contentFileDeltas[contentFile] = (contentFileDeltas[contentFile] or 0) + 1
+        cellPresence.byContentFile[contentFile] = (cellPresence.byContentFile[contentFile] or 0) + 1
       end
 
-      -- Static list population — interiors only.
-      -- Exterior staticContentFiles is rebuilt from cellObjectIds by rebuildStaticListFromCellObjectIds.
-      if not cellKey and objType == StaticType then
-        if contentFile and not seenContentFiles[contentFile] then
-          outContentFiles[#outContentFiles + 1] = contentFile
-          seenContentFiles[contentFile] = true
-        end
+      if objType == StaticType and contentFile and not seenCellStaticContentFiles[contentFile] then
+        local staticContentFiles = cellPresence.staticContentFiles
+        staticContentFiles[#staticContentFiles + 1] = contentFile
+        seenCellStaticContentFiles[contentFile] = true
       end
 
       -- Combat check: does this cell contain any aggressive living actor (excluding the player)?
@@ -345,35 +322,42 @@ local function collectPresenceAndStatics(cell, cellKey)
   end
 
   -- Commit the full cell atomically — if the coroutine was aborted mid-loop,
-  -- the entries were never written to CellPresence and get garbage collected.
+  -- neither its per-cell data nor its deltas are published.
   local byContentFile, byRecord, byType =
     CellPresence.byContentFile, CellPresence.byRecord, CellPresence.byType
-  for recordId, delta in Next, recordDeltas do
+  for recordId, delta in Next, cellPresence.byRecord do
     byRecord[recordId] = (byRecord[recordId] or 0) + delta
   end
 
-  for typeName, delta in Next, typeDeltas do
+  for typeName, delta in Next, cellPresence.byType do
     byType[typeName] = (byType[typeName] or 0) + delta
   end
 
-  for contentFile, delta in Next, contentFileDeltas do
+  for contentFile, delta in Next, cellPresence.byContentFile do
     byContentFile[contentFile] = (byContentFile[contentFile] or 0) + delta
   end
 
+  if not cellKey then
+    local staticContentFiles = cellPresence.staticContentFiles
+    for i = 1, #staticContentFiles do
+      local contentFile = staticContentFiles[i]
+      if not seenContentFiles[contentFile] then
+        CellPresence.staticContentFiles[#CellPresence.staticContentFiles + 1] = contentFile
+        seenContentFiles[contentFile] = true
+      end
+    end
+  end
+
   if cellKey then
-    cellObjectIds[cellKey] = {
-      ids = objIds,
-      recordIds = objRecordIds,
-      objectTypes = objTypes,
-      contentFiles = objContentFiles,
-    }
+    cellData.hasHostileActors = cellHasHostile or false
+    exteriorCellData[cellKey] = cellData
   else
     local region = cell.region
     if not region and nearestDoor then region = DoorDestination(nearestDoor).region end
     if region then CellPresence.nearestRegion = region end
   end
 
-  return cellHasHostile
+  return cellHasHostile or false
 end
 
 local function flushPendingAdditions(budget)
@@ -403,17 +387,32 @@ local function flushPendingAdditions(budget)
       byContentFile[contentFile] = (contentFileCount or 0) + 1
     end
 
-    -- Track in cellObjectIds so the diff/removeFromPresence path can account for it
+    -- Track in exteriorCellData so the diff/remove path can account for it
     local objCell = obj.cell
     if objCell.isExterior then
       local cellKey = szudzik.getIndex(objCell.gridX, objCell.gridY)
-      local cellData = cellObjectIds[cellKey]
+      local cellData = exteriorCellData[cellKey]
       if cellData then
-        local idx = #cellData.ids + 1
-        cellData.ids[idx] = obj.id
-        cellData.recordIds[idx] = recordId
-        cellData.objectTypes[idx] = typeName
-        cellData.contentFiles[idx] = contentFile
+        cellData.ids[#cellData.ids + 1] = obj.id
+
+        local presence = cellData.presence
+        presence.byRecord[recordId] = (presence.byRecord[recordId] or 0) + 1
+        presence.byType[typeName] = (presence.byType[typeName] or 0) + 1
+        if contentFile then
+          presence.byContentFile[contentFile] = (presence.byContentFile[contentFile] or 0) + 1
+        end
+
+        if objType == StaticType and contentFile then
+          local staticContentFiles = presence.staticContentFiles
+          local found = false
+          for j = 1, #staticContentFiles do
+            if staticContentFiles[j] == contentFile then
+              found = true
+              break
+            end
+          end
+          if not found then staticContentFiles[#staticContentFiles + 1] = contentFile end
+        end
       end
     end
 
@@ -467,8 +466,6 @@ local function cellTransitionCoroutineHandler()
         oldMinY, oldMaxY = py - 1, py + 1
       end
 
-      local areaHostile, centerKey = false, szudzik.getIndex(gridX, gridY)
-
       for offsetX = -1, 1 do
         for offsetY = -1, 1 do
           local cellX, cellY = gridX + offsetX, gridY + offsetY
@@ -479,36 +476,25 @@ local function cellTransitionCoroutineHandler()
             or cellX > oldMaxX
             or cellY < oldMinY
             or cellY > oldMaxY
-          ) and not cellObjectIds[cellKey]
+          ) and not exteriorCellData[cellKey]
           if isNew then
             CoYield() -- Breathe before GetAll
 
             local exteriorCell = GetExteriorCell(cellX, cellY)
-            if exteriorCell then
-              local cellHostile = collectPresenceAndStatics(exteriorCell, cellKey)
-              if cellKey == centerKey then CellPresence.cellHasHostileActors = cellHostile end
-              if cellHostile then areaHostile = true end
-            end
+            if exteriorCell then collectPresenceAndStatics(exteriorCell, cellKey) end
 
             CoYield() -- Between cells
           end
         end
       end
 
-      -- Remove all cellObjectIds entries outside the new 3×3
+      -- Remove all exteriorCellData entries outside the new 3×3
       -- (covers both normal leaving-cells and orphans from aborted coroutines)
-      for cellKey, cellData in Next, cellObjectIds do
+      for cellKey, cellData in Next, exteriorCellData do
         local cellX, cellY = szudzik.unpair(cellKey)
         if cellX < gridX - 1 or cellX > gridX + 1 or cellY < gridY - 1 or cellY > gridY + 1 then
-          local numEntries = #cellData.ids
-          for j = 1, numEntries do
-            removeFromPresence(
-              cellData.recordIds[j],
-              cellData.objectTypes[j],
-              cellData.contentFiles[j]
-            )
-          end
-          cellObjectIds[cellKey] = nil
+          removeCellPresence(cellData)
+          exteriorCellData[cellKey] = nil
         end
       end
 
@@ -516,24 +502,31 @@ local function cellTransitionCoroutineHandler()
       for offsetX = -1, 1 do
         for offsetY = -1, 1 do
           local cellKey = szudzik.getIndex(gridX + offsetX, gridY + offsetY)
-          if not cellObjectIds[cellKey] then
+          if not exteriorCellData[cellKey] then
             CoYield() -- Breathe before GetAll
             local cell = GetExteriorCell(gridX + offsetX, gridY + offsetY)
-            if cell then
-              local cellHostile = collectPresenceAndStatics(cell, cellKey)
-              if cellKey == centerKey then CellPresence.cellHasHostileActors = cellHostile end
-              if cellHostile then areaHostile = true end
-            end
+            if cell then collectPresenceAndStatics(cell, cellKey) end
           end
         end
       end
-      CellPresence.areaHasHostileActors = areaHostile
-
-      -- Rebuild staticContentFiles from the authoritative cellObjectIds
-      -- This captures statics from ALL cells in the current 3×3, including kept cells
-      -- that the diff loop skipped (they're already in cellObjectIds)
-      rebuildStaticListFromCellObjectIds()
     end
+
+    local centerData = exteriorCellData[center]
+    if not centerData then Error 'Current exterior cell is missing from exteriorCellData' end
+
+    -- Derive all exterior-facing state from the authoritative retained cells.
+    rebuildStaticListFromExteriorCellData()
+    CellPresence.currentExteriorCellObjects = centerData.presence
+    CellPresence.cellHasHostileActors = centerData.hasHostileActors
+
+    local areaHasHostileActors = false
+    for _, cellData in Next, exteriorCellData do
+      if cellData.hasHostileActors then
+        areaHasHostileActors = true
+        break
+      end
+    end
+    CellPresence.areaHasHostileActors = areaHasHostileActors
   else
     -- Interior: save exterior state if coming from exterior, then clear + rebuild
     local playerId = TransitioningPlayer.id
@@ -561,6 +554,7 @@ local function cellTransitionCoroutineHandler()
     local cellHostile = collectPresenceAndStatics(TransitionCell)
     CellPresence.cellHasHostileActors = cellHostile
     CellPresence.areaHasHostileActors = cellHostile
+    CellPresence.currentExteriorCellObjects = nil
   end
 
   -- Stamp the source cell so the player-side subscriber can reject stale writes
