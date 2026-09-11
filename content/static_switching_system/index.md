@@ -25,6 +25,10 @@ extra:
 
 <!-- more -->
 
+<div align="center">
+  <img src="logo.png" alt="Static Switching System logo" width="512" height="512" />
+</div>
+
 SSS has two module types: static and instance. Pick one.
 
 - **Static modules** replace meshes and maintain tracked replacement chains. They are the original Static Switching System path.
