@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Bad Weather Has Consequences
+priority: polish
+
+instances:
+  - conditions:
+      - object_type: Static
+      - record_id:
+          - ex_dwrv_statue00
+          - ex_imp_dragonstatue
+          - ex_v_vivecstatue_01
+          - ex_v_vivecstatue_02
+          - furn_6th_ashstatue
+          - furn_shrine_vivec_01
+          - furn_shrine_tribunal_01
+      - current_weather:
+          isStorm: true
+          name: ash
+    once: true
+    actions:
+      - transform:
+          rotate:
+            z: { min: -12, max: 12 }
+      - create:
+          furn_bone_01:
+            count:
+              max: 2
+            chance: 0.4
+            position:
+              x: { min: -80, max: 80 }
+              y: { min: -80, max: 80 }

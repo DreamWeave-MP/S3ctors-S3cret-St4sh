@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: The Door Knows What You're Wearing
+priority: standard
+
+instances:
+  - conditions:
+      - object_type: Door
+      - faction_owner_id: imperial legion
+      - player_equipped: imperial cuirass_armor
+      - locked: true
+    actions:
+      - lock_level: 0
+      - key: false
+      - trap: false

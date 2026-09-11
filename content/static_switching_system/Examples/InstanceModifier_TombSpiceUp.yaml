@@ -23,7 +23,7 @@ instances:
           - ^urn_
           - bone
           - lantern
-          - ^web_
+          - ^furn_web
     once: per_cell
     actions:
       - transform:
@@ -35,7 +35,7 @@ instances:
       - record_id:
           - skull
           - bone
-          - ^web_
+          - ^furn_web
     once: per_cell
     actions:
       - transform:

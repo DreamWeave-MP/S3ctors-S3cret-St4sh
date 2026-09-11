@@ -1,0 +1,191 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: You Probably Want Lua
+priority: finisher
+
+instances:
+  - conditions:
+      - object_type: Static
+      - record_id:
+          - furn_bone_01
+          - furn_bone_rib_01
+          - furn_bone_skull_01
+          - furn_bone_stake00
+      - generated_object: false
+      - current_weather:
+          isStorm: true
+          name: ash
+      - player_health:
+          max: 20
+      - player_magicka:
+          max: 30
+      - player_fatigue:
+          max: 40
+      - player_attribute:
+          willpower:
+            min: 40
+          luck:
+            min: 40
+      - player_skill:
+          mysticism:
+            min: 30
+          security:
+            min: 40
+      - player_faction:
+          faction: imperial legion
+          min: 1
+      - player_equipped: imperial cuirass_armor
+    once: true
+    actions:
+      - chance: 0.8
+        replace:
+          bonewalker: 0.35
+        transform:
+          scale: { min: 0.75, max: 1.5 }
+          rotate:
+            x: { min: -10, max: 10 }
+            y: { min: -10, max: 10 }
+            z: { min: -30, max: 30 }
+          position:
+            x: { min: -8, max: 8 }
+            y: { min: -8, max: 8 }
+        create:
+          furn_bone_01:
+            count: { min: 1, max: 4 }
+            chance: 0.8
+            scale: { min: 0.6, max: 1.3 }
+            rotate:
+              z: { min: 0, max: 360 }
+            position:
+              x: { min: -128, max: 128 }
+              y: { min: -128, max: 128 }
+          furn_bone_skull_01:
+            count: { min: 1, max: 2 }
+            chance: 0.45
+            rotate:
+              z: { min: 0, max: 360 }
+            position:
+              x: { min: -160, max: 160 }
+              y: { min: -160, max: 160 }
+          bonewalker:
+            count: { min: 1, max: 2 }
+            chance: 0.25
+            position:
+              x: { min: -192, max: 192 }
+              y: { min: -192, max: 192 }
+        playsound:
+          id: bonewalkerroar
+          chance: 0.5
+          volume: 0.7
+          pitch: 0.8
+
+  - conditions:
+      - object_type: Creature
+      - generated_object: true
+      - creature_type: undead
+      - is_dead: true
+      - current_weather:
+          isStorm: true
+          name: ash
+      - player_health:
+          max: 20
+    once: true
+    actions:
+      - replace: self
+        transform:
+          scale: { min: 0.8, max: 1.2 }
+          rotate:
+            z: { min: -180, max: 180 }
+        teleport:
+          cell: Ashurnabitashpi
+          position:
+            x: { min: -128, max: 128 }
+            y: { min: -128, max: 128 }
+            z: { min: 0, max: 64 }
+          onGround: true
+        create:
+          bonewalker_greater:
+            count: { min: 1, max: 2 }
+            chance: 0.6
+            position:
+              x: { min: -96, max: 96 }
+              y: { min: -96, max: 96 }
+          furn_bone_skull_01:
+            count: { min: 1, max: 3 }
+            chance: 0.8
+            position:
+              x: { min: -96, max: 96 }
+              y: { min: -96, max: 96 }
+        playsound: bonewalkerroar
+        delete: true
+
+  - conditions:
+      - object_type:
+          - Door
+          - Container
+      - cell_match: tomb
+      - player_level:
+          min: 20
+      - player_health:
+          max: 20
+      - player_skill:
+          security:
+            min: 80
+      - player_equipped: imperial cuirass_armor
+      - locked: true
+      - has_key: true
+      - has_trap: false
+      - carrying:
+          - gold_001: 100
+    once: true
+    actions:
+      - lock_level: { min: 75, max: 100 }
+        key:
+          - key_caius_cosades: 0.35
+          - key_marvani_tomb: 1.0
+        trap:
+          - trap_paralyze00: 0.2
+          - trap_poison00: 0.4
+          - trap_fire00: 1.0
+        set_ownership:
+          faction: imperial legion
+          factionRank: 1
+        create:
+          furn_bone_01:
+            count: { min: 1, max: 3 }
+            chance: 0.5
+            position:
+              x: { min: -80, max: 80 }
+              y: { min: -80, max: 80 }
+        playsound:
+          id: bonewalkerroar
+          chance: 0.25
+
+  - conditions:
+      - object_type: NPC
+      - target_faction:
+          faction: imperial legion
+          min: 1
+      - target_class: warrior
+      - target_attribute:
+          strength:
+            min: 50
+      - target_skill:
+          longblade:
+            min: 40
+      - target_health:
+          max: 50
+      - player_fatigue:
+          max: 25
+      - player_equipped: imperial cuirass_armor
+    once: true
+    actions:
+      - unequip:
+          - imperial shield
+          - imperial broadsword
+      - remove:
+          imperial broadsword: { chance: 0.5 }
+      - add:
+          imperial broadsword: { count: 1, chance: 0.75 }
+      - equip:
+          imperial broadsword: { chance: 0.5 }
+          imperial shield: { chance: 0.5 }
