@@ -53,7 +53,7 @@ interfaces.Settings.registerGroup {
       renderer = 'checkbox',
       name = 'SoulGemRandomizeName',
       description = 'SoulGemRandomizeDesc',
-      default = false,
+      default = true,
     },
   },
 }

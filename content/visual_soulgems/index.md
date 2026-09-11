@@ -70,7 +70,7 @@ VSG exposes two global settings:
 | Setting | Default | Behavior |
 | --- | --- | --- |
 | **Soul Gem Variant** | Ultra Glow | Chooses the visual style used for newly converted filled soul gems. |
-| **Randomize** | Off | Chooses a random visual variant whenever VSG converts a filled soul gem or stack. |
+| **Randomize** | On | Chooses a random visual variant whenever VSG converts a filled soul gem or stack. |
 
 When randomization is enabled, the selected fixed variant is ignored for that conversion.
 
