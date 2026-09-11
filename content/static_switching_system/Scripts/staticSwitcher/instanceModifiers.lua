@@ -25,12 +25,12 @@ local OnceCache = {
   byObjectId = {},
 }
 
---- Runtime-only per-cell-load tracking set.
+--- Runtime-only activation-batch tracking set.
 --- Tracks "object.id:moduleName:actionHash" for rules with once="per_cell".
 --- Cleared at the start of each new activation batch (onObjectActive when the
 --- stack was empty). Marked entries suppress re-processing of objects that
---- were already modified this cell load, including replacement objects.
---- Not saved — only lives for the current cell session.
+--- were already modified in this activation batch, including replacement objects.
+--- Not saved — only lives for the current runtime session.
 ---@type table<string, true>
 local PerCellApplied = {}
 
@@ -117,7 +117,7 @@ local function markOnceActionApplied(object, moduleName, actionHash)
 end
 
 ---
---- Per-cell-load tracking helpers
+--- Activation-batch tracking helpers
 ---
 
 ---@param object openmw.GObject
@@ -144,9 +144,9 @@ local function markAppliedThisLoad(object, moduleName, actionHash)
 end
 
 --- Clears the per-cell tracking table. Called from the activation listener when
---- the ActiveObjectStack was empty, indicating a fresh cell-load batch.
+--- the ActiveObjectStack was empty, indicating a fresh activation batch.
 local function clearPerCellTracking()
-  DebugLog 'Cleared per-cell tracking for new cell-load batch'
+  DebugLog 'Cleared per-cell tracking for new activation batch'
   PerCellApplied = {}
 end
 
@@ -298,13 +298,13 @@ local function getMatchingInstanceModules(object)
         skipReason = 'once=true already applied'
       end
 
-      -- Per-cell once: only skip for this cell-load session; not saved
+      -- Per-cell once: only skip for this activation batch; not saved
       if
         not skipReason
         and actionData.once == 'per_cell'
         and wasAppliedThisLoad(object, moduleName, actionTableHash)
       then
-        skipReason = 'once=per_cell already applied this load'
+        skipReason = 'once=per_cell already applied this activation batch'
       end
 
       -- Module-level once: skip all rules for this module if any rule has already applied
@@ -362,6 +362,7 @@ local function tryModifyObject(object, instanceModificationList)
 
   local newTransform, newPos, newCell, targetScale =
     object.rotation, object.position, object.cell, object.scale
+  local teleportOnGround
 
   DebugLog(
     'APPLY %d rule(s) to %s (%s)',
@@ -439,12 +440,23 @@ local function tryModifyObject(object, instanceModificationList)
             needsPlacementUpdate = needsPlacementUpdate or didTransform
             currentRuleApplied = currentRuleApplied or didTransform
             if didTransform then
+              teleportOnGround = nil
               DebugLog('  transform on %s: scale=%.3f', objectId, targetScale)
             end
           end
 
           if teleportAction then
-            local didTeleport = actionHandlers.teleport(modifyTarget, teleportAction)
+            local didTeleport, targetCell, targetPos, targetTransform, onGround =
+              actionHandlers.teleport(modifyTarget, teleportAction, newCell, newPos, newTransform)
+
+            if didTeleport then
+              newCell = targetCell
+              newPos = targetPos
+              newTransform = targetTransform
+              teleportOnGround = onGround
+              needsPlacementUpdate = true
+            end
+
             anyActionApplied = anyActionApplied or didTeleport
             currentRuleApplied = currentRuleApplied or didTeleport
             DebugLog('  teleport on %s: %s', objectId, didTeleport and 'OK' or 'failed')
@@ -649,10 +661,13 @@ local function tryModifyObject(object, instanceModificationList)
 
   if not anyActionApplied then return end
 
-  if needsPlacementUpdate then
+  if needsPlacementUpdate and modifyTarget:isValid() then
     modifyTarget:setScale(targetScale)
-    ---@diagnostic disable-next-line: param-type-mismatch
-    modifyTarget:teleport(newCell, newPos, newTransform)
+
+    local teleportOptions = { rotation = newTransform }
+    if teleportOnGround then teleportOptions.onGround = true end
+
+    modifyTarget:teleport(newCell, newPos, teleportOptions)
   end
 
   if shouldDisable and modifyTarget:isValid() then modifyTarget.enabled = false end

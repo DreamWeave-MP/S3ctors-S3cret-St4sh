@@ -588,13 +588,13 @@ local actionHandlers = {
     globals[globalData.name] = value
     return true
   end,
-  ['teleport'] = function(object, teleportData)
+  ['teleport'] = function(object, teleportData, currentCell, currentPos, currentRotation)
     local cell = teleportData.cell
     local pos = teleportData.position
     local rot = teleportData.rotation
     local onGround = teleportData.onGround
 
-    local targetCell = object.cell
+    local targetCell = currentCell
 
     if cell then
       local cellType = type(cell)
@@ -610,8 +610,8 @@ local actionHandlers = {
       end
     end
 
-    local targetPos = object.position
-    local targetRot = object.rotation
+    local targetPos = currentPos
+    local targetRot = currentRotation
 
     if pos then
       targetPos = util.vector3(
@@ -623,11 +623,7 @@ local actionHandlers = {
 
     if rot then targetRot = getRotationValue(true, rot, targetRot) end
 
-    local options = { rotation = targetRot }
-    if onGround then options.onGround = true end
-
-    object:teleport(targetCell, targetPos, options)
-    return true
+    return true, targetCell, targetPos, targetRot, onGround
   end,
   ['add_tag'] = function(object, tag)
     if not addTag then return false end
