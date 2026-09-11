@@ -1,0 +1,16 @@
+particles: Partículas
+particles & static glow: Partículas y brillo estático
+static glow: Brillo estático
+ultra glow: Brillo ultra
+
+SoulGemVariantName: Estilo de gema de alma
+SoulGemVariantDesc: |-
+  Tu estilo de gema de alma preferido se usa cada vez que se activa una.
+  Puedes cambiar el estilo durante la partida, pero el cambio no afecta a las gemas de alma ya convertidas,
+  lo que te permite mezclar distintos estilos a lo largo de la partida si quieres.
+
+VisualSoulGemsDesc: Sustituye dinámicamente los objetos de gemas de alma vacías por otros llenos, usando recursos de reemplazo de SVNR.
+VisualSoulGemsName: Visual Soul Gems OpenMW
+
+VisualSoulGemsGroupName: ""
+VisualSoulGemsGroupDesc: ""

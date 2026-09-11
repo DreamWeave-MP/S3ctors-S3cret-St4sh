@@ -1,0 +1,16 @@
+particles: Particles
+particles & static glow: Particles & Static Glow
+static glow: Static Glow
+ultra glow: Ultra Glow
+
+SoulGemVariantName: Soul Gem Style
+SoulGemVariantDesc: |-
+  Your preferred soul gem style is used whenever one is activated.
+  Changing the style works in-game, however does not take effect for already-converted soul gems,
+  allowing you to mix and match throughout your playthrough if you like.
+
+VisualSoulGemsDesc: Dynamically switch out un-filled soul gem objects with filled ones, using replacement assets by SVNR.
+VisualSoulGemsName: Visual Soul Gems OpenMW
+
+VisualSoulGemsGroupName: ""
+VisualSoulGemsGroupDesc: ""
