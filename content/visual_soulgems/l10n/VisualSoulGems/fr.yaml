@@ -5,11 +5,13 @@ ultra glow: Lueur intense
 
 SoulGemVariantName: Style des gemmes spirituelles
 SoulGemVariantDesc: |-
-  Le style de gemme spirituelle que vous préférez est utilisé chaque fois qu'une gemme est activée.
-  Vous pouvez changer de style en cours de partie, mais ce changement ne s'applique pas aux gemmes déjà converties,
+  Votre style de gemme spirituelle préféré est utilisé chaque fois que VSG convertit une gemme spirituelle remplie.
+  Changer de style n'affecte pas les gemmes spirituelles déjà converties,
   ce qui vous permet de mélanger les styles au fil de votre partie si vous le souhaitez.
+SoulGemRandomizeName: Style de gemme spirituelle aléatoire
+SoulGemRandomizeDesc: Choisit un style visuel aléatoire chaque fois que VSG convertit une gemme spirituelle remplie.
 
-VisualSoulGemsDesc: Remplace dynamiquement les objets de gemmes spirituelles vides par des versions remplies, à l'aide des ressources de remplacement de SVNR.
+VisualSoulGemsDesc: Donne aux gemmes spirituelles remplies des effets visuels distincts grâce à quatre styles sélectionnables ou aléatoires.
 VisualSoulGemsName: Visual Soul Gems OpenMW
 
 VisualSoulGemsGroupName: ""

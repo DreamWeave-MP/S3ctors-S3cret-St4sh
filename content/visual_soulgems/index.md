@@ -1,12 +1,13 @@
 ---
 title: Visual Soul Gems
-description: Filled soul gem visuals for OpenMW, with four Crystal Soul Gems effect variants and optional randomization.
+description: Give filled soul gems distinct visuals in OpenMW with four selectable or randomized styles, including support for black soul gems.
 
 taxonomies:
   tags:
     - Visuals
     - Items
     - OpenMW
+    - OpenMW 0.51
 
 extra:
   nexus_id: 60181
@@ -23,7 +24,7 @@ extra:
 
 Visual Soul Gems makes filled soul gems look filled.
 
-VSG uses the excellent [Crystal Soul Gems](https://www.nexusmods.com/morrowind/mods/48300) assets by SVNR, OffworldDevil, and NullCascade to give filled vanilla soul gems four distinct visual styles in OpenMW. Pick one, or let VSG choose for you.
+VSG uses the excellent [Crystal Soul Gems](https://www.nexusmods.com/morrowind/mods/48300) assets by SVNR, OffworldDevil, and NullCascade to give filled vanilla soul gems four distinct visual styles in OpenMW. VSG also supports black soul gems. Pick one of four styles, or let VSG choose for you.
 
 <!-- more -->
 
@@ -38,20 +39,18 @@ VSG uses the excellent [Crystal Soul Gems](https://www.nexusmods.com/morrowind/m
 
 ## Requirements
 
-- OpenMW
+- OpenMW 0.51.0 or newer
 - Nothing else. The Crystal Soul Gems assets required by VSG are included.
 
 ## Overview
 
-Crystal Soul Gems normally ships its visual variants as alternatives: install one mesh set over another and whichever files win the VFS overwrite wins in game.
+Crystal Soul Gems normally ships its visual variants as alternatives: install one mesh set over another and choose a look for your game.
 
 VSG needs those variants available **at the same time**.
 
-To make that possible, the required Crystal Soul Gems meshes are bundled with VSG and moved into separate internal paths. VSG can then select the appropriate model at runtime without asking four mutually exclusive replacers to somehow coexist. No overwrite roulette required.
+To make that possible, VSG bundles the required meshes so all four styles can coexist. No overwrite roulette required.
 
 Only **filled** soul gems are changed. Empty soul gems are left alone.
-
-VSG supports all soul gem variants.
 
 ## Visual Variants
 
@@ -77,24 +76,23 @@ When randomization is enabled, the selected fixed variant is ignored for that co
 
 A soul gem keeps the appearance it received when VSG converted it. Changing the setting later affects future conversions; it does not retroactively repaint objects that have already been replaced.
 
-## What VSG Preserves
+The settings menu is available in English, German, Spanish, French, and Swedish.
 
-VSG is not merely swapping a mesh path on the existing object. OpenMW does not currently expose that operation for an individual object, so VSG creates an equivalent replacement record using the selected model and replaces the filled gem with it.
+## How It Works
 
-During that replacement, VSG preserves the important instance state:
+When VSG finds a filled soul gem in the world, it replaces it with a matching visual variant.
 
-- trapped soul;
-- stack count;
-- owner;
-- owning faction and faction rank;
-- scale;
-- cell, position, and rotation.
+OpenMW still treats the replacement as a soul gem. VSG preserves the trapped soul, stack count, ownership, scale, and placement while changing only its appearance.
 
 Stacks stay stacks. Souls stay trapped. The pretty lights are the only part meant to change.
 
+VSG supports all five vanilla soul gem sizes: Petty, Lesser, Common, Greater, and Grand.
+
+It also recognizes filled black soul gems from [Black Soul Gems](https://www.nexusmods.com/morrowind/mods/45902) and [OAAB Data](https://www.nexusmods.com/morrowind/mods/49042), and gives them the same four visual styles.
+
 ## Compatibility
 
-VSG intentionally owns the model used by filled vanilla soul gems after they are converted. A conventional replacer that changes the vanilla soul gem mesh path will therefore not change a VSG-generated filled gem.
+VSG uses its own visual records for converted filled soul gems. Conventional mesh replacers that change the original soul gem paths therefore will not affect gems already converted by VSG.
 
 Empty gems are not converted by VSG.
 
@@ -108,14 +106,16 @@ Keep the bundled meshes and textures with the mod. They are part of the runtime 
 
 ## Uninstallation
 
-VSG creates replacement records and saves references to them. It is therefore not equivalent to a purely visual texture or mesh replacer.
+VSG is not a simple mesh replacer. Once a soul gem has been converted, your save may contain a VSG-specific version of that item.
 
-Mid-save uninstallation is unsupported. Removing VSG's assets from a save containing converted soul gems can leave those objects referring to models that are no longer present.
+**Mid-save uninstallation is unsupported.** Removing VSG can leave already-converted soul gems pointing to assets that no longer exist.
 
 ## Credits
 
 Visual Soul Gems uses assets from **[Crystal Soul Gems](https://www.nexusmods.com/morrowind/mods/48300)**, created by **SVNR, OffworldDevil, and NullCascade** and uploaded by **SVNR**.
 
 Those assets are redistributed under the permissions published on the original Nexus Mods page. Crystal Soul Gems does not permit its assets to be used in mods or files that are sold, and does not permit mods using those assets to earn Nexus Donation Points.
+
+The filled black soul gem NIFs were made by **grumblingvomit**, based on [OAAB Data](https://www.nexusmods.com/morrowind/mods/49042) assets.
 
 Please go give the original mod some love. VSG exists because those meshes are damn good.

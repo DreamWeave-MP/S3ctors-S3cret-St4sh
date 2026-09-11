@@ -2,37 +2,32 @@
 
 local async = require 'openmw.async'
 local interfaces = require 'openmw.interfaces'
+local recordData = require 'scripts.s3.VSG.records'
 local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 local world = require 'openmw.world'
 
 local miscellaneous = types.Miscellaneous
 local miscellaneousRecords = miscellaneous.records
-local createMiscellaneousDraft = miscellaneous.createRecordDraft
 local itemData = types.Item.itemData
 
 local createObject = world.createObject
-local createRecord = world.createRecord
 local Error, Random, StrFormat = error, math.random, string.format
 
-local modelPathFormat = 'meshes/s3/%s/%s.nif'
-
-local soulGemRecordIds = {
-  'misc_soulgem_common',
-  'misc_soulgem_grand',
-  'misc_soulgem_greater',
-  'misc_soulgem_lesser',
-  'misc_soulgem_petty',
-}
-
-local soulGemVariants = {
-  'particles',
-  'particles & static glow',
-  'static glow',
-  'ultra glow',
-}
+local soulGemVariants, variantSuffixes = {}, {}
+for i = 1, #recordData.variants do
+  local variant = recordData.variants[i]
+  soulGemVariants[i] = variant.setting
+  variantSuffixes[variant.setting] = variant.suffix
+end
 
 local variantCount = #soulGemVariants
+
+local replacementNames = {}
+for i = 1, #recordData.records do
+  local record = recordData.records[i]
+  replacementNames[record.sourceId] = record.replacementName
+end
 
 interfaces.Settings.registerGroup {
   key = 'SettingsGlobalVisualSoulGems',
@@ -45,7 +40,7 @@ interfaces.Settings.registerGroup {
     {
       key = 'SoulGemVariant',
       renderer = 'select',
-      name = 'SoulGemVariantNames',
+      name = 'SoulGemVariantName',
       description = 'SoulGemVariantDesc',
       default = soulGemVariants[variantCount],
       argument = {
@@ -77,40 +72,10 @@ settings:subscribe(async:callback(function(_, key)
   end
 end))
 
-local ReplacementMap
-local TemplateTable = { template = '', model = '' }
-
-local function generateReplacementRecords()
-  if ReplacementMap then return end
-
-  ReplacementMap = {}
-
-  for i = 1, #soulGemRecordIds do
-    local soulGemRecordId = soulGemRecordIds[i]
-    local originalRecord = miscellaneousRecords[soulGemRecordId]
-    if not originalRecord then Error(StrFormat('Missing soul gem record: %s', soulGemRecordId)) end
-
-    local replacementVariants = {}
-
-    for j = 1, #soulGemVariants do
-      local variant = soulGemVariants[j]
-
-      TemplateTable.template, TemplateTable.model =
-        originalRecord, StrFormat(modelPathFormat, variant, soulGemRecordId)
-
-      local replacementRecord = createRecord(createMiscellaneousDraft(TemplateTable))
-
-      replacementVariants[variant] = replacementRecord.id
-    end
-
-    ReplacementMap[soulGemRecordId] = replacementVariants
-  end
-end
-
 ---@param item openmw.GObject
 local function replaceSoulGem(item)
-  local replacementVariants = ReplacementMap and ReplacementMap[item.recordId]
-  if not replacementVariants then return end
+  local replacementName = replacementNames[item.recordId]
+  if not replacementName then return end
 
   local soul = itemData(item).soul
   if not soul then return end
@@ -118,8 +83,13 @@ local function replaceSoulGem(item)
   local variant = selectedVariant
   if randomize then variant = soulGemVariants[Random(variantCount)] end
 
-  local targetRecordId = replacementVariants[variant]
-  if not targetRecordId then Error(StrFormat('Unknown soul gem variant: %s', variant)) end
+  local variantSuffix = variantSuffixes[variant]
+  if not variantSuffix then Error(StrFormat('Unknown soul gem variant: %s', variant)) end
+
+  local targetRecordId = recordData.replacementPrefix .. replacementName .. '_' .. variantSuffix
+  if not miscellaneousRecords[targetRecordId] then
+    Error(StrFormat('Missing VSG replacement record: %s', targetRecordId))
+  end
 
   local count = item.count
   local owner = item.owner
@@ -140,11 +110,6 @@ end
 
 return {
   engineHandlers = {
-    onPlayerAdded = generateReplacementRecords,
-    onSave = function() return ReplacementMap end,
-    onLoad = function(data)
-      if data then ReplacementMap = data end
-    end,
     onItemActive = replaceSoulGem,
   },
 }

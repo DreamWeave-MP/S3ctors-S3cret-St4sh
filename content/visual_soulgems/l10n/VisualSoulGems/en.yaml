@@ -5,11 +5,13 @@ ultra glow: Ultra Glow
 
 SoulGemVariantName: Soul Gem Style
 SoulGemVariantDesc: |-
-  Your preferred soul gem style is used whenever one is activated.
-  Changing the style works in-game, however does not take effect for already-converted soul gems,
+  Your preferred soul gem style is used whenever VSG converts a filled soul gem.
+  Changing the style does not affect already-converted soul gems,
   allowing you to mix and match throughout your playthrough if you like.
+SoulGemRandomizeName: Randomize Soul Gem Style
+SoulGemRandomizeDesc: Choose a random visual style whenever VSG converts a filled soul gem.
 
-VisualSoulGemsDesc: Dynamically switch out un-filled soul gem objects with filled ones, using replacement assets by SVNR.
+VisualSoulGemsDesc: Give filled soul gems distinct visual effects with four selectable or randomized styles.
 VisualSoulGemsName: Visual Soul Gems OpenMW
 
 VisualSoulGemsGroupName: ""
