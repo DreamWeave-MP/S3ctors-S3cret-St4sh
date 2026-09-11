@@ -1,73 +1,38 @@
-
-
 [center][size=6][b][color=#d29cff]T4RG3T5[/color][/b][/size]
 
-[size=4][i][color=#b44cff]Dark Souls-style lock-on targeting for OpenMW.[/color][/i][/size]
+[size=4][i][color=#b44cff]Lock on. Stay on. Dark Souls 1-inspired targeting for the modern outlander.[/color][/i][/size]
 
-T4rg3t5 is a full lock-on targeting system built around fast target acquisition, readable combat feedback, and a proper third-person combat camera.
+T4rg3t5 is a full lock-on targeting system for OpenMW, built around fast target acquisition, readable combat feedback, and a completely rebuilt third-person combat camera.
 
-Lock onto an eligible combat target and T4rg3t5 handles facing, target switching, visibility, range, marker feedback, and camera composition around the fight. Initial acquisition always checks visibility, offscreen targets are rejected, and optional continuous line-of-sight checking can break a lock if your target stays hidden.
+Lock onto an eligible combat target and T4rg3t5 handles facing, directional target switching, visibility, range, camera composition, and target feedback. The camera is collision-aware, shoulder-switching, independently smoothed, and extensively configurable.
 
-The target marker tracks health continuously across six configurable colors, scales with distance, and bounces on successful hits. T4rg3t5 ships with 31 marker icons, and adding your own is dead simple.
+[color=#8f3fc7][b]Target acquisition listens to OpenMW's combat-target updates instead of scanning every actor in the world. The hot path came through the barbershop for a fade.[/b][/color]
 
-[color=#8f3fc7][b]Target acquisition listens to OpenMW's combat-target updates instead of scanning every actor in the world. The hot path also came through the barbershop for a fade.[/b][/color]
+[url=https://youtu.be/OwHE_Or-Ps0][b][color=#d29cff]Watch the 1.0 combat demo[/color][/b][/url]
 
 [b][color=#d29cff]Assign a keybinding under Settings → T4rg3t5 → Target Lock Core, or the mod will be (mostly) useless.[/color][/b]
-
-For animated examples, full settings documentation, integration notes, and modder-facing API docs, see [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/t4rg3t5/][color=#b44cff][b]T4rg3t5 in the S3cret St4sh[/b][/color][/url].
 [/center]
 
-[size=5][b][color=#8f3fc7]Third-Person Lock Camera[/color][/b][/size]
-
-T4rg3t5 1.0 includes a completely rebuilt third-person lock camera designed around the same basic combat language as Souls-style targeting: keep the player and target readable, keep the fight centered, and get the camera out of its own damn way.
+[size=5][b][color=#8f3fc7]Features[/color][/b][/size]
 
 [list]
-[*][b][color=#b44cff]Collision-Aware Orbit[/color][/b] — The camera pulls in around walls and obstacles instead of clipping straight through them.[/*]
-[*][b][color=#b44cff]Automatic Shoulder Switching[/color][/b] — Starts on your preferred shoulder and can swap sides when collision or visibility makes the other side better.[/*]
-[*][b][color=#b44cff]Independent Camera Smoothing[/color][/b] — Camera movement and target look response are sprung separately for smoother tracking without turning the view into soup.[/*]
-[*][b][color=#b44cff]Configurable Composition[/color][/b] — Tune orbit distance, height, shoulder offset, target framing, look bias, responsiveness, and minimum collision distance.[/*]
-[*][b][color=#b44cff]Optional Lock FOV[/color][/b] — Give the combat camera its own field of view, or leave it at 0 to inherit your existing FOV.[/*]
-[*][b][color=#b44cff]Graceful Lock Loss[/color][/b] — Configure how long a temporarily invalid target can remain locked before T4rg3t5 gives up on it.[/*]
-[/list]
-
-[size=5][b][color=#8f3fc7]Smart Targeting[/color][/b][/size]
-
-[list]
-[*][b][color=#b44cff]Automatic Target Selection[/color][/b] — Locks onto the nearest eligible combat target in your field of view.[/*]
-[*][b][color=#b44cff]Visibility-Aware Acquisition[/color][/b] — Targets behind obstacles are rejected when you try to lock on.[/*]
-[*][b][color=#b44cff]Optional Continuous LOS[/color][/b] — Keep checking visibility after acquisition and break the lock when a target stays obstructed.[/*]
-[*][b][color=#b44cff]Flick Switching[/color][/b] — Flick the mouse left or right to switch targets in that screen direction.[/*]
-[*][b][color=#b44cff]Combat Auto-Lock[/color][/b] — Optionally lock onto enemies who initiate combat with you.[/*]
-[*][b][color=#b44cff]Dead-Target Switching[/color][/b] — Automatically move to another eligible target when the current one dies.[/*]
-[*][b][color=#b44cff]Range and Screen Validation[/color][/b] — Locks gracefully break when targets remain invalid, too far away, or offscreen.[/*]
-[/list]
-
-[size=5][b][color=#8f3fc7]Combat Tracking[/color][/b][/size]
-
-[list]
-[*][b][color=#b44cff]Auto-Facing[/color][/b] — Your character turns toward the locked target while tracking is active.[/*]
-[*][b][color=#b44cff]Weapon and Spell Awareness[/color][/b] — Combat tracking respects whether your character is actually readied to fight.[/*]
-[*][b][color=#b44cff]Sheathing Behavior[/color][/b] — Locks can automatically clear when you put your weapon away.[/*]
-[*][b][color=#b44cff]First- and Third-Person Support[/color][/b] — Use normal target tracking in first person or the full custom combat camera in third person.[/*]
-[/list]
-
-[size=5][b][color=#8f3fc7]Visual Target Indicators[/color][/b][/size]
-
-[list]
-[*][b][color=#b44cff]Distance Scaling[/color][/b] — Marker size changes smoothly with target distance.[/*]
-[*][b][color=#b44cff]Hit Feedback[/color][/b] — The marker bounces when the locked target is successfully hit.[/*]
-[*][b][color=#b44cff]Health-Based Coloring[/color][/b] — Marker color continuously interpolates across six configurable health colors, from full health to dead.[/*]
-[*][b][color=#b44cff]31 Included Icons[/color][/b] — Pick from the bundled marker set or drop in your own DDS texture.[/*]
-[*][b][color=#b44cff]Fully Configurable Presentation[/color][/b] — Tune marker size, distance scaling, colors, and icon choice from the settings menu.[/*]
+[*][b][color=#b44cff]Souls-style Lock Camera[/color][/b] — Collision-aware orbiting, automatic shoulder switching, configurable framing, FOV, smoothing, and lock-loss behavior.[/*]
+[*][b][color=#b44cff]Smart Targeting[/color][/b] — Visibility-aware acquisition, directional flick switching, combat auto-lock, dead-target switching, and range validation.[/*]
+[*][b][color=#b44cff]Combat Tracking[/color][/b] — Automatic facing, first- and third-person support, and weapon/sheathing awareness.[/*]
+[*][b][color=#b44cff]Target Feedback[/color][/b] — 31 included markers, distance scaling, hit bounce, and continuous health coloring across six configurable colors.[/*]
 [/list]
 
 [size=5][b][color=#8f3fc7]For Mod Authors[/color][/b][/size]
 
-T4rg3t5 1.0 has a documented player interface, live settings surface, target-change event protocol, trigger support, and examples for integrating other OpenMW-Lua mods.
+T4rg3t5 1.0 exposes a documented player interface, live settings, target-change events, trigger support, and integration examples.
 
-[color=#8f3fc7]The stable contract is intentionally small:[/color] use the Manager for live state and settings, and use the target event for target changes. The rest of the camera and frame machinery is implementation detail. Poke at it if you like; just don't build your house there.
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/t4rg3t5/docs/][b][color=#b44cff]API / Modder Documentation[/color][/b][/url]
 
-Full documentation lives in [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/t4rg3t5/docs/][color=#b44cff][b]the S3cret St4sh[/b][/color][/url].
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/t4rg3t5/][color=#8f3fc7]Full T4rg3t5 documentation in the S3cret St4sh[/color][/url]
+
+[size=3][b][color=#8f3fc7]Production Note[/color][/b][/size]
+
+LLMs were used as development tools in the production of T4rg3t5 1.0 and later. The T4rg3t5 artwork was handmade by me. The DreamWeave logo was created by [url=https://www.nexusmods.com/profile/MrArrean][color=#b44cff]MrArrean[/color][/url].
 
 [center][url=https://www.patreon.com/c/S3kshun8][img width=85]https://c14.patreon.com/fhd_Patreon_Symbol_6fff9723d3.png[/img][/url]    [url=https://ko-fi.com/magicaldave][img width=147]https://storage.ko-fi.com/cdn/brandasset/logo_white_stroke_small.png[/img][/url][/center]
 
