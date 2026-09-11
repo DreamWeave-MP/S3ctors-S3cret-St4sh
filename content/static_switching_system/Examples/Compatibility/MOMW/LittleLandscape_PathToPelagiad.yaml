@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 76: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/76%20Little%20Landscape%20Path%20to%20Pelagiad%20Rock%20Fix
+log_name: Little Landscape - Path to Pelagiad Rock Fix
+priority: cleanup
+
+instances:
+  - conditions:
+      - content_file_target:
+          "Little Landscape - Path to Pelagiad.esp":
+            - 242
+      - coords:
+          - x: -1
+            y: -9
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: 216.95932
+            y: -69834.65
+            z: 975.63007
+          rotate:
+            x: 330.899989
+            y: 353.999991
+            z: 149.099999
+          scale: 1.2700001
+      - teleport:
+          cell:
+            x: 0
+            y: -9

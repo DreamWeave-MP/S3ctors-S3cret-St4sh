@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from alvazir's various patches: https://www.nexusmods.com/morrowind/mods/48955
+log_name: Populated Vvardenfell - Balmora Waterworks
+priority: cleanup
+
+instances:
+  - conditions:
+      - object_type: NPC
+      - content_file: "PopulatedVvardenfell 1.5.esp"
+      - record_id: "^1hlaalunpc35$"
+      - coords:
+          - x: -3
+            y: -2
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -18275
+            y: -15960
+            z: 275

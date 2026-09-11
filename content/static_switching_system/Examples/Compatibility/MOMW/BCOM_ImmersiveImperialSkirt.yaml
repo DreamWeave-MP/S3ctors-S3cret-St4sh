@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 89: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/89%20BCOM%20x%20Immersive%20Imperial%20Skirt
+log_name: BCoM - Immersive Imperial Skirt
+priority: cleanup
+
+instances:
+  - conditions:
+      - object_type: NPC
+      - content_file_target:
+          Clean_imperial_skirt.esp:
+            - 1
+      - record_id: "^dmb_skirt_arnard$"
+      - cell: "Gnisis, Madach Tradehouse"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -767.064
+            y: -835
+            z: -1535
+          rotate:
+            x: 0
+            y: 0
+            z: 79.051869

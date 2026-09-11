@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 81: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/81%20Odai%20River%20Overhaul%20Statue%20Remover%20Patch
+log_name: Odai River Upper Overhaul - Statue Remover
+priority: cleanup
+
+instances:
+  - conditions:
+      - content_file_target:
+          Odai River Upper Overhaul.esp:
+            - 244
+            - 245
+      - coords:
+          - x: -4
+            y: -4
+    once: true
+    actions:
+      - disable: true

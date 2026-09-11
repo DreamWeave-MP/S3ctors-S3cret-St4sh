@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 82: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/82%20Immersive%20Mournhold%20Corner%20Tower%20Remover%20Patch
+log_name: Immersive Mournhold - Corner Tower Remover
+priority: cleanup
+
+instances:
+  - conditions:
+      - cell: "Mournhold, Godsreach"
+      - content_file_target:
+          Immersive Mournhold.esp:
+            - 1015
+            - 1017
+            - 1018
+            - 1019
+            - 1020
+            - 1021
+            - 1022
+    once: true
+    actions:
+      - disable: true
+
+  - conditions:
+      - cell: "Mournhold, Great Bazaar"
+      - content_file_target:
+          Immersive Mournhold.esp:
+            - 1606
+            - 1607
+            - 1608
+            - 1609
+            - 1610
+            - 1611
+    once: true
+    actions:
+      - disable: true
+
+  - conditions:
+      - cell: "Mournhold, Temple Courtyard"
+      - content_file_target:
+          Immersive Mournhold.esp:
+            - 3935
+            - 3976
+            - 3977
+            - 3978
+            - 3979
+            - 3980
+            - 3981
+    once: true
+    actions:
+      - disable: true
