@@ -40,7 +40,7 @@ SSS `content_file_target` is intentionally close to the source patch vocabulary:
 
 ## Attribution
 
-The [MOMW translation index](@/static_switching_system/Examples/Compatibility/MOMW/index.md) and [alvazir translation index](@/static_switching_system/Examples/Compatibility/Alvazir/index.md) contain the source attribution and module tables. SSS does not claim the original compatibility research.
+The [MOMW translation index](@/static_switching_system/docs/compatibility/MOMW/index.md) and [alvazir translation index](@/static_switching_system/docs/compatibility/Alvazir/index.md) contain the source attribution and module tables. SSS does not claim the original compatibility research.
 
 ## Reading moved references in MOMW exports
 
