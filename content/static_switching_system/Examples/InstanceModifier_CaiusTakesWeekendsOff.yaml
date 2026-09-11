@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Caius Takes Weekends Off
+priority: polish
+
+instances:
+  - conditions:
+      - object_type: NPC
+      - record_id: "^caius cosades$"
+      - cell: "Balmora, Caius Cosades' House"
+      - day_of_week:
+          - loredas
+          - sundas
+    actions:
+      - teleport:
+          cell: "Balmora, South Wall Cornerclub"
+          position:
+            x: 291
+            y: 537
+            z: 261
+          onGround: true
+
+  - conditions:
+      - object_type: NPC
+      - record_id: "^caius cosades$"
+      - cell: "Balmora, South Wall Cornerclub"
+      - not:
+          day_of_week:
+            - loredas
+            - sundas
+    actions:
+      - teleport:
+          cell: "Balmora, Caius Cosades' House"
+          position:
+            x: 163
+            y: -228
+            z: 192
+          onGround: true

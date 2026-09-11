@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Low Health Makes Vvardenfell Worse
+priority: polish
+
+instances:
+  - conditions:
+      - object_type: Static
+      - cell_match: tomb
+      - record_id:
+          - furn_bone_01
+          - furn_bone_rib_01
+          - furn_bone_skull_01
+          - furn_bone_stake00
+          - furn_com_lantern_hook
+      - player_health:
+          max: 50
+    once: true
+    actions:
+      - transform:
+          position:
+            x: { min: -3, max: 3 }
+            y: { min: -3, max: 3 }
+          rotate:
+            z: { min: -8, max: 8 }
+
+  - conditions:
+      - object_type: Static
+      - cell_match: tomb
+      - record_id:
+          - furn_bone_01
+          - furn_bone_rib_01
+          - furn_bone_skull_01
+          - furn_bone_stake00
+          - furn_com_lantern_hook
+      - player_health:
+          max: 25
+    once: true
+    actions:
+      - create:
+          furn_bone_01:
+            count:
+              max: 2
+            chance: 0.25
+            position:
+              x: { min: -64, max: 64 }
+              y: { min: -64, max: 64 }
+
+  - conditions:
+      - object_type: Static
+      - cell_match: tomb
+      - record_id:
+          - furn_bone_01
+          - furn_bone_skull_01
+      - player_health:
+          max: 10
+    once: true
+    actions:
+      - replace:
+          bonewalker: 0.05

@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: The House Moves When You're Not Looking
+priority: polish
+
+instances:
+  - conditions:
+      - object_type: Static
+      - cell_match: tomb
+      - record_id:
+          - furn_bone_01
+          - furn_bone_rib_01
+          - furn_bone_skull_01
+          - furn_bone_stake00
+          - furn_com_lantern_hook
+    once: per_cell
+    actions:
+      - transform:
+          position:
+            x: { min: -4, max: 4 }
+            y: { min: -4, max: 4 }
+          rotate:
+            z: { min: -3, max: 3 }

@@ -25,6 +25,7 @@ SSS has two module types: static and instance. Pick one. They are separate pipel
 - [Concepts](@/static_switching_system/docs/concepts/_index.md) — the two pipelines, matching and priority, persistence, edge cases, and diagnostics.
 - [API Reference](@/static_switching_system/docs/api/_index.md) — the YAML format, schema, settings, lifecycle, and the advanced `StaticSwitcher_G` interface.
 - [Recipes](@/static_switching_system/docs/recipes/_index.md) — copyable patterns built from the shipped examples, plus lessons from released static modules.
+- [Experiments and Oddities](@/static_switching_system/docs/experiments/_index.md) — executable documentation for combinations that are useful, cursed, or both.
 - [Compatibility and Troubleshooting](@/static_switching_system/docs/compatibility/_index.md) — VFS, optional dependencies, save updates, and runtime diagnosis.
 
 The shipped YAML examples are **source fixtures**. They document real module shapes and are intended to be copied or adapted into the discovered VFS data directory; the examples directory itself is not scanned as a module directory.

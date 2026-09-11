@@ -72,4 +72,5 @@ This test uses no replacement asset and is a quick way to verify the plugin, dep
 | Change active objects based on conditions | [Your First Module](@/static_switching_system/docs/getting-started/first-module.md) |
 | Add inventory, locks, traps, or equipment | [Loot, locks, and traps](@/static_switching_system/docs/recipes/loot-locks-traps.md) |
 | Use quests or world state | [Quest-state world patching](@/static_switching_system/docs/recipes/quest-state-world-patching.md) |
+| Study strange multi-primitive combinations | [Experiments and Oddities](@/static_switching_system/docs/experiments/_index.md) |
 | Inspect or debug a loaded installation | [Validation and Debugging](@/static_switching_system/docs/concepts/validation-and-debugging.md) |

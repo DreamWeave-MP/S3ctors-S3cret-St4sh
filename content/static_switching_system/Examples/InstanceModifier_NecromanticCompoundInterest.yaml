@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Necromantic Compound Interest
+priority: balance
+
+instances:
+  - conditions:
+      - generated_object: true
+      - is_dead: true
+      - creature_type: undead
+    once: true
+    actions:
+      - create:
+          skeleton:
+            count:
+              max: 2
+            chance: 0.35
+            position:
+              x: { min: -96, max: 96 }
+              y: { min: -96, max: 96 }
