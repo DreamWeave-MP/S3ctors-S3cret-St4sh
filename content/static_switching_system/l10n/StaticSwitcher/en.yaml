@@ -13,25 +13,6 @@ StaticSwitcherSettings: Static Switcher Settings
 StaticSwitcherFalseLabel: Disable
 StaticSwitcherTrueLabel: Enable
 
-StaticSwitcherModuleDisableButton: Uninstall Module
-StaticSwitcherModuleDisableDesc: |-
-  Select this option to uninstall whichever Static Switching System module you have selected above. 
-  This process is reversible!
-  Please make sure to heed the warning above as well.
-
-StaticSwitcherModuleSelection: Select A Module To Disable
-StaticSwitcherModuleSelectionDesc: |-
-  With this option, you may select an installed module to disable.
-  Uninstall the module by selecting it with this option, then toggling the option below.
-  Afterwards, your game will save and exit automatically. 
-  Go uninstall whatever mod you just tried to uninstall.
-
-  WARNING:
-  If you uninstall a module here, but do not actually uninstall the *files*, they will be restored the next time your save is loaded.
-
-StaticSwitcherSaveDesc: |-
-  Removed SSS Module {moduleName}
-
 StaticSwitcherEnableDebugName: Enable Debug Logging
 StaticSwitcherEnableDebugDesc: |-
   When enabled, detailed debug and info messages are printed to the console.

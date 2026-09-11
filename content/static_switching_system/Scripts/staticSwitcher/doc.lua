@@ -22,12 +22,11 @@
 ---@class ObjectDeleteData
 ---@field object openmw.GObject
 ---@field ticks integer number of frames before this object will be deleted
----@field removeOrDisable boolean whether or not the object will be permanently removed or just disabled. When replacing, the original objects are disabled, but when uninstalling a module the replacements are removed and the originals restored.
+---@field removeOrDisable boolean whether the object is permanently removed or only disabled. Original objects are disabled during replacement.
 
 ---@class SSSDeleteManager
 ---@field queue ObjectDeleteData[]
 ---@field addObjectToDeleteQueue fun(self: SSSDeleteManager, object: openmw.GObject, removeOrDisable: boolean)
----@field removeObjectFromDeleteQueue fun(self: SSSDeleteManager, targetObject: openmw.GObject, removeOrDisable?: boolean)
 ---@field processDeleteQueue fun(self: SSSDeleteManager)
 ---@field queueIsEmpty fun(self: SSSDeleteManager): boolean
 
@@ -56,7 +55,7 @@
 ---@class SSSModuleRaw
 ---@field log_name string?
 ---@field once boolean? when true, the entire module only processes each object once across all rules
----@field priority string? load order tier: cleanup, foundation, remodel, balance, standard, polish, finisher; defaults to standard
+---@field priority string? execution-order tier: cleanup, foundation, remodel, balance, standard, polish, finisher; defaults to standard
 
 ---@class SSSModuleInstances: SSSModuleRaw
 ---@field instances SSSInstanceRule[] set of game object rules to muck with
@@ -216,10 +215,10 @@
 ---@field moduleOnce boolean? when true, marking any rule applied blocks the entire module for this object
 ---@field actions SSSInstanceAction[]
 
----@alias SSSObjectModificationStore table<string, {rules: SSSInstanceRule[], moduleOnce: boolean?, priority: string?}>
+---@alias SSSObjectModificationStore table<string, {rules: SSSInstanceRule[], moduleOnce: boolean?}>
 ---@alias SSSInstanceModificationList SSSInstanceModification[]
 ---@alias SSSOverrideRecords table<string, ReplacementMap>
----@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>>
+---@alias SSSReplacedObjectSet table<string, table<openmw.GObject, openmw.GObject>> legacy save data accepted only during migration
 ---@alias SSSReplacementStepBySource table<string, openmw.GObject> runtime-only source object id to replacement object map
 
 ---@class SSSReplacementChainStep
@@ -259,26 +258,24 @@
 ---@class SSSModuleCatalog
 ---@field moduleNames string[] alias for moduleIds
 ---@field moduleIds string[] loaded canonical module ids
----@field staticModuleIds string[] loaded canonical module ids that define static replacements and can be uninstalled by the current static-chain uninstall flow
 ---@field modules table<string, SSSModuleIdentity> canonical module id to identity metadata
 ---@field moduleLabels table<string, string> canonical module id to display label
 ---@field legacyIdsByBasename table<string, string[]> legacy basename to candidate canonical module ids
 ---@field numModules number number of loaded canonical module ids
 ---@field resolveModuleId fun(moduleKey: string): string? resolves canonical ids and unambiguous legacy basenames
 ---@field ObjectModificationStore SSSObjectModificationStore canonical module-id keyed instance modification rules
----@field SortedModuleIds string[] module IDs in priority-sorted load order
+---@field SortedModuleIds string[] instance module IDs in priority-sorted evaluation order
+---@field SortedStaticModuleIds string[] static module IDs in priority-sorted execution order
 
 ---@class SSSStaticReplacements
 ---@field ComposedReplacements table<string, SSSModule> canonical module-id keyed static replacement data
----@field loadReplacementChains fun(savedChains?: SSSReplacementChainsSaved)
+---@field loadReplacementChains fun(savedChains?: SSSReplacementChainsSaved, legacyReplacedObjectSet?: SSSReplacedObjectSet)
 ---@field ReplacementChains SSSReplacementChains saved chain state plus runtime indexes
 ---@field OverrideRecords SSSOverrideRecords canonical module-id keyed generated replacement record IDs
 ---@field migrateOverrideRecords fun() migrates unambiguous legacy basename override-record keys to canonical module ids
----@field rebuildReplacementStepBySource fun() rebuilds runtime source-object replacement guard from saved replacement objects
----@field ReplacedObjectSet SSSReplacedObjectSet canonical module-id keyed replacement object to original object map
 ---@field saveReplacementChains fun(): SSSReplacementChainsSaved
----@field uninstallModule fun(moduleName: string): string? removes the target module and later chain steps, restoring the source before the removed suffix
----@field setModuleResolver fun(moduleResolver: fun(moduleKey: string): string?) sets the canonical module-id resolver for save migration and settings compatibility
+---@field setModuleResolver fun(moduleResolver: fun(moduleKey: string): string?) sets the canonical module-id resolver for save migration
+---@field setModuleOrder fun(moduleOrder: string[]) sets the priority-sorted static execution order
 ---@field tryReplaceObject fun(object: openmw.GObject)
 
 ---@class SSSInstanceModifiers
@@ -292,15 +289,14 @@
 ---@field objectDeleteQueue ObjectDeleteData[]?
 ---@field instanceModifiers SSSOnceCacheSaved?
 ---@field replacementChains SSSReplacementChainsSaved?
----@field replacedObjectSet SSSReplacedObjectSet?
+---@field replacedObjectSet SSSReplacedObjectSet? legacy save data accepted only for migration when replacementChains is absent
 
 ---@class openmw.interfaces.StaticSwitcher_G
 ---@field getRefNum fun(object: openmw.GObject): boolean, number Returns whether the object is generated and its local/generated reference number.
+---@field composedReplacements fun(): table<string, SSSModule> Returns loaded static replacement data keyed by canonical module ID.
 ---@field objectModificationStore fun(): SSSObjectModificationStore Returns the loaded instance-modification rule store.
 ---@field overrideRecords fun(): SSSOverrideRecords Returns generated override record IDs keyed by canonical module id.
----@field replacedObjectSet fun(): SSSReplacedObjectSet Returns replacement objects keyed by canonical module id for uninstall bookkeeping.
----@field uninstallModule fun(moduleName: string) Queues uninstall/removal for a loaded replacement module.
----@field version integer Static Switching System interface version.
+---@field version integer Static Switching System interface version. Version 4 is the current contract.
 
 ---@class openmw.interfaces
 ---@field StaticSwitcher_G openmw.interfaces.StaticSwitcher_G

@@ -36,7 +36,7 @@ if I.FlexTagG then hasTag = I.FlexTagG.objectHasTag end
 local function getExteriorRegionFromDoor(cell, position)
   local cached = cellToExteriorRegion[cell.id]
 
-  if cached ~= nil then
+  if cached then
     if type(cached) == 'string' then return cached end
 
     return
@@ -88,7 +88,7 @@ local conditionHandlers = {
 
     local itemType = type(itemId)
     if itemType == 'string' then
-      return StrFind(objectInventory, itemId) ~= nil
+      return objectInventory:find(itemId) ~= nil
     else
       local itemName, itemCount = next(itemId)
 
@@ -149,7 +149,7 @@ local conditionHandlers = {
 
     local objectRecord = BatchCache.objectRecord(object)
 
-    if objectRecord.name == nil or objectRecord.name == '' then return false end
+    if not objectRecord.name or objectRecord.name == '' then return false end
 
     return objectRecord.name == targetName or StrFind(objectRecord.name, targetName, 1, true) ~= nil
   end,
@@ -398,7 +398,7 @@ local conditionHandlers = {
   object_type = function(object, targetTypeName)
     local targetType = types[targetTypeName]
 
-    assert(targetType ~= nil, StrFormat(INVALID_TYPE, targetTypeName))
+    assert(targetType, StrFormat(INVALID_TYPE, targetTypeName))
 
     return targetType.objectIsInstance(object)
   end,
@@ -794,7 +794,7 @@ local conditionHandlers = {
     local current = BatchCache.currentWeather(Player.cell)
 
     if type(weatherData) == 'string' then
-      if weatherData == 'none' then return current == nil end
+      if weatherData == 'none' then return not current end
       if not current then return false end
       return StrFind(StrLower(current.name), weatherData, 1, true) ~= nil
     end
@@ -802,7 +802,7 @@ local conditionHandlers = {
     if weatherData[1] then
       for i = 1, #weatherData do
         if weatherData[i] == 'none' then
-          if current == nil then return true end
+          if not current then return true end
         elseif current and StrFind(StrLower(current.name), weatherData[i], 1, true) ~= nil then
           return true
         end

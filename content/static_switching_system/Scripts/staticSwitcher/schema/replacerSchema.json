@@ -1,6 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Static Switcher Module",
+    "title": "Static Switching System Module",
+    "description": "A Static Switching System module is exactly one of a static replacement module or an instance rule module. Static replacement fields and instances are mutually exclusive.",
     "type": "object",
     "definitions": {
         "recordId": {
@@ -30,6 +31,30 @@
                     ],
                     "additionalProperties": false,
                     "description": "Range with at least one bound"
+                }
+            ]
+        },
+        "randomNumericRange": {
+            "oneOf": [
+                {
+                    "type": "number",
+                    "description": "Fixed numeric value"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "min": {
+                            "type": "number",
+                            "description": "Optional minimum sampled value"
+                        },
+                        "max": {
+                            "type": "number",
+                            "description": "Required maximum sampled value"
+                        }
+                    },
+                    "required": ["max"],
+                    "additionalProperties": false,
+                    "description": "Randomly sampled numeric range. The consuming action supplies the default minimum when it is omitted."
                 }
             ]
         },
@@ -76,6 +101,21 @@
                 },
                 "z": {
                     "$ref": "#/definitions/numericRange"
+                }
+            },
+            "additionalProperties": false
+        },
+        "randomVector3Range": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "$ref": "#/definitions/randomNumericRange"
+                },
+                "y": {
+                    "$ref": "#/definitions/randomNumericRange"
+                },
+                "z": {
+                    "$ref": "#/definitions/randomNumericRange"
                 }
             },
             "additionalProperties": false
@@ -207,13 +247,13 @@
             "type": "object",
             "properties": {
                 "scale": {
-                    "$ref": "#/definitions/numericRange"
+                    "$ref": "#/definitions/randomNumericRange"
                 },
                 "rotate": {
-                    "$ref": "#/definitions/vector3Range"
+                    "$ref": "#/definitions/randomVector3Range"
                 },
                 "position": {
-                    "$ref": "#/definitions/vector3Range"
+                    "$ref": "#/definitions/randomVector3Range"
                 },
                 "transform_type": {
                     "type": "string",
@@ -254,13 +294,13 @@
                     "description": "Probability (0-1) that this pool activates."
                 },
                 "scale": {
-                    "$ref": "#/definitions/numericRange"
+                    "$ref": "#/definitions/randomNumericRange"
                 },
                 "rotate": {
-                    "$ref": "#/definitions/vector3Range"
+                    "$ref": "#/definitions/randomVector3Range"
                 },
                 "position": {
-                    "$ref": "#/definitions/vector3Range"
+                    "$ref": "#/definitions/randomVector3Range"
                 },
                 "transform_type": {
                     "type": "string",
@@ -354,7 +394,7 @@
                     "description": "Spawn objects at the trigger's position. Each pool (record ID) is evaluated independently with optional count, chance, and position/rotation/scale overrides per pool. Transform overrides within a pool re-randomize per object for scatter/spread effects."
                 },
                 "lock_level": {
-                    "$ref": "#/definitions/numericRange",
+                    "$ref": "#/definitions/randomNumericRange",
                     "description": "Lock or unlock the target object. Positive values lock at that level. Zero or negative values unlock. Non-lockable objects (statics, creatures) no-op."
                 },
                 "add_lua_script": {
@@ -374,10 +414,7 @@
                     "properties": {
                         "name": {"type": "string", "description": "Global variable name."},
                         "value": {
-                            "oneOf": [
-                                {"type": "number"},
-                                {"type": "object", "properties": {"min": {"type": "number"}, "max": {"type": "number"}}, "required": ["max"], "additionalProperties": false}
-                            ]
+                            "$ref": "#/definitions/randomNumericRange"
                         }
                     },
                     "required": ["name", "value"],
@@ -396,13 +433,13 @@
                         "position": {
                             "type": "object",
                             "properties": {
-                                "x": {"$ref": "#/definitions/numericRange"},
-                                "y": {"$ref": "#/definitions/numericRange"},
-                                "z": {"$ref": "#/definitions/numericRange"}
+                                "x": {"$ref": "#/definitions/randomNumericRange"},
+                                "y": {"$ref": "#/definitions/randomNumericRange"},
+                                "z": {"$ref": "#/definitions/randomNumericRange"}
                             },
                             "additionalProperties": false
                         },
-                        "rotation": {"$ref": "#/definitions/vector3Range"},
+                        "rotation": {"$ref": "#/definitions/randomVector3Range"},
                         "onGround": {"type": "boolean", "description": "Place on ground after teleport."}
                     },
                     "additionalProperties": false,
@@ -1164,7 +1201,7 @@
             "type": "string",
             "enum": ["cleanup", "foundation", "remodel", "balance", "standard", "polish", "finisher"],
             "default": "standard",
-            "description": "Module load order tier. Lower runs first. cleanup (remove/disable only), foundation (structural), remodel (mesh/models), balance (stats/difficulty), standard (default), polish (cosmetic), finisher (last)."
+            "description": "SSS module execution-order tier. Earlier tiers are evaluated first; modules within the same tier are ordered by canonical module ID. Applies to both instance modules and static replacement modules. For static modules, priority determines the order in which replacement modules are considered. Defaults to standard."
         },
         "once": {
             "type": "boolean",
@@ -1255,8 +1292,17 @@
                 "replace_meshes"
             ],
             "not": {
-                "required": [
-                    "instances"
+                "anyOf": [
+                    {
+                        "required": [
+                            "instances"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "once"
+                        ]
+                    }
                 ]
             }
         }
@@ -1293,10 +1339,9 @@
                 {
                     "conditions": [
                         {
-                            "content_file": "Morrowind.esm"
-                        },
-                        {
-                            "ref_num": 67647
+                            "content_file_target": {
+                                "Morrowind.esm": [67647]
+                            }
                         }
                     ],
                     "once": true,
