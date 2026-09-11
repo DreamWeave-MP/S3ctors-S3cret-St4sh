@@ -1,6 +1,7 @@
 +++
 title = "Getting Started"
 description = "Install Static Switching System and author your first YAML module."
+template = "docs/section.html"
 page_template = "docs/page.html"
 sort_by = "weight"
 weight = 10
