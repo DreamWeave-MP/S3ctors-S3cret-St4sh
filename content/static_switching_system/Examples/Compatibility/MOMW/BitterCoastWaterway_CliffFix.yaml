@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 46: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/46%20Bitter%20Coast%20Waterway%20Cliff%20Fix
+log_name: Bitter Coast Waterway Cliff Fix
+priority: cleanup
+
+instances:
+  - conditions:
+      - content_file_target:
+          Bitter Coast Waterway.esp:
+            - 114
+      - coords:
+          - x: -4
+            y: -8
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -26698.402
+            y: -59540.223
+            z: 1355.718
+          rotate:
+            x: 348.540867
+            y: 11.459157
+            z: 18.152119
+
+  - conditions:
+      - content_file_target:
+          Bitter Coast Waterway.esp:
+            - 204
+      - coords:
+          - x: -5
+            y: -8
+    once: true
+    actions:
+      - disable: true
+
+  - conditions:
+      - content_file_target:
+          Bitter Coast Waterway.esp:
+            - 165
+      - coords:
+          - x: -5
+            y: -7
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -33222.777
+            y: -56318.543
+            z: 1386.3762
+          rotate:
+            x: 0
+            y: 0
+            z: 17.188734
+          scale: 2
+
+  - conditions:
+      - content_file_target:
+          Bitter Coast Waterway.esp:
+            - 187
+      - coords:
+          - x: -5
+            y: -7
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -35494.766
+            y: -56488.938
+            z: 1006.57935
+          rotate:
+            x: 0
+            y: 0
+            z: 57.29578
+          scale: 2

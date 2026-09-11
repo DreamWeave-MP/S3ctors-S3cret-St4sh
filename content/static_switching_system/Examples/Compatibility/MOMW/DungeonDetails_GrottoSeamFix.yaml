@@ -1,0 +1,95 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 73: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/73%20Dungeon%20Details%20Grotto%20Fix
+log_name: Dungeon Details - Grotto Seam Fix
+priority: cleanup
+
+instances:
+  - conditions:
+      - content_file_target:
+          "Dungeon Details -- Malmus Grotto.esp":
+            - 4
+      - cell: "Malmus Grotto"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -1084.342
+            y: 2276.3994
+            z: -1034.5599
+          rotate:
+            x: 0
+            y: 0
+            z: 354.270404
+
+  - conditions:
+      - content_file_target:
+          "Dungeon Details -- Malmus Grotto.esp":
+            - 118
+      - cell: "Malmus Grotto"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -1624.0911
+            y: 2684.334
+            z: -377.4194
+          rotate:
+            x: 0
+            y: 0
+            z: 51.566187
+
+  - conditions:
+      - content_file_target:
+          "Dungeon Details -- Malmus Grotto.esp":
+            - 120
+      - cell: "Malmus Grotto"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -553.82434
+            y: 2114.5107
+            z: 115.907104
+          rotate:
+            x: 270.000001
+            y: 74.484502
+            z: 180.000112
+
+  - conditions:
+      - content_file_target:
+          "Dungeon Details -- Malmus Grotto.esp":
+            - 124
+      - cell: "Malmus Grotto"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -2096.3596
+            y: 80.82117
+            z: 87.490875
+          rotate:
+            x: 90
+            y: 88.366193
+            z: 0.000126
+
+  - conditions:
+      - content_file_target:
+          "Dungeon Details -- Nimawia Grotto.esp":
+            - 295
+      - cell: "Nimawia Grotto"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -828.7918
+            y: 1246.7598
+            z: -223.81973
+          rotate:
+            x: 0
+            y: 0
+            z: 337.082014

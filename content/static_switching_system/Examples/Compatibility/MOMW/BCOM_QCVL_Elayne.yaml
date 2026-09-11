@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 22: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/22%20BCOM+Quests%20for%20Clans%20and%20Vampire%20Legends%20Patch
+log_name: BCoM - Quests for Clans and Vampire Legends
+priority: cleanup
+
+instances:
+  - conditions:
+      - object_type: NPC
+      - content_file: "Quests for Clans and Vampire Legends.ESP"
+      - has_mwscript: ElayneUSebaonard
+      - cell: "Vivec, Black Shalk Cornerclub"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          rotate:
+            z: 0
+      - teleport:
+          cell: "Vivec, Black Shalk Cornerclub"
+          position:
+            x: 322
+            y: -4
+            z: -63

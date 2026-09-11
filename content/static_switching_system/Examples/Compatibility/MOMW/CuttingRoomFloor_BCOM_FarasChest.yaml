@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 06: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/06%20Cutting%20Room%20Floor+BCOM%20Patch
+log_name: Cutting Room Floor - BCoM Fara's Chest
+priority: cleanup
+
+instances:
+  - conditions:
+      - object_type: Container
+      - content_file: "Cutting Room Floor - Jobs.esp"
+      - record_id: "^de_p_chest_02_fara1$"
+      - cell: "Sadrith Mora, Fara's Hole in the Wall"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          rotate:
+            z: 325
+      - teleport:
+          cell: "Sadrith Mora, Fara's Hole in the Wall"
+          position:
+            x: -120
+            y: -355
+            z: 395

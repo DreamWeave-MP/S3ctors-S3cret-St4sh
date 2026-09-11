@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from alvazir's various patches: https://www.nexusmods.com/morrowind/mods/48955
+log_name: Vality's Bitter Coast - Twin Lamps
+priority: cleanup
+
+instances:
+  - conditions:
+      - content_file_target:
+          Valitys_Bitter_Coast_Addon.esp:
+            - 361
+      - coords:
+          - x: -6
+            y: -7
+    once: true
+    actions:
+      - disable: true

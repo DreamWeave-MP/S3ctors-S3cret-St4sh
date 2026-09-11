@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 66: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/66%20RepopulatedMorrowindxTheWolverineHall%20patch
+log_name: Repopulated Morrowind - The Wolverine Hall
+priority: cleanup
+
+instances:
+  - conditions:
+      - content_file_target:
+          RepopulatedMorrowind.ESM:
+            - 771
+      - cell: "Sadrith Mora, Wolverine Hall: Imperial Shrine"
+    once: true
+    actions:
+      - disable: true
+
+  - conditions:
+      - content_file_target:
+          RepopulatedMorrowind.ESM:
+            - 14
+      - cell: "Wolverine Hall"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: 149646
+            y: 29724
+            z: 2052
+          rotate:
+            x: 0
+            y: 0
+            z: 308.433724
+
+  - conditions:
+      - content_file_target:
+          RepopulatedMorrowind.ESM:
+            - 18
+      - cell: "Wolverine Hall"
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: 149407
+            y: 28228
+            z: 2052
+          rotate:
+            x: 0
+            y: 0
+            z: 166.157738

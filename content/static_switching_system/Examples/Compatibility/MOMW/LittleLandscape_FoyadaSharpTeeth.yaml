@@ -1,0 +1,103 @@
+# yaml-language-server: $schema=../../../Scripts/staticSwitcher/schema/replacerSchema.json
+# Derived from MOMW Patches 78: https://gitlab.com/modding-openmw/momw-patches/-/tree/master/78%20Little%20Landscape%20Foyada%20of%20Sharp%20Teeth%20Rock%20Fix
+log_name: Little Landscape - Foyada of Sharp Teeth Rock Fix
+priority: cleanup
+
+instances:
+  - conditions:
+      - content_file_target:
+          Morrowind.esm:
+            - 246291
+      - coords:
+          - x: -7
+            y: 17
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -50020.695
+            y: 140111.88
+            z: 2375.8877
+          rotate:
+            x: 0
+            y: 0
+            z: 165.190172
+          scale: 2
+
+  - conditions:
+      - content_file_target:
+          "Little Landscape - Foyada of Sharp Teeth.esp":
+            - 29
+      - coords:
+          - x: -7
+            y: 18
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -48973.445
+            y: 151542.7
+            z: 1521.7207
+          rotate:
+            x: 0
+            y: 0
+            z: 177.616916
+          scale: 1.12
+      - teleport:
+          cell:
+            x: -6
+            y: 18
+
+  - conditions:
+      - content_file_target:
+          Morrowind.esm:
+            - 246147
+      - coords:
+          - x: -6
+            y: 16
+    once: true
+    actions:
+      - disable: true
+
+  - conditions:
+      - content_file_target:
+          Morrowind.esm:
+            - 273665
+      - coords:
+          - x: -6
+            y: 16
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -49097.805
+            y: 134475.64
+            z: 3444.5642
+          rotate:
+            x: 0
+            y: 0
+            z: 314.163428
+          scale: 1.7800001
+
+  - conditions:
+      - content_file_target:
+          "Little Landscape - Foyada of Sharp Teeth.esp":
+            - 3
+      - coords:
+          - x: -6
+            y: 17
+    once: true
+    actions:
+      - transform:
+          transform_type: absolute
+          position:
+            x: -48227.105
+            y: 146507.34
+            z: 3116.7637
+          rotate:
+            x: 0
+            y: 0
+            z: 262.597272
