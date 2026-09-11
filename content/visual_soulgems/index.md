@@ -12,10 +12,11 @@ extra:
   nexus_id: 60181
   nexus_group_id: 7945146
 
-  data_directories:
-    - .
-  content_files:
-    - VSG.esp
+  install_info:
+    data_directories:
+      - .
+    content_files:
+      - VSG.esp
 
   version: 1.0
 ---
