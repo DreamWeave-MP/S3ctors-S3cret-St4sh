@@ -1,6 +1,7 @@
 +++
 title = "Concepts"
 description = "The execution model behind SSS YAML modules."
+template = "docs/section.html"
 page_template = "docs/page.html"
 sort_by = "weight"
 weight = 40
