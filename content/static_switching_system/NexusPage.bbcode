@@ -1,0 +1,212 @@
+[center][size=6][b][color=#b48cff]STATIC SWITCHING SYSTEM[/color][/b][/size]
+[size=4][i]Declarative world patching for OpenMW.[/i][/size][/center]
+
+[center][color=#b48cff][b]Replace it. Move it. Spawn it. Lock it. Delete it. Make it somebody else's problem.[/b][/color][/center]
+
+Static Switching System — SSS — is an OpenMW framework for mods which need to change objects in the world without manually rebuilding every affected reference, maintaining piles of compatibility plugins, or writing an entire Lua framework from scratch.
+
+It started as a contextual mesh replacer.
+
+It got a little out of hand.
+
+[color=#b48cff][size=5][b]JUST HERE BECAUSE ANOTHER MOD REQUIRES SSS?[/b][/size][/color]
+
+Good news: you do not need to learn any of this.
+
+For ordinary players:
+
+[b]1.[/b] Install H3lp Yours3lf.
+[b]2.[/b] Install Static Switching System.
+[b]3.[/b] Enable both plugins.
+[b]4.[/b] Install whatever mod told you to come here.
+[b]5.[/b] Play.
+
+That's it.
+
+SSS discovers its modules automatically through OpenMW's VFS. There is no module manager you need to operate, no configuration ritual, and no YAML you need to touch.
+
+Some individual SSS mods may also require FlexTag. If they do, their mod page should tell you.
+
+[color=#b48cff][b]If SSS is installed correctly, it is supposed to be boring.[/b][/color]
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/getting-started/installation/]Having trouble? Read the installation and VFS guide.[/url]
+
+[color=#b48cff][size=5][b]SO WHAT DOES IT ACTUALLY DO?[/b][/size][/color]
+
+SSS now has two module systems.
+
+[color=#b48cff][b]Static modules[/b][/color] are the original Static Switching System. They replace meshes globally or only in selected places, while respecting module priority and replacement chains.
+
+[color=#b48cff][b]Instance modules[/b][/color] operate on live objects directly. They can inspect the object, its location, its source mod, the player, quests, factions, inventories, ownership, weather, time, and considerably more before deciding what should happen.
+
+Rather than listing every possibility, here are a few things the shipped examples actually do:
+
+[center][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/recipes/dungeon-creature-repopulation/][color=#b48cff][b]Dungeon Repopulation[/b][/color][/url] — dead creatures marked as respawning can return when a dungeon wakes back up.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/caius-takes-weekends-off/][color=#b48cff][b]Caius Takes Weekends Off[/b][/color][/url] — Caius lazily relocates between his house and the South Wall Cornerclub according to the Tamrielic weekday.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/house-moves/][color=#b48cff][b]The House Moves When You're Not Looking[/b][/color][/url] — furniture shifts slightly every time the world wakes it back up.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/door-disguise/][color=#b48cff][b]The Door Knows What You're Wearing[/b][/color][/url] — equipped faction clothing can become a declarative access-control system.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/low-health-vvardenfell/][color=#b48cff][b]Low Health Makes Vvardenfell Worse[/b][/color][/url] — player state can permanently scar objects as they become active.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/necromantic-compound-interest/][color=#b48cff][b]Necromantic Compound Interest[/b][/color][/url] — dead generated undead reproduce. Eventually this becomes everybody's problem.[/center]
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/]See Experiments and Oddities for the complete cursed gallery.[/url]
+
+SSS currently ships with [color=#b48cff][b]2 YAML module formats, 59 conditions, 21 actions, 7 priority tiers, 31 working example modules, and 58 pages / 3,270 lines of documentation.[/b][/color]
+
+[color=#b48cff][size=5][b]I WANT TO MAKE A MOD. WHERE DO I START?[/b][/size][/color]
+
+You do not need to read 58 pages front-to-back.
+
+Pick the problem you're actually trying to solve.
+
+[color=#b48cff][b]“I just want to replace one mesh with another.”[/b][/color]
+
+Use a [b]static module[/b]. This is the original SSS use case: map one mesh to another and let SSS handle the replacement chain.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/recipes/basic-static-replacement/]Read: Basic Static Replacement[/url]
+
+[color=#b48cff][b]“I only want the replacement in Balmora, one dungeon, or a handful of exterior cells.”[/b][/color]
+
+Static modules can scope replacement by interior names, regions, and exterior grids instead of replacing the asset everywhere.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/recipes/contextual-static-replacement/]Read: Contextual Static Replacement[/url]
+
+[color=#b48cff][b]“I want to target one exact object from another plugin.”[/b][/color]
+
+Use provenance conditions such as [b]content_file[/b] and [b]content_file_target[/b]. SSS can identify the originating plugin and its local reference number without guessing from the object's record ID.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/conditions/location-and-identity/]Read: Location and Identity Conditions[/url]
+
+[color=#b48cff][b]“I need to move a rock, NPC, chest, or other placed object.”[/b][/color]
+
+Use an instance module with [b]transform[/b] or [b]teleport[/b]. Absolute transforms are particularly useful for compatibility patches.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/actions/world-and-transform/]Read: World and Transform Actions[/url]
+
+[color=#b48cff][b]“I want this object gone.”[/b][/color]
+
+Use [b]disable[/b] when the object should simply disappear, or [b]delete[/b] when permanent removal is actually required.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/actions/world-and-transform/]Read: World and Transform Actions[/url]
+
+[color=#b48cff][b]“I want the rule to depend on the player or the state of the world.”[/b][/color]
+
+Instance rules can gate behavior on player level, attributes, skills, health, magicka, fatigue, equipment, spells, faction membership, quest state, globals, time of day, weather, and even the Tamrielic weekday.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/conditions/player-and-world-state/]Read: Player and World-State Conditions[/url]
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/recipes/quest-state-world-patching/]Example: Quest-State World Patching[/url]
+
+[color=#b48cff][b]“I want to modify creatures or NPCs.”[/b][/color]
+
+SSS can inspect death state, respawn flags, creature type, race, class, disposition, level, attributes, skills, spells, factions, inventory, and more.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/conditions/actors-and-target-state/]Read: Actor and Target-State Conditions[/url]
+
+[color=#b48cff][b]“I want to create objects around something.”[/b][/color]
+
+The [b]create[/b] action can spawn one or more records with randomized count, position, rotation, and scale.
+
+This is how one of the examples accidentally implements skeleton population dynamics.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/recipes/randomized-object-creation/]Example: Randomized Object Creation[/url]
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/actions/world-and-transform/]Reference: World and Transform Actions[/url]
+
+[color=#b48cff][b]“I want doors or containers to react to equipment, factions, keys, locks, or traps.”[/b][/color]
+
+Combine equipment and ownership conditions with lock, key, trap, inventory, and activation actions.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/recipes/loot-locks-traps/]Example: Loot, Locks, and Traps[/url]
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/conditions/]Browse: All Conditions[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/actions/]Browse: All Actions[/url]
+
+[color=#b48cff][b]“I need a compatibility patch, but I really do not want another ESP.”[/b][/color]
+
+Good. This is now one of SSS's strongest use cases.
+
+The shipped examples include real compatibility fixes translated from [b]Modding-OpenMW's MOMW Patches[/b] and [b]alvazir's Various Patches[/b], with attribution to the people who originally discovered and documented those conflicts.
+
+Several existing ESP or MWScript patches collapse into a few YAML rules.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/compatibility/real-world-patches/]Read: Real-World Compatibility Patches[/url]
+
+[color=#b48cff][b]“Can SSS replace every compatibility plugin?”[/b][/color]
+
+No.
+
+SSS operates on resolved live objects. It is excellent when a placed reference is wrong, unwanted, misplaced, or needs different runtime state.
+
+It is not a replacement for build-time or plugin-resolution surgery involving [b]CELL[/b], [b]LAND[/b], [b]PGRD[/b], dialogue [b]INFO[/b], or conflicting base records.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/compatibility/what-sss-cannot-replace/]Read: What SSS Cannot Replace[/url]
+
+[color=#b48cff][b]“I want something to happen every frame, after a timer, or immediately when some unrelated event occurs.”[/b][/color]
+
+You probably want Lua.
+
+SSS evaluates objects when they become active. Conditions such as weather, player health, quest state, or weekday are snapshots taken when the object is processed; they are not event listeners.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/lifecycle/]Read: Loading, Processing, and Persistence[/url]
+
+[color=#b48cff][b]“I have combined twelve conditions, eight actions, generated objects, teleportation, inventory edits, weather checks, and quest state into one rule.”[/b][/color]
+
+Congratulations.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/you-probably-want-lua/]Read: You Probably Want Lua[/url]
+
+[color=#b48cff][size=5][b]AUTHORING[/b][/size][/color]
+
+SSS modules live under [b]scripts/staticSwitcher/data/[/b].
+
+The shipped JSON schema is the real authoring contract. If your editor supports YAML schemas, use it.
+
+The fastest authoring path is:
+
+[color=#b48cff][b]Start with one shipped example that looks vaguely like what you want, then follow the links above when you need another primitive.[/b][/color]
+
+Do not try to memorize the whole framework.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/getting-started/first-module/]Start Here: Your First Module[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/module-format/]Read: Module Format[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/api/schema/]Read: Schema and Editor Validation[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/recipes/]Browse: Recipes[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/experiments/]Browse: Experiments and Oddities[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/]Browse: Complete Documentation[/url]
+
+[color=#b48cff][size=5][b]PERSISTENCE AND REMOVAL[/b][/size][/color]
+
+[color=#b48cff][b]Do not assume an SSS module can be safely removed from an existing save.[/b][/color]
+
+Instance modules can make persistent changes to world objects. Removing the YAML later does not automatically reverse changes which already happened.
+
+Treat an SSS module like any other mod capable of modifying your save unless its author specifically documents otherwise.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/concepts/persistence/]Read: Persistence and Once Semantics[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/compatibility/save-updates-and-persistence/]Read: Updating and Removing Modules[/url]
+
+[color=#b48cff][size=5][b]IF SOMETHING IS BROKEN[/b][/size][/color]
+
+Start with the log.
+
+Then check that the module is actually inside OpenMW's active VFS, that its assets are visible there, and that the YAML validates against the shipped schema.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/compatibility/troubleshooting/]Read: Troubleshooting[/url]
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/static_switching_system/docs/compatibility/vfs-package-boundaries/]Read: VFS and Package Boundaries[/url]
+
+[color=#b48cff][size=5][b]THE SHORT VERSION[/b][/size][/color]
+
+If you're a player:
+
+[color=#b48cff][b]Install it. Enable it. Forget about it.[/b][/color]
+
+If you're an author:
+
+[color=#b48cff][b]Tell SSS what objects you're interested in, tell it what should happen to them, and let the framework worry about the plumbing.[/b][/color]
+
+Turns out the answer to “what can it switch?” was [color=#b48cff][b]yes[/b][/color].
