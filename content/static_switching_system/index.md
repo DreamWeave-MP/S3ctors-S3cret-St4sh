@@ -30,6 +30,12 @@ SSS has two module types: static and instance. Pick one.
 
 A YAML file must not combine `instances` with static replacement fields. When an object matches an instance rule, that pipeline owns the activation; static replacement is the fallback for objects with no matching instance rules.
 
+## Dependencies and optional integrations
+
+SSS depends on [H3lp Yours3lf](@/h3lp_yours3lf/index.md), so install and enable H3lp Yours3lf before testing SSS.
+
+[FlexTag](@/flextag/index.md) is optional. It is required only by the tag feature family: `has_tag` and `cell_tag` conditions, plus `add_tag` and `remove_tag` actions. Without FlexTag's `FlexTagG` interface, those conditions return false and those actions cannot perform their operation, so a module that depends on them will appear inactive. SSS's static pipeline and its other instance conditions and actions do not require FlexTag. In particular, `cell_match` is an SSS location condition, not a FlexTag condition. See [FlexTag compatibility](@/static_switching_system/docs/compatibility/flextag.md) for tag data and persistence details.
+
 ## Mods already using SSS
 
 SSS is already doing useful work in released static modules, not just in sample files:
@@ -42,7 +48,7 @@ All nine are static modules. See [Static Modules in the Wild](@/static_switching
 
 ## Start here: a five-minute test
 
-1. Install SSS and [H3lp Yours3lf](@/h3lp_yours3lf/index.md), then enable `Static Switching System.esp`.
+1. Install SSS and [H3lp Yours3lf](@/h3lp_yours3lf/index.md), enable `H3lp Yours3lf.esp`, and then enable `Static Switching System.esp`. Install [FlexTag](@/flextag/index.md) only if your module uses `has_tag`, `cell_tag`, `add_tag`, or `remove_tag`.
 2. Create a YAML file below `scripts/staticSwitcher/data/` in an active OpenMW data directory:
 
    ```yaml
