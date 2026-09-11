@@ -87,6 +87,32 @@
   top: 1em
   max-height: calc(100vh - 2em)
   overflow-y: auto
+  scrollbar-color: #6f3f8f #101010
+  scrollbar-gutter: stable
+  scrollbar-width: thin
+
+  &::-webkit-scrollbar
+    width: 8px
+
+  &::-webkit-scrollbar-track
+    background: #101010
+
+  &::-webkit-scrollbar-thumb
+    background: #6f3f8f
+    border: 2px solid #101010
+    border-radius: 999px
+
+  &::-webkit-scrollbar-thumb:hover
+    background: #b48cff
+
+  &::-webkit-scrollbar-thumb:active
+    background: #c8a8ff
+
+  &::-webkit-scrollbar-button
+    display: none
+
+  &::-webkit-scrollbar-corner
+    background: transparent
 
 .docs-sidebar__panel,
 .docs-toc__panel
