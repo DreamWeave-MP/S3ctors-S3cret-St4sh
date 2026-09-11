@@ -62,6 +62,6 @@ Instance rules remain in the order written in `instances`; matching rules are co
 
 An action block's `chance` is rolled before the fields in that block. Some fields have a second chance: item entries, sound data, key/trap candidates, replacement candidates, pools, and conditional disable. These rolls are independent.
 
-`replace` is a map of candidate record IDs to chances. The chances are not normalized weights. The runtime tests candidates and uses the first successful candidate it encounters; YAML map iteration is not an authoring-order contract, so do not describe this as a weighted ordered list. Key and trap actions are different: their array of one-key tables is explicitly ordered and the first passing entry wins.
+`replace` is either `self` or a map of candidate record IDs to chances. `self` recreates the matched object's base record. Map chances are not normalized weights. The runtime tests candidates and uses the first successful candidate it encounters; YAML map iteration is not an authoring-order contract, so do not describe this as a weighted ordered list. Key and trap actions are different: their array of one-key tables is explicitly ordered and the first passing entry wins.
 
 A same-table `replace` plus `delete` queues deletion only when replacement succeeds. Put `delete: true` in a separate action entry when source deletion must be unconditional. Replacement and transform placement updates are applied through the runtime's deferred processing; see [Lifecycle](@/static_switching_system/docs/api/lifecycle.md).

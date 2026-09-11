@@ -87,7 +87,7 @@
 ---@field rotate SSSVector3Range?
 ---@field position SSSVector3Range?
 
----@alias SSSReplaceAction table<RecordId, number>
+---@alias SSSReplaceAction 'self'|table<RecordId, number>
 ---@alias SSSChanceRange number|SSSChanceRangeTable
 
 ---@class SSSChanceRangeTable
@@ -116,7 +116,7 @@
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
 ---@field chance number? probability 0-1 that this entire action block fires; omitted means always
----@field replace SSSReplaceAction?
+---@field replace SSSReplaceAction? record ID chance map, or `self` to recreate the matched object's base record
 ---@field transform SSSTransformAction?
 ---@field add SSSItemAction? queues item(s) into the current action target when it is an Actor or Container
 ---@field remove SSSItemAction? removes item(s) from the current action target when it is an Actor or Container and enough items are available
@@ -182,6 +182,7 @@
 ---@field has_tag string|string[]? FlexTag tag(s) on the object. Requires FlexTag mod. Match any.
 ---@field cell_tag string|string[]? FlexTag tag(s) on the object's cell. Requires FlexTag mod. Match any.
 ---@field is_dead boolean? Whether the target actor is dead. Non-actors return false.
+---@field is_respawning boolean? Whether the target NPC or Creature record is flagged to respawn. Other object types return false.
 ---@field creature_type string|number|(string|number)[]? Target creature type (creatures/daedra/undead/humanoid). Non-creatures return false.
 ---@field has_enchantment boolean? Whether the target object has an enchantment.
 ---@field enchantment string|string[]? Enchantment ID on the target object. Exact, case-insensitive match. Returns false when no enchantment is present.

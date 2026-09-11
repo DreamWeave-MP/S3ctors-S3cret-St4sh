@@ -21,6 +21,16 @@ Matches an Actor's dead state. Non-actors return false.
 is_dead: false
 ```
 
+## `is_respawning`
+
+**Shape:** `is_respawning: boolean`
+
+Matches the OpenMW `CreatureRecord.isRespawning` or `NpcRecord.isRespawning` flag. This describes whether the actor's base record is marked with the respawn flag; it does not indicate whether the current instance is dead or currently being respawned. Other object types return false.
+
+```yaml
+is_respawning: true
+```
+
 ## `creature_type`
 
 **Shape:** `creature_type: creatures | daedra | undead | humanoid | [named values, ...]`

@@ -23,7 +23,7 @@ SSS keeps the normal path small, but valid-looking modules can still hit boundar
 - Module priority controls execution order, not plugin load order. Same-tier modules use canonical module ID as the tie-breaker.
 - Instance rules remain in their module order, but every matching rule can contribute. `once` skips only the rule or module scope it governs; it is not a general “stop all later modules” switch.
 - Fields in one action table execute in SSS's fixed action order, not YAML mapping order. Use separate action entries when you need separate block chances or unconditional deletion.
-- `replace` candidate maps are not weighted tables and do not provide YAML authoring order. The runtime uses the first passing candidate it encounters. `key` and `trap` arrays are explicitly ordered first-passing selections.
+- `replace` candidate maps are not weighted tables and do not provide YAML authoring order. The runtime uses the first passing candidate it encounters; only scalar `replace: self` recreates the matched object's base record. `key` and `trap` arrays are explicitly ordered first-passing selections.
 
 ## Target and timing behavior
 

@@ -72,7 +72,7 @@ The supported condition keys are:
 - **Location and provenance:** `cell`, `cell_match`, `coords`, `content_file`, `content_file_target`, `exterior`, `quasi_exterior`, `region`, `worldspace`.
 - **Object identity and record data:** `record_id`, `object_type`, `mesh`, `generated_record`, `generated_object`, `nameMatch`, `has_name`, `scale`.
 - **Scripts, tags, and equipment:** `has_lua_script`, `has_mwscript`, `has_tag`, `cell_tag`, `player_equipped`.
-- **Actor and inventory state:** `carrying`, `is_dead`, `creature_type`, `race`, `target_class`, `target_disposition`, `target_level`, `target_attribute`, `target_skill`, `target_spell`.
+- **Actor and inventory state:** `carrying`, `is_dead`, `is_respawning`, `creature_type`, `race`, `target_class`, `target_disposition`, `target_level`, `target_attribute`, `target_skill`, `target_spell`.
 - **Locks and ownership:** `locked`, `has_key`, `has_trap`, `owner_id`, `faction_owner_id`, `faction_owner_rank`, `target_faction`, `player_faction`.
 - **Player and world state:** `player_level`, `player_attribute`, `player_skill`, `player_health`, `player_magicka`, `player_fatigue`, `player_spell`, `global_value`, `has_journal`, `time_of_day`, `current_weather`.
 - **Logic:** `not` for one inverted inner condition.
@@ -93,7 +93,7 @@ The stable actions are:
 
 | Action | Shape and behavior |
 | --- | --- |
-| `replace` | Map of replacement record ID to chance. Creates a replacement object when a candidate succeeds. Candidates are not normalized weights. |
+| `replace` | `self` to recreate the matched object's base record, or a map of replacement record ID to chance. Candidates are not normalized weights. |
 | `transform` | `scale`, `rotate`, and/or `position`, with `transform_type: relative` (default) or `absolute`. |
 | `teleport` | Optional cell name/ID or exterior `{x, y}`, position, relative rotation, and `onGround`. |
 | `set_ownership` | Optional `owner`, `faction`, and `factionRank`. |
