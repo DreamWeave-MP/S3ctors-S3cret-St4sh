@@ -1,0 +1,16 @@
+particles: Partiklar
+particles & static glow: Partiklar och statiskt sken
+static glow: Statiskt sken
+ultra glow: Ultrasken
+
+SoulGemVariantName: Stil för själsstenar
+SoulGemVariantDesc: |-
+  Din valda stil för själsstenar används varje gång en sådan aktiveras.
+  Du kan byta stil under spelets gång, men ändringen påverkar inte själsstenar som redan har konverterats,
+  så du kan blanda olika stilar under genomspelningen om du vill.
+
+VisualSoulGemsDesc: Byter dynamiskt ut tomma själsstensobjekt mot fyllda varianter med ersättningsresurser av SVNR.
+VisualSoulGemsName: Visual Soul Gems OpenMW
+
+VisualSoulGemsGroupName: ""
+VisualSoulGemsGroupDesc: ""

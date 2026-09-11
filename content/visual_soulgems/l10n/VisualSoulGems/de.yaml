@@ -1,0 +1,16 @@
+particles: Partikel
+particles & static glow: Partikel und statisches Leuchten
+static glow: Statisches Leuchten
+ultra glow: Ultra-Leuchten
+
+SoulGemVariantName: Seelenstein-Stil
+SoulGemVariantDesc: |-
+  Dein bevorzugter Seelenstein-Stil wird verwendet, sobald ein Seelenstein aktiviert wird.
+  Du kannst den Stil während des Spiels ändern; bereits umgewandelte Seelensteine bleiben davon jedoch unberührt,
+  sodass du während deines Spieldurchlaufs verschiedene Stile mischen kannst, wenn du möchtest.
+
+VisualSoulGemsDesc: Ersetzt leere Seelenstein-Objekte dynamisch durch gefüllte Varianten und verwendet dafür die Ersatz-Assets von SVNR.
+VisualSoulGemsName: Visual Soul Gems OpenMW
+
+VisualSoulGemsGroupName: ""
+VisualSoulGemsGroupDesc: ""

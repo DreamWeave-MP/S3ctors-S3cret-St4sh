@@ -1,0 +1,16 @@
+particles: Particules
+particles & static glow: Particules et lueur statique
+static glow: Lueur statique
+ultra glow: Lueur intense
+
+SoulGemVariantName: Style des gemmes spirituelles
+SoulGemVariantDesc: |-
+  Le style de gemme spirituelle que vous préférez est utilisé chaque fois qu'une gemme est activée.
+  Vous pouvez changer de style en cours de partie, mais ce changement ne s'applique pas aux gemmes déjà converties,
+  ce qui vous permet de mélanger les styles au fil de votre partie si vous le souhaitez.
+
+VisualSoulGemsDesc: Remplace dynamiquement les objets de gemmes spirituelles vides par des versions remplies, à l'aide des ressources de remplacement de SVNR.
+VisualSoulGemsName: Visual Soul Gems OpenMW
+
+VisualSoulGemsGroupName: ""
+VisualSoulGemsGroupDesc: ""
