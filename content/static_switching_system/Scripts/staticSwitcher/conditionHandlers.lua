@@ -717,6 +717,7 @@ local conditionHandlers = {
 
     return true
   end,
+  ['day_of_week'] = function(_, day) return BatchCache.dayOfWeek() == day end,
   ['player_faction'] = function(_, factionData)
     local faction = factionData.faction
     local rank = Player.type.getFactionRank(Player, faction)

@@ -2,6 +2,7 @@
 
 ---@type SSSBatchCache
 
+local calendar = require 'openmw_aux.calendar'
 local core = require 'openmw.core'
 local types = require 'openmw.types'
 local world = require 'openmw.world'
@@ -9,6 +10,16 @@ local world = require 'openmw.world'
 local Player = world.players[1]
 
 local Cache = {}
+
+local DAYS_OF_WEEK = {
+  [0] = 'sundas',
+  [1] = 'morndas',
+  [2] = 'tirdas',
+  [3] = 'middas',
+  [4] = 'turdas',
+  [5] = 'fredas',
+  [6] = 'loredas',
+}
 
 local clear
 ---@diagnostic disable-next-line: undefined-field
@@ -52,6 +63,17 @@ local function currentWeather(cell)
   end
 
   return weather ~= false and weather or nil
+end
+
+local function dayOfWeek()
+  local day = Cache._dayOfWeek
+  if day then return day end
+
+  local dayIndex = tonumber(calendar.formatGameTime('%w', core.getGameTime()))
+  day = DAYS_OF_WEEK[dayIndex]
+
+  Cache._dayOfWeek = day
+  return day
 end
 
 local function attributeStat(object, attrId)
@@ -170,6 +192,7 @@ return {
   playerQuests = playerQuests,
   playerEquipment = playerEquipment,
   currentWeather = currentWeather,
+  dayOfWeek = dayOfWeek,
   attributeStat = attributeStat,
   skillStat = skillStat,
   dynamicStat = dynamicStat,
