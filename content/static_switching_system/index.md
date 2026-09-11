@@ -23,6 +23,8 @@ extra:
 
 **Static Switching System (SSS)** is a declarative world-patching framework for OpenMW. Write YAML modules to replace meshes globally or in specific places, or to target live objects with conditions and apply object, inventory, actor, world-state, and scripting actions.
 
+<!-- more -->
+
 SSS has two module types: static and instance. Pick one.
 
 - **Static modules** replace meshes and maintain tracked replacement chains. They are the original Static Switching System path.
