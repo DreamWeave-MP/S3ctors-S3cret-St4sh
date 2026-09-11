@@ -868,7 +868,7 @@ conditionHandlers['not'] = function(object, innerCondition)
   if type(innerValue) == 'table' then
     local firstKey = next(innerValue)
 
-    if firstKey and type(firstKey) == 'number' then
+    if innerName ~= 'global_value' and firstKey and type(firstKey) == 'number' then
       for valIndex = 1, #innerValue do
         if innerHandler(object, innerValue[valIndex]) then return false end
       end

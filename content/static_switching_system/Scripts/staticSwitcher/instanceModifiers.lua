@@ -284,17 +284,7 @@ local function getMatchingInstanceModules(object)
       local actionTableHash = actionData.actionHash
       local skipReason
 
-      local conditionsPassed = not actionData.conditions
-        or matchesAllConditions(object, actionData.conditions)
-
-      if not conditionsPassed then skipReason = 'conditions failed' end
-
-      -- Action conditions have been evaluated already, and this action can only run once
-      if
-        not skipReason
-        and actionData.once == true
-        and onceActionWasApplied(object, moduleName, actionTableHash)
-      then
+      if actionData.once == true and onceActionWasApplied(object, moduleName, actionTableHash) then
         skipReason = 'once=true already applied'
       end
 
@@ -310,6 +300,13 @@ local function getMatchingInstanceModules(object)
       -- Module-level once: skip all rules for this module if any rule has already applied
       if not skipReason and moduleOnce and onceActionWasApplied(object, moduleName, '*') then
         skipReason = 'module once=true already applied'
+      end
+
+      if not skipReason then
+        local conditionsPassed = not actionData.conditions
+          or matchesAllConditions(object, actionData.conditions)
+
+        if not conditionsPassed then skipReason = 'conditions failed' end
       end
 
       if skipReason then
@@ -418,7 +415,7 @@ local function tryModifyObject(object, instanceModificationList)
               objectId,
               didReplace and 'OK' or 'failed (no matching roll)'
             )
-            if didReplace then
+            if didReplace and instanceModification.once == 'per_cell' then
               markAppliedThisLoad(
                 modifyTarget,
                 instanceModification.moduleName,
@@ -470,17 +467,17 @@ local function tryModifyObject(object, instanceModificationList)
           end
 
           if addTagAction then
-            actionHandlers.add_tag(modifyTarget, addTagAction)
-            anyActionApplied = true
-            currentRuleApplied = true
-            DebugLog('  add_tag on %s', objectId)
+            local didAddTag = actionHandlers.add_tag(modifyTarget, addTagAction)
+            anyActionApplied = anyActionApplied or didAddTag
+            currentRuleApplied = currentRuleApplied or didAddTag
+            DebugLog('  add_tag on %s: %s', objectId, didAddTag and 'OK' or 'unavailable')
           end
 
           if removeTagAction then
-            actionHandlers.remove_tag(modifyTarget, removeTagAction)
-            anyActionApplied = true
-            currentRuleApplied = true
-            DebugLog('  remove_tag on %s', objectId)
+            local didRemoveTag = actionHandlers.remove_tag(modifyTarget, removeTagAction)
+            anyActionApplied = anyActionApplied or didRemoveTag
+            currentRuleApplied = currentRuleApplied or didRemoveTag
+            DebugLog('  remove_tag on %s: %s', objectId, didRemoveTag and 'OK' or 'unavailable')
           end
 
           if addAction then
@@ -554,12 +551,14 @@ local function tryModifyObject(object, instanceModificationList)
               currentRuleApplied = true
               DebugLog('  create on %s: %d spawned', objectId, numCreated)
 
-              for objIdx = 1, numCreated do
-                markAppliedThisLoad(
-                  createdObjects[objIdx],
-                  instanceModification.moduleName,
-                  instanceModification.actionHash
-                )
+              if instanceModification.once == 'per_cell' then
+                for objIdx = 1, numCreated do
+                  markAppliedThisLoad(
+                    createdObjects[objIdx],
+                    instanceModification.moduleName,
+                    instanceModification.actionHash
+                  )
+                end
               end
             end
           end

@@ -250,7 +250,7 @@ end
 
 ---
 --- Helper: extract a numeric value from a number or {min, max} range table.
----@param numberOrTable number|SSSNumericRange
+---@param numberOrTable SSSRandomNumericRange
 ---@return number
 local function getRangeValue(numberOrTable)
   local actionDataType = type(numberOrTable)
@@ -290,7 +290,7 @@ end
 
 ---
 --- Calculate target scale from a scale action, relative to a reference.
----@param scaleAction SSSNumericRange
+---@param scaleAction SSSRandomNumericRange
 ---@param referenceScale number
 ---@return number
 local function getScaleValue(scaleAction, referenceScale)

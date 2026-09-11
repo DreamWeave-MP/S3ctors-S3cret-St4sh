@@ -315,7 +315,7 @@
                     "type": "string",
                     "enum": ["relative", "absolute"],
                     "default": "relative",
-                    "description": "Whether position/rotation/scale overrides are relative to the trigger object's values (default) or absolute."
+                    "description": "Whether position/rotation/scale overrides are relative to the current accumulated action placement (default) or absolute."
                 }
             },
             "additionalProperties": false
@@ -326,8 +326,8 @@
             "patternProperties": {
                 "^.*$": {
                     "oneOf": [
-                        {"type": "string", "description": "Spawn 1 copy at trigger position."},
-                        {"type": "integer", "minimum": 1, "description": "Spawn this many copies at trigger position."},
+                        {"type": "string", "description": "Spawn 1 copy at the accumulated action placement."},
+                        {"type": "integer", "minimum": 1, "description": "Spawn this many copies at the accumulated action placement."},
                         {"$ref": "#/definitions/createPool"}
                     ]
                 }
@@ -400,7 +400,7 @@
                 },
                 "create": {
                     "$ref": "#/definitions/createAction",
-                    "description": "Spawn objects at the trigger's position. Each pool (record ID) is evaluated independently with optional count, chance, and position/rotation/scale overrides per pool. Transform overrides within a pool re-randomize per object for scatter/spread effects."
+                    "description": "Spawn objects at the accumulated action placement. Each pool (record ID) is evaluated independently with optional count, chance, and position/rotation/scale overrides per pool. Transform overrides within a pool re-randomize per object for scatter/spread effects."
                 },
                 "lock_level": {
                     "$ref": "#/definitions/randomNumericRange",
@@ -738,7 +738,10 @@
                     "$ref": "#/definitions/stringOrStringList"
                 },
                 "not": {
-                    "$ref": "#/definitions/conditionData",
+                    "allOf": [
+                        {"$ref": "#/definitions/conditionData"},
+                        {"maxProperties": 1}
+                    ],
                     "description": "Invert a single inner condition. The value is a condition table like {nameMatch: \"Guard\"} — the inner condition is evaluated and the result negated."
                 },
                 "global_value": {
@@ -1226,10 +1229,10 @@
                         {
                             "type": "string",
                             "enum": ["per_cell"],
-                            "description": "The rule re-rolls every cell load. Applied actions do not persist across save/load."
+                            "description": "The rule is eligible once per SSS activation batch. Applied actions do not persist across save/load."
                         }
                     ],
-                    "description": "When to process this rule. true persists across saves; \"per_cell\" re-rolls each cell load."
+                    "description": "When to process this rule. true persists across saves; \"per_cell\" permits one application per SSS activation batch."
                 }
             },
             "required": [
