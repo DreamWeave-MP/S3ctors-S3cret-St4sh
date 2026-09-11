@@ -92,20 +92,14 @@ local function new(constructorData)
 
   local methods, proxy, shadowSettings, state = {}, {}, {}, {}
 
-  requestedGroup:subscribe(
-    async:callback(
-      function(group, key) defaultSubscribeHandler(shadowSettings, requestedGroup, group, key) end
-    )
-  )
+  local subscribeHandler = constructorData.subscribeHandler
+  if subscribeHandler == nil then subscribeHandler = defaultSubscribeHandler end
 
-  if constructorData.subscribeHandler then
-    assert(type(constructorData.subscribeHandler) == 'function')
-
+  if subscribeHandler then
+    assert(type(subscribeHandler) == 'function')
     requestedGroup:subscribe(
       async:callback(
-        function(group, key)
-          constructorData.subscribeHandler(shadowSettings, requestedGroup, group, key)
-        end
+        function(group, key) subscribeHandler(shadowSettings, requestedGroup, group, key) end
       )
     )
   end
