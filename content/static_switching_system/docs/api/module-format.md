@@ -74,7 +74,7 @@ The supported condition keys are:
 - **Scripts, tags, and equipment:** `has_lua_script`, `has_mwscript`, `has_tag`, `cell_tag`, `player_equipped`.
 - **Actor and inventory state:** `carrying`, `is_dead`, `is_respawning`, `creature_type`, `race`, `target_class`, `target_disposition`, `target_level`, `target_attribute`, `target_skill`, `target_spell`.
 - **Locks and ownership:** `locked`, `has_key`, `has_trap`, `owner_id`, `faction_owner_id`, `faction_owner_rank`, `target_faction`, `player_faction`.
-- **Player and world state:** `player_level`, `player_attribute`, `player_skill`, `player_health`, `player_magicka`, `player_fatigue`, `player_spell`, `global_value`, `has_journal`, `time_of_day`, `current_weather`.
+- **Player and world state:** `player_level`, `player_attribute`, `player_skill`, `player_health`, `player_magicka`, `player_fatigue`, `player_spell`, `global_value`, `has_journal`, `time_of_day`, `day_of_week`, `current_weather`.
 - **Logic:** `not` for one inverted inner condition.
 
 Condition keys that refer to actors, NPCs, inventories, locks, tags, or other specialized state return false or no-op when the target does not support that state. `record_id` uses Lua pattern matching; anchor it when exact matching is required, for example `^rat$`. `content_file_target` scopes local reference numbers to a named content file:

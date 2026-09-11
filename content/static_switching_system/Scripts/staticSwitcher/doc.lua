@@ -129,7 +129,7 @@
 --- here stay disabled permanently from the SSS's perspective. Use once=true with disable when
 --- you want a one-time effect, or avoid disable entirely for objects you want to toggle.
 ---@field delete true? queues removal of the original matched source object through DeleteManager
----@field create SSSCreateAction? spawns objects at the trigger's position; each pool evaluated independently with optional count, chance, and position/rotation/scale overrides
+---@field create SSSCreateAction? spawns objects at the accumulated action placement; each pool evaluated independently with optional count, chance, and position/rotation/scale overrides
 ---@field lock_level SSSNumericRange? locks (positive) or unlocks (zero/negative) the target object; non-lockable objects no-op
 ---@field key false|table<string, SSSChanceRange>[]? sets or removes key; each entry is `{recordId: chance}`; first passing entry wins
 ---@field trap false|table<string, SSSChanceRange>[]? sets or removes trap; each entry is `{recordId: chance}`; first passing entry wins
@@ -168,6 +168,7 @@
 ---@field target_magicka number|table? Target current magicka gate. Non-actors return false.
 ---@field target_fatigue number|table? Target current fatigue gate. Non-actors return false.
 ---@field time_of_day number|table? Game hour gate: bare number means at-least, table with min/max for range. Computed from core.getGameTime().
+---@field day_of_week string|string[]? Current Tamrielic weekday: sundas, morndas, tirdas, middas, turdas, fredas, or loredas.
 ---@field player_faction table? Player faction membership: {faction: string, rank?: integer, min?: integer, max?: integer}. rank is shorthand for min. Returns false if player is not in the faction.
 ---@field faction_owner_id string|string[]? Object owner faction ID. Case-insensitive exact match. Returns false when no faction owner is set.
 ---@field owner_id string|string[]? Object owner NPC record ID. Case-insensitive exact match. Returns false when no owner is set.
@@ -319,6 +320,7 @@
 ---@field playerQuests fun(): table<string, openmw.types.PlayerQuest> Returns the player's quest table, cached per batch.
 ---@field playerEquipment fun(): openmw.types.EquipmentTable Returns the player's equipment table, cached per batch.
 ---@field currentWeather fun(cell: openmw.core.Cell): openmw.core.WeatherRecord? Returns current weather for a cell, cached per batch.
+---@field dayOfWeek fun(): string Returns the current Tamrielic weekday, cached per batch.
 ---@field attributeStat fun(object: openmw.GObject?, attrId: string): openmw.types.AttributeStat Returns cached attribute stat; defaults to Player when object is nil.
 ---@field skillStat fun(object: openmw.GObject?, skillId: string): openmw.types.SkillStat Returns cached skill stat; defaults to Player when object is nil.
 ---@field dynamicStat fun(object: openmw.GObject?, statName: string): openmw.types.DynamicStat|nil Returns cached dynamic stat (health/magicka/fatigue); defaults to Player when object is nil.

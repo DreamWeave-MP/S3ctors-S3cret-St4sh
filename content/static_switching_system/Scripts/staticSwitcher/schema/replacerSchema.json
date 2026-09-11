@@ -1040,6 +1040,39 @@
                     "$ref": "#/definitions/numericRange",
                     "description": "Game hour gate. Bare number means at-least, table with min/max for range. Hour is a 0-23 float."
                 },
+                "day_of_week": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "enum": [
+                                "sundas",
+                                "morndas",
+                                "tirdas",
+                                "middas",
+                                "turdas",
+                                "fredas",
+                                "loredas"
+                            ]
+                        },
+                        {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "sundas",
+                                    "morndas",
+                                    "tirdas",
+                                    "middas",
+                                    "turdas",
+                                    "fredas",
+                                    "loredas"
+                                ]
+                            }
+                        }
+                    ],
+                    "description": "Current Tamrielic weekday. Values are lowercase canonical names; a list matches any listed day."
+                },
                 "faction_owner_id": {
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "Faction that owns the object. Case-insensitive exact match against owner.factionId. Returns false when no faction owner is set."

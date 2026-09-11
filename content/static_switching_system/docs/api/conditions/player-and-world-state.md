@@ -126,6 +126,20 @@ time_of_day:
   max: 8
 ```
 
+## `day_of_week`
+
+**Shape:** `day_of_week: string | string[]`
+
+Matches the current in-game Tamrielic weekday when the object is processed. It is a condition, not a weekday-change event. A string matches one canonical lowercase weekday; a list matches any listed weekday. The weekdays are `sundas`, `morndas`, `tirdas`, `middas`, `turdas`, `fredas`, and `loredas`.
+
+```yaml
+day_of_week:
+  - loredas
+  - sundas
+```
+
+The weekday is derived from the game calendar and cached for the current SSS activation batch. Waiting for a new weekday does not wake or reschedule an object; the rule is reconsidered the next time SSS processes that object.
+
 ## `player_faction`
 
 **Shape:** `player_faction: { faction: string, rank?: integer, min?: integer, max?: integer }`
