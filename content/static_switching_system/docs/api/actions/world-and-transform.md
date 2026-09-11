@@ -11,7 +11,13 @@ kind = "api"
 
 ## `replace`
 
-**Shape:** `replace: { ReplacementRecordId: chance, ... }`
+**Shape:** `replace: self` or `replace: { ReplacementRecordId: chance, ... }`
+
+`replace: self` recreates the matched object from its base record. The original instance is disabled, and the new instance becomes the action target. SSS carries the replacement through the normal placement pipeline, so later transforms and teleports apply to the new instance. This is a fresh instance, not an in-place reset: instance state, inventory, health, scripts, and other runtime state are not restored from the old object.
+
+```yaml
+replace: self
+```
 
 Attempts each replacement record with its chance and returns the first successful creation. A replacement action changes the current action target to the created object and disables the original source. It is not a weighted one-winner table: multiple entries may pass, and map iteration order determines which passing entry is encountered first.
 
@@ -21,6 +27,15 @@ replace:
 ```
 
 Each chance is a number from `0` to `1` in the schema. A failed creation is skipped by the handler. If no entry passes, the action is a no-op. See [execution order](execution-order.md) for replacement plus `delete` semantics.
+
+When a chance is useful, put it on the action block, for example:
+
+```yaml
+chance: 0.5
+replace: self
+```
+
+Map keys remain record IDs, including a literal record ID named `self`. Do not use unconditional self-replacement without a narrowing condition or `once`; the fresh object can match the same rule again.
 
 ## `transform`
 

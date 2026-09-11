@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: The Dead Walk Again
+priority: balance
+
+instances:
+  - conditions:
+      - object_type: Creature
+      - is_dead: true
+      - is_respawning: true
+      - cell_tag: CellDungeon
+    actions:
+      - replace: self

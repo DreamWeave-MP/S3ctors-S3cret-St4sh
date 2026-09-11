@@ -147,16 +147,25 @@
             "additionalProperties": false
         },
         "replaceAction": {
-            "type": "object",
-            "patternProperties": {
-                "^.*$": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
+            "oneOf": [
+                {
+                    "type": "string",
+                    "const": "self",
+                    "description": "Recreate the matched object from its base record and disable the original instance."
+                },
+                {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
                 }
-            },
-            "minProperties": 1,
-            "additionalProperties": false
+            ]
         },
         "itemAction": {
             "oneOf": [
@@ -840,6 +849,10 @@
                 "is_dead": {
                     "type": "boolean",
                     "description": "Whether the target actor is dead. Non-actors return false."
+                },
+                "is_respawning": {
+                    "type": "boolean",
+                    "description": "Whether the target NPC or Creature record is flagged to respawn. Other object types return false."
                 },
                 "creature_type": {
                     "oneOf": [

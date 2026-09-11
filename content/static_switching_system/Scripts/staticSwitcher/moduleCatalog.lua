@@ -109,6 +109,7 @@ local CONDITIONPRIORITY = {
   'has_tag',
   'cell_tag',
   'is_dead',
+  'is_respawning',
   'creature_type',
   'has_enchantment',
   'enchantment',

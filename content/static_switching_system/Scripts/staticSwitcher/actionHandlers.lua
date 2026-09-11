@@ -344,7 +344,14 @@ local actionHandlers = {
 
     return wasModified, newTransform, newPos, targetScale
   end,
-  ['replace'] = function(_, replaceActionData)
+  ['replace'] = function(object, replaceActionData)
+    if replaceActionData == 'self' then
+      local result, replacement = pcall(world.createObject, object.recordId)
+      if result then return replacement end
+
+      return
+    end
+
     for replaceId, replaceChance in pairs(replaceActionData) do
       if randomGen.float() <= replaceChance then
         local result, replacement = pcall(world.createObject, replaceId)

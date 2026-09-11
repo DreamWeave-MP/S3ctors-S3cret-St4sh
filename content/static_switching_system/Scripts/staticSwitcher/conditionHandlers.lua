@@ -180,6 +180,19 @@ local conditionHandlers = {
 
     return types.Actor.isDead(object) == shouldBeDead
   end,
+  is_respawning = function(object, shouldBeRespawning)
+    local objectRecord
+
+    if object.type == types.Creature then
+      objectRecord = types.Creature.records[object.recordId]
+    elseif object.type == types.NPC then
+      objectRecord = types.NPC.records[object.recordId]
+    else
+      return false
+    end
+
+    return objectRecord ~= nil and objectRecord.isRespawning == shouldBeRespawning
+  end,
   creature_type = function(object, typeValue)
     local objType = object.type
     if not objType or objType ~= types.Creature then return false end
