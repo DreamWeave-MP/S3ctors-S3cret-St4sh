@@ -5,11 +5,13 @@ ultra glow: Ultra-Leuchten
 
 SoulGemVariantName: Seelenstein-Stil
 SoulGemVariantDesc: |-
-  Dein bevorzugter Seelenstein-Stil wird verwendet, sobald ein Seelenstein aktiviert wird.
-  Du kannst den Stil während des Spiels ändern; bereits umgewandelte Seelensteine bleiben davon jedoch unberührt,
+  Dein bevorzugter Seelenstein-Stil wird verwendet, wann immer VSG einen gefüllten Seelenstein umwandelt.
+  Eine Änderung des Stils wirkt sich nicht auf bereits umgewandelte Seelensteine aus,
   sodass du während deines Spieldurchlaufs verschiedene Stile mischen kannst, wenn du möchtest.
+SoulGemRandomizeName: Zufälliger Seelenstein-Stil
+SoulGemRandomizeDesc: Wählt jedes Mal einen zufälligen visuellen Stil, wenn VSG einen gefüllten Seelenstein umwandelt.
 
-VisualSoulGemsDesc: Ersetzt leere Seelenstein-Objekte dynamisch durch gefüllte Varianten und verwendet dafür die Ersatz-Assets von SVNR.
+VisualSoulGemsDesc: Verleiht gefüllten Seelensteinen mit vier auswählbaren oder zufälligen Stilen unterschiedliche visuelle Effekte.
 VisualSoulGemsName: Visual Soul Gems OpenMW
 
 VisualSoulGemsGroupName: ""
