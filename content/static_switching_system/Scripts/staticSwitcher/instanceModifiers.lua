@@ -541,7 +541,14 @@ local function tryModifyObject(object, instanceModificationList)
           end
 
           if createAction then
-            local numCreated, createdObjects = actionHandlers.create(modifyTarget, createAction)
+            local numCreated, createdObjects = actionHandlers.create(
+              modifyTarget,
+              createAction,
+              newCell,
+              newPos,
+              newTransform,
+              targetScale
+            )
             if numCreated > 0 then
               anyActionApplied = true
               currentRuleApplied = true

@@ -383,7 +383,14 @@ local actionHandlers = {
   ['delete'] = function(_, deleteAction, replaceAction, replaceActionSucceeded)
     return deleteAction and (not replaceAction or replaceActionSucceeded)
   end,
-  ['create'] = function(triggerObject, createActionData)
+  ['create'] = function(
+    _,
+    createActionData,
+    accumulatedCell,
+    accumulatedPosition,
+    accumulatedRotation,
+    accumulatedScale
+  )
     local totalCreated = 0
     local createdObjects = {}
 
@@ -417,10 +424,10 @@ local actionHandlers = {
           -- pool missed
         else
           local useRelativeTransform = transformType == nil or transformType == 'relative'
-          local baseTransform = triggerObject.rotation
-          local basePos = triggerObject.position
-          local baseScale = triggerObject.scale
-          local baseCell = triggerObject.cell
+          local baseTransform = accumulatedRotation
+          local basePos = accumulatedPosition
+          local baseScale = accumulatedScale
+          local baseCell = accumulatedCell
 
           for _ = 1, count do
             local newPos = basePos
