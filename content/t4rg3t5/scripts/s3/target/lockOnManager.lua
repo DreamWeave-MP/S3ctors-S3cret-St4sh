@@ -785,7 +785,7 @@ function LockOnManager:updateLockCamera(target)
   if not self.state.isThirdPersonLock and not self:beginLockCamera(target) then return false end
 
   updateLockCameraFOV()
-  self:trackTargetThirdPerson(target)
+  self.trackTargetThirdPerson(target)
   return true
 end
 
