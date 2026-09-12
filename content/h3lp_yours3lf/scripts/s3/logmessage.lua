@@ -1,52 +1,59 @@
----@omw-context all
-
-local types = require 'openmw.types'
-local Player = types.Player
+---@omw-context local | global | player | load
 
 ---@type ScriptContext
 local ScriptContext = require 'scripts.s3.scriptContext'
 local CurrentContext = ScriptContext.get()
 
-local World, Self, ui, nearby
+local select, tostring = select, tostring
+local World, nearby, ui
 
 if CurrentContext == ScriptContext.Types.Global then
-    ---@omw-context-begin global
-    World = require 'openmw.world'
-    ---@omw-context-end global
-elseif CurrentContext ~= ScriptContext.Types.Menu then
-    ---@omw-context-begin local
-    Self = require 'openmw.self'
+  ---@omw-context-begin global
+  World = require 'openmw.world'
+  ---@omw-context-end global
+elseif
+  CurrentContext == ScriptContext.Types.Local or CurrentContext == ScriptContext.Types.Player
+then
+  ---@omw-context-begin local
+  local types = require 'openmw.types'
+  local Self = require 'openmw.self'
 
-    if Player.objectIsInstance(Self) then
-        ---@omw-context-begin player
-        ui = require 'openmw.ui'
-        ---@omw-context-end player
-    else
-        nearby = require 'openmw.nearby'
-    end
-    ---@omw-context-end local
+  if types.Player.objectIsInstance(Self) then
+    ---@omw-context-begin player
+    ui = require 'openmw.ui'
+    ---@omw-context-end player
+  else
+    nearby = require 'openmw.nearby'
+  end
+  ---@omw-context-end local
 end
 
---- Prints a message to the console, directly using the console OR to nearby players if the attached object isn't a player
----@param messageString string The message to print to the console
-local function LogMessage(messageString)
-    if CurrentContext == ScriptContext.Types.Load then
-        print(messageString)
-    elseif CurrentContext == ScriptContext.Types.Global then
-        assert(World, "World is not available")
+--- Prints all arguments without adding a module-specific prefix.
+---@param ... any
+local function LogMessage(...)
+  local arguments = { ... }
+  for index = 1, select('#', ...) do
+    arguments[index] = tostring(arguments[index])
+  end
+  local messageString = table.concat(arguments, '\t')
 
-        for _, player in pairs(World.players) do
-            player:sendEvent('S3LFDisplay', messageString)
-        end
-    else
-        if CurrentContext == ScriptContext.Types.Player then
-            ui.printToConsole(messageString, ui.CONSOLE_COLOR.Success)
-        elseif CurrentContext == ScriptContext.Types.Local then
-            for _, player in pairs(nearby.players) do
-                player:sendEvent('S3LFDisplay', messageString)
-            end
-        end
+  if CurrentContext == ScriptContext.Types.Load then
+    print(messageString)
+  elseif CurrentContext == ScriptContext.Types.Global then
+    assert(World, 'World is not available')
+
+    for _, player in pairs(World.players) do
+      player:sendEvent('S3LFDisplay', messageString)
     end
+  else
+    if CurrentContext == ScriptContext.Types.Player then
+      ui.printToConsole(messageString, ui.CONSOLE_COLOR.Success)
+    elseif CurrentContext == ScriptContext.Types.Local then
+      for _, player in pairs(nearby.players) do
+        player:sendEvent('S3LFDisplay', messageString)
+      end
+    end
+  end
 end
 
 return LogMessage
