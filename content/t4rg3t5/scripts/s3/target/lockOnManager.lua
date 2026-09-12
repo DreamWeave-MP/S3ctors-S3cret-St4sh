@@ -143,7 +143,6 @@ local function isWielding() return s3lf.getStance() ~= STANCE_NONE end
 ---@field TargetFramingHeight integer Percentage of target height used by the lock camera's look target
 ---@field LockLossDelay number Seconds a temporarily invalid target remains locked
 local LockOnManager = I.S3ProtectedTable.new {
-  inputGroupName = ModInfo.groupName,
   logPrefix = ModInfo.logPrefix,
   managerName = ModInfo.name,
   storageSection = require('openmw.storage').playerSection(ModInfo.groupName),
