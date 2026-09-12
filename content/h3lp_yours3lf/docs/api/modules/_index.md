@@ -34,6 +34,21 @@ Browse by the problem you are solving. These categories describe public semantic
 - [Result](@/h3lp_yours3lf/docs/api/modules/result.md): represent success and failure explicitly.
 - [normalizePath](@/h3lp_yours3lf/docs/api/modules/normalize-path.md): normalize VFS-style path spelling.
 
+## Math, data, and specialized helpers
+
+- [randomGen](@/h3lp_yours3lf/docs/api/modules/random-gen.md): generate values from an independent xorshift stream.
+- [oscillator](@/h3lp_yours3lf/docs/api/modules/oscillator.md): sample a smooth periodic value from a selected clock.
+- [tableHash](@/h3lp_yours3lf/docs/api/modules/table-hash.md): derive a content hash for simple tables.
+- [szudzik](@/h3lp_yours3lf/docs/api/modules/szudzik.md): map signed integer pairs to one integer and back.
+- [class](@/h3lp_yours3lf/docs/api/modules/class.md): define small single-inheritance Lua classes.
+- [Small Utilities](@/h3lp_yours3lf/docs/api/modules/small-utilities.md): clear tables and supply no-op functions.
+
+## Engine-specific helpers
+
+- [CamHelper](@/h3lp_yours3lf/docs/api/modules/cam-helper.md): test whether objects are onscreen and calculate viewport positions.
+- [spellUtil](@/h3lp_yours3lf/docs/api/modules/spell-util.md): reuse OpenMW's spell and enchantment calculations from Lua.
+- [isHostile](@/h3lp_yours3lf/docs/api/modules/is-hostile.md): mirror the engine's aggression-threshold calculation.
+
 ## UI and diagnostics
 
 - [ImageAtlas](@/h3lp_yours3lf/docs/api/modules/image-atlas.md): cycle tile-based image frames in a player UI.
