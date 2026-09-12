@@ -53,5 +53,6 @@ Browse by the problem you are solving. These categories describe public semantic
 
 - [UI Components](@/h3lp_yours3lf/docs/api/modules/ui-components.md): build composable passive layouts.
 - [Settings Renderers](@/h3lp_yours3lf/docs/api/modules/renderers.md): provide H3's menu-only custom settings controls.
+- [DragEvents](@/h3lp_yours3lf/docs/api/modules/drag-events.md): add direct drag and resize behavior to menu and player layouts.
 - [ImageAtlas](@/h3lp_yours3lf/docs/api/modules/image-atlas.md): cycle tile-based image frames in a player UI.
 - [uiSnapshot](@/h3lp_yours3lf/docs/api/modules/ui-snapshot.md): capture bounded, deterministic layout evidence.
