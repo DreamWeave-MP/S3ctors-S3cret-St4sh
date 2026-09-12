@@ -8,10 +8,10 @@ extra:
 
 {{ api_signature(value="require 'scripts.s3.components.*' → layout builder") }}
 
-These modules return layout tables. They do not create or destroy mounted UI elements, choose a layer, persist state, or update a mounted tree. Controlled components keep only the transient interaction state needed by their event handlers; the caller owns the displayed value and durable state. Read [UI Components and Layouts](@/h3lp_yours3lf/docs/concepts/ui-components.md) before choosing a component.
+These modules return layout tables. They do not create or destroy mounted UI elements, choose a layer, persist state, or update a mounted tree. Interactive components mutate their returned layout state before notifying the caller; the caller owns the root `Element` and should call `Element:update()` from its callback. Read [UI Components and Layouts](@/h3lp_yours3lf/docs/concepts/ui-components.md) before choosing a component.
 
 {% usage_note(title="Menu and player only · Layout builders") %}
-All components in this page are annotated for `menu|player`. Low-level `events` callbacks are passed through unchanged; wrap them with `async:callback` before handing them to OpenMW UI events. Controlled callbacks such as `onChange`, `onSelect`, `onToggle`, `onMove`, and `onResize` are adapted by the component.
+All components in this page are annotated for `menu|player`. Low-level `events` callbacks are preserved and composed where a component owns the same event; wrap them with `async:callback` before handing them to OpenMW UI events. Controlled callbacks such as `onChange`, `onCommit`, `onSelect`, `onToggle`, `onMove`, and `onResize` are adapted by the component.
 {% end %}
 
 ## Shared options
@@ -66,27 +66,33 @@ local panel = box {
 | `meter` | `require 'scripts.s3.components.meter'(opts?) → Layout` | Build a horizontal fill/empty meter from `value` and `max`, clamped to a `0..1` ratio. |
 | `itemSlot` | `require 'scripts.s3.components.itemSlot'(opts?) → Layout` | Build a bordered icon slot with an optional count label. It does not query game state. |
 
-`button`, `iconButton`, `bookFrame`, `dialog`, and `itemSlot` use shared MWUI templates by default and allow caller overrides. `iconButton` and `itemSlot` accept prebuilt texture resources; neither registers or owns textures. `meter` creates fill and empty child widgets and does not update itself after construction.
+`button`, `iconButton`, `bookFrame`, `dialog`, and `itemSlot` use shared MWUI templates by default and allow caller overrides. `iconButton` and `itemSlot` accept prebuilt texture resources; neither registers or owns textures. `meter` creates fill and empty Image children and does not update itself after construction.
 
 ## Controls and window chrome
 
 | Builder | Signature | Behavior |
 | --- | --- | --- |
-| `toggle` | `require 'scripts.s3.components.toggle'(options?) → Layout` | Build a state-labelled yes/no button; `value` is caller-owned and `onChange` receives the next boolean. |
-| `slider` | `require 'scripts.s3.components.slider'(options?) → Layout` | Build a bounded meter that reports pointer changes through `onChange`; supports `min`, `max`, and `step`. |
-| `select` | `require 'scripts.s3.components.select'(options?) → Layout` | Build a previous/value/next selector from ordered items. |
-| `tabs` | `require 'scripts.s3.components.tabs'(options?) → Layout` | Build a tab strip; it does not create or own page content. |
-| `collapsible` | `require 'scripts.s3.components.collapsible'(options) → Layout` | Build a disclosure header and conditionally include its caller-owned content. |
-| `numberInput` | `require 'scripts.s3.components.numberInput'(options?) → Layout` | Build a numeric TextEdit with parsing, clamping, optional integer rounding, and stepping. |
-| `searchInput` | `require 'scripts.s3.components.searchInput'(options?) → Layout` | Build a TextEdit with placeholder and clear-button conventions. |
+| `toggle` | `require 'scripts.s3.components.toggle'(options?) → Layout` | Build a state-labelled yes/no button; clicking updates its label before `onChange` receives the next boolean. |
+| `slider` | `require 'scripts.s3.components.slider'(options?) → Layout` | Build a bounded meter whose fill updates during pointer interaction; supports `min`, `max`, and `step`. |
+| `select` | `require 'scripts.s3.components.select'(options?) → Layout` | Build a previous/value/next selector whose displayed value follows the selected item. |
+| `tabs` | `require 'scripts.s3.components.tabs'(options?) → Layout` | Build a tab strip with mutable selected visual state; it does not create or own page content. |
+| `collapsible` | `require 'scripts.s3.components.collapsible'(options) → Layout` | Build a disclosure header and a body whose visibility follows the expanded state. |
+| `numberInput` | `require 'scripts.s3.components.numberInput'(options?) → Layout` | Build a numeric TextEdit with raw editing text and commit-time clamping, optional integer rounding, and stepping. |
+| `searchInput` | `require 'scripts.s3.components.searchInput'(options?) → Layout` | Build a TextEdit with a clear-button convention. OpenMW TextEdit has no placeholder property; provide placeholder-like copy separately. |
 | `headBlock` | `require 'scripts.s3.components.headBlock'(options?) → Layout` | Build a scalable Morrowind title block from vanilla VFS textures. |
 | `caption` | `require 'scripts.s3.components.caption'(options?) → Layout` | Build a centered Morrowind title strip with optional pin and close controls. |
 | `pinButton` | `require 'scripts.s3.components.pinButton'(options?) → Layout` | Build the canonical up/down pin control. |
 | `window` | `require 'scripts.s3.components.window'(options?) → Layout` | Build a caller-owned movable/resizable framed surface with optional title, pin, and close controls. |
 
-`slider` defaults to a 200×18 fixed track because pointer-to-value conversion needs a known width. Its event handlers mutate only the returned layout's transient interaction closure and call `onChange`; rebuild or update the mounted element from caller-owned state to display the new value. `select`, `tabs`, `toggle`, and `collapsible` follow the same controlled pattern.
+`slider` defaults to a 200×18 fixed track because pointer-to-value conversion needs a known width. Set `trackWidth` when `props.relativeSize.x` is non-zero so pointer conversion uses the rendered track width. Its event handlers update the returned meter layout and call `onChange`; update the owning mounted element from that callback. `select`, `tabs`, `toggle`, and `collapsible` likewise update their layout state before notifying the caller. `numberInput` preserves raw text during editing, normalizes it on focus loss, calls `onChange` when the committed number changes, and calls `onCommit` after every commit; use either callback to update the owning mounted element. The caller still owns durable state and the mounted `Element`.
 
-`window` does not use `ui.TYPE.Window`, persist geometry, or implement docking and focus management. Its default minimum size is 240×160, it clamps movement and resizing to the screen, and it accepts `clampToScreen = false` when a partially off-screen surface is intentional. Position and size are ordinary layout properties owned by the caller.
+`window` does not use `ui.TYPE.Window`, persist geometry, or implement docking and focus management. Its default minimum size is 64×64, it uses the shared thick-border MWUI template, clamps movement and resizing to the assigned layer by default, and accepts a `referenceSize` vector or provider when nested in another coordinate space. The default resize hitbox is 4 pixels; override `resizeHandle` when a larger edge target is needed. `clampToScreen = false` permits a partially off-screen surface. A caption bar is created when a title, pin control, or close control is requested. Position and size are ordinary layout properties owned by the caller; call the owning mounted element's `update()` from `onMove` and `onResize` for continuous redraw during interaction. `onResize` receives `(size, position)` so callers can persist both values when resizing from the left or top.
+
+`searchInput.events` belongs to the returned row. Pass editor-specific handlers through `searchInput.inputEvents`; its `textChanged` handler receives the raw TextEdit value.
+
+`tabs.selectedProps` and `tabs.selectedLabelProps` are merged over `buttonProps` and `labelProps`; unspecified base properties are retained for selected tabs.
+
+`numberInput` requires integral `min`, `max`, and `step` values when `integer = true`; this keeps its normalization rules compatible with the integer contract. `pinButton` is fixed at 19×19. A `caption` with pin or close controls requires at least 19 pixels of height, and custom controls must not be taller than the caption.
 
 ```lua
 local slider = require 'scripts.s3.components.slider'

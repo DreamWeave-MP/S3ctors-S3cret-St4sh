@@ -6,10 +6,10 @@ extra:
   kind: concept
 ---
 
-H3's UI components are layout builders and controlled interaction compositions, not retained widgets. A component returns an `openmw.ui.Layout` table; it does not call `ui.create`, attach a layer, persist application state, or own the lifetime of any later `Element`.
+H3's UI components are layout builders and controlled interaction compositions, not retained widgets. A component returns an `openmw.ui.Layout` table; interactive handlers mutate that layout before notifying the caller, but the caller remains responsible for updating the mounted root `Element`.
 
 {% usage_note(title="Menu and player layouts · Caller owns the element") %}
-The component modules are available in `menu` and `player` scripts. The caller owns the root element, its layer, its rebuild/destroy path, and any state used to produce a new layout. Low-level event callbacks are passed through; controlled component callbacks are adapted by H3 and receive semantic values.
+The component modules are available in `menu` and `player` scripts. The caller owns the root element, its layer, its rebuild/destroy path, and any durable state used to produce a new layout. Low-level event callbacks are preserved and composed where a component owns the same event; controlled component callbacks are adapted by H3 and receive semantic values after the component has updated its layout state. Any interactive component that mutates layout state needs an owner update path: have its state callback or low-level event callback call the mounted root `Element:update()`, or the rendered UI can remain stale even though the layout table changed.
 {% end %}
 
 ## Build, mount, update
