@@ -3,15 +3,6 @@
 local bitXor, bitAnd, realTime
 local floor, type = math.floor, type
 
---- @param value number
---- @param digits? number
---- @return number result
-local function round(value, digits)
-  local mult = 10 ^ (digits or 0)
-
-  return floor(value * mult + 0.5) / mult
-end
-
 if require 'scripts.s3.isOpenMW' then
   realTime = require('openmw.core').getRealTime
 
@@ -91,12 +82,9 @@ local function range(a, b, c)
     shouldRound = false
   end
 
-  local result = min + float() * (max - min)
-  if shouldRound then
-    return round(result)
-  else
-    return result
-  end
+  if shouldRound then return floor(float() * (max - min + 1)) + min end
+
+  return min + float() * (max - min)
 end
 
 ---@class Rand
