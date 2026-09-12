@@ -165,7 +165,7 @@ do
       Setting(
         'CameraPreferredShoulder',
         'select',
-        { items = { 'Right', 'Left' } },
+        { items = { 'Right', 'Left' }, l10n = ModInfo.l10nName },
         'CameraPreferredShoulderName',
         'CameraPreferredShoulderDesc',
         'Right'
