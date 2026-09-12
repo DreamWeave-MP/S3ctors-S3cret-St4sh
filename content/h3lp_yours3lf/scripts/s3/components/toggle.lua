@@ -22,39 +22,44 @@ local button = require 'scripts.s3.components.button'
 ---@param options? H3.ToggleOptions
 ---@return openmw.ui.Layout
 local function toggle(options)
-  options = options or {}
-  local value = options.value == true
-  local events = {}
+    options = options or {}
 
-  for key, event in pairs(options.events or {}) do
-    events[key] = event
-  end
+    local value = options.value == true
+    local onLabel = options.onLabel or 'On'
+    local offLabel = options.offLabel or 'Off'
+    local prefix = options.label
+    local onChange = options.onChange
+    local events = {}
 
-  local previousClick = events.mouseClick
-  events.mouseClick = async:callback(function(event, layout)
-    value = not value
-    local stateLabel = value and (options.onLabel or 'On') or (options.offLabel or 'Off')
-    local label = options.label and options.label .. ': ' .. stateLabel or stateLabel
-    local labelLayout = layout.content[1].content[1]
-    labelLayout.props.text = label
+    if options.events then
+        for key, event in next, options.events do
+            events[key] = event
+        end
+    end
 
-    if options.onChange then options.onChange(value) end
-    if previousClick then return previousClick(event, layout) end
-    return true
-  end)
+    local enabledLabel = prefix and prefix .. ': ' .. onLabel or onLabel
+    local disabledLabel = prefix and prefix .. ': ' .. offLabel or offLabel
 
-  return button {
-    name = options.name,
-    label = options.label
-        and options.label .. ': ' .. (value and (options.onLabel or 'On') or (options.offLabel or 'Off'))
-      or (value and (options.onLabel or 'On') or (options.offLabel or 'Off')),
-    props = options.props,
-    labelProps = options.labelProps,
-    external = options.external,
-    events = events,
-    userData = options.userData,
-    template = options.template,
-  }
+    local previousClick = events.mouseClick
+    events.mouseClick = async:callback(function(event, layout)
+        value = not value
+        layout.content[1].content[1].props.text = value and enabledLabel or disabledLabel
+
+        if onChange then onChange(value) end
+        if previousClick then return previousClick(event, layout) end
+        return true
+    end)
+
+    return button {
+        name = options.name,
+        label = value and enabledLabel or disabledLabel,
+        props = options.props,
+        labelProps = options.labelProps,
+        external = options.external,
+        events = events,
+        userData = options.userData,
+        template = options.template,
+    }
 end
 
 return toggle
