@@ -6,32 +6,34 @@ extra:
   kind: api
 ---
 
-These helpers read OpenMW clocks; they do not install callbacks. Choose based on what missed time should mean, not merely whether you want to wait.
+These helpers are for code you already call from an OpenMW handler. They poll a clock; they do not schedule callbacks. Use `openmw.async` or `openmw_aux.time` when the engine should call a function later.
 
-| Need | Module / constructor | Result |
+| Situation | Use | Result |
 | --- | --- | --- |
-| Periodic check | `every(interval, simulation?)` | `tick()` returns whether at least one interval elapsed. |
-| Rate-limit an attempted action | `cooldown(interval, simulation?)` | `canRun()` starts ready, then permits at most one success per interval. |
-| One delayed action | `once(delay, simulation?)` | `tick()` returns true once after the delay. |
-| Measure elapsed time | `stopwatch(simulation?)` | `start, stop, reset, elapsed, lap` functions. |
+| You already have `onUpdate`, but this check only needs to run four times a second. | `every(interval, simulation?)` | Poll `tick()`; missed periods coalesce. |
+| A function may be attempted constantly, but should only succeed every 500 ms. | `cooldown(interval, simulation?)` | Poll `canRun()` when the attempt happens; it starts ready. |
+| You are already polling state and need one delayed transition. | `once(delay, simulation?)` | Poll `tick()`; it becomes true once. |
+| You need to measure a duration spanning several callbacks. | `stopwatch(simulation?)` | Keep `start`, `stop`, `reset`, `elapsed`, and `lap`. |
 | Wait for changes to settle | [Debounce](@/h3lp_yours3lf/docs/api/modules/debounce.md) | `tick, push` pair. |
 
 Require each module as `scripts.s3.every`, `scripts.s3.cooldown`, `scripts.s3.once`, or `scripts.s3.stopwatch`.
 
 {% usage_note(title="Clock selection is not callback scheduling") %}
-The optional flag must be boolean: absent/false selects real time, true selects simulation time. Simulation time follows the engine's pause/time-scale behavior. Real time can pass while your handler is not running; work still waits for your next call. These closures are runtime state, not a built-in save system.
+The optional flag must be boolean: absent/false selects real time, true selects simulation time. Simulation time follows pause and time scale; real time can pass while your handler is not running. These closures are runtime state, not save data.
 {% end %}
 
-## Periodic checks
+## Every: poll an existing update loop
 
 ```lua
 local every = require 'scripts.s3.every'
-local tick = every(1, true)
+local nearby = require 'openmw.nearby'
+local refresh = every(0.25, true)
 
 return {
     engineHandlers = {
         onUpdate = function()
-            if tick() then print('At least one interval elapsed') end
+            if not refresh() then return end
+            updateTargetMarkers(nearby.actors)
         end,
     },
 }
@@ -39,36 +41,63 @@ return {
 
 `interval` must be greater than zero. Every starts waiting. Missed intervals coalesce into a single true result and the fractional remainder is preserved. A 3.5-second gap with interval 1 does not run your action three times; it reports once and keeps 0.5 seconds toward the next interval.
 
-## Cooldowns and one-shot delays
+## Cooldown: guard an attempted action
 
 ```lua
 local cooldown = require 'scripts.s3.cooldown'
-local once = require 'scripts.s3.once'
+local self = require 'openmw.self'
 
-local allowed = cooldown(0.5, true)
-assert(allowed())
-local firstTick = once(0, true)
-assert(firstTick())
-assert(not firstTick())
+local canSend = cooldown(0.5, true)
+
+return {
+    eventHandlers = {
+        MyModAttempt = function()
+            if not canSend() then return end
+            self:sendEvent('MyModAccepted')
+        end,
+    },
+}
 ```
 
-Cooldown requires a positive interval and starts ready. Each successful call discards accumulated excess time, unlike Every's preserved remainder. Call it when an action is attempted; if you poll it continuously you consume readiness continuously.
+Cooldown requires a positive interval and starts ready. A successful call resets elapsed time and discards excess, unlike Every's preserved remainder. Call it when the action is attempted; polling it continuously makes it periodic.
 
-Once permits a nonnegative delay. Zero means the first tick succeeds, not that construction executes an action. Once it fires, later calls return false. Construct a new closure to start a new one-shot delay.
+## Once: a delayed boolean inside polling code
 
-## Stopwatch
+```lua
+local once = require 'scripts.s3.once'
+local transitionReady = once(1, true)
+
+return {
+    engineHandlers = {
+        onUpdate = function()
+            if transitionReady() then print('Transition is ready') end
+        end,
+    },
+}
+```
+
+Once permits a nonnegative delay. Zero succeeds on the first tick, not at construction; after firing, later calls return false.
+
+Once is a niche helper for code that already polls. No downstream consumer currently uses it in this repository; use `async:newUnsavableSimulationTimer()` or `openmw_aux.time.newSimulationTimer()` when a native timer makes the control flow clearer.
+
+## Stopwatch: measure across callbacks
 
 ```lua
 local stopwatch = require 'scripts.s3.stopwatch'
-local start, stop, reset, elapsed, lap = stopwatch()
-start()
-print(elapsed())
-stop()
-print(lap())
-reset()
-assert(elapsed() == 0)
+local start, stop, reset, elapsed = stopwatch(true)
+
+return {
+    eventHandlers = {
+        MyModChargePressed = function()
+            reset()
+            start()
+        end,
+        MyModChargeReleased = function()
+            stop()
+            print('Charge duration:', elapsed())
+        end,
+    },
+}
 ```
 
-The stopwatch starts stopped. `start()` and `stop()` are idempotent in their respective states. Elapsed time includes completed running intervals plus the current running interval. `lap()` reports the accumulated lap duration and resets its boundary; while stopped it returns that accumulator once, then zero. `reset()` clears both accumulators and stops the watch. Reading elapsed time does not advance it; the selected clock does.
-
-Use the [bootstrap](@/h3lp_yours3lf/docs/getting-started/overview.md) to register the periodic example and [Debounce](@/h3lp_yours3lf/docs/api/modules/debounce.md) when each new input should restart the wait.
+The stopwatch starts stopped. `start()` and `stop()` are idempotent; `reset()` clears both accumulators and stops the watch. Reading does not advance it; the selected clock does.
