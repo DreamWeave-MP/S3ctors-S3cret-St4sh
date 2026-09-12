@@ -1,3 +1,4 @@
+---@omw-context local | player
 local async = require 'openmw.async'
 local core = require 'openmw.core'
 local storage = require 'openmw.storage'
@@ -31,6 +32,7 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic'
 ---@field EnableDynamicModule boolean
 local DynamicManager = I.S3ProtectedTable.new {
   inputGroupName = groupName,
+  managerName = modInfo.name .. ' Dynamic',
   logPrefix = 'ChimManagerDynamic',
 }
 
@@ -72,13 +74,9 @@ function DynamicManager:handleFatigueRegen(dt)
   Fatigue.current = math.min(Fatigue.base, fatigueThisFrame)
 end
 
-function DynamicManager:manageFatigue(dt)
-  self:overrideNativeFatigue()
-end
+function DynamicManager:manageFatigue(dt) self:overrideNativeFatigue() end
 
-function DynamicManager.canRegenerateFatigue()
-  return true
-end
+function DynamicManager.canRegenerateFatigue() return true end
 
 local FortifyMagickaEffect = MagickEffect.FortifyMagicka
 function DynamicManager:calculateMaxMagicka()
@@ -108,17 +106,13 @@ function DynamicManager:overrideNativeMagicka()
   self.debugLog('MagickaMgr: Magicka updated from', oldMagicka, 'to', Magicka.base)
 end
 
-function DynamicManager:manageMagicka(dt)
-  self:overrideNativeMagicka()
-end
+function DynamicManager:manageMagicka(dt) self:overrideNativeMagicka() end
 
 function DynamicManager.canRegenerateMagicka()
   return s3lf.activeEffects():getEffect('stuntedmagicka').magnitude == 0
 end
 
-function DynamicManager.canRegenerateHealth()
-  return true
-end
+function DynamicManager.canRegenerateHealth() return true end
 
 function DynamicManager:calculateMaxHealth()
   local endurance = s3lf.endurance.modified
@@ -142,9 +136,7 @@ function DynamicManager:overrideNativeHealth()
   self.debugLog('HealthMgr: Health updated from', oldHealth, 'to', s3lf.health.base)
 end
 
-function DynamicManager:manageHealth(dt)
-  self:overrideNativeHealth()
-end
+function DynamicManager:manageHealth(dt) self:overrideNativeHealth() end
 
 function DynamicManager.updateStats()
   DynamicManager:manageMagicka()
@@ -156,15 +148,13 @@ storage.globalSection(groupName):subscribe(async:callback(DynamicManager.updateS
 
 local engineHandlers, eventHandlers = {}, {}
 
-for _, handlerName in ipairs { 'onActive', 'onInactive', 'onSave', 'onLoad', 'onTeleported', } do
+for _, handlerName in ipairs { 'onActive', 'onInactive', 'onSave', 'onLoad', 'onTeleported' } do
   engineHandlers[handlerName] = DynamicManager.updateStats
 end
 
-function engineHandlers.onUpdate(dt)
-  DynamicManager:handleFatigueRegen(dt)
-end
+function engineHandlers.onUpdate(dt) DynamicManager:handleFatigueRegen(dt) end
 
-for _, handlerName in ipairs { 'ModifyStat', } do
+for _, handlerName in ipairs { 'ModifyStat' } do
   eventHandlers[handlerName] = DynamicManager.updateStats
 end
 
