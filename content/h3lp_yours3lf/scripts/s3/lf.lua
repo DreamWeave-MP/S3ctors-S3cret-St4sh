@@ -43,9 +43,7 @@ local S3S = storage.globalSection 'S3lfColdStorage'
 local KeyBehavior = S3S:get 'KeyBehavior'
 
 S3S:subscribe(async:callback(function(_, key)
-  if not key or key == 'KeyBehavior' then
-    KeyBehavior = S3S:get 'KeyBehavior'
-  end
+  if not key or key == 'KeyBehavior' then KeyBehavior = S3S:get 'KeyBehavior' end
 end))
 
 ---Dynamic convenience facade for the current object.
@@ -229,7 +227,9 @@ local MakeReadOnly, SendEvent = util.makeReadOnly, gameSelf.sendEvent
 ---@return fun(): K, V
 local function sortedPairs(tbl, comparator)
   local tableKeys = {}
-  for key in pairs(tbl) do insert(tableKeys, key) end
+  for key in pairs(tbl) do
+    insert(tableKeys, key)
+  end
 
   sort(tableKeys, comparator)
   local i = 0
@@ -250,20 +250,13 @@ local function alphabeticalParts()
     if valueType == 'function' then
       methodParts[#methodParts + 1] = key
     elseif valueType == 'userdata' then
-      userDataParts[#userDataParts + 1] = ('%s = %s'):format(
-        key,
-        value
-      )
+      userDataParts[#userDataParts + 1] = ('%s = %s'):format(key, value)
     else
-      parts[#parts + 1] = ('%s = %s'):format(
-        key,
-        value
-      )
+      parts[#parts + 1] = ('%s = %s'):format(key, value)
     end
   end
 
-  return (
-    'S3GameGameSelf {\n Fields: { %s },\n Methods: { %s },\n UserData: { %s }\n}'):format(
+  return ('S3GameGameSelf {\n Fields: { %s },\n Methods: { %s },\n UserData: { %s }\n}'):format(
     concat(parts, ', '),
     concat(methodParts, ', '),
     concat(userDataParts, ', ')
@@ -276,15 +269,13 @@ local function instanceDisplay()
   for _, player in ipairs(localPlayers) do
     SendEvent(player, 'S3LFDisplay', resultString)
   end
+
+  return resultString
 end
 
-function instance.distance(other)
-  return (gameSelf.position - other.position):length()
-end
+function instance.distance(other) return (gameSelf.position - other.position):length() end
 
-function instance.sendObjectEvent(eventName, eventData)
-  SendEvent(gameSelf, eventName, eventData)
-end
+function instance.sendObjectEvent(eventName, eventData) SendEvent(gameSelf, eventName, eventData) end
 
 local cellsVisited
 
@@ -303,7 +294,7 @@ do
   elseif MyType == types.Player then
     ActorType = 0
   else
-    error('Invalid actor type!!!!')
+    error 'Invalid actor type!!!!'
   end
 
   rawset(instance, 'actorType', ActorType)
@@ -356,7 +347,8 @@ do
 
   if ActorType < 3 then
     Stats = MyType.stats
-    AI, Attributes, Dynamic, Level, Skills = Stats.ai, Stats.attributes, Stats.dynamic, Stats.level, Stats.skills
+    AI, Attributes, Dynamic, Level, Skills =
+      Stats.ai, Stats.attributes, Stats.dynamic, Stats.level, Stats.skills
   end
 
   if ActorType == 0 then
@@ -372,7 +364,7 @@ do
       ---@type KeyBehavior?
       local behavior = KeyBehavior[key]
 
-      if behavior == 0 then     -- Ignored
+      if behavior == 0 then -- Ignored
         return
       elseif behavior == 1 then -- Uncacheable
         return gameSelf[key]
@@ -381,14 +373,12 @@ do
       local typeValue = MyType[key]
 
       if typeValue ~= nil then
-        if type(typeValue) ~= "function" or key == 'createRecordDraft' then
+        if type(typeValue) ~= 'function' or key == 'createRecordDraft' then
           rawset(instance, key, typeValue)
 
           return typeValue
         else
-          local typeHandler = function(...)
-            return typeValue(gameSelf, ...)
-          end
+          local typeHandler = function(...) return typeValue(gameSelf, ...) end
 
           rawset(instance, key, typeHandler)
 
@@ -466,9 +456,7 @@ do
         local insertValue
 
         if type(animValue) == 'function' then
-          insertValue = function(...)
-            return animValue(gameSelf, ...)
-          end
+          insertValue = function(...) return animValue(gameSelf, ...) end
         else
           insertValue = animValue
         end
@@ -497,13 +485,9 @@ if instance.actorType == 0 then
   local staticTargetData = {}
   local staticTargetDataView = util.makeReadOnly(staticTargetData)
 
-  function instance.isInCombat()
-    return next(staticTargetData) ~= nil and debug.isAIEnabled()
-  end
+  function instance.isInCombat() return next(staticTargetData) ~= nil and debug.isAIEnabled() end
 
-  function instance.targetData()
-    return staticTargetDataView
-  end
+  function instance.targetData() return staticTargetDataView end
 
   return {
     engineHandlers = {
@@ -567,7 +551,7 @@ if instance.actorType == 0 then
     interfaceName = 's3',
     interface = {
       lf = instance,
-    }
+    },
   }
   ---@omw-context-end player
   ---@omw-context-begin local
@@ -578,7 +562,7 @@ else
     interfaceName = 's3',
     interface = {
       lf = instance,
-    }
+    },
   }
 end
 ---@omw-context-end local
