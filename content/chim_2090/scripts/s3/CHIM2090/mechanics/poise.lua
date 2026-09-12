@@ -9,6 +9,8 @@ local util = require 'openmw.util'
 local I = require 'openmw.interfaces'
 local s3lf = I.s3.lf
 
+---@omw-context local | player
+
 ---@class PoiseIcon: ProtectedTable
 ---@field PoiseHUDPos util.vector2
 ---@field PoiseHUDColor util.color
@@ -19,8 +21,10 @@ local PoiseIcon
 local SWITCH
 local isPlayer = s3lf.actorType == 0
 if isPlayer then
+  ---@omw-context-begin player
   ui = require 'openmw.ui'
   SWITCH = s3lf.CONTROL_SWITCH
+  ---@omw-context-end player
 end
 
 local modInfo = require 'scripts.s3.CHIM2090.modInfo'
@@ -134,11 +138,12 @@ end
 function Poise.startTimer() Poise.state.timeRemaining = Poise.recoveryTime() end
 
 function Poise.creaturePoiseDamage(attackInfo)
-  local attacker = s3lf.From(attackInfo.attacker)
+  local attacker = attackInfo.attacker
+  local strength = types.Actor.stats.attributes.strength(attacker).modified
 
   -- Simple base + strength scaling
   local basePoise = Poise.CreatureBasePoiseDamage
-  local strengthBonus = attacker.strength.modified * Poise.CreatureStrengthPoiseFactor
+  local strengthBonus = strength * Poise.CreatureStrengthPoiseFactor
 
   local totalPoise = basePoise + strengthBonus
 
@@ -162,17 +167,21 @@ end
 ---@param attackInfo AttackInfo
 ---@return number poiseDamage total poise damage dealt by this (hand to hand) attack
 function Poise.handToHandPoiseDamage(attackInfo)
-  local attacker = s3lf.From(attackInfo.attacker)
+  local attacker = attackInfo.attacker
+  local skills = attacker.type.stats.skills
+  local attributes = types.Actor.stats.attributes
 
   -- Base from hand-to-hand skill (better technique = better force transfer)
-  local handToHandSkill = attacker.handtohand.modified
+  local handToHandSkill = skills.handtohand(attacker).modified
   local skillPoise = handToHandSkill * Poise.HandToHandSkillPoiseFactor
 
   -- Strength bonus (stronger punches carry more force)
-  local strengthBonus = skillPoise * (attacker.strength.modified * Poise.StrengthPoiseDamageBonus)
+  local strengthBonus = skillPoise
+    * (attributes.strength(attacker).modified * Poise.StrengthPoiseDamageBonus)
 
   -- Weapons gain a bonus from their weight, whereas hand-to-hand combatants instead use their agility
-  local agilityBonus = skillPoise * (attacker.agility.modified * Poise.AgilityPoiseBonus)
+  local agilityBonus = skillPoise
+    * (attributes.agility(attacker).modified * Poise.AgilityPoiseBonus)
 
   local totalPoise = (skillPoise + strengthBonus + agilityBonus) * Poise.HandToHandPoiseMult
 
@@ -200,7 +209,8 @@ function Poise.weaponPoiseDamage(attackInfo)
   local weapon = attackInfo.weapon
   assert(weapon)
   local weaponRecord = WeaponRecords[weapon.recordId]
-  local attacker = s3lf.From(attackInfo.attacker)
+  local attacker = attackInfo.attacker
+  local strength = types.Actor.stats.attributes.strength(attacker).modified
 
   -- Base from weapon weight (heavier weapons stagger more)
   local weightPoise = weaponRecord.weight * Poise.WeightPoiseFactor
@@ -209,8 +219,7 @@ function Poise.weaponPoiseDamage(attackInfo)
   local skillPoise = weaponSkill * Poise.WeaponSkillPoiseFactor
 
   -- Strength bonus (stronger swings carry more force)
-  local strengthBonus = (weightPoise + skillPoise)
-    * (attacker.strength.modified * Poise.StrengthPoiseDamageBonus)
+  local strengthBonus = (weightPoise + skillPoise) * (strength * Poise.StrengthPoiseDamageBonus)
 
   local totalPoise = (weightPoise + skillPoise + strengthBonus) * Poise.WeaponPoiseMult
 

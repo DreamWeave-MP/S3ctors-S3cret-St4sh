@@ -1,23 +1,24 @@
+---@omw-context player
+
 -- local async = require('openmw.async')
-local core = require('openmw.core')
-local nearby = require('openmw.nearby')
-local types = require('openmw.types')
-local ui = require('openmw.ui')
+local core = require 'openmw.core'
+local nearby = require 'openmw.nearby'
+local types = require 'openmw.types'
+local ui = require 'openmw.ui'
 
-local I = require('openmw.interfaces')
+local I = require 'openmw.interfaces'
 
-local Debug = require('openmw.debug')
+local Debug = require 'openmw.debug'
 
-local s3lf = require('scripts.s3.lf')
+local s3lf = I.s3.lf
 
-local modInfo = require('scripts.s3.CHIM2090.modInfo')
+local modInfo = require 'scripts.s3.CHIM2090.modInfo'
 
-local SleepManager = require('scripts.s3.CHIM2090.protectedTable')('SettingsGlobal' .. modInfo.name .. 'Sleep')
-local RestMenu = require('scripts.s3.CHIM2090.ui.restMenu')
+local RestMenu = require 'scripts.s3.CHIM2090.ui.restMenu'
+local SleepManager =
+  require 'scripts.s3.CHIM2090.protectedTable'('SettingsGlobal' .. modInfo.name .. 'Sleep')
 
-function SleepManager.test()
-  Debug.reloadLua()
-end
+function SleepManager.test() Debug.reloadLua() end
 
 local fromBed = false
 local fromBedroll = false
@@ -31,8 +32,7 @@ local sleepMultiplier = 1.0
 local sleepMenu = ui.create(RestMenu)
 
 function SleepManager.makeSleepMenu(state)
-  assert(state ~= nil
-         , modInfo.logPrefix .. 'Must provide a state when calling toggle sleep menu!')
+  assert(state ~= nil, modInfo.logPrefix .. 'Must provide a state when calling toggle sleep menu!')
 
   local sleepProps = sleepMenu.layout.props
   if state == sleepProps.visible then return end
@@ -51,19 +51,18 @@ function SleepManager.makeSleepMenu(state)
 end
 
 I.UI.setPauseOnMode('Rest', false)
-I.UI.registerWindow('WaitDialog', function() SleepManager.makeSleepMenu(true) end
-                    , function() SleepManager.makeSleepMenu(false) end)
+I.UI.registerWindow(
+  'WaitDialog',
+  function() SleepManager.makeSleepMenu(true) end,
+  function() SleepManager.makeSleepMenu(false) end
+)
 
-function SleepManager.getSleepMenu()
-  return sleepMenu
-end
+function SleepManager.getSleepMenu() return sleepMenu end
 
 function SleepManager.playerHasPillow()
   local misc = s3lf.inventory():getAll(types.Miscellaneous)
   for _, item in pairs(misc) do
-    if string.find(item.recordId, 'pillow') ~= nil then
-      return true
-    end
+    if string.find(item.recordId, 'pillow') ~= nil then return true end
   end
   return false
 end
@@ -79,7 +78,7 @@ end
 function SleepManager.handleUiMode(data)
   if data.newMode == 'Rest' then
     sleepMultiplier = 1.0
-    restOrWait = fromBed or not s3lf.cell:hasTag('NoSleep')
+    restOrWait = fromBed or not s3lf.cell:hasTag 'NoSleep'
 
     sleepingOnGround = restOrWait and not fromBed
 
@@ -98,7 +97,7 @@ function SleepManager.handleUiMode(data)
       sleepMultiplier = SleepManager.OwnedSleepMult
     end
 
-    local isOutside = s3lf.cell.isExterior or s3lf.cell:hasTag('QuasiExterior')
+    local isOutside = s3lf.cell.isExterior or s3lf.cell:hasTag 'QuasiExterior'
 
     if isOutside and not fromBedroll then
       if restOrWait then
@@ -124,12 +123,20 @@ function SleepManager.handleUiMode(data)
       sleepingOnGround = sleepingOnGround,
     }
 
-    SleepManager.debugLog('rest menu opened, restOrWait:', tostring(restOrWait)
-                            , 'fromBed:', tostring(fromBed)
-                            , 'fromOwnedBed:', tostring(fromOwnedBed)
-                            , 'fromBedroll:', tostring(fromBedroll)
-                            , 'sleepingOnGround:', tostring(sleepingOnGround)
-                            , 'sleepMultiplier:', sleepMultiplier)
+    SleepManager.debugLog(
+      'rest menu opened, restOrWait:',
+      tostring(restOrWait),
+      'fromBed:',
+      tostring(fromBed),
+      'fromOwnedBed:',
+      tostring(fromOwnedBed),
+      'fromBedroll:',
+      tostring(fromBedroll),
+      'sleepingOnGround:',
+      tostring(sleepingOnGround),
+      'sleepMultiplier:',
+      sleepMultiplier
+    )
   end
 end
 
@@ -143,14 +150,17 @@ function SleepManager.handleSleepFrame()
       local sleptHours = math.floor((currentWorldTime - oldWorldTime) / 3600)
       for _, actor in pairs(nearby.actors) do
         if actor.id ~= s3lf.id then
-          actor:sendEvent('s3ChimDynamic_SleepActor', { time = sleptHours,
-                                                        restOrWait = restOrWait,
-                                                        oldHealth = nearbyActorStats[actor.id]})
+          actor:sendEvent(
+            's3ChimDynamic_SleepActor',
+            { time = sleptHours, restOrWait = restOrWait, oldHealth = nearbyActorStats[actor.id] }
+          )
         else
-          actor:sendEvent('s3ChimDynamic_SleepPlayer', { time = sleptHours,
-                                                         restOrWait = restOrWait,
-                                                         oldHealth = nearbyActorStats[actor.id],
-                                                         sleepMultiplier = sleepMultiplier })
+          actor:sendEvent('s3ChimDynamic_SleepPlayer', {
+            time = sleptHours,
+            restOrWait = restOrWait,
+            oldHealth = nearbyActorStats[actor.id],
+            sleepMultiplier = sleepMultiplier,
+          })
         end
       end
     end
@@ -160,9 +170,7 @@ function SleepManager.handleSleepFrame()
   oldWorldTime = core.getGameTime()
 end
 
-function SleepManager.onUpdate(_dt)
-  SleepManager.handleSleepFrame()
-end
+function SleepManager.onUpdate(_dt) SleepManager.handleSleepFrame() end
 
 return {
   interfaceName = 's3ChimSleepP',
