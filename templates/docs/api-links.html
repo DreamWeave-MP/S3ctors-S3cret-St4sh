@@ -1,0 +1,21 @@
+{% if page and page.extra.kind | default(value="") == "api" %}
+{% set h3_usage = load_data(path="data/h3_usage.json", format="json") %}
+{% for api in h3_usage.apis %}
+{% if api.slug == page.slug %}
+{% if api.related | length > 0 %}
+<section class="docs-related" aria-labelledby="related-helpers">
+    <h2 id="related-helpers">Related helpers</h2>
+    <ul>
+        {% for related_slug in api.related %}
+        {% for related in h3_usage.apis %}
+        {% if related.slug == related_slug %}
+        <li><a href="{{ get_url(path=related.path) }}">{{ related.title }}</a>: {{ related.summary }}</li>
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}

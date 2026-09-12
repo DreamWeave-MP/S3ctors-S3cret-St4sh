@@ -44,6 +44,8 @@ See each subsystem's respective section for details on what each one does and ho
 
 {{ install_instructions(describe=true) }}
 
+{{ h3_usage(mod="CHIM 2090") }}
+
 ## Dynamic Stats
 
 CHIM alters the maximum capacity of all dynamic stats, and takes over fatigue regeneration completely. This is primarily to rebalance the combat experience and lower stat values out of the box. In most cases, vanilla formulae are reproduced and simply dehardcoded.

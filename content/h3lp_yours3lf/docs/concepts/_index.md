@@ -1,5 +1,6 @@
 ---
 title: Concepts
+template: docs/section.html
 page_template: docs/page.html
 sort_by: weight
 weight: 20

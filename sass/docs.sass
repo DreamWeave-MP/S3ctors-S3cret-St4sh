@@ -13,6 +13,50 @@
   > :last-child
     margin-bottom: 0
 
+.docs-api-status
+  margin: 1em 0 1.5em
+  border-top: 1px solid var(--border-color)
+  border-bottom: 1px solid var(--border-color)
+  padding: .75em 0
+
+.docs-api-status dl
+  display: grid
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+  gap: .75em 1em
+  margin: 0
+
+.docs-api-status dl > div
+  min-width: 0
+
+.docs-api-status dt
+  color: var(--color)
+  font-size: .75em
+  opacity: .72
+
+.docs-api-status dd
+  margin: .15em 0 0
+  color: var(--accent)
+  overflow-wrap: anywhere
+
+.docs-usage-map
+  margin: 1.5em 0
+  border: 1px solid var(--accent-alpha-70)
+  padding: .75em 1em
+  background: var(--accent-alpha-20)
+
+.docs-usage-map > summary
+  color: var(--accent)
+  font-weight: bold
+  cursor: pointer
+
+.docs-usage-map[open] > summary
+  margin-bottom: .75em
+
+.docs-usage-map ul
+  margin: 0
+  padding: 0
+  list-style: none
+
 .container:has(.docs-shell)
   max-width: 1440px
 
@@ -114,22 +158,10 @@
   &::-webkit-scrollbar-corner
     background: transparent
 
-.docs-sidebar__panel,
 .docs-toc__panel
   > summary
     color: var(--accent)
     font-weight: bold
-
-.docs-sidebar__panel
-  > summary
-    padding-bottom: .75em
-
-  > summary::marker
-    content: none
-
-  > summary
-    list-style: none
-    cursor: default
 
 .docs-sidebar ul
   list-style: none
@@ -147,9 +179,6 @@
 
 .docs-sidebar details[open] > summary::before
   content: "▾"
-
-.docs-sidebar__panel > summary::before
-  content: none
 
 .docs-sidebar li
   margin: .15em 0
@@ -282,12 +311,12 @@
 
 .docs-api-signature
   max-width: none
-  overflow-x: auto
   margin: 1.5em 0
   border-left: .25em solid var(--accent)
   padding: .75em 1em
   background: var(--accent-alpha-20)
-  white-space: nowrap
+  overflow-wrap: anywhere
+  white-space: normal
 
 .docs-api-signature code
   margin: 0
@@ -296,10 +325,14 @@
   color: var(--accent)
 
 .docs-article table
-  display: block
-  width: max-content
+  width: 100%
   max-width: 100%
-  overflow-x: auto
+  table-layout: fixed
+
+.docs-article th,
+.docs-article td
+  overflow-wrap: anywhere
+  vertical-align: top
 
 .docs-article table,
 .docs-article th,
@@ -457,7 +490,6 @@
   .docs-toc
     margin-bottom: 2em
 
-  .docs-sidebar__panel > summary,
   .docs-toc__panel > summary
     cursor: pointer
 
@@ -483,15 +515,6 @@
     overflow-y: visible
     overflow-x: hidden
 
-  .docs-sidebar__panel > summary::before
-    content: "▸"
-    display: inline-block
-    width: 1em
-    color: var(--accent-alpha-70)
-
-  .docs-sidebar__panel[open] > summary::before
-    content: "▾"
-
 @media (max-width: 683px)
   .container:has(.docs-shell)
     padding: 20px
@@ -508,3 +531,7 @@
 
   .docs-footer
     margin-bottom: 1em
+
+@media (max-width: 600px)
+  .docs-api-status dl
+    grid-template-columns: repeat(2, minmax(0, 1fr))

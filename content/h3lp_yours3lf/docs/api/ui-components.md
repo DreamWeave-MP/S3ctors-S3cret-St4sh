@@ -8,10 +8,10 @@ extra:
 
 {{ api_signature(value="require 'scripts.s3.components.*' → layout builder") }}
 
-These modules return layout tables. They do not create or destroy `openmw.ui.Element` objects, choose a layer, persist state, or update a mounted tree. Read [UI Components and Layouts](@/h3lp_yours3lf/docs/concepts/ui-components.md) before choosing a component.
+These modules return layout tables. They do not create or destroy mounted UI elements, choose a layer, persist state, or update a mounted tree. Controlled components keep only the transient interaction state needed by their event handlers; the caller owns the displayed value and durable state. Read [UI Components and Layouts](@/h3lp_yours3lf/docs/concepts/ui-components.md) before choosing a component.
 
-{% usage_note(title="Menu and player only · Passive builders") %}
-All components in this page are annotated for `menu|player`. Event callbacks are passed through unchanged; wrap them with `async:callback` before handing them to OpenMW UI events.
+{% usage_note(title="Menu and player only · Layout builders") %}
+All components in this page are annotated for `menu|player`. Low-level `events` callbacks are passed through unchanged; wrap them with `async:callback` before handing them to OpenMW UI events. Controlled callbacks such as `onChange`, `onSelect`, `onToggle`, `onMove`, and `onResize` are adapted by the component.
 {% end %}
 
 ## Shared options
@@ -67,6 +67,52 @@ local panel = box {
 | `itemSlot` | `require 'scripts.s3.components.itemSlot'(opts?) → Layout` | Build a bordered icon slot with an optional count label. It does not query game state. |
 
 `button`, `iconButton`, `bookFrame`, `dialog`, and `itemSlot` use shared MWUI templates by default and allow caller overrides. `iconButton` and `itemSlot` accept prebuilt texture resources; neither registers or owns textures. `meter` creates fill and empty child widgets and does not update itself after construction.
+
+## Controls and window chrome
+
+| Builder | Signature | Behavior |
+| --- | --- | --- |
+| `toggle` | `require 'scripts.s3.components.toggle'(options?) → Layout` | Build a state-labelled yes/no button; `value` is caller-owned and `onChange` receives the next boolean. |
+| `slider` | `require 'scripts.s3.components.slider'(options?) → Layout` | Build a bounded meter that reports pointer changes through `onChange`; supports `min`, `max`, and `step`. |
+| `select` | `require 'scripts.s3.components.select'(options?) → Layout` | Build a previous/value/next selector from ordered items. |
+| `tabs` | `require 'scripts.s3.components.tabs'(options?) → Layout` | Build a tab strip; it does not create or own page content. |
+| `collapsible` | `require 'scripts.s3.components.collapsible'(options) → Layout` | Build a disclosure header and conditionally include its caller-owned content. |
+| `numberInput` | `require 'scripts.s3.components.numberInput'(options?) → Layout` | Build a numeric TextEdit with parsing, clamping, optional integer rounding, and stepping. |
+| `searchInput` | `require 'scripts.s3.components.searchInput'(options?) → Layout` | Build a TextEdit with placeholder and clear-button conventions. |
+| `headBlock` | `require 'scripts.s3.components.headBlock'(options?) → Layout` | Build a scalable Morrowind title block from vanilla VFS textures. |
+| `caption` | `require 'scripts.s3.components.caption'(options?) → Layout` | Build a centered Morrowind title strip with optional pin and close controls. |
+| `pinButton` | `require 'scripts.s3.components.pinButton'(options?) → Layout` | Build the canonical up/down pin control. |
+| `window` | `require 'scripts.s3.components.window'(options?) → Layout` | Build a caller-owned movable/resizable framed surface with optional title, pin, and close controls. |
+
+`slider` defaults to a 200×18 fixed track because pointer-to-value conversion needs a known width. Its event handlers mutate only the returned layout's transient interaction closure and call `onChange`; rebuild or update the mounted element from caller-owned state to display the new value. `select`, `tabs`, `toggle`, and `collapsible` follow the same controlled pattern.
+
+`window` does not use `ui.TYPE.Window`, persist geometry, or implement docking and focus management. Its default minimum size is 240×160, it clamps movement and resizing to the screen, and it accepts `clampToScreen = false` when a partially off-screen surface is intentional. Position and size are ordinary layout properties owned by the caller.
+
+```lua
+local slider = require 'scripts.s3.components.slider'
+local toggle = require 'scripts.s3.components.toggle'
+
+local settings = { enabled = true, volume = 0.5 }
+local controls = {
+    toggle {
+        value = settings.enabled,
+        onChange = function(value)
+            settings.enabled = value
+            refresh()
+        end,
+    },
+    slider {
+        value = settings.volume,
+        min = 0,
+        max = 1,
+        step = 0.05,
+        onChange = function(value)
+            settings.volume = value
+            refresh()
+        end,
+    },
+}
+```
 
 ## Input and explanation
 

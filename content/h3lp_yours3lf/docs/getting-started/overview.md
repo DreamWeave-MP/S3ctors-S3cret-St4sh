@@ -8,6 +8,21 @@ extra:
 
 H3 saves you from maintaining the same small utilities in every mod. You can adopt one helper without adopting a framework. Start with a plain module; installed interfaces come later.
 
+## Two ways into H3
+
+H3 has two entry points. A plain module is loaded with `require` and returns a Lua value. An installed interface is published by a registered H3 script, so it must be obtained through `openmw.interfaces` after H3's plugin is enabled.
+
+```lua
+-- Plain module
+local random = require 'scripts.s3.randomGen'
+
+-- Installed interface
+local I = require 'openmw.interfaces'
+local s3lf = I.s3.lf
+```
+
+The spelling of the path is part of the contract: `randomGen` is a module, while `s3lf` is a member of the `I.s3` interface. The interface also carries OpenMW context and lifetime rules; the `require` call does not grant permissions by itself. Continue with [State and Context](@/h3lp_yours3lf/docs/concepts/state-and-context.md) before combining the two styles in one system.
+
 ## Install the dependency
 
 Follow the [H3 installation instructions](@/h3lp_yours3lf/index.md): make its data directory available to OpenMW and enable `H3lp Yours3lf.esp`. Use an OpenMW version supported by the H3 release you installed. These pages describe the source in this repository, not every older release.
@@ -61,12 +76,11 @@ Signal and normalizePath do not import OpenMW APIs. This example runs as a playe
 
 - **Module not found:** check that H3's data directory is active. Paths passed to `require` are module names, not filesystem paths.
 - **No output:** check that your script list is enabled and its script path matches your file. Read earlier log errors before debugging the helper.
-- **Missing interface:** a plain module and an installed interface are different entry points. [S3lf](@/h3lp_yours3lf/docs/api/modules/s3lf.md) is `I.s3.lf`, not a Signal-style constructor.
+- **Missing interface:** a plain module and an installed interface are different entry points. [S3lf](@/h3lp_yours3lf/docs/api/interfaces/s3lf.md) is `I.s3.lf`, not a Signal-style constructor.
 
 ## Choose the next step
 
-- [Signal](@/h3lp_yours3lf/docs/api/modules/signal.md): coordinate synchronous listeners.
-- [Debounce](@/h3lp_yours3lf/docs/api/modules/debounce.md): wait until changes settle before acting.
-- [normalizePath](@/h3lp_yours3lf/docs/api/modules/normalize-path.md): understand exactly what normalization changes.
+- [Signal](@/h3lp_yours3lf/docs/api/packages/signal.md): coordinate synchronous listeners.
+- [Debounce](@/h3lp_yours3lf/docs/api/packages/debounce.md): wait until changes settle before acting.
+- [normalizePath](@/h3lp_yours3lf/docs/api/packages/normalize-path.md): understand exactly what normalization changes.
 - [State and Context](@/h3lp_yours3lf/docs/concepts/state-and-context.md): decide where behavior belongs.
-- [Migrating helpers](@/h3lp_yours3lf/docs/migration/from-local-helpers.md): replace existing code without quietly changing its contract.

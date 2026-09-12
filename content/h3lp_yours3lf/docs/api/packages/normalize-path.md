@@ -21,4 +21,4 @@ This does not check file existence, resolve `.` or `..`, remove a leading slash,
 
 Input must be a string. There is no result cache; normalization performs string operations each time. Normalize stable identifiers once rather than repeatedly inside a hot callback.
 
-See [Your First H3 Integration](@/h3lp_yours3lf/docs/getting-started/overview.md) for a runnable script and [Migrating helpers](@/h3lp_yours3lf/docs/migration/from-local-helpers.md) for a before/after comparison.
+See [Your First H3 Integration](@/h3lp_yours3lf/docs/getting-started/overview.md) for a runnable script.

@@ -1,0 +1,443 @@
+{
+  "repository": "https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh",
+  "apis": [
+    {
+      "slug": "result",
+      "title": "Result",
+      "path": "@/h3lp_yours3lf/docs/api/packages/result.md",
+      "aliases": [],
+      "stability": "Evolving",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Represent success and failure without conflating a missing value with an error.",
+      "related": ["memoize", "lazy"]
+    },
+    {
+      "slug": "memoize",
+      "title": "memoize",
+      "path": "@/h3lp_yours3lf/docs/api/packages/memoize.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Retain results with explicit expiry and entry limits.",
+      "related": ["lazy", "result", "pool"]
+    },
+    {
+      "slug": "state-machine",
+      "title": "StateMachine",
+      "path": "@/h3lp_yours3lf/docs/api/packages/state-machine.md",
+      "aliases": [],
+      "stability": "Evolving",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Make named states, callbacks, and transition timing explicit.",
+      "related": ["signal", "timing", "result"]
+    },
+    {
+      "slug": "protected-table",
+      "title": "ProtectedTable",
+      "path": "@/h3lp_yours3lf/docs/api/interfaces/protected-table.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Installed interface",
+      "context": "Local and player",
+      "persistence": "Settings-backed plus runtime state",
+      "summary": "Keep settings, runtime state, and manager methods behind one interface.",
+      "used": true,
+      "related": ["s3lf", "script-context", "drag-events"]
+    },
+    {
+      "slug": "timing",
+      "title": "Timing Helpers",
+      "path": "@/h3lp_yours3lf/docs/api/timing.md",
+      "aliases": ["every", "cooldown", "once", "stopwatch"],
+      "stability": "Stable",
+      "runtime": "OpenMW runtime",
+      "context": "Any script that owns a callback",
+      "persistence": "Runtime-only",
+      "summary": "Poll clocks for intervals, cooldowns, delays, and elapsed time.",
+      "related": ["debounce", "budget", "state-machine"]
+    },
+    {
+      "slug": "s3lf",
+      "title": "S3lf",
+      "path": "@/h3lp_yours3lf/docs/api/interfaces/s3lf.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Installed interface",
+      "context": "Local and player",
+      "persistence": "Engine-backed; not save data",
+      "summary": "Read the attached object's common fields, records, and actor data.",
+      "used": true,
+      "related": ["protected-table", "script-context", "cam-helper", "spell-util"]
+    },
+    {
+      "slug": "normalize-path",
+      "title": "normalizePath",
+      "path": "@/h3lp_yours3lf/docs/api/packages/normalize-path.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Normalize VFS-style path spelling without claiming the path exists.",
+      "related": ["small-utilities", "result"]
+    },
+    {
+      "slug": "debounce",
+      "title": "Debounce",
+      "path": "@/h3lp_yours3lf/docs/api/packages/debounce.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "OpenMW runtime",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Wait until a changing input has settled before acting.",
+      "related": ["timing", "signal"]
+    },
+    {
+      "slug": "pool",
+      "title": "Pool",
+      "path": "@/h3lp_yours3lf/docs/api/packages/pool.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Reuse short-lived objects when allocation pressure justifies borrowed ownership.",
+      "related": ["signal", "memoize", "small-utilities"]
+    },
+    {
+      "slug": "signal",
+      "title": "Signal",
+      "path": "@/h3lp_yours3lf/docs/api/packages/signal.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "One Lua environment",
+      "persistence": "Runtime-only",
+      "summary": "Dispatch synchronous, prioritized listeners with explicit handles.",
+      "related": ["state-machine", "timing", "pool"]
+    },
+    {
+      "slug": "drag-events",
+      "title": "DragEvents",
+      "path": "@/h3lp_yours3lf/docs/api/packages/drag-events.md",
+      "aliases": [],
+      "stability": "Evolving",
+      "runtime": "OpenMW runtime",
+      "context": "Menu and player",
+      "persistence": "Explicit caller-owned save",
+      "summary": "Add drag and resize interaction to an existing UI layout.",
+      "related": ["ui-components", "image-atlas", "protected-table"]
+    },
+    {
+      "slug": "renderers",
+      "title": "Settings Renderers",
+      "path": "@/h3lp_yours3lf/docs/api/renderers.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "Installed interface",
+      "context": "Menu",
+      "persistence": "Settings-owned",
+      "summary": "Register H3's custom Settings controls for positions and string lists.",
+      "related": ["ui-components", "drag-events"]
+    },
+    {
+      "slug": "ui-components",
+      "title": "UI Components",
+      "path": "@/h3lp_yours3lf/docs/api/ui-components.md",
+      "aliases": [],
+      "stability": "Evolving",
+      "runtime": "OpenMW runtime",
+      "context": "Menu and player",
+      "persistence": "Runtime-only",
+      "summary": "Compose passive layout tables without owning mounted UI elements.",
+      "related": ["drag-events", "image-atlas", "renderers", "ui-snapshot"]
+    },
+    {
+      "slug": "small-utilities",
+      "title": "Small Utilities",
+      "path": "@/h3lp_yours3lf/docs/api/small-utilities.md",
+      "aliases": ["clear", "nullFunction"],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Clear reusable tables or supply an intentional no-op callback.",
+      "used": true,
+      "related": ["result", "pool", "normalize-path"]
+    },
+    {
+      "slug": "spell-util",
+      "title": "spellUtil",
+      "path": "@/h3lp_yours3lf/docs/api/packages/spell-util.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "OpenMW runtime",
+      "context": "Local and player",
+      "persistence": "Runtime-only",
+      "summary": "Reuse OpenMW-derived magic calculations from Lua.",
+      "used": true,
+      "related": ["s3lf", "is-hostile"]
+    },
+    {
+      "slug": "is-hostile",
+      "title": "isHostile",
+      "path": "@/h3lp_yours3lf/docs/api/packages/is-hostile.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "OpenMW runtime",
+      "context": "Global, local, and player",
+      "persistence": "Runtime-only",
+      "summary": "Evaluate the engine-style aggression threshold without starting combat.",
+      "related": ["s3lf", "spell-util"]
+    },
+    {
+      "slug": "cam-helper",
+      "title": "CamHelper",
+      "path": "@/h3lp_yours3lf/docs/api/interfaces/cam-helper.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "Installed interface",
+      "context": "Player",
+      "persistence": "Runtime-only",
+      "summary": "Project world objects into the player's viewport for UI markers.",
+      "used": true,
+      "related": ["s3lf", "image-atlas", "ui-components"]
+    },
+    {
+      "slug": "class",
+      "title": "class",
+      "path": "@/h3lp_yours3lf/docs/api/packages/class.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Define small single-inheritance Lua classes without a framework lifecycle.",
+      "related": ["state-machine", "result"]
+    },
+    {
+      "slug": "table-hash",
+      "title": "tableHash",
+      "path": "@/h3lp_yours3lf/docs/api/packages/table-hash.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Derive a deterministic content hash for simple tables.",
+      "related": ["szudzik", "memoize"]
+    },
+    {
+      "slug": "szudzik",
+      "title": "szudzik",
+      "path": "@/h3lp_yours3lf/docs/api/packages/szudzik.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Pair signed integer coordinates into one stable lookup key.",
+      "related": ["table-hash", "small-utilities"]
+    },
+    {
+      "slug": "oscillator",
+      "title": "oscillator",
+      "path": "@/h3lp_yours3lf/docs/api/packages/oscillator.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "OpenMW runtime",
+      "context": "Any script that owns a callback",
+      "persistence": "Runtime-only",
+      "summary": "Sample a smooth periodic value from a selected clock.",
+      "related": ["timing", "budget"]
+    },
+    {
+      "slug": "random-gen",
+      "title": "randomGen",
+      "path": "@/h3lp_yours3lf/docs/api/packages/random-gen.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Generate fast independent pseudo-random values without consuming OpenMW's stream.",
+      "used": true,
+      "related": []
+    },
+    {
+      "slug": "image-atlas",
+      "title": "ImageAtlas",
+      "path": "@/h3lp_yours3lf/docs/api/interfaces/image-atlas.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "Installed interface",
+      "context": "Player",
+      "persistence": "Runtime-only",
+      "summary": "Display and cycle tile-based frames from one atlas texture.",
+      "related": ["ui-components", "drag-events", "ui-snapshot"]
+    },
+    {
+      "slug": "is-openmw",
+      "title": "isOpenMW",
+      "path": "@/h3lp_yours3lf/docs/api/packages/is-openmw.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "OpenMW runtime",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Detect whether code is running inside OpenMW's Lua runtime.",
+      "related": ["script-context", "log-message"]
+    },
+    {
+      "slug": "ui-snapshot",
+      "title": "uiSnapshot",
+      "path": "@/h3lp_yours3lf/docs/api/packages/ui-snapshot.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "Plain Lua inspection",
+      "context": "Menu and player UI owners",
+      "persistence": "Runtime-only",
+      "summary": "Capture bounded deterministic evidence from a layout or element.",
+      "related": ["ui-components", "image-atlas", "drag-events"]
+    },
+    {
+      "slug": "log-message",
+      "title": "LogMessage",
+      "path": "@/h3lp_yours3lf/docs/api/packages/log-message.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "OpenMW runtime",
+      "context": "Local, player, global, and load",
+      "persistence": "Runtime-only",
+      "summary": "Send diagnostic text through the output path available to the current context.",
+      "related": ["script-context", "s3lf"]
+    },
+    {
+      "slug": "script-context",
+      "title": "ScriptContext",
+      "path": "@/h3lp_yours3lf/docs/api/packages/script-context.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "OpenMW runtime",
+      "context": "All supported script contexts",
+      "persistence": "Runtime-only",
+      "summary": "Identify the context in which shared code is executing.",
+      "related": ["log-message", "s3lf", "is-openmw"]
+    },
+    {
+      "slug": "budget",
+      "title": "Budget",
+      "path": "@/h3lp_yours3lf/docs/api/packages/budget.md",
+      "aliases": [],
+      "stability": "Specialized",
+      "runtime": "OpenMW runtime",
+      "context": "Any script that owns an update loop",
+      "persistence": "Runtime-only",
+      "summary": "Spread a finite queue of work across frames.",
+      "related": ["timing", "debounce"]
+    },
+    {
+      "slug": "lazy",
+      "title": "lazy",
+      "path": "@/h3lp_yours3lf/docs/api/packages/lazy.md",
+      "aliases": [],
+      "stability": "Stable",
+      "runtime": "Plain Lua",
+      "context": "Any",
+      "persistence": "Runtime-only",
+      "summary": "Compute and retain one value only when it is first requested.",
+      "related": ["memoize", "result"]
+    }
+  ],
+  "examples": [
+    {
+      "mod": "CHIM 2090",
+      "sources": [
+        {
+          "path": "content/chim_2090/scripts/s3/CHIM2090/roll/core.lua",
+          "label": "roll/core.lua"
+        }
+      ],
+      "helpers": ["s3lf", "protected-table", "random-gen"],
+      "summary": "Roll manager settings, attached actor access, and randomized roll audio."
+    },
+    {
+      "mod": "S3maphore",
+      "sources": [
+        {
+          "path": "content/s3maphore/00 Core/scripts/s3/music/core.lua",
+          "label": "music/core.lua"
+        }
+      ],
+      "helpers": ["s3lf", "spell-util", "state-machine", "clear", "random-gen"],
+      "summary": "A production music loop combining actor state, transitions, cleanup, magic checks, and randomized selection."
+    },
+    {
+      "mod": "H4ND",
+      "sources": [
+        {
+          "path": "content/talk_to_the_hand/scripts/s3/TTTH/hud.lua",
+          "label": "TTTH/hud.lua"
+        }
+      ],
+      "helpers": ["s3lf", "protected-table", "image-atlas", "spell-util", "random-gen"],
+      "summary": "A HUD consumer combining attached actor data, settings state, atlas frames, magic calculations, and randomized presentation."
+    },
+    {
+      "mod": "T4RG3T5",
+      "sources": [
+        {
+          "path": "content/t4rg3t5/scripts/s3/target/lockOnManager.lua",
+          "label": "target/lockOnManager.lua"
+        }
+      ],
+      "helpers": ["s3lf", "protected-table", "cam-helper"],
+      "summary": "Lock-on state, attached target access, and onscreen projection for target markers."
+    },
+    {
+      "mod": "Static Switching System",
+      "sources": [
+        {
+          "path": "content/static_switching_system/Scripts/staticSwitcher/actionHandlers.lua",
+          "label": "actionHandlers.lua"
+        },
+        {
+          "path": "content/static_switching_system/Scripts/staticSwitcher/moduleCatalog.lua",
+          "label": "moduleCatalog.lua"
+        },
+        {
+          "path": "content/static_switching_system/Scripts/staticSwitcher/staticReplacements.lua",
+          "label": "staticReplacements.lua"
+        },
+        {
+          "path": "content/static_switching_system/Scripts/staticSwitcher/global.lua",
+          "label": "global.lua"
+        }
+      ],
+      "helpers": ["random-gen", "szudzik", "table-hash", "nullFunction"],
+      "summary": "Action variation, spatial indexing, content fingerprints, and optional callbacks across the replacement pipeline."
+    },
+    {
+      "mod": "S3UI",
+      "sources": [
+        {
+          "path": "content/s3ui/scripts/s3ui/player_camera.lua",
+          "label": "player_camera.lua"
+        },
+        {
+          "path": "content/s3ui/scripts/s3ui/inventory/window.lua",
+          "label": "inventory/window.lua"
+        }
+      ],
+      "helpers": ["nullFunction"],
+      "summary": "Small UI fallbacks where an optional callback needs to remain callable."
+    }
+  ]
+}

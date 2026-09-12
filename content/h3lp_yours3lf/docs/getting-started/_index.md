@@ -1,5 +1,6 @@
 ---
 title: Getting Started
+template: docs/section.html
 page_template: docs/page.html
 sort_by: weight
 weight: 10

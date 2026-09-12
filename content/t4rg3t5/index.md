@@ -47,6 +47,8 @@ T4rg3t5 1.0 is built around a collision-aware over-the-shoulder camera with auto
 
 Assign a keybinding under **Settings → T4rg3t5 → Target Lock Core**, or the mod will be (mostly) useless.
 
+{{ h3_usage(mod="T4RG3T5") }}
+
 ## What T4rg3t5 does
 
 ### Lock camera

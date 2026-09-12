@@ -14,7 +14,7 @@ These helpers are for code you already call from an OpenMW handler. They poll a 
 | A function may be attempted constantly, but should only succeed every 500 ms. | `cooldown(interval, simulation?)` | Poll `canRun()` when the attempt happens; it starts ready. |
 | You are already polling state and need one delayed transition. | `once(delay, simulation?)` | Poll `tick()`; it becomes true once. |
 | You need to measure a duration spanning several callbacks. | `stopwatch(simulation?)` | Keep `start`, `stop`, `reset`, `elapsed`, and `lap`. |
-| Wait for changes to settle | [Debounce](@/h3lp_yours3lf/docs/api/modules/debounce.md) | `tick, push` pair. |
+| Wait for changes to settle | [Debounce](@/h3lp_yours3lf/docs/api/packages/debounce.md) | `tick, push` pair. |
 
 Require each module as `scripts.s3.every`, `scripts.s3.cooldown`, `scripts.s3.once`, or `scripts.s3.stopwatch`.
 

@@ -1,0 +1,24 @@
+{% if page and page.extra.kind | default(value="") == "api" %}
+{% set h3_usage = load_data(path="data/h3_usage.json", format="json") %}
+{% for api in h3_usage.apis %}
+{% if api.slug == page.slug and api.used | default(value=false) %}
+<details class="docs-usage-map">
+    <summary>Used in the St4sh</summary>
+    <ul>
+        {% for example in h3_usage.examples %}
+        {% for helper in example.helpers %}
+        {% if helper == api.slug or helper in api.aliases %}
+        <li>
+            <strong>{{ example.mod }}</strong>:
+            {% for source in example.sources %}<a href="{{ h3_usage.repository }}/blob/main/{{ source.path | replace(from=" ", to="%20") }}">{{ source.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+            — {{ example.summary }}
+        </li>
+        {% break %}
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
+{% endfor %}
+{% endif %}

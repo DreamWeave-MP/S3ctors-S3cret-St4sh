@@ -32,4 +32,4 @@ H3lp Yours3lf is the shared OpenMW-Lua utility layer: reusable code proven acros
 
 ## Documentation
 
-The [H3 documentation](@/h3lp_yours3lf/docs/_index.md) contains the getting-started guide, concepts, source-checked API references, and runnable examples. Start with [Getting Started](@/h3lp_yours3lf/docs/getting-started/overview.md), then use the [API Reference](@/h3lp_yours3lf/docs/api/_index.md) when you need a specific module contract.
+The [H3 documentation](@/h3lp_yours3lf/docs/_index.md) contains the getting-started guide, concepts, source-checked API references, and runnable examples. H3 covers core utilities, timing, state and coordination, OpenMW helpers, UI, rendering, diagnostics, and specialized math/data helpers. Start with [Getting Started](@/h3lp_yours3lf/docs/getting-started/overview.md), then use the [API Reference](@/h3lp_yours3lf/docs/api/_index.md) when you need a specific module contract.

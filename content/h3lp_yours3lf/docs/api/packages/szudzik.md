@@ -25,5 +25,3 @@ local x, y = szudzik.unpair(key)
 | `unpair(z)` | Return the original `x, y` pair for a key produced by `getIndex`. |
 
 Inputs are expected to be integers. The module performs no type or range validation; fractional, negative-key, or otherwise invalid inputs can produce meaningless results.
-
-Current consumers include [Static Switching System replacements](https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/blob/main/content%2Fstatic_switching_system%2FScripts%2FstaticSwitcher%2FstaticReplacements.lua), its [module catalog](https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/blob/main/content%2Fstatic_switching_system%2FScripts%2FstaticSwitcher%2FmoduleCatalog.lua), and [S3maphore's static collection](https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/blob/main/content%2Fs3maphore%2F00%20Core%2Fscripts%2Fs3%2Fmusic%2FstaticCollection.lua).

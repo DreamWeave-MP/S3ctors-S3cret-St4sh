@@ -26,4 +26,4 @@ The enum contains `Types.Local`, `Types.Global`, `Types.Player`, `Types.Menu`, a
 
 On load, the module probes context-specific OpenMW modules. `get()` checks global, load, and menu before using the attached object to distinguish local from player.
 
-Use it when one plain module needs a context-appropriate implementation, as [LogMessage](@/h3lp_yours3lf/docs/api/modules/log-message.md) does. Prefer separate modules when branching obscures permissions or lifecycle.
+Use it when one plain module needs a context-appropriate implementation, as [LogMessage](@/h3lp_yours3lf/docs/api/packages/log-message.md) does. Prefer separate modules when branching obscures permissions or lifecycle.

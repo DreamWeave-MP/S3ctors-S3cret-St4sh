@@ -54,4 +54,4 @@ Signal passes the supplied value, not a deep copy. It neither clears nor pools t
 
 Connections allocate listener entries and handles. Listener-list mutations during dispatch allocate pending operations. Ordinary dispatch with stable listeners avoids those allocations; one-shot cleanup and error paths have additional work.
 
-Start with ordinary payloads. Use [Pool](@/h3lp_yours3lf/docs/api/modules/pool.md) only when measured allocation pressure justifies manual lifetime management. The [pooling example](@/h3lp_yours3lf/docs/examples/pooling-and-signals.md) demonstrates the complete acquire/fire/release sequence.
+Start with ordinary payloads. Use [Pool](@/h3lp_yours3lf/docs/api/packages/pool.md) only when measured allocation pressure justifies manual lifetime management. The [pooling example](@/h3lp_yours3lf/docs/examples/pooling-and-signals.md) demonstrates the complete acquire/fire/release sequence.
