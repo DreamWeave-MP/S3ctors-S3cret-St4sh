@@ -1,3 +1,4 @@
+---@omw-context local | player
 local animation = require 'openmw.animation'
 local aux_util = require 'openmw_aux.util'
 local core = require 'openmw.core'
@@ -37,138 +38,146 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 ---@field MediumAnimSpeed number
 ---@field HeavyAnimSpeed number
 ---@field OverloadedAnimSpeed number
-local ChimCore = I.S3ProtectedTable.new { inputGroupName = groupName, logPrefix = '[ CHIMCore ]:' }
+local ChimCore = I.S3ProtectedTable.new {
+  inputGroupName = groupName,
+  managerName = modInfo.name .. ' Core',
+  logPrefix = '[ CHIMCore ]:',
+}
 ChimCore.state = {
-    Handedness = {
-        ONE = 1,
-        TWO = 2,
-        RANGED = 3,
-        THROWN = 4,
-    },
+  Handedness = {
+    ONE = 1,
+    TWO = 2,
+    RANGED = 3,
+    THROWN = 4,
+  },
 }
 
 local ActiveEffects = s3lf.activeEffects()
 
 local TargetAttackMagnitude = 32000
 local function ensureFortifyAttack()
-    local currentFortifyAttackMagnitude = ActiveEffects:getEffect(core.magic.EFFECT_TYPE.FortifyAttack).magnitude
-    ActiveEffects:modify(TargetAttackMagnitude - currentFortifyAttackMagnitude, core.magic.EFFECT_TYPE.FortifyAttack)
+  local currentFortifyAttackMagnitude =
+    ActiveEffects:getEffect(core.magic.EFFECT_TYPE.FortifyAttack).magnitude
+  ActiveEffects:modify(
+    TargetAttackMagnitude - currentFortifyAttackMagnitude,
+    core.magic.EFFECT_TYPE.FortifyAttack
+  )
 end
 ensureFortifyAttack()
 
-local fCombatInvisoMult = core.getGMST('fCombatInvisoMult')
-local fFatigueBase = core.getGMST('fFatigueBase')
-local fFatigueMult = core.getGMST('fFatigueMult')
+local fCombatInvisoMult = core.getGMST 'fCombatInvisoMult'
+local fFatigueBase = core.getGMST 'fFatigueBase'
+local fFatigueMult = core.getGMST 'fFatigueMult'
 
 local weaponTypes = types.Weapon.TYPE
 local weaponTypesToSkills = {
-    [weaponTypes.ShortBladeOneHand] = 'shortblade',
-    [weaponTypes.LongBladeOneHand] = 'longblade',
-    [weaponTypes.LongBladeTwoHand] = 'longblade',
-    [weaponTypes.BluntOneHand] = 'bluntweapon',
-    [weaponTypes.BluntTwoClose] = 'bluntweapon',
-    [weaponTypes.BluntTwoWide] = 'bluntweapon',
-    [weaponTypes.SpearTwoWide] = 'spear',
-    [weaponTypes.AxeOneHand] = 'axe',
-    [weaponTypes.AxeTwoHand] = 'axe',
-    [weaponTypes.MarksmanBow] = 'marksman',
-    [weaponTypes.MarksmanCrossbow] = 'marksman',
-    [weaponTypes.MarksmanThrown] = 'marksman',
+  [weaponTypes.ShortBladeOneHand] = 'shortblade',
+  [weaponTypes.LongBladeOneHand] = 'longblade',
+  [weaponTypes.LongBladeTwoHand] = 'longblade',
+  [weaponTypes.BluntOneHand] = 'bluntweapon',
+  [weaponTypes.BluntTwoClose] = 'bluntweapon',
+  [weaponTypes.BluntTwoWide] = 'bluntweapon',
+  [weaponTypes.SpearTwoWide] = 'spear',
+  [weaponTypes.AxeOneHand] = 'axe',
+  [weaponTypes.AxeTwoHand] = 'axe',
+  [weaponTypes.MarksmanBow] = 'marksman',
+  [weaponTypes.MarksmanCrossbow] = 'marksman',
+  [weaponTypes.MarksmanThrown] = 'marksman',
 }
 
 local twoHandedTypes = {
-    [weaponTypes.LongBladeTwoHand] = true,
-    [weaponTypes.BluntTwoClose] = true,
-    [weaponTypes.BluntTwoWide] = true,
-    [weaponTypes.SpearTwoWide] = true,
-    [weaponTypes.AxeTwoHand] = true,
+  [weaponTypes.LongBladeTwoHand] = true,
+  [weaponTypes.BluntTwoClose] = true,
+  [weaponTypes.BluntTwoWide] = true,
+  [weaponTypes.SpearTwoWide] = true,
+  [weaponTypes.AxeTwoHand] = true,
 }
 
 local rangedWeaponTypes = {
-    [weaponTypes.MarksmanBow] = true,
-    [weaponTypes.MarksmanCrossbow] = true,
-    [weaponTypes.MarksmanThrown] = true,
+  [weaponTypes.MarksmanBow] = true,
+  [weaponTypes.MarksmanCrossbow] = true,
+  [weaponTypes.MarksmanThrown] = true,
 }
 
 local oneHandedTypes = {
-    [weaponTypes.AxeOneHand] = true,
-    [weaponTypes.ShortBladeOneHand] = true,
-    [weaponTypes.LongBladeOneHand] = true,
-    [weaponTypes.BluntOneHand] = true,
+  [weaponTypes.AxeOneHand] = true,
+  [weaponTypes.ShortBladeOneHand] = true,
+  [weaponTypes.LongBladeOneHand] = true,
+  [weaponTypes.BluntOneHand] = true,
 }
 
 ---@param actorOrWeapon GameObject? an optional gameobject, being either a weapon or NPC gameObject
 function ChimCore.getWeaponHandedness(actorOrWeapon)
-    local weapon, actor
-    if not actorOrWeapon then
-        weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
-    elseif not actorOrWeapon.type then -- lacking the .type field indicates a s3lf object
-        local objectType = actorOrWeapon.objectType()
+  local weapon, actor
+  if not actorOrWeapon then
+    weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+  elseif not actorOrWeapon.type then -- lacking the .type field indicates a s3lf object
+    local objectType = actorOrWeapon.objectType()
 
-        if objectType == 'npc' then
-            weapon = actorOrWeapon.getEquipment(actorOrWeapon.EQUIPMENT_SLOT.CarriedRight)
-        elseif objectType == 'weapon' then
-            weapon = actorOrWeapon
-        end
-    elseif types.NPC.objectIsInstance(actorOrWeapon) then
-        weapon = actor.type.getEquipment(actor, actor.type.EQUIPMENT_SLOT.CarriedRight)
-    elseif types.Weapon.objectIsInstance(actorOrWeapon) then
-        weapon = actorOrWeapon
+    if objectType == 'npc' then
+      weapon = actorOrWeapon.getEquipment(actorOrWeapon.EQUIPMENT_SLOT.CarriedRight)
+    elseif objectType == 'weapon' then
+      weapon = actorOrWeapon
     end
+  elseif types.NPC.objectIsInstance(actorOrWeapon) then
+    weapon = actor.type.getEquipment(actor, actor.type.EQUIPMENT_SLOT.CarriedRight)
+  elseif types.Weapon.objectIsInstance(actorOrWeapon) then
+    weapon = actorOrWeapon
+  end
 
-    if not weapon then return end
+  if not weapon then return end
 
-    local weaponType = weapon.type.records[weapon.recordId].type
+  local weaponType = weapon.type.records[weapon.recordId].type
 
-    if oneHandedTypes[weaponType] then
-        return ChimCore.state.Handedness.ONE
-    elseif twoHandedTypes[weaponType] then
-        return ChimCore.state.Handedness.TWO
-    elseif weaponType == weaponTypes.MarksmanThrown then
-        return ChimCore.state.Handedness.THROWN
-    else
-        return ChimCore.state.Handedness.RANGED
-    end
+  if oneHandedTypes[weaponType] then
+    return ChimCore.state.Handedness.ONE
+  elseif twoHandedTypes[weaponType] then
+    return ChimCore.state.Handedness.TWO
+  elseif weaponType == weaponTypes.MarksmanThrown then
+    return ChimCore.state.Handedness.THROWN
+  else
+    return ChimCore.state.Handedness.RANGED
+  end
 end
 
 ---@param actor GameObject
 ---@return number fatigueTerm fatigue cost for this action??
 local function getFatigueTerm(actor)
-    local normalizedFatigue = actor.fatigue.current / actor.fatigue.base
-    local fatigueTerm = fFatigueBase - fFatigueMult * (1 - normalizedFatigue)
-    return fatigueTerm
+  local normalizedFatigue = actor.fatigue.current / actor.fatigue.base
+  local fatigueTerm = fFatigueBase - fFatigueMult * (1 - normalizedFatigue)
+  return fatigueTerm
 end
 
 ---@param weapon GameObject
 ---@return string skillName
 function ChimCore.getWeaponSkillName(weapon)
-    if not weapon.type then --- Lacking the .type field indicates we've receievd a s3lfObject
-        weapon = weapon.gameObject
-    end
+  if not weapon.type then --- Lacking the .type field indicates we've receievd a s3lfObject
+    weapon = weapon.gameObject
+  end
 
-    local weaponType = weapon.type.records[weapon.recordId].type
-    local resultType = weaponTypesToSkills[weaponType]
+  local weaponType = weapon.type.records[weapon.recordId].type
+  local resultType = weaponTypesToSkills[weaponType]
 
-    assert(resultType ~= nil, 'Failed to find a result type for weapon:', weapon.recordId)
+  assert(resultType ~= nil, 'Failed to find a result type for weapon:', weapon.recordId)
 
-    return resultType
+  return resultType
 end
 
 ---@param weapon GameObject
 ---@param attacker GameObject
 function ChimCore.getWeaponSkill(weapon, attacker)
-    if attacker.type then --- Lacking the .type field indicates we've receievd a s3lfObject
-        attacker = s3lf.From(attacker)
-    end
+  if attacker.type then --- Lacking the .type field indicates we've receievd a s3lfObject
+    attacker = s3lf.From(attacker)
+  end
 
-    if attacker.isNPC then
-        local weaponType = weapon.type.records[weapon.recordId].type
-        local weaponSkill = weaponTypesToSkills[weaponType]
+  if attacker.isNPC then
+    local weaponType = weapon.type.records[weapon.recordId].type
+    local weaponSkill = weaponTypesToSkills[weaponType]
 
-        return attacker[weaponSkill].modified
-    else
-        return attacker.combatSkill
-    end
+    return attacker[weaponSkill].modified
+  else
+    return attacker.combatSkill
+  end
 end
 
 --- Returns the character's raw equipment capacity, derived from their endurance
@@ -177,107 +186,96 @@ end
 --- Allowing for anywhere between 20% and 50% of their carrying capacity to be used for equipment depending on endurance
 ---@return number equipCapacity the total weight of equipment a character is potentially expected to wear
 function ChimCore.getEquipmentCapacity()
-    local normalizedEndurance = math.min(s3lf.endurance.modified, 100) / 100
-    return s3lf.getCapacity() * (0.2 + normalizedEndurance * 0.3)
+  local normalizedEndurance = math.min(s3lf.endurance.modified, 100) / 100
+  return s3lf.getCapacity() * (0.2 + normalizedEndurance * 0.3)
 end
 
 --- Calculates total currently-used encumbrance points
 --- Primarily based on endurance, and normalized before returning, unless explicitly requested not to
 ---@param noLimit boolean?
 function ChimCore.getEquipmentEncumbrance(noLimit)
-    local encumbrance = ChimCore.getTotalEquipmentWeight() / ChimCore.getEquipmentCapacity()
+  local encumbrance = ChimCore.getTotalEquipmentWeight() / ChimCore.getEquipmentCapacity()
 
-    if noLimit then
-        return encumbrance
-    end
+  if noLimit then return encumbrance end
 
-    return util.clamp(
-        encumbrance,
-        0.0,
-        1.0
-    )
+  return util.clamp(encumbrance, 0.0, 1.0)
 end
 
 ---Given a weapon object return whether it is a two-handed type
 ---@param weapon GameObject
 ---@return boolean
 function ChimCore.weaponIsTwoHanded(weapon)
-    local weaponType = weapon.type.records[weapon.recordId].type
-    return twoHandedTypes[weaponType] or false
+  local weaponType = weapon.type.records[weapon.recordId].type
+  return twoHandedTypes[weaponType] or false
 end
 
-function ChimCore.getRandomHitGroup()
-    return ('hit%d'):format(math.random(1, 5))
-end
+function ChimCore.getRandomHitGroup() return ('hit%d'):format(math.random(1, 5)) end
 
-function ChimCore.isKnockedDown(actor)
-    return animation.isPlaying(actor, 'knockout')
-end
+function ChimCore.isKnockedDown(actor) return animation.isPlaying(actor, 'knockout') end
 
 ---@param attacker GameObject
 ---@param defender GameObject
 ---@return number defenseTerm Influence of the defending character's stats on an attack's chance to hit. Not actually used in CHIM, probably.
 function ChimCore:getAttackDefenseTerm(attacker, defender)
-    if defender.fatigue.current <= 0 then
-        return 0
-    end
+  if defender.fatigue.current <= 0 then return 0 end
 
-    local defenseTerm = 0
-    local defenderEffects = defender.activeEffects()
-    --- FIXME: isPlayer field has been removed
-    local unaware = defender.stance == defender.STANCE.Nothing and attacker.isPlayer
-    local isKnockedDown = defender.isPlaying('knockout')
-    local isParalyzed = defenderEffects:getEffect(ParalyzeEffect).magnitude > 0
+  local defenseTerm = 0
+  local defenderEffects = defender.activeEffects()
+  --- FIXME: isPlayer field has been removed
+  local unaware = defender.stance == defender.STANCE.Nothing and attacker.isPlayer
+  local isKnockedDown = defender.isPlaying 'knockout'
+  local isParalyzed = defenderEffects:getEffect(ParalyzeEffect).magnitude > 0
 
-    if not (unaware or isKnockedDown or isParalyzed) then
-        local agilityDefenseInfluence = self.AgilityHitChancePct * defender.agility.modified
-        local luckDefenseInfluence = self.LuckHitChancePct * defender.luck.modified
-        local defenderFatigueTerm = getFatigueTerm(defender)
-        defenseTerm = (agilityDefenseInfluence + luckDefenseInfluence) * defenderFatigueTerm
+  if not (unaware or isKnockedDown or isParalyzed) then
+    local agilityDefenseInfluence = self.AgilityHitChancePct * defender.agility.modified
+    local luckDefenseInfluence = self.LuckHitChancePct * defender.luck.modified
+    local defenderFatigueTerm = getFatigueTerm(defender)
+    defenseTerm = (agilityDefenseInfluence + luckDefenseInfluence) * defenderFatigueTerm
 
-        local sanctuaryEffect = defenderEffects:getEffect(SanctuaryEffect).magnitude
-        sanctuaryEffect = math.min(100, sanctuaryEffect)
-        defenseTerm = defenseTerm + sanctuaryEffect
-    end
+    local sanctuaryEffect = defenderEffects:getEffect(SanctuaryEffect).magnitude
+    sanctuaryEffect = math.min(100, sanctuaryEffect)
+    defenseTerm = defenseTerm + sanctuaryEffect
+  end
 
-    local chameleonEffect = math.min(100, fCombatInvisoMult * defenderEffects:getEffect(ChameleonEffect).magnitude)
-    local invisibilityEffect = math.min(100, fCombatInvisoMult * defenderEffects:getEffect(InvisibleEffect)
-        .magnitude)
+  local chameleonEffect =
+    math.min(100, fCombatInvisoMult * defenderEffects:getEffect(ChameleonEffect).magnitude)
+  local invisibilityEffect =
+    math.min(100, fCombatInvisoMult * defenderEffects:getEffect(InvisibleEffect).magnitude)
 
-    defenseTerm = defenseTerm + chameleonEffect + invisibilityEffect
+  defenseTerm = defenseTerm + chameleonEffect + invisibilityEffect
 
-    return defenseTerm
+  return defenseTerm
 end
 
 ---@param attackData CHIMAttackData
 ---@return number hitChance hit chance used to determine the overall attack effectiveness
 function ChimCore:getNativeHitChance(attackData)
-    local attacker, defender = attackData.attacker, attackData.defender
+  local attacker, defender = attackData.attacker, attackData.defender
 
-    local attackerFatigueTerm = getFatigueTerm(attacker)
+  local attackerFatigueTerm = getFatigueTerm(attacker)
 
-    local weapon = attacker.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+  local weapon = attacker.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
 
-    local skillValue
-    if attacker.isCreature then
-        skillValue = attacker.combatSkill
-    elseif not weapon then
-        skillValue = attacker.handtohand.modified
-    else
-        local weaponType = weapon.type.records[weapon.recordId].type
-        local skillName = weaponTypesToSkills[weaponType]
-        skillValue = attacker[skillName].modified
-    end
+  local skillValue
+  if attacker.isCreature then
+    skillValue = attacker.combatSkill
+  elseif not weapon then
+    skillValue = attacker.handtohand.modified
+  else
+    local weaponType = weapon.type.records[weapon.recordId].type
+    local skillName = weaponTypesToSkills[weaponType]
+    skillValue = attacker[skillName].modified
+  end
 
-    local agilityInfluence = self.AgilityHitChancePct * attacker.agility.modified
-    local luckInfluence = self.LuckHitChancePct * attacker.luck.modified
+  local agilityInfluence = self.AgilityHitChancePct * attacker.agility.modified
+  local luckInfluence = self.LuckHitChancePct * attacker.luck.modified
 
-    local attackTerm = (skillValue + agilityInfluence + luckInfluence) * attackerFatigueTerm
-    local blindMagnitude = attacker.activeEffects():getEffect("blind").magnitude
+  local attackTerm = (skillValue + agilityInfluence + luckInfluence) * attackerFatigueTerm
+  local blindMagnitude = attacker.activeEffects():getEffect('blind').magnitude
 
-    attackTerm = (attackTerm - blindMagnitude) / 100
+  attackTerm = (attackTerm - blindMagnitude) / 100
 
-    return attackTerm
+  return attackTerm
 end
 
 ---@class CHIMAttackData
@@ -287,121 +285,110 @@ end
 
 ---@param attackData CHIMAttackData
 function ChimCore:getDamageBonus(attackData)
-    attackData.attacker = I.s3.lf.From(attackData.attacker)
-    attackData.defender = I.s3.lf.From(attackData.defender)
+  attackData.attacker = I.s3.lf.From(attackData.attacker)
+  attackData.defender = I.s3.lf.From(attackData.defender)
 
-    local roll = math.random()
-    local luckMod = (math.min(attackData.attacker.luck.modified, 100) / 100.0) * self.CritLuckPercent
-    local hitChance = math.min(self.MaxDamageMultiplier, I.s3ChimCore.Manager:getNativeHitChance(attackData))
-    local critChance = hitChance * (self.CritChancePercent / 100.0) * (1 + luckMod)
-    local fumblePct = self.FumbleBaseChance / 100.0
-    local fumbleScalePct = self.FumbleChanceScale / 100.0
-    local fumbleChance = math.max(0.0,
-        (
-            fumblePct +
-            (1.0 - (hitChance + luckMod)
-            ) * fumbleScalePct
-        )
-    )
+  local roll = math.random()
+  local luckMod = (math.min(attackData.attacker.luck.modified, 100) / 100.0) * self.CritLuckPercent
+  local hitChance =
+    math.min(self.MaxDamageMultiplier, I.s3ChimCore.Manager:getNativeHitChance(attackData))
+  local critChance = hitChance * (self.CritChancePercent / 100.0) * (1 + luckMod)
+  local fumblePct = self.FumbleBaseChance / 100.0
+  local fumbleScalePct = self.FumbleChanceScale / 100.0
+  local fumbleChance = math.max(0.0, (fumblePct + (1.0 - (hitChance + luckMod)) * fumbleScalePct))
 
-    self.debugLog(
-        (
-            [[Roll: %s
+  self.debugLog(([[Roll: %s
 Hit Chance: %s
 Crit Chance: %s
 Fumble Chance: %s
-Luck Mod: %s]]
-        ):format(roll, hitChance, critChance, fumbleChance, luckMod)
-    )
+Luck Mod: %s]]):format(roll, hitChance, critChance, fumbleChance, luckMod))
 
-    if self.EnableCritFumble then
-        if roll < fumbleChance then
-            hitChance = hitChance * (self.FumbleDamagePercent / 100)
-        elseif roll < critChance then
-            hitChance = hitChance * self.CritDamageMultiplier
-        end
+  if self.EnableCritFumble then
+    if roll < fumbleChance then
+      hitChance = hitChance * (self.FumbleDamagePercent / 100)
+    elseif roll < critChance then
+      hitChance = hitChance * self.CritDamageMultiplier
     end
+  end
 
-    return hitChance
+  return hitChance
 end
 
 function ChimCore.getTotalEquipmentWeight()
-    local totalEquippedWeight = 0
-    for _, item in ipairs(s3lf.getEquipment()) do
-        if not item then goto CONTINUE end
+  local totalEquippedWeight = 0
+  for _, item in ipairs(s3lf.getEquipment()) do
+    if not item then goto CONTINUE end
 
-        local countsAsEquipment = types.Armor.objectIsInstance(item) or types.Weapon.objectIsInstance(item)
+    local countsAsEquipment = types.Armor.objectIsInstance(item)
+      or types.Weapon.objectIsInstance(item)
 
-        if not countsAsEquipment then goto CONTINUE end
+    if not countsAsEquipment then goto CONTINUE end
 
-        local itemRecord = item.type.records[item.recordId]
-        totalEquippedWeight = totalEquippedWeight + itemRecord.weight
+    local itemRecord = item.type.records[item.recordId]
+    totalEquippedWeight = totalEquippedWeight + itemRecord.weight
 
-        ::CONTINUE::
-    end
+    ::CONTINUE::
+  end
 
-    return util.round(totalEquippedWeight)
+  return util.round(totalEquippedWeight)
 end
 
 function ChimCore.getHitAnimationSpeed()
-    local equipmentEncumbrance = ChimCore.getEquipmentEncumbrance()
+  local equipmentEncumbrance = ChimCore.getEquipmentEncumbrance()
 
-    if equipmentEncumbrance <= 0.25 then
-        return ChimCore.LightAnimSpeed
-    elseif equipmentEncumbrance <= 0.5 then
-        return ChimCore.MediumAnimSpeed
-    elseif equipmentEncumbrance <= 0.75 then
-        return ChimCore.HeavyAnimSpeed
-    else
-        return ChimCore.OverloadedAnimSpeed
-    end
+  if equipmentEncumbrance <= 0.25 then
+    return ChimCore.LightAnimSpeed
+  elseif equipmentEncumbrance <= 0.5 then
+    return ChimCore.MediumAnimSpeed
+  elseif equipmentEncumbrance <= 0.75 then
+    return ChimCore.HeavyAnimSpeed
+  else
+    return ChimCore.OverloadedAnimSpeed
+  end
 end
 
 local function filterCombatant(actor)
-    return not actor.type.isDead(actor)
-        and actor.id ~= s3lf.id
-        and not types.Player.objectIsInstance(actor)
-        and actor.type.getStance(actor) ~= s3lf.STANCE.Nothing
+  return not actor.type.isDead(actor)
+    and actor.id ~= s3lf.id
+    and not types.Player.objectIsInstance(actor)
+    and actor.type.getStance(actor) ~= s3lf.STANCE.Nothing
 end
 
 function ChimCore.getCombatants()
-    local targets, _ = aux_util.mapFilter(nearby.actors, filterCombatant)
+  local targets, _ = aux_util.mapFilter(nearby.actors, filterCombatant)
 
-    return targets
+  return targets
 end
 
 local eventHandlers = {
-    CHIMEnsureFortifyAttack = ensureFortifyAttack,
+  CHIMEnsureFortifyAttack = ensureFortifyAttack,
 }
 
 if s3lf.actorType == 0 then
-    eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
-        local addOrRemove = next(targetData.targets) ~= nil
-        core.sendGlobalEvent('CHIMScriptToggle', {
-            actor = targetData.actor,
-            state = addOrRemove,
-        })
-    end
+  eventHandlers.OMWMusicCombatTargetsChanged = function(targetData)
+    local addOrRemove = next(targetData.targets) ~= nil
+    core.sendGlobalEvent('CHIMScriptToggle', {
+      actor = targetData.actor,
+      state = addOrRemove,
+    })
+  end
 end
 
 return {
-    interfaceName = "s3ChimCore",
-    interface = setmetatable(
-        {},
-        {
-            __index = function(_, key)
-                local managerKey = ChimCore[key] or ChimCore.state[key]
+  interfaceName = 's3ChimCore',
+  interface = setmetatable({}, {
+    __index = function(_, key)
+      local managerKey = ChimCore[key] or ChimCore.state[key]
 
-                if key == 'help' then
-                    return [[
+      if key == 'help' then
+        return [[
                     ]]
-                elseif managerKey then
-                    return managerKey
-                elseif key == 'Manager' then
-                    return ChimCore
-                end
-            end,
-        }
-    ),
-    eventHandlers = eventHandlers,
+      elseif managerKey then
+        return managerKey
+      elseif key == 'Manager' then
+        return ChimCore
+      end
+    end,
+  }),
+  eventHandlers = eventHandlers,
 }
