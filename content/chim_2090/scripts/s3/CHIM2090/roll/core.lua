@@ -30,7 +30,8 @@ end
 ---@field DoubleTapDelay number
 ---@field RollSoundPitchRange number
 local Roll = I.S3ProtectedTable.new {
-  managerName = 'SettingsGlobal' .. modInfo.name .. 'Roll',
+  inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Roll',
+  managerName = modInfo.name .. ' Roll',
   logPrefix = '[CHIMROLL]:',
 }
 Roll.state = {

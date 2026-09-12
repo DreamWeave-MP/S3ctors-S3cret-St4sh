@@ -42,7 +42,7 @@ local FRAME_DURATION = 1.0 / 60.0
 ---@field BlockSkillBonus number
 ---@field MinDamageMultiplier number
 ---@field MaxDamageMultiplier number
-local Parry = ProtectedTable.new { managerName = groupName, logPrefix = '[CHIMParry]:\n' }
+local Parry = ProtectedTable.new { inputGroupName = groupName, logPrefix = '[CHIMParry]:\n' }
 Parry.state = {
   remainingTime = 0,
 }

@@ -142,7 +142,7 @@ local ProtectedTable = I.S3ProtectedTable
 ---@field BlockLeftAngle number
 ---@field BlockRightAngle number
 local Block = ProtectedTable.new {
-  managerName = groupName,
+  inputGroupName = groupName,
   logPrefix = '[CHIMBlock]:\n',
 }
 Block.state = {
@@ -165,7 +165,7 @@ Block.state = {
 ---@field doTurtle boolean
 ---@field repeatedBlocks number
 local BlockActor = ProtectedTable.new {
-  managerName = 'SettingsGlobal' .. modInfo.name .. 'BlockActor',
+  inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'BlockActor',
   logPrefix = '[CHIMAI]:\n',
 }
 BlockActor.state = {

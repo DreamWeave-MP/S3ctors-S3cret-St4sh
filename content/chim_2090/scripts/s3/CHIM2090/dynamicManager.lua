@@ -31,7 +31,8 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Dynamic'
 ---@field HealthVitalityMult number
 ---@field EnableDynamicModule boolean
 local DynamicManager = I.S3ProtectedTable.new {
-  managerName = groupName,
+  inputGroupName = groupName,
+  managerName = modInfo.name .. ' Dynamic',
   logPrefix = 'ChimManagerDynamic',
 }
 
