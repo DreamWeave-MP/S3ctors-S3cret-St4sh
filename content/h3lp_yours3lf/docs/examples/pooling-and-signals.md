@@ -6,7 +6,7 @@ extra:
   kind: example
 ---
 
-Use this pattern only when profiling identifies repeated payload allocations as a problem. For occasional notifications, an ordinary table and [Signal](@/h3lp_yours3lf/docs/api/modules/signal.md) are simpler.
+Use this pattern only when profiling identifies repeated payload allocations as a problem. For occasional notifications, an ordinary table and [Signal](@/h3lp_yours3lf/docs/api/packages/signal.md) are simpler.
 
 ```lua
 local Pool = require 'scripts.s3.pool'
@@ -43,4 +43,4 @@ A listener must not store `data`, capture it for a timer, or forward it across a
 
 The pool's default reset clears released tables. Populate every needed field on each acquisition. Capacity limits idle objects retained, not total acquisitions; exhaustion allocates rather than blocking.
 
-Read [Pool](@/h3lp_yours3lf/docs/api/modules/pool.md) for accounting and release constraints, [Signal](@/h3lp_yours3lf/docs/api/modules/signal.md) for listener behavior, and [State and Context](@/h3lp_yours3lf/docs/concepts/state-and-context.md) before introducing deferred work.
+Read [Pool](@/h3lp_yours3lf/docs/api/packages/pool.md) for accounting and release constraints, [Signal](@/h3lp_yours3lf/docs/api/packages/signal.md) for listener behavior, and [State and Context](@/h3lp_yours3lf/docs/concepts/state-and-context.md) before introducing deferred work.

@@ -42,6 +42,8 @@ SSS depends on [H3lp Yours3lf](@/h3lp_yours3lf/index.md), so install and enable 
 
 [FlexTag](@/flextag/index.md) is optional. It is required only by the tag feature family: `has_tag` and `cell_tag` conditions, plus `add_tag` and `remove_tag` actions. Without FlexTag's `FlexTagG` interface, those conditions return false and those actions cannot perform their operation, so a module that depends on them will appear inactive. SSS's static pipeline and its other instance conditions and actions do not require FlexTag. In particular, `cell_match` is an SSS location condition, not a FlexTag condition. See [FlexTag compatibility](@/static_switching_system/docs/compatibility/flextag.md) for tag data and persistence details.
 
+{{ h3_usage(mod="Static Switching System") }}
+
 ## Mods already using SSS
 
 SSS is already doing useful work in released static modules, not just in sample files:

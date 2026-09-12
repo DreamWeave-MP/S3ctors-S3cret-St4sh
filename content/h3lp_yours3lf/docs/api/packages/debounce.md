@@ -49,4 +49,4 @@ Register this as a player script using the [bootstrap instructions](@/h3lp_yours
 
 Do not replace the second argument with a function: this API returns two functions rather than accepting a completion callback.
 
-Need a regular interval or an immediately ready rate limit instead? Compare [Every and Cooldown](@/h3lp_yours3lf/docs/api/modules/timing.md).
+Need a regular interval or an immediately ready rate limit instead? Compare [Every and Cooldown](@/h3lp_yours3lf/docs/api/timing.md).

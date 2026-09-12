@@ -49,4 +49,4 @@ return {
 
 The factory is called with no arguments. Extra factory return values are discarded because the callable represents one value. If the element is destroyed, call `getStatusText:reset()` before building it again. Recursive factory evaluation and resetting during evaluation raise errors.
 
-Use `lazy` when construction should happen at most once on demand. For a result that must be refreshed by keys or expiry, use [memoize](@/h3lp_yours3lf/docs/api/modules/memoize.md) instead; for explicit success/failure, use [Result](@/h3lp_yours3lf/docs/api/modules/result.md).
+Use `lazy` when construction should happen at most once on demand. For a result that must be refreshed by keys or expiry, use [memoize](@/h3lp_yours3lf/docs/api/packages/memoize.md) instead; for explicit success/failure, use [Result](@/h3lp_yours3lf/docs/api/packages/result.md).

@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-{{ api_signature(value="require('openmw.interfaces').S3ProtectedTable.new(options) → ProtectedTable") }}
+{{ api_signature(value="require 'openmw.interfaces'.S3ProtectedTable.new(options) → ProtectedTable") }}
 
 Use ProtectedTable when a settings table has grown methods and transient state around it. Settings stay in storage; runtime state stays under `.state`; methods live on the same manager.
 
@@ -50,11 +50,14 @@ Assignments to a writable section update storage; read-only sections reject them
 
 The manager is callable and iterates current storage values in sorted key order. `tostring(manager)` lists settings, methods, and runtime state.
 
+## Runtime state
+
+`manager.state` is a writable table for transient values owned by the script. It is separate from the settings section and is not a method.
+
 ## Built-in methods
 
 | Member | Behavior |
 | --- | --- |
-| `manager.state` | Writable table for runtime values; not the settings section. |
 | `manager.debugLog(...)` | Prints arguments when the storage setting `DebugEnable` is true. |
 | `manager.notifyPlayer(...)` | Shows a message box when `MessageEnable` is true; player scripts only. |
 | `manager.interface(handler)` | Creates a table whose indexed values come from `handler(key)`. |

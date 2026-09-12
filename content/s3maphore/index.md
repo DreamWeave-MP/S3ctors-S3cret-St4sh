@@ -69,6 +69,8 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 
 ## Introduction
 
+{{ h3_usage(mod="S3maphore") }}
+
 In order to understand how S3maphore works, you need to understand three basic ideas:
 
 1. __Playlist__ - Just like in real life, S3maphore playlists are contextual. You may have a Spotify playlist for working out, long drives, or having a bad day - S3maphore playlists can run indoors, outdoors, in hostile areas, in bad weather, or even if you're using a specific type of magic.

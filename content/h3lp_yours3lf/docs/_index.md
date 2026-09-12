@@ -24,8 +24,8 @@ Use [Getting Started](@/h3lp_yours3lf/docs/getting-started/_index.md) for the fi
 
 ## Build something small first
 
-The [first integration](@/h3lp_yours3lf/docs/getting-started/overview.md) takes you from installation through a running player script and expected output. Then choose [timing](@/h3lp_yours3lf/docs/api/modules/timing.md), [local notifications](@/h3lp_yours3lf/docs/api/modules/signal.md), or [object access](@/h3lp_yours3lf/docs/api/modules/s3lf.md) according to the work you need.
+The [first integration](@/h3lp_yours3lf/docs/getting-started/overview.md) takes you from installation through a running player script and expected output. Then choose [timing](@/h3lp_yours3lf/docs/api/timing.md), [local notifications](@/h3lp_yours3lf/docs/api/packages/signal.md), or [object access](@/h3lp_yours3lf/docs/api/interfaces/s3lf.md) according to the work you need.
 
-Already maintaining your own helpers? Follow the [migration checklist](@/h3lp_yours3lf/docs/migration/from-local-helpers.md). Optimizing a measured allocation hotspot? Read the [pooling example](@/h3lp_yours3lf/docs/examples/pooling-and-signals.md), including its borrowed-payload restrictions.
+Optimizing a measured allocation hotspot? Read the [pooling example](@/h3lp_yours3lf/docs/examples/pooling-and-signals.md), including its borrowed-payload restrictions.
 
-The [API coverage note](@/h3lp_yours3lf/docs/api/_index.md#coverage-and-remaining-references) identifies material still awaiting dedicated pages. This manual distinguishes verified references from unfinished coverage rather than treating every module as interchangeable.
+The [API Reference](@/h3lp_yours3lf/docs/api/_index.md) identifies the supported contracts. This manual distinguishes verified references from implementation detail rather than treating every source file as interchangeable.

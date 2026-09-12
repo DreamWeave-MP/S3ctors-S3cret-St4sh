@@ -18,3 +18,5 @@ S3ui is an early replacement OpenMW UI experiment. It currently registers a play
 <!-- more -->
 
 {{ install_instructions(describe=true) }}
+
+{{ h3_usage(mod="S3UI") }}

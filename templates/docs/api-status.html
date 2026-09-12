@@ -1,0 +1,15 @@
+{% if page and page.extra.kind | default(value="") == "api" %}
+{% set h3_usage = load_data(path="data/h3_usage.json", format="json") %}
+{% for api in h3_usage.apis %}
+{% if api.slug == page.slug %}
+<aside class="docs-api-status" aria-label="{{ api.title | escape }} status">
+    <dl>
+        <div><dt>Stability</dt><dd>{{ api.stability }}</dd></div>
+        <div><dt>Runtime</dt><dd>{{ api.runtime }}</dd></div>
+        <div><dt>Context</dt><dd>{{ api.context }}</dd></div>
+        <div><dt>Persistence</dt><dd>{{ api.persistence }}</dd></div>
+    </dl>
+</aside>
+{% endif %}
+{% endfor %}
+{% endif %}

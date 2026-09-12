@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-{{ api_signature(value="require('openmw.interfaces').S3AtlasConstructor.constructAtlas(data) → ImageAtlas") }}
+{{ api_signature(value="require 'openmw.interfaces'.S3AtlasConstructor.constructAtlas(data) → ImageAtlas") }}
 
 Use `ImageAtlas` when a UI needs many frames stored in one texture: an animated icon, hand pose, or status marker. H3 creates the tile resources and gives you an object that can spawn and cycle one image element.
 
@@ -67,4 +67,4 @@ Replace the atlas path and dimensions with the actual texture. `tileSize` is in 
 
 Construction allocates the atlas object and `totalTiles` texture resources. Cycling updates an existing element. Construct atlases when the UI is created, not from `onFrame`.
 
-Use ordinary `ui.texture` when you need one image resource, and use [uiSnapshot](@/h3lp_yours3lf/docs/api/modules/ui-snapshot.md) when the problem is inspecting a layout rather than displaying atlas frames.
+Use ordinary `ui.texture` when you need one image resource, and use [uiSnapshot](@/h3lp_yours3lf/docs/api/packages/ui-snapshot.md) when the problem is inspecting a layout rather than displaying atlas frames.

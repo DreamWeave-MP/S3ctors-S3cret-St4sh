@@ -6,10 +6,10 @@ extra:
   kind: concept
 ---
 
-H3's UI components are layout builders, not retained widgets. A component returns an `openmw.ui.Layout` table; it does not call `ui.create`, attach a layer, register callbacks with the engine, or own the lifetime of any later `Element`.
+H3's UI components are layout builders and controlled interaction compositions, not retained widgets. A component returns an `openmw.ui.Layout` table; it does not call `ui.create`, attach a layer, persist application state, or own the lifetime of any later `Element`.
 
 {% usage_note(title="Menu and player layouts · Caller owns the element") %}
-The component modules are available in `menu` and `player` scripts. The caller owns the root element, its layer, its rebuild/destroy path, and any state used to produce a new layout. Event callbacks are passed through; wrap OpenMW-facing callbacks with `async:callback` in the script that owns them.
+The component modules are available in `menu` and `player` scripts. The caller owns the root element, its layer, its rebuild/destroy path, and any state used to produce a new layout. Low-level event callbacks are passed through; controlled component callbacks are adapted by H3 and receive semantic values.
 {% end %}
 
 ## Build, mount, update
@@ -61,6 +61,8 @@ Components copy the outer `props` and `external` tables, but they do not deep-co
 - **Flow:** `row` and `column` are horizontal and vertical Flex layouts; `list` is a vertical Flex layout; `grid` builds a vertical Flex of horizontal rows.
 - **Spacing and framing:** `spacer`, `bookFrame`, and `dialog` add geometry or presentation without creating a window or layer.
 - **Actions and state display:** `button`, `iconButton`, `meter`, and `itemSlot` compose common controls and indicators.
+- **Controls:** `toggle`, `slider`, `select`, `tabs`, `collapsible`, `numberInput`, and `searchInput` report changes while the caller owns their state.
 - **Input and explanation:** `textInput` builds a TextEdit line; `tooltip` builds a boxed content layout but does not position or show it.
+- **Morrowind chrome:** `headBlock`, `caption`, `pinButton`, and `window` compose caller-owned framed surfaces without using `ui.TYPE.Window`.
 
-For the exact options and defaults, see the [UI Components reference](@/h3lp_yours3lf/docs/api/modules/ui-components.md).
+For the exact options and defaults, see the [UI Components reference](@/h3lp_yours3lf/docs/api/ui-components.md).

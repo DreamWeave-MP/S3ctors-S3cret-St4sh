@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-{{ api_signature(value="require('openmw.interfaces').s3.lf → S3lfObject") }}
+{{ api_signature(value="require 'openmw.interfaces'.s3.lf → S3lfObject") }}
 
 S3lf exposes frequently used object, type, record, and stat data through a lazily resolved view. It reduces repeated engine API indexing; it does not turn every engine value into a plain Lua value or remove the engine's restrictions.
 
@@ -52,7 +52,7 @@ Use the [bootstrap's player-script registration](@/h3lp_yours3lf/docs/getting-st
 | `actorType` | `0` player, `1` NPC, `2` creature, `3` non-actor. |
 | `bounds` | The attached object's bounding box. |
 | `cellsVisited` | Player-only map of cell IDs observed by the player's update handler. |
-| `consoleLog(...)` | Lowercase convenience alias for [LogMessage](@/h3lp_yours3lf/docs/api/modules/log-message.md). |
+| `consoleLog(...)` | Lowercase convenience alias for [LogMessage](@/h3lp_yours3lf/docs/api/packages/log-message.md). |
 | `distance(other)` | Distance from the attached object's position to another object's position. |
 | `sendObjectEvent(name, data?)` | Sends an event to the attached object. |
 | `asActor()`, `asNPC()`, `asPlayer()`, `asCreature()`, `asNonActor()` | Same view narrowed to the matching type, or `nil`. NPC includes player. |

@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-{{ api_signature(value="require('openmw.interfaces').S3CamHelper → H3CamHelperInterface") }}
+{{ api_signature(value="require 'openmw.interfaces'.S3CamHelper → H3CamHelperInterface") }}
 
 `S3CamHelper` is a player-scoped installed interface for target markers, lock-on indicators, and other UI that follows world objects. It is not a plain `require`-returned constructor.
 
@@ -28,4 +28,4 @@ end
 
 `objectIsOnscreen` uses strict screen-edge checks, camera view distance, and a behind-camera test. It does not perform an occlusion test or raycast, so “onscreen” does not mean unobstructed. Its returned `x` and `y` are normalized to `[0, 1]`; OpenMW defines `z` as the distance from the camera to the position in world-space units. For NPCs, the default target height is `1.6 * halfSize.z`. Pass a previously captured offset when animation-driven bounding-box changes would cause marker jitter.
 
-The provider is implemented in [H3's CamHelper module](https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/blob/main/content%2Fh3lp_yours3lf%2Fscripts%2Fs3%2FcamHelper.lua) and relies on OpenMW's [camera bindings](https://github.com/OpenMW/openmw/blob/master/apps/openmw/mwlua/camerabindings.cpp#L100-L125) and vector operations. A substantial consumer is [T4rg3t5's lock-on manager](https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/blob/main/content%2Ft4rg3t5%2Fscripts%2Fs3%2Ftarget%2FlockOnManager.lua).
+The provider is implemented in [H3's CamHelper module](https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/blob/main/content%2Fh3lp_yours3lf%2Fscripts%2Fs3%2FcamHelper.lua) and relies on OpenMW's [camera bindings](https://github.com/OpenMW/openmw/blob/master/apps/openmw/mwlua/camerabindings.cpp#L100-L125) and vector operations.

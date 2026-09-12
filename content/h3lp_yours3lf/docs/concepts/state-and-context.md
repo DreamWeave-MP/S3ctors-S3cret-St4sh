@@ -10,11 +10,11 @@ Before choosing a helper, answer two questions: **where does this code run, and 
 
 ## Modules versus installed interfaces
 
-A plain module returns a function or table when required. [Signal](@/h3lp_yours3lf/docs/api/modules/signal.md), [Pool](@/h3lp_yours3lf/docs/api/modules/pool.md), and [normalizePath](@/h3lp_yours3lf/docs/api/modules/normalize-path.md) do not import OpenMW APIs.
+A plain module returns a function or table when required. [Signal](@/h3lp_yours3lf/docs/api/packages/signal.md), [Pool](@/h3lp_yours3lf/docs/api/packages/pool.md), and [normalizePath](@/h3lp_yours3lf/docs/api/packages/normalize-path.md) do not import OpenMW APIs.
 
-A runtime helper uses engine facilities. [Debounce](@/h3lp_yours3lf/docs/api/modules/debounce.md) reads an OpenMW clock, but still requires your script to call it.
+A runtime helper uses engine facilities. [Debounce](@/h3lp_yours3lf/docs/api/packages/debounce.md) reads an OpenMW clock, but still requires your script to call it.
 
-An installed interface is provided by another registered script. [S3lf](@/h3lp_yours3lf/docs/api/modules/s3lf.md) is obtained through `I.s3.lf`; requiring an implementation file is not a substitute for installing its provider.
+An installed interface is provided by another registered script. [S3lf](@/h3lp_yours3lf/docs/api/interfaces/s3lf.md) is obtained through `I.s3.lf`; requiring an implementation file is not a substitute for installing its provider.
 
 {% usage_note(title="Script context is a permission boundary") %}
 Local scripts work with their attached object; player scripts have additional player facilities. Global and menu scripts have different APIs and lifecycles. A helper using `openmw.self` cannot become global-safe because its require path looks generic.

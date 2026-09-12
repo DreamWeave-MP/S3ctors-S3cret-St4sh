@@ -18,3 +18,5 @@ extra:
       - TTTH.omwscripts
   version: unreleased
 ---
+
+{{ h3_usage(mod="H4ND") }}

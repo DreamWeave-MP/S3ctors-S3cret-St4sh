@@ -1,0 +1,43 @@
+{% set h3_usage = load_data(path="data/h3_usage.json", format="json") %}
+{% if mod | default(value=false) %}
+{% for example in h3_usage.examples %}
+{% if example.mod == mod %}
+<aside class="docs-built-with" aria-label="Built with H3">
+    <p><strong>Built with H3</strong></p>
+    <p>
+        {% for helper in example.helpers %}
+        {% set helper_last = loop.last %}
+        {% for api in h3_usage.apis %}
+        {% if helper == api.slug or helper in api.aliases %}
+        <a href="{{ get_url(path=api.path) }}">{% if helper in api.aliases %}{{ helper }}{% else %}{{ api.title }}{% endif %}</a>{% if not helper_last %} · {% endif %}
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </p>
+    <p>{{ example.summary }} {% for source in example.sources %}<a href="{{ h3_usage.repository }}/blob/main/{{ source.path | replace(from=" ", to="%20") }}">Read {{ source.label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+</aside>
+{% endif %}
+{% endfor %}
+{% elif overview | default(value=false) %}
+<div class="docs-st4sh-examples">
+    {% for example in h3_usage.examples %}
+    <article>
+        <h3>{{ example.mod }}</h3>
+        <p>
+            {% for helper in example.helpers %}
+            {% set helper_last = loop.last %}
+            {% for api in h3_usage.apis %}
+            {% if helper == api.slug or helper in api.aliases %}
+            <a href="{{ get_url(path=api.path) }}">{% if helper in api.aliases %}{{ helper }}{% else %}{{ api.title }}{% endif %}</a>{% if not helper_last %} · {% endif %}
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </p>
+        <p>{{ example.summary }}</p>
+        <p>
+            {% for source in example.sources %}<a href="{{ h3_usage.repository }}/blob/main/{{ source.path | replace(from=" ", to="%20") }}">Read {{ source.label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}
+        </p>
+    </article>
+    {% endfor %}
+</div>
+{% endif %}
