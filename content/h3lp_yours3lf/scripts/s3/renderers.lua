@@ -370,7 +370,7 @@ I.Settings.registerRenderer('List', function(input, set)
       {
         template = I.MWUI.templates.textEditLine,
         events = {
-          textChanged = async:callback(function(text) inputText = text:lower() end),
+          textChanged = async:callback(function(text) inputText = text end),
         },
       },
     },
