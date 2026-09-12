@@ -4,6 +4,7 @@ return {
   replacementPrefix = 'misc_soulgem_vsg_',
   variants = {
     {
+      settingKey = 'SoulGemVariantParticles',
       setting = 'particles',
       suffix = 'particles',
       models = {
@@ -16,6 +17,7 @@ return {
       },
     },
     {
+      settingKey = 'SoulGemVariantParticlesStaticGlow',
       setting = 'particles & static glow',
       suffix = 'particles_static_glow',
       models = {
@@ -28,6 +30,7 @@ return {
       },
     },
     {
+      settingKey = 'SoulGemVariantStaticGlow',
       setting = 'static glow',
       suffix = 'static_glow',
       models = {
@@ -40,6 +43,7 @@ return {
       },
     },
     {
+      settingKey = 'SoulGemVariantUltraGlow',
       setting = 'ultra glow',
       suffix = 'ultra_glow',
       models = {

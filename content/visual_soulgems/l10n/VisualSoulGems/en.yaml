@@ -3,16 +3,11 @@ particles & static glow: Particles & Static Glow
 static glow: Static Glow
 ultra glow: Ultra Glow
 
-SoulGemVariantName: Soul Gem Style
-SoulGemVariantDesc: |-
-  Your preferred soul gem style is used whenever VSG converts a filled soul gem.
-  Changing the style does not affect already-converted soul gems,
-  allowing you to mix and match throughout your playthrough if you like.
 SoulGemRandomizeName: Randomize Soul Gem Style
-SoulGemRandomizeDesc: Choose a random visual style whenever VSG converts a filled soul gem.
+SoulGemRandomizeDesc: Choose a random enabled visual style whenever VSG converts a filled soul gem.
 
 VisualSoulGemsDesc: Give filled soul gems distinct visual effects with four selectable or randomized styles.
 VisualSoulGemsName: Visual Soul Gems OpenMW
 
-VisualSoulGemsGroupName: ""
-VisualSoulGemsGroupDesc: ""
+VisualSoulGemsGroupName: Soul Gem Styles
+VisualSoulGemsGroupDesc: Choose which visual styles are enabled. When Randomize is on, the enabled styles form its selection pool. When it is off, enable one style to use it for every conversion.

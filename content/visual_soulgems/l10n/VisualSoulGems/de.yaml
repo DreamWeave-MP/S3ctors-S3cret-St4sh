@@ -3,16 +3,11 @@ particles & static glow: Partikel und statisches Leuchten
 static glow: Statisches Leuchten
 ultra glow: Ultra-Leuchten
 
-SoulGemVariantName: Seelenstein-Stil
-SoulGemVariantDesc: |-
-  Dein bevorzugter Seelenstein-Stil wird verwendet, wann immer VSG einen gefüllten Seelenstein umwandelt.
-  Eine Änderung des Stils wirkt sich nicht auf bereits umgewandelte Seelensteine aus,
-  sodass du während deines Spieldurchlaufs verschiedene Stile mischen kannst, wenn du möchtest.
 SoulGemRandomizeName: Zufälliger Seelenstein-Stil
-SoulGemRandomizeDesc: Wählt jedes Mal einen zufälligen visuellen Stil, wenn VSG einen gefüllten Seelenstein umwandelt.
+SoulGemRandomizeDesc: Wählt jedes Mal einen zufälligen aktivierten visuellen Stil, wenn VSG einen gefüllten Seelenstein umwandelt.
 
 VisualSoulGemsDesc: Verleiht gefüllten Seelensteinen mit vier auswählbaren oder zufälligen Stilen unterschiedliche visuelle Effekte.
 VisualSoulGemsName: Visual Soul Gems OpenMW
 
-VisualSoulGemsGroupName: ""
-VisualSoulGemsGroupDesc: ""
+VisualSoulGemsGroupName: Seelenstein-Stile
+VisualSoulGemsGroupDesc: Wähle, welche visuellen Stile aktiviert sind. Wenn die Zufallsauswahl aktiviert ist, bilden diese Stile die Auswahl. Wenn sie deaktiviert ist, aktiviere einen Stil, der bei jeder Umwandlung verwendet werden soll.
