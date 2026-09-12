@@ -39,7 +39,8 @@ local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 ---@field HeavyAnimSpeed number
 ---@field OverloadedAnimSpeed number
 local ChimCore = I.S3ProtectedTable.new {
-  managerName = groupName,
+  inputGroupName = groupName,
+  managerName = modInfo.name .. ' Core',
   logPrefix = '[ CHIMCore ]:',
 }
 ChimCore.state = {

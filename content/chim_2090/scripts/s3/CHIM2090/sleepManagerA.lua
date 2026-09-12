@@ -10,7 +10,7 @@ local protectedTableInterface = I.S3ProtectedTable
 
 ---@class SleepManagerA: ProtectedTable
 local SleepManagerA = protectedTableInterface.new {
-  managerName = 'SettingsGlobal' .. modInfo.name .. 'Sleep',
+  inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Sleep',
   logPrefix = 'ChimSleepManagerA',
 }
 

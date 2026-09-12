@@ -64,7 +64,7 @@ end
 ---@field CreatureStrengthPoiseFactor number
 ---@field AlwaysScaleHitAnimSpeed boolean
 local Poise = ProtectedTable.new {
-  managerName = 'SettingsGlobal' .. modInfo.name .. 'Poise',
+  inputGroupName = 'SettingsGlobal' .. modInfo.name .. 'Poise',
   logPrefix = '[ CHIMPoise ]:\n',
 }
 ---@class PoiseState
@@ -384,7 +384,7 @@ if isPlayer then
 
   ---@type PoiseIcon
   PoiseIcon = ProtectedTable.new {
-    managerName = IconGroupName,
+    inputGroupName = IconGroupName,
     logPrefix = '[ PoiseIcon ]:\n',
     subscribeHandler = false,
   }
