@@ -40,6 +40,7 @@ Choose an entry by the problem it solves. References describe the repository's c
 | Clear tables or provide no-op callbacks | [Small Utilities](@/h3lp_yours3lf/docs/api/modules/small-utilities.md) |
 | Build passive UI layouts | [UI Components](@/h3lp_yours3lf/docs/api/modules/ui-components.md) |
 | Add H3 settings renderers | [Settings Renderers](@/h3lp_yours3lf/docs/api/modules/renderers.md) |
+| Add direct drag and resize behavior to a UI layout | [DragEvents](@/h3lp_yours3lf/docs/api/modules/drag-events.md) |
 
 ## Coverage and remaining references
 
