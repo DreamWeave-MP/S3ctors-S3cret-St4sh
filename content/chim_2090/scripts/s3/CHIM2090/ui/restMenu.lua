@@ -1,24 +1,30 @@
-local ambient = require('openmw.ambient')
-local async = require('openmw.async')
-local calendar = require('openmw_aux.calendar')
-local core = require('openmw.core')
-local nearby = require('openmw.nearby')
-local s3lf = require('scripts.s3.lf')
-local time = require('openmw_aux.time')
-local ui = require('openmw.ui')
-local util = require('openmw.util')
+---@omw-context player
 
-local I = require('openmw.interfaces')
+local ambient = require 'openmw.ambient'
+local async = require 'openmw.async'
+local calendar = require 'openmw_aux.calendar'
+local core = require 'openmw.core'
+local nearby = require 'openmw.nearby'
+local time = require 'openmw_aux.time'
+local types = require 'openmw.types'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local I = require 'openmw.interfaces'
+local s3lf = I.s3.lf
 local templates = I.MWUI.templates
-local constants = require('scripts.omw.mwui.constants')
+local constants = require 'scripts.omw.mwui.constants'
 
-local Object = require('scripts.s3.CHIM2090.lib.object')
+local Object = require 'scripts.s3.CHIM2090.lib.object'
 
 --- Returns a specific date string
 --- for Starwind or Morrowind
 --- @return string
 local function getDateStr()
-  if core.contentFiles.has('Starwind.omwaddon') or core.contentFiles.has('StarwindRemasteredPatch.esm') then
+  if
+    core.contentFiles.has 'Starwind.omwaddon'
+    or core.contentFiles.has 'StarwindRemasteredPatch.esm'
+  then
     return '%H:%M, Day %d of %b, %Y BBY'
   else
     return '%H:%M, Day %d of %b, 3E%Y'
@@ -39,10 +45,10 @@ local RestMenu = {
   name = 's3ChimRestMenu',
   template = I.MWUI.templates.bordersThick,
   props = {
-    anchor = util.vector2(.5, .5),
+    anchor = util.vector2(0.5, 0.5),
     position = util.vector2(0, 0),
-    relativePosition = util.vector2(.5, .5),
-    relativeSize = util.vector2(.25, .25),
+    relativePosition = util.vector2(0.5, 0.5),
+    relativeSize = util.vector2(0.25, 0.25),
     visible = false,
   },
   userData = {
@@ -50,9 +56,9 @@ local RestMenu = {
     nearbyActorStats = {},
     doDrag = false,
     lastMousePos = nil,
-    sleepInfoSize = util.vector2(.8, .15),
-    majorSize = util.vector2(1, .3),
-    minorSize = util.vector2(1, .125),
+    sleepInfoSize = util.vector2(0.8, 0.15),
+    majorSize = util.vector2(1, 0.3),
+    minorSize = util.vector2(1, 0.125),
     HoursToHealString = 'You will need to sleep for %d hours to recover from your wounds.',
     RestOnGroundString = 'You will be sleeping on the ground. It won\'t be very comfortable.',
     OutsideBedString = 'You will be sleeping outside. It might actually be pretty nice.',
@@ -70,7 +76,7 @@ local RestMenu = {
     originalTimescale = core.getGameTimeScale(),
     hoursToSleep = 24,
     wakeUpTime = core.getGameTime(),
-  }
+  },
 }
 
 --- Returns a transparent black background
@@ -84,9 +90,9 @@ function RestMenu.Background()
     },
     props = {
       relativeSize = util.vector2(1, 1),
-      resource = ui.texture { path = "white" },
-      color = util.color.hex('000000'),
-      alpha = .75,
+      resource = ui.texture { path = 'white' },
+      color = util.color.hex '000000',
+      alpha = 0.75,
     },
   }
 end
@@ -110,7 +116,7 @@ function RestMenu.WidgetBody()
       RestMenu.TimeSelectBody(),
       RestMenu.HoursToHeal(),
       RestMenu.BottomRowContainer(),
-    }
+    },
   }
 end
 
@@ -128,13 +134,13 @@ function RestMenu.DateHeader()
 end
 
 function RestMenu.startUpdateDate()
-    RestMenu.userData.dateUpdate = time.runRepeatedly(function()
-        local restMenu = I.s3ChimSleep.Menu
-        local dateHeader = RestMenu.getElementByName('dateHeader', restMenu.layout)
-        dateHeader.props.text = calendar.formatGameTime(getDateStr())
-        if not restMenu.layout.props.visible then return end
-        restMenu:update()
-    end, 1  * time.minute, { initialDelay = 0, type = time.GameTime })
+  RestMenu.userData.dateUpdate = time.runRepeatedly(function()
+    local restMenu = I.s3ChimSleep.Menu
+    local dateHeader = RestMenu.getElementByName('dateHeader', restMenu.layout)
+    dateHeader.props.text = calendar.formatGameTime(getDateStr())
+    if not restMenu.layout.props.visible then return end
+    restMenu:update()
+  end, 1 * time.minute, { initialDelay = 0, type = time.GameTime })
 end
 
 function RestMenu.updateSleepInfo(sleepInfo)
@@ -172,8 +178,8 @@ end
 --- @return ui.TYPE.Text
 function RestMenu.SleepInfoString()
   local sleepInfo = RestMenu.TextBox(RestMenu.userData.RestString)
-  sleepInfo.props.relativeSize = util.vector2(.8, .15)
-  sleepInfo.props.multipline = true
+  sleepInfo.props.relativeSize = util.vector2(0.8, 0.15)
+  sleepInfo.props.multiline = true
   sleepInfo.props.wordWrap = true
   sleepInfo.name = 'sleepInfoBox'
   return sleepInfo
@@ -188,12 +194,10 @@ local HighlightStates = {
 function RestMenu.colorFromGMST(gmst)
   local colorString = core.getGMST(gmst)
   local numberTable = {}
-  for numberString in colorString:gmatch("([^,]+)") do
+  for numberString in colorString:gmatch '([^,]+)' do
     if #numberTable == 3 then break end
-    local number = tonumber(numberString:match("^%s*(.-)%s*$"))
-    if number then
-      table.insert(numberTable, number / 255)
-    end
+    local number = tonumber(numberString:match '^%s*(.-)%s*$')
+    if number then table.insert(numberTable, number / 255) end
   end
 
   if #numberTable < 3 then error('Invalid color GMST name: ' .. gmst) end
@@ -202,23 +206,23 @@ function RestMenu.colorFromGMST(gmst)
 end
 
 RestMenu.userData.colors = {
-  textHeader = RestMenu.colorFromGMST('fontcolor_color_header'),
-  textNormal = RestMenu.colorFromGMST('fontcolor_color_normal'),
-  textNormalOver = RestMenu.colorFromGMST('fontcolor_color_normal_over'),
-  textNormalPressed = RestMenu.colorFromGMST('fontcolor_color_normal_pressed'),
-  textAnswer = RestMenu.colorFromGMST('fontcolor_color_answer'),
-  textAnswerOver = RestMenu.colorFromGMST('fontcolor_color_answer_over'),
-  textAnswerPressed = RestMenu.colorFromGMST('fontcolor_color_answer_pressed'),
-  highlightNormal = RestMenu.colorFromGMST('fontcolor_color_big_normal'),
-  highlightOver = RestMenu.colorFromGMST('fontcolor_color_big_normal_over'),
-  highlightPressed = RestMenu.colorFromGMST('fontcolor_color_big_normal_pressed'),
-  journalNormal = RestMenu.colorFromGMST('FontColor_color_journal_link'),
-  journalOver = RestMenu.colorFromGMST('FontColor_color_journal_link_over'),
-  journalPressed = RestMenu.colorFromGMST('FontColor_color_journal_link_pressed'),
-  disabled = RestMenu.colorFromGMST('fontcolor_color_disabled'),
-  magic = RestMenu.colorFromGMST('fontcolor_color_magic'),
-  health = RestMenu.colorFromGMST('fontcolor_color_health'),
-  fatigue = RestMenu.colorFromGMST('fontcolor_color_fatigue'),
+  textHeader = RestMenu.colorFromGMST 'fontcolor_color_header',
+  textNormal = RestMenu.colorFromGMST 'fontcolor_color_normal',
+  textNormalOver = RestMenu.colorFromGMST 'fontcolor_color_normal_over',
+  textNormalPressed = RestMenu.colorFromGMST 'fontcolor_color_normal_pressed',
+  textAnswer = RestMenu.colorFromGMST 'fontcolor_color_answer',
+  textAnswerOver = RestMenu.colorFromGMST 'fontcolor_color_answer_over',
+  textAnswerPressed = RestMenu.colorFromGMST 'fontcolor_color_answer_pressed',
+  highlightNormal = RestMenu.colorFromGMST 'fontcolor_color_big_normal',
+  highlightOver = RestMenu.colorFromGMST 'fontcolor_color_big_normal_over',
+  highlightPressed = RestMenu.colorFromGMST 'fontcolor_color_big_normal_pressed',
+  journalNormal = RestMenu.colorFromGMST 'FontColor_color_journal_link',
+  journalOver = RestMenu.colorFromGMST 'FontColor_color_journal_link_over',
+  journalPressed = RestMenu.colorFromGMST 'FontColor_color_journal_link_pressed',
+  disabled = RestMenu.colorFromGMST 'fontcolor_color_disabled',
+  magic = RestMenu.colorFromGMST 'fontcolor_color_magic',
+  health = RestMenu.colorFromGMST 'fontcolor_color_health',
+  fatigue = RestMenu.colorFromGMST 'fontcolor_color_fatigue',
 }
 
 local function updateButtonHighlight(highlightData)
@@ -284,7 +288,7 @@ end
 function RestMenu.updateLocalActorStats()
   RestMenu.userData.nearbyActorStats = {}
   for _, actor in pairs(nearby.actors) do
-    RestMenu.userData.nearbyActorStats[actor.id] = s3lf.From(actor).health.current
+    RestMenu.userData.nearbyActorStats[actor.id] = types.Actor.stats.dynamic.health(actor).current
     I.s3ChimSleep.Manager.debugLog('Added actor', actor.id, 'to nearbyActorStats')
   end
 end
@@ -308,8 +312,8 @@ function RestMenu.refreshMenuState(newState)
     restOrWait = newState.restOrWait,
   }
 
-  RestMenu.getElementByName('dateHeader', sleepMenu.layout).props.text
-    = calendar.formatGameTime(getDateStr())
+  RestMenu.getElementByName('dateHeader', sleepMenu.layout).props.text =
+    calendar.formatGameTime(getDateStr())
 
   RestMenu.unhighlightAllButtons()
 
@@ -345,11 +349,12 @@ function RestMenu.ArrowContainer(left)
         }
         if RestMenu.timeStopFn then RestMenu.timeStopFn() end
         RestMenu.timeStopFn = time.runRepeatedly(function()
-            if not I.s3ChimSleep.Menu.layout.props.visible then RestMenu.timeStopFn() return end
-            updateTime(left)
-        end
-          , .2
-          , { initialDelay = 0 })
+          if not I.s3ChimSleep.Menu.layout.props.visible then
+            RestMenu.timeStopFn()
+            return
+          end
+          updateTime(left)
+        end, 0.2, { initialDelay = 0 })
       end),
       mouseRelease = async:callback(function(_, layout)
         updateArrowHighlight {
@@ -360,21 +365,25 @@ function RestMenu.ArrowContainer(left)
         ambient.playSoundFile(RestMenu.userData.clickSound)
         if RestMenu.timeStopFn then RestMenu.timeStopFn() end
       end),
-      focusGain = async:callback(function(_, layout)
+      focusGain = async:callback(
+        function(_, layout)
           updateArrowHighlight {
             state = HighlightStates.MEDIUM,
             layout = layout,
             update = true,
           }
-      end),
-      focusLoss = async:callback(function(_, layout)
-        updateArrowHighlight {
-          state = HighlightStates.NORMAL,
-          layout = layout,
-          update = true,
-        }
-      end),
-    }
+        end
+      ),
+      focusLoss = async:callback(
+        function(_, layout)
+          updateArrowHighlight {
+            state = HighlightStates.NORMAL,
+            layout = layout,
+            update = true,
+          }
+        end
+      ),
+    },
   }
 
   return {
@@ -386,10 +395,10 @@ function RestMenu.ArrowContainer(left)
       align = ui.ALIGNMENT.Center,
       arrange = left and ui.ALIGNMENT.End or ui.ALIGNMENT.Start,
     },
-    external = { grow = 1, },
+    external = { grow = 1 },
     content = ui.content {
-      arrow
-    }
+      arrow,
+    },
   }
 end
 
@@ -418,14 +427,14 @@ function RestMenu.SleepTimeContainer()
         },
         events = {
           textChanged = async:callback(function(input, layout)
-              local subInput = input:gsub('%D', '')
-              local hours = tonumber(subInput) or 24
-              local newHours = math.min(24, math.max(1, hours))
-              layout.props.text = tostring(newHours)
-              I.s3ChimSleep.Menu:update()
+            local subInput = input:gsub('%D', '')
+            local hours = tonumber(subInput) or 24
+            local newHours = math.min(24, math.max(1, hours))
+            layout.props.text = tostring(newHours)
+            I.s3ChimSleep.Menu:update()
           end),
         },
-      }
+      },
     },
   }
 end
@@ -444,7 +453,7 @@ function RestMenu.TimeSelectBody()
       RestMenu.ArrowContainer(true),
       RestMenu.SleepTimeContainer(),
       RestMenu.ArrowContainer(false),
-    }
+    },
   }
 end
 
@@ -492,15 +501,23 @@ function RestMenu.updateHoursToHeal(healData)
     local healthToRecover = s3lf.health.base - s3lf.health.current
 
     local numHoursToHeal = healthToRecover / (healthPerHour * multiplier)
-    numHoursToHeal = math.max(1, math.floor(numHoursToHeal + .5))
+    numHoursToHeal = math.max(1, math.floor(numHoursToHeal + 0.5))
     numHoursToHeal = tostring(numHoursToHeal)
 
     hoursToHeal.props.text = RestMenu.userData.HoursToHealString:format(numHoursToHeal)
     sleepTimeSelectionBox.props.text = numHoursToHeal
     RestMenu.userData.hoursToHeal = numHoursToHeal
 
-    I.s3ChimSleep.Manager.debugLog('Hours to heal:', numHoursToHeal, 'Health per hour:', healthPerHour
-                                   , 'Multiplier:', multiplier, 'Health to recover:', healthToRecover)
+    I.s3ChimSleep.Manager.debugLog(
+      'Hours to heal:',
+      numHoursToHeal,
+      'Health per hour:',
+      healthPerHour,
+      'Multiplier:',
+      multiplier,
+      'Health to recover:',
+      healthToRecover
+    )
   end
 
   untilHealedButton.props.visible = healData.needsToHeal and healData.restOrWait
@@ -510,79 +527,80 @@ end
 --- describing how long it will take to heal via sleeping
 --- @return ui.TYPE.Text
 function RestMenu.HoursToHeal()
-  local hoursToHeal = RestMenu.TextBox('')
+  local hoursToHeal = RestMenu.TextBox ''
   hoursToHeal.props.multiline = true
   hoursToHeal.props.wordWrap = true
-  hoursToHeal.props.relativeSize = util.vector2(.75, .2)
+  hoursToHeal.props.relativeSize = util.vector2(0.75, 0.2)
   hoursToHeal.name = 'totalHoursToHeal'
   return hoursToHeal
 end
 
 local buttonHighlightEnter = async:callback(function(_, layout)
-    if layout.userData.isFocused then return end
+  if layout.userData.isFocused then return end
 
-    updateButtonHighlight {
-      state = HighlightStates.MEDIUM,
-      layout = layout,
-      update = true,
-    }
-    layout.userData.isFocused = true
+  updateButtonHighlight {
+    state = HighlightStates.MEDIUM,
+    layout = layout,
+    update = true,
+  }
+  layout.userData.isFocused = true
 end)
 
 local buttonHighlightExit = async:callback(function(_, layout)
-    if not layout.userData.isFocused then return end
+  if not layout.userData.isFocused then return end
 
+  updateButtonHighlight {
+    state = HighlightStates.NORMAL,
+    layout = layout,
+    update = true,
+  }
+  layout.userData.isFocused = false
+end)
+
+local function cancelEvent(clicked, layout)
+  if clicked then
     updateButtonHighlight {
-      state = HighlightStates.NORMAL,
+      state = HighlightStates.DARK,
       layout = layout,
       update = true,
     }
     layout.userData.isFocused = false
-end)
-
-local function cancelEvent(clicked, layout)
-    if clicked then
-        updateButtonHighlight {
-            state = HighlightStates.DARK,
-            layout = layout,
-            update = true,
-        }
-        layout.userData.isFocused = false
-    else
-        ambient.playSoundFile(RestMenu.userData.clickSound)
-        I.UI.setMode()
-    end
+  else
+    ambient.playSoundFile(RestMenu.userData.clickSound)
+    I.UI.setMode()
+  end
 end
 
 local prevHudState = false
 local function startSleepFromInputEvent(clicked, layout, toHealed)
-    if clicked then
-        updateButtonHighlight {
-            state = HighlightStates.DARK,
-            layout = layout,
-            update = true,
-        }
-        layout.userData.isFocused = false
+  if clicked then
+    updateButtonHighlight {
+      state = HighlightStates.DARK,
+      layout = layout,
+      update = true,
+    }
+    layout.userData.isFocused = false
+  else
+    ambient.playSoundFile(RestMenu.userData.clickSound)
+    prevHudState = I.UI.isHudVisible()
+    I.UI.setHudVisibility(false)
+    I.s3ChimSleep.Menu.layout.props.visible = false
+    I.s3ChimSleep.Menu:update()
+    local sleepDuration
+    if not toHealed then
+      sleepDuration = tonumber(
+        RestMenu.getElementByName('sleepTimeSelection', I.s3ChimSleep.Menu.layout).props.text
+      )
     else
-        ambient.playSoundFile(RestMenu.userData.clickSound)
-        prevHudState = I.UI.isHudVisible()
-        I.UI.setHudVisibility(false)
-        I.s3ChimSleep.Menu.layout.props.visible = false
-        I.s3ChimSleep.Menu:update()
-        local sleepDuration
-        if not toHealed then
-          sleepDuration = tonumber(RestMenu.getElementByName('sleepTimeSelection'
-                                                                 , I.s3ChimSleep.Menu.layout).props.text)
-        else
-          sleepDuration = RestMenu.userData.hoursToHeal
-        end
-        RestMenu.SleepFade(sleepDuration)
+      sleepDuration = RestMenu.userData.hoursToHeal
     end
+    RestMenu.SleepFade(sleepDuration)
+  end
 end
 
 function RestMenu.unhighlightAllButtons()
   local layout = I.s3ChimSleep.Menu.layout
-  for _, element in pairs({ 'waitButton', 'untilHealedButton', 'cancelButton' }) do
+  for _, element in pairs { 'waitButton', 'untilHealedButton', 'cancelButton' } do
     local button = RestMenu.getElementByName(element, layout)
     button.userData.isFocused = false
     updateButtonHighlight {
@@ -597,43 +615,32 @@ end
 --- whether to rest or now
 --- @return ui.TYPE.Flex
 function RestMenu.BottomRowContainer()
-  local events = { focusGain = buttonHighlightEnter, focusLoss = buttonHighlightExit, }
+  local events = { focusGain = buttonHighlightEnter, focusLoss = buttonHighlightExit }
 
-  local waitButton = RestMenu.Button('Wait')
+  local waitButton = RestMenu.Button 'Wait'
   waitButton.name = 'waitButton'
   waitButton.events = RestMenu.cloneTo({
-      mousePress = async:callback(function(_, layout)
-        startSleepFromInputEvent(true, layout)
-      end),
-      mouseRelease = async:callback(function(_, layout)
-        startSleepFromInputEvent(false, layout, false)
-      end),
-    }
-    , events)
+    mousePress = async:callback(function(_, layout) startSleepFromInputEvent(true, layout) end),
+    mouseRelease = async:callback(
+      function(_, layout) startSleepFromInputEvent(false, layout, false) end
+    ),
+  }, events)
 
-  local cancelButton = RestMenu.Button('Cancel')
+  local cancelButton = RestMenu.Button 'Cancel'
   cancelButton.name = 'cancelButton'
   cancelButton.events = RestMenu.cloneTo({
-    mousePress = async:callback(function(_, layout)
-      cancelEvent(true, layout)
-    end),
-    mouseRelease = async:callback(function(_, layout)
-      cancelEvent(false, layout)
-    end),
-  }
-  , events)
+    mousePress = async:callback(function(_, layout) cancelEvent(true, layout) end),
+    mouseRelease = async:callback(function(_, layout) cancelEvent(false, layout) end),
+  }, events)
 
-  local untilHealedButton = RestMenu.Button('Until Healed')
+  local untilHealedButton = RestMenu.Button 'Until Healed'
   untilHealedButton.name = 'untilHealedButton'
   untilHealedButton.events = RestMenu.cloneTo({
-      mousePress = async:callback(function(_, layout)
-        startSleepFromInputEvent(true, layout)
-      end),
-      mouseRelease = async:callback(function(_, layout)
-        startSleepFromInputEvent(false, layout, true)
-      end),
-    }
-    , events)
+    mousePress = async:callback(function(_, layout) startSleepFromInputEvent(true, layout) end),
+    mouseRelease = async:callback(
+      function(_, layout) startSleepFromInputEvent(false, layout, true) end
+    ),
+  }, events)
 
   return {
     type = ui.TYPE.Flex,
@@ -652,7 +659,7 @@ function RestMenu.BottomRowContainer()
       untilHealedButton,
       { external = { grow = 1, stretch = 1 } },
       waitButton,
-    }
+    },
   }
 end
 
@@ -699,8 +706,7 @@ local function alphaStep(up, props)
     RestMenu.userData.sleepBar:update()
   end
 
-  if (up and props.alpha < 1.00 )
-    or (not up and props.alpha > 0.00) then
+  if (up and props.alpha < 1.00) or (not up and props.alpha > 0.00) then
     background:update()
     return true
   elseif not up and props.alpha <= 0.00 then
@@ -722,21 +728,17 @@ local function tickBackground()
     core.sendGlobalEvent('SetGameTimeScale', RestMenu.userData.originalTimescale)
     RestMenu.userData.backgroundStopFn()
     RestMenu.userData.backgroundStopFn = time.runRepeatedly(function()
+      if RestMenu.userData.sleepBar then
+        RestMenu.userData.sleepBar:destroy()
+        RestMenu.userData.sleepBar = nil
+      end
 
-        if RestMenu.userData.sleepBar then
-          RestMenu.userData.sleepBar:destroy()
-          RestMenu.userData.sleepBar = nil
-        end
-
-        if not alphaStep(false, imageProps) then
-          RestMenu.userData.backgroundStopFn()
-          I.UI.setMode()
-          I.UI.setHudVisibility(prevHudState)
-        end
-
-    end
-      , RestMenu.userData.tickInterval
-      , { initialDelay = 1 })
+      if not alphaStep(false, imageProps) then
+        RestMenu.userData.backgroundStopFn()
+        I.UI.setMode()
+        I.UI.setHudVisibility(prevHudState)
+      end
+    end, RestMenu.userData.tickInterval, { initialDelay = 1 })
   end
 end
 
@@ -749,7 +751,7 @@ function RestMenu.SleepFade(hours)
     layer = 'FadeToBlack',
     props = {
       resource = ui.texture { path = 'white' },
-      color = util.color.hex('000000'),
+      color = util.color.hex '000000',
       relativeSize = util.vector2(1, 1),
       alpha = 0.0,
     },
@@ -759,10 +761,8 @@ function RestMenu.SleepFade(hours)
   RestMenu.userData.originalTimescale = core.getGameTimeScale()
   core.sendGlobalEvent('SetGameTimeScale', 1000 * hours)
 
-  RestMenu.userData.backgroundStopFn
-    = time.runRepeatedly(tickBackground,
-                         RestMenu.userData.tickInterval,
-                         { initialDelay = 0 })
+  RestMenu.userData.backgroundStopFn =
+    time.runRepeatedly(tickBackground, RestMenu.userData.tickInterval, { initialDelay = 0 })
 end
 
 function RestMenu.SleepProgressBar()
@@ -770,9 +770,9 @@ function RestMenu.SleepProgressBar()
     template = I.MWUI.templates.bordersThick,
     layer = 'Modal',
     props = {
-      relativeSize = util.vector2(.15, .035),
-      anchor = util.vector2(.5, .5),
-      relativePosition = util.vector2(.5, .5),
+      relativeSize = util.vector2(0.15, 0.035),
+      anchor = util.vector2(0.5, 0.5),
+      relativePosition = util.vector2(0.5, 0.5),
     },
     content = ui.content {
       {
@@ -782,7 +782,7 @@ function RestMenu.SleepProgressBar()
           relativeSize = util.vector2(1, 1),
           resource = ui.texture { path = 'white' },
           color = util.color.rgb(0, 0, 0),
-          alpha = .75,
+          alpha = 0.75,
         },
       },
       {
@@ -791,7 +791,7 @@ function RestMenu.SleepProgressBar()
         props = {
           resource = ui.texture { path = 'white' },
           color = RestMenu.userData.colors.textAnswer,
-          alpha = .5,
+          alpha = 0.5,
         },
       },
       {
@@ -800,41 +800,41 @@ function RestMenu.SleepProgressBar()
         props = {
           resource = ui.texture { path = 'white' },
           color = RestMenu.userData.colors.magic,
-          alpha = .5,
+          alpha = 0.5,
         },
       },
       {
         type = ui.TYPE.Text,
         name = 'progressBarText',
         props = {
-          relativePosition = util.vector2(.5, .5),
-          anchor = util.vector2(.5, .5),
+          relativePosition = util.vector2(0.5, 0.5),
+          anchor = util.vector2(0.5, 0.5),
           text = (' %d / %d '):format(0, RestMenu.userData.hoursToSleep or 24),
           textColor = RestMenu.userData.colors.textNormal,
           textSize = 18,
-        }
+        },
       },
     },
   }
 end
 
 RestMenu.startDrag = async:callback(function(mouseEvent)
-    if mouseEvent.button ~= 1 then return end
-    RestMenu.userData.doDrag = true
-    RestMenu.userData.lastMousePos = mouseEvent.position
+  if mouseEvent.button ~= 1 then return end
+  RestMenu.userData.doDrag = true
+  RestMenu.userData.lastMousePos = mouseEvent.position
 end)
 
 RestMenu.stopDrag = async:callback(function(mouseEvent)
-    if mouseEvent.button ~= 1 then return end
-    RestMenu.userData.doDrag = false
+  if mouseEvent.button ~= 1 then return end
+  RestMenu.userData.doDrag = false
 end)
 
 RestMenu.drag = async:callback(function(coord, layout)
-    if not RestMenu.userData.doDrag then return end
-    local props = layout.props
-    props.position = props.position - (RestMenu.userData.lastMousePos - coord.position)
-    I.s3ChimSleep.Menu:update()
-    RestMenu.userData.lastMousePos = coord.position
+  if not RestMenu.userData.doDrag then return end
+  local props = layout.props
+  props.position = props.position - (RestMenu.userData.lastMousePos - coord.position)
+  I.s3ChimSleep.Menu:update()
+  RestMenu.userData.lastMousePos = coord.position
 end)
 
 RestMenu.events = {
@@ -872,9 +872,7 @@ end
 --- @return ui.Layout
 function RestMenu.getElementByName(name, layout)
   for _, child in ipairs(layout.content or {}) do
-    if child.name and child.name == name then
-      return child
-    end
+    if child.name and child.name == name then return child end
     local found = RestMenu.getElementByName(name, child)
     if found then return found end
   end

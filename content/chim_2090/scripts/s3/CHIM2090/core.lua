@@ -16,6 +16,18 @@ local ParalyzeEffect = core.magic.EFFECT_TYPE.Paralyze
 local SanctuaryEffect = core.magic.EFFECT_TYPE.Sanctuary
 
 local s3lf = I.s3.lf
+local Actor = types.Actor
+local ActorAttributes = Actor.stats.attributes
+local ActorDynamic = Actor.stats.dynamic
+local Creature = types.Creature
+local Weapon = types.Weapon
+local IsActor = Actor.objectIsInstance
+local IsCreature = Creature.objectIsInstance
+local IsWeapon = Weapon.objectIsInstance
+local IsPlayer = types.Player.objectIsInstance
+local GetEquipment = Actor.getEquipment
+local GetActiveEffects = Actor.activeEffects
+local IsPlaying = animation.isPlaying
 
 local groupName = 'SettingsGlobal' .. modInfo.name .. 'Core'
 
@@ -69,7 +81,7 @@ local fCombatInvisoMult = core.getGMST 'fCombatInvisoMult'
 local fFatigueBase = core.getGMST 'fFatigueBase'
 local fFatigueMult = core.getGMST 'fFatigueMult'
 
-local weaponTypes = types.Weapon.TYPE
+local weaponTypes = Weapon.TYPE
 local weaponTypesToSkills = {
   [weaponTypes.ShortBladeOneHand] = 'shortblade',
   [weaponTypes.LongBladeOneHand] = 'longblade',
@@ -106,22 +118,14 @@ local oneHandedTypes = {
   [weaponTypes.BluntOneHand] = true,
 }
 
----@param actorOrWeapon GameObject? an optional gameobject, being either a weapon or NPC gameObject
+---@param actorOrWeapon GameObject? an optional actor or weapon GameObject
 function ChimCore.getWeaponHandedness(actorOrWeapon)
-  local weapon, actor
+  local weapon
   if not actorOrWeapon then
     weapon = s3lf.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
-  elseif not actorOrWeapon.type then -- lacking the .type field indicates a s3lf object
-    local objectType = actorOrWeapon.objectType()
-
-    if objectType == 'npc' then
-      weapon = actorOrWeapon.getEquipment(actorOrWeapon.EQUIPMENT_SLOT.CarriedRight)
-    elseif objectType == 'weapon' then
-      weapon = actorOrWeapon
-    end
-  elseif types.NPC.objectIsInstance(actorOrWeapon) then
-    weapon = actor.type.getEquipment(actor, actor.type.EQUIPMENT_SLOT.CarriedRight)
-  elseif types.Weapon.objectIsInstance(actorOrWeapon) then
+  elseif IsActor(actorOrWeapon) then
+    weapon = GetEquipment(actorOrWeapon, Actor.EQUIPMENT_SLOT.CarriedRight)
+  elseif IsWeapon(actorOrWeapon) then
     weapon = actorOrWeapon
   end
 
@@ -143,7 +147,8 @@ end
 ---@param actor GameObject
 ---@return number fatigueTerm fatigue cost for this action??
 local function getFatigueTerm(actor)
-  local normalizedFatigue = actor.fatigue.current / actor.fatigue.base
+  local fatigue = ActorDynamic.fatigue(actor)
+  local normalizedFatigue = fatigue.current / fatigue.base
   local fatigueTerm = fFatigueBase - fFatigueMult * (1 - normalizedFatigue)
   return fatigueTerm
 end
@@ -151,10 +156,6 @@ end
 ---@param weapon GameObject
 ---@return string skillName
 function ChimCore.getWeaponSkillName(weapon)
-  if not weapon.type then --- Lacking the .type field indicates we've receievd a s3lfObject
-    weapon = weapon.gameObject
-  end
-
   local weaponType = weapon.type.records[weapon.recordId].type
   local resultType = weaponTypesToSkills[weaponType]
 
@@ -166,17 +167,13 @@ end
 ---@param weapon GameObject
 ---@param attacker GameObject
 function ChimCore.getWeaponSkill(weapon, attacker)
-  if attacker.type then --- Lacking the .type field indicates we've receievd a s3lfObject
-    attacker = s3lf.From(attacker)
-  end
-
-  if attacker.isNPC then
+  if IsCreature(attacker) then
+    return Creature.records[attacker.recordId].combatSkill
+  else
     local weaponType = weapon.type.records[weapon.recordId].type
     local weaponSkill = weaponTypesToSkills[weaponType]
 
-    return attacker[weaponSkill].modified
-  else
-    return attacker.combatSkill
+    return attacker.type.stats.skills[weaponSkill](attacker).modified
   end
 end
 
@@ -211,24 +208,25 @@ end
 
 function ChimCore.getRandomHitGroup() return ('hit%d'):format(math.random(1, 5)) end
 
-function ChimCore.isKnockedDown(actor) return animation.isPlaying(actor, 'knockout') end
+function ChimCore.isKnockedDown(actor) return IsPlaying(actor, 'knockout') end
 
 ---@param attacker GameObject
 ---@param defender GameObject
 ---@return number defenseTerm Influence of the defending character's stats on an attack's chance to hit. Not actually used in CHIM, probably.
 function ChimCore:getAttackDefenseTerm(attacker, defender)
-  if defender.fatigue.current <= 0 then return 0 end
+  local defenderFatigue = ActorDynamic.fatigue(defender)
+  if defenderFatigue.current <= 0 then return 0 end
 
   local defenseTerm = 0
-  local defenderEffects = defender.activeEffects()
-  --- FIXME: isPlayer field has been removed
-  local unaware = defender.stance == defender.STANCE.Nothing and attacker.isPlayer
-  local isKnockedDown = defender.isPlaying 'knockout'
+  local defenderEffects = GetActiveEffects(defender)
+  local unaware = Actor.getStance(defender) == Actor.STANCE.Nothing and IsPlayer(attacker)
+  local isKnockedDown = IsPlaying(defender, 'knockout')
   local isParalyzed = defenderEffects:getEffect(ParalyzeEffect).magnitude > 0
 
   if not (unaware or isKnockedDown or isParalyzed) then
-    local agilityDefenseInfluence = self.AgilityHitChancePct * defender.agility.modified
-    local luckDefenseInfluence = self.LuckHitChancePct * defender.luck.modified
+    local agilityDefenseInfluence = self.AgilityHitChancePct
+      * ActorAttributes.agility(defender).modified
+    local luckDefenseInfluence = self.LuckHitChancePct * ActorAttributes.luck(defender).modified
     local defenderFatigueTerm = getFatigueTerm(defender)
     defenseTerm = (agilityDefenseInfluence + luckDefenseInfluence) * defenderFatigueTerm
 
@@ -254,24 +252,24 @@ function ChimCore:getNativeHitChance(attackData)
 
   local attackerFatigueTerm = getFatigueTerm(attacker)
 
-  local weapon = attacker.getEquipment(s3lf.EQUIPMENT_SLOT.CarriedRight)
+  local weapon = GetEquipment(attacker, Actor.EQUIPMENT_SLOT.CarriedRight)
 
   local skillValue
-  if attacker.isCreature then
-    skillValue = attacker.combatSkill
+  if IsCreature(attacker) then
+    skillValue = Creature.records[attacker.recordId].combatSkill
   elseif not weapon then
-    skillValue = attacker.handtohand.modified
+    skillValue = attacker.type.stats.skills.handtohand(attacker).modified
   else
     local weaponType = weapon.type.records[weapon.recordId].type
     local skillName = weaponTypesToSkills[weaponType]
-    skillValue = attacker[skillName].modified
+    skillValue = attacker.type.stats.skills[skillName](attacker).modified
   end
 
-  local agilityInfluence = self.AgilityHitChancePct * attacker.agility.modified
-  local luckInfluence = self.LuckHitChancePct * attacker.luck.modified
+  local agilityInfluence = self.AgilityHitChancePct * ActorAttributes.agility(attacker).modified
+  local luckInfluence = self.LuckHitChancePct * ActorAttributes.luck(attacker).modified
 
   local attackTerm = (skillValue + agilityInfluence + luckInfluence) * attackerFatigueTerm
-  local blindMagnitude = attacker.activeEffects():getEffect('blind').magnitude
+  local blindMagnitude = GetActiveEffects(attacker):getEffect('blind').magnitude
 
   attackTerm = (attackTerm - blindMagnitude) / 100
 
@@ -285,11 +283,9 @@ end
 
 ---@param attackData CHIMAttackData
 function ChimCore:getDamageBonus(attackData)
-  attackData.attacker = I.s3.lf.From(attackData.attacker)
-  attackData.defender = I.s3.lf.From(attackData.defender)
-
   local roll = math.random()
-  local luckMod = (math.min(attackData.attacker.luck.modified, 100) / 100.0) * self.CritLuckPercent
+  local luckMod = (math.min(ActorAttributes.luck(attackData.attacker).modified, 100) / 100.0)
+    * self.CritLuckPercent
   local hitChance =
     math.min(self.MaxDamageMultiplier, I.s3ChimCore.Manager:getNativeHitChance(attackData))
   local critChance = hitChance * (self.CritChancePercent / 100.0) * (1 + luckMod)
