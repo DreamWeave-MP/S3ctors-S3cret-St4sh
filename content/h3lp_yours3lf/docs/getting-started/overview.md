@@ -16,7 +16,7 @@ Your own mod still needs its own data directory and script declaration. Requirin
 
 ## Run a complete example
 
-Create `scripts/my_mod/h3_demo.lua` inside your mod's data directory:
+Create `scripts/<mod_name>/h3_demo.lua` inside your mod's data directory:
 
 ```lua
 local Signal = require 'scripts.s3.signal'
@@ -28,7 +28,7 @@ ready:connect(function(path)
 end)
 
 local function report()
-    ready:fire(normalizePath('Textures\\MyMod\\Icon.dds'))
+    ready:fire(normalizePath('Config\\MyMod\\Icon'))
 end
 
 return {
@@ -39,16 +39,16 @@ return {
 }
 ```
 
-Create `my_mod.omwscripts` alongside the `scripts` directory:
+Create your script list alongside the `scripts` directory:
 
 ```text
-PLAYER: scripts/my_mod/h3_demo.lua
+PLAYER: scripts/<mod_name>/h3_demo.lua
 ```
 
 Enable that script list in OpenMW's content list, with H3 enabled as a dependency. Load a game. The OpenMW log should contain:
 
 ```text
-H3 demo: textures/mymod/icon.dds
+H3 demo: config/mymod/icon
 ```
 
 The example does not load a texture or change game state. It normalizes a string, passes it to a synchronous listener, and prints the result. `onInit` covers initialization and `onLoad` covers loading saved script state; no per-frame polling is needed.
@@ -60,7 +60,7 @@ Signal and normalizePath do not import OpenMW APIs. This example runs as a playe
 ## If nothing happens
 
 - **Module not found:** check that H3's data directory is active. Paths passed to `require` are module names, not filesystem paths.
-- **No output:** check that `my_mod.omwscripts` is enabled and its script path matches your file. Read earlier log errors before debugging the helper.
+- **No output:** check that your script list is enabled and its script path matches your file. Read earlier log errors before debugging the helper.
 - **Missing interface:** a plain module and an installed interface are different entry points. [S3lf](@/h3lp_yours3lf/docs/api/modules/s3lf.md) is `I.s3.lf`, not a Signal-style constructor.
 
 ## Choose the next step

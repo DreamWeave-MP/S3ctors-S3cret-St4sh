@@ -15,14 +15,14 @@ local function normalize(path)
     local result = path:lower():gsub('\\', '/'):gsub('/+', '/')
     return result
 end
-assert(normalize('Textures\\MyMod//Icon.dds') == 'textures/mymod/icon.dds')
+assert(normalize('Config\\MyMod//Icon') == 'config/mymod/icon')
 ```
 
 ## After: require the shared helper
 
 ```lua
 local normalize = require 'scripts.s3.normalizePath'
-assert(normalize('Textures\\MyMod//Icon.dds') == 'textures/mymod/icon.dds')
+assert(normalize('Config\\MyMod//Icon') == 'config/mymod/icon')
 ```
 
 The [normalizePath contract](@/h3lp_yours3lf/docs/api/modules/normalize-path.md) matches these transformations. If your previous function also checked existence or resolved parent directories, this is not a complete replacement.

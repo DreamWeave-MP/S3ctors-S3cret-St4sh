@@ -10,7 +10,7 @@ extra:
 
 ```lua
 local normalizePath = require 'scripts.s3.normalizePath'
-assert(normalizePath('Textures\\MyMod//Icon.dds') == 'textures/mymod/icon.dds')
+assert(normalizePath('Config\\MyMod//Icon') == 'config/mymod/icon')
 ```
 
 The function lowercases the string, converts backslashes to forward slashes, and collapses repeated forward slashes. It returns the transformed string without mutating anything outside the call. It has no OpenMW imports or filesystem access.
