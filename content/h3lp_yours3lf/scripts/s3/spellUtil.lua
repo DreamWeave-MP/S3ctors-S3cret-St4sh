@@ -1,4 +1,4 @@
----@omw-context runtime
+---@omw-context local | player
 
 local core = require 'openmw.core'
 local types = require 'openmw.types'
