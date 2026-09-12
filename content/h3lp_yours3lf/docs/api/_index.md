@@ -38,6 +38,8 @@ Choose an entry by the problem it solves. References describe the repository's c
 | Calculate spell, enchantment, and potion values | [spellUtil](@/h3lp_yours3lf/docs/api/modules/spell-util.md) |
 | Test whether an actor meets the aggression threshold | [isHostile](@/h3lp_yours3lf/docs/api/modules/is-hostile.md) |
 | Clear tables or provide no-op callbacks | [Small Utilities](@/h3lp_yours3lf/docs/api/modules/small-utilities.md) |
+| Build passive UI layouts | [UI Components](@/h3lp_yours3lf/docs/api/modules/ui-components.md) |
+| Add H3 settings renderers | [Settings Renderers](@/h3lp_yours3lf/docs/api/modules/renderers.md) |
 
 ## Coverage and remaining references
 
