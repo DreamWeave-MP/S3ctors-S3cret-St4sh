@@ -98,19 +98,21 @@ StateMachine.__index = StateMachine
 ---@param opts? StateMachineOptions
 ---@return StateMachine machine
 function StateMachine.new(opts)
-    opts = opts or {}
-    assert(opts.validate == nil or type(opts.validate) == 'boolean',
-        'StateMachine.new: opts.validate must be a boolean')
-    return setmetatable({
-        _states   = {},   -- name -> { tick, on_enter, on_exit }
-        _allowed  = nil,  -- { [from] = { [to] = true } } or nil if unused
-        _validate = opts.validate == true,
-        _current  = nil,  -- current state record
-        _cur_name = nil,  -- current state name
-        _prev     = nil,  -- previous state name
-        _pending  = nil,  -- deferred transition target
-        _ticking  = false,
-    }, StateMachine)
+  opts = opts or {}
+  assert(
+    opts.validate == nil or type(opts.validate) == 'boolean',
+    'StateMachine.new: opts.validate must be a boolean'
+  )
+  return setmetatable({
+    _states = {}, -- name -> { tick, on_enter, on_exit }
+    _allowed = nil, -- { [from] = { [to] = true } } or nil if unused
+    _validate = opts.validate == true,
+    _current = nil, -- current state record
+    _cur_name = nil, -- current state name
+    _prev = nil, -- previous state name
+    _pending = nil, -- deferred transition target
+    _ticking = false,
+  }, StateMachine)
 end
 
 -- ---------------------------------------------------------------------------
@@ -122,19 +124,23 @@ end
 ---@param def StateDefinition|StateTick Raises if not a state table or function.
 ---@return nil
 function StateMachine:state(name, def)
-    assert(type(name) == 'string', 'state name must be a string')
-    assert(self._current == nil, 'state: states must be registered before start()')
-    if type(def) == 'function' then
-        def = { tick = def }
-    end
-    assert(type(def) == 'table', 'state must be a function or table')
-    assert(def.tick     == nil or type(def.tick)     == 'function',
-        ('state %q: tick must be a function'):format(name))
-    assert(def.on_enter == nil or type(def.on_enter) == 'function',
-        ('state %q: on_enter must be a function'):format(name))
-    assert(def.on_exit  == nil or type(def.on_exit)  == 'function',
-        ('state %q: on_exit must be a function'):format(name))
-    self._states[name] = def
+  assert(type(name) == 'string', 'state name must be a string')
+  assert(self._current == nil, 'state: states must be registered before start()')
+  if type(def) == 'function' then def = { tick = def } end
+  assert(type(def) == 'table', 'state must be a function or table')
+  assert(
+    def.tick == nil or type(def.tick) == 'function',
+    ('state %q: tick must be a function'):format(name)
+  )
+  assert(
+    def.on_enter == nil or type(def.on_enter) == 'function',
+    ('state %q: on_enter must be a function'):format(name)
+  )
+  assert(
+    def.on_exit == nil or type(def.on_exit) == 'function',
+    ('state %q: on_exit must be a function'):format(name)
+  )
+  self._states[name] = def
 end
 
 -- ---------------------------------------------------------------------------
@@ -147,19 +153,19 @@ end
 ---@param to StateName Raises if not a string.
 ---@return nil
 function StateMachine:allow(from, to)
-    assert(type(from) == 'string', 'allow: from must be a string')
-    assert(type(to)   == 'string', 'allow: to must be a string')
-    if not self._allowed then self._allowed = {} end
-    if not self._allowed[from] then self._allowed[from] = {} end
-    self._allowed[from][to] = true
+  assert(type(from) == 'string', 'allow: from must be a string')
+  assert(type(to) == 'string', 'allow: to must be a string')
+  if not self._allowed then self._allowed = {} end
+  if not self._allowed[from] then self._allowed[from] = {} end
+  self._allowed[from][to] = true
 end
 
 ---Enables or disables transition validation.
 ---@param enabled boolean
 ---@return nil
 function StateMachine:validate(enabled)
-    assert(type(enabled) == 'boolean', 'validate: enabled must be a boolean')
-    self._validate = enabled
+  assert(type(enabled) == 'boolean', 'validate: enabled must be a boolean')
+  self._validate = enabled
 end
 
 ---@param self StateMachine
@@ -167,17 +173,19 @@ end
 ---@param to StateName
 ---@return nil
 local function check_allowed(self, from, to)
-    if not self._validate then return end
-    local allowed = self._allowed
-    -- Validation on but no rules = allow all. Once rules exist, only explicit
-    -- from -> to or wildcard transitions are allowed.
-    if not allowed then return end
-    local from_rules = from and allowed[from] or nil
-    local wildcard   = allowed['*']
-    if not ((from_rules and from_rules[to]) or (wildcard and wildcard[to])) then
-        error(('StateMachine: transition %q -> %q is not declared as allowed')
-            :format(from or '(none)', to), 3)
-    end
+  if not self._validate then return end
+  local allowed = self._allowed
+  -- Validation on but no rules = allow all. Once rules exist, only explicit
+  -- from -> to or wildcard transitions are allowed.
+  if not allowed then return end
+  local from_rules = from and allowed[from] or nil
+  local wildcard = allowed['*']
+  if not ((from_rules and from_rules[to]) or (wildcard and wildcard[to])) then
+    error(
+      ('StateMachine: transition %q -> %q is not declared as allowed'):format(from or '(none)', to),
+      3
+    )
+  end
 end
 
 -- ---------------------------------------------------------------------------
@@ -189,23 +197,19 @@ end
 ---@param err? any Passed to destination on_enter after tick error transitions.
 ---@return nil
 local function do_transition(self, to, err)
-    local next_state = self._states[to]
-    assert(next_state, ('StateMachine: unknown state %q'):format(to))
-    check_allowed(self, self._cur_name, to)
+  local next_state = self._states[to]
+  assert(next_state, ('StateMachine: unknown state %q'):format(to))
+  check_allowed(self, self._cur_name, to)
 
-    local cur = self._current
-    if cur and cur.on_exit then
-        cur.on_exit(to)
-    end
+  local cur = self._current
+  if cur and cur.on_exit then cur.on_exit(to) end
 
-    local from     = self._cur_name
-    self._prev     = from
-    self._current  = next_state
-    self._cur_name = to
+  local from = self._cur_name
+  self._prev = from
+  self._current = next_state
+  self._cur_name = to
 
-    if next_state.on_enter then
-        next_state.on_enter(from, err)
-    end
+  if next_state.on_enter then next_state.on_enter(from, err) end
 end
 
 -- ---------------------------------------------------------------------------
@@ -218,10 +222,10 @@ end
 ---@param name StateName Raises for unknown or disallowed transitions.
 ---@return nil
 function StateMachine:transition(name)
-    assert(type(name) == 'string', 'transition: name must be a string')
-    assert(self._states[name], ('StateMachine: unknown state %q'):format(name))
-    check_allowed(self, self._cur_name, name)
-    self._pending = name
+  assert(type(name) == 'string', 'transition: name must be a string')
+  assert(self._states[name], ('StateMachine: unknown state %q'):format(name))
+  check_allowed(self, self._cur_name, name)
+  self._pending = name
 end
 
 ---Immediately transitions: on_exit/on_enter run right now.
@@ -229,9 +233,13 @@ end
 ---@param name StateName Raises for unknown or disallowed transitions.
 ---@return nil
 function StateMachine:jump(name)
-    assert(type(name) == 'string', 'jump: name must be a string')
-    do_transition(self, name)
-    self._pending = nil  -- cancel any pending deferred transition
+  assert(type(name) == 'string', 'jump: name must be a string')
+  self._pending = nil -- cancel any pending deferred transition
+  local ok, err = pcall(do_transition, self, name)
+  if not ok then
+    self._pending = nil
+    error(err, 0)
+  end
 end
 
 -- Alias for jump; communicates intent at the call site.
@@ -246,38 +254,50 @@ StateMachine.start = StateMachine.jump
 ---@param dt any Passed through to the current state's tick callback.
 ---@return nil
 function StateMachine:tick(dt)
-    assert(self._current, 'StateMachine: call start() before tick()')
-    assert(not self._ticking, 'StateMachine: re-entrant tick() detected')
+  assert(self._current, 'StateMachine: call start() before tick()')
+  assert(not self._ticking, 'StateMachine: re-entrant tick() detected')
 
-    self._ticking = true
+  self._ticking = true
 
-    local ok, err
-    local tick_fn = self._current.tick
-    if tick_fn then
-        ok, err = pcall(tick_fn, dt)
+  local ok, err
+  local tick_fn = self._current.tick
+  if tick_fn then
+    ok, err = pcall(tick_fn, dt)
+  else
+    ok = true
+  end
+
+  -- Collect and clear pending before any further work so that transitions
+  -- triggered from on_enter during do_transition go through normally.
+  local pending = self._pending
+  self._pending = nil
+
+  if not ok then
+    if self._states['error'] then
+      self._pending = nil
+      local transitionOk, transitionError = pcall(do_transition, self, 'error', err)
+      self._ticking = false
+      if not transitionOk then
+        self._pending = nil
+        error(transitionError, 0)
+      end
     else
-        ok = true
+      self._ticking = false
+      error(err, 2)
     end
+    return
+  end
 
-    -- Collect and clear pending before any further work so that transitions
-    -- triggered from on_enter during do_transition go through normally.
-    local pending  = self._pending
-    self._pending  = nil
-    self._ticking  = false
-
-    if not ok then
-        if self._states['error'] then
-            self._pending = nil
-            do_transition(self, 'error', err)
-        else
-            error(err, 2)
-        end
-        return
+  if pending then
+    local transitionOk, transitionError = pcall(do_transition, self, pending)
+    self._ticking = false
+    if not transitionOk then
+      self._pending = nil
+      error(transitionError, 0)
     end
-
-    if pending then
-        do_transition(self, pending)
-    end
+  else
+    self._ticking = false
+  end
 end
 
 -- ---------------------------------------------------------------------------
@@ -286,13 +306,13 @@ end
 
 ---Returns the current state name, or nil before start().
 ---@return StateName? current
-function StateMachine:current()  return self._cur_name end
+function StateMachine:current() return self._cur_name end
 ---Returns the previous state name, or nil before the first transition.
 ---@return StateName? previous
-function StateMachine:previous() return self._prev     end
+function StateMachine:previous() return self._prev end
 ---Returns true when the current state name equals name.
 ---@param name StateName
 ---@return boolean is_current
-function StateMachine:is(name)   return self._cur_name == name end
+function StateMachine:is(name) return self._cur_name == name end
 
 return StateMachine
