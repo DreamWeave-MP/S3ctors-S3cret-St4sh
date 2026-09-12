@@ -19,7 +19,7 @@ extra:
     content_files:
       - VSG.esp
 
-  version: 1.0
+  version: 1.1
 ---
 
 Visual Soul Gems makes filled soul gems look filled.
