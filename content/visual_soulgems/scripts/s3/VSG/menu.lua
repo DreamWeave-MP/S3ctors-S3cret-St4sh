@@ -1,6 +1,8 @@
 ---@omw-context menu
 
-require('openmw.interfaces').Settings.registerPage {
+local I = require 'openmw.interfaces'
+
+I.Settings.registerPage {
   key = 'VisualSoulGemsPage',
   l10n = 'VisualSoulGems',
   name = 'VisualSoulGemsName',

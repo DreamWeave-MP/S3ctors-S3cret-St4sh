@@ -1,9 +1,7 @@
 ---@omw-context global
 
-local async = require 'openmw.async'
-local interfaces = require 'openmw.interfaces'
+local globalSettings = require 'scripts.s3.VSG.globalSettings'
 local recordData = require 'scripts.s3.VSG.records'
-local storage = require 'openmw.storage'
 local types = require 'openmw.types'
 local world = require 'openmw.world'
 
@@ -12,65 +10,19 @@ local miscellaneousRecords = miscellaneous.records
 local itemData = types.Item.itemData
 
 local createObject = world.createObject
-local Error, Random, StrFormat = error, math.random, string.format
+local Error, StrFormat = error, string.format
 
-local soulGemVariants, variantSuffixes = {}, {}
+local variantSuffixes = {}
 for i = 1, #recordData.variants do
   local variant = recordData.variants[i]
-  soulGemVariants[i] = variant.setting
   variantSuffixes[variant.setting] = variant.suffix
 end
-
-local variantCount = #soulGemVariants
 
 local replacementNames = {}
 for i = 1, #recordData.records do
   local record = recordData.records[i]
   replacementNames[record.sourceId] = record.replacementName
 end
-
-interfaces.Settings.registerGroup {
-  key = 'SettingsGlobalVisualSoulGems',
-  page = 'VisualSoulGemsPage',
-  l10n = 'VisualSoulGems',
-  name = 'VisualSoulGemsGroupName',
-  description = 'VisualSoulGemsGroupDesc',
-  permanentStorage = true,
-  settings = {
-    {
-      key = 'SoulGemVariant',
-      renderer = 'select',
-      name = 'SoulGemVariantName',
-      description = 'SoulGemVariantDesc',
-      default = soulGemVariants[variantCount],
-      argument = {
-        l10n = 'VisualSoulGems',
-        items = soulGemVariants,
-      },
-    },
-    {
-      key = 'SoulGemRandomize',
-      renderer = 'checkbox',
-      name = 'SoulGemRandomizeName',
-      description = 'SoulGemRandomizeDesc',
-      default = true,
-    },
-  },
-}
-
-local settings = storage.globalSection 'SettingsGlobalVisualSoulGems'
-local randomize = settings:get 'SoulGemRandomize'
-local selectedVariant = settings:get 'SoulGemVariant'
-
-settings:subscribe(async:callback(function(_, key)
-  local value = settings:get(key)
-
-  if key == 'SoulGemVariant' then
-    selectedVariant = value
-  elseif key == 'SoulGemRandomize' then
-    randomize = value
-  end
-end))
 
 ---@param item openmw.GObject
 local function replaceSoulGem(item)
@@ -80,8 +32,7 @@ local function replaceSoulGem(item)
   local soul = itemData(item).soul
   if not soul then return end
 
-  local variant = selectedVariant
-  if randomize then variant = soulGemVariants[Random(variantCount)] end
+  local variant = globalSettings.getSelectedVariant()
 
   local variantSuffix = variantSuffixes[variant]
   if not variantSuffix then Error(StrFormat('Unknown soul gem variant: %s', variant)) end
@@ -109,6 +60,7 @@ local function replaceSoulGem(item)
 end
 
 return {
+  eventHandlers = globalSettings.eventHandlers,
   engineHandlers = {
     onItemActive = replaceSoulGem,
   },

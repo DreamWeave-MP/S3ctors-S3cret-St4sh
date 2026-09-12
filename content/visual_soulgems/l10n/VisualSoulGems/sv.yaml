@@ -3,16 +3,11 @@ particles & static glow: Partiklar och statiskt sken
 static glow: Statiskt sken
 ultra glow: Ultrasken
 
-SoulGemVariantName: Stil för själsstenar
-SoulGemVariantDesc: |-
-  Din valda stil för själsstenar används varje gång VSG konverterar en fylld själssten.
-  Att byta stil påverkar inte själsstenar som redan har konverterats,
-  så du kan blanda olika stilar under genomspelningen om du vill.
 SoulGemRandomizeName: Slumpa stil för själsstenar
-SoulGemRandomizeDesc: Väljer en slumpmässig visuell stil varje gång VSG konverterar en fylld själssten.
+SoulGemRandomizeDesc: Väljer en slumpmässig visuell stil bland de aktiverade varje gång VSG konverterar en fylld själssten.
 
 VisualSoulGemsDesc: Ger fyllda själsstenar olika visuella effekter med fyra valbara eller slumpmässiga stilar.
 VisualSoulGemsName: Visual Soul Gems OpenMW
 
-VisualSoulGemsGroupName: ""
-VisualSoulGemsGroupDesc: ""
+VisualSoulGemsGroupName: Stilar för själsstenar
+VisualSoulGemsGroupDesc: Välj vilka visuella stilar som är aktiverade. När slumpval är aktiverat bildar de aktiverade stilarna dess urval. När det är inaktiverat aktiverar du en stil som ska användas vid varje konvertering.

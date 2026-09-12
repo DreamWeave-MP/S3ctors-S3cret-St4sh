@@ -61,18 +61,18 @@ VSG includes four filled-gem styles:
 - **Static Glow**
 - **Ultra Glow**
 
-**Ultra Glow** is the default.
+All four styles are enabled by default.
 
 ## Settings
 
-VSG exposes two global settings:
+VSG exposes a randomization toggle and one toggle for each visual style:
 
 | Setting | Default | Behavior |
 | --- | --- | --- |
-| **Soul Gem Variant** | Ultra Glow | Chooses the visual style used for newly converted filled soul gems. |
-| **Randomize** | On | Chooses a random visual variant whenever VSG converts a filled soul gem or stack. |
+| **Randomize** | On | Chooses a random enabled visual variant whenever VSG converts a filled soul gem or stack. |
+| **Style toggles** | All On | Choose which visual styles Randomize can use. |
 
-When randomization is enabled, the selected fixed variant is ignored for that conversion.
+When randomization is enabled, only enabled styles are eligible. When it is disabled, the style toggles become mutually exclusive and the single enabled style is used for every conversion. Re-enabling Randomize restores all four styles.
 
 A soul gem keeps the appearance it received when VSG converted it. Changing the setting later affects future conversions; it does not retroactively repaint objects that have already been replaced.
 

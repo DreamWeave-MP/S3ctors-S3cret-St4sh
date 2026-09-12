@@ -3,16 +3,11 @@ particles & static glow: Partículas y brillo estático
 static glow: Brillo estático
 ultra glow: Brillo ultra
 
-SoulGemVariantName: Estilo de gema de alma
-SoulGemVariantDesc: |-
-  Tu estilo de gema de alma preferido se usa cada vez que VSG convierte una gema de alma llena.
-  Cambiar el estilo no afecta a las gemas de alma ya convertidas,
-  lo que te permite mezclar distintos estilos a lo largo de la partida si quieres.
 SoulGemRandomizeName: Aleatorizar estilo de gema de alma
-SoulGemRandomizeDesc: Elige un estilo visual al azar cada vez que VSG convierte una gema de alma llena.
+SoulGemRandomizeDesc: Elige un estilo visual al azar entre los activados cada vez que VSG convierte una gema de alma llena.
 
 VisualSoulGemsDesc: Da a las gemas de alma llenas distintos efectos visuales con cuatro estilos seleccionables o aleatorios.
 VisualSoulGemsName: Visual Soul Gems OpenMW
 
-VisualSoulGemsGroupName: ""
-VisualSoulGemsGroupDesc: ""
+VisualSoulGemsGroupName: Estilos de gemas de alma
+VisualSoulGemsGroupDesc: Elige qué estilos visuales están activados. Cuando Aleatorizar está activado, los estilos activados forman el conjunto de selección. Cuando está desactivado, activa un estilo para usarlo en cada conversión.
