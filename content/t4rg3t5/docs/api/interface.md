@@ -30,7 +30,7 @@ The current interface version is `2`.
 
 Anything documented below is fair game. `Manager.state`, camera internals, frame handlers, and anything else hanging off the table are implementation details. Poke at ’em if you like; just don’t build your house there.
 
-See [Settings](@/t4rg3t5/docs/api/settings.md) for configurable fields and the [H3lp Yours3lf documentation](@/h3lp_yours3lf/docs/_index.md) for the shared utility layer.
+See [Settings](@/t4rg3t5/docs/api/settings.md) for configurable fields and the [H3lp Yours3lf page](@/h3lp_yours3lf/index.md) for the shared utility layer.
 
 ## Manager methods
 
