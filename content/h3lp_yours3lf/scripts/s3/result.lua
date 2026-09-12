@@ -47,9 +47,8 @@
 --- Notes:
 ---   - Results are plain tables; they are not protected from mutation.
 ---   - nil is a valid Ok value. Ok(nil):is_ok() == true.
----   - Result.all does not pack returned values. Ok(nil) entries produce nil
----     array slots; callers who care must avoid nil Ok values or handle sparse
----     arrays by normal Lua rules.
+---   - Result.all returns a normal Lua array, not a packed table. Ok(nil)
+---     therefore produces a sparse result and positional nils are not preserved.
 
 ---@class ResultModule
 ---@field Ok fun(value: any): OkResult
@@ -95,35 +94,34 @@ local ErrMeta = { __index = ErrMethods }
 ---@param value any
 ---@return boolean
 local function is_result(value)
-    return type(value) == 'table'
-        and (rawget(value, OK_TAG) ~= nil or rawget(value, ERR_TAG) ~= nil)
+  return type(value) == 'table' and (rawget(value, OK_TAG) ~= nil or rawget(value, ERR_TAG) ~= nil)
 end
 
 ---@param self Result
 ---@return any
 local function ok_value(self)
-    local value = rawget(self, OK_TAG)
-    if value == NIL_SENTINEL then return nil end
-    return value
+  local value = rawget(self, OK_TAG)
+  if value == NIL_SENTINEL then return nil end
+  return value
 end
 
 ---Creates an Ok result. nil is accepted and preserved by unwrap/expect.
 ---@param value any nil is accepted and preserved by unwrap/expect.
 ---@return OkResult
 function Result.Ok(value)
-    return setmetatable({
-        [OK_TAG] = value == nil and NIL_SENTINEL or value,
-    }, OkMeta)
+  return setmetatable({
+    [OK_TAG] = value == nil and NIL_SENTINEL or value,
+  }, OkMeta)
 end
 
 ---Creates an Err result. Any non-nil error value is accepted.
 ---@param err any Raises if nil.
 ---@return ErrResult
 function Result.Err(err)
-    assert(err ~= nil, 'Err: error value must not be nil')
-    return setmetatable({
-        [ERR_TAG] = err,
-    }, ErrMeta)
+  assert(err ~= nil, 'Err: error value must not be nil')
+  return setmetatable({
+    [ERR_TAG] = err,
+  }, ErrMeta)
 end
 
 local Ok = Result.Ok
@@ -155,55 +153,39 @@ function ErrMethods:is_err() return true end
 
 ---Returns the Ok value.
 ---@return any value
-function OkMethods:unwrap()
-    return ok_value(self)
-end
+function OkMethods:unwrap() return ok_value(self) end
 
 ---Raises with the Err value.
 ---@return nil Raises with the Err value.
-function ErrMethods:unwrap()
-    error('called unwrap() on Err: ' .. tostring(rawget(self, ERR_TAG)), 2)
-end
+function ErrMethods:unwrap() error('called unwrap() on Err: ' .. tostring(rawget(self, ERR_TAG)), 2) end
 
 ---Returns the Ok value, ignoring the default.
 ---@param _default any Ignored for Ok results.
 ---@return any value
-function OkMethods:unwrap_or(_default)
-    return ok_value(self)
-end
+function OkMethods:unwrap_or(_default) return ok_value(self) end
 
 ---Returns the supplied default for Err results.
 ---@param default any
 ---@return any default
-function ErrMethods:unwrap_or(default)
-    return default
-end
+function ErrMethods:unwrap_or(default) return default end
 
 ---Raises because this is Ok.
 ---@return nil Raises because this is Ok.
-function OkMethods:unwrap_err()
-    error('called unwrap_err() on Ok', 2)
-end
+function OkMethods:unwrap_err() error('called unwrap_err() on Ok', 2) end
 
 ---Returns the Err value.
 ---@return any err
-function ErrMethods:unwrap_err()
-    return rawget(self, ERR_TAG)
-end
+function ErrMethods:unwrap_err() return rawget(self, ERR_TAG) end
 
 ---Returns the Ok value, ignoring the message.
 ---@param _msg string Ignored for Ok results.
 ---@return any value
-function OkMethods:expect(_msg)
-    return ok_value(self)
-end
+function OkMethods:expect(_msg) return ok_value(self) end
 
 ---Raises with msg and the Err value.
 ---@param msg string
 ---@return nil Raises with msg and the Err value.
-function ErrMethods:expect(msg)
-    error(msg .. ': ' .. tostring(rawget(self, ERR_TAG)), 2)
-end
+function ErrMethods:expect(msg) error(msg .. ': ' .. tostring(rawget(self, ERR_TAG)), 2) end
 
 -- ---------------------------------------------------------------------------
 -- Transformation
@@ -212,61 +194,49 @@ end
 ---Maps an Ok value through fn and wraps it in Ok.
 ---@param fn fun(value: any): any
 ---@return OkResult
-function OkMethods:map(fn)
-    return Ok(fn(ok_value(self)))
-end
+function OkMethods:map(fn) return Ok(fn(ok_value(self))) end
 
 ---Propagates this Err unchanged.
 ---@param _fn fun(value: any): any Ignored for Err results.
 ---@return ErrResult self
-function ErrMethods:map(_fn)
-    return self
-end
+function ErrMethods:map(_fn) return self end
 
 ---Propagates this Ok unchanged.
 ---@param _fn fun(err: any): any Ignored for Ok results.
 ---@return OkResult self
-function OkMethods:map_err(_fn)
-    return self
-end
+function OkMethods:map_err(_fn) return self end
 
 ---Maps an Err value through fn and wraps it in Err.
 ---@param fn fun(err: any): any
 ---@return ErrResult
-function ErrMethods:map_err(fn)
-    return Err(fn(rawget(self, ERR_TAG)))
-end
+function ErrMethods:map_err(fn) return Err(fn(rawget(self, ERR_TAG))) end
 
 ---Chains an Ok value through fn, which must return a Result.
 ---@param fn fun(value: any): Result Must return a Result; raises otherwise.
 ---@return Result
 function OkMethods:and_then(fn)
-    local result = fn(ok_value(self))
-    assert(is_result(result), 'and_then: function must return a Result')
-    return result
+  local result = fn(ok_value(self))
+  assert(is_result(result), 'and_then: function must return a Result')
+  return result
 end
 
 ---Propagates this Err unchanged.
 ---@param _fn fun(value: any): Result Ignored for Err results.
 ---@return ErrResult self
-function ErrMethods:and_then(_fn)
-    return self
-end
+function ErrMethods:and_then(_fn) return self end
 
 ---Propagates this Ok unchanged.
 ---@param _fn fun(err: any): Result Ignored for Ok results.
 ---@return OkResult self
-function OkMethods:or_else(_fn)
-    return self
-end
+function OkMethods:or_else(_fn) return self end
 
 ---Chains an Err value through fn, which must return a Result.
 ---@param fn fun(err: any): Result Must return a Result; raises otherwise.
 ---@return Result
 function ErrMethods:or_else(fn)
-    local result = fn(rawget(self, ERR_TAG))
-    assert(is_result(result), 'or_else: function must return a Result')
-    return result
+  local result = fn(rawget(self, ERR_TAG))
+  assert(is_result(result), 'or_else: function must return a Result')
+  return result
 end
 
 -- ---------------------------------------------------------------------------
@@ -277,16 +247,16 @@ end
 ---@param cases ResultMatchCases Raises if ok handler is missing.
 ---@return any
 function OkMethods:match(cases)
-    assert(type(cases.ok) == 'function', 'match: missing ok handler')
-    return cases.ok(ok_value(self))
+  assert(type(cases.ok) == 'function', 'match: missing ok handler')
+  return cases.ok(ok_value(self))
 end
 
 ---Calls cases.err with the Err value.
 ---@param cases ResultMatchCases Raises if err handler is missing.
 ---@return any
 function ErrMethods:match(cases)
-    assert(type(cases.err) == 'function', 'match: missing err handler')
-    return cases.err(rawget(self, ERR_TAG))
+  assert(type(cases.err) == 'function', 'match: missing err handler')
+  return cases.err(rawget(self, ERR_TAG))
 end
 
 -- ---------------------------------------------------------------------------
@@ -295,15 +265,11 @@ end
 
 ---@param self OkResult
 ---@return string
-OkMeta.__tostring = function(self)
-    return ('Ok(%s)'):format(tostring(ok_value(self)))
-end
+OkMeta.__tostring = function(self) return ('Ok(%s)'):format(tostring(ok_value(self))) end
 
 ---@param self ErrResult
 ---@return string
-ErrMeta.__tostring = function(self)
-    return ('Err(%s)'):format(tostring(rawget(self, ERR_TAG)))
-end
+ErrMeta.__tostring = function(self) return ('Err(%s)'):format(tostring(rawget(self, ERR_TAG))) end
 
 -- ---------------------------------------------------------------------------
 -- Utilities
@@ -315,11 +281,10 @@ end
 ---@param ... any
 ---@return Result result Ok(first_return_value) or Err(error_value).
 function Result.try(fn, ...)
-    local ok, value = pcall(fn, ...)
-    if ok then
-        return Ok(value)
-    end
-    return Err(value)
+  local ok, value = pcall(fn, ...)
+  if ok then return Ok(value) end
+  if value == nil then value = '<nil error>' end
+  return Err(value)
 end
 
 ---Collects a list of Results, failing fast on the first Err.
@@ -328,12 +293,12 @@ end
 ---@param results Result[]
 ---@return Result result Ok(array) if all Ok, otherwise the first Err.
 function Result.all(results)
-    local values = {}
-    for i, result in ipairs(results) do
-        if result:is_err() then return result end
-        values[i] = result:unwrap()
-    end
-    return Ok(values)
+  local values = {}
+  for i, result in ipairs(results) do
+    if result:is_err() then return result end
+    values[i] = result:unwrap()
+  end
+  return Ok(values)
 end
 
 ---@cast Result ResultModule

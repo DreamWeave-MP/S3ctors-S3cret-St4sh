@@ -8,7 +8,12 @@ local assert, rawset, next, pairs, tostring, type = assert, rawset, next, pairs,
 local StrFormat = string.format
 local TableConcat, TableInsert, TableSort = table.concat, table.insert, table.sort
 
-local StorageGet, StorageSet = storage.globalSection('SettingsOMWCombat').get, nil
+local StorageGet, StorageSet
+do
+  local section = storage.globalSection 'SettingsOMWCombat'
+  StorageGet = section.get
+  StorageSet = section.set
+end
 
 local isPlayer, ui
 do
@@ -44,7 +49,17 @@ end
 
 ---@type ShadowTableSubscriptionHandler
 local function defaultSubscribeHandler(shadowSettings, group, _, key)
-  shadowSettings[key] = StorageGet(group, key)
+  if key == nil then
+    for cachedKey in pairs(shadowSettings) do
+      shadowSettings[cachedKey] = nil
+    end
+
+    for changedKey, value in pairs(group:asTable()) do
+      shadowSettings[changedKey] = value
+    end
+  else
+    shadowSettings[key] = StorageGet(group, key)
+  end
 end
 
 ---@alias IndexFunction fun(key: string): any
@@ -61,33 +76,35 @@ end
 ---@field interface fun(handler: IndexFunction) Helper function to provide more convenience when binding a protectedTable into an interface
 
 ---@alias ShadowSettingsTable table<string, any>
----@alias ShadowTableSubscriptionHandler fun(shadowSettings: ShadowSettingsTable, group: openmw.storage.StorageSection, groupName: string, key: string)
+---@alias ShadowTableSubscriptionHandler fun(shadowSettings: ShadowSettingsTable, group: openmw.storage.StorageSection, groupName: string, key: string?)
 
 ---@class ProtectedTableConstructor
 ---@field logPrefix string
----@field storageSection openmw.storage.StorageSection? instead of the *name* of a global section, protectedTables may provide a storgae section which the table uses
----@field inputGroupName string? name of the *global* storage section to use. If no managerName is provided, also used in the __tostring method
----@field managerName string? optional name to override inputGroupName in the __tostring method
+---@field inputGroupName string? name of the *global* storage section to use
+---@field storageSection openmw.storage.StorageSection? instead of the *name* of a global section, protectedTables may provide a storage section which the table uses
+---@field managerName string? name to use in the __tostring method; falls back to inputGroupName
 ---@field subscribeHandler ShadowTableSubscriptionHandler|false? override function to use instead of the default subscription handler. Since global sections may not be written from local scripts, an explicit value of `false` can be used to indicate no subscription at all.
 
 ---@param constructorData ProtectedTableConstructor
 ---@return ProtectedTable
 local function new(constructorData)
-  local requestedGroup
-  if constructorData.storageSection then
-    requestedGroup = constructorData.storageSection
-  elseif constructorData.inputGroupName then
-    requestedGroup = storage.globalSection(constructorData.inputGroupName)
-  else
-    error('No group or group name provded to protectedTable constructor!', 2)
+  local groupName = constructorData.inputGroupName
+  local hasGroupName = type(groupName) == 'string' and groupName ~= ''
+  assert(
+    constructorData.storageSection or hasGroupName,
+    'ProtectedTable requires storageSection or inputGroupName'
+  )
+  if constructorData.storageSection and not hasGroupName then
+    assert(
+      type(constructorData.managerName) == 'string' and constructorData.managerName ~= '',
+      'ProtectedTable requires a non-empty managerName for storageSection'
+    )
   end
 
+  local requestedGroup = constructorData.storageSection or storage.globalSection(groupName)
   assert(requestedGroup ~= nil, 'An invalid storage section was provided!')
   local testKey, testValue = next(requestedGroup:asTable())
-
-  ---@diagnostic disable-next-line: undefined-field
-  StorageSet = requestedGroup.set
-
+  if testKey == nil then testKey = '__S3ProtectedTableWritabilityProbe' end
   local groupIsWritable = pcall(StorageSet, requestedGroup, testKey, testValue)
 
   local methods, proxy, shadowSettings, state = {}, {}, {}, {}
@@ -104,7 +121,7 @@ local function new(constructorData)
     )
   end
 
-  local managerString = constructorData.managerName or constructorData.inputGroupName
+  local managerString = constructorData.managerName or groupName
 
   function methods.debugLog(...)
     if not shadowSettings.DebugEnable then return end
@@ -162,10 +179,9 @@ local function new(constructorData)
         state[key] = value
       elseif type(value) ~= 'function' or (type(value) ~= 'table' and key == 'state') then
         if groupIsWritable then
-          shadowSettings[key] = value
-
           ---@cast requestedGroup openmw.storage.MutableStorageSection
           StorageSet(requestedGroup, key, value)
+          shadowSettings[key] = value
         else
           error(
             ([[%s Unauthorized table access when updating '%s' to '%s'.
@@ -173,7 +189,7 @@ This table is not writable and values must be updated through its associated sto
               constructorData.logPrefix,
               tostring(key),
               tostring(value),
-              constructorData.inputGroupName or 'NO NAME PROVIDED'
+              managerString
             ),
             2
           )
@@ -250,7 +266,7 @@ local ProtectedTableInterface = {
   ---  -- Prefix to use in log messages if your storage section includes a `DebugEnable` key,
   ---  -- Its value is `true`, and you use the log function PT provides
   ---  logPrefix = ModInfo.logPrefix,
-  ---  -- Overrides the `inputGroupName` in the ProtectedTable's __tostring method
+  ---  -- Optional presentation name for __tostring.
   ---  managerName = ModInfo.name,
   ---  -- Optionally provide your own subscribe handler
   ---  -- PT wraps it in async:callback for you
@@ -267,15 +283,15 @@ local ProtectedTableInterface = {
   interface = {
     new = new,
     help = [[
-        The ProtectedTable constructor takes three required arguments:
-        logPrefix: string applied as a prefix when using the built-in debugLog function
-        inputGroupName: A settings group to which this table will attached
+         The ProtectedTable constructor requires:
+         logPrefix: string applied as a prefix when using the built-in debugLog function
+         Storage source: provide either inputGroupName or storageSection
 
-        Optional Arguments:
-        managerName: overrides the inputGroupName in __tostring
-        subscribeHandler: overrides the built-in subscription handler for more advanced change handling, such as changing a UI element when the user sets a different size.
+         Optional Arguments:
+         managerName: name used in __tostring; defaults to inputGroupName and is required with storageSection
+         subscribeHandler: overrides the built-in subscription handler for more advanced change handling, such as changing a UI element when the user sets a different size.
 
-        To make a new ProtectedTable bound to a settings group, simply call the interface: I.S3ProtectedTable.new { logPrefix = '[ SW4Mounts ]', inputGroupName = 'SettingsGlobalSW4Mounts' }
+         To make a new ProtectedTable bound to a settings group, simply call the interface: I.S3ProtectedTable.new { logPrefix = '[ SW4Mounts ]', inputGroupName = 'SettingsGlobalSW4Mounts', managerName = 'SW4Mounts' }
         ]],
   },
 }

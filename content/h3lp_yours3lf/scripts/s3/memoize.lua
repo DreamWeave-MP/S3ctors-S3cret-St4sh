@@ -102,32 +102,30 @@ local NIL_KEY = {}
 ---@diagnostic disable-next-line: deprecated
 local unpack = table.unpack or unpack
 
-local function pack(...)
-    return { n = select('#', ...), ... }
-end
+local function pack(...) return { n = select('#', ...), ... } end
 
 ---@param self Memoized
 ---@param ... any
 ---@return any
 local function cache_key(self, ...)
-    local key
-    if self._key_fn then
-        key = self._key_fn(...)
-    else
-        key = (...) -- first argument is the default key
-    end
-    if key == nil then return NIL_KEY end
-    return key
+  local key
+  if self._key_fn then
+    key = self._key_fn(...)
+  else
+    key = (...) -- first argument is the default key
+  end
+  if key == nil then return NIL_KEY end
+  return key
 end
 
 ---@param results table
 ---@return table<integer, any>
 local function store_values(results)
-    local stored = {}
-    for i = 1, results.n do
-        stored[i] = results[i] == nil and NIL or results[i]
-    end
-    return stored
+  local stored = {}
+  for i = 1, results.n do
+    stored[i] = results[i] == nil and NIL or results[i]
+  end
+  return stored
 end
 
 ---@param self Memoized
@@ -135,76 +133,80 @@ end
 ---@param n integer
 ---@return any ...
 local function return_values(self, stored, n)
-    local scratch = self._scratch
-    local old_n = self._scratch_n
-    if n == 0 then
-        for i = 1, old_n do
-            scratch[i] = nil
-        end
-        self._scratch_n = 0
-        return
+  local scratch = self._scratch
+  local old_n = self._scratch_n
+  if n == 0 then
+    for i = 1, old_n do
+      scratch[i] = nil
     end
-    for i = 1, n do
-        local value = stored[i]
-        scratch[i] = value ~= NIL and value or nil
-    end
-    for i = n + 1, old_n do
-        scratch[i] = nil
-    end
-    self._scratch_n = n
+    self._scratch_n = 0
+    return
+  end
+  for i = 1, n do
+    local value = stored[i]
+    scratch[i] = value ~= NIL and value or nil
+  end
+  for i = n + 1, old_n do
+    scratch[i] = nil
+  end
+  self._scratch_n = n
 
-    return unpack(scratch, 1, n)
+  return unpack(scratch, 1, n)
 end
 
 ---@param self Memoized
 ---@param entry MemoizeEntry
 ---@return nil
 local function link_entry(self, entry)
-    if not self._max_entries then return end
+  if not self._max_entries then return end
 
-    local newest = self._newest
-    entry.older = newest
-    entry.newer = nil
-    if newest then
-        newest.newer = entry
-    else
-        self._oldest = entry
-    end
-    self._newest = entry
+  local newest = self._newest
+  entry.older = newest
+  entry.newer = nil
+  if newest then
+    newest.newer = entry
+  else
+    self._oldest = entry
+  end
+  self._newest = entry
 end
 
 ---@param self Memoized
 ---@param entry MemoizeEntry
 ---@return nil
 local function unlink_entry(self, entry)
-    if not self._max_entries then return end
+  if not self._max_entries then return end
 
-    local older = entry.older
-    local newer = entry.newer
-    if older then
-        older.newer = newer
-    else
-        self._oldest = newer
-    end
-    if newer then
-        newer.older = older
-    else
-        self._newest = older
-    end
-    entry.older = nil
-    entry.newer = nil
+  local older = entry.older
+  local newer = entry.newer
+  if older then
+    older.newer = newer
+  else
+    self._oldest = newer
+  end
+  if newer then
+    newer.older = older
+  else
+    self._newest = older
+  end
+  entry.older = nil
+  entry.newer = nil
 end
 
 ---@param self Memoized
 ---@param key any
 ---@return nil
 local function evict_key(self, key)
-    local entry = self._cache[key]
-    if not entry then return end
+  local entry = self._cache[key]
+  if not entry then return end
 
-    unlink_entry(self, entry)
-    self._cache[key] = nil
-    self._size = self._size - 1
+  for i = 1, self._scratch_n do
+    self._scratch[i] = nil
+  end
+  self._scratch_n = 0
+  unlink_entry(self, entry)
+  self._cache[key] = nil
+  self._size = self._size - 1
 end
 
 ---@param self Memoized
@@ -212,17 +214,17 @@ end
 ---@param entry MemoizeEntry
 ---@return nil
 local function store_entry(self, key, entry)
-    entry.key = key
-    self._cache[key] = entry
-    self._size = self._size + 1
-    link_entry(self, entry)
+  entry.key = key
+  self._cache[key] = entry
+  self._size = self._size + 1
+  link_entry(self, entry)
 
-    local max_entries = self._max_entries
-    while max_entries and self._size > max_entries do
-        local oldest = self._oldest
-        if not oldest then return end
-        evict_key(self, oldest.key)
-    end
+  local max_entries = self._max_entries
+  while max_entries and self._size > max_entries do
+    local oldest = self._oldest
+    if not oldest then return end
+    evict_key(self, oldest.key)
+  end
 end
 
 local Memoized = {}
@@ -234,74 +236,79 @@ Memoized.__index = Memoized
 ---@param opts? MemoizeOptions
 ---@return Memoized callable
 local function make(fn, key_fn, opts)
-    opts = opts or {}
-    local ttl = opts.ttl -- nil = no expiry
-    local refresh_on_hit = opts.refresh_on_hit == true
-    local max_entries = opts.max_entries
+  opts = opts or {}
+  local ttl = opts.ttl -- nil = no expiry
+  local refresh_on_hit = opts.refresh_on_hit == true
+  local max_entries = opts.max_entries
 
-    assert(type(fn) == 'function', 'memoize: fn must be a function')
-    assert(key_fn == nil or type(key_fn) == 'function', 'memoize: key_fn must be a function')
-    assert(ttl == nil or (type(ttl) == 'number' and ttl > 0), 'memoize: ttl must be a positive number')
-    assert(max_entries == nil or (type(max_entries) == 'number'
-        and max_entries >= 1 and math.floor(max_entries) == max_entries),
-        'memoize: max_entries must be a positive integer')
+  assert(type(fn) == 'function', 'memoize: fn must be a function')
+  assert(key_fn == nil or type(key_fn) == 'function', 'memoize: key_fn must be a function')
+  assert(
+    ttl == nil or (type(ttl) == 'number' and ttl > 0),
+    'memoize: ttl must be a positive number'
+  )
+  assert(
+    max_entries == nil
+      or (
+        type(max_entries) == 'number'
+        and max_entries >= 1
+        and math.floor(max_entries) == max_entries
+      ),
+    'memoize: max_entries must be a positive integer'
+  )
 
-    local self = setmetatable({
-        _fn             = fn,
-        _key_fn         = key_fn,
-        _cache          = {}, -- key -> { values = {...}, n = count, age = 0 }
-        _ttl            = ttl,
-        _refresh_on_hit = refresh_on_hit,
-        _max_entries    = max_entries,
-        _size           = 0,
-        _oldest         = nil,
-        _newest         = nil,
-        _scratch        = {},
-        _scratch_n      = 0,
-        _hits           = 0,
-        _misses         = 0,
-    }, Memoized)
+  local self = setmetatable({
+    _fn = fn,
+    _key_fn = key_fn,
+    _cache = {}, -- key -> { values = {...}, n = count, age = 0 }
+    _ttl = ttl,
+    _refresh_on_hit = refresh_on_hit,
+    _max_entries = max_entries,
+    _size = 0,
+    _oldest = nil,
+    _newest = nil,
+    _scratch = {},
+    _scratch_n = 0,
+    _hits = 0,
+    _misses = 0,
+  }, Memoized)
 
-    -- Return a callable that behaves like the original function.
-    -- Method wrappers close over the real state table; colon calls on the
-    -- callable must not write accounting fields onto the callable shell.
-    local callable = {
-        tick = function(_, dt) return self:tick(dt) end,
-        invalidate = function(_, ...) return self:invalidate(...) end,
-        invalidate_all = function(_) return self:invalidate_all() end,
-        stats = function(_) return self:stats() end,
-    }
-    setmetatable(callable, {
-        __call = function(_, ...)
-            return self:_call(...)
-        end,
-        __index = self,
-    })
+  -- Return a callable that behaves like the original function.
+  -- Method wrappers close over the real state table; colon calls on the
+  -- callable must not write accounting fields onto the callable shell.
+  local callable = {
+    tick = function(_, dt) return self:tick(dt) end,
+    invalidate = function(_, ...) return self:invalidate(...) end,
+    invalidate_all = function(_) return self:invalidate_all() end,
+    stats = function(_) return self:stats() end,
+  }
+  setmetatable(callable, {
+    __call = function(_, ...) return self:_call(...) end,
+    __index = self,
+  })
 
-    return callable
+  return callable
 end
 
 ---Calls the wrapped function on misses, or returns cached values on hits.
 ---@param ... any
 ---@return any ... Cached or freshly computed return values; multiple returns are preserved dynamically.
 function Memoized:_call(...)
-    local key = cache_key(self, ...)
-    local entry = self._cache[key]
-    if entry then
-        self._hits = self._hits + 1
-        if self._refresh_on_hit then
-            entry.age = 0
-        end
-        return return_values(self, entry.values, entry.n)
-    end
+  local key = cache_key(self, ...)
+  local entry = self._cache[key]
+  if entry then
+    self._hits = self._hits + 1
+    if self._refresh_on_hit then entry.age = 0 end
+    return return_values(self, entry.values, entry.n)
+  end
 
-    self._misses = self._misses + 1
-    local results = pack(self._fn(...))
-    local stored = store_values(results)
+  self._misses = self._misses + 1
+  local results = pack(self._fn(...))
+  local stored = store_values(results)
 
-    store_entry(self, key, { values = stored, n = results.n, age = 0 })
+  store_entry(self, key, { values = stored, n = results.n, age = 0 })
 
-    return return_values(self, stored, results.n)
+  return return_values(self, stored, results.n)
 end
 
 ---Advances the age of all cache entries and evicts expired entries.
@@ -309,44 +316,44 @@ end
 ---@param dt number Non-negative elapsed seconds supplied by the caller; not validated.
 ---@return nil
 function Memoized:tick(dt)
-    local ttl = self._ttl
-    if not ttl then return end
+  local ttl = self._ttl
+  if not ttl then return end
 
-    local expired
-    for key, entry in pairs(self._cache) do
-        entry.age = entry.age + dt
-        if entry.age >= ttl then
-            expired = expired or {}
-            expired[#expired + 1] = key
-        end
+  local expired
+  for key, entry in pairs(self._cache) do
+    entry.age = entry.age + dt
+    if entry.age >= ttl then
+      expired = expired or {}
+      expired[#expired + 1] = key
     end
+  end
 
-    if not expired then return end
-    for i = 1, #expired do
-        evict_key(self, expired[i])
-    end
+  if not expired then return end
+  for i = 1, #expired do
+    evict_key(self, expired[i])
+  end
 end
 
 ---Invalidates one cached entry.
 ---@param ... any Arguments passed to key_fn, or first argument used directly.
 ---@return nil
-function Memoized:invalidate(...)
-    evict_key(self, cache_key(self, ...))
-end
+function Memoized:invalidate(...) evict_key(self, cache_key(self, ...)) end
 
 ---Invalidates all cached entries.
 ---@return nil
 function Memoized:invalidate_all()
-    self._cache = {}
-    self._size = 0
-    self._oldest = nil
-    self._newest = nil
+  self._cache = {}
+  self._size = 0
+  self._oldest = nil
+  self._newest = nil
+  for i = 1, self._scratch_n do
+    self._scratch[i] = nil
+  end
+  self._scratch_n = 0
 end
 
 ---Returns cache counters. Allocates a new table.
 ---@return MemoizeStats stats
-function Memoized:stats()
-    return { hits = self._hits, misses = self._misses, size = self._size }
-end
+function Memoized:stats() return { hits = self._hits, misses = self._misses, size = self._size } end
 
 return make

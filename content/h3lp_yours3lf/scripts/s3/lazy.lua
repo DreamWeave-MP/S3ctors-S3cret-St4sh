@@ -31,31 +31,38 @@
 ---@param fn fun(): any Raises from fn propagate on first computation.
 ---@return LazyValue lazy_value Callable object that computes at most once until reset.
 local function lazy(fn)
-    assert(type(fn) == 'function', 'lazy: factory must be a function')
+  assert(type(fn) == 'function', 'lazy: factory must be a function')
 
-    local computed = false
-    local value = nil
+  local computed = false
+  local evaluating = false
+  local value = nil
 
-    return setmetatable({}, {
-        __call = function()
-            if not computed then
-                value = fn()
-                computed = true
-            end
-            return value
-        end,
-        __index = {
-            ---@return boolean
-            computed = function() return computed end,
-            ---@return any?
-            peek = function() return value end,
-            ---@return nil
-            reset = function()
-                computed = false
-                value = nil
-            end,
-        },
-    })
+  return setmetatable({}, {
+    __call = function()
+      if not computed then
+        assert(not evaluating, 'lazy: recursive factory evaluation')
+        evaluating = true
+        local ok, result = pcall(fn)
+        evaluating = false
+        if not ok then error(result, 0) end
+        value = result
+        computed = true
+      end
+      return value
+    end,
+    __index = {
+      ---@return boolean
+      computed = function() return computed end,
+      ---@return any?
+      peek = function() return value end,
+      ---@return nil
+      reset = function()
+        assert(not evaluating, 'lazy: reset during factory evaluation')
+        computed = false
+        value = nil
+      end,
+    },
+  })
 end
 
 return lazy
