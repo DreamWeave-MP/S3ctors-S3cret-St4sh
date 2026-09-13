@@ -200,6 +200,19 @@ DEAD_VANILLA_FACTION_INFO_IDS = [
     "30253208512738732261",
 ]
 
+# Starwind reuses these vanilla regions for pseudo-exterior weather, but their
+# Morrowind/Bloodmoon sleep encounters are not valid for the standalone world.
+STANDALONE_REGION_SLEEP_CREATURES = [
+    ("Ascadian Isles Region", "ex_ascadianisles_sleep"),
+    ("Isinfier Plains Region", "bm_ex_isinplains_sleep"),
+    ("Azura's Coast Region", "ex_azurascoast_sleep"),
+    ("Bitter Coast Region", "ex_bittercoast_sleep"),
+    ("Grazelands Region", "ex_grazelands_sleep"),
+    ("Moesring Mountains Region", "bm_ex_moemountains_sleep"),
+    ("Red Mountain Region", "ex_RedMtn_all_sleep"),
+    ("West Gash Region", "ex_westgash_sleep"),
+]
+
 # TES3/TESCS DialogueInfo faction sentinel meaning "-NO FACTION-".
 NO_FACTION_SENTINELS = {"ffff"}
 
@@ -365,6 +378,39 @@ def prune_dead_standalone_vanilla_dialogue(work: Path) -> None:
         args.extend(["--exact-id", info_id])
     args.extend(masters)
     tc(work, *args)
+
+
+def clear_standalone_region_sleep_creatures(work: Path) -> None:
+    """Clear vanilla sleep encounters from Starwind's reused regions.
+
+    The Starwind patch supplies six of these regions itself; the other two are
+    inherited from the staged Morrowind and Bloodmoon masters. Modify only the
+    standalone build inputs so the ordinary merged and vanilla source data
+    retain their original gameplay.
+    """
+    inputs = [
+        "Starwind.esp",
+        "Morrowind.esm",
+        "Bloodmoon.esm",
+    ]
+    missing = [name for name in inputs if not (work / name).exists()]
+    if missing:
+        die(
+            "standalone region sleep cleanup is missing staged inputs: "
+            + ", ".join(missing)
+        )
+
+    log("Clearing vanilla sleep encounters from reused standalone regions...")
+    for region_id, sleep_creature in STANDALONE_REGION_SLEEP_CREATURES:
+        tc(
+            work,
+            "modify",
+            "--type", "REGN",
+            "--exact-id", region_id,
+            "--sub-match", "Sleep_Creature_ID:",
+            "--replace", f"/{sleep_creature}//",
+            *inputs,
+        )
 
 
 def common_preprocess(work: Path, mode: str) -> None:
@@ -674,6 +720,7 @@ def do_standalone_merge(work: Path) -> Path:
     # in Starwind and otherwise cause addVanillaRefs to materialize dialogue whose
     # only remaining dependencies are vanilla factions we intentionally do not want.
     prune_dead_standalone_vanilla_dialogue(work)
+    clear_standalone_region_sleep_creatures(work)
 
     # addVanillaRefs expects these names in cwd. They were already compiled here.
     log("Running recursive addVanillaRefs...")
