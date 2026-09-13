@@ -69,20 +69,22 @@ jobs:
 
       - name: Build Releases
         run: |
-          ARGS="--repository ${{ github.repository }} --build --changelog --release ${{ needs.release_cleanup.outputs.release_name }} "
+          RELEASE_NAME="${{ needs.release_cleanup.outputs.release_name }}"
+          ARGS=(--repository "${{ github.repository }}" --build --changelog --release "$RELEASE_NAME")
 
-          if [ "${{ needs.release_cleanup.outputs.release_name }}" != 'development' ]; then
+          if [ "$RELEASE_NAME" != 'development' ]; then
             # Sensitive to multiple hyphens in tag name — use underscores in mod names instead
-            ARGS+="--tag $( echo ${{ needs.release_cleanup.outputs.release_name }} | cut -f 1 -d '-') "
+            ARGS+=(--tag "${RELEASE_NAME%%-*}")
           fi
 
-          ./buildSite $ARGS
+          ./buildSite "${ARGS[@]}"
 
       - name: Set Nexus upload matrix
         id: nexus-matrix
         run: |
-          matrix=$(jq -c '[.mods[] | select(.nexus_group_id) | {slug, nexus_group_id, version, title}]' dist/*.modManifest)
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          manifests=(dist/*.modManifest)
+          matrix=$(jq -c '[.mods[] | select(.nexus_group_id) | {slug, nexus_group_id, version, title}]' "${manifests[@]}")
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v7
