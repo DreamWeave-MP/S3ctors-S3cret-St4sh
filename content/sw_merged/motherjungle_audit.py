@@ -413,6 +413,23 @@ def clear_standalone_region_sleep_creatures(work: Path) -> None:
         )
 
 
+def clear_standalone_exterior_residue(work: Path) -> None:
+    """Remove the known empty exterior worldspace island from Standalone.
+
+    The final Standalone inventory contains no intended exterior worldspace;
+    this removes its remaining exterior CELL, LAND, and LTEX records only from
+    the merged standalone input.
+    """
+    plugin = work / "Starwind.esp"
+    if not plugin.exists():
+        die("standalone exterior cleanup is missing Starwind.esp")
+
+    log("Removing empty standalone exterior worldspace residue...")
+    tc(work, "delete", "--type", "CELL", "--exterior", plugin.name)
+    tc(work, "delete", "--type", "LAND", plugin.name)
+    tc(work, "delete", "--type", "LTEX", plugin.name)
+
+
 def common_preprocess(work: Path, mode: str) -> None:
     # Non-TSI branch from historical build.sh.
     if mode != "tsi":
@@ -721,6 +738,7 @@ def do_standalone_merge(work: Path) -> Path:
     # only remaining dependencies are vanilla factions we intentionally do not want.
     prune_dead_standalone_vanilla_dialogue(work)
     clear_standalone_region_sleep_creatures(work)
+    clear_standalone_exterior_residue(work)
 
     # addVanillaRefs expects these names in cwd. They were already compiled here.
     log("Running recursive addVanillaRefs...")
