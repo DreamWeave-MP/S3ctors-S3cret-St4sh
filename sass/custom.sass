@@ -2,6 +2,22 @@
   .custom-divider
     display: none
 
+:root
+  --link-color: #b48cff
+  --link-hover-color: #d4b8ff
+
+a
+  color: var(--link-color)
+  text-decoration: none
+
+  &:hover,
+  &:focus-visible
+    color: var(--link-hover-color)
+
+.post-list .post-list-title,
+.post-list .post-tag
+  text-decoration: none
+
 html
   scrollbar-color: #5c2c72 #101010
   scrollbar-width: thin
