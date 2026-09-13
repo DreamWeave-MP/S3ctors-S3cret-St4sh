@@ -2,9 +2,10 @@
 
 local emptyOptions = {}
 
+local constants = require 'scripts.omw.mwui.constants'
 local ui = require 'openmw.ui'
 
----Build a Text layout.
+---Build a Text layout with Morrowind's normal text color and size by default.
 ---Allocates fresh layout, props, and external tables. The returned layout is passive and must
 ---be mounted and updated by its owner if its text changes later.
 ---@param options? {text?: string, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
@@ -12,6 +13,10 @@ local ui = require 'openmw.ui'
 local function text(options)
   options = options or emptyOptions
   local props = {}
+  if options.template == nil then
+    props.textColor = constants.normalColor
+    props.textSize = constants.textNormalSize
+  end
   if options.props then
     for key, value in next, options.props do
       props[key] = value

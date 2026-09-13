@@ -5,6 +5,7 @@ local util = require 'openmw.util'
 
 local box = require 'scripts.s3.components.box'
 local column = require 'scripts.s3.components.column'
+local constants = require 'scripts.omw.mwui.constants'
 local meter = require 'scripts.s3.components.meter'
 local row = require 'scripts.s3.components.row'
 local slider = require 'scripts.s3.components.slider'
@@ -19,6 +20,10 @@ local relativeSliderSize = UtilVector2(-40, 18)
 local relativeMeterSize = UtilVector2(-40, 16)
 local halfMeterSize = UtilVector2(-12, 16)
 local gap = UtilVector2(12, 0)
+local headerTextProps = {
+  textColor = constants.headerColor,
+  textSize = constants.textHeaderSize,
+}
 local function refresh() I.H3ComponentTest.refresh() end
 
 ---@return openmw.ui.Layout
@@ -29,7 +34,13 @@ local function relativeSizing()
     children = {
       column {
         children = {
-          text { text = 'Relative sizing + explicit slider trackWidth' },
+          text {
+            text = 'Relative sizing + explicit slider trackWidth',
+            props = headerTextProps,
+          },
+          text {
+            text = 'Drag the slider to verify redraw with a relative-width track.',
+          },
           slider {
             value = 25,
             min = 0,
