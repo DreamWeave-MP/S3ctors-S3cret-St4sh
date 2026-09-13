@@ -15,7 +15,6 @@
         {% set_global docs_current_description = section.description %}
         {% set_global docs_current_toc = section.toc %}
     {% endif %}
-
     {% set_global docs_root_path = "" %}
     {% for ancestor_path in docs_active_paths %}
         {% set candidate = get_section(path=ancestor_path, metadata_only=true) %}
@@ -95,7 +94,7 @@
         {% endif %}
     <div class="docs-shell{% if not docs_has_toc %} docs-shell--no-toc{% endif %}">
         <aside class="docs-sidebar">
-            {{ docs_sidebar::render(section=docs_root, current_url=current_url, active_paths=active_paths, root=true, root_label=docs_sidebar_label) }}
+            {{ docs_sidebar::render(nav_section=docs_root, current_url=current_url, active_paths=active_paths, root=true, root_label=docs_sidebar_label) }}
         </aside>
 
         {% if docs_has_toc %}

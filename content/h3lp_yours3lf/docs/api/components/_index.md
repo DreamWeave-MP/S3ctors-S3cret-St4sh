@@ -7,6 +7,23 @@ sort_by: title
 weight: 1
 extra:
   kind: api
+  sidebar_groups:
+    - title: Basic layout shape
+      pages: [widget, container, row, column]
+    - title: Text, images, and spacing
+      pages: [text, image, spacer]
+    - title: Lists and repeated content
+      pages: [list, list-item, grid]
+    - title: Framed content
+      pages: [box, book-frame, dialog, tooltip]
+    - title: Actions and indicators
+      pages: [button, icon-button, meter, item-slot]
+    - title: State and input
+      pages: [toggle, slider, selector, number-input, search-input, text-input]
+    - title: Tabbed or expandable content
+      pages: [tabs, collapsible]
+    - title: Morrowind window chrome
+      pages: [head-block, caption, pin-button, window]
 aliases:
   - /h3lp_yours3lf/docs/api/ui-components/
 ---

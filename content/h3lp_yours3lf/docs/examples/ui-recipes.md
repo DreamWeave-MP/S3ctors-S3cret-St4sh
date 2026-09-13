@@ -90,7 +90,7 @@ element = ui.create {
 }
 ```
 
-See [toggle](../api/components/toggle.md), [slider](../api/components/slider.md), and [numberInput](../api/components/number-input.md).
+See [toggle](@/h3lp_yours3lf/docs/api/components/toggle.md), [slider](@/h3lp_yours3lf/docs/api/components/slider.md), and [numberInput](@/h3lp_yours3lf/docs/api/components/number-input.md).
 
 ## Inventory-ish grid
 
@@ -165,7 +165,7 @@ element = ui.create {
 }
 ```
 
-For real inventory data, rebuild or update the owner when item data changes. See [grid](../api/components/grid.md), [itemSlot](../api/components/item-slot.md), and [tooltip](../api/components/tooltip.md).
+For real inventory data, rebuild or update the owner when item data changes. See [grid](@/h3lp_yours3lf/docs/api/components/grid.md), [itemSlot](@/h3lp_yours3lf/docs/api/components/item-slot.md), and [tooltip](@/h3lp_yours3lf/docs/api/components/tooltip.md).
 
 ## Tabbed window
 
@@ -212,7 +212,7 @@ element = ui.create {
 }
 ```
 
-See [tabs](../api/components/tabs.md) and [window](../api/components/window.md).
+See [tabs](@/h3lp_yours3lf/docs/api/components/tabs.md) and [window](@/h3lp_yours3lf/docs/api/components/window.md).
 
 ## Searchable list
 
@@ -274,4 +274,4 @@ element = ui.create {
 }
 ```
 
-See [searchInput](../api/components/search-input.md) and [list](../api/components/list.md).
+See [searchInput](@/h3lp_yours3lf/docs/api/components/search-input.md) and [list](@/h3lp_yours3lf/docs/api/components/list.md).
