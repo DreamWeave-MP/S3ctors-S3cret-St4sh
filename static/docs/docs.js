@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   docsShell.querySelectorAll('.docs-article pre').forEach(function(block) {
     const code = block.querySelector('code');
-    if (!code) {
+    if (!code || block.parentElement.classList.contains('docs-code-block')) {
       return;
     }
 
