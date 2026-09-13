@@ -2,7 +2,6 @@
 
 local emptyOptions = {}
 
-local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -90,7 +89,7 @@ local function selector(options)
       name = 'value',
       text = label,
       props = options.labelProps,
-      template = options.labelTemplate or I.MWUI.templates.textNormal,
+      template = options.labelTemplate,
     },
     makeButton('next', nextTexture, 1),
   }

@@ -25,7 +25,7 @@ Most builders share `name`, `props`, `external`, `events`, `userData`, and `temp
 | `widget` | `require 'scripts.s3.components.widget'(options?) → Layout` | Build a passive `ui.TYPE.Widget`. |
 | `container` | `require 'scripts.s3.components.container'(options?) → Layout` | Build a passive `ui.TYPE.Container`. |
 | `box` | `require 'scripts.s3.components.box'(options?) → Layout` | Build an MWUI box, using `I.MWUI.templates.box` by default. |
-| `text` | `require 'scripts.s3.components.text'(options?) → Layout` | Build a `ui.TYPE.Text`; `options.text` supplies `props.text`. |
+| `text` | `require 'scripts.s3.components.text'(options?) → Layout` | Build a `ui.TYPE.Text`; `options.text` supplies `props.text`, and normal Morrowind text color and size are the defaults. |
 | `image` | `require 'scripts.s3.components.image'(options?) → Layout` | Build a `ui.TYPE.Image`; `options.resource` supplies a prebuilt texture resource. |
 
 ```lua
@@ -41,6 +41,8 @@ local panel = box {
 ```
 
 `image` does not call `ui.texture`; callers provide a resource or put one in `props.resource`. Shared MWUI templates are read-only inputs to these builders.
+
+`text` reads the normal Morrowind color and size from `scripts.omw.mwui.constants` when no template is supplied. Override `props.textColor` or `props.textSize` for another text treatment; a custom `template` remains available when it supplies different defaults or other layout properties.
 
 ## Flow and spacing
 
@@ -74,7 +76,7 @@ local panel = box {
 | --- | --- | --- |
 | `toggle` | `require 'scripts.s3.components.toggle'(options?) → Layout` | Build a state-labelled yes/no button; its layout updates before `onChange` receives the next boolean. |
 | `slider` | `require 'scripts.s3.components.slider'(options?) → Layout` | Build a bounded meter whose fill layout updates during pointer interaction; supports `min`, `max`, and `step`. |
-| `selector` | `require 'scripts.s3.components.selector'(options?) → Layout` | Build a previous/value/next selector whose displayed value follows the selected item; the value uses `I.MWUI.templates.textNormal` by default and accepts `labelTemplate`. |
+| `selector` | `require 'scripts.s3.components.selector'(options?) → Layout` | Build a previous/value/next selector whose displayed value follows the selected item; the value uses the text component defaults and accepts `labelTemplate`. |
 | `tabs` | `require 'scripts.s3.components.tabs'(options?) → Layout` | Build a tab strip with mutable selected visual state; it does not create or own page content. |
 | `collapsible` | `require 'scripts.s3.components.collapsible'(options) → Layout` | Build a disclosure header and a body whose visibility follows the expanded state. |
 | `numberInput` | `require 'scripts.s3.components.numberInput'(options?) → Layout` | Build a numeric TextEdit with raw editing text and commit-time clamping, optional integer rounding, and stepping. |

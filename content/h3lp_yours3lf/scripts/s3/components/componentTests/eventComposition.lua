@@ -5,6 +5,7 @@ local async = require 'openmw.async'
 local util = require 'openmw.util'
 
 local column = require 'scripts.s3.components.column'
+local constants = require 'scripts.omw.mwui.constants'
 local numberInput = require 'scripts.s3.components.numberInput'
 local pinButton = require 'scripts.s3.components.pinButton'
 local row = require 'scripts.s3.components.row'
@@ -17,16 +18,20 @@ local UtilVector2 = util.vector2
 local StrFormat = string.format
 local sliderSize = UtilVector2(220, 18)
 local inputSize = UtilVector2(120, 24)
+local headerTextProps = {
+  textColor = constants.headerColor,
+  textSize = constants.textHeaderSize,
+}
 
----@return openmw.ui.Layout
-local function eventComposition()
+local function makeCounter(label)
   local semantic = 0
   local lowLevel = 0
-  local bubbled = 0
-  local status = text { text = 'semantic=0 low=0 bubbled=0' }
+  local status = text {
+    text = StrFormat('%s: semantic=0 low=0', label),
+  }
 
   local function redraw()
-    status.props.text = StrFormat('semantic=%d low=%d bubbled=%d', semantic, lowLevel, bubbled)
+    status.props.text = StrFormat('%s: semantic=%d low=%d', label, semantic, lowLevel)
     I.H3ComponentTest.refresh()
   end
 
@@ -41,10 +46,26 @@ local function eventComposition()
     return true
   end
 
+  return status, semanticHit, lowHit
+end
+
+---@return openmw.ui.Layout
+local function eventComposition()
+  local toggleStatus, toggleSemanticHit, toggleLowHit = makeCounter 'Toggle'
+  local pinStatus, pinSemanticHit, pinLowHit = makeCounter 'Pin button (no bubble)'
+  local sliderStatus, sliderSemanticHit, sliderLowHit = makeCounter 'Slider (drag)'
+  local numberStatus, numberSemanticHit, numberLowHit = makeCounter 'Number input (type, then blur)'
+  local searchStatus, searchSemanticHit, searchLowHit = makeCounter 'Search input (type or clear)'
+  local bubbled = 0
+  local bubbleStatus = text {
+    text = 'Root bubbles (toggle/search clicks): 0',
+  }
+
   local rootEvents = {
     mouseClick = async:callback(function()
       bubbled = bubbled + 1
-      redraw()
+      bubbleStatus.props.text = StrFormat('Root bubbles (toggle/search clicks): %d', bubbled)
+      I.H3ComponentTest.refresh()
       return true
     end),
   }
@@ -53,57 +74,68 @@ local function eventComposition()
     name = 'ct_demo_event_composition',
     events = rootEvents,
     children = {
-      text { text = 'Semantic callbacks + existing low-level handlers + bubbling' },
-      status,
+      text {
+        text = 'Callback layers: semantic callbacks, raw handlers, and bubbling',
+        props = headerTextProps,
+      },
+      text {
+        text = 'semantic = component callback | low = supplied raw event | root = bubbled click',
+      },
+      toggleStatus,
 
       row {
         children = {
           toggle {
             label = 'Toggle',
-            onChange = semanticHit,
-            events = { mouseClick = async:callback(lowHit) },
+            onChange = toggleSemanticHit,
+            events = { mouseClick = async:callback(toggleLowHit) },
           },
           pinButton {
-            onToggle = semanticHit,
-            events = { mouseClick = async:callback(lowHit) },
+            onToggle = pinSemanticHit,
+            events = { mouseClick = async:callback(pinLowHit) },
           },
         },
       },
 
+      pinStatus,
+      bubbleStatus,
+      sliderStatus,
       slider {
         value = 50,
         min = 0,
         max = 100,
         props = { size = sliderSize },
-        onChange = semanticHit,
+        onChange = sliderSemanticHit,
         events = {
-          mousePress = async:callback(lowHit),
-          mouseMove = async:callback(lowHit),
-          mouseRelease = async:callback(lowHit),
+          mousePress = async:callback(sliderLowHit),
+          mouseMove = async:callback(sliderLowHit),
+          mouseRelease = async:callback(sliderLowHit),
         },
       },
 
+      numberStatus,
       numberInput {
         value = 2,
         min = 0,
         max = 10,
         props = { size = inputSize },
-        onChange = semanticHit,
+        onChange = numberSemanticHit,
         onCommit = I.H3ComponentTest.refresh,
         events = {
-          textChanged = async:callback(lowHit),
-          focusLoss = async:callback(lowHit),
+          textChanged = async:callback(numberLowHit),
+          focusLoss = async:callback(numberLowHit),
         },
       },
 
+      searchStatus,
       searchInput {
         value = 'compose',
-        onChange = semanticHit,
+        onChange = searchSemanticHit,
         inputEvents = {
-          textChanged = async:callback(lowHit),
+          textChanged = async:callback(searchLowHit),
         },
         events = {
-          mouseClick = async:callback(lowHit),
+          mouseClick = async:callback(searchLowHit),
         },
       },
     },

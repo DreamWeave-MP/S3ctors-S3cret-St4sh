@@ -4,6 +4,7 @@ local I = require 'openmw.interfaces'
 local util = require 'openmw.util'
 
 local column = require 'scripts.s3.components.column'
+local constants = require 'scripts.omw.mwui.constants'
 local meter = require 'scripts.s3.components.meter'
 local row = require 'scripts.s3.components.row'
 local selector = require 'scripts.s3.components.selector'
@@ -24,8 +25,10 @@ local selectLabelSize = UtilVector2(52, 19)
 local choices = { 'Low', 'Med', 'High' }
 local sliderSteps = { 1, 5, 10 }
 local meterValues = { 0, 100, 14, 86, 28, 72, 42, 58, 56, 44, 70, 30, 84, 16, 96, 4 }
-local normalTextTemplate = I.MWUI.templates.textNormal
-local headerTextTemplate = I.MWUI.templates.textHeader
+local headerTextProps = {
+  textColor = constants.headerColor,
+  textSize = constants.textHeaderSize,
+}
 local passiveProps = { ignorePointerEvents = true }
 
 local function refresh() I.H3ComponentTest.refresh() end
@@ -40,7 +43,6 @@ local function makeSliderRow(index)
       autoSize = false,
       size = labelSize,
     },
-    template = normalTextTemplate,
   }
 
   return row {
@@ -72,7 +74,6 @@ local function makeMeterRow(index)
           autoSize = false,
           size = labelSize,
         },
-        template = normalTextTemplate,
       },
       meter {
         value = value,
@@ -94,7 +95,6 @@ local function makeControlRow(index)
           autoSize = false,
           size = labelSize,
         },
-        template = normalTextTemplate,
       },
       toggle {
         value = index % 2 == 0,
@@ -115,9 +115,9 @@ end
 
 ---@return openmw.ui.Layout
 local function dense()
-  local sliderRows = { text { text = 'Interactive sliders', template = headerTextTemplate } }
-  local meterRows = { text { text = 'Passive meters', template = headerTextTemplate } }
-  local controlRows = { text { text = 'Toggle / select controls', template = headerTextTemplate } }
+  local sliderRows = { text { text = 'Interactive sliders', props = headerTextProps } }
+  local meterRows = { text { text = 'Passive meters', props = headerTextProps } }
+  local controlRows = { text { text = 'Toggle / select controls', props = headerTextProps } }
 
   for index = 1, 16 do
     sliderRows[#sliderRows + 1] = makeSliderRow(index)
@@ -130,7 +130,7 @@ local function dense()
     children = {
       text {
         text = 'Dense component banks: construction, layout, and semantic update stress',
-        template = headerTextTemplate,
+        props = headerTextProps,
       },
       row {
         children = {

@@ -6,6 +6,7 @@ local util = require 'openmw.util'
 local caption = require 'scripts.s3.components.caption'
 local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
+local constants = require 'scripts.omw.mwui.constants'
 local searchInput = require 'scripts.s3.components.searchInput'
 local selector = require 'scripts.s3.components.selector'
 local spacer = require 'scripts.s3.components.spacer'
@@ -17,6 +18,10 @@ local UtilVector2 = util.vector2
 local narrow = UtilVector2(360, 0)
 local gap = UtilVector2(0, 6)
 local long = 'A deliberately obnoxious label that is much longer than normal UI copy'
+local headerTextProps = {
+  textColor = constants.headerColor,
+  textSize = constants.textHeaderSize,
+}
 local function refresh() I.H3ComponentTest.refresh() end
 
 ---@return openmw.ui.Layout
@@ -25,7 +30,7 @@ local function longLabels()
     name = 'ct_demo_long_labels',
     props = { size = narrow },
     children = {
-      text { text = 'Long-label and cramped-width behavior' },
+      text { text = 'Long-label and cramped-width behavior', props = headerTextProps },
       spacer { props = { size = gap } },
       caption {
         text = long,
@@ -68,7 +73,9 @@ local function longLabels()
         expanded = true,
         onToggle = refresh,
         children = {
-          text { text = long .. ' inside the disclosure body as well.' },
+          text {
+            text = long .. ' inside the disclosure body as well.',
+          },
         },
       },
     },
