@@ -14,3 +14,14 @@ AGENTS.md
 /openmwplayer
 /tools
 /tests/omw_context_luals/__pycache__
+/static/img/h3/DejaVuLGCSansMono.ttf
+/static/img/h3/OperationNapalm-Italic.ttf
+/static/img/h3/OperationNapalm-Regular.ttf
+/static/img/h3/crowbar.png
+/content/sw_merged/addVanillaRefs
+/content/sw_merged/merge_to_master
+/content/sw_merged/tes3cmd
+/content/sw_merged/tes3conv
+/content/sw_merged/plugins/**
+/content/sw_merged/.swbuild
+/content/sw_merged/__pycache__
