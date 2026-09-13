@@ -3,12 +3,13 @@
 local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
+local image = require 'scripts.s3.components.image'
 local ui = require 'openmw.ui'
 
 ---Build a bordered item slot layout with optional icon and count label.
----Allocates fresh layout, props, external, and content tables. Pass a prebuilt texture `resource`; this
----primitive does not register textures, query game state, or own any Element.
----@param options? {resource?: openmw.ui.TextureResource, count?: string|number, name?: string, props?: table, iconProps?: table, countProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---Allocates fresh layout, props, external, and content tables. A texture options table passed as
+---`resource` is converted by the image component; this primitive does not query game state or own any Element.
+---@param options? {resource?: openmw.ui.TextureResource|openmw.ui.TextureResourceOptions, count?: string|number, name?: string, props?: table, iconProps?: table, countProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
 local function itemSlot(options)
   options = options or emptyOptions
@@ -24,10 +25,7 @@ local function itemSlot(options)
   iconProps.ignorePointerEvents = true
 
   local content = {
-    {
-      type = ui.TYPE.Image,
-      props = iconProps,
-    },
+    image { resource = options.resource, props = iconProps },
   }
   if options.count ~= nil then
     local countProps = {}

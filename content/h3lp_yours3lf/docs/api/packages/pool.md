@@ -19,7 +19,10 @@ A custom factory takes no arguments and must return a non-nil value. A custom re
 ```lua
 local Pool = require 'scripts.s3.pool'
 local vectors = Pool.new(4, function()
-    return { x = 0, y = 0 }
+    return {
+        x = 0,
+        y = 0,
+    }
 end, function(vector)
     vector.x = 0
     vector.y = 0

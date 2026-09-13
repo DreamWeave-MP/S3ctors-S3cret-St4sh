@@ -24,24 +24,25 @@ local util = require 'openmw.util'
 local dragEvents = require 'scripts.s3.dragEvents'
 
 local layout = {
-    type = ui.TYPE.Widget,
-    props = {
-        anchor = util.vector2(0, 0),
-        relativePosition = util.vector2(0.1, 0.1),
-        size = util.vector2(320, 120),
-    },
+  props = {
+    anchor = util.vector2(0, 0),
+    relativePosition = util.vector2(0.1, 0.1),
+    size = util.vector2(320, 120),
+  },
 }
 
 local element
 
 dragEvents.install(layout, {
-    onDrag = function(changedLayout, newPosition)
-        print('Moved to', newPosition.x, newPosition.y)
-        element:update()
-    end,
+  onDrag = function(changedLayout, newPosition)
+    print('Moved to', newPosition.x, newPosition.y)
+    element:update()
+  end,
 })
 
-element = ui.create(layout)
+element = ui.create(
+  layout
+)
 ```
 
 The callback is responsible for applying the mutation to the rendered element. Changing `layout.props` without calling `element:update()` does not update an already-created element.
@@ -54,24 +55,24 @@ Provide `onResize` to enable resizing. A primary-button press near an edge start
 local dragEvents = require 'scripts.s3.dragEvents'
 
 dragEvents.install(layout, {
-    onDrag = function(changedLayout, newPosition)
-        element:update()
-    end,
-    onDragStart = function(changedLayout)
-        print('Interaction started')
-    end,
-    onDragEnd = function(changedLayout)
-        print('Interaction finished')
-    end,
-    onResizeStart = function(changedLayout, newAnchor, newPosition)
-        element:update()
-    end,
-    onResize = function(changedLayout, newSize)
-        element:update()
-    end,
-    onResizeEnd = function(changedLayout)
-        print('Resize finished')
-    end,
+  onDrag = function(changedLayout, newPosition)
+    element:update()
+  end,
+  onDragStart = function(changedLayout)
+    print('Interaction started')
+  end,
+  onDragEnd = function(changedLayout)
+    print('Interaction finished')
+  end,
+  onResizeStart = function(changedLayout, newAnchor, newPosition)
+    element:update()
+  end,
+  onResize = function(changedLayout, newSize)
+    element:update()
+  end,
+  onResizeEnd = function(changedLayout)
+    print('Resize finished')
+  end,
 })
 ```
 
@@ -81,16 +82,16 @@ If an application needs a resize policy other than free two-dimensional resizing
 
 ```lua
 dragEvents.install(layout, {
-    onDrag = function()
-        element:update()
-    end,
-    onResize = function()
-        element:update()
-    end,
-    resolveResize = function(_, proposedSize)
-        local width = math.max(0.15, proposedSize.x)
-        return require('openmw.util').vector2(width, width)
-    end,
+  onDrag = function()
+    element:update()
+  end,
+  onResize = function()
+    element:update()
+  end,
+  resolveResize = function(_, proposedSize)
+    local width = math.max(0.15, proposedSize.x)
+    return require('openmw.util').vector2(width, width)
+  end,
 })
 ```
 
@@ -143,10 +144,10 @@ local dragEvents = require 'scripts.s3.dragEvents'
 local section = storage.playerSection('MyModLayout')
 
 dragEvents.install(layout, {
-    section = section,
-    onDrag = function()
-        element:update()
-    end,
+  section = section,
+  onDrag = function()
+    element:update()
+  end,
 })
 
 -- Call this from the owning save lifecycle callback.

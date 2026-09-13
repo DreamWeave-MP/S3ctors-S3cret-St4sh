@@ -48,10 +48,6 @@ local windowGeometry = require 'scripts.s3.components.componentTests.windowGeome
 
 local UtilVector2 = util.vector2
 
-local whiteTexture = constants.whiteTexture
-local markerTexture = ui.texture { path = 'textures/menu_map_smark.dds' }
-local leftArrowTexture = ui.texture { path = 'textures/omw_menu_scroll_left.dds' }
-
 local sectionGapSize = UtilVector2(0, 4)
 local horizontalGapSize = UtilVector2(8, 0)
 local verticalGapSize = UtilVector2(0, 8)
@@ -62,14 +58,16 @@ local textInputSize = UtilVector2(180, 24)
 local smallIconSize = UtilVector2(14, 14)
 local meterSize = UtilVector2(150, 18)
 local sliderSize = UtilVector2(160, 18)
-local itemIconSize = UtilVector2(28, 28)
+local itemIconSize = UtilVector2(72, 72)
 local defaultPosition = UtilVector2(80, 80)
 local defaultSize = UtilVector2(760, 720)
 
 local swatchColor = util.color.rgb(0.30, 0.42, 0.72)
 local meterFillColor = util.color.rgb(0.15, 0.65, 0.25)
 local meterEmptyColor = util.color.rgb(0.18, 0.12, 0.12)
-local slotTint = util.color.rgb(0.72, 0.48, 0.18)
+local red = util.color.rgb(1, 0, 0)
+local green = util.color.rgb(0, 1, 0)
+local blue = util.color.rgb(0, 0, 1)
 
 local selectItems = { 'One', 'Two', 'Three' }
 local tabItems = { 'First', 'Second', 'Third' }
@@ -245,7 +243,7 @@ local function makeBodyLayout(state)
         children = {
           image {
             name = 'ct_image_marker',
-            resource = markerTexture,
+            resource = { path = 'textures/menu_map_smark.dds' },
             props = { size = markerSize },
           },
           spacer { name = 'ct_header_gap', props = { size = horizontalGapSize } },
@@ -271,7 +269,7 @@ local function makeBodyLayout(state)
               children = {
                 image {
                   name = 'ct_widget_image_fill',
-                  resource = whiteTexture,
+                  resource = { path = 'white' },
                   props = {
                     relativeSize = fullSize,
                     color = swatchColor,
@@ -322,7 +320,7 @@ local function makeBodyLayout(state)
             iconButton {
               name = 'ct_icon_button_notify',
               label = 'Icon',
-              resource = leftArrowTexture,
+              resource = { path = 'textures/omw_menu_scroll_left.dds' },
               iconProps = { size = smallIconSize },
               labelProps = normalTextProps,
               events = {
@@ -464,21 +462,21 @@ local function makeBodyLayout(state)
               items = {
                 itemSlot {
                   name = 'ct_item_slot_one',
-                  resource = markerTexture,
+                  resource = { path = 'white' },
                   count = 1,
-                  iconProps = { size = itemIconSize },
+                  iconProps = { size = itemIconSize, color = red },
                 },
                 itemSlot {
                   name = 'ct_item_slot_two',
-                  resource = whiteTexture,
+                  resource = { path = 'white' },
                   count = 2,
-                  iconProps = { size = itemIconSize, color = slotTint },
+                  iconProps = { size = itemIconSize, color = green },
                 },
                 itemSlot {
                   name = 'ct_item_slot_three',
-                  resource = leftArrowTexture,
+                  resource = { path = 'white' },
                   count = 3,
-                  iconProps = { size = itemIconSize },
+                  iconProps = { size = itemIconSize, color = blue },
                 },
               },
             },

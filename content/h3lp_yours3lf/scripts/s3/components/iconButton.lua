@@ -3,12 +3,13 @@
 local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
+local image = require 'scripts.s3.components.image'
 local ui = require 'openmw.ui'
 
 ---Build an MWUI button with an icon and optional label.
----Allocates fresh layout, props, external, and content tables. Pass a prebuilt texture `resource`; this
----primitive does not register textures or own element lifetime.
----@param options? {resource?: openmw.ui.TextureResource, label?: string, name?: string, props?: table, iconProps?: table, labelProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---Allocates fresh layout, props, external, and content tables. A texture options table passed as
+---`resource` is converted by the image component; this primitive does not query game state or own any Element.
+---@param options? {resource?: openmw.ui.TextureResource|openmw.ui.TextureResourceOptions, label?: string, name?: string, props?: table, iconProps?: table, labelProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
 local function iconButton(options)
   options = options or emptyOptions
@@ -24,10 +25,7 @@ local function iconButton(options)
   iconProps.ignorePointerEvents = true
 
   local rowContent = {
-    {
-      type = ui.TYPE.Image,
-      props = iconProps,
-    },
+    image { resource = options.resource, props = iconProps },
   }
   if options.label ~= nil then
     local labelProps = {}

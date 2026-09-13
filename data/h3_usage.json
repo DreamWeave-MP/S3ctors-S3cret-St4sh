@@ -150,7 +150,7 @@
     {
       "slug": "ui-components",
       "title": "UI Components",
-      "path": "@/h3lp_yours3lf/docs/api/ui-components.md",
+      "path": "@/h3lp_yours3lf/docs/api/components/_index.md",
       "aliases": [],
       "stability": "Evolving",
       "runtime": "OpenMW runtime",
