@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-      button.textContent = copied ? 'Copied' : 'Copy failed';
+      button.textContent = copied ? 'Copied!' : 'Copy failed';
       button.setAttribute('aria-label', copied ? 'Code copied to clipboard' : 'Copying code failed');
       window.setTimeout(function() {
         button.textContent = 'Copy';
