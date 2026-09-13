@@ -417,6 +417,40 @@ def collect_actor_population(path: Path) -> list[dict[str, str]]:
     return actors
 
 
+def parse_liveness_actor_population(path: Path | None) -> list[dict[str, str]] | None:
+    """Read the actor snapshot emitted before Rust prunes dialogue."""
+    if path is None or not path.exists():
+        return None
+
+    actors: list[dict[str, str]] = []
+    in_snapshot = False
+    complete = False
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line == "Dialogue liveness population begin":
+            actors = []
+            in_snapshot = True
+            complete = False
+            continue
+        if line == "Dialogue liveness population end":
+            complete = in_snapshot
+            in_snapshot = False
+            continue
+        if not in_snapshot or not line.startswith("Dialogue liveness actor\t"):
+            continue
+        fields = line.split("\t")
+        if len(fields) != 6:
+            continue
+        _, actor_type, actor_id, race, cls, sex = fields
+        actors.append({
+            "id": norm_id(actor_id),
+            "race": norm_id(race),
+            "class": norm_id(cls),
+            "sex": norm_id(sex),
+        })
+
+    return actors if complete else None
+
+
 def normalize_dialogue_type(value: Any) -> str:
     return norm_id(value).replace("_", " ").strip()
 
@@ -1544,7 +1578,9 @@ def main() -> None:
     effective = replay_openmw(full_stack)
     starwind_ids = collect_physical_dialogue_ids(args.starwind_solo)
     scripts = collect_scripts(args.starwind_solo)
-    actors = collect_actor_population(args.standalone)
+    final_actors = collect_actor_population(args.standalone)
+    liveness_actors = parse_liveness_actor_population(args.decouple_log)
+    actors = liveness_actors if liveness_actors is not None else final_actors
 
     projected, liveness_audit = build_liveness_projection(
         effective, starwind_ids, scripts, actors
@@ -1573,7 +1609,13 @@ def main() -> None:
     report["expected_base_mode"] = expected_base_mode
     report["reconstruction_stack"] = [str(p) for p in full_stack]
     report["starwind_ownership_source"] = str(args.starwind_solo)
-    report["actor_population_source"] = str(args.standalone)
+    report["actor_population_source"] = (
+        str(args.decouple_log) + " (pre-dialogue-liveness snapshot)"
+        if liveness_actors is not None
+        else str(args.standalone) + " (fallback; no Rust snapshot found)"
+    )
+    report["final_actor_population_count"] = len(final_actors)
+    report["liveness_actor_population_count"] = len(actors)
     report["materialization_log"] = (
         str(args.decouple_log) if args.decouple_log.exists() else None
     )
@@ -1585,7 +1627,7 @@ def main() -> None:
         "When staged standalone vanilla masters exist, v11 reconstructs against those exact build-local masters so intentional pre-addVanillaRefs pruning is reflected in expected dialogue.",
         "Vanilla INFOs are retained when the current pruning policy says they can still match.",
         "Dialogue INFO text is not used for DIAL topic discovery; vanilla topics do not expand the topic graph.",
-        "Actor population is read from final Standalone because addVanillaRefs imports dependencies before pruning.",
+        "Actor population is read from the addVanillaRefs pre-dialogue-liveness snapshot; final Standalone is only a fallback for older logs.",
         "speaker_cell and dialogue filters are preserved and compared verbatim.",
         "OpenMW-effective order differences are classified by whether inverted INFO pairs can statically compete.",
         "Mutual-exclusion proofs are deliberately conservative; unproven does not mean definitely harmful.",
