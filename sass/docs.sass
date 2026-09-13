@@ -35,8 +35,20 @@
 
 .docs-api-status dd
   margin: .15em 0 0
-  color: var(--accent)
+  color: var(--color)
   overflow-wrap: anywhere
+
+.docs-api-status__stability
+  font-weight: 600
+
+.docs-api-status__stability--stable
+  color: #7ee2a8
+
+.docs-api-status__stability--evolving
+  color: #f2c66d
+
+.docs-api-status__stability--specialized
+  color: #b48cff
 
 .docs-usage-map
   margin: 1.5em 0
@@ -214,6 +226,18 @@
 
 .docs-sidebar__section > details > ul
   padding-left: 1em
+
+.docs-sidebar__group-label
+  display: block
+  padding: .3em .6em
+  color: var(--color)
+  font-size: inherit
+  font-weight: bold
+  letter-spacing: normal
+  opacity: .82
+
+.docs-sidebar__group > details > ul
+  padding-left: .7em
 
 .docs-sidebar__section
   margin-top: .35em

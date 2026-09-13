@@ -14,7 +14,7 @@ Use `randomGen` when a mod needs randomness that should not consume or reseed Op
 This is a fast gameplay PRNG, not a security primitive and not a reproducible save-data source. It does not expose a reseed operation. Its sequence belongs to the Lua environment that loaded the module; do not persist the internal state or use it for authoritative randomness that must replay exactly.
 {% end %}
 
-## Values and ranges
+## Example
 
 ```lua
 local random = require 'scripts.s3.randomGen'
@@ -25,6 +25,8 @@ if chance <= 0.25 then playRareEffect() end
 local index = random.range(1, #entries, true)
 local pitch = random.range(-2, 2)
 ```
+
+## Values and ranges
 
 | Function | Behavior |
 | --- | --- |

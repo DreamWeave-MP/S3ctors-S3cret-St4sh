@@ -4,7 +4,7 @@
 {% if api.slug == page.slug %}
 <aside class="docs-api-status" aria-label="{{ api.title | escape }} status">
     <dl>
-        <div><dt>Stability</dt><dd>{{ api.stability }}</dd></div>
+        <div><dt>Stability</dt><dd class="docs-api-status__stability docs-api-status__stability--{{ api.stability | lower }}">{{ api.stability }}</dd></div>
         <div><dt>Runtime</dt><dd>{{ api.runtime }}</dd></div>
         <div><dt>Context</dt><dd>{{ api.context }}</dd></div>
         <div><dt>Persistence</dt><dd>{{ api.persistence }}</dd></div>
