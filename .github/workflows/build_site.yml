@@ -21,7 +21,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -29,10 +29,17 @@ jobs:
         run: |
           ./buildSite --repository ${{ github.repository }} --changelog
 
-      - name: Build Zola + upload Pages artifact
-        uses: getzola/github-pages@066755243e69f508fd1a74739fbf1a65f656c790
+      - name: Build Zola
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            ghcr.io/getzola/zola:v0.22.1 build
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          zola_version: v0.22.1
+          path: public/
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,7 +53,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   release_cleanup:
-    uses: DreamWeave-MP/StroggForge/.github/workflows/createRelease.yml@v6
+    uses: DreamWeave-MP/StroggForge/.github/workflows/createRelease.yml@v40
     secrets: inherit
 
   build-mods:
@@ -56,7 +63,7 @@ jobs:
       nexus-matrix: ${{ steps.nexus-matrix.outputs.matrix }}
     steps:
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -78,13 +85,13 @@ jobs:
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
       - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
 
       - name: Upload releases
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -103,7 +110,7 @@ jobs:
         mod: ${{ fromJson(needs.build-mods.outputs.nexus-matrix) }}
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
