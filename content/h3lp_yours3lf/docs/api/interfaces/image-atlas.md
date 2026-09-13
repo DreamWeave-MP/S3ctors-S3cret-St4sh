@@ -23,28 +23,28 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local atlas = I.S3AtlasConstructor.constructAtlas {
-    atlasPath = '<atlas VFS path>',
-    tileSize = util.vector2(64, 64),
-    tilesPerRow = 8,
-    totalTiles = 32,
+  atlasPath = '<atlas VFS path>',
+  tileSize = util.vector2(64, 64),
+  tilesPerRow = 8,
+  totalTiles = 32,
 }
 
 atlas:spawn {
-    layer = 'HUD',
-    name = 'MyModIcon',
-    relativeSize = util.vector2(0.08, 0.08),
-    relativePosition = util.vector2(0.5, 0.5),
-    anchor = util.vector2(0.5, 0.5),
+  layer = 'HUD',
+  name = 'MyModIcon',
+  relativeSize = util.vector2(0.08, 0.08),
+  relativePosition = util.vector2(0.5, 0.5),
+  anchor = util.vector2(0.5, 0.5),
 }
 
 local nextFrame = every(0.1)
 
 return {
-    engineHandlers = {
-        onFrame = function()
-            if nextFrame() then atlas:cycleFrame(true) end
-        end,
-    },
+  engineHandlers = {
+    onFrame = function()
+      if nextFrame() then atlas:cycleFrame(true) end
+    end,
+  },
 }
 ```
 

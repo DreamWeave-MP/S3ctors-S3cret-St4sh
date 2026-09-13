@@ -5,9 +5,9 @@ local emptyOptions = {}
 local ui = require 'openmw.ui'
 
 ---Build an Image layout.
----Allocates fresh layout, props, and external tables. Pass a prebuilt `resource` or set
----`props.resource`; this primitive intentionally does not call `ui.texture`.
----@param options? {resource?: openmw.ui.TextureResource, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---Allocates fresh layout, props, and external tables. A texture options table passed as
+---`resource` or `props.resource` is converted with `ui.texture`.
+---@param options? {resource?: openmw.ui.TextureResource|openmw.ui.TextureResourceOptions, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
 local function image(options)
   options = options or emptyOptions
@@ -19,6 +19,8 @@ local function image(options)
   end
 
   if options.resource ~= nil then props.resource = options.resource end
+
+  if type(props.resource) == 'table' then props.resource = ui.texture(props.resource) end
   if props.ignorePointerEvents == nil then props.ignorePointerEvents = options.events == nil end
 
   local external

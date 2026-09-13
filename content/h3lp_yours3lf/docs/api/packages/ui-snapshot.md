@@ -22,12 +22,12 @@ local uiSnapshot = require 'scripts.s3.uiSnapshot'
 local util = require 'openmw.util'
 
 local element = ui.create {
-    type = ui.TYPE.Text,
-    layer = 'HUD',
-    props = {
-        text = 'Loading...',
-        relativeSize = util.vector2(0.4, 0.05),
-    },
+  type = ui.TYPE.Text,
+  layer = 'HUD',
+  props = {
+    text = 'Loading...',
+    relativeSize = util.vector2(0.4, 0.05),
+  },
 }
 
 print(uiSnapshot.format(element))
@@ -37,12 +37,12 @@ print(uiSnapshot.format(element))
 
 ```lua
 local snapshot = uiSnapshot.capture(element, {
-    maxDepth = 6,
-    maxChildren = 32,
-    maxString = 80,
-    includeEvents = false,
-    includeUserData = true,
-    vectorMode = 'placeholder',
+  maxDepth = 6,
+  maxChildren = 32,
+  maxString = 80,
+  includeEvents = false,
+  includeUserData = true,
+  vectorMode = 'placeholder',
 })
 ```
 

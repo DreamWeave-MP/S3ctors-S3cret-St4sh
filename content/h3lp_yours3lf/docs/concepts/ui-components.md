@@ -1,70 +1,51 @@
 ---
-title: UI Components and Layouts
-description: Compose passive OpenMW UI layouts without hiding ownership or lifecycle.
+title: UI Layouts and Lifecycle
+description: Build, mount, update, and own OpenMW UI layouts.
 weight: 25
 extra:
   kind: concept
 ---
 
-H3's UI components are layout builders and controlled interaction compositions, not retained widgets. A component returns an `openmw.ui.Layout` table; interactive handlers mutate that layout before notifying the caller, but the caller remains responsible for updating the mounted root `Element`.
+H3 components build OpenMW layout tables. They do not create elements, choose layers, retain your state, or own the lifetime of a rendered surface.
 
-{% usage_note(title="Menu and player layouts · Caller owns the element") %}
-The component modules are available in `menu` and `player` scripts. The caller owns the root element, its layer, its rebuild/destroy path, and any durable state used to produce a new layout. Low-level event callbacks are preserved and composed where a component owns the same event; controlled component callbacks are adapted by H3 and receive semantic values after the component has updated its layout state. Any interactive component that mutates layout state needs an owner update path: have its state callback or low-level event callback call the mounted root `Element:update()`, or the rendered UI can remain stale even though the layout table changed.
+{% usage_note(title="Runnable context · Register a menu or player script") %}
+UI code runs in a registered `menu` or `player` script. Requiring `openmw.ui` does not register a script or make code execute. Add the script to your mod's `.omwscripts` or plugin configuration and enable that content.
 {% end %}
 
-## Build, mount, update
+{% usage_note(title="Menu and player layouts · Caller owns the element") %}
+Keep the root element, choose its layer, and decide when to rebuild or destroy it. Keep interactive state in your script. H3 callbacks report the new value after updating the component layout; refresh the mounted root with `element:update()` when the visual tree needs to change.
+{% end %}
 
-Build the complete layout tree first, then mount the root deliberately:
+## Layout, mount, and update
+
+A layout is a Lua table that describes one widget and its children. An element is the live OpenMW object created from that table. H3 components return layouts; `ui.create` gives you the element.
 
 ```lua
 local ui = require 'openmw.ui'
-local column = require 'scripts.s3.components.column'
 local text = require 'scripts.s3.components.text'
 
-local layout = {
-    layer = 'Windows',
-    props = { size = require('openmw.util').vector2(360, 120) },
-    content = ui.content({
-        column {
-            name = 'body',
-            children = {
-                text { name = 'title', text = 'H3 UI' },
-            },
-        },
-    }),
+local status = text {
+  text = 'Ready',
 }
 
-local element = ui.create(layout)
+local element = ui.create {
+  type = ui.TYPE.Container,
+  layer = 'Windows',
+  content = ui.content {
+    status,
+  },
+}
+
+status.props.text = 'Updated'
+element:update()
 ```
 
-Keep the live `element` when later mutation is needed. Updating the old construction table does not update the engine; mutate the live element or its live layout and call `element:update()`. Structural changes belong to the owner of the root, not to a distant child that happens to have a reference to it.
+`status` is a layout. `element` is the live mounted OpenMW object. Mutating the layout table does not redraw the engine until the owning element is updated. Use a `Container` for a content-fitting root; use a `Widget` when you need explicit `size` or `relativeSize`. Rebuild the root for structural changes; use `element:update()` for property changes.
 
-## Shared options
+## Callbacks and context
 
-Most builders share these options; specialized builders expose their own inputs:
+H3's semantic callbacks are ordinary Lua functions. Low-level OpenMW event callbacks in an `events` table must be wrapped with `async:callback`. Interactive components update their own layout state before calling your semantic callback, but they do not know which root owns the rendered tree.
 
-| Field | Behavior |
-| --- | --- |
-| `name` | Name used for lookup from the owning `Content`. Keep names unique within that owner. |
-| `props` | Shallow-copied layout properties. Component-specific convenience values are applied afterward. |
-| `external` | Shallow-copied external layout properties, such as `grow` or `stretch`. |
-| `events` | Event table passed to the returned layout. Callbacks are not automatically async-wrapped. |
-| `userData` | Caller-owned data attached to the layout using the camel-cased `userData` field. |
-| `template` | Optional template override when the component supports one. |
-| `content` / `children` | Common on container-like builders for child layouts or an existing `openmw.ui.Content`; `content` takes precedence. |
+Keep these components in `menu` or `player` scripts. A global or local script can coordinate state, but it cannot directly use the UI package.
 
-Components copy the outer `props` and `external` tables, but they do not deep-copy values, child layouts, textures, or caller-owned state. Construction allocates layout tables and usually one or more `Content` wrappers. Do not treat a returned layout as a pooled or save-safe object.
-
-Layouts compose structure. Components such as `toggle` and `slider` mutate their returned layout before notifying the caller; the caller owns the mounted Element and must refresh it when the visual state changes.
-
-## Component families
-
-- **Primitives:** `widget`, `container`, `box`, `text`, and `image` map directly to basic OpenMW layout shapes or shared MWUI templates.
-- **Flow:** `row` and `column` are horizontal and vertical Flex layouts; `list` is a vertical Flex layout; `grid` builds a vertical Flex of horizontal rows.
-- **Spacing and framing:** `spacer`, `bookFrame`, and `dialog` add geometry or presentation without creating a window or layer.
-- **Actions and state display:** `button`, `iconButton`, `meter`, and `itemSlot` compose common controls and indicators.
-- **Controls:** `toggle`, `slider`, `selector`, `tabs`, `collapsible`, `numberInput`, and `searchInput` report changes while the caller owns their state.
-- **Input and explanation:** `textInput` builds a TextEdit line; `tooltip` builds a boxed content layout but does not position or show it.
-- **Morrowind chrome:** `headBlock`, `caption`, `pinButton`, and `window` compose caller-owned framed surfaces without using `ui.TYPE.Window`.
-
-For the exact options and defaults, see the [UI Components reference](@/h3lp_yours3lf/docs/api/ui-components.md).
+The [UI Components API](@/h3lp_yours3lf/docs/api/components/_index.md) lists the builders. The [UI Recipes](@/h3lp_yours3lf/docs/examples/ui-recipes.md) show larger compositions.
