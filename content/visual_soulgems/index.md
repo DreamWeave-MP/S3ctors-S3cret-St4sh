@@ -1,6 +1,7 @@
 ---
 title: Visual Soul Gems
 description: Give filled soul gems distinct visuals in OpenMW with four selectable or randomized styles, including support for black soul gems.
+date: 2026-09-11
 
 taxonomies:
   tags:

@@ -1,6 +1,7 @@
 ---
 title: T4rg3t5
 description: Lock on. Stay on. Dark Souls 1-inspired targeting for the modern outlander.
+date: 2026-09-10
 
 taxonomies:
   tags:
