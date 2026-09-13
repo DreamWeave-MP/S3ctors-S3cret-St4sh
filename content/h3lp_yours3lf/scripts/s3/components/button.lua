@@ -1,53 +1,68 @@
 ---@omw-context menu|player
 
-local ui = require 'openmw.ui'
+local emptyOptions = {}
+
 local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
 
 ---Build a simple MWUI text button layout.
 ---Allocates fresh layout, props, external, padding, text, and content tables. The button is only a
 ---layout; caller-owned event callbacks must be async-wrapped before use.
----@param opts? {label?: string, name?: string, props?: table, labelProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.Layout[], children?: openmw.ui.Content|openmw.ui.Layout[], template?: openmw.ui.Template}
+---@param options? {label?: string, name?: string, props?: table, labelProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.LayoutOrElement[], children?: openmw.ui.Content|openmw.ui.LayoutOrElement[], template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
-local function button(opts)
-    opts = opts or {}
-    local labelProps = {}
-    for key, value in pairs(opts.labelProps or {}) do
-        labelProps[key] = value
+local function button(options)
+  options = options or emptyOptions
+
+  local labelProps = {}
+  if options.labelProps then
+    for key, value in next, options.labelProps do
+      labelProps[key] = value
     end
-    if opts.label ~= nil then
-        labelProps.text = opts.label
-    end
-    local children = opts.content or opts.children or {
-        {
-            template = I.MWUI.templates.padding,
-            content = ui.content({
-                {
-                    template = I.MWUI.templates.textNormal,
-                    props = labelProps,
-                },
-            }),
+  end
+
+  if options.label ~= nil then labelProps.text = options.label end
+  if labelProps.ignorePointerEvents == nil then labelProps.ignorePointerEvents = true end
+
+  local children = options.content or options.children
+  if not children then
+    children = {
+      {
+        template = I.MWUI.templates.padding,
+        props = { ignorePointerEvents = true },
+        content = ui.content {
+          {
+            template = I.MWUI.templates.textNormal,
+            props = labelProps,
+          },
         },
+      },
     }
-    local props = {}
-    for key, value in pairs(opts.props or {}) do
-        props[key] = value
+  end
+
+  local props = {}
+  if options.props then
+    for key, value in next, options.props do
+      props[key] = value
     end
-    local external = nil
-    if opts.external then
-        external = {}
-        for key, value in pairs(opts.external) do
-            external[key] = value
-        end
+  end
+
+  local external
+  if options.external then
+    external = {}
+    for key, value in next, options.external do
+      external[key] = value
     end
-    return {
-        template = opts.template or I.MWUI.templates.box,
-        name = opts.name,
-        props = props,
-        external = external,
-        events = opts.events,
-        userData = opts.userData,
-        content = ui.content(children),
-    }
+  end
+
+  return {
+    template = options.template or I.MWUI.templates.box,
+    name = options.name,
+    props = props,
+    external = external,
+    events = options.events,
+    userData = options.userData,
+    content = ui.content(children),
+  }
 end
 
 return button

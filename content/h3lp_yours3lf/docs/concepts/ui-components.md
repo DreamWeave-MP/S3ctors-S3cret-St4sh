@@ -55,13 +55,15 @@ Most builders share these options; specialized builders expose their own inputs:
 
 Components copy the outer `props` and `external` tables, but they do not deep-copy values, child layouts, textures, or caller-owned state. Construction allocates layout tables and usually one or more `Content` wrappers. Do not treat a returned layout as a pooled or save-safe object.
 
+Layouts compose structure. Components such as `toggle` and `slider` mutate their returned layout before notifying the caller; the caller owns the mounted Element and must refresh it when the visual state changes.
+
 ## Component families
 
 - **Primitives:** `widget`, `container`, `box`, `text`, and `image` map directly to basic OpenMW layout shapes or shared MWUI templates.
 - **Flow:** `row` and `column` are horizontal and vertical Flex layouts; `list` is a vertical Flex layout; `grid` builds a vertical Flex of horizontal rows.
 - **Spacing and framing:** `spacer`, `bookFrame`, and `dialog` add geometry or presentation without creating a window or layer.
 - **Actions and state display:** `button`, `iconButton`, `meter`, and `itemSlot` compose common controls and indicators.
-- **Controls:** `toggle`, `slider`, `select`, `tabs`, `collapsible`, `numberInput`, and `searchInput` report changes while the caller owns their state.
+- **Controls:** `toggle`, `slider`, `selector`, `tabs`, `collapsible`, `numberInput`, and `searchInput` report changes while the caller owns their state.
 - **Input and explanation:** `textInput` builds a TextEdit line; `tooltip` builds a boxed content layout but does not position or show it.
 - **Morrowind chrome:** `headBlock`, `caption`, `pinButton`, and `window` compose caller-owned framed surfaces without using `ui.TYPE.Window`.
 

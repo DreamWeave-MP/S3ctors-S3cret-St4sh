@@ -1,5 +1,7 @@
 ---@omw-context menu|player
 
+local emptyOptions = {}
+
 local async = require 'openmw.async'
 
 local button = require 'scripts.s3.components.button'
@@ -24,66 +26,66 @@ local textInput = require 'scripts.s3.components.textInput'
 ---@param options? H3.SearchInputOptions
 ---@return openmw.ui.Layout
 local function searchInput(options)
-    options = options or {}
+  options = options or emptyOptions
 
-    local initialValue = options.value or ''
-    local onChange = options.onChange
-    local inputLayout
-    local inputEvents = {}
+  local initialValue = options.value or ''
+  local onChange = options.onChange
+  local inputLayout
+  local inputEvents = {}
 
-    if options.inputEvents then
-        for key, event in next, options.inputEvents do
-            inputEvents[key] = event
-        end
+  if options.inputEvents then
+    for key, event in next, options.inputEvents do
+      inputEvents[key] = event
     end
+  end
 
-    local previousTextChanged = inputEvents.textChanged
-    inputEvents.textChanged = async:callback(function(text, layout)
-        layout.props.text = text
+  local previousTextChanged = inputEvents.textChanged
+  inputEvents.textChanged = async:callback(function(text, layout)
+    layout.props.text = text
 
-        if onChange then onChange(text) end
-        if previousTextChanged then return previousTextChanged(text, layout) end
-        return true
-    end)
+    if onChange then onChange(text) end
+    if previousTextChanged then return previousTextChanged(text, layout) end
+    return true
+  end)
 
-    local children = {
-        textInput {
-            name = 'input',
-            text = initialValue,
-            props = options.inputProps,
-            external = options.inputExternal,
-            events = inputEvents,
-            userData = options.userData,
-            template = options.template,
-        },
+  local children = {
+    textInput {
+      name = 'input',
+      text = initialValue,
+      props = options.inputProps,
+      external = options.inputExternal,
+      events = inputEvents,
+      userData = options.userData,
+      template = options.template,
+    },
+  }
+
+  if options.clearable ~= false then
+    children[#children + 1] = button {
+      name = 'clear',
+      label = options.clearLabel or 'X',
+      events = {
+        mouseClick = async:callback(function()
+          inputLayout.props.text = ''
+
+          if onChange then onChange '' end
+          return true
+        end),
+      },
     }
+  end
 
-    if options.clearable ~= false then
-        children[#children + 1] = button {
-            name = 'clear',
-            label = options.clearLabel or 'X',
-            events = {
-                mouseClick = async:callback(function()
-                    inputLayout.props.text = ''
+  local layout = row {
+    name = options.name,
+    props = options.props,
+    external = options.external,
+    events = options.events,
+    userData = options.userData,
+    children = children,
+  }
 
-                    if onChange then onChange '' end
-                    return true
-                end),
-            },
-        }
-    end
-
-    local layout = row {
-        name = options.name,
-        props = options.props,
-        external = options.external,
-        events = options.events,
-        userData = options.userData,
-        children = children,
-    }
-
-    inputLayout = children[1]
-    return layout
+  inputLayout = children[1]
+  return layout
 end
 
 return searchInput

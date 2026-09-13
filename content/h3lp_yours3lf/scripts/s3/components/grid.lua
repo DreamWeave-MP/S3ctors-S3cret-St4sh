@@ -1,54 +1,66 @@
 ---@omw-context menu|player
 
+local emptyOptions = {}
+local emptyItems = {}
+
 local ui = require 'openmw.ui'
 
 ---Build a grid as a vertical Flex of horizontal Flex rows.
 ---Allocates fresh layout, props, external, and content tables for the grid and each row. `items` are not
 ---copied; callers own child layout mutation and any mounted elements.
----@param opts? {items?: openmw.ui.Layout[], columns?: integer, name?: string, props?: table, rowProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---@param options? {items?: openmw.ui.LayoutOrElement[], columns?: integer, name?: string, props?: table, rowProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
-local function grid(opts)
-    opts = opts or {}
-    local columns = opts.columns or 1
-    if columns < 1 then
-        columns = 1
-    end
-    local rows = {}
-    local row = nil
-    for index, item in ipairs(opts.items or {}) do
-        if (index - 1) % columns == 0 then
-            local rowProps = {}
-            for key, value in pairs(opts.rowProps or {}) do
-                rowProps[key] = value
-            end
-            rowProps.horizontal = true
-            row = { type = ui.TYPE.Flex, props = rowProps, content = ui.content({}) }
-            rows[#rows + 1] = row
+local function grid(options)
+  options = options or emptyOptions
+
+  local columns = options.columns or 1
+  if columns < 1 then columns = 1 end
+
+  local rows = {}
+  local row
+  local items = options.items or emptyItems
+  for index = 1, #items do
+    local item = items[index]
+    if (index - 1) % columns == 0 then
+      local rowProps = {}
+      if options.rowProps then
+        for key, value in next, options.rowProps do
+          rowProps[key] = value
         end
-        row.content:add(item)
+      end
+      rowProps.horizontal = true
+      row = { type = ui.TYPE.Flex, props = rowProps, content = ui.content {} }
+      rows[#rows + 1] = row
     end
-    local props = {}
-    for key, value in pairs(opts.props or {}) do
-        props[key] = value
+    row.content:add(item)
+  end
+
+  local props = {}
+  if options.props then
+    for key, value in next, options.props do
+      props[key] = value
     end
-    local external = nil
-    if opts.external then
-        external = {}
-        for key, value in pairs(opts.external) do
-            external[key] = value
-        end
+  end
+  local external
+  if options.external then
+    external = {}
+    for key, value in next, options.external do
+      external[key] = value
     end
-    props.horizontal = false
-    return {
-        type = ui.TYPE.Flex,
-        name = opts.name,
-        props = props,
-        external = external,
-        events = opts.events,
-        userData = opts.userData,
-        template = opts.template,
-        content = ui.content(rows),
-    }
+  end
+
+  props.horizontal = false
+
+  return {
+    type = ui.TYPE.Flex,
+    name = options.name,
+    props = props,
+    external = external,
+    events = options.events,
+    userData = options.userData,
+    template = options.template,
+    content = ui.content(rows),
+  }
 end
 
 return grid

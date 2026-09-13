@@ -4,6 +4,9 @@ local async = require 'openmw.async'
 
 local button = require 'scripts.s3.components.button'
 
+local emptyOptions = {}
+local StrFormat = string.format
+
 ---@class H3.ToggleOptions
 ---@field value? boolean
 ---@field onChange? fun(value: boolean)
@@ -22,44 +25,44 @@ local button = require 'scripts.s3.components.button'
 ---@param options? H3.ToggleOptions
 ---@return openmw.ui.Layout
 local function toggle(options)
-    options = options or {}
+  options = options or emptyOptions
 
-    local value = options.value == true
-    local onLabel = options.onLabel or 'On'
-    local offLabel = options.offLabel or 'Off'
-    local prefix = options.label
-    local onChange = options.onChange
-    local events = {}
+  local value = options.value == true
+  local onLabel = options.onLabel or 'On'
+  local offLabel = options.offLabel or 'Off'
+  local prefix = options.label
+  local onChange = options.onChange
+  local events = {}
 
-    if options.events then
-        for key, event in next, options.events do
-            events[key] = event
-        end
+  if options.events then
+    for key, event in next, options.events do
+      events[key] = event
     end
+  end
 
-    local enabledLabel = prefix and prefix .. ': ' .. onLabel or onLabel
-    local disabledLabel = prefix and prefix .. ': ' .. offLabel or offLabel
+  local enabledLabel = prefix and StrFormat('%s: %s', prefix, onLabel) or onLabel
+  local disabledLabel = prefix and StrFormat('%s: %s', prefix, offLabel) or offLabel
 
-    local previousClick = events.mouseClick
-    events.mouseClick = async:callback(function(event, layout)
-        value = not value
-        layout.content[1].content[1].props.text = value and enabledLabel or disabledLabel
+  local previousClick = events.mouseClick
+  events.mouseClick = async:callback(function(event, layout)
+    value = not value
+    layout.content[1].content[1].props.text = value and enabledLabel or disabledLabel
 
-        if onChange then onChange(value) end
-        if previousClick then return previousClick(event, layout) end
-        return true
-    end)
+    if onChange then onChange(value) end
+    if previousClick then return previousClick(event, layout) end
+    return true
+  end)
 
-    return button {
-        name = options.name,
-        label = value and enabledLabel or disabledLabel,
-        props = options.props,
-        labelProps = options.labelProps,
-        external = options.external,
-        events = events,
-        userData = options.userData,
-        template = options.template,
-    }
+  return button {
+    name = options.name,
+    label = value and enabledLabel or disabledLabel,
+    props = options.props,
+    labelProps = options.labelProps,
+    external = options.external,
+    events = events,
+    userData = options.userData,
+    template = options.template,
+  }
 end
 
 return toggle

@@ -1,59 +1,74 @@
 ---@omw-context menu|player
 
-local ui = require 'openmw.ui'
+local emptyOptions = {}
+
 local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
 
 ---Build a bordered item slot layout with optional icon and count label.
 ---Allocates fresh layout, props, external, and content tables. Pass a prebuilt texture `resource`; this
 ---primitive does not register textures, query game state, or own any Element.
----@param opts? {resource?: openmw.ui.TextureResource, count?: string|number, name?: string, props?: table, iconProps?: table, countProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---@param options? {resource?: openmw.ui.TextureResource, count?: string|number, name?: string, props?: table, iconProps?: table, countProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
-local function itemSlot(opts)
-    opts = opts or {}
-    local iconProps = {}
-    for key, value in pairs(opts.iconProps or {}) do
-        iconProps[key] = value
+local function itemSlot(options)
+  options = options or emptyOptions
+
+  local iconProps = {}
+  if options.iconProps then
+    for key, value in next, options.iconProps do
+      iconProps[key] = value
     end
-    if opts.resource ~= nil then
-        iconProps.resource = opts.resource
+  end
+
+  if options.resource ~= nil then iconProps.resource = options.resource end
+  iconProps.ignorePointerEvents = true
+
+  local content = {
+    {
+      type = ui.TYPE.Image,
+      props = iconProps,
+    },
+  }
+  if options.count ~= nil then
+    local countProps = {}
+    if options.countProps then
+      for key, value in next, options.countProps do
+        countProps[key] = value
+      end
     end
-    local content = {
-        {
-            type = ui.TYPE.Image,
-            props = iconProps,
-        },
+
+    countProps.text = tostring(options.count)
+    countProps.ignorePointerEvents = true
+    content[#content + 1] = {
+      template = I.MWUI.templates.textNormal,
+      props = countProps,
     }
-    if opts.count ~= nil then
-        local countProps = {}
-        for key, value in pairs(opts.countProps or {}) do
-            countProps[key] = value
-        end
-        countProps.text = tostring(opts.count)
-        content[#content + 1] = {
-            template = I.MWUI.templates.textNormal,
-            props = countProps,
-        }
+  end
+
+  local props = {}
+  if options.props then
+    for key, value in next, options.props do
+      props[key] = value
     end
-    local props = {}
-    for key, value in pairs(opts.props or {}) do
-        props[key] = value
+  end
+
+  local external
+  if options.external then
+    external = {}
+    for key, value in next, options.external do
+      external[key] = value
     end
-    local external = nil
-    if opts.external then
-        external = {}
-        for key, value in pairs(opts.external) do
-            external[key] = value
-        end
-    end
-    return {
-        template = opts.template or I.MWUI.templates.box,
-        name = opts.name,
-        props = props,
-        external = external,
-        events = opts.events,
-        userData = opts.userData,
-        content = ui.content(content),
-    }
+  end
+
+  return {
+    template = options.template or I.MWUI.templates.box,
+    name = options.name,
+    props = props,
+    external = external,
+    events = options.events,
+    userData = options.userData,
+    content = ui.content(content),
+  }
 end
 
 return itemSlot
