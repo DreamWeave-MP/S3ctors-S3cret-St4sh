@@ -1,62 +1,79 @@
 ---@omw-context menu|player
 
-local ui = require 'openmw.ui'
+local emptyOptions = {}
+local emptyContent = {}
+
 local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
 
 ---Build a book-like framed content layout.
 ---Allocates fresh layout, props, external, and content tables and uses MWUI borders read-only. It is a
 ---passive layout primitive; caller owns mounting and later updates.
----@param opts? {title?: string, name?: string, props?: table, titleProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.Layout[], children?: openmw.ui.Content|openmw.ui.Layout[], template?: openmw.ui.Template}
+---@param options? {title?: string, name?: string, props?: table, titleProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.LayoutOrElement[], children?: openmw.ui.Content|openmw.ui.LayoutOrElement[], template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
-local function bookFrame(opts)
-    opts = opts or {}
-    local body = opts.content or opts.children or {}
-    local content = {}
-    if opts.title ~= nil then
-        local titleProps = {}
-        for key, value in pairs(opts.titleProps or {}) do
-            titleProps[key] = value
-        end
-        titleProps.text = opts.title
-        content[#content + 1] = { template = I.MWUI.templates.textHeader, props = titleProps }
-        content[#content + 1] = { template = I.MWUI.templates.interval }
+local function bookFrame(options)
+  options = options or emptyOptions
+
+  local body = options.content or options.children
+  body = body or emptyContent
+  local content = {}
+  if options.title ~= nil then
+    local titleProps = {}
+    if options.titleProps then
+      for key, value in next, options.titleProps do
+        titleProps[key] = value
+      end
     end
+
+    titleProps.text = options.title
+    titleProps.ignorePointerEvents = true
+    content[#content + 1] = { template = I.MWUI.templates.textHeader, props = titleProps }
     content[#content + 1] = {
-        template = I.MWUI.templates.padding,
-        content = ui.content({
-            {
-                type = ui.TYPE.Flex,
-                props = { horizontal = false },
-                content = ui.content(body),
-            },
-        }),
+      template = I.MWUI.templates.interval,
+      props = { ignorePointerEvents = true },
     }
-    local props = {}
-    for key, value in pairs(opts.props or {}) do
-        props[key] = value
+  end
+
+  content[#content + 1] = {
+    template = I.MWUI.templates.padding,
+    content = ui.content {
+      {
+        type = ui.TYPE.Flex,
+        props = { horizontal = false },
+        content = ui.content(body),
+      },
+    },
+  }
+  local props = {}
+  if options.props then
+    for key, value in next, options.props do
+      props[key] = value
     end
-    local external = nil
-    if opts.external then
-        external = {}
-        for key, value in pairs(opts.external) do
-            external[key] = value
-        end
+  end
+
+  local external
+  if options.external then
+    external = {}
+    for key, value in next, options.external do
+      external[key] = value
     end
-    return {
-        template = opts.template or I.MWUI.templates.boxSolid,
-        name = opts.name,
-        props = props,
-        external = external,
-        events = opts.events,
-        userData = opts.userData,
-        content = ui.content({
-            {
-                type = ui.TYPE.Flex,
-                props = { horizontal = false },
-                content = ui.content(content),
-            },
-        }),
-    }
+  end
+
+  return {
+    template = options.template or I.MWUI.templates.boxSolid,
+    name = options.name,
+    props = props,
+    external = external,
+    events = options.events,
+    userData = options.userData,
+    content = ui.content {
+      {
+        type = ui.TYPE.Flex,
+        props = { horizontal = false },
+        content = ui.content(content),
+      },
+    },
+  }
 end
 
 return bookFrame

@@ -1,37 +1,43 @@
 ---@omw-context menu|player
 
+local emptyOptions = {}
+
 local ui = require 'openmw.ui'
 
 ---Build a Text layout.
 ---Allocates fresh layout, props, and external tables. The returned layout is passive and must
 ---be mounted and updated by its owner if its text changes later.
----@param opts? {text?: string, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---@param options? {text?: string, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
-local function text(opts)
-    opts = opts or {}
-    local props = {}
-    for key, value in pairs(opts.props or {}) do
-        props[key] = value
+local function text(options)
+  options = options or emptyOptions
+  local props = {}
+  if options.props then
+    for key, value in next, options.props do
+      props[key] = value
     end
-    if opts.text ~= nil then
-        props.text = opts.text
+  end
+
+  if options.text ~= nil then props.text = options.text end
+  if props.ignorePointerEvents == nil then props.ignorePointerEvents = options.events == nil end
+
+  local external
+  if options.external then
+    external = {}
+    for key, value in next, options.external do
+      external[key] = value
     end
-    local external = nil
-    if opts.external then
-        external = {}
-        for key, value in pairs(opts.external) do
-            external[key] = value
-        end
-    end
-    return {
-        type = ui.TYPE.Text,
-        name = opts.name,
-        props = props,
-        external = external,
-        events = opts.events,
-        userData = opts.userData,
-        template = opts.template,
-    }
+  end
+
+  return {
+    type = ui.TYPE.Text,
+    name = options.name,
+    props = props,
+    external = external,
+    events = options.events,
+    userData = options.userData,
+    template = options.template,
+  }
 end
 
 return text

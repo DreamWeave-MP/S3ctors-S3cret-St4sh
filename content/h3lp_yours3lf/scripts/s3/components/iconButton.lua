@@ -1,71 +1,90 @@
 ---@omw-context menu|player
 
-local ui = require 'openmw.ui'
+local emptyOptions = {}
+
 local I = require 'openmw.interfaces'
+local ui = require 'openmw.ui'
 
 ---Build an MWUI button with an icon and optional label.
 ---Allocates fresh layout, props, external, and content tables. Pass a prebuilt texture `resource`; this
 ---primitive does not register textures or own element lifetime.
----@param opts? {resource?: openmw.ui.TextureResource, label?: string, name?: string, props?: table, iconProps?: table, labelProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---@param options? {resource?: openmw.ui.TextureResource, label?: string, name?: string, props?: table, iconProps?: table, labelProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
-local function iconButton(opts)
-    opts = opts or {}
-    local iconProps = {}
-    for key, value in pairs(opts.iconProps or {}) do
-        iconProps[key] = value
+local function iconButton(options)
+  options = options or emptyOptions
+
+  local iconProps = {}
+  if options.iconProps then
+    for key, value in next, options.iconProps do
+      iconProps[key] = value
     end
-    if opts.resource ~= nil then
-        iconProps.resource = opts.resource
+  end
+
+  if options.resource ~= nil then iconProps.resource = options.resource end
+  iconProps.ignorePointerEvents = true
+
+  local rowContent = {
+    {
+      type = ui.TYPE.Image,
+      props = iconProps,
+    },
+  }
+  if options.label ~= nil then
+    local labelProps = {}
+    if options.labelProps then
+      for key, value in next, options.labelProps do
+        labelProps[key] = value
+      end
     end
-    local rowContent = {
-        {
-            type = ui.TYPE.Image,
-            props = iconProps,
+
+    labelProps.text = options.label
+    labelProps.ignorePointerEvents = true
+    rowContent[#rowContent + 1] = {
+      template = I.MWUI.templates.interval,
+      props = { ignorePointerEvents = true },
+    }
+    rowContent[#rowContent + 1] = {
+      template = I.MWUI.templates.textNormal,
+      props = labelProps,
+    }
+  end
+
+  local props = {}
+  if options.props then
+    for key, value in next, options.props do
+      props[key] = value
+    end
+  end
+
+  local external
+  if options.external then
+    external = {}
+    for key, value in next, options.external do
+      external[key] = value
+    end
+  end
+
+  return {
+    template = options.template or I.MWUI.templates.box,
+    name = options.name,
+    props = props,
+    external = external,
+    events = options.events,
+    userData = options.userData,
+    content = ui.content {
+      {
+        template = I.MWUI.templates.padding,
+        props = { ignorePointerEvents = true },
+        content = ui.content {
+          {
+            type = ui.TYPE.Flex,
+            props = { horizontal = true, arrange = ui.ALIGNMENT.Center },
+            content = ui.content(rowContent),
+          },
         },
-    }
-    if opts.label ~= nil then
-        local labelProps = {}
-        for key, value in pairs(opts.labelProps or {}) do
-            labelProps[key] = value
-        end
-        labelProps.text = opts.label
-        rowContent[#rowContent + 1] = { template = I.MWUI.templates.interval }
-        rowContent[#rowContent + 1] = {
-            template = I.MWUI.templates.textNormal,
-            props = labelProps,
-        }
-    end
-    local props = {}
-    for key, value in pairs(opts.props or {}) do
-        props[key] = value
-    end
-    local external = nil
-    if opts.external then
-        external = {}
-        for key, value in pairs(opts.external) do
-            external[key] = value
-        end
-    end
-    return {
-        template = opts.template or I.MWUI.templates.box,
-        name = opts.name,
-        props = props,
-        external = external,
-        events = opts.events,
-        userData = opts.userData,
-        content = ui.content({
-            {
-                template = I.MWUI.templates.padding,
-                content = ui.content({
-                    {
-                        type = ui.TYPE.Flex,
-                        props = { horizontal = true, arrange = ui.ALIGNMENT.Center },
-                        content = ui.content(rowContent),
-                    },
-                }),
-            },
-        }),
-    }
+      },
+    },
+  }
 end
 
 return iconButton
