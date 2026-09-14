@@ -385,6 +385,12 @@ do
           settingName,
           { disabled = disabled, items = iconNames, l10n = ModInfo.l10nName }
         )
+      elseif settingName == 'CameraPreferredShoulder' then
+        I.Settings.updateRendererArgument(
+          ModInfo.groupName,
+          settingName,
+          { disabled = disabled, items = { 'Right', 'Left' }, l10n = ModInfo.l10nName }
+        )
       else
         I.Settings.updateRendererArgument(ModInfo.groupName, settingName, { disabled = disabled })
       end
