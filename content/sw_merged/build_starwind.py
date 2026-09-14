@@ -49,6 +49,18 @@ MAIN_QUEST_CELL_REFERENCE_ANCHORS = {
     "SW_ShipQuester",
 }
 
+# Manually audited against the Definitive corpus. These classes are
+# non-playable and have zero NPC, dialogue, or script references.
+# Re-audit before adding IDs to this list.
+DEAD_DEFINITIVE_CLASS_IDS = (
+    "Apothecary", "Assassin Service", "Bard", "Battlemage Service",
+    "Bookseller", "Clothier", "Dreamers", "Enchanter Service", "Gardener",
+    "Gondolier", "Guild Guide", "Journalist", "Mabrigash", "Miner",
+    "Necromancer", "Pawnbroker", "Pilgrim", "Priest Service", "Publican",
+    "Shipmaster", "Sorcerer Service", "Warlock", "Wise Woman",
+    "Wise Woman Service", "Witch",
+)
+
 
 def source_manifest() -> dict:
     sources = {}
@@ -155,6 +167,22 @@ def preprocess_definitive_sources(checks: list[dict]) -> None:
     contains multiplayer substitutions, quest-instance removals, and other
     historical deployment policy that must not enter the Definitive edition.
     """
+    class_inputs = [
+        WORK / "Morrowind.esm",
+        WORK / "Tribunal.esm",
+        WORK / "Bloodmoon.esm",
+        WORK / "StarwindRemasteredV1.15.esm",
+    ]
+    missing = [path.name for path in class_inputs if not path.exists()]
+    if missing:
+        raise RuntimeError("dead class prune is missing staged inputs: " + ", ".join(missing))
+    legacy.log(f"Pruning {len(DEAD_DEFINITIVE_CLASS_IDS)} unreferenced non-playable classes...")
+    args = ["delete", "--type", "CLAS"]
+    for class_id in DEAD_DEFINITIVE_CLASS_IDS:
+        args.extend(["--exact-id", class_id])
+    args.extend(path.name for path in class_inputs)
+    legacy.tc(WORK, *args)
+
     legacy.common_preprocess(WORK, "definitive")
 
     # Bing's pack contributes reusable races/content but carries two known
