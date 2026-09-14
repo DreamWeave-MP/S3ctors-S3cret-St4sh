@@ -209,11 +209,10 @@ def preprocess_definitive_sources(checks: list[dict]) -> None:
         "nar shaddaa, h.t. parnell's oddities", "bings race pack.esp",
     )
 
-    # Alt Start's prison ship conflicts with the canonical opening sequence.
-    legacy.tc(
-        WORK, "delete", "--type", "CELL", "--exact-id", "Imperial Prison Ship",
-        "alt_start1.5.esp",
-    )
+    # Alt Start supplies the Definitive background-selection escape pods and
+    # their placements in the prison ship. MPRecords is excluded, so do not
+    # delete this cell wholesale; the canonical merge must retain these
+    # source-owned additions.
 
     # Naboo's old multiplayer DRM is not part of Definitive. Remove the
     # obsolete records and clear every attached script/reference coherently.
