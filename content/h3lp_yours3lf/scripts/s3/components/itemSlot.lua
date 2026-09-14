@@ -25,7 +25,7 @@ local function itemSlot(options)
   iconProps.ignorePointerEvents = true
 
   local content = {
-    image { resource = options.resource, props = iconProps },
+    image { name = 'icon', resource = options.resource, props = iconProps },
   }
   if options.count ~= nil then
     local countProps = {}
