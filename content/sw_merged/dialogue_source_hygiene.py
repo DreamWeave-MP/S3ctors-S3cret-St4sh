@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Starwind dialogue source hygiene auditor v2.
+Starwind dialogue source hygiene auditor v3.
 
 This audits each Starwind source against its *actual inherited dialogue state*:
 
@@ -76,6 +76,23 @@ VANILLA = [
 STARWIND = [
     (PLUGINS / "StarwindRemasteredV1.15.json", "StarwindRemasteredV1.15.esm", "V1.15"),
     (PLUGINS / "StarwindRemasteredPatch.json", "StarwindRemasteredPatch.esm", "RemasteredPatch"),
+]
+
+# The Definitive graph has more Starwind-owned dialogue sources than the old
+# V1.15/Patch audit covered. Compare every non-Bethesda source independently
+# against the vanilla baseline so copied TESCS dialogue cannot hide behind an
+# unrelated Starwind source layer.
+DEFINITIVE_CORPUS = [
+    (PLUGINS / "Minimal.json", "Minimal.esp", "Minimal"),
+    (PLUGINS / "StarwindRemasteredV1.15.json", "StarwindRemasteredV1.15.esm", "V1.15"),
+    (PLUGINS / "StarwindRemasteredPatch.json", "StarwindRemasteredPatch.esm", "RemasteredPatch"),
+    (PLUGINS / "bings race pack.json", "bings race pack.esp", "Bings"),
+    (PLUGINS / "Starwind Enhanced.json", "Starwind Enhanced.esm", "Enhanced"),
+    (PLUGINS / "StarwindPlanExp.json", "StarwindPlanExp.esp", "PlanExp"),
+    (PLUGINS / "alt_start1.5.json", "alt_start1.5.esp", "AltStart"),
+    (PLUGINS / "Starwind Community Patch Project.json", "Starwind Community Patch Project.esp", "CPP"),
+    (PLUGINS / "naboo.json", "naboo.esp", "Naboo"),
+    (PLUGINS / "PartyHats.json", "PartyHats.esp", "PartyHats"),
 ]
 
 
@@ -227,6 +244,7 @@ def classify_source(
     source_label: str,
     parent: DialogueState,
     topic_filter: str | None,
+    parent_model: str | None = None,
 ) -> dict:
     items = physical_infos(path)
     dup_meta = duplicate_metadata(items)
@@ -319,7 +337,7 @@ def classify_source(
         "source_json": str(path),
         "binary_name": binary_name,
         "source_label": source_label,
-        "parent_model": (
+        "parent_model": parent_model or (
             "Morrowind -> Tribunal -> Bloodmoon"
             if source_label == "V1.15"
             else "Morrowind -> Tribunal -> Bloodmoon -> V1.15"
@@ -421,7 +439,7 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    required = [p for p, _ in VANILLA] + [p for p, _, _ in STARWIND]
+    required = [p for p, _ in VANILLA] + [p for p, _, _ in DEFINITIVE_CORPUS]
     missing = [p for p in required if not p.exists()]
     if missing:
         print("Missing required files:")
@@ -433,22 +451,35 @@ def main() -> None:
     state = build_vanilla_state()
 
     reports = []
+    for path, binary, label in DEFINITIVE_CORPUS:
+        report = classify_source(
+            path,
+            binary,
+            label,
+            build_vanilla_state(),
+            topic_filter,
+            "Morrowind -> Tribunal -> Bloodmoon (vanilla baseline)",
+        )
+        reports.append(report)
+
+    layered_reports = []
     for path, binary, label in STARWIND:
         report = classify_source(path, binary, label, state, topic_filter)
-        reports.append(report)
+        layered_reports.append(report)
         apply_starwind_layer(state, path, label)
 
     result = {
-        "version": 2,
+        "version": 3,
         "vanilla_load_order": [str(p) for p, _ in VANILLA],
         "topic_filter": topic_filter,
         "sources": reports,
+        "layered_v115_patch_sources": layered_reports,
     }
 
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
-    print("Starwind dialogue source hygiene v2")
+    print("Starwind dialogue source hygiene v3")
     print("==================================")
     categories = (
         "NEW_INFO",
