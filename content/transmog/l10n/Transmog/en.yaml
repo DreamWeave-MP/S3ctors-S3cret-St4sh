@@ -1,0 +1,35 @@
+TransmogPageName: Transmog Menu
+TransmogPageDesc: Create enchanted items with one item's appearance and another item's properties.
+
+TransmogSettingsName: Key Bindings
+TransmogSettingsDesc: Configure the controls used by the Transmog menu.
+
+TransmogOpenActionName: Open Transmog Menu
+TransmogOpenActionDesc: Opens the Transmog menu.
+
+TransmogConfirmActionName: Confirm Transmog
+TransmogConfirmActionDesc: Creates the selected Transmog item.
+
+TransmogPreviewActionName: Preview Transmog
+TransmogPreviewActionDesc: Temporarily previews the selected appearance.
+
+TransmogRotateLeftActionName: Rotate Left
+TransmogRotateLeftActionDesc: Rotates the character left while the Transmog menu is open.
+
+TransmogRotateRightActionName: Rotate Right
+TransmogRotateRightActionDesc: Rotates the character right while the Transmog menu is open.
+
+TransmogOpenBindingName: Open Transmog Menu
+TransmogOpenBindingDesc: Key binding used to open the Transmog menu.
+
+TransmogConfirmBindingName: Confirm Transmog
+TransmogConfirmBindingDesc: Key binding used to create the selected Transmog item.
+
+TransmogPreviewBindingName: Preview Transmog
+TransmogPreviewBindingDesc: Key binding used to preview the selected appearance.
+
+TransmogRotateLeftBindingName: Rotate Left
+TransmogRotateLeftBindingDesc: Key binding used to rotate the character left.
+
+TransmogRotateRightBindingName: Rotate Right
+TransmogRotateRightBindingDesc: Key binding used to rotate the character right.
