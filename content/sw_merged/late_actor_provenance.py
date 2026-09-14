@@ -25,6 +25,10 @@ import dialogue_source_hygiene as hygiene  # noqa: E402
 COPY_RE = re.compile(
     r"Copying '(.+)' \(([^)]+)\) to 'Starwind\.esp' from '([^']+)'"
 )
+DEPENDENCY_TARGET_RE = re.compile(r"  target=([^ ]+) '(.+)'$")
+DEPENDENCY_SOURCE_RE = re.compile(r"  source=([^ ]+) '(.+)'$")
+DEPENDENCY_PASS_RE = re.compile(r"  pass=(.+)$")
+DEPENDENCY_FIELD_RE = re.compile(r"  field=(.+)$")
 ACTOR_TYPES = {"NPC", "NPC_", "CREA", "Npc", "Creature"}
 HYGIENE_CATEGORIES = {
     "NEW_INFO",
@@ -118,6 +122,43 @@ def parse_second_closure_copies(path: Path) -> dict[str, dict]:
     return copies
 
 
+def parse_dependency_imports(path: Path) -> dict[str, list[dict]]:
+    imports: dict[str, list[dict]] = {}
+    inside = False
+    current: dict[str, Any] | None = None
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    for line_number, line in enumerate(lines, 1):
+        if line == "Dialogue liveness population end":
+            inside = True
+            continue
+        if not inside:
+            continue
+        if line == "Dependency import:":
+            current = {"log_line": line_number}
+            continue
+        if current is None:
+            continue
+        matchers = (
+            (DEPENDENCY_PASS_RE, "pass"),
+            (DEPENDENCY_TARGET_RE, "target"),
+            (DEPENDENCY_SOURCE_RE, "source"),
+            (DEPENDENCY_FIELD_RE, "field"),
+        )
+        for matcher, key in matchers:
+            match = matcher.match(line)
+            if not match:
+                continue
+            if key in {"target", "source"}:
+                current[key + "_type"], current[key + "_id"] = match.groups()
+            else:
+                current[key] = match.group(1)
+            break
+        if "target_id" in current and "field" in current:
+            imports.setdefault(norm(current["target_id"]), []).append(current)
+            current = None
+    return imports
+
+
 def final_actor_population(records: list[dict], path: Path) -> dict[str, dict]:
     actors: dict[str, dict] = {}
     for index, record in enumerate(records):
@@ -126,6 +167,17 @@ def final_actor_population(records: list[dict], path: Path) -> dict[str, dict]:
         actor = compact_actor(record, str(path), index)
         actors[norm(actor["id"])] = actor
     return actors
+
+
+def dialogue_info_topics(records: list[dict]) -> dict[str, str]:
+    topics: dict[str, str] = {}
+    topic = ""
+    for record in records:
+        if record.get("type") == "Dialogue":
+            topic = str(record.get("id", ""))
+        elif record.get("type") == "DialogueInfo" and record.get("id"):
+            topics[norm(record["id"])] = topic
+    return topics
 
 
 def source_actor_index() -> dict[str, dict]:
@@ -317,6 +369,7 @@ def classify(
     references: list[dict],
     non_dialogue: list[dict],
     source_candidates: list[dict],
+    causal_imports: list[dict],
 ) -> tuple[str, str]:
     categories = {item["hygiene_classification"] for item in references}
     if non_dialogue:
@@ -327,6 +380,8 @@ def classify(
         return "C", "at least one surviving speaker_id INFO is a new Starwind INFO"
     if "MODIFIED_PARENT" in categories:
         return "B", "at least one surviving speaker_id INFO semantically modifies its parent"
+    if causal_imports:
+        return "D", "post-dialogue dependency telemetry identifies the import cause"
     if not references and source_candidates:
         return "D", "no surviving dependency found; canonical source has candidate references to trace"
     if not references or non_dialogue:
@@ -337,8 +392,10 @@ def classify(
 def make_report(args: argparse.Namespace) -> dict:
     snapshot = parse_liveness_snapshot(args.log)
     copies = parse_second_closure_copies(args.log)
+    dependency_imports = parse_dependency_imports(args.log)
     final_records = dialogue.load_records(args.standalone)
     final = final_actor_population(final_records, args.standalone)
+    info_topics = dialogue_info_topics(final_records)
     late_ids = sorted(set(final) - set(snapshot))
     actors = [snapshot[actor_id] for actor_id in sorted(snapshot)]
     projection, audit, canonical_infos = dialogue_projection(actors)
@@ -363,8 +420,16 @@ def make_report(args: argparse.Namespace) -> dict:
             hit for hit in exact[actor_id]
             if hit["record_type"] not in {"Npc", "Creature"}
         ]
-        category, rationale = classify(direct_infos, non_dialogue, source_exact[actor_id])
         copy = copies.get(actor_id, {})
+        causal_imports = dependency_imports.get(actor_id, [])
+        for causal_import in causal_imports:
+            if causal_import.get("source_type", "").casefold() == "info":
+                causal_import["source_topic"] = info_topics.get(
+                    norm(causal_import.get("source_id", "")), ""
+                )
+        category, rationale = classify(
+            direct_infos, non_dialogue, source_exact[actor_id], causal_imports
+        )
         rows.append({
             "actor": actor,
             "source_master": copy.get("source_master") or vanilla_actors.get(actor_id, {}).get("source"),
@@ -374,6 +439,7 @@ def make_report(args: argparse.Namespace) -> dict:
                 "direct_live_dialogue_speaker_id_references": len(direct_infos),
                 "non_dialogue_exact_references": len(non_dialogue),
                 "source_reference_candidates": len(source_exact[actor_id]),
+                "causal_dependency_imports": len(causal_imports),
                 "reason_class": category,
                 "classification_rationale": rationale,
             },
@@ -384,6 +450,7 @@ def make_report(args: argparse.Namespace) -> dict:
             "source_reference_candidates": source_exact[actor_id],
             "source_script_text_mentions": source_script_mentions[actor_id],
             "source_placed_references": source_placed[actor_id],
+            "causal_dependency_imports": causal_imports,
         })
 
     classes = Counter(row["why_imported_on_second_closure"]["reason_class"] for row in rows)
@@ -425,13 +492,18 @@ def write_markdown(path: Path, report: dict) -> None:
     ]
     for category, count in report["late_actor_class_counts"].items():
         lines.append(f"| {category} | {count} |")
-    lines += ["", "| Actor | Master | Class | Dialogue refs | Other refs |", "| --- | --- | --- | ---: | ---: |"]
+    lines += [
+        "",
+        "| Actor | Master | Class | Dialogue refs | Other refs | Causal imports |",
+        "| --- | --- | --- | ---: | ---: | ---: |",
+    ]
     for row in report["actors"]:
         why = row["why_imported_on_second_closure"]
         lines.append(
             f"| `{row['actor']['id']}` | `{row.get('source_master') or '?'}` | "
             f"{why['reason_class']} | {why['direct_live_dialogue_speaker_id_references']} | "
-            f"{why['non_dialogue_exact_references']} |"
+            f"{why['non_dialogue_exact_references']} | "
+            f"{why['causal_dependency_imports']} |"
         )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

@@ -300,6 +300,24 @@ def run_dialogue_validation(final: Path, pre_add_vanilla: Path) -> Path:
     return report
 
 
+def run_late_actor_provenance(final: Path) -> Path:
+    report = REPORTS / "late-actor-provenance.json"
+    subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "late_actor_provenance.py"),
+            "--log", str(WORK / "decoupleLog.txt"),
+            "--standalone", str(final),
+            "--report", str(report),
+            "--markdown", str(REPORTS / "late-actor-provenance.md"),
+            "--cleanup-script", str(REPORTS / "late-actor-provenance-cleanup.sh"),
+        ],
+        cwd=ROOT,
+        check=True,
+    )
+    return report
+
+
 def build(*, clean: bool, keep_work: bool, strict: bool) -> None:
     if clean and BUILD_ROOT.exists():
         shutil.rmtree(BUILD_ROOT)
@@ -327,6 +345,7 @@ def build(*, clean: bool, keep_work: bool, strict: bool) -> None:
 
     closure = legacy.audit(final, fail_on_unresolved=True)
     dialogue_report = run_dialogue_validation(final, pre_add_vanilla)
+    late_actor_report = run_late_actor_provenance(final)
     split_report = split_starwind.split(
         final,
         OUT / "Star_Data.omwaddon",
@@ -355,6 +374,7 @@ def build(*, clean: bool, keep_work: bool, strict: bool) -> None:
         "source_hygiene_report": str(hygiene_report),
         "closure_report": str(ROOT / ".swbuild" / "reports" / "Starwind-Definitive-closure-audit.json"),
         "dialogue_report": str(dialogue_report),
+        "late_actor_provenance_report": str(late_actor_report),
         "split_report": str(REPORTS / "starwind-split-report.json"),
         "main_quest_guard_report": str(REPORTS / "main-quest-preservation.json"),
         "closure_counts": closure["counts"],
