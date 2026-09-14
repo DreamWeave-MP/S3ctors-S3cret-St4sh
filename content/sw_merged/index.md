@@ -48,7 +48,7 @@ it from Bethesda masters, canonicalizes dialogue, and validates the final
 
 | Invariant | Current result |
 | --- | ---: |
-| Monolith records, excluding header | **30,707** |
+| Monolith records, excluding header | **30,576** |
 | Header masters | **0** |
 | Hard unresolved dependencies | **0** |
 | Expected / actual DIALs | **591 / 591** |
@@ -60,8 +60,8 @@ it from Bethesda masters, canonicalizes dialogue, and validates the final
 | `Star_Data -> Starwind` dependencies | **0** |
 | Split reconstruction | **exact** |
 
-The generated split currently contains **13,374** non-header records in
-`Star_Data.omwaddon` and **17,333** in `Starwind.omwaddon`.
+The generated split currently contains **13,356** non-header records in
+`Star_Data.omwaddon` and **17,220** in `Starwind.omwaddon`.
 
 ## Build it
 
