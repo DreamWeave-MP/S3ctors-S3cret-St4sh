@@ -28,7 +28,7 @@ aliases:
   - /h3lp_yours3lf/docs/api/ui-components/
 ---
 
-H3 components are passive layout builders for registered `menu` and `player` scripts. Each call returns an OpenMW layout; it does not create an element or own your state. Start with [UI Layouts and Lifecycle](@/h3lp_yours3lf/docs/concepts/ui-components.md), or jump to a [UI recipe](@/h3lp_yours3lf/docs/examples/ui-recipes.md) for a complete surface.
+H3 components are passive layout builders for registered `menu` and `player` scripts. Each call returns an OpenMW layout; it does not create an element or own your state. Start with [UI Layouts and Lifecycle](@/h3lp_yours3lf/docs/concepts/ui-components.md), jump to a [UI recipe](@/h3lp_yours3lf/docs/examples/ui-recipes.md) for a complete surface, or use [H3UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) when you want recipes, scoped themes, tokens, and a style cascade above these primitives.
 
 A content-only root uses `ui.TYPE.Container` so it sizes itself to its children. The default `ui.TYPE.Widget` is also valid, but needs explicit geometry.
 

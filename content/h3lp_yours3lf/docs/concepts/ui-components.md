@@ -44,7 +44,7 @@ element:update()
 
 ## Callbacks and context
 
-H3's semantic callbacks are ordinary Lua functions. Low-level OpenMW event callbacks in an `events` table must be wrapped with `async:callback`. Interactive components update their own layout state before calling your semantic callback, but they do not know which root owns the rendered tree.
+H3 component callbacks are ordinary Lua functions. Low-level OpenMW event callbacks in an `events` table must be wrapped with `async:callback`. Interactive components update their own layout state before calling your callback, but they do not know which root owns the rendered tree.
 
 Keep these components in `menu` or `player` scripts. A global or local script can coordinate state, but it cannot directly use the UI package.
 
