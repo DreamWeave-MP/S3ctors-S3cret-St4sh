@@ -41,6 +41,7 @@ local boundaries = require 'scripts.s3.components.componentTests.boundaries'
 local controlStates = require 'scripts.s3.components.componentTests.controlStates'
 local dense = require 'scripts.s3.components.componentTests.dense'
 local eventComposition = require 'scripts.s3.components.componentTests.eventComposition'
+local h3ui = require 'scripts.s3.components.componentTests.h3ui'
 local longLabels = require 'scripts.s3.components.componentTests.longLabels'
 local nesting = require 'scripts.s3.components.componentTests.nesting'
 local relativeSizing = require 'scripts.s3.components.componentTests.relativeSizing'
@@ -96,6 +97,7 @@ local headerTextProps = {
 ---| 'longLabels'
 ---| 'nesting'
 ---| 'relativeSizing'
+---| 'h3ui'
 ---| 'windowGeometry'
 
 ---@class openmw.interfaces.H3ComponentTest
@@ -114,6 +116,7 @@ local headerTextProps = {
 ---@field longLabels fun(): openmw.ui.Layout
 ---@field nesting fun(): openmw.ui.Layout
 ---@field relativeSizing fun(): openmw.ui.Layout
+---@field h3ui fun(): openmw.ui.Layout
 ---@field windowGeometry fun(): openmw.ui.Layout
 
 ---@class openmw.interfaces
@@ -137,6 +140,7 @@ local demoConstructors = {
   longLabels = longLabels,
   nesting = nesting,
   relativeSizing = relativeSizing,
+  h3ui = h3ui,
   windowGeometry = windowGeometry,
 }
 local demoNames = {
@@ -148,6 +152,7 @@ local demoNames = {
   'longLabels',
   'nesting',
   'relativeSizing',
+  'h3ui',
   'windowGeometry',
 }
 local currentDemoIndex = 0
@@ -658,6 +663,7 @@ local interface = {
   longLabels = longLabels,
   nesting = nesting,
   relativeSizing = relativeSizing,
+  h3ui = h3ui,
   windowGeometry = windowGeometry,
 }
 
