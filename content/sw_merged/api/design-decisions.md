@@ -73,6 +73,12 @@ looks weak:
 Automated deletion based only on "no current actor references it" is therefore
 not allowed.
 
+There is one audited exception: Definitive preprocessing removes 25
+non-playable classes whose NPC, dialogue, and script reference counts are all
+zero. The 18 playable Starwind chargen classes and every referenced non-playable
+class remain. This is an explicit reviewed source boundary, not an automated
+reachability rule.
+
 ## Equipment enchantment capacity is normalized to 375
 
 Definitive Starwind intentionally makes otherwise-unenchanted equipment broadly

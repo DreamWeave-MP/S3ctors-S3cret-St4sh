@@ -80,6 +80,12 @@ those destructive server-only edits by accident.
 Only reviewed source-cleaning and integration operations run. Historical TSI
 multiplayer policy is not reused as a convenience layer.
 
+Before the canonical merge, the build removes a manually audited set of 25
+non-playable `CLAS` records from the staged Bethesda inputs and the staged
+V1.15 override input. The list is limited to classes with zero NPC, dialogue,
+and script references; it does not perform general class reachability pruning.
+The canonical vanilla JSON sources remain unchanged.
+
 The build explicitly does **not** apply the old TSI gold/Kolto substitutions,
 main-quest instance removals, `SW_ShipQuester` removal, Courte server cleanup,
 or other server-only reference surgery.

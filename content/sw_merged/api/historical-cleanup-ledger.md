@@ -202,6 +202,36 @@ are still source merge semantics and are not part of this cleanup batch.
 Alt Start's conflicting Imperial Prison Ship cell is removed so the canonical
 Starwind cell remains authoritative.
 
+## Dead non-playable class cleanup
+
+The Definitive pair initially contained 99 `CLAS` records. Manual reference
+auditing identified 25 non-playable classes with zero NPC, dialogue, and script
+references:
+
+```text
+Apothecary       Assassin Service    Bard              Battlemage Service
+Bookseller       Clothier            Dreamers          Enchanter Service
+Gardener         Gondolier           Guild Guide       Journalist
+Mabrigash        Miner               Necromancer       Pawnbroker
+Pilgrim          Priest Service      Publican          Shipmaster
+Sorcerer Service Warlock             Wise Woman        Wise Woman Service
+Witch
+```
+
+They are deleted only from staged `Morrowind.esm`, `Tribunal.esm`,
+`Bloodmoon.esm`, and `StarwindRemasteredV1.15.esm` inputs before the canonical
+merge. The source JSON masters remain unchanged, and the 18 playable Starwind
+classes plus 56 referenced non-playable classes are retained. The result is
+74 intentional/referenced classes in the Definitive pair.
+
+## Czerka faction reaction cleanup
+
+The V1.15 `Imperial Legion` override is intentionally repurposed as **Czerka
+Corporation**, with Czerka rank names and Starwind membership. Its inherited
+Imperial Legion reaction table was stale Morrowind diplomacy, so the override
+now retains only its self-reaction. This is a faction-record correction, not
+part of the class cleanup.
+
 ## Main-quest removals deliberately *not* carried forward
 
 Old TSI deployment included or contemplated destructive operations that do not
