@@ -55,6 +55,8 @@ ui.create {
 | --- | --- | --- |
 | `items` | table | Child layouts assigned in order. |
 | `columns` | integer? | Items per row; defaults to `1`. |
+| `columnGap` | number? | Horizontal space inserted between items in each row. |
+| `rowGap` | number? | Vertical space inserted between generated rows. |
 | `rowProps` | table? | Properties copied to each generated row. |
 | `template` | openmw.ui.Template? | Replaces the default grid template. |
 

@@ -2,7 +2,13 @@
 
 local emptyOptions = {}
 
+local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
+local auxUi = require 'openmw_aux.ui'
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local constants = require 'scripts.omw.mwui.constants'
 
 local button = require 'scripts.s3.components.button'
 local row = require 'scripts.s3.components.row'
@@ -13,6 +19,7 @@ local textInput = require 'scripts.s3.components.textInput'
 ---@field onChange? fun(value: string)
 ---@field clearable? boolean
 ---@field clearLabel? string
+---@field bordered? boolean
 ---@field name? string
 ---@field props? table
 ---@field inputProps? table
@@ -23,6 +30,28 @@ local textInput = require 'scripts.s3.components.textInput'
 ---@field userData? any
 ---@field template? openmw.ui.Template
 
+local function borderedTemplate(template)
+  local result = auxUi.deepLayoutCopy(template)
+  local content = result.content or ui.content {}
+
+  content:add {
+    template = I.MWUI.templates.horizontalLine,
+  }
+  content:add {
+    template = I.MWUI.templates.horizontalLine,
+    props = {
+      position = util.vector2(0, -constants.border),
+      relativePosition = util.vector2(0, 1),
+    },
+  }
+  content:add {
+    template = I.MWUI.templates.verticalLine,
+  }
+
+  result.content = content
+  return result
+end
+
 ---@param options? H3.SearchInputOptions
 ---@return openmw.ui.Layout
 local function searchInput(options)
@@ -31,7 +60,16 @@ local function searchInput(options)
   local initialValue = options.value or ''
   local onChange = options.onChange
   local inputLayout
+  local inputProps = {}
   local inputEvents = {}
+
+  if options.inputProps then
+    for key, value in next, options.inputProps do
+      inputProps[key] = value
+    end
+  end
+
+  if inputProps.textAlignV == nil then inputProps.textAlignV = ui.ALIGNMENT.Center end
 
   if options.inputEvents then
     for key, event in next, options.inputEvents do
@@ -52,11 +90,12 @@ local function searchInput(options)
     textInput {
       name = 'input',
       text = initialValue,
-      props = options.inputProps,
+      props = inputProps,
       external = options.inputExternal,
       events = inputEvents,
       userData = options.userData,
-      template = options.template,
+      template = options.bordered == false and options.template
+        or borderedTemplate(options.template or I.MWUI.templates.textEditLine),
     },
   }
 

@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-Builds a row containing a TextEdit named `input` and, by default, a clear button named `clear`. OpenMW TextEdit has no placeholder property; provide placeholder-like text separately.
+Builds a row containing a bordered TextEdit named `input` and, by default, a clear button named `clear`. OpenMW TextEdit has no placeholder property; provide placeholder-like text separately.
 
 ## Example
 
@@ -43,6 +43,7 @@ element = ui.create {
 | `onChange` | function? | Receives text changes and clear as `''`. |
 | `clearable` | boolean? | Shows the clear button; enabled by default. |
 | `clearLabel` | string? | Label for the clear button. |
+| `bordered` | boolean? | Draws top, left, and bottom borders around the editor; enabled by default. |
 | `inputProps` | table? | Properties for the nested editor. |
 | `inputEvents` | table? | Events for the nested editor. |
 | `inputExternal` | table? | External properties for the nested editor. |
