@@ -1,0 +1,209 @@
+---
+title: Historical cleanup ledger
+weight: 70
+description: Specific data cleanups, removals, rejected historical behavior, and provenance behind the Definitive transformation.
+---
+
+# Historical cleanup ledger
+
+This page is the durable archaeology record: what was changed or removed, why,
+and whether the action applies to canonical source, staged vanilla inputs, or
+final masterless serialization.
+
+It is intentionally more detailed than the project landing page.
+
+## Historical build lineage
+
+The modern builder descends from Starwind-Builder and TSI deployment work, but
+**Definitive is not the old TSI build**.
+
+Historical CI had separate SP/TSI behavior. The TSI path was explicitly allowed
+to alter or remove content for server operation, including using a no-main-
+quest Patch variant and performing reference surgery that a definitive
+single-player base must never inherit.
+
+The modern builder therefore preserves historical scripts as provenance but
+re-approves operations individually.
+
+## Source dialogue exact-copy cleanup
+
+A parent-aware RemasteredPatch audit identified **3,002** INFO records that were
+byte-for-byte identical to the inherited parent record, including linkage.
+
+These records contributed no semantic or structural change and were removed
+from canonical Starwind source.
+
+This cleanup alone reduced enormous TESCS dialogue snapshots such as `Hello`
+without changing effective dialogue.
+
+## Link-only TESCS dialogue dirt
+
+Many physical Starwind INFOs were semantically identical to Bethesda parent
+INFOs but carried modified `prev_id`/`next_id` links because TESCS rewrote
+neighboring records when new dialogue was inserted.
+
+These were *not* globally deleted on sight. Link-only overrides can be the
+mechanical glue surrounding a legitimate new Starwind INFO.
+
+Later actor-provenance analysis identified a subset that served only to import
+vanilla actors and dependency trees. Those proven dirty roots were removed at
+source, allowing their actor/script/inventory trees to disappear through normal
+closure rather than final-plugin whack-a-mole.
+
+## Dead Tribunal `TR08_Hlaalu` INFOs
+
+Three V1.15 INFO IDs were modified Starwind copies of Tribunal dialogue gated
+on unreachable Tribunal journal state:
+
+```text
+19191290671947220251
+192701535310983235
+3221696071812632454
+```
+
+They were removed from Starwind source.
+
+A fourth Helseth `Hello` INFO requiring `TR08_Hlaalu >= 100` had already been
+removed by the exact-copy cleanup.
+
+## Vanilla faction-dialogue staged prune
+
+The final exact set of **53** inherited Bethesda INFO IDs responsible for dead
+Morag Tong / Hands of Almalexia / Census and Excise dependencies is embedded in
+the build driver.
+
+They are deleted only from temporary staged vanilla masters before dialogue
+materialization.
+
+A preliminary broad `tes3cmd --sub-match` search returned 563 IDs and was
+explicitly rejected as overbroad.
+
+## `FFFF` sentinel
+
+Two apparent missing faction references were actually `speaker_faction =
+"FFFF"`, the TES3 Construction Set representation of `-NO FACTION-`.
+
+The closure model was corrected; no fake faction record is imported.
+
+## Response-text dialogue materialization removed
+
+Generic topic-name scanning was progressively narrowed and finally removed.
+Ordinary response text is not considered sufficient evidence to import a
+Bethesda DIAL.
+
+The final test case was `price on your head`. Manual inspection proved the six
+candidate INFOs were Morrowind Thieves Guild bounty-removal content, not generic
+crime-system functionality needed by Starwind.
+
+## INFO tombstone serialization removed
+
+An earlier masterless build contained exactly **4,826** more physical INFOs
+than the expected live set. Every excess record was a deletion tombstone.
+
+The decoupler was corrected so tombstones suppress their parent during
+reconstruction but are not serialized after the masters are gone.
+
+This change brought effective order, physical order, and serialized links to
+exact equality.
+
+## Non-dialogue tombstones
+
+The same masterless principle was later generalized to other deleted records:
+once parent/master deletion semantics have been applied, dead top-level
+tombstones are not useful in the final self-contained artifact.
+
+## Exact duplicate MGEFs
+
+Eight byte-identical physical MagicEffect duplicates were identified in one
+intermediate build (`Levitate`, `SlowFall`, `Lock`, `Invisibility`, `Dispel`,
+`Telekinesis`, `Mark`, `Reflect`) and deduplicated.
+
+This is **not MGEF pruning**. MGEF/SKIL/GMST remain foundational and off-limits
+to reachability-based minimization.
+
+## Region sleep-creature cleanup
+
+Reused vanilla regions carried vanilla `sleep_creature` leveled-list links into
+Starwind pseudo-exterior areas. Those links could import Morrowind/Bloodmoon
+sleep encounter lists and vanilla creatures into Star Wars locations.
+
+The causal region sleep dependencies were removed rather than pruning the
+creatures after import.
+
+## Exterior/LAND/LTEX residue
+
+An earlier Standalone corpus retained a tiny leftover exterior worldspace
+island after the large exterior-cell cleanup. That residue was separately
+audited and removed where it was proven unnecessary.
+
+Definitive revalidates the full approved corpus after Naboo/Enhanced/etc.; the
+historical result is recorded here as provenance, not as a blanket rule that
+all future LAND/LTEX records must be deleted.
+
+## Dialogue-driven late actor cleanup
+
+A pre-Definitive provenance pass found **94** actors imported only after
+dialogue liveness. **82** were rooted solely in link-only TESCS-dirt INFOs.
+Cleaning those causal INFOs removed the actor records and their transitive
+inventory/script/etc. dependencies naturally.
+
+This is why the modern decoupler also defers dialogue dependencies until after
+the non-dialogue actor population is known.
+
+## Naboo DRM/test cleanup
+
+Naboo is approved Definitive content, but old DRM/test machinery is not. Those
+records are removed as integration/source hygiene, with closure validation used
+to ensure no live container/object still references a deleted dependency.
+
+## Bing/Enhanced integration cleanup
+
+Reviewed dirty-cell, orphan-bodypart, duplicate-reference, and related merge
+fixes discovered during TSI maintenance remain valid when they correct the
+source data itself rather than implement server policy.
+
+## Alt Start Imperial Prison Ship conflict
+
+Alt Start's conflicting Imperial Prison Ship cell is removed so the canonical
+Starwind cell remains authoritative.
+
+## Main-quest removals deliberately *not* carried forward
+
+Old TSI deployment included or contemplated destructive operations that do not
+belong in Definitive Edition. The modern builder does not perform:
+
+- no-main-quest Patch substitution;
+- `SW_ShipQuester` removal;
+- old Taris/main-quest instance deletions;
+- old server-only Shade/Thegg cleanup;
+- MP replacement-door/freighter edits;
+- Courte server cleanup merely for multiplayer behavior;
+- TSI gold/Kolto replacement policy;
+- MPRecords merge;
+- Vvardenfell merge/surgery.
+
+The main-quest preservation guard exists specifically to prevent accidental
+regression toward those historical server transforms.
+
+## Enchantment capacity 375 retained intentionally
+
+The old TSI pipeline also normalized otherwise-unenchanted equipment to
+capacity `375`. Unlike the destructive MP operations above, this one was
+reviewed and explicitly retained as Definitive design.
+
+The reason is player customization: long-term server experience indicated that
+players valued freedom to use the equipment they liked rather than having
+Morrowind's original enchantment capacity dictate appearance/build choices.
+
+## Provenance principle
+
+Historical TSI behavior falls into three buckets:
+
+1. **source/data fix** — may be retained after review;
+2. **intentional Definitive design** — may be retained and documented as policy;
+3. **multiplayer deployment policy** — must not enter Definitive merely because it once existed in `build.sh`.
+
+This classification is more important than whether a line appeared under an
+old `tsi` branch.
+
+[API index](../) · [Source corpus & preprocessing](../source-corpus-and-preprocessing/) · [Dialogue canonicalization](../dialogue-canonicalization/)
