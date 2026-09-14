@@ -666,7 +666,50 @@ After exact-copy cleanup, dead Tribunal-dialogue removal, build-local vanilla pr
 
 The project therefore keeps MTM as the historical merge engine and validates/canonicalizes the Standalone result for the runtime we actually target.
 
-# Current next step: physical dialogue cleanup
+# Current next step: data/content split
+
+The root `Starwind-Standalone.omwaddon` is now the monolithic baseline for a
+Tamriel Rebuilt-style split:
+
+```text
+Star_Data.omwaddon       stable definitions and reusable data
+        ↑
+Starwind.omwaddon        world, actors, state, scripts, and dialogue
+```
+
+`split_starwind.py` produces the first dependency-checked definition split.
+Always-Data families are `GMST`, `MGEF`, `SKIL`, `RACE`, `CLAS`, `FACT`,
+`BSGN`, `SOUN`, `SNDG`, `STAT`, `BODY`, `APPA`, `LOCK`, `PROB`, `REPA`,
+`INGR`, `ALCH`, `ENCH`, and `SPEL`. Candidate families are `WEAP`, `ARMO`,
+`CLOT`, `MISC`, `LIGH`, `ACTI`, `CONT`, `DOOR`, `CREA`, `LEVI`, and `LEVC`;
+only records whose typed dependencies also resolve inside Data are promoted.
+
+`CELL`, `PGRD`, `DIAL`, `INFO`, `NPC_`, `SCPT`, `GLOB`, `REGN`, `BOOK`,
+`StartScript`, and other world/content records remain in `Starwind` by
+default. A legacy script may cross the boundary only when its ID is explicitly
+added to the splitter's approved Data-script allowlist.
+
+Scripted item/object definitions therefore remain in `Starwind` unless their
+script is explicitly approved. Dependency resolution is record-namespace-aware;
+for example, `RACE "Droid"` cannot match `DIAL "droid"`. This preserves the
+one-way invariant:
+
+```text
+Star_Data → Starwind = 0 dependencies
+Starwind → Star_Data = allowed
+```
+
+Run the split from the repository root with:
+
+```bash
+./split_starwind.py
+```
+
+The generated `.swbuild/split/starwind-split-report.json` records the boundary,
+demotions, header masters, dependency checks, and record-for-record
+reconstruction result.
+
+# Later next step: physical dialogue cleanup
 
 Behavioral correctness is no longer the blocker. The next goal is the one that motivated this archaeology in the first place: **remove unnecessary physical dialogue baggage instead of merely proving it harmless.**
 
@@ -728,6 +771,7 @@ Useful generated files include:
 .swbuild/standalone/reports/Starwind-Standalone-closure-audit.json
 .swbuild/reports/Starwind-Standalone-dialogue-chain-audit.json
 .swbuild/reports/Starwind-dialogue-source-hygiene-v2.json
+.swbuild/split/starwind-split-report.json
 ```
 
 `decoupleLog.txt` is particularly useful because `addVanillaRefs` records why vanilla dialogue topics/INFOs were retained or materialized.
