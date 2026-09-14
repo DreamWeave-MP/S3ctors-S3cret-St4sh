@@ -73,6 +73,15 @@ def compile_sources() -> None:
         legacy.run([legacy.tool("tes3conv"), "-o", source, destination], cwd=WORK)
 
 
+def active_staged_plugins() -> list[Path]:
+    """Return only current compiled inputs, not tes3cmd backup copies."""
+    return [
+        WORK / legacy.BINARY_NAME[key]
+        for key in INCLUDED_SOURCES
+        if (WORK / legacy.BINARY_NAME[key]).exists()
+    ]
+
+
 def run_source_hygiene() -> Path:
     report = REPORTS / "Starwind-definitive-dialogue-source-hygiene.json"
     subprocess.run(
@@ -199,7 +208,7 @@ def preprocess_definitive_sources(checks: list[dict]) -> None:
 
     assert_main_quest(
         "after-definitive-preprocess",
-        [path for path in WORK.iterdir() if path.suffix.lower() in {".esm", ".esp"}],
+        active_staged_plugins(),
         checks,
     )
 
@@ -218,7 +227,6 @@ def merge_definitive() -> Path:
         legacy.mtm(WORK, plugin, "StarwindRemasteredPatch.esm")
     legacy.mtm(WORK, "StarwindRemasteredPatch.esm", "StarwindRemasteredV1.15.esm")
 
-    legacy.tc(WORK, "delete", "--instance-match", "DELE", "StarwindRemasteredV1.15.esm")
     canonical = WORK / "Starwind-Definitive.omwaddon"
     (WORK / "StarwindRemasteredV1.15.esm").rename(canonical)
     legacy.mtm(WORK, "PartyHats.esp", canonical.name)
@@ -281,6 +289,7 @@ def run_dialogue_validation(final: Path, pre_add_vanilla: Path) -> Path:
         key: summary[key]
         for key in (
             "missing_dialogues", "extra_dialogues", "extra_dead_infos",
+            "missing_live_infos", "engine_order_mismatches",
             "potentially_competing_inversions", "dialogue_content_mismatches",
             "info_content_mismatches", "standalone_orphan_infos",
         )
@@ -304,7 +313,7 @@ def build(*, clean: bool, keep_work: bool, strict: bool) -> None:
     compile_sources()
     assert_main_quest(
         "before-definitive-preprocess",
-        [path for path in WORK.iterdir() if path.suffix.lower() in {".esm", ".esp"}],
+        active_staged_plugins(),
         quest_checks,
     )
     preprocess_definitive_sources(quest_checks)

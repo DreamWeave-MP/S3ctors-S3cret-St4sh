@@ -103,7 +103,9 @@ DEPENDENCY_TARGET_TYPES = {
     "door.open_sound": {"Sound"},
     "door.close_sound": {"Sound"},
     "light.sound": {"Sound"},
-    "creature.sound": {"Sound"},
+    # TES3 creature sound fields point to creature sound-generator records,
+    # which tes3conv represents as Creature records.
+    "creature.sound": {"Creature"},
     "creature.spells": {"Spell", "MagicEffect"},
     "creature.ai.activate": {"Activator"},
     "bodypart.race": {"Race"},
