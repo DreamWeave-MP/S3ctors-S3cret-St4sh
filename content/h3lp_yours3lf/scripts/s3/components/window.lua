@@ -388,6 +388,7 @@ local function window(options)
   }
 
   return {
+    layer = options.layer,
     type = ui.TYPE.Widget,
     name = options.name,
     props = props,
