@@ -174,8 +174,8 @@ Required invariants:
 Current validated counts from the documented build are:
 
 ```text
-Starwind-Definitive   30,573 non-header records
-Star_Data             13,355
+Starwind-Definitive   30,548 non-header records
+Star_Data             13,330
 Starwind              17,218
 ```
 
