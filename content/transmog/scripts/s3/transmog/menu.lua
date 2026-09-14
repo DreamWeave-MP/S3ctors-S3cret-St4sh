@@ -3,6 +3,7 @@
 local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local camera = require 'openmw.camera'
+local constants = require 'scripts.omw.mwui.constants'
 local core = require 'openmw.core'
 local types = require 'openmw.types'
 local ui = require 'openmw.ui'
@@ -22,6 +23,20 @@ local TableSort = table.sort
 local MathCeil = math.ceil
 local MathMax = math.max
 local MathMin = math.min
+local UtilVector2 = util.vector2
+
+local smallGap = constants.padding * 3
+local mediumGap = constants.padding * 4
+local largeGap = constants.padding * 6
+local outerGap = constants.padding * 8
+local gridGap = constants.padding * 3
+local selectionNameWidth = 210
+local selectionNameHeight = 48
+local selectionIconSize = 72
+local selectionBodyHeight = 152
+local iconColor = util.color.rgb(1, 0.78, 0.25)
+local hoveredIconAlpha = 1
+local normalIconAlpha = 0.78
 
 ---@class TransmogElement
 ---@field layout table?
@@ -43,6 +58,13 @@ local state = {
   controls = nil,
   createData = {},
 }
+
+local function makeSpacer(width, height)
+  return H3UI.build {
+    component = 'spacer',
+    args = { props = { size = UtilVector2(width, height) } },
+  }
+end
 
 local function copyEquipment()
   local result = {}
@@ -117,52 +139,96 @@ local function canUseAsAppearance(data)
 end
 
 local function selectedSlot(label, data)
-  local children = {
-    H3UI.build {
-      component = 'text',
-      role = 'selection-label',
-      args = {
-        text = label,
+  local selectionItem = H3UI.build {
+    component = 'itemSlot',
+    role = 'selection-item',
+    args = {
+      resource = data and data.record.icon and ui.texture { path = data.record.icon } or nil,
+      iconProps = { size = UtilVector2(selectionIconSize, selectionIconSize) },
+      props = { size = UtilVector2(selectionIconSize, selectionIconSize) },
+    },
+  }
+
+  local selectionContent = H3UI.build {
+    component = 'column',
+    role = 'selection-content',
+    args = {
+      props = { autoSize = false, relativeSize = UtilVector2(1, 1) },
+      children = {
+        H3UI.build {
+          component = 'spacer',
+          args = { grow = 1 },
+        },
+        H3UI.build {
+          component = 'row',
+          role = 'selection-item-row',
+          args = {
+            props = { align = ui.ALIGNMENT.Center },
+            external = { stretch = 1 },
+            children = { selectionItem },
+          },
+        },
+        H3UI.build {
+          component = 'spacer',
+          args = { grow = 1 },
+        },
+        H3UI.build {
+          component = 'text',
+          role = data and 'selection-name' or 'selection-empty',
+          args = {
+            text = data and data.record.name or 'None selected',
+            props = {
+              textColor = constants.headerColor,
+              textSize = constants.textHeaderSize,
+              multiline = true,
+              wordWrap = true,
+              autoSize = false,
+              size = UtilVector2(selectionNameWidth, selectionNameHeight),
+              textAlignH = ui.ALIGNMENT.Center,
+              textAlignV = ui.ALIGNMENT.End,
+            },
+          },
+        },
       },
     },
   }
 
-  if data then
-    children[#children + 1] = H3UI.build {
-      component = 'itemSlot',
-      role = 'selection-item',
+  local children = {
+    H3UI.build {
+      component = 'widget',
+      role = 'selection-body',
       args = {
-        resource = data.record.icon and ui.texture { path = data.record.icon } or nil,
-        iconProps = { size = util.vector2(64, 64) },
-        props = { size = util.vector2(64, 64) },
+        props = {
+          autoSize = false,
+          size = UtilVector2(selectionNameWidth, selectionBodyHeight),
+        },
+        children = { selectionContent },
       },
-    }
-
-    children[#children + 1] = H3UI.build {
-      component = 'text',
-      role = 'selection-name',
-      args = {
-        text = data.record.name,
-      },
-    }
-  else
-    children[#children + 1] = H3UI.build {
-      component = 'text',
-      role = 'selection-empty',
-      args = {
-        text = 'None selected',
-      },
-    }
-  end
+    },
+  }
 
   return H3UI.build {
-    component = 'column',
+    component = 'bookFrame',
     role = 'selection',
     args = {
+      title = label,
+      titleProps = {
+        size = UtilVector2(selectionNameWidth, constants.textHeaderSize),
+        autoSize = false,
+        multiline = false,
+        wordWrap = false,
+        textAlignH = ui.ALIGNMENT.Center,
+        textAlignV = ui.ALIGNMENT.Center,
+      },
       children = children,
       external = { grow = 1 },
     },
   }
+end
+
+local function isSelected(data)
+  return state.base and state.base.object == data.object
+    or state.appearance and state.appearance.object == data.object
 end
 
 local rebuild
@@ -192,13 +258,28 @@ local function selectItem(data)
 end
 
 local function inventoryItem(data)
+  local selected = isSelected(data)
+  local iconProps = {
+    size = UtilVector2(48, 48),
+    alpha = selected and hoveredIconAlpha or normalIconAlpha,
+  }
+  if selected then iconProps.color = iconColor end
+
   return {
     resource = data.record.icon and ui.texture { path = data.record.icon } or nil,
     count = data.object.count > 1 and data.object.count or nil,
-    iconProps = { size = util.vector2(48, 48) },
-    props = { size = util.vector2(48, 48) },
+    iconProps = iconProps,
+    props = { size = UtilVector2(48, 48) },
     userData = data,
     events = {
+      focusGain = async:callback(function(_, layout)
+        layout.content.icon.props.alpha = hoveredIconAlpha
+        return true
+      end),
+      focusLoss = async:callback(function(_, layout)
+        layout.content.icon.props.alpha = selected and hoveredIconAlpha or normalIconAlpha
+        return true
+      end),
       mouseClick = async:callback(function()
         selectItem(data)
         return true
@@ -225,7 +306,13 @@ local function buildInventory()
     component = 'row',
     role = 'pagination',
     args = {
+      external = { stretch = 1 },
       children = {
+        H3UI.build {
+          component = 'spacer',
+          args = { grow = 1 },
+        },
+
         H3UI.build {
           component = 'button',
           role = 'previous-page',
@@ -243,11 +330,18 @@ local function buildInventory()
           },
         },
 
+        makeSpacer(mediumGap, 0),
+
         H3UI.build {
           component = 'text',
           role = 'page-status',
-          args = { text = StrFormat('Page %d / %d', state.page, pageCount) },
+          args = {
+            text = StrFormat('Page %d / %d', state.page, pageCount),
+            props = { textColor = constants.normalColor },
+          },
         },
+
+        makeSpacer(mediumGap, 0),
 
         H3UI.build {
           component = 'button',
@@ -265,38 +359,33 @@ local function buildInventory()
             },
           },
         },
+
+        H3UI.build {
+          component = 'spacer',
+          args = { grow = 1 },
+        },
       },
     },
   }
 
   return H3UI.build {
-    component = 'column',
+    component = 'bookFrame',
     role = 'inventory-panel',
     args = {
-      external = { grow = 1, stretch = 1 },
+      title = 'Inventory',
       children = {
-        H3UI.build {
-          component = 'searchInput',
-          role = 'inventory-search',
-          args = {
-            value = state.search,
-            clearable = true,
-            onChange = function(value)
-              state.search = value
-              state.page = 1
-              rebuild()
-            end,
-          },
-        },
-
-        navigation,
+        makeSpacer(0, smallGap),
 
         H3UI.build {
           recipe = 'itemGrid',
           columns = 7,
           items = items,
-          external = { grow = 1, stretch = 1 },
+          columnGap = gridGap,
+          rowGap = gridGap,
         },
+
+        makeSpacer(0, largeGap),
+        navigation,
       },
     },
   }
@@ -330,6 +419,124 @@ local function confirm()
   core.sendGlobalEvent('TransmogCreate', createData)
 end
 
+local function buildSearch()
+  return H3UI.build {
+    component = 'bookFrame',
+    role = 'search-panel',
+    args = {
+      title = 'Filter inventory',
+      children = {
+        H3UI.build {
+          component = 'text',
+          role = 'search-label',
+          args = { text = 'Search by item name' },
+        },
+        makeSpacer(0, mediumGap),
+        H3UI.build {
+          component = 'searchInput',
+          role = 'inventory-search',
+          args = {
+            value = state.search,
+            clearable = true,
+            inputProps = { size = UtilVector2(420, 28) },
+            onChange = function(value)
+              state.search = value
+              state.page = 1
+              rebuild()
+            end,
+          },
+        },
+      },
+    },
+  }
+end
+
+local function buildActions()
+  local actionButtons = H3UI.build {
+    component = 'row',
+    role = 'primary-actions',
+    args = {
+      external = { stretch = 1 },
+      children = {
+        H3UI.build {
+          component = 'spacer',
+          args = { grow = 1 },
+        },
+        H3UI.build {
+          component = 'button',
+          role = 'clear',
+          args = { label = 'Clear', events = { mouseClick = async:callback(clearSelection) } },
+        },
+        makeSpacer(largeGap, 0),
+        H3UI.build {
+          component = 'button',
+          role = 'confirm',
+          args = { label = 'Create', events = { mouseClick = async:callback(confirm) } },
+        },
+        makeSpacer(largeGap, 0),
+        H3UI.build {
+          component = 'button',
+          role = 'close',
+          args = { label = 'Close', events = { mouseClick = async:callback(menu.close) } },
+        },
+        H3UI.build {
+          component = 'spacer',
+          args = { grow = 1 },
+        },
+      },
+    },
+  }
+
+  return H3UI.build {
+    component = 'bookFrame',
+    role = 'actions-panel',
+    args = {
+      title = 'Create item',
+      children = {
+        H3UI.build {
+          component = 'row',
+          role = 'name-control',
+          args = {
+            external = { stretch = 1 },
+            children = {
+              H3UI.build {
+                component = 'text',
+                role = 'name-label',
+                args = {
+                  text = 'New item name',
+                  props = {
+                    textColor = constants.headerColor,
+                    textSize = constants.textHeaderSize,
+                  },
+                },
+              },
+              makeSpacer(mediumGap, 0),
+              H3UI.build {
+                component = 'textInput',
+                role = 'name-input',
+                args = {
+                  text = state.itemName,
+                  props = { size = UtilVector2(320, 28) },
+                  external = { grow = 1 },
+                  events = {
+                    textChanged = async:callback(function(value, layout)
+                      state.itemName = value
+                      layout.props.text = value
+                      return true
+                    end),
+                  },
+                },
+              },
+            },
+          },
+        },
+        makeSpacer(0, largeGap),
+        actionButtons,
+      },
+    },
+  }
+end
+
 local function build()
   local selected = H3UI.build {
     component = 'row',
@@ -337,44 +544,9 @@ local function build()
     args = {
       children = {
         selectedSlot('Base item', state.base),
+        makeSpacer(mediumGap, 0),
         selectedSlot('Appearance', state.appearance),
       },
-    },
-  }
-
-  local controls = {
-    H3UI.build {
-      component = 'textInput',
-      role = 'name-input',
-      args = {
-        text = state.itemName,
-        props = { size = util.vector2(220, 24) },
-        events = {
-          textChanged = async:callback(function(value, layout)
-            state.itemName = value
-            layout.props.text = value
-            return true
-          end),
-        },
-      },
-    },
-
-    H3UI.build {
-      component = 'button',
-      role = 'clear',
-      args = { label = 'Clear', events = { mouseClick = async:callback(clearSelection) } },
-    },
-
-    H3UI.build {
-      component = 'button',
-      role = 'confirm',
-      args = { label = 'Create', events = { mouseClick = async:callback(confirm) } },
-    },
-
-    H3UI.build {
-      component = 'button',
-      role = 'close',
-      args = { label = 'Close', events = { mouseClick = async:callback(menu.close) } },
     },
   }
 
@@ -384,26 +556,41 @@ local function build()
     args = {
       layer = 'Windows',
       title = 'Transmog',
+      captionHeight = 24,
       closable = false,
       movable = false,
       resizable = false,
-      position = util.vector2(20, 80),
-      size = util.vector2(620, 650),
+      position = UtilVector2(20, 80),
+      size = UtilVector2(620, 650),
       children = {
         H3UI.build {
-          component = 'column',
-          role = 'body',
+          component = 'row',
+          role = 'body-inset',
           args = {
-            props = { relativeSize = util.vector2(1, 1) },
+            props = { autoSize = false, relativeSize = UtilVector2(1, 1) },
+            external = { grow = 1, stretch = 1 },
             children = {
-              selected,
-
+              makeSpacer(outerGap, 0),
               H3UI.build {
-                component = 'row',
-                role = 'controls',
-                args = { children = controls },
+                component = 'column',
+                role = 'body',
+                args = {
+                  props = { arrange = ui.ALIGNMENT.Center, autoSize = false },
+                  external = { grow = 1, stretch = 1 },
+                  children = {
+                    makeSpacer(0, outerGap),
+                    selected,
+                    makeSpacer(0, largeGap),
+                    buildSearch(),
+                    makeSpacer(0, largeGap),
+                    buildInventory(),
+                    makeSpacer(0, largeGap),
+                    buildActions(),
+                    makeSpacer(0, outerGap),
+                  },
+                },
               },
-              buildInventory(),
+              makeSpacer(outerGap, 0),
             },
           },
         },
