@@ -197,10 +197,21 @@ Two V1.15 Attack link-only findings were intentionally excluded because
 RemasteredPatch deletes them later. The remaining 10 orphan-delete tombstones
 are still source merge semantics and are not part of this cleanup batch.
 
-## Alt Start Imperial Prison Ship conflict
+## Alt Start escape-pod background selection
 
-Alt Start's conflicting Imperial Prison Ship cell is removed so the canonical
-Starwind cell remains authoritative.
+The historical TSI pipeline deleted the entire Alt Start `Imperial Prison Ship`
+cell under the assumption that it was a conflicting duplicate. That was too
+broad for Definitive: `StarwindMPRecords` is excluded, while Alt Start carries
+the source-owned background-selection additions needed by the supported
+single-player build.
+
+The restored contribution includes the `SW_CharGenPodDoor2`,
+`SW_CharGenPodDoor3`, `SW_CharGenPodDoor4`, `SW_CharGenPodDoor5`,
+`SW_CharGenPodDoor7`, `SW_CharGenPodDoorMando`, and
+`SW_CharGenPodDoorShipCap` placements, plus the live `SW_CharGenPodAct`
+escape-pod activator placement. The corresponding door/activator definitions
+and scripts are retained as well. The Definitive merge now preserves these
+Alt Start additions instead of deleting the whole cell.
 
 ## Dead non-playable class cleanup
 

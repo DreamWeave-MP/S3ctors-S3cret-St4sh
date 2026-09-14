@@ -93,8 +93,13 @@ resolves known plugin integration defects rather than multiplayer policy.
 
 ### Alt Start integration
 
-The conflicting Alt Start copy of the Imperial Prison Ship cell is removed so
-the canonical Starwind cell remains authoritative.
+Alt Start contributes the background-selection escape pods to the canonical
+`Imperial Prison Ship` cell. The Definitive build preserves those source-owned
+placements because `StarwindMPRecords` is intentionally excluded; deleting the
+whole Alt Start cell would incorrectly remove the pod doors while leaving some
+of their definitions behind. The canonical merge therefore retains the Alt
+Start cell additions while the existing Starwind prison-ship content remains
+authoritative.
 
 ### Naboo integration
 
