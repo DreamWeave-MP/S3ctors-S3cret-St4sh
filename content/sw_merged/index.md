@@ -17,7 +17,7 @@ extra:
       - Star_Data.omwaddon
       - Starwind.omwaddon
 
-  version: 1.0
+  version: "1.0"
 ---
 <h1 style="font-size: 1.5em;text-align: center;font-style: italic;padding-top: 45px;padding-bottom: 45px;">Brought to you by the Starwind Team and all the players on <a href="https://discord.gg/wcMj2b2svh">The Starwind Initiative</a></h1>
 

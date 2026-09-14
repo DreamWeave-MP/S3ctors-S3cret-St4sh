@@ -16,7 +16,7 @@ extra:
     content_files:
       - Fargoth Assassins.omwaddon
 
-  version: 1.0
+  version: "1.0"
 ---
 Well, by now the jig is up.
 

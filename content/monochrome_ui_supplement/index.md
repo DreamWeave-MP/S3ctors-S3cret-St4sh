@@ -7,7 +7,7 @@ extra:
   install_info:
     data_directories:
       - .
-  version: 1.0
+  version: "1.0"
 ---
 
 Monochrome UI supplement is, well... a monochrome UI supplement.
@@ -41,5 +41,4 @@ listName = "total-overhaul"
 insert = "/home/sk3shun-8/GitHub/s3stash/monochrome_ui_supplement"
 after = "MonochromeUserInterface/monochrome-user-interface"
 ```
-
 

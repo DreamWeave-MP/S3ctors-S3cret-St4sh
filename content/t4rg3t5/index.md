@@ -18,7 +18,7 @@ extra:
     content_files:
       - T4rg3t5.esp
 
-  version: 1.0
+  version: "1.0"
 ---
 
 <div align="center">

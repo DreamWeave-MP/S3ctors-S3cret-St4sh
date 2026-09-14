@@ -18,7 +18,7 @@ extra:
       - .
     content_files:
       - Static Switching System.esp
-  version: 1.0
+  version: "1.0"
 ---
 
 **Static Switching System (SSS)** is a declarative world-patching framework for OpenMW. Write YAML modules to replace meshes globally or in specific places, or to target live objects with conditions and apply object, inventory, actor, world-state, and scripting actions.
