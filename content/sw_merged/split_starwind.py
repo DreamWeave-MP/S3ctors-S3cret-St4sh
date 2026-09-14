@@ -19,9 +19,9 @@ DEFAULT_CONTENT = ROOT / "Starwind.omwaddon"
 DEFAULT_REPORT = ROOT / ".swbuild" / "split" / "starwind-split-report.json"
 CONVERTER = ROOT / "tes3conv"
 
-# These definitions are always reusable unless the dependency validator finds
-# a content-only target. They are kept separate from the broader candidate set
-# so the policy is visible and can be tightened without changing semantics.
+# These definition families default to Data. Individual records with a
+# content-only dependency remain in Starwind; a type name alone is not enough
+# to make a masterless reusable record.
 ALWAYS_DATA_TYPES = {
     "Alchemy",
     "Apparatus",
@@ -249,11 +249,6 @@ def choose_data_records(records: list[dict]) -> tuple[set[int], list[dict]]:
             record = indexed[index]
             for dependency in dependencies(record, index):
                 if dependency_target_keys(dependency, all_keys_by_id) & content_keys:
-                    if record.get("type") in ALWAYS_DATA_TYPES:
-                        raise RuntimeError(
-                            f"required Data record depends on content: "
-                            f"{record.get('type')} {editor_id(record)}"
-                        )
                     to_demote.append((index, record, dependency))
                     break
         if not to_demote:

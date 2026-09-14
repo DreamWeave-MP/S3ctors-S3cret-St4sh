@@ -179,9 +179,38 @@ Audit Starwind's source dialogue against its inherited parent state:
 ./dialogue_source_hygiene.py --topic hello
 ```
 
-## Generated build tree
+## Definitive generated build tree
 
-Each build mode receives an independent disposable work tree:
+The definitive builder has one product and one fixed source graph:
+
+```text
+.swbuild/definitive/
+├── work/
+├── out/
+│   ├── Starwind-Definitive.omwaddon
+│   ├── Star_Data.omwaddon
+│   └── Starwind.omwaddon
+├── reports/
+└── build-manifest.json
+```
+
+Run it with:
+
+```bash
+./build_starwind.py
+```
+
+The included source set is Morrowind, Tribunal, Bloodmoon, Minimal,
+Remastered V1.15, Remastered Patch, Bing's Race Pack, Enhanced, PlanExp, Alt
+Start, Community Patch, Naboo, and PartyHats. `StarwindMPRecords` and
+`StarwindVvardenfell` are explicitly excluded.
+
+`motherjungle_audit.py` remains available as a historical build transcription,
+but its Solo/Standalone/TSI modes are not the Definitive build path.
+
+## Historical generated build tree
+
+The legacy transcriber keeps separate historical work trees for comparison:
 
 ```text
 .swbuild/
@@ -206,7 +235,28 @@ Each build mode receives an independent disposable work tree:
 
 Keeping each mode isolated is important: the Standalone build intentionally modifies its **staged vanilla masters** before `addVanillaRefs`; those work copies must never leak into the Solo or TSI build.
 
-# Build pipeline
+# Definitive build pipeline
+
+`build_starwind.py` always performs the same sequence:
+
+1. Compile the fixed source set with `tes3conv`.
+2. Run source hygiene reporting.
+3. Apply only reviewed Definitive preprocessing.
+4. Merge Bing's Race Pack into Enhanced, then Enhanced/PlanExp/Alt Start/CPP/Naboo into Patch.
+5. Merge Patch into V1.15 and PartyHats into the canonical result.
+6. Fold the canonical result into Minimal for master decoupling.
+7. Apply standalone-only vanilla surgery and run `addVanillaRefs`.
+8. Remove final tombstones and validate main-quest sentinels.
+9. Verify closure and dialogue equivalence.
+10. Split the resulting `Starwind-Definitive.omwaddon` into `Star_Data` and `Starwind`.
+
+The Definitive path deliberately does **not** call the historical
+`tsi_preprocess()` function. In particular, it does not apply TSI gold/Kolto
+substitutions, multiplayer cell/actor removals, Courte cleanup, Ship Quester
+removal, or Vvardenfell surgery. Naboo DRM cleanup and orphan Bings bodyparts
+are handled explicitly in `build_starwind.py`.
+
+# Historical build transcription
 
 ## 1. Compile JSON sources
 
@@ -678,7 +728,7 @@ Starwind.omwaddon        world, actors, state, scripts, and dialogue
 ```
 
 `split_starwind.py` produces the first dependency-checked definition split.
-Always-Data families are `GMST`, `MGEF`, `SKIL`, `RACE`, `CLAS`, `FACT`,
+Default-Data families are `GMST`, `MGEF`, `SKIL`, `RACE`, `CLAS`, `FACT`,
 `BSGN`, `SOUN`, `SNDG`, `STAT`, `BODY`, `APPA`, `LOCK`, `PROB`, `REPA`,
 `INGR`, `ALCH`, `ENCH`, and `SPEL`. Candidate families are `WEAP`, `ARMO`,
 `CLOT`, `MISC`, `LIGH`, `ACTI`, `CONT`, `DOOR`, `CREA`, `LEVI`, and `LEVC`;
@@ -686,8 +736,10 @@ only records whose typed dependencies also resolve inside Data are promoted.
 
 `CELL`, `PGRD`, `DIAL`, `INFO`, `NPC_`, `SCPT`, `GLOB`, `REGN`, `BOOK`,
 `StartScript`, and other world/content records remain in `Starwind` by
-default. A legacy script may cross the boundary only when its ID is explicitly
-added to the splitter's approved Data-script allowlist.
+default. A record from a default-Data family remains in `Starwind` when its
+dependencies require content. A legacy script may cross the boundary only
+when its ID is explicitly added to the splitter's approved Data-script
+allowlist.
 
 Scripted item/object definitions therefore remain in `Starwind` unless their
 script is explicitly approved. Dependency resolution is record-namespace-aware;
