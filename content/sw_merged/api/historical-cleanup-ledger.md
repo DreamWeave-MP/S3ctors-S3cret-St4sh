@@ -184,6 +184,19 @@ Six of the Bing records were the same editor-navigation marker across the
 not runtime dialogue. Provenance telemetry was used to identify the records;
 no broad `PROBABLE_TESCS_LINK_DIRT` deletion was performed.
 
+After the actor-bootstrap class was solved, a controlled source-hygiene batch
+removed the **43** remaining records that survived into the Definitive output:
+42 link-only overrides and Naboo's one redundant exact copy (`airan's teeth`,
+INFO `100711405879315001`). The batch was grouped by source: V1.15 (8),
+RemasteredPatch (24), Bing's Race Pack (4), Enhanced (1), PlanExp (4), and
+Naboo (2). The strict rebuild preserved all 591 canonical DIALs and INFOs,
+all ordering and link invariants, and reduced the final output by only the
+records that were not recoverable as effective dialogue.
+
+Two V1.15 Attack link-only findings were intentionally excluded because
+RemasteredPatch deletes them later. The remaining 10 orphan-delete tombstones
+are still source merge semantics and are not part of this cleanup batch.
+
 ## Alt Start Imperial Prison Ship conflict
 
 Alt Start's conflicting Imperial Prison Ship cell is removed so the canonical
