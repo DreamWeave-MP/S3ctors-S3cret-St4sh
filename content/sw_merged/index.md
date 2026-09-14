@@ -250,6 +250,14 @@ Keeping each mode isolated is important: the Standalone build intentionally modi
 9. Verify closure and dialogue equivalence.
 10. Split the resulting `Starwind-Definitive.omwaddon` into `Star_Data` and `Starwind`.
 
+### Definitive enchantment normalization
+
+Definitive Edition intentionally normalizes otherwise-unenchanted clothing,
+armor, and weapons to an enchantment capacity of **375**. This is a product
+design decision, not inherited TSI cleanup: Starwind favors player
+personalization and equipment freedom over preserving vanilla Morrowind
+balance.
+
 The Definitive path deliberately does **not** call the historical
 `tsi_preprocess()` function. In particular, it does not apply TSI gold/Kolto
 substitutions, multiplayer cell/actor removals, Courte cleanup, Ship Quester
