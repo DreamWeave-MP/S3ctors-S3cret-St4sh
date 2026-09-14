@@ -1,2 +1,2 @@
-PLAYER: scripts/s3/transmog/main.lua
-GLOBAL: scripts/s3/transmog/recordGenerator.lua
+PLAYER: scripts/s3/transmog/player.lua
+GLOBAL: scripts/s3/transmog/global.lua
