@@ -1,7 +1,18 @@
 ---
 title: Definitive Build API & Wiki
 description: Exhaustive technical reference for the Starwind Definitive build, decoupling, dialogue canonicalization, validation, and Star_Data split.
+template: docs/section.html
+page_template: docs/page.html
 sort_by: weight
+
+extra:
+  docs_root: true
+  docs_project_name: Starwind Merged Plugin Project
+  docs_short_title: Definitive Build Docs
+  docs_project_path: '@/sw_merged/index.md'
+  docs_repository_url: https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/tree/main/content/sw_merged
+  docs_sidebar_label: API & Wiki
+  kind: guide
 ---
 
 # Definitive Build API & Wiki

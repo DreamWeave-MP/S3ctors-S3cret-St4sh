@@ -162,6 +162,25 @@ Reviewed dirty-cell, orphan-bodypart, duplicate-reference, and related merge
 fixes discovered during TSI maintenance remain valid when they correct the
 source data itself rather than implement server policy.
 
+The final actor-provenance pass also removed **19** source-owned INFO records
+that imported vanilla actors only through dialogue dependency closure. The
+records were limited to the approved Starwind source packs:
+
+- Bing's Race Pack: `946685598144191231`, `2301111508799109825`,
+  `909260325349167310`, `864550852431976539`, `1906888690290850855`,
+  `859512568224451931`, `135879349263212923`, `17567110311180430349`,
+  `883924055226252767`;
+- Enhanced: `3109648071102316693`, `2257190978769676981`;
+- Naboo: `283975135048201436`;
+- StarwindPlanExp: `1847857661117273120`, `1910916768339372042`,
+  `2230768852655184036`, `1416449617362841427`, `619028186535386174`,
+  `1294752263377418595`, `1328358151231324457`.
+
+The repeated `Hello` entries with `dialog placeholder` and
+`-----TSAESCI VOICEFILES START HERE-----` were editor markers, not runtime
+dialogue. Provenance telemetry was used to identify the records; no broad
+`PROBABLE_TESCS_LINK_DIRT` deletion was performed.
+
 ## Alt Start Imperial Prison Ship conflict
 
 Alt Start's conflicting Imperial Prison Ship cell is removed so the canonical
