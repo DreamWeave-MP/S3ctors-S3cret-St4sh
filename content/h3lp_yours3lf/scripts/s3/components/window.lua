@@ -3,12 +3,13 @@
 local emptyOptions = {}
 local emptyContent = {}
 
-local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local caption = require 'scripts.s3.components.caption'
+local chrome = require 'scripts.s3.ui.chrome'
 local column = require 'scripts.s3.components.column'
 local constants = require 'scripts.omw.mwui.constants'
 
@@ -35,6 +36,7 @@ local relativeWidth = UtilVector2(1, 0)
 ---@field closable? boolean
 ---@field pinnable? boolean
 ---@field pinned? boolean
+---@field innerBorder? boolean Adds the vanilla-style inner border below the caption; enabled by default.
 ---@field onMove? fun(position: openmw.util.Vector2)
 ---@field onResize? fun(size: openmw.util.Vector2, position: openmw.util.Vector2)
 ---@field onClose? fun()
@@ -123,8 +125,10 @@ local function window(options)
 
   local captionHeight = options.captionHeight or 20
   local hasCaption = options.title ~= nil or options.pinnable or options.closable
+  local innerBorder = options.innerBorder ~= false
   local canMove = movable and hasCaption
-  local border = constants.thickBorder
+  local frameSkin = appearance.chrome 'frame.thick'
+  local border = frameSkin.thickness or constants.thickBorder
   local padding = constants.padding
   local contentInset = border + padding
   local captionTop = border
@@ -334,8 +338,8 @@ local function window(options)
       props = {
         resource = constants.whiteTexture,
         ignorePointerEvents = true,
-        color = util.color.rgb(0, 0, 0),
-        alpha = 0.75,
+        color = appearance.token 'color.background',
+        alpha = appearance.token 'transparency.menu',
         relativeSize = fullSize,
       },
     },
@@ -373,15 +377,31 @@ local function window(options)
     }
   end
 
-  local bodyOffset = border + padding + (hasCaption and captionHeight or 0)
+  local innerBorderTop = border + (hasCaption and captionHeight or 0)
+  local bodyInset = innerBorder and 2 * border or contentInset
+  local bodyOffset = innerBorderTop + (innerBorder and border or padding)
+
+  if innerBorder then
+    content[#content + 1] = chrome.frame {
+      name = 'innerBorder',
+      skin = frameSkin,
+      props = {
+        position = UtilVector2(border, innerBorderTop),
+        size = UtilVector2(-2 * border, -(innerBorderTop + border)),
+        relativeSize = fullSize,
+      },
+      tint = appearance.token 'color.chromeBorder',
+    }
+  end
+
   local body = options.content or options.children
   body = body or emptyContent
   content[#content + 1] = {
     name = 'body',
     type = ui.TYPE.Widget,
     props = {
-      position = UtilVector2(contentInset, bodyOffset),
-      size = UtilVector2(-2 * contentInset, -(contentInset + bodyOffset)),
+      position = UtilVector2(bodyInset, bodyOffset),
+      size = UtilVector2(-2 * bodyInset, -(bodyInset + bodyOffset)),
       relativeSize = fullSize,
     },
     content = ui.content {
@@ -395,17 +415,33 @@ local function window(options)
     },
   }
 
-  return {
-    layer = options.layer,
-    type = ui.TYPE.Widget,
+  if options.template then
+    return {
+      layer = options.layer,
+      type = ui.TYPE.Widget,
+      name = options.name,
+      props = props,
+      external = options.external,
+      events = events,
+      userData = options.userData,
+      template = options.template,
+      content = ui.content(content),
+    }
+  end
+
+  local borderColor = appearance.token 'color.chromeBorder'
+  local result = chrome.frame {
+    skin = frameSkin,
     name = options.name,
     props = props,
     external = options.external,
     events = events,
     userData = options.userData,
-    template = options.template or I.MWUI.templates.bordersThick,
-    content = ui.content(content),
+    tint = borderColor,
+    content = content,
   }
+  result.layer = options.layer
+  return result
 end
 
 return window

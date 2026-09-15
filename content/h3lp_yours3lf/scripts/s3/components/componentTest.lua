@@ -10,12 +10,14 @@ local storage = require 'openmw.storage'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+require 'scripts.s3.ui'
+local appearance = require 'scripts.s3.ui.appearance'
 local bookFrame = require 'scripts.s3.components.bookFrame'
 local box = require 'scripts.s3.components.box'
 local button = require 'scripts.s3.components.button'
+local chrome = require 'scripts.s3.ui.chrome'
 local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local grid = require 'scripts.s3.components.grid'
 local iconButton = require 'scripts.s3.components.iconButton'
 local image = require 'scripts.s3.components.image'
@@ -74,14 +76,19 @@ local blue = util.color.rgb(0, 0, 1)
 
 local selectItems = { 'One', 'Two', 'Three' }
 local tabItems = { 'First', 'Second', 'Third' }
-local normalTextProps = {
-  textColor = constants.normalColor,
-  textSize = constants.textNormalSize,
-}
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function normalTextProps()
+  return {
+    textColor = appearance.token 'color.text',
+    textSize = appearance.token 'textSize.normal',
+  }
+end
+
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 
 ---@class H3ComponentTest.Options
 ---@field layer? string Root UI layer. Defaults to `Windows` for in-game console use.
@@ -220,7 +227,7 @@ local function section(id, title, children)
       column {
         name = 'ct_column_' .. id,
         children = {
-          text { name = 'ct_text_' .. id, text = title, props = headerTextProps },
+          text { name = 'ct_text_' .. id, text = title, props = headerTextProps() },
           spacer { name = 'ct_spacer_' .. id, props = { size = sectionGapSize } },
           column { name = 'ct_section_body_' .. id, children = children },
         },
@@ -257,7 +264,7 @@ local function makeBodyLayout(state)
           text {
             name = 'ct_header_text',
             text = 'Manual player-context smoke layout for every H3 UI component.',
-            props = normalTextProps,
+            props = normalTextProps(),
           },
         },
       },
@@ -288,7 +295,7 @@ local function makeBodyLayout(state)
             text {
               name = 'ct_primitive_text',
               text = 'widget + image + text',
-              props = normalTextProps,
+              props = normalTextProps(),
             },
           },
         },
@@ -297,8 +304,8 @@ local function makeBodyLayout(state)
           text = 'edit me',
           props = {
             size = textInputSize,
-            textColor = constants.normalColor,
-            textSize = constants.textNormalSize,
+            textColor = appearance.token 'color.text',
+            textSize = appearance.token 'textSize.normal',
           },
           events = {
             textChanged = async:callback(function()
@@ -318,7 +325,7 @@ local function makeBodyLayout(state)
             button {
               name = 'ct_button_notify',
               label = 'Button',
-              labelProps = normalTextProps,
+              labelProps = normalTextProps(),
               events = {
                 mouseClick = async:callback(function() notify 'button clicked' end),
               },
@@ -327,9 +334,9 @@ local function makeBodyLayout(state)
             iconButton {
               name = 'ct_icon_button_notify',
               label = 'Icon',
-              resource = { path = 'textures/omw_menu_scroll_left.dds' },
+              resource = chrome.texture(appearance.chrome 'scroll.left'),
               iconProps = { size = smallIconSize },
-              labelProps = normalTextProps,
+              labelProps = normalTextProps(),
               events = {
                 mouseClick = async:callback(function() notify 'icon button clicked' end),
               },
@@ -418,7 +425,7 @@ local function makeBodyLayout(state)
             text {
               name = 'ct_collapsible_text',
               text = 'Disclosure content.',
-              props = normalTextProps,
+              props = normalTextProps(),
             },
           },
         },
@@ -528,7 +535,6 @@ end
 local function makeWindowLayout(options, body, title)
   -- The body is a child Element in create(); keep live resize updates on the window shell.
   local resizeDirty = false
-
   local function finishResize()
     if not resizeDirty then return end
     resizeDirty = false

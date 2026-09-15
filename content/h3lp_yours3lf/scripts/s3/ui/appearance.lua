@@ -5,6 +5,7 @@ local core = require 'openmw.core'
 local storage = require 'openmw.storage'
 local util = require 'openmw.util'
 
+local builtinChrome = require 'scripts.s3.ui.chrome'
 local themeModule = require 'scripts.s3.ui.theme'
 
 local sectionName = 'SettingsPlayerH3UI'
@@ -13,10 +14,11 @@ local customThemeId = 'custom'
 local menuTransparencyKey = 'menuTransparency'
 local normalTextSizeKey = 'textSizeNormal'
 local headerTextSizeKey = 'textSizeHeader'
+local chromeSourceKey = 'chromeSource'
+local defaultChromeSource = 'auto'
 local defaultMenuTransparency = 0.84
 local defaultNormalTextSize = 16
 local defaultHeaderTextSize = 18
-local StrFormat = string.format
 
 local colorKeys = {
   'text',
@@ -65,6 +67,7 @@ local colorKeys = {
   'negative',
   'count',
   'accent',
+  'chromeBorder',
 }
 
 local colorKeySet = {}
@@ -73,6 +76,15 @@ for index = 1, #colorKeys do
 end
 
 local state
+
+local function ensureInitialized()
+  if not state then require 'scripts.s3.ui' end
+end
+
+local function invalidate()
+  state.active = nil
+  state.generation = state.generation + 1
+end
 
 local function normalizeHex(value)
   if type(value) ~= 'string' then return nil end
@@ -91,6 +103,11 @@ local function normalizeTextSize(value)
   value = tonumber(value)
   if not value then return nil end
   return math.floor(math.max(1, math.min(100, value)) + 0.5)
+end
+
+local function normalizeChromeSource(value)
+  if value == 'auto' or value == 'theme' or value == 'h3ui' then return value end
+  return nil
 end
 
 local function colorHex(value)
@@ -112,15 +129,6 @@ local function paletteFor(theme)
     palette[key] = themeColor(theme, key, fallback)
   end
   return palette
-end
-
-local function paletteFingerprint(palette)
-  local result = {}
-  for index = 1, #colorKeys do
-    local key = colorKeys[index]
-    result[#result + 1] = key .. '=' .. palette[key]
-  end
-  return table.concat(result, ';')
 end
 
 local function customPalette()
@@ -165,9 +173,22 @@ local function menuTransparency()
   return normalizeTransparency(settingValue(menuTransparencyKey)) or defaultMenuTransparency
 end
 
+local function chromeSource()
+  return normalizeChromeSource(settingValue(chromeSourceKey)) or defaultChromeSource
+end
+
 local function textSize(key, default) return normalizeTextSize(settingValue(key)) or default end
 
 local function registeredTheme(id) return state.themes[id] end
+
+local function selectedChrome(entry)
+  local source = chromeSource()
+  local themeChrome = entry.theme.chrome()
+  if source == 'auto' then source = themeChrome.preferredSource or 'theme' end
+
+  if source == 'theme' and entry.hasChrome then return themeChrome end
+  return builtinChrome.builtin()
+end
 
 local function validPreset(id)
   return id ~= nil and id ~= customThemeId and registeredTheme(id) ~= nil
@@ -205,9 +226,7 @@ local function writePreset(id)
     local key = colorKeys[index]
     if normalizeHex(settingValue(key)) ~= palette[key] then state.section:set(key, palette[key]) end
   end
-  state.active = nil
-  state.activeFingerprint = nil
-  state.generation = state.generation + 1
+  invalidate()
   return true
 end
 
@@ -228,6 +247,10 @@ local function initializeSettings()
   local storedHeaderTextSize = normalizeTextSize(raw[headerTextSizeKey]) or defaultHeaderTextSize
   if storedHeaderTextSize ~= raw[headerTextSizeKey] then
     state.section:set(headerTextSizeKey, storedHeaderTextSize)
+  end
+  local storedChromeSource = normalizeChromeSource(raw[chromeSourceKey]) or defaultChromeSource
+  if storedChromeSource ~= raw[chromeSourceKey] then
+    state.section:set(chromeSourceKey, storedChromeSource)
   end
   local explicitTheme = raw.theme
   if validPreset(explicitTheme) then
@@ -251,9 +274,7 @@ local function initializeSettings()
     local key = colorKeys[index]
     if raw[key] == nil then state.section:set(key, defaultPalette[key]) end
   end
-  state.active = nil
-  state.activeFingerprint = nil
-  state.generation = state.generation + 1
+  invalidate()
 end
 
 local function activeEntry()
@@ -286,9 +307,7 @@ local function restoreCustomPalette()
     end
   end
   state.lastPresetId = entry.id
-  state.active = nil
-  state.activeFingerprint = nil
-  state.generation = state.generation + 1
+  invalidate()
 end
 
 local function currentThemeId()
@@ -302,7 +321,9 @@ end
 local function morrowindPalette() return paletteFor(state.themes.morrowind.theme) end
 
 local function activeTheme()
+  ensureInitialized()
   initializeSettings()
+  if state.active then return state.active end
 
   local entry = activeEntry()
   local palette = settingValue 'theme' == customThemeId
@@ -311,15 +332,7 @@ local function activeTheme()
   local transparency = menuTransparency()
   local normalTextSize = textSize(normalTextSizeKey, defaultNormalTextSize)
   local headerTextSize = textSize(headerTextSizeKey, defaultHeaderTextSize)
-  local fingerprint = StrFormat(
-    '%s:%s;menuTransparency=%s;textSizeNormal=%s;textSizeHeader=%s',
-    entry.id,
-    paletteFingerprint(palette),
-    transparency,
-    normalTextSize,
-    headerTextSize
-  )
-  if state.active and state.activeFingerprint == fingerprint then return state.active end
+  local chrome = selectedChrome(entry)
 
   local tokens = {
     color = {},
@@ -331,11 +344,17 @@ local function activeTheme()
     tokens.color[key] = util.color.hex(palette[key])
   end
 
-  state.active =
-    themeModule.new({ name = entry.name, tokens = tokens }, state.registry, entry.theme)
-  state.activeFingerprint = fingerprint
+  state.active = themeModule.new(
+    { name = entry.name, tokens = tokens, chrome = chrome },
+    state.registry,
+    entry.theme
+  )
   return state.active
 end
+
+local function token(path) return activeTheme().token(path) end
+
+local function chrome(path) return builtinChrome.resolve(activeTheme(), path) end
 
 local function scheduleThemeUpdate(id, expectedTheme)
   state.pendingTheme = { id = id, expectedTheme = expectedTheme }
@@ -358,15 +377,15 @@ local function scheduleThemeUpdate(id, expectedTheme)
 end
 
 local function onStorageChanged(_, key)
-  state.active = nil
-  state.activeFingerprint = nil
-  state.generation = state.generation + 1
+  invalidate()
 
   if key == 'theme' then
     local selected = settingValue 'theme'
     if validPreset(selected) then scheduleThemeUpdate(selected, selected) end
   end
 end
+
+local function onCustomStorageChanged() invalidate() end
 
 local function registerThemeEntry(id, spec, compiled)
   assert(type(id) == 'string' and id ~= '', 'H3 UI theme id must be a non-empty string')
@@ -393,9 +412,10 @@ local function registerThemeEntry(id, spec, compiled)
     name = spec.name,
     description = spec.description,
     author = spec.author,
+    hasChrome = theme.hasChrome(),
     theme = theme,
   }
-  state.generation = state.generation + 1
+  invalidate()
 end
 
 local function initialize(registry, builtins)
@@ -416,6 +436,7 @@ local function initialize(registry, builtins)
   end
 
   state.section:subscribe(async:callback(onStorageChanged))
+  state.customSection:subscribe(async:callback(onCustomStorageChanged))
 end
 
 local function themeEntries()
@@ -463,9 +484,7 @@ local function setColor(key, value, set)
     state.section:set('theme', customThemeId)
     restoreCustomPalette()
   end
-  state.active = nil
-  state.activeFingerprint = nil
-  state.generation = state.generation + 1
+  invalidate()
 end
 
 local function reset()
@@ -474,6 +493,7 @@ local function reset()
     state.section:set(menuTransparencyKey, defaultMenuTransparency)
     state.section:set(normalTextSizeKey, defaultNormalTextSize)
     state.section:set(headerTextSizeKey, defaultHeaderTextSize)
+    state.section:set(chromeSourceKey, defaultChromeSource)
   end
   return result
 end
@@ -495,11 +515,17 @@ return {
   defaultMenuTransparency = defaultMenuTransparency,
   defaultNormalTextSize = defaultNormalTextSize,
   defaultHeaderTextSize = defaultHeaderTextSize,
+  defaultChromeSource = defaultChromeSource,
   initialize = initialize,
   activeTheme = activeTheme,
+  current = activeTheme,
+  token = token,
+  chrome = chrome,
   registerTheme = registerTheme,
   themeEntries = themeEntries,
   currentThemeId = currentThemeId,
+  chromeSource = chromeSource,
+  normalizeChromeSource = normalizeChromeSource,
   morrowindPalette = morrowindPalette,
   selectTheme = selectTheme,
   setColor = setColor,

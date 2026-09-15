@@ -2,20 +2,22 @@
 
 local I = require 'openmw.interfaces'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local box = require 'scripts.s3.components.box'
 local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local row = require 'scripts.s3.components.row'
 local selector = require 'scripts.s3.components.selector'
 local tabs = require 'scripts.s3.components.tabs'
 local text = require 'scripts.s3.components.text'
 local toggle = require 'scripts.s3.components.toggle'
 
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 
 ---@return openmw.ui.Layout
 local function nesting()
@@ -24,7 +26,7 @@ local function nesting()
   return column {
     name = 'ct_demo_nesting',
     children = {
-      text { text = 'Nested Flex/component composition', props = headerTextProps },
+      text { text = 'Nested Flex/component composition', props = headerTextProps() },
       status,
       box {
         children = {

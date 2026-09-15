@@ -7,13 +7,16 @@ local I = require 'openmw.interfaces'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
+local chrome = require 'scripts.s3.ui.chrome'
+
 local fullSize = util.vector2(1, 1)
 local black = util.color.rgb(0, 0, 0)
 local whiteTexture = ui.texture { path = 'white' }
 
 ---Build a book-like framed content layout.
----Allocates fresh layout, props, external, and content tables and uses MWUI borders read-only. It is a
----passive layout primitive; caller owns mounting and later updates.
+---Allocates fresh layout, props, external, and content tables. It is a passive layout primitive; caller
+---owns mounting and later updates.
 ---@param options? {title?: string, name?: string, props?: table, titleProps?: table, backgroundProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.LayoutOrElement[], children?: openmw.ui.Content|openmw.ui.LayoutOrElement[], template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
 local function bookFrame(options)
@@ -23,7 +26,10 @@ local function bookFrame(options)
   body = body or emptyContent
   local content = {}
   if options.title ~= nil then
-    local titleProps = {}
+    local titleProps = {
+      textSize = appearance.token 'textSize.header',
+      textColor = appearance.token 'color.header',
+    }
     if options.titleProps then
       for key, value in next, options.titleProps do
         titleProps[key] = value
@@ -66,8 +72,8 @@ local function bookFrame(options)
 
   local backgroundProps = {
     resource = whiteTexture,
-    color = black,
-    alpha = 1,
+    color = appearance.token 'color.background' or black,
+    alpha = appearance.token 'transparency.menu' or 1,
     ignorePointerEvents = true,
     relativeSize = fullSize,
   }
@@ -77,14 +83,8 @@ local function bookFrame(options)
     end
   end
 
-  return {
-    template = options.template or I.MWUI.templates.box,
-    name = options.name,
-    props = props,
-    external = external,
-    events = options.events,
-    userData = options.userData,
-    content = ui.content {
+  if options.template then
+    local legacyContent = ui.content {
       {
         type = ui.TYPE.Container,
         content = ui.content {
@@ -95,6 +95,34 @@ local function bookFrame(options)
             content = ui.content(content),
           },
         },
+      },
+    }
+
+    return {
+      template = options.template,
+      name = options.name,
+      props = props,
+      external = external,
+      events = options.events,
+      userData = options.userData,
+      content = legacyContent,
+    }
+  end
+
+  return chrome.box {
+    skin = appearance.chrome 'frame.thin',
+    name = options.name,
+    props = props,
+    external = external,
+    events = options.events,
+    userData = options.userData,
+    backgroundProps = backgroundProps,
+    tint = appearance.token 'color.chromeBorder',
+    content = {
+      {
+        type = ui.TYPE.Flex,
+        props = { horizontal = false },
+        content = ui.content(content),
       },
     },
   }

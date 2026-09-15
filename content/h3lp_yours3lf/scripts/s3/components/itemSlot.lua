@@ -3,6 +3,8 @@
 local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
+local appearance = require 'scripts.s3.ui.appearance'
+local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
 local ui = require 'openmw.ui'
 
@@ -28,7 +30,10 @@ local function itemSlot(options)
     image { name = 'icon', resource = options.resource, props = iconProps },
   }
   if options.count ~= nil then
-    local countProps = {}
+    local countProps = {
+      textColor = appearance.token 'color.count',
+      textSize = appearance.token 'textSize.normal',
+    }
     if options.countProps then
       for key, value in next, options.countProps do
         countProps[key] = value
@@ -58,14 +63,29 @@ local function itemSlot(options)
     end
   end
 
-  return {
-    template = options.template or I.MWUI.templates.box,
+  local layout = {
     name = options.name,
     props = props,
     external = external,
     events = options.events,
     userData = options.userData,
     content = ui.content(content),
+  }
+
+  if options.template then
+    layout.template = options.template
+    return layout
+  end
+
+  return chrome.box {
+    skin = appearance.chrome 'frame.thin',
+    name = layout.name,
+    props = layout.props,
+    external = layout.external,
+    events = layout.events,
+    userData = layout.userData,
+    tint = appearance.token 'color.chromeBorder',
+    content = content,
   }
 end
 

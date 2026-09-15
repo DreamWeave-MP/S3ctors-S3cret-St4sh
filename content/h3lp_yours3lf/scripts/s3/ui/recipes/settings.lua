@@ -4,7 +4,7 @@ local async = require 'openmw.async'
 local merge = require 'scripts.s3.ui.merge'
 
 local controlKeys = {
-  toggle = { 'value', 'onChange', 'onLabel', 'offLabel', 'label' },
+  toggle = { 'value', 'onChange', 'onLabel', 'offLabel' },
   slider = { 'value', 'min', 'max', 'step', 'trackWidth', 'onChange' },
   numberInput = { 'value', 'min', 'max', 'step', 'integer', 'onChange', 'onCommit' },
   selector = { 'items', 'selected', 'onSelect', 'emptyLabel' },
@@ -118,7 +118,9 @@ local function settings(ctx, spec)
   end
 
   if spec.children then
-    for index = 1, #spec.children do children[#children + 1] = spec.children[index] end
+    for index = 1, #spec.children do
+      children[#children + 1] = spec.children[index]
+    end
   end
 
   local args = merge.shallowCopy(spec.args or {})

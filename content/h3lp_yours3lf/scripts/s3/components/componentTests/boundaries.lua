@@ -4,9 +4,9 @@ local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local meter = require 'scripts.s3.components.meter'
 local numberInput = require 'scripts.s3.components.numberInput'
 local row = require 'scripts.s3.components.row'
@@ -22,10 +22,12 @@ local gap = UtilVector2(0, 6)
 local meterSize = UtilVector2(180, 14)
 local sliderSize = UtilVector2(220, 18)
 local inputSize = UtilVector2(120, 24)
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 
 local function pass() return true end
 local function refresh() I.H3ComponentTest.refresh() end
@@ -37,11 +39,11 @@ local function boundaries()
     children = {
       text {
         text = 'Boundary, empty, clamp, and normalization cases',
-        props = headerTextProps,
+        props = headerTextProps(),
       },
       spacer { props = { size = gap } },
 
-      text { text = 'Meters', props = headerTextProps },
+      text { text = 'Meters', props = headerTextProps() },
       row {
         children = {
           text { text = 'below zero — expected: empty' },
@@ -74,7 +76,7 @@ local function boundaries()
       },
 
       spacer { props = { size = gap } },
-      text { text = 'Sliders', props = headerTextProps },
+      text { text = 'Sliders', props = headerTextProps() },
 
       row {
         children = {
@@ -120,7 +122,7 @@ local function boundaries()
       spacer { props = { size = gap } },
       text {
         text = 'Number inputs: clamps, fractional steps, invalid text rollback on blur',
-        props = headerTextProps,
+        props = headerTextProps(),
       },
 
       row {
@@ -176,7 +178,7 @@ local function boundaries()
       },
 
       spacer { props = { size = gap } },
-      text { text = 'Empty and singleton navigation controls', props = headerTextProps },
+      text { text = 'Empty and singleton navigation controls', props = headerTextProps() },
       text { text = '<empty> selector — arrows do nothing' },
       selector { items = {}, emptyLabel = '<empty>' },
       text { text = 'Only selector — arrows do nothing' },

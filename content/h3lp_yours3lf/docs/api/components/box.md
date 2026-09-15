@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-Builds an H3UI box around optional content. The default template is OpenMW's `I.MWUI.templates.box`; pass `template` to use another supported template.
+Builds an H3UI box around optional content using the active appearance's thin frame. Pass `template` to use another supported template.
 
 ## Example
 

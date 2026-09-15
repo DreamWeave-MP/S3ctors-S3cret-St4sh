@@ -14,6 +14,14 @@ local StrFormat = string.format
 
 local emptyItems = {}
 
+local function labelLayout(layout)
+  local result = layout.content[1]
+  while result.content do
+    result = result.content[1]
+  end
+  return result
+end
+
 ---@class H3.TabItem
 ---@field label string
 ---@field value? any
@@ -72,19 +80,29 @@ local function tabs(options)
   local selectedSuffix = options.selectedSuffix or ' ]'
   local onSelect = options.onSelect
   local children = {}
+  local baseButtonProps = {}
+  local baseLabelProps = {}
+
+  local function applyOverrides(target, base, overrides, enabled)
+    if not overrides then return end
+    for key, value in next, overrides do
+      target[key] = enabled and value or base[key]
+    end
+  end
 
   local function setTabState(layout, index, isSelected)
     local label = itemLabel(items[index])
     if isSelected then label = StrFormat('%s%s%s', selectedPrefix, label, selectedSuffix) end
 
-    local labelLayout = layout.content[1].content[1]
-    mergeInto(layout.props, options.buttonProps, isSelected and options.selectedProps or nil)
-    mergeInto(
-      labelLayout.props,
-      options.labelProps,
-      isSelected and options.selectedLabelProps or nil
+    local labelTextLayout = labelLayout(layout)
+    applyOverrides(layout.props, baseButtonProps[index], options.selectedProps, isSelected)
+    applyOverrides(
+      labelTextLayout.props,
+      baseLabelProps[index],
+      options.selectedLabelProps,
+      isSelected
     )
-    labelLayout.props.text = label
+    labelTextLayout.props.text = label
   end
 
   for index = 1, #items do
@@ -109,18 +127,14 @@ local function tabs(options)
     children[index] = button {
       name = 'tab_' .. index,
       label = label,
-      props = mergeInto(
-        {},
-        options.buttonProps,
-        index == selected and options.selectedProps or nil
-      ),
-      labelProps = mergeInto(
-        {},
-        options.labelProps,
-        index == selected and options.selectedLabelProps or nil
-      ),
+      props = mergeInto({}, options.buttonProps),
+      labelProps = mergeInto({}, options.labelProps),
       events = itemEvents,
     }
+
+    baseButtonProps[index] = mergeInto({}, children[index].props)
+    baseLabelProps[index] = mergeInto({}, labelLayout(children[index]).props)
+    if index == selected then setTabState(children[index], index, true) end
   end
 
   return row {

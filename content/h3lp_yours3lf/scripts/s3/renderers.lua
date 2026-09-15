@@ -485,6 +485,20 @@ I.Settings.registerRenderer('H3UITheme', function(value, set)
   }
 end)
 
+I.Settings.registerRenderer('H3UIChromeSource', function(value, set)
+  local items = {
+    { label = core.l10n 'H3' 'H3UIChromeSourceAuto', value = 'auto' },
+    { label = core.l10n 'H3' 'H3UIChromeSourceTheme', value = 'theme' },
+    { label = core.l10n 'H3' 'H3UIChromeSourceH3UI', value = 'h3ui' },
+  }
+  local selected = appearance.normalizeChromeSource(value) or appearance.defaultChromeSource
+  return require 'scripts.s3.components.selector' {
+    items = items,
+    selected = themeIndex(items, selected),
+    onSelect = function(_, item) set(item.value) end,
+  }
+end)
+
 I.Settings.registerRenderer('H3UIColor', function(value, set, argument)
   local hex = appearance.normalizeHex(value) or '000000'
   local swatch = {

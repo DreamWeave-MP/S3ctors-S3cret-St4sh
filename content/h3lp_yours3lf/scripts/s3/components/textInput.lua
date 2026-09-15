@@ -3,6 +3,7 @@
 local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
+local appearance = require 'scripts.s3.ui.appearance'
 local ui = require 'openmw.ui'
 
 ---Build a TextEdit layout using `I.MWUI.templates.textEditLine` by default.
@@ -14,6 +15,8 @@ local function textInput(options)
   options = options or emptyOptions
 
   local props = {}
+  props.textColor = appearance.token 'color.text'
+  props.textSize = appearance.token 'textSize.normal'
   if options.props then
     for key, value in next, options.props do
       props[key] = value

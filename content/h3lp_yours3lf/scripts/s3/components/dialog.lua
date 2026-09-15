@@ -4,6 +4,7 @@ local emptyOptions = {}
 local emptyContent = {}
 
 local I = require 'openmw.interfaces'
+local appearance = require 'scripts.s3.ui.appearance'
 local ui = require 'openmw.ui'
 
 ---Build a Window-style dialog layout.
@@ -18,7 +19,10 @@ local function dialog(options)
   body = body or emptyContent
   local content = {}
   if options.title ~= nil then
-    local titleProps = {}
+    local titleProps = {
+      textSize = appearance.token 'textSize.header',
+      textColor = appearance.token 'color.header',
+    }
     if options.titleProps then
       for key, value in next, options.titleProps do
         titleProps[key] = value
