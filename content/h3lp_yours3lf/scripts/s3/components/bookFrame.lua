@@ -5,11 +5,16 @@ local emptyContent = {}
 
 local I = require 'openmw.interfaces'
 local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local fullSize = util.vector2(1, 1)
+local black = util.color.rgb(0, 0, 0)
+local whiteTexture = ui.texture { path = 'white' }
 
 ---Build a book-like framed content layout.
 ---Allocates fresh layout, props, external, and content tables and uses MWUI borders read-only. It is a
 ---passive layout primitive; caller owns mounting and later updates.
----@param options? {title?: string, name?: string, props?: table, titleProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.LayoutOrElement[], children?: openmw.ui.Content|openmw.ui.LayoutOrElement[], template?: openmw.ui.Template}
+---@param options? {title?: string, name?: string, props?: table, titleProps?: table, backgroundProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.LayoutOrElement[], children?: openmw.ui.Content|openmw.ui.LayoutOrElement[], template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
 local function bookFrame(options)
   options = options or emptyOptions
@@ -59,8 +64,21 @@ local function bookFrame(options)
     end
   end
 
+  local backgroundProps = {
+    resource = whiteTexture,
+    color = black,
+    alpha = 1,
+    ignorePointerEvents = true,
+    relativeSize = fullSize,
+  }
+  if options.backgroundProps then
+    for key, value in next, options.backgroundProps do
+      backgroundProps[key] = value
+    end
+  end
+
   return {
-    template = options.template or I.MWUI.templates.boxSolid,
+    template = options.template or I.MWUI.templates.box,
     name = options.name,
     props = props,
     external = external,
@@ -68,9 +86,15 @@ local function bookFrame(options)
     userData = options.userData,
     content = ui.content {
       {
-        type = ui.TYPE.Flex,
-        props = { horizontal = false },
-        content = ui.content(content),
+        type = ui.TYPE.Container,
+        content = ui.content {
+          { type = ui.TYPE.Image, props = backgroundProps },
+          {
+            type = ui.TYPE.Flex,
+            props = { horizontal = false },
+            content = ui.content(content),
+          },
+        },
       },
     },
   }

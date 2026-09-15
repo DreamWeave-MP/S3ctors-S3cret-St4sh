@@ -8,7 +8,17 @@ package.preload['openmw.async'] = function()
 end
 
 package.preload['openmw.interfaces'] = function()
-  return { MWUI = { templates = { box = {}, padding = {}, textNormal = {} } } }
+  return {
+    MWUI = {
+      templates = {
+        borders = {},
+        box = {},
+        interval = {},
+        padding = {},
+        textNormal = {},
+      },
+    },
+  }
 end
 
 package.preload['openmw.ui'] = function()
@@ -22,6 +32,7 @@ package.preload['openmw.ui'] = function()
 
   return {
     content = content,
+    TYPE = { Container = 'Container', Flex = 'Flex', Image = 'Image' },
     texture = function(value) return value end,
   }
 end
@@ -32,9 +43,12 @@ package.preload['openmw.util'] = function()
       commaString = function(value) return value end,
       rgb = function(red, green, blue) return { red, green, blue } end,
     },
+    vector2 = function(x, y) return { x = x, y = y } end,
   }
 end
 
+local I = require 'openmw.interfaces'
+local bookFrame = require 'scripts.s3.components.bookFrame'
 local newRegistry = require 'scripts.s3.ui.registry'
 local newResolver = require 'scripts.s3.ui.resolver'
 local newScope = require 'scripts.s3.ui.scope'
@@ -66,7 +80,11 @@ local registry = newRegistry {
   },
   bookFrame = {
     builder = function() return {} end,
-    slots = { root = { props = 'props' }, title = { props = 'titleProps' } },
+    slots = {
+      root = { props = 'props' },
+      title = { props = 'titleProps' },
+      background = { props = 'backgroundProps' },
+    },
   },
   caption = {
     builder = function() return {} end,
@@ -208,6 +226,16 @@ local function testTextRuleSlots()
       assert(rules[index].selector.slot == 'root')
     end
   end
+end
+
+local function testBookFrameBackground()
+  local background = { color = 'starwind-background', alpha = 0.84 }
+  local layout = bookFrame { backgroundProps = background }
+  local frameContent = layout.content[1].content
+  assert(layout.template == I.MWUI.templates.box)
+  assert(frameContent[1].props.color == background.color)
+  assert(frameContent[1].props.alpha == background.alpha)
+  assert(frameContent[2].props.horizontal == false)
 end
 
 local function testStateMachineAndEventReturns()
@@ -383,6 +411,7 @@ end
 
 testTextRuleSlots()
 testThemeTokens()
+testBookFrameBackground()
 testStateMachineAndEventReturns()
 testProtectionAndTraversal()
 testToggleLabelMutation()

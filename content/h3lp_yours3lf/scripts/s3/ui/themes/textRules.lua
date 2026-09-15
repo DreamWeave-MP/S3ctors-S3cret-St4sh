@@ -53,6 +53,15 @@ local function new()
       style = textStyle('color.header', 'textSize.header'),
     },
     {
+      selector = { component = 'bookFrame', slot = 'background' },
+      style = {
+        props = {
+          color = token.ref 'color.background',
+          alpha = token.ref 'transparency.menu',
+        },
+      },
+    },
+    {
       selector = { component = 'caption', slot = 'text' },
       style = textStyle('color.header', 'textSize.header'),
     },
