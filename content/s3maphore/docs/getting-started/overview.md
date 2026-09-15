@@ -10,6 +10,8 @@ kind = "guide"
 
 S3maphore treats music as a collection of contextual playlists. A playlist describes tracks and playback behavior; its `isValidCallback` describes when it is eligible; its priority decides what happens when several playlists are eligible at once.
 
+This is the central design reduction: the resolver does not need to understand every reason a playlist might apply. See Cod3x's [S3maphore Playlist Eligibility](@/cod3x/docs/good-designs/s3maphore-playlist-eligibility.md) design study for the problem, the tempting escalation, and the smaller contract that survived.
+
 When selection is reevaluated, S3maphore considers eligible playlists in priority order and may stop after finding a valid choice. Callback frequency is not a timing contract. Write callbacks as cheap queries of the current playback state, not as update loops.
 
 ## The three pieces

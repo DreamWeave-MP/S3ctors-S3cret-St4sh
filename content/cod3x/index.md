@@ -1,6 +1,6 @@
 ---
 title: Cod3x
-description: Lua Language Server support for OpenMW Lua modding.
+description: OpenMW Lua tooling, context-aware annotations, and the OpenMW-Lua engineering field manual.
 date: 2026-05-21
 
 taxonomies:
@@ -12,25 +12,40 @@ taxonomies:
 extra:
   nexus_id: 59122
   nexus_group_id: 7468718
-  version: 0.4
+  version: "0.4"
 ---
 
 # Cod3x
 
-Cod3x gives the Lua Language Server (LuaLS) better type information for
-OpenMW Lua scripts. It provides completions and warnings for OpenMW modules,
-interfaces, and script contexts.
+Cod3x is the OpenMW-Lua development companion: Lua Language Server annotations, context-aware diagnostics, and an engineering field manual built from years of production OpenMW Lua, profiler work, repository history, and runtime archaeology.
 
-## Setup
+The annotations answer **what exists**.
 
-Add the Cod3x folder to `workspace.library`, select LuaJIT, and load the
-Cod3x context plugin with `runtime.plugin`:
-
-Cod3x also ships an example config at
-`examples/openmw-mod/.luarc.json`. Copy it into your mod project and replace
-`/absolute/path/to/Cod3x` with the folder where you extracted Cod3x.
+The [Cod3x Field Manual](@/cod3x/docs/_index.md) answers **how to engineer with it, why the rules exist, where the engine costs live, and which mistakes have already been Paid For With Blood**.
 
 <!-- more -->
+
+## Field Manual
+
+Start with [Why Cod3x Exists](@/cod3x/docs/mission.md), then use the manual by problem:
+
+- [Zero to Hero: build your first OpenMW Lua mod](@/cod3x/docs/zero-to-hero/_index.md)
+- [OpenMW Lua mental model](@/cod3x/docs/getting-started/mental-model.md)
+- [script contexts](@/cod3x/docs/getting-started/contexts.md)
+- [objects, records, types, and cells](@/cod3x/docs/getting-started/objects-records-types.md)
+- [error handling](@/cod3x/docs/practice/error-handling.md)
+- [Good Designs](@/cod3x/docs/good-designs/_index.md)
+- [performance](@/cod3x/docs/performance/_index.md)
+- [Pr0f1l3r](@/cod3x/docs/performance/pr0f1l3r.md)
+- [LuaJIT bytecode and traces](@/cod3x/docs/performance/luajit-bytecode.md)
+- [Paid For With Blood](@/cod3x/docs/paid-for-with-blood/_index.md)
+- [So You Want To Code With AI?](@/cod3x/docs/tooling/so-you-want-to-code-with-ai.md)
+
+Cod3x is also the map legend for the rest of the site. Follow a rule into an [H3 pattern library](@/h3lp_yours3lf/docs/_index.md), a [S3maphore production system](@/s3maphore/docs/_index.md), or the [historical evidence index](@/cod3x/docs/reference/history-index.md).
+
+## LuaLS setup
+
+Add the Cod3x folder to `workspace.library`, select LuaJIT, and load the Cod3x context plugin with `runtime.plugin`:
 
 ```json
 {
@@ -40,35 +55,17 @@ Cod3x also ships an example config at
 }
 ```
 
-## Add a script context
+Cod3x ships an example config at `examples/openmw-mod/.luarc.json`.
 
-Add a context annotation near the top of each OpenMW script. This tells LuaLS
-which OpenMW APIs are available to that script.
+## Declare script context
+
+Add a context annotation near the top of every OpenMW-facing script:
 
 ```lua
 ---@omw-context player
 ```
 
-Available contexts:
-
-- `global` — one script for the game world
-- `local` — a script attached to an object or actor
-- `player` — a player-specific script
-- `menu` — a menu script
-- `load` — a content-loading script
-
-Cod3x also provides abstract contexts for shared code:
-
-- `runtime` — code that can run in global, local, player, or menu scripts
-- `all` — code that can run in every OpenMW script context, including `load`
-- `none` — a file that intentionally uses no OpenMW APIs
-
-For example, a utility shared by runtime scripts can use:
-
-```lua
----@omw-context runtime
-local core = require('openmw.core')
-```
+Available contexts are `global`, `local`, `player`, `menu`, and `load`, plus Cod3x's shared-code sets `runtime`, `all`, and `none`.
 
 For shared code, combine contexts with `|`:
 
@@ -76,104 +73,21 @@ For shared code, combine contexts with `|`:
 ---@omw-context global | player
 ```
 
-## Scoped contexts
-
-Use `omw-context-next` for one line or `omw-context-begin` and
-`omw-context-end` for a block:
+Use scoped context assertions when only a narrow block has a stronger runtime guarantee:
 
 ```lua
 ---@omw-context global | player
-local core = require('openmw.core')
+local core = require 'openmw.core'
 
 ---@omw-context-next player
-local camera = require('openmw.camera')
-
----@omw-context-begin player
-local input = require('openmw.input')
-local ui = require('openmw.ui')
----@omw-context-end
+local camera = require 'openmw.camera'
 ```
 
-Scoped contexts temporarily override the file's default context. They are
-assertions for LuaLS; make sure the code really only runs in that context.
-
-## Examples
-
-Player script:
-
-```lua
----@omw-context player
-local camera = require('openmw.camera')
-local input = require('openmw.input')
-
-if input.isActionPressed(input.ACTION.Use) then
-    camera.setMode(camera.MODE.FirstPerson)
-end
-```
-
-Global script:
-
-```lua
----@omw-context global
-local world = require('openmw.world')
-
-local function onUpdate()
-    for _, actor in ipairs(world.activeActors) do
-        print(actor.recordId)
-    end
-end
-
-return { engineHandlers = { onUpdate = onUpdate } }
-```
-
-Load script:
-
-```lua
----@omw-context load
-local content = require('openmw.content')
-
-content.gameSettings.records.fJumpAcrobaticsBase = 1024
-```
-
-## VS Code and VSCodium
-
-If pressing Enter causes incorrect indentation or inserts text in the wrong
-place, disable LuaLS on-type formatting for the workspace. In `.luarc.json`,
-use the unprefixed settings:
-
-```json
-{
-  "language.fixIndent": false,
-  "typeFormat.config": {
-    "format_line": "false",
-    "auto_complete_end": "false",
-    "auto_complete_table_sep": "false"
-  }
-}
-```
-
-When putting these settings in VS Code's `settings.json`, prefix them with
-`Lua.`:
-
-```json
-{
-  "Lua.language.fixIndent": false,
-  "Lua.typeFormat.config": {
-    "format_line": "false",
-    "auto_complete_end": "false",
-    "auto_complete_table_sep": "false"
-  }
-}
-```
-
-Keep Cod3x's virtual transforms enabled. They improve context-aware checking,
-but they must not be used as the source document for editor formatting.
+See [Script Contexts](@/cod3x/docs/getting-started/contexts.md) for the model and exact semantics.
 
 ## Type your own interfaces
 
-To get completions and type checking for your own interfaces, add a LuaLS
-metadata file to your project. Keep it in your workspace; OpenMW does not load
-this file.
+Keep interface metadata in your workspace; OpenMW does not load it:
 
 ```lua
 ---@meta
@@ -186,8 +100,10 @@ this file.
 ---@field doThing fun(target: unknown): boolean
 ```
 
-Cod3x checks OpenMW APIs used directly in each file. It cannot check whether
-context annotations on your own modules agree with every module that imports
-them, so give shared modules the broadest context they actually support.
+## Editor formatting
+
+Cod3x's context plugin uses virtual LuaLS transforms. They improve context-aware diagnostics but must not become the source text for on-type formatting edits.
+
+If VS Code/VSCodium inserts or indents text incorrectly, disable LuaLS on-type formatting for the workspace. The example `.luarc.json` carries the recommended settings.
 
 {{ credits(default=true) }}

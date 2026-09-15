@@ -1,0 +1,25 @@
+{
+  "id": "cod3x-event-driven-resolution",
+  "mode": "flow",
+  "title": "The event-driven resolution shape",
+  "heading_level": 3,
+  "description": "Events announce that an eligibility input may have changed; the resolver does work when it is needed instead of rediscovering every fact on every update.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "change", "title": "Relevant state changes", "kind": "input", "detail": "Time, cell, combat, target, quest, or settings state changes." },
+    { "id": "invalidate", "title": "Mark or request resolution", "kind": "boundary", "detail": "Invalidate the derived answer at the boundary that owns it." },
+    { "id": "work", "title": "Resolution work", "kind": "component", "detail": "Ask the generic selection mechanism for the best eligible playlist." },
+    { "id": "playback", "title": "Playback sequencing", "kind": "result", "detail": "Updates that genuinely need time continue through the normal update path." }
+  ],
+  "edges": [
+    { "from": "change", "to": "invalidate" },
+    { "from": "invalidate", "to": "work" },
+    { "from": "work", "to": "playback" }
+  ],
+  "legend": [
+    { "kind": "input", "label": "Change" },
+    { "kind": "boundary", "label": "Invalidation" },
+    { "kind": "component", "label": "Resolution" },
+    { "kind": "result", "label": "Playback" }
+  ]
+}

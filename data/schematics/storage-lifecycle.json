@@ -1,0 +1,25 @@
+{
+  "id": "cod3x-storage-lifecycle",
+  "mode": "flow",
+  "title": "The persistence boundary",
+  "heading_level": 3,
+  "description": "Persist minimal authoritative data, then reconstruct transient runtime state instead of serializing engine-owned objects blindly.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "authority", "title": "Authoritative state", "kind": "state", "detail": "Decide what the feature actually owns." },
+    { "id": "save", "title": "Minimal serializable save data", "kind": "boundary", "detail": "Keep identifiers and durable facts, not live handles or UI elements." },
+    { "id": "load", "title": "Load and migrate", "kind": "service", "detail": "Interpret old shapes deliberately and reject incompatible assumptions." },
+    { "id": "rebuild", "title": "Rebuild transient runtime state", "kind": "result", "detail": "Recreate caches, handles, iterators, and UI from authoritative data." }
+  ],
+  "edges": [
+    { "from": "authority", "to": "save" },
+    { "from": "save", "to": "load" },
+    { "from": "load", "to": "rebuild" }
+  ],
+  "legend": [
+    { "kind": "state", "label": "Authority" },
+    { "kind": "boundary", "label": "Save contract" },
+    { "kind": "service", "label": "Migration" },
+    { "kind": "result", "label": "Rebuilt runtime" }
+  ]
+}

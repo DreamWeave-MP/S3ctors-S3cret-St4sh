@@ -1,0 +1,28 @@
+{
+  "id": "cod3x-object-record-model",
+  "mode": "flow-support",
+  "title": "The object and record map",
+  "heading_level": 3,
+  "description": "The object tells you which runtime instance you have; its type and record tell you what that instance means.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "object", "title": "Generic object handle", "kind": "engine", "detail": "A live instance somewhere in game state." },
+    { "id": "type", "title": "Concrete type", "kind": "component", "detail": "Actor, Weapon, Door, Container, or another game category." },
+    { "id": "instance", "title": "Instance identity and state", "kind": "state", "detail": "The object ID identifies this particular runtime instance." },
+    { "id": "cell", "title": "Location and lifetime", "kind": "boundary", "detail": "Cell transitions and unloads can change whether the handle remains valid." },
+    { "id": "record", "title": "Content record", "kind": "support", "role": "support", "detail": "The record ID identifies the definition the instance came from." }
+  ],
+  "edges": [
+    { "from": "object", "to": "type", "label": "interpret" },
+    { "from": "type", "to": "instance" },
+    { "from": "instance", "to": "cell" },
+    { "from": "object", "to": "record", "label": "recordId", "kind": "support" }
+  ],
+  "legend": [
+    { "kind": "engine", "label": "Runtime handle" },
+    { "kind": "component", "label": "Meaning" },
+    { "kind": "state", "label": "Instance state" },
+    { "kind": "boundary", "label": "Lifetime" },
+    { "kind": "support", "label": "Definition" }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "cod3x-static-collection-representation",
+  "mode": "flow",
+  "title": "The representation sequence",
+  "heading_level": 3,
+  "description": "The collection became cheaper only after its data shape, invalidation, deferred work, and lifetime were made explicit.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "objects", "title": "Engine objects", "kind": "engine", "detail": "Rich live handles are expensive to traverse and retain." },
+    { "id": "representation", "title": "String / count representation", "kind": "state", "detail": "Keep the facts the rules actually need." },
+    { "id": "events", "title": "Event-aware changes", "kind": "service", "detail": "React when relevant world state changes." },
+    { "id": "coroutine", "title": "Incremental coroutine work", "kind": "component", "detail": "Spread a large scan across bounded slices of time." },
+    { "id": "lifetime", "title": "Explicit generation and lifetime rules", "kind": "boundary", "detail": "Reject deferred results that no longer belong to the current world." },
+    { "id": "optimization", "title": "Optimization", "kind": "result", "detail": "Tune the proven shape only after the ownership story is honest." }
+  ],
+  "edges": [
+    { "from": "objects", "to": "representation" },
+    { "from": "representation", "to": "events" },
+    { "from": "events", "to": "coroutine" },
+    { "from": "coroutine", "to": "lifetime" },
+    { "from": "lifetime", "to": "optimization" }
+  ]
+}

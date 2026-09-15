@@ -10,6 +10,8 @@ extra:
 
 Use `ImageAtlas` when a UI needs many frames stored in one texture: an animated icon, hand pose, or status marker. H3 creates the tile resources and gives you an object that can spawn and cycle one image element.
 
+Cod3x's [ImageAtlas Design Study](@/cod3x/docs/good-designs/image-atlas-domain-concept.md) explains why this deserves a domain vocabulary instead of repeated frame arithmetic in every UI consumer.
+
 {% usage_note(title="Installed interface · Player context") %}
 The constructor is provided by H3's `S3AtlasConstructor` interface. Obtain it through `openmw.interfaces` in a player script. The atlas owns texture resources, not save data or an update handler.
 {% end %}

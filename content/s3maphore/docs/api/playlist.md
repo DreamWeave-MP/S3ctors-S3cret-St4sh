@@ -14,6 +14,8 @@ kind = "api"
 
 A playlist is a table containing an `id`, a `priority`, and an `isValidCallback`. A playlist file returns an array of these tables. See the complete [Playlist Specification](@/s3maphore/docs/playlist-authoring/specification.md) for every supported field.
 
+Cod3x's [S3maphore Playlist Eligibility Design Study](@/cod3x/docs/good-designs/s3maphore-playlist-eligibility.md) explains why the callback is the small policy boundary behind the resolver.
+
 ### Required fields
 
 `id` is the playlist's stable identifier. It is also used as a folder name when `tracks` is not provided.

@@ -1,0 +1,37 @@
+{% if data_path %}
+{% set learning_path = load_data(path=data_path, format="json") %}
+{% else %}
+{% set learning_path = data %}
+{% endif %}
+{% set path_id = learning_path.id | default(value="docs-learning-path") %}
+<section class="docs-learning-path" aria-labelledby="{{ path_id }}-title">
+  <h2 id="{{ path_id }}-title">{{ learning_path.start_title | default(value="Start here") | escape }}</h2>
+  <ol class="docs-learning-path__steps">
+    {% for step in learning_path.steps %}
+    <li>
+      <a class="docs-learning-path__step" href="{{ get_url(path=step.path) }}">
+        <span class="docs-learning-path__number">{{ step.number | default(value=loop.index) }}</span>
+        <strong>{{ step.title | escape }}</strong>
+        <span>{{ step.takeaway | escape }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section class="docs-design-tracks" aria-labelledby="{{ path_id }}-tracks-title">
+  <h2 id="{{ path_id }}-tracks-title">{{ learning_path.tracks_title | default(value="Choose a branch") | escape }}</h2>
+  <div class="docs-design-tracks__grid">
+    {% for track in learning_path.tracks %}
+    <article class="docs-design-track">
+      <h3>{{ track.title | escape }}</h3>
+      <p>{{ track.summary | escape }}</p>
+      <ol>
+        {% for step in track.steps %}
+        <li><a href="{{ get_url(path=step.path) }}"><strong>{{ step.title | escape }}</strong><span>{{ step.takeaway | escape }}</span></a></li>
+        {% endfor %}
+      </ol>
+    </article>
+    {% endfor %}
+  </div>
+</section>

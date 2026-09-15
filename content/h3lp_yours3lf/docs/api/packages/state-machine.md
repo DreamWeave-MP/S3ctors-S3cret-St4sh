@@ -10,6 +10,8 @@ extra:
 
 Use StateMachine when a handful of booleans have quietly turned into a state machine anyway. Give each state a name, put its enter/exit behavior in one place, and make transitions explicit.
 
+For the smaller design that should come before this module, see Cod3x's [NullFunction to StateMachine genealogy](@/cod3x/docs/good-designs/state-machine-genealogy.md).
+
 {% usage_note(title="Plain Lua state · Runtime only") %}
 The module has no OpenMW imports and does not register an update handler.
 {% end %}
@@ -78,3 +80,5 @@ An `on_exit` error aborts the transition before the current state changes. An `o
 | `machine:is(name)` | Whether the named state is current. |
 
 The machine retains state definitions, callbacks, and one pending transition. It is runtime state, not a persistence format. Save a separate plain state name and restore it deliberately after registering the machine's states.
+
+For explicit state ownership, derived-state invalidation, and stale deferred work, see Cod3x's [State Ownership and Invalidation](@/cod3x/docs/practice/state.md).

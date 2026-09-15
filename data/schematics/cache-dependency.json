@@ -1,0 +1,21 @@
+{
+  "id": "cod3x-cache-dependency",
+  "mode": "flow",
+  "title": "Derived-state dependency chain",
+  "heading_level": 3,
+  "description": "Clearing a source cache is not enough when another derived layer still remembers the old answer.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "journal", "title": "Journal data", "kind": "source", "detail": "Authoritative input changes." },
+    { "id": "journal-cache", "title": "Journal cache", "kind": "cache", "detail": "A reusable view of that input." },
+    { "id": "rules", "title": "Rule evaluation", "kind": "component", "detail": "Conditions consume the cached facts." },
+    { "id": "playlist", "title": "Desired playlist", "kind": "state", "detail": "The resolver derives a selection." },
+    { "id": "playback", "title": "Playback state", "kind": "result", "detail": "The engine acts on the selected result." }
+  ],
+  "edges": [
+    { "from": "journal", "to": "journal-cache" },
+    { "from": "journal-cache", "to": "rules" },
+    { "from": "rules", "to": "playlist" },
+    { "from": "playlist", "to": "playback" }
+  ]
+}

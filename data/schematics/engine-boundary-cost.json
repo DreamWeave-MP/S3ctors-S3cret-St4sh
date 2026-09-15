@@ -1,0 +1,19 @@
+{
+  "id": "cod3x-engine-boundary-cost",
+  "mode": "flow",
+  "title": "Where the cost goes",
+  "heading_level": 3,
+  "description": "Localizing a callable can remove lookup overhead, but it does not erase the rest of the boundary.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "lookup", "title": "Cost to find the callable", "kind": "tool", "detail": "Property and method resolution." },
+    { "id": "crossing", "title": "Cost to cross the binding", "kind": "boundary", "detail": "Dispatch and argument conversion." },
+    { "id": "operation", "title": "Cost of the engine operation", "kind": "engine", "detail": "The actual world, physics, record, or subsystem work." },
+    { "id": "result", "title": "Cost to construct the result", "kind": "allocation", "detail": "Returned values and userdata may add allocation and cleanup pressure." }
+  ],
+  "edges": [
+    { "from": "lookup", "to": "crossing" },
+    { "from": "crossing", "to": "operation" },
+    { "from": "operation", "to": "result" }
+  ]
+}

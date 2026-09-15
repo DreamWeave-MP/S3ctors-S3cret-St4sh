@@ -12,6 +12,8 @@ A YAML file is one of two module types:
 1. A **static replacement module**, identified by `replace_meshes`, with optional cell filters and record exclusions.
 2. An **instance module**, identified by `instances`, containing ordered rules with conditions and actions.
 
+SSS's small runtime primitives and its promotion of repeated utilities into H3 are part of Cod3x's [earned shared infrastructure genealogy](@/cod3x/docs/good-designs/earned-shared-infrastructure.md).
+
 Pick one. Do not put `instances` beside `replace_meshes`, `replace_names`, `exterior_cells`, `replace_regions`, or `ignore_records`. There is no precedence rule that runs both systems for one object.
 
 ## Dispatch

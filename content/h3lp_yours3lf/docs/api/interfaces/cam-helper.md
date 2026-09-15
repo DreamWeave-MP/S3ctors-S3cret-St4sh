@@ -10,6 +10,8 @@ extra:
 
 `S3CamHelper` is a player-scoped installed interface for target markers, lock-on indicators, and other UI that follows world objects. It is not a plain `require`-returned constructor.
 
+Cod3x's [CamHelper Design Study](@/cod3x/docs/good-designs/cam-helper-extraction.md) follows its path from T4rg3t5 application code into a reusable H3 boundary and the performance fixes that followed.
+
 ```lua
 local I = require 'openmw.interfaces'
 

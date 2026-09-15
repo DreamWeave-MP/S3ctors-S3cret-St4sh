@@ -1,0 +1,21 @@
+{
+  "id": "cod3x-engine-boundary-allocation",
+  "mode": "flow",
+  "title": "Why returned values can create pressure",
+  "heading_level": 3,
+  "description": "Vector-heavy code can create allocation and garbage-collection work even when the Lua expression looks harmless.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "return", "title": "Sol-bound C++ value return", "kind": "engine", "detail": "A native API returns a value object." },
+    { "id": "usertype", "title": "Usertype allocation", "kind": "allocation", "detail": "The binding creates a Lua-visible wrapper." },
+    { "id": "userdata", "title": "lua_newuserdata", "kind": "boundary", "detail": "Storage is allocated for the exposed value." },
+    { "id": "construct", "title": "Inline C++ value construction", "kind": "component", "detail": "The native value is constructed in that storage." },
+    { "id": "finalizer", "title": "Finalizer path", "kind": "result", "detail": "Eventually the wrapper participates in collection and cleanup." }
+  ],
+  "edges": [
+    { "from": "return", "to": "usertype" },
+    { "from": "usertype", "to": "userdata" },
+    { "from": "userdata", "to": "construct" },
+    { "from": "construct", "to": "finalizer" }
+  ]
+}

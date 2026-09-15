@@ -169,3 +169,5 @@ The initial engine intentionally does not include:
 H3 still does not parse CSS strings or create a general pseudo-state engine. Runtime state is limited to the generated slot properties described above.
 
 See [H3UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) for the concrete API and [UI Layouts and Lifecycle](@/h3lp_yours3lf/docs/concepts/ui-components.md) for mounting and update ownership.
+
+For the underlying OpenMW UI ownership model and the path from a primitive layout to a reusable recipe, see Cod3x's [UI: From Nothing to Something](@/cod3x/docs/getting-started/ui.md).

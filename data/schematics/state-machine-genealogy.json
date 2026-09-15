@@ -1,0 +1,19 @@
+{
+  "id": "cod3x-state-machine-genealogy",
+  "mode": "timeline",
+  "title": "When the representation grows up",
+  "heading_level": 3,
+  "description": "An empty callback is a good state representation until the system gains named phases and transition behavior worth preserving.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "empty", "title": "Empty callback", "kind": "source", "detail": "No work is represented by doing nothing." },
+    { "id": "handler", "title": "Swappable handler", "kind": "component", "detail": "Replace the current behavior as the work changes." },
+    { "id": "states", "title": "Named runtime states", "kind": "state", "detail": "Give the phases names the reader and debugger can see." },
+    { "id": "transitions", "title": "Explicit transition timing", "kind": "boundary", "detail": "Make enter, exit, queueing, and sequencing part of the contract." }
+  ],
+  "edges": [
+    { "from": "empty", "to": "handler" },
+    { "from": "handler", "to": "states" },
+    { "from": "states", "to": "transitions" }
+  ]
+}

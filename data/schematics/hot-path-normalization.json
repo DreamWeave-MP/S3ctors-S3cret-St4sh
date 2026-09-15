@@ -1,0 +1,17 @@
+{
+  "id": "cod3x-hot-path-normalization",
+  "mode": "flow",
+  "title": "The hot-path shape",
+  "heading_level": 3,
+  "description": "Do flexible work at registration so repeated evaluation can operate on compact canonical data.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "input", "title": "Parse / validate / normalize at ingress", "kind": "input", "detail": "Pay the flexible-input cost once." },
+    { "id": "canonical", "title": "Canonical data", "kind": "state", "detail": "Store the representation the evaluator needs." },
+    { "id": "evaluate", "title": "Evaluate compact data in the hot path", "kind": "result", "detail": "Avoid repeating normalization for every active object." }
+  ],
+  "edges": [
+    { "from": "input", "to": "canonical" },
+    { "from": "canonical", "to": "evaluate" }
+  ]
+}

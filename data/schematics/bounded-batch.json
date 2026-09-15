@@ -1,0 +1,17 @@
+{
+  "id": "cod3x-bounded-batch",
+  "mode": "flow",
+  "title": "The bounded-batch tradeoff",
+  "heading_level": 3,
+  "description": "The batch grows with the work while the freshness target keeps the time before every actor is checked bounded.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "actors", "title": "More actors", "kind": "input", "detail": "The world contains more candidates to inspect." },
+    { "id": "batch", "title": "More work per batch", "kind": "component", "detail": "Each update handles enough actors to meet the target." },
+    { "id": "latency", "title": "Bounded time before every actor is checked", "kind": "result", "detail": "Tune the batch from an explicit freshness requirement instead of an arbitrary constant." }
+  ],
+  "edges": [
+    { "from": "actors", "to": "batch" },
+    { "from": "batch", "to": "latency" }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "cod3x-earned-shared-infrastructure",
+  "mode": "flow",
+  "title": "The promotion sequence",
+  "heading_level": 3,
+  "description": "Shared infrastructure should be the result of repeated evidence, not a guess made before the second consumer exists.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "specific", "title": "Specific solution", "kind": "source", "detail": "Solve the first real problem directly." },
+    { "id": "consumers", "title": "Repeated consumers", "kind": "input", "detail": "The same shape appears in more than one place." },
+    { "id": "contract", "title": "Stable semantic contract", "kind": "boundary", "detail": "Separate the meaning that callers share from implementation details." },
+    { "id": "implementation", "title": "Shared implementation", "kind": "component", "detail": "Move the proven mechanism behind the contract." },
+    { "id": "callers", "title": "Narrower callers", "kind": "result", "detail": "Consumers depend on the useful boundary, not the machinery." }
+  ],
+  "edges": [
+    { "from": "specific", "to": "consumers" },
+    { "from": "consumers", "to": "contract" },
+    { "from": "contract", "to": "implementation" },
+    { "from": "implementation", "to": "callers" }
+  ]
+}
