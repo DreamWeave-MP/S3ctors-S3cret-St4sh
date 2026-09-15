@@ -178,8 +178,6 @@ local function selectedSlot(label, data)
           args = {
             text = data and data.record.name or 'None selected',
             props = {
-              textColor = constants.headerColor,
-              textSize = constants.textHeaderSize,
               multiline = true,
               wordWrap = true,
               autoSize = false,
@@ -337,7 +335,6 @@ local function buildInventory()
           role = 'page-status',
           args = {
             text = StrFormat('Page %d / %d', state.page, pageCount),
-            props = { textColor = constants.normalColor },
           },
         },
 
@@ -504,10 +501,6 @@ local function buildActions()
                 role = 'name-label',
                 args = {
                   text = 'New item name',
-                  props = {
-                    textColor = constants.headerColor,
-                    textSize = constants.textHeaderSize,
-                  },
                 },
               },
               makeSpacer(mediumGap, 0),
