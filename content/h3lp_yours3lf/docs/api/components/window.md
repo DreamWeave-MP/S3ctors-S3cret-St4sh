@@ -81,6 +81,8 @@ element = ui.create {
 | `captionHeight` | number? | Caption strip height. |
 | `resizeHandle` | number? | Resize hitbox; defaults to `4`. |
 | `captionProps` | table? | Properties for the generated caption. |
+| `captionTextProps` | table? | Properties for the generated caption text. |
+| `backgroundProps` | table? | Properties for the generated background; H3UI themes use this slot for the configured background color and transparency. |
 | `content` | table? | Body content; takes precedence over `children`. |
 | `children` | table? | Body layouts used when `content` is absent. |
 

@@ -10,6 +10,8 @@ local styleBagKeys = {
   template = true,
 }
 
+local interactiveStates = { 'hover', 'pressed' }
+
 local function isRootStyleBag(style)
   for key in next, style do
     if styleBagKeys[key] then return true end
@@ -30,7 +32,10 @@ local function normalizeInlineStyle(registry, componentName, style, activeTheme)
   local result = {}
   for slot, bag in next, resolved do
     registry.validateSlot(componentName, slot)
-    assert(merge.isPlainTable(bag), 'H3 UI inline style slot must be a plain table: ' .. tostring(slot))
+    assert(
+      merge.isPlainTable(bag),
+      'H3 UI inline style slot must be a plain table: ' .. tostring(slot)
+    )
     result[slot] = bag
   end
   return result
@@ -51,9 +56,22 @@ local function mergeRuleStyles(registry, componentName, matched)
   return styles
 end
 
+local function stateStyles(registry, theme, componentNode, state)
+  local stateNode = merge.shallowCopy(componentNode)
+  stateNode.state = state
+
+  return mergeRuleStyles(
+    registry,
+    componentNode.component,
+    themeModule.matchingState(theme, stateNode, state)
+  )
+end
+
 local function resolveList(resolveValue, values, context)
   local result = {}
-  for index = 1, #values do result[index] = resolveValue(values[index], context) end
+  for index = 1, #values do
+    result[index] = resolveValue(values[index], context)
+  end
   return result
 end
 
@@ -72,7 +90,9 @@ local function makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
   end
 
   local classes = {}
-  for className in next, componentNode.classes do classes[#classes + 1] = className end
+  for className in next, componentNode.classes do
+    classes[#classes + 1] = className
+  end
   table.sort(classes)
 
   return {
@@ -109,17 +129,24 @@ local function new(registry, builtinRecipes)
     local baseRecipe = spec.recipe
     local density = spec.density
     if density == nil then density = parentContext and parentContext.density or scope.density end
+    local invalidate = spec.invalidate
+    if invalidate == nil then invalidate = parentContext and parentContext.invalidate end
+    if invalidate ~= nil then
+      assert(type(invalidate) == 'function', 'H3 UI invalidate must be a function')
+    end
 
     local context = {
-      theme = scope.theme,
+      theme = parentContext and parentContext.theme or scope.resolveTheme(),
       density = density,
       recipe = baseRecipe,
+      invalidate = invalidate,
     }
 
     function context.component(name, childSpec)
       return node.component(name, childSpec, {
         recipe = baseRecipe,
         density = density,
+        invalidate = invalidate,
       })
     end
 
@@ -145,9 +172,11 @@ local function new(registry, builtinRecipes)
       if node.isComponent(value) or node.isRecipe(value) then
         result[key] = resolveValue(scope, value, context, trace)
       elseif type(value) == 'table' and merge.isArray(value) then
-        result[key] = resolveList(function(item, nestedContext)
-          return resolveValue(scope, item, nestedContext, trace)
-        end, value, context)
+        result[key] = resolveList(
+          function(item, nestedContext) return resolveValue(scope, item, nestedContext, trace) end,
+          value,
+          context
+        )
       end
     end
 
@@ -157,21 +186,44 @@ local function new(registry, builtinRecipes)
   resolveComponent = function(scope, componentNode, context, trace)
     registry.get(componentNode.component)
 
-    local matched = themeModule.matching(scope.theme, componentNode)
+    local activeTheme = context.theme or scope.resolveTheme()
+    local matched = themeModule.matching(activeTheme, componentNode)
     local themeStyles = mergeRuleStyles(registry, componentNode.component, matched)
-    local inlineStyles = normalizeInlineStyle(
-      registry,
-      componentNode.component,
-      componentNode.style,
-      scope.theme
-    )
+    local inlineStyles =
+      normalizeInlineStyle(registry, componentNode.component, componentNode.style, activeTheme)
+
+    local dynamicStyles
+    if componentNode.state == nil and registry.supportsRuntimeState(componentNode.component) then
+      for index = 1, #interactiveStates do
+        local state = interactiveStates[index]
+        if themeModule.hasStateRules(activeTheme, componentNode.component, state) then
+          dynamicStyles = dynamicStyles or {}
+          local styles = stateStyles(registry, activeTheme, componentNode, state)
+          if next(styles) ~= nil then dynamicStyles[state] = styles end
+        end
+      end
+    end
+    if dynamicStyles and next(dynamicStyles) ~= nil then
+      dynamicStyles.baseState = componentNode.state
+    end
 
     if trace then
       trace[#trace + 1] = makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
     end
 
     local args = resolveArgs(scope, componentNode.args, context, trace)
-    return registry.build(componentNode.component, args, themeStyles, inlineStyles)
+    local invalidate = componentNode.invalidate or context.invalidate
+    if invalidate ~= nil then
+      assert(type(invalidate) == 'function', 'H3 UI invalidate must be a function')
+    end
+    return registry.build(
+      componentNode.component,
+      args,
+      themeStyles,
+      inlineStyles,
+      dynamicStyles,
+      invalidate
+    )
   end
 
   resolveValue = function(scope, value, context, trace)
@@ -184,15 +236,26 @@ local function new(registry, builtinRecipes)
     assert(merge.isPlainTable(spec), 'H3 UI build spec must be a plain table')
 
     if spec.recipe ~= nil then
-      return resolveRecipe(scope, spec, { density = scope.density }, trace)
+      local invalidate = spec.invalidate
+      if invalidate == nil then invalidate = scope.invalidate end
+      return resolveRecipe(
+        scope,
+        spec,
+        { theme = scope.resolveTheme(), density = scope.density, invalidate = invalidate },
+        trace
+      )
     end
 
     if spec.component ~= nil then
       local componentNode = node.component(spec.component, spec, { density = scope.density })
-      return resolveComponent(scope, componentNode, { density = componentNode.density }, trace)
+      return resolveComponent(scope, componentNode, {
+        theme = scope.resolveTheme(),
+        density = componentNode.density,
+        invalidate = scope.invalidate,
+      }, trace)
     end
 
-    error('H3 UI build requires recipe or component')
+    error 'H3 UI build requires recipe or component'
   end
 
   function resolver.explain(scope, spec)
@@ -201,7 +264,7 @@ local function new(registry, builtinRecipes)
     return {
       layout = layout,
       nodes = trace,
-      theme = scope.theme.name,
+      theme = scope.resolveTheme().name,
     }
   end
 

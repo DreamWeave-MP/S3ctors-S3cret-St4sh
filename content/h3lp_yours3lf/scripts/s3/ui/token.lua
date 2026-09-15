@@ -6,6 +6,8 @@ local marker = {}
 local StrFormat = string.format
 local Type = type
 
+---@param path string
+---@return H3UI.TokenReference
 local function ref(path)
   assert(Type(path) == 'string' and path ~= '', 'H3 UI token path must be a non-empty string')
   return {
@@ -14,9 +16,7 @@ local function ref(path)
   }
 end
 
-local function isRef(value)
-  return Type(value) == 'table' and rawget(value, marker) == true
-end
+local function isRef(value) return Type(value) == 'table' and rawget(value, marker) == true end
 
 local function getPath(root, path)
   local value = root
@@ -86,7 +86,7 @@ local function resolveValue(value, tokens, active)
   if not merge.isPlainTable(value) then return value end
 
   active = active or {}
-  if active[value] then error('H3 UI style table contains a cycle') end
+  if active[value] then error 'H3 UI style table contains a cycle' end
   active[value] = true
 
   local result = {}

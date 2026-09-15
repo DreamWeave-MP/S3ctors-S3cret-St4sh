@@ -1,6 +1,6 @@
 ---
 title: H3UI
-description: Build high-level H3 layouts from recipes and style them with scoped themes.
+description: Build high-level H3 layouts from recipes and render them with the player's configured appearance.
 weight: 15
 extra:
   kind: api
@@ -16,6 +16,8 @@ The plugin installs `I.H3UI` in menu and player contexts. You may also `require 
 
 {% usage_note(title="Build is not mount") %}
 `H3UI.build(...)` never calls `ui.create`, chooses a layer, owns a root element, updates your root, or persists application state. Mount the returned layout yourself and call `element:update()` when your application changes visible layout state.
+
+For runtime `hover` and `pressed` styling, you may also pass `invalidate = function() ... end` in the build spec. H3UI calls it after a state transition changes a styled property, allowing the caller to update its mounted `Element` without transferring ownership to H3UI.
 {% end %}
 
 ## Build a recipe
@@ -81,19 +83,21 @@ local button = H3UI.build {
 
 The component name is the H3 builder name (`button`, `row`, `itemSlot`, `searchInput`, and so on). `args` are ordinary options for that component. Behavioral values stay in `args`; visual overrides belong in `style` or the theme.
 
-## Themes
+## Appearance and registered themes
 
-Create a compiled theme with `H3UI.theme`:
+H3UI uses the appearance selected in the player's settings. Scripts describe UI structure and meaning; they do not select the active palette.
 
 ```lua
-local dangerColor = require('openmw.util').color.rgb(1, 0.25, 0.2)
+local H3UI = require('openmw.interfaces').H3UI
 
-local theme = H3UI.theme {
-    name = 'myMod',
-    extends = H3UI.themes.morrowind,
+H3UI.registerTheme {
+    id = 'myMod:danger',
+    name = 'Danger',
+    description = 'A red-accented appearance.',
+    author = 'My Mod',
     tokens = {
         color = {
-            danger = dangerColor,
+            danger = require('openmw.util').color.rgb(1, 0.25, 0.2),
         },
     },
     rules = {
@@ -113,21 +117,39 @@ local theme = H3UI.theme {
 }
 ```
 
-A theme may extend another compiled theme. Parent tokens are merged first, child tokens override them, parent rules keep their source order, and child rules follow them. Token references are resolved against the final derived token set, so overriding a token also affects inherited rules that reference it.
+Registration adds a preset to `Settings → H3UI → Appearance`. It does not select the preset and there is no public theme-selection function or compiled-theme table.
+
+The built-in presets are `Morrowind`, `Starwind`, and `Custom`. Selecting a preset copies its palette into the player settings. Editing a color changes the selection to `Custom`; resetting restores the canonical Morrowind palette. The default is Morrowind, unless an optional `scripts.s3.ui.defaultTheme` hint or the built-in Starwind content-file detection supplies another default.
+
+The settings group uses the player section `SettingsPlayerH3UI`; its saved Custom palette lives separately in `SettingsPlayerH3UICustom`. The visible `theme` value is a registered theme ID or `custom`, and its color values are six-digit hexadecimal strings. Custom starts with the canonical Morrowind palette, keeps edits while presets are cycled, and is not reset when the visible settings group is reset. `menuTransparency` controls H3UI window backgrounds from transparent (`0.0`) to opaque (`1.0`) and defaults to `0.84`, matching OpenMW's default GUI setting. `textSizeNormal` defaults to `16`, matching OpenMW's default `font size`; `textSizeHeader` defaults to H3's `18`-pixel header size. Both can be configured independently in the H3UI settings page. The `enableDebugHotkeys` setting is disabled by default; enabling it allows F7 to cycle component demos and Shift+F7 to reload Lua. Writing the visible values is the supported integration point for a total conversion or curated setup that wants to configure the player's shared H3UI appearance.
+
+The internal theme compiler still supports selectors, rules, and token references. A registered theme may provide additional rules and tokens, but its palette is resolved through the player's configured color settings.
+
+The public registration shape is:
+
+```lua
+H3UI.registerTheme {
+    id = 'myMod:theme',
+    name = 'My Theme',
+    tokens = { color = { accent = require('openmw.util').color.rgb(1, 0.5, 0) } },
+    rules = {},
+}
+```
+
+Theme IDs must be stable and unique. Namespaced IDs such as `myMod:theme` are recommended. A registered theme may use `extends` with another registered theme ID; otherwise it extends the built-in Morrowind rules internally. Token references are resolved against the final derived token set.
 
 Unknown token paths, token cycles, unknown selector fields, unknown component names, and invalid style slots are errors rather than silent no-ops.
 
-### Built-in theme
+### Built-in presets
 
-`H3UI.themes.morrowind` is the compatibility theme. Existing H3 primitives still provide their current Morrowind defaults; the theme supplies shared tokens and a base for derived themes without forcing the low-level components through H3UI.
+The canonical Morrowind and Starwind palettes are registered internally. Existing H3 primitives still provide their current Morrowind defaults; H3UI supplies the configured tokens without forcing low-level components through this facade. H3UI no longer reads `FontColor_*` GMST values during normal operation.
 
-## Scoped themes
+## Scopes
 
-Themes are intentionally not global mutable state:
+Scopes provide density, invalidation, and local recipes. Appearance remains shared and player-configured:
 
 ```lua
 local MyH3UI = H3UI.scope {
-    theme = theme,
     density = 'compact',
 }
 
@@ -138,11 +160,10 @@ local layout = MyH3UI.build {
 }
 ```
 
-Two scopes may use different themes in the same script without affecting one another. A scope may also provide local recipes:
+Scopes may provide local recipes without changing the shared appearance:
 
 ```lua
 local MyH3UI = H3UI.scope {
-    theme = theme,
     recipes = {
         ['myMod:characterCard'] = function(ctx, spec)
             return ctx.component('column', {
@@ -195,7 +216,7 @@ Matched rules apply from lower to higher precedence:
 2. recipe/role rules;
 3. `variant`, `tone`, or `density` rules;
 4. class rules;
-5. state rules.
+5. state rules. State rules may be applied again at runtime for generated `hover` and `pressed` states.
 
 Inside one tier, a rule with more selector constraints wins; exact ties use later source order. Component options supplied in `args` override theme-provided style values, and explicit instance `style` is applied last.
 
@@ -226,7 +247,7 @@ Generated subparts expose narrower slots when the underlying component already h
 | `meter`, `slider` | `fill`, `empty` |
 | `listItem`, `toggle` | `label` |
 | `tooltip` | `text` |
-| `window` | `caption` |
+| `window` | `caption`, `captionText` |
 | `grid` | `row` |
 | `tabs` | `button`, `selected`, `label`, `selectedLabel` |
 | `selector` | `button`, `icon`, `label` |
@@ -254,6 +275,8 @@ A rule with `selector.slot` writes directly to that slot:
 ```
 
 A rule without `slot` targets `root`.
+
+Window captions expose two separate slots: `caption` styles the caption container, while `captionText` styles the title text passed to the caption component.
 
 ## Inline style and `H3UI.UNSET`
 

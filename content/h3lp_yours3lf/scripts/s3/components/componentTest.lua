@@ -6,6 +6,7 @@ local async = require 'openmw.async'
 local auxUi = require 'openmw_aux.ui'
 local input = require 'openmw.input'
 local omwDebug = require 'openmw.debug'
+local storage = require 'openmw.storage'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -48,6 +49,7 @@ local relativeSizing = require 'scripts.s3.components.componentTests.relativeSiz
 local windowGeometry = require 'scripts.s3.components.componentTests.windowGeometry'
 
 local UtilVector2 = util.vector2
+local debugSettings = storage.playerSection 'SettingsPlayerH3UI'
 
 local sectionGapSize = UtilVector2(0, 4)
 local horizontalGapSize = UtilVector2(8, 0)
@@ -116,7 +118,7 @@ local headerTextProps = {
 ---@field longLabels fun(): openmw.ui.Layout
 ---@field nesting fun(): openmw.ui.Layout
 ---@field relativeSizing fun(): openmw.ui.Layout
----@field h3ui fun(): openmw.ui.Layout
+---@field h3ui fun(invalidate?: fun()): openmw.ui.Layout
 ---@field windowGeometry fun(): openmw.ui.Layout
 
 ---@class openmw.interfaces
@@ -614,9 +616,11 @@ local function createDemo(name, options)
   assert(constructor, 'Unknown H3 component demo: ' .. tostring(name))
 
   options = options or emptyOptions
+  local invalidate
+  if name == 'h3ui' then invalidate = refreshBody end
   local body = column {
     name = 'ct_demo_body',
-    children = { constructor() },
+    children = { constructor(invalidate) },
   }
   return createBody(options, body, 'H3 Component Test: ' .. name)
 end
@@ -627,6 +631,7 @@ local function cycleDemo()
 end
 
 local function onKeyPress(key)
+  if debugSettings:get 'enableDebugHotkeys' ~= true then return end
   if key.code ~= input.KEY.F7 then return end
   if key.withShift then
     omwDebug.reloadLua()

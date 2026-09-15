@@ -2,3 +2,74 @@ button_add: Add
 button_apply: Apply
 button_cancel: Cancel
 button_remove: Remove
+
+H3UIPageName: H3UI
+H3UIPageDescription: Configure the shared H3 user interface appearance.
+H3UIAppearanceName: Appearance
+H3UIAppearanceDescription: Choose a palette and adjust its colors.
+H3UIThemeName: Theme
+H3UIThemeDescription: Select the palette used by H3UI layouts.
+H3UIThemeCustom: Custom
+H3UIMenuTransparencyName: Menu transparency
+H3UIMenuTransparencyDescription: Set the opacity of H3UI backgrounds.
+H3UITextSizeNormalName: Normal text size
+H3UITextSizeNormalDescription: Set the size of ordinary H3UI text.
+H3UITextSizeHeaderName: Header text size
+H3UITextSizeHeaderDescription: Set the size of H3UI headers.
+H3UIResetName: Reset to Morrowind defaults
+H3UIResetDescription: Restore the shipped H3UI appearance.
+H3UIDebugHotkeysName: Enable H3UI debug hotkeys
+H3UIDebugHotkeysDescription: Allow F7 to cycle component demos and Shift+F7 to reload Lua.
+H3UIColor_text_Name: Normal text
+H3UIColor_textHover_Name: Hover text
+H3UIColor_textPressed_Name: Pressed text
+
+H3UIColor_active_Name: Active text
+
+H3UIColor_activeHover_Name: Active hover text
+
+H3UIColor_activePressed_Name: Active pressed text
+H3UIColor_disabled_Name: Disabled text
+H3UIColor_disabledHover_Name: Disabled hover text
+H3UIColor_disabledPressed_Name: Disabled pressed text
+H3UIColor_link_Name: Link
+H3UIColor_linkHover_Name: Link hover
+H3UIColor_linkPressed_Name: Link pressed
+H3UIColor_journalLink_Name: Journal link
+H3UIColor_journalLinkHover_Name: Journal link hover
+H3UIColor_journalLinkPressed_Name: Journal link pressed
+H3UIColor_journalTopic_Name: Journal topic
+H3UIColor_journalTopicHover_Name: Journal topic hover
+H3UIColor_journalTopicPressed_Name: Journal topic pressed
+H3UIColor_answer_Name: Answer
+H3UIColor_answerHover_Name: Answer hover
+H3UIColor_answerPressed_Name: Answer pressed
+H3UIColor_header_Name: Header
+H3UIColor_notify_Name: Notification
+H3UIColor_bigText_Name: Large text
+H3UIColor_bigTextHover_Name: Large hover text
+H3UIColor_bigTextPressed_Name: Large pressed text
+H3UIColor_bigLink_Name: Large link
+H3UIColor_bigLinkHover_Name: Large link hover
+H3UIColor_bigLinkPressed_Name: Large link pressed
+H3UIColor_bigAnswer_Name: Large answer
+H3UIColor_bigAnswerHover_Name: Large answer hover
+H3UIColor_bigAnswerPressed_Name: Large answer pressed
+H3UIColor_bigHeader_Name: Large header
+H3UIColor_bigNotify_Name: Large notification
+H3UIColor_background_Name: Background
+H3UIColor_focus_Name: Focus
+H3UIColor_health_Name: Health
+H3UIColor_magic_Name: Magicka
+H3UIColor_fatigue_Name: Fatigue
+
+H3UIColor_misc_Name: Miscellaneous
+H3UIColor_weaponFill_Name: Weapon fill
+H3UIColor_magicFill_Name: Magicka fill
+
+H3UIColor_positive_Name: Positive
+
+H3UIColor_negative_Name: Negative
+
+H3UIColor_count_Name: Item count
+H3UIColor_accent_Name: Accent
