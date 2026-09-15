@@ -9,6 +9,8 @@ local util = require 'openmw.util'
 local clamp = util.clamp
 
 local I = require 'openmw.interfaces'
+local appearance = require 'scripts.s3.ui.appearance'
+require 'scripts.s3.ui'
 
 local markTexture = ui.texture { path = 'textures/menu_map_smark.dds' }
 local whiteTexture = ui.texture { path = 'white' }
@@ -41,9 +43,9 @@ local function isScreenPositionPopupAlive(popup, generation)
     and popup.element.layout ~= nil
 end
 
-local function menuTransparency()
-  ---@diagnostic disable-next-line: undefined-field
-  return ui._getMenuTransparency()
+local function menuBackgroundStyle()
+  local theme = appearance.activeTheme()
+  return theme.token 'color.background', theme.token 'transparency.menu'
 end
 
 local function screenPositionTitle(argument)
@@ -70,6 +72,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
   local applyButtonRelativePosition = util.vector2(0.33, 0.88)
   local cancelButtonRelativePosition = util.vector2(0.67, 0.88)
   local currentValue = normalizedScreenPosition(value)
+  local previewBackgroundColor, previewBackgroundAlpha = menuBackgroundStyle()
 
   local function marker(position, props)
     props = props or { size = buttonSize }
@@ -111,7 +114,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
       util.vector2(panelSize.x * pickerRelativeSize.x, panelSize.y * pickerRelativeSize.y)
     local generation = popup.generation
     local markerLayout = marker(draft, { relativeSize = markerRelativeSize })
-    local backgroundAlpha = menuTransparency()
+    local backgroundColor, backgroundAlpha = menuBackgroundStyle()
     local panelContent = ui.content {}
 
     local function updateMarker()
@@ -146,7 +149,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
             props = {
               resource = whiteTexture,
               relativeSize = util.vector2(1, 1),
-              color = util.color.rgb(0, 0, 0),
+              color = backgroundColor,
               alpha = backgroundAlpha,
             },
           },
@@ -180,7 +183,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
       props = {
         resource = whiteTexture,
         relativeSize = util.vector2(1, 1),
-        color = util.color.rgb(0, 0, 0),
+        color = backgroundColor,
         alpha = backgroundAlpha,
       },
     }
@@ -216,7 +219,7 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
           props = {
             resource = whiteTexture,
             relativeSize = util.vector2(1, 1),
-            color = util.color.rgb(0, 0, 0),
+            color = backgroundColor,
             alpha = backgroundAlpha,
           },
         },
@@ -329,8 +332,8 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
         props = {
           resource = whiteTexture,
           relativeSize = util.vector2(1, 1),
-          color = util.color.rgb(0, 0, 0),
-          alpha = menuTransparency(),
+          color = previewBackgroundColor,
+          alpha = previewBackgroundAlpha,
         },
       },
       {
@@ -450,6 +453,90 @@ I.Settings.registerRenderer('List', function(input, set)
     content = ui.content {
       header,
       body,
+    },
+  }
+end)
+
+local function themeIndex(items, id)
+  for index = 1, #items do
+    if items[index].value == id then return index end
+  end
+  return 1
+end
+
+I.Settings.registerRenderer('H3UITheme', function(value, set)
+  local items = {}
+  local entries = appearance.themeEntries()
+  for index = 1, #entries do
+    local entry = entries[index]
+    items[#items + 1] = { label = entry.name, value = entry.id }
+  end
+  items[#items + 1] = {
+    label = core.l10n 'H3' 'H3UIThemeCustom',
+    value = appearance.customThemeId,
+  }
+
+  local selected = value
+  if selected == nil or selected == '' then selected = appearance.currentThemeId() end
+  return require 'scripts.s3.components.selector' {
+    items = items,
+    selected = themeIndex(items, selected),
+    onSelect = function(_, item) appearance.selectTheme(item.value, set) end,
+  }
+end)
+
+I.Settings.registerRenderer('H3UIColor', function(value, set, argument)
+  local hex = appearance.normalizeHex(value) or '000000'
+  local swatch = {
+    type = ui.TYPE.Image,
+    props = {
+      resource = whiteTexture,
+      size = util.vector2(32, 20),
+      color = appearance.color(hex),
+    },
+  }
+
+  return {
+    type = ui.TYPE.Flex,
+    props = { horizontal = true },
+    content = ui.content {
+      swatch,
+      {
+        template = I.MWUI.templates.box,
+        external = { stretch = 1 },
+        content = ui.content {
+          {
+            template = I.MWUI.templates.textEditLine,
+            props = { text = hex },
+            events = {
+              textChanged = async:callback(function(text)
+                local nextHex = appearance.normalizeHex(text)
+                if not nextHex then return end
+                swatch.props.color = appearance.color(nextHex)
+                appearance.setColor(argument.key, nextHex, set)
+              end),
+            },
+          },
+        },
+      },
+    },
+  }
+end)
+
+I.Settings.registerRenderer('H3UIReset', function(_, set)
+  return {
+    template = I.MWUI.templates.box,
+    content = ui.content {
+      {
+        template = I.MWUI.templates.textNormal,
+        props = { text = core.l10n 'H3' 'H3UIResetName' },
+        events = {
+          mouseClick = async:callback(function()
+            appearance.reset()
+            set(false)
+          end),
+        },
+      },
     },
   }
 end)

@@ -1,7 +1,10 @@
 ---@omw-context menu|player
 
+local async = require 'openmw.async'
 local constants = require 'scripts.s3.ui.constants'
 local merge = require 'scripts.s3.ui.merge'
+
+local styleTargetMarker = {}
 
 local function new(definitions)
   local adapters = {}
@@ -36,6 +39,8 @@ local function new(definitions)
   end
 
   function registry.has(name) return adapters[name] ~= nil end
+
+  function registry.supportsRuntimeState(name) return registry.get(name).runtimeState == true end
 
   function registry.validateSlot(name, slot)
     local adapter = registry.get(name)
@@ -86,6 +91,203 @@ local function new(definitions)
     end
   end
 
+  local function markStyleTargets(options, adapter, styles)
+    for slotName, mapping in next, adapter.slots do
+      local kinds = styles[slotName]
+      if kinds then
+        for styleKind, optionKey in next, mapping do
+          if kinds[styleKind] then
+            local styleOptions = options[optionKey]
+            if styleOptions == nil then
+              styleOptions = {}
+              options[optionKey] = styleOptions
+            end
+            if merge.isPlainTable(styleOptions) then
+              local marks = rawget(styleOptions, styleTargetMarker)
+              if not marks then
+                marks = {}
+                rawset(styleOptions, styleTargetMarker, marks)
+              end
+              local slotMarks = marks[slotName]
+              if not slotMarks then
+                slotMarks = {}
+                marks[slotName] = slotMarks
+              end
+              slotMarks[styleKind] = true
+            end
+          end
+        end
+      end
+    end
+  end
+
+  local function collectStyleTargets(layout)
+    local targets = {}
+    local seen = {}
+
+    local function collect(value)
+      if type(value) ~= 'table' or seen[value] then return end
+      seen[value] = true
+      local marks = rawget(value, styleTargetMarker)
+      if marks then
+        rawset(value, styleTargetMarker, nil)
+        for slotName, slotMarks in next, marks do
+          local slotTargets = targets[slotName] or {}
+          targets[slotName] = slotTargets
+          for styleKind in next, slotMarks do
+            slotTargets[#slotTargets + 1] = {
+              kind = styleKind,
+              value = value,
+            }
+          end
+        end
+      end
+    end
+
+    local function visit(layoutValue)
+      if type(layoutValue) ~= 'table' then return end
+      collect(layoutValue.props)
+      collect(layoutValue.external)
+
+      local content = layoutValue.content
+      if content ~= nil then
+        for index = 1, #content do
+          visit(content[index])
+        end
+      end
+    end
+
+    visit(layout)
+    return targets
+  end
+
+  local function protectedStyleKeys(adapter, args, inlineStyles)
+    local protected = {}
+
+    local function add(source)
+      if not source then return end
+      for slotName, mapping in next, adapter.slots do
+        for styleKind, optionKey in next, mapping do
+          if styleKind == 'props' or styleKind == 'external' then
+            local value = source[optionKey]
+            if value ~= nil then
+              local slot = protected[slotName]
+              if not slot then
+                slot = {}
+                protected[slotName] = slot
+              end
+              local keys = slot[styleKind]
+              if keys == nil then
+                keys = merge.isPlainTable(value) and {} or true
+                slot[styleKind] = keys
+              end
+              if keys ~= true then
+                for key in next, value do
+                  keys[key] = true
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    add(args)
+
+    for slotName, style in next, inlineStyles or {} do
+      local slot = protected[slotName]
+      if not slot then
+        slot = {}
+        protected[slotName] = slot
+      end
+      for styleKind, values in next, style do
+        if styleKind == 'props' or styleKind == 'external' then
+          local keys = slot[styleKind]
+          if keys == nil then
+            keys = {}
+            slot[styleKind] = keys
+          end
+          if keys ~= true then
+            for key in next, values do
+              keys[key] = true
+            end
+          end
+        end
+      end
+    end
+
+    return protected
+  end
+
+  local function compileStateDeltas(targets, stateStyles, protected)
+    local compiled = {}
+    local count = 0
+
+    for state, styles in next, stateStyles do
+      if state ~= 'baseState' then
+        local stateDeltas = {}
+
+        for slotName, style in next, styles do
+          local slotTargets = targets[slotName]
+          if slotTargets then
+            local slotProtection = protected[slotName]
+            for styleKind, values in next, style do
+              if styleKind == 'props' or styleKind == 'external' then
+                local keys = slotProtection and slotProtection[styleKind]
+                if keys ~= true then
+                  for key, value in next, values do
+                    if not (keys and keys[key]) then
+                      for targetIndex = 1, #slotTargets do
+                        local target = slotTargets[targetIndex]
+                        if target.kind == styleKind then
+                          stateDeltas[#stateDeltas + 1] = {
+                            key = key,
+                            target = target,
+                            value = value,
+                          }
+                          count = count + 1
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        if #stateDeltas > 0 then compiled[state] = stateDeltas end
+      end
+    end
+
+    return compiled, count
+  end
+
+  local function applyStateDeltas(active, deltas)
+    for index = 1, #active do
+      local entry = active[index]
+      if entry.hadValue then
+        entry.target.value[entry.key] = entry.previous
+      else
+        entry.target.value[entry.key] = nil
+      end
+      active[index] = nil
+    end
+
+    for index = 1, #deltas do
+      local entry = deltas[index]
+      local value = entry.target.value[entry.key]
+      entry.previous = value
+      entry.hadValue = value ~= nil
+      if constants.isUnset(entry.value) then
+        entry.target.value[entry.key] = nil
+      else
+        entry.target.value[entry.key] = merge.copy(entry.value)
+      end
+      active[index] = entry
+    end
+  end
+
   local function overlayArgs(options, adapter, args)
     if not args then return end
     for key, value in next, args do
@@ -104,15 +306,93 @@ local function new(definitions)
     end
   end
 
-  function registry.build(name, args, themeStyles, inlineStyles)
+  function registry.build(name, args, themeStyles, inlineStyles, stateStyles, invalidate)
     local adapter = registry.get(name)
     local options = {}
 
     applyStyles(options, adapter, themeStyles)
     overlayArgs(options, adapter, args)
     applyStyles(options, adapter, inlineStyles)
+    if stateStyles then
+      local activeSlots = {}
+      for state, styles in next, stateStyles do
+        if state ~= 'baseState' then
+          applyStyles({}, adapter, styles)
+          for slotName, style in next, styles do
+            local kinds = activeSlots[slotName] or {}
+            activeSlots[slotName] = kinds
+            for styleKind in next, style do
+              assert(
+                styleKind == 'props' or styleKind == 'external',
+                'H3 UI runtime state styles support props and external values only'
+              )
+              kinds[styleKind] = true
+            end
+          end
+        end
+      end
+      markStyleTargets(options, adapter, activeSlots)
+    end
 
-    return adapter.builder(options)
+    local layout = adapter.builder(options)
+    if stateStyles then
+      local targets = collectStyleTargets(layout)
+      local protected = protectedStyleKeys(adapter, args, inlineStyles)
+      local compiled, deltaCount = compileStateDeltas(targets, stateStyles, protected)
+      if deltaCount == 0 then return layout end
+
+      local events = merge.shallowCopy(layout.events or {})
+      layout.events = events
+      local baseState = stateStyles.baseState
+      local active = {}
+      local emptyDeltas = {}
+      local currentState
+      local focused = false
+      local pressed = false
+
+      local function nextState()
+        if pressed and compiled.pressed then return 'pressed' end
+        if focused and compiled.hover then return 'hover' end
+        return baseState
+      end
+
+      local function refreshState()
+        local state = nextState()
+        if currentState == state then return false end
+        currentState = state
+        applyStateDeltas(active, compiled[state] or emptyDeltas)
+        return true
+      end
+
+      local function addStateHandler(name, transition)
+        local previous = events[name]
+        events[name] = async:callback(function(event, eventLayout)
+          transition(event)
+          local changed = refreshState()
+          local result
+          if previous then result = previous(event, eventLayout) end
+          if changed and invalidate then invalidate() end
+          return result
+        end)
+      end
+
+      addStateHandler('focusGain', function() focused = true end)
+      addStateHandler('focusLoss', function()
+        focused = false
+        pressed = false
+      end)
+      addStateHandler('mousePress', function(event)
+        if event and event.button == 1 then pressed = true end
+      end)
+      addStateHandler('mouseRelease', function(event)
+        if event and event.button == 1 then pressed = false end
+      end)
+
+      refreshState()
+      return layout
+    end
+
+    return layout
   end
 
   function registry.slots(name)

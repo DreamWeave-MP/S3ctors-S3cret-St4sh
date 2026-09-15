@@ -9,7 +9,7 @@ extra:
 These recipes use H3UI's passive builders. Put them in a registered `menu` or `player` script; requiring a component does not run a script. Keep application state and the mounted root in your script, and call `element:update()` when a callback changes what should be displayed. Each content-only root uses `ui.TYPE.Container` so it sizes itself to its children.
 
 {% usage_note(title="Two levels · recipes or direct components") %}
-The examples below remain useful low-level compositions. H3 also installs `I.H3UI`, which can build the same kinds of surfaces from recipes and scoped themes. `H3UI.build` still returns an ordinary caller-owned layout; it does not replace `ui.create` or `element:update()`.
+The examples below remain useful low-level compositions. H3 also installs `I.H3UI`, which can build the same kinds of surfaces from recipes and the player's configured appearance. `H3UI.build` still returns an ordinary caller-owned layout; it does not replace `ui.create` or `element:update()`.
 {% end %}
 
 ## H3UI settings panel
@@ -78,15 +78,15 @@ element = ui.create {
 
 The recipe does not persist any setting. It simply composes existing H3 controls.
 
-## Scoped styling
+## Registered styling
 
 ```lua
 local util = require 'openmw.util'
 local H3UI = require('openmw.interfaces').H3UI
 
-local dangerTheme = H3UI.theme {
+H3UI.registerTheme {
+    id = 'myMod:danger-demo',
     name = 'danger-demo',
-    extends = H3UI.themes.morrowind,
     tokens = {
         color = {
             danger = util.color.rgb(1, 0.25, 0.2),
@@ -108,16 +108,14 @@ local dangerTheme = H3UI.theme {
     },
 }
 
-local MyH3UI = H3UI.scope { theme = dangerTheme }
-
-local deleteButton = MyH3UI.build {
+local deleteButton = H3UI.build {
     component = 'button',
     tone = 'danger',
     args = { label = 'Delete' },
 }
 ```
 
-The theme is local to `MyH3UI`; another mod or another scope can use `H3UI.themes.morrowind` at the same time. See [H3UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) for selectors, traits, tokens, classes, style slots, cascade order, and diagnostics.
+Registered themes appear in the player's H3UI settings. Scripts do not select a theme; every H3UI scope uses the player's configured appearance. See [H3UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) for selectors, traits, tokens, classes, style slots, cascade order, and diagnostics.
 
 ## Settings panel
 

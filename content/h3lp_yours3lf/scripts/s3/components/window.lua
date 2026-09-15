@@ -23,7 +23,6 @@ local defaultPosition = UtilVector2(80, 80)
 local defaultSize = UtilVector2(400, 300)
 local fullSize = UtilVector2(1, 1)
 local relativeWidth = UtilVector2(1, 0)
-local backgroundColor = util.color.rgb(0, 0, 0)
 
 ---@class H3.WindowOptions
 ---@field title? string
@@ -52,6 +51,8 @@ local backgroundColor = util.color.rgb(0, 0, 0)
 ---@field content? openmw.ui.Content|openmw.ui.LayoutOrElement[]
 ---@field children? openmw.ui.Content|openmw.ui.LayoutOrElement[]
 ---@field captionProps? table
+---@field captionTextProps? table
+---@field backgroundProps? table
 ---@field template? openmw.ui.Template
 
 local function addHandler(events, name, handler)
@@ -333,12 +334,18 @@ local function window(options)
       props = {
         resource = constants.whiteTexture,
         ignorePointerEvents = true,
-        color = backgroundColor,
+        color = util.color.rgb(0, 0, 0),
         alpha = 0.75,
         relativeSize = fullSize,
       },
     },
   }
+
+  if options.backgroundProps then
+    for key, value in next, options.backgroundProps do
+      content[1].props[key] = value
+    end
+  end
 
   if hasCaption then
     local captionProps = {
@@ -361,6 +368,7 @@ local function window(options)
       onPin = options.onPin,
       closable = options.closable,
       onClose = options.onClose,
+      textProps = options.captionTextProps,
       props = captionProps,
     }
   end

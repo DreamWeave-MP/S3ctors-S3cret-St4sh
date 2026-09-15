@@ -33,6 +33,7 @@ local function component(name, spec, defaults)
     classes = selector.classes(spec.classes, spec.class),
     args = args,
     style = spec.style,
+    invalidate = spec.invalidate ~= nil and spec.invalidate or defaults.invalidate,
   }
 end
 
@@ -49,9 +50,7 @@ local function isComponent(value)
   return type(value) == 'table' and rawget(value, componentMarker) == true
 end
 
-local function isRecipe(value)
-  return type(value) == 'table' and rawget(value, recipeMarker) == true
-end
+local function isRecipe(value) return type(value) == 'table' and rawget(value, recipeMarker) == true end
 
 return {
   component = component,

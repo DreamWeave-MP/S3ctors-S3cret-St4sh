@@ -27,6 +27,7 @@ local windowKeys = {
   'events',
   'userData',
   'captionProps',
+  'captionTextProps',
   'template',
 }
 
@@ -48,7 +49,9 @@ local function tabbedWindow(ctx, spec)
   local page = spec.page or spec.content or spec.children
   if page ~= nil then
     if type(page) == 'table' and page[1] ~= nil then
-      for index = 1, #page do children[#children + 1] = page[index] end
+      for index = 1, #page do
+        children[#children + 1] = page[index]
+      end
     else
       children[#children + 1] = page
     end

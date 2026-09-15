@@ -20,6 +20,7 @@ return {
   },
   button = {
     builder = require 'scripts.s3.components.button',
+    runtimeState = true,
     slots = { root = root(), label = { props = 'labelProps' } },
   },
   caption = {
@@ -61,6 +62,7 @@ return {
   },
   iconButton = {
     builder = require 'scripts.s3.components.iconButton',
+    runtimeState = true,
     slots = {
       root = root(),
       icon = { props = 'iconProps' },
@@ -85,6 +87,7 @@ return {
   },
   listItem = {
     builder = require 'scripts.s3.components.listItem',
+    runtimeState = true,
     slots = { root = root(), label = { props = 'labelProps' } },
   },
   meter = {
@@ -159,6 +162,7 @@ return {
   },
   toggle = {
     builder = require 'scripts.s3.components.toggle',
+    runtimeState = true,
     slots = { root = root(), label = { props = 'labelProps' } },
   },
   tooltip = {
@@ -171,6 +175,11 @@ return {
   },
   window = {
     builder = require 'scripts.s3.components.window',
-    slots = { root = root(), caption = { props = 'captionProps' } },
+    slots = {
+      root = root(),
+      background = { props = 'backgroundProps' },
+      caption = { props = 'captionProps' },
+      captionText = { props = 'captionTextProps' },
+    },
   },
 }
