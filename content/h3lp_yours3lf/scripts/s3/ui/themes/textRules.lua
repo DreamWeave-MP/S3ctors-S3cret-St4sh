@@ -50,7 +50,7 @@ local function new()
     },
     {
       selector = { component = 'bookFrame', slot = 'title' },
-      style = textStyle('color.header', 'textSize.header'),
+      style = textStyle('color.text', 'textSize.normal'),
     },
     {
       selector = { component = 'bookFrame', slot = 'background' },
@@ -63,11 +63,11 @@ local function new()
     },
     {
       selector = { component = 'caption', slot = 'text' },
-      style = textStyle('color.header', 'textSize.header'),
+      style = textStyle('color.text', 'textSize.normal'),
     },
     {
       selector = { component = 'window', slot = 'captionText' },
-      style = textStyle('color.header', 'textSize.header'),
+      style = textStyle('color.text', 'textSize.normal'),
     },
     {
       selector = { component = 'window', slot = 'background' },
