@@ -113,6 +113,8 @@ local Content = {}
 ---@class openmw.ui.Element
 local Element = {}
 
+---@alias openmw.ui.LayoutOrElement openmw.ui.Layout|openmw.ui.Element
+
 ---Mouse event, passed as an argument to relevant UI events
 ---@class openmw.ui.MouseEvent
 ---@field position openmw.util.Vector2 Absolute position of the mouse cursor
@@ -188,7 +190,7 @@ function ui.getConsoleMode() end
 function ui.screenSize() end
 
 ---Converts a given table of tables into an openmw.ui.Content
----@param table (openmw.ui.Layout|openmw.ui.Element)[]
+---@param table openmw.ui.LayoutOrElement[]
 ---@return openmw.ui.Content
 function ui.content(table) end
 
