@@ -1,0 +1,241 @@
+[center][size=6][b][color=#b48cff]COD3X[/color][/b][/size]
+[size=4][b][color=#d4d4d8]THE OPENMW LUA FIELD MANUAL[/color][/b][/size]
+
+[size=3][color=#b48cff]CODE · CONTEXT · CONSEQUENCE[/color][/size][/center]
+
+[color=#d4d4d8]Cod3x is a [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/][color=#b48cff]field manual[/color][/url] for writing, understanding, debugging, and optimizing OpenMW Lua.[/color]
+
+[color=#d4d4d8]It began as context-aware Lua Language Server annotations. It has grown into something considerably larger: a complete OpenMW Lua reference companion, beginner curriculum, engineering handbook, cookbook, architecture archive, performance guide, and historical record of the things that worked — and the things that absolutely did not.[/color]
+
+[center][size=5][b][color=#b48cff]Write better OpenMW Lua. Understand why it works.[/color][/b][/size][/center]
+
+[color=#d4d4d8]If you have never written Lua before, Cod3x can take you [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/zero-to-hero/][color=#7ee2a8]from zero to a working mod[/color][/url].[/color]
+
+[color=#d4d4d8]If you already ship OpenMW Lua, use it as a reference, architecture guide, performance manual, and source of production-tested patterns.[/color]
+
+[color=#d4d4d8]And if someone tells you OpenMW Lua is simply slow:[/color]
+
+[center][size=5][b][color=#b48cff]No. Your OpenMW Lua is slow.[/color][/b][/size][/center]
+
+[center][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/measure-first/][color=#ff9875]Measure it. Find out why.[/color][/url][/center]
+[heading][center][color=#b48cff]What Cod3x contains[/color][/center]
+[/heading]
+[center][b][size=4][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/zero-to-hero/][color=#7ee2a8]Zero to Hero[/color][/url][/size][/b][/center]
+
+[color=#d4d4d8]Never written Lua? Never made an OpenMW script? Do not know what a language server is? Start here.[/color]
+
+[color=#d4d4d8]Zero to Hero walks through Lua fundamentals, your first OpenMW Lua mod, Cod3x setup, script contexts, communication between scripts, objects and records, state, UI, input, and finally a complete small mod that ties the pieces together.[/color]
+
+[center][size=4][b][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/reference/][color=#b48cff]API Reference[/color][/url][/b][/size][/center]
+
+[color=#d4d4d8]A human-facing reference companion for OpenMW's Lua APIs, types, records, objects, interfaces, handlers, constants, and script-context restrictions.[/color]
+
+[color=#d4d4d8]The goal is not merely to repeat function signatures. Cod3x connects APIs to mental models, examples, architecture, production usage, and the engine behavior underneath them.[/color]
+
+[center][size=4][b][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/tooling/luals/][color=#83c7ff]LuaLS Tooling[/color][/url][/b][/size][/center]
+
+[color=#d4d4d8]Cod3x still provides the tooling it originally existed to build: detailed Lua Language Server annotations and an OpenMW-aware context plugin.[/color]
+
+[color=#d4d4d8]Autocomplete, hover documentation, type checking, nilability, OpenMW records and objects, interfaces, enums, and context-aware diagnostics all work directly in your editor.[/color]
+
+[center][size=4][b][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/][color=#f2c66d]Good Designs[/color][/url][/b][/size][/center]
+
+[color=#d4d4d8]Real OpenMW systems are used as design studies rather than reduced to generic programming slogans.[/color]
+
+[color=#d4d4d8]Cod3x documents how abstractions such as [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/s3lf-semantic-boundary/][color=#b48cff]S3lf[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/protected-table-genealogy/][color=#b48cff]ProtectedTable[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/image-atlas-domain-concept/][color=#b48cff]ImageAtlas[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/cam-helper-extraction/][color=#b48cff]CamHelper[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/state-machine-genealogy/][color=#b48cff]StateMachine[/color][/url], S3maphore's playlist resolver, bounded actor scheduling, and other systems evolved — including when the best answer was to [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/delete-fake-objects/][color=#b48cff]delete an abstraction[/color][/url] instead of making it smarter.[/color]
+
+[center][b][color=#b48cff]Sometimes better code is simpler, not smarter.[/color][/b][/center]
+
+[center][size=4][b][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/][color=#ff9875]Performance[/color][/url][/b][/size][/center]
+
+[color=#d4d4d8]Profiling, allocation, caching, engine-boundary costs, hot-path design, LuaJIT bytecode, traces, side exits, userdata, garbage collection, benchmarking, [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/pr0f1l3r/][color=#b48cff]Pr0f1l3r[/color][/url], and eventually the runtime itself.[/color]
+
+[color=#d4d4d8]Cod3x does not teach optimization folklore. It asks where the work actually happens. Start with [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/measure-first/][color=#ff9875]Measure First[/color][/url], then keep digging into [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/engine-boundaries/][color=#b48cff]Engine Boundaries[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/luajit-bytecode/][color=#b48cff]LuaJIT Bytecode[/color][/url], and [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/luajit-traces/][color=#b48cff]Traces[/color][/url].[/color]
+
+[center][size=4][b][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/paid-for-with-blood/][color=#bfc1c9]Paid For With Blood[/color][/url][/b][/size][/center]
+
+[color=#d4d4d8]Some rules exist because somebody already paid the debugging cost for you.[/color]
+
+[color=#d4d4d8]Paid For With Blood documents real bugs, regressions, failed assumptions, performance cliffs, abandoned designs, and historical fixes, with direct links to the commits wherever possible.[/color]
+
+[color=#d4d4d8]The point is not to pretend the current architecture was obvious from the beginning. The failures are part of the documentation.[/color]
+[heading][center][color=#b48cff]Start here[/color][/center]
+[/heading]
+
+[center][size=4][b][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/][color=#b48cff]THE COMPLETE COD3X FIELD MANUAL[/color][/url][/b][/size][/center]
+
+[color=#d4d4d8]New to OpenMW Lua? Start with [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/zero-to-hero/][color=#7ee2a8]Zero to Hero[/color][/url].[/color]
+
+[color=#d4d4d8]Already shipping mods? Jump directly into [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/reference/][color=#b48cff]Reference and Mental Maps[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/good-designs/][color=#f2c66d]Good Designs[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/practice/][color=#b48cff]Engineering Practice[/color][/url], [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/][color=#ff9875]Performance[/color][/url], or [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/paid-for-with-blood/][color=#bfc1c9]Paid For With Blood[/color][/url].[/color]
+
+[color=#d4d4d8]Need a specific small answer? Check the [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/cookbook/][color=#b48cff]Cookbook[/color][/url]. Need to understand why an API exists only somewhere? Read [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/getting-started/contexts/][color=#b48cff]Script Contexts[/color][/url]. Need to know why a rule sounds suspiciously specific? There is probably a corpse in [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/paid-for-with-blood/][color=#bfc1c9]Paid For With Blood[/color][/url].[/color]
+[heading][center][color=#b48cff]Editor setup[/color][/center]
+[/heading]
+
+[color=#d4d4d8]Cod3x is not a normal OpenMW mod. Do not enable it in the OpenMW launcher.[/color]
+
+[color=#d4d4d8]The repository contains Lua Language Server annotations, an OpenMW context plugin, documentation, and example projects. The tooling portion is loaded by your editor, not by OpenMW.[/color]
+
+[color=#d4d4d8]You need an editor with LuaLS support. For VSCode and its forks, install the Lua Language Server extension.[/color]
+
+[color=#d4d4d8]Download Cod3x manually and extract it somewhere stable.[/color]
+
+[color=#d4d4d8]For example:[/color]
+
+[code]C:/Modding/Tools/Cod3x/
+/home/you/Modding/Tools/Cod3x/[/code]
+
+[color=#d4d4d8]The folder contains the OpenMW annotations, context plugin, examples, and supporting metadata.[/color]
+
+[color=#d4d4d8]Copy [font=Courier New].luarc.json[/font] from [font=Courier New]examples/openmw-mod/[/font] into the root of your Lua mod, then replace the Cod3x paths with the directory where you extracted it:[/color]
+
+[code]{
+  "runtime.version": "LuaJIT",
+  "workspace.library": ["/absolute/path/to/Cod3x"],
+  "runtime.plugin": "/absolute/path/to/Cod3x/omw_context_plugin.lua"
+}[/code]
+
+[color=#d4d4d8]The complete [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/zero-to-hero/setup-cod3x/][color=#b48cff]Set Up Cod3x walkthrough[/color][/url] shows how to configure LuaLS and prove that the context plugin is actually working.[/color]
+[heading][center][color=#b48cff]Context-aware OpenMW diagnostics[/color][/center]
+[/heading]
+
+[color=#d4d4d8]OpenMW scripts do not all run with the same authority. Global, local, player, menu, and load scripts expose different parts of the engine. See [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/getting-started/contexts/][color=#b48cff]Script Contexts[/color][/url] for the full mental model.[/color]
+
+[color=#d4d4d8]Tell Cod3x which context a source file belongs to:[/color]
+
+[code]---@omw-context player[/code]
+
+[color=#d4d4d8]Supported contexts include:[/color]
+
+[list]
+[*][font=Courier New]global[/font] — world-level script context[/*]
+[*][font=Courier New]local[/font] — script attached to an in-world object[/*]
+[*][font=Courier New]player[/font] — player-specific behavior, input, camera, and UI[/*]
+[*][font=Courier New]menu[/font] — menu behavior and menu UI[/*]
+[*][font=Courier New]load[/font] — content-loading scripts[/*]
+[*][font=Courier New]runtime[/font] — shared code valid in normal runtime contexts[/*]
+[*][font=Courier New]all[/font] — code valid in every OpenMW script context[/*]
+[*][font=Courier New]none[/font] — code intentionally using no OpenMW APIs[/*]
+[/list]
+[color=#d4d4d8]Contexts can also be combined:[/color]
+
+[code]---@omw-context global | player[/code]
+
+[color=#d4d4d8]And narrowed locally when a runtime branch genuinely changes what the code is allowed to do:[/color]
+
+[code]---@omw-context global | player
+local core = require 'openmw.core'
+
+---@omw-context-next player
+local camera = require 'openmw.camera'
+
+---@omw-context-begin player
+local input = require 'openmw.input'
+local ui = require 'openmw.ui'
+---@omw-context-end[/code]
+
+[color=#d4d4d8]These annotations are assertions for LuaLS. They do not change runtime permissions. Cod3x uses them to catch context mistakes before you boot the game. The deeper tooling explanation lives in [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/tooling/luals/][color=#83c7ff]Cod3x and LuaLS[/color][/url].[/color]
+[heading][center][color=#b48cff]What the tooling gives you[/color][/center]
+[/heading]
+
+[list]
+[*]Autocomplete for OpenMW Lua APIs[/*]
+[*]Hover documentation directly in your editor[/*]
+[*]Function parameters and return types[/*]
+[*]Nilability information instead of mystery [font=Courier New]unknown[/font] values[/*]
+[*]Context-aware diagnostics for OpenMW modules, interfaces, and selected members[/*]
+[*]LuaLS-native models for OpenMW objects, records, constants, and enums[/*]
+[*]Support for typing your own mod interfaces[/*]
+[*]A maintained machine-readable companion to the human field manual[/*]
+[/list]
+
+[center][size=4][b][color=#b48cff]Make your editor understand OpenMW before OpenMW teaches you the hard way.[/color][/b][/size][/center]
+[heading][center][color=#b48cff]Type your own interfaces[/color][/center]
+[/heading]
+
+[color=#d4d4d8]Public interfaces deserve explicit contracts. The [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/getting-started/events-and-interfaces/][color=#b48cff]Events and Interfaces[/color][/url] guide explains when an interface is the right communication boundary, while [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/reference/interfaces/][color=#b48cff]Built-In Interfaces[/color][/url] maps OpenMW's own interface surface.[/color]
+
+[color=#d4d4d8]You can extend [font=Courier New]openmw.interfaces[/font] for your own project through a workspace-only LuaLS metadata file. OpenMW does not need to load it.[/color]
+
+[code]---@meta
+
+---@class openmw.interfaces
+---@field MyMod? openmw.interfaces.MyMod
+
+---@class openmw.interfaces.MyMod
+---@field version string
+---@field resolve fun(recordId: string): boolean[/code]
+
+[color=#d4d4d8]Cod3x documents both the mechanism and the architecture around interfaces: ownership, communication boundaries, context, versioning, and when an event is the more appropriate tool.[/color]
+[heading][center][color=#b48cff]Source, history, and receipts[/color][/center]
+[/heading]
+
+[color=#d4d4d8]Cod3x goes out of its way to link engineering advice back to real implementations. Read [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/provenance/][color=#b48cff]Provenance and Research Corpus[/color][/url] for where the material came from and how evidence is treated.[/color]
+
+[color=#d4d4d8]Where useful, documentation links directly to:[/color]
+
+[list]
+[*]current H3 patterns and API documentation[/*]
+[*]production implementations in S3maphore, SSS, T4rg3t5, and other DreamWeave projects[/*]
+[*]OpenMW source and API behavior[/*]
+[*]historical commits where designs changed[/*]
+[*]failed experiments and subsequent fixes[/*]
+[*]the current implementation after that history settled[/*]
+[/list]
+[color=#d4d4d8]The goal is to make the path from principle → implementation → history navigable instead of asking everyone to rediscover it independently.[/color]
+
+[color=#d4d4d8]If you want to dig yourself, use the [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/tooling/source-diving/][color=#b48cff]Source-Diving Workflow[/color][/url]. If you want the receipts, browse the [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/reference/history-index/][color=#b48cff]Historical Evidence Index[/color][/url].[/color]
+
+[center][size=4][b][color=#b48cff]So You Want to Code with AI?[/color][/b][/size][/center]
+
+[color=#d4d4d8]Okay. Fine.[/color]
+
+[color=#d4d4d8]With great power comes great responsibility.[/color]
+
+[color=#d4d4d8]AI can dramatically increase how much code you are capable of producing. That means you should be [i]more[/i] responsible for understanding, testing, profiling, and reviewing what you ship — not less.[/color]
+
+[color=#d4d4d8]If you are new to programming, use Cod3x to learn what the agent is doing instead of treating generated code as magic. Start with [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/zero-to-hero/][color=#7ee2a8]Zero to Hero[/color][/url], then let the manual teach you the concepts behind the code your agent writes.[/color]
+
+[color=#d4d4d8]If you already know what you are doing, Cod3x gives an agent the same things that help a human engineer work responsibly: API contracts, project conventions, known-good patterns, source history, performance guidance, and receipts.[/color]
+
+[center][size=4][b][color=#b48cff]If your laptop can code itself now, the least you can do is give the thing a couple pointers.[/color][/b][/size][/center]
+
+[color=#d4d4d8]Read [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/tooling/so-you-want-to-code-with-ai/][color=#b48cff]So You Want To Code With AI?[/color][/url] for practical guidance on repository instructions, source-grounding, review, testing, validation, Git history, and making an agent prove its work instead of merely sounding confident.[/color]
+
+[color=#d4d4d8]The standard does not go down because a machine typed the code.[/color]
+
+[color=#d4d4d8][b]The standard goes up.[/b][/color]
+[heading][center][color=#b48cff]Requirements[/color][/center]
+[/heading]
+
+[color=#d4d4d8]Cod3x currently targets OpenMW 0.52 and the LuaJIT-based scripting environment used by that release line. Older versions may expose different APIs, types, interfaces, and behavior.[/color]
+
+[color=#d4d4d8]The field manual also documents deeper runtime and binding behavior where it is relevant to engineering and performance. If you want to understand where Lua-side optimization eventually stops being enough, read [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/performance/rubic0n/][color=#ff9875]When Lua-Side Optimization Stops Being Enough[/color][/url].[/color]
+
+[heading][center][color=#b48cff]Provenance and shout outs[/color][/center]
+[/heading]
+
+[color=#d4d4d8]Cod3x did not appear in a vacuum.[/color]
+
+[color=#d4d4d8]It carries forward years of OpenMW community knowledge, earlier annotation work, Yvan/Hebi's Effective OpenMW Lua project, production lessons from DreamWeave projects, upstream OpenMW implementation details, and ideas contributed or explored by many people across the community.[/color]
+
+[color=#d4d4d8]Where a technique, implementation, or historical influence can be traced to a specific source, the field manual tries to preserve that provenance rather than quietly absorbing it. See [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/provenance/][color=#b48cff]Provenance and Research Corpus[/color][/url].[/color]
+
+AI media disclosure: Cod3x's new images are generated, but not by an image model - [url=https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/tree/main/static/img/cod3x]just classic magick.[/url]
+
+[heading][center][color=#b48cff]One last thing[/color][/center]
+[/heading]
+
+[center][color=#d4d4d8]Protected execution is appropriate when failure is genuinely expected and recoverable.[/color]
+
+[color=#d4d4d8]It is not a substitute for correct program state, proper ownership, or understanding why something failed.[/color][/center]
+
+[center][size=5][b][color=#b48cff]I will hunt you for using pcall.[/color][/b][/size][/center]
+
+[center][url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/docs/practice/error-handling/][color=#d4d4d8]Yes, there is an entire page explaining why.[/color][/url][/center]
+
+[center]Cod3x is also available on [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/cod3x/][color=#8E44AD]the st4sh[/color][/url].[/center]
+
+[center][size=3][color=#d4d4d8][img]https://i.imgur.com/z5EI8Ln.png[/img][/color][/size][/center]
+
+[center][url=https://www.patreon.com/c/S3kshun8][img width=85]https://c14.patreon.com/fhd_Patreon_Symbol_6fff9723d3.png[/img][/url]    [url=https://ko-fi.com/magicaldave][img width=147]https://storage.ko-fi.com/cdn/brandasset/logo_white_stroke_small.png[/img][/url][/center]
