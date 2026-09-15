@@ -1,0 +1,25 @@
+{
+  "id": "cod3x-cell-greeter-architecture",
+  "mode": "flow",
+  "title": "The Cell Greeter architecture",
+  "heading_level": 3,
+  "description": "Registration gives the script a context; handlers observe the world; ordinary state and save hooks turn that observation into player feedback.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "registration", "title": ".omwscripts registration", "kind": "source", "detail": "Places the entry point in the player context." },
+    { "id": "context", "title": "Player context", "kind": "boundary", "detail": "Provides player-owned APIs and lifecycle." },
+    { "id": "handlers", "title": "Engine handlers", "kind": "service", "detail": "OpenMW calls the script when relevant events occur." },
+    { "id": "cell", "title": "Cell and identity", "kind": "engine", "detail": "The current cell supplies the fact being observed." },
+    { "id": "state", "title": "Lua table state", "kind": "state", "detail": "Tracks visited cells and current display state." },
+    { "id": "save", "title": "onSave / onLoad", "kind": "boundary", "detail": "Preserves the small authoritative state across saves." },
+    { "id": "feedback", "title": "Visible player feedback", "kind": "result", "detail": "The UI presents the result without becoming its source of truth." }
+  ],
+  "edges": [
+    { "from": "registration", "to": "context" },
+    { "from": "context", "to": "handlers" },
+    { "from": "handlers", "to": "cell" },
+    { "from": "cell", "to": "state" },
+    { "from": "state", "to": "save" },
+    { "from": "save", "to": "feedback" }
+  ]
+}

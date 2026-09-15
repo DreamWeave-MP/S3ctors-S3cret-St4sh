@@ -37,3 +37,5 @@ Signal listeners run during `fire`. OpenMW events cross an engine-managed delive
 Ordinary Lua locals are not automatically a save format. Decide which values are runtime scratch state and which belong in your script's explicit save/load contract. Avoid saving closures, connection handles, or pool internals.
 
 The [bootstrap](@/h3lp_yours3lf/docs/getting-started/overview.md) demonstrates a script with no persistent state. The [pooling example](@/h3lp_yours3lf/docs/examples/pooling-and-signals.md) demonstrates a deliberately shorter lifetime: one synchronous dispatch.
+
+Cod3x explains the larger OpenMW constraints in [Contexts](@/cod3x/docs/getting-started/contexts.md), [Object Lifetime](@/cod3x/docs/practice/object-lifetime.md), and [Storage and Lifecycle](@/cod3x/docs/getting-started/storage-and-lifecycle.md).

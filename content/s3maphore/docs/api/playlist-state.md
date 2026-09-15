@@ -10,6 +10,8 @@ kind = "state"
 
 `PlaylistState` is the read-only context behind `Playback.state` and `I.S3maphore.state`. It describes the player's location, nearby content, combat, player condition, and the current playback inputs. `Playback` is provided by the [PlaylistEnvironment](@/s3maphore/docs/api/playlist-environment.md).
 
+The [event-driven resolution genealogy](@/cod3x/docs/good-designs/s3maphore-event-resolution.md) shows how these state fields became explicit invalidation inputs rather than facts the resolver blindly polled every update.
+
 Inside a playlist callback:
 
 ```lua

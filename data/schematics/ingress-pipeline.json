@@ -1,0 +1,21 @@
+{
+  "id": "cod3x-ingress-pipeline",
+  "mode": "flow",
+  "title": "The preferred pipeline",
+  "heading_level": 3,
+  "description": "Flexible external input becomes canonical internal data once, before it reaches hot or stateful code.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "parse", "title": "Parse", "kind": "input", "detail": "Read the external shape." },
+    { "id": "validate", "title": "Validate", "kind": "boundary", "detail": "Reject values that violate the contract." },
+    { "id": "normalize", "title": "Normalize", "kind": "component", "detail": "Resolve aliases, casing, and shorthand forms." },
+    { "id": "store", "title": "Store canonical representation", "kind": "state", "detail": "Keep the form downstream code actually wants." },
+    { "id": "execute", "title": "Execute", "kind": "result", "detail": "The runtime can now rely on smaller invariants." }
+  ],
+  "edges": [
+    { "from": "parse", "to": "validate" },
+    { "from": "validate", "to": "normalize" },
+    { "from": "normalize", "to": "store" },
+    { "from": "store", "to": "execute" }
+  ]
+}

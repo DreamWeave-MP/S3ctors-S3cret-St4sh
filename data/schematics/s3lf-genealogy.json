@@ -1,0 +1,23 @@
+{
+  "id": "cod3x-s3lf-genealogy",
+  "mode": "timeline",
+  "title": "The S3lf genealogy",
+  "heading_level": 3,
+  "description": "A repeated engine-backed lookup became a cached object-shaped view, then a public interface.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "lookup", "title": "Repeated engine-backed lookup and self plumbing", "kind": "engine", "detail": "Callers repeatedly reconstruct the same view." },
+    { "id": "cache", "title": "Lazy cache on the attached-object view", "kind": "cache", "detail": "Keep safe engine-backed values near the owner of the lookup." },
+    { "id": "methods", "title": "Bind type methods once", "kind": "component", "detail": "Remove repeated access-path and self plumbing." },
+    { "id": "facade", "title": "Convenient object-shaped facade", "kind": "boundary", "detail": "Present a stable view without pretending userdata is a plain table." },
+    { "id": "release", "title": "Standalone S3lf release", "kind": "history", "detail": "The boundary becomes useful beyond its original caller." },
+    { "id": "interface", "title": "I.s3.lf in H3", "kind": "cod3x", "detail": "Consumers receive the capability through an installed interface." }
+  ],
+  "edges": [
+    { "from": "lookup", "to": "cache" },
+    { "from": "cache", "to": "methods" },
+    { "from": "methods", "to": "facade" },
+    { "from": "facade", "to": "release" },
+    { "from": "release", "to": "interface" }
+  ]
+}

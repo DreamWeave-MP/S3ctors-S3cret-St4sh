@@ -1,0 +1,156 @@
+{
+  "id": "cod3x-zero-to-hero",
+  "start_title": "Start here",
+  "tracks_title": "Where to go after the path",
+  "steps": [
+    {
+      "number": "01",
+      "path": "@/cod3x/docs/zero-to-hero/what-is-lua.md",
+      "title": "What Is Lua?",
+      "takeaway": "Learn what embedded scripting means."
+    },
+    {
+      "number": "02",
+      "path": "@/cod3x/docs/zero-to-hero/lua-to-be-dangerous.md",
+      "title": "Learn Enough Lua to Be Dangerous",
+      "takeaway": "Read and write the syntax Cod3x assumes."
+    },
+    {
+      "number": "03",
+      "path": "@/cod3x/docs/zero-to-hero/what-is-openmw-lua.md",
+      "title": "What Is OpenMW Lua?",
+      "takeaway": "Understand the engine as your host."
+    },
+    {
+      "number": "04",
+      "path": "@/cod3x/docs/zero-to-hero/first-openmw-mod.md",
+      "title": "Your First OpenMW Lua Mod",
+      "takeaway": "Register a file, run it, and see a message."
+    },
+    {
+      "number": "05",
+      "path": "@/cod3x/docs/zero-to-hero/language-server.md",
+      "title": "What the Hell Is a Language Server?",
+      "takeaway": "Understand editor completion and diagnostics."
+    },
+    {
+      "number": "06",
+      "path": "@/cod3x/docs/zero-to-hero/setup-cod3x.md",
+      "title": "Set Up Cod3x",
+      "takeaway": "Make your editor understand OpenMW."
+    },
+    {
+      "number": "07",
+      "path": "@/cod3x/docs/zero-to-hero/contexts-in-practice.md",
+      "title": "Scripts Have Contexts",
+      "takeaway": "Put behavior where its authority lives."
+    },
+    {
+      "number": "08",
+      "path": "@/cod3x/docs/zero-to-hero/scripts-talk.md",
+      "title": "Make Two Scripts Talk",
+      "takeaway": "Choose direct calls, events, or interfaces."
+    },
+    {
+      "number": "09",
+      "path": "@/cod3x/docs/zero-to-hero/objects-records-cells.md",
+      "title": "Objects, Records, and Cells",
+      "takeaway": "Tell instances from definitions and locations."
+    },
+    {
+      "number": "10",
+      "path": "@/cod3x/docs/zero-to-hero/keep-state.md",
+      "title": "Keep Some State",
+      "takeaway": "Choose locals, storage, or save data deliberately."
+    },
+    {
+      "number": "11",
+      "path": "@/cod3x/docs/zero-to-hero/put-something-on-screen.md",
+      "title": "Put Something on the Screen",
+      "takeaway": "Start with a message and grow toward UI."
+    },
+    {
+      "number": "12",
+      "path": "@/cod3x/docs/zero-to-hero/react-to-the-player.md",
+      "title": "React to the Player",
+      "takeaway": "Use input and handlers without polling everything."
+    },
+    {
+      "number": "13",
+      "path": "@/cod3x/docs/zero-to-hero/cell-greeter.md",
+      "title": "Build Cell Greeter",
+      "takeaway": "Combine registration, state, cell tracking, and UI."
+    },
+    {
+      "number": "14",
+      "path": "@/cod3x/docs/zero-to-hero/where-next.md",
+      "title": "Where Do I Go From Here?",
+      "takeaway": "Choose the next branch with a working mod behind you."
+    }
+  ],
+  "tracks": [
+    {
+      "title": "Understand the engine",
+      "summary": "Learn the mental models that make OpenMW's API boundaries predictable.",
+      "steps": [
+        {
+          "path": "@/cod3x/docs/getting-started/mental-model.md",
+          "title": "OpenMW Lua Mental Model",
+          "takeaway": "Separate engine, script, object, record, and context."
+        },
+        {
+          "path": "@/cod3x/docs/getting-started/contexts.md",
+          "title": "Script Contexts",
+          "takeaway": "Check capability before calling an API."
+        },
+        {
+          "path": "@/cod3x/docs/getting-started/objects-records-types.md",
+          "title": "Objects, Records, Types, and Cells",
+          "takeaway": "Use the right identity for the question."
+        }
+      ]
+    },
+    {
+      "title": "Build useful features",
+      "summary": "Find the smallest correct recipe for the thing you want to make.",
+      "steps": [
+        {
+          "path": "@/cod3x/docs/cookbook/_index.md",
+          "title": "Cookbook",
+          "takeaway": "Start from a focused recipe."
+        },
+        {
+          "path": "@/cod3x/docs/getting-started/events-and-interfaces.md",
+          "title": "Events and Interfaces",
+          "takeaway": "Choose communication by ownership."
+        },
+        {
+          "path": "@/cod3x/docs/getting-started/ui.md",
+          "title": "UI: From Nothing to Something",
+          "takeaway": "Build visible behavior one element at a time."
+        }
+      ]
+    },
+    {
+      "title": "Become dangerous responsibly",
+      "summary": "Once it works, learn how to keep it readable, fast, and hard to break.",
+      "steps": [
+        {
+          "path": "@/cod3x/docs/good-designs/_index.md",
+          "title": "Good Designs",
+          "takeaway": "Follow abstractions that earned their existence."
+        },
+        {
+          "path": "@/cod3x/docs/practice/_index.md",
+          "title": "Engineering Practice",
+          "takeaway": "Make ownership and contracts explicit."
+        },
+        {
+          "path": "@/cod3x/docs/performance/_index.md",
+          "title": "Performance",
+          "takeaway": "Measure before optimizing."
+        }
+      ]
+    }
+  ]
+}

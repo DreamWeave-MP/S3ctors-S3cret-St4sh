@@ -76,4 +76,6 @@ Cache misses call the wrapped function and propagate its errors without storing 
 
 Returned tables and userdata are cached by reference, not copied. Mutating one changes what later hits receive. The callable retains keys and results until invalidation or eviction, so use bounded retention for player-driven or hot paths.
 
+For the reasoning behind cache lifetime, invalidation, retention, and performance measurement, see Cod3x's [Caching Without Creating New Bugs](@/cod3x/docs/performance/caching.md).
+
 Cache hits unpack through an internal reusable scratch array. Do not retain that implementation table; retain the returned values themselves if their types permit it. `stats()` and misses allocate; stable hits avoid result-table allocation.

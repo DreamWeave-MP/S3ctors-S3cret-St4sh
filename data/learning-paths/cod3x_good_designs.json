@@ -1,0 +1,107 @@
+{
+  "id": "cod3x-good-designs",
+  "start_title": "Start here",
+  "tracks_title": "Choose a branch",
+  "steps": [
+    {
+      "number": "01",
+      "path": "@/cod3x/docs/good-designs/reduce-the-problem.md",
+      "title": "Reduce the Problem",
+      "takeaway": "Ask the smallest useful question."
+    },
+    {
+      "number": "02",
+      "path": "@/cod3x/docs/good-designs/s3maphore-playlist-eligibility.md",
+      "title": "Playlist Eligibility",
+      "takeaway": "Put policy behind the smallest expressive contract."
+    },
+    {
+      "number": "03",
+      "path": "@/cod3x/docs/good-designs/cold-path-ordering.md",
+      "title": "Move Stable Work Cold",
+      "takeaway": "Compute stable facts when they become stable."
+    },
+    {
+      "number": "04",
+      "path": "@/cod3x/docs/good-designs/state-machine-genealogy.md",
+      "title": "NullFunction to StateMachine",
+      "takeaway": "Let representation grow only when state earns it."
+    },
+    {
+      "number": "05",
+      "path": "@/cod3x/docs/good-designs/delete-fake-objects.md",
+      "title": "Delete Fake Objects",
+      "takeaway": "Remove machinery with no real identity, ownership, or lifetime."
+    }
+  ],
+  "tracks": [
+    {
+      "title": "Building abstractions",
+      "summary": "Follow repeated domain rules until a stable shared boundary earns its name.",
+      "steps": [
+        {
+          "path": "@/cod3x/docs/good-designs/image-atlas-domain-concept.md",
+          "title": "ImageAtlas",
+          "takeaway": "Name repeated domain rules."
+        },
+        {
+          "path": "@/cod3x/docs/good-designs/cam-helper-extraction.md",
+          "title": "CamHelper",
+          "takeaway": "Extract after real reuse."
+        },
+        {
+          "path": "@/cod3x/docs/good-designs/s3lf-semantic-boundary.md",
+          "title": "I.s3.lf",
+          "takeaway": "Cache and normalize engine-backed values."
+        },
+        {
+          "path": "@/cod3x/docs/good-designs/protected-table-genealogy.md",
+          "title": "ProtectedTable",
+          "takeaway": "Compose settings, state, and behavior."
+        },
+        {
+          "path": "@/cod3x/docs/good-designs/earned-shared-infrastructure.md",
+          "title": "Earned Shared Infrastructure",
+          "takeaway": "Promote only what repetition proves."
+        }
+      ]
+    },
+    {
+      "title": "Architecture",
+      "summary": "Match the communication boundary to ownership, timing, and context.",
+      "steps": [
+        {
+          "path": "@/cod3x/docs/good-designs/local-handlers.md",
+          "title": "Local Handlers",
+          "takeaway": "Keep local observation local."
+        },
+        {
+          "path": "@/cod3x/docs/good-designs/playlist-rules-private-machinery.md",
+          "title": "PlaylistRules",
+          "takeaway": "Hide cache machinery behind meaning."
+        },
+        {
+          "path": "@/cod3x/docs/good-designs/s3maphore-event-resolution.md",
+          "title": "Event-Driven Resolution",
+          "takeaway": "Make invalidation explicit."
+        }
+      ]
+    },
+    {
+      "title": "Performance systems",
+      "summary": "Change the work shape before reaching for lower-level tricks.",
+      "steps": [
+        {
+          "path": "@/cod3x/docs/good-designs/actor-scheduler.md",
+          "title": "Actor Scheduler",
+          "takeaway": "Bound work and choose freshness."
+        },
+        {
+          "path": "@/cod3x/docs/good-designs/static-collection-representation.md",
+          "title": "StaticCollection",
+          "takeaway": "Fix representation before the loop."
+        }
+      ]
+    }
+  ]
+}

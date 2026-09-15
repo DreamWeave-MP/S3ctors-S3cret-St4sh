@@ -2,7 +2,7 @@
 
 {% block docs_content %}
     {{ section.content | safe }}
-    {% if section.pages or section.subsections %}
+    {% if (section.pages or section.subsections) and not section.extra.suppress_section_links %}
     <div class="docs-section-links">
         {% for child_page in section.pages %}
             <a class="docs-section-link" href="{{ child_page.permalink | safe }}">

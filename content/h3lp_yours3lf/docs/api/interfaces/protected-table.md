@@ -1,6 +1,6 @@
 ---
 title: ProtectedTable
-description: Bind settings and runtime state to a small, inspectable manager interface.
+description: Compose OpenMW settings, transient runtime state, and methods into one table-shaped manager interface.
 weight: 15
 extra:
   kind: api
@@ -8,11 +8,44 @@ extra:
 
 {{ api_signature(value="require 'openmw.interfaces'.S3ProtectedTable.new(options) → ProtectedTable") }}
 
-Use ProtectedTable when a settings table has grown methods and transient state around it. Settings stay in storage; runtime state stays under `.state`; methods live on the same manager.
+ProtectedTable composes three neighboring things into one table-shaped interface: an OpenMW storage section, arbitrary transient state owned by the script, and user-defined methods. Settings stay in storage; runtime values stay under `.state`; behavior lives on the same manager.
 
 {% usage_note(title="Installed interface · Local and player") %}
 Enable H3's plugin and obtain the constructor through `I.S3ProtectedTable`. This is not a plain `require`-returned constructor and it is not available to global or menu scripts.
 {% end %}
+
+## What it actually does
+
+The caller does not have to juggle three separate namespaces:
+
+```lua
+local settings = Settings.Enabled
+local lastUpdate = RuntimeState.lastUpdate
+Methods.reset()
+```
+
+ProtectedTable presents the same arrangement as one manager:
+
+```lua
+local I = require 'openmw.interfaces'
+
+local manager = I.S3ProtectedTable.new {
+    inputGroupName = 'SettingsGlobalMyMod',
+    managerName = 'MyMod',
+}
+
+manager.state.lastUpdate = 0
+
+function manager.reset()
+    manager.state.lastUpdate = 0
+end
+
+local enabled = manager.Enabled
+local lastUpdate = manager.lastUpdate
+if enabled and lastUpdate == 0 then manager.reset() end
+```
+
+`manager.Enabled` comes from the OpenMW storage section, `manager.state.lastUpdate` is written into arbitrary script-owned state, and `manager.lastUpdate` transparently reads that state through the manager. `manager.reset` is a user-defined method. The composition is the design; protection, synchronization, and ownership rules keep those sources from colliding.
 
 ## Construction
 

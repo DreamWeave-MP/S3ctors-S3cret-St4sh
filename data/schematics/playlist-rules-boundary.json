@@ -1,0 +1,28 @@
+{
+  "id": "cod3x-playlist-rules-boundary",
+  "mode": "flow",
+  "title": "The semantic boundary",
+  "heading_level": 3,
+  "description": "Callers ask a playlist question. PlaylistRules owns the cache, identity, lifetime, and invalidation needed to answer it.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "question", "title": "Semantic playlist question", "kind": "input", "detail": "Does this cell, target, or rule match?" },
+    { "id": "rules", "title": "PlaylistRules", "kind": "boundary", "detail": "Presents a stable meaning to callers." },
+    { "id": "cache", "title": "Private cache machinery", "kind": "cache", "detail": "Reuses answers for a defined identity and lifetime." },
+    { "id": "invalidate", "title": "Explicit invalidation", "kind": "service", "detail": "Events clear or rebuild the affected derived state." },
+    { "id": "answer", "title": "Answer returned to the resolver", "kind": "result", "detail": "The caller does not need to know how the answer was produced." }
+  ],
+  "edges": [
+    { "from": "question", "to": "rules" },
+    { "from": "rules", "to": "cache" },
+    { "from": "cache", "to": "invalidate", "label": "must remain fresh", "kind": "support" },
+    { "from": "invalidate", "to": "answer" }
+  ],
+  "legend": [
+    { "kind": "input", "label": "Caller" },
+    { "kind": "boundary", "label": "Public boundary" },
+    { "kind": "cache", "label": "Private machinery" },
+    { "kind": "service", "label": "Invalidation" },
+    { "kind": "result", "label": "Answer" }
+  ]
+}

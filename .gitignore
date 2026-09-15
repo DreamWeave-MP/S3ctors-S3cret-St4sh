@@ -4,6 +4,7 @@ content/*/changelog.md
 unpublished
 .opencode/**
 AGENTS.md
+!content/cod3x/AGENTS.md
 
 /MWSE
 /openmw

@@ -1,0 +1,29 @@
+{
+  "id": "cod3x-engine-boundary",
+  "mode": "flow",
+  "title": "The engine-boundary path",
+  "heading_level": 3,
+  "description": "A small Lua expression can cross several layers before it returns to Lua.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "lua", "title": "Lua code", "kind": "source", "detail": "Your expression or loop." },
+    { "id": "jit", "title": "LuaJIT VM / JIT", "kind": "service", "detail": "Optimizes Lua around the call when it can." },
+    { "id": "binding", "title": "Binding dispatch", "kind": "boundary", "detail": "Resolves and invokes the exposed API." },
+    { "id": "arguments", "title": "Argument conversion", "kind": "component", "detail": "Converts Lua values for the native call." },
+    { "id": "cpp", "title": "C++ API", "kind": "engine", "detail": "The engine-facing implementation begins here." },
+    { "id": "subsystem", "title": "Engine subsystem", "kind": "engine", "detail": "World, physics, records, rendering, or another subsystem does the work." },
+    { "id": "return", "title": "Return-value conversion", "kind": "boundary", "detail": "The result crosses back through the binding layer." },
+    { "id": "value", "title": "Userdata / value allocation", "kind": "allocation", "detail": "The result may construct a temporary native-backed value." },
+    { "id": "lua-again", "title": "Lua code again", "kind": "result", "detail": "Only now can the script consume the result." }
+  ],
+  "edges": [
+    { "from": "lua", "to": "jit" },
+    { "from": "jit", "to": "binding" },
+    { "from": "binding", "to": "arguments" },
+    { "from": "arguments", "to": "cpp" },
+    { "from": "cpp", "to": "subsystem" },
+    { "from": "subsystem", "to": "return" },
+    { "from": "return", "to": "value" },
+    { "from": "value", "to": "lua-again" }
+  ]
+}

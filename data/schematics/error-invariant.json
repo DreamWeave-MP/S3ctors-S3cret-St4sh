@@ -1,0 +1,17 @@
+{
+  "id": "cod3x-error-invariant",
+  "mode": "flow",
+  "title": "The safe failure shape",
+  "heading_level": 3,
+  "description": "A protected callback is legitimate when it restores an invariant and still propagates the failure.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "callback", "title": "Callback fails", "kind": "input", "detail": "A listener throws while the owner is in a sensitive operation." },
+    { "id": "restore", "title": "Restore Signal invariants", "kind": "boundary", "detail": "Reset firing state and listener bookkeeping." },
+    { "id": "propagate", "title": "Propagate the failure", "kind": "result", "detail": "Do not silently convert a broken callback into success." }
+  ],
+  "edges": [
+    { "from": "callback", "to": "restore" },
+    { "from": "restore", "to": "propagate" }
+  ]
+}

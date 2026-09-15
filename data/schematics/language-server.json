@@ -1,0 +1,81 @@
+{
+  "id": "cod3x-language-server",
+  "mode": "flow-support",
+  "title": "The basic picture",
+  "description": "Your editor asks questions, LuaLS answers them, and Cod3x supplies the OpenMW knowledge LuaLS does not have.",
+  "direction": "vertical",
+  "nodes": [
+    {
+      "id": "source",
+      "title": "Your .lua file",
+      "kind": "source",
+      "role": "main",
+      "detail": "The code you write."
+    },
+    {
+      "id": "editor",
+      "title": "Your editor",
+      "kind": "tool",
+      "role": "main",
+      "detail": "Displays the answers and sends questions to the language server.",
+      "links": [
+        { "label": "Protocol", "url": "https://microsoft.github.io/language-server-protocol/" }
+      ]
+    },
+    {
+      "id": "luals",
+      "title": "Lua Language Server",
+      "kind": "service",
+      "role": "main",
+      "detail": "Understands Lua syntax, scopes, types, and common mistakes.",
+      "links": [
+        { "label": "LuaLS", "url": "https://luals.github.io/" }
+      ]
+    },
+    {
+      "id": "cod3x",
+      "title": "Cod3x",
+      "kind": "cod3x",
+      "role": "support",
+      "detail": "Teaches LuaLS about OpenMW APIs, types, contexts, and interfaces.",
+      "links": [
+        { "label": "Docs", "page": "@/cod3x/docs/tooling/luals.md" }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "source",
+      "to": "editor"
+    },
+    {
+      "from": "editor",
+      "to": "luals",
+      "label": "What is this symbol?"
+    },
+    {
+      "from": "cod3x",
+      "to": "luals",
+      "label": "OpenMW knowledge",
+      "kind": "support"
+    }
+  ],
+  "legend": [
+    {
+      "kind": "source",
+      "label": "Source"
+    },
+    {
+      "kind": "tool",
+      "label": "Tool"
+    },
+    {
+      "kind": "service",
+      "label": "Service"
+    },
+    {
+      "kind": "cod3x",
+      "label": "Cod3x knowledge"
+    }
+  ]
+}

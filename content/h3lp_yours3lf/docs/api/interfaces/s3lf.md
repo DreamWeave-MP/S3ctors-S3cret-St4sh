@@ -1,6 +1,6 @@
 ---
 title: S3lf
-description: The installed local/player interface for convenient access to the attached object.
+description: Lazy caching for attached-object values and bound type methods, exposed as one local/player interface.
 weight: 10
 extra:
   kind: api
@@ -8,19 +8,47 @@ extra:
 
 {{ api_signature(value="require 'openmw.interfaces'.s3.lf → S3lfObject") }}
 
-S3lf exposes frequently used object, type, record, and stat data through a lazily resolved view. It reduces repeated engine API indexing; it does not turn every engine value into a plain Lua value or remove the engine's restrictions.
+S3lf is a lazily cached facade over the attached OpenMW object. It resolves type methods, stats, records, object fields, and related helpers on demand, caching values where the configured key behavior allows it so repeated engine-backed lookups become ordinary table access. Bound type methods automatically use the attached object.
+
+For the design reasoning and internal evolution behind this boundary, see Cod3x's [I.s3.lf Design Genealogy](@/cod3x/docs/good-designs/s3lf-semantic-boundary.md).
 
 {% usage_note(title="Installed interface · Local and player") %}
 Enable H3's plugin and use the interface on an object where its provider is attached. This is not a global or menu interface. `I.s3.lf` is the current path; `I.s3lf` is not. Do not require the provider script as a constructor.
 {% end %}
 
-## Read the attached actor's health
+## What it actually does
+
+These two forms ask the same OpenMW question:
+
+```lua
+local types = require 'openmw.types'
+local health = types.Actor.stats.dynamic.health(self)
+local stance = types.Actor.getStance(self)
+```
 
 ```lua
 local I = require 'openmw.interfaces'
 
+local health = I.s3.lf.health
+local stance = I.s3.lf.getStance()
+```
+
+The first S3lf access resolves the engine-backed value and stores cacheable results on the facade. Later reads use ordinary table lookup. The bound method supplies the attached object, so callers do not repeatedly pass `self`; type methods are wrapped once with the attached object and cached, removing repeated `self` plumbing and repeated facade resolution.
+
+S3lf caches the engine-backed stat object, not a numeric snapshot of the stat. Caching `s3lf.health` does not freeze `health.current`; it retains the DynamicStat view instead of reconstructing that wrapper on every access.
+
+## Read the attached actor's health
+
+```lua
+local core = require 'openmw.core'
+local I = require 'openmw.interfaces'
+
+if not core.contentFiles.has 'H3lp Yours3lf.esp' then
+    error 'H3 S3lf dependency is missing; enable the H3lp Yours3lf plugin before this script'
+end
+
 local function reportHealth()
-    local s3lf = assert(I.s3 and I.s3.lf, 'H3 S3lf interface is unavailable')
+    local s3lf = I.s3.lf
     local actor = s3lf.asActor()
     if actor then
         print(actor.recordId .. ': ' .. tostring(actor.health.current))
@@ -35,7 +63,7 @@ return {
 }
 ```
 
-Use the [bootstrap's player-script registration](@/h3lp_yours3lf/docs/getting-started/overview.md). The lookup happens when the handler runs rather than assuming the interface is ready during another script's top-level evaluation.
+Use the [bootstrap's player-script registration](@/h3lp_yours3lf/docs/getting-started/overview.md). Put `H3lp Yours3lf.esp` before your content in the load order. The content-file check diagnoses a missing or misconfigured dependency; the lookup still happens when the handler runs rather than assuming the interface is ready during another script's top-level evaluation.
 
 ## Common members
 
