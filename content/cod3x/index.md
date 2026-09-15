@@ -19,6 +19,8 @@ extra:
 
 Cod3x is the OpenMW-Lua development companion: Lua Language Server annotations, context-aware diagnostics, and an engineering field manual built from years of production OpenMW Lua, profiler work, repository history, and runtime archaeology.
 
+{{ image(src="/img/cod3x/icon.png", alt="Cod3x: Code, Context, Consequence.", style="border-radius: 8px;") }}
+
 The annotations answer **what exists**.
 
 The [Cod3x Field Manual](@/cod3x/docs/_index.md) answers **how to engineer with it, why the rules exist, where the engine costs live, and which mistakes have already been Paid For With Blood**.
