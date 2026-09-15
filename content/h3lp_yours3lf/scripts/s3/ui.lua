@@ -56,11 +56,39 @@ local environment = {
 ---@field style H3UI.Style
 ---@field source? string
 
+---@class H3UI.ChromeFrame
+---@field thickness number
+---@field top string
+---@field bottom string
+---@field left string
+---@field right string
+---@field topLeft string
+---@field topRight string
+---@field bottomLeft string
+---@field bottomRight string
+---@field center? string
+---@field tintable? boolean
+
+---@class H3UI.ChromeSpec
+---@field preferredSource? 'theme'|'h3ui'
+---@field frame? table<string, H3UI.ChromeFrame>
+---@field caption? H3UI.ChromeFrame
+---@field pin? table<string, H3UI.ChromeFrame>
+---@field scroll? table<string, string>
+
 ---@class H3UI.ThemeSpec
 ---@field name? string
 ---@field extends? string
 ---@field tokens? table<string, any>
 ---@field rules? H3UI.ThemeRule[]
+---@field chrome? H3UI.ChromeSpec
+
+---@class H3UI.Theme
+---@field name string
+---@field token fun(path: string): any
+---@field resolve fun(value: any): any
+---@field chrome fun(): H3UI.ChromeSpec
+---@field hasChrome fun(): boolean
 
 ---@class H3UI.ThemeRegistration: H3UI.ThemeSpec
 ---@field id string Stable namespaced identifier.

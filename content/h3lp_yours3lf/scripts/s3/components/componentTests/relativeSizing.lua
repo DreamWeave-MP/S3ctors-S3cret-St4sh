@@ -3,8 +3,8 @@
 local I = require 'openmw.interfaces'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local meter = require 'scripts.s3.components.meter'
 local row = require 'scripts.s3.components.row'
 local slider = require 'scripts.s3.components.slider'
@@ -23,10 +23,12 @@ local halfMeterSize = UtilVector2(-12, 16)
 local rowSize = UtilVector2(0, 16)
 local gap = UtilVector2(12, 0)
 
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 local function refresh() I.H3ComponentTest.refresh() end
 
 ---@return openmw.ui.Layout
@@ -46,7 +48,7 @@ local function relativeSizing()
         children = {
           text {
             text = 'Relative sizing in a fixed Widget coordinate space',
-            props = headerTextProps,
+            props = headerTextProps(),
           },
 
           text {

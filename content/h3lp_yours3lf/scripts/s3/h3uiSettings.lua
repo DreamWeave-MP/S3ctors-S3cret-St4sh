@@ -36,6 +36,13 @@ local settingsList = {
     default = 'morrowind',
   },
   {
+    key = 'chromeSource',
+    renderer = 'H3UIChromeSource',
+    name = 'H3UIChromeSourceName',
+    description = 'H3UIChromeSourceDescription',
+    default = appearance.defaultChromeSource,
+  },
+  {
     key = 'menuTransparency',
     renderer = 'number',
     argument = { min = 0.0, max = 1.0, integer = false },

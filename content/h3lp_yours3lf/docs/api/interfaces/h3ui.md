@@ -123,16 +123,34 @@ The built-in presets are `Morrowind`, `Starwind`, and `Custom`. Selecting a pres
 
 The settings group uses the player section `SettingsPlayerH3UI`; its saved Custom palette lives separately in `SettingsPlayerH3UICustom`. The visible `theme` value is a registered theme ID or `custom`, and its color values are six-digit hexadecimal strings. Custom starts with the canonical Morrowind palette, keeps edits while presets are cycled, and is not reset when the visible settings group is reset. `menuTransparency` controls H3UI window backgrounds from transparent (`0.0`) to opaque (`1.0`) and defaults to `0.84`, matching OpenMW's default GUI setting. `textSizeNormal` defaults to `16`, matching OpenMW's default `font size`; `textSizeHeader` defaults to H3's `18`-pixel header size. Both can be configured independently in the H3UI settings page. The `enableDebugHotkeys` setting is disabled by default; enabling it allows F7 to cycle component demos and Shift+F7 to reload Lua. Writing the visible values is the supported integration point for a total conversion or curated setup that wants to configure the player's shared H3UI appearance.
 
+H3UI frame components use a chrome source independent of the palette. `Theme default` honors the active theme's recommendation, `Theme textures` forces its declared texture paths, and `H3UI customizable` uses H3's namespaced grayscale textures and the configurable `Border color`. A theme may declare arbitrary VFS paths under `chrome`; its frame resources are not tied to OpenMW template names. Themes may omit chrome and H3UI then falls back to its built-in resources.
+
 The internal theme compiler still supports selectors, rules, and token references. A registered theme may provide additional rules and tokens, but its palette is resolved through the player's configured color settings.
 
 The public registration shape is:
 
 ```lua
 H3UI.registerTheme {
-    id = 'myMod:theme',
-    name = 'My Theme',
-    tokens = { color = { accent = require('openmw.util').color.rgb(1, 0.5, 0) } },
-    rules = {},
+  id = 'myMod:theme',
+  name = 'My Theme',
+  tokens = { color = { accent = require('openmw.util').color.rgb(1, 0.5, 0) } },
+  chrome = {
+    preferredSource = 'theme',
+    frame = {
+      thin = {
+        thickness = 2,
+        topLeft = '<my-frame-top-left-VFS-path>',
+        top = '<my-frame-top-VFS-path>',
+        topRight = '<my-frame-top-right-VFS-path>',
+        left = '<my-frame-left-VFS-path>',
+        right = '<my-frame-right-VFS-path>',
+        bottomLeft = '<my-frame-bottom-left-VFS-path>',
+        bottom = '<my-frame-bottom-VFS-path>',
+        bottomRight = '<my-frame-bottom-right-VFS-path>',
+      },
+    },
+  },
+  rules = {},
 }
 ```
 

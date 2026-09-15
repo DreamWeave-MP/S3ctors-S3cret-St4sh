@@ -36,9 +36,17 @@ local function collapsible(options)
   local expandedLabel = expandedPrefix .. options.title
   local collapsedLabel = collapsedPrefix .. options.title
 
+  local function labelLayout(layout)
+    local result = layout.content[1]
+    while result.content do
+      result = result.content[1]
+    end
+    return result
+  end
+
   local function setExpanded(nextExpanded, headerLayout)
     expanded = nextExpanded
-    headerLayout.content[1].content[1].props.text = expanded and expandedLabel or collapsedLabel
+    labelLayout(headerLayout).props.text = expanded and expandedLabel or collapsedLabel
     bodyLayout.props.visible = expanded
   end
 

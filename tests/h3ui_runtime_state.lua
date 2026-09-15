@@ -32,13 +32,15 @@ package.preload['openmw.ui'] = function()
 
   return {
     content = content,
-    TYPE = { Container = 'Container', Flex = 'Flex', Image = 'Image' },
+    ALIGNMENT = { Center = 'Center' },
+    TYPE = { Container = 'Container', Flex = 'Flex', Image = 'Image', Widget = 'Widget' },
     texture = function(value) return value end,
   }
 end
 
 package.preload['openmw.util'] = function()
   return {
+    clamp = function(value, minimum, maximum) return math.max(minimum, math.min(value, maximum)) end,
     color = {
       commaString = function(value) return value end,
       rgb = function(red, green, blue) return { red, green, blue } end,
@@ -47,14 +49,45 @@ package.preload['openmw.util'] = function()
   }
 end
 
+package.preload['scripts.omw.mwui.constants'] = function()
+  return {
+    headerColor = 'header-color',
+    normalColor = 'normal-color',
+    textHeaderSize = 18,
+    textNormalSize = 16,
+    padding = 2,
+    border = 2,
+    thickBorder = 4,
+    whiteTexture = { path = 'white' },
+  }
+end
+
+package.preload['scripts.s3.ui.appearance'] = function()
+  local chrome = require 'scripts.s3.ui.chrome'
+  return {
+    chrome = function(path) return chrome.resolve(nil, path) end,
+    token = function(path)
+      if path == 'color.chromeBorder' then return 'chrome-border' end
+      return nil
+    end,
+  }
+end
+
 local I = require 'openmw.interfaces'
 local bookFrame = require 'scripts.s3.components.bookFrame'
+local chrome = require 'scripts.s3.ui.chrome'
+local itemSlot = require 'scripts.s3.components.itemSlot'
 local newRegistry = require 'scripts.s3.ui.registry'
 local newResolver = require 'scripts.s3.ui.resolver'
 local newScope = require 'scripts.s3.ui.scope'
+local searchInput = require 'scripts.s3.components.searchInput'
+local selector = require 'scripts.s3.components.selector'
+local tabs = require 'scripts.s3.components.tabs'
 local textRules = require 'scripts.s3.ui.themes.textRules'
 local themeModule = require 'scripts.s3.ui.theme'
 local token = require 'scripts.s3.ui.token'
+local ui = require 'openmw.ui'
+local window = require 'scripts.s3.components.window'
 
 local registry = newRegistry {
   button = {
@@ -195,7 +228,13 @@ local function buildWith(theme, spec, recipes)
   )
 end
 
-local function labelProps(layout) return layout.content[1].content[1].props end
+local function labelProps(layout)
+  local result = layout.content[1]
+  while result.content do
+    result = result.content[1]
+  end
+  return result.props
+end
 
 local function testThemeTokens()
   assert(
@@ -231,11 +270,43 @@ end
 local function testBookFrameBackground()
   local background = { color = 'starwind-background', alpha = 0.84 }
   local layout = bookFrame { backgroundProps = background }
-  local frameContent = layout.content[1].content
-  assert(layout.template == I.MWUI.templates.box)
+  local frameContent = layout.template.content
+  assert(layout.template.type == ui.TYPE.Container)
   assert(frameContent[1].props.color == background.color)
   assert(frameContent[1].props.alpha == background.alpha)
-  assert(frameContent[2].props.horizontal == false)
+  assert(layout.content[1].props.horizontal == false)
+  assert(
+    frameContent[2].props.resource.path == 'textures/h3ui/menu_thin_border_top_left_corner.dds'
+  )
+  assert(frameContent[2].props.size.x == 2 and frameContent[2].props.size.y == 2)
+  assert(frameContent[4].props.position.x == 0 and frameContent[4].props.position.y == 0)
+  assert(frameContent[6].props.position.x == 0 and frameContent[6].props.position.y == 2)
+  assert(frameContent[7].props.position.x == 0 and frameContent[7].props.position.y == 0)
+  assert(frameContent[8].props.position.x == 2 and frameContent[8].props.position.y == 0)
+  assert(frameContent[9].props.position.x == 0 and frameContent[9].props.position.y == 0)
+end
+
+local function testBuiltinPinChromePaths()
+  assert(chrome.resolve(nil, 'pin.up').topLeft == 'textures/h3ui/menu_rightbuttonup_top_left.dds')
+  assert(
+    chrome.resolve(nil, 'pin.down').bottomRight
+      == 'textures/h3ui/menu_rightbuttondown_bottom_right.dds'
+  )
+end
+
+local function testWindowInnerBorder()
+  local layout = window { title = 'window', size = { x = 400, y = 300 } }
+  local innerBorder = layout.content[3]
+  local body = layout.content[4]
+
+  assert(innerBorder.name == 'innerBorder')
+  assert(innerBorder.props.position.x == 4 and innerBorder.props.position.y == 24)
+  assert(innerBorder.props.size.x == -8 and innerBorder.props.size.y == -28)
+  assert(body.props.position.x == 8 and body.props.position.y == 28)
+  assert(body.props.size.x == -16 and body.props.size.y == -36)
+
+  local outerOnly = window { innerBorder = false }
+  assert(outerOnly.content[2].name == 'body')
 end
 
 local function testStateMachineAndEventReturns()
@@ -409,11 +480,73 @@ local function testToggleLabelMutation()
   assert(props.text == 'On')
 end
 
+local function testTabStyleRetention()
+  local layout = tabs {
+    items = { 'First', 'Second' },
+    buttonProps = { marker = 'base' },
+    selectedProps = { marker = 'selected' },
+    labelProps = { textColor = 'base' },
+    selectedLabelProps = { textColor = 'selected' },
+  }
+  local first = layout.content[1]
+  local second = layout.content[2]
+
+  assert(first.props.marker == 'selected')
+  assert(labelProps(first).textColor == 'selected')
+  assert(second.props.marker == 'base')
+  assert(labelProps(second).textColor == 'base')
+
+  second.events.mouseClick(nil, second)
+  assert(first.props.marker == 'base')
+  assert(labelProps(first).textColor == 'base')
+  assert(second.props.marker == 'selected')
+  assert(labelProps(second).textColor == 'selected')
+end
+
+local function testSelectorAlignment()
+  local layout = selector { items = { 'First' } }
+  local arrow = layout.content[1].content[1].content[1].content[1].content[1].content[1]
+  local value = layout.content[2]
+  for _ = 1, 3 do
+    value = value.content[1]
+  end
+
+  assert(layout.props.arrange == 'Center')
+  assert(arrow.props.color == 'chrome-border')
+  assert(value.props.textAlignH == 'Center')
+  assert(value.props.textAlignV == 'Center')
+end
+
+local function testSearchInputHeight()
+  local layout = searchInput { inputProps = { size = { x = 420, y = 28 } } }
+  local input = layout.content[1].content[1].content[1].content[1]
+
+  assert(input.props.size.y == 20)
+
+  local defaultLayout = searchInput {}
+  local defaultInput = defaultLayout.content[1].content[1].content[1].content[1]
+  assert(defaultInput.props.size.y == 20)
+end
+
+local function testItemSlotChrome()
+  local layout = itemSlot {}
+  assert(layout.template.content[1].props.color == 'chrome-border')
+
+  local customTemplate = {}
+  assert(itemSlot({ template = customTemplate }).template == customTemplate)
+end
+
 testTextRuleSlots()
 testThemeTokens()
 testBookFrameBackground()
+testBuiltinPinChromePaths()
+testWindowInnerBorder()
 testStateMachineAndEventReturns()
 testProtectionAndTraversal()
 testToggleLabelMutation()
+testTabStyleRetention()
+testSelectorAlignment()
+testSearchInputHeight()
+testItemSlotChrome()
 
 print 'H3UI runtime state tests passed'

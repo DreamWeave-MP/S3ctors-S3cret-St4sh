@@ -4,8 +4,8 @@ local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local numberInput = require 'scripts.s3.components.numberInput'
 local pinButton = require 'scripts.s3.components.pinButton'
 local row = require 'scripts.s3.components.row'
@@ -18,10 +18,12 @@ local UtilVector2 = util.vector2
 local StrFormat = string.format
 local sliderSize = UtilVector2(220, 18)
 local inputSize = UtilVector2(120, 24)
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 
 local function makeCounter(label)
   local semantic = 0
@@ -76,7 +78,7 @@ local function eventComposition()
     children = {
       text {
         text = 'Callback layers: semantic callbacks, raw handlers, and bubbling',
-        props = headerTextProps,
+        props = headerTextProps(),
       },
       text {
         text = 'semantic = component callback | low = supplied raw event | root = bubbled click',

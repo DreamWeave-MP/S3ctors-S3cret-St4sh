@@ -6,15 +6,20 @@ local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local button = require 'scripts.s3.components.button'
 local constants = require 'scripts.omw.mwui.constants'
 local headBlock = require 'scripts.s3.components.headBlock'
 local pinButton = require 'scripts.s3.components.pinButton'
+local row = require 'scripts.s3.components.row'
+local spacer = require 'scripts.s3.components.spacer'
 local text = require 'scripts.s3.components.text'
 
 local UtilVector2 = util.vector2
 
 local controlSize = UtilVector2(19, 19)
+local headBlockWidth = 30
+local captionTextPadding = 12
 local zero = UtilVector2(0, 0)
 local relativeWidth = UtilVector2(1, 0)
 
@@ -60,8 +65,8 @@ local function caption(options)
   props.arrange = props.arrange or ui.ALIGNMENT.Center
 
   local textProps = {
-    textSize = constants.textHeaderSize,
-    textColor = constants.headerColor,
+    textSize = appearance.token 'textSize.normal' or constants.textNormalSize,
+    textColor = appearance.token 'color.text' or constants.normalColor,
   }
   if options.textProps then
     for key, value in next, options.textProps do
@@ -86,20 +91,27 @@ local function caption(options)
   local children = {
     headBlock {
       props = {
-        size = heightSize,
+        size = UtilVector2(headBlockWidth, height),
         relativeSize = zero,
       },
       external = { grow = 1 },
       height = height,
     },
-    text {
+    row {
       name = 'text',
-      text = options.text or '',
-      props = textProps,
+      props = { arrange = ui.ALIGNMENT.Center },
+      children = {
+        spacer(captionTextPadding, 0),
+        text {
+          text = options.text or '',
+          props = textProps,
+        },
+        spacer(captionTextPadding, 0),
+      },
     },
     headBlock {
       props = {
-        size = heightSize,
+        size = UtilVector2(headBlockWidth, height),
         relativeSize = zero,
       },
       external = { grow = 1 },

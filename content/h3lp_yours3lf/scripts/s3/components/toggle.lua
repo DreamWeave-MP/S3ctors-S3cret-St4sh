@@ -7,6 +7,14 @@ local button = require 'scripts.s3.components.button'
 local emptyOptions = {}
 local StrFormat = string.format
 
+local function labelLayout(layout)
+  local result = layout.content[1]
+  while result.content do
+    result = result.content[1]
+  end
+  return result
+end
+
 ---@class H3.ToggleOptions
 ---@field value? boolean
 ---@field onChange? fun(value: boolean)
@@ -46,7 +54,7 @@ local function toggle(options)
   local previousClick = events.mouseClick
   events.mouseClick = async:callback(function(event, layout)
     value = not value
-    layout.content[1].content[1].props.text = value and enabledLabel or disabledLabel
+    labelLayout(layout).props.text = value and enabledLabel or disabledLabel
 
     if onChange then onChange(value) end
     if previousClick then return previousClick(event, layout) end

@@ -6,6 +6,9 @@ local I = require 'openmw.interfaces'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
+local chrome = require 'scripts.s3.ui.chrome'
+
 local UtilClamp = util.clamp
 local UtilVector2 = util.vector2
 
@@ -32,7 +35,7 @@ local function meter(options)
       fillProps[key] = propValue
     end
   end
-  fillProps.color = fillProps.color or fillColor
+  fillProps.color = fillProps.color or appearance.token 'color.accent' or fillColor
   fillProps.resource = fillProps.resource or whiteTexture
   fillProps.relativeSize = fillProps.relativeSize or UtilVector2(ratio, 1)
   fillProps.ignorePointerEvents = true
@@ -64,15 +67,13 @@ local function meter(options)
     end
   end
 
-  return {
-    type = ui.TYPE.Widget,
-    template = options.template or I.MWUI.templates.borders,
+  local result = {
     name = options.name,
     props = props,
     external = external,
     events = options.events,
     userData = options.userData,
-    content = ui.content {
+    content = {
       {
         type = ui.TYPE.Flex,
         props = {
@@ -87,6 +88,30 @@ local function meter(options)
         },
       },
     },
+  }
+
+  if options.template then
+    result.template = options.template
+    result.content = ui.content(result.content)
+    return result
+  end
+
+  if not result.props.size then
+    result.type = ui.TYPE.Widget
+    result.template = I.MWUI.templates.borders
+    result.content = ui.content(result.content)
+    return result
+  end
+
+  return chrome.frame {
+    skin = appearance.chrome 'frame.thin',
+    name = result.name,
+    props = result.props,
+    external = result.external,
+    events = result.events,
+    userData = result.userData,
+    tint = appearance.token 'color.chromeBorder',
+    content = result.content,
   }
 end
 

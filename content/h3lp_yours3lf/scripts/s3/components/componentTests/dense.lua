@@ -3,8 +3,8 @@
 local I = require 'openmw.interfaces'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local meter = require 'scripts.s3.components.meter'
 local row = require 'scripts.s3.components.row'
 local selector = require 'scripts.s3.components.selector'
@@ -25,10 +25,12 @@ local selectLabelSize = UtilVector2(52, 19)
 local choices = { 'Low', 'Med', 'High' }
 local sliderSteps = { 1, 5, 10 }
 local meterValues = { 0, 100, 14, 86, 28, 72, 42, 58, 56, 44, 70, 30, 84, 16, 96, 4 }
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 local passiveProps = { ignorePointerEvents = true }
 
 local function refresh() I.H3ComponentTest.refresh() end
@@ -115,9 +117,9 @@ end
 
 ---@return openmw.ui.Layout
 local function dense()
-  local sliderRows = { text { text = 'Interactive sliders', props = headerTextProps } }
-  local meterRows = { text { text = 'Passive meters', props = headerTextProps } }
-  local controlRows = { text { text = 'Toggle / select controls', props = headerTextProps } }
+  local sliderRows = { text { text = 'Interactive sliders', props = headerTextProps() } }
+  local meterRows = { text { text = 'Passive meters', props = headerTextProps() } }
+  local controlRows = { text { text = 'Toggle / select controls', props = headerTextProps() } }
 
   for index = 1, 16 do
     sliderRows[#sliderRows + 1] = makeSliderRow(index)
@@ -130,7 +132,7 @@ local function dense()
     children = {
       text {
         text = 'Dense component banks: construction, layout, and semantic update stress',
-        props = headerTextProps,
+        props = headerTextProps(),
       },
       row {
         children = {

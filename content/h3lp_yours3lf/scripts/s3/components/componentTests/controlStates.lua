@@ -4,9 +4,9 @@ local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local numberInput = require 'scripts.s3.components.numberInput'
 local row = require 'scripts.s3.components.row'
 local searchInput = require 'scripts.s3.components.searchInput'
@@ -22,10 +22,12 @@ local StrFormat = string.format
 local gap = UtilVector2(0, 6)
 local sliderSize = UtilVector2(220, 18)
 local inputSize = UtilVector2(120, 24)
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 local selectItems = {
   { label = 'Alpha', value = 'a' },
   { label = 'Beta', value = 'b' },
@@ -52,7 +54,7 @@ local function controlStates()
   return column {
     name = 'ct_demo_control_states',
     children = {
-      text { text = 'State mutation and semantic callback coverage', props = headerTextProps },
+      text { text = 'State mutation and semantic callback coverage', props = headerTextProps() },
       spacer { props = { size = gap } },
 
       row {

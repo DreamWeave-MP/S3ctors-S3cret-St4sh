@@ -72,6 +72,7 @@ element = ui.create {
 | `closable` | boolean? | Adds a close control. |
 | `pinnable` | boolean? | Adds a pin control. |
 | `pinned` | boolean? | Initial pin state. |
+| `innerBorder` | boolean? | Adds the vanilla-style inner border below the caption; enabled by default. |
 | `onMove` | function? | Receives the current position during movement. |
 | `onResize` | function? | Receives size and position during resizing. |
 | `onClose` | function? | Runs when close is pressed. |

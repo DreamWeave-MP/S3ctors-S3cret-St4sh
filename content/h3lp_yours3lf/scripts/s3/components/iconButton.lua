@@ -3,6 +3,8 @@
 local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
+local appearance = require 'scripts.s3.ui.appearance'
+local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
 local ui = require 'openmw.ui'
 
@@ -28,7 +30,10 @@ local function iconButton(options)
     image { resource = options.resource, props = iconProps },
   }
   if options.label ~= nil then
-    local labelProps = {}
+    local labelProps = {
+      textColor = appearance.token 'color.text',
+      textSize = appearance.token 'textSize.normal',
+    }
     if options.labelProps then
       for key, value in next, options.labelProps do
         labelProps[key] = value
@@ -62,26 +67,54 @@ local function iconButton(options)
     end
   end
 
-  return {
-    template = options.template or I.MWUI.templates.box,
+  local result = {
     name = options.name,
     props = props,
     external = external,
     events = options.events,
     userData = options.userData,
-    content = ui.content {
+    content = {
       {
         template = I.MWUI.templates.padding,
-        props = { ignorePointerEvents = true },
+        props = { ignorePointerEvents = false },
         content = ui.content {
           {
-            type = ui.TYPE.Flex,
-            props = { horizontal = true, arrange = ui.ALIGNMENT.Center },
-            content = ui.content(rowContent),
+            template = I.MWUI.templates.padding,
+            props = { ignorePointerEvents = true },
+            content = ui.content {
+              {
+                template = I.MWUI.templates.padding,
+                props = { ignorePointerEvents = true },
+                content = ui.content {
+                  {
+                    type = ui.TYPE.Flex,
+                    props = { horizontal = true, arrange = ui.ALIGNMENT.Center },
+                    content = ui.content(rowContent),
+                  },
+                },
+              },
+            },
           },
         },
       },
     },
+  }
+
+  if options.template then
+    result.template = options.template
+    result.content = ui.content(result.content)
+    return result
+  end
+
+  return chrome.box {
+    skin = appearance.chrome 'frame.button',
+    name = result.name,
+    props = result.props,
+    external = result.external,
+    events = result.events,
+    userData = result.userData,
+    tint = appearance.token 'color.chromeBorder',
+    content = result.content,
   }
 end
 

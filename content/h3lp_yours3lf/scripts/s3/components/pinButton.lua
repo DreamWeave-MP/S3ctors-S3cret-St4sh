@@ -8,6 +8,9 @@ local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
+local chrome = require 'scripts.s3.ui.chrome'
+
 local UtilVector2 = util.vector2
 
 local pinSize = UtilVector2(19, 19)
@@ -27,42 +30,18 @@ local bottomRightPosition = UtilVector2(17, 17)
 
 local function textureSet(paths)
   return {
-    topLeft = ui.texture { path = paths.topLeft },
-    top = ui.texture { path = paths.top },
-    topRight = ui.texture { path = paths.topRight },
-    left = ui.texture { path = paths.left },
-    center = ui.texture { path = paths.center },
-    right = ui.texture { path = paths.right },
-    bottomLeft = ui.texture { path = paths.bottomLeft },
-    bottom = ui.texture { path = paths.bottom },
-    bottomRight = ui.texture { path = paths.bottomRight },
+    tintable = paths.tintable,
+    topLeft = chrome.texture(paths.topLeft),
+    top = chrome.texture(paths.top),
+    topRight = chrome.texture(paths.topRight),
+    left = chrome.texture(paths.left),
+    center = chrome.texture(paths.center),
+    right = chrome.texture(paths.right),
+    bottomLeft = chrome.texture(paths.bottomLeft),
+    bottom = chrome.texture(paths.bottom),
+    bottomRight = chrome.texture(paths.bottomRight),
   }
 end
-
-local textures = {
-  up = textureSet {
-    topLeft = 'textures/menu_rightbuttonup_top_left.dds',
-    top = 'textures/menu_rightbuttonup_top.dds',
-    topRight = 'textures/menu_rightbuttonup_top_right.dds',
-    left = 'textures/menu_rightbuttonup_left.dds',
-    center = 'textures/menu_rightbuttonup_center.dds',
-    right = 'textures/menu_rightbuttonup_right.dds',
-    bottomLeft = 'textures/menu_rightbuttonup_bottom_left.dds',
-    bottom = 'textures/menu_rightbuttonup_bottom.dds',
-    bottomRight = 'textures/menu_rightbuttonup_bottom_right.dds',
-  },
-  down = textureSet {
-    topLeft = 'textures/menu_rightbuttondown_top_left.dds',
-    top = 'textures/menu_rightbuttondown_top.dds',
-    topRight = 'textures/menu_rightbuttondown_top_right.dds',
-    left = 'textures/menu_rightbuttondown_left.dds',
-    center = 'textures/menu_rightbuttondown_center.dds',
-    right = 'textures/menu_rightbuttondown_right.dds',
-    bottomLeft = 'textures/menu_rightbuttondown_bottom_left.dds',
-    bottom = 'textures/menu_rightbuttondown_bottom.dds',
-    bottomRight = 'textures/menu_rightbuttondown_bottom_right.dds',
-  },
-}
 
 ---@class H3.PinButtonOptions
 ---@field pinned? boolean
@@ -73,22 +52,27 @@ local textures = {
 ---@field events? table
 ---@field userData? any
 
-local function image(name, resource, position, size)
+local function image(name, resource, position, size, color)
+  local props = {
+    resource = resource,
+    ignorePointerEvents = true,
+    position = position,
+    size = size,
+  }
+  if color then props.color = color end
   return {
     name = name,
     type = ui.TYPE.Image,
-    props = {
-      resource = resource,
-      ignorePointerEvents = true,
-      position = position,
-      size = size,
-    },
+    props = props,
   }
 end
 
-local function setSkin(layout, skin)
+local function setSkin(layout, skin, color)
   for name, resource in next, skin do
-    layout.content[name].props.resource = resource
+    if name ~= 'tintable' and name ~= 'thickness' then
+      layout.content[name].props.resource = resource
+      layout.content[name].props.color = skin.tintable and color or nil
+    end
   end
 end
 
@@ -99,6 +83,15 @@ local function pinButton(options)
 
   local pinned = options.pinned == true
   local onToggle = options.onToggle
+  local upSkin = appearance.chrome 'pin.up'
+  local downSkin = appearance.chrome 'pin.down'
+  local textures = {
+    up = textureSet(upSkin),
+    down = textureSet(downSkin),
+  }
+  local skin = pinned and downSkin or upSkin
+  local resources = pinned and textures.down or textures.up
+  local tint = skin.tintable and appearance.token 'color.chromeBorder' or nil
   local props = {}
 
   if options.props then
@@ -124,14 +117,12 @@ local function pinButton(options)
   local previousClick = events.mouseClick
   events.mouseClick = async:callback(function(event, layout)
     pinned = not pinned
-    setSkin(layout, pinned and textures.down or textures.up)
+    setSkin(layout, pinned and textures.down or textures.up, tint)
 
     if onToggle then onToggle(pinned) end
 
     if previousClick then return previousClick(event, layout) end
   end)
-
-  local skin = pinned and textures.down or textures.up
 
   return {
     type = ui.TYPE.Widget,
@@ -141,15 +132,15 @@ local function pinButton(options)
     events = events,
     userData = options.userData,
     content = ui.content {
-      image('center', skin.center, centerPosition, centerSize),
-      image('topLeft', skin.topLeft, topLeftPosition, cornerSize),
-      image('top', skin.top, topPosition, horizontalSize),
-      image('topRight', skin.topRight, topRightPosition, cornerSize),
-      image('left', skin.left, leftPosition, verticalSize),
-      image('right', skin.right, rightPosition, verticalSize),
-      image('bottomLeft', skin.bottomLeft, bottomLeftPosition, cornerSize),
-      image('bottom', skin.bottom, bottomPosition, horizontalSize),
-      image('bottomRight', skin.bottomRight, bottomRightPosition, cornerSize),
+      image('center', resources.center, centerPosition, centerSize, tint),
+      image('topLeft', resources.topLeft, topLeftPosition, cornerSize, tint),
+      image('top', resources.top, topPosition, horizontalSize, tint),
+      image('topRight', resources.topRight, topRightPosition, cornerSize, tint),
+      image('left', resources.left, leftPosition, verticalSize, tint),
+      image('right', resources.right, rightPosition, verticalSize, tint),
+      image('bottomLeft', resources.bottomLeft, bottomLeftPosition, cornerSize, tint),
+      image('bottom', resources.bottom, bottomPosition, horizontalSize, tint),
+      image('bottomRight', resources.bottomRight, bottomRightPosition, cornerSize, tint),
     },
   }
 end

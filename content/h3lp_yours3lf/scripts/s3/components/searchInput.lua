@@ -4,15 +4,19 @@ local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
-local auxUi = require 'openmw_aux.ui'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
-local constants = require 'scripts.omw.mwui.constants'
-
+local appearance = require 'scripts.s3.ui.appearance'
 local button = require 'scripts.s3.components.button'
+local chrome = require 'scripts.s3.ui.chrome'
+local constants = require 'scripts.omw.mwui.constants'
 local row = require 'scripts.s3.components.row'
 local textInput = require 'scripts.s3.components.textInput'
+
+local UtilVector2 = util.vector2
+local inputPadding = 2 * constants.border * 2
+local defaultInputWidth = 150
 
 ---@class H3.SearchInputOptions
 ---@field value? string
@@ -30,28 +34,6 @@ local textInput = require 'scripts.s3.components.textInput'
 ---@field userData? any
 ---@field template? openmw.ui.Template
 
-local function borderedTemplate(template)
-  local result = auxUi.deepLayoutCopy(template)
-  local content = result.content or ui.content {}
-
-  content:add {
-    template = I.MWUI.templates.horizontalLine,
-  }
-  content:add {
-    template = I.MWUI.templates.horizontalLine,
-    props = {
-      position = util.vector2(0, -constants.border),
-      relativePosition = util.vector2(0, 1),
-    },
-  }
-  content:add {
-    template = I.MWUI.templates.verticalLine,
-  }
-
-  result.content = content
-  return result
-end
-
 ---@param options? H3.SearchInputOptions
 ---@return openmw.ui.Layout
 local function searchInput(options)
@@ -60,6 +42,7 @@ local function searchInput(options)
   local initialValue = options.value or ''
   local onChange = options.onChange
   local inputLayout
+  local input
   local inputProps = {}
   local inputEvents = {}
 
@@ -67,6 +50,16 @@ local function searchInput(options)
     for key, value in next, options.inputProps do
       inputProps[key] = value
     end
+  end
+
+  if options.bordered ~= false then
+    local minimumInputHeight = (appearance.token 'textSize.normal' or constants.textNormalSize)
+      + 2 * constants.border
+    local inputSize = inputProps.size
+    local inputWidth = inputSize and inputSize.x or defaultInputWidth
+    local inputHeight = inputSize and inputSize.y or minimumInputHeight + inputPadding
+    inputProps.size =
+      UtilVector2(inputWidth, math.max(minimumInputHeight, inputHeight - inputPadding))
   end
 
   if inputProps.textAlignV == nil then inputProps.textAlignV = ui.ALIGNMENT.Center end
@@ -86,18 +79,36 @@ local function searchInput(options)
     return true
   end)
 
-  local children = {
-    textInput {
-      name = 'input',
-      text = initialValue,
-      props = inputProps,
-      external = options.inputExternal,
-      events = inputEvents,
-      userData = options.userData,
-      template = options.bordered == false and options.template
-        or borderedTemplate(options.template or I.MWUI.templates.textEditLine),
-    },
+  input = textInput {
+    name = 'input',
+    text = initialValue,
+    props = inputProps,
+    external = options.inputExternal,
+    events = inputEvents,
+    userData = options.userData,
+    template = options.template,
   }
+
+  local inputContent = input
+  if options.bordered ~= false then
+    local paddedInput = {
+      template = I.MWUI.templates.padding,
+      props = { ignorePointerEvents = false },
+      content = ui.content { input },
+    }
+    local spacedInput = {
+      template = I.MWUI.templates.padding,
+      props = { ignorePointerEvents = false },
+      content = ui.content { paddedInput },
+    }
+    inputContent = chrome.box {
+      skin = appearance.chrome 'frame.thin',
+      tint = appearance.token 'color.chromeBorder',
+      content = { spacedInput },
+    }
+  end
+
+  local children = { inputContent }
 
   if options.clearable ~= false then
     children[#children + 1] = button {
@@ -123,7 +134,7 @@ local function searchInput(options)
     children = children,
   }
 
-  inputLayout = children[1]
+  inputLayout = input
   return layout
 end
 

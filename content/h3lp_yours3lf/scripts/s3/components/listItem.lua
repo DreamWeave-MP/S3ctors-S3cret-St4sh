@@ -3,6 +3,7 @@
 local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
+local appearance = require 'scripts.s3.ui.appearance'
 local ui = require 'openmw.ui'
 
 ---Build a list item row layout.
@@ -13,7 +14,10 @@ local ui = require 'openmw.ui'
 local function listItem(options)
   options = options or emptyOptions
 
-  local labelProps = {}
+  local labelProps = {
+    textColor = appearance.token 'color.text',
+    textSize = appearance.token 'textSize.normal',
+  }
   if options.labelProps then
     for key, value in next, options.labelProps do
       labelProps[key] = value

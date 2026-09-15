@@ -59,6 +59,7 @@ return {
       negative = rgb(172, 57, 57),
       count = normal,
       accent = normal,
+      chromeBorder = normal,
     },
     textSize = {
       normal = 16,
@@ -74,5 +75,8 @@ return {
     texture = {
       white = ui.texture { path = 'white' },
     },
+  },
+  chrome = {
+    preferredSource = 'theme',
   },
 }

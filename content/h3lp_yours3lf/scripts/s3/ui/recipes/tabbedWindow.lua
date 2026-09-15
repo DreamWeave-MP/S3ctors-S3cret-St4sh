@@ -13,6 +13,7 @@ local windowKeys = {
   'closable',
   'pinnable',
   'pinned',
+  'innerBorder',
   'onMove',
   'onResize',
   'onClose',

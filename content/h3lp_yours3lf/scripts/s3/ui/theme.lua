@@ -65,6 +65,11 @@ local function new(spec, registry, inheritedParent)
   end
 
   local resolvedTokens = token.resolveTree(rawTokens)
+  local rawChrome = parent and merge.copy(parent._rawChrome) or {}
+  if spec.chrome ~= nil then
+    assert(merge.isPlainTable(spec.chrome), 'H3 UI theme chrome must be a plain table')
+    merge.mergeInto(rawChrome, spec.chrome)
+  end
   local rules = {}
   local index = {
     generic = {},
@@ -125,6 +130,7 @@ local function new(spec, registry, inheritedParent)
     name = spec.name or sourceName,
     parent = parent,
     _rawTokens = rawTokens,
+    _rawChrome = rawChrome,
     _rawRules = rawRules,
     _tokens = resolvedTokens,
     _rules = rules,
@@ -133,6 +139,8 @@ local function new(spec, registry, inheritedParent)
 
   function theme.token(path) return token.lookup(resolvedTokens, path) end
   function theme.resolve(value) return token.resolveValue(value, resolvedTokens) end
+  function theme.chrome() return rawChrome end
+  function theme.hasChrome() return next(rawChrome) ~= nil end
 
   return theme
 end

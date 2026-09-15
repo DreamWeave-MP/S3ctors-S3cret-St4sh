@@ -4,9 +4,9 @@ local I = require 'openmw.interfaces'
 local async = require 'openmw.async'
 local util = require 'openmw.util'
 
+local appearance = require 'scripts.s3.ui.appearance'
 local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
 local numberInput = require 'scripts.s3.components.numberInput'
 local row = require 'scripts.s3.components.row'
 local searchInput = require 'scripts.s3.components.searchInput'
@@ -23,10 +23,12 @@ local sliderSize = UtilVector2(260, 18)
 local numberSize = UtilVector2(90, 24)
 local modes = { 'Compact', 'Balanced', 'Verbose' }
 local pages = { 'General', 'Filtering', 'Advanced' }
-local headerTextProps = {
-  textColor = constants.headerColor,
-  textSize = constants.textHeaderSize,
-}
+local function headerTextProps()
+  return {
+    textColor = appearance.token 'color.header',
+    textSize = appearance.token 'textSize.header',
+  }
+end
 
 local function pass() return true end
 
@@ -42,7 +44,7 @@ local function applicationForm()
   return column {
     name = 'ct_demo_application_form',
     children = {
-      text { text = 'Application-style settings form', props = headerTextProps },
+      text { text = 'Application-style settings form', props = headerTextProps() },
       tabs {
         items = pages,
         onSelect = function(_, item) setSummary('page: ' .. item) end,
