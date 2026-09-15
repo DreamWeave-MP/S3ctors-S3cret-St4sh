@@ -12,7 +12,11 @@ end
 return {
   bookFrame = {
     builder = require 'scripts.s3.components.bookFrame',
-    slots = { root = root(), title = { props = 'titleProps' } },
+    slots = {
+      root = root(),
+      title = { props = 'titleProps' },
+      background = { props = 'backgroundProps' },
+    },
   },
   box = {
     builder = require 'scripts.s3.components.box',

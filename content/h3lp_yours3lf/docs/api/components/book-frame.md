@@ -37,6 +37,7 @@ ui.create {
 | --- | --- | --- |
 | `title` | string? | Optional heading text. |
 | `titleProps` | table? | Properties for the generated heading. |
+| `backgroundProps` | table? | Properties for the generated background; H3UI themes use this slot for the configured background color and transparency. |
 | `template` | openmw.ui.Template? | Replaces the default solid frame template. |
 | `content` | table? | Child content; takes precedence over `children`. |
 | `children` | table? | Child layouts used when `content` is absent. |
