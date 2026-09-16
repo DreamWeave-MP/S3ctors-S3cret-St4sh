@@ -12,7 +12,7 @@ local chrome = require 'scripts.s3.ui.chrome'
 
 local UtilVector2 = util.vector2
 
-local pinSize = UtilVector2(19, 19)
+local pinSize = UtilVector2(20, 20)
 ---@class H3.PinButtonOptions
 ---@field pinned? boolean
 ---@field onToggle? fun(pinned: boolean)
@@ -47,7 +47,7 @@ local function pinButton(options)
   end
 
   if props.size then
-    assert(props.size.x == pinSize.x and props.size.y == pinSize.y, 'PinButton size must be 19x19')
+    assert(props.size.x == pinSize.x and props.size.y == pinSize.y, 'PinButton size must be 20x20')
   end
 
   props.size = props.size or pinSize
