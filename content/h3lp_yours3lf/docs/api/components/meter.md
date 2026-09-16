@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-Builds a bordered Widget with fill and empty Image children. `value / max` is clamped to `0..1`; `max <= 0` produces an empty meter.
+Builds a bordered Widget with fill and empty Image children. `value / max` is clamped to `0..1`; `max <= 0` produces an empty meter. An unsized meter uses a 150x18 default size.
 
 ## Example
 

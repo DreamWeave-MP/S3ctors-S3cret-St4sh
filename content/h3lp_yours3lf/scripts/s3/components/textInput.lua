@@ -2,11 +2,14 @@
 
 local emptyOptions = {}
 
-local I = require 'openmw.interfaces'
 local appearance = require 'scripts.s3.ui.appearance'
 local ui = require 'openmw.ui'
+local util = require 'openmw.util'
 
----Build a TextEdit layout using `I.MWUI.templates.textEditLine` by default.
+local UtilVector2 = util.vector2
+local defaultSize = UtilVector2(150, 0)
+
+---Build an H3UI-owned single-line TextEdit layout by default.
 ---Allocates fresh layout, props, and external tables. Event callbacks, if supplied, are passed
 ---through unchanged; callers must wrap OpenMW UI callbacks with `async:callback`.
 ---@param options? {text?: string, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
@@ -17,6 +20,12 @@ local function textInput(options)
   local props = {}
   props.textColor = appearance.token 'color.text'
   props.textSize = appearance.token 'textSize.normal'
+  if options.template == nil then
+    props.size = defaultSize
+    props.autoSize = true
+    props.multiline = false
+    props.textAlignV = ui.ALIGNMENT.Center
+  end
   if options.props then
     for key, value in next, options.props do
       props[key] = value
@@ -40,7 +49,7 @@ local function textInput(options)
     external = external,
     events = options.events,
     userData = options.userData,
-    template = options.template or I.MWUI.templates.textEditLine,
+    template = options.template,
   }
 end
 

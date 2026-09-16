@@ -124,6 +124,7 @@ local morrowind = themeModule.new({
       text = 'caa560',
       active = '6070ca',
       accent = 'caa560',
+      chromeBorder = '967c43',
       header = 'dfc99f',
       misc = '00cdcd',
       bigAnswerPressed = 'f3ed16',
@@ -183,24 +184,19 @@ appearance.selectTheme 'morrowind'
 flushTimers()
 local morrowindMeter = meter { value = 1, max = 1 }
 assert(morrowindMeter.content[1].content[1].props.color:asHex() == 'caa560')
+assert(morrowindMeter.content[2].props.color:asHex() == '967c43')
 appearance.selectTheme 'starwind'
 flushTimers()
 local box = require 'scripts.s3.components.box'
 local button = require 'scripts.s3.components.button'
 local directBox = box { content = {} }
-assert(
-  directBox.template.content[1].props.resource.path
-    == 'textures/h3ui/menu_thin_border_top_left_corner.dds'
-)
+assert(directBox.template.content[1].props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
 local directButton = button { label = 'Configured button' }
 assert(
   directButton.content[1].content[1].content[1].content[1].props.textColor
     == appearance.token 'color.text'
 )
-assert(
-  directButton.template.content[1].props.resource.path
-    == 'textures/h3ui/menu_button_frame_top_left_corner.dds'
-)
+assert(directButton.template.content[1].props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
 assert(button({ label = 'Another button' }).template == directButton.template)
 
 assert(requestedSections.SettingsPlayerH3UI)
@@ -213,6 +209,8 @@ assert(appearance.activeTheme().token('color.active'):asHex() == '22affb')
 assert(appearance.activeTheme().token('color.misc'):asHex() == '22affb')
 assert(values.menuTransparency == 0.84)
 assert(appearance.activeTheme().token 'transparency.menu' == 0.84)
+assert(values.chromeTransparency == 1.0)
+assert(appearance.activeTheme().token 'transparency.chrome' == 1.0)
 assert(values.textSizeNormal == 16)
 assert(values.textSizeHeader == 18)
 assert(appearance.activeTheme().token 'textSize.normal' == 16)
@@ -260,6 +258,9 @@ assert(values.header == 'dfc99f')
 values.menuTransparency = 1.5
 subscriber(nil, 'menuTransparency')
 assert(appearance.activeTheme().token 'transparency.menu' == 1)
+values.chromeTransparency = 0.25
+subscriber(nil, 'chromeTransparency')
+assert(appearance.activeTheme().token 'transparency.chrome' == 0.25)
 values.textSizeNormal = 24
 subscriber(nil, 'textSizeNormal')
 assert(appearance.activeTheme().token 'textSize.normal' == 24)
@@ -268,6 +269,7 @@ appearance.reset()
 assert(values.theme == 'morrowind')
 assert(values.text == 'caa560')
 assert(values.menuTransparency == 0.84)
+assert(values.chromeTransparency == 1.0)
 assert(values.textSizeNormal == 16)
 assert(values.textSizeHeader == 18)
 assert(values.chromeSource == 'auto')

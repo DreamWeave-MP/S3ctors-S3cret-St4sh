@@ -83,6 +83,36 @@ local button = H3UI.build {
 
 The component name is the H3 builder name (`button`, `row`, `itemSlot`, `searchInput`, and so on). `args` are ordinary options for that component. Behavioral values stay in `args`; visual overrides belong in `style` or the theme.
 
+## Build a nine-slice frame
+
+`nineSlice` builds a resizable frame from one atlas region. `source` describes
+the complete source region and its border thickness; the returned layout still
+contains ordinary OpenMW `Image` children and can contain caller-owned content.
+Set `inset` to place content inside a fixed inset from the frame edges.
+
+```lua
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local frame = H3UI.nineSlice {
+    source = {
+        path = 'textures/h3ui/h3ui_chrome.dds',
+        offset = util.vector2(0, 0),
+        size = util.vector2(516, 516),
+        thickness = 2,
+    },
+    props = {
+        size = util.vector2(320, 160),
+    },
+    inset = 2,
+    content = ui.content {},
+}
+```
+
+The source region itself does not need to match the atlas dimensions: atlas
+offsets and sizes describe its original pixel rectangle. H3UI caches the nine
+`TextureResource` subresources by atlas region.
+
 ## Appearance and registered themes
 
 H3UI uses the appearance selected in the player's settings. Scripts describe UI structure and meaning; they do not select the active palette.
@@ -119,11 +149,11 @@ H3UI.registerTheme {
 
 Registration adds a preset to `Settings → H3UI → Appearance`. It does not select the preset and there is no public theme-selection function or compiled-theme table.
 
-The built-in presets are `Morrowind`, `Starwind`, and `Custom`. Selecting a preset copies its palette into the player settings. Editing a color changes the selection to `Custom`; resetting restores the canonical Morrowind palette. The default is Morrowind, unless an optional `scripts.s3.ui.defaultTheme` hint or the built-in Starwind content-file detection supplies another default.
+The built-in presets are `Morrowind`, `Starwind`, and `Custom`. Selecting a preset copies its palette into the player settings. Editing a color changes the selection to `Custom`; resetting restores the canonical Morrowind palette. The default is Morrowind, unless built-in Starwind content-file detection supplies another default.
 
-The settings group uses the player section `SettingsPlayerH3UI`; its saved Custom palette lives separately in `SettingsPlayerH3UICustom`. The visible `theme` value is a registered theme ID or `custom`, and its color values are six-digit hexadecimal strings. Custom starts with the canonical Morrowind palette, keeps edits while presets are cycled, and is not reset when the visible settings group is reset. `menuTransparency` controls H3UI window backgrounds from transparent (`0.0`) to opaque (`1.0`) and defaults to `0.84`, matching OpenMW's default GUI setting. `textSizeNormal` defaults to `16`, matching OpenMW's default `font size`; `textSizeHeader` defaults to H3's `18`-pixel header size. Both can be configured independently in the H3UI settings page. The `enableDebugHotkeys` setting is disabled by default; enabling it allows F7 to cycle component demos and Shift+F7 to reload Lua. Writing the visible values is the supported integration point for a total conversion or curated setup that wants to configure the player's shared H3UI appearance.
+The settings group uses the player section `SettingsPlayerH3UI`; its saved Custom palette lives separately in `SettingsPlayerH3UICustom`. The visible `theme` value is a registered theme ID or `custom`, and its color values are six-digit hexadecimal strings. Custom starts with the canonical Morrowind palette, keeps edits while presets are cycled, and is not reset when the visible settings group is reset. `chromeBorder` is the user-facing color for tintable H3UI chrome, while built-in themes provide their matching default through the same palette token. `menuTransparency` controls H3UI window backgrounds from transparent (`0.0`) to opaque (`1.0`) and defaults to `0.84`, matching OpenMW's default GUI setting. `chromeTransparency` independently controls the opacity of borders and frames and defaults to `1.0`. `textSizeNormal` defaults to `16`, matching OpenMW's default `font size`; `textSizeHeader` defaults to H3's `18`-pixel header size. Both can be configured independently in the H3UI settings page. The `enableDebugHotkeys` setting is disabled by default; enabling it allows F7 to cycle component demos and Shift+F7 to reload Lua. Writing the visible values is the supported integration point for a total conversion or curated setup that wants to configure the player's shared H3UI appearance.
 
-H3UI frame components use a chrome source independent of the palette. `Theme default` honors the active theme's recommendation, `Theme textures` forces its declared texture paths, and `H3UI customizable` uses H3's namespaced grayscale textures and the configurable `Border color`. A theme may declare arbitrary VFS paths under `chrome`; its frame resources are not tied to OpenMW template names. Themes may omit chrome and H3UI then falls back to its built-in resources.
+H3UI frame components use a chrome source independent of the palette. `Theme default` honors the active theme's recommendation, `Theme textures` forces its declared texture paths, and `H3UI customizable` uses H3's namespaced grayscale textures and the configurable `Chrome border color`. A theme may declare arbitrary VFS paths under `chrome`; its frame resources are not tied to OpenMW template names. Themes may omit chrome and H3UI then falls back to its built-in resources.
 
 The internal theme compiler still supports selectors, rules, and token references. A registered theme may provide additional rules and tokens, but its palette is resolved through the player's configured color settings.
 

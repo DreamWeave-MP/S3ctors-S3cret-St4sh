@@ -114,6 +114,7 @@ local function iconButton(options)
     events = result.events,
     userData = result.userData,
     tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
     content = result.content,
   }
 end

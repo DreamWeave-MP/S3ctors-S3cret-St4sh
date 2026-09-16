@@ -2,7 +2,6 @@
 
 local emptyOptions = {}
 
-local I = require 'openmw.interfaces'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -15,6 +14,7 @@ local UtilVector2 = util.vector2
 local whiteTexture = ui.texture { path = 'white' }
 local fillColor = util.color.rgb(0.65, 0.52, 0.25)
 local emptyColor = util.color.rgba(0, 0, 0, 0.35)
+local defaultSize = UtilVector2(150, 18)
 local fullSize = UtilVector2(1, 1)
 
 ---Build a simple horizontal meter layout.
@@ -57,6 +57,7 @@ local function meter(options)
       props[key] = propValue
     end
   end
+  props.size = props.size or defaultSize
   if props.ignorePointerEvents == nil then props.ignorePointerEvents = options.events == nil end
 
   local external
@@ -96,13 +97,6 @@ local function meter(options)
     return result
   end
 
-  if not result.props.size then
-    result.type = ui.TYPE.Widget
-    result.template = I.MWUI.templates.borders
-    result.content = ui.content(result.content)
-    return result
-  end
-
   return chrome.frame {
     skin = appearance.chrome 'frame.thin',
     name = result.name,
@@ -111,6 +105,7 @@ local function meter(options)
     events = result.events,
     userData = result.userData,
     tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
     content = result.content,
   }
 end

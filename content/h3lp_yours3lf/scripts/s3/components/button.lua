@@ -108,6 +108,7 @@ local function button(options)
     events = result.events,
     userData = result.userData,
     tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
     content = children,
   }
 end

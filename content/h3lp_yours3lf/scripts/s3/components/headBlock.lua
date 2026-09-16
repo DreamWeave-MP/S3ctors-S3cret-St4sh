@@ -43,6 +43,7 @@ local function headBlock(options)
     events = options.events,
     userData = options.userData,
     tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
   }
 end
 

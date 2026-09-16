@@ -3,6 +3,7 @@
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
 local function rgb(red, green, blue) return util.color.rgb(red / 255, green / 255, blue / 255) end
 
 local normal = rgb(34, 175, 251)
@@ -78,5 +79,12 @@ return {
   },
   chrome = {
     preferredSource = 'theme',
+    frame = chromeAssets.starwind.frame,
+    caption = chromeAssets.starwind.frame.caption,
+    pin = {
+      up = chromeAssets.starwind.frame.pinUp,
+      down = chromeAssets.starwind.frame.pinDown,
+    },
+    scroll = chromeAssets.starwind.scroll,
   },
 }

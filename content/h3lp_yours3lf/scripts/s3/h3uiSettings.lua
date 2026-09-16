@@ -51,6 +51,14 @@ local settingsList = {
     default = appearance.defaultMenuTransparency,
   },
   {
+    key = 'chromeTransparency',
+    renderer = 'number',
+    argument = { min = 0.0, max = 1.0, integer = false },
+    name = 'H3UIChromeTransparencyName',
+    description = 'H3UIChromeTransparencyDescription',
+    default = appearance.defaultChromeTransparency,
+  },
+  {
     key = 'textSizeNormal',
     renderer = 'number',
     argument = { min = 1, max = 100, integer = true },

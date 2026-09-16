@@ -57,6 +57,7 @@ local function box(options)
     events = layout.events,
     userData = layout.userData,
     tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
     content = children,
   }
 end
