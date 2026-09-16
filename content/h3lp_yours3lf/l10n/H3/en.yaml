@@ -17,6 +17,8 @@ H3UIChromeSourceTheme: Theme textures
 H3UIChromeSourceH3UI: H3UI customizable
 H3UIMenuTransparencyName: Menu transparency
 H3UIMenuTransparencyDescription: Set the opacity of H3UI backgrounds.
+H3UIChromeTransparencyName: Chrome transparency
+H3UIChromeTransparencyDescription: Set the opacity of H3UI borders and frames.
 H3UITextSizeNormalName: Normal text size
 H3UITextSizeNormalDescription: Set the size of ordinary H3UI text.
 H3UITextSizeHeaderName: Header text size
@@ -78,4 +80,4 @@ H3UIColor_negative_Name: Negative
 
 H3UIColor_count_Name: Item count
 H3UIColor_accent_Name: Accent
-H3UIColor_chromeBorder_Name: Border color
+H3UIColor_chromeBorder_Name: Chrome border color

@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-Builds a `ui.TYPE.TextEdit`, using OpenMW's `I.MWUI.templates.textEditLine` by default.
+Builds a plain `ui.TYPE.TextEdit` with H3UI text appearance and a 150-pixel default width. Supplying `template` opts into a caller-owned OpenMW template without disabling H3UI text color or size defaults.
 
 ## Example
 

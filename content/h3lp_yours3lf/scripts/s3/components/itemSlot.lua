@@ -85,6 +85,7 @@ local function itemSlot(options)
     events = layout.events,
     userData = layout.userData,
     tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
     content = content,
   }
 end

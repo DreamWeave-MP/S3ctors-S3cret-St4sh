@@ -12,11 +12,13 @@ local sectionName = 'SettingsPlayerH3UI'
 local customSectionName = 'SettingsPlayerH3UICustom'
 local customThemeId = 'custom'
 local menuTransparencyKey = 'menuTransparency'
+local chromeTransparencyKey = 'chromeTransparency'
 local normalTextSizeKey = 'textSizeNormal'
 local headerTextSizeKey = 'textSizeHeader'
 local chromeSourceKey = 'chromeSource'
 local defaultChromeSource = 'auto'
 local defaultMenuTransparency = 0.84
+local defaultChromeTransparency = 1.0
 local defaultNormalTextSize = 16
 local defaultHeaderTextSize = 18
 
@@ -173,6 +175,10 @@ local function menuTransparency()
   return normalizeTransparency(settingValue(menuTransparencyKey)) or defaultMenuTransparency
 end
 
+local function chromeTransparency()
+  return normalizeTransparency(settingValue(chromeTransparencyKey)) or defaultChromeTransparency
+end
+
 local function chromeSource()
   return normalizeChromeSource(settingValue(chromeSourceKey)) or defaultChromeSource
 end
@@ -239,6 +245,11 @@ local function initializeSettings()
     or defaultMenuTransparency
   if storedTransparency ~= raw[menuTransparencyKey] then
     state.section:set(menuTransparencyKey, storedTransparency)
+  end
+  local storedChromeTransparency = normalizeTransparency(raw[chromeTransparencyKey])
+    or defaultChromeTransparency
+  if storedChromeTransparency ~= raw[chromeTransparencyKey] then
+    state.section:set(chromeTransparencyKey, storedChromeTransparency)
   end
   local storedNormalTextSize = normalizeTextSize(raw[normalTextSizeKey]) or defaultNormalTextSize
   if storedNormalTextSize ~= raw[normalTextSizeKey] then
@@ -330,6 +341,7 @@ local function activeTheme()
       and configuredPalette(entry, state.customSection)
     or configuredPalette(entry)
   local transparency = menuTransparency()
+  local chromeAlpha = chromeTransparency()
   local normalTextSize = textSize(normalTextSizeKey, defaultNormalTextSize)
   local headerTextSize = textSize(headerTextSizeKey, defaultHeaderTextSize)
   local chrome = selectedChrome(entry)
@@ -337,7 +349,7 @@ local function activeTheme()
   local tokens = {
     color = {},
     textSize = { normal = normalTextSize, header = headerTextSize },
-    transparency = { menu = transparency },
+    transparency = { menu = transparency, chrome = chromeAlpha },
   }
   for index = 1, #colorKeys do
     local key = colorKeys[index]
@@ -491,6 +503,7 @@ local function reset()
   local result = writePreset 'morrowind'
   if result then
     state.section:set(menuTransparencyKey, defaultMenuTransparency)
+    state.section:set(chromeTransparencyKey, defaultChromeTransparency)
     state.section:set(normalTextSizeKey, defaultNormalTextSize)
     state.section:set(headerTextSizeKey, defaultHeaderTextSize)
     state.section:set(chromeSourceKey, defaultChromeSource)
@@ -513,6 +526,7 @@ return {
   colorKeys = colorKeys,
   customThemeId = customThemeId,
   defaultMenuTransparency = defaultMenuTransparency,
+  defaultChromeTransparency = defaultChromeTransparency,
   defaultNormalTextSize = defaultNormalTextSize,
   defaultHeaderTextSize = defaultHeaderTextSize,
   defaultChromeSource = defaultChromeSource,
@@ -525,6 +539,7 @@ return {
   themeEntries = themeEntries,
   currentThemeId = currentThemeId,
   chromeSource = chromeSource,
+  chromeTransparency = chromeTransparency,
   normalizeChromeSource = normalizeChromeSource,
   morrowindPalette = morrowindPalette,
   selectTheme = selectTheme,

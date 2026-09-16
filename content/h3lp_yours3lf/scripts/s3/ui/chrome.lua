@@ -3,9 +3,10 @@
 
 local ui
 local textureCache = {}
-local templateCache = {}
+local templateCache = setmetatable({}, { __mode = 'k' })
 local copy
 local UtilVector2 = require('openmw.util').vector2
+local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
 local zero = UtilVector2(0, 0)
 local rightTop = UtilVector2(1, 0)
 local leftBottom = UtilVector2(0, 1)
@@ -13,47 +14,40 @@ local rightBottom = UtilVector2(1, 1)
 local fullSize = UtilVector2(1, 1)
 local relativeWidth = UtilVector2(1, 0)
 local relativeHeight = UtilVector2(0, 1)
+local framePartNames = {
+  'center',
+  'topLeft',
+  'top',
+  'topRight',
+  'left',
+  'right',
+  'bottomLeft',
+  'bottom',
+  'bottomRight',
+}
 
 local function uiModule()
   ui = ui or require 'openmw.ui'
   return ui
 end
 
-local function frame(prefix, thickness, center, cornerSuffix)
-  cornerSuffix = cornerSuffix == nil and '_corner' or cornerSuffix
-  local result = {
-    thickness = thickness,
-    topLeft = 'textures/h3ui/' .. prefix .. '_top_left' .. cornerSuffix .. '.dds',
-    top = 'textures/h3ui/' .. prefix .. '_top.dds',
-    topRight = 'textures/h3ui/' .. prefix .. '_top_right' .. cornerSuffix .. '.dds',
-    left = 'textures/h3ui/' .. prefix .. '_left.dds',
-    right = 'textures/h3ui/' .. prefix .. '_right.dds',
-    bottomLeft = 'textures/h3ui/' .. prefix .. '_bottom_left' .. cornerSuffix .. '.dds',
-    bottom = 'textures/h3ui/' .. prefix .. '_bottom.dds',
-    bottomRight = 'textures/h3ui/' .. prefix .. '_bottom_right' .. cornerSuffix .. '.dds',
-    tintable = true,
-  }
-  if center then result.center = 'textures/h3ui/' .. prefix .. '_' .. center .. '.dds' end
-  return result
-end
-
 local builtin = {
   preferredSource = 'h3ui',
   frame = {
-    thin = frame('menu_thin_border', 2),
-    thick = frame('menu_thick_border', 4),
-    button = frame('menu_button_frame', 4),
+    thin = chromeAssets.h3ui.frame.thin,
+    thick = chromeAssets.h3ui.frame.thick,
+    button = chromeAssets.h3ui.frame.button,
   },
-  caption = frame('menu_head_block', 2, 'middle'),
+  caption = chromeAssets.h3ui.frame.caption,
   pin = {
-    up = frame('menu_rightbuttonup', 2, 'center', ''),
-    down = frame('menu_rightbuttondown', 2, 'center', ''),
+    up = chromeAssets.h3ui.frame.pinUp,
+    down = chromeAssets.h3ui.frame.pinDown,
   },
   scroll = {
-    up = 'textures/h3ui/omw_menu_scroll_up.dds',
-    down = 'textures/h3ui/omw_menu_scroll_down.dds',
-    left = 'textures/h3ui/omw_menu_scroll_left.dds',
-    right = 'textures/h3ui/omw_menu_scroll_right.dds',
+    up = chromeAssets.h3ui.scroll.up,
+    down = chromeAssets.h3ui.scroll.down,
+    left = chromeAssets.h3ui.scroll.left,
+    right = chromeAssets.h3ui.scroll.right,
   },
 }
 
@@ -71,6 +65,23 @@ copy = function(value, seen)
 end
 
 local function texture(value)
+  if type(value) == 'table' and value.path and value.offset and value.size then
+    local offset = value.offset
+    local size = value.size
+    local key = table.concat({
+      value.path,
+      tostring(offset.x),
+      tostring(offset.y),
+      tostring(size.x),
+      tostring(size.y),
+    }, ':')
+    local result = textureCache[key]
+    if not result then
+      result = uiModule().texture { path = value.path, offset = offset, size = size }
+      textureCache[key] = result
+    end
+    return result
+  end
   if type(value) == 'string' then
     local result = textureCache[value]
     if not result then
@@ -81,6 +92,79 @@ local function texture(value)
   end
   return value
 end
+
+local function sourceMargins(skin)
+  local border = skin.sourceBorder or skin.thickness
+  if type(border) == 'number' then return border, border, border, border end
+  assert(type(border) == 'table', 'H3 UI chrome source requires border margins')
+  return border.left, border.top, border.right, border.bottom
+end
+
+local function atlasPart(skin, name)
+  if skin.parts then
+    local part = skin.parts[name]
+    return part and texture(part) or nil
+  end
+
+  if not (skin.path and skin.offset and skin.size) then return nil end
+  if name == 'center' and not skin.center then return nil end
+
+  local left, top, right, bottom = sourceMargins(skin)
+  local width = skin.size.x
+  local height = skin.size.y
+  local centerWidth = width - left - right
+  local centerHeight = height - top - bottom
+  assert(centerWidth > 0 and centerHeight > 0, 'H3 UI chrome source region is too small')
+
+  local x = skin.offset.x
+  local y = skin.offset.y
+  local partX = x
+  local partY = y
+  local partWidth = left
+  local partHeight = top
+
+  if name == 'center' then
+    partX = x + left
+    partY = y + top
+    partWidth = centerWidth
+    partHeight = centerHeight
+  elseif name == 'top' then
+    partX = x + left
+    partWidth = centerWidth
+  elseif name == 'topRight' then
+    partX = x + width - right
+    partWidth = right
+  elseif name == 'left' then
+    partY = y + top
+    partHeight = centerHeight
+  elseif name == 'right' then
+    partX = x + width - right
+    partY = y + top
+    partWidth = right
+    partHeight = centerHeight
+  elseif name == 'bottomLeft' then
+    partY = y + height - bottom
+    partHeight = bottom
+  elseif name == 'bottom' then
+    partX = x + left
+    partY = y + height - bottom
+    partWidth = centerWidth
+    partHeight = bottom
+  elseif name == 'bottomRight' then
+    partX = x + width - right
+    partY = y + height - bottom
+    partWidth = right
+    partHeight = bottom
+  end
+
+  return texture {
+    path = skin.path,
+    offset = UtilVector2(partX, partY),
+    size = UtilVector2(partWidth, partHeight),
+  }
+end
+
+local function skinPart(skin, name) return atlasPart(skin, name) or texture(skin[name]) end
 
 local function material(resource, tint, alpha, tintable)
   local props = {
@@ -93,6 +177,7 @@ local function material(resource, tint, alpha, tintable)
 end
 
 local function image(
+  name,
   resource,
   anchor,
   position,
@@ -113,7 +198,7 @@ local function image(
   props.relativeSize = relativeSize
   props.tileH = tileH
   props.tileV = tileV
-  return { type = openmwUi.TYPE.Image, props = props }
+  return { name = name, type = openmwUi.TYPE.Image, props = props }
 end
 
 local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCenter)
@@ -128,8 +213,9 @@ local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCen
     content[#content + 1] = { type = openmwUi.TYPE.Image, props = background }
   end
 
-  if includeCenter ~= false and skin.center then
-    local center = material(skin.center, tint, alpha, skin.tintable)
+  local centerResource = skinPart(skin, 'center')
+  if includeCenter ~= false and centerResource then
+    local center = material(centerResource, tint, alpha, skin.tintable)
     center.anchor = zero
     center.relativePosition = zero
     center.position = zero
@@ -137,7 +223,11 @@ local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCen
     center.relativeSize = fullSize
     center.tileH = true
     center.tileV = true
-    content[#content + 1] = { type = openmwUi.TYPE.Image, props = center }
+    content[#content + 1] = {
+      name = 'h3ui_center',
+      type = openmwUi.TYPE.Image,
+      props = center,
+    }
   end
 
   return content
@@ -146,101 +236,102 @@ end
 local function frameChildren(skin, thickness, tint, alpha, backgroundProps, includeCenter)
   local content = backgroundChildren(skin, tint, alpha, backgroundProps, includeCenter)
 
-  content[#content + 1] = image(
-    skin.topLeft,
+  local function addFrameImage(name, resource, anchor, position, size, relativeSize, tileH, tileV)
+    local child = image(
+      'h3ui_' .. name,
+      resource,
+      anchor,
+      position,
+      size,
+      relativeSize,
+      tileH,
+      tileV,
+      tint,
+      alpha,
+      skin.tintable
+    )
+    content[#content + 1] = child
+  end
+
+  addFrameImage(
+    'topLeft',
+    skinPart(skin, 'topLeft'),
     zero,
     zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
-    nil,
-    tint,
-    alpha,
-    skin.tintable
+    nil
   )
-  content[#content + 1] = image(
-    skin.top,
+  addFrameImage(
+    'top',
+    skinPart(skin, 'top'),
     zero,
     UtilVector2(thickness, 0),
     UtilVector2(-2 * thickness, thickness),
     relativeWidth,
     true,
-    false,
-    tint,
-    alpha,
-    skin.tintable
+    false
   )
-  content[#content + 1] = image(
-    skin.topRight,
+  addFrameImage(
+    'topRight',
+    skinPart(skin, 'topRight'),
     rightTop,
     zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
-    nil,
-    tint,
-    alpha,
-    skin.tintable
+    nil
   )
-  content[#content + 1] = image(
-    skin.left,
+  addFrameImage(
+    'left',
+    skinPart(skin, 'left'),
     zero,
     UtilVector2(0, thickness),
     UtilVector2(thickness, -2 * thickness),
     relativeHeight,
     false,
-    true,
-    tint,
-    alpha,
-    skin.tintable
+    true
   )
-  content[#content + 1] = image(
-    skin.right,
+  addFrameImage(
+    'right',
+    skinPart(skin, 'right'),
     rightTop,
     UtilVector2(0, thickness),
     UtilVector2(thickness, -2 * thickness),
     relativeHeight,
     false,
-    true,
-    tint,
-    alpha,
-    skin.tintable
+    true
   )
-  content[#content + 1] = image(
-    skin.bottomLeft,
+  addFrameImage(
+    'bottomLeft',
+    skinPart(skin, 'bottomLeft'),
     leftBottom,
     zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
-    nil,
-    tint,
-    alpha,
-    skin.tintable
+    nil
   )
-  content[#content + 1] = image(
-    skin.bottom,
+  addFrameImage(
+    'bottom',
+    skinPart(skin, 'bottom'),
     leftBottom,
     UtilVector2(thickness, 0),
     UtilVector2(-2 * thickness, thickness),
     relativeWidth,
     true,
-    false,
-    tint,
-    alpha,
-    skin.tintable
+    false
   )
-  content[#content + 1] = image(
-    skin.bottomRight,
+  addFrameImage(
+    'bottomRight',
+    skinPart(skin, 'bottomRight'),
     rightBottom,
     zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
-    nil,
-    tint,
-    alpha,
-    skin.tintable
+    nil
   )
 
   return content
@@ -272,11 +363,23 @@ local function frameLayout(options)
   local thickness = skin.thickness
   assert(type(thickness) == 'number' and thickness > 0, 'H3 UI chrome frame requires thickness')
 
+  local contentProps = options.contentProps
+  if options.inset ~= nil then
+    assert(
+      type(options.inset) == 'number' and options.inset >= 0,
+      'H3 UI chrome inset must be non-negative'
+    )
+    contentProps = copy(options.contentProps or {})
+    contentProps.position = contentProps.position or UtilVector2(options.inset, options.inset)
+    contentProps.size = contentProps.size or UtilVector2(-2 * options.inset, -2 * options.inset)
+    contentProps.relativeSize = contentProps.relativeSize or fullSize
+  end
+
   local content = backgroundChildren(skin, options.tint, options.alpha, options.backgroundProps)
-  if options.contentProps then
+  if contentProps then
     content[#content + 1] = {
       type = openmwUi.TYPE.Widget,
-      props = copy(options.contentProps),
+      props = contentProps,
       content = openmwUi.content(options.content or {}),
     }
   else
@@ -301,9 +404,75 @@ local function frameLayout(options)
   }
 end
 
-local function cacheKey(value)
+local function framePart(layout, name) return layout.content['h3ui_' .. name] end
+
+local function applyCompatibleSkin(layout, skin, tint, alpha)
+  assert(type(skin) == 'table', 'H3 UI chrome skin requires a table')
+  assert(
+    type(skin.thickness) == 'number' and skin.thickness > 0,
+    'H3 UI chrome skin requires thickness'
+  )
+
+  local topLeft = framePart(layout, 'topLeft')
+  assert(topLeft, 'H3 UI chrome frame is missing topLeft')
+  assert(
+    topLeft.props.size.x == skin.thickness,
+    'H3 UI chrome skin thickness is incompatible with the existing frame'
+  )
+
+  for index = 1, #framePartNames do
+    local name = framePartNames[index]
+    local resource = skinPart(skin, name)
+    local child = framePart(layout, name)
+    assert(
+      (resource ~= nil) == (child ~= nil),
+      'H3 UI chrome skin topology is incompatible with the existing frame'
+    )
+    if resource then
+      child.props.resource = texture(resource)
+      child.props.color = skin.tintable and tint or nil
+      child.props.alpha = alpha
+    end
+  end
+end
+
+local function nineSliceLayout(options)
+  options = options or {}
+  local normalized = copy(options)
+  normalized.skin = options.source or options.skin
+  return frameLayout(normalized)
+end
+
+local function cacheKey(value, seen)
   if value == nil then return 'nil' end
-  return tostring(value)
+  local valueType = type(value)
+  if valueType ~= 'table' and valueType ~= 'userdata' then
+    return valueType .. ':' .. tostring(value)
+  end
+
+  if valueType == 'userdata' then
+    local ok, hex = pcall(function() return value:asHex() end)
+    if ok and type(hex) == 'string' then return 'color:' .. hex end
+    return valueType .. ':' .. tostring(value)
+  end
+
+  seen = seen or {}
+  if seen[value] then return '<cycle>' end
+  seen[value] = true
+
+  local keys = {}
+  for key in next, value do
+    keys[#keys + 1] = key
+  end
+  table.sort(keys, function(left, right) return tostring(left) < tostring(right) end)
+
+  local parts = {}
+  for index = 1, #keys do
+    local key = keys[index]
+    parts[#parts + 1] = cacheKey(key, seen) .. '=' .. cacheKey(value[key], seen)
+  end
+  seen[value] = nil
+  return '{' .. table.concat(parts, ';') .. '}'
 end
 
 local function boxTemplate(options)
@@ -364,6 +533,8 @@ return {
   builtin = builtinChrome,
   box = boxLayout,
   frame = frameLayout,
+  nineSlice = nineSliceLayout,
+  applyCompatibleSkin = applyCompatibleSkin,
   resolve = skinFrom,
   texture = texture,
 }

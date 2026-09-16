@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-Builds a transparent H3UI box with padding and a paragraph-text child by default. It is content, not a tooltip manager.
+Builds an H3UI nine-slice box with a two-pixel content inset and a paragraph-text child by default. It is content, not a tooltip manager.
 
 ## Example
 

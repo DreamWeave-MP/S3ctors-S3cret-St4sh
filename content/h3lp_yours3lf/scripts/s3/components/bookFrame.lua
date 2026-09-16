@@ -118,6 +118,7 @@ local function bookFrame(options)
     userData = options.userData,
     backgroundProps = backgroundProps,
     tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
     content = {
       {
         type = ui.TYPE.Flex,

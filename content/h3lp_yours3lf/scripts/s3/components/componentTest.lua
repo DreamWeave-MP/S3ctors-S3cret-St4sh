@@ -39,6 +39,7 @@ local tooltip = require 'scripts.s3.components.tooltip'
 local widget = require 'scripts.s3.components.widget'
 local window = require 'scripts.s3.components.window'
 
+local appearanceCoverage = require 'scripts.s3.components.componentTests.appearanceCoverage'
 local applicationForm = require 'scripts.s3.components.componentTests.applicationForm'
 local boundaries = require 'scripts.s3.components.componentTests.boundaries'
 local controlStates = require 'scripts.s3.components.componentTests.controlStates'
@@ -99,6 +100,7 @@ end
 
 ---@alias H3ComponentTest.DemoName
 ---| 'applicationForm'
+---| 'appearanceCoverage'
 ---| 'boundaries'
 ---| 'controlStates'
 ---| 'dense'
@@ -118,6 +120,7 @@ end
 ---@field isOpen fun(): boolean
 ---@field refresh fun()
 ---@field applicationForm fun(): openmw.ui.Layout
+---@field appearanceCoverage fun(): openmw.ui.Layout
 ---@field boundaries fun(): openmw.ui.Layout
 ---@field controlStates fun(): openmw.ui.Layout
 ---@field dense fun(): openmw.ui.Layout
@@ -142,6 +145,7 @@ local bodyDirty = false
 
 local demoConstructors = {
   applicationForm = applicationForm,
+  appearanceCoverage = appearanceCoverage,
   boundaries = boundaries,
   controlStates = controlStates,
   dense = dense,
@@ -154,6 +158,7 @@ local demoConstructors = {
 }
 local demoNames = {
   'applicationForm',
+  'appearanceCoverage',
   'boundaries',
   'controlStates',
   'dense',
@@ -623,7 +628,7 @@ local function createDemo(name, options)
 
   options = options or emptyOptions
   local invalidate
-  if name == 'h3ui' then invalidate = refreshBody end
+  if name == 'h3ui' or name == 'appearanceCoverage' then invalidate = refreshBody end
   local body = column {
     name = 'ct_demo_body',
     children = { constructor(invalidate) },
@@ -667,6 +672,7 @@ local interface = {
   isOpen = isOpen,
   refresh = refreshBody,
   applicationForm = applicationForm,
+  appearanceCoverage = appearanceCoverage,
   boundaries = boundaries,
   controlStates = controlStates,
   dense = dense,

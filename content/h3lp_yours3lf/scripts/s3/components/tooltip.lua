@@ -2,8 +2,31 @@
 
 local emptyOptions = {}
 
-local I = require 'openmw.interfaces'
+local appearance = require 'scripts.s3.ui.appearance'
+local chrome = require 'scripts.s3.ui.chrome'
 local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local UtilVector2 = util.vector2
+
+local function paragraph(textProps)
+  local props = {
+    autoSize = true,
+    readOnly = true,
+    multiline = true,
+    wordWrap = true,
+    size = UtilVector2(100, 0),
+  }
+  for key, value in next, textProps do
+    props[key] = value
+  end
+  props.ignorePointerEvents = true
+
+  return {
+    type = ui.TYPE.TextEdit,
+    props = props,
+  }
+end
 
 ---Build a boxed tooltip layout.
 ---Allocates fresh layout, props, external, and content tables. This primitive does not position, show,
@@ -14,6 +37,8 @@ local function tooltip(options)
   options = options or emptyOptions
 
   local textProps = {}
+  textProps.textColor = appearance.token 'color.text'
+  textProps.textSize = appearance.token 'textSize.normal'
   if options.textProps then
     for key, value in next, options.textProps do
       textProps[key] = value
@@ -24,14 +49,7 @@ local function tooltip(options)
   textProps.ignorePointerEvents = true
 
   local children = options.content or options.children
-  if not children then
-    children = {
-      {
-        template = I.MWUI.templates.textParagraph,
-        props = textProps,
-      },
-    }
-  end
+  if not children then children = { paragraph(textProps) } end
 
   local props = {}
   if options.props then
@@ -48,19 +66,31 @@ local function tooltip(options)
     end
   end
 
-  return {
-    template = options.template or I.MWUI.templates.boxTransparent,
+  local layout = {
     name = options.name,
     props = props,
     external = external,
     events = options.events,
     userData = options.userData,
-    content = ui.content {
-      {
-        template = I.MWUI.templates.padding,
-        content = ui.content(children),
-      },
-    },
+    content = ui.content(children),
+  }
+
+  if options.template then
+    layout.template = options.template
+    return layout
+  end
+
+  return chrome.nineSlice {
+    source = appearance.chrome 'frame.thin',
+    inset = 2,
+    name = layout.name,
+    props = layout.props,
+    external = layout.external,
+    events = layout.events,
+    userData = layout.userData,
+    tint = appearance.token 'color.chromeBorder',
+    alpha = appearance.token 'transparency.chrome',
+    content = children,
   }
 end
 

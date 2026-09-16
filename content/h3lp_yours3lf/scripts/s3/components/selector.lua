@@ -62,6 +62,9 @@ local function selector(options)
   if arrowIconProps.color == nil then
     arrowIconProps.color = appearance.token 'color.chromeBorder'
   end
+  if arrowIconProps.alpha == nil then
+    arrowIconProps.alpha = appearance.token 'transparency.chrome'
+  end
 
   local onSelect = options.onSelect
   local valueLayout

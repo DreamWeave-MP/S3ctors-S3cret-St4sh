@@ -4,6 +4,7 @@ local textRules = require 'scripts.s3.ui.themes.textRules'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
 local function rgb(red, green, blue) return util.color.rgb(red / 255, green / 255, blue / 255) end
 
 ---@type H3UI.ThemeSpec
@@ -57,7 +58,7 @@ return {
       negative = rgb(200, 60, 30),
       count = rgb(223, 201, 159),
       accent = rgb(223, 201, 159),
-      chromeBorder = rgb(202, 165, 96),
+      chromeBorder = rgb(150, 124, 67),
     },
     textSize = {
       normal = 16,
@@ -84,86 +85,13 @@ return {
   },
   chrome = {
     preferredSource = 'theme',
-    frame = {
-      thin = {
-        thickness = 2,
-        topLeft = 'textures/menu_thin_border_top_left_corner.dds',
-        top = 'textures/menu_thin_border_top.dds',
-        topRight = 'textures/menu_thin_border_top_right_corner.dds',
-        left = 'textures/menu_thin_border_left.dds',
-        right = 'textures/menu_thin_border_right.dds',
-        bottomLeft = 'textures/menu_thin_border_bottom_left_corner.dds',
-        bottom = 'textures/menu_thin_border_bottom.dds',
-        bottomRight = 'textures/menu_thin_border_bottom_right_corner.dds',
-      },
-      thick = {
-        thickness = 4,
-        topLeft = 'textures/menu_thick_border_top_left_corner.dds',
-        top = 'textures/menu_thick_border_top.dds',
-        topRight = 'textures/menu_thick_border_top_right_corner.dds',
-        left = 'textures/menu_thick_border_left.dds',
-        right = 'textures/menu_thick_border_right.dds',
-        bottomLeft = 'textures/menu_thick_border_bottom_left_corner.dds',
-        bottom = 'textures/menu_thick_border_bottom.dds',
-        bottomRight = 'textures/menu_thick_border_bottom_right_corner.dds',
-      },
-      button = {
-        thickness = 4,
-        tintable = true,
-        topLeft = 'textures/menu_button_frame_top_left_corner.dds',
-        top = 'textures/menu_button_frame_top.dds',
-        topRight = 'textures/menu_button_frame_top_right_corner.dds',
-        left = 'textures/menu_button_frame_left.dds',
-        right = 'textures/menu_button_frame_right.dds',
-        bottomLeft = 'textures/menu_button_frame_bottom_left_corner.dds',
-        bottom = 'textures/menu_button_frame_bottom.dds',
-        bottomRight = 'textures/menu_button_frame_bottom_right_corner.dds',
-      },
-    },
-    caption = {
-      thickness = 2,
-      topLeft = 'textures/menu_head_block_top_left_corner.dds',
-      top = 'textures/menu_head_block_top.dds',
-      topRight = 'textures/menu_head_block_top_right_corner.dds',
-      left = 'textures/menu_head_block_left.dds',
-      center = 'textures/menu_head_block_middle.dds',
-      right = 'textures/menu_head_block_right.dds',
-      bottomLeft = 'textures/menu_head_block_bottom_left_corner.dds',
-      bottom = 'textures/menu_head_block_bottom.dds',
-      bottomRight = 'textures/menu_head_block_bottom_right_corner.dds',
-    },
+    frame = chromeAssets.morrowind.frame,
+    caption = chromeAssets.morrowind.frame.caption,
     pin = {
-      up = {
-        thickness = 2,
-        topLeft = 'textures/menu_rightbuttonup_top_left.dds',
-        top = 'textures/menu_rightbuttonup_top.dds',
-        topRight = 'textures/menu_rightbuttonup_top_right.dds',
-        left = 'textures/menu_rightbuttonup_left.dds',
-        center = 'textures/menu_rightbuttonup_center.dds',
-        right = 'textures/menu_rightbuttonup_right.dds',
-        bottomLeft = 'textures/menu_rightbuttonup_bottom_left.dds',
-        bottom = 'textures/menu_rightbuttonup_bottom.dds',
-        bottomRight = 'textures/menu_rightbuttonup_bottom_right.dds',
-      },
-      down = {
-        thickness = 2,
-        topLeft = 'textures/menu_rightbuttondown_top_left.dds',
-        top = 'textures/menu_rightbuttondown_top.dds',
-        topRight = 'textures/menu_rightbuttondown_top_right.dds',
-        left = 'textures/menu_rightbuttondown_left.dds',
-        center = 'textures/menu_rightbuttondown_center.dds',
-        right = 'textures/menu_rightbuttondown_right.dds',
-        bottomLeft = 'textures/menu_rightbuttondown_bottom_left.dds',
-        bottom = 'textures/menu_rightbuttondown_bottom.dds',
-        bottomRight = 'textures/menu_rightbuttondown_bottom_right.dds',
-      },
+      up = chromeAssets.morrowind.frame.pinUp,
+      down = chromeAssets.morrowind.frame.pinDown,
     },
-    scroll = {
-      up = 'textures/omw_menu_scroll_up.dds',
-      down = 'textures/omw_menu_scroll_down.dds',
-      left = 'textures/omw_menu_scroll_left.dds',
-      right = 'textures/omw_menu_scroll_right.dds',
-    },
+    scroll = chromeAssets.morrowind.scroll,
   },
   rules = textRules(),
 }

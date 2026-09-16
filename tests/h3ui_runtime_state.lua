@@ -25,7 +25,14 @@ package.preload['openmw.ui'] = function()
   local function content(value)
     local proxy = newproxy(true)
     local metatable = getmetatable(proxy)
-    metatable.__index = function(_, key) return value[key] end
+    metatable.__index = function(_, key)
+      if value[key] ~= nil then return value[key] end
+      if type(key) == 'string' then
+        for index = 1, #value do
+          if value[index].name == key then return value[index] end
+        end
+      end
+    end
     metatable.__len = function() return #value end
     return proxy
   end
@@ -33,7 +40,13 @@ package.preload['openmw.ui'] = function()
   return {
     content = content,
     ALIGNMENT = { Center = 'Center' },
-    TYPE = { Container = 'Container', Flex = 'Flex', Image = 'Image', Widget = 'Widget' },
+    TYPE = {
+      Container = 'Container',
+      Flex = 'Flex',
+      Image = 'Image',
+      TextEdit = 'TextEdit',
+      Widget = 'Widget',
+    },
     texture = function(value) return value end,
   }
 end
@@ -44,6 +57,7 @@ package.preload['openmw.util'] = function()
     color = {
       commaString = function(value) return value end,
       rgb = function(red, green, blue) return { red, green, blue } end,
+      rgba = function(red, green, blue, alpha) return { red, green, blue, alpha } end,
     },
     vector2 = function(x, y) return { x = x, y = y } end,
   }
@@ -68,6 +82,9 @@ package.preload['scripts.s3.ui.appearance'] = function()
     chrome = function(path) return chrome.resolve(nil, path) end,
     token = function(path)
       if path == 'color.chromeBorder' then return 'chrome-border' end
+      if path == 'color.text' then return 'text-color' end
+      if path == 'textSize.normal' then return 16 end
+      if path == 'transparency.chrome' then return 0.75 end
       return nil
     end,
   }
@@ -77,15 +94,19 @@ local I = require 'openmw.interfaces'
 local bookFrame = require 'scripts.s3.components.bookFrame'
 local chrome = require 'scripts.s3.ui.chrome'
 local itemSlot = require 'scripts.s3.components.itemSlot'
+local meter = require 'scripts.s3.components.meter'
 local newRegistry = require 'scripts.s3.ui.registry'
 local newResolver = require 'scripts.s3.ui.resolver'
 local newScope = require 'scripts.s3.ui.scope'
+local pinButton = require 'scripts.s3.components.pinButton'
 local searchInput = require 'scripts.s3.components.searchInput'
 local selector = require 'scripts.s3.components.selector'
 local tabs = require 'scripts.s3.components.tabs'
+local textInput = require 'scripts.s3.components.textInput'
 local textRules = require 'scripts.s3.ui.themes.textRules'
 local themeModule = require 'scripts.s3.ui.theme'
 local token = require 'scripts.s3.ui.token'
+local tooltip = require 'scripts.s3.components.tooltip'
 local ui = require 'openmw.ui'
 local window = require 'scripts.s3.components.window'
 
@@ -275,9 +296,9 @@ local function testBookFrameBackground()
   assert(frameContent[1].props.color == background.color)
   assert(frameContent[1].props.alpha == background.alpha)
   assert(layout.content[1].props.horizontal == false)
-  assert(
-    frameContent[2].props.resource.path == 'textures/h3ui/menu_thin_border_top_left_corner.dds'
-  )
+  assert(frameContent[2].props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
+  assert(frameContent[2].props.resource.offset.x == 0)
+  assert(frameContent[2].props.resource.offset.y == 0)
   assert(frameContent[2].props.size.x == 2 and frameContent[2].props.size.y == 2)
   assert(frameContent[4].props.position.x == 0 and frameContent[4].props.position.y == 0)
   assert(frameContent[6].props.position.x == 0 and frameContent[6].props.position.y == 2)
@@ -287,11 +308,10 @@ local function testBookFrameBackground()
 end
 
 local function testBuiltinPinChromePaths()
-  assert(chrome.resolve(nil, 'pin.up').topLeft == 'textures/h3ui/menu_rightbuttonup_top_left.dds')
-  assert(
-    chrome.resolve(nil, 'pin.down').bottomRight
-      == 'textures/h3ui/menu_rightbuttondown_bottom_right.dds'
-  )
+  assert(chrome.resolve(nil, 'pin.up').path == 'textures/h3ui/h3ui_chrome.dds')
+  assert(chrome.resolve(nil, 'pin.up').offset.x == 402)
+  assert(chrome.resolve(nil, 'pin.down').path == 'textures/h3ui/h3ui_chrome.dds')
+  assert(chrome.resolve(nil, 'pin.down').offset.x == 424)
 end
 
 local function testWindowInnerBorder()
@@ -536,6 +556,69 @@ local function testItemSlotChrome()
   assert(itemSlot({ template = customTemplate }).template == customTemplate)
 end
 
+local function testChromeCacheAndSkinSwap()
+  local skin = chrome.resolve(nil, 'frame.thin')
+  local first = chrome.box {
+    skin = skin,
+    alpha = 0.75,
+    backgroundProps = { color = 'background' },
+  }
+  local second = chrome.box {
+    skin = skin,
+    alpha = 0.75,
+    backgroundProps = { color = 'background' },
+  }
+  assert(first.template == second.template)
+  assert(first.template.content[2].props.alpha == 0.75)
+
+  local pin = pinButton {}
+  local pinTopLeft = pin.content[2]
+  assert(pinTopLeft.name == 'h3ui_topLeft')
+  assert(pinTopLeft.props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
+  assert(pinTopLeft.props.resource.offset.x == 402)
+  pin.events.mouseClick(nil, pin)
+  assert(pinTopLeft.props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
+  assert(pinTopLeft.props.resource.offset.x == 424)
+
+  local defaultMeter = meter {}
+  assert(defaultMeter.type == ui.TYPE.Widget)
+  assert(defaultMeter.props.size.x == 150 and defaultMeter.props.size.y == 18)
+  assert(defaultMeter.content[2].name == 'h3ui_topLeft')
+  assert(defaultMeter.content[2].props.color == 'chrome-border')
+
+  local defaultTooltip = tooltip {}
+  assert(defaultTooltip.template == nil)
+  local tooltipContent = defaultTooltip.content[1]
+  assert(tooltipContent.type == ui.TYPE.Widget)
+  assert(tooltipContent.props.position.x == 2 and tooltipContent.props.position.y == 2)
+  assert(tooltipContent.props.size.x == -4 and tooltipContent.props.size.y == -4)
+  assert(tooltipContent.props.relativeSize.x == 1 and tooltipContent.props.relativeSize.y == 1)
+  local tooltipText = tooltipContent.content[1]
+  assert(tooltipText.type == ui.TYPE.TextEdit)
+  assert(tooltipText.props.readOnly == true and tooltipText.props.wordWrap == true)
+end
+
+local function testTextInputDefaults()
+  local layout = textInput {}
+  assert(layout.type == ui.TYPE.TextEdit)
+  assert(layout.template == nil)
+  assert(layout.props.size.x == 150 and layout.props.size.y == 0)
+  assert(layout.props.autoSize == true)
+  assert(layout.props.multiline == false)
+  assert(layout.props.textAlignV == 'Center')
+  assert(layout.props.textColor == 'text-color')
+  assert(layout.props.textSize == 16)
+  local enteredLayout = textInput { text = 'typed text', props = { size = { x = 180, y = 24 } } }
+  assert(enteredLayout.props.text == 'typed text')
+  assert(enteredLayout.props.textAlignV == 'Center')
+
+  local customTemplate = {}
+  local customLayout = textInput { template = customTemplate }
+  assert(customLayout.template == customTemplate)
+  assert(customLayout.props.textColor == 'text-color')
+  assert(customLayout.props.textSize == 16)
+end
+
 testTextRuleSlots()
 testThemeTokens()
 testBookFrameBackground()
@@ -548,5 +631,7 @@ testTabStyleRetention()
 testSelectorAlignment()
 testSearchInputHeight()
 testItemSlotChrome()
+testChromeCacheAndSkinSwap()
+testTextInputDefaults()
 
 print 'H3UI runtime state tests passed'

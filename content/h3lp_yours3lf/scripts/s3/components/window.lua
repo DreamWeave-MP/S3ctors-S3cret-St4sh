@@ -391,6 +391,7 @@ local function window(options)
         relativeSize = fullSize,
       },
       tint = appearance.token 'color.chromeBorder',
+      alpha = appearance.token 'transparency.chrome',
     }
   end
 
@@ -438,6 +439,7 @@ local function window(options)
     events = events,
     userData = options.userData,
     tint = borderColor,
+    alpha = appearance.token 'transparency.chrome',
     content = content,
   }
   result.layer = options.layer

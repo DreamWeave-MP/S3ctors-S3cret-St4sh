@@ -3,6 +3,7 @@
 
 local appearance = require 'scripts.s3.ui.appearance'
 local builtinRecipes = require 'scripts.s3.ui.recipes.init'
+local chrome = require 'scripts.s3.ui.chrome'
 local componentDefinitions = require 'scripts.s3.ui.components'
 local constants = require 'scripts.s3.ui.constants'
 local newRegistry = require 'scripts.s3.ui.registry'
@@ -58,23 +59,47 @@ local environment = {
 
 ---@class H3UI.ChromeFrame
 ---@field thickness number
----@field top string
----@field bottom string
----@field left string
----@field right string
----@field topLeft string
----@field topRight string
----@field bottomLeft string
----@field bottomRight string
----@field center? string
+---@field path? string Atlas texture path.
+---@field offset? openmw.util.Vector2 Atlas region offset.
+---@field size? openmw.util.Vector2 Atlas region size.
+---@field sourceBorder? table Atlas source margins, defaulting to thickness.
+---@field center? boolean|string Atlas center flag or legacy center texture path.
+---@field parts? table<string, H3UI.TextureRegion>
+---@field top? string
+---@field bottom? string
+---@field left? string
+---@field right? string
+---@field topLeft? string
+---@field topRight? string
+---@field bottomLeft? string
+---@field bottomRight? string
 ---@field tintable? boolean
+
+---@class H3UI.TextureRegion
+---@field path string
+---@field offset openmw.util.Vector2
+---@field size openmw.util.Vector2
 
 ---@class H3UI.ChromeSpec
 ---@field preferredSource? 'theme'|'h3ui'
 ---@field frame? table<string, H3UI.ChromeFrame>
 ---@field caption? H3UI.ChromeFrame
 ---@field pin? table<string, H3UI.ChromeFrame>
----@field scroll? table<string, string>
+---@field scroll? table<string, string|H3UI.TextureRegion>
+
+---@class H3UI.NineSliceOptions
+---@field source H3UI.ChromeFrame
+---@field name? string
+---@field props? table
+---@field external? table
+---@field events? table
+---@field userData? any
+---@field tint? openmw.util.Color
+---@field alpha? number
+---@field backgroundProps? table
+---@field contentProps? table
+---@field inset? number Fixed inset for content inside the nine-slice frame.
+---@field content? openmw.ui.Content|openmw.ui.LayoutOrElement[]
 
 ---@class H3UI.ThemeSpec
 ---@field name? string
@@ -119,6 +144,7 @@ local environment = {
 ---@field scope fun(options?: H3UI.ScopeOptions): H3UI.Scope
 ---@field token fun(path: string): H3UI.TokenReference
 ---@field slots fun(component: string): string[]
+---@field nineSlice fun(options: H3UI.NineSliceOptions): openmw.ui.Layout
 local H3UI = {
   UNSET = constants.UNSET,
 }
@@ -133,6 +159,10 @@ function H3UI.token(path) return token.ref(path) end
 ---@param component string
 ---@return string[]
 function H3UI.slots(component) return registry.slots(component) end
+
+---@param options H3UI.NineSliceOptions
+---@return openmw.ui.Layout
+function H3UI.nineSlice(options) return chrome.nineSlice(options) end
 
 ---@param options? H3UI.ScopeOptions
 ---@return H3UI.Scope

@@ -104,6 +104,7 @@ local function searchInput(options)
     inputContent = chrome.box {
       skin = appearance.chrome 'frame.thin',
       tint = appearance.token 'color.chromeBorder',
+      alpha = appearance.token 'transparency.chrome',
       content = { spacedInput },
     }
   end
