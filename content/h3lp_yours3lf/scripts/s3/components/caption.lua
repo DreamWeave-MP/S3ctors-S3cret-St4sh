@@ -17,7 +17,7 @@ local text = require 'scripts.s3.components.text'
 
 local UtilVector2 = util.vector2
 
-local controlSize = UtilVector2(19, 19)
+local controlSize = UtilVector2(20, 20)
 local headBlockWidth = 30
 local captionTextPadding = 12
 local zero = UtilVector2(0, 0)
