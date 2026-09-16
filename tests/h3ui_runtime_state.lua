@@ -312,6 +312,8 @@ local function testBuiltinPinChromePaths()
   assert(chrome.resolve(nil, 'pin.up').offset.x == 402)
   assert(chrome.resolve(nil, 'pin.down').path == 'textures/h3ui/h3ui_chrome.dds')
   assert(chrome.resolve(nil, 'pin.down').offset.x == 424)
+  assert(chrome.resolve(nil, 'scroll.left').size.x == 8)
+  assert(chrome.resolve(nil, 'scroll.left').size.y == 8)
 end
 
 local function testWindowInnerBorder()
