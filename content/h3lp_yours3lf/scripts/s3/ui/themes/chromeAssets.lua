@@ -60,7 +60,7 @@ local morrowindPath = 'textures/h3ui/morrowind_chrome.dds'
 return {
   h3ui = {
     frame = frame(h3uiPath, true, 15),
-    scroll = scroll(h3uiPath, 10),
+    scroll = scroll(h3uiPath, 8),
   },
   morrowind = {
     frame = frame(morrowindPath, true, 16),
