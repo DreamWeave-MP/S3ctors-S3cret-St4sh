@@ -33,6 +33,20 @@ local function addStateTextRule(rules, component, slot, state, color)
   }
 end
 
+local function addSelectedTextRule(rules, component, slot, color)
+  rules[#rules + 1] = {
+    selector = { component = component, slot = slot, selected = true },
+    style = { props = { textColor = token.ref(color) } },
+  }
+end
+
+local function addSelectedStateTextRule(rules, component, slot, state, color)
+  rules[#rules + 1] = {
+    selector = { component = component, slot = slot, selected = true, state = state },
+    style = { props = { textColor = token.ref(color) } },
+  }
+end
+
 local toneColors = {
   accent = 'color.accent',
   positive = 'color.positive',
@@ -140,6 +154,17 @@ local function new()
   end
   addStateTextRule(rules, 'listItem', 'secondary', 'hover', 'color.textHover')
   addStateTextRule(rules, 'listItem', 'secondary', 'pressed', 'color.textPressed')
+
+  addSelectedTextRule(rules, 'iconButton', 'label', 'color.active')
+  addSelectedTextRule(rules, 'listItem', 'label', 'color.active')
+  addSelectedTextRule(rules, 'listItem', 'secondary', 'color.active')
+  addSelectedTextRule(rules, 'itemSlot', 'count', 'color.active')
+  addSelectedStateTextRule(rules, 'iconButton', 'label', 'hover', 'color.activeHover')
+  addSelectedStateTextRule(rules, 'iconButton', 'label', 'pressed', 'color.activePressed')
+  addSelectedStateTextRule(rules, 'listItem', 'label', 'hover', 'color.activeHover')
+  addSelectedStateTextRule(rules, 'listItem', 'secondary', 'hover', 'color.activeHover')
+  addSelectedStateTextRule(rules, 'listItem', 'label', 'pressed', 'color.activePressed')
+  addSelectedStateTextRule(rules, 'listItem', 'secondary', 'pressed', 'color.activePressed')
 
   addToneRules(rules)
   return rules

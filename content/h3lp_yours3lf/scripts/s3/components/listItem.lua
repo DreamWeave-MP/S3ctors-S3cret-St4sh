@@ -15,6 +15,7 @@ local relativeWidth = util.vector2(1, 0)
 ---@class H3.ListItemOptions
 ---@field label? string
 ---@field secondary? string|number Right-aligned secondary value for list rows.
+---@field selected? boolean Use the active theme color and full-row selection semantics.
 ---@field name? string
 ---@field props? table
 ---@field labelProps? table
@@ -33,7 +34,7 @@ local function listItem(options)
   options = options or emptyOptions
 
   local labelProps = {
-    textColor = appearance.token 'color.text',
+    textColor = appearance.token(options.selected and 'color.active' or 'color.text'),
     textSize = appearance.token 'textSize.normal',
   }
   for key, value in next, options.labelProps or {} do
@@ -52,7 +53,7 @@ local function listItem(options)
 
     if options.secondary ~= nil then
       local secondaryProps = {
-        textColor = appearance.token 'color.text',
+        textColor = appearance.token(options.selected and 'color.active' or 'color.text'),
         textSize = appearance.token 'textSize.normal',
         ignorePointerEvents = true,
       }
@@ -81,6 +82,8 @@ local function listItem(options)
     for key, value in next, options.external do
       external[key] = value
     end
+  elseif options.secondary ~= nil then
+    external = { stretch = 1 }
   end
 
   return {

@@ -14,6 +14,7 @@ local ui = require 'openmw.ui'
 ---@class H3.IconButtonOptions
 ---@field resource? openmw.ui.TextureResource|openmw.ui.TextureResourceOptions
 ---@field label? string
+---@field selected? boolean Highlight the button using the active theme color.
 ---@field onActivate? fun(event: table, layout: openmw.ui.Layout): any
 ---@field gap? number
 ---@field name? string
@@ -43,6 +44,9 @@ local function iconButton(options)
     local labelProps = {}
     for key, value in next, options.labelProps or {} do
       labelProps[key] = value
+    end
+    if labelProps.textColor == nil and options.selected then
+      labelProps.textColor = appearance.token 'color.active'
     end
     labelProps.ignorePointerEvents = true
     children[#children + 1] = text { text = options.label, props = labelProps }
@@ -88,7 +92,7 @@ local function iconButton(options)
     external = external,
     events = events,
     userData = options.userData,
-    tint = appearance.token 'color.chromeBorder',
+    tint = appearance.token(options.selected and 'color.active' or 'color.chromeBorder'),
     alpha = appearance.token 'transparency.chrome',
     content = { padded },
   }

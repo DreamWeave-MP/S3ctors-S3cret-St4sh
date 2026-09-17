@@ -10,12 +10,30 @@ local numberSize = UtilVector2(90, 24)
 local textInputSize = UtilVector2(260, 24)
 local modes = { 'Compact', 'Balanced', 'Verbose' }
 
-local function ignore() end
+local function initializeState(state)
+  if state.initialized then return end
+  state.initialized = true
+  state.selectedPage = 1
+  state.enabled = true
+  state.selectedMode = 2
+  state.intensity = 65
+  state.defaultFilter = 'npc'
+  state.pageSize = 20
+  state.searchQuery = ''
+  state.showExperimental = true
+  state.unsafeMode = false
+end
 
 ---@param invalidate? fun()
+---@param rebuild? fun()
+---@param state? table
 ---@return openmw.ui.Layout
-local function applicationForm(invalidate)
-  local refresh = invalidate or ignore
+local function applicationForm(invalidate, rebuild, state)
+  local refresh = invalidate or function() end
+  rebuild = rebuild or refresh
+  state = state or {}
+  initializeState(state)
+
   local ui = I.H3UI.scope { invalidate = invalidate }
 
   local general = ui.settings {
@@ -26,31 +44,40 @@ local function applicationForm(invalidate)
       {
         label = 'Enabled',
         kind = 'toggle',
-        value = true,
-        onChange = refresh,
+        value = state.enabled,
+        onChange = function(value)
+          state.enabled = value
+          rebuild()
+        end,
       },
       {
         label = 'Mode',
         kind = 'selector',
         items = modes,
-        selected = 2,
-        onSelect = refresh,
+        selected = state.selectedMode,
+        onSelect = function(index)
+          state.selectedMode = index
+          rebuild()
+        end,
       },
       {
         label = 'Intensity',
         kind = 'slider',
-        value = 65,
+        value = state.intensity,
         min = 0,
         max = 100,
         step = 5,
         props = { size = sliderSize },
-        onChange = refresh,
+        onChange = function(value)
+          state.intensity = value
+          rebuild()
+        end,
       },
     },
     children = {
       ui.divider(),
       ui.text {
-        text = 'This page is built from the settings recipe; the surrounding window and page switching come from tabbedWindow.',
+        text = 'This page is built from settings; tabbedWindow only renders the selected page.',
         tone = 'muted',
       },
     },
@@ -64,26 +91,32 @@ local function applicationForm(invalidate)
       {
         label = 'Default filter',
         kind = 'textInput',
-        text = 'npc',
+        text = state.defaultFilter,
         props = { size = textInputSize },
-        onChange = refresh,
+        onChange = function(value)
+          state.defaultFilter = value
+          rebuild()
+        end,
       },
       {
         label = 'Page size',
         kind = 'numberInput',
-        value = 20,
+        value = state.pageSize,
         min = 5,
         max = 100,
         step = 5,
         integer = true,
         props = { size = numberSize },
-        onCommit = refresh,
+        onCommit = function(value)
+          state.pageSize = value
+          rebuild()
+        end,
       },
     },
     children = {
       ui.divider(),
       ui.searchableList {
-        query = '',
+        query = state.searchQuery,
         items = {
           'Actors',
           'Creatures',
@@ -91,7 +124,10 @@ local function applicationForm(invalidate)
           'Doors',
           'Weapons',
         },
-        onQueryChange = ignore,
+        onQueryChange = function(value)
+          state.searchQuery = value
+          rebuild()
+        end,
       },
     },
   }
@@ -101,22 +137,28 @@ local function applicationForm(invalidate)
     ui.text { text = 'Advanced', role = 'title' },
     ui.collapsible {
       title = 'Experimental behavior',
-      expanded = true,
-      onToggle = refresh,
+      expanded = state.showExperimental,
+      onToggle = function(value)
+        state.showExperimental = value
+        rebuild()
+      end,
       children = {
         ui.settings {
           fields = {
             {
               label = 'Unsafe mode',
               kind = 'toggle',
-              value = false,
+              value = state.unsafeMode,
               tone = 'negative',
-              onChange = refresh,
+              onChange = function(value)
+                state.unsafeMode = value
+                rebuild()
+              end,
             },
           },
         },
         ui.text {
-          text = 'Application examples are intentionally written as copyable mod code rather than synthetic widget banks.',
+          text = 'Reference fixtures own their state and rebuild only when structure or controlled values change.',
           tone = 'muted',
         },
       },
@@ -125,8 +167,20 @@ local function applicationForm(invalidate)
     ui.row {
       gap = 6,
       ui.spacer { grow = 1 },
-      ui.button { label = 'Reset', onActivate = ignore },
-      ui.button { label = 'Apply', tone = 'positive', onActivate = ignore },
+      ui.button {
+        label = 'Reset',
+        onActivate = function()
+          state.initialized = nil
+          initializeState(state)
+          rebuild()
+          return true
+        end,
+      },
+      ui.button {
+        label = 'Apply',
+        tone = 'positive',
+        onActivate = function() return true end,
+      },
     },
   }
 
@@ -136,13 +190,16 @@ local function applicationForm(invalidate)
     size = windowSize,
     resizable = false,
     pinnable = true,
-    selected = 1,
+    selected = state.selectedPage,
     tabs = {
       { label = 'General', content = general },
       { label = 'Filtering', content = filtering },
       { label = 'Advanced', content = advanced },
     },
-    onSelect = refresh,
+    onSelect = function(index)
+      state.selectedPage = index
+      rebuild()
+    end,
   }
 end
 

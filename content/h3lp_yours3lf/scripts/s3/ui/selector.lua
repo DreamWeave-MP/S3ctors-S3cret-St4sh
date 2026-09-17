@@ -7,6 +7,7 @@ local allowed = {
   component = true,
   recipe = true,
   role = true,
+  selected = true,
   slot = true,
   state = true,
   tone = true,
@@ -17,6 +18,7 @@ local traitFields = {
   'component',
   'recipe',
   'role',
+  'selected',
   'variant',
   'tone',
   'state',
@@ -43,6 +45,9 @@ local function normalize(input)
       type(result.slot) == 'string' and result.slot ~= '',
       'H3 UI selector slot must be a string'
     )
+  end
+  if result.selected ~= nil then
+    assert(type(result.selected) == 'boolean', 'H3 UI selector selected must be boolean')
   end
 
   return result
@@ -87,7 +92,7 @@ end
 local function tier(rule)
   if rule.state ~= nil then return 5 end
   if rule.class ~= nil then return 4 end
-  if rule.variant ~= nil or rule.tone ~= nil then return 3 end
+  if rule.variant ~= nil or rule.tone ~= nil or rule.selected ~= nil then return 3 end
   if rule.recipe ~= nil or rule.role ~= nil then return 2 end
   if rule.component ~= nil then return 1 end
   return 0

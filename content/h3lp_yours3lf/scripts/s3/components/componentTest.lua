@@ -53,9 +53,9 @@ local defaultSize = UtilVector2(760, 720)
 ---@field toggle fun(options?: H3ComponentTest.Options): boolean
 ---@field isOpen fun(): boolean
 ---@field refresh fun()
----@field magicMenu fun(invalidate?: fun()): openmw.ui.Layout
----@field inventoryPanel fun(invalidate?: fun()): openmw.ui.Layout
----@field applicationForm fun(invalidate?: fun()): openmw.ui.Layout
+---@field magicMenu fun(invalidate?: fun(), rebuild?: fun(), state?: table): openmw.ui.Layout
+---@field inventoryPanel fun(invalidate?: fun(), rebuild?: fun(), state?: table): openmw.ui.Layout
+---@field applicationForm fun(invalidate?: fun(), rebuild?: fun(), state?: table): openmw.ui.Layout
 ---@field appearanceCoverage fun(invalidate?: fun()): openmw.ui.Layout
 ---@field boundaries fun(): openmw.ui.Layout
 ---@field controlStates fun(): openmw.ui.Layout
@@ -73,7 +73,11 @@ local bodyElement
 ---@type fun(element: openmw.ui.Element)|nil
 local elementUpdate
 local rootDirty = false
+local rootRebuildDirty = false
 local bodyDirty = false
+local standaloneConstructor
+local standaloneOptions
+local standaloneState
 
 local demoDefinitions = {
   magicMenu = { constructor = magicMenu, standalone = true },
@@ -109,8 +113,12 @@ local function destroy()
 
   rootElement = nil
   rootDirty = false
+  rootRebuildDirty = false
   bodyElement = nil
   bodyDirty = false
+  standaloneConstructor = nil
+  standaloneOptions = nil
+  standaloneState = nil
 
   if currentRoot and currentRoot.layout then
     auxUi.deepDestroy(currentRoot)
@@ -127,6 +135,7 @@ local function updateElement(element)
 end
 
 local function refreshRoot() rootDirty = true end
+local function rebuildRoot() rootRebuildDirty = true end
 
 local function refreshBody()
   if bodyElement and bodyElement.layout then
@@ -136,8 +145,33 @@ local function refreshBody()
   end
 end
 
+local function buildStandaloneLayout()
+  local layout = standaloneConstructor(refreshRoot, rebuildRoot, standaloneState)
+  local options = standaloneOptions or emptyOptions
+  layout.layer = options.layer or 'Windows'
+  if options.position then layout.props.position = options.position end
+  if options.size then layout.props.size = options.size end
+  return layout
+end
+
 local function flushUpdates()
-  if rootDirty then
+  if rootRebuildDirty then
+    rootRebuildDirty = false
+    rootDirty = false
+
+    local current = rootElement
+    if current and current.layout and standaloneConstructor then
+      local position = current.layout.props and current.layout.props.position
+      local size = current.layout.props and current.layout.props.size
+      local layout = buildStandaloneLayout()
+
+      if standaloneOptions.position == nil and position ~= nil then layout.props.position = position end
+      if standaloneOptions.size == nil and size ~= nil then layout.props.size = size end
+
+      auxUi.deepDestroy(current)
+      rootElement = ui.create(layout)
+    end
+  elseif rootDirty then
     rootDirty = false
     local element = rootElement
     if element and element.layout then updateElement(element) end
@@ -218,11 +252,11 @@ local function createStandalone(options, constructor)
     destroy()
   end
 
-  local layout = constructor(refreshRoot)
-  layout.layer = options.layer or 'Windows'
-  if options.position then layout.props.position = options.position end
-  if options.size then layout.props.size = options.size end
-  rootElement = ui.create(layout)
+  standaloneConstructor = constructor
+  standaloneOptions = options
+  standaloneState = {}
+
+  rootElement = ui.create(buildStandaloneLayout())
   return rootElement
 end
 

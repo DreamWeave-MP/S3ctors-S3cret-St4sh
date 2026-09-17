@@ -12,6 +12,7 @@ local ui = require 'openmw.ui'
 ---@class H3.ItemSlotOptions
 ---@field resource? openmw.ui.TextureResource|openmw.ui.TextureResourceOptions
 ---@field count? string|number
+---@field selected? boolean Highlight the slot using the active theme color.
 ---@field onActivate? fun(event: table, layout: openmw.ui.Layout): any
 ---@field name? string
 ---@field props? table
@@ -45,7 +46,7 @@ local function itemSlot(options)
   }
   if options.count ~= nil then
     local countProps = {
-      textColor = appearance.token 'color.count',
+      textColor = appearance.token(options.selected and 'color.active' or 'color.count'),
       textSize = appearance.token 'textSize.normal',
     }
     if options.countProps then
@@ -94,7 +95,7 @@ local function itemSlot(options)
     external = layout.external,
     events = layout.events,
     userData = layout.userData,
-    tint = appearance.token 'color.chromeBorder',
+    tint = appearance.token(options.selected and 'color.active' or 'color.chromeBorder'),
     alpha = appearance.token 'transparency.chrome',
     content = content,
   }

@@ -60,6 +60,7 @@ local function section(ctx, spec)
     end
     children[#children + 1] = ctx.row {
       role = 'header',
+      external = { stretch = 1 },
       gap = spec.headerGap or ctx.token 'spacing.sm',
       children = headerChildren,
     }
@@ -69,7 +70,7 @@ local function section(ctx, spec)
   children[#children + 1] = ctx.column {
     role = 'body',
     props = spec.bodyProps,
-    external = spec.bodyExternal,
+    external = spec.bodyExternal or { stretch = 1 },
     gap = spec.gap or ctx.token 'spacing.sm',
     children = body,
   }
@@ -83,7 +84,7 @@ local function section(ctx, spec)
     style = spec.style,
     name = spec.name,
     props = spec.props,
-    external = spec.external,
+    external = spec.external or { stretch = 1 },
     events = spec.events,
     userData = spec.userData,
     template = spec.template,
