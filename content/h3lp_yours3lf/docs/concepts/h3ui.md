@@ -176,7 +176,7 @@ Theme rules may target generated `hover` and `pressed` states:
 
 H3UI applies hover on focus gain, pressed for the primary mouse button, and restores the previous generated style on focus loss or release. Explicit component options and inline style still win over theme state rules.
 
-Application code does not set arbitrary component `state`; selected, checked, enabled, or similar concepts belong to the components that actually implement them.
+Application code does not set arbitrary component `state`. Semantic concepts belong to the components that actually implement them: `listItem`, `itemSlot`, and `iconButton` expose `selected`, while runtime `hover`/`pressed` remains theme-owned.
 
 ## Reference fixtures are part of the API design process
 

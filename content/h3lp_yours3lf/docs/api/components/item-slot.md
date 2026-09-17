@@ -18,6 +18,7 @@ local potion = H3UI.itemSlot {
         path = 'white',
     },
     count = 4,
+    selected = selectedItemId == potionId,
     onActivate = function()
         selectPotion()
         return true
@@ -31,6 +32,7 @@ local potion = H3UI.itemSlot {
 | --- | --- | --- |
 | `resource` | openmw.ui.TextureResource or openmw.ui.TextureResourceOptions | Icon texture resource or options for one. |
 | `count` | number? | Optional count rendered over the icon. |
+| `selected` | boolean? | Highlights the slot with the active theme color and exposes selected-state styling to H3UI themes. |
 | `onActivate` | function? | Runs when the slot is activated. |
 | `iconProps` | table? | Properties for the icon. |
 | `countProps` | table? | Properties for the count label. |

@@ -275,7 +275,7 @@ Builds `searchInput` + `list` + `listItem` and filters items during construction
 
 ### `section`
 
-Builds a semantic section with optional `header`, `title`, and `secondary`, followed by a `divider` and `body`. Supply body layouts through `content`, `children`, or the array part of the options table. The stable roles are `root`, `header`, `title`, `secondary`, `divider`, and `body`.
+Builds a semantic section with optional `header`, `title`, and right-aligned `secondary`, followed by a `divider` and `body`. Sections stretch across the available cross-axis by default so callers do not need to hand-wire Flex geometry for ordinary full-width rows. Supply body layouts through `content`, `children`, or the array part of the options table. The stable roles are `root`, `header`, `title`, `secondary`, `divider`, and `body`.
 
 ### `tabbedWindow`
 
@@ -370,6 +370,7 @@ selector = {
     component = 'button',
     recipe = 'confirmDialog',
     role = 'confirm',
+    selected = true,
     variant = 'primary',
     tone = 'negative',
     class = 'important',
@@ -378,7 +379,7 @@ selector = {
 }
 ```
 
-All supplied fields must match. `class` tests membership in the node's class set. `slot` chooses a component style target and does not itself increase specificity.
+All supplied fields must match. `class` tests membership in the node's class set. `selected` is a semantic boolean exposed by selectable components such as `listItem`, `itemSlot`, and `iconButton`; it is separate from index-valued component options such as `selector.selected` and `tabs.selected`. `slot` chooses a component style target and does not itself increase specificity.
 
 H3 intentionally does not parse CSS selector strings and does not implement descendant, sibling, `nth-child`, or arbitrary tree selectors. Recipes expose `role` values so themes can target a component's job instead of incidental child positions.
 
@@ -390,7 +391,7 @@ Matched rules apply from lower to higher precedence:
 
 1. generic/component rules;
 2. recipe/role rules;
-3. `variant` or `tone` rules;
+3. `variant`, `tone`, or semantic `selected` rules;
 4. class rules;
 5. runtime state rules.
 

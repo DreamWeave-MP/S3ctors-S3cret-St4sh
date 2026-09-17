@@ -44,6 +44,8 @@ local function new(definitions)
 
   function registry.supportsRuntimeState(name) return registry.get(name).runtimeState == true end
 
+  function registry.supportsSelection(name) return registry.get(name).selectable == true end
+
   function registry.publicComponents()
     local result = {}
     for name, adapter in next, adapters do

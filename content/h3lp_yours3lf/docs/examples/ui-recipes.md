@@ -31,6 +31,8 @@ local ui = I.H3UI.scope {
 
 The scoped object is your constructor catalog. You normally should not need separate component `require`s.
 
+Use cheap `element:update()` invalidation for H3UI's hover/pressed mutations and other in-place layout changes. When caller-owned state changes which layouts exist—filters, selected pages, deleted items—reconstruct the root through your application's normal rebuild path. The executable fixtures exercise both paths.
+
 ## Morrowind-style Magic menu
 
 A useful reference surface should exercise real interface problems. The bundled Magic-menu fixture combines window chrome, an icon strip, semantic sections, aligned secondary values, filtering, destructive actions, hover/pressed styling, and enough real text to expose spacing problems.
@@ -42,9 +44,10 @@ local function spellRow(spell)
     return ui.listItem {
         label = spell.name,
         secondary = spell.costChance,
+        selected = selectedSpell == spell,
         onActivate = function()
             selectedSpell = spell
-            refresh()
+            rebuild()
             return true
         end,
     }
@@ -77,18 +80,17 @@ local layout = ui.window {
             props = { size = util.vector2(584, 30) },
             ui.row {
                 gap = 2,
-                ui.image { resource = { path = 'textures/menu_icon_magic.dds' } },
-                -- More active-effect icons...
+                -- Distinct active-effect icons...
             },
         },
 
         ui.box {
-            props = { size = util.vector2(584, 316) },
+            props = { size = util.vector2(584, 326) },
             ui.column {
-                gap = 2,
-                spellSection('Powers', nil, powers),
-                ui.divider(),
-                spellSection('Spells', 'Cost/Chance', spells),
+                gap = 4,
+                spellSection('Powers', nil, filteredPowers),
+                spellSection('Spells', 'Cost/Chance', filteredSpells),
+                spellSection('Magic Items', 'Charge', filteredItems),
             },
         },
 
@@ -98,7 +100,7 @@ local layout = ui.window {
                 text = filter,
                 onChange = function(value)
                     filter = value
-                    refresh()
+                    rebuild()
                 end,
             },
             ui.button {
@@ -185,11 +187,12 @@ local layout = ui.tabbedWindow {
     },
     onSelect = function(index)
         selectedPage = index
+        rebuild()
     end,
 }
 ```
 
-`tabbedWindow` renders only the selected page. The `selectedPage` variable is yours: update it in `onSelect` and rebuild the caller-owned surface.
+`tabbedWindow` renders only the selected page. The `selectedPage` variable is yours: update it in `onSelect` and rebuild the caller-owned surface. The component-test harness deliberately distinguishes cheap `element:update()` invalidation from a full fixture rebuild so these examples exercise the same controlled-state model expected from real mods.
 
 The executable fixture lives at `scripts/s3/components/componentTests/applicationForm.lua`.
 
@@ -204,9 +207,10 @@ for index = 1, #items do
     itemLayouts[index] = {
         resource = { path = item.icon },
         count = item.count,
+        selected = selectedItem == item,
         onActivate = function()
             selectedItem = item
-            refresh()
+            rebuild()
             return true
         end,
     }
@@ -243,7 +247,10 @@ local layout = ui.window {
             ui.spacer { grow = 1 },
             ui.row {
                 gap = 6,
-                ui.button { label = 'Equip', onActivate = equipSelected },
+                ui.button {
+                    label = equipped[selectedItem] and 'Unequip' or 'Equip',
+                    onActivate = toggleEquipSelected,
+                },
                 ui.button {
                     label = 'Drop',
                     tone = 'negative',
@@ -256,6 +263,8 @@ local layout = ui.window {
 ```
 
 The executable fixture lives at `scripts/s3/components/componentTests/inventoryPanel.lua`.
+
+The fixture also performs real construction-time category/search filtering, selection highlighting, equip/unequip state, count reduction on Drop, and carry-weight recalculation. The data is mock inventory data; the interaction pattern is intentionally application-realistic.
 
 ## Confirm dialog
 

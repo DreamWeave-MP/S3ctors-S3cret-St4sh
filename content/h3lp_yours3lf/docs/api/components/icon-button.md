@@ -18,6 +18,7 @@ local mapButton = H3UI.iconButton {
     resource = {
         path = 'textures/menu_icon_magic.dds',
     },
+    selected = currentMode == 'map',
     onActivate = openMap,
 }
 ```
@@ -28,6 +29,7 @@ local mapButton = H3UI.iconButton {
 | --- | --- | --- |
 | `resource` | openmw.ui.TextureResource or openmw.ui.TextureResourceOptions | Icon texture resource or options for one. |
 | `label` | string? | Optional text beside the icon. |
+| `selected` | boolean? | Highlights the button with the active theme color and exposes selected-state styling to H3UI themes. |
 | `onActivate` | function? | Runs for the normal button activation. |
 | `iconProps` | table? | Properties for the icon. |
 | `labelProps` | table? | Properties for the label. |

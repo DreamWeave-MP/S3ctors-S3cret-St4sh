@@ -16,6 +16,7 @@ local H3UI = require('openmw.interfaces').H3UI
 local spell = H3UI.listItem {
     label = 'Detect Creature',
     secondary = '19/63',
+    selected = selectedSpell == 'Detect Creature',
     onActivate = function()
         selectSpell('Detect Creature')
         return true
@@ -28,7 +29,8 @@ local spell = H3UI.listItem {
 | Field | Type | Description |
 | --- | --- | --- |
 | `label` | string? | Text for the generated primary label. |
-| `secondary` | string or number? | Right-aligned secondary value. |
+| `secondary` | string or number? | Right-aligned secondary value. Rows with `secondary` stretch across their parent by default. |
+| `selected` | boolean? | Marks the row as selected so themes can apply active styling. |
 | `onActivate` | function? | Runs when the row is activated. |
 | `labelProps` | table? | Properties for the generated primary label. |
 | `secondaryProps` | table? | Properties for the generated secondary text. |
@@ -38,7 +40,7 @@ local spell = H3UI.listItem {
 
 Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md).
 
-The H3UI style adapter exposes `label` and `secondary` slots for the generated text.
+The H3UI style adapter exposes `label` and `secondary` slots for the generated text. `selected = true` is also a selector trait, so themes can distinguish selected rows without application-specific classes.
 
 ## See also
 

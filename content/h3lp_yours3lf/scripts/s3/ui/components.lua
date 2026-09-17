@@ -75,6 +75,7 @@ return {
     public = true,
     builder = require 'scripts.s3.components.iconButton',
     runtimeState = true,
+    selectable = true,
     slots = {
       root = root(),
       icon = { props = 'iconProps' },
@@ -89,6 +90,7 @@ return {
   itemSlot = {
     public = true,
     builder = require 'scripts.s3.components.itemSlot',
+    selectable = true,
     slots = {
       root = root(),
       icon = { props = 'iconProps' },
@@ -104,6 +106,7 @@ return {
     public = true,
     builder = require 'scripts.s3.components.listItem',
     runtimeState = true,
+    selectable = true,
     slots = {
       root = root(),
       label = { props = 'labelProps' },

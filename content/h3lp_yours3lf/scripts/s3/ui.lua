@@ -48,6 +48,7 @@ local environment = {
 ---@field component? string
 ---@field recipe? string
 ---@field role? string
+---@field selected? boolean
 ---@field slot? string
 ---@field state? string
 ---@field tone? string

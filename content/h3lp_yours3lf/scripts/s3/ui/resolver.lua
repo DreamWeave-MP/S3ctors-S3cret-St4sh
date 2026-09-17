@@ -101,6 +101,7 @@ local function makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
     component = componentNode.component,
     recipe = componentNode.recipe,
     role = componentNode.role,
+    selected = componentNode.selected,
     variant = componentNode.variant,
     tone = componentNode.tone,
     classes = classes,
@@ -204,6 +205,14 @@ local function new(registry, publicComponents)
 
   resolveComponent = function(scope, componentNode, context, trace)
     registry.get(componentNode.component)
+    local selected = componentNode.args.selected
+    if registry.supportsSelection(componentNode.component) then
+      if selected ~= nil then
+        assert(type(selected) == 'boolean', 'H3 UI selected must be boolean')
+      end
+    elseif componentNode.selected ~= nil then
+      error('H3 UI selected is not supported by component: ' .. componentNode.component)
+    end
 
     local activeTheme = context.theme or scope.resolveTheme()
     local matched = themeModule.matching(activeTheme, componentNode)

@@ -32,7 +32,6 @@ local function component(name, spec, defaults)
     spec.state == nil,
     'H3 UI instance state was removed; interactive state is component-owned'
   )
-
   local args = {}
   for key, value in next, spec do
     if not reserved[key] then args[key] = value end
@@ -43,6 +42,7 @@ local function component(name, spec, defaults)
     component = name,
     recipe = spec.recipe ~= nil and spec.recipe or defaults.recipe,
     role = spec.role,
+    selected = type(spec.selected) == 'boolean' and spec.selected or nil,
     variant = spec.variant,
     tone = spec.tone,
     classes = selector.classes(spec.classes, spec.class),
