@@ -13,6 +13,7 @@ local themeModule = require 'scripts.s3.ui.theme'
 local token = require 'scripts.s3.ui.token'
 
 local registry = newRegistry(componentDefinitions)
+local publicComponents = registry.publicComponents()
 local morrowindTheme = themeModule.new(require 'scripts.s3.ui.themes.morrowind', registry)
 local starwindTheme =
   themeModule.new(require 'scripts.s3.ui.themes.starwind', registry, morrowindTheme)
@@ -28,12 +29,13 @@ appearance.initialize(registry, {
     theme = starwindTheme,
   },
 })
-local resolver = newResolver(registry, builtinRecipes)
+local resolver = newResolver(registry, publicComponents)
 
 local environment = {
   resolveTheme = appearance.activeTheme,
   recipes = builtinRecipes,
   resolver = resolver,
+  publicComponents = publicComponents,
 }
 
 ---@class H3UI.Style
@@ -123,22 +125,54 @@ local environment = {
 ---@class H3UI.TokenReference
 ---@field path string
 
----@class H3UI.BuildSpec
+---@class H3UI.ExplainSpec
 ---@field recipe? string
 ---@field component? string
----@field invalidate? fun() Called after a runtime state change that needs a mounted Element update.
+---@field invalidate? fun() Called when H3UI-owned interaction or recipe state needs a mounted Element update.
 
 ---@class H3UI.Scope
 ---@field invalidate? fun()
----@field build fun(spec: H3UI.BuildSpec): openmw.ui.Layout
----@field explain fun(spec: H3UI.BuildSpec): table
+---@field bookFrame fun(options?: table): openmw.ui.Layout
+---@field box fun(options?: table): openmw.ui.Layout
+---@field button fun(options?: H3.ButtonOptions): openmw.ui.Layout
+---@field collapsible fun(options?: H3.CollapsibleOptions): openmw.ui.Layout
+---@field column fun(options?: table): openmw.ui.Layout
+---@field divider fun(options?: H3.DividerOptions): openmw.ui.Layout
+---@field grid fun(options?: table): openmw.ui.Layout
+---@field iconButton fun(options?: H3.IconButtonOptions): openmw.ui.Layout
+---@field image fun(options?: table): openmw.ui.Layout
+---@field itemSlot fun(options?: H3.ItemSlotOptions): openmw.ui.Layout
+---@field list fun(options?: table): openmw.ui.Layout
+---@field listItem fun(options?: H3.ListItemOptions): openmw.ui.Layout
+---@field meter fun(options?: table): openmw.ui.Layout
+---@field numberInput fun(options?: H3.NumberInputOptions): openmw.ui.Layout
+---@field row fun(options?: table): openmw.ui.Layout
+---@field searchInput fun(options?: H3.SearchInputOptions): openmw.ui.Layout
+---@field selector fun(options?: H3.SelectorOptions): openmw.ui.Layout
+---@field slider fun(options?: H3.SliderOptions): openmw.ui.Layout
+---@field spacer fun(options?: H3.SpacerOptions|number, height?: number): openmw.ui.Layout
+---@field tabs fun(options?: H3.TabsOptions): openmw.ui.Layout
+---@field text fun(options?: table|string|number): openmw.ui.Layout
+---@field textInput fun(options?: H3.TextInputOptions): openmw.ui.Layout
+---@field toggle fun(options?: H3.ToggleOptions): openmw.ui.Layout
+---@field tooltip fun(options?: table): openmw.ui.Layout
+---@field window fun(options?: H3.WindowOptions): openmw.ui.Layout
+---@field confirmDialog fun(spec?: H3UI.ConfirmDialogOptions): openmw.ui.Layout
+---@field dialog fun(spec?: H3UI.DialogOptions): openmw.ui.Layout
+---@field itemGrid fun(spec?: H3UI.ItemGridOptions): openmw.ui.Layout
+---@field searchableList fun(spec?: H3UI.SearchableListOptions): openmw.ui.Layout
+---@field settings fun(spec?: H3UI.SettingsOptions): openmw.ui.Layout
+---@field tabbedWindow fun(spec?: H3UI.TabbedWindowOptions): openmw.ui.Layout
+---@field section fun(spec?: H3UI.SectionOptions): openmw.ui.Layout
+---@field component fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic component construction.
+---@field recipe fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic recipe construction.
+---@field explain fun(spec: H3UI.ExplainSpec): table
 ---@field token fun(path: string): H3UI.TokenReference
 
----@class H3UI
+---@class H3UI: H3UI.Scope
 ---@field UNSET table Explicit style-removal sentinel.
 ---@field registerTheme fun(spec: H3UI.ThemeRegistration)
----@field build fun(spec: H3UI.BuildSpec): openmw.ui.Layout
----@field explain fun(spec: H3UI.BuildSpec): table
+---@field explain fun(spec: H3UI.ExplainSpec): table
 ---@field scope fun(options?: H3UI.ScopeOptions): H3UI.Scope
 ---@field token fun(path: string): H3UI.TokenReference
 ---@field slots fun(component: string): string[]
@@ -168,12 +202,18 @@ function H3UI.scope(options) return newScope(options, environment) end
 
 local defaultScope = H3UI.scope()
 
----@param spec H3UI.BuildSpec
----@return openmw.ui.Layout
-function H3UI.build(spec) return defaultScope.build(spec) end
-
----@param spec H3UI.BuildSpec
+---@param spec H3UI.ExplainSpec
 ---@return table
 function H3UI.explain(spec) return defaultScope.explain(spec) end
+
+H3UI.component = defaultScope.component
+H3UI.recipe = defaultScope.recipe
+for index = 1, #publicComponents do
+  local name = publicComponents[index]
+  H3UI[name] = defaultScope[name]
+end
+for name in next, builtinRecipes do
+  H3UI[name] = defaultScope[name]
+end
 
 return H3UI

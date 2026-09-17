@@ -6,6 +6,10 @@ extra:
   kind: api
 ---
 
+{% usage_note(title="Advanced building block") %}
+This module is documented for H3 component and chrome authors. Normal mod UI should use the constructors exposed by `I.H3UI`; this primitive is not part of the application-facing constructor catalog.
+{% end %}
+
 Builds a plain `ui.TYPE.Container` that groups child layouts without adding H3UI presentation. A container sizes itself to its children but does not arrange sibling layouts; use `row` or `column` when you need an arrangement.
 
 ## Example

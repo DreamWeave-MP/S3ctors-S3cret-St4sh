@@ -1,28 +1,25 @@
 ---
 title: listItem
-description: Build a padded row for one list entry.
+description: Build an activatable padded list row with optional right-aligned secondary text.
 weight: 23
 extra:
   kind: api
 ---
 
-Builds a padded H3UI row. Without `content` or `children`, it creates one normal-text child from `label`.
+Builds a padded H3UI list row. Without custom `content` or `children`, `label` creates the primary text and `secondary` optionally creates a right-aligned secondary value. This covers common Morrowind-style rows such as spell name plus `Cost/Chance` without forcing every caller to rebuild the same spacer/alignment structure.
 
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
-local listItem = require 'scripts.s3.components.listItem'
+local H3UI = require('openmw.interfaces').H3UI
 
-ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    listItem {
-      name = 'selected_item',
-      label = 'A padded entry',
-    },
-  },
+local spell = H3UI.listItem {
+    label = 'Detect Creature',
+    secondary = '19/63',
+    onActivate = function()
+        selectSpell('Detect Creature')
+        return true
+    end,
 }
 ```
 
@@ -30,13 +27,18 @@ ui.create {
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `label` | string? | Text for the generated label. |
-| `labelProps` | table? | Properties for the generated label. |
-| `content` | table? | Custom child content; replaces the generated label. |
+| `label` | string? | Text for the generated primary label. |
+| `secondary` | string or number? | Right-aligned secondary value. |
+| `onActivate` | function? | Runs when the row is activated. |
+| `labelProps` | table? | Properties for the generated primary label. |
+| `secondaryProps` | table? | Properties for the generated secondary text. |
+| `content` | table? | Custom child content; replaces generated label/secondary content. |
 | `children` | table? | Custom child layouts when `content` is absent. |
 | `template` | openmw.ui.Template? | Replaces the default row template. |
 
 Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md).
+
+The H3UI style adapter exposes `label` and `secondary` slots for the generated text.
 
 ## See also
 

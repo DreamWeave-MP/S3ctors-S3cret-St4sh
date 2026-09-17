@@ -12,13 +12,13 @@ Builds a `ui.TYPE.Text` layout and supplies `props.text`. Without a template, H3
 
 ```lua
 local ui = require 'openmw.ui'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    text {
+    H3UI.text {
       text = 'Hello from H3',
       props = {
         textAlignH = ui.ALIGNMENT.Center,

@@ -12,15 +12,13 @@ Builds a horizontal row of buttons. The selected tab gets its selected button an
 
 ```lua
 local ui = require 'openmw.ui'
-local column = require 'scripts.s3.components.column'
-local tabs = require 'scripts.s3.components.tabs'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
 local pages = {
   'General',
   'Advanced',
 }
-local page = text {
+local page = H3UI.text {
   text = pages[1],
 }
 local element
@@ -29,9 +27,9 @@ element = ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    column {
+    H3UI.column {
       children = {
-        tabs {
+        H3UI.tabs {
           items = pages,
           onSelect = function(_, label)
             page.props.text = 'Showing ' .. label

@@ -1,45 +1,52 @@
 ---
 title: H3UI and Styling
-description: Build high-level UI from recipes and render it with the player's configured appearance without changing H3's layout lifecycle.
+description: Use one constructor facade for H3 components and recipes while keeping layout ownership explicit.
 weight: 30
 extra:
   kind: concept
 ---
 
-H3's low-level components answer **how do I build this OpenMW layout?** H3UI answers **what interface should I build, and how should it look?**
+H3UI is the application-facing UI surface for H3. The important design rule is simple:
 
-The layers are deliberately one-way:
+> Application code should describe the interface it wants, not the module graph that happens to implement it.
 
-```text
-OpenMW UI
-    ↑
-H3 primitive components
-    ↑
-component style adapters
-    ↑
-component nodes + style resolver
-    ↑
-recipes + player-configured appearance
+Ordinary scripts therefore construct both primitive controls and higher-level recipes through the same object:
+
+```lua
+local I = require 'openmw.interfaces'
+local ui = I.H3UI.scope { invalidate = refresh }
+
+return ui.window {
+    title = 'My Mod',
+    ui.column {
+        gap = 8,
+        ui.text 'Settings',
+        ui.settings { fields = fields },
+        ui.button {
+            label = 'Apply',
+            tone = 'positive',
+            onActivate = apply,
+        },
+    },
+}
 ```
 
-The low-level component library does not depend on H3UI. Existing code that directly requires `scripts.s3.components.button`, `row`, `window`, or any other primitive keeps working unchanged.
+Whether `button` is a primitive component and `settings` is a recipe is useful information to H3's resolver and theme engine. It is not ceremony every mod author should repeat.
 
 ## A construction-time compiler, not a widget runtime
 
-`H3UI.build` expands recipes and resolves styles while constructing a layout. Once built, the result is an ordinary OpenMW layout table. There is no virtual DOM, retained style graph, polling loop, automatic root traversal, or extra `onFrame` work.
-
-That keeps H3's existing lifecycle intact:
+H3UI resolves recipes and styles while constructing ordinary OpenMW layouts:
 
 ```text
-UI description
+H3UI constructor call
     ↓
-recipe expansion
+recipe expansion when needed
     ↓
-component nodes
+semantic component nodes
     ↓
 style resolution
     ↓
-existing H3 component builders
+H3 component builders
     ↓
 openmw.ui.Layout
     ↓
@@ -48,74 +55,109 @@ caller ui.create(...)
 caller element:update() / destroy()
 ```
 
-If a callback changes application state, H3UI still cannot know which mounted root should redraw. The caller owns that decision. Theme state rules are narrower: H3UI may update the generated style tables for `hover` and `pressed` events, but it never owns the mounted element or application state.
+There is no virtual DOM, retained style graph, polling loop, automatic root traversal, or extra `onFrame` work.
+
+The caller still owns application state and the mounted root. If a callback changes what should be displayed, update or rebuild the caller-owned layout. H3UI's runtime hover/pressed support is deliberately narrower: it mutates generated style properties and may call a scope's `invalidate` callback, but it never takes ownership of the element.
+
+## Components and recipes share one public path
+
+The constructor facade deliberately hides require-spam:
+
+```lua
+ui.row {
+    gap = 6,
+    ui.text 'Name',
+    ui.textInput { text = name, onChange = setName },
+}
+```
+
+not:
+
+```text
+require row
+require text
+require textInput
+assemble them manually
+```
+
+The low-level component modules still exist because H3 itself and recipe authors need them, but they are not the application-level teaching path.
+
+String-based `ui.component(name, spec)` and `ui.recipe(name, spec)` remain available for dynamic or framework code. Known controls should use their named constructors so LuaLS and the documentation can expose their contracts directly.
 
 ## Structure, traits, presentation
 
 A recipe owns **structure**: which H3 components are composed and how they nest.
 
-A component node carries **traits**: component name, recipe, role, variant, tone, and classes.
+A component node carries **traits**: component name, recipe identity, role, variant, tone, and classes.
 
-A theme owns **presentation**: rules that target those meanings and write through public component style slots. The player settings supply its active palette.
+A theme owns **presentation**: rules target those meanings and write through public component style slots. The player settings supply the active palette.
 
-This is the useful part of CSS without importing CSS syntax or DOM assumptions into OpenMW Lua.
+This keeps ordinary application code semantic:
 
-## Why roles instead of descendant selectors
+```lua
+ui.button {
+    role = 'deleteCharacter',
+    tone = 'negative',
+    label = 'Delete',
+}
+```
 
-A dialog recipe may currently build:
+instead of hard-coding whichever literal color happens to represent destructive actions today.
+
+## Why roles instead of tree selectors
+
+A confirm-dialog recipe may currently build:
 
 ```text
-dialog
-└── column
+bookFrame
+└── content
     ├── message
     └── actions row
 ```
 
-A theme should not need to encode that exact tree. It can target:
+A theme should not encode that exact tree. It can target:
 
 ```lua
 selector = {
-    recipe = 'dialog.confirm',
+    recipe = 'confirmDialog',
     role = 'actions',
 }
 ```
 
-The recipe can later wrap or rearrange that row without breaking a theme that cares about its meaning.
+The recipe can later wrap or rearrange the row without breaking a theme that cares about its meaning.
 
 ## Why style slots instead of child traversal
 
-A button's generated label is an implementation detail, but `labelProps` is already a stable public styling surface. The component adapter exposes that surface as the `label` slot.
-
-The style engine therefore says:
+A button's generated label is an implementation detail, but `labelProps` is a stable styling surface. The adapter exposes it as the `label` slot:
 
 ```text
 button.label → button option labelProps
 ```
 
-It does **not** search through `layout.content[1].content[1]` and mutate whatever happens to be there today.
-
-This keeps component implementation refactors from becoming theme-breaking API changes.
-
-## Why appearance is player-configured
-
-H3 is shared by unrelated mods. A process-wide `setTheme()` would let one mod accidentally or deliberately restyle another mod's interface. H3UI therefore has one player-owned appearance configuration, and every scope uses it:
-
-```lua
-local InventoryH3UI = H3UI.scope()
-local JournalH3UI = H3UI.scope()
-```
-
-Both use the same configured palette while retaining independent recipes and invalidation behavior. Mods may register additional presets, but only the player settings select them.
+Themes never search through arbitrary generated child indexes hoping to find the label. The same rule applies to slots such as `window.captionText`, `itemSlot.count`, and `listItem.secondary`.
 
 ## Why recipes do not own models
 
-`itemGrid` composes item slots, but it is not an inventory system. `searchableList` composes a search field and list, but it does not own the query or filter your collection. `settings` composes controls, but it does not persist settings.
+`itemGrid` composes item slots, but it is not an inventory system. `searchableList` filters its supplied items during construction, but it does not own the query or search algorithm. `settings` composes controls, but it does not persist settings.
 
-Recipes remove repeated UI assembly. They do not absorb application data models into H3.
+Recipes exist when recognizable semantic structure removes meaningful repeated assembly. They do not absorb application data models into H3.
 
-## Runtime state rules
+That also sets the bar for adding recipes: if ordinary composition is already shorter and clearer, a new recipe is not justified.
 
-`state` rules can style generated component slots while the component's layout is alive:
+## Why appearance is player-configured
+
+H3 is shared by unrelated mods. A process-wide `setTheme()` would let one mod restyle another mod's interface. H3UI therefore has one player-owned appearance configuration, and every scope uses it:
+
+```lua
+local inventoryUi = H3UI.scope()
+local journalUi = H3UI.scope()
+```
+
+Both use the same configured appearance while retaining independent recipes and invalidation behavior. Mods may register additional presets, but only the player settings select them.
+
+## Runtime interaction state
+
+Theme rules may target generated `hover` and `pressed` states:
 
 ```lua
 {
@@ -132,41 +174,33 @@ Recipes remove repeated UI assembly. They do not absorb application data models 
 }
 ```
 
-H3UI applies `hover` on `focusGain`, `pressed` for the primary mouse button, and restores the previous state on `focusLoss` or mouse release. State rules only change properties exposed through registered slots. Explicit component arguments and inline style properties remain protected, so a caller's value wins over a state rule.
+H3UI applies hover on focus gain, pressed for the primary mouse button, and restores the previous generated style on focus loss or release. Explicit component options and inline style still win over theme state rules.
 
-For now, an explicit component `state` is mutually exclusive with these runtime interaction states; H3UI does not install hover or pressed handlers when a component already has a state.
+Application code does not set arbitrary component `state`; selected, checked, enabled, or similar concepts belong to the components that actually implement them.
 
-This is deliberately not a retained UI system. H3UI adds event callbacks to the returned layout and mutates the generated style tables; the caller still mounts, updates, and destroys the layout. If runtime state styling is used, pass an optional `invalidate` callback in the build spec. H3UI calls it only after a state transition changes a styled property, so the caller can update its mounted element without giving H3UI ownership of that element:
+## Reference fixtures are part of the API design process
 
-```lua
-local ui = require 'openmw.ui'
-local element
-local layout = H3UI.build {
-    component = 'button',
-    label = 'Refreshes on hover',
-    invalidate = function()
-        if element and element.layout then element:update() end
-    end,
-}
+H3's component test suite is intentionally split between two jobs:
 
-element = ui.create {
-    layer = 'Windows',
-    content = ui.content { layout },
-}
-```
+- small diagnostic fixtures isolate engine invariants such as sizing, boundaries, event composition, and window geometry;
+- application-grade reference fixtures exercise the public H3UI surface the way a real mod would.
 
-## Version 1 boundaries
+The reference fixtures include a Morrowind-style Magic menu, an inventory/item-grid surface, and a tabbed mod configuration window. They are meant to remain readable and screenshot-worthy, not merely dense widget torture tests.
 
-The initial engine intentionally does not include:
+When a realistic fixture requires the same awkward structure repeatedly, that is evidence for a new component or recipe. This keeps the high-level API usage-driven instead of growing abstractions in the abstract.
+
+## Boundaries
+
+H3UI intentionally does not include:
 
 - CSS strings or a CSS parser;
 - arbitrary ancestor/descendant selectors;
 - sibling or `nth-child` selectors;
 - general inherited style properties;
 - animation or transitions;
-- a public theme-selection API or a global mutable active theme.
-
-H3 still does not parse CSS strings or create a general pseudo-state engine. Runtime state is limited to the generated slot properties described above.
+- a public theme-selection API or a global mutable active theme;
+- caller-supplied arbitrary component state;
+- retained application models.
 
 See [H3UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) for the concrete API and [UI Layouts and Lifecycle](@/h3lp_yours3lf/docs/concepts/ui-components.md) for mounting and update ownership.
 

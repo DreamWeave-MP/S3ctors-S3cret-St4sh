@@ -1,5 +1,25 @@
 ---@omw-context menu|player
 
+local node = require 'scripts.s3.ui.node'
+
+---@class H3UI.ItemGridOptions
+---@field items? table[]|openmw.ui.Layout[]
+---@field columns? integer
+---@field columnGap? number
+---@field rowGap? number
+---@field rowProps? table
+---@field variant? string
+---@field tone? string
+---@field class? string
+---@field classes? string[]|table<string, boolean>
+---@field style? table
+---@field name? string
+---@field props? table
+---@field external? table
+---@field events? table
+---@field userData? any
+---@field template? openmw.ui.Template
+
 local metadata = {
   role = true,
   variant = true,
@@ -7,14 +27,16 @@ local metadata = {
   class = true,
   classes = true,
   style = true,
-  component = true,
-  recipe = true,
+  name = true,
 }
 
 local function itemNode(ctx, item, index)
+  if node.isComponent(item) or node.isRecipe(item) then return item end
   if type(item) ~= 'table' then return item end
-  if item.recipe then return ctx.build(item) end
-  if item.component then return ctx.component(item.component, item) end
+  assert(
+    item.component == nil and item.recipe == nil,
+    'H3 UI itemGrid items must be descriptors or constructed layouts'
+  )
   if item.type ~= nil or item.template ~= nil and item.resource == nil then return item end
   local spec = {
     role = item.role or 'item',
@@ -23,12 +45,12 @@ local function itemNode(ctx, item, index)
     class = item.class,
     classes = item.classes,
     style = item.style,
+    name = item.name or ('item_' .. tostring(index)),
   }
   for key, value in next, item do
     if not metadata[key] then spec[key] = value end
   end
-  spec.name = spec.name or ('item_' .. tostring(index))
-  return ctx.component('itemSlot', spec)
+  return ctx.itemSlot(spec)
 end
 
 local function itemGrid(ctx, spec)
@@ -37,7 +59,7 @@ local function itemGrid(ctx, spec)
   for index = 1, #items do
     children[index] = itemNode(ctx, items[index], index)
   end
-  return ctx.component('grid', {
+  return ctx.grid {
     role = 'root',
     variant = spec.variant,
     tone = spec.tone,
@@ -55,6 +77,6 @@ local function itemGrid(ctx, spec)
     events = spec.events,
     userData = spec.userData,
     template = spec.template,
-  })
+  }
 end
 return itemGrid

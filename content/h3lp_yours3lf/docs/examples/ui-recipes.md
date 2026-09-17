@@ -1,386 +1,325 @@
 ---
 title: UI Recipes
-description: Copyable H3UI compositions for common OpenMW UI surfaces.
-weight: 45
+weight: 10
+description: Copyable H3UI application patterns built through the public constructor facade.
 extra:
   kind: example
 ---
 
-These recipes use H3UI's passive builders. Put them in a registered `menu` or `player` script; requiring a component does not run a script. Keep application state and the mounted root in your script, and call `element:update()` when a callback changes what should be displayed. Each content-only root uses `ui.TYPE.Container` so it sizes itself to its children.
+These examples use the same path H3's application-grade component fixtures use: one `I.H3UI` facade, caller-owned state, and ordinary OpenMW mounting.
 
-{% usage_note(title="Two levels · recipes or direct components") %}
-The examples below remain useful low-level compositions. H3 also installs `I.H3UI`, which can build the same kinds of surfaces from recipes and the player's configured appearance. `H3UI.build` still returns an ordinary caller-owned layout; it does not replace `ui.create` or `element:update()`.
+{% usage_note(title="Reference code, not a second framework") %}
+The component test suite contains the executable versions of these patterns. Its application fixtures are intentionally written as real mod code: attractive enough to screenshot, concise enough to copy, and complicated enough to pressure-test H3UI. Small synthetic fixtures remain only where they isolate a specific engine invariant better.
 {% end %}
 
-## H3UI settings panel
-
-The high-level settings recipe removes the repeated row/label/control assembly while leaving values and redraw ownership in your script:
+## The normal setup
 
 ```lua
-local ui = require 'openmw.ui'
 local I = require 'openmw.interfaces'
+local util = require 'openmw.util'
 
-local H3UI = I.H3UI
-local enabled = true
-local intensity = 50
-local pageSize = 20
 local element
 
-local function build()
-    return H3UI.build {
-        recipe = 'settings',
-        title = 'Settings',
-        fields = {
-            {
-                kind = 'toggle',
-                label = 'Enabled',
-                value = enabled,
-                onChange = function(value)
-                    enabled = value
-                    element:update()
-                end,
-            },
-            {
-                kind = 'slider',
-                label = 'Intensity',
-                value = intensity,
-                min = 0,
-                max = 100,
-                step = 5,
-                onChange = function(value)
-                    intensity = value
-                    element:update()
-                end,
-            },
-            {
-                kind = 'number',
-                label = 'Page size',
-                value = pageSize,
-                min = 5,
-                max = 100,
-                step = 5,
-                integer = true,
-                onChange = function(value)
-                    pageSize = value
-                    element:update()
-                end,
-            },
-        },
-    }
+local function refresh()
+    if element and element.layout then element:update() end
 end
 
-element = ui.create {
-    type = ui.TYPE.Container,
-    layer = 'Windows',
-    content = ui.content { build() },
+local ui = I.H3UI.scope {
+    invalidate = refresh,
 }
 ```
 
-The recipe does not persist any setting. It simply composes existing H3 controls.
+The scoped object is your constructor catalog. You normally should not need separate component `require`s.
 
-## Registered styling
+## Morrowind-style Magic menu
+
+A useful reference surface should exercise real interface problems. The bundled Magic-menu fixture combines window chrome, an icon strip, semantic sections, aligned secondary values, filtering, destructive actions, hover/pressed styling, and enough real text to expose spacing problems.
+
+The important part is not reproducing Morrowind's data model. It is how little scaffolding the layout needs:
 
 ```lua
-local util = require 'openmw.util'
-local H3UI = require('openmw.interfaces').H3UI
+local function spellRow(spell)
+    return ui.listItem {
+        label = spell.name,
+        secondary = spell.costChance,
+        onActivate = function()
+            selectedSpell = spell
+            refresh()
+            return true
+        end,
+    }
+end
 
-H3UI.registerTheme {
-    id = 'myMod:danger-demo',
-    name = 'danger-demo',
-    tokens = {
-        color = {
-            danger = util.color.rgb(1, 0.25, 0.2),
+local function spellSection(title, secondary, spells)
+    local children = {}
+
+    for index = 1, #spells do
+        children[#children + 1] = spellRow(spells[index])
+    end
+
+    return ui.section {
+        title = title,
+        secondary = secondary,
+        gap = 1,
+        children = children,
+    }
+end
+
+local layout = ui.window {
+    title = selectedSpell and selectedSpell.name or 'None',
+    size = util.vector2(620, 440),
+    pinnable = true,
+
+    ui.column {
+        gap = 6,
+
+        ui.box {
+            props = { size = util.vector2(584, 30) },
+            ui.row {
+                gap = 2,
+                ui.image { resource = { path = 'textures/menu_icon_magic.dds' } },
+                -- More active-effect icons...
+            },
+        },
+
+        ui.box {
+            props = { size = util.vector2(584, 316) },
+            ui.column {
+                gap = 2,
+                spellSection('Powers', nil, powers),
+                ui.divider(),
+                spellSection('Spells', 'Cost/Chance', spells),
+            },
+        },
+
+        ui.row {
+            gap = 4,
+            ui.textInput {
+                text = filter,
+                onChange = function(value)
+                    filter = value
+                    refresh()
+                end,
+            },
+            ui.button {
+                label = 'Delete',
+                tone = 'negative',
+                onActivate = deleteSelectedSpell,
+            },
         },
     },
-    rules = {
+}
+```
+
+Notice what is *not* present: no row/column/text/button import pile, no raw `mouseClick` callback, no `args` wrapper, and no knowledge that the individual constructors resolve through different internal component adapters.
+
+The executable fixture lives at `scripts/s3/components/componentTests/magicMenu.lua`.
+
+## Tabbed mod configuration
+
+`settings` and `tabbedWindow` are higher-level recipes, but they are called exactly like the primitive constructors around them:
+
+```lua
+local generalPage = ui.settings {
+    title = 'General',
+    gap = 8,
+    fieldGap = 12,
+    fields = {
         {
-            selector = {
-                component = 'button',
-                tone = 'negative',
-                slot = 'label',
+            label = 'Enabled',
+            kind = 'toggle',
+            value = enabled,
+            onChange = function(value)
+                enabled = value
+                refresh()
+            end,
+        },
+        {
+            label = 'Mode',
+            kind = 'selector',
+            items = modes,
+            selected = selectedMode,
+            onSelect = function(index)
+                selectedMode = index
+                refresh()
+            end,
+        },
+        {
+            label = 'Intensity',
+            kind = 'slider',
+            value = intensity,
+            min = 0,
+            max = 100,
+            step = 5,
+            onChange = function(value)
+                intensity = value
+                refresh()
+            end,
+        },
+    },
+}
+
+local advancedPage = ui.column {
+    gap = 8,
+    ui.text { text = 'Advanced', role = 'title' },
+    ui.collapsible {
+        title = 'Experimental behavior',
+        expanded = showExperimental,
+        onToggle = function(value)
+            showExperimental = value
+            refresh()
+        end,
+        children = {
+            ui.text 'Put genuinely advanced controls here.',
+        },
+    },
+}
+
+local layout = ui.tabbedWindow {
+    title = 'My Mod',
+    size = util.vector2(560, 360),
+    selected = selectedPage,
+    tabs = {
+        { label = 'General', content = generalPage },
+        { label = 'Advanced', content = advancedPage },
+    },
+    onSelect = function(index)
+        selectedPage = index
+    end,
+}
+```
+
+`tabbedWindow` renders only the selected page. The `selectedPage` variable is yours: update it in `onSelect` and rebuild the caller-owned surface.
+
+The executable fixture lives at `scripts/s3/components/componentTests/applicationForm.lua`.
+
+## Inventory and item-grid surface
+
+`itemGrid` removes repeated grid/item-slot assembly without pretending to own inventory data:
+
+```lua
+local itemLayouts = {}
+for index = 1, #items do
+    local item = items[index]
+    itemLayouts[index] = {
+        resource = { path = item.icon },
+        count = item.count,
+        onActivate = function()
+            selectedItem = item
+            refresh()
+            return true
+        end,
+    }
+end
+
+local layout = ui.window {
+    title = 'Inventory',
+
+    ui.row {
+        gap = 8,
+
+        ui.box {
+            ui.itemGrid {
+                columns = 4,
+                columnGap = 4,
+                rowGap = 4,
+                items = itemLayouts,
             },
-            style = {
-                props = {
-                    textColor = H3UI.token('color.danger'),
+        },
+
+        ui.column {
+            gap = 8,
+            ui.text { text = selectedItem.name, role = 'title' },
+            ui.divider(),
+            ui.text(('Weight %s    Value %s'):format(
+                selectedItem.weight,
+                selectedItem.value
+            )),
+            ui.text 'Condition',
+            ui.meter {
+                value = selectedItem.condition,
+                max = selectedItem.maxCondition,
+            },
+            ui.spacer { grow = 1 },
+            ui.row {
+                gap = 6,
+                ui.button { label = 'Equip', onActivate = equipSelected },
+                ui.button {
+                    label = 'Drop',
+                    tone = 'negative',
+                    onActivate = dropSelected,
                 },
             },
         },
     },
 }
-
-local deleteButton = H3UI.build {
-    component = 'button',
-    tone = 'negative',
-    label = 'Delete',
-}
 ```
 
-Registered themes appear in the player's H3UI settings. Scripts do not select a theme; every H3UI scope uses the player's configured appearance. See [H3UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) for selectors, traits, tokens, classes, style slots, cascade order, and diagnostics.
+The executable fixture lives at `scripts/s3/components/componentTests/inventoryPanel.lua`.
 
-## Settings panel
+## Confirm dialog
 
-Compose a small settings surface from a column, labels, toggle, slider, and numeric input. Interactive callbacks update the mounted root after changing their state.
+A complete confirmation flow should not require rebuilding the same frame/message/action structure in every mod:
 
 ```lua
-local ui = require 'openmw.ui'
-local util = require 'openmw.util'
-local column = require 'scripts.s3.components.column'
-local numberInput = require 'scripts.s3.components.numberInput'
-local row = require 'scripts.s3.components.row'
-local slider = require 'scripts.s3.components.slider'
-local text = require 'scripts.s3.components.text'
-local toggle = require 'scripts.s3.components.toggle'
-
-local enabled = true
-local intensity = 50
-local pageSize = 20
-local element
-
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    column {
-      children = {
-        text {
-          text = 'Settings',
-        },
-        row {
-          children = {
-            text {
-              text = 'Enabled',
-            },
-            toggle {
-              value = enabled,
-              onChange = function(value)
-                enabled = value
-                element:update()
-              end,
-            },
-          },
-        },
-        text {
-          text = 'Intensity',
-        },
-        slider {
-          value = intensity,
-          min = 0,
-          max = 100,
-          step = 5,
-          props = {
-            size = util.vector2(260, 18),
-          },
-          onChange = function(value)
-            intensity = value
-            element:update()
-          end,
-        },
-        row {
-          children = {
-            text {
-              text = 'Page size',
-            },
-            numberInput {
-              value = pageSize,
-              min = 5,
-              max = 100,
-              step = 5,
-              integer = true,
-              onChange = function(value)
-                pageSize = value
-                element:update()
-              end,
-            },
-          },
-        },
-      },
-    },
-  },
+local dialog = ui.confirmDialog {
+    title = 'Delete preset?',
+    body = 'This cannot be undone.',
+    confirmLabel = 'Delete',
+    confirmTone = 'negative',
+    onCancel = closeDialog,
+    onConfirm = deletePreset,
 }
 ```
 
-See [toggle](@/h3lp_yours3lf/docs/api/components/toggle.md), [slider](@/h3lp_yours3lf/docs/api/components/slider.md), and [numberInput](@/h3lp_yours3lf/docs/api/components/number-input.md).
-
-## Inventory-ish grid
-
-`grid` does not know anything about inventory. Give it item-slot layouts, then use focus events to show a caller-owned tooltip beside the grid.
+For custom action sets:
 
 ```lua
-local async = require 'openmw.async'
-local ui = require 'openmw.ui'
-local util = require 'openmw.util'
-local grid = require 'scripts.s3.components.grid'
-local itemSlot = require 'scripts.s3.components.itemSlot'
-local text = require 'scripts.s3.components.text'
-local tooltip = require 'scripts.s3.components.tooltip'
-
-local iconSize = util.vector2(72, 72)
-local red = util.color.rgb(1, 0, 0)
-local green = util.color.rgb(0, 1, 0)
-local blue = util.color.rgb(0, 0, 1)
-
-local tooltipText = text {
-  text = '',
-}
-local tooltipLayout = tooltip {
-  props = {
-    position = util.vector2(320, 80),
-    visible = false,
-  },
-  children = {
-    tooltipText,
-  },
-}
-local element
-
-local function slot(label, count, color)
-  return itemSlot {
-    resource = {
-      path = 'white',
+ui.confirmDialog {
+    title = 'Unsaved changes',
+    body = 'What should happen to your edits?',
+    actions = {
+        { role = 'cancel', label = 'Keep editing', onActivate = closePrompt },
+        { role = 'discard', label = 'Discard', tone = 'negative', onActivate = discard },
+        { role = 'confirm', label = 'Save', tone = 'positive', onActivate = save },
     },
-    count = count,
-    iconProps = {
-      size = iconSize,
-      color = color,
-    },
-    events = {
-      focusGain = async:callback(function()
-        tooltipText.props.text = label
-        tooltipLayout.props.visible = true
-        element:update()
-      end),
-      focusLoss = async:callback(function()
-        tooltipLayout.props.visible = false
-        element:update()
-      end),
-    },
-  }
-end
-
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    grid {
-      columns = 3,
-      items = {
-        slot('Restore potion', 3, red),
-        slot('Torch', 1, green),
-        slot('Lockpick', 12, blue),
-      },
-    },
-    tooltipLayout,
-  },
 }
 ```
-
-For real inventory data, rebuild or update the owner when item data changes. See [grid](@/h3lp_yours3lf/docs/api/components/grid.md), [itemSlot](@/h3lp_yours3lf/docs/api/components/item-slot.md), and [tooltip](@/h3lp_yours3lf/docs/api/components/tooltip.md).
-
-## Tabbed window
-
-Tabs select a label and report the item; they do not own page content. Keep the page layout beside the tab strip and update it in `onSelect`.
-
-```lua
-local ui = require 'openmw.ui'
-local column = require 'scripts.s3.components.column'
-local tabs = require 'scripts.s3.components.tabs'
-local text = require 'scripts.s3.components.text'
-local window = require 'scripts.s3.components.window'
-
-local pages = {
-  'General',
-  'Advanced',
-}
-local pageText = text {
-  text = 'General settings',
-}
-local element
-
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    window {
-      title = 'Preferences',
-      children = {
-        column {
-          children = {
-            tabs {
-              items = pages,
-              onSelect = function(_, label)
-                pageText.props.text = label .. ' settings'
-                element:update()
-              end,
-            },
-            pageText,
-          },
-        },
-      },
-    },
-  },
-}
-```
-
-See [tabs](@/h3lp_yours3lf/docs/api/components/tabs.md) and [window](@/h3lp_yours3lf/docs/api/components/window.md).
 
 ## Searchable list
 
-Keep filter state outside the components. Replace the root's content and update the existing element when the query changes; do not destroy and recreate the root during the input callback.
+The recipe owns the recurring visual structure and performs simple construction-time matching, not your query state or search algorithm:
 
 ```lua
-local ui = require 'openmw.ui'
-local column = require 'scripts.s3.components.column'
-local list = require 'scripts.s3.components.list'
-local listItem = require 'scripts.s3.components.listItem'
-local searchInput = require 'scripts.s3.components.searchInput'
-
-local names = {
-  'Almalexia',
-  'Baurus',
-  'Caius Cosades',
-}
-local element
-
-local function matches(name, query)
-  return query == ''
-    or string.find(string.lower(name), string.lower(query), 1, true) ~= nil
-end
-
-local function build(query)
-  local items = {}
-  for _, name in ipairs(names) do
-    if matches(name, query) then
-      items[#items + 1] = listItem {
-        label = name,
-      }
-    end
-  end
-
-  return column {
-    children = {
-      searchInput {
-        value = query,
-        onChange = function(nextQuery)
-          element.layout.content = ui.content {
-            build(nextQuery),
-          }
-          element:update()
+local function buildResults()
+    return ui.searchableList {
+        query = query,
+        items = allNames,
+        text = function(item)
+            return item
         end,
-      },
-      list {
-        items = items,
-      },
-    },
-  }
+        onQueryChange = function(value)
+            query = value
+            rebuildResults()
+        end,
+    }
 end
+```
 
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    build(''),
-  },
+If the application needs pagination, selection models, database search, or async indexing, keep those in application code. A recipe should remove repeated interface assembly, not become a data framework.
+
+## When *not* to add a recipe
+
+The constructor API intentionally makes ordinary composition cheap:
+
+```lua
+ui.row {
+    gap = 6,
+    ui.button { label = 'Cancel', onActivate = cancel },
+    ui.button { label = 'Apply', tone = 'positive', onActivate = apply },
 }
 ```
 
-See [searchInput](@/h3lp_yours3lf/docs/api/components/search-input.md) and [list](@/h3lp_yours3lf/docs/api/components/list.md).
+A `buttonRow` recipe would not improve that. New recipes should earn their existence by encoding recognizable semantic structure, removing substantial repetitive plumbing, or exposing stable roles/slots that themes need.
+
+The reference fixtures are where H3 pressures that rule. If several serious layouts keep writing the same awkward structure, that is evidence for the next reusable primitive or recipe.

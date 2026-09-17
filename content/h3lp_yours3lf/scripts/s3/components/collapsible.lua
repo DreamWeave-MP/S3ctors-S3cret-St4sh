@@ -2,8 +2,6 @@
 
 local emptyContent = {}
 
-local async = require 'openmw.async'
-
 local button = require 'scripts.s3.components.button'
 local column = require 'scripts.s3.components.column'
 
@@ -55,13 +53,11 @@ local function collapsible(options)
     label = expanded and expandedLabel or collapsedLabel,
     props = options.headerProps,
     labelProps = options.headerLabelProps,
-    events = {
-      mouseClick = async:callback(function(_, headerLayout)
-        setExpanded(not expanded, headerLayout)
-        if onToggle then onToggle(expanded) end
-        return true
-      end),
-    },
+    onActivate = function(_, headerLayout)
+      setExpanded(not expanded, headerLayout)
+      if onToggle then onToggle(expanded) end
+      return true
+    end,
   }
 
   bodyLayout = column {

@@ -12,7 +12,7 @@ Builds a TextEdit that preserves raw text while editing and normalizes it on foc
 
 ```lua
 local ui = require 'openmw.ui'
-local numberInput = require 'scripts.s3.components.numberInput'
+local H3UI = require('openmw.interfaces').H3UI
 
 local amount = 20
 local element
@@ -21,7 +21,7 @@ element = ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    numberInput {
+    H3UI.numberInput {
       value = amount,
       min = 5,
       max = 100,

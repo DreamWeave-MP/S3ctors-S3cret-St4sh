@@ -22,9 +22,9 @@ A layout is a Lua table that describes one widget and its children. An element i
 
 ```lua
 local ui = require 'openmw.ui'
-local text = require 'scripts.s3.components.text'
+local I = require 'openmw.interfaces'
 
-local status = text {
+local status = I.H3UI.text {
   text = 'Ready',
 }
 
@@ -44,8 +44,8 @@ element:update()
 
 ## Callbacks and context
 
-H3 component callbacks are ordinary Lua functions. Low-level OpenMW event callbacks in an `events` table must be wrapped with `async:callback`. Interactive components update their own layout state before calling your callback, but they do not know which root owns the rendered tree.
+H3 semantic callbacks such as `button.onActivate`, `toggle.onChange`, and `selector.onSelect` are ordinary Lua functions. Raw OpenMW callbacks supplied through an `events` table still use OpenMW event semantics, but normal controls should not require that plumbing. Interactive components update their own layout state before calling your callback, but they do not know which root owns the rendered tree.
 
 Keep these components in `menu` or `player` scripts. A global or local script can coordinate state, but it cannot directly use the UI package.
 
-The [UI Components API](@/h3lp_yours3lf/docs/api/components/_index.md) lists the builders. The [UI Recipes](@/h3lp_yours3lf/docs/examples/ui-recipes.md) show larger compositions.
+Use the [H3UI interface](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) as the normal constructor surface. The [UI Components API](@/h3lp_yours3lf/docs/api/components/_index.md) documents individual option contracts, while the [UI Recipes](@/h3lp_yours3lf/docs/examples/ui-recipes.md) show larger copyable compositions.

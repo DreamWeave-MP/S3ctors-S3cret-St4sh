@@ -12,17 +12,16 @@ Builds a solid H3UI framed body, optionally preceded by a header title. It is a 
 
 ```lua
 local ui = require 'openmw.ui'
-local bookFrame = require 'scripts.s3.components.bookFrame'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    bookFrame {
+    H3UI.bookFrame {
       title = 'Notes',
       children = {
-        text {
+        H3UI.text {
           text = 'A solid framed page.',
         },
       },

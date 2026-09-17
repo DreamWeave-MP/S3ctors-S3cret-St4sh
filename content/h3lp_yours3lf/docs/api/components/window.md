@@ -13,8 +13,7 @@ Builds a framed Widget with an optional caption and body. It is not `ui.TYPE.Win
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local text = require 'scripts.s3.components.text'
-local window = require 'scripts.s3.components.window'
+local H3UI = require('openmw.interfaces').H3UI
 
 local position = util.vector2(80, 80)
 local size = util.vector2(360, 220)
@@ -25,8 +24,8 @@ element = ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    window {
-      title = 'My tool window',
+    H3UI.window {
+      title = 'My tool H3UI.window',
       position = position,
       size = size,
       pinnable = true,
@@ -49,7 +48,7 @@ element = ui.create {
         element:update()
       end,
       children = {
-        text {
+        H3UI.text {
           text = 'Drag the caption or resize an edge.',
         },
       },

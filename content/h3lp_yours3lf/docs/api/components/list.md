@@ -12,19 +12,18 @@ Builds a vertical `ui.TYPE.Flex`. Use `items` for a list of layouts, or `childre
 
 ```lua
 local ui = require 'openmw.ui'
-local list = require 'scripts.s3.components.list'
-local listItem = require 'scripts.s3.components.listItem'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    list {
+    H3UI.list {
       items = {
-        listItem {
+        H3UI.listItem {
           label = 'First entry',
         },
-        listItem {
+        H3UI.listItem {
           label = 'Second entry',
         },
       },

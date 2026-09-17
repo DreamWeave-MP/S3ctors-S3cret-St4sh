@@ -6,6 +6,10 @@ extra:
   kind: api
 ---
 
+{% usage_note(title="Advanced building block") %}
+This module is documented for H3 component and chrome authors. Normal mod UI should use the constructors exposed by `I.H3UI`; this primitive is not part of the application-facing constructor catalog.
+{% end %}
+
 Builds a horizontal title strip from head blocks and centered text. It can append a pin control and/or close button; it does not close a parent window. Give it a fixed-width Widget parent because its default width is relative.
 
 ## Example
@@ -47,7 +51,7 @@ ui.create {
 | `closable` | boolean? | Adds a close control. |
 | `onClose` | function? | Runs when close is pressed. |
 | `closeLabel` | string? | Accessible close-button label. |
-| `height` | number? | Strip height; controls need at least `19`. |
+| `height` | number? | Strip height; defaults to `20`. Captions with pin or close controls require at least `20`; captions without controls require at least `4`. |
 | `textProps` | table? | Properties for the caption text. |
 | `pinProps` | table? | Properties for the pin control. |
 | `closeProps` | table? | Properties for the close control. |

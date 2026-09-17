@@ -1,8 +1,10 @@
 ---@omw-context menu|player
 
+local constructors = require 'scripts.s3.ui.constructors'
 local merge = require 'scripts.s3.ui.merge'
 local node = require 'scripts.s3.ui.node'
 local themeModule = require 'scripts.s3.ui.theme'
+local token = require 'scripts.s3.ui.token'
 
 local styleBagKeys = {
   external = true,
@@ -108,7 +110,8 @@ local function makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
   }
 end
 
-local function new(registry, builtinRecipes)
+local function new(registry, publicComponents)
+  publicComponents = publicComponents or {}
   local resolver = {}
 
   local resolveValue
@@ -121,8 +124,8 @@ local function new(registry, builtinRecipes)
     return recipeFunction, name
   end
 
-  local function recipeContext(scope, spec, parentContext)
-    local baseRecipe = spec.recipe
+  local function recipeContext(scope, recipeName, spec, parentContext)
+    local baseRecipe = recipeName
     local invalidate = spec.invalidate
     if invalidate == nil then invalidate = parentContext and parentContext.invalidate end
     if invalidate ~= nil then
@@ -142,33 +145,57 @@ local function new(registry, builtinRecipes)
       })
     end
 
-    function context.build(childSpec) return node.recipe(childSpec) end
     function context.token(path) return scope.token(path) end
+
+    local function recipe(name, childSpec)
+      childSpec = childSpec or {}
+      assert(merge.isPlainTable(childSpec), 'H3 UI recipe options must be a plain table')
+      assert(
+        childSpec.component == nil and childSpec.recipe == nil,
+        'H3 UI recipe constructor options cannot select another component or recipe'
+      )
+      local nested = merge.shallowCopy(childSpec)
+      nested.recipe = name
+      return node.recipe(nested)
+    end
+
+    constructors(
+      context,
+      publicComponents,
+      scope.recipes,
+      function(name, childSpec) return context.component(name, childSpec) end,
+      recipe
+    )
+
     return context
   end
 
-  resolveRecipe = function(scope, spec, parentContext, trace)
-    local recipeFunction = findRecipe(scope, spec.recipe)
-    local context = recipeContext(scope, spec, parentContext)
+  resolveRecipe = function(scope, recipeName, spec, parentContext, trace)
+    local recipeFunction = findRecipe(scope, recipeName)
+    local context = recipeContext(scope, recipeName, spec, parentContext)
     local result = recipeFunction(context, spec)
     return resolveValue(scope, result, context, trace)
   end
 
   local function resolveArgs(scope, args, context, trace)
     local result = merge.shallowCopy(args or {})
-    local keys = { 'children', 'content', 'items' }
+    local childKeys = { children = true, content = true, items = true }
 
-    for index = 1, #keys do
-      local key = keys[index]
-      local value = result[key]
-      if node.isComponent(value) or node.isRecipe(value) then
+    for key, value in next, result do
+      if type(key) == 'number' then
         result[key] = resolveValue(scope, value, context, trace)
-      elseif type(value) == 'table' and merge.isArray(value) then
-        result[key] = resolveList(
-          function(item, nestedContext) return resolveValue(scope, item, nestedContext, trace) end,
-          value,
-          context
-        )
+      elseif childKeys[key] then
+        if node.isComponent(value) or node.isRecipe(value) then
+          result[key] = resolveValue(scope, value, context, trace)
+        elseif type(value) == 'table' and merge.isArray(value) then
+          result[key] = resolveList(
+            function(item, nestedContext) return resolveValue(scope, item, nestedContext, trace) end,
+            value,
+            context
+          )
+        end
+      elseif token.isRef(value) then
+        result[key] = resolveValue(scope, value, context, trace)
       end
     end
 
@@ -216,8 +243,38 @@ local function new(registry, builtinRecipes)
 
   resolveValue = function(scope, value, context, trace)
     if node.isComponent(value) then return resolveComponent(scope, value, context, trace) end
-    if node.isRecipe(value) then return resolveRecipe(scope, value.spec, context, trace) end
+    if node.isRecipe(value) then
+      return resolveRecipe(scope, value.spec.recipe, value.spec, context, trace)
+    end
+    if token.isRef(value) then return context.theme.resolve(value) end
     return value
+  end
+
+  local function constructorSpec(kind, spec)
+    spec = spec or {}
+    assert(merge.isPlainTable(spec), 'H3 UI ' .. kind .. ' options must be a plain table')
+    assert(
+      spec.component == nil and spec.recipe == nil,
+      'H3 UI constructor options cannot select another component or recipe'
+    )
+    return spec
+  end
+
+  function resolver.component(scope, name, spec, trace)
+    spec = constructorSpec('component', spec)
+    local componentNode = node.component(name, spec)
+    return resolveComponent(scope, componentNode, {
+      theme = scope.resolveTheme(),
+      invalidate = spec.invalidate or scope.invalidate,
+    }, trace)
+  end
+
+  function resolver.recipe(scope, name, spec, trace)
+    spec = constructorSpec('recipe', spec)
+    return resolveRecipe(scope, name, spec, {
+      theme = scope.resolveTheme(),
+      invalidate = spec.invalidate or scope.invalidate,
+    }, trace)
   end
 
   function resolver.build(scope, spec, trace)
@@ -226,12 +283,10 @@ local function new(registry, builtinRecipes)
     if spec.recipe ~= nil then
       local invalidate = spec.invalidate
       if invalidate == nil then invalidate = scope.invalidate end
-      return resolveRecipe(
-        scope,
-        spec,
-        { theme = scope.resolveTheme(), invalidate = invalidate },
-        trace
-      )
+      return resolveRecipe(scope, spec.recipe, spec, {
+        theme = scope.resolveTheme(),
+        invalidate = invalidate,
+      }, trace)
     end
 
     if spec.component ~= nil then

@@ -1,30 +1,27 @@
 ---
 title: itemSlot
-description: Display an icon in a bordered slot with an optional count.
+description: Display an activatable icon slot with an optional count.
 weight: 35
 extra:
   kind: api
 ---
 
-Builds a bordered icon slot with an optional normal-text count. It does not inspect inventory or query game state.
+Builds a bordered icon slot with an optional count. It does not inspect inventory or query game state. Use `onActivate` when selecting or using the represented item.
 
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
-local itemSlot = require 'scripts.s3.components.itemSlot'
+local H3UI = require('openmw.interfaces').H3UI
 
-ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    itemSlot {
-      resource = {
+local potion = H3UI.itemSlot {
+    resource = {
         path = 'white',
-      },
-      count = 4,
     },
-  },
+    count = 4,
+    onActivate = function()
+        selectPotion()
+        return true
+    end,
 }
 ```
 
@@ -34,9 +31,10 @@ ui.create {
 | --- | --- | --- |
 | `resource` | openmw.ui.TextureResource or openmw.ui.TextureResourceOptions | Icon texture resource or options for one. |
 | `count` | number? | Optional count rendered over the icon. |
+| `onActivate` | function? | Runs when the slot is activated. |
 | `iconProps` | table? | Properties for the icon. |
 | `countProps` | table? | Properties for the count label. |
-| `template` | openmw.ui.Template? | Replaces the default H3UI slot template. |
+| `template` | openmw.ui.Template? | Replaces the default H3UI slot frame. |
 
 Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md). Count values become text during construction; live inventory changes require an owner update or rebuild.
 

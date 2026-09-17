@@ -13,12 +13,10 @@ Builds a [meter](@/h3lp_yours3lf/docs/api/components/meter.md)-based horizontal 
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local column = require 'scripts.s3.components.column'
-local slider = require 'scripts.s3.components.slider'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
 local value = 50
-local readout = text {
+local readout = H3UI.text {
   text = '50%',
 }
 local element
@@ -27,9 +25,9 @@ element = ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    column {
+    H3UI.column {
       children = {
-        slider {
+        H3UI.slider {
           value = value,
           min = 0,
           max = 100,
