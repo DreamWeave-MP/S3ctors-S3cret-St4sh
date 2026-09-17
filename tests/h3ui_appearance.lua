@@ -190,13 +190,18 @@ flushTimers()
 local box = require 'scripts.s3.components.box'
 local button = require 'scripts.s3.components.button'
 local directBox = box { content = {} }
-assert(directBox.template.content[1].props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
+assert(
+  directBox.template.content[1].props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds'
+)
 local directButton = button { label = 'Configured button' }
 assert(
   directButton.content[1].content[1].content[1].content[1].props.textColor
     == appearance.token 'color.text'
 )
-assert(directButton.template.content[1].props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
+assert(
+  directButton.template.content[1].props.resource.path
+    == 'textures/h3ui/chrome/coral_fort_wall_02.dds'
+)
 assert(button({ label = 'Another button' }).template == directButton.template)
 
 assert(requestedSections.SettingsPlayerH3UI)
@@ -225,6 +230,41 @@ subscriber(nil, 'chromeSource')
 assert(appearance.chromeSource() == 'theme')
 assert(appearance.current() ~= cachedAppearance)
 assert(appearance.activeTheme().chrome().preferredSource == 'h3ui')
+
+assert(appearance.normalizeChromeSource 'h3ui:nope' == nil)
+values.chromeSource = 'h3ui:nope'
+subscriber(nil, 'chromeSource')
+assert(appearance.chromeSource() == 'auto')
+assert(appearance.normalizeMaterialFamily 'stone' == 'stone')
+assert(appearance.normalizeMaterialFamily 'nope' == nil)
+values.chromeMaterialFamily = 'stone'
+subscriber(nil, 'chromeMaterialFamily')
+assert(appearance.chromeMaterialFamily() == 'stone')
+values.chromeMaterial = 'dark_rock'
+subscriber(nil, 'chromeMaterial')
+assert(appearance.chromeMaterial() == 'dark_rock')
+values.chromeMaterialFamily = 'wood'
+subscriber(nil, 'chromeMaterialFamily')
+assert(appearance.chromeMaterial() == 'bamboo_wall')
+values.chromeMaterialFamily = 'nope'
+subscriber(nil, 'chromeMaterialFamily')
+assert(appearance.chromeMaterialFamily() == 'concrete')
+assert(appearance.chromeMaterial() == 'coral_fort_wall_02')
+appearance.selectMaterialFamily 'wood'
+assert(values.chromeMaterialFamily == 'wood')
+assert(values.chromeMaterial == 'bamboo_wall')
+assert(appearance.chromeMaterial() == 'bamboo_wall')
+values.chromeSource = 'h3ui'
+subscriber(nil, 'chromeSource')
+values.chromeMaterialFamily = 'stone'
+subscriber(nil, 'chromeMaterialFamily')
+values.chromeMaterial = 'dark_rock'
+subscriber(nil, 'chromeMaterial')
+local resolvedChrome = appearance.activeTheme().chrome()
+assert(resolvedChrome.frame.thin.path == 'textures/h3ui/chrome/dark_rock.dds')
+assert(resolvedChrome.caption.path == 'textures/h3ui/chrome/dark_rock.dds')
+assert(resolvedChrome.scroll.left.path == 'textures/h3ui/chrome/dark_rock.dds')
+assert(resolvedChrome.pin.up.path == 'textures/h3ui/chrome/dark_rock.dds')
 
 appearance.selectTheme 'custom'
 assert(values.theme == 'custom')

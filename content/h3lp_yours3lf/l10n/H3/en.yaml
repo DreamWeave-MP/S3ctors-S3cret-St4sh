@@ -15,6 +15,62 @@ H3UIChromeSourceDescription: Choose the border and frame artwork used by H3UI.
 H3UIChromeSourceAuto: Theme default
 H3UIChromeSourceTheme: Theme textures
 H3UIChromeSourceH3UI: H3UI customizable
+H3UIChromeMaterialFamilyName: Material family
+H3UIChromeMaterialFamilyDescription: Choose the family of border and frame artwork used by H3UI.
+H3UIChromeMaterialFamily_stone: Stone
+H3UIChromeMaterialFamily_snow: Snow
+H3UIChromeMaterialFamily_concrete: Concrete
+H3UIChromeMaterialFamily_plaster: Plaster
+H3UIChromeMaterialFamily_wood: Wood
+H3UIChromeMaterialFamily_wallpaper: Wallpaper
+H3UIChromeMaterialFamily_fabric: Fabric
+H3UIChromeMaterialFamily_leather: Leather
+H3UIChromeMaterialFamily_tile: Tile
+H3UIChromeMaterialFamily_thatch: Thatch
+H3UIChromeMaterialFamily_classic: Classic
+H3UIChromeMaterialName: Material
+H3UIChromeMaterialDescription: Choose the border and frame artwork used by H3UI.
+H3UIChromeMaterial_aerial_asphalt_01: Aerial Asphalt
+H3UIChromeMaterial_asphalt_04: Asphalt
+H3UIChromeMaterial_asphalt_snow: Snowy Asphalt
+H3UIChromeMaterial_bamboo_wall: Bamboo Wall
+H3UIChromeMaterial_bark_brown_02: Brown Bark
+H3UIChromeMaterial_black_walnut_veneer_03: Black Walnut
+H3UIChromeMaterial_brushed_concrete: Brushed Concrete
+H3UIChromeMaterial_brushed_concrete_04: Brushed Concrete 2
+H3UIChromeMaterial_concrete_floor_painted: Painted Floor
+H3UIChromeMaterial_coral_fort_wall_02: Coral Fort
+H3UIChromeMaterial_cracked_concrete_wall: Cracked Concrete
+H3UIChromeMaterial_dark_rock: Dark Rock
+H3UIChromeMaterial_decrepit_wallpaper: Decrepit Wallpaper
+H3UIChromeMaterial_denim_fabric_06: Denim
+H3UIChromeMaterial_dirty_concrete: Dirty Concrete
+H3UIChromeMaterial_faux_fur_geometric: Geometric Fur
+H3UIChromeMaterial_floor_pattern_02: Patterned Floor
+H3UIChromeMaterial_floral_jacquard: Floral Jacquard
+H3UIChromeMaterial_gravel_embedded_concrete: Gravel Concrete
+H3UIChromeMaterial_hangar_concrete_floor: Hangar Floor
+H3UIChromeMaterial_hessian_230: Hessian
+H3UIChromeMaterial_leather_red_03: Red Leather
+H3UIChromeMaterial_marble_cliff_04: Marble Cliff
+H3UIChromeMaterial_morrowind: Morrowind Classic
+H3UIChromeMaterial_painted_concrete: Painted Concrete
+H3UIChromeMaterial_patterned_clay_wall: Patterned Clay
+H3UIChromeMaterial_pebble_embedded_pavement: Pebble Pavement
+H3UIChromeMaterial_plastered_stone_wall: Plastered Stone
+H3UIChromeMaterial_reed_roof_03: Reed Roof
+H3UIChromeMaterial_rock_embedded_concrete_wall: Rock Concrete
+H3UIChromeMaterial_rock_wall_09: Rock Wall
+H3UIChromeMaterial_rough_plaster_brick: Rough Plaster Brick
+H3UIChromeMaterial_rough_plaster_brick_02: Rough Plaster Brick 2
+H3UIChromeMaterial_rubber_tiles: Rubber Tiles
+H3UIChromeMaterial_snow_field_aerial: Snow Field
+H3UIChromeMaterial_square_tiles_02: Square Tiles
+H3UIChromeMaterial_stone_tiles: Stone Tiles
+H3UIChromeMaterial_tatami_mat: Tatami Mat
+H3UIChromeMaterial_wood_plank_wall: Wood Plank Wall
+H3UIChromeMaterial_worn_asphalt: Worn Asphalt
+H3UIChromeMaterial_worn_mossy_plasterwall: Mossy Plaster
 H3UIMenuTransparencyName: Menu transparency
 H3UIMenuTransparencyDescription: Set the opacity of H3UI backgrounds.
 H3UIChromeTransparencyName: Chrome transparency

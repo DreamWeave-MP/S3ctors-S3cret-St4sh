@@ -4,6 +4,7 @@ local async = require 'openmw.async'
 local core = require 'openmw.core'
 local storage = require 'openmw.storage'
 local util = require 'openmw.util'
+local vfs = require 'openmw.vfs'
 
 local builtinChrome = require 'scripts.s3.ui.chrome'
 local themeModule = require 'scripts.s3.ui.theme'
@@ -17,6 +18,10 @@ local normalTextSizeKey = 'textSizeNormal'
 local headerTextSizeKey = 'textSizeHeader'
 local chromeSourceKey = 'chromeSource'
 local defaultChromeSource = 'auto'
+local chromeMaterialFamilyKey = 'chromeMaterialFamily'
+local chromeMaterialKey = 'chromeMaterial'
+local defaultMaterial = 'coral_fort_wall_02'
+local defaultMaterialFamily = builtinChrome.variantFamily(defaultMaterial)
 local defaultMenuTransparency = 0.84
 local defaultChromeTransparency = 1.0
 local defaultNormalTextSize = 16
@@ -78,6 +83,7 @@ for index = 1, #colorKeys do
 end
 
 local state
+local initCustomTheme = false
 
 local function ensureInitialized()
   if not state then require 'scripts.s3.ui' end
@@ -109,15 +115,14 @@ end
 
 local function normalizeChromeSource(value)
   if value == 'auto' or value == 'theme' or value == 'h3ui' then return value end
-  return nil
 end
 
 local function colorHex(value)
   if type(value) == 'string' then return normalizeHex(value) end
   if type(value) == 'userdata' then return normalizeHex(value:asHex()) end
-  return nil
 end
 
+-- Third-party themes may omit palette tokens; token lookup errors must preserve the fallback.
 local function themeColor(theme, key, fallback)
   local ok, value = pcall(theme.token, 'color.' .. key)
   return ok and (colorHex(value) or fallback) or fallback
@@ -183,6 +188,34 @@ local function chromeSource()
   return normalizeChromeSource(settingValue(chromeSourceKey)) or defaultChromeSource
 end
 
+local function normalizeMaterialFamily(value)
+  if type(value) ~= 'string' then return end
+  local families = builtinChrome.materialFamilies()
+  for index = 1, #families do
+    if families[index] == value then return value end
+  end
+end
+
+local function firstMaterialOfFamily(family)
+  local stems = builtinChrome.materialStems(family)
+  assert(#stems > 0, 'H3 UI material family is empty: ' .. tostring(family))
+  return stems[1]
+end
+
+local function chromeMaterialFamily()
+  return normalizeMaterialFamily(settingValue(chromeMaterialFamilyKey)) or defaultMaterialFamily
+end
+
+local function normalizeMaterial(value, family)
+  if type(value) ~= 'string' then return end
+  if builtinChrome.variantFamily(value) == family then return value end
+end
+
+local function chromeMaterial()
+  local family = chromeMaterialFamily()
+  return normalizeMaterial(settingValue(chromeMaterialKey), family) or firstMaterialOfFamily(family)
+end
+
 local function textSize(key, default) return normalizeTextSize(settingValue(key)) or default end
 
 local function registeredTheme(id) return state.themes[id] end
@@ -193,6 +226,9 @@ local function selectedChrome(entry)
   if source == 'auto' then source = themeChrome.preferredSource or 'theme' end
 
   if source == 'theme' and entry.hasChrome then return themeChrome end
+  if source == 'h3ui' then
+    return builtinChrome.variant(chromeMaterial()) or builtinChrome.builtin()
+  end
   return builtinChrome.builtin()
 end
 
@@ -200,13 +236,18 @@ local function validPreset(id)
   return id ~= nil and id ~= customThemeId and registeredTheme(id) ~= nil
 end
 
+-- Optional installation-wide VFS hint, consulted only when no saved theme takes precedence.
+-- H3UI does not ship this file; a present but broken override must fail loudly.
 local function defaultHint()
-  local ok, hint = pcall(require, 'scripts.s3.ui.defaultTheme')
-  if ok and type(hint) == 'string' and registeredTheme(hint) then return hint end
-  return nil
+  if not vfs.fileExists 'scripts/s3/ui/defaultTheme.lua' then return end
+  local hint = require 'scripts.s3.ui.defaultTheme'
+  assert(type(hint) == 'string', 'H3UI defaultTheme.lua must return a theme ID string')
+  return registeredTheme(hint) and hint or nil
 end
 
-local function detectedDefault()
+local function resolveDefault()
+  local hint = defaultHint()
+  if hint then return hint end
   local contentFiles = core.contentFiles
   if
     contentFiles
@@ -216,8 +257,6 @@ local function detectedDefault()
   end
   return 'morrowind'
 end
-
-local function resolveDefault() return defaultHint() or detectedDefault() end
 
 local function writePreset(id)
   local entry = registeredTheme(id)
@@ -236,10 +275,7 @@ local function writePreset(id)
   return true
 end
 
-local function initializeSettings()
-  if state.initialized then return end
-  state.initialized = true
-
+local function canonicalizeStorage()
   local raw = rawStorageValues()
   local storedTransparency = normalizeTransparency(raw[menuTransparencyKey])
     or defaultMenuTransparency
@@ -262,6 +298,16 @@ local function initializeSettings()
   local storedChromeSource = normalizeChromeSource(raw[chromeSourceKey]) or defaultChromeSource
   if storedChromeSource ~= raw[chromeSourceKey] then
     state.section:set(chromeSourceKey, storedChromeSource)
+  end
+  local storedMaterialFamily = normalizeMaterialFamily(raw[chromeMaterialFamilyKey])
+    or defaultMaterialFamily
+  if storedMaterialFamily ~= raw[chromeMaterialFamilyKey] then
+    state.section:set(chromeMaterialFamilyKey, storedMaterialFamily)
+  end
+  local storedMaterial = normalizeMaterial(raw[chromeMaterialKey], storedMaterialFamily)
+    or firstMaterialOfFamily(storedMaterialFamily)
+  if storedMaterial ~= raw[chromeMaterialKey] then
+    state.section:set(chromeMaterialKey, storedMaterial)
   end
   local explicitTheme = raw.theme
   if validPreset(explicitTheme) then
@@ -288,9 +334,30 @@ local function initializeSettings()
   invalidate()
 end
 
+local function initializeSettings()
+  if state.initialized then return end
+  state.initialized = true
+
+  local raw = rawStorageValues()
+  local explicitTheme = raw.theme
+  if validPreset(explicitTheme) then
+    state.lastPresetId = explicitTheme
+  else
+    for index = 1, #colorKeys do
+      if raw[colorKeys[index]] ~= nil then
+        initCustomTheme = true
+        break
+      end
+    end
+  end
+  invalidate()
+
+  async:newUnsavableSimulationTimer(0, function() canonicalizeStorage() end)
+end
+
 local function activeEntry()
   local selected = settingValue 'theme'
-  if selected == customThemeId then
+  if selected == customThemeId or initCustomTheme then
     local baseId = state.lastPresetId or resolveDefault()
     return registeredTheme(baseId) or state.themes.morrowind
   end
@@ -323,6 +390,7 @@ end
 
 local function currentThemeId()
   initializeSettings()
+  if initCustomTheme then return customThemeId end
   local selected = settingValue 'theme'
   if selected == customThemeId then return customThemeId end
   if registeredTheme(selected) then return selected end
@@ -465,8 +533,21 @@ local function themeEntries()
   return result
 end
 
+local function selectMaterialFamily(family, set)
+  local stems = builtinChrome.materialStems(family)
+  assert(#stems > 0, 'Unknown H3 UI material family: ' .. tostring(family))
+  if set then
+    set(family)
+  else
+    state.section:set(chromeMaterialFamilyKey, family)
+  end
+  state.section:set(chromeMaterialKey, stems[1])
+  invalidate()
+end
+
 local function selectTheme(id, set)
   assert(id == customThemeId or validPreset(id), 'Unknown H3 UI theme: ' .. tostring(id))
+  initCustomTheme = false
   if set then
     set(id)
   else
@@ -500,6 +581,7 @@ local function setColor(key, value, set)
 end
 
 local function reset()
+  initCustomTheme = false
   local result = writePreset 'morrowind'
   if result then
     state.section:set(menuTransparencyKey, defaultMenuTransparency)
@@ -507,6 +589,8 @@ local function reset()
     state.section:set(normalTextSizeKey, defaultNormalTextSize)
     state.section:set(headerTextSizeKey, defaultHeaderTextSize)
     state.section:set(chromeSourceKey, defaultChromeSource)
+    state.section:set(chromeMaterialFamilyKey, defaultMaterialFamily)
+    state.section:set(chromeMaterialKey, defaultMaterial)
   end
   return result
 end
@@ -541,6 +625,14 @@ return {
   chromeSource = chromeSource,
   chromeTransparency = chromeTransparency,
   normalizeChromeSource = normalizeChromeSource,
+  defaultMaterialFamily = defaultMaterialFamily,
+  defaultMaterial = defaultMaterial,
+  chromeMaterialFamily = chromeMaterialFamily,
+  chromeMaterial = chromeMaterial,
+  normalizeMaterialFamily = normalizeMaterialFamily,
+  selectMaterialFamily = selectMaterialFamily,
+  materialFamilies = builtinChrome.materialFamilies,
+  materialStems = builtinChrome.materialStems,
   morrowindPalette = morrowindPalette,
   selectTheme = selectTheme,
   setColor = setColor,

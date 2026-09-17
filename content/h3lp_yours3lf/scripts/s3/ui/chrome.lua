@@ -1,19 +1,24 @@
 ---@omw-context menu|player
 ---@module 'scripts.s3.ui.chrome'
 
-local ui
+local StrFormat = string.format
+
+local copy
+local ui = require 'openmw.ui'
+
 local textureCache = {}
 local templateCache = setmetatable({}, { __mode = 'k' })
-local copy
 local UtilVector2 = require('openmw.util').vector2
 local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
-local zero = UtilVector2(0, 0)
-local rightTop = UtilVector2(1, 0)
-local leftBottom = UtilVector2(0, 1)
-local rightBottom = UtilVector2(1, 1)
-local fullSize = UtilVector2(1, 1)
-local relativeWidth = UtilVector2(1, 0)
-local relativeHeight = UtilVector2(0, 1)
+
+local Zero = UtilVector2(0, 0)
+local RightTop = UtilVector2(1, 0)
+local LeftBottom = UtilVector2(0, 1)
+local RightBottom = UtilVector2(1, 1)
+local FullSize = UtilVector2(1, 1)
+local RelativeWidth = UtilVector2(1, 0)
+local RelativeHeight = UtilVector2(0, 1)
+
 local framePartNames = {
   'center',
   'topLeft',
@@ -209,18 +214,18 @@ local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCen
     local background = copy(backgroundProps)
     background.resource = background.resource or texture 'white'
     background.ignorePointerEvents = true
-    background.relativeSize = background.relativeSize or fullSize
+    background.relativeSize = background.relativeSize or FullSize
     content[#content + 1] = { type = openmwUi.TYPE.Image, props = background }
   end
 
   local centerResource = skinPart(skin, 'center')
   if includeCenter ~= false and centerResource then
     local center = material(centerResource, tint, alpha, skin.tintable)
-    center.anchor = zero
-    center.relativePosition = zero
-    center.position = zero
-    center.size = zero
-    center.relativeSize = fullSize
+    center.anchor = Zero
+    center.relativePosition = Zero
+    center.position = Zero
+    center.size = Zero
+    center.relativeSize = FullSize
     center.tileH = true
     center.tileV = true
     content[#content + 1] = {
@@ -256,8 +261,8 @@ local function frameChildren(skin, thickness, tint, alpha, backgroundProps, incl
   addFrameImage(
     'topLeft',
     skinPart(skin, 'topLeft'),
-    zero,
-    zero,
+    Zero,
+    Zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
@@ -266,18 +271,18 @@ local function frameChildren(skin, thickness, tint, alpha, backgroundProps, incl
   addFrameImage(
     'top',
     skinPart(skin, 'top'),
-    zero,
+    Zero,
     UtilVector2(thickness, 0),
     UtilVector2(-2 * thickness, thickness),
-    relativeWidth,
+    RelativeWidth,
     true,
     false
   )
   addFrameImage(
     'topRight',
     skinPart(skin, 'topRight'),
-    rightTop,
-    zero,
+    RightTop,
+    Zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
@@ -286,28 +291,28 @@ local function frameChildren(skin, thickness, tint, alpha, backgroundProps, incl
   addFrameImage(
     'left',
     skinPart(skin, 'left'),
-    zero,
+    Zero,
     UtilVector2(0, thickness),
     UtilVector2(thickness, -2 * thickness),
-    relativeHeight,
+    RelativeHeight,
     false,
     true
   )
   addFrameImage(
     'right',
     skinPart(skin, 'right'),
-    rightTop,
+    RightTop,
     UtilVector2(0, thickness),
     UtilVector2(thickness, -2 * thickness),
-    relativeHeight,
+    RelativeHeight,
     false,
     true
   )
   addFrameImage(
     'bottomLeft',
     skinPart(skin, 'bottomLeft'),
-    leftBottom,
-    zero,
+    LeftBottom,
+    Zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
@@ -316,18 +321,18 @@ local function frameChildren(skin, thickness, tint, alpha, backgroundProps, incl
   addFrameImage(
     'bottom',
     skinPart(skin, 'bottom'),
-    leftBottom,
+    LeftBottom,
     UtilVector2(thickness, 0),
     UtilVector2(-2 * thickness, thickness),
-    relativeWidth,
+    RelativeWidth,
     true,
     false
   )
   addFrameImage(
     'bottomRight',
     skinPart(skin, 'bottomRight'),
-    rightBottom,
-    zero,
+    RightBottom,
+    Zero,
     UtilVector2(thickness, thickness),
     nil,
     nil,
@@ -372,7 +377,7 @@ local function frameLayout(options)
     contentProps = copy(options.contentProps or {})
     contentProps.position = contentProps.position or UtilVector2(options.inset, options.inset)
     contentProps.size = contentProps.size or UtilVector2(-2 * options.inset, -2 * options.inset)
-    contentProps.relativeSize = contentProps.relativeSize or fullSize
+    contentProps.relativeSize = contentProps.relativeSize or FullSize
   end
 
   local content = backgroundChildren(skin, options.tint, options.alpha, options.backgroundProps)
@@ -446,15 +451,7 @@ end
 local function cacheKey(value, seen)
   if value == nil then return 'nil' end
   local valueType = type(value)
-  if valueType ~= 'table' and valueType ~= 'userdata' then
-    return valueType .. ':' .. tostring(value)
-  end
-
-  if valueType == 'userdata' then
-    local ok, hex = pcall(function() return value:asHex() end)
-    if ok and type(hex) == 'string' then return 'color:' .. hex end
-    return valueType .. ':' .. tostring(value)
-  end
+  if valueType ~= 'table' then return StrFormat('%s:%s', valueType, tostring(value)) end
 
   seen = seen or {}
   if seen[value] then return '<cycle>' end
@@ -529,8 +526,18 @@ end
 ---@return H3UI.ChromeSpec
 local function builtinChrome() return builtin end
 
+local function variantFamily(stem) return chromeAssets.variantFamily[stem] end
+
+---@param stem string
+---@return H3UI.ChromeSpec?
+local function variantChrome(stem) return chromeAssets.material(stem) end
+
 return {
   builtin = builtinChrome,
+  variant = variantChrome,
+  variantFamily = variantFamily,
+  materialFamilies = chromeAssets.materialFamilies,
+  materialStems = chromeAssets.materialStems,
   box = boxLayout,
   frame = frameLayout,
   nineSlice = nineSliceLayout,
