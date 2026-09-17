@@ -16,4 +16,4 @@ Cod3x tooling is deliberately part of the field manual rather than a separate do
 
 Use [Testing OpenMW Lua](@/cod3x/docs/tooling/testing.md) to choose the right layer for pure logic, context/tooling checks, in-game integration, and performance harnesses.
 
-Use [Source-Diving Workflow](@/cod3x/docs/tooling/source-diving.md) to establish facts, [Coding Agents](@/cod3x/docs/tooling/agents.md) for the short operational contract, and [So You Want To Code With AI?](@/cod3x/docs/tooling/so-you-want-to-code-with-ai.md) for the larger discipline: give the machine a map, sources, constraints, and a proof burden.
+Use [Source-Diving Workflow](@/cod3x/docs/tooling/source-diving.md) to establish facts and [Repository Instructions for Coding Agents](@/cod3x/docs/tooling/agents.md) for the short operational contract. For Cod3x's shipped OpenCode subagents, reusable skills, setup, and composition patterns, use [Coding with AI](@/cod3x/docs/ai/_index.md). [So You Want To Code With AI?](@/cod3x/docs/tooling/so-you-want-to-code-with-ai.md) covers the larger discipline: give the machine a map, sources, constraints, and a proof burden.

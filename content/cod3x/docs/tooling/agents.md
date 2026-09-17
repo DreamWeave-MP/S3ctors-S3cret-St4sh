@@ -1,12 +1,14 @@
 ---
-title: Coding Agents
-description: Cod3x should make machine-assisted OpenMW Lua less plausible-looking and more correct.
+title: Repository Instructions for Coding Agents
+description: Write short repository-level agent instructions that point into maintained engineering documentation.
 weight: 20
 extra:
   kind: guide
 ---
 
 Coding agents are useful precisely because they can apply a large body of explicit knowledge quickly.
+
+This page is about the **persistent repository contract**: `AGENTS.md`, architecture pointers, hard rules, and validation commands that should apply throughout a project. Cod3x's prebuilt OpenCode specialists and on-demand skills are documented separately under [Coding with AI](@/cod3x/docs/ai/_index.md).
 
 They are dangerous when that knowledge is generic Lua advice plus confident autocomplete.
 
