@@ -13,13 +13,13 @@ Builds a `ui.TYPE.Image` layout. Pass a texture resource or `openmw.ui.TextureRe
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local image = require 'scripts.s3.components.image'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    image {
+    H3UI.image {
       resource = {
         path = 'white',
       },

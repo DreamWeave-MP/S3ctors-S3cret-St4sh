@@ -13,13 +13,13 @@ Builds a bordered Widget with fill and empty Image children. `value / max` is cl
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local meter = require 'scripts.s3.components.meter'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    meter {
+    H3UI.meter {
       value = 65,
       max = 100,
       props = {

@@ -1,9 +1,54 @@
 ---@omw-context menu|player
 
+---@class H3UI.DialogAction
+---@field role? string
+---@field label? string
+---@field component? string
+---@field variant? string
+---@field tone? string
+---@field class? string
+---@field classes? string[]|table<string, boolean>
+---@field style? table
+---@field name? string
+---@field props? table
+---@field labelProps? table
+---@field external? table
+---@field events? table
+---@field userData? any
+---@field template? openmw.ui.Template
+---@field onActivate? fun(action: H3UI.DialogAction, layout: openmw.ui.Layout): any
+
+---@class H3UI.DialogOptions
+---@field title? string
+---@field body? string|number|openmw.ui.Layout|openmw.ui.Layout[]
+---@field content? openmw.ui.Layout|openmw.ui.Layout[]
+---@field children? openmw.ui.Layout|openmw.ui.Layout[]
+---@field variant? string
+---@field tone? string
+---@field class? string
+---@field classes? string[]|table<string, boolean>
+---@field style? table
+---@field name? string
+---@field props? table
+---@field titleProps? table
+---@field external? table
+---@field events? table
+---@field userData? any
+---@field template? openmw.ui.Template
+
+---@class H3UI.ConfirmDialogOptions: H3UI.DialogOptions
+---@field actions? (string|H3UI.DialogAction)[]
+---@field actionGap? number
+---@field cancelLabel? string
+---@field confirmLabel? string
+---@field confirmTone? string
+---@field onCancel? fun(action: H3UI.DialogAction, layout: openmw.ui.Layout): any
+---@field onConfirm? fun(action: H3UI.DialogAction, layout: openmw.ui.Layout): any
+
 local function appendBody(ctx, target, body)
   if body == nil then return end
   if type(body) == 'string' or type(body) == 'number' then
-    target[#target + 1] = ctx.component('text', { role = 'message', text = tostring(body) })
+    target[#target + 1] = ctx.text { role = 'message', text = tostring(body) }
     return
   end
   if type(body) == 'table' and body[1] ~= nil then
@@ -19,7 +64,7 @@ local function dialog(ctx, spec)
   local children = {}
   appendBody(ctx, children, spec.body)
   appendBody(ctx, children, spec.content or spec.children)
-  return ctx.component('bookFrame', {
+  return ctx.bookFrame {
     role = 'root',
     variant = spec.variant,
     tone = spec.tone,
@@ -35,7 +80,7 @@ local function dialog(ctx, spec)
     userData = spec.userData,
     template = spec.template,
     children = children,
-  })
+  }
 end
 
 local function actionCallback(spec, action)
@@ -89,13 +134,14 @@ local function confirm(ctx, spec)
     for index = 1, #actions do
       actionChildren[index] = actionNode(ctx, spec, actions[index], index)
     end
-    children[#children + 1] = ctx.component(
-      'row',
-      { role = 'actions', gap = spec.actionGap or 4, children = actionChildren }
-    )
+    children[#children + 1] = ctx.row {
+      role = 'actions',
+      gap = spec.actionGap or ctx.token 'spacing.sm',
+      children = actionChildren,
+    }
   end
 
-  return ctx.component('bookFrame', {
+  return ctx.bookFrame {
     role = 'root',
     variant = spec.variant,
     tone = spec.tone,
@@ -111,7 +157,7 @@ local function confirm(ctx, spec)
     userData = spec.userData,
     template = spec.template,
     children = children,
-  })
+  }
 end
 
 return { basic = dialog, confirm = confirm }

@@ -12,17 +12,16 @@ Builds an H3UI box around optional content using the active appearance's thin fr
 
 ```lua
 local ui = require 'openmw.ui'
-local box = require 'scripts.s3.components.box'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    box {
+    H3UI.box {
       children = {
-        text {
-          text = 'A reusable framed box',
+        H3UI.text {
+          text = 'A reusable framed H3UI.box',
         },
       },
     },

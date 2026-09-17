@@ -3,113 +3,146 @@
 local I = require 'openmw.interfaces'
 local util = require 'openmw.util'
 
-local appearance = require 'scripts.s3.ui.appearance'
-local collapsible = require 'scripts.s3.components.collapsible'
-local column = require 'scripts.s3.components.column'
-local numberInput = require 'scripts.s3.components.numberInput'
-local row = require 'scripts.s3.components.row'
-local searchInput = require 'scripts.s3.components.searchInput'
-local selector = require 'scripts.s3.components.selector'
-local slider = require 'scripts.s3.components.slider'
-local tabs = require 'scripts.s3.components.tabs'
-local text = require 'scripts.s3.components.text'
-local toggle = require 'scripts.s3.components.toggle'
-
 local UtilVector2 = util.vector2
+local windowSize = UtilVector2(560, 360)
 local sliderSize = UtilVector2(260, 18)
 local numberSize = UtilVector2(90, 24)
+local textInputSize = UtilVector2(260, 24)
 local modes = { 'Compact', 'Balanced', 'Verbose' }
-local pages = { 'General', 'Filtering', 'Advanced' }
 
-local function headerTextProps()
-  return {
-    textColor = appearance.token 'color.header',
-    textSize = appearance.token 'textSize.header',
-  }
-end
+local function ignore() end
 
+---@param invalidate? fun()
 ---@return openmw.ui.Layout
-local function applicationForm()
-  local summary = text 'Ready'
+local function applicationForm(invalidate)
+  local refresh = invalidate or ignore
+  local ui = I.H3UI.scope { invalidate = invalidate }
 
-  local function setSummary(value)
-    summary.props.text = value
-    I.H3ComponentTest.refresh()
-  end
-
-  return column {
-    name = 'ct_demo_application_form',
+  local general = ui.settings {
+    title = 'General',
     gap = 8,
-
-    text { text = 'Application-style settings form', props = headerTextProps() },
-    tabs {
-      items = pages,
-      onSelect = function(_, item) setSummary('page: ' .. item) end,
-    },
-
-    row {
-      gap = 8,
-      text 'Enabled',
-      toggle {
+    fieldGap = 12,
+    fields = {
+      {
+        label = 'Enabled',
+        kind = 'toggle',
         value = true,
-        onChange = function(value) setSummary('enabled: ' .. tostring(value)) end,
+        onChange = refresh,
+      },
+      {
+        label = 'Mode',
+        kind = 'selector',
+        items = modes,
+        selected = 2,
+        onSelect = refresh,
+      },
+      {
+        label = 'Intensity',
+        kind = 'slider',
+        value = 65,
+        min = 0,
+        max = 100,
+        step = 5,
+        props = { size = sliderSize },
+        onChange = refresh,
       },
     },
-
-    text 'Intensity',
-    slider {
-      value = 65,
-      min = 0,
-      max = 100,
-      step = 5,
-      props = { size = sliderSize },
-      onChange = function(value) setSummary('intensity: ' .. tostring(value)) end,
+    children = {
+      ui.divider(),
+      ui.text {
+        text = 'This page is built from the settings recipe; the surrounding window and page switching come from tabbedWindow.',
+        tone = 'muted',
+      },
     },
+  }
 
-    row {
-      gap = 8,
-      text 'Page size',
-      numberInput {
+  local filtering = ui.settings {
+    title = 'Filtering',
+    gap = 8,
+    fieldGap = 12,
+    fields = {
+      {
+        label = 'Default filter',
+        kind = 'textInput',
+        text = 'npc',
+        props = { size = textInputSize },
+        onChange = refresh,
+      },
+      {
+        label = 'Page size',
+        kind = 'numberInput',
         value = 20,
         min = 5,
         max = 100,
         step = 5,
         integer = true,
         props = { size = numberSize },
-        onCommit = function(value) setSummary('page size: ' .. tostring(value)) end,
+        onCommit = refresh,
       },
     },
-
-    row {
-      gap = 8,
-      text 'Mode',
-      selector {
-        items = modes,
-        selected = 2,
-        onSelect = function(_, item) setSummary('mode: ' .. item) end,
-      },
-    },
-
-    searchInput {
-      value = 'npc',
-      onChange = function(value) setSummary('filter: ' .. value) end,
-    },
-
-    collapsible {
-      title = 'Advanced',
-      expanded = false,
-      onToggle = I.H3ComponentTest.refresh,
-      children = {
-        toggle {
-          label = 'Experimental behavior',
-          value = false,
-          onChange = function(value) setSummary('experimental: ' .. tostring(value)) end,
+    children = {
+      ui.divider(),
+      ui.searchableList {
+        query = '',
+        items = {
+          'Actors',
+          'Creatures',
+          'Containers',
+          'Doors',
+          'Weapons',
         },
-        text 'A realistic disclosure section should remain stable.',
+        onQueryChange = ignore,
       },
     },
+  }
 
-    summary,
+  local advanced = ui.column {
+    gap = 8,
+    ui.text { text = 'Advanced', role = 'title' },
+    ui.collapsible {
+      title = 'Experimental behavior',
+      expanded = true,
+      onToggle = refresh,
+      children = {
+        ui.settings {
+          fields = {
+            {
+              label = 'Unsafe mode',
+              kind = 'toggle',
+              value = false,
+              tone = 'negative',
+              onChange = refresh,
+            },
+          },
+        },
+        ui.text {
+          text = 'Application examples are intentionally written as copyable mod code rather than synthetic widget banks.',
+          tone = 'muted',
+        },
+      },
+    },
+    ui.divider(),
+    ui.row {
+      gap = 6,
+      ui.spacer { grow = 1 },
+      ui.button { label = 'Reset', onActivate = ignore },
+      ui.button { label = 'Apply', tone = 'positive', onActivate = ignore },
+    },
+  }
+
+  return ui.tabbedWindow {
+    name = 'ct_demo_application_form',
+    title = 'H3UI Mod Configuration',
+    size = windowSize,
+    resizable = false,
+    pinnable = true,
+    selected = 1,
+    tabs = {
+      { label = 'General', content = general },
+      { label = 'Filtering', content = filtering },
+      { label = 'Advanced', content = advanced },
+    },
+    onSelect = refresh,
   }
 end
 

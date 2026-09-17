@@ -1,5 +1,7 @@
 ---@omw-context menu|player
+
 local emptyOptions = {}
+
 local appearance = require 'scripts.s3.ui.appearance'
 local button = require 'scripts.s3.components.button'
 local chrome = require 'scripts.s3.ui.chrome'
@@ -8,17 +10,39 @@ local row = require 'scripts.s3.components.row'
 local textInput = require 'scripts.s3.components.textInput'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
+
 local UtilVector2 = util.vector2
 local defaultInputWidth = 150
+
+---@class H3.SearchInputOptions
+---@field value? string
+---@field onChange? fun(value: string, layout: openmw.ui.Layout): any
+---@field clearable? boolean
+---@field clearLabel? string
+---@field bordered? boolean
+---@field gap? number
+---@field name? string
+---@field props? table
+---@field external? table
+---@field events? table
+---@field userData? any
+---@field inputProps? table
+---@field inputExternal? table
+---@field inputEvents? table
+---@field template? openmw.ui.Template
+
+---@param options? H3.SearchInputOptions
+---@return openmw.ui.Layout
 local function searchInput(options)
   options = options or emptyOptions
+
   local inputProps = {}
   for key, value in next, options.inputProps or {} do
     inputProps[key] = value
   end
   if inputProps.textAlignV == nil then inputProps.textAlignV = ui.ALIGNMENT.Center end
-  local input
-  input = textInput {
+
+  local input = textInput {
     name = 'input',
     text = options.value or '',
     props = inputProps,
@@ -28,6 +52,7 @@ local function searchInput(options)
     template = options.template,
     onChange = options.onChange,
   }
+
   local inputContent = input
   if options.bordered ~= false then
     local minHeight = (appearance.token 'textSize.normal' or constants.textNormalSize)
@@ -44,6 +69,7 @@ local function searchInput(options)
       content = { input },
     }
   end
+
   local children = { inputContent }
   if options.clearable ~= false then
     children[#children + 1] = button {
@@ -56,6 +82,7 @@ local function searchInput(options)
       end,
     }
   end
+
   return row {
     name = options.name,
     props = options.props,
@@ -66,4 +93,5 @@ local function searchInput(options)
     children = children,
   }
 end
+
 return searchInput

@@ -1,35 +1,26 @@
 ---
 title: row
-description: Arrange children in a horizontal Flex layout.
+description: Arrange children horizontally with optional built-in gaps.
 weight: 20
 extra:
   kind: api
 ---
 
-Builds a `ui.TYPE.Flex` with `props.horizontal = true`. The component's orientation overrides `props.horizontal`.
+Builds a horizontal `ui.TYPE.Flex`. Put child layouts directly in the array portion of the options table; `gap` inserts fixed spacing between them. Explicit `children` or `content` remains available when data is already in that form.
 
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
-local row = require 'scripts.s3.components.row'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
-ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    row {
-      children = {
-        text {
-          text = 'Left',
-        },
-        text {
-          text = 'Right',
-        },
-      },
+local actions = H3UI.row {
+    gap = 6,
+    H3UI.button { label = 'Cancel', onActivate = cancel },
+    H3UI.button {
+        label = 'Apply',
+        tone = 'positive',
+        onActivate = apply,
     },
-  },
 }
 ```
 
@@ -37,15 +28,13 @@ ui.create {
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `content` | table? | Child content; takes precedence over `children`. |
-| `children` | table? | Child layouts used when `content` is absent. |
+| array children | openmw.ui.LayoutOrElement[]? | Direct child layouts. |
+| `gap` | number? | Fixed horizontal spacing inserted between children. |
+| `content` | table? | Explicit child content; cannot be combined with array children. |
+| `children` | table? | Explicit child layouts; cannot be combined with array children. |
 
-Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md).
+Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md). The component always sets `props.horizontal = true`.
 
 ## See also
 
-[column](@/h3lp_yours3lf/docs/api/components/column.md) · [spacer](@/h3lp_yours3lf/docs/api/components/spacer.md) · [list](@/h3lp_yours3lf/docs/api/components/list.md)
-
-## Ergonomic shorthand
-
-`row` accepts child layouts in the array portion of its options table and a numeric `gap` that inserts spacing between children. The explicit `children`/`content` forms remain available when useful.
+[column](@/h3lp_yours3lf/docs/api/components/column.md) · [spacer](@/h3lp_yours3lf/docs/api/components/spacer.md) · [divider](@/h3lp_yours3lf/docs/api/components/divider.md)

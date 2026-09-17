@@ -101,6 +101,7 @@ package.preload['openmw.interfaces'] = function()
   return {
     MWUI = {
       templates = {
+        borders = {},
         box = {},
         textHeader = {},
         textNormal = {},
@@ -111,10 +112,31 @@ package.preload['openmw.interfaces'] = function()
   }
 end
 
+package.preload['scripts.omw.mwui.constants'] = function()
+  return {
+    headerColor = 'header-color',
+    normalColor = 'normal-color',
+    textHeaderSize = 18,
+    textNormalSize = 16,
+    padding = 2,
+    border = 2,
+    thickBorder = 4,
+    whiteTexture = { path = 'white' },
+  }
+end
+
 package.preload['openmw.ui'] = function()
   return {
     content = function(value) return value end,
-    TYPE = { Container = 'Container', Flex = 'Flex', Image = 'Image', Widget = 'Widget' },
+    ALIGNMENT = { Center = 'Center' },
+    TYPE = {
+      Container = 'Container',
+      Flex = 'Flex',
+      Image = 'Image',
+      Text = 'Text',
+      TextEdit = 'TextEdit',
+      Widget = 'Widget',
+    },
     texture = function(value) return value end,
   }
 end
@@ -207,10 +229,18 @@ assert(
   directBox.template.content[1].props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds'
 )
 local directButton = button { label = 'Configured button' }
-assert(
-  directButton.content[1].content[1].content[1].content[1].props.textColor
-    == appearance.token 'color.text'
+local function findDescendant(layout, predicate)
+  if predicate(layout) then return layout end
+  for index = 1, #(layout.content or {}) do
+    local result = findDescendant(layout.content[index], predicate)
+    if result then return result end
+  end
+end
+local buttonLabel = findDescendant(
+  directButton,
+  function(layout) return layout.type == require('openmw.ui').TYPE.Text end
 )
+assert(buttonLabel and buttonLabel.props.textColor == appearance.token 'color.text')
 assert(
   directButton.template.content[1].props.resource.path
     == 'textures/h3ui/chrome/coral_fort_wall_02.dds'

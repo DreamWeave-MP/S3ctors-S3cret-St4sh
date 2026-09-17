@@ -13,8 +13,7 @@ Builds a vertical Flex containing horizontal Flex rows. `items` are assigned in 
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local grid = require 'scripts.s3.components.grid'
-local itemSlot = require 'scripts.s3.components.itemSlot'
+local H3UI = require('openmw.interfaces').H3UI
 
 local iconSize = util.vector2(72, 72)
 local red = util.color.rgb(1, 0, 0)
@@ -25,20 +24,20 @@ ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    grid {
+    H3UI.grid {
       columns = 3,
       items = {
-        itemSlot {
+        H3UI.itemSlot {
           resource = { path = 'white' },
           count = 1,
           iconProps = { size = iconSize, color = red },
         },
-        itemSlot {
+        H3UI.itemSlot {
           resource = { path = 'white' },
           count = 2,
           iconProps = { size = iconSize, color = green },
         },
-        itemSlot {
+        H3UI.itemSlot {
           resource = { path = 'white' },
           count = 3,
           iconProps = { size = iconSize, color = blue },

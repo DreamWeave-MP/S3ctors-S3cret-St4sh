@@ -6,6 +6,10 @@ extra:
   kind: api
 ---
 
+{% usage_note(title="Advanced building block") %}
+This module is documented for H3 component and chrome authors. Normal mod UI should use the constructors exposed by `I.H3UI`; this primitive is not part of the application-facing constructor catalog.
+{% end %}
+
 Builds a Widget from the vanilla head-block corner, edge, and center textures. It scales horizontally to its parent and accepts a height of at least 4 pixels. Give it a fixed-width Widget parent; a fitting Container cannot provide that width.
 
 ## Example

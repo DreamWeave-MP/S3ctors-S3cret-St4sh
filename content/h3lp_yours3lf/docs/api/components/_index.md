@@ -1,6 +1,6 @@
 ---
 title: UI Components
-description: H3 UI component contracts and copyable examples.
+description: Option contracts for H3UI's application-facing constructors and internal building blocks.
 template: docs/section.html
 page_template: docs/page.html
 sort_by: title
@@ -8,84 +8,109 @@ weight: 1
 extra:
   kind: api
   sidebar_groups:
-    - title: Basic layout shape
-      pages: [widget, container, row, column]
-    - title: Text, images, and spacing
-      pages: [text, image, spacer]
+    - title: Layout and spacing
+      pages: [row, column, spacer, divider]
+    - title: Text and images
+      pages: [text, image]
     - title: Lists and repeated content
       pages: [list, list-item, grid]
-    - title: Framed content
-      pages: [box, book-frame, tooltip]
+    - title: Frames and surfaces
+      pages: [box, book-frame, tooltip, window]
     - title: Actions and indicators
       pages: [button, icon-button, meter, item-slot]
     - title: State and input
       pages: [toggle, slider, selector, number-input, search-input, text-input]
     - title: Tabbed or expandable content
       pages: [tabs, collapsible]
-    - title: Morrowind window chrome
-      pages: [head-block, caption, pin-button, window]
+    - title: Advanced internals
+      pages: [widget, container, head-block, caption, pin-button]
 aliases:
   - /h3lp_yours3lf/docs/api/ui-components/
 ---
 
-H3 components are passive layout builders for registered `menu` and `player` scripts. Each call returns an OpenMW layout; it does not create an element or own your state. Start with [UI Layouts and Lifecycle](@/h3lp_yours3lf/docs/concepts/ui-components.md), jump to a [UI recipe](@/h3lp_yours3lf/docs/examples/ui-recipes.md) for a complete surface, or use [H3UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) when you want recipes, player-configured appearance, tokens, and a style cascade above these primitives.
+H3 components are passive layout builders. Application code normally reaches them through the [H3UI facade](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md):
 
-A content-only root uses `ui.TYPE.Container` so it sizes itself to its children. The default `ui.TYPE.Widget` is also valid, but needs explicit geometry.
+```lua
+local I = require 'openmw.interfaces'
+local ui = I.H3UI.scope { invalidate = refresh }
+
+local layout = ui.column {
+    gap = 8,
+    ui.text 'Hello from H3',
+    ui.button {
+        label = 'Continue',
+        onActivate = continue,
+    },
+}
+```
+
+The pages in this section document the option contracts behind those constructors. You should not need one `require` per component in ordinary mod code.
+
+H3UI returns normal OpenMW layouts; it does not create elements, choose layers, retain application state, or own a rendered surface. Start with [UI Layouts and Lifecycle](@/h3lp_yours3lf/docs/concepts/ui-components.md), then use the [application recipes](@/h3lp_yours3lf/docs/examples/ui-recipes.md) for complete copyable surfaces.
 
 ## Choose by job
 
-| Need | Components |
+| Need | Constructors |
 | --- | --- |
-| Basic layout shape | [widget](@/h3lp_yours3lf/docs/api/components/widget.md), [container](@/h3lp_yours3lf/docs/api/components/container.md), [row](@/h3lp_yours3lf/docs/api/components/row.md), [column](@/h3lp_yours3lf/docs/api/components/column.md) |
-| Text, images, and spacing | [text](@/h3lp_yours3lf/docs/api/components/text.md), [image](@/h3lp_yours3lf/docs/api/components/image.md), [spacer](@/h3lp_yours3lf/docs/api/components/spacer.md) |
+| Layout and spacing | [row](@/h3lp_yours3lf/docs/api/components/row.md), [column](@/h3lp_yours3lf/docs/api/components/column.md), [spacer](@/h3lp_yours3lf/docs/api/components/spacer.md), [divider](@/h3lp_yours3lf/docs/api/components/divider.md) |
+| Text and images | [text](@/h3lp_yours3lf/docs/api/components/text.md), [image](@/h3lp_yours3lf/docs/api/components/image.md) |
 | Lists and repeated content | [list](@/h3lp_yours3lf/docs/api/components/list.md), [listItem](@/h3lp_yours3lf/docs/api/components/list-item.md), [grid](@/h3lp_yours3lf/docs/api/components/grid.md) |
-| Framed content | [box](@/h3lp_yours3lf/docs/api/components/box.md), [bookFrame](@/h3lp_yours3lf/docs/api/components/book-frame.md), [tooltip](@/h3lp_yours3lf/docs/api/components/tooltip.md) |
+| Frames and surfaces | [box](@/h3lp_yours3lf/docs/api/components/box.md), [bookFrame](@/h3lp_yours3lf/docs/api/components/book-frame.md), [tooltip](@/h3lp_yours3lf/docs/api/components/tooltip.md), [window](@/h3lp_yours3lf/docs/api/components/window.md) |
 | Actions and indicators | [button](@/h3lp_yours3lf/docs/api/components/button.md), [iconButton](@/h3lp_yours3lf/docs/api/components/icon-button.md), [meter](@/h3lp_yours3lf/docs/api/components/meter.md), [itemSlot](@/h3lp_yours3lf/docs/api/components/item-slot.md) |
 | State and input | [toggle](@/h3lp_yours3lf/docs/api/components/toggle.md), [slider](@/h3lp_yours3lf/docs/api/components/slider.md), [selector](@/h3lp_yours3lf/docs/api/components/selector.md), [numberInput](@/h3lp_yours3lf/docs/api/components/number-input.md), [searchInput](@/h3lp_yours3lf/docs/api/components/search-input.md), [textInput](@/h3lp_yours3lf/docs/api/components/text-input.md) |
 | Tabbed or expandable content | [tabs](@/h3lp_yours3lf/docs/api/components/tabs.md), [collapsible](@/h3lp_yours3lf/docs/api/components/collapsible.md) |
-| Morrowind window chrome | [headBlock](@/h3lp_yours3lf/docs/api/components/head-block.md), [caption](@/h3lp_yours3lf/docs/api/components/caption.md), [pinButton](@/h3lp_yours3lf/docs/api/components/pin-button.md), [window](@/h3lp_yours3lf/docs/api/components/window.md) |
+
+`widget`, `container`, `headBlock`, `caption`, and `pinButton` remain documented because H3 itself and advanced component authors use them. They are not part of the normal application constructor surface.
 
 ## Shared layout options
 
-Most builders accept these layout fields:
+Most constructors accept these layout fields:
 
 | Field | Type | Description |
 | --- | --- | --- |
 | `name` | string? | Name a child for lookup from its owning `Content`. |
 | `props` | table? | Set layout properties such as `size`, `position`, or `visible`. |
 | `external` | table? | Set parent-facing properties such as `grow` or `stretch`. |
-| `events` | table? | Supply low-level OpenMW callbacks. Wrap them with `async:callback`. |
+| `events` | table? | Supply low-level OpenMW callbacks when no semantic callback fits. |
 | `userData` | any? | Attach caller-owned data to a layout. |
 | `template` | openmw.ui.Template? | Override the default template where supported. |
-| `content` | openmw.ui.Content? | Provide child content; takes precedence over `children`. |
-| `children` | openmw.ui.LayoutOrElement[]? | Provide child layouts when `content` is absent. |
+| `content` | openmw.ui.Content? | Provide child content where supported. |
+| `children` | openmw.ui.LayoutOrElement[]? | Provide child layouts where supported. |
 
-The builders shallow-copy `props` and `external`. They do not copy child layouts, textures, or caller state deeply.
+`row` and `column` also accept children directly in the array part of the options table:
+
+```lua
+ui.row {
+    gap = 6,
+    ui.text 'Name',
+    ui.textInput { text = name, onChange = setName },
+}
+```
+
+The builders shallow-copy `props` and `external`. They do not deeply copy child layouts, textures, or caller state.
 
 ## Mount a component
 
 ```lua
-local ui = require 'openmw.ui'
-local column = require 'scripts.s3.components.column'
-local text = require 'scripts.s3.components.text'
+local I = require 'openmw.interfaces'
+local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
-ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  props = {
-    position = util.vector2(80, 80),
-  },
-  content = ui.content {
-    column {
-      children = {
-        text {
-          text = 'Hello from H3',
-        },
-      },
+local layout = I.H3UI.column {
+    gap = 4,
+    I.H3UI.text 'Hello from H3',
+}
+
+local element = openmwUi.create {
+    type = openmwUi.TYPE.Container,
+    layer = 'Windows',
+    props = {
+        position = util.vector2(80, 80),
     },
-  },
+    content = openmwUi.content { layout },
 }
 ```
 
-Keep `element` when a callback changes layout state, then call `element:update()`. Rebuild the root for structural changes. The [component tests](https://github.com/DreamWeave-MP/S3ctors-S3cret-St4sh/tree/main/content/h3lp_yours3lf/scripts/s3/components/componentTests) provide larger executable constructions.
+Keep `element` when a callback changes layout state, then call `element:update()`. Rebuild the caller-owned root for structural changes.
+
+The bundled component tests now separate small diagnostic probes from application-grade reference fixtures. The Magic menu, inventory panel, and mod configuration surfaces are intended to be useful examples as well as integration tests.

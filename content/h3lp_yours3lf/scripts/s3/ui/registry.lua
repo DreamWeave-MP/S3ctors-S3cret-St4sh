@@ -8,6 +8,7 @@ local styleTargetMarker = {}
 
 local function new(definitions)
   local adapters = {}
+  local adapterNames = {}
 
   for name, definition in next, definitions do
     assert(type(name) == 'string' and name ~= '', 'H3 UI component name must be a string')
@@ -28,6 +29,7 @@ local function new(definitions)
     end
     definition._styledOptions = styledOptions
     adapters[name] = definition
+    adapterNames[definition] = name
   end
 
   local registry = {}
@@ -42,6 +44,15 @@ local function new(definitions)
 
   function registry.supportsRuntimeState(name) return registry.get(name).runtimeState == true end
 
+  function registry.publicComponents()
+    local result = {}
+    for name, adapter in next, adapters do
+      if adapter.public then result[#result + 1] = name end
+    end
+    table.sort(result)
+    return result
+  end
+
   function registry.validateSlot(name, slot)
     local adapter = registry.get(name)
     if not adapter.slots[slot] then
@@ -53,7 +64,9 @@ local function new(definitions)
   local function applySlot(options, adapter, slotName, style)
     local mapping = adapter.slots[slotName]
     if not mapping then
-      error(('Unknown H3 UI style slot %q for component %q'):format(slotName, adapter.name))
+      error(
+        ('Unknown H3 UI style slot %q for component %q'):format(slotName, adapterNames[adapter])
+      )
     end
     assert(merge.isPlainTable(style), 'H3 UI style slot must be a plain table')
 
@@ -63,7 +76,7 @@ local function new(definitions)
         error(
           ('Unsupported H3 UI style key %q on %s.%s'):format(
             tostring(styleKey),
-            adapter.name,
+            adapterNames[adapter],
             slotName
           )
         )
@@ -403,10 +416,6 @@ local function new(definitions)
     end
     table.sort(result)
     return result
-  end
-
-  for name, adapter in next, adapters do
-    adapter.name = name
   end
 
   return registry

@@ -6,6 +6,10 @@ extra:
   kind: api
 ---
 
+{% usage_note(title="Advanced building block") %}
+This module is documented for H3 component and chrome authors. Normal mod UI should use the constructors exposed by `I.H3UI`; this primitive is not part of the application-facing constructor catalog.
+{% end %}
+
 Builds the vanilla up/down pin control. It is fixed at 19×19 pixels and changes its skin when clicked.
 
 ## Example

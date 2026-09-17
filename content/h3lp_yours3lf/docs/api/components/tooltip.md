@@ -12,14 +12,14 @@ Builds an H3UI nine-slice box with a two-pixel content inset and a paragraph-tex
 
 ```lua
 local ui = require 'openmw.ui'
-local tooltip = require 'scripts.s3.components.tooltip'
 local util = require 'openmw.util'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    tooltip {
+    H3UI.tooltip {
       text = 'This explains the item under the pointer.',
       props = {
         position = util.vector2(100, 100),

@@ -12,12 +12,10 @@ Builds an H3UI button whose label reflects a boolean value. `value` defaults to 
 
 ```lua
 local ui = require 'openmw.ui'
-local column = require 'scripts.s3.components.column'
-local toggle = require 'scripts.s3.components.toggle'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
 local enabled = true
-local status = text {
+local status = H3UI.text {
   text = 'Enabled',
 }
 local element
@@ -26,9 +24,9 @@ element = ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    column {
+    H3UI.column {
       children = {
-        toggle {
+        H3UI.toggle {
           label = 'Sound',
           value = enabled,
           onChange = function(value)

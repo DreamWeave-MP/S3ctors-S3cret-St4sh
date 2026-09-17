@@ -1,10 +1,11 @@
 ---@omw-context menu|player
 
+local constructors = require 'scripts.s3.ui.constructors'
 local merge = require 'scripts.s3.ui.merge'
 local token = require 'scripts.s3.ui.token'
 
 ---@class H3UI.ScopeOptions
----@field invalidate? fun() Called after a runtime state change that needs a mounted Element update.
+---@field invalidate? fun() Called when H3UI-owned interaction or recipe state needs a mounted Element update.
 ---@field recipes? table<string, function>
 
 ---@param options? H3UI.ScopeOptions
@@ -39,9 +40,28 @@ local function new(options, environment)
     resolveTheme = environment.resolveTheme,
   }
 
-  function scope.build(spec) return environment.resolver.build(scope, spec) end
+  ---Build a component by dynamic name. Prefer the named constructors such as `ui.button` in normal code.
+  function scope.component(name, spec)
+    assert(type(name) == 'string' and name ~= '', 'H3 UI component name must be a string')
+    return environment.resolver.component(scope, name, spec or {})
+  end
+
+  ---Build a recipe by dynamic name. Prefer named recipe constructors such as `ui.settings` in normal code.
+  function scope.recipe(name, spec)
+    assert(type(name) == 'string' and name ~= '', 'H3 UI recipe name must be a string')
+    return environment.resolver.recipe(scope, name, spec or {})
+  end
+
   function scope.explain(spec) return environment.resolver.explain(scope, spec) end
   function scope.token(path) return token.ref(path) end
+
+  constructors(
+    scope,
+    environment.publicComponents,
+    recipes,
+    function(name, spec) return scope.component(name, spec) end,
+    function(name, spec) return scope.recipe(name, spec) end
+  )
 
   return scope
 end

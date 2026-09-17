@@ -2,8 +2,8 @@
 
 local emptyOptions = {}
 
+local activationEvents = require 'scripts.s3.components.activationEvents'
 local appearance = require 'scripts.s3.ui.appearance'
-local async = require 'openmw.async'
 local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
 local inset = require 'scripts.s3.components.inset'
@@ -11,28 +11,22 @@ local row = require 'scripts.s3.components.row'
 local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 
-local function activationEvents(options)
-  local events = {}
-  for key, value in next, options.events or {} do
-    events[key] = value
-  end
-  if options.onActivate then
-    local previous = events.mouseClick
-    events.mouseClick = async:callback(function(event, layout)
-      local result = options.onActivate(event, layout)
-      if previous then
-        local previousResult = previous(event, layout)
-        if previousResult ~= nil then return previousResult end
-      end
-      if result ~= nil then return result end
-      return true
-    end)
-  end
-  return next(events) and events or nil
-end
+---@class H3.IconButtonOptions
+---@field resource? openmw.ui.TextureResource|openmw.ui.TextureResourceOptions
+---@field label? string
+---@field onActivate? fun(event: table, layout: openmw.ui.Layout): any
+---@field gap? number
+---@field name? string
+---@field props? table
+---@field iconProps? table
+---@field labelProps? table
+---@field external? table
+---@field events? table
+---@field userData? any
+---@field template? openmw.ui.Template
 
 ---Build a button with an icon and optional label.
----@param options? table
+---@param options? H3.IconButtonOptions
 ---@return openmw.ui.Layout
 local function iconButton(options)
   options = options or emptyOptions
@@ -72,7 +66,7 @@ local function iconButton(options)
     end
   end
 
-  local events = activationEvents(options)
+  local events = activationEvents(options.events, options.onActivate)
   local padded = inset(content)
 
   if options.template then

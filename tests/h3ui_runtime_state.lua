@@ -102,6 +102,7 @@ local newScope = require 'scripts.s3.ui.scope'
 local pinButton = require 'scripts.s3.components.pinButton'
 local searchInput = require 'scripts.s3.components.searchInput'
 local selector = require 'scripts.s3.components.selector'
+local tabbedWindow = require 'scripts.s3.ui.recipes.tabbedWindow'
 local tabs = require 'scripts.s3.components.tabs'
 local textInput = require 'scripts.s3.components.textInput'
 local textRules = require 'scripts.s3.ui.themes.textRules'
@@ -128,7 +129,11 @@ local registry = newRegistry {
     runtimeState = true,
     slots = { root = { props = 'props', external = 'external' }, label = { props = 'labelProps' } },
   },
-  text = { builder = function() return {} end, slots = { root = { props = 'props' } } },
+  text = { builder = function(options) return options end, slots = { root = { props = 'props' } } },
+  spacer = {
+    builder = function(options) return options end,
+    slots = { root = { props = 'props' } },
+  },
   dialog = {
     builder = function() return {} end,
     slots = { root = { props = 'props' }, title = { props = 'titleProps' } },
@@ -161,7 +166,11 @@ local registry = newRegistry {
   },
   listItem = {
     builder = function() return {} end,
-    slots = { root = { props = 'props' }, label = { props = 'labelProps' } },
+    slots = {
+      root = { props = 'props' },
+      label = { props = 'labelProps' },
+      secondary = { props = 'secondaryProps' },
+    },
   },
   tabs = {
     builder = function() return {} end,
@@ -234,18 +243,15 @@ local starwind = makeTheme('starwind-test', {
   textHover = 'starwind-hover',
   textPressed = 'starwind-pressed',
 })
-local resolver = newResolver(registry, {})
+local resolver = newResolver(registry, { 'button', 'text', 'spacer' })
 
 local function build(theme, spec)
-  return resolver.build(
-    { resolveTheme = function() return theme end, density = nil, recipes = {} },
-    spec
-  )
+  return resolver.build({ resolveTheme = function() return theme end, recipes = {} }, spec)
 end
 
 local function buildWith(theme, spec, recipes)
   return resolver.build(
-    { resolveTheme = function() return theme end, density = nil, recipes = recipes or {} },
+    { resolveTheme = function() return theme end, recipes = recipes or {} },
     spec
   )
 end
@@ -258,13 +264,23 @@ local function labelProps(layout)
   return result.props
 end
 
+local function findDescendant(layout, predicate)
+  if predicate(layout) then return layout end
+  if not layout.content then return nil end
+
+  for index = 1, #layout.content do
+    local result = findDescendant(layout.content[index], predicate)
+    if result then return result end
+  end
+end
+
 local function testThemeTokens()
   assert(
-    labelProps(build(morrowind, { component = 'button', args = { label = 'Morrowind' } })).textColor
+    labelProps(build(morrowind, { component = 'button', label = 'Morrowind' })).textColor
       == 'morrowind-text'
   )
   assert(
-    labelProps(build(starwind, { component = 'button', args = { label = 'Starwind' } })).textColor
+    labelProps(build(starwind, { component = 'button', label = 'Starwind' })).textColor
       == 'starwind-text'
   )
 
@@ -353,15 +369,13 @@ local function testStateMachineAndEventReturns()
   local invalidationCount = 0
   local layout = build(morrowind, {
     component = 'button',
-    args = {
-      label = 'Button',
-      events = {
-        focusGain = function()
-          callbackCalled = true
-          return returnValue
-        end,
-        mousePress = function() return mouseReturn end,
-      },
+    label = 'Button',
+    events = {
+      focusGain = function()
+        callbackCalled = true
+        return returnValue
+      end,
+      mousePress = function() return mouseReturn end,
     },
     invalidate = function()
       assert(callbackCalled)
@@ -389,7 +403,7 @@ local function testStateMachineAndEventReturns()
   assert(props.textColor == 'changed-before-focus')
   assert(props.unrelated == 'preserved')
 
-  local noResurrection = build(morrowind, { component = 'button', args = { label = 'Button' } })
+  local noResurrection = build(morrowind, { component = 'button', label = 'Button' })
   local noResurrectionProps = labelProps(noResurrection)
   noResurrection.events.mousePress({ button = 1 }, noResurrection)
   noResurrection.events.focusLoss(nil, noResurrection)
@@ -409,8 +423,7 @@ local function testStateMachineAndEventReturns()
       },
     },
   }, registry)
-  local hoverOnlyLayout =
-    build(hoverOnly, { component = 'button', args = { label = 'Hover only' } })
+  local hoverOnlyLayout = build(hoverOnly, { component = 'button', label = 'Hover only' })
   local hoverOnlyProps = labelProps(hoverOnlyLayout)
   hoverOnlyLayout.events.focusGain(nil, hoverOnlyLayout)
   hoverOnlyLayout.events.mousePress({ button = 1 }, hoverOnlyLayout)
@@ -432,8 +445,7 @@ local function testStateMachineAndEventReturns()
       },
     },
   }, registry)
-  local pressedOnlyLayout =
-    build(pressedOnly, { component = 'button', args = { label = 'Pressed only' } })
+  local pressedOnlyLayout = build(pressedOnly, { component = 'button', label = 'Pressed only' })
   local pressedOnlyProps = labelProps(pressedOnlyLayout)
   pressedOnlyLayout.events.focusGain(nil, pressedOnlyLayout)
   assert(pressedOnlyProps.textColor == 'normal')
@@ -446,42 +458,57 @@ local function testStateMachineAndEventReturns()
     recipe = 'buttonRecipe',
     invalidate = function() invalidationCount = invalidationCount + 1 end,
   }, {
-    buttonRecipe = function(context)
-      return context.component('button', { args = { label = 'Recipe button' } })
-    end,
+    buttonRecipe = function(context) return context.button { label = 'Recipe button' } end,
   })
   recipeLayout.events.focusGain(nil, recipeLayout)
   assert(invalidationCount == 5)
 
   local scoped = newScope({
     invalidate = function() invalidationCount = invalidationCount + 1 end,
-  }, { resolveTheme = function() return morrowind end, recipes = {}, resolver = resolver })
-  local scopeLayout = scoped.build { component = 'button', args = { label = 'Scoped button' } }
+  }, {
+    resolveTheme = function() return morrowind end,
+    recipes = {
+      testCard = function(context, spec) return context.text(spec.label) end,
+    },
+    resolver = resolver,
+    publicComponents = { 'button', 'text', 'spacer' },
+  })
+
+  local scopeLayout = scoped.button { label = 'Scoped button' }
   scopeLayout.events.focusGain(nil, scopeLayout)
   assert(invalidationCount == 6)
 
   local overrideCount = 0
-  local overrideLayout = scoped.build {
-    component = 'button',
+  local overrideLayout = scoped.button {
+    label = 'Override button',
     invalidate = function() overrideCount = overrideCount + 1 end,
-    args = { label = 'Override button' },
   }
   overrideLayout.events.focusGain(nil, overrideLayout)
   assert(overrideCount == 1)
   assert(invalidationCount == 6)
+
+  local shorthandText = scoped.text 'Constructor text'
+  assert(shorthandText.text == 'Constructor text')
+
+  local shorthandSpacer = scoped.spacer(8, 4)
+  assert(shorthandSpacer.props.size.x == 8 and shorthandSpacer.props.size.y == 4)
+
+  local constructorRecipeLayout = scoped.testCard { label = 'Recipe constructor' }
+  assert(constructorRecipeLayout.text == 'Recipe constructor')
 end
 
 local function testProtectionAndTraversal()
   local callerOwned = build(morrowind, {
     component = 'button',
-    args = { label = 'Button', labelProps = { textColor = 'caller' } },
+    label = 'Button',
+    labelProps = { textColor = 'caller' },
   })
   assert(labelProps(callerOwned).textColor == 'caller')
   assert(callerOwned.events == nil)
 
   local inlineOwned = build(morrowind, {
     component = 'button',
-    args = { label = 'Button' },
+    label = 'Button',
     style = { label = { props = { textColor = 'inline' } } },
   })
   assert(labelProps(inlineOwned).textColor == 'inline')
@@ -489,7 +516,7 @@ local function testProtectionAndTraversal()
 
   local customContent = build(morrowind, {
     component = 'button',
-    args = { content = { { props = { textColor = 'custom' } } } },
+    content = { { props = { textColor = 'custom' } } },
   })
   assert(customContent.events == nil)
   assert(customContent.content[1].props.textColor == 'custom')
@@ -497,16 +524,25 @@ local function testProtectionAndTraversal()
   local composite = build(morrowind, { component = 'selector' })
   assert(composite.events == nil)
 
-  local explicitState = build(morrowind, { component = 'button', state = 'disabled' })
-  assert(explicitState.events == nil)
+  local stateOk, stateError = pcall(build, morrowind, {
+    component = 'button',
+    state = 'disabled',
+  })
+  assert(not stateOk and tostring(stateError):find('instance state was removed', 1, true))
+
+  local argsOk, argsError = pcall(build, morrowind, {
+    component = 'button',
+    args = { label = 'legacy' },
+  })
+  assert(not argsOk and tostring(argsError):find('component args are flat', 1, true))
 
   local plain = themeModule.new({ name = 'plain' }, registry)
-  local plainLayout = build(plain, { component = 'button', args = { label = 'Plain' } })
+  local plainLayout = build(plain, { component = 'button', label = 'Plain' })
   assert(plainLayout.events == nil)
 end
 
 local function testToggleLabelMutation()
-  local layout = build(morrowind, { component = 'toggle', args = { value = false } })
+  local layout = build(morrowind, { component = 'toggle', value = false })
   local props = labelProps(layout)
 
   layout.events.focusGain(nil, layout)
@@ -540,29 +576,68 @@ local function testTabStyleRetention()
   assert(labelProps(second).textColor == 'selected')
 end
 
+local function testTabbedWindowControlledSelection()
+  local selectedIndex
+  local onSelect
+  local general = { name = 'general' }
+  local advanced = { name = 'advanced' }
+  local context = {
+    token = function(path)
+      assert(path == 'spacing.sm')
+      return 4
+    end,
+    tabs = function(options)
+      onSelect = options.onSelect
+      return { kind = 'tabs', options = options }
+    end,
+    column = function(options) return { kind = 'column', options = options } end,
+    window = function(options) return { kind = 'window', options = options } end,
+  }
+
+  local layout = tabbedWindow(context, {
+    selected = 2,
+    tabs = {
+      { label = 'General', content = general },
+      { label = 'Advanced', content = advanced },
+    },
+    onSelect = function(index) selectedIndex = index end,
+  })
+
+  local body = layout.options.children[1]
+  assert(body.options.children[1].options.selected == 2)
+  assert(body.options.children[2].options.children[1] == advanced)
+
+  onSelect(1)
+  assert(selectedIndex == 1)
+  assert(body.options.children[2].options.children[1] == advanced)
+end
+
 local function testSelectorAlignment()
   local layout = selector { items = { 'First' } }
-  local arrow = layout.content[1].content[1].content[1].content[1].content[1].content[1]
-  local value = layout.content[2]
-  for _ = 1, 3 do
-    value = value.content[1]
-  end
+  local arrow = findDescendant(
+    layout.content[1],
+    function(child) return child.type == ui.TYPE.Image end
+  )
+  local value = findDescendant(layout.content[2], function(child) return child.name == 'value' end)
 
   assert(layout.props.arrange == 'Center')
-  assert(arrow.props.color == 'chrome-border')
-  assert(value.props.textAlignH == 'Center')
+  assert(arrow and arrow.props.color == 'chrome-border')
+  assert(value and value.props.textAlignH == 'Center')
   assert(value.props.textAlignV == 'Center')
 end
 
 local function testSearchInputHeight()
   local layout = searchInput { inputProps = { size = { x = 420, y = 28 } } }
-  local input = layout.content[1].content[1].content[1].content[1]
+  local input = findDescendant(layout, function(child) return child.type == ui.TYPE.TextEdit end)
 
-  assert(input.props.size.y == 20)
+  assert(input and input.props.size.y == 24)
 
   local defaultLayout = searchInput {}
-  local defaultInput = defaultLayout.content[1].content[1].content[1].content[1]
-  assert(defaultInput.props.size.y == 20)
+  local defaultInput = findDescendant(
+    defaultLayout,
+    function(child) return child.type == ui.TYPE.TextEdit end
+  )
+  assert(defaultInput and defaultInput.props.size.y == 20)
 end
 
 local function testItemSlotChrome()
@@ -645,6 +720,7 @@ testStateMachineAndEventReturns()
 testProtectionAndTraversal()
 testToggleLabelMutation()
 testTabStyleRetention()
+testTabbedWindowControlledSelection()
 testSelectorAlignment()
 testSearchInputHeight()
 testItemSlotChrome()

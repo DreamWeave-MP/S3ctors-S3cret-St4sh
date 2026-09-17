@@ -46,6 +46,7 @@ local toneTargets = {
   { 'button', 'label' },
   { 'iconButton', 'label' },
   { 'listItem', 'label' },
+  { 'listItem', 'secondary' },
   { 'toggle', 'label' },
   { 'selector', 'label' },
   { 'tabs', 'label' },
@@ -116,6 +117,7 @@ local function new()
     { 'button', 'label' },
     { 'iconButton', 'label' },
     { 'listItem', 'label' },
+    { 'listItem', 'secondary' },
     { 'selector', 'label' },
     { 'tabs', 'label' },
     { 'tabs', 'selectedLabel' },
@@ -136,6 +138,8 @@ local function new()
     addStateTextRule(rules, component, 'label', 'hover', 'color.textHover')
     addStateTextRule(rules, component, 'label', 'pressed', 'color.textPressed')
   end
+  addStateTextRule(rules, 'listItem', 'secondary', 'hover', 'color.textHover')
+  addStateTextRule(rules, 'listItem', 'secondary', 'pressed', 'color.textPressed')
 
   addToneRules(rules)
   return rules

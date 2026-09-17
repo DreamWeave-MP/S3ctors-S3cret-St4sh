@@ -13,26 +13,24 @@ Builds an empty `ui.TYPE.Widget`. Use `spacer(8)` for an 8×8 square, `spacer(12
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local row = require 'scripts.s3.components.row'
-local spacer = require 'scripts.s3.components.spacer'
-local text = require 'scripts.s3.components.text'
+local H3UI = require('openmw.interfaces').H3UI
 
 ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    row {
+    H3UI.row {
       props = {
         size = util.vector2(240, 24),
       },
       children = {
-        text {
+        H3UI.text {
           text = 'Left',
         },
-        spacer {
+        H3UI.spacer {
           grow = 1,
         },
-        text {
+        H3UI.text {
           text = 'Right',
         },
       },

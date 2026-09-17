@@ -12,7 +12,7 @@ Builds a row containing a bordered TextEdit named `input` and, by default, a cle
 
 ```lua
 local ui = require 'openmw.ui'
-local searchInput = require 'scripts.s3.components.searchInput'
+local H3UI = require('openmw.interfaces').H3UI
 
 local query = ''
 local element
@@ -21,7 +21,7 @@ element = ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    searchInput {
+    H3UI.searchInput {
       value = query,
       clearable = true,
       clearLabel = 'Clear',

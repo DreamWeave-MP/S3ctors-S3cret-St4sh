@@ -11,9 +11,19 @@ local UtilVector2 = util.vector2
 local defaultSize = UtilVector2(150, 0)
 
 ---Build an H3UI-owned single-line TextEdit layout by default.
----Allocates fresh layout, props, and external tables. Event callbacks, if supplied, are passed
----through unchanged; callers must wrap OpenMW UI callbacks with `async:callback`.
----@param options? {text?: string, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+---Allocates fresh layout, props, and external tables. `onChange` is composed with any caller-supplied
+---`events.textChanged` callback so normal application code does not need raw event plumbing.
+---@class H3.TextInputOptions
+---@field text? string
+---@field onChange? fun(value: string, layout: openmw.ui.Layout): any
+---@field name? string
+---@field props? table
+---@field external? table
+---@field events? table
+---@field userData? any
+---@field template? openmw.ui.Template
+
+---@param options? H3.TextInputOptions
 ---@return openmw.ui.Layout
 local function textInput(options)
   options = options or emptyOptions
