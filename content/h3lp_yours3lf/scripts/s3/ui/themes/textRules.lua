@@ -33,6 +33,37 @@ local function addStateTextRule(rules, component, slot, state, color)
   }
 end
 
+local toneColors = {
+  accent = 'color.accent',
+  positive = 'color.positive',
+  negative = 'color.negative',
+  muted = 'color.disabled',
+  link = 'color.link',
+}
+
+local toneTargets = {
+  { 'text', 'root' },
+  { 'button', 'label' },
+  { 'iconButton', 'label' },
+  { 'listItem', 'label' },
+  { 'toggle', 'label' },
+  { 'selector', 'label' },
+  { 'tabs', 'label' },
+  { 'tabs', 'selectedLabel' },
+}
+
+local function addToneRules(rules)
+  for tone, color in next, toneColors do
+    for index = 1, #toneTargets do
+      local target = toneTargets[index]
+      rules[#rules + 1] = {
+        selector = { component = target[1], slot = target[2], tone = tone },
+        style = { props = { textColor = token.ref(color) } },
+      }
+    end
+  end
+end
+
 ---@return H3UI.ThemeRule[]
 local function new()
   local rules = {
@@ -42,10 +73,6 @@ local function new()
     },
     {
       selector = { component = 'text', role = 'title' },
-      style = textStyle('color.header', 'textSize.header'),
-    },
-    {
-      selector = { component = 'dialog', slot = 'title' },
       style = textStyle('color.header', 'textSize.header'),
     },
     {
@@ -110,6 +137,7 @@ local function new()
     addStateTextRule(rules, component, 'label', 'pressed', 'color.textPressed')
   end
 
+  addToneRules(rules)
   return rules
 end
 

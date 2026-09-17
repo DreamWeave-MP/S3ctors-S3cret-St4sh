@@ -48,9 +48,9 @@ local function action(scope, label, invalidate)
   return scope.build {
     component = 'button',
     invalidate = invalidate,
-    tone = 'danger',
+    tone = 'negative',
     classes = { 'wide' },
-    args = { label = label },
+    label = label,
     style = {
       label = {
         props = { textSize = 18 },
@@ -63,10 +63,8 @@ local function frame(scope, title, children, invalidate)
   return scope.build {
     component = 'bookFrame',
     invalidate = invalidate,
-    args = {
-      title = title,
-      children = children,
-    },
+    title = title,
+    children = children,
   }
 end
 
@@ -74,7 +72,7 @@ end
 ---@return openmw.ui.Layout
 local function h3ui(invalidate)
   local H3UI = I.H3UI
-  local scoped = H3UI.scope { density = 'compact' }
+  local scoped = H3UI.scope()
 
   return column {
     name = 'ct_demo_h3ui',
@@ -87,8 +85,8 @@ local function h3ui(invalidate)
             action(H3UI, 'Danger action', invalidate),
           }, invalidate),
           spacer { props = { size = gap } },
-          frame(scoped, 'Compact scope', {
-            settings(scoped, '(density only)', invalidate),
+          frame(scoped, 'Independent scope', {
+            settings(scoped, '(local recipes/invalidation)', invalidate),
             action(scoped, 'Hover me', invalidate),
           }, invalidate),
         },

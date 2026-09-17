@@ -40,3 +40,7 @@ Common layout fields are documented on the [UI Components overview](@/h3lp_yours
 ## See also
 
 [textInput](@/h3lp_yours3lf/docs/api/components/text-input.md) · [caption](@/h3lp_yours3lf/docs/api/components/caption.md) · [listItem](@/h3lp_yours3lf/docs/api/components/list-item.md)
+
+## String shorthand
+
+`text 'Settings'` is equivalent to `text { text = 'Settings' }`.

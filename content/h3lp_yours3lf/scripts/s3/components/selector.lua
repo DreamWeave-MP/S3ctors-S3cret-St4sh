@@ -2,14 +2,13 @@
 
 local emptyOptions = {}
 
-local I = require 'openmw.interfaces'
-local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local appearance = require 'scripts.s3.ui.appearance'
 local chrome = require 'scripts.s3.ui.chrome'
 local iconButton = require 'scripts.s3.components.iconButton'
+local inset = require 'scripts.s3.components.inset'
 local row = require 'scripts.s3.components.row'
 local text = require 'scripts.s3.components.text'
 
@@ -85,12 +84,10 @@ local function selector(options)
       resource = resource,
       props = options.buttonProps,
       iconProps = arrowIconProps,
-      events = {
-        mouseClick = async:callback(function()
-          choose(selected + offset)
-          return true
-        end),
-      },
+      onActivate = function()
+        choose(selected + offset)
+        return true
+      end,
     }
   end
 
@@ -120,15 +117,7 @@ local function selector(options)
     template = options.labelTemplate,
   }
   local valueContent = valueLayout
-  if labelProps.autoSize ~= false then
-    for _ = 1, 3 do
-      valueContent = {
-        template = I.MWUI.templates.padding,
-        props = { ignorePointerEvents = true },
-        content = ui.content { valueContent },
-      }
-    end
-  end
+  if labelProps.autoSize ~= false then valueContent = inset(valueContent, true) end
 
   local children = {
     makeButton('previous', previousTexture, -1),

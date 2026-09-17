@@ -5,7 +5,6 @@ local merge = require 'scripts.s3.ui.merge'
 local allowed = {
   class = true,
   component = true,
-  density = true,
   recipe = true,
   role = true,
   slot = true,
@@ -20,7 +19,6 @@ local traitFields = {
   'role',
   'variant',
   'tone',
-  'density',
   'state',
 }
 
@@ -89,7 +87,7 @@ end
 local function tier(rule)
   if rule.state ~= nil then return 5 end
   if rule.class ~= nil then return 4 end
-  if rule.variant ~= nil or rule.tone ~= nil or rule.density ~= nil then return 3 end
+  if rule.variant ~= nil or rule.tone ~= nil then return 3 end
   if rule.recipe ~= nil or rule.role ~= nil then return 2 end
   if rule.component ~= nil then return 1 end
   return 0

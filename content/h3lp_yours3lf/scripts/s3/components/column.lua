@@ -1,27 +1,39 @@
 ---@omw-context menu|player
 
 local emptyOptions = {}
-
----H3 UI component primitive for passive vertical Flex layouts.
----@module 'scripts.s3.components.column'
-
+local spacer = require 'scripts.s3.components.spacer'
 local ui = require 'openmw.ui'
 
----Build a vertical Flex layout.
----Allocates fresh layout, props, external, and content tables. `options.props` is shallow-copied
----before `horizontal = false` is applied, so callers may reuse their input table safely.
----@param options? {name?: string, props?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.LayoutOrElement[], children?: openmw.ui.Content|openmw.ui.LayoutOrElement[], template?: openmw.ui.Template}
+local function collectChildren(options)
+  local explicit = options.content or options.children
+  if #options == 0 then return explicit end
+  assert(explicit == nil, 'H3 column accepts array children or children/content, not both')
+  local result = {}
+  for index = 1, #options do
+    result[index] = options[index]
+  end
+  return result
+end
+
+local function withGap(children, gap)
+  if not children or #children < 2 or gap == nil or gap == 0 then return children end
+  assert(type(gap) == 'number' and gap >= 0, 'H3 column gap must be a non-negative number')
+  local result = {}
+  for index = 1, #children do
+    if index > 1 then result[#result + 1] = spacer(0, gap) end
+    result[#result + 1] = children[index]
+  end
+  return result
+end
+
+---@param options? table
 ---@return openmw.ui.Layout
 local function column(options)
   options = options or emptyOptions
-
   local props = {}
-  if options.props then
-    for key, value in next, options.props do
-      props[key] = value
-    end
+  for key, value in next, options.props or {} do
+    props[key] = value
   end
-
   local external
   if options.external then
     external = {}
@@ -29,9 +41,7 @@ local function column(options)
       external[key] = value
     end
   end
-
   props.horizontal = false
-
   local layout = {
     type = ui.TYPE.Flex,
     name = options.name,
@@ -41,8 +51,7 @@ local function column(options)
     userData = options.userData,
     template = options.template,
   }
-  local children = options.content or options.children
-
+  local children = withGap(collectChildren(options), options.gap)
   if children then layout.content = ui.content(children) end
   return layout
 end

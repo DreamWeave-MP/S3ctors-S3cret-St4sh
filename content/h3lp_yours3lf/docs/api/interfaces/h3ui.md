@@ -31,9 +31,8 @@ local H3UI = I.H3UI
 local element
 
 local layout = H3UI.build {
-    recipe = 'dialog',
-    variant = 'confirm',
-    tone = 'danger',
+    recipe = 'dialog.confirm',
+    tone = 'negative',
     props = {
         position = util.vector2(80, 80),
         size = util.vector2(320, 120),
@@ -50,7 +49,7 @@ local layout = H3UI.build {
         },
         {
             role = 'confirm',
-            tone = 'danger',
+            tone = 'negative',
             label = 'Delete',
             onActivate = function()
                 element:destroy()
@@ -68,20 +67,18 @@ element = ui.create {
 
 ## Build a styled primitive
 
-Recipes are optional. An H3UI build can apply the same theme machinery to an existing H3 primitive:
+Recipes are optional. An H3UI build can apply the same theme machinery to an existing H3 primitive. Component options are flat; H3UI metadata keys are the only reserved fields:
 
 ```lua
 local button = H3UI.build {
     component = 'button',
-    tone = 'danger',
+    tone = 'negative',
     classes = { 'wide' },
-    args = {
-        label = 'Delete',
-    },
+    label = 'Delete',
 }
 ```
 
-The component name is the H3 builder name (`button`, `row`, `itemSlot`, `searchInput`, and so on). `args` are ordinary options for that component. Behavioral values stay in `args`; visual overrides belong in `style` or the theme.
+The component name is the H3 builder name (`button`, `row`, `itemSlot`, `searchInput`, and so on). Ordinary component options sit directly beside H3UI metadata such as `tone`, `role`, and `style`.
 
 ## Build a nine-slice frame
 
@@ -134,7 +131,7 @@ H3UI.registerTheme {
         {
             selector = {
                 component = 'button',
-                tone = 'danger',
+                tone = 'negative',
                 slot = 'label',
             },
             style = {
@@ -194,11 +191,10 @@ The canonical Morrowind and Starwind palettes are registered internally. Existin
 
 ## Scopes
 
-Scopes provide density, invalidation, and local recipes. Appearance remains shared and player-configured:
+Scopes provide invalidation and local recipes. Appearance remains shared and player-configured:
 
 ```lua
 local MyH3UI = H3UI.scope {
-    density = 'compact',
 }
 
 local layout = MyH3UI.build {
@@ -216,13 +212,11 @@ local MyH3UI = H3UI.scope {
         ['myMod:characterCard'] = function(ctx, spec)
             return ctx.component('column', {
                 role = 'root',
-                args = {
-                    children = {
-                        ctx.component('text', {
-                            role = 'name',
-                            args = { text = spec.name },
-                        }),
-                    },
+                children = {
+                    ctx.component('text', {
+                        role = 'name',
+                        text = spec.name,
+                    }),
                 },
             })
         end,
@@ -239,11 +233,10 @@ Version 1 selectors are explicit Lua data:
 ```lua
 selector = {
     component = 'button',
-    recipe = 'dialog',
+    recipe = 'dialog.confirm',
     role = 'confirm',
     variant = 'primary',
-    tone = 'danger',
-    density = 'compact',
+    tone = 'negative',
     class = 'important',
     state = 'selected',
     slot = 'label',
@@ -252,7 +245,7 @@ selector = {
 
 All supplied fields must match. `class` tests membership in the node's class set. `slot` chooses the component style target and does not itself increase specificity.
 
-Selectors match component traits such as `variant`, `tone`, `density`, `role`, and `class`.
+Selectors match component traits such as `variant`, `tone`, `role`, and `class`.
 
 H3 intentionally does not parse CSS selector strings and does not implement descendant, sibling, `nth-child`, or arbitrary tree selectors. Recipes expose `role` values so themes can target a component's job instead of incidental child positions.
 
@@ -262,7 +255,7 @@ Matched rules apply from lower to higher precedence:
 
 1. generic/component rules;
 2. recipe/role rules;
-3. `variant`, `tone`, or `density` rules;
+3. `variant` or `tone` rules;
 4. class rules;
 5. state rules. State rules may be applied again at runtime for generated `hover` and `pressed` states.
 
@@ -311,7 +304,7 @@ A rule with `selector.slot` writes directly to that slot:
 {
     selector = {
         component = 'button',
-        tone = 'danger',
+        tone = 'negative',
         slot = 'label',
     },
     style = {
@@ -333,7 +326,7 @@ Inline styles can address multiple slots and always apply after theme rules and 
 ```lua
 H3UI.build {
     component = 'button',
-    args = { label = 'Wide' },
+    label = 'Wide',
     style = {
         root = {
             external = { grow = 1 },
@@ -351,9 +344,9 @@ Use `H3UI.UNSET` when a later style must explicitly remove an inherited style ke
 
 ### `dialog`
 
-Inputs include `title`, `body`, `children`/`content`, `tone`, `density`, `classes`, and ordinary dialog options. `variant = 'confirm'` selects the confirm structure. Because the result is a `ui.TYPE.Widget`, provide `props.size` or `props.relativeSize` when mounting it directly.
+Inputs include `title`, `body`, `children`/`content`, `tone`, `classes`, and ordinary dialog options. use `recipe = 'dialog.confirm'` for the confirm structure. Because the result is a `ui.TYPE.Widget`, provide `props.size` or `props.relativeSize` when mounting it directly.
 
-### `dialog` + `variant = 'confirm'`
+### `dialog.confirm`
 
 Adds an `actions` row. Each action may supply `role`, `label`, `tone`, `classes`, `style`, `args`, and `onActivate`. If `actions` is omitted while `onConfirm` or `onCancel` is supplied, H3 generates conventional Cancel/Confirm actions.
 
@@ -384,7 +377,7 @@ Builds `searchInput` + `list` + `listItem`. It does not filter your data. Pass a
     nodes = {
         {
             component = 'button',
-            recipe = 'dialog',
+            recipe = 'dialog.confirm',
             role = 'confirm',
             matched = {
                 -- matching rule selectors, tier, specificity and source order

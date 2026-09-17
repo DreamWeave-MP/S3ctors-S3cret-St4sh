@@ -53,4 +53,4 @@ Common layout fields are documented on the [UI Components overview](@/h3lp_yours
 
 ## See also
 
-[toggle](@/h3lp_yours3lf/docs/api/components/toggle.md) · [column](@/h3lp_yours3lf/docs/api/components/column.md) · [dialog](@/h3lp_yours3lf/docs/api/components/dialog.md)
+[toggle](@/h3lp_yours3lf/docs/api/components/toggle.md) · [column](@/h3lp_yours3lf/docs/api/components/column.md)

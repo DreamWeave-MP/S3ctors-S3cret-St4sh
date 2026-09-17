@@ -101,8 +101,6 @@ local function makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
     role = componentNode.role,
     variant = componentNode.variant,
     tone = componentNode.tone,
-    density = componentNode.density,
-    state = componentNode.state,
     classes = classes,
     matched = rules,
     themeStyle = merge.copy(themeStyles),
@@ -117,9 +115,7 @@ local function new(registry, builtinRecipes)
   local resolveComponent
   local resolveRecipe
 
-  local function findRecipe(scope, name, variant)
-    local specific = variant and (name .. '.' .. variant) or nil
-    if specific and scope.recipes[specific] then return scope.recipes[specific], specific end
+  local function findRecipe(scope, name)
     local recipeFunction = scope.recipes[name]
     if not recipeFunction then error('Unknown H3 UI recipe: ' .. tostring(name)) end
     return recipeFunction, name
@@ -127,8 +123,6 @@ local function new(registry, builtinRecipes)
 
   local function recipeContext(scope, spec, parentContext)
     local baseRecipe = spec.recipe
-    local density = spec.density
-    if density == nil then density = parentContext and parentContext.density or scope.density end
     local invalidate = spec.invalidate
     if invalidate == nil then invalidate = parentContext and parentContext.invalidate end
     if invalidate ~= nil then
@@ -137,7 +131,6 @@ local function new(registry, builtinRecipes)
 
     local context = {
       theme = parentContext and parentContext.theme or scope.resolveTheme(),
-      density = density,
       recipe = baseRecipe,
       invalidate = invalidate,
     }
@@ -145,7 +138,6 @@ local function new(registry, builtinRecipes)
     function context.component(name, childSpec)
       return node.component(name, childSpec, {
         recipe = baseRecipe,
-        density = density,
         invalidate = invalidate,
       })
     end
@@ -156,7 +148,7 @@ local function new(registry, builtinRecipes)
   end
 
   resolveRecipe = function(scope, spec, parentContext, trace)
-    local recipeFunction = findRecipe(scope, spec.recipe, spec.variant)
+    local recipeFunction = findRecipe(scope, spec.recipe)
     local context = recipeContext(scope, spec, parentContext)
     local result = recipeFunction(context, spec)
     return resolveValue(scope, result, context, trace)
@@ -193,7 +185,7 @@ local function new(registry, builtinRecipes)
       normalizeInlineStyle(registry, componentNode.component, componentNode.style, activeTheme)
 
     local dynamicStyles
-    if componentNode.state == nil and registry.supportsRuntimeState(componentNode.component) then
+    if registry.supportsRuntimeState(componentNode.component) then
       for index = 1, #interactiveStates do
         local state = interactiveStates[index]
         if themeModule.hasStateRules(activeTheme, componentNode.component, state) then
@@ -203,10 +195,6 @@ local function new(registry, builtinRecipes)
         end
       end
     end
-    if dynamicStyles and next(dynamicStyles) ~= nil then
-      dynamicStyles.baseState = componentNode.state
-    end
-
     if trace then
       trace[#trace + 1] = makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
     end
@@ -241,16 +229,15 @@ local function new(registry, builtinRecipes)
       return resolveRecipe(
         scope,
         spec,
-        { theme = scope.resolveTheme(), density = scope.density, invalidate = invalidate },
+        { theme = scope.resolveTheme(), invalidate = invalidate },
         trace
       )
     end
 
     if spec.component ~= nil then
-      local componentNode = node.component(spec.component, spec, { density = scope.density })
+      local componentNode = node.component(spec.component, spec)
       return resolveComponent(scope, componentNode, {
         theme = scope.resolveTheme(),
-        density = componentNode.density,
         invalidate = scope.invalidate,
       }, trace)
     end

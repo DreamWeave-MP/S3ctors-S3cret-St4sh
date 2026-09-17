@@ -1,19 +1,37 @@
 ---@omw-context menu|player
 
 local emptyOptions = {}
-
-local I = require 'openmw.interfaces'
 local appearance = require 'scripts.s3.ui.appearance'
+local async = require 'openmw.async'
 local chrome = require 'scripts.s3.ui.chrome'
+local inset = require 'scripts.s3.components.inset'
+local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-
 local fullSize = util.vector2(1, 1)
 
----Build a simple MWUI text button layout.
----Allocates fresh layout, props, external, padding, text, and content tables. The button is only a
----layout; caller-owned event callbacks must be async-wrapped before use.
----@param options? {label?: string, name?: string, props?: table, labelProps?: table, external?: table, events?: table, userData?: any, content?: openmw.ui.Content|openmw.ui.LayoutOrElement[], children?: openmw.ui.Content|openmw.ui.LayoutOrElement[], template?: openmw.ui.Template}
+local function eventsFor(options)
+  local events = {}
+  for key, value in next, options.events or {} do
+    events[key] = value
+  end
+  if options.onActivate then
+    local previous = events.mouseClick
+    events.mouseClick = async:callback(function(event, layout)
+      local result = options.onActivate(event, layout)
+      if previous then
+        local previousResult = previous(event, layout)
+        if previousResult ~= nil then return previousResult end
+      end
+      if result ~= nil then return result end
+      return true
+    end)
+  end
+  return next(events) and events or nil
+end
+
+---Build a text button. Prefer `onActivate` over raw `events.mouseClick`.
+---@param options? table
 ---@return openmw.ui.Layout
 local function button(options)
   options = options or emptyOptions
@@ -22,13 +40,9 @@ local function button(options)
     textColor = appearance.token 'color.text',
     textSize = appearance.token 'textSize.normal',
   }
-  if options.labelProps then
-    for key, value in next, options.labelProps do
-      labelProps[key] = value
-    end
+  for key, value in next, options.labelProps or {} do
+    labelProps[key] = value
   end
-
-  if options.label ~= nil then labelProps.text = options.label end
   if labelProps.ignorePointerEvents == nil then labelProps.ignorePointerEvents = true end
 
   local children = options.content or options.children
@@ -39,44 +53,15 @@ local function button(options)
       labelProps.relativeSize = fullSize
       labelProps.textAlignH = ui.ALIGNMENT.Center
       labelProps.textAlignV = ui.ALIGNMENT.Center
-      children = {
-        {
-          template = I.MWUI.templates.textNormal,
-          props = labelProps,
-        },
-      }
-    else
-      local label = {
-        template = I.MWUI.templates.textNormal,
-        props = labelProps,
-      }
-      local paddedLabel = {
-        template = I.MWUI.templates.padding,
-        props = { ignorePointerEvents = true },
-        content = ui.content { label },
-      }
-      local spacedLabel = {
-        template = I.MWUI.templates.padding,
-        props = { ignorePointerEvents = true },
-        content = ui.content { paddedLabel },
-      }
-      children = {
-        {
-          template = I.MWUI.templates.padding,
-          props = { ignorePointerEvents = false },
-          content = ui.content { spacedLabel },
-        },
-      }
     end
+    local label = text { text = options.label, props = labelProps }
+    children = fixedSize and { label } or { inset(label) }
   end
 
   local props = {}
-  if options.props then
-    for key, value in next, options.props do
-      props[key] = value
-    end
+  for key, value in next, options.props or {} do
+    props[key] = value
   end
-
   local external
   if options.external then
     external = {}
@@ -85,28 +70,27 @@ local function button(options)
     end
   end
 
-  local result = {
-    name = options.name,
-    props = props,
-    external = external,
-    events = options.events,
-    userData = options.userData,
-    content = ui.content(children),
-  }
-
+  local events = eventsFor(options)
   if options.template then
-    result.template = options.template
-    return result
+    return {
+      template = options.template,
+      name = options.name,
+      props = props,
+      external = external,
+      events = events,
+      userData = options.userData,
+      content = ui.content(children),
+    }
   end
 
   local frame = fixedSize and chrome.frame or chrome.box
   return frame {
     skin = appearance.chrome 'frame.button',
-    name = result.name,
-    props = result.props,
-    external = result.external,
-    events = result.events,
-    userData = result.userData,
+    name = options.name,
+    props = props,
+    external = external,
+    events = events,
+    userData = options.userData,
     tint = appearance.token 'color.chromeBorder',
     alpha = appearance.token 'transparency.chrome',
     content = children,

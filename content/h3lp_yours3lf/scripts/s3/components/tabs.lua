@@ -2,8 +2,6 @@
 
 local emptyOptions = {}
 
-local async = require 'openmw.async'
-
 local button = require 'scripts.s3.components.button'
 local row = require 'scripts.s3.components.row'
 
@@ -108,18 +106,14 @@ local function tabs(options)
   for index = 1, #items do
     local item = items[index]
     local itemIndex = index
-    local itemEvents = {
-      mouseClick = async:callback(function(_, layout)
-        if itemIndex == selected then return true end
-
-        setTabState(children[selected], selected, false)
-        selected = itemIndex
-        setTabState(layout, itemIndex, true)
-
-        if onSelect then onSelect(itemIndex, item) end
-        return true
-      end),
-    }
+    local function activate(_, layout)
+      if itemIndex == selected then return true end
+      setTabState(children[selected], selected, false)
+      selected = itemIndex
+      setTabState(layout, itemIndex, true)
+      if onSelect then onSelect(itemIndex, item) end
+      return true
+    end
 
     local label = itemLabel(item)
     if index == selected then label = StrFormat('%s%s%s', selectedPrefix, label, selectedSuffix) end
@@ -129,7 +123,7 @@ local function tabs(options)
       label = label,
       props = mergeInto({}, options.buttonProps),
       labelProps = mergeInto({}, options.labelProps),
-      events = itemEvents,
+      onActivate = activate,
     }
 
     baseButtonProps[index] = mergeInto({}, children[index].props)

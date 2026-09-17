@@ -44,7 +44,6 @@ local environment = {
 ---@class H3UI.ThemeSelector
 ---@field class? string
 ---@field component? string
----@field density? string
 ---@field recipe? string
 ---@field role? string
 ---@field slot? string
@@ -130,7 +129,6 @@ local environment = {
 ---@field invalidate? fun() Called after a runtime state change that needs a mounted Element update.
 
 ---@class H3UI.Scope
----@field density? string
 ---@field invalidate? fun()
 ---@field build fun(spec: H3UI.BuildSpec): openmw.ui.Layout
 ---@field explain fun(spec: H3UI.BuildSpec): table

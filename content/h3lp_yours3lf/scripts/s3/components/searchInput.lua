@@ -1,142 +1,69 @@
 ---@omw-context menu|player
-
 local emptyOptions = {}
-
-local I = require 'openmw.interfaces'
-local async = require 'openmw.async'
-local ui = require 'openmw.ui'
-local util = require 'openmw.util'
-
 local appearance = require 'scripts.s3.ui.appearance'
 local button = require 'scripts.s3.components.button'
 local chrome = require 'scripts.s3.ui.chrome'
 local constants = require 'scripts.omw.mwui.constants'
 local row = require 'scripts.s3.components.row'
 local textInput = require 'scripts.s3.components.textInput'
-
+local ui = require 'openmw.ui'
+local util = require 'openmw.util'
 local UtilVector2 = util.vector2
-local inputPadding = 2 * constants.border * 2
 local defaultInputWidth = 150
-
----@class H3.SearchInputOptions
----@field value? string
----@field onChange? fun(value: string)
----@field clearable? boolean
----@field clearLabel? string
----@field bordered? boolean
----@field name? string
----@field props? table
----@field inputProps? table
----@field inputEvents? table
----@field inputExternal? table
----@field external? table
----@field events? table
----@field userData? any
----@field template? openmw.ui.Template
-
----@param options? H3.SearchInputOptions
----@return openmw.ui.Layout
 local function searchInput(options)
   options = options or emptyOptions
-
-  local initialValue = options.value or ''
-  local onChange = options.onChange
-  local inputLayout
-  local input
   local inputProps = {}
-  local inputEvents = {}
-
-  if options.inputProps then
-    for key, value in next, options.inputProps do
-      inputProps[key] = value
-    end
+  for key, value in next, options.inputProps or {} do
+    inputProps[key] = value
   end
-
-  if options.bordered ~= false then
-    local minimumInputHeight = (appearance.token 'textSize.normal' or constants.textNormalSize)
-      + 2 * constants.border
-    local inputSize = inputProps.size
-    local inputWidth = inputSize and inputSize.x or defaultInputWidth
-    local inputHeight = inputSize and inputSize.y or minimumInputHeight + inputPadding
-    inputProps.size =
-      UtilVector2(inputWidth, math.max(minimumInputHeight, inputHeight - inputPadding))
-  end
-
   if inputProps.textAlignV == nil then inputProps.textAlignV = ui.ALIGNMENT.Center end
-
-  if options.inputEvents then
-    for key, event in next, options.inputEvents do
-      inputEvents[key] = event
-    end
-  end
-
-  local previousTextChanged = inputEvents.textChanged
-  inputEvents.textChanged = async:callback(function(text, layout)
-    layout.props.text = text
-
-    if onChange then onChange(text) end
-    if previousTextChanged then return previousTextChanged(text, layout) end
-    return true
-  end)
-
+  local input
   input = textInput {
     name = 'input',
-    text = initialValue,
+    text = options.value or '',
     props = inputProps,
     external = options.inputExternal,
-    events = inputEvents,
+    events = options.inputEvents,
     userData = options.userData,
     template = options.template,
+    onChange = options.onChange,
   }
-
   local inputContent = input
   if options.bordered ~= false then
-    local paddedInput = {
-      template = I.MWUI.templates.padding,
-      props = { ignorePointerEvents = false },
-      content = ui.content { input },
-    }
-    local spacedInput = {
-      template = I.MWUI.templates.padding,
-      props = { ignorePointerEvents = false },
-      content = ui.content { paddedInput },
-    }
+    local minHeight = (appearance.token 'textSize.normal' or constants.textNormalSize)
+      + 2 * constants.border
+    local size = inputProps.size
+    local width = size and size.x or defaultInputWidth
+    local height = size and size.y or minHeight + 4
+    input.props.size = UtilVector2(width, math.max(minHeight, height - 4))
     inputContent = chrome.box {
       skin = appearance.chrome 'frame.thin',
       tint = appearance.token 'color.chromeBorder',
       alpha = appearance.token 'transparency.chrome',
-      content = { spacedInput },
+      inset = 2,
+      content = { input },
     }
   end
-
   local children = { inputContent }
-
   if options.clearable ~= false then
     children[#children + 1] = button {
       name = 'clear',
       label = options.clearLabel or 'X',
-      events = {
-        mouseClick = async:callback(function()
-          inputLayout.props.text = ''
-
-          if onChange then onChange '' end
-          return true
-        end),
-      },
+      onActivate = function()
+        input.props.text = ''
+        if options.onChange then options.onChange('', input) end
+        return true
+      end,
     }
   end
-
-  local layout = row {
+  return row {
     name = options.name,
     props = options.props,
     external = options.external,
     events = options.events,
     userData = options.userData,
+    gap = options.gap or 4,
     children = children,
   }
-
-  inputLayout = input
-  return layout
 end
-
 return searchInput

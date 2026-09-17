@@ -96,7 +96,7 @@ H3UI.registerTheme {
         {
             selector = {
                 component = 'button',
-                tone = 'danger',
+                tone = 'negative',
                 slot = 'label',
             },
             style = {
@@ -110,8 +110,8 @@ H3UI.registerTheme {
 
 local deleteButton = H3UI.build {
     component = 'button',
-    tone = 'danger',
-    args = { label = 'Delete' },
+    tone = 'negative',
+    label = 'Delete',
 }
 ```
 

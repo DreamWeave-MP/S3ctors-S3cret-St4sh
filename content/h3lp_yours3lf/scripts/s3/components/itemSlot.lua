@@ -4,6 +4,7 @@ local emptyOptions = {}
 
 local I = require 'openmw.interfaces'
 local appearance = require 'scripts.s3.ui.appearance'
+local async = require 'openmw.async'
 local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
 local ui = require 'openmw.ui'
@@ -11,6 +12,26 @@ local ui = require 'openmw.ui'
 ---Build a bordered item slot layout with optional icon and count label.
 ---Allocates fresh layout, props, external, and content tables. A texture options table passed as
 ---`resource` is converted by the image component; this primitive does not query game state or own any Element.
+local function activationEvents(options)
+  local events = {}
+  for key, value in next, options.events or {} do
+    events[key] = value
+  end
+  if options.onActivate then
+    local previous = events.mouseClick
+    events.mouseClick = async:callback(function(event, layout)
+      local result = options.onActivate(event, layout)
+      if previous then
+        local previousResult = previous(event, layout)
+        if previousResult ~= nil then return previousResult end
+      end
+      if result ~= nil then return result end
+      return true
+    end)
+  end
+  return next(events) and events or nil
+end
+
 ---@param options? {resource?: openmw.ui.TextureResource|openmw.ui.TextureResourceOptions, count?: string|number, name?: string, props?: table, iconProps?: table, countProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
 local function itemSlot(options)
@@ -67,7 +88,7 @@ local function itemSlot(options)
     name = options.name,
     props = props,
     external = external,
-    events = options.events,
+    events = activationEvents(options),
     userData = options.userData,
     content = ui.content(content),
   }

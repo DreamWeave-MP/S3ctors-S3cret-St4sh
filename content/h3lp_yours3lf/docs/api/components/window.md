@@ -91,4 +91,4 @@ Common layout fields are documented on the [UI Components overview](@/h3lp_yours
 
 ## See also
 
-[caption](@/h3lp_yours3lf/docs/api/components/caption.md) · [dialog](@/h3lp_yours3lf/docs/api/components/dialog.md) · [text](@/h3lp_yours3lf/docs/api/components/text.md)
+[caption](@/h3lp_yours3lf/docs/api/components/caption.md) · [text](@/h3lp_yours3lf/docs/api/components/text.md)
