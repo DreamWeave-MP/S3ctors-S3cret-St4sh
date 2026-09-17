@@ -44,7 +44,7 @@ H3UI exists to package those repeated compositions without pretending OpenMW's l
 
 For a new mod, prefer a high-level H3UI recipe or component when it matches the surface you need. Learn the low-level API anyway, because ownership, update behavior, events, and performance remain OpenMW concepts underneath it.
 
-H3 Pattern: start with a [Window](@/h3lp_yours3lf/docs/api/components/window.md), [Dialog](@/h3lp_yours3lf/docs/api/components/dialog.md), [Grid](@/h3lp_yours3lf/docs/api/components/grid.md), [Tabs](@/h3lp_yours3lf/docs/api/components/tabs.md), or [ItemSlot](@/h3lp_yours3lf/docs/api/components/item-slot.md) when one matches. For higher-level composition, read [H3UI and Styling](@/h3lp_yours3lf/docs/concepts/h3ui.md) and the [UI Recipes](@/h3lp_yours3lf/docs/examples/ui-recipes.md).
+H3 Pattern: start with a [Window](@/h3lp_yours3lf/docs/api/components/window.md), [Grid](@/h3lp_yours3lf/docs/api/components/grid.md), [Tabs](@/h3lp_yours3lf/docs/api/components/tabs.md), or [ItemSlot](@/h3lp_yours3lf/docs/api/components/item-slot.md) when one matches. For higher-level composition, read [H3UI and Styling](@/h3lp_yours3lf/docs/concepts/h3ui.md) and the [UI Recipes](@/h3lp_yours3lf/docs/examples/ui-recipes.md).
 
 ## Keep state outside the layout when practical
 
