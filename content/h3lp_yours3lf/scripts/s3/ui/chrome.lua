@@ -448,9 +448,18 @@ local function nineSliceLayout(options)
   return frameLayout(normalized)
 end
 
+local function colorHex(value) return value:asHex() end
+
 local function cacheKey(value, seen)
   if value == nil then return 'nil' end
   local valueType = type(value)
+
+  -- Equivalent colors must share cache entries regardless of userdata identity.
+  if valueType == 'userdata' then
+    local ok, hex = pcall(colorHex, value)
+    if ok and type(hex) == 'string' then return StrFormat('color:%s', hex) end
+  end
+
   if valueType ~= 'table' then return StrFormat('%s:%s', valueType, tostring(value)) end
 
   seen = seen or {}
