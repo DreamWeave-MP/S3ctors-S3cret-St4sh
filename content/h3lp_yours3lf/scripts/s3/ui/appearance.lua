@@ -83,7 +83,6 @@ for index = 1, #colorKeys do
 end
 
 local state
-local initCustomTheme = false
 
 local function ensureInitialized()
   if not state then require 'scripts.s3.ui' end
@@ -159,17 +158,10 @@ local function writeCustomPalette(palette)
   return palette
 end
 
-local function ensureCustomPalette(source)
+local function ensureCustomPalette()
   local existing = customPalette()
   if existing then return existing end
-
-  local fallback = paletteFor(state.themes.morrowind.theme)
-  local palette = {}
-  for index = 1, #colorKeys do
-    local key = colorKeys[index]
-    palette[key] = normalizeHex(source and source[key]) or fallback[key]
-  end
-  return writeCustomPalette(palette)
+  return writeCustomPalette(paletteFor(state.themes.morrowind.theme))
 end
 
 local function rawStorageValues() return state.section:asTable() end
@@ -315,49 +307,29 @@ local function canonicalizeStorage()
     return
   end
 
-  for index = 1, #colorKeys do
-    if raw[colorKeys[index]] ~= nil then
-      ensureCustomPalette(raw)
-      state.section:set('theme', customThemeId)
-      return
-    end
+  ensureCustomPalette()
+  if explicitTheme == customThemeId then
+    invalidate()
+    return
   end
 
-  local defaultId = resolveDefault()
-  local defaultPalette = paletteFor(registeredTheme(defaultId).theme)
-  ensureCustomPalette()
-  state.section:set('theme', defaultId)
-  for index = 1, #colorKeys do
-    local key = colorKeys[index]
-    if raw[key] == nil then state.section:set(key, defaultPalette[key]) end
-  end
-  invalidate()
+  writePreset(resolveDefault())
 end
 
 local function initializeSettings()
   if state.initialized then return end
   state.initialized = true
 
-  local raw = rawStorageValues()
-  local explicitTheme = raw.theme
-  if validPreset(explicitTheme) then
-    state.lastPresetId = explicitTheme
-  else
-    for index = 1, #colorKeys do
-      if raw[colorKeys[index]] ~= nil then
-        initCustomTheme = true
-        break
-      end
-    end
-  end
+  local explicitTheme = settingValue 'theme'
+  if validPreset(explicitTheme) then state.lastPresetId = explicitTheme end
   invalidate()
 
-  async:newUnsavableSimulationTimer(0, function() canonicalizeStorage() end)
+  async:newUnsavableSimulationTimer(0, canonicalizeStorage)
 end
 
 local function activeEntry()
   local selected = settingValue 'theme'
-  if selected == customThemeId or initCustomTheme then
+  if selected == customThemeId then
     local baseId = state.lastPresetId or resolveDefault()
     return registeredTheme(baseId) or state.themes.morrowind
   end
@@ -390,7 +362,6 @@ end
 
 local function currentThemeId()
   initializeSettings()
-  if initCustomTheme then return customThemeId end
   local selected = settingValue 'theme'
   if selected == customThemeId then return customThemeId end
   if registeredTheme(selected) then return selected end
@@ -547,7 +518,6 @@ end
 
 local function selectTheme(id, set)
   assert(id == customThemeId or validPreset(id), 'Unknown H3 UI theme: ' .. tostring(id))
-  initCustomTheme = false
   if set then
     set(id)
   else
@@ -581,7 +551,6 @@ local function setColor(key, value, set)
 end
 
 local function reset()
-  initCustomTheme = false
   local result = writePreset 'morrowind'
   if result then
     state.section:set(menuTransparencyKey, defaultMenuTransparency)
