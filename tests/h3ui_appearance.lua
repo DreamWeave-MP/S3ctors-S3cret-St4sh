@@ -10,6 +10,19 @@ local subscriber
 local customSubscriber
 local timers = {}
 local requestedSections = {}
+local defaultThemeExists = false
+local defaultThemeHint = 'morrowind'
+
+package.preload['openmw.vfs'] = function()
+  return {
+    fileExists = function(path)
+      assert(path == 'scripts/s3/ui/defaultTheme.lua')
+      return defaultThemeExists
+    end,
+  }
+end
+
+package.preload['scripts.s3.ui.defaultTheme'] = function() return defaultThemeHint end
 
 package.preload['openmw.async'] = function()
   return {
@@ -355,5 +368,87 @@ appearance.registerTheme {
   tokens = { color = { text = '010203' } },
 }
 assert(#appearance.themeEntries() == 4)
+
+local function freshSettings(settings, customSettings)
+  flushTimers()
+  for key in pairs(values) do
+    values[key] = nil
+  end
+  for key in pairs(customValues) do
+    customValues[key] = nil
+  end
+  for key, value in pairs(settings or {}) do
+    values[key] = value
+  end
+  for key, value in pairs(customSettings or {}) do
+    customValues[key] = value
+  end
+  package.loaded['scripts.s3.ui.appearance'] = nil
+  package.loaded['scripts.s3.ui.defaultTheme'] = nil
+  local fresh = require 'scripts.s3.ui.appearance'
+  fresh.initialize(registry, {
+    { id = 'morrowind', spec = { name = 'Morrowind' }, theme = morrowind },
+    { id = 'starwind', spec = { name = 'Starwind' }, theme = starwind },
+  })
+  return fresh
+end
+
+local fresh = freshSettings { text = '123456' }
+assert(fresh.currentThemeId() == 'starwind', 'palette values must not imply Custom selection')
+flushTimers()
+assert(values.theme == 'starwind')
+assert(values.text == '22affb', 'initial preset must replace orphaned palette values')
+assert(customValues.text == 'caa560', 'orphaned colors must not be migrated into Custom')
+values.theme = 'morrowind'
+subscriber(nil, 'theme')
+assert(fresh.currentThemeId() == 'morrowind', 'external theme selection must remain authoritative')
+flushTimers()
+assert(fresh.activeTheme().token('color.text'):asHex() == 'caa560')
+
+local savedCustom = {}
+for index = 1, #fresh.colorKeys do
+  savedCustom[fresh.colorKeys[index]] = '123456'
+end
+fresh = freshSettings({ theme = 'custom' }, savedCustom)
+assert(fresh.currentThemeId() == 'custom')
+flushTimers()
+assert(values.theme == 'custom', 'explicit Custom selection must survive initialization')
+assert(fresh.activeTheme().token('color.text'):asHex() == '123456')
+
+fresh = freshSettings()
+assert(
+  fresh.currentThemeId() == 'starwind',
+  'absent default theme hint must use environment detection'
+)
+defaultThemeExists = true
+fresh = freshSettings()
+assert(
+  fresh.currentThemeId() == 'morrowind',
+  'default theme hint must override environment detection'
+)
+flushTimers()
+assert(values.theme == 'morrowind')
+fresh = freshSettings { theme = 'starwind' }
+assert(fresh.currentThemeId() == 'starwind', 'saved selection must override default theme hint')
+flushTimers()
+
+defaultThemeHint = 'unregistered'
+fresh = freshSettings()
+assert(fresh.currentThemeId() == 'starwind', 'unregistered hint must fall through')
+flushTimers()
+defaultThemeHint = 42
+fresh = freshSettings()
+local ok, err = pcall(fresh.currentThemeId)
+assert(not ok and tostring(err):find('must return a theme ID string', 1, true))
+defaultThemeExists = false
+flushTimers()
+
+fresh = freshSettings()
+fresh.registerTheme { id = 'sparse', name = 'Sparse', tokens = { color = { text = '010203' } } }
+fresh.selectTheme 'sparse'
+assert(
+  values.textHover == '010203',
+  'missing third-party theme token must fall back to palette text'
+)
 
 print 'H3UI appearance tests passed'
