@@ -41,6 +41,7 @@ Start with [Why Cod3x Exists](@/cod3x/docs/mission.md), then use the manual by p
 - [Pr0f1l3r](@/cod3x/docs/performance/pr0f1l3r.md)
 - [LuaJIT bytecode and traces](@/cod3x/docs/performance/luajit-bytecode.md)
 - [Paid For With Blood](@/cod3x/docs/paid-for-with-blood/_index.md)
+- [Coding with AI: OpenCode agents, skills, and workflows](@/cod3x/docs/ai/_index.md)
 - [So You Want To Code With AI?](@/cod3x/docs/tooling/so-you-want-to-code-with-ai.md)
 
 Cod3x is also the map legend for the rest of the site. Follow a rule into an [H3 pattern library](@/h3lp_yours3lf/docs/_index.md), a [S3maphore production system](@/s3maphore/docs/_index.md), or the [historical evidence index](@/cod3x/docs/reference/history-index.md).

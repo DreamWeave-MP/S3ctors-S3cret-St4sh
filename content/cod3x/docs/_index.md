@@ -24,7 +24,7 @@ It is an API companion, handbook, cookbook, performance guide, historical record
 
 Read [Why Cod3x Exists](@/cod3x/docs/mission.md), then choose [Zero to Hero](@/cod3x/docs/zero-to-hero/_index.md) if OpenMW Lua is new to you. After that, build the mental model in [Getting Started](@/cod3x/docs/getting-started/_index.md). If you already ship OpenMW Lua, [Good Designs](@/cod3x/docs/good-designs/_index.md), [Engineering Practice](@/cod3x/docs/practice/_index.md), and [Performance](@/cod3x/docs/performance/_index.md) are the useful parts immediately.
 
-If something looks clever, inspect [Anti-Patterns](@/cod3x/docs/anti-patterns/_index.md). If a design looks simpler than the problem it solves, inspect [Good Designs](@/cod3x/docs/good-designs/_index.md). If a rule sounds suspiciously specific, there is a fair chance the explanation is in [Paid For With Blood](@/cod3x/docs/paid-for-with-blood/_index.md). If a machine is helping you work, read [So You Want To Code With AI?](@/cod3x/docs/tooling/so-you-want-to-code-with-ai.md) before giving it the keys.
+If something looks clever, inspect [Anti-Patterns](@/cod3x/docs/anti-patterns/_index.md). If a design looks simpler than the problem it solves, inspect [Good Designs](@/cod3x/docs/good-designs/_index.md). If a rule sounds suspiciously specific, there is a fair chance the explanation is in [Paid For With Blood](@/cod3x/docs/paid-for-with-blood/_index.md). If a machine is helping you work, start with [Coding with AI](@/cod3x/docs/ai/_index.md) for Cod3x's OpenCode agents and skills, then read [So You Want To Code With AI?](@/cod3x/docs/tooling/so-you-want-to-code-with-ai.md) for the engineering discipline behind them.
 
 ## Follow the evidence graph
 
@@ -69,3 +69,4 @@ See [Provenance and Research Corpus](@/cod3x/docs/provenance.md) for how evidenc
 - Reading LuaJIT output: [Bytecode](@/cod3x/docs/performance/luajit-bytecode.md) and [Traces](@/cod3x/docs/performance/luajit-traces.md)
 - Trying to optimize the engine boundary: [Engine Boundaries](@/cod3x/docs/performance/engine-boundaries.md)
 - Wondering why Rubic0n exists: [When Lua-Side Optimization Stops Being Enough](@/cod3x/docs/performance/rubic0n.md)
+- Using OpenCode or another coding agent: [Coding with AI](@/cod3x/docs/ai/_index.md)

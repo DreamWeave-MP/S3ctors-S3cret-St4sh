@@ -73,4 +73,6 @@ Be technically exact. Be direct. Humor is allowed when it does not obscure the c
 - `docs/performance/_index.md`
 - `docs/performance/benchmarking.md`
 - `docs/paid-for-with-blood/_index.md`
+- `docs/ai/_index.md`
+- `docs/ai/opencode.md`
 - `docs/tooling/so-you-want-to-code-with-ai.md`

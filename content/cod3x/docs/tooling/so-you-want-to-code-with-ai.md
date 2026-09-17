@@ -8,6 +8,8 @@ extra:
 
 AI can write a lot of code.
 
+For the concrete Cod3x/OpenCode setup—project discovery, the four shipped specialist subagents, the twelve reusable skills, and example workflows—see [Coding with AI](@/cod3x/docs/ai/_index.md). This page is the engineering doctrine underneath that tooling.
+
 That is not the impressive part anymore. The important question is whether the code is correct, appropriate for the project, grounded in the real API, consistent with the architecture, and worth keeping.
 
 A coding agent can make one competent developer enormously more capable. It can also make one careless developer enormously more productive at producing garbage.
