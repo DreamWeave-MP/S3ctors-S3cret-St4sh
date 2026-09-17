@@ -43,4 +43,4 @@ Common layout fields are documented on the [UI Components overview](@/h3lp_yours
 
 ## See also
 
-[dialog](@/h3lp_yours3lf/docs/api/components/dialog.md) · [text](@/h3lp_yours3lf/docs/api/components/text.md) · [window](@/h3lp_yours3lf/docs/api/components/window.md)
+[text](@/h3lp_yours3lf/docs/api/components/text.md) · [window](@/h3lp_yours3lf/docs/api/components/window.md)

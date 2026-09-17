@@ -2,63 +2,68 @@
 
 local emptyOptions = {}
 
-local I = require 'openmw.interfaces'
 local appearance = require 'scripts.s3.ui.appearance'
+local async = require 'openmw.async'
 local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
+local inset = require 'scripts.s3.components.inset'
+local row = require 'scripts.s3.components.row'
+local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 
----Build an MWUI button with an icon and optional label.
----Allocates fresh layout, props, external, and content tables. A texture options table passed as
----`resource` is converted by the image component; this primitive does not query game state or own any Element.
----@param options? {resource?: openmw.ui.TextureResource|openmw.ui.TextureResourceOptions, label?: string, name?: string, props?: table, iconProps?: table, labelProps?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
+local function activationEvents(options)
+  local events = {}
+  for key, value in next, options.events or {} do
+    events[key] = value
+  end
+  if options.onActivate then
+    local previous = events.mouseClick
+    events.mouseClick = async:callback(function(event, layout)
+      local result = options.onActivate(event, layout)
+      if previous then
+        local previousResult = previous(event, layout)
+        if previousResult ~= nil then return previousResult end
+      end
+      if result ~= nil then return result end
+      return true
+    end)
+  end
+  return next(events) and events or nil
+end
+
+---Build a button with an icon and optional label.
+---@param options? table
 ---@return openmw.ui.Layout
 local function iconButton(options)
   options = options or emptyOptions
 
   local iconProps = {}
-  if options.iconProps then
-    for key, value in next, options.iconProps do
-      iconProps[key] = value
-    end
+  for key, value in next, options.iconProps or {} do
+    iconProps[key] = value
   end
-
   if options.resource ~= nil then iconProps.resource = options.resource end
   iconProps.ignorePointerEvents = true
 
-  local rowContent = {
-    image { resource = options.resource, props = iconProps },
-  }
+  local children = { image { resource = options.resource, props = iconProps } }
   if options.label ~= nil then
-    local labelProps = {
-      textColor = appearance.token 'color.text',
-      textSize = appearance.token 'textSize.normal',
-    }
-    if options.labelProps then
-      for key, value in next, options.labelProps do
-        labelProps[key] = value
-      end
+    local labelProps = {}
+    for key, value in next, options.labelProps or {} do
+      labelProps[key] = value
     end
-
-    labelProps.text = options.label
     labelProps.ignorePointerEvents = true
-    rowContent[#rowContent + 1] = {
-      template = I.MWUI.templates.interval,
-      props = { ignorePointerEvents = true },
-    }
-    rowContent[#rowContent + 1] = {
-      template = I.MWUI.templates.textNormal,
-      props = labelProps,
-    }
+    children[#children + 1] = text { text = options.label, props = labelProps }
   end
+
+  local content = row {
+    gap = options.gap or 4,
+    props = { arrange = ui.ALIGNMENT.Center, ignorePointerEvents = true },
+    children = children,
+  }
 
   local props = {}
-  if options.props then
-    for key, value in next, options.props do
-      props[key] = value
-    end
+  for key, value in next, options.props or {} do
+    props[key] = value
   end
-
   local external
   if options.external then
     external = {}
@@ -67,55 +72,31 @@ local function iconButton(options)
     end
   end
 
-  local result = {
-    name = options.name,
-    props = props,
-    external = external,
-    events = options.events,
-    userData = options.userData,
-    content = {
-      {
-        template = I.MWUI.templates.padding,
-        props = { ignorePointerEvents = false },
-        content = ui.content {
-          {
-            template = I.MWUI.templates.padding,
-            props = { ignorePointerEvents = true },
-            content = ui.content {
-              {
-                template = I.MWUI.templates.padding,
-                props = { ignorePointerEvents = true },
-                content = ui.content {
-                  {
-                    type = ui.TYPE.Flex,
-                    props = { horizontal = true, arrange = ui.ALIGNMENT.Center },
-                    content = ui.content(rowContent),
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  }
+  local events = activationEvents(options)
+  local padded = inset(content)
 
   if options.template then
-    result.template = options.template
-    result.content = ui.content(result.content)
-    return result
+    return {
+      template = options.template,
+      name = options.name,
+      props = props,
+      external = external,
+      events = events,
+      userData = options.userData,
+      content = ui.content { padded },
+    }
   end
 
   return chrome.box {
     skin = appearance.chrome 'frame.button',
-    name = result.name,
-    props = result.props,
-    external = result.external,
-    events = result.events,
-    userData = result.userData,
+    name = options.name,
+    props = props,
+    external = external,
+    events = events,
+    userData = options.userData,
     tint = appearance.token 'color.chromeBorder',
     alpha = appearance.token 'transparency.chrome',
-    content = result.content,
+    content = { padded },
   }
 end
 

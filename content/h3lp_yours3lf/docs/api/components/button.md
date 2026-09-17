@@ -48,4 +48,4 @@ Wrap OpenMW callbacks with `async:callback`; H3 passes low-level events through 
 
 ## See also
 
-[toggle](@/h3lp_yours3lf/docs/api/components/toggle.md) · [iconButton](@/h3lp_yours3lf/docs/api/components/icon-button.md) · [dialog](@/h3lp_yours3lf/docs/api/components/dialog.md)
+[toggle](@/h3lp_yours3lf/docs/api/components/toggle.md) · [iconButton](@/h3lp_yours3lf/docs/api/components/icon-button.md)

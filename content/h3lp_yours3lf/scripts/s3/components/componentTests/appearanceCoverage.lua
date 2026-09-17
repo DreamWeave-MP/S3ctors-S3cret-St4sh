@@ -10,7 +10,6 @@ local button = require 'scripts.s3.components.button'
 local chrome = require 'scripts.s3.ui.chrome'
 local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
-local dialog = require 'scripts.s3.components.dialog'
 local headBlock = require 'scripts.s3.components.headBlock'
 local iconButton = require 'scripts.s3.components.iconButton'
 local itemSlot = require 'scripts.s3.components.itemSlot'
@@ -198,15 +197,6 @@ local function coverage(invalidate)
             bookFrame {
               title = 'Book frame',
               children = { text { text = 'default book' } },
-            }
-          ),
-          spacer { props = { size = columnGap } },
-          entry(
-            'dialog',
-            'window body',
-            dialog {
-              title = 'Dialog',
-              children = { text { text = 'default dialog' } },
             }
           ),
         },

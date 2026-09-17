@@ -6,20 +6,37 @@ local selector = require 'scripts.s3.ui.selector'
 local componentMarker = {}
 local recipeMarker = {}
 
+local reserved = {
+  component = true,
+  recipe = true,
+  role = true,
+  variant = true,
+  tone = true,
+  class = true,
+  classes = true,
+  style = true,
+  invalidate = true,
+}
+
 local function component(name, spec, defaults)
   spec = spec or {}
   defaults = defaults or {}
   assert(type(name) == 'string' and name ~= '', 'H3 UI component node requires a component name')
   assert(merge.isPlainTable(spec), 'H3 UI component spec must be a plain table')
+  assert(spec.args == nil, 'H3 UI component args are flat; move fields out of args')
+  assert(
+    spec.density == nil,
+    'H3 UI density was removed; style spacing explicitly or through theme rules'
+  )
+  assert(
+    spec.state == nil,
+    'H3 UI instance state was removed; interactive state is component-owned'
+  )
 
-  local args = merge.shallowCopy(spec.args or {})
-  if spec.children ~= nil and args.children == nil and args.content == nil then
-    args.children = spec.children
+  local args = {}
+  for key, value in next, spec do
+    if not reserved[key] then args[key] = value end
   end
-  if spec.content ~= nil and args.content == nil and args.children == nil then
-    args.content = spec.content
-  end
-  if spec.items ~= nil and args.items == nil then args.items = spec.items end
 
   return {
     [componentMarker] = true,
@@ -28,8 +45,6 @@ local function component(name, spec, defaults)
     role = spec.role,
     variant = spec.variant,
     tone = spec.tone,
-    density = spec.density ~= nil and spec.density or defaults.density,
-    state = spec.state,
     classes = selector.classes(spec.classes, spec.class),
     args = args,
     style = spec.style,
@@ -40,6 +55,9 @@ end
 local function recipe(spec)
   assert(merge.isPlainTable(spec), 'H3 UI recipe spec must be a plain table')
   assert(type(spec.recipe) == 'string' and spec.recipe ~= '', 'H3 UI recipe spec requires recipe')
+  assert(spec.args == nil, 'H3 UI recipe args are flat; move fields out of args')
+  assert(spec.density == nil, 'H3 UI density was removed')
+  assert(spec.state == nil, 'H3 UI instance state was removed')
   return {
     [recipeMarker] = true,
     spec = merge.shallowCopy(spec),

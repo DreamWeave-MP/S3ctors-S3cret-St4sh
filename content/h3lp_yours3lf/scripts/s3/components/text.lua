@@ -12,6 +12,9 @@ local ui = require 'openmw.ui'
 ---@param options? {text?: string, name?: string, props?: table, external?: table, events?: table, userData?: any, template?: openmw.ui.Template}
 ---@return openmw.ui.Layout
 local function text(options)
+  if type(options) == 'string' or type(options) == 'number' then
+    options = { text = tostring(options) }
+  end
   options = options or emptyOptions
   local props = {}
   if options.template == nil then

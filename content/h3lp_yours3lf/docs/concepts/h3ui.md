@@ -54,7 +54,7 @@ If a callback changes application state, H3UI still cannot know which mounted ro
 
 A recipe owns **structure**: which H3 components are composed and how they nest.
 
-A component node carries **traits**: component name, recipe, role, variant, tone, density, classes, and optional state.
+A component node carries **traits**: component name, recipe, role, variant, tone, and classes.
 
 A theme owns **presentation**: rules that target those meanings and write through public component style slots. The player settings supply its active palette.
 
@@ -75,7 +75,7 @@ A theme should not need to encode that exact tree. It can target:
 
 ```lua
 selector = {
-    recipe = 'dialog',
+    recipe = 'dialog.confirm',
     role = 'actions',
 }
 ```
@@ -101,11 +101,11 @@ This keeps component implementation refactors from becoming theme-breaking API c
 H3 is shared by unrelated mods. A process-wide `setTheme()` would let one mod accidentally or deliberately restyle another mod's interface. H3UI therefore has one player-owned appearance configuration, and every scope uses it:
 
 ```lua
-local InventoryH3UI = H3UI.scope { density = 'compact' }
+local InventoryH3UI = H3UI.scope()
 local JournalH3UI = H3UI.scope()
 ```
 
-Both use the same configured palette while retaining independent density, recipes, and invalidation behavior. Mods may register additional presets, but only the player settings select them.
+Both use the same configured palette while retaining independent recipes and invalidation behavior. Mods may register additional presets, but only the player settings select them.
 
 ## Why recipes do not own models
 
@@ -143,7 +143,7 @@ local ui = require 'openmw.ui'
 local element
 local layout = H3UI.build {
     component = 'button',
-    args = { label = 'Refreshes on hover' },
+    label = 'Refreshes on hover',
     invalidate = function()
         if element and element.layout then element:update() end
     end,

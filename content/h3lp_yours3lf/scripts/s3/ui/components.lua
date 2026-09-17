@@ -52,10 +52,6 @@ return {
     builder = require 'scripts.s3.components.container',
     slots = { root = root() },
   },
-  dialog = {
-    builder = require 'scripts.s3.components.dialog',
-    slots = { root = root(), title = { props = 'titleProps' } },
-  },
   grid = {
     builder = require 'scripts.s3.components.grid',
     slots = { root = root(), row = { props = 'rowProps' } },

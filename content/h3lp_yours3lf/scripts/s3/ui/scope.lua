@@ -4,7 +4,6 @@ local merge = require 'scripts.s3.ui.merge'
 local token = require 'scripts.s3.ui.token'
 
 ---@class H3UI.ScopeOptions
----@field density? string
 ---@field invalidate? fun() Called after a runtime state change that needs a mounted Element update.
 ---@field recipes? table<string, function>
 
@@ -14,6 +13,7 @@ local token = require 'scripts.s3.ui.token'
 local function new(options, environment)
   options = options or {}
   assert(merge.isPlainTable(options), 'H3 UI scope options must be a plain table')
+  assert(options.density == nil, 'H3 UI density was removed')
 
   if options.invalidate ~= nil then
     assert(type(options.invalidate) == 'function', 'H3 UI invalidate must be a function')
@@ -34,7 +34,6 @@ local function new(options, environment)
   end
 
   local scope = {
-    density = options.density,
     invalidate = options.invalidate,
     recipes = recipes,
     resolveTheme = environment.resolveTheme,

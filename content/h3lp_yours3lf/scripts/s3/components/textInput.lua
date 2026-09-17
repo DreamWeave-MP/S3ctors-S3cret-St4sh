@@ -3,6 +3,7 @@
 local emptyOptions = {}
 
 local appearance = require 'scripts.s3.ui.appearance'
+local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -42,12 +43,30 @@ local function textInput(options)
     end
   end
 
+  local events = {}
+  for key, value in next, options.events or {} do
+    events[key] = value
+  end
+  if options.onChange then
+    local previous = events.textChanged
+    events.textChanged = async:callback(function(value, layout)
+      layout.props.text = value
+      local result = options.onChange(value, layout)
+      if previous then
+        local previousResult = previous(value, layout)
+        if previousResult ~= nil then return previousResult end
+      end
+      if result ~= nil then return result end
+      return true
+    end)
+  end
+
   return {
     type = ui.TYPE.TextEdit,
     name = options.name,
     props = props,
     external = external,
-    events = options.events,
+    events = next(events) and events or nil,
     userData = options.userData,
     template = options.template,
   }

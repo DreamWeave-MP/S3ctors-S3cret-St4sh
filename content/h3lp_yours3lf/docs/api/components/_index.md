@@ -15,7 +15,7 @@ extra:
     - title: Lists and repeated content
       pages: [list, list-item, grid]
     - title: Framed content
-      pages: [box, book-frame, dialog, tooltip]
+      pages: [box, book-frame, tooltip]
     - title: Actions and indicators
       pages: [button, icon-button, meter, item-slot]
     - title: State and input
@@ -39,7 +39,7 @@ A content-only root uses `ui.TYPE.Container` so it sizes itself to its children.
 | Basic layout shape | [widget](@/h3lp_yours3lf/docs/api/components/widget.md), [container](@/h3lp_yours3lf/docs/api/components/container.md), [row](@/h3lp_yours3lf/docs/api/components/row.md), [column](@/h3lp_yours3lf/docs/api/components/column.md) |
 | Text, images, and spacing | [text](@/h3lp_yours3lf/docs/api/components/text.md), [image](@/h3lp_yours3lf/docs/api/components/image.md), [spacer](@/h3lp_yours3lf/docs/api/components/spacer.md) |
 | Lists and repeated content | [list](@/h3lp_yours3lf/docs/api/components/list.md), [listItem](@/h3lp_yours3lf/docs/api/components/list-item.md), [grid](@/h3lp_yours3lf/docs/api/components/grid.md) |
-| Framed content | [box](@/h3lp_yours3lf/docs/api/components/box.md), [bookFrame](@/h3lp_yours3lf/docs/api/components/book-frame.md), [dialog](@/h3lp_yours3lf/docs/api/components/dialog.md), [tooltip](@/h3lp_yours3lf/docs/api/components/tooltip.md) |
+| Framed content | [box](@/h3lp_yours3lf/docs/api/components/box.md), [bookFrame](@/h3lp_yours3lf/docs/api/components/book-frame.md), [tooltip](@/h3lp_yours3lf/docs/api/components/tooltip.md) |
 | Actions and indicators | [button](@/h3lp_yours3lf/docs/api/components/button.md), [iconButton](@/h3lp_yours3lf/docs/api/components/icon-button.md), [meter](@/h3lp_yours3lf/docs/api/components/meter.md), [itemSlot](@/h3lp_yours3lf/docs/api/components/item-slot.md) |
 | State and input | [toggle](@/h3lp_yours3lf/docs/api/components/toggle.md), [slider](@/h3lp_yours3lf/docs/api/components/slider.md), [selector](@/h3lp_yours3lf/docs/api/components/selector.md), [numberInput](@/h3lp_yours3lf/docs/api/components/number-input.md), [searchInput](@/h3lp_yours3lf/docs/api/components/search-input.md), [textInput](@/h3lp_yours3lf/docs/api/components/text-input.md) |
 | Tabbed or expandable content | [tabs](@/h3lp_yours3lf/docs/api/components/tabs.md), [collapsible](@/h3lp_yours3lf/docs/api/components/collapsible.md) |

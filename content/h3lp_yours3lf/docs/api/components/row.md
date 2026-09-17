@@ -45,3 +45,7 @@ Common layout fields are documented on the [UI Components overview](@/h3lp_yours
 ## See also
 
 [column](@/h3lp_yours3lf/docs/api/components/column.md) · [spacer](@/h3lp_yours3lf/docs/api/components/spacer.md) · [list](@/h3lp_yours3lf/docs/api/components/list.md)
+
+## Ergonomic shorthand
+
+`row` accepts child layouts in the array portion of its options table and a numeric `gap` that inserts spacing between children. The explicit `children`/`content` forms remain available when useful.
