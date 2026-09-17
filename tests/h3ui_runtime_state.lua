@@ -93,6 +93,7 @@ end
 local I = require 'openmw.interfaces'
 local bookFrame = require 'scripts.s3.components.bookFrame'
 local chrome = require 'scripts.s3.ui.chrome'
+local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
 local itemSlot = require 'scripts.s3.components.itemSlot'
 local meter = require 'scripts.s3.components.meter'
 local newRegistry = require 'scripts.s3.ui.registry'
@@ -296,9 +297,10 @@ local function testBookFrameBackground()
   assert(frameContent[1].props.color == background.color)
   assert(frameContent[1].props.alpha == background.alpha)
   assert(layout.content[1].props.horizontal == false)
-  assert(frameContent[2].props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
-  assert(frameContent[2].props.resource.offset.x == 0)
-  assert(frameContent[2].props.resource.offset.y == 0)
+  assert(frameContent[2].props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds')
+  assert(frameContent[2].props.resource.offset.x == 4)
+  assert(frameContent[2].props.resource.offset.y == 4)
+  assert(frameContent[2].props.resource.size.x == 2 and frameContent[2].props.resource.size.y == 2)
   assert(frameContent[2].props.size.x == 2 and frameContent[2].props.size.y == 2)
   assert(frameContent[4].props.position.x == 0 and frameContent[4].props.position.y == 0)
   assert(frameContent[6].props.position.x == 0 and frameContent[6].props.position.y == 2)
@@ -308,12 +310,25 @@ local function testBookFrameBackground()
 end
 
 local function testBuiltinPinChromePaths()
-  assert(chrome.resolve(nil, 'pin.up').path == 'textures/h3ui/h3ui_chrome.dds')
-  assert(chrome.resolve(nil, 'pin.up').offset.x == 402)
-  assert(chrome.resolve(nil, 'pin.down').path == 'textures/h3ui/h3ui_chrome.dds')
-  assert(chrome.resolve(nil, 'pin.down').offset.x == 424)
-  assert(chrome.resolve(nil, 'scroll.left').size.x == 8)
-  assert(chrome.resolve(nil, 'scroll.left').size.y == 8)
+  assert(chrome.resolve(nil, 'pin.up').path == 'textures/h3ui/chrome/coral_fort_wall_02.dds')
+  assert(chrome.resolve(nil, 'pin.up').offset.x == 328)
+  assert(chrome.resolve(nil, 'pin.down').path == 'textures/h3ui/chrome/coral_fort_wall_02.dds')
+  assert(chrome.resolve(nil, 'pin.down').offset.x == 400)
+  assert(chrome.resolve(nil, 'scroll.left').offset.x == 392)
+  assert(chrome.resolve(nil, 'scroll.left').size.x == 16)
+  assert(chrome.resolve(nil, 'scroll.left').size.y == 16)
+
+  assert(chromeAssets.morrowind.frame.thin.offset.x == 4)
+  assert(chromeAssets.morrowind.frame.thin.offset.y == 4)
+  assert(chromeAssets.morrowind.frame.thin.size.x == 504)
+  assert(chromeAssets.morrowind.frame.thin.size.y == 504)
+  assert(chromeAssets.morrowind.frame.thin.sourceBorder == 2)
+  assert(chromeAssets.morrowind.frame.thick.offset.x == 0)
+  assert(chromeAssets.morrowind.frame.thick.sourceBorder == 4)
+  assert(chromeAssets.morrowind.frame.pinUp.offset.x == 328)
+  assert(chromeAssets.morrowind.frame.pinDown.offset.x == 400)
+  assert(chromeAssets.morrowind.scroll.left.offset.x == 392)
+  assert(chromeAssets.morrowind.scroll.left.size.x == 16)
 end
 
 local function testWindowInnerBorder()
@@ -576,11 +591,11 @@ local function testChromeCacheAndSkinSwap()
   local pin = pinButton {}
   local pinTopLeft = pin.content[2]
   assert(pinTopLeft.name == 'h3ui_topLeft')
-  assert(pinTopLeft.props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
-  assert(pinTopLeft.props.resource.offset.x == 402)
+  assert(pinTopLeft.props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds')
+  assert(pinTopLeft.props.resource.offset.x == 328)
   pin.events.mouseClick(nil, pin)
-  assert(pinTopLeft.props.resource.path == 'textures/h3ui/h3ui_chrome.dds')
-  assert(pinTopLeft.props.resource.offset.x == 424)
+  assert(pinTopLeft.props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds')
+  assert(pinTopLeft.props.resource.offset.x == 400)
 
   local defaultMeter = meter {}
   assert(defaultMeter.type == ui.TYPE.Widget)

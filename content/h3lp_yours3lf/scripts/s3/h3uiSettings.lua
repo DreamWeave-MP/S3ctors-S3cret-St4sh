@@ -43,6 +43,20 @@ local settingsList = {
     default = appearance.defaultChromeSource,
   },
   {
+    key = 'chromeMaterialFamily',
+    renderer = 'H3UIMaterialFamily',
+    name = 'H3UIChromeMaterialFamilyName',
+    description = 'H3UIChromeMaterialFamilyDescription',
+    default = appearance.defaultMaterialFamily,
+  },
+  {
+    key = 'chromeMaterial',
+    renderer = 'H3UIMaterial',
+    name = 'H3UIChromeMaterialName',
+    description = 'H3UIChromeMaterialDescription',
+    default = appearance.defaultMaterial,
+  },
+  {
     key = 'menuTransparency',
     renderer = 'number',
     argument = { min = 0.0, max = 1.0, integer = false },

@@ -1,0 +1,269 @@
+{% set library = load_data(path="data/h3_materials.json", format="json") -%}
+<div style="width:512px;max-width:100%;margin:0 auto;">
+  <div style="position:relative;">
+    <canvas id="h3-chrome-demo" width="480" height="300" style="display:block;width:100%;"></canvas>
+    <button type="button" id="h3-chrome-prev" aria-label="Previous material" style="position:absolute;left:0;top:50%;transform:translate(calc(-100% - 1em), -50%);">&#8592;</button>
+    <button type="button" id="h3-chrome-next" aria-label="Next material" style="position:absolute;right:0;top:50%;transform:translate(calc(100% + 1em), -50%);">&#8594;</button>
+  </div>
+  <div style="display:flex;gap:0.5em;margin-top:1em;">
+    <span style="flex:1;min-width:0;overflow-wrap:anywhere;"><span id="h3-chrome-name"></span> &middot; <span id="h3-chrome-family"></span> &middot; <span id="h3-chrome-count"></span></span>
+    <span style="flex:none;">Tint</span>
+    <button type="button" id="h3-chrome-swatch" aria-label="Open color picker" style="width:2em;height:2em;padding:0;border:1px solid var(--accent);background:#967c43;cursor:pointer;"></button>
+    <span id="h3-chrome-hex">#967c43</span>
+  </div>
+  <div id="h3-chrome-picker" style="display:none;border:1px solid var(--accent);margin-top:1em;">
+    <div id="h3-chrome-sv" style="position:relative;width:112px;height:112px;margin:0 auto;cursor:crosshair;background:#967c43;">
+      <div style="position:absolute;inset:0;background:linear-gradient(to right,rgb(255,255,255),rgba(255,255,255,0));"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgb(0,0,0),rgba(0,0,0,0));"></div>
+      <div id="h3-chrome-svdot" style="position:absolute;width:10px;height:10px;margin:-5px;border:2px solid #fff;border-radius:50%;pointer-events:none;"></div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--accent);margin:0;">
+    <div id="h3-chrome-hue" tabindex="0" role="slider" aria-label="Hue" aria-valuemin="0" aria-valuemax="360" style="position:relative;height:14px;background:linear-gradient(to right,rgb(255,0,0),rgb(255,255,0),rgb(0,255,0),rgb(0,255,255),rgb(0,0,255),rgb(255,0,255),rgb(255,0,0));cursor:pointer;">
+      <div id="h3-chrome-huethumb" style="position:absolute;top:-3px;bottom:-3px;width:10px;margin-left:-5px;border-radius:5px;background:var(--accent);"></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:0.5em;margin-top:1em;">
+    <label>Family
+      <select id="h3-chrome-familyselect">
+        {%- for family, items in library.materials | group_by(attribute="family") %}
+        <option value="{{ family }}">{{ family | capitalize }}</option>
+        {%- endfor %}
+      </select>
+    </label>
+    <label>Material
+      <select id="h3-chrome-materialselect">
+        {%- for family, items in library.materials | group_by(attribute="family") %}
+        <optgroup label="{{ family | capitalize }}">
+          {%- for material in items %}
+          <option value="{{ material.id }}">{{ material.name }}</option>
+          {%- endfor %}
+        </optgroup>
+        {%- endfor %}
+      </select>
+    </label>
+  </div>
+  <details style="margin-top:1em;">
+    <summary>Atlas layout</summary>
+    <img id="h3-chrome-atlas" src="" alt="Packed 512x512 chrome atlas" style="display:block;width:100%;">
+  </details>
+</div>
+<script>
+(function(){
+  var CHROME = {
+    thick:   { x: 0,  y: 0,   w: 512, h: 512, border: 4 },
+    thin:    { x: 4,  y: 4,   w: 504, h: 504, border: 2 },
+    button:  { x: 56, y: 56,  w: 136, h: 24,  border: 4 },
+    caption: { x: 56, y: 160, w: 260, h: 20,  border: 2 },
+    pinUp:   { x: 328, y: 56,  w: 20,  h: 20,  border: 2 },
+    scrollLeft:  { x: 392, y: 128, w: 16, h: 16 },
+    scrollRight: { x: 428, y: 128, w: 16, h: 16 }
+  };
+  var MATERIALS = [
+    {%- for material in library.materials %}
+    {id:"{{ material.id }}",name:"{{ material.name }}",family:"{{ material.family }}",src:"{{ get_url(path="img/h3ui/chrome/" ~ material.id ~ ".webp") }}"},
+    {%- endfor %}
+  ];
+  MATERIALS.forEach(function(m){
+    m.img = new Image();
+    m.img.src = m.src;
+    m.img.addEventListener('load', function(){ render(); });
+  });
+  var index = 0;
+  var tint = '#967c43';
+  var canvas = document.getElementById('h3-chrome-demo');
+  var ctx = canvas.getContext('2d');
+  var mainName = document.getElementById('h3-chrome-name');
+  var mainFamily = document.getElementById('h3-chrome-family');
+  var mainCount = document.getElementById('h3-chrome-count');
+  var atlasImg = document.getElementById('h3-chrome-atlas');
+  var swatch = document.getElementById('h3-chrome-swatch');
+  var picker = document.getElementById('h3-chrome-picker');
+  var familySelect = document.getElementById('h3-chrome-familyselect');
+  var materialSelect = document.getElementById('h3-chrome-materialselect');
+  var tintedKey = '';
+  var tinted = document.createElement('canvas');
+  tinted.width = 512;
+  tinted.height = 512;
+
+  function slice(src, s, dx, dy, dw, dh, center){
+    var b = s.border;
+    var rx = s.x + s.w - b, bx = dx + dw - b, ry = s.y + s.h - b, by = dy + dh - b;
+    var cw = s.w - 2 * b, ch = s.h - 2 * b, iw = dw - 2 * b, ih = dh - 2 * b;
+    ctx.drawImage(src, s.x, s.y, b, b, dx, dy, b, b);
+    ctx.drawImage(src, s.x + b, s.y, cw, b, dx + b, dy, iw, b);
+    ctx.drawImage(src, rx, s.y, b, b, bx, dy, b, b);
+    ctx.drawImage(src, s.x, s.y + b, b, ch, dx, dy + b, b, ih);
+    if(center){
+      ctx.drawImage(src, s.x + b, s.y + b, cw, ch, dx + b, dy + b, iw, ih);
+    }
+    ctx.drawImage(src, rx, s.y + b, b, ch, bx, dy + b, b, ih);
+    ctx.drawImage(src, s.x, ry, b, b, dx, by, b, b);
+    ctx.drawImage(src, s.x + b, ry, cw, b, dx + b, by, iw, b);
+    ctx.drawImage(src, rx, ry, b, b, bx, by, b, b);
+  }
+
+  function tintedAtlas(){
+    var key = index + '|' + tint;
+    if(tintedKey === key){ return tinted; }
+    var img = MATERIALS[index].img;
+    var x = tinted.getContext('2d');
+    x.clearRect(0, 0, 512, 512);
+    x.globalCompositeOperation = 'source-over';
+    x.drawImage(img, 0, 0);
+    x.globalCompositeOperation = 'multiply';
+    x.fillStyle = tint;
+    x.fillRect(0, 0, 512, 512);
+    x.globalCompositeOperation = 'destination-in';
+    x.drawImage(img, 0, 0);
+    x.globalCompositeOperation = 'source-over';
+    tintedKey = key;
+    return tinted;
+  }
+
+  function render(){
+    var img = MATERIALS[index].img;
+    if(!img.complete || !img.naturalWidth){ return; }
+    var t = tintedAtlas();
+    ctx.clearRect(0, 0, 480, 300);
+    slice(t, CHROME.thick, 0, 0, 480, 300, 0);
+    slice(t, CHROME.caption, 4, 4, 472, 20, 1);
+    slice(t, CHROME.pinUp, 452, 4, 20, 20, 1);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '12px monospace';
+    ctx.fillText('Chrome Material', 12, 18);
+    slice(t, CHROME.thin, 12, 32, 456, 252, 0);
+    ctx.fillText('Example text', 28, 62);
+    slice(t, CHROME.button, 28, 78, 136, 24, 0);
+    var label = 'Button';
+    ctx.fillText(label, 28 + 68 - ctx.measureText(label).width / 2, 94);
+    var a = CHROME.scrollLeft, b = CHROME.scrollRight;
+    ctx.drawImage(t, a.x, a.y, a.w, a.h, 180, 82, 16, 16);
+    ctx.drawImage(t, b.x, b.y, b.w, b.h, 202, 82, 16, 16);
+  }
+
+  function show(i){
+    index = (i + MATERIALS.length) % MATERIALS.length;
+    var m = MATERIALS[index];
+    mainName.textContent = m.name;
+    mainFamily.textContent = m.family.charAt(0).toUpperCase() + m.family.slice(1);
+    mainCount.textContent = (index + 1) + ' / ' + MATERIALS.length;
+    atlasImg.src = m.src;
+    familySelect.value = m.family;
+    materialSelect.value = m.id;
+    render();
+  }
+
+  document.getElementById('h3-chrome-prev').addEventListener('click', function(){ show(index - 1); });
+  document.getElementById('h3-chrome-next').addEventListener('click', function(){ show(index + 1); });
+  document.addEventListener('keydown', function(e){
+    var tag = e.target && e.target.tagName;
+    if(tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA'){ return; }
+    if(e.key === 'ArrowLeft'){ show(index - 1); }
+    else if(e.key === 'ArrowRight'){ show(index + 1); }
+  });
+  familySelect.addEventListener('change', function(){
+    var id = familySelect.value;
+    for(var i = 0; i < MATERIALS.length; i++){
+      if(MATERIALS[i].family === id){ show(i); break; }
+    }
+  });
+  materialSelect.addEventListener('change', function(){
+    for(var i = 0; i < MATERIALS.length; i++){
+      if(MATERIALS[i].id === materialSelect.value){ show(i); break; }
+    }
+  });
+  swatch.addEventListener('click', function(){
+    picker.style.display = (picker.style.display === 'none' || !picker.style.display) ? 'block' : 'none';
+  });
+
+  var sv = document.getElementById('h3-chrome-sv');
+  var svdot = document.getElementById('h3-chrome-svdot');
+  var huetrack = document.getElementById('h3-chrome-hue');
+  var huethumb = document.getElementById('h3-chrome-huethumb');
+  var hex = document.getElementById('h3-chrome-hex');
+  var H = 30, S = 0.5, V = 0.6;
+  function toByte(n){
+    var s = Math.round(n * 255).toString(16);
+    return s.length < 2 ? '0' + s : s;
+  }
+  function hsvToHex(h, s, v){
+    var c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c, r, g, b;
+    if(h < 60){ r = c; g = x; b = 0; }
+    else if(h < 120){ r = x; g = c; b = 0; }
+    else if(h < 180){ r = 0; g = c; b = x; }
+    else if(h < 240){ r = 0; g = x; b = c; }
+    else if(h < 300){ r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+    return '#' + toByte(r + m) + toByte(g + m) + toByte(b + m);
+  }
+  function applyTint(){
+    tint = hsvToHex(H, S, V);
+    swatch.style.background = tint;
+    hex.textContent = tint;
+    sv.style.background = hsvToHex(H, 1, 1);
+    svdot.style.left = (S * 100) + '%';
+    svdot.style.top = ((1 - V) * 100) + '%';
+    render();
+  }
+  function pick(e){
+    var r = sv.getBoundingClientRect();
+    S = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    V = 1 - Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    applyTint();
+  }
+  var dragging = false;
+  sv.addEventListener('pointerdown', function(e){ dragging = true; sv.setPointerCapture(e.pointerId); pick(e); });
+  sv.addEventListener('pointermove', function(e){ if(dragging){ pick(e); } });
+  sv.addEventListener('pointerup', function(){ dragging = false; });
+  function setHue(clientX){
+    var r = huetrack.getBoundingClientRect();
+    H = Math.min(360, Math.max(0, (clientX - r.left) / r.width * 360));
+    huethumb.style.left = (H / 360 * 100) + '%';
+    huetrack.setAttribute('aria-valuenow', Math.round(H));
+    applyTint();
+  }
+  var hueDragging = false;
+  huetrack.addEventListener('pointerdown', function(e){ hueDragging = true; huetrack.setPointerCapture(e.pointerId); setHue(e.clientX); });
+  huetrack.addEventListener('pointermove', function(e){ if(hueDragging){ setHue(e.clientX); } });
+  huetrack.addEventListener('pointerup', function(){ hueDragging = false; });
+  huetrack.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){ H = (H + 358) % 360; huethumb.style.left = (H / 360 * 100) + '%'; applyTint(); e.preventDefault(); e.stopPropagation(); }
+    else if(e.key === 'ArrowRight'){ H = (H + 2) % 360; huethumb.style.left = (H / 360 * 100) + '%'; applyTint(); e.preventDefault(); e.stopPropagation(); }
+  });
+  (function initTint(){
+    var r = 0x96 / 255, g = 0x7c / 255, b = 0x43 / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    H = d ? (mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60 : 0;
+    if(H < 0){ H += 360; }
+    S = mx ? d / mx : 0;
+    V = mx;
+    huethumb.style.left = (H / 360 * 100) + '%';
+    huetrack.setAttribute('aria-valuenow', Math.round(H));
+    applyTint();
+  })();
+  picker.style.display = 'none';
+  show(0);
+})();
+</script>
+
+<table>
+  <thead><tr><th>Material</th><th>Family</th><th>Source</th><th>License</th></tr></thead>
+  <tbody>
+  {%- for material in library.materials %}
+    <tr>
+      <td>{{ material.name }}</td>
+      <td>{{ material.family | capitalize }}</td>
+      <td><a href="{{ material.url }}">{{ material.author }}</a></td>
+      <td>{{ material.license }}</td>
+    </tr>
+  {%- endfor %}
+  </tbody>
+</table>
+
+<h3>Contributors</h3>
+<p>H3UI chrome materials are baked from photographs shared under permissive licenses. Thanks to:</p>
+<ul>
+{%- for author, items in library.materials | group_by(attribute="author") %}
+  <li>{{ author }} ({{ items | length }} material{% if items | length > 1 %}s{% endif %})</li>
+{%- endfor %}
+</ul>

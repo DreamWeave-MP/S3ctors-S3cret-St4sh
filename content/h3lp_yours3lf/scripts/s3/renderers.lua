@@ -15,6 +15,8 @@ require 'scripts.s3.ui'
 local markTexture = ui.texture { path = 'textures/menu_map_smark.dds' }
 local whiteTexture = ui.texture { path = 'white' }
 local screenPositionLayer = 'Modal'
+local l10n = core.l10n 'H3'
+local StrFormat = string.format
 
 local screenPositionPopup
 local screenPositionGeneration = 0
@@ -58,7 +60,6 @@ local function screenPositionTitle(argument)
 end
 
 I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
-  local l10n = core.l10n 'H3'
   local buttonSize = util.vector2(20, 20)
   local previewSize = util.vector2(50, 50)
   local titleText = screenPositionTitle(argument)
@@ -351,7 +352,6 @@ I.Settings.registerRenderer('ScreenPosition', function(value, set, argument)
 end)
 
 I.Settings.registerRenderer('List', function(input, set)
-  local l10n = core.l10n 'H3'
   local value = {}
   for i = 1, #input do
     table.insert(value, input[i])
@@ -472,12 +472,11 @@ I.Settings.registerRenderer('H3UITheme', function(value, set)
     items[#items + 1] = { label = entry.name, value = entry.id }
   end
   items[#items + 1] = {
-    label = core.l10n 'H3' 'H3UIThemeCustom',
+    label = l10n 'H3UIThemeCustom',
     value = appearance.customThemeId,
   }
 
-  local selected = value
-  if selected == nil or selected == '' then selected = appearance.currentThemeId() end
+  local selected = appearance.currentThemeId()
   return require 'scripts.s3.components.selector' {
     items = items,
     selected = themeIndex(items, selected),
@@ -487,11 +486,47 @@ end)
 
 I.Settings.registerRenderer('H3UIChromeSource', function(value, set)
   local items = {
-    { label = core.l10n 'H3' 'H3UIChromeSourceAuto', value = 'auto' },
-    { label = core.l10n 'H3' 'H3UIChromeSourceTheme', value = 'theme' },
-    { label = core.l10n 'H3' 'H3UIChromeSourceH3UI', value = 'h3ui' },
+    { label = l10n 'H3UIChromeSourceAuto', value = 'auto' },
+    { label = l10n 'H3UIChromeSourceTheme', value = 'theme' },
+    { label = l10n 'H3UIChromeSourceH3UI', value = 'h3ui' },
   }
   local selected = appearance.normalizeChromeSource(value) or appearance.defaultChromeSource
+  return require 'scripts.s3.components.selector' {
+    items = items,
+    selected = themeIndex(items, selected),
+    onSelect = function(_, item) set(item.value) end,
+  }
+end)
+
+I.Settings.registerRenderer('H3UIMaterialFamily', function(value, set)
+  local items = {}
+  local families = appearance.materialFamilies()
+  for index = 1, #families do
+    local family = families[index]
+    items[#items + 1] = {
+      label = l10n(StrFormat('H3UIChromeMaterialFamily_%s', family)),
+      value = family,
+    }
+  end
+  local selected = appearance.normalizeMaterialFamily(value) or appearance.defaultMaterialFamily
+  return require 'scripts.s3.components.selector' {
+    items = items,
+    selected = themeIndex(items, selected),
+    onSelect = function(_, item) appearance.selectMaterialFamily(item.value, set) end,
+  }
+end)
+
+I.Settings.registerRenderer('H3UIMaterial', function(value, set)
+  local items = {}
+  local stems = appearance.materialStems(appearance.chromeMaterialFamily())
+  for index = 1, #stems do
+    local stem = stems[index]
+    items[#items + 1] = {
+      label = l10n(StrFormat('H3UIChromeMaterial_%s', stem)),
+      value = stem,
+    }
+  end
+  local selected = appearance.chromeMaterial()
   return require 'scripts.s3.components.selector' {
     items = items,
     selected = themeIndex(items, selected),
@@ -543,7 +578,7 @@ I.Settings.registerRenderer('H3UIReset', function(_, set)
     content = ui.content {
       {
         template = I.MWUI.templates.textNormal,
-        props = { text = core.l10n 'H3' 'H3UIResetName' },
+        props = { text = l10n 'H3UIResetName' },
         events = {
           mouseClick = async:callback(function()
             appearance.reset()
