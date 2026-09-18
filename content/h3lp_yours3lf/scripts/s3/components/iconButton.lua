@@ -11,6 +11,8 @@ local row = require 'scripts.s3.components.row'
 local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 
+local IconButtonPadding = 4
+
 ---@class H3.IconButtonOptions
 ---@field resource? openmw.ui.TextureResource|openmw.ui.TextureResourceOptions
 ---@field label? string
@@ -71,7 +73,7 @@ local function iconButton(options)
   end
 
   local events = activationEvents(options.events, options.onActivate)
-  local padded = inset(content)
+  local padded = inset(content, nil, IconButtonPadding)
 
   if options.template then
     return {

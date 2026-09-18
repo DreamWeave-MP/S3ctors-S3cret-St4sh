@@ -1,24 +1,26 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
+local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local UtilVector2 = util.vector2
-local windowSize = UtilVector2(660, 320)
+local fullSize = UtilVector2(1, 1)
+local windowSize = UtilVector2(660, 380)
 local slotSize = UtilVector2(58, 58)
 local iconSize = UtilVector2(50, 50)
-local gridSize = UtilVector2(270, 214)
-local detailSize = UtilVector2(330, 214)
+local gridSize = UtilVector2(252, 252)
+local detailSize = UtilVector2(348, 252)
 local meterSize = UtilVector2(290, 16)
 local searchSize = UtilVector2(390, 24)
 local relativeWidth = UtilVector2(1, 0)
 
-local categories = { 'All', 'Gear', 'Magic', 'Consumables', 'Tools', 'Misc' }
+local categories = { 'All', 'Weapon', 'Apparel', 'Magic', 'Misc' }
 
 local itemData = {
   {
     name = 'Iron Longsword',
-    category = 'Gear',
+    category = 'Weapon',
     count = 1,
     color = util.color.rgb(0.60, 0.60, 0.64),
     value = 40,
@@ -28,7 +30,7 @@ local itemData = {
   },
   {
     name = 'Restore Health',
-    category = 'Consumables',
+    category = 'Magic',
     count = 3,
     color = util.color.rgb(0.65, 0.16, 0.12),
     value = 35,
@@ -36,7 +38,7 @@ local itemData = {
   },
   {
     name = 'Journeyman Lockpick',
-    category = 'Tools',
+    category = 'Misc',
     count = 8,
     color = util.color.rgb(0.72, 0.62, 0.24),
     value = 12,
@@ -44,7 +46,7 @@ local itemData = {
   },
   {
     name = 'Common Robe',
-    category = 'Gear',
+    category = 'Apparel',
     count = 1,
     color = util.color.rgb(0.28, 0.20, 0.52),
     value = 8,
@@ -62,7 +64,7 @@ local itemData = {
   },
   {
     name = 'Grand Soul Gem',
-    category = 'Magic',
+    category = 'Misc',
     count = 2,
     color = util.color.rgb(0.30, 0.48, 0.80),
     value = 200,
@@ -86,7 +88,7 @@ local itemData = {
   },
   {
     name = 'Chitin Cuirass',
-    category = 'Gear',
+    category = 'Apparel',
     count = 1,
     color = util.color.rgb(0.42, 0.31, 0.18),
     value = 120,
@@ -96,7 +98,7 @@ local itemData = {
   },
   {
     name = 'Sujamma',
-    category = 'Consumables',
+    category = 'Magic',
     count = 4,
     color = util.color.rgb(0.58, 0.20, 0.12),
     value = 30,
@@ -104,7 +106,7 @@ local itemData = {
   },
   {
     name = 'Probe',
-    category = 'Tools',
+    category = 'Misc',
     count = 6,
     color = util.color.rgb(0.48, 0.48, 0.48),
     value = 9,
@@ -112,11 +114,45 @@ local itemData = {
   },
   {
     name = 'Rising Force Potion',
-    category = 'Consumables',
+    category = 'Magic',
     count = 2,
     color = util.color.rgb(0.18, 0.58, 0.34),
     value = 90,
     weight = 0.5,
+  },
+  {
+    name = 'Steel Dagger',
+    category = 'Weapon',
+    count = 1,
+    color = util.color.rgb(0.35, 0.37, 0.42),
+    value = 16,
+    weight = 4,
+  },
+  {
+    name = 'Leather Boots',
+    category = 'Apparel',
+    count = 1,
+    color = util.color.rgb(0.30, 0.20, 0.10),
+    value = 5,
+    weight = 4,
+    condition = 25,
+    maxCondition = 30,
+  },
+  {
+    name = 'Cure Poison',
+    category = 'Magic',
+    count = 2,
+    color = util.color.rgb(0.55, 0.80, 0.45),
+    value = 20,
+    weight = 0.5,
+  },
+  {
+    name = 'Torch',
+    category = 'Misc',
+    count = 3,
+    color = util.color.rgb(0.80, 0.45, 0.15),
+    value = 3,
+    weight = 1,
   },
 }
 
@@ -238,7 +274,7 @@ local function detailPanel(ui, rebuild, state, selected)
 
   return ui.column {
     gap = 8,
-    props = { relativeSize = relativeWidth },
+    props = { autoSize = false, relativeSize = fullSize },
     children = children,
   }
 end
@@ -254,36 +290,66 @@ local function inventoryPanel(invalidate, rebuild, state)
   initializeState(state)
 
   local ui = I.H3UI.scope { invalidate = invalidate }
-  local visible = visibleItems(state)
 
-  local selected = findItem(state.selected)
-  local selectedVisible = false
-  for index = 1, #visible do
-    if visible[index] == selected then
-      selectedVisible = true
-      break
+  local function currentSelection()
+    local selected = findItem(state.selected)
+    local fresh = visibleItems(state)
+    local selectedVisible = false
+    for index = 1, #fresh do
+      if fresh[index] == selected then
+        selectedVisible = true
+        break
+      end
     end
-  end
-  if not selectedVisible then
-    selected = visible[1]
-    state.selected = selected and selected.name or nil
+    if not selectedVisible then
+      selected = fresh[1]
+      state.selected = selected and selected.name or nil
+    end
+    return selected
   end
 
-  local items = {}
-  for index = 1, #visible do
-    local item = visible[index]
-    items[index] = {
-      resource = { path = 'white' },
-      count = state.counts[item.name],
-      selected = state.selected == item.name,
-      props = { size = slotSize },
-      iconProps = { size = iconSize, color = item.color },
-      onActivate = function()
-        state.selected = item.name
-        rebuild()
-        return true
-      end,
+  local selected = currentSelection()
+
+  local function buildItems()
+    local result = {}
+    local fresh = visibleItems(state)
+    for index = 1, #fresh do
+      local item = fresh[index]
+      result[#result + 1] = {
+        resource = { path = 'white' },
+        count = state.counts[item.name],
+        selected = state.selected == item.name,
+        props = { size = slotSize },
+        iconProps = { size = iconSize, color = item.color },
+        onActivate = function()
+          state.selected = item.name
+          rebuild()
+          return true
+        end,
+      }
+    end
+    return result
+  end
+
+  local function buildGrid()
+    return ui.itemGrid {
+      columns = 4,
+      columnGap = 4,
+      rowGap = 4,
+      props = {
+        autoSize = false,
+        relativeSize = fullSize,
+      },
+      items = buildItems(),
     }
+  end
+
+  local gridBox
+  local detailBox
+  local function refilter()
+    gridBox.content = openmwUi.content { buildGrid() }
+    detailBox.content = openmwUi.content { detailPanel(ui, rebuild, state, currentSelection()) }
+    refresh()
   end
 
   local categoryButtons = {}
@@ -300,37 +366,37 @@ local function inventoryPanel(invalidate, rebuild, state)
     }
   end
 
+  gridBox = ui.box {
+    props = { size = gridSize },
+    children = { buildGrid() },
+  }
+  detailBox = ui.box {
+    props = { size = detailSize },
+    children = { detailPanel(ui, rebuild, state, selected) },
+  }
+
   return ui.window {
     name = 'ct_demo_inventory_panel',
     title = 'Inventory Pattern',
     size = windowSize,
     resizable = false,
     pinnable = true,
+    onMove = refresh,
+    onPin = refresh,
     children = {
       ui.column {
         gap = 6,
+        props = { autoSize = false, relativeSize = fullSize },
         ui.row {
           gap = 4,
           children = categoryButtons,
         },
         ui.row {
           gap = 8,
-          ui.box {
-            props = { size = gridSize },
-            children = {
-              ui.itemGrid {
-                columns = 4,
-                columnGap = 4,
-                rowGap = 4,
-                items = items,
-              },
-            },
-          },
-          ui.box {
-            props = { size = detailSize },
-            children = { detailPanel(ui, rebuild, state, selected) },
-          },
+          gridBox,
+          detailBox,
         },
+        ui.spacer { grow = 1 },
         ui.row {
           gap = 8,
           ui.searchInput {
@@ -338,7 +404,7 @@ local function inventoryPanel(invalidate, rebuild, state)
             inputProps = { size = searchSize },
             onChange = function(value)
               state.query = value
-              rebuild()
+              refilter()
             end,
           },
           ui.spacer { grow = 1 },

@@ -450,6 +450,8 @@ end
 
 local function colorHex(value) return value:asHex() end
 
+local function sortKeys(left, right) return tostring(left) < tostring(right) end
+
 local function cacheKey(value, seen)
   if value == nil then return 'nil' end
   local valueType = type(value)
@@ -475,13 +477,13 @@ local function cacheKey(value, seen)
   local parts = {}
   for index = 1, #keys do
     local key = keys[index]
-    parts[#parts + 1] = cacheKey(key, seen) .. '=' .. cacheKey(value[key], seen)
+    parts[#parts + 1] = StrFormat('%s=%s', cacheKey(key, seen), cacheKey(value[key], seen))
   end
   seen[value] = nil
-  return '{' .. table.concat(parts, ';') .. '}'
+  return StrFormat('{%s}', table.concat(parts, ';'))
 end
 
-local function boxTemplate(options)
+local function boxTemplate(options, boxType)
   local skin = options.skin
   local thickness = skin.thickness
   local skinCache = templateCache[skin]
@@ -499,12 +501,12 @@ local function boxTemplate(options)
 
   local alphaKey = cacheKey(options.alpha)
   local backgroundKey = cacheKey(options.backgroundProps)
-  local key = alphaKey .. ':' .. backgroundKey
+  local key = StrFormat('%s:%s:%s', tostring(boxType), alphaKey, backgroundKey)
   local result = tintCache[key]
   if result then return result end
 
   result = {
-    type = uiModule().TYPE.Container,
+    type = boxType,
     content = uiModule().content(
       frameChildren(skin, thickness, options.tint, options.alpha, options.backgroundProps)
     ),
@@ -521,8 +523,15 @@ local function boxLayout(options)
     'H3 UI chrome box requires thickness'
   )
 
+  local openmwUi = uiModule()
+  local props = options.props
+  local boxType = props
+      and (props.size ~= nil or props.relativeSize ~= nil)
+      and openmwUi.TYPE.Widget
+    or openmwUi.TYPE.Container
+
   return {
-    template = boxTemplate(options),
+    template = boxTemplate(options, boxType),
     name = options.name,
     props = options.props,
     external = options.external,

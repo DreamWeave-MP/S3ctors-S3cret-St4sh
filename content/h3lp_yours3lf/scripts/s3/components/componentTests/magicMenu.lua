@@ -1,15 +1,16 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
+local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local UtilVector2 = util.vector2
-local menuSize = UtilVector2(620, 440)
+local menuSize = UtilVector2(620, 448)
 local effectStripSize = UtilVector2(584, 30)
 local spellListSize = UtilVector2(584, 326)
 local effectIconSize = UtilVector2(18, 18)
 local filterSize = UtilVector2(516, 24)
-local relativeWidth = UtilVector2(1, 0)
+local fullSize = UtilVector2(1, 1)
 
 local effectColors = {
   util.color.rgb(0.58, 0.33, 0.82),
@@ -60,7 +61,7 @@ end
 local function effectIcon(ui, index)
   return ui.image {
     name = 'magic_effect_' .. tostring(index),
-    resource = { path = 'textures/menu_icon_magic.dds' },
+    resource = { path = 'textures/menu_icon_magic_mini.dds' },
     props = {
       size = effectIconSize,
       color = effectColors[index],
@@ -82,8 +83,6 @@ local function entry(ui, rebuild, state, item)
 end
 
 local function section(ui, rebuild, state, title, secondary, items)
-  if #items == 0 then return nil end
-
   local children = {}
   for index = 1, #items do
     children[#children + 1] = entry(ui, rebuild, state, items[index])
@@ -95,10 +94,6 @@ local function section(ui, rebuild, state, title, secondary, items)
     gap = 1,
     children = children,
   }
-end
-
-local function append(children, value)
-  if value ~= nil then children[#children + 1] = value end
 end
 
 ---@param invalidate? fun()
@@ -113,34 +108,55 @@ local function magicMenu(invalidate, rebuild, state)
   state.deleted = state.deleted or {}
 
   local ui = I.H3UI.scope { invalidate = invalidate }
-  local listChildren = {}
 
-  append(listChildren, section(ui, rebuild, state, 'Powers', nil, filtered(powers, state)))
-  append(
-    listChildren,
-    section(ui, rebuild, state, 'Spells', 'Cost/Chance', filtered(spells, state))
-  )
-  append(
-    listChildren,
-    section(ui, rebuild, state, 'Magic Items', 'Charge', filtered(enchantedItems, state))
-  )
+  local function buildListBody()
+    local listChildren = {}
 
-  if #listChildren == 0 then
-    listChildren[1] = ui.text {
-      text = 'No spells or magic items match this filter.',
-      tone = 'muted',
+    local visiblePowers = filtered(powers, state)
+    if next(visiblePowers) ~= nil then
+      listChildren[#listChildren + 1] = section(ui, rebuild, state, 'Powers', nil, visiblePowers)
+    end
+    local visibleSpells = filtered(spells, state)
+    if next(visibleSpells) ~= nil then
+      listChildren[#listChildren + 1] =
+        section(ui, rebuild, state, 'Spells', 'Cost/Chance', visibleSpells)
+    end
+    local visibleItems = filtered(enchantedItems, state)
+    if next(visibleItems) ~= nil then
+      listChildren[#listChildren + 1] =
+        section(ui, rebuild, state, 'Magic Items', 'Charge', visibleItems)
+    end
+
+    if next(listChildren) == nil then
+      listChildren[1] = ui.text {
+        text = 'No spells or magic items match this filter.',
+        tone = 'muted',
+      }
+    end
+
+    return ui.column {
+      gap = 4,
+      props = { autoSize = false, relativeSize = fullSize },
+      children = listChildren,
     }
   end
 
-  local effectIcons = {}
-  for index = 1, #effectColors do
-    effectIcons[index] = effectIcon(ui, index)
+  local spellBox
+  local function refilter()
+    spellBox.content = openmwUi.content { buildListBody() }
+    refresh()
   end
 
-  local listBody = ui.column {
-    gap = 4,
-    props = { relativeSize = relativeWidth },
-    children = listChildren,
+  local effectIcons = { ui.spacer(4, 0) }
+  for index = 1, #effectColors do
+    effectIcons[#effectIcons + 1] = effectIcon(ui, index)
+  end
+
+  local listBody = buildListBody()
+
+  spellBox = ui.box {
+    props = { size = spellListSize },
+    children = { listBody },
   }
 
   return ui.window {
@@ -151,6 +167,8 @@ local function magicMenu(invalidate, rebuild, state)
     resizable = false,
     closable = false,
     pinnable = true,
+    onMove = refresh,
+    onPin = refresh,
     children = {
       ui.column {
         gap = 6,
@@ -159,24 +177,27 @@ local function magicMenu(invalidate, rebuild, state)
           children = {
             ui.row {
               gap = 2,
+              props = {
+                anchor = UtilVector2(0, 0.5),
+                relativePosition = UtilVector2(0, 0.5),
+              },
               children = effectIcons,
             },
           },
         },
-        ui.box {
-          props = { size = spellListSize },
-          children = { listBody },
-        },
+        spellBox,
         ui.row {
           gap = 4,
-          ui.textInput {
-            text = state.query,
-            props = { size = filterSize },
+          ui.searchInput {
+            value = state.query,
+            clearable = false,
+            inputProps = { size = filterSize },
             onChange = function(value)
               state.query = value
-              rebuild()
+              refilter()
             end,
           },
+          ui.spacer(8, 0),
           ui.button {
             label = 'Delete',
             tone = 'negative',

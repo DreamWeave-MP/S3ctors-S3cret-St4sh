@@ -266,7 +266,7 @@ local function createBody(options, body, title)
     destroy()
   end
 
-  bodyElement = ui.create(body, { noWarnUnused = true })
+  bodyElement = ui.create(body)
   rootElement = ui.create(makeShellLayout(options, bodyElement, title))
   return rootElement
 end

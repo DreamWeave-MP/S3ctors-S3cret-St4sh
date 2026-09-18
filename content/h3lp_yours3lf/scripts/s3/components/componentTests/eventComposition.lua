@@ -57,7 +57,7 @@ local function eventComposition()
   local pinStatus, pinSemanticHit, pinLowHit = makeCounter 'Pin button (no bubble)'
   local sliderStatus, sliderSemanticHit, sliderLowHit = makeCounter 'Slider (drag)'
   local numberStatus, numberSemanticHit, numberLowHit = makeCounter 'Number input (type, then blur)'
-  local searchStatus, searchSemanticHit, searchLowHit = makeCounter 'Search input (type or clear)'
+  local searchStatus, searchSemanticHit, searchLowHit = makeCounter 'Search input (type, blur, or clear)'
   local bubbled = 0
   local bubbleStatus = text {
     text = 'Root bubbles (toggle/search clicks): 0',
@@ -133,8 +133,10 @@ local function eventComposition()
       searchInput {
         value = 'compose',
         onChange = searchSemanticHit,
+        onCommit = searchSemanticHit,
         inputEvents = {
           textChanged = async:callback(searchLowHit),
+          focusLoss = async:callback(searchLowHit),
         },
         events = {
           mouseClick = async:callback(searchLowHit),

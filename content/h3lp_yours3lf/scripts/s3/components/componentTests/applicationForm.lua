@@ -70,7 +70,7 @@ local function applicationForm(invalidate, rebuild, state)
         props = { size = sliderSize },
         onChange = function(value)
           state.intensity = value
-          rebuild()
+          refresh()
         end,
       },
     },
@@ -95,7 +95,7 @@ local function applicationForm(invalidate, rebuild, state)
         props = { size = textInputSize },
         onChange = function(value)
           state.defaultFilter = value
-          rebuild()
+          refresh()
         end,
       },
       {
@@ -109,7 +109,7 @@ local function applicationForm(invalidate, rebuild, state)
         props = { size = numberSize },
         onCommit = function(value)
           state.pageSize = value
-          rebuild()
+          refresh()
         end,
       },
     },
@@ -126,7 +126,7 @@ local function applicationForm(invalidate, rebuild, state)
         },
         onQueryChange = function(value)
           state.searchQuery = value
-          rebuild()
+          refresh()
         end,
       },
     },
@@ -190,6 +190,8 @@ local function applicationForm(invalidate, rebuild, state)
     size = windowSize,
     resizable = false,
     pinnable = true,
+    onMove = refresh,
+    onPin = refresh,
     selected = state.selectedPage,
     tabs = {
       { label = 'General', content = general },

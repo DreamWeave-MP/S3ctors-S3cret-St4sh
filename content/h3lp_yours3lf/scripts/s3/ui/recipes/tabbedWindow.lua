@@ -83,6 +83,7 @@ local function tabbedWindow(ctx, spec)
     pinnable = spec.pinnable,
     pinned = spec.pinned,
     innerBorder = spec.innerBorder,
+    padding = spec.padding,
     onMove = spec.onMove,
     onResize = spec.onResize,
     onClose = spec.onClose,

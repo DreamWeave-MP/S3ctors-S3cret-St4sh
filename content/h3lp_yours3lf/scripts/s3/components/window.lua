@@ -37,6 +37,7 @@ local relativeWidth = UtilVector2(1, 0)
 ---@field pinnable? boolean
 ---@field pinned? boolean
 ---@field innerBorder? boolean Adds the vanilla-style inner border below the caption; enabled by default.
+---@field padding? number Empty space between the frame and the body on all four sides. Defaults to `8`.
 ---@field onMove? fun(position: openmw.util.Vector2)
 ---@field onResize? fun(size: openmw.util.Vector2, position: openmw.util.Vector2)
 ---@field onClose? fun()
@@ -378,8 +379,10 @@ local function window(options)
   end
 
   local innerBorderTop = border + (hasCaption and captionHeight or 0)
-  local bodyInset = innerBorder and 2 * border or contentInset
-  local bodyOffset = innerBorderTop + (innerBorder and border or padding)
+  local bodyPadding = options.padding or 8
+  assert(type(bodyPadding) == 'number' and bodyPadding >= 0, 'Window padding must be non-negative')
+  local bodyInset = (innerBorder and 2 * border or contentInset) + bodyPadding
+  local bodyOffset = innerBorderTop + (innerBorder and border or padding) + bodyPadding
 
   if innerBorder then
     content[#content + 1] = chrome.frame {

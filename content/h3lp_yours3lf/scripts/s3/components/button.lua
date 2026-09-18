@@ -9,9 +9,12 @@ local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 local fullSize = util.vector2(1, 1)
+local ButtonPaddingX = 8
+local ButtonPaddingY = 4
 
 ---@class H3.ButtonOptions
 ---@field label? string
+---@field padding? number Uniform slot inset in pixels. Defaults to roomy button padding.
 ---@field onActivate? fun(event: table, layout: openmw.ui.Layout): any
 ---@field name? string
 ---@field props? table
@@ -39,7 +42,8 @@ local function button(options)
   if labelProps.ignorePointerEvents == nil then labelProps.ignorePointerEvents = true end
 
   local children = options.content or options.children
-  local fixedSize = options.props and options.props.size ~= nil
+  local fixedSize = options.props
+    and (options.props.size ~= nil or options.props.relativeSize ~= nil)
   if not children then
     if fixedSize then
       labelProps.autoSize = false
@@ -48,7 +52,15 @@ local function button(options)
       labelProps.textAlignV = ui.ALIGNMENT.Center
     end
     local label = text { text = options.label, props = labelProps }
-    children = fixedSize and { label } or { inset(label) }
+    local padX, padY = ButtonPaddingX, ButtonPaddingY
+    if options.padding ~= nil then
+      assert(
+        type(options.padding) == 'number' and options.padding >= 0,
+        'H3 button padding must be non-negative'
+      )
+      padX, padY = options.padding, options.padding
+    end
+    children = fixedSize and { label } or { inset(label, nil, padX, padY) }
   end
 
   local props = {}
