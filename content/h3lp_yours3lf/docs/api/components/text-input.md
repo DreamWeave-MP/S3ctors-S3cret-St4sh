@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-Builds a plain `ui.TYPE.TextEdit` with H3UI text appearance and a 150-pixel default width. `onChange` is the normal application callback for edited text; raw `events` remain available for lower-level TextEdit behavior.
+Builds a plain `ui.TYPE.TextEdit` with H3UI text appearance and a 150-pixel default width. `onChange` runs for each edit; `onCommit` runs when editing focus is released. Raw `events` remain available for lower-level TextEdit behavior.
 
 ## Example
 
@@ -27,6 +27,7 @@ local nameInput = H3UI.textInput {
 | --- | --- | --- |
 | `text` | string? | Initial editor text. |
 | `onChange` | function? | Receives the current editor text after it changes. |
+| `onCommit` | function? | Receives the final editor text when the TextEdit loses focus. |
 | `template` | openmw.ui.Template? | Replaces the default OpenMW text-edit template. |
 
 Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md).

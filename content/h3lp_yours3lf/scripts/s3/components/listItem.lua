@@ -2,9 +2,9 @@
 
 local emptyOptions = {}
 
-local I = require 'openmw.interfaces'
 local activationEvents = require 'scripts.s3.components.activationEvents'
 local appearance = require 'scripts.s3.ui.appearance'
+local inset = require 'scripts.s3.components.inset'
 local row = require 'scripts.s3.components.row'
 local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
@@ -87,7 +87,7 @@ local function listItem(options)
   end
 
   return {
-    template = options.template or I.MWUI.templates.padding,
+    template = options.template or inset.template,
     name = options.name,
     props = props,
     external = external,

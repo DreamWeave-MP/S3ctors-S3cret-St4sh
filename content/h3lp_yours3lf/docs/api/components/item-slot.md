@@ -6,7 +6,7 @@ extra:
   kind: api
 ---
 
-Builds a bordered icon slot with an optional count. It does not inspect inventory or query game state. Use `onActivate` when selecting or using the represented item.
+Builds a bordered icon slot with an optional count. The H3 frame renders above the icon, and a supplied `props.size` fixes the total slot dimensions so icon/count content cannot resize the slot. It does not inspect inventory or query game state. Use `onActivate` when selecting or using the represented item.
 
 ## Example
 

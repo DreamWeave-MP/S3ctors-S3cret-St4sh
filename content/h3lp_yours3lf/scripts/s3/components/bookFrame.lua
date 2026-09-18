@@ -3,12 +3,14 @@
 local emptyOptions = {}
 local emptyContent = {}
 
-local I = require 'openmw.interfaces'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local appearance = require 'scripts.s3.ui.appearance'
 local chrome = require 'scripts.s3.ui.chrome'
+local inset = require 'scripts.s3.components.inset'
+local spacer = require 'scripts.s3.components.spacer'
+local text = require 'scripts.s3.components.text'
 
 local fullSize = util.vector2(1, 1)
 local black = util.color.rgb(0, 0, 0)
@@ -38,15 +40,12 @@ local function bookFrame(options)
 
     titleProps.text = options.title
     titleProps.ignorePointerEvents = true
-    content[#content + 1] = { template = I.MWUI.templates.textHeader, props = titleProps }
-    content[#content + 1] = {
-      template = I.MWUI.templates.interval,
-      props = { ignorePointerEvents = true },
-    }
+    content[#content + 1] = text { text = options.title, props = titleProps }
+    content[#content + 1] = spacer(2, 2)
   end
 
   content[#content + 1] = {
-    template = I.MWUI.templates.padding,
+    template = inset.template,
     content = ui.content {
       {
         type = ui.TYPE.Flex,

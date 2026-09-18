@@ -40,7 +40,7 @@ status.props.text = 'Updated'
 element:update()
 ```
 
-`status` is a layout. `element` is the live mounted OpenMW object. Mutating the layout table does not redraw the engine until the owning element is updated. Use a `Container` for a content-fitting root; use a `Widget` when you need explicit `size` or `relativeSize`. Rebuild the root for structural changes; use `element:update()` for property changes.
+`status` is a layout. `element` is the live mounted OpenMW object. Mutating the layout table does not redraw the engine until the owning element is updated. Use a `Container` for a content-fitting root; use a `Widget` when you need explicit `size` or `relativeSize`. Rebuild the root for structural changes; use `element:update()` for property changes. A full rebuild destroys the old OpenMW widgets, including TextEdit focus. Do not rebuild a search/form root from every `textChanged` event: keep the edited value in `onChange`, then rebuild on `onCommit`/focus loss, or update a stable mounted subtree without replacing the focused editor.
 
 ## Callbacks and context
 

@@ -17,6 +17,7 @@ local defaultInputWidth = 150
 ---@class H3.SearchInputOptions
 ---@field value? string
 ---@field onChange? fun(value: string, layout: openmw.ui.Layout): any
+---@field onCommit? fun(value: string, layout: openmw.ui.Layout): any Runs when editing focus is released.
 ---@field clearable? boolean
 ---@field clearLabel? string
 ---@field bordered? boolean
@@ -51,6 +52,7 @@ local function searchInput(options)
     userData = options.userData,
     template = options.template,
     onChange = options.onChange,
+    onCommit = options.onCommit,
   }
 
   local inputContent = input
@@ -59,13 +61,15 @@ local function searchInput(options)
       + 2 * constants.border
     local size = inputProps.size
     local width = size and size.x or defaultInputWidth
-    local height = size and size.y or minHeight + 4
-    input.props.size = UtilVector2(width, math.max(minHeight, height - 4))
-    inputContent = chrome.box {
+    local height = math.max(size and size.y or minHeight + 4, minHeight + 4)
+    local inset = 2
+    input.props.size = UtilVector2(math.max(0, width - 2 * inset), height - 2 * inset)
+    inputContent = chrome.frame {
       skin = appearance.chrome 'frame.thin',
+      props = { size = UtilVector2(width, height) },
       tint = appearance.token 'color.chromeBorder',
       alpha = appearance.token 'transparency.chrome',
-      inset = 2,
+      inset = inset,
       content = { input },
     }
   end
@@ -75,9 +79,11 @@ local function searchInput(options)
     children[#children + 1] = button {
       name = 'clear',
       label = options.clearLabel or 'X',
+      padding = 3,
       onActivate = function()
         input.props.text = ''
         if options.onChange then options.onChange('', input) end
+        if options.onCommit then options.onCommit('', input) end
         return true
       end,
     }

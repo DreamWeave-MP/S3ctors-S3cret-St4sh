@@ -16,6 +16,7 @@ local defaultSize = UtilVector2(150, 0)
 ---@class H3.TextInputOptions
 ---@field text? string
 ---@field onChange? fun(value: string, layout: openmw.ui.Layout): any
+---@field onCommit? fun(value: string, layout: openmw.ui.Layout): any Runs when editing focus is released.
 ---@field name? string
 ---@field props? table
 ---@field external? table
@@ -68,6 +69,17 @@ local function textInput(options)
       end
       if result ~= nil then return result end
       return true
+    end)
+  end
+  if options.onCommit then
+    local previous = events.focusLoss
+    events.focusLoss = async:callback(function(event, layout)
+      local result = options.onCommit(layout.props.text or '', layout)
+      if previous then
+        local previousResult = previous(event, layout)
+        if previousResult ~= nil then return previousResult end
+      end
+      if result ~= nil then return result end
     end)
   end
 

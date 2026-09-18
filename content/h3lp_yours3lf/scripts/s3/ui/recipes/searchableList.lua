@@ -1,6 +1,9 @@
 ---@omw-context menu|player
 
 local node = require 'scripts.s3.ui.node'
+local ui = require 'openmw.ui'
+
+local StrLower = string.lower
 
 ---@class H3UI.SearchableListOptions
 ---@field query? string
@@ -65,34 +68,47 @@ local function searchableList(ctx, spec)
     spec.text == nil or type(spec.text) == 'function',
     'H3 UI searchableList text must be a function'
   )
-  local normalizedQuery = string.lower(query)
-  local listItems = {}
-  for index = 1, #items do
-    if
-      normalizedQuery == ''
-      or string.find(
-        string.lower(itemText(items[index], index, spec.text)),
-        normalizedQuery,
-        1,
-        true
-      )
-    then
-      listItems[#listItems + 1] = listItem(ctx, items[index], index)
+
+  local function matchingEntries(filter)
+    local normalizedQuery = StrLower(filter)
+    local entries = {}
+    for index = 1, #items do
+      if
+        normalizedQuery == ''
+        or string.find(StrLower(itemText(items[index], index, spec.text)), normalizedQuery, 1, true)
+      then
+        entries[#entries + 1] = listItem(ctx, items[index], index)
+      end
     end
+    return entries
   end
+
+  local resultsLayout
+  local function applyQuery(value, layout)
+    if spec.onQueryChange then spec.onQueryChange(value, layout) end
+    resultsLayout.content = ui.content(matchingEntries(value))
+    if ctx.invalidate then ctx.invalidate() end
+  end
+
   local children = {
     ctx.searchInput {
       role = 'search',
       style = spec.searchStyle,
       value = query,
-      onChange = spec.onQueryChange,
+      onChange = applyQuery,
       clearable = spec.clearable,
       clearLabel = spec.clearLabel,
       props = spec.searchProps,
       inputProps = spec.inputProps,
     },
-    ctx.list { role = 'results', style = spec.listStyle, items = listItems, props = spec.listProps },
   }
+  resultsLayout = ctx.list {
+    role = 'results',
+    style = spec.listStyle,
+    items = matchingEntries(query),
+    props = spec.listProps,
+  }
+  children[#children + 1] = resultsLayout
   return ctx.column {
     role = 'root',
     variant = spec.variant,

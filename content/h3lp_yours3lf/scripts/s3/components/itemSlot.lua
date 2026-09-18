@@ -8,6 +8,11 @@ local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
 local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local UtilVector2 = util.vector2
+local Center = UtilVector2(0.5, 0.5)
+local BottomRight = UtilVector2(1, 1)
 
 ---@class H3.ItemSlotOptions
 ---@field resource? openmw.ui.TextureResource|openmw.ui.TextureResourceOptions
@@ -31,6 +36,17 @@ local ui = require 'openmw.ui'
 local function itemSlot(options)
   options = options or emptyOptions
 
+  local props = {}
+  if options.props then
+    for key, value in next, options.props do
+      props[key] = value
+    end
+  end
+
+  -- Fixed-geometry slots are free-positioned Widget roots, so center the icon with anchor
+  -- geometry. Auto-sized slots keep flow layout so the icon can size the slot.
+  local fixedGeometry = props.size ~= nil or props.relativeSize ~= nil
+
   local iconProps = {}
   if options.iconProps then
     for key, value in next, options.iconProps do
@@ -40,6 +56,10 @@ local function itemSlot(options)
 
   if options.resource ~= nil then iconProps.resource = options.resource end
   iconProps.ignorePointerEvents = true
+  if fixedGeometry then
+    if iconProps.anchor == nil then iconProps.anchor = Center end
+    if iconProps.relativePosition == nil then iconProps.relativePosition = Center end
+  end
 
   local content = {
     image { name = 'icon', resource = options.resource, props = iconProps },
@@ -56,14 +76,12 @@ local function itemSlot(options)
     end
 
     countProps.ignorePointerEvents = true
-    content[#content + 1] = text { text = tostring(options.count), props = countProps }
-  end
-
-  local props = {}
-  if options.props then
-    for key, value in next, options.props do
-      props[key] = value
+    if fixedGeometry then
+      if countProps.anchor == nil then countProps.anchor = BottomRight end
+      if countProps.relativePosition == nil then countProps.relativePosition = BottomRight end
+      if countProps.position == nil then countProps.position = UtilVector2(-3, -3) end
     end
+    content[#content + 1] = text { text = tostring(options.count), props = countProps }
   end
 
   local external
