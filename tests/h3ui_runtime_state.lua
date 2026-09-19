@@ -31,6 +31,7 @@ package.preload['openmw.ui'] = function()
       if key == 'add' then
         return function(_, child) value[#value + 1] = child end
       end
+      if type(key) == 'number' then return value[key] end
       if value[key] ~= nil then return value[key] end
       if type(key) == 'string' then
         for index = 1, #value do
@@ -62,6 +63,9 @@ package.preload['openmw.ui'] = function()
       Widget = 'Widget',
     },
     texture = function(value) return value end,
+    create = function(layout)
+      return { layout = layout, update = function() end }
+    end,
   }
 end
 
@@ -110,6 +114,7 @@ local I = require 'openmw.interfaces'
 local bookFrame = require 'scripts.s3.components.bookFrame'
 local chrome = require 'scripts.s3.ui.chrome'
 local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
+local itemGrid = require 'scripts.s3.ui.recipes.itemGrid'
 local itemSlot = require 'scripts.s3.components.itemSlot'
 local meter = require 'scripts.s3.components.meter'
 local newRegistry = require 'scripts.s3.ui.registry'
@@ -117,6 +122,7 @@ local newResolver = require 'scripts.s3.ui.resolver'
 local newScope = require 'scripts.s3.ui.scope'
 local pinButton = require 'scripts.s3.components.pinButton'
 local searchInput = require 'scripts.s3.components.searchInput'
+local searchableList = require 'scripts.s3.ui.recipes.searchableList'
 local selector = require 'scripts.s3.components.selector'
 local surface = require 'scripts.s3.ui.surface'
 local tabbedWindow = require 'scripts.s3.ui.recipes.tabbedWindow'
@@ -134,6 +140,7 @@ local registry = newRegistry {
   button = {
     builder = require 'scripts.s3.components.button',
     runtimeState = true,
+    selectable = true,
     slots = { root = { props = 'props', external = 'external' }, label = { props = 'labelProps' } },
   },
   selector = {
@@ -181,7 +188,12 @@ local registry = newRegistry {
   textInput = { builder = function() return {} end, slots = { root = { props = 'props' } } },
   iconButton = {
     builder = function() return {} end,
-    slots = { root = { props = 'props' }, label = { props = 'labelProps' } },
+    selectable = true,
+    slots = {
+      root = { props = 'props' },
+      label = { props = 'labelProps' },
+      selectedChrome = { props = 'selectionProps', retained = true },
+    },
   },
   listItem = {
     builder = function() return {} end,
@@ -206,7 +218,12 @@ local registry = newRegistry {
   },
   itemSlot = {
     builder = function() return {} end,
-    slots = { root = { props = 'props' }, count = { props = 'countProps' } },
+    selectable = true,
+    slots = {
+      root = { props = 'props' },
+      count = { props = 'countProps' },
+      selectedChrome = { props = 'selectionProps', retained = true },
+    },
   },
   tooltip = {
     builder = function() return {} end,
@@ -242,6 +259,14 @@ local sharedRules = {
   {
     selector = { component = 'toggle', slot = 'label', state = 'pressed' },
     style = { props = { textColor = token.ref 'color.textPressed' } },
+  },
+  {
+    selector = { component = 'button', slot = 'label', selected = true },
+    style = { props = { textColor = 'selected-text' } },
+  },
+  {
+    selector = { component = 'button', slot = 'label', selected = true, state = 'hover' },
+    style = { props = { textColor = 'selected-hover' } },
   },
 }
 
@@ -1001,6 +1026,7 @@ local function testChildScopes()
       card = function(context, spec) return { name = spec.label } end,
     },
     resolver = resolver,
+    registry = registry,
     publicComponents = { 'button' },
   })
 
@@ -1019,11 +1045,14 @@ local function testChildScopes()
 
   local button = child.button { label = 'Child button' }
   assert(button ~= nil and button.content ~= nil)
+  parent.patch(button, { label = { props = { textColor = 'child-patch' } } })
+  assert(labelProps(button).textColor == 'child-patch')
+  assert(childInvalidations == 1 and parentInvalidations == 0)
 
   local holder = { name = 'holder', content = ui.content {} }
   child.setChildren(holder, { { name = 'child' } })
   assert(holder.content[1].name == 'child')
-  assert(childInvalidations == 1 and parentInvalidations == 0)
+  assert(childInvalidations == 2 and parentInvalidations == 0)
 
   local updateQueue = require 'scripts.s3.ui.updateQueue'
   local updates = 0
@@ -1040,6 +1069,193 @@ local function testChildScopes()
   domain.setChildren(holder, { { name = 'gone' } })
   updateQueue.flush()
   assert(updates == 1)
+
+  local destroyed = 0
+  local owned = parent.child {
+    element = function()
+      return { destroy = function() destroyed = destroyed + 1 end }
+    end,
+    _ownsElement = true,
+  }
+  assert(owned ~= nil)
+  parent.destroy()
+  assert(destroyed == 1)
+end
+
+local function testSemanticPatchAndSelection()
+  local invalidations = 0
+  local scoped = newScope({
+    invalidate = function() invalidations = invalidations + 1 end,
+  }, {
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+    resolver = resolver,
+    registry = registry,
+    publicComponents = { 'button' },
+  })
+
+  local layout = scoped.button { label = 'Patch me' }
+  scoped.patch(layout, { label = { props = { textColor = 'patched' } } })
+  assert(labelProps(layout).textColor == 'patched')
+  assert(invalidations == 1)
+
+  scoped.setSelected(layout, true)
+  assert(labelProps(layout).textColor == 'selected-text')
+  assert(invalidations == 2)
+  scoped.setSelected(layout, false)
+  assert(labelProps(layout).textColor == 'patched')
+  assert(invalidations == 3)
+
+  layout.events.focusGain(nil, layout)
+  scoped.setSelected(layout, true)
+  assert(labelProps(layout).textColor == 'selected-hover')
+  scoped.setSelected(layout, false)
+  assert(labelProps(layout).textColor == 'morrowind-hover')
+  layout.events.focusLoss(nil, layout)
+  assert(labelProps(layout).textColor == 'patched')
+end
+
+local function testSelectionFallbackBaseline()
+  local fallbackRegistry = newRegistry {
+    fallback = {
+      builder = require 'scripts.s3.components.button',
+      selectable = true,
+      slots = {
+        root = { props = 'props', external = 'external' },
+        label = { props = 'labelProps' },
+      },
+    },
+  }
+  local fallbackResolver = newResolver(fallbackRegistry, { 'fallback' })
+  local fallbackTheme = themeModule.new({
+    name = 'fallback-selection',
+    rules = {
+      {
+        selector = { component = 'fallback', slot = 'label', selected = true },
+        style = { props = { textColor = 'selected-only' } },
+      },
+    },
+  }, fallbackRegistry)
+  local fallbackScope = newScope({ invalidate = function() end }, {
+    resolveTheme = function() return fallbackTheme end,
+    recipes = {},
+    resolver = fallbackResolver,
+    registry = fallbackRegistry,
+    publicComponents = { 'fallback' },
+  })
+  local layout = fallbackScope.fallback { label = 'Fallback' }
+  fallbackScope.setSelected(layout, true)
+  assert(labelProps(layout).textColor == 'selected-only')
+  fallbackScope.setSelected(layout, false)
+  assert(labelProps(layout).textColor == 'text-color')
+end
+
+local function testSelectionSurfaceTarget()
+  local selectionRegistry = newRegistry {
+    itemSlot = {
+      builder = itemSlot,
+      selectable = true,
+      slots = {
+        root = { props = 'props', external = 'external' },
+        icon = { props = 'iconProps' },
+        count = { props = 'countProps' },
+        selectedChrome = { props = 'selectionProps', retained = true },
+      },
+    },
+  }
+  local selectionResolver = newResolver(selectionRegistry, { 'itemSlot' })
+  local selectionTheme = themeModule.new({
+    name = 'selection-surface',
+    rules = {
+      {
+        selector = { component = 'itemSlot', slot = 'selectedChrome', selected = true },
+        style = { props = { visible = true } },
+      },
+    },
+  }, selectionRegistry)
+  local selectionScope = newScope({ invalidate = function() end }, {
+    resolveTheme = function() return selectionTheme end,
+    recipes = {},
+    resolver = selectionResolver,
+    registry = selectionRegistry,
+    publicComponents = { 'itemSlot' },
+  })
+  local layout = selectionScope.itemSlot { resource = { path = 'white' } }
+  local overlay = layout.content[2]
+  assert(overlay.props.visible == false)
+  selectionScope.setSelected(layout, true)
+  assert(overlay.props.visible == true, tostring(overlay.props.visible))
+  selectionScope.setSelected(layout, false)
+  assert(overlay.props.visible == false)
+
+  local secondLayout = selectionScope.itemSlot { resource = { path = 'white' } }
+  assert(layout.template == secondLayout.template)
+  assert(overlay.template == secondLayout.content[2].template)
+end
+
+local function testCollectionActivationDispatch()
+  local layouts = {}
+  local activated
+  local context = {
+    itemSlot = function(options)
+      local layout = { events = options.events }
+      layouts[#layouts + 1] = layout
+      return layout
+    end,
+    grid = function(options) return options end,
+  }
+  local items = { { name = 'First' }, { name = 'Second' } }
+  local layout = itemGrid(context, {
+    items = items,
+    onActivate = function(item, index, target)
+      activated = { item = item, index = index, layout = target }
+    end,
+  })
+
+  assert(layout.items[1] == layouts[1] and layout.items[2] == layouts[2])
+  assert(layouts[1].events.mouseClick == layouts[2].events.mouseClick)
+  layouts[2].events.mouseClick(nil, layouts[2])
+  assert(activated.item == items[2] and activated.index == 2 and activated.layout == layouts[2])
+end
+
+local function testSearchableListRegion()
+  local resultLayout
+  local replacements = 0
+  local itemLayouts = {}
+  local child = {
+    listItem = function(options)
+      local layout = { events = options.events }
+      itemLayouts[#itemLayouts + 1] = layout
+      return layout
+    end,
+    list = function(options)
+      resultLayout = options
+      return options
+    end,
+    setChildren = function(_, children)
+      replacements = replacements + 1
+      resultLayout.items = children
+    end,
+  }
+  local context = {
+    child = function() return child end,
+    searchInput = function(options) return options end,
+    column = function(options) return options end,
+    token = function() return 4 end,
+  }
+  local activated
+  local layout = searchableList(context, {
+    items = { 'First', 'Second' },
+    query = '',
+    onActivate = function(item, index) activated = { item = item, index = index } end,
+  })
+
+  assert(layout.children[2].layout == resultLayout)
+  assert(itemLayouts[1].events.mouseClick == itemLayouts[2].events.mouseClick)
+  itemLayouts[2].events.mouseClick(nil, itemLayouts[2])
+  assert(activated.item == 'Second' and activated.index == 2)
+  layout.children[1].onChange 'second'
+  assert(replacements == 1 and #resultLayout.items == 1)
 end
 
 local function testCollapsibleReattachment()
@@ -1117,6 +1333,11 @@ testElementRedrawDeduplicationAndRequeue()
 testSetChildren()
 testScopeElementResolver()
 testChildScopes()
+testSemanticPatchAndSelection()
+testSelectionFallbackBaseline()
+testSelectionSurfaceTarget()
+testCollectionActivationDispatch()
+testSearchableListRegion()
 testCollapsibleReattachment()
 
 print 'H3UI runtime state tests passed'

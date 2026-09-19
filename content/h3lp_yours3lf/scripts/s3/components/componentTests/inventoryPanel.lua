@@ -234,6 +234,8 @@ local function inventoryPanel(invalidate, rebuild, state)
   local gridBox
   local detailBox
   local footerRow
+  local carryLayout
+  local selectedLayouts = {}
 
   local function currentSelection()
     local selected = findItem(state.selected)
@@ -258,21 +260,19 @@ local function inventoryPanel(invalidate, rebuild, state)
     for index = 1, #fresh do
       local item = fresh[index]
       result[#result + 1] = {
+        name = item.name,
         resource = { path = 'white' },
         count = state.counts[item.name],
         selected = state.selected == item.name,
         props = { size = slotSize },
         iconProps = { size = iconSize, color = item.color },
-        onActivate = function()
-          selectItem(item.name)
-          return true
-        end,
       }
     end
     return result
   end
 
   local function buildGrid()
+    selectedLayouts = {}
     return gridUi.itemGrid {
       columns = 4,
       columnGap = 4,
@@ -282,6 +282,13 @@ local function inventoryPanel(invalidate, rebuild, state)
         relativeSize = fullSize,
       },
       items = buildItems(),
+      onLayout = function(item, _, layout)
+        if item.selected then selectedLayouts[item.name] = layout end
+      end,
+      onActivate = function(item, _, layout)
+        selectItem(item.name, layout)
+        return true
+      end,
     }
   end
 
@@ -344,10 +351,22 @@ local function inventoryPanel(invalidate, rebuild, state)
           if state.counts[selected.name] <= 0 then
             state.selected = nil
             state.equipped[selected.name] = nil
+            selectedLayouts[selected.name] = nil
+            gridUi.setChildren(gridBox, { buildGrid() })
+            detailUi.setChildren(detailBox, { detailPanel() })
+          else
+            local layout = selectedLayouts[selected.name]
+            if layout then
+              gridUi.patch(layout, {
+                count = { props = { text = tostring(state.counts[selected.name]) } },
+              })
+            else
+              gridUi.setChildren(gridBox, { buildGrid() })
+            end
           end
-          gridUi.setChildren(gridBox, { buildGrid() })
-          detailUi.setChildren(detailBox, { detailPanel() })
-          shellUi.setChildren(footerRow, buildFooter())
+          shellUi.patch(carryLayout, {
+            root = { props = { text = ('Carry %.1f / 300'):format(carryWeight(state)) } },
+          })
           return true
         end,
       },
@@ -361,6 +380,10 @@ local function inventoryPanel(invalidate, rebuild, state)
   end
 
   function buildFooter()
+    carryLayout = shellUi.text {
+      text = ('Carry %.1f / 300'):format(carryWeight(state)),
+      name = 'carryWeight',
+    }
     return {
       shellUi.searchInput {
         value = state.query,
@@ -371,7 +394,7 @@ local function inventoryPanel(invalidate, rebuild, state)
         end,
       },
       shellUi.spacer { grow = 1 },
-      shellUi.text(('Carry %.1f / 300'):format(carryWeight(state))),
+      carryLayout,
       shellUi.text 'Gold 1,247',
     }
   end
@@ -395,9 +418,12 @@ local function inventoryPanel(invalidate, rebuild, state)
     return buttons
   end
 
-  function selectItem(name)
+  function selectItem(name, layout)
+    local previous = selectedLayouts[state.selected]
+    if previous and previous ~= layout then gridUi.setSelected(previous, false) end
     state.selected = name
-    gridUi.setChildren(gridBox, { buildGrid() })
+    selectedLayouts[name] = layout
+    gridUi.setSelected(layout, true)
     detailUi.setChildren(detailBox, { detailPanel() })
   end
 

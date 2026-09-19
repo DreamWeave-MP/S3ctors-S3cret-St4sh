@@ -15,7 +15,7 @@ local updateQueue = require 'scripts.s3.ui.updateQueue'
 ---@param options? H3UI.ScopeOptions
 ---@param environment table
 ---@return H3UI.Scope
-local function new(options, environment)
+local function new(options, environment, inheritedRecipes, inheritedResolveTheme)
   options = options or {}
   assert(merge.isPlainTable(options), 'H3 UI scope options must be a plain table')
   assert(options.density == nil, 'H3 UI density was removed')
@@ -36,10 +36,10 @@ local function new(options, environment)
     invalidate = function() updateQueue.queue(updateRequest) end
   end
 
-  local recipes = environment.recipes
+  local recipes = inheritedRecipes or environment.recipes
   if options.recipes ~= nil then
     assert(merge.isPlainTable(options.recipes), 'H3 UI scope recipes must be a plain table')
-    recipes = merge.shallowCopy(environment.recipes)
+    recipes = merge.shallowCopy(recipes)
     for name, recipe in next, options.recipes do
       assert(type(name) == 'string' and name ~= '', 'H3 UI recipe name must be a string')
       assert(type(recipe) == 'function', 'H3 UI recipe must be a function: ' .. tostring(name))
@@ -47,10 +47,12 @@ local function new(options, environment)
     end
   end
 
+  local childScopes = {}
+  local destroyed = false
   local scope = {
     invalidate = invalidate,
     recipes = recipes,
-    resolveTheme = environment.resolveTheme,
+    resolveTheme = inheritedResolveTheme or environment.resolveTheme,
   }
 
   ---Build a component by dynamic name. Prefer the named constructors such as `ui.button` in normal code.
@@ -87,29 +89,53 @@ local function new(options, environment)
     mutation.setChildren(layout, children, scope.invalidate)
   end
 
+  ---Patch a retained component slot and invalidate its owning scope.
+  ---@param layout openmw.ui.Layout H3 component layout returned by this scope or one of its children.
+  ---@param styles table<string, H3UI.Style> Slot styles containing props or external values.
+  function scope.patch(layout, styles) environment.registry.patch(layout, styles) end
+
+  ---Change a selectable component's retained selected state and invalidate this scope.
+  ---@param layout openmw.ui.Layout H3 selectable component layout.
+  ---@param selected boolean
+  function scope.setSelected(layout, selected) environment.registry.setSelected(layout, selected) end
+
+  ---Destroy Elements created by this scope and its child scopes.
+  function scope.destroy()
+    if destroyed then return end
+    destroyed = true
+    for index = #childScopes, 1, -1 do
+      childScopes[index].destroy()
+    end
+    if options._ownsElement and options.element then
+      local element = options.element()
+      if element then element:destroy() end
+    end
+  end
+
   ---Create a child scope sharing this scope's theme, recipes, and tokens while owning a
   ---separate invalidation target. Local recipes are inherited and may be overridden. Element
-  ---lifetime stays with the application; destroy nested Elements with their owning root.
+  ---lifetime stays with the application. Destroy child Elements explicitly when tearing down
+  ---the owning surface; OpenMW detaches nested Elements rather than destroying them.
   ---@param childOptions? H3UI.ScopeOptions
   ---@return H3UI.Scope
   function scope.child(childOptions)
     childOptions = childOptions or {}
     assert(merge.isPlainTable(childOptions), 'H3 UI child scope options must be a plain table')
-    local childRecipes = {}
-    for name, recipe in next, scope.recipes do
-      childRecipes[name] = recipe
-    end
+    local childRecipes = scope.recipes
     if childOptions.recipes ~= nil then
       assert(merge.isPlainTable(childOptions.recipes), 'H3 UI scope recipes must be a plain table')
+      childRecipes = merge.shallowCopy(scope.recipes)
       for name, recipe in next, childOptions.recipes do
         childRecipes[name] = recipe
       end
     end
-    return new({
+    local child = new({
       invalidate = childOptions.invalidate,
       element = childOptions.element,
-      recipes = childRecipes,
-    }, environment)
+      _ownsElement = childOptions._ownsElement,
+    }, environment, childRecipes, scope.resolveTheme)
+    childScopes[#childScopes + 1] = child
+    return child
   end
 
   constructors(

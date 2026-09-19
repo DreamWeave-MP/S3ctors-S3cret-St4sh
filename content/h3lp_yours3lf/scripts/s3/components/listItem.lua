@@ -37,9 +37,7 @@ local function listItem(options)
   for key, value in next, options.labelProps or {} do
     labelProps[key] = value
   end
-  if labelProps.textColor == nil then
-    labelProps.textColor = appearance.token(options.selected and 'color.active' or 'color.text')
-  end
+  if labelProps.textColor == nil then labelProps.textColor = appearance.token 'color.text' end
   if labelProps.textSize == nil then labelProps.textSize = appearance.token 'textSize.normal' end
   if labelProps.ignorePointerEvents == nil then labelProps.ignorePointerEvents = true end
 
@@ -58,12 +56,14 @@ local function listItem(options)
         secondaryProps[key] = value
       end
       if secondaryProps.textColor == nil then
-        secondaryProps.textColor = appearance.token(options.selected and 'color.active' or 'color.text')
+        secondaryProps.textColor = appearance.token 'color.text'
       end
       if secondaryProps.textSize == nil then
         secondaryProps.textSize = appearance.token 'textSize.normal'
       end
-      if secondaryProps.ignorePointerEvents == nil then secondaryProps.ignorePointerEvents = true end
+      if secondaryProps.ignorePointerEvents == nil then
+        secondaryProps.ignorePointerEvents = true
+      end
 
       children = {
         row {

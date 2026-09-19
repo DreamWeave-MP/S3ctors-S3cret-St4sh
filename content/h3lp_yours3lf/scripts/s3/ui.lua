@@ -36,6 +36,7 @@ local environment = {
   resolveTheme = appearance.activeTheme,
   recipes = builtinRecipes,
   resolver = resolver,
+  registry = registry,
   publicComponents = publicComponents,
 }
 
@@ -43,6 +44,36 @@ local environment = {
 ---@field props? table
 ---@field external? table
 ---@field template? openmw.ui.Template
+
+---@class H3UI.ComponentSlot
+---@field props? string
+---@field external? string
+---@field template? string
+---@field retained? boolean
+
+---@class H3UI.ComponentDefinition
+---@field public? boolean
+---@field builder fun(options: table): openmw.ui.Layout
+---@field runtimeState? boolean
+---@field selectable? boolean
+---@field invalidateOn? string|string[]
+---@field slots table<string, H3UI.ComponentSlot>
+
+---@alias H3UI.ComponentDefinitions table<string, H3UI.ComponentDefinition>
+
+---@class H3UI.ComponentAdapter: H3UI.ComponentDefinition
+
+---@class H3UI.Registry
+---@field get fun(name: string): H3UI.ComponentAdapter
+---@field has fun(name: string): boolean
+---@field supportsRuntimeState fun(name: string): boolean
+---@field supportsSelection fun(name: string): boolean
+---@field publicComponents fun(): string[]
+---@field validateSlot fun(name: string, slot: string): boolean
+---@field build fun(name: string, args: table, themeStyles: table, inlineStyles: table, stateStyles: table?, invalidate: fun()?, selectionStyles: table?, selected: boolean?): openmw.ui.Layout
+---@field patch fun(layout: openmw.ui.Layout, styles: table)
+---@field setSelected fun(layout: openmw.ui.Layout, selected: boolean): boolean
+---@field slots fun(name: string): string[]
 
 ---@class H3UI.ThemeSelector
 ---@field class? string
@@ -207,6 +238,9 @@ local environment = {
 ---@field recipe fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic recipe construction.
 ---@field setChildren fun(layout: openmw.ui.Layout, children: openmw.ui.LayoutOrElement[]) Replace a mounted layout's content with fresh children and invalidate the owning scope.
 ---@field child fun(options?: H3UI.ScopeOptions): H3UI.Scope Create a child scope sharing theme, recipes, and tokens with separate invalidation.
+---@field destroy fun() Destroy Elements created and owned by this scope and its children.
+---@field patch fun(layout: openmw.ui.Layout, styles: table<string, H3UI.Style>) Patch retained semantic slot targets and invalidate this scope.
+---@field setSelected fun(layout: openmw.ui.Layout, selected: boolean) Change retained selection state and invalidate this scope.
 ---@field explain fun(spec: H3UI.Spec|H3UI.Document): table
 ---@field resolve fun(spec: H3UI.Spec|H3UI.Document): openmw.ui.Layout
 ---@field spec fun(): H3UI.SpecScope Returns the same constructor vocabulary backed by portable specs instead of OpenMW layouts.

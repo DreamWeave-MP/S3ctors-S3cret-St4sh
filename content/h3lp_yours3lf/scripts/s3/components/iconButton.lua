@@ -23,6 +23,7 @@ local IconButtonPadding = 4
 ---@field props? table
 ---@field iconProps? table
 ---@field labelProps? table
+---@field selectionProps? table
 ---@field external? table
 ---@field events? table
 ---@field userData? any
@@ -47,9 +48,7 @@ local function iconButton(options)
     for key, value in next, options.labelProps or {} do
       labelProps[key] = value
     end
-    if labelProps.textColor == nil and options.selected then
-      labelProps.textColor = appearance.token 'color.active'
-    end
+    if labelProps.textColor == nil then labelProps.textColor = appearance.token 'color.text' end
     labelProps.ignorePointerEvents = true
     children[#children + 1] = text { text = options.label, props = labelProps }
   end
@@ -94,8 +93,13 @@ local function iconButton(options)
     external = external,
     events = events,
     userData = options.userData,
-    tint = appearance.token(options.selected and 'color.active' or 'color.chromeBorder'),
+    tint = appearance.token 'color.chromeBorder',
     alpha = appearance.token 'transparency.chrome',
+    selected = {
+      props = options.selectionProps,
+      tint = appearance.token 'color.active',
+      alpha = appearance.token 'transparency.chrome',
+    },
     content = { padded },
   }
 end

@@ -159,6 +159,14 @@ local function new()
   addSelectedTextRule(rules, 'listItem', 'label', 'color.active')
   addSelectedTextRule(rules, 'listItem', 'secondary', 'color.active')
   addSelectedTextRule(rules, 'itemSlot', 'count', 'color.active')
+  rules[#rules + 1] = {
+    selector = { component = 'itemSlot', slot = 'selectedChrome', selected = true },
+    style = { props = { visible = true } },
+  }
+  rules[#rules + 1] = {
+    selector = { component = 'iconButton', slot = 'selectedChrome', selected = true },
+    style = { props = { visible = true } },
+  }
   addSelectedStateTextRule(rules, 'iconButton', 'label', 'hover', 'color.activeHover')
   addSelectedStateTextRule(rules, 'iconButton', 'label', 'pressed', 'color.activePressed')
   addSelectedStateTextRule(rules, 'listItem', 'label', 'hover', 'color.activeHover')

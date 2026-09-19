@@ -179,13 +179,18 @@ local function skinPart(skin, name)
   return result
 end
 
-local function material(resource, tint, alpha, tintable)
+local function material(resource, tint, alpha, tintable, tintProps)
   local props = {
     resource = texture(resource),
     ignorePointerEvents = true,
   }
   if tintable == true and tint ~= nil then props.color = tint end
   if alpha ~= nil then props.alpha = alpha end
+  if tintProps then
+    for key, value in next, tintProps do
+      props[key] = value
+    end
+  end
   return props
 end
 
@@ -200,10 +205,11 @@ local function image(
   tileV,
   tint,
   alpha,
-  tintable
+  tintable,
+  tintProps
 )
   local openmwUi = ui
-  local props = material(resource, tint, alpha, tintable)
+  local props = material(resource, tint, alpha, tintable, tintProps)
   props.anchor = anchor
   props.relativePosition = anchor
   props.position = position
@@ -214,7 +220,7 @@ local function image(
   return { name = name, type = openmwUi.TYPE.Image, props = props }
 end
 
-local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCenter)
+local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCenter, tintProps)
   local openmwUi = ui
   local content = {}
 
@@ -228,7 +234,7 @@ local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCen
 
   local centerResource = skinPart(skin, 'center')
   if includeCenter ~= false and centerResource then
-    local center = material(centerResource, tint, alpha, skin.tintable)
+    local center = material(centerResource, tint, alpha, skin.tintable, tintProps)
     center.anchor = Zero
     center.relativePosition = Zero
     center.position = Zero
@@ -246,8 +252,16 @@ local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCen
   return content
 end
 
-local function frameChildren(skin, thickness, tint, alpha, backgroundProps, includeCenter)
-  local content = backgroundChildren(skin, tint, alpha, backgroundProps, includeCenter)
+local function frameChildren(
+  skin,
+  thickness,
+  tint,
+  alpha,
+  backgroundProps,
+  includeCenter,
+  tintProps
+)
+  local content = backgroundChildren(skin, tint, alpha, backgroundProps, includeCenter, tintProps)
 
   local function addFrameImage(name, resource, anchor, position, size, relativeSize, tileH, tileV)
     local child = image(
@@ -261,7 +275,8 @@ local function frameChildren(skin, thickness, tint, alpha, backgroundProps, incl
       tileV,
       tint,
       alpha,
-      skin.tintable
+      skin.tintable,
+      tintProps
     )
     content[#content + 1] = child
   end
