@@ -4,20 +4,12 @@
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local chrome = require 'scripts.s3.ui.chrome'
+
 local UtilVector2 = util.vector2
 local FullSize = UtilVector2(1, 1)
 
 local templateCache = setmetatable({}, { __mode = 'k' })
-
--- surface assembles chrome frame children; components call surface directly, so the
--- dependency runs one way: components -> surface -> chrome. chrome is loaded on first use
--- instead of at module scope to keep surface cheap to require.
-local chromeModule
-
-local function requireChrome()
-  if chromeModule == nil then chromeModule = require 'scripts.s3.ui.chrome' end
-  return chromeModule
-end
 
 local function surfaceTemplate(skin, thickness, tint, alpha, backgroundProps, padding, boxType)
   local skinCache = templateCache[skin]
@@ -26,7 +18,6 @@ local function surfaceTemplate(skin, thickness, tint, alpha, backgroundProps, pa
     templateCache[skin] = skinCache
   end
 
-  local chrome = requireChrome()
   local key = table.concat({
     tostring(boxType),
     padding,

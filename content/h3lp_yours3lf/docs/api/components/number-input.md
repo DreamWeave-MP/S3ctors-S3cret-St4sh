@@ -11,36 +11,21 @@ Builds a TextEdit that preserves raw text while editing and normalizes it on foc
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
-local I = require 'openmw.interfaces'
-
 local amount = 20
-local element
-local H3UI = I.H3UI.scope {
-  invalidate = function()
-    if element and element.layout then element:update() end
-  end,
-}
 
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    H3UI.numberInput {
-      value = amount,
-      min = 5,
-      max = 100,
-      step = 5,
-      integer = true,
-      onChange = function(value)
-        amount = value
-        print('Changed:', value)
-      end,
-      onCommit = function(value)
-        print('Committed:', value)
-      end,
-    },
-  },
+ui.numberInput {
+  value = amount,
+  min = 5,
+  max = 100,
+  step = 5,
+  integer = true,
+  onChange = function(value)
+    amount = value
+    print('Changed:', value)
+  end,
+  onCommit = function(value)
+    print('Committed:', value)
+  end,
 }
 ```
 

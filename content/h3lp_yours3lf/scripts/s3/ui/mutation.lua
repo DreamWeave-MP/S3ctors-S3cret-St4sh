@@ -10,7 +10,7 @@ local function setChildren(layout, children, invalidate)
   if invalidate then invalidate() end
 end
 
-local function invalidatingCallback(callback, invalidate)
+local function invalidateAfter(callback, invalidate)
   return function(...)
     local result
     if callback then result = callback(...) end
@@ -21,5 +21,5 @@ end
 
 return {
   setChildren = setChildren,
-  invalidatingCallback = invalidatingCallback,
+  invalidateAfter = invalidateAfter,
 }

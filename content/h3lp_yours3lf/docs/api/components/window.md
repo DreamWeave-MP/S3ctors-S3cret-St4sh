@@ -11,49 +11,31 @@ Builds a framed Widget with an optional caption and body. It is not `ui.TYPE.Win
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local I = require 'openmw.interfaces'
 
 local position = util.vector2(80, 80)
 local size = util.vector2(360, 220)
 local pinned = false
-local element
-local H3UI = I.H3UI.scope {
-  invalidate = function()
-    if element and element.layout then element:update() end
-  end,
-}
 
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    H3UI.window {
-      title = 'My tool H3UI.window',
-      position = position,
-      size = size,
-      pinnable = true,
-      pinned = pinned,
-      closable = true,
-      onPin = function(value)
-        pinned = value
-      end,
-      onClose = function()
-        element:destroy()
-      end,
-      onMove = function(nextPosition)
-        position = nextPosition
-      end,
-      onResize = function(nextSize, nextPosition)
-        size = nextSize
-        position = nextPosition
-      end,
-      children = {
-        H3UI.text {
-          text = 'Drag the caption or resize an edge.',
-        },
-      },
+ui.window {
+  title = 'My tool H3UI.window',
+  position = position,
+  size = size,
+  pinnable = true,
+  pinned = pinned,
+  onPin = function(value)
+    pinned = value
+  end,
+  onMove = function(nextPosition)
+    position = nextPosition
+  end,
+  onResize = function(nextSize, nextPosition)
+    size = nextSize
+    position = nextPosition
+  end,
+  children = {
+    ui.text {
+      text = 'Drag the caption or resize an edge.',
     },
   },
 }
