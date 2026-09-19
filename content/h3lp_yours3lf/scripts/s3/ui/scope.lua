@@ -87,6 +87,31 @@ local function new(options, environment)
     mutation.setChildren(layout, children, scope.invalidate)
   end
 
+  ---Create a child scope sharing this scope's theme, recipes, and tokens while owning a
+  ---separate invalidation target. Local recipes are inherited and may be overridden. Element
+  ---lifetime stays with the application; destroy nested Elements with their owning root.
+  ---@param childOptions? H3UI.ScopeOptions
+  ---@return H3UI.Scope
+  function scope.child(childOptions)
+    childOptions = childOptions or {}
+    assert(merge.isPlainTable(childOptions), 'H3 UI child scope options must be a plain table')
+    local childRecipes = {}
+    for name, recipe in next, scope.recipes do
+      childRecipes[name] = recipe
+    end
+    if childOptions.recipes ~= nil then
+      assert(merge.isPlainTable(childOptions.recipes), 'H3 UI scope recipes must be a plain table')
+      for name, recipe in next, childOptions.recipes do
+        childRecipes[name] = recipe
+      end
+    end
+    return new({
+      invalidate = childOptions.invalidate,
+      element = childOptions.element,
+      recipes = childRecipes,
+    }, environment)
+  end
+
   constructors(
     scope,
     environment.publicComponents,

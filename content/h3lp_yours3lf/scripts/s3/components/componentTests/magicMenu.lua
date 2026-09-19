@@ -123,7 +123,7 @@ local function magicMenu(invalidate, rebuild, state)
   local shellUi = I.H3UI.scope { invalidate = invalidate }
 
   local listElement
-  local listUi = I.H3UI.scope {
+  local listUi = shellUi.child {
     element = function() return listElement end,
   }
 

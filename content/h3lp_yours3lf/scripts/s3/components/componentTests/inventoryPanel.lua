@@ -219,11 +219,11 @@ local function inventoryPanel(invalidate, rebuild, state)
   local shellUi = I.H3UI.scope { invalidate = invalidate }
 
   local gridElement
-  local gridUi = I.H3UI.scope {
+  local gridUi = shellUi.child {
     element = function() return gridElement end,
   }
   local detailElement
-  local detailUi = I.H3UI.scope {
+  local detailUi = shellUi.child {
     element = function() return detailElement end,
   }
 
