@@ -40,7 +40,9 @@ local function itemLayout(ctx, item, index, activate)
     item.component == nil and item.recipe == nil,
     'H3 UI itemGrid items must be descriptors or constructed layouts'
   )
-  if item.type ~= nil or item.template ~= nil and item.resource == nil then
+  -- Constructed layouts always carry content; selectable surfaces are template-less
+  -- wrappers, so template alone no longer identifies them.
+  if item.type ~= nil or item.content ~= nil or item.template ~= nil and item.resource == nil then
     if not activate then return item end
     local layout = {}
     for key, value in next, item do
