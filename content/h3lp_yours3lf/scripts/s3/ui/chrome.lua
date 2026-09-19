@@ -7,6 +7,9 @@ local copy
 local ui = require 'openmw.ui'
 
 local textureCache = {}
+local skinPartCache = setmetatable({}, { __mode = 'k' })
+local skinLookupCache = setmetatable({}, { __mode = 'k' })
+local colorKeyCache = setmetatable({}, { __mode = 'k' })
 local UtilVector2 = require('openmw.util').vector2
 local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
 
@@ -29,11 +32,6 @@ local framePartNames = {
   'bottom',
   'bottomRight',
 }
-
-local function uiModule()
-  ui = ui or require 'openmw.ui'
-  return ui
-end
 
 local builtin = {
   preferredSource = 'h3ui',
@@ -81,7 +79,7 @@ local function texture(value)
     }, ':')
     local result = textureCache[key]
     if not result then
-      result = uiModule().texture { path = value.path, offset = offset, size = size }
+      result = ui.texture { path = value.path, offset = offset, size = size }
       textureCache[key] = result
     end
     return result
@@ -89,7 +87,7 @@ local function texture(value)
   if type(value) == 'string' then
     local result = textureCache[value]
     if not result then
-      result = uiModule().texture { path = value }
+      result = ui.texture { path = value }
       textureCache[value] = result
     end
     return result
@@ -168,7 +166,18 @@ local function atlasPart(skin, name)
   }
 end
 
-local function skinPart(skin, name) return atlasPart(skin, name) or texture(skin[name]) end
+local function skinPart(skin, name)
+  local cache = skinPartCache[skin]
+  if not cache then
+    cache = {}
+    skinPartCache[skin] = cache
+  end
+  local cached = cache[name]
+  if cached ~= nil then return cached ~= false and cached or nil end
+  local result = atlasPart(skin, name) or texture(skin[name])
+  cache[name] = result or false
+  return result
+end
 
 local function material(resource, tint, alpha, tintable)
   local props = {
@@ -193,7 +202,7 @@ local function image(
   alpha,
   tintable
 )
-  local openmwUi = uiModule()
+  local openmwUi = ui
   local props = material(resource, tint, alpha, tintable)
   props.anchor = anchor
   props.relativePosition = anchor
@@ -206,7 +215,7 @@ local function image(
 end
 
 local function backgroundChildren(skin, tint, alpha, backgroundProps, includeCenter)
-  local openmwUi = uiModule()
+  local openmwUi = ui
   local content = {}
 
   if backgroundProps then
@@ -342,6 +351,11 @@ local function frameChildren(skin, thickness, tint, alpha, backgroundProps, incl
 end
 
 local function skinFrom(theme, path)
+  if theme then
+    local cache = skinLookupCache[theme]
+    if cache and cache[path] ~= nil then return cache[path] end
+  end
+
   local source = theme and theme.chrome and theme.chrome() or nil
   local value = source
   for part in string.gmatch(path, '[^%.]+') do
@@ -357,11 +371,20 @@ local function skinFrom(theme, path)
       value = value[part]
     end
   end
+
+  if theme then
+    local cache = skinLookupCache[theme]
+    if not cache then
+      cache = {}
+      skinLookupCache[theme] = cache
+    end
+    cache[path] = value
+  end
   return value
 end
 
 local function frameLayout(options)
-  local openmwUi = uiModule()
+  local openmwUi = ui
   local skin = options.skin
   assert(type(skin) == 'table', 'H3 UI chrome frame requires a skin')
   local thickness = skin.thickness
@@ -449,16 +472,20 @@ end
 
 local function colorHex(value) return value:asHex() end
 
-local function sortKeys(left, right) return tostring(left) < tostring(right) end
-
 local function cacheKey(value, seen)
   if value == nil then return 'nil' end
   local valueType = type(value)
 
   -- Equivalent colors must share cache entries regardless of userdata identity.
   if valueType == 'userdata' then
+    local cached = colorKeyCache[value]
+    if cached then return cached end
     local ok, hex = pcall(colorHex, value)
-    if ok and type(hex) == 'string' then return StrFormat('color:%s', hex) end
+    if ok and type(hex) == 'string' then
+      cached = StrFormat('color:%s', hex)
+      colorKeyCache[value] = cached
+      return cached
+    end
   end
 
   if valueType ~= 'table' then return StrFormat('%s:%s', valueType, tostring(value)) end

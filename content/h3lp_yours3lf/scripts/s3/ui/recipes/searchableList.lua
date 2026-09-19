@@ -1,7 +1,6 @@
 ---@omw-context menu|player
 
-local node = require 'scripts.s3.ui.node'
-
+local StrFind = string.find
 local StrLower = string.lower
 
 ---@class H3UI.SearchableListOptions
@@ -38,7 +37,6 @@ local function listItem(ctx, item, index)
     }
   end
   if type(item) ~= 'table' then return item end
-  if node.isComponent(item) or node.isRecipe(item) then return item end
   assert(
     item.component == nil and item.recipe == nil,
     'H3 UI searchableList items must be descriptors or constructed layouts'
@@ -68,14 +66,16 @@ local function searchableList(ctx, spec)
     'H3 UI searchableList text must be a function'
   )
 
+  local searchText = {}
+  for index = 1, #items do
+    searchText[index] = StrLower(itemText(items[index], index, spec.text))
+  end
+
   local function matchingEntries(filter)
     local normalizedQuery = StrLower(filter)
     local entries = {}
     for index = 1, #items do
-      if
-        normalizedQuery == ''
-        or string.find(StrLower(itemText(items[index], index, spec.text)), normalizedQuery, 1, true)
-      then
+      if normalizedQuery == '' or StrFind(searchText[index], normalizedQuery, 1, true) then
         entries[#entries + 1] = listItem(ctx, items[index], index)
       end
     end

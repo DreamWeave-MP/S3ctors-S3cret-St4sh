@@ -33,13 +33,12 @@ local ButtonPaddingY = 4
 local function button(options)
   options = options or emptyOptions
 
-  local labelProps = {
-    textColor = appearance.token 'color.text',
-    textSize = appearance.token 'textSize.normal',
-  }
+  local labelProps = {}
   for key, value in next, options.labelProps or {} do
     labelProps[key] = value
   end
+  if labelProps.textColor == nil then labelProps.textColor = appearance.token 'color.text' end
+  if labelProps.textSize == nil then labelProps.textSize = appearance.token 'textSize.normal' end
   if labelProps.ignorePointerEvents == nil then labelProps.ignorePointerEvents = true end
 
   local children = options.content or options.children

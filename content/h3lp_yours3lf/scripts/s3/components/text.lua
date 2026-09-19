@@ -3,7 +3,6 @@
 local emptyOptions = {}
 
 local appearance = require 'scripts.s3.ui.appearance'
-local constants = require 'scripts.omw.mwui.constants'
 local ui = require 'openmw.ui'
 
 ---Build a Text layout with the current H3UI appearance's normal text color and size by default.
@@ -17,14 +16,14 @@ local function text(options)
   end
   options = options or emptyOptions
   local props = {}
-  if options.template == nil then
-    props.textColor = appearance.token 'color.text' or constants.normalColor
-    props.textSize = appearance.token 'textSize.normal' or constants.textNormalSize
-  end
   if options.props then
     for key, value in next, options.props do
       props[key] = value
     end
+  end
+  if options.template == nil then
+    if props.textColor == nil then props.textColor = appearance.token 'color.text' end
+    if props.textSize == nil then props.textSize = appearance.token 'textSize.normal' end
   end
 
   if options.text ~= nil then props.text = options.text end

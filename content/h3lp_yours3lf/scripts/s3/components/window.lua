@@ -3,7 +3,6 @@
 local emptyOptions = {}
 local emptyContent = {}
 
-local async = require 'openmw.async'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -11,7 +10,7 @@ local appearance = require 'scripts.s3.ui.appearance'
 local caption = require 'scripts.s3.components.caption'
 local chrome = require 'scripts.s3.ui.chrome'
 local column = require 'scripts.s3.components.column'
-local constants = require 'scripts.omw.mwui.constants'
+local eventHandlers = require 'scripts.s3.components.eventHandlers'
 
 local UtilClamp = util.clamp
 local UtilVector2 = util.vector2
@@ -57,20 +56,6 @@ local relativeWidth = UtilVector2(1, 0)
 ---@field captionTextProps? table
 ---@field backgroundProps? table
 ---@field template? openmw.ui.Template
-
-local function addHandler(events, name, handler)
-  local previous = events[name]
-
-  if not previous then
-    events[name] = async:callback(handler)
-    return
-  end
-
-  events[name] = async:callback(function(event, layout)
-    handler(event, layout)
-    return previous(event, layout)
-  end)
-end
 
 local function getReferenceSize(layout, referenceSize)
   local size = referenceSize
@@ -129,8 +114,9 @@ local function window(options)
   local innerBorder = options.innerBorder ~= false
   local canMove = movable and hasCaption
   local frameSkin = appearance.chrome 'frame.thick'
-  local border = frameSkin.thickness or constants.thickBorder
-  local padding = constants.padding
+  local border = frameSkin.thickness
+  assert(type(border) == 'number' and border > 0, 'Window frame skin requires thickness')
+  local padding = appearance.token 'spacing.padding'
   local contentInset = border + padding
   local captionTop = border
   local captionBottom = captionTop + captionHeight
@@ -169,7 +155,7 @@ local function window(options)
   end
 
   if canMove or resizable then
-    addHandler(events, 'mousePress', function(event, layout)
+    eventHandlers.add(events, 'mousePress', function(event, layout)
       if not event or event.button ~= 1 then return end
 
       local size = layout.props.size
@@ -214,7 +200,7 @@ local function window(options)
       return true
     end)
 
-    addHandler(events, 'mouseMove', function(event, layout)
+    eventHandlers.add(events, 'mouseMove', function(event, layout)
       if not event or (not moving and not resizing) then return end
       if event.button ~= 1 then
         finishInteraction()
@@ -318,14 +304,14 @@ local function window(options)
       return true
     end)
 
-    addHandler(events, 'mouseRelease', function(event)
+    eventHandlers.add(events, 'mouseRelease', function(event)
       if not event or event.button ~= 1 or (not moving and not resizing) then return end
 
       finishInteraction()
       return true
     end)
 
-    addHandler(events, 'focusLoss', function()
+    eventHandlers.add(events, 'focusLoss', function()
       if not moving and not resizing then return end
 
       finishInteraction()
@@ -337,7 +323,7 @@ local function window(options)
     {
       type = ui.TYPE.Image,
       props = {
-        resource = constants.whiteTexture,
+        resource = appearance.token 'texture.white',
         ignorePointerEvents = true,
         color = appearance.token 'color.background',
         alpha = appearance.token 'transparency.menu',
@@ -399,6 +385,10 @@ local function window(options)
   end
 
   local body = options.content or options.children
+  if #options > 0 then
+    assert(body == nil, 'H3 window accepts array children or children/content, not both')
+    body = options
+  end
   body = body or emptyContent
   content[#content + 1] = {
     name = 'body',

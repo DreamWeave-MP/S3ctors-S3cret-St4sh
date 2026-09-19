@@ -5,7 +5,6 @@ local emptyOptions = {}
 local appearance = require 'scripts.s3.ui.appearance'
 local button = require 'scripts.s3.components.button'
 local chrome = require 'scripts.s3.ui.chrome'
-local constants = require 'scripts.omw.mwui.constants'
 local row = require 'scripts.s3.components.row'
 local textInput = require 'scripts.s3.components.textInput'
 local ui = require 'openmw.ui'
@@ -57,8 +56,7 @@ local function searchInput(options)
 
   local inputContent = input
   if options.bordered ~= false then
-    local minHeight = (appearance.token 'textSize.normal' or constants.textNormalSize)
-      + 2 * constants.border
+    local minHeight = appearance.token 'textSize.normal' + 2 * appearance.token 'border.normal'
     local size = inputProps.size
     local width = size and size.x or defaultInputWidth
     local height = math.max(size and size.y or minHeight + 4, minHeight + 4)

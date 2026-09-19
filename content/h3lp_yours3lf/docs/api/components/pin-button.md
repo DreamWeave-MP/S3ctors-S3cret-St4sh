@@ -10,7 +10,7 @@ extra:
 This module is documented for H3 component and chrome authors. Normal mod UI should use the constructors exposed by `I.H3UI`; this primitive is not part of the application-facing constructor catalog.
 {% end %}
 
-Builds the vanilla up/down pin control. It is fixed at 19×19 pixels and changes its skin when clicked.
+Builds the vanilla up/down pin control. It is fixed at 20×20 pixels and changes its skin when clicked.
 
 ## Example
 
@@ -44,7 +44,7 @@ element = ui.create {
 | `pinned` | boolean? | Initial pin state; defaults to `false`. |
 | `onToggle` | function? | Receives the new pin state. |
 
-Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md). A supplied `props.size` must be exactly 19×19. The component does not update the mounted element or persist the pin state.
+Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md). A supplied `props.size` must be exactly 20×20. The component does not update the mounted element or persist the pin state.
 
 ## See also
 

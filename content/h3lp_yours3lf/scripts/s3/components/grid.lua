@@ -6,6 +6,7 @@ local emptyItems = {}
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local MathFloor = math.floor
 local UtilVector2 = util.vector2
 
 ---Build a grid as a vertical Flex of horizontal Flex rows.
@@ -17,9 +18,20 @@ local function grid(options)
   options = options or emptyOptions
 
   local columns = options.columns or 1
-  if columns < 1 then columns = 1 end
   local columnGap = options.columnGap
   local rowGap = options.rowGap
+  assert(
+    type(columns) == 'number' and columns >= 1 and columns == MathFloor(columns),
+    'H3 grid columns must be a positive integer'
+  )
+  assert(
+    columnGap == nil or type(columnGap) == 'number' and columnGap >= 0,
+    'H3 grid columnGap must be a non-negative number'
+  )
+  assert(
+    rowGap == nil or type(rowGap) == 'number' and rowGap >= 0,
+    'H3 grid rowGap must be a non-negative number'
+  )
 
   local rows = {}
   local row
@@ -27,7 +39,7 @@ local function grid(options)
   for index = 1, #items do
     local item = items[index]
     if (index - 1) % columns == 0 then
-      if row and rowGap then
+      if row and rowGap and rowGap > 0 then
         rows[#rows + 1] = {
           type = ui.TYPE.Widget,
           props = { size = UtilVector2(0, rowGap), ignorePointerEvents = true },
@@ -43,7 +55,7 @@ local function grid(options)
       rowProps.horizontal = true
       row = { type = ui.TYPE.Flex, props = rowProps, content = ui.content {} }
       rows[#rows + 1] = row
-    elseif columnGap then
+    elseif columnGap and columnGap > 0 then
       row.content:add {
         type = ui.TYPE.Widget,
         props = { size = UtilVector2(columnGap, 0), ignorePointerEvents = true },

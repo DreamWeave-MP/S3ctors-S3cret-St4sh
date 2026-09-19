@@ -65,16 +65,16 @@ local function itemSlot(options)
     image { name = 'icon', resource = options.resource, props = iconProps },
   }
   if options.count ~= nil then
-    local countProps = {
-      textColor = appearance.token(options.selected and 'color.active' or 'color.count'),
-      textSize = appearance.token 'textSize.normal',
-    }
+    local countProps = {}
     if options.countProps then
       for key, value in next, options.countProps do
         countProps[key] = value
       end
     end
-
+    if countProps.textColor == nil then
+      countProps.textColor = appearance.token(options.selected and 'color.active' or 'color.count')
+    end
+    if countProps.textSize == nil then countProps.textSize = appearance.token 'textSize.normal' end
     countProps.ignorePointerEvents = true
     if fixedGeometry then
       if countProps.anchor == nil then countProps.anchor = BottomRight end

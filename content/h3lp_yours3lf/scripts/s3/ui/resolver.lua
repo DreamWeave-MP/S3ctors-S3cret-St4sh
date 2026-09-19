@@ -3,7 +3,8 @@
 local constructors = require 'scripts.s3.ui.constructors'
 local merge = require 'scripts.s3.ui.merge'
 local mutation = require 'scripts.s3.ui.mutation'
-local node = require 'scripts.s3.ui.node'
+local selector = require 'scripts.s3.ui.selector'
+local specModule = require 'scripts.s3.ui.spec'
 local themeModule = require 'scripts.s3.ui.theme'
 local token = require 'scripts.s3.ui.token'
 
@@ -13,7 +14,25 @@ local styleBagKeys = {
   template = true,
 }
 
+local componentMetadata = {
+  class = true,
+  classes = true,
+  component = true,
+  recipe = true,
+  role = true,
+  style = true,
+  tone = true,
+  variant = true,
+}
+
+local childKeys = {
+  children = true,
+  content = true,
+  items = true,
+}
+
 local interactiveStates = { 'hover', 'pressed' }
+local componentStringTraits = { 'role', 'tone', 'variant' }
 
 local function isRootStyleBag(style)
   for key in next, style do
@@ -59,26 +78,15 @@ local function mergeRuleStyles(registry, componentName, matched)
   return styles
 end
 
-local function stateStyles(registry, theme, componentNode, state)
-  local stateNode = merge.shallowCopy(componentNode)
-  stateNode.state = state
-
+local function stateStyles(registry, theme, componentRecord, state)
   return mergeRuleStyles(
     registry,
-    componentNode.component,
-    themeModule.matchingState(theme, stateNode, state)
+    componentRecord.component,
+    themeModule.matchingState(theme, componentRecord, state)
   )
 end
 
-local function resolveList(resolveValue, values, context)
-  local result = {}
-  for index = 1, #values do
-    result[index] = resolveValue(values[index], context)
-  end
-  return result
-end
-
-local function makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
+local function makeTraceEntry(componentRecord, matched, themeStyles, inlineStyles)
   local rules = {}
   for index = 1, #matched do
     local rule = matched[index]
@@ -93,22 +101,66 @@ local function makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
   end
 
   local classes = {}
-  for className in next, componentNode.classes do
+  for className in next, componentRecord.classes do
     classes[#classes + 1] = className
   end
   table.sort(classes)
 
   return {
-    component = componentNode.component,
-    recipe = componentNode.recipe,
-    role = componentNode.role,
-    selected = componentNode.selected,
-    variant = componentNode.variant,
-    tone = componentNode.tone,
+    component = componentRecord.component,
+    recipe = componentRecord.recipe,
+    role = componentRecord.role,
+    selected = componentRecord.selected,
+    variant = componentRecord.variant,
+    tone = componentRecord.tone,
     classes = classes,
     matched = rules,
-    themeStyle = merge.copy(themeStyles),
-    inlineStyle = merge.copy(inlineStyles),
+    themeStyle = specModule.portable(themeStyles),
+    inlineStyle = specModule.portable(inlineStyles),
+  }
+end
+
+local function normalizeComponent(name, input, recipeName)
+  input = input or {}
+  assert(type(name) == 'string' and name ~= '', 'H3 UI component requires a component name')
+  assert(merge.isPlainTable(input), 'H3 UI component options must be a plain table')
+  assert(input.args == nil, 'H3 UI component args are flat; move fields out of args')
+  assert(
+    input.invalidate == nil,
+    'H3 UI invalidation belongs to the scope, not individual components'
+  )
+  assert(
+    input.density == nil,
+    'H3 UI density was removed; style spacing explicitly or through theme rules'
+  )
+  assert(
+    input.state == nil,
+    'H3 UI instance state was removed; interactive state is component-owned'
+  )
+  for index = 1, #componentStringTraits do
+    local key = componentStringTraits[index]
+    local value = input[key]
+    if value ~= nil then
+      assert(
+        type(value) == 'string' and value ~= '',
+        'H3 UI component ' .. key .. ' must be a non-empty string'
+      )
+    end
+  end
+
+  local selected = input.selected
+  if type(selected) ~= 'boolean' then selected = nil end
+
+  return {
+    component = name,
+    recipe = recipeName,
+    role = input.role,
+    selected = selected,
+    variant = input.variant,
+    tone = input.tone,
+    classes = selector.classes(input.classes, input.class),
+    source = input,
+    style = input.style,
   }
 end
 
@@ -123,31 +175,30 @@ local function new(registry, publicComponents)
   local function findRecipe(scope, name)
     local recipeFunction = scope.recipes[name]
     if not recipeFunction then error('Unknown H3 UI recipe: ' .. tostring(name)) end
-    return recipeFunction, name
+    return recipeFunction
   end
 
-  local function recipeContext(scope, recipeName, spec, parentContext, trace)
-    local baseRecipe = recipeName
-    local invalidate = spec.invalidate
-    if invalidate == nil then invalidate = parentContext and parentContext.invalidate end
-    if invalidate ~= nil then
-      assert(type(invalidate) == 'function', 'H3 UI invalidate must be a function')
-    end
-
+  local function recipeContext(scope, recipeName, parentContext, trace)
+    local invalidate = parentContext and parentContext.invalidate or scope.invalidate
     local context = {
       theme = parentContext and parentContext.theme or scope.resolveTheme(),
-      recipe = baseRecipe,
+      recipe = recipeName,
       invalidate = invalidate,
     }
 
     function context.component(name, childSpec)
       childSpec = childSpec or {}
       assert(merge.isPlainTable(childSpec), 'H3 UI component options must be a plain table')
-      local componentNode = node.component(name, childSpec, {
-        recipe = baseRecipe,
-        invalidate = invalidate,
-      })
-      return resolveComponent(scope, componentNode, context, trace)
+      assert(
+        childSpec.component == nil and childSpec.recipe == nil,
+        'H3 UI component constructor options cannot select another component or recipe'
+      )
+      return resolveComponent(
+        scope,
+        normalizeComponent(name, childSpec, recipeName),
+        context,
+        trace
+      )
     end
 
     function context.token(path) return scope.token(path) end
@@ -163,9 +214,11 @@ local function new(registry, publicComponents)
         childSpec.component == nil and childSpec.recipe == nil,
         'H3 UI recipe constructor options cannot select another component or recipe'
       )
-      local nested = merge.shallowCopy(childSpec)
-      nested.recipe = name
-      return resolveRecipe(scope, name, nested, context, trace)
+      assert(
+        childSpec.invalidate == nil,
+        'H3 UI invalidation belongs to the scope, not individual recipes'
+      )
+      return resolveRecipe(scope, name, childSpec, context, trace)
     end
 
     constructors(
@@ -179,136 +232,166 @@ local function new(registry, publicComponents)
     return context
   end
 
-  resolveRecipe = function(scope, recipeName, spec, parentContext, trace)
+  resolveRecipe = function(scope, recipeName, input, parentContext, trace)
+    assert(type(recipeName) == 'string' and recipeName ~= '', 'H3 UI recipe requires a name')
+    assert(merge.isPlainTable(input), 'H3 UI recipe options must be a plain table')
+    assert(input.args == nil, 'H3 UI recipe args are flat; move fields out of args')
+    assert(input.invalidate == nil, 'H3 UI invalidation belongs to the scope, not individual recipes')
+    assert(input.density == nil, 'H3 UI density was removed')
+    assert(input.state == nil, 'H3 UI instance state was removed')
+
     local recipeFunction = findRecipe(scope, recipeName)
-    local context = recipeContext(scope, recipeName, spec, parentContext, trace)
-    local result = recipeFunction(context, spec)
+    local context = recipeContext(scope, recipeName, parentContext, trace)
+    local recipeInput = input
+    if input.recipe ~= nil then
+      recipeInput = {}
+      for key, value in next, input do
+        if key ~= 'recipe' then recipeInput[key] = value end
+      end
+    end
+    local result = recipeFunction(context, recipeInput)
     return resolveValue(scope, result, context, trace)
   end
 
-  local function resolveArgs(scope, args, context, trace)
-    local result = merge.shallowCopy(args or {})
-    local childKeys = { children = true, content = true, items = true }
-
-    for key, value in next, result do
-      if type(key) == 'number' then
-        result[key] = resolveValue(scope, value, context, trace)
-      elseif childKeys[key] then
-        if node.isComponent(value) or node.isRecipe(value) then
-          result[key] = resolveValue(scope, value, context, trace)
-        elseif type(value) == 'table' and merge.isArray(value) then
-          result[key] = resolveList(
-            function(item, nestedContext) return resolveValue(scope, item, nestedContext, trace) end,
-            value,
-            context
-          )
-        end
-      elseif token.isRef(value) then
-        result[key] = resolveValue(scope, value, context, trace)
-      end
+  local function resolveArray(scope, values, context, trace)
+    local result = {}
+    for index = 1, #values do
+      result[index] = resolveValue(scope, values[index], context, trace)
     end
-
     return result
   end
 
-  resolveComponent = function(scope, componentNode, context, trace)
-    registry.get(componentNode.component)
-    local selected = componentNode.args.selected
-    if registry.supportsSelection(componentNode.component) then
+  local function resolveArgs(scope, args, context, trace)
+    local result = {}
+    for key, value in next, args or {} do
+      if componentMetadata[key] then
+        -- Semantic metadata is consumed by the resolver rather than forwarded to builders.
+      elseif type(key) == 'number' then
+        result[key] = resolveValue(scope, value, context, trace)
+      elseif childKeys[key] then
+        if specModule.isComponent(value) or specModule.isRecipe(value) then
+          result[key] = resolveValue(scope, value, context, trace)
+        elseif merge.isArray(value) then
+          result[key] = resolveArray(scope, value, context, trace)
+        else
+          result[key] = value
+        end
+      elseif token.isRef(value) then
+        result[key] = context.theme.resolve(value)
+      else
+        result[key] = value
+      end
+    end
+    return result
+  end
+
+  resolveComponent = function(scope, componentRecord, context, trace)
+    registry.get(componentRecord.component)
+    local selected = componentRecord.source.selected
+    if registry.supportsSelection(componentRecord.component) then
       if selected ~= nil then
         assert(type(selected) == 'boolean', 'H3 UI selected must be boolean')
       end
-    elseif componentNode.selected ~= nil then
-      error('H3 UI selected is not supported by component: ' .. componentNode.component)
+    elseif componentRecord.selected ~= nil then
+      error('H3 UI selected is not supported by component: ' .. componentRecord.component)
     end
 
     local activeTheme = context.theme or scope.resolveTheme()
-    local matched = themeModule.matching(activeTheme, componentNode)
-    local themeStyles = mergeRuleStyles(registry, componentNode.component, matched)
+    local matched = themeModule.matching(activeTheme, componentRecord)
+    local themeStyles = mergeRuleStyles(registry, componentRecord.component, matched)
     local inlineStyles =
-      normalizeInlineStyle(registry, componentNode.component, componentNode.style, activeTheme)
+      normalizeInlineStyle(registry, componentRecord.component, componentRecord.style, activeTheme)
 
     local dynamicStyles
-    if registry.supportsRuntimeState(componentNode.component) then
+    if registry.supportsRuntimeState(componentRecord.component) then
       for index = 1, #interactiveStates do
         local state = interactiveStates[index]
-        if themeModule.hasStateRules(activeTheme, componentNode.component, state) then
+        if themeModule.hasStateRules(activeTheme, componentRecord.component, state) then
           dynamicStyles = dynamicStyles or {}
-          local styles = stateStyles(registry, activeTheme, componentNode, state)
+          local styles = stateStyles(registry, activeTheme, componentRecord, state)
           if next(styles) ~= nil then dynamicStyles[state] = styles end
         end
       end
     end
+
     if trace then
-      trace[#trace + 1] = makeTraceEntry(componentNode, matched, themeStyles, inlineStyles)
+      trace[#trace + 1] = makeTraceEntry(componentRecord, matched, themeStyles, inlineStyles)
     end
 
-    local args = resolveArgs(scope, componentNode.args, context, trace)
-    local invalidate = componentNode.invalidate or context.invalidate
-    if invalidate ~= nil then
-      assert(type(invalidate) == 'function', 'H3 UI invalidate must be a function')
-    end
     return registry.build(
-      componentNode.component,
-      args,
+      componentRecord.component,
+      resolveArgs(scope, componentRecord.source, context, trace),
       themeStyles,
       inlineStyles,
       dynamicStyles,
-      invalidate
+      context.invalidate
     )
   end
 
   resolveValue = function(scope, value, context, trace)
-    if node.isComponent(value) then return resolveComponent(scope, value, context, trace) end
-    if node.isRecipe(value) then
-      return resolveRecipe(scope, value.spec.recipe, value.spec, context, trace)
+    if specModule.isComponent(value) then
+      return resolveComponent(
+        scope,
+        normalizeComponent(value.component, value, context.recipe),
+        context,
+        trace
+      )
+    end
+    if specModule.isRecipe(value) then
+      return resolveRecipe(scope, value.recipe, value, context, trace)
     end
     if token.isRef(value) then return context.theme.resolve(value) end
     return value
   end
 
-  local function constructorSpec(kind, spec)
-    spec = spec or {}
-    assert(merge.isPlainTable(spec), 'H3 UI ' .. kind .. ' options must be a plain table')
+  local function constructorSpec(kind, input)
+    input = input or {}
+    assert(merge.isPlainTable(input), 'H3 UI ' .. kind .. ' options must be a plain table')
     assert(
-      spec.component == nil and spec.recipe == nil,
+      input.component == nil and input.recipe == nil,
       'H3 UI constructor options cannot select another component or recipe'
     )
-    return spec
+    assert(
+      input.invalidate == nil,
+      'H3 UI invalidation belongs to the scope, not individual components or recipes'
+    )
+    return input
   end
 
-  function resolver.component(scope, name, spec, trace)
-    spec = constructorSpec('component', spec)
-    local componentNode = node.component(name, spec)
-    return resolveComponent(scope, componentNode, {
+  function resolver.component(scope, name, input, trace)
+    input = constructorSpec('component', input)
+    local context = {
       theme = scope.resolveTheme(),
-      invalidate = spec.invalidate or scope.invalidate,
+      invalidate = scope.invalidate,
+    }
+    return resolveComponent(scope, normalizeComponent(name, input), context, trace)
+  end
+
+  function resolver.recipe(scope, name, input, trace)
+    input = constructorSpec('recipe', input)
+    return resolveRecipe(scope, name, input, {
+      theme = scope.resolveTheme(),
+      invalidate = scope.invalidate,
     }, trace)
   end
 
-  function resolver.recipe(scope, name, spec, trace)
-    spec = constructorSpec('recipe', spec)
-    return resolveRecipe(scope, name, spec, {
-      theme = scope.resolveTheme(),
-      invalidate = spec.invalidate or scope.invalidate,
-    }, trace)
-  end
+  function resolver.build(scope, input, trace)
+    input = specModule.root(input)
+    assert(merge.isPlainTable(input), 'H3 UI build spec must be a plain table')
+    assert(
+      not (input.component ~= nil and input.recipe ~= nil),
+      'H3 UI build spec cannot select both component and recipe'
+    )
 
-  function resolver.build(scope, spec, trace)
-    assert(merge.isPlainTable(spec), 'H3 UI build spec must be a plain table')
-
-    if spec.recipe ~= nil then
-      local invalidate = spec.invalidate
-      if invalidate == nil then invalidate = scope.invalidate end
-      return resolveRecipe(scope, spec.recipe, spec, {
+    if specModule.isRecipe(input) then
+      return resolveRecipe(scope, input.recipe, input, {
         theme = scope.resolveTheme(),
-        invalidate = invalidate,
+        invalidate = scope.invalidate,
       }, trace)
     end
 
-    if spec.component ~= nil then
-      local componentNode = node.component(spec.component, spec)
-      return resolveComponent(scope, componentNode, {
+    if specModule.isComponent(input) then
+      return resolveComponent(scope, normalizeComponent(input.component, input), {
         theme = scope.resolveTheme(),
         invalidate = scope.invalidate,
       }, trace)
@@ -317,10 +400,12 @@ local function new(registry, publicComponents)
     error 'H3 UI build requires recipe or component'
   end
 
-  function resolver.explain(scope, spec)
+  function resolver.explain(scope, input)
+    local root = specModule.root(input)
     local trace = {}
-    local layout = resolver.build(scope, spec, trace)
+    local layout = resolver.build(scope, root, trace)
     return {
+      document = specModule.document(root),
       layout = layout,
       nodes = trace,
       theme = scope.resolveTheme().name,

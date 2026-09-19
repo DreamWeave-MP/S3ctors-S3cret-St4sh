@@ -9,6 +9,7 @@ local constants = require 'scripts.s3.ui.constants'
 local newRegistry = require 'scripts.s3.ui.registry'
 local newResolver = require 'scripts.s3.ui.resolver'
 local newScope = require 'scripts.s3.ui.scope'
+local specModule = require 'scripts.s3.ui.spec'
 local themeModule = require 'scripts.s3.ui.theme'
 local token = require 'scripts.s3.ui.token'
 
@@ -126,13 +127,50 @@ local environment = {
 ---@class H3UI.TokenReference
 ---@field path string
 
----@class H3UI.ExplainSpec
----@field recipe? string
----@field component? string
----@field invalidate? fun() Called when H3UI-owned interaction or recipe state needs a mounted Element update.
+---@alias H3UI.Spec table Plain declarative component or recipe spec.
+
+---@class H3UI.Document
+---@field h3ui integer Document format version.
+---@field root H3UI.Spec Portable component or recipe spec.
+
+---@class H3UI.SpecScope
+---@field bookFrame fun(options?: table): H3UI.Spec
+---@field box fun(options?: table): H3UI.Spec
+---@field button fun(options?: H3.ButtonOptions): H3UI.Spec
+---@field collapsible fun(options?: H3.CollapsibleOptions): H3UI.Spec
+---@field column fun(options?: table): H3UI.Spec
+---@field divider fun(options?: H3.DividerOptions): H3UI.Spec
+---@field grid fun(options?: table): H3UI.Spec
+---@field iconButton fun(options?: H3.IconButtonOptions): H3UI.Spec
+---@field image fun(options?: table): H3UI.Spec
+---@field itemSlot fun(options?: H3.ItemSlotOptions): H3UI.Spec
+---@field list fun(options?: table): H3UI.Spec
+---@field listItem fun(options?: H3.ListItemOptions): H3UI.Spec
+---@field meter fun(options?: table): H3UI.Spec
+---@field numberInput fun(options?: H3.NumberInputOptions): H3UI.Spec
+---@field row fun(options?: table): H3UI.Spec
+---@field searchInput fun(options?: H3.SearchInputOptions): H3UI.Spec
+---@field selector fun(options?: H3.SelectorOptions): H3UI.Spec
+---@field slider fun(options?: H3.SliderOptions): H3UI.Spec
+---@field spacer fun(options?: H3.SpacerOptions|number, height?: number): H3UI.Spec
+---@field tabs fun(options?: H3.TabsOptions): H3UI.Spec
+---@field text fun(options?: table|string|number): H3UI.Spec
+---@field textInput fun(options?: H3.TextInputOptions): H3UI.Spec
+---@field toggle fun(options?: H3.ToggleOptions): H3UI.Spec
+---@field tooltip fun(options?: table): H3UI.Spec
+---@field window fun(options?: H3.WindowOptions): H3UI.Spec
+---@field confirmDialog fun(spec?: H3UI.ConfirmDialogOptions): H3UI.Spec
+---@field dialog fun(spec?: H3UI.DialogOptions): H3UI.Spec
+---@field itemGrid fun(spec?: H3UI.ItemGridOptions): H3UI.Spec
+---@field searchableList fun(spec?: H3UI.SearchableListOptions): H3UI.Spec
+---@field settings fun(spec?: H3UI.SettingsOptions): H3UI.Spec
+---@field tabbedWindow fun(spec?: H3UI.TabbedWindowOptions): H3UI.Spec
+---@field section fun(spec?: H3UI.SectionOptions): H3UI.Spec
+---@field component fun(name: string, spec?: table): H3UI.Spec
+---@field recipe fun(name: string, spec?: table): H3UI.Spec
+---@field token fun(path: string): H3UI.TokenReference
 
 ---@class H3UI.Scope
----@field invalidate? fun()
 ---@field bookFrame fun(options?: table): openmw.ui.Layout
 ---@field box fun(options?: table): openmw.ui.Layout
 ---@field button fun(options?: H3.ButtonOptions): openmw.ui.Layout
@@ -168,18 +206,26 @@ local environment = {
 ---@field component fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic component construction.
 ---@field recipe fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic recipe construction.
 ---@field setChildren fun(layout: openmw.ui.Layout, children: openmw.ui.LayoutOrElement[]) Replace a mounted layout's content with fresh children and invalidate the owning scope.
----@field explain fun(spec: H3UI.ExplainSpec): table
+---@field explain fun(spec: H3UI.Spec|H3UI.Document): table
+---@field resolve fun(spec: H3UI.Spec|H3UI.Document): openmw.ui.Layout
+---@field spec fun(): H3UI.SpecScope Returns the same constructor vocabulary backed by portable specs instead of OpenMW layouts.
 ---@field token fun(path: string): H3UI.TokenReference
 
 ---@class H3UI: H3UI.Scope
+---@field DOCUMENT_VERSION integer Portable document format version.
 ---@field UNSET table Explicit style-removal sentinel.
 ---@field registerTheme fun(spec: H3UI.ThemeRegistration)
----@field explain fun(spec: H3UI.ExplainSpec): table
+---@field explain fun(spec: H3UI.Spec|H3UI.Document): table
+---@field document fun(root: H3UI.Spec): H3UI.Document
+---@field deserialize fun(document: H3UI.Document): H3UI.Spec
+---@field resolve fun(spec: H3UI.Spec|H3UI.Document): openmw.ui.Layout
+---@field spec fun(): H3UI.SpecScope Returns the same constructor vocabulary backed by portable specs instead of OpenMW layouts.
 ---@field scope fun(options?: H3UI.ScopeOptions): H3UI.Scope
 ---@field token fun(path: string): H3UI.TokenReference
 ---@field slots fun(component: string): string[]
 ---@field nineSlice fun(options: H3UI.NineSliceOptions): openmw.ui.Layout
 local H3UI = {
+  DOCUMENT_VERSION = specModule.DOCUMENT_VERSION,
   UNSET = constants.UNSET,
 }
 
@@ -204,7 +250,22 @@ function H3UI.scope(options) return newScope(options, environment) end
 
 local defaultScope = H3UI.scope()
 
----@param spec H3UI.ExplainSpec
+---@return H3UI.SpecScope
+function H3UI.spec() return defaultScope.spec() end
+
+---@param root H3UI.Spec
+---@return H3UI.Document
+function H3UI.document(root) return specModule.document(root) end
+
+---@param document H3UI.Document
+---@return H3UI.Spec
+function H3UI.deserialize(document) return specModule.deserialize(document) end
+
+---@param spec H3UI.Spec|H3UI.Document
+---@return openmw.ui.Layout
+function H3UI.resolve(spec) return defaultScope.resolve(spec) end
+
+---@param spec H3UI.Spec|H3UI.Document
 ---@return table
 function H3UI.explain(spec) return defaultScope.explain(spec) end
 
@@ -212,9 +273,11 @@ H3UI.component = defaultScope.component
 H3UI.recipe = defaultScope.recipe
 for index = 1, #publicComponents do
   local name = publicComponents[index]
+  assert(H3UI[name] == nil, 'H3 UI component collides with interface API: ' .. name)
   H3UI[name] = defaultScope[name]
 end
 for name in next, builtinRecipes do
+  assert(H3UI[name] == nil, 'H3 UI recipe collides with interface API: ' .. name)
   H3UI[name] = defaultScope[name]
 end
 

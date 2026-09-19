@@ -4,11 +4,11 @@
 
 local emptyOptions = {}
 
-local async = require 'openmw.async'
 local util = require 'openmw.util'
 
 local appearance = require 'scripts.s3.ui.appearance'
 local chrome = require 'scripts.s3.ui.chrome'
+local eventHandlers = require 'scripts.s3.components.eventHandlers'
 
 local UtilVector2 = util.vector2
 
@@ -60,14 +60,10 @@ local function pinButton(options)
     end
   end
 
-  local previousClick = events.mouseClick
-  events.mouseClick = async:callback(function(event, layout)
+  eventHandlers.add(events, 'mouseClick', function(_, layout)
     pinned = not pinned
     setSkin(layout, pinned and downSkin or upSkin, tint, alpha)
-
     if onToggle then onToggle(pinned) end
-
-    if previousClick then return previousClick(event, layout) end
   end)
 
   return chrome.frame {

@@ -33,13 +33,14 @@ local relativeWidth = util.vector2(1, 0)
 local function listItem(options)
   options = options or emptyOptions
 
-  local labelProps = {
-    textColor = appearance.token(options.selected and 'color.active' or 'color.text'),
-    textSize = appearance.token 'textSize.normal',
-  }
+  local labelProps = {}
   for key, value in next, options.labelProps or {} do
     labelProps[key] = value
   end
+  if labelProps.textColor == nil then
+    labelProps.textColor = appearance.token(options.selected and 'color.active' or 'color.text')
+  end
+  if labelProps.textSize == nil then labelProps.textSize = appearance.token 'textSize.normal' end
   if labelProps.ignorePointerEvents == nil then labelProps.ignorePointerEvents = true end
 
   local children = options.content or options.children
@@ -52,14 +53,17 @@ local function listItem(options)
     children = { label }
 
     if options.secondary ~= nil then
-      local secondaryProps = {
-        textColor = appearance.token(options.selected and 'color.active' or 'color.text'),
-        textSize = appearance.token 'textSize.normal',
-        ignorePointerEvents = true,
-      }
+      local secondaryProps = {}
       for key, value in next, options.secondaryProps or {} do
         secondaryProps[key] = value
       end
+      if secondaryProps.textColor == nil then
+        secondaryProps.textColor = appearance.token(options.selected and 'color.active' or 'color.text')
+      end
+      if secondaryProps.textSize == nil then
+        secondaryProps.textSize = appearance.token 'textSize.normal'
+      end
+      if secondaryProps.ignorePointerEvents == nil then secondaryProps.ignorePointerEvents = true end
 
       children = {
         row {

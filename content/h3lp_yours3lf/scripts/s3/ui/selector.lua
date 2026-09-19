@@ -14,6 +14,19 @@ local allowed = {
   variant = true,
 }
 
+local stringFields = {
+  'class',
+  'component',
+  'recipe',
+  'role',
+  'slot',
+  'state',
+  'tone',
+  'variant',
+}
+
+local emptyClasses = {}
+
 local traitFields = {
   'component',
   'recipe',
@@ -34,56 +47,73 @@ local function normalize(input)
     if value ~= nil then result[key] = value end
   end
 
-  if result.class ~= nil then
-    assert(
-      type(result.class) == 'string' and result.class ~= '',
-      'H3 UI selector class must be a string'
-    )
-  end
-  if result.slot ~= nil then
-    assert(
-      type(result.slot) == 'string' and result.slot ~= '',
-      'H3 UI selector slot must be a string'
-    )
+  for index = 1, #stringFields do
+    local key = stringFields[index]
+    local value = result[key]
+    if value ~= nil then
+      assert(
+        type(value) == 'string' and value ~= '',
+        'H3 UI selector ' .. key .. ' must be a non-empty string'
+      )
+    end
   end
   if result.selected ~= nil then
     assert(type(result.selected) == 'boolean', 'H3 UI selector selected must be boolean')
+  end
+  if result.state ~= nil then
+    assert(
+      result.state == 'hover' or result.state == 'pressed',
+      'H3 UI selector state must be hover or pressed'
+    )
   end
 
   return result
 end
 
 local function classes(input, single)
+  if input == nil and single == nil then return emptyClasses end
   local result = {}
   if single ~= nil then
-    assert(type(single) == 'string' and single ~= '', 'H3 UI class must be a string')
+    assert(type(single) == 'string' and single ~= '', 'H3 UI class must be a non-empty string')
     result[single] = true
   end
 
-  if input ~= nil then
-    if type(input) == 'string' then
-      assert(input ~= '', 'H3 UI class must be a non-empty string')
-      result[input] = true
-    else
-      assert(type(input) == 'table', 'H3 UI classes must be a string or array')
-      for index = 1, #input do
-        local value = input[index]
-        assert(type(value) == 'string' and value ~= '', 'H3 UI classes must contain strings')
-        result[value] = true
-      end
-    end
+  if input == nil then return result end
+  if type(input) == 'string' then
+    assert(input ~= '', 'H3 UI class must be a non-empty string')
+    result[input] = true
+    return result
   end
 
+  assert(merge.isPlainTable(input), 'H3 UI classes must be a string, array, or set')
+  if merge.isArray(input) then
+    for index = 1, #input do
+      local value = input[index]
+      assert(type(value) == 'string' and value ~= '', 'H3 UI classes must contain strings')
+      result[value] = true
+    end
+    return result
+  end
+
+  for className, enabled in next, input do
+    assert(
+      type(className) == 'string' and className ~= '',
+      'H3 UI class set keys must be non-empty strings'
+    )
+    assert(type(enabled) == 'boolean', 'H3 UI class set values must be boolean')
+    if enabled then result[className] = true end
+  end
   return result
 end
 
-local function matches(rule, node)
-  if rule.class ~= nil and not node.classes[rule.class] then return false end
+local function matches(rule, componentRecord, state)
+  if rule.class ~= nil and not componentRecord.classes[rule.class] then return false end
 
   for index = 1, #traitFields do
     local key = traitFields[index]
     local expected = rule[key]
-    if expected ~= nil and node[key] ~= expected then return false end
+    local actual = key == 'state' and state or componentRecord[key]
+    if expected ~= nil and actual ~= expected then return false end
   end
 
   return true

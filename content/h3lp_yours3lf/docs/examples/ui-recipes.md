@@ -20,18 +20,12 @@ local util = require 'openmw.util'
 
 local element
 
-local function refresh()
-    if element and element.layout then element:update() end
-end
-
 local ui = I.H3UI.scope {
-    invalidate = refresh,
+    element = function() return element end,
 }
 ```
 
-The scoped object is your constructor catalog. You normally should not need separate component `require`s.
-
-Use cheap `element:update()` invalidation for H3UI's hover/pressed mutations and other in-place layout changes. When caller-owned state changes which layouts exist—filters, selected pages, deleted items—reconstruct the root through your application's normal rebuild path. The executable fixtures exercise both paths.
+The scoped object is your constructor catalog. You normally should not need separate component `require`s. H3 redraws its own semantic mutations through the element resolver. Use `ui.setChildren()` for localized structural changes; rebuild the root only when caller-owned state changes the larger application structure.
 
 ## Morrowind-style Magic menu
 

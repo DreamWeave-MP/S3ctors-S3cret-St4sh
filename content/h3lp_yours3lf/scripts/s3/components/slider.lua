@@ -2,9 +2,9 @@
 
 local emptyOptions = {}
 
-local async = require 'openmw.async'
 local util = require 'openmw.util'
 
+local eventHandlers = require 'scripts.s3.components.eventHandlers'
 local meter = require 'scripts.s3.components.meter'
 
 local MathFloor = math.floor
@@ -28,20 +28,6 @@ local defaultSize = UtilVector2(200, 18)
 ---@field events? table
 ---@field userData? any
 ---@field template? openmw.ui.Template
-
-local function addHandler(events, name, handler)
-  local previous = events[name]
-
-  if not previous then
-    events[name] = async:callback(handler)
-    return
-  end
-
-  events[name] = async:callback(function(event, layout)
-    handler(event, layout)
-    return previous(event, layout)
-  end)
-end
 
 ---@param options? H3.SliderOptions
 ---@return openmw.ui.Layout
@@ -116,7 +102,7 @@ local function slider(options)
     return minimum + range * ratio
   end
 
-  addHandler(events, 'mousePress', function(event)
+  eventHandlers.add(events, 'mousePress', function(event)
     if not event or event.button ~= 1 then return end
 
     dragging = true
@@ -124,7 +110,7 @@ local function slider(options)
     return true
   end)
 
-  addHandler(events, 'mouseMove', function(event)
+  eventHandlers.add(events, 'mouseMove', function(event)
     if not dragging or not event then return end
 
     if event.button ~= 1 then
@@ -136,14 +122,14 @@ local function slider(options)
     return true
   end)
 
-  addHandler(events, 'mouseRelease', function(event)
+  eventHandlers.add(events, 'mouseRelease', function(event)
     if not event or event.button ~= 1 or not dragging then return end
 
     dragging = false
     return true
   end)
 
-  addHandler(events, 'focusLoss', function()
+  eventHandlers.add(events, 'focusLoss', function()
     if not dragging then return end
 
     dragging = false

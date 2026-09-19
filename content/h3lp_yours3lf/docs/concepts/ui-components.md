@@ -13,7 +13,7 @@ UI code runs in a registered `menu` or `player` script. Requiring `openmw.ui` do
 {% end %}
 
 {% usage_note(title="Menu and player layouts · Caller owns the element") %}
-Keep the root element, choose its layer, and decide when to rebuild or destroy it. Keep interactive state in your script. H3 callbacks report the new value after updating the component layout; refresh the mounted root with `element:update()` when the visual tree needs to change.
+Keep the root element, choose its layer, and decide when to rebuild or destroy it. Keep interactive state in your script. For interactive H3UI, give the scope an `element` resolver; H3 redraws its own semantic mutations while the application retains element lifetime and state ownership.
 {% end %}
 
 ## Layout, mount, and update
@@ -24,23 +24,34 @@ A layout is a Lua table that describes one widget and its children. An element i
 local ui = require 'openmw.ui'
 local I = require 'openmw.interfaces'
 
-local status = I.H3UI.text {
-  text = 'Ready',
+local element
+local h3ui = I.H3UI.scope {
+  element = function() return element end,
 }
 
-local element = ui.create {
+local enabled = false
+local status = h3ui.text 'Disabled'
+local toggle = h3ui.toggle {
+  value = enabled,
+  onChange = function(value)
+    enabled = value
+    status.props.text = value and 'Enabled' or 'Disabled'
+  end,
+}
+
+element = ui.create {
   type = ui.TYPE.Container,
   layer = 'Windows',
   content = ui.content {
-    status,
+    h3ui.column {
+      toggle,
+      status,
+    },
   },
 }
-
-status.props.text = 'Updated'
-element:update()
 ```
 
-`status` is a layout. `element` is the live mounted OpenMW object. Mutating the layout table does not redraw the engine until the owning element is updated. Use a `Container` for a content-fitting root; use a `Widget` when you need explicit `size` or `relativeSize`. Rebuild the root for structural changes; use `element:update()` for property changes. A full rebuild destroys the old OpenMW widgets, including TextEdit focus. Do not rebuild a search/form root from every `textChanged` event: keep the edited value in `onChange`, then rebuild on `onCommit`/focus loss, or update a stable mounted subtree without replacing the focused editor.
+`toggle` and `status` are layouts. `element` is the live mounted OpenMW object. The toggle mutates its own label, runs `onChange`, then H3 redraws through the scope's element resolver, so the dependent `status` mutation is included in the same update. For localized structural replacement, use `h3ui.setChildren(layout, children)` so the parent layout keeps its identity. Rebuild the root only when the structure genuinely requires it. A full rebuild destroys the old OpenMW widgets, including TextEdit focus, so do not rebuild a search/form root for every `textChanged` event.
 
 ## Callbacks and context
 

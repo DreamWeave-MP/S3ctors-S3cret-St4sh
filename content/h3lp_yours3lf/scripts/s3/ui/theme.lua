@@ -30,6 +30,25 @@ local function validateSelector(registry, ruleSelector)
   end
 end
 
+local function compareRules(left, right)
+  if left.tier ~= right.tier then return left.tier < right.tier end
+  if left.specificity ~= right.specificity then return left.specificity < right.specificity end
+  return left.order < right.order
+end
+
+local function sortBuckets(index)
+  table.sort(index.generic, compareRules)
+  for _, bucket in next, index.component do
+    table.sort(bucket, compareRules)
+  end
+  for _, stateIndex in next, index.state do
+    table.sort(stateIndex.generic, compareRules)
+    for _, bucket in next, stateIndex.component do
+      table.sort(bucket, compareRules)
+    end
+  end
+end
+
 ---@param spec H3UI.ThemeSpec
 ---@param registry table
 ---@param inheritedParent? H3UI.Theme
@@ -58,7 +77,10 @@ local function new(spec, registry, inheritedParent)
 
   local sourceName = spec.name or ('theme#' .. tostring(nextThemeId + 1))
   if spec.rules ~= nil then
-    assert(type(spec.rules) == 'table', 'H3 UI theme rules must be an array')
+    assert(
+      merge.isPlainTable(spec.rules) and (next(spec.rules) == nil or merge.isArray(spec.rules)),
+      'H3 UI theme rules must be a dense array'
+    )
     for index = 1, #spec.rules do
       rawRules[#rawRules + 1] = normalizeRawRule(spec.rules[index], sourceName)
     end
@@ -93,18 +115,18 @@ local function new(spec, registry, inheritedParent)
     }
     rules[#rules + 1] = rule
 
-    if normalizedSelector.component ~= nil then
-      local bucket = index.component[normalizedSelector.component]
-      if not bucket then
-        bucket = {}
-        index.component[normalizedSelector.component] = bucket
+    if normalizedSelector.state == nil then
+      if normalizedSelector.component ~= nil then
+        local bucket = index.component[normalizedSelector.component]
+        if not bucket then
+          bucket = {}
+          index.component[normalizedSelector.component] = bucket
+        end
+        bucket[#bucket + 1] = rule
+      else
+        index.generic[#index.generic + 1] = rule
       end
-      bucket[#bucket + 1] = rule
     else
-      index.generic[#index.generic + 1] = rule
-    end
-
-    if normalizedSelector.state ~= nil then
       local stateIndex = index.state[normalizedSelector.state]
       if not stateIndex then
         stateIndex = { generic = {}, component = {} }
@@ -123,7 +145,10 @@ local function new(spec, registry, inheritedParent)
     end
   end
 
+  sortBuckets(index)
+
   nextThemeId = nextThemeId + 1
+  local tokenCache = {}
   local theme = {
     [marker] = true,
     id = nextThemeId,
@@ -137,7 +162,14 @@ local function new(spec, registry, inheritedParent)
     _index = index,
   }
 
-  function theme.token(path) return token.lookup(resolvedTokens, path) end
+  function theme.token(path)
+    local cached = tokenCache[path]
+    if cached == nil then
+      cached = token.lookup(resolvedTokens, path)
+      tokenCache[path] = cached
+    end
+    return merge.copy(cached)
+  end
   function theme.resolve(value) return token.resolveValue(value, resolvedTokens) end
   function theme.chrome() return rawChrome end
   function theme.hasChrome() return next(rawChrome) ~= nil end
@@ -145,57 +177,47 @@ local function new(spec, registry, inheritedParent)
   return theme
 end
 
-local function compareRules(left, right)
-  if left.tier ~= right.tier then return left.tier < right.tier end
-  if left.specificity ~= right.specificity then return left.specificity < right.specificity end
-  return left.order < right.order
-end
-
-local function matching(theme, node)
-  local candidates = {}
-  local generic = theme._index.generic
-  for index = 1, #generic do
-    candidates[#candidates + 1] = generic[index]
-  end
-
-  local componentRules = theme._index.component[node.component]
-  if componentRules then
-    for index = 1, #componentRules do
-      candidates[#candidates + 1] = componentRules[index]
-    end
-  end
-
+local function matchingBuckets(generic, componentRules, componentRecord, state)
   local matched = {}
-  for index = 1, #candidates do
-    local rule = candidates[index]
-    if selector.matches(rule.selector, node) then matched[#matched + 1] = rule end
+  local genericIndex = 1
+  local componentIndex = 1
+  local genericCount = #generic
+  local componentCount = componentRules and #componentRules or 0
+
+  while genericIndex <= genericCount or componentIndex <= componentCount do
+    local rule
+    if componentIndex > componentCount then
+      rule = generic[genericIndex]
+      genericIndex = genericIndex + 1
+    elseif genericIndex > genericCount then
+      rule = componentRules[componentIndex]
+      componentIndex = componentIndex + 1
+    elseif compareRules(generic[genericIndex], componentRules[componentIndex]) then
+      rule = generic[genericIndex]
+      genericIndex = genericIndex + 1
+    else
+      rule = componentRules[componentIndex]
+      componentIndex = componentIndex + 1
+    end
+
+    if selector.matches(rule.selector, componentRecord, state) then matched[#matched + 1] = rule end
   end
 
-  table.sort(matched, compareRules)
   return matched
 end
 
-local function matchingState(theme, node, state)
+local function matching(theme, componentRecord)
+  return matchingBuckets(
+    theme._index.generic,
+    theme._index.component[componentRecord.component],
+    componentRecord
+  )
+end
+
+local function matchingState(theme, componentRecord, state)
   local stateIndex = theme._index.state[state]
   if not stateIndex then return {} end
-
-  local matched = {}
-  local generic = stateIndex.generic
-  for index = 1, #generic do
-    local rule = generic[index]
-    if selector.matches(rule.selector, node) then matched[#matched + 1] = rule end
-  end
-
-  local componentRules = stateIndex.component[node.component]
-  if componentRules then
-    for index = 1, #componentRules do
-      local rule = componentRules[index]
-      if selector.matches(rule.selector, node) then matched[#matched + 1] = rule end
-    end
-  end
-
-  table.sort(matched, compareRules)
-  return matched
+  return matchingBuckets(stateIndex.generic, stateIndex.component[componentRecord.component], componentRecord, state)
 end
 
 local function hasStateRules(theme, component, state)

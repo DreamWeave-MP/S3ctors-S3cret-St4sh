@@ -13,8 +13,6 @@ local surface = require 'scripts.s3.ui.surface'
 local text = require 'scripts.s3.components.text'
 
 local fullSize = util.vector2(1, 1)
-local black = util.color.rgb(0, 0, 0)
-local whiteTexture = ui.texture { path = 'white' }
 
 ---Build a book-like framed content layout.
 ---Allocates fresh layout, props, external, and content tables. It is a passive layout primitive; caller
@@ -28,15 +26,14 @@ local function bookFrame(options)
   body = body or emptyContent
   local content = {}
   if options.title ~= nil then
-    local titleProps = {
-      textSize = appearance.token 'textSize.header',
-      textColor = appearance.token 'color.header',
-    }
+    local titleProps = {}
     if options.titleProps then
       for key, value in next, options.titleProps do
         titleProps[key] = value
       end
     end
+    if titleProps.textSize == nil then titleProps.textSize = appearance.token 'textSize.header' end
+    if titleProps.textColor == nil then titleProps.textColor = appearance.token 'color.header' end
 
     titleProps.text = options.title
     titleProps.ignorePointerEvents = true
@@ -69,18 +66,17 @@ local function bookFrame(options)
     end
   end
 
-  local backgroundProps = {
-    resource = whiteTexture,
-    color = appearance.token 'color.background' or black,
-    alpha = appearance.token 'transparency.menu' or 1,
-    ignorePointerEvents = true,
-    relativeSize = fullSize,
-  }
+  local backgroundProps = {}
   if options.backgroundProps then
     for key, value in next, options.backgroundProps do
       backgroundProps[key] = value
     end
   end
+  if backgroundProps.resource == nil then backgroundProps.resource = appearance.token 'texture.white' end
+  if backgroundProps.color == nil then backgroundProps.color = appearance.token 'color.background' end
+  if backgroundProps.alpha == nil then backgroundProps.alpha = appearance.token 'transparency.menu' end
+  if backgroundProps.ignorePointerEvents == nil then backgroundProps.ignorePointerEvents = true end
+  if backgroundProps.relativeSize == nil then backgroundProps.relativeSize = fullSize end
 
   if options.template then
     local legacyContent = ui.content {

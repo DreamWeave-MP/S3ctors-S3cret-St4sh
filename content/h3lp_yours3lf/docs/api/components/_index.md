@@ -111,6 +111,6 @@ local element = openmwUi.create {
 }
 ```
 
-Keep `element` when a callback changes layout state, then call `element:update()`. Rebuild the caller-owned root for structural changes.
+For interactive surfaces, create an H3UI scope with an `element` resolver. H3 redraws its own semantic mutations; use `ui.setChildren()` for localized structural replacement and rebuild the caller-owned root only when necessary.
 
 The bundled component tests now separate small diagnostic probes from application-grade reference fixtures. The Magic menu, inventory panel, and mod configuration surfaces are intended to be useful examples as well as integration tests.

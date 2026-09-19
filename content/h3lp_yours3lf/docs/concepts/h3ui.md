@@ -14,7 +14,7 @@ Ordinary scripts therefore construct both primitive controls and higher-level re
 
 ```lua
 local I = require 'openmw.interfaces'
-local ui = I.H3UI.scope { invalidate = refresh }
+local ui = I.H3UI
 
 return ui.window {
     title = 'My Mod',
@@ -42,7 +42,7 @@ H3UI constructor call
     ↓
 recipe expansion when needed
     ↓
-semantic component nodes
+semantic component specs
     ↓
 style resolution
     ↓
@@ -52,12 +52,12 @@ openmw.ui.Layout
     ↓
 caller ui.create(...)
     ↓
-caller element:update() / destroy()
+caller-owned Element
 ```
 
 There is no virtual DOM, retained style graph, polling loop, automatic root traversal, or extra `onFrame` work.
 
-The caller still owns application state and the mounted root. If a callback changes what should be displayed, update or rebuild the caller-owned layout. H3UI's runtime hover/pressed support is deliberately narrower: it mutates generated style properties and may call a scope's `invalidate` callback, but it never takes ownership of the element.
+The caller still owns application state and the mounted root. A scoped `element` resolver lets H3 redraw semantic mutations without exposing invalidation plumbing to ordinary component code. Use `ui.setChildren()` for localized structural replacement and rebuild the caller-owned root only when the structure genuinely changes. H3UI never takes ownership of the element.
 
 ## Components and recipes share one public path
 
@@ -88,7 +88,7 @@ String-based `ui.component(name, spec)` and `ui.recipe(name, spec)` remain avail
 
 A recipe owns **structure**: which H3 components are composed and how they nest.
 
-A component node carries **traits**: component name, recipe identity, role, variant, tone, and classes.
+A component spec carries **traits**: component name, recipe identity, role, variant, tone, and classes.
 
 A theme owns **presentation**: rules target those meanings and write through public component style slots. The player settings supply the active palette.
 
@@ -138,7 +138,7 @@ Themes never search through arbitrary generated child indexes hoping to find the
 
 ## Why recipes do not own models
 
-`itemGrid` composes item slots, but it is not an inventory system. `searchableList` filters its supplied items during construction, but it does not own the query or search algorithm. `settings` composes controls, but it does not persist settings.
+`itemGrid` composes item slots, but it is not an inventory system. `searchableList` owns a stable results subtree and can replace it while filtering, but it does not own query state or an application data model. `settings` composes controls, but it does not persist settings.
 
 Recipes exist when recognizable semantic structure removes meaningful repeated assembly. They do not absorb application data models into H3.
 
