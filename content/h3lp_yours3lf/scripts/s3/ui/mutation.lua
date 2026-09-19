@@ -11,9 +11,10 @@ local function setChildren(layout, children, invalidate)
 end
 
 local function invalidateAfter(callback, invalidate)
+  if callback == nil then return invalidate end
+
   return function(...)
-    local result
-    if callback then result = callback(...) end
+    local result = callback(...)
     invalidate()
     return result
   end

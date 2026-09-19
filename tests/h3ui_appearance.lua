@@ -165,6 +165,7 @@ local morrowind = themeModule.new({
       bigAnswerPressed = 'f3ed16',
     },
     spacing = { padding = 2 },
+    texture = { white = { path = 'white' } },
   },
 }, registry)
 local starwind = themeModule.new({

@@ -41,7 +41,7 @@ The plugin installs `I.H3UI` in menu and player contexts. Local and global scrip
 {% end %}
 
 {% usage_note(title="Construction is not mounting") %}
-H3UI never calls `ui.create`, chooses a layer, owns a root element, or persists application state. Mount the returned layout yourself. For interactive mounted UI, give a scope an `element` resolver as shown under [Mounting interactive UI](#mounting-interactive-ui); H3 then redraws its own semantic mutations. Use `ui.setChildren()` for localized structural replacement, and rebuild the root only when genuinely necessary.
+H3UI never calls `ui.create`, chooses a layer, owns a root element, or persists application state. Mount the returned layout yourself. For interactive mounted UI, give a scope an `element` resolver as shown under [Mounting interactive UI](#mounting-interactive-ui); H3 then redraws its own semantic mutations. Element-backed scopes coalesce all H3-owned invalidations produced while processing a frame into at most one `Element:update()` per mounted root on the following H3UI frame flush. Use `ui.setChildren()` for localized structural replacement, and rebuild the root only when genuinely necessary.
 {% end %}
 
 ## The normal constructor surface
@@ -201,7 +201,7 @@ local function refilter()
 end
 ```
 
-The layout keeps its identity; child layouts are rebuilt by the caller. Removed layouts leave the rendered subtree on update; explicitly supplied Elements remain caller-owned. Safe to call from event handlers, including handlers on widgets outside the replaced subtree. Call it once per structural change rather than once per mutated property.
+The layout keeps its identity; child layouts are rebuilt by the caller. Removed layouts leave the rendered subtree on update; explicitly supplied Elements remain caller-owned. Safe to call from event handlers, including handlers on widgets outside the replaced subtree. Each call should still represent a real structural replacement, but several replacements or semantic mutations during the same input frame share the same queued root redraw.
 
 ## Mounting interactive UI
 
@@ -238,7 +238,7 @@ element = openmwUi.create {
 }
 ```
 
-The closure captures the local before the element exists, and keeps returning whatever it currently holds if the application ever destroys and recreates the element. Ownership stays split: the application owns `ui.create`, the layer, the element lifetime, destruction, and application state. H3 manages the layouts it constructs, their semantic mutations, and redrawing those layouts. Passing `invalidate` to `I.H3UI.scope` instead remains available as an escape hatch when redraw needs custom handling.
+The closure captures the local before the element exists, and keeps returning whatever it currently holds if the application ever destroys and recreates the element. Ownership stays split: the application owns `ui.create`, the layer, the element lifetime, destruction, and application state. H3 manages the layouts it constructs, their semantic mutations, and redrawing those layouts. H3 queues element-backed invalidations and flushes them once after input processing each frame; repeated invalidations from hover, press, release, sliders, recipe mutations, or several scopes resolving to the same root are deduplicated to one `Element:update()` for that root. An invalidation raised while that update is being flushed is deferred to the next frame rather than recursively redrawing. Passing `invalidate` to `I.H3UI.scope` instead remains available as an escape hatch when redraw needs custom handling; custom invalidators are caller-owned and are not coalesced by H3.
 
 ## Advanced dynamic construction
 

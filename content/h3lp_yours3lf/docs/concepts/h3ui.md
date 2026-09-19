@@ -55,9 +55,9 @@ caller ui.create(...)
 caller-owned Element
 ```
 
-There is no virtual DOM, retained style graph, polling loop, automatic root traversal, or extra `onFrame` work.
+There is no virtual DOM, retained style graph, polling loop, or automatic root traversal. H3UI has one frame-end redraw queue in menu and player contexts: its idle `onFrame` path is an empty-queue check, while queued element-backed scopes are flushed after input processing.
 
-The caller still owns application state and the mounted root. A scoped `element` resolver lets H3 redraw semantic mutations without exposing invalidation plumbing to ordinary component code. Use `ui.setChildren()` for localized structural replacement and rebuild the caller-owned root only when the structure genuinely changes. H3UI never takes ownership of the element.
+The caller still owns application state and the mounted root. A scoped `element` resolver lets H3 redraw semantic mutations without exposing invalidation plumbing to ordinary component code. Any number of H3-owned invalidations produced for the same mounted root during one input frame collapse to at most one `Element:update()` on that frame's flush. Invalidations raised during a flush roll forward to the next frame. Use `ui.setChildren()` for localized structural replacement and rebuild the caller-owned root only when the structure genuinely changes. H3UI never takes ownership of the element.
 
 ## Components and recipes share one public path
 
@@ -174,7 +174,7 @@ Theme rules may target generated `hover` and `pressed` states:
 }
 ```
 
-H3UI applies hover on focus gain, pressed for the primary mouse button, and restores the previous generated style on focus loss or release. Explicit component options and inline style still win over theme state rules.
+H3UI applies hover on focus gain, pressed for the primary mouse button, and restores the previous generated style on focus loss or release. Runtime-state controls share one registry-level event dispatcher instead of allocating a fresh focus/press handler closure set per control, and H3 installs only the handlers needed by the states that actually compiled for that component. Explicit component options and inline style still win over theme state rules.
 
 Application code does not set arbitrary component `state`. Semantic concepts belong to the components that actually implement them: `listItem`, `itemSlot`, and `iconButton` expose `selected`, while runtime `hover`/`pressed` remains theme-owned.
 
