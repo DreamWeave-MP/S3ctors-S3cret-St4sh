@@ -12,7 +12,7 @@ Builds a horizontal row containing previous, value, and next controls. Items may
 
 ```lua
 local ui = require 'openmw.ui'
-local H3UI = require('openmw.interfaces').H3UI
+local I = require 'openmw.interfaces'
 
 local modes = {
   'Compact',
@@ -21,6 +21,11 @@ local modes = {
 }
 local selected = 2
 local element
+local H3UI = I.H3UI.scope {
+  invalidate = function()
+    if element and element.layout then element:update() end
+  end,
+}
 
 element = ui.create {
   type = ui.TYPE.Container,
@@ -32,7 +37,6 @@ element = ui.create {
       onSelect = function(index, item)
         selected = index
         print('Mode:', item)
-        element:update()
       end,
     },
   },

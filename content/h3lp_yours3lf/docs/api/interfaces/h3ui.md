@@ -46,7 +46,7 @@ The plugin installs `I.H3UI` in menu and player contexts. Local and global scrip
 {% usage_note(title="Construction is not mounting") %}
 H3UI never calls `ui.create`, chooses a layer, owns a root element, or persists application state. Mount the returned layout yourself. When application state changes what should be visible, update your mounted element.
 
-Pass `invalidate` to a scope when theme-driven hover or pressed changes must redraw a mounted root. H3UI calls it only after a runtime style transition changes generated properties.
+Pass `invalidate` to a scope so H3 redraws its own in-place mutations: runtime hover/pressed transitions and semantic controls (toggles, sliders, selectors, windows) mutate their own layouts and then call it. Application callbacks run before the redraw, so dependent properties changed there are included. Use `ui.setChildren()` for localized structural replacement, and rebuild the root only when genuinely necessary.
 {% end %}
 
 ## The normal constructor surface
@@ -197,6 +197,16 @@ local card = ui.characterCard {
 ```
 
 Local recipes become named constructors on that scope automatically. Recipe callbacks receive the same constructor vocabulary for public components and recipes, while preserving recipe identity for theme selectors. `ui.component(name, ...)` and `ui.recipe(name, ...)` remain available when a name is genuinely dynamic.
+
+A scope also provides `ui.setChildren(layout, children)` for replacing the content of an already-mounted layout:
+
+```lua
+local function refilter()
+    ui.setChildren(spellBox, { buildListBody() })
+end
+```
+
+The layout keeps its identity; child layouts are rebuilt by the caller. Removed layouts leave the rendered subtree on update; explicitly supplied Elements remain caller-owned. Safe to call from event handlers, including handlers on widgets outside the replaced subtree. Call it once per structural change rather than once per mutated property.
 
 ## Advanced dynamic construction
 

@@ -7,9 +7,9 @@ local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local appearance = require 'scripts.s3.ui.appearance'
-local chrome = require 'scripts.s3.ui.chrome'
 local inset = require 'scripts.s3.components.inset'
 local spacer = require 'scripts.s3.components.spacer'
+local surface = require 'scripts.s3.ui.surface'
 local text = require 'scripts.s3.components.text'
 
 local fullSize = util.vector2(1, 1)
@@ -108,7 +108,7 @@ local function bookFrame(options)
     }
   end
 
-  return chrome.box {
+  return surface.build {
     skin = appearance.chrome 'frame.thin',
     name = options.name,
     props = props,

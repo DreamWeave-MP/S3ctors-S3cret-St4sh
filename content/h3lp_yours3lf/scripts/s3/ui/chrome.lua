@@ -7,7 +7,6 @@ local copy
 local ui = require 'openmw.ui'
 
 local textureCache = {}
-local templateCache = setmetatable({}, { __mode = 'k' })
 local UtilVector2 = require('openmw.util').vector2
 local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
 
@@ -483,64 +482,6 @@ local function cacheKey(value, seen)
   return StrFormat('{%s}', table.concat(parts, ';'))
 end
 
-local function boxTemplate(options, boxType)
-  local skin = options.skin
-  local thickness = skin.thickness
-  local skinCache = templateCache[skin]
-  if not skinCache then
-    skinCache = {}
-    templateCache[skin] = skinCache
-  end
-
-  local tintKey = cacheKey(options.tint)
-  local tintCache = skinCache[tintKey]
-  if not tintCache then
-    tintCache = {}
-    skinCache[tintKey] = tintCache
-  end
-
-  local alphaKey = cacheKey(options.alpha)
-  local backgroundKey = cacheKey(options.backgroundProps)
-  local key = StrFormat('%s:%s:%s', tostring(boxType), alphaKey, backgroundKey)
-  local result = tintCache[key]
-  if result then return result end
-
-  result = {
-    type = boxType,
-    content = uiModule().content(
-      frameChildren(skin, thickness, options.tint, options.alpha, options.backgroundProps)
-    ),
-  }
-  tintCache[key] = result
-  return result
-end
-
-local function boxLayout(options)
-  local skin = options.skin
-  assert(type(skin) == 'table', 'H3 UI chrome box requires a skin')
-  assert(
-    type(skin.thickness) == 'number' and skin.thickness > 0,
-    'H3 UI chrome box requires thickness'
-  )
-
-  local openmwUi = uiModule()
-  local props = options.props
-  local boxType = props
-      and (props.size ~= nil or props.relativeSize ~= nil)
-      and openmwUi.TYPE.Widget
-    or openmwUi.TYPE.Container
-
-  return {
-    template = boxTemplate(options, boxType),
-    name = options.name,
-    props = options.props,
-    external = options.external,
-    events = options.events,
-    userData = options.userData,
-    content = uiModule().content(options.content or {}),
-  }
-end
-
 ---@return H3UI.ChromeSpec
 local function builtinChrome() return builtin end
 
@@ -556,8 +497,10 @@ return {
   variantFamily = variantFamily,
   materialFamilies = chromeAssets.materialFamilies,
   materialStems = chromeAssets.materialStems,
-  box = boxLayout,
   frame = frameLayout,
+  backgroundChildren = backgroundChildren,
+  frameChildren = frameChildren,
+  cacheKey = cacheKey,
   nineSlice = nineSliceLayout,
   applyCompatibleSkin = applyCompatibleSkin,
   resolve = skinFrom,

@@ -26,10 +26,22 @@ package.preload['openmw.ui'] = function()
     local proxy = newproxy(true)
     local metatable = getmetatable(proxy)
     metatable.__index = function(_, key)
+      if key == 'add' then
+        return function(_, child) value[#value + 1] = child end
+      end
       if value[key] ~= nil then return value[key] end
       if type(key) == 'string' then
         for index = 1, #value do
           if value[index].name == key then return value[index] end
+        end
+      end
+    end
+    metatable.__newindex = function(_, key, newValue)
+      assert(type(key) == 'string' and newValue == nil, 'mock content only supports named removal')
+      for index = 1, #value do
+        if value[index].name == key then
+          table.remove(value, index)
+          return
         end
       end
     end
@@ -102,6 +114,7 @@ local newScope = require 'scripts.s3.ui.scope'
 local pinButton = require 'scripts.s3.components.pinButton'
 local searchInput = require 'scripts.s3.components.searchInput'
 local selector = require 'scripts.s3.components.selector'
+local surface = require 'scripts.s3.ui.surface'
 local tabbedWindow = require 'scripts.s3.ui.recipes.tabbedWindow'
 local tabs = require 'scripts.s3.components.tabs'
 local textInput = require 'scripts.s3.components.textInput'
@@ -127,6 +140,7 @@ local registry = newRegistry {
   toggle = {
     builder = require 'scripts.s3.components.toggle',
     runtimeState = true,
+    invalidateOn = 'onChange',
     slots = { root = { props = 'props', external = 'external' }, label = { props = 'labelProps' } },
   },
   text = { builder = function(options) return options end, slots = { root = { props = 'props' } } },
@@ -181,7 +195,8 @@ local registry = newRegistry {
     },
   },
   collapsible = {
-    builder = function() return {} end,
+    builder = require 'scripts.s3.components.collapsible',
+    invalidateOn = 'onToggle',
     slots = { root = { props = 'props' }, headerLabel = { props = 'headerLabelProps' } },
   },
   itemSlot = {
@@ -313,16 +328,23 @@ local function testBookFrameBackground()
   assert(frameContent[1].props.color == background.color)
   assert(frameContent[1].props.alpha == background.alpha)
   assert(layout.content[1].props.horizontal == false)
-  assert(frameContent[2].props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds')
-  assert(frameContent[2].props.resource.offset.x == 4)
-  assert(frameContent[2].props.resource.offset.y == 4)
-  assert(frameContent[2].props.resource.size.x == 2 and frameContent[2].props.resource.size.y == 2)
-  assert(frameContent[2].props.size.x == 2 and frameContent[2].props.size.y == 2)
-  assert(frameContent[4].props.position.x == 0 and frameContent[4].props.position.y == 0)
-  assert(frameContent[6].props.position.x == 0 and frameContent[6].props.position.y == 2)
-  assert(frameContent[7].props.position.x == 0 and frameContent[7].props.position.y == 0)
-  assert(frameContent[8].props.position.x == 2 and frameContent[8].props.position.y == 0)
-  assert(frameContent[9].props.position.x == 0 and frameContent[9].props.position.y == 0)
+  assert(frameContent.h3ui_content.external.slot)
+  local topLeft = frameContent.h3ui_topLeft
+  assert(topLeft.props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds')
+  assert(topLeft.props.resource.offset.x == 4)
+  assert(topLeft.props.resource.offset.y == 4)
+  assert(topLeft.props.resource.size.x == 2 and topLeft.props.resource.size.y == 2)
+  assert(topLeft.props.size.x == 2 and topLeft.props.size.y == 2)
+  local topRight = frameContent.h3ui_topRight
+  assert(topRight.props.position.x == 0 and topRight.props.position.y == 0)
+  local right = frameContent.h3ui_right
+  assert(right.props.position.x == 0 and right.props.position.y == 2)
+  local bottomLeft = frameContent.h3ui_bottomLeft
+  assert(bottomLeft.props.position.x == 0 and bottomLeft.props.position.y == 0)
+  local bottom = frameContent.h3ui_bottom
+  assert(bottom.props.position.x == 2 and bottom.props.position.y == 0)
+  local bottomRight = frameContent.h3ui_bottomRight
+  assert(bottomRight.props.position.x == 0 and bottomRight.props.position.y == 0)
 end
 
 local function testBuiltinPinChromePaths()
@@ -355,8 +377,8 @@ local function testWindowInnerBorder()
   assert(innerBorder.name == 'innerBorder')
   assert(innerBorder.props.position.x == 4 and innerBorder.props.position.y == 24)
   assert(innerBorder.props.size.x == -8 and innerBorder.props.size.y == -28)
-  assert(body.props.position.x == 8 and body.props.position.y == 28)
-  assert(body.props.size.x == -16 and body.props.size.y == -36)
+  assert(body.props.position.x == 16 and body.props.position.y == 36)
+  assert(body.props.size.x == -32 and body.props.size.y == -52)
 
   local outerOnly = window { innerBorder = false }
   assert(outerOnly.content[2].name == 'body')
@@ -642,7 +664,7 @@ end
 
 local function testItemSlotChrome()
   local layout = itemSlot {}
-  assert(layout.template.content[1].props.color == 'chrome-border')
+  assert(layout.template.content.h3ui_topLeft.props.color == 'chrome-border')
 
   local customTemplate = {}
   assert(itemSlot({ template = customTemplate }).template == customTemplate)
@@ -650,18 +672,18 @@ end
 
 local function testChromeCacheAndSkinSwap()
   local skin = chrome.resolve(nil, 'frame.thin')
-  local first = chrome.box {
+  local first = surface.build {
     skin = skin,
     alpha = 0.75,
     backgroundProps = { color = 'background' },
   }
-  local second = chrome.box {
+  local second = surface.build {
     skin = skin,
     alpha = 0.75,
     backgroundProps = { color = 'background' },
   }
   assert(first.template == second.template)
-  assert(first.template.content[2].props.alpha == 0.75)
+  assert(first.template.content.h3ui_topLeft.props.alpha == 0.75)
 
   local pin = pinButton {}
   local pinTopLeft = pin.content[2]
@@ -688,6 +710,105 @@ local function testChromeCacheAndSkinSwap()
   local tooltipText = tooltipContent.content[1]
   assert(tooltipText.type == ui.TYPE.TextEdit)
   assert(tooltipText.props.readOnly == true and tooltipText.props.wordWrap == true)
+end
+
+local function testImmediateRecipeConstructors()
+  local layout = buildWith(morrowind, {
+    recipe = 'immediateButton',
+  }, {
+    immediateButton = function(context) return context.button { label = 'Immediate' } end,
+  })
+  assert(layout.component == nil and layout.recipe == nil)
+  assert(layout.args == nil and layout.spec == nil)
+  local label = findDescendant(
+    layout,
+    function(child) return child.type == ui.TYPE.Text and child.props.text == 'Immediate' end
+  )
+  assert(label ~= nil)
+
+  local nested = buildWith(morrowind, {
+    recipe = 'outer',
+  }, {
+    outer = function(context) return context.inner { label = 'Deep' } end,
+    inner = function(context, spec) return context.button { label = spec.label } end,
+  })
+  assert(nested.component == nil and nested.recipe == nil)
+  local deepLabel = findDescendant(
+    nested,
+    function(child) return child.type == ui.TYPE.Text and child.props.text == 'Deep' end
+  )
+  assert(deepLabel ~= nil)
+end
+
+local function testInvalidatorCallbackOrder()
+  local order = {}
+  local layout = build(morrowind, {
+    component = 'toggle',
+    label = 'Sound',
+    value = false,
+    onChange = function(value) order[#order + 1] = 'change:' .. tostring(value) end,
+    invalidate = function() order[#order + 1] = 'invalidate' end,
+  })
+  layout.events.mouseClick(nil, layout)
+  assert(#order == 2)
+  assert(order[1] == 'change:true')
+  assert(order[2] == 'invalidate')
+  layout.events.mouseClick(nil, layout)
+  assert(#order == 4)
+  assert(order[3] == 'change:false')
+  assert(order[4] == 'invalidate')
+end
+
+local function testSetChildren()
+  local invalidations = 0
+  local scoped = newScope({
+    invalidate = function() invalidations = invalidations + 1 end,
+  }, {
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+    resolver = resolver,
+    publicComponents = {},
+  })
+  local holder = { name = 'holder', content = ui.content { { name = 'old' } } }
+  scoped.setChildren(holder, { { name = 'new' } })
+  assert(holder.content[1].name == 'new')
+  assert(#holder.content == 1)
+  assert(invalidations == 1)
+  scoped.setChildren(holder, { { name = 'newer' } })
+  assert(holder.content[1].name == 'newer')
+  assert(#holder.content == 1)
+  assert(invalidations == 2)
+end
+
+local function testCollapsibleReattachment()
+  local toggles = 0
+  local invalidations = 0
+  local layout = build(morrowind, {
+    component = 'collapsible',
+    title = 'Details',
+    children = { { name = 'payload' } },
+    onToggle = function() toggles = toggles + 1 end,
+    invalidate = function() invalidations = invalidations + 1 end,
+  })
+  local function bodyCount()
+    local count = 0
+    for index = 1, #layout.content do
+      if layout.content[index].name == 'body' then count = count + 1 end
+    end
+    return count
+  end
+  local header = layout.content[1]
+  assert(bodyCount() == 0)
+  header.events.mouseClick(nil, header)
+  assert(bodyCount() == 1)
+  header.events.mouseClick(nil, header)
+  assert(bodyCount() == 0)
+  header.events.mouseClick(nil, header)
+  assert(bodyCount() == 1)
+  header.events.mouseClick(nil, header)
+  assert(bodyCount() == 0)
+  assert(toggles == 4)
+  assert(invalidations == 4)
 end
 
 local function testTextInputDefaults()
@@ -726,5 +847,9 @@ testSearchInputHeight()
 testItemSlotChrome()
 testChromeCacheAndSkinSwap()
 testTextInputDefaults()
+testImmediateRecipeConstructors()
+testInvalidatorCallbackOrder()
+testSetChildren()
+testCollapsibleReattachment()
 
 print 'H3UI runtime state tests passed'

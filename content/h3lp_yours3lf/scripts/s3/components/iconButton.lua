@@ -4,10 +4,10 @@ local emptyOptions = {}
 
 local activationEvents = require 'scripts.s3.components.activationEvents'
 local appearance = require 'scripts.s3.ui.appearance'
-local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
 local inset = require 'scripts.s3.components.inset'
 local row = require 'scripts.s3.components.row'
+local surface = require 'scripts.s3.ui.surface'
 local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 
@@ -87,7 +87,7 @@ local function iconButton(options)
     }
   end
 
-  return chrome.box {
+  return surface.build {
     skin = appearance.chrome 'frame.button',
     name = options.name,
     props = props,

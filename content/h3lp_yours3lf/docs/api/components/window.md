@@ -13,12 +13,17 @@ Builds a framed Widget with an optional caption and body. It is not `ui.TYPE.Win
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local H3UI = require('openmw.interfaces').H3UI
+local I = require 'openmw.interfaces'
 
 local position = util.vector2(80, 80)
 local size = util.vector2(360, 220)
 local pinned = false
 local element
+local H3UI = I.H3UI.scope {
+  invalidate = function()
+    if element and element.layout then element:update() end
+  end,
+}
 
 element = ui.create {
   type = ui.TYPE.Container,
@@ -33,19 +38,16 @@ element = ui.create {
       closable = true,
       onPin = function(value)
         pinned = value
-        element:update()
       end,
       onClose = function()
         element:destroy()
       end,
       onMove = function(nextPosition)
         position = nextPosition
-        element:update()
       end,
       onResize = function(nextSize, nextPosition)
         size = nextSize
         position = nextPosition
-        element:update()
       end,
       children = {
         H3UI.text {
@@ -73,10 +75,10 @@ element = ui.create {
 | `pinned` | boolean? | Initial pin state. |
 | `innerBorder` | boolean? | Adds the vanilla-style inner border below the caption; enabled by default. |
 | `padding` | number? | Empty space between the frame and the body on all four sides; defaults to `8`. |
-| `onMove` | function? | Receives the current position during movement. Invalidate the owning element here for live dragging. |
+| `onMove` | function? | Receives the current position during movement. |
 | `onResize` | function? | Receives size and position during resizing. |
 | `onClose` | function? | Runs when close is pressed. |
-| `onPin` | function? | Receives the new pin state. Invalidate the owning element here so the pin skin redraws. |
+| `onPin` | function? | Receives the new pin state. |
 | `clampToScreen` | boolean? | Keeps movement within the screen. |
 | `referenceSize` | openmw.util.Vector2 or function? | Coordinate space for nested windows. |
 | `captionHeight` | number? | Caption strip height. |
@@ -87,7 +89,7 @@ element = ui.create {
 | `content` | table? | Body content; takes precedence over `children`. |
 | `children` | table? | Body layouts used when `content` is absent. |
 
-Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md). The caller owns geometry, persistence, visibility, redraw, and destruction.
+Common layout fields are documented on the [UI Components overview](@/h3lp_yours3lf/docs/api/components/_index.md). The caller owns geometry, persistence, visibility, and destruction; H3 redraws its own mutations through the scope invalidator.
 
 ## See also
 

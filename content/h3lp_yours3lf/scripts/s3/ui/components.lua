@@ -42,6 +42,7 @@ return {
   collapsible = {
     public = true,
     builder = require 'scripts.s3.components.collapsible',
+    invalidateOn = 'onToggle',
     slots = {
       root = root(false),
       header = { props = 'headerProps' },
@@ -125,6 +126,7 @@ return {
   numberInput = {
     public = true,
     builder = require 'scripts.s3.components.numberInput',
+    invalidateOn = 'onCommit',
     slots = { root = root() },
   },
   pinButton = {
@@ -139,6 +141,7 @@ return {
   searchInput = {
     public = true,
     builder = require 'scripts.s3.components.searchInput',
+    invalidateOn = 'onCommit',
     slots = {
       root = root(false),
       input = {
@@ -151,6 +154,7 @@ return {
   selector = {
     public = true,
     builder = require 'scripts.s3.components.selector',
+    invalidateOn = 'onSelect',
     slots = {
       root = root(false),
       button = { props = 'buttonProps' },
@@ -161,6 +165,7 @@ return {
   slider = {
     public = true,
     builder = require 'scripts.s3.components.slider',
+    invalidateOn = 'onChange',
     slots = {
       root = root(),
       fill = { props = 'fillProps' },
@@ -175,6 +180,7 @@ return {
   tabs = {
     public = true,
     builder = require 'scripts.s3.components.tabs',
+    invalidateOn = 'onSelect',
     slots = {
       root = root(false),
       button = { props = 'buttonProps' },
@@ -197,6 +203,7 @@ return {
     public = true,
     builder = require 'scripts.s3.components.toggle',
     runtimeState = true,
+    invalidateOn = 'onChange',
     slots = { root = root(), label = { props = 'labelProps' } },
   },
   tooltip = {
@@ -211,6 +218,7 @@ return {
   window = {
     public = true,
     builder = require 'scripts.s3.components.window',
+    invalidateOn = { 'onMove', 'onResize', 'onPin' },
     slots = {
       root = root(),
       background = { props = 'backgroundProps' },

@@ -12,6 +12,7 @@ local collapsible = require 'scripts.s3.components.collapsible'
 local column = require 'scripts.s3.components.column'
 local headBlock = require 'scripts.s3.components.headBlock'
 local iconButton = require 'scripts.s3.components.iconButton'
+local image = require 'scripts.s3.components.image'
 local itemSlot = require 'scripts.s3.components.itemSlot'
 local listItem = require 'scripts.s3.components.listItem'
 local meter = require 'scripts.s3.components.meter'
@@ -20,6 +21,7 @@ local row = require 'scripts.s3.components.row'
 local searchInput = require 'scripts.s3.components.searchInput'
 local selector = require 'scripts.s3.components.selector'
 local spacer = require 'scripts.s3.components.spacer'
+local surface = require 'scripts.s3.ui.surface'
 local tabs = require 'scripts.s3.components.tabs'
 local text = require 'scripts.s3.components.text'
 local textInput = require 'scripts.s3.components.textInput'
@@ -216,6 +218,82 @@ local function coverage(invalidate)
           entry('headBlock', 'caption', headBlock { props = { size = headBlockSize } }),
           spacer { props = { size = columnGap } },
           entry('pinButton', 'pin.up/down', pinButton {}),
+        },
+      },
+      row {
+        children = {
+          entry(
+            'button (fixed)',
+            'frame.button, fixed size',
+            button {
+              label = 'fixed button',
+              props = { size = controlSize },
+            }
+          ),
+          spacer { props = { size = columnGap } },
+          entry(
+            'surface (auto, padded)',
+            'frame.thin + slot',
+            surface.build {
+              skin = appearance.chrome 'frame.thin',
+              padding = 8,
+              tint = appearance.token 'color.chromeBorder',
+              alpha = appearance.token 'transparency.chrome',
+              content = { text { text = 'padded surface' } },
+            }
+          ),
+          spacer { props = { size = columnGap } },
+          entry(
+            'surface (fixed, padded)',
+            'frame.thin + slot',
+            surface.build {
+              skin = appearance.chrome 'frame.thin',
+              padding = 8,
+              tint = appearance.token 'color.chromeBorder',
+              alpha = appearance.token 'transparency.chrome',
+              props = { size = frameSize },
+              content = { text { text = 'fixed surface' } },
+            }
+          ),
+        },
+      },
+      row {
+        children = {
+          entry(
+            'surface (auto, unpadded)',
+            'frame.thin + slot',
+            surface.build {
+              skin = appearance.chrome 'frame.thin',
+              tint = appearance.token 'color.chromeBorder',
+              alpha = appearance.token 'transparency.chrome',
+              content = { text { text = 'unpadded surface' } },
+            }
+          ),
+          spacer { props = { size = columnGap } },
+          entry(
+            'itemSlot (edge icon)',
+            'frame.thin, icon fills slot',
+            itemSlot {
+              resource = { path = 'white' },
+              count = 7,
+              props = { size = itemSize },
+              iconProps = { size = itemSize },
+            }
+          ),
+          spacer { props = { size = columnGap } },
+          entry(
+            'box (full-bleed image)',
+            'frame stays above content',
+            box {
+              props = { size = frameSize },
+              children = {
+                image {
+                  resource = { path = 'white' },
+                  props = { size = frameSize },
+                },
+              },
+            }
+          ),
         },
       },
       spacer { props = { size = UtilVector2(0, 8) } },
