@@ -990,6 +990,58 @@ local function testScopeElementResolver()
   assert(customCalls == 1 and resolveCalls == 0)
 end
 
+local function testChildScopes()
+  local parentInvalidations = 0
+  local childInvalidations = 0
+  local parent = newScope({
+    invalidate = function() parentInvalidations = parentInvalidations + 1 end,
+  }, {
+    resolveTheme = function() return morrowind end,
+    recipes = {
+      card = function(context, spec) return { name = spec.label } end,
+    },
+    resolver = resolver,
+    publicComponents = { 'button' },
+  })
+
+  local child = parent.child {
+    invalidate = function() childInvalidations = childInvalidations + 1 end,
+  }
+  assert(child.card({ label = 'Inherited' }).name == 'Inherited')
+
+  local override = parent.child {
+    recipes = {
+      card = function(context, spec) return { name = 'Override:' .. spec.label } end,
+    },
+  }
+  assert(override.card({ label = 'X' }).name == 'Override:X')
+  assert(parent.card({ label = 'X' }).name == 'X')
+
+  local button = child.button { label = 'Child button' }
+  assert(button ~= nil and button.content ~= nil)
+
+  local holder = { name = 'holder', content = ui.content {} }
+  child.setChildren(holder, { { name = 'child' } })
+  assert(holder.content[1].name == 'child')
+  assert(childInvalidations == 1 and parentInvalidations == 0)
+
+  local updateQueue = require 'scripts.s3.ui.updateQueue'
+  local updates = 0
+  local fakeElement = { layout = {}, update = function() updates = updates + 1 end }
+  local current = fakeElement
+  local domain = parent.child {
+    element = function() return current end,
+  }
+  domain.setChildren(holder, { { name = 'domain' } })
+  updateQueue.flush()
+  assert(updates == 1)
+  assert(holder.content[1].name == 'domain')
+  current = nil
+  domain.setChildren(holder, { { name = 'gone' } })
+  updateQueue.flush()
+  assert(updates == 1)
+end
+
 local function testCollapsibleReattachment()
   local toggles = 0
   local invalidations = 0
@@ -1064,6 +1116,7 @@ testInteractionRedrawCoalescing()
 testElementRedrawDeduplicationAndRequeue()
 testSetChildren()
 testScopeElementResolver()
+testChildScopes()
 testCollapsibleReattachment()
 
 print 'H3UI runtime state tests passed'

@@ -203,6 +203,20 @@ end
 
 The layout keeps its identity; child layouts are rebuilt by the caller. Removed layouts leave the rendered subtree on update; explicitly supplied Elements remain caller-owned. Safe to call from event handlers, including handlers on widgets outside the replaced subtree. Each call should still represent a real structural replacement, but several replacements or semantic mutations during the same input frame share the same queued root redraw.
 
+### Child scopes as update domains
+
+A scope can mint a child scope sharing its theme, recipes, and tokens while owning a separate invalidation target:
+
+```lua
+local listUi = ui.child {
+    element = function()
+        return listElement
+    end,
+}
+```
+
+Build the independently-mutating subtree through the child, mount it in its own nested Element, and `listUi.setChildren()` invalidates only that Element. Element lifetime stays with the application; nested Elements are destroyed with their owning root. This is how large surfaces isolate frequently-rebuilt regions (filterable lists, grids, detail panels) without callers knowing where the boundaries are — the scope making the call names the dirty domain.
+
 ## Mounting interactive UI
 
 H3UI builds layouts; the application mounts them. Give the scope a function returning the mounted element; semantic controls then redraw themselves with no further plumbing:
