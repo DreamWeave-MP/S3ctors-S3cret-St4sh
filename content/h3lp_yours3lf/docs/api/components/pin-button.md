@@ -16,7 +16,7 @@ Builds the vanilla up/down pin control. It is fixed at 20×20 pixels and changes
 
 ```lua
 local ui = require 'openmw.ui'
-local pinButton = require 'scripts.s3.components.pinButton'
+local pinButton = require 'scripts.h3.components.pinButton'
 
 local pinned = false
 local element

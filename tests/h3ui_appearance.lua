@@ -1,9 +1,11 @@
+---@omw-context none
+
 local source = debug.getinfo(1, 'S').source
 local root = source:match '^@(.+)/tests/h3ui_appearance%.lua$' or '.'
 
 package.path = root .. '/content/h3lp_yours3lf/?.lua;' .. package.path
 
-local contentFiles = { ['StarwindRemasteredV1.15.esm'] = true }
+local ContentFiles = { ['StarwindRemasteredV1.15.esm'] = true }
 local values = {}
 local customValues = {}
 local subscriber
@@ -11,18 +13,18 @@ local customSubscriber
 local timers = {}
 local requestedSections = {}
 local defaultThemeExists = false
-local defaultThemeHint = 'morrowind'
+local DefaultThemeHint = 'morrowind'
 
 package.preload['openmw.vfs'] = function()
   return {
     fileExists = function(path)
-      assert(path == 'scripts/s3/ui/defaultTheme.lua')
+      assert(path == 'scripts/h3/ui/defaultTheme.lua')
       return defaultThemeExists
     end,
   }
 end
 
-package.preload['scripts.s3.ui.defaultTheme'] = function() return defaultThemeHint end
+package.preload['scripts.h3.ui.defaultTheme'] = function() return DefaultThemeHint end
 
 package.preload['openmw.async'] = function()
   return {
@@ -34,7 +36,7 @@ end
 package.preload['openmw.core'] = function()
   return {
     contentFiles = {
-      has = function(name) return contentFiles[name] == true end,
+      has = function(name) return ContentFiles[name] == true end,
     },
   }
 end
@@ -87,7 +89,10 @@ package.preload['openmw.util'] = function()
     color = {
       hex = function(hex)
         local color = newproxy(true)
-        getmetatable(color).__index = { asHex = function() return hex end }
+        getmetatable(color).__index = {
+          __type = { name = 'Misc::Color' },
+          asHex = function() return hex end,
+        }
         return color
       end,
       rgb = function(red, green, blue) return { red, green, blue } end,
@@ -141,8 +146,8 @@ package.preload['openmw.ui'] = function()
   }
 end
 
-local appearance = require 'scripts.s3.ui.appearance'
-local themeModule = require 'scripts.s3.ui.theme'
+local appearance = require 'scripts.h3.ui.appearance'
+local themeModule = require 'scripts.h3.ui.theme'
 
 local function flushTimers()
   while #timers > 0 do
@@ -208,7 +213,7 @@ appearance.registerTheme {
 }
 
 appearance.selectTheme 'customChrome'
-local directBookFrame = require 'scripts.s3.components.bookFrame' {}
+local directBookFrame = require 'scripts.h3.components.bookFrame' {}
 assert(directBookFrame.template.content[1].props.resource.path == 'white')
 assert(directBookFrame.template.content[2].name == 'h3ui_content')
 assert(
@@ -219,7 +224,7 @@ assert(directBookFrame.template.content[3].props.resource.path == 'textures/cust
 assert(directBookFrame.template.content[3].props.size.x == 3)
 appearance.selectTheme 'starwind'
 flushTimers()
-local meter = require 'scripts.s3.components.meter'
+local meter = require 'scripts.h3.components.meter'
 local starwindMeter = meter { value = 1, max = 1 }
 assert(starwindMeter.content[1].content[1].props.color:asHex() == '22affb')
 appearance.selectTheme 'morrowind'
@@ -229,8 +234,8 @@ assert(morrowindMeter.content[1].content[1].props.color:asHex() == 'caa560')
 assert(morrowindMeter.content[2].props.color:asHex() == '967c43')
 appearance.selectTheme 'starwind'
 flushTimers()
-local box = require 'scripts.s3.components.box'
-local button = require 'scripts.s3.components.button'
+local box = require 'scripts.h3.components.box'
+local button = require 'scripts.h3.components.button'
 local directBox = box { content = {} }
 assert(directBox.template.content[1].props.size.x == 4)
 assert(directBox.template.content[1].props.size.y == 4)
@@ -419,21 +424,21 @@ assert(#appearance.themeEntries() == 4)
 
 local function freshSettings(settings, customSettings)
   flushTimers()
-  for key in pairs(values) do
+  for key in next, values do
     values[key] = nil
   end
-  for key in pairs(customValues) do
+  for key in next, customValues do
     customValues[key] = nil
   end
-  for key, value in pairs(settings or {}) do
+  for key, value in next, settings or {} do
     values[key] = value
   end
-  for key, value in pairs(customSettings or {}) do
+  for key, value in next, customSettings or {} do
     customValues[key] = value
   end
-  package.loaded['scripts.s3.ui.appearance'] = nil
-  package.loaded['scripts.s3.ui.defaultTheme'] = nil
-  local fresh = require 'scripts.s3.ui.appearance'
+  package.loaded['scripts.h3.ui.appearance'] = nil
+  package.loaded['scripts.h3.ui.defaultTheme'] = nil
+  local fresh = require 'scripts.h3.ui.appearance'
   fresh.initialize(registry, {
     { id = 'morrowind', spec = { name = 'Morrowind' }, theme = morrowind },
     { id = 'starwind', spec = { name = 'Starwind' }, theme = starwind },
@@ -480,11 +485,11 @@ fresh = freshSettings { theme = 'starwind' }
 assert(fresh.currentThemeId() == 'starwind', 'saved selection must override default theme hint')
 flushTimers()
 
-defaultThemeHint = 'unregistered'
+DefaultThemeHint = 'unregistered'
 fresh = freshSettings()
 assert(fresh.currentThemeId() == 'starwind', 'unregistered hint must fall through')
 flushTimers()
-defaultThemeHint = 42
+DefaultThemeHint = 42
 fresh = freshSettings()
 local ok, err = pcall(fresh.currentThemeId)
 assert(not ok and tostring(err):find('must return a theme ID string', 1, true))

@@ -109,7 +109,7 @@ local layout = ui.window {
 
 Notice what is *not* present: no row/column/text/button import pile, no raw `mouseClick` callback, no `args` wrapper, and no knowledge that the individual constructors resolve through different internal component adapters.
 
-The executable fixture lives at `scripts/s3/components/componentTests/magicMenu.lua`.
+The executable fixture lives at `scripts/h3/componentTests/magicMenu.lua`.
 
 ## Tabbed mod configuration
 
@@ -188,7 +188,7 @@ local layout = ui.tabbedWindow {
 
 `tabbedWindow` renders only the selected page. The `selectedPage` variable is yours: update it in `onSelect` and rebuild the caller-owned surface. The component-test harness deliberately distinguishes cheap `element:update()` invalidation from a full fixture rebuild so these examples exercise the same controlled-state model expected from real mods.
 
-The executable fixture lives at `scripts/s3/components/componentTests/applicationForm.lua`.
+The executable fixture lives at `scripts/h3/componentTests/applicationForm.lua`.
 
 ## Inventory and item-grid surface
 
@@ -256,7 +256,7 @@ local layout = ui.window {
 }
 ```
 
-The executable fixture lives at `scripts/s3/components/componentTests/inventoryPanel.lua`.
+The executable fixture lives at `scripts/h3/componentTests/inventoryPanel.lua`.
 
 The fixture also performs real construction-time category/search filtering, selection highlighting, equip/unequip state, count reduction on Drop, and carry-weight recalculation. The data is mock inventory data; the interaction pattern is intentionally application-realistic.
 

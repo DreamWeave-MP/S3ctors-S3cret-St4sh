@@ -1,3 +1,5 @@
+---@omw-context none
+
 local source = debug.getinfo(1, 'S').source
 local root = source:match '^@(.+)/tests/h3ui_runtime_state%.lua$' or '.'
 
@@ -62,6 +64,7 @@ package.preload['openmw.ui'] = function()
       TextEdit = 'TextEdit',
       Widget = 'Widget',
     },
+    layers = { indexOf = function() return nil end },
     texture = function(value) return value end,
     create = function(layout)
       return { layout = layout, update = function() end }
@@ -94,8 +97,8 @@ package.preload['scripts.omw.mwui.constants'] = function()
   }
 end
 
-package.preload['scripts.s3.ui.appearance'] = function()
-  local chrome = require 'scripts.s3.ui.chrome'
+package.preload['scripts.h3.ui.appearance'] = function()
+  local chrome = require 'scripts.h3.ui.chrome'
   return {
     chrome = function(path) return chrome.resolve(nil, path) end,
     token = function(path)
@@ -111,34 +114,34 @@ package.preload['scripts.s3.ui.appearance'] = function()
 end
 
 local I = require 'openmw.interfaces'
-local bookFrame = require 'scripts.s3.components.bookFrame'
-local chrome = require 'scripts.s3.ui.chrome'
-local chromeAssets = require 'scripts.s3.ui.themes.chromeAssets'
-local itemGrid = require 'scripts.s3.ui.recipes.itemGrid'
-local itemSlot = require 'scripts.s3.components.itemSlot'
-local meter = require 'scripts.s3.components.meter'
-local newRegistry = require 'scripts.s3.ui.registry'
-local newResolver = require 'scripts.s3.ui.resolver'
-local newScope = require 'scripts.s3.ui.scope'
-local pinButton = require 'scripts.s3.components.pinButton'
-local searchInput = require 'scripts.s3.components.searchInput'
-local searchableList = require 'scripts.s3.ui.recipes.searchableList'
-local selector = require 'scripts.s3.components.selector'
-local surface = require 'scripts.s3.ui.surface'
-local tabbedWindow = require 'scripts.s3.ui.recipes.tabbedWindow'
-local tabs = require 'scripts.s3.components.tabs'
-local textInput = require 'scripts.s3.components.textInput'
-local textRules = require 'scripts.s3.ui.themes.textRules'
-local themeModule = require 'scripts.s3.ui.theme'
-local token = require 'scripts.s3.ui.token'
-local tooltip = require 'scripts.s3.components.tooltip'
+local bookFrame = require 'scripts.h3.components.bookFrame'
+local chrome = require 'scripts.h3.ui.chrome'
+local chromeAssets = require 'scripts.h3.ui.themes.chromeAssets'
+local itemGrid = require 'scripts.h3.ui.recipes.itemGrid'
+local itemSlot = require 'scripts.h3.components.itemSlot'
+local meter = require 'scripts.h3.components.meter'
+local newRegistry = require 'scripts.h3.ui.registry'
+local newResolver = require 'scripts.h3.ui.resolver'
+local newScope = require 'scripts.h3.ui.scope'
+local pinButton = require 'scripts.h3.components.pinButton'
+local searchInput = require 'scripts.h3.components.searchInput'
+local searchableList = require 'scripts.h3.ui.recipes.searchableList'
+local selector = require 'scripts.h3.components.selector'
+local surface = require 'scripts.h3.ui.surface'
+local tabbedWindow = require 'scripts.h3.ui.recipes.tabbedWindow'
+local tabs = require 'scripts.h3.components.tabs'
+local textInput = require 'scripts.h3.components.textInput'
+local textRules = require 'scripts.h3.ui.themes.textRules'
+local themeModule = require 'scripts.h3.ui.theme'
+local token = require 'scripts.h3.ui.token'
+local tooltip = require 'scripts.h3.components.tooltip'
 local ui = require 'openmw.ui'
-local updateQueue = require 'scripts.s3.ui.updateQueue'
-local window = require 'scripts.s3.components.window'
+local updateQueue = require 'scripts.h3.ui.updateQueue'
+local window = require 'scripts.h3.components.window'
 
 local registry = newRegistry {
   button = {
-    builder = require 'scripts.s3.components.button',
+    builder = require 'scripts.h3.components.button',
     runtimeState = true,
     selectable = true,
     slots = { root = { props = 'props', external = 'external' }, label = { props = 'labelProps' } },
@@ -150,14 +153,14 @@ local registry = newRegistry {
     slots = { root = { props = 'props' }, label = { props = 'labelProps' } },
   },
   toggle = {
-    builder = require 'scripts.s3.components.toggle',
+    builder = require 'scripts.h3.components.toggle',
     runtimeState = true,
     invalidateOn = 'onChange',
     slots = { root = { props = 'props', external = 'external' }, label = { props = 'labelProps' } },
   },
   text = { builder = function(options) return options end, slots = { root = { props = 'props' } } },
   spacer = {
-    builder = require 'scripts.s3.components.spacer',
+    builder = require 'scripts.h3.components.spacer',
     slots = { root = { props = 'props' } },
   },
   dialog = {
@@ -212,7 +215,7 @@ local registry = newRegistry {
     },
   },
   collapsible = {
-    builder = require 'scripts.s3.components.collapsible',
+    builder = require 'scripts.h3.components.collapsible',
     invalidateOn = 'onToggle',
     slots = { root = { props = 'props' }, headerLabel = { props = 'headerLabelProps' } },
   },
@@ -334,14 +337,14 @@ local function testThemeTokens()
       == 'starwind-text'
   )
 
-  local starwindSpec = require 'scripts.s3.ui.themes.starwind'
+  local starwindSpec = require 'scripts.h3.ui.themes.starwind'
   local canonicalStarwind = themeModule.new(starwindSpec, registry, morrowind)
   local disabled = canonicalStarwind.token 'color.disabled'
   assert(disabled[1] == 77 / 255 and disabled[2] == 156 / 255 and disabled[3] == 221 / 255)
   local weaponFill = canonicalStarwind.token 'color.weaponFill'
   assert(weaponFill[1] == 182 / 255 and weaponFill[2] == 72 / 255 and weaponFill[3] == 31 / 255)
 
-  local canonicalMorrowind = themeModule.new(require 'scripts.s3.ui.themes.morrowind', registry)
+  local canonicalMorrowind = themeModule.new(require 'scripts.h3.ui.themes.morrowind', registry)
   assert(canonicalMorrowind.token 'transparency.menu' == 0.84)
 end
 
@@ -576,6 +579,9 @@ local function testProtectionAndTraversal()
 
   local composite = build(morrowind, { component = 'selector' })
   assert(composite.events == nil)
+
+  local selectedSelector = build(morrowind, { component = 'selector', selected = 2 })
+  assert(selectedSelector.events == nil)
 
   local stateOk, stateError = pcall(build, morrowind, {
     component = 'button',
@@ -1055,7 +1061,7 @@ local function testChildScopes()
   assert(holder.content[1].name == 'child')
   assert(childInvalidations == 2 and parentInvalidations == 0)
 
-  local updateQueue = require 'scripts.s3.ui.updateQueue'
+  local updateQueue = require 'scripts.h3.ui.updateQueue'
   local updates = 0
   local fakeElement = { layout = {}, update = function() updates = updates + 1 end }
   local current = fakeElement
@@ -1119,7 +1125,7 @@ end
 local function testSelectionFallbackBaseline()
   local fallbackRegistry = newRegistry {
     fallback = {
-      builder = require 'scripts.s3.components.button',
+      builder = require 'scripts.h3.components.button',
       selectable = true,
       slots = {
         root = { props = 'props', external = 'external' },

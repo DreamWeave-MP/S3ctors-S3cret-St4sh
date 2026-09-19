@@ -17,7 +17,7 @@ Builds a Widget from the vanilla head-block corner, edge, and center textures. I
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local headBlock = require 'scripts.s3.components.headBlock'
+local headBlock = require 'scripts.h3.components.headBlock'
 
 ui.create {
   layer = 'Windows',
