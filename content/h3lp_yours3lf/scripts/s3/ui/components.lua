@@ -81,6 +81,7 @@ return {
       root = root(),
       icon = { props = 'iconProps' },
       label = { props = 'labelProps' },
+      selectedChrome = { props = 'selectionProps', retained = true },
     },
   },
   image = {
@@ -96,6 +97,7 @@ return {
       root = root(),
       icon = { props = 'iconProps' },
       count = { props = 'countProps' },
+      selectedChrome = { props = 'selectionProps', retained = true },
     },
   },
   list = {

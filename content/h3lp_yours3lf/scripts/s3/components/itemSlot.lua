@@ -23,6 +23,7 @@ local BottomRight = UtilVector2(1, 1)
 ---@field props? table
 ---@field iconProps? table
 ---@field countProps? table
+---@field selectionProps? table
 ---@field external? table
 ---@field events? table
 ---@field userData? any
@@ -71,9 +72,7 @@ local function itemSlot(options)
         countProps[key] = value
       end
     end
-    if countProps.textColor == nil then
-      countProps.textColor = appearance.token(options.selected and 'color.active' or 'color.count')
-    end
+    if countProps.textColor == nil then countProps.textColor = appearance.token 'color.count' end
     if countProps.textSize == nil then countProps.textSize = appearance.token 'textSize.normal' end
     countProps.ignorePointerEvents = true
     if fixedGeometry then
@@ -113,8 +112,13 @@ local function itemSlot(options)
     external = layout.external,
     events = layout.events,
     userData = layout.userData,
-    tint = appearance.token(options.selected and 'color.active' or 'color.chromeBorder'),
+    tint = appearance.token 'color.chromeBorder',
     alpha = appearance.token 'transparency.chrome',
+    selected = {
+      props = options.selectionProps,
+      tint = appearance.token 'color.active',
+      alpha = appearance.token 'transparency.chrome',
+    },
     content = content,
   }
 end

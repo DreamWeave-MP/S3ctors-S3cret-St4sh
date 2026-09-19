@@ -1,6 +1,7 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
+local async = require 'openmw.async'
 local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -69,22 +70,24 @@ local function effectIcon(ui, index)
   }
 end
 
-local function entry(ui, selectSpell, state, item)
-  return ui.listItem {
+local function entry(ui, activation, state, item, layouts)
+  local layout = ui.listItem {
     label = item.name,
     secondary = item.secondary,
     selected = state.selected == item.name,
-    onActivate = function()
-      selectSpell(item.name)
-      return true
-    end,
   }
+  activation.targets[layout] = item
+  local events = layout.events or {}
+  events.mouseClick = activation.callback
+  layout.events = events
+  if layouts and state.selected == item.name then layouts[item.name] = layout end
+  return layout
 end
 
-local function section(ui, selectSpell, state, title, secondary, items)
+local function section(ui, activation, state, title, secondary, items, layouts)
   local children = {}
   for index = 1, #items do
-    children[#children + 1] = entry(ui, selectSpell, state, items[index])
+    children[#children + 1] = entry(ui, activation, state, items[index], layouts)
   end
 
   return ui.section {
@@ -130,6 +133,16 @@ local function magicMenu(invalidate, rebuild, state)
   local spellBox
   local titleText
   local selectSpell
+  local selectedLayouts = {}
+  local activation = {
+    targets = setmetatable({}, { __mode = 'k' }),
+  }
+  activation.callback = async:callback(function(event, layout)
+    local item = activation.targets[layout]
+    if not item then return true end
+    selectSpell(item.name, layout)
+    return true
+  end)
 
   local function buildListBody()
     local listChildren = {}
@@ -137,17 +150,17 @@ local function magicMenu(invalidate, rebuild, state)
     local visiblePowers = filtered(powers, state)
     if next(visiblePowers) ~= nil then
       listChildren[#listChildren + 1] =
-        section(listUi, selectSpell, state, 'Powers', nil, visiblePowers)
+        section(listUi, activation, state, 'Powers', nil, visiblePowers, selectedLayouts)
     end
     local visibleSpells = filtered(spells, state)
     if next(visibleSpells) ~= nil then
       listChildren[#listChildren + 1] =
-        section(listUi, selectSpell, state, 'Spells', 'Cost/Chance', visibleSpells)
+        section(listUi, activation, state, 'Spells', 'Cost/Chance', visibleSpells, selectedLayouts)
     end
     local visibleItems = filtered(enchantedItems, state)
     if next(visibleItems) ~= nil then
       listChildren[#listChildren + 1] =
-        section(listUi, selectSpell, state, 'Magic Items', 'Charge', visibleItems)
+        section(listUi, activation, state, 'Magic Items', 'Charge', visibleItems, selectedLayouts)
     end
 
     if next(listChildren) == nil then
@@ -172,14 +185,20 @@ local function magicMenu(invalidate, rebuild, state)
     if shellUi.invalidate then shellUi.invalidate() end
   end
 
-  function selectSpell(name)
+  function selectSpell(name, layout)
+    local previous = selectedLayouts[state.selected]
+    if previous and previous ~= layout then listUi.setSelected(previous, false) end
     state.selected = name
-    listUi.setChildren(spellBox, { buildListBody() })
+    selectedLayouts[name] = layout
+    listUi.setSelected(layout, true)
     updateTitle()
     refreshShell()
   end
 
-  local function refilter() listUi.setChildren(spellBox, { buildListBody() }) end
+  local function refilter()
+    selectedLayouts = {}
+    listUi.setChildren(spellBox, { buildListBody() })
+  end
 
   local effectIcons = { shellUi.spacer(4, 0) }
   for index = 1, #effectColors do
@@ -236,6 +255,7 @@ local function magicMenu(invalidate, rebuild, state)
               if state.selected == nil then return true end
               state.deleted[state.selected] = true
               state.selected = nil
+              selectedLayouts = {}
               listUi.setChildren(spellBox, { buildListBody() })
               updateTitle()
               refreshShell()

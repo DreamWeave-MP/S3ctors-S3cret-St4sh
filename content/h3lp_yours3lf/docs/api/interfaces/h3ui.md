@@ -203,6 +203,23 @@ end
 
 The layout keeps its identity; child layouts are rebuilt by the caller. Removed layouts leave the rendered subtree on update; explicitly supplied Elements remain caller-owned. Safe to call from event handlers, including handlers on widgets outside the replaced subtree. Each call should still represent a real structural replacement, but several replacements or semantic mutations during the same input frame share the same queued root redraw.
 
+For an existing H3 component, mutate a semantic slot instead of rebuilding the component:
+
+```lua
+ui.patch(itemLayout, {
+    count = { props = { text = tostring(count) } },
+})
+```
+
+`patch` accepts the component's registered `props` and `external` slots and invalidates the owning scope. Selectable components also retain their selection state:
+
+```lua
+ui.setSelected(oldItemLayout, false)
+ui.setSelected(newItemLayout, true)
+```
+
+These operations change retained targets only. They do not rerun component resolvers or rebuild child layout graphs.
+
 ### Child scopes as update domains
 
 A scope can mint a child scope sharing its theme, recipes, and tokens while owning a separate invalidation target:
@@ -215,11 +232,11 @@ local listUi = ui.child {
 }
 ```
 
-Build the independently-mutating subtree through the child, mount it in its own nested Element, and `listUi.setChildren()` invalidates only that Element. Element lifetime stays with the application; nested Elements are destroyed with their owning root. This is how large surfaces isolate frequently-rebuilt regions (filterable lists, grids, detail panels) without callers knowing where the boundaries are — the scope making the call names the dirty domain.
+Build the independently-mutating subtree through the child, mount it in its own nested Element, and `listUi.setChildren()` invalidates only that Element. A scope tracks child scopes; call `ui.destroy()` when tearing down the surface so H3-owned child Elements are destroyed. OpenMW detaches nested Elements rather than destroying them automatically. This is how large surfaces isolate frequently-rebuilt regions (filterable lists, grids, detail panels) without callers knowing where the boundaries are — the scope making the call names the dirty domain.
 
 ## Mounting interactive UI
 
-H3UI builds layouts; the application mounts them. Give the scope a function returning the mounted element; semantic controls then redraw themselves with no further plumbing:
+H3UI builds layouts; the application mounts the root. Give the scope a function returning that mounted element; semantic controls then redraw themselves with no further plumbing. Recipes may create nested Elements for deliberately isolated child scopes. Keep those Element handles and destroy them explicitly when tearing down the owning surface; OpenMW detaches nested roots rather than destroying them with the parent.
 
 ```lua
 local openmwUi = require 'openmw.ui'
@@ -324,10 +341,11 @@ ui.settings {
 ### `itemGrid`
 
 Builds `grid` + `itemSlot` composition. Item descriptors are presentation data only; the recipe does not query or own inventory.
+Pass `onActivate(item, index, layout)` once for collection-level activation; H3 dispatches it through the produced item layouts without creating one callback closure per item.
 
 ### `searchableList`
 
-Builds `searchInput` + `list` + `listItem`. Pass `query`, `items`, and optionally a `text(item, index)` extractor. Search text is normalized once when the recipe is built; later query changes replace only the stable results subtree with `setChildren`, so the input keeps focus while filtering.
+Builds `searchInput` + `list` + `listItem`. Pass `query`, `items`, and optionally a `text(item, index)` extractor. Search text is normalized once when the recipe is built; later query changes replace only the nested results Element, so the input keeps focus and the outer surface does not redraw. `onActivate(item, index, layout)` uses the same shared collection dispatch as `itemGrid`.
 
 ### `section`
 

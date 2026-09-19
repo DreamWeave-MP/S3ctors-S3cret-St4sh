@@ -33,6 +33,7 @@ local childKeys = {
 
 local interactiveStates = { 'hover', 'pressed' }
 local componentStringTraits = { 'role', 'tone', 'variant' }
+local stylePlanCache = setmetatable({}, { __mode = 'k' })
 
 local function isRootStyleBag(style)
   for key in next, style do
@@ -65,6 +66,69 @@ end
 
 local function stateStyles(registry, theme, componentRecord, state)
   return themeModule.matchingStyles(theme, componentRecord, state, registry)
+end
+
+local function stylePlanKey(componentRecord)
+  local classes = {}
+  for className in next, componentRecord.classes do
+    classes[#classes + 1] = className
+  end
+  table.sort(classes)
+
+  return table.concat({
+    componentRecord.component,
+    componentRecord.recipe or '',
+    componentRecord.role or '',
+    componentRecord.tone or '',
+    componentRecord.variant or '',
+    componentRecord.selected == true and '1' or '0',
+    table.concat(classes, ','),
+  }, '\31')
+end
+
+local function stylePlan(registry, theme, componentRecord)
+  local cache = stylePlanCache[theme]
+  if cache == nil then
+    cache = {}
+    stylePlanCache[theme] = cache
+  end
+
+  local key = stylePlanKey(componentRecord)
+  local cached = cache[key]
+  if cached then return cached end
+
+  local matched = {}
+  local themeStyles = themeModule.matchingStyles(theme, componentRecord, nil, registry, matched)
+  local dynamicStyles
+  if registry.supportsRuntimeState(componentRecord.component) then
+    for index = 1, #interactiveStates do
+      local state = interactiveStates[index]
+      if themeModule.hasStateRules(theme, componentRecord.component, state) then
+        local styles = stateStyles(registry, theme, componentRecord, state)
+        if next(styles) ~= nil then
+          dynamicStyles = dynamicStyles or {}
+          dynamicStyles[state] = styles
+        end
+      end
+    end
+  end
+
+  cached = {
+    matched = matched,
+    themeStyles = themeStyles,
+    dynamicStyles = dynamicStyles,
+  }
+  cache[key] = cached
+  return cached
+end
+
+local function styleRecord(componentRecord, selected)
+  local result = {}
+  for key, value in next, componentRecord do
+    result[key] = value
+  end
+  result.selected = selected
+  return result
 end
 
 local function makeTraceEntry(componentRecord, matched, themeStyles, inlineStyles)
@@ -188,6 +252,26 @@ local function new(registry, publicComponents)
       mutation.setChildren(layout, children, invalidate)
     end
 
+    function context.child(childOptions)
+      childOptions = childOptions or {}
+      assert(merge.isPlainTable(childOptions), 'H3 UI recipe child options must be a plain table')
+      local childScope = scope.child {
+        invalidate = childOptions.invalidate,
+        element = childOptions.element,
+        recipes = childOptions.recipes,
+        _ownsElement = childOptions._ownsElement,
+      }
+      local childContext = recipeContext(
+        childScope,
+        recipeName,
+        { theme = context.theme, invalidate = childScope.invalidate },
+        trace
+      )
+      function childContext.patch(layout, styles) childScope.patch(layout, styles) end
+      function childContext.setSelected(layout, selected) childScope.setSelected(layout, selected) end
+      return childContext
+    end
+
     local function recipe(name, childSpec)
       childSpec = childSpec or {}
       assert(merge.isPlainTable(childSpec), 'H3 UI recipe options must be a plain table')
@@ -247,7 +331,7 @@ local function new(registry, publicComponents)
 
   local function resolveArgs(scope, args, context, trace)
     local result = {}
-    for key, value in next, args or {} do
+    for key, value in next, args do
       if componentMetadata[key] then
         -- Semantic metadata is consumed by the resolver rather than forwarded to builders.
       elseif type(key) == 'number' then
@@ -281,26 +365,28 @@ local function new(registry, publicComponents)
     end
 
     local activeTheme = context.theme or scope.resolveTheme()
-    local matched = trace and {} or nil
-    local themeStyles =
-      themeModule.matchingStyles(activeTheme, componentRecord, nil, registry, matched)
+    local selected = componentRecord.selected == true
+    local currentRecord = styleRecord(componentRecord, selected)
+    local currentPlan = stylePlan(registry, activeTheme, currentRecord)
+    local themeStyles = currentPlan.themeStyles
     local inlineStyles =
       normalizeInlineStyle(registry, componentRecord.component, componentRecord.style, activeTheme)
 
-    local dynamicStyles
-    if registry.supportsRuntimeState(componentRecord.component) then
-      for index = 1, #interactiveStates do
-        local state = interactiveStates[index]
-        if themeModule.hasStateRules(activeTheme, componentRecord.component, state) then
-          dynamicStyles = dynamicStyles or {}
-          local styles = stateStyles(registry, activeTheme, componentRecord, state)
-          if next(styles) ~= nil then dynamicStyles[state] = styles end
-        end
-      end
+    if trace then
+      trace[#trace + 1] =
+        makeTraceEntry(componentRecord, currentPlan.matched, themeStyles, inlineStyles)
     end
 
-    if trace then
-      trace[#trace + 1] = makeTraceEntry(componentRecord, matched, themeStyles, inlineStyles)
+    local selectionStyles
+    if registry.supportsSelection(componentRecord.component) then
+      local basePlan = stylePlan(registry, activeTheme, styleRecord(componentRecord, false))
+      local selectedPlan = stylePlan(registry, activeTheme, styleRecord(componentRecord, true))
+      selectionStyles = {
+        base = basePlan.themeStyles,
+        selected = selectedPlan.themeStyles,
+        baseRuntime = basePlan.dynamicStyles,
+        selectedRuntime = selectedPlan.dynamicStyles,
+      }
     end
 
     return registry.build(
@@ -308,8 +394,10 @@ local function new(registry, publicComponents)
       resolveArgs(scope, componentRecord.source, context, trace),
       themeStyles,
       inlineStyles,
-      dynamicStyles,
-      context.invalidate
+      currentPlan.dynamicStyles,
+      context.invalidate,
+      selectionStyles,
+      selected
     )
   end
 
