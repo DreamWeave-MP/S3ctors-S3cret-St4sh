@@ -208,8 +208,14 @@ appearance.registerTheme {
 
 appearance.selectTheme 'customChrome'
 local directBookFrame = require 'scripts.s3.components.bookFrame' {}
-assert(directBookFrame.template.content[2].props.resource.path == 'textures/custom/top-left.dds')
-assert(directBookFrame.template.content[2].props.size.x == 3)
+assert(directBookFrame.template.content[1].props.resource.path == 'white')
+assert(directBookFrame.template.content[2].name == 'h3ui_content')
+assert(
+  directBookFrame.template.content[2].external ~= nil
+    and directBookFrame.template.content[2].external.slot
+)
+assert(directBookFrame.template.content[3].props.resource.path == 'textures/custom/top-left.dds')
+assert(directBookFrame.template.content[3].props.size.x == 3)
 appearance.selectTheme 'starwind'
 flushTimers()
 local meter = require 'scripts.s3.components.meter'
@@ -225,8 +231,18 @@ flushTimers()
 local box = require 'scripts.s3.components.box'
 local button = require 'scripts.s3.components.button'
 local directBox = box { content = {} }
+assert(directBox.template.content[1].props.size.x == 4)
+assert(directBox.template.content[1].props.size.y == 4)
+assert(directBox.template.content[2].name == 'h3ui_content')
 assert(
-  directBox.template.content[1].props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds'
+  directBox.template.content[2].external ~= nil and directBox.template.content[2].external.slot
+)
+assert(directBox.template.content[2].props.position.x == 4)
+assert(directBox.template.content[2].props.position.y == 4)
+assert(directBox.template.content[2].props.size.x == -8)
+assert(directBox.template.content[2].props.size.y == -8)
+assert(
+  directBox.template.content[4].props.resource.path == 'textures/h3ui/chrome/coral_fort_wall_02.dds'
 )
 local directButton = button { label = 'Configured button' }
 local function findDescendant(layout, predicate)
@@ -241,8 +257,9 @@ local buttonLabel = findDescendant(
   function(layout) return layout.type == require('openmw.ui').TYPE.Text end
 )
 assert(buttonLabel and buttonLabel.props.textColor == appearance.token 'color.text')
+assert(directButton.template.content[1].name == 'h3ui_content')
 assert(
-  directButton.template.content[1].props.resource.path
+  directButton.template.content[2].props.resource.path
     == 'textures/h3ui/chrome/coral_fort_wall_02.dds'
 )
 assert(button({ label = 'Another button' }).template == directButton.template)

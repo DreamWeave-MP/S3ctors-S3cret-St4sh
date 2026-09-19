@@ -3,6 +3,7 @@
 local async = require 'openmw.async'
 local constants = require 'scripts.s3.ui.constants'
 local merge = require 'scripts.s3.ui.merge'
+local mutation = require 'scripts.s3.ui.mutation'
 
 local styleTargetMarker = {}
 
@@ -321,6 +322,21 @@ local function new(definitions)
     end
   end
 
+  local function applyInvalidation(options, adapter, invalidate)
+    if not invalidate or not adapter.invalidateOn then return end
+
+    local callbacks = adapter.invalidateOn
+    if type(callbacks) == 'string' then
+      options[callbacks] = mutation.invalidatingCallback(options[callbacks], invalidate)
+      return
+    end
+
+    for index = 1, #callbacks do
+      local name = callbacks[index]
+      options[name] = mutation.invalidatingCallback(options[name], invalidate)
+    end
+  end
+
   function registry.build(name, args, themeStyles, inlineStyles, stateStyles, invalidate)
     local adapter = registry.get(name)
     local options = {}
@@ -348,6 +364,8 @@ local function new(definitions)
       end
       markStyleTargets(options, adapter, activeSlots)
     end
+
+    applyInvalidation(options, adapter, invalidate)
 
     local layout = adapter.builder(options)
     if stateStyles then

@@ -2,6 +2,7 @@
 
 local constructors = require 'scripts.s3.ui.constructors'
 local merge = require 'scripts.s3.ui.merge'
+local mutation = require 'scripts.s3.ui.mutation'
 local node = require 'scripts.s3.ui.node'
 local themeModule = require 'scripts.s3.ui.theme'
 local token = require 'scripts.s3.ui.token'
@@ -125,7 +126,7 @@ local function new(registry, publicComponents)
     return recipeFunction, name
   end
 
-  local function recipeContext(scope, recipeName, spec, parentContext)
+  local function recipeContext(scope, recipeName, spec, parentContext, trace)
     local baseRecipe = recipeName
     local invalidate = spec.invalidate
     if invalidate == nil then invalidate = parentContext and parentContext.invalidate end
@@ -140,13 +141,20 @@ local function new(registry, publicComponents)
     }
 
     function context.component(name, childSpec)
-      return node.component(name, childSpec, {
+      childSpec = childSpec or {}
+      assert(merge.isPlainTable(childSpec), 'H3 UI component options must be a plain table')
+      local componentNode = node.component(name, childSpec, {
         recipe = baseRecipe,
         invalidate = invalidate,
       })
+      return resolveComponent(scope, componentNode, context, trace)
     end
 
     function context.token(path) return scope.token(path) end
+
+    function context.setChildren(layout, children)
+      mutation.setChildren(layout, children, invalidate)
+    end
 
     local function recipe(name, childSpec)
       childSpec = childSpec or {}
@@ -157,7 +165,7 @@ local function new(registry, publicComponents)
       )
       local nested = merge.shallowCopy(childSpec)
       nested.recipe = name
-      return node.recipe(nested)
+      return resolveRecipe(scope, name, nested, context, trace)
     end
 
     constructors(
@@ -173,7 +181,7 @@ local function new(registry, publicComponents)
 
   resolveRecipe = function(scope, recipeName, spec, parentContext, trace)
     local recipeFunction = findRecipe(scope, recipeName)
-    local context = recipeContext(scope, recipeName, spec, parentContext)
+    local context = recipeContext(scope, recipeName, spec, parentContext, trace)
     local result = recipeFunction(context, spec)
     return resolveValue(scope, result, context, trace)
   end

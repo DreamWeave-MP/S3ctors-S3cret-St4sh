@@ -12,10 +12,15 @@ Builds a TextEdit that preserves raw text while editing and normalizes it on foc
 
 ```lua
 local ui = require 'openmw.ui'
-local H3UI = require('openmw.interfaces').H3UI
+local I = require 'openmw.interfaces'
 
 local amount = 20
 local element
+local H3UI = I.H3UI.scope {
+  invalidate = function()
+    if element and element.layout then element:update() end
+  end,
+}
 
 element = ui.create {
   type = ui.TYPE.Container,
@@ -33,7 +38,6 @@ element = ui.create {
       end,
       onCommit = function(value)
         print('Committed:', value)
-        element:update()
       end,
     },
   },

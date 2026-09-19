@@ -1,7 +1,6 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
-local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local UtilVector2 = util.vector2
@@ -101,8 +100,7 @@ end
 ---@param state? table
 ---@return openmw.ui.Layout
 local function magicMenu(invalidate, rebuild, state)
-  local refresh = invalidate or function() end
-  rebuild = rebuild or refresh
+  rebuild = rebuild or function() end
   state = state or {}
   state.query = state.query or ''
   state.deleted = state.deleted or {}
@@ -142,10 +140,7 @@ local function magicMenu(invalidate, rebuild, state)
   end
 
   local spellBox
-  local function refilter()
-    spellBox.content = openmwUi.content { buildListBody() }
-    refresh()
-  end
+  local function refilter() ui.setChildren(spellBox, { buildListBody() }) end
 
   local effectIcons = { ui.spacer(4, 0) }
   for index = 1, #effectColors do
@@ -167,8 +162,6 @@ local function magicMenu(invalidate, rebuild, state)
     resizable = false,
     closable = false,
     pinnable = true,
-    onMove = refresh,
-    onPin = refresh,
     children = {
       ui.column {
         gap = 6,

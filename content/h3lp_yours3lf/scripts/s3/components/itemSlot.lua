@@ -4,8 +4,8 @@ local emptyOptions = {}
 
 local activationEvents = require 'scripts.s3.components.activationEvents'
 local appearance = require 'scripts.s3.ui.appearance'
-local chrome = require 'scripts.s3.ui.chrome'
 local image = require 'scripts.s3.components.image'
+local surface = require 'scripts.s3.ui.surface'
 local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -106,7 +106,7 @@ local function itemSlot(options)
     return layout
   end
 
-  return chrome.box {
+  return surface.build {
     skin = appearance.chrome 'frame.thin',
     name = layout.name,
     props = layout.props,

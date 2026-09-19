@@ -365,7 +365,7 @@ local function window(options)
       end
     end
 
-    content[#content + 1] = caption {
+    content[#content + 1] = caption({
       text = options.title,
       height = captionHeight,
       pinnable = options.pinnable,
@@ -375,7 +375,7 @@ local function window(options)
       onClose = options.onClose,
       textProps = options.captionTextProps,
       props = captionProps,
-    }
+    })
   end
 
   local innerBorderTop = border + (hasCaption and captionHeight or 0)

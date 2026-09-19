@@ -1,7 +1,6 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
-local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local UtilVector2 = util.vector2
@@ -284,8 +283,7 @@ end
 ---@param state? table
 ---@return openmw.ui.Layout
 local function inventoryPanel(invalidate, rebuild, state)
-  local refresh = invalidate or function() end
-  rebuild = rebuild or refresh
+  rebuild = rebuild or function() end
   state = state or {}
   initializeState(state)
 
@@ -347,9 +345,8 @@ local function inventoryPanel(invalidate, rebuild, state)
   local gridBox
   local detailBox
   local function refilter()
-    gridBox.content = openmwUi.content { buildGrid() }
-    detailBox.content = openmwUi.content { detailPanel(ui, rebuild, state, currentSelection()) }
-    refresh()
+    ui.setChildren(gridBox, { buildGrid() })
+    ui.setChildren(detailBox, { detailPanel(ui, rebuild, state, currentSelection()) })
   end
 
   local categoryButtons = {}
@@ -381,8 +378,6 @@ local function inventoryPanel(invalidate, rebuild, state)
     size = windowSize,
     resizable = false,
     pinnable = true,
-    onMove = refresh,
-    onPin = refresh,
     children = {
       ui.column {
         gap = 6,

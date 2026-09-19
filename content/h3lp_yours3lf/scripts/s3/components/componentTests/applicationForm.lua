@@ -29,8 +29,7 @@ end
 ---@param state? table
 ---@return openmw.ui.Layout
 local function applicationForm(invalidate, rebuild, state)
-  local refresh = invalidate or function() end
-  rebuild = rebuild or refresh
+  rebuild = rebuild or function() end
   state = state or {}
   initializeState(state)
 
@@ -45,20 +44,14 @@ local function applicationForm(invalidate, rebuild, state)
         label = 'Enabled',
         kind = 'toggle',
         value = state.enabled,
-        onChange = function(value)
-          state.enabled = value
-          rebuild()
-        end,
+        onChange = function(value) state.enabled = value end,
       },
       {
         label = 'Mode',
         kind = 'selector',
         items = modes,
         selected = state.selectedMode,
-        onSelect = function(index)
-          state.selectedMode = index
-          rebuild()
-        end,
+        onSelect = function(index) state.selectedMode = index end,
       },
       {
         label = 'Intensity',
@@ -68,10 +61,7 @@ local function applicationForm(invalidate, rebuild, state)
         max = 100,
         step = 5,
         props = { size = sliderSize },
-        onChange = function(value)
-          state.intensity = value
-          refresh()
-        end,
+        onChange = function(value) state.intensity = value end,
       },
     },
     children = {
@@ -93,10 +83,7 @@ local function applicationForm(invalidate, rebuild, state)
         kind = 'textInput',
         text = state.defaultFilter,
         props = { size = textInputSize },
-        onChange = function(value)
-          state.defaultFilter = value
-          refresh()
-        end,
+        onChange = function(value) state.defaultFilter = value end,
       },
       {
         label = 'Page size',
@@ -107,10 +94,7 @@ local function applicationForm(invalidate, rebuild, state)
         step = 5,
         integer = true,
         props = { size = numberSize },
-        onCommit = function(value)
-          state.pageSize = value
-          refresh()
-        end,
+        onCommit = function(value) state.pageSize = value end,
       },
     },
     children = {
@@ -124,10 +108,7 @@ local function applicationForm(invalidate, rebuild, state)
           'Doors',
           'Weapons',
         },
-        onQueryChange = function(value)
-          state.searchQuery = value
-          refresh()
-        end,
+        onQueryChange = function(value) state.searchQuery = value end,
       },
     },
   }
@@ -138,10 +119,7 @@ local function applicationForm(invalidate, rebuild, state)
     ui.collapsible {
       title = 'Experimental behavior',
       expanded = state.showExperimental,
-      onToggle = function(value)
-        state.showExperimental = value
-        rebuild()
-      end,
+      onToggle = function(value) state.showExperimental = value end,
       children = {
         ui.settings {
           fields = {
@@ -150,10 +128,7 @@ local function applicationForm(invalidate, rebuild, state)
               kind = 'toggle',
               value = state.unsafeMode,
               tone = 'negative',
-              onChange = function(value)
-                state.unsafeMode = value
-                rebuild()
-              end,
+              onChange = function(value) state.unsafeMode = value end,
             },
           },
         },
@@ -190,8 +165,6 @@ local function applicationForm(invalidate, rebuild, state)
     size = windowSize,
     resizable = false,
     pinnable = true,
-    onMove = refresh,
-    onPin = refresh,
     selected = state.selectedPage,
     tabs = {
       { label = 'General', content = general },

@@ -167,6 +167,7 @@ local environment = {
 ---@field section fun(spec?: H3UI.SectionOptions): openmw.ui.Layout
 ---@field component fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic component construction.
 ---@field recipe fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic recipe construction.
+---@field setChildren fun(layout: openmw.ui.Layout, children: openmw.ui.LayoutOrElement[]) Replace a mounted layout's content with fresh children and invalidate the owning scope.
 ---@field explain fun(spec: H3UI.ExplainSpec): table
 ---@field token fun(path: string): H3UI.TokenReference
 

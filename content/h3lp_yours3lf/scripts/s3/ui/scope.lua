@@ -2,6 +2,7 @@
 
 local constructors = require 'scripts.s3.ui.constructors'
 local merge = require 'scripts.s3.ui.merge'
+local mutation = require 'scripts.s3.ui.mutation'
 local token = require 'scripts.s3.ui.token'
 
 ---@class H3UI.ScopeOptions
@@ -54,6 +55,17 @@ local function new(options, environment)
 
   function scope.explain(spec) return environment.resolver.explain(scope, spec) end
   function scope.token(path) return token.ref(path) end
+
+  ---Replace a mounted layout's content with fresh child layouts and invalidate the owning scope.
+  ---Allocates one Content object. The layout keeps its identity; child layouts are rebuilt by the
+  ---caller. Removed layouts leave the rendered subtree on update; explicitly supplied Elements
+  ---remain caller-owned. Safe to call from event handlers, including handlers on widgets outside
+  ---the replaced subtree.
+  ---@param layout openmw.ui.Layout Mounted layout whose content is replaced.
+  ---@param children openmw.ui.LayoutOrElement[] Fresh child layouts.
+  function scope.setChildren(layout, children)
+    mutation.setChildren(layout, children, scope.invalidate)
+  end
 
   constructors(
     scope,

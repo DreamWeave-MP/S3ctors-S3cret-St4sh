@@ -1,7 +1,6 @@
 ---@omw-context menu|player
 
 local node = require 'scripts.s3.ui.node'
-local ui = require 'openmw.ui'
 
 local StrLower = string.lower
 
@@ -86,8 +85,7 @@ local function searchableList(ctx, spec)
   local resultsLayout
   local function applyQuery(value, layout)
     if spec.onQueryChange then spec.onQueryChange(value, layout) end
-    resultsLayout.content = ui.content(matchingEntries(value))
-    if ctx.invalidate then ctx.invalidate() end
+    ctx.setChildren(resultsLayout, matchingEntries(value))
   end
 
   local children = {

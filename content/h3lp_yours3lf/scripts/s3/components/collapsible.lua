@@ -31,6 +31,7 @@ local function collapsible(options)
   local body = options.content or options.children
   body = body or emptyContent
   local bodyLayout
+  local rootLayout
   local expandedLabel = expandedPrefix .. options.title
   local collapsedLabel = collapsedPrefix .. options.title
 
@@ -45,7 +46,12 @@ local function collapsible(options)
   local function setExpanded(nextExpanded, headerLayout)
     expanded = nextExpanded
     labelLayout(headerLayout).props.text = expanded and expandedLabel or collapsedLabel
-    bodyLayout.props.visible = expanded
+    local content = rootLayout.content
+    if expanded then
+      content:add(bodyLayout)
+    else
+      content.body = nil
+    end
   end
 
   local header = button {
@@ -62,20 +68,21 @@ local function collapsible(options)
 
   bodyLayout = column {
     name = 'body',
-    props = {
-      visible = expanded,
-    },
     children = body,
   }
 
-  return column {
+  local children = { header }
+  if expanded then children[#children + 1] = bodyLayout end
+
+  rootLayout = column {
     name = options.name,
     props = options.props,
     external = options.external,
     userData = options.userData,
     events = options.events,
-    children = { header, bodyLayout },
+    children = children,
   }
+  return rootLayout
 end
 
 return collapsible

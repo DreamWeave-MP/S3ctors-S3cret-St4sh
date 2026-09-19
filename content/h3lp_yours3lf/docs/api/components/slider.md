@@ -13,13 +13,18 @@ Builds a [meter](@/h3lp_yours3lf/docs/api/components/meter.md)-based horizontal 
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local H3UI = require('openmw.interfaces').H3UI
+local I = require 'openmw.interfaces'
 
 local value = 50
+local element
+local H3UI = I.H3UI.scope {
+  invalidate = function()
+    if element and element.layout then element:update() end
+  end,
+}
 local readout = H3UI.text {
   text = '50%',
 }
-local element
 
 element = ui.create {
   type = ui.TYPE.Container,
@@ -38,7 +43,6 @@ element = ui.create {
           onChange = function(nextValue)
             value = nextValue
             readout.props.text = tostring(nextValue) .. '%'
-            element:update()
           end,
         },
         readout,

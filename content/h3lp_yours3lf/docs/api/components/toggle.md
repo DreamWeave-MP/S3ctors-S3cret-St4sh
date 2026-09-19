@@ -12,13 +12,18 @@ Builds an H3UI button whose label reflects a boolean value. `value` defaults to 
 
 ```lua
 local ui = require 'openmw.ui'
-local H3UI = require('openmw.interfaces').H3UI
+local I = require 'openmw.interfaces'
 
 local enabled = true
+local element
+local H3UI = I.H3UI.scope {
+  invalidate = function()
+    if element and element.layout then element:update() end
+  end,
+}
 local status = H3UI.text {
   text = 'Enabled',
 }
-local element
 
 element = ui.create {
   type = ui.TYPE.Container,
@@ -32,7 +37,6 @@ element = ui.create {
           onChange = function(value)
             enabled = value
             status.props.text = value and 'Enabled' or 'Disabled'
-            element:update()
           end,
         },
         status,

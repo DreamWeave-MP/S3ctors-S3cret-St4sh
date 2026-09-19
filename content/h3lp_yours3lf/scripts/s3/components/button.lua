@@ -5,6 +5,7 @@ local activationEvents = require 'scripts.s3.components.activationEvents'
 local appearance = require 'scripts.s3.ui.appearance'
 local chrome = require 'scripts.s3.ui.chrome'
 local inset = require 'scripts.s3.components.inset'
+local surface = require 'scripts.s3.ui.surface'
 local text = require 'scripts.s3.components.text'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
@@ -88,7 +89,7 @@ local function button(options)
     }
   end
 
-  local frame = fixedSize and chrome.frame or chrome.box
+  local frame = fixedSize and chrome.frame or surface.build
   return frame {
     skin = appearance.chrome 'frame.button',
     name = options.name,
