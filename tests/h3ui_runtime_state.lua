@@ -695,7 +695,8 @@ end
 
 local function testItemSlotChrome()
   local layout = itemSlot {}
-  assert(layout.template.content.h3ui_topLeft.props.color == 'chrome-border')
+  assert(layout.template == nil)
+  assert(layout.content[1].template.content.h3ui_topLeft.props.color == 'chrome-border')
 
   local customTemplate = {}
   assert(itemSlot({ template = customTemplate }).template == customTemplate)
@@ -1181,7 +1182,19 @@ local function testSelectionSurfaceTarget()
     publicComponents = { 'itemSlot' },
   })
   local layout = selectionScope.itemSlot { resource = { path = 'white' } }
+  assert(layout.template == nil)
+  assert(layout.type == 'Container')
+  assert(#layout.content == 2)
+  local normal = layout.content[1]
   local overlay = layout.content[2]
+  assert(normal.template ~= nil)
+  assert(overlay.template ~= nil)
+  assert(normal.template ~= overlay.template)
+  assert(normal.content[1].name == 'icon')
+  assert(normal.content[1] ~= overlay)
+  assert(normal.content[2] ~= overlay)
+  assert(overlay.props.relativeSize.x == 1 and overlay.props.relativeSize.y == 1)
+  assert(overlay.props.ignorePointerEvents == true)
   assert(overlay.props.visible == false)
   selectionScope.setSelected(layout, true)
   assert(overlay.props.visible == true, tostring(overlay.props.visible))
@@ -1189,8 +1202,66 @@ local function testSelectionSurfaceTarget()
   assert(overlay.props.visible == false)
 
   local secondLayout = selectionScope.itemSlot { resource = { path = 'white' } }
-  assert(layout.template == secondLayout.template)
-  assert(overlay.template == secondLayout.content[2].template)
+  assert(secondLayout.content[1].template == normal.template)
+  assert(secondLayout.content[2].template == overlay.template)
+end
+
+local function testSelectionFixedGeometry()
+  local selectionRegistry = newRegistry {
+    itemSlot = {
+      builder = itemSlot,
+      selectable = true,
+      slots = {
+        root = { props = 'props', external = 'external' },
+        icon = { props = 'iconProps' },
+        count = { props = 'countProps' },
+        selectedChrome = { props = 'selectionProps', retained = true },
+      },
+    },
+  }
+  local selectionResolver = newResolver(selectionRegistry, { 'itemSlot' })
+  local selectionTheme = themeModule.new({
+    name = 'selection-fixed',
+    rules = {
+      {
+        selector = { component = 'itemSlot', slot = 'selectedChrome', selected = true },
+        style = { props = { visible = true } },
+      },
+    },
+  }, selectionRegistry)
+  local selectionScope = newScope({ invalidate = function() end }, {
+    resolveTheme = function() return selectionTheme end,
+    recipes = {},
+    resolver = selectionResolver,
+    registry = selectionRegistry,
+    publicComponents = { 'itemSlot' },
+  })
+  local layout = selectionScope.itemSlot {
+    resource = { path = 'white' },
+    props = { size = { x = 58, y = 58 } },
+  }
+  assert(layout.template == nil)
+  assert(layout.type == 'Widget')
+  assert(layout.props.size.x == 58 and layout.props.size.y == 58)
+  assert(#layout.content == 2)
+  local normal = layout.content[1]
+  local overlay = layout.content[2]
+  assert(normal.type == 'Widget')
+  assert(normal.props.relativeSize.x == 1 and normal.props.relativeSize.y == 1)
+  assert(overlay.props.relativeSize.x == 1 and overlay.props.relativeSize.y == 1)
+  assert(normal.template ~= overlay.template)
+  assert(overlay.props.visible == false)
+  selectionScope.setSelected(layout, true)
+  assert(overlay.props.visible == true)
+  selectionScope.setSelected(layout, false)
+  assert(overlay.props.visible == false)
+
+  local secondLayout = selectionScope.itemSlot {
+    resource = { path = 'white' },
+    props = { size = { x = 58, y = 58 } },
+  }
+  assert(secondLayout.content[1].template == normal.template)
+  assert(secondLayout.content[2].template == overlay.template)
 end
 
 local function testCollectionActivationDispatch()
@@ -1336,6 +1407,7 @@ testChildScopes()
 testSemanticPatchAndSelection()
 testSelectionFallbackBaseline()
 testSelectionSurfaceTarget()
+testSelectionFixedGeometry()
 testCollectionActivationDispatch()
 testSearchableListRegion()
 testCollapsibleReattachment()
