@@ -32,7 +32,7 @@ H3 components are passive layout builders. Application code normally reaches the
 
 ```lua
 local I = require 'openmw.interfaces'
-local ui = I.H3UI.scope { invalidate = refresh }
+local ui = I.H3UI.scope()
 
 local layout = ui.column {
     gap = 8,
@@ -44,7 +44,7 @@ local layout = ui.column {
 }
 ```
 
-The pages in this section document the option contracts behind those constructors. You should not need one `require` per component in ordinary mod code.
+The pages in this section document the option contracts behind those constructors. You should not need one `require` per component in ordinary mod code. Examples in this section assume `ui` is an H3UI scope. See [Mounting interactive UI](@/h3lp_yours3lf/docs/api/interfaces/h3ui.md) for attaching that scope to an OpenMW Element.
 
 H3UI returns normal OpenMW layouts; it does not create elements, choose layers, retain application state, or own a rendered surface. Start with [UI Layouts and Lifecycle](@/h3lp_yours3lf/docs/concepts/ui-components.md), then use the [application recipes](@/h3lp_yours3lf/docs/examples/ui-recipes.md) for complete copyable surfaces.
 

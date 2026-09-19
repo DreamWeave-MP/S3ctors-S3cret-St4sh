@@ -11,38 +11,23 @@ Builds a horizontal row of buttons. The selected tab gets its selected button an
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
-local I = require 'openmw.interfaces'
-
 local pages = {
   'General',
   'Advanced',
 }
-local element
-local H3UI = I.H3UI.scope {
-  invalidate = function()
-    if element and element.layout then element:update() end
-  end,
-}
-local page = H3UI.text {
+local page = ui.text {
   text = pages[1],
 }
 
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    H3UI.column {
-      children = {
-        H3UI.tabs {
-          items = pages,
-          onSelect = function(_, label)
-            page.props.text = 'Showing ' .. label
-          end,
-        },
-        page,
-      },
+ui.column {
+  children = {
+    ui.tabs {
+      items = pages,
+      onSelect = function(_, label)
+        page.props.text = 'Showing ' .. label
+      end,
     },
+    page,
   },
 }
 ```

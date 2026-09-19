@@ -7,6 +7,7 @@ local token = require 'scripts.s3.ui.token'
 
 ---@class H3UI.ScopeOptions
 ---@field invalidate? fun() Called when H3UI-owned interaction or recipe state needs a mounted Element update.
+---@field element? fun(): openmw.ui.Element? Returns the currently mounted OpenMW UI element owned by this scope.
 ---@field recipes? table<string, function>
 
 ---@param options? H3UI.ScopeOptions
@@ -19,6 +20,18 @@ local function new(options, environment)
 
   if options.invalidate ~= nil then
     assert(type(options.invalidate) == 'function', 'H3 UI invalidate must be a function')
+  end
+  if options.element ~= nil then
+    assert(type(options.element) == 'function', 'H3 UI element must be a function')
+  end
+
+  local invalidate = options.invalidate
+  if invalidate == nil and options.element then
+    local resolveElement = options.element
+    invalidate = function()
+      local element = resolveElement()
+      if element and element.layout then element:update() end
+    end
   end
 
   local recipes = {}
@@ -36,7 +49,7 @@ local function new(options, environment)
   end
 
   local scope = {
-    invalidate = options.invalidate,
+    invalidate = invalidate,
     recipes = recipes,
     resolveTheme = environment.resolveTheme,
   }

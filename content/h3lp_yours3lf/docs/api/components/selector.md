@@ -11,35 +11,20 @@ Builds a horizontal row containing previous, value, and next controls. Items may
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
-local I = require 'openmw.interfaces'
-
 local modes = {
   'Compact',
   'Balanced',
   'Verbose',
 }
 local selected = 2
-local element
-local H3UI = I.H3UI.scope {
-  invalidate = function()
-    if element and element.layout then element:update() end
-  end,
-}
 
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    H3UI.selector {
-      items = modes,
-      selected = selected,
-      onSelect = function(index, item)
-        selected = index
-        print('Mode:', item)
-      end,
-    },
-  },
+ui.selector {
+  items = modes,
+  selected = selected,
+  onSelect = function(index, item)
+    selected = index
+    print('Mode:', item)
+  end,
 }
 ```
 

@@ -162,12 +162,12 @@ Raw `events` remain available for behavior outside a component's semantic contra
 
 ## Scopes
 
-Use a scope when a mounted surface needs an invalidation callback or local recipes:
+Use a scope when a mounted surface needs redraws or local recipes:
 
 ```lua
 local ui = I.H3UI.scope {
-    invalidate = function()
-        if element and element.layout then element:update() end
+    element = function()
+        return element
     end,
 }
 ```
@@ -207,6 +207,43 @@ end
 ```
 
 The layout keeps its identity; child layouts are rebuilt by the caller. Removed layouts leave the rendered subtree on update; explicitly supplied Elements remain caller-owned. Safe to call from event handlers, including handlers on widgets outside the replaced subtree. Call it once per structural change rather than once per mutated property.
+
+## Mounting interactive UI
+
+H3UI builds layouts; the application mounts them. Give the scope a function returning the mounted element; semantic controls then redraw themselves with no further plumbing:
+
+```lua
+local openmwUi = require 'openmw.ui'
+local I = require 'openmw.interfaces'
+
+local element
+
+local ui = I.H3UI.scope {
+    element = function()
+        return element
+    end,
+}
+
+local enabled = true
+
+local layout = ui.window {
+    title = 'My Mod',
+
+    ui.toggle {
+        value = enabled,
+        onChange = function(value)
+            enabled = value
+        end,
+    },
+}
+
+element = openmwUi.create {
+    layer = 'Windows',
+    content = openmwUi.content { layout },
+}
+```
+
+The closure captures the local before the element exists, and keeps returning whatever it currently holds if the application ever destroys and recreates the element. Ownership stays split: the application owns `ui.create`, the layer, the element lifetime, destruction, and application state. H3 manages the layouts it constructs, their semantic mutations, and redrawing those layouts. Passing `invalidate` to `I.H3UI.scope` instead remains available as an escape hatch when redraw needs custom handling.
 
 ## Advanced dynamic construction
 

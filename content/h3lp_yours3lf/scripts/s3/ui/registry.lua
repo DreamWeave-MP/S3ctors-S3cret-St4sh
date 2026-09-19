@@ -327,13 +327,13 @@ local function new(definitions)
 
     local callbacks = adapter.invalidateOn
     if type(callbacks) == 'string' then
-      options[callbacks] = mutation.invalidatingCallback(options[callbacks], invalidate)
+      options[callbacks] = mutation.invalidateAfter(options[callbacks], invalidate)
       return
     end
 
     for index = 1, #callbacks do
       local name = callbacks[index]
-      options[name] = mutation.invalidatingCallback(options[name], invalidate)
+      options[name] = mutation.invalidateAfter(options[name], invalidate)
     end
   end
 

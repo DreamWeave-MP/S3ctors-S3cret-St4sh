@@ -780,6 +780,49 @@ local function testSetChildren()
   assert(invalidations == 2)
 end
 
+local function testScopeElementResolver()
+  local updated = 0
+  local fakeElement = {
+    layout = {},
+    update = function() updated = updated + 1 end,
+  }
+  local current = nil
+  local scoped = newScope({
+    element = function() return current end,
+  }, {
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+    resolver = resolver,
+    publicComponents = {},
+  })
+  local holder = { name = 'holder', content = ui.content {} }
+  scoped.setChildren(holder, { { name = 'child' } })
+  assert(updated == 0)
+  current = fakeElement
+  scoped.setChildren(holder, { { name = 'other' } })
+  assert(updated == 1)
+  current = nil
+  scoped.setChildren(holder, { { name = 'again' } })
+  assert(updated == 1)
+
+  local customCalls = 0
+  local resolveCalls = 0
+  local explicit = newScope({
+    invalidate = function() customCalls = customCalls + 1 end,
+    element = function()
+      resolveCalls = resolveCalls + 1
+      return fakeElement
+    end,
+  }, {
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+    resolver = resolver,
+    publicComponents = {},
+  })
+  explicit.setChildren(holder, { { name = 'explicit' } })
+  assert(customCalls == 1 and resolveCalls == 0)
+end
+
 local function testCollapsibleReattachment()
   local toggles = 0
   local invalidations = 0
@@ -850,6 +893,7 @@ testTextInputDefaults()
 testImmediateRecipeConstructors()
 testInvalidatorCallbackOrder()
 testSetChildren()
+testScopeElementResolver()
 testCollapsibleReattachment()
 
 print 'H3UI runtime state tests passed'

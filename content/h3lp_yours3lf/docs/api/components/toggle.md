@@ -11,37 +11,22 @@ Builds an H3UI button whose label reflects a boolean value. `value` defaults to 
 ## Example
 
 ```lua
-local ui = require 'openmw.ui'
-local I = require 'openmw.interfaces'
-
 local enabled = true
-local element
-local H3UI = I.H3UI.scope {
-  invalidate = function()
-    if element and element.layout then element:update() end
-  end,
-}
-local status = H3UI.text {
+local status = ui.text {
   text = 'Enabled',
 }
 
-element = ui.create {
-  type = ui.TYPE.Container,
-  layer = 'Windows',
-  content = ui.content {
-    H3UI.column {
-      children = {
-        H3UI.toggle {
-          label = 'Sound',
-          value = enabled,
-          onChange = function(value)
-            enabled = value
-            status.props.text = value and 'Enabled' or 'Disabled'
-          end,
-        },
-        status,
-      },
+ui.column {
+  children = {
+    ui.toggle {
+      label = 'Sound',
+      value = enabled,
+      onChange = function(value)
+        enabled = value
+        status.props.text = value and 'Enabled' or 'Disabled'
+      end,
     },
+    status,
   },
 }
 ```
