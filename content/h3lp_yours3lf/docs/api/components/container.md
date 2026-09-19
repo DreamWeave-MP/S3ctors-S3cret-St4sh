@@ -17,9 +17,9 @@ Builds a plain `ui.TYPE.Container` that groups child layouts without adding H3UI
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local column = require 'scripts.s3.components.column'
-local container = require 'scripts.s3.components.container'
-local text = require 'scripts.s3.components.text'
+local column = require 'scripts.h3.components.column'
+local container = require 'scripts.h3.components.container'
+local text = require 'scripts.h3.components.text'
 
 ui.create {
   type = ui.TYPE.Container,

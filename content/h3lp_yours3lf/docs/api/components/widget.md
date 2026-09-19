@@ -17,8 +17,8 @@ Builds a plain `ui.TYPE.Widget`, optionally containing child layouts. Use it for
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local widget = require 'scripts.s3.components.widget'
-local text = require 'scripts.s3.components.text'
+local widget = require 'scripts.h3.components.widget'
+local text = require 'scripts.h3.components.text'
 
 ui.create {
   layer = 'Windows',

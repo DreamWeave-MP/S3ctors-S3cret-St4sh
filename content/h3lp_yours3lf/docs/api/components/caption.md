@@ -17,7 +17,7 @@ Builds a horizontal title strip from head blocks and centered text. It can appen
 ```lua
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
-local caption = require 'scripts.s3.components.caption'
+local caption = require 'scripts.h3.components.caption'
 
 ui.create {
   layer = 'Windows',
