@@ -1,6 +1,7 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
+local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local UtilVector2 = util.vector2
@@ -68,23 +69,22 @@ local function effectIcon(ui, index)
   }
 end
 
-local function entry(ui, rebuild, state, item)
+local function entry(ui, selectSpell, state, item)
   return ui.listItem {
     label = item.name,
     secondary = item.secondary,
     selected = state.selected == item.name,
     onActivate = function()
-      state.selected = item.name
-      rebuild()
+      selectSpell(item.name)
       return true
     end,
   }
 end
 
-local function section(ui, rebuild, state, title, secondary, items)
+local function section(ui, selectSpell, state, title, secondary, items)
   local children = {}
   for index = 1, #items do
-    children[#children + 1] = entry(ui, rebuild, state, items[index])
+    children[#children + 1] = entry(ui, selectSpell, state, items[index])
   end
 
   return ui.section {
@@ -93,6 +93,21 @@ local function section(ui, rebuild, state, title, secondary, items)
     gap = 1,
     children = children,
   }
+end
+
+local function findCaptionText(windowLayout)
+  local caption = windowLayout.content[2]
+  if caption == nil then return nil end
+  for index = 1, #caption.content do
+    local child = caption.content[index]
+    if child.name == 'text' and child.content ~= nil then
+      for subIndex = 1, #child.content do
+        local sub = child.content[subIndex]
+        if sub.type == openmwUi.TYPE.Text then return sub end
+      end
+    end
+  end
+  return nil
 end
 
 ---@param invalidate? fun()
@@ -105,56 +120,79 @@ local function magicMenu(invalidate, rebuild, state)
   state.query = state.query or ''
   state.deleted = state.deleted or {}
 
-  local ui = I.H3UI.scope { invalidate = invalidate }
+  local shellUi = I.H3UI.scope { invalidate = invalidate }
+
+  local listElement
+  local listUi = I.H3UI.scope {
+    element = function() return listElement end,
+  }
+
+  local spellBox
+  local titleText
+  local selectSpell
 
   local function buildListBody()
     local listChildren = {}
 
     local visiblePowers = filtered(powers, state)
     if next(visiblePowers) ~= nil then
-      listChildren[#listChildren + 1] = section(ui, rebuild, state, 'Powers', nil, visiblePowers)
+      listChildren[#listChildren + 1] =
+        section(listUi, selectSpell, state, 'Powers', nil, visiblePowers)
     end
     local visibleSpells = filtered(spells, state)
     if next(visibleSpells) ~= nil then
       listChildren[#listChildren + 1] =
-        section(ui, rebuild, state, 'Spells', 'Cost/Chance', visibleSpells)
+        section(listUi, selectSpell, state, 'Spells', 'Cost/Chance', visibleSpells)
     end
     local visibleItems = filtered(enchantedItems, state)
     if next(visibleItems) ~= nil then
       listChildren[#listChildren + 1] =
-        section(ui, rebuild, state, 'Magic Items', 'Charge', visibleItems)
+        section(listUi, selectSpell, state, 'Magic Items', 'Charge', visibleItems)
     end
 
     if next(listChildren) == nil then
-      listChildren[1] = ui.text {
+      listChildren[1] = listUi.text {
         text = 'No spells or magic items match this filter.',
         tone = 'muted',
       }
     end
 
-    return ui.column {
+    return listUi.column {
       gap = 4,
       props = { autoSize = false, relativeSize = fullSize },
       children = listChildren,
     }
   end
 
-  local spellBox
-  local function refilter() ui.setChildren(spellBox, { buildListBody() }) end
-
-  local effectIcons = { ui.spacer(4, 0) }
-  for index = 1, #effectColors do
-    effectIcons[#effectIcons + 1] = effectIcon(ui, index)
+  local function updateTitle()
+    if titleText then titleText.props.text = state.selected or 'None' end
   end
 
-  local listBody = buildListBody()
+  local function refreshShell()
+    if shellUi.invalidate then shellUi.invalidate() end
+  end
 
-  spellBox = ui.box {
+  function selectSpell(name)
+    state.selected = name
+    listUi.setChildren(spellBox, { buildListBody() })
+    updateTitle()
+    refreshShell()
+  end
+
+  local function refilter() listUi.setChildren(spellBox, { buildListBody() }) end
+
+  local effectIcons = { shellUi.spacer(4, 0) }
+  for index = 1, #effectColors do
+    effectIcons[#effectIcons + 1] = effectIcon(shellUi, index)
+  end
+
+  spellBox = listUi.box {
     props = { size = spellListSize },
-    children = { listBody },
+    children = { buildListBody() },
   }
+  listElement = openmwUi.create(spellBox)
 
-  return ui.window {
+  local windowLayout = shellUi.window {
     name = 'ct_demo_magic_menu',
     title = state.selected or 'None',
     size = menuSize,
@@ -163,12 +201,12 @@ local function magicMenu(invalidate, rebuild, state)
     closable = false,
     pinnable = true,
     children = {
-      ui.column {
+      shellUi.column {
         gap = 6,
-        ui.box {
+        shellUi.box {
           props = { size = effectStripSize },
           children = {
-            ui.row {
+            shellUi.row {
               gap = 2,
               props = {
                 anchor = UtilVector2(0, 0.5),
@@ -178,10 +216,10 @@ local function magicMenu(invalidate, rebuild, state)
             },
           },
         },
-        spellBox,
-        ui.row {
+        listElement,
+        shellUi.row {
           gap = 4,
-          ui.searchInput {
+          shellUi.searchInput {
             value = state.query,
             clearable = false,
             inputProps = { size = filterSize },
@@ -190,15 +228,17 @@ local function magicMenu(invalidate, rebuild, state)
               refilter()
             end,
           },
-          ui.spacer(8, 0),
-          ui.button {
+          shellUi.spacer(8, 0),
+          shellUi.button {
             label = 'Delete',
             tone = 'negative',
             onActivate = function()
               if state.selected == nil then return true end
               state.deleted[state.selected] = true
               state.selected = nil
-              rebuild()
+              listUi.setChildren(spellBox, { buildListBody() })
+              updateTitle()
+              refreshShell()
               return true
             end,
           },
@@ -206,6 +246,11 @@ local function magicMenu(invalidate, rebuild, state)
       },
     },
   }
+
+  titleText = findCaptionText(windowLayout)
+  assert(titleText ~= nil, 'H3 magic menu fixture requires a caption text layout')
+
+  return windowLayout
 end
 
 return magicMenu

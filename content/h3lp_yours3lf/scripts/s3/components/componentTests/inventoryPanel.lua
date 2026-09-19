@@ -1,6 +1,7 @@
 ---@omw-context player
 
 local I = require 'openmw.interfaces'
+local openmwUi = require 'openmw.ui'
 local util = require 'openmw.util'
 
 local UtilVector2 = util.vector2
@@ -206,78 +207,6 @@ local function statRow(ui, label, value)
   }
 end
 
-local function detailPanel(ui, rebuild, state, selected)
-  if selected == nil then
-    return ui.column {
-      gap = 8,
-      props = { relativeSize = relativeWidth },
-      ui.text { text = 'No matching items', role = 'title' },
-      ui.divider(),
-      ui.text {
-        text = 'Change the category or search filter to bring inventory items back into view.',
-        tone = 'muted',
-      },
-    }
-  end
-
-  local children = {
-    ui.section {
-      title = selected.name,
-      secondary = selected.category,
-      gap = 4,
-      statRow(ui, 'Weight', selected.weight),
-      statRow(ui, 'Value', selected.value),
-    },
-  }
-
-  if selected.condition ~= nil then
-    children[#children + 1] = ui.text 'Condition'
-    children[#children + 1] = ui.meter {
-      value = selected.condition,
-      max = selected.maxCondition,
-      props = { size = meterSize },
-    }
-  end
-
-  if state.equipped[selected.name] then
-    children[#children + 1] = ui.text { text = 'Equipped', tone = 'positive' }
-  end
-
-  children[#children + 1] = ui.spacer { grow = 1 }
-  children[#children + 1] = ui.row {
-    gap = 6,
-    ui.button {
-      label = state.equipped[selected.name] and 'Unequip' or 'Equip',
-      tone = state.equipped[selected.name] and 'link' or 'positive',
-      onActivate = function()
-        state.equipped[selected.name] = not state.equipped[selected.name]
-        rebuild()
-        return true
-      end,
-    },
-    ui.button {
-      label = 'Drop',
-      tone = 'negative',
-      onActivate = function()
-        local count = state.counts[selected.name] or 0
-        if count > 0 then state.counts[selected.name] = count - 1 end
-        if state.counts[selected.name] <= 0 then
-          state.selected = nil
-          state.equipped[selected.name] = nil
-        end
-        rebuild()
-        return true
-      end,
-    },
-  }
-
-  return ui.column {
-    gap = 8,
-    props = { autoSize = false, relativeSize = fullSize },
-    children = children,
-  }
-end
-
 ---@param invalidate? fun()
 ---@param rebuild? fun()
 ---@param state? table
@@ -287,7 +216,24 @@ local function inventoryPanel(invalidate, rebuild, state)
   state = state or {}
   initializeState(state)
 
-  local ui = I.H3UI.scope { invalidate = invalidate }
+  local shellUi = I.H3UI.scope { invalidate = invalidate }
+
+  local gridElement
+  local gridUi = I.H3UI.scope {
+    element = function() return gridElement end,
+  }
+  local detailElement
+  local detailUi = I.H3UI.scope {
+    element = function() return detailElement end,
+  }
+
+  local selectItem
+  local refilter
+  local buildFooter
+  local tabsRow
+  local gridBox
+  local detailBox
+  local footerRow
 
   local function currentSelection()
     local selected = findItem(state.selected)
@@ -306,8 +252,6 @@ local function inventoryPanel(invalidate, rebuild, state)
     return selected
   end
 
-  local selected = currentSelection()
-
   local function buildItems()
     local result = {}
     local fresh = visibleItems(state)
@@ -320,8 +264,7 @@ local function inventoryPanel(invalidate, rebuild, state)
         props = { size = slotSize },
         iconProps = { size = iconSize, color = item.color },
         onActivate = function()
-          state.selected = item.name
-          rebuild()
+          selectItem(item.name)
           return true
         end,
       }
@@ -330,7 +273,7 @@ local function inventoryPanel(invalidate, rebuild, state)
   end
 
   local function buildGrid()
-    return ui.itemGrid {
+    return gridUi.itemGrid {
       columns = 4,
       columnGap = 4,
       rowGap = 4,
@@ -342,70 +285,167 @@ local function inventoryPanel(invalidate, rebuild, state)
     }
   end
 
-  local gridBox
-  local detailBox
-  local function refilter()
-    ui.setChildren(gridBox, { buildGrid() })
-    ui.setChildren(detailBox, { detailPanel(ui, rebuild, state, currentSelection()) })
-  end
+  local function detailPanel()
+    local selected = currentSelection()
+    if selected == nil then
+      return detailUi.column {
+        gap = 8,
+        props = { relativeSize = relativeWidth },
+        detailUi.text { text = 'No matching items', role = 'title' },
+        detailUi.divider(),
+        detailUi.text {
+          text = 'Change the category or search filter to bring inventory items back into view.',
+          tone = 'muted',
+        },
+      }
+    end
 
-  local categoryButtons = {}
-  for index = 1, #categories do
-    local category = categories[index]
-    categoryButtons[index] = ui.button {
-      label = category,
-      tone = state.category == category and 'link' or nil,
-      onActivate = function()
-        state.category = category
-        rebuild()
-        return true
-      end,
+    local children = {
+      detailUi.section {
+        title = selected.name,
+        secondary = selected.category,
+        gap = 4,
+        statRow(detailUi, 'Weight', selected.weight),
+        statRow(detailUi, 'Value', selected.value),
+      },
+    }
+
+    if selected.condition ~= nil then
+      children[#children + 1] = detailUi.text 'Condition'
+      children[#children + 1] = detailUi.meter {
+        value = selected.condition,
+        max = selected.maxCondition,
+        props = { size = meterSize },
+      }
+    end
+
+    if state.equipped[selected.name] then
+      children[#children + 1] = detailUi.text { text = 'Equipped', tone = 'positive' }
+    end
+
+    children[#children + 1] = detailUi.spacer { grow = 1 }
+    children[#children + 1] = detailUi.row {
+      gap = 6,
+      detailUi.button {
+        label = state.equipped[selected.name] and 'Unequip' or 'Equip',
+        tone = state.equipped[selected.name] and 'link' or 'positive',
+        onActivate = function()
+          state.equipped[selected.name] = not state.equipped[selected.name]
+          detailUi.setChildren(detailBox, { detailPanel() })
+          return true
+        end,
+      },
+      detailUi.button {
+        label = 'Drop',
+        tone = 'negative',
+        onActivate = function()
+          local count = state.counts[selected.name] or 0
+          if count > 0 then state.counts[selected.name] = count - 1 end
+          if state.counts[selected.name] <= 0 then
+            state.selected = nil
+            state.equipped[selected.name] = nil
+          end
+          gridUi.setChildren(gridBox, { buildGrid() })
+          detailUi.setChildren(detailBox, { detailPanel() })
+          shellUi.setChildren(footerRow, buildFooter())
+          return true
+        end,
+      },
+    }
+
+    return detailUi.column {
+      gap = 8,
+      props = { autoSize = false, relativeSize = fullSize },
+      children = children,
     }
   end
 
-  gridBox = ui.box {
+  function buildFooter()
+    return {
+      shellUi.searchInput {
+        value = state.query,
+        inputProps = { size = searchSize },
+        onChange = function(value)
+          state.query = value
+          refilter()
+        end,
+      },
+      shellUi.spacer { grow = 1 },
+      shellUi.text(('Carry %.1f / 300'):format(carryWeight(state))),
+      shellUi.text 'Gold 1,247',
+    }
+  end
+
+  local function buildCategoryButtons()
+    local buttons = {}
+    for index = 1, #categories do
+      local category = categories[index]
+      buttons[index] = shellUi.button {
+        label = category,
+        tone = state.category == category and 'link' or nil,
+        onActivate = function()
+          state.category = category
+          shellUi.setChildren(tabsRow, buildCategoryButtons())
+          gridUi.setChildren(gridBox, { buildGrid() })
+          detailUi.setChildren(detailBox, { detailPanel() })
+          return true
+        end,
+      }
+    end
+    return buttons
+  end
+
+  function selectItem(name)
+    state.selected = name
+    gridUi.setChildren(gridBox, { buildGrid() })
+    detailUi.setChildren(detailBox, { detailPanel() })
+  end
+
+  function refilter()
+    gridUi.setChildren(gridBox, { buildGrid() })
+    detailUi.setChildren(detailBox, { detailPanel() })
+  end
+
+  tabsRow = shellUi.row {
+    gap = 4,
+    children = buildCategoryButtons(),
+  }
+
+  gridBox = gridUi.box {
     props = { size = gridSize },
     children = { buildGrid() },
   }
-  detailBox = ui.box {
+  gridElement = openmwUi.create(gridBox)
+
+  detailBox = detailUi.box {
     props = { size = detailSize },
-    children = { detailPanel(ui, rebuild, state, selected) },
+    children = { detailPanel() },
+  }
+  detailElement = openmwUi.create(detailBox)
+
+  footerRow = shellUi.row {
+    gap = 8,
+    children = buildFooter(),
   }
 
-  return ui.window {
+  return shellUi.window {
     name = 'ct_demo_inventory_panel',
     title = 'Inventory Pattern',
     size = windowSize,
     resizable = false,
     pinnable = true,
     children = {
-      ui.column {
+      shellUi.column {
         gap = 6,
         props = { autoSize = false, relativeSize = fullSize },
-        ui.row {
-          gap = 4,
-          children = categoryButtons,
-        },
-        ui.row {
+        tabsRow,
+        shellUi.row {
           gap = 8,
-          gridBox,
-          detailBox,
+          gridElement,
+          detailElement,
         },
-        ui.spacer { grow = 1 },
-        ui.row {
-          gap = 8,
-          ui.searchInput {
-            value = state.query,
-            inputProps = { size = searchSize },
-            onChange = function(value)
-              state.query = value
-              refilter()
-            end,
-          },
-          ui.spacer { grow = 1 },
-          ui.text(('Carry %.1f / 300'):format(carryWeight(state))),
-          ui.text 'Gold 1,247',
-        },
+        shellUi.spacer { grow = 1 },
+        footerRow,
       },
     },
   }
