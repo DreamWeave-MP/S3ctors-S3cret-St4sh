@@ -63,27 +63,8 @@ local function normalizeInlineStyle(registry, componentName, style, activeTheme)
   return result
 end
 
-local function mergeRuleStyles(registry, componentName, matched)
-  local styles = {}
-  for index = 1, #matched do
-    local rule = matched[index]
-    registry.validateSlot(componentName, rule.slot)
-    local slotStyle = styles[rule.slot]
-    if not slotStyle then
-      slotStyle = {}
-      styles[rule.slot] = slotStyle
-    end
-    merge.mergeInto(slotStyle, rule.style)
-  end
-  return styles
-end
-
 local function stateStyles(registry, theme, componentRecord, state)
-  return mergeRuleStyles(
-    registry,
-    componentRecord.component,
-    themeModule.matchingState(theme, componentRecord, state)
-  )
+  return themeModule.matchingStyles(theme, componentRecord, state, registry)
 end
 
 local function makeTraceEntry(componentRecord, matched, themeStyles, inlineStyles)
@@ -236,7 +217,10 @@ local function new(registry, publicComponents)
     assert(type(recipeName) == 'string' and recipeName ~= '', 'H3 UI recipe requires a name')
     assert(merge.isPlainTable(input), 'H3 UI recipe options must be a plain table')
     assert(input.args == nil, 'H3 UI recipe args are flat; move fields out of args')
-    assert(input.invalidate == nil, 'H3 UI invalidation belongs to the scope, not individual recipes')
+    assert(
+      input.invalidate == nil,
+      'H3 UI invalidation belongs to the scope, not individual recipes'
+    )
     assert(input.density == nil, 'H3 UI density was removed')
     assert(input.state == nil, 'H3 UI instance state was removed')
 
@@ -297,8 +281,9 @@ local function new(registry, publicComponents)
     end
 
     local activeTheme = context.theme or scope.resolveTheme()
-    local matched = themeModule.matching(activeTheme, componentRecord)
-    local themeStyles = mergeRuleStyles(registry, componentRecord.component, matched)
+    local matched = trace and {} or nil
+    local themeStyles =
+      themeModule.matchingStyles(activeTheme, componentRecord, nil, registry, matched)
     local inlineStyles =
       normalizeInlineStyle(registry, componentRecord.component, componentRecord.style, activeTheme)
 

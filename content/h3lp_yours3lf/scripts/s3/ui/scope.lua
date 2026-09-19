@@ -5,6 +5,7 @@ local merge = require 'scripts.s3.ui.merge'
 local mutation = require 'scripts.s3.ui.mutation'
 local specModule = require 'scripts.s3.ui.spec'
 local token = require 'scripts.s3.ui.token'
+local updateQueue = require 'scripts.s3.ui.updateQueue'
 
 ---@class H3UI.ScopeOptions
 ---@field invalidate? fun() Called when H3UI-owned interaction or recipe state needs a mounted Element update.
@@ -28,11 +29,11 @@ local function new(options, environment)
 
   local invalidate = options.invalidate
   if invalidate == nil and options.element then
-    local resolveElement = options.element
-    invalidate = function()
-      local element = resolveElement()
-      if element and element.layout then element:update() end
-    end
+    local updateRequest = {
+      pending = false,
+      resolveElement = options.element,
+    }
+    invalidate = function() updateQueue.queue(updateRequest) end
   end
 
   local recipes = environment.recipes

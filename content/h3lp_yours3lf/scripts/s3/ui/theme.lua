@@ -177,8 +177,7 @@ local function new(spec, registry, inheritedParent)
   return theme
 end
 
-local function matchingBuckets(generic, componentRules, componentRecord, state)
-  local matched = {}
+local function visitMatchingBuckets(generic, componentRules, componentRecord, state, visitor)
   local genericIndex = 1
   local componentIndex = 1
   local genericCount = #generic
@@ -200,10 +199,69 @@ local function matchingBuckets(generic, componentRules, componentRecord, state)
       componentIndex = componentIndex + 1
     end
 
-    if selector.matches(rule.selector, componentRecord, state) then matched[#matched + 1] = rule end
+    if selector.matches(rule.selector, componentRecord, state) then visitor(rule) end
   end
+end
+
+local function matchingBuckets(generic, componentRules, componentRecord, state)
+  local matched = {}
+  visitMatchingBuckets(
+    generic,
+    componentRules,
+    componentRecord,
+    state,
+    function(rule) matched[#matched + 1] = rule end
+  )
 
   return matched
+end
+
+local function matchingStyles(theme, componentRecord, state, registry, matched)
+  local styles = {}
+  local themeIndex
+  if state == nil then
+    themeIndex = theme._index
+  else
+    themeIndex = theme._index.state[state]
+    if not themeIndex then return styles end
+  end
+
+  local generic = themeIndex.generic
+  local componentRules = themeIndex.component[componentRecord.component]
+  local genericIndex = 1
+  local componentIndex = 1
+  local genericCount = #generic
+  local componentCount = componentRules and #componentRules or 0
+
+  while genericIndex <= genericCount or componentIndex <= componentCount do
+    local rule
+    if componentIndex > componentCount then
+      rule = generic[genericIndex]
+      genericIndex = genericIndex + 1
+    elseif genericIndex > genericCount then
+      rule = componentRules[componentIndex]
+      componentIndex = componentIndex + 1
+    elseif compareRules(generic[genericIndex], componentRules[componentIndex]) then
+      rule = generic[genericIndex]
+      genericIndex = genericIndex + 1
+    else
+      rule = componentRules[componentIndex]
+      componentIndex = componentIndex + 1
+    end
+
+    if selector.matches(rule.selector, componentRecord, state) then
+      if matched then matched[#matched + 1] = rule end
+      registry.validateSlot(componentRecord.component, rule.slot)
+      local slotStyle = styles[rule.slot]
+      if not slotStyle then
+        slotStyle = {}
+        styles[rule.slot] = slotStyle
+      end
+      merge.mergeInto(slotStyle, rule.style)
+    end
+  end
+
+  return styles
 end
 
 local function matching(theme, componentRecord)
@@ -217,7 +275,12 @@ end
 local function matchingState(theme, componentRecord, state)
   local stateIndex = theme._index.state[state]
   if not stateIndex then return {} end
-  return matchingBuckets(stateIndex.generic, stateIndex.component[componentRecord.component], componentRecord, state)
+  return matchingBuckets(
+    stateIndex.generic,
+    stateIndex.component[componentRecord.component],
+    componentRecord,
+    state
+  )
 end
 
 local function hasStateRules(theme, component, state)
@@ -230,5 +293,6 @@ return {
   hasStateRules = hasStateRules,
   matching = matching,
   matchingState = matchingState,
+  matchingStyles = matchingStyles,
   new = new,
 }

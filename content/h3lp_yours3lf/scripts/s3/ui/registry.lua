@@ -6,6 +6,8 @@ local merge = require 'scripts.s3.ui.merge'
 local mutation = require 'scripts.s3.ui.mutation'
 
 local styleTargetMarker = {}
+local styleTargetGroupMarker = {}
+local emptyDeltas = {}
 
 local function new(definitions)
   local adapters = {}
@@ -23,12 +25,37 @@ local function new(definitions)
       'H3 UI component adapter requires root slot: ' .. name
     )
     local styledOptions = {}
-    for _, mapping in next, definition.slots do
-      for _, optionKey in next, mapping do
+    local stateTargetMarkers = {}
+    local stateTargetOptions = {}
+    for slotName, mapping in next, definition.slots do
+      local slotMarkers = {}
+      stateTargetMarkers[slotName] = slotMarkers
+      for styleKind, optionKey in next, mapping do
         styledOptions[optionKey] = true
+        if styleKind == 'props' or styleKind == 'external' then
+          local previous = stateTargetOptions[optionKey]
+          assert(
+            previous == nil,
+            ('H3 UI runtime style target %q is shared by %s.%s and %s.%s'):format(
+              optionKey,
+              previous and previous.slot or slotName,
+              previous and previous.kind or styleKind,
+              slotName,
+              styleKind
+            )
+          )
+          local marker = {
+            slot = slotName,
+            kind = styleKind,
+            option = optionKey,
+          }
+          slotMarkers[styleKind] = marker
+          stateTargetOptions[optionKey] = marker
+        end
       end
     end
     definition._styledOptions = styledOptions
+    definition._stateTargetMarkers = stateTargetMarkers
     adapters[name] = definition
     adapterNames[definition] = name
   end
@@ -107,30 +134,50 @@ local function new(definitions)
     end
   end
 
-  local function markStyleTargets(options, adapter, styles)
-    for slotName, mapping in next, adapter.slots do
-      local kinds = styles[slotName]
-      if kinds then
-        for styleKind, optionKey in next, mapping do
-          if kinds[styleKind] then
+  local function markStyleTargets(options, adapter, stateStyles)
+    for state, styles in next, stateStyles do
+      if state ~= 'baseState' then
+        for slotName, style in next, styles do
+          local mapping = adapter.slots[slotName]
+          if not mapping then
+            error(
+              ('Unknown H3 UI style slot %q for component %q'):format(
+                slotName,
+                adapterNames[adapter]
+              )
+            )
+          end
+
+          for styleKind in next, style do
+            assert(
+              styleKind == 'props' or styleKind == 'external',
+              'H3 UI runtime state styles support props and external values only'
+            )
+            local optionKey = mapping[styleKind]
+            if not optionKey then
+              error(
+                ('Unsupported H3 UI style key %q on %s.%s'):format(
+                  tostring(styleKind),
+                  adapterNames[adapter],
+                  slotName
+                )
+              )
+            end
+
             local styleOptions = options[optionKey]
             if styleOptions == nil then
               styleOptions = {}
               options[optionKey] = styleOptions
             end
-            if merge.isPlainTable(styleOptions) then
-              local marks = rawget(styleOptions, styleTargetMarker)
-              if not marks then
-                marks = {}
-                rawset(styleOptions, styleTargetMarker, marks)
-              end
-              local slotMarks = marks[slotName]
-              if not slotMarks then
-                slotMarks = {}
-                marks[slotName] = slotMarks
-              end
-              slotMarks[styleKind] = true
-            end
+            assert(
+              merge.isPlainTable(styleOptions),
+              'H3 UI runtime state target must be a plain table: ' .. optionKey
+            )
+            rawset(
+              styleOptions,
+              styleTargetMarker,
+              adapter._stateTargetMarkers[slotName][styleKind]
+            )
           end
         end
       end
@@ -144,19 +191,21 @@ local function new(definitions)
     local function collect(value)
       if type(value) ~= 'table' or seen[value] then return end
       seen[value] = true
-      local marks = rawget(value, styleTargetMarker)
-      if marks then
-        rawset(value, styleTargetMarker, nil)
-        for slotName, slotMarks in next, marks do
-          local slotTargets = targets[slotName] or {}
-          targets[slotName] = slotTargets
-          for styleKind in next, slotMarks do
-            slotTargets[#slotTargets + 1] = {
-              kind = styleKind,
-              value = value,
-            }
-          end
-        end
+      local marker = rawget(value, styleTargetMarker)
+      if not marker then return end
+      rawset(value, styleTargetMarker, nil)
+
+      local target = targets[marker]
+      if target == nil then
+        targets[marker] = value
+      elseif rawget(target, styleTargetGroupMarker) then
+        target[#target + 1] = value
+      else
+        targets[marker] = {
+          [styleTargetGroupMarker] = true,
+          target,
+          value,
+        }
       end
     end
 
@@ -178,7 +227,7 @@ local function new(definitions)
   end
 
   local function protectedStyleKeys(adapter, args, inlineStyles)
-    local protected = {}
+    local protected
 
     local function add(source)
       if not source then return end
@@ -187,6 +236,7 @@ local function new(definitions)
           if styleKind == 'props' or styleKind == 'external' then
             local value = source[optionKey]
             if value ~= nil then
+              protected = protected or {}
               local slot = protected[slotName]
               if not slot then
                 slot = {}
@@ -211,6 +261,7 @@ local function new(definitions)
     add(args)
 
     for slotName, style in next, inlineStyles or {} do
+      protected = protected or {}
       local slot = protected[slotName]
       if not slot then
         slot = {}
@@ -235,7 +286,25 @@ local function new(definitions)
     return protected
   end
 
-  local function compileStateDeltas(targets, stateStyles, protected)
+  local function appendStateDelta(deltas, target, key, value)
+    if rawget(target, styleTargetGroupMarker) then
+      for index = 1, #target do
+        local offset = #deltas
+        deltas[offset + 1] = target[index]
+        deltas[offset + 2] = key
+        deltas[offset + 3] = value
+      end
+      return #target
+    end
+
+    local offset = #deltas
+    deltas[offset + 1] = target
+    deltas[offset + 2] = key
+    deltas[offset + 3] = value
+    return 1
+  end
+
+  local function compileStateDeltas(adapter, targets, stateStyles, protected)
     local compiled = {}
     local count = 0
 
@@ -244,26 +313,17 @@ local function new(definitions)
         local stateDeltas = {}
 
         for slotName, style in next, styles do
-          local slotTargets = targets[slotName]
-          if slotTargets then
-            local slotProtection = protected[slotName]
-            for styleKind, values in next, style do
-              if styleKind == 'props' or styleKind == 'external' then
-                local keys = slotProtection and slotProtection[styleKind]
-                if keys ~= true then
+          local slotProtection = protected and protected[slotName]
+          local markers = adapter._stateTargetMarkers[slotName]
+          for styleKind, values in next, style do
+            if styleKind == 'props' or styleKind == 'external' then
+              local keys = slotProtection and slotProtection[styleKind]
+              if keys ~= true then
+                local target = targets[markers[styleKind]]
+                if target then
                   for key, value in next, values do
                     if not (keys and keys[key]) then
-                      for targetIndex = 1, #slotTargets do
-                        local target = slotTargets[targetIndex]
-                        if target.kind == styleKind then
-                          stateDeltas[#stateDeltas + 1] = {
-                            key = key,
-                            target = target,
-                            value = value,
-                          }
-                          count = count + 1
-                        end
-                      end
+                      count = count + appendStateDelta(stateDeltas, target, key, value)
                     end
                   end
                 end
@@ -280,27 +340,35 @@ local function new(definitions)
   end
 
   local function applyStateDeltas(active, deltas)
-    for index = 1, #active do
-      local entry = active[index]
-      if entry.hadValue then
-        entry.target.value[entry.key] = entry.previous
+    for index = 1, #active, 4 do
+      local target = active[index]
+      local key = active[index + 1]
+      if active[index + 3] then
+        target[key] = active[index + 2]
       else
-        entry.target.value[entry.key] = nil
+        target[key] = nil
       end
-      active[index] = nil
     end
 
-    for index = 1, #deltas do
-      local entry = deltas[index]
-      local value = entry.target.value[entry.key]
-      entry.previous = value
-      entry.hadValue = value ~= nil
-      if constants.isUnset(entry.value) then
-        entry.target.value[entry.key] = nil
+    local activeIndex = 1
+    for index = 1, #deltas, 3 do
+      local target = deltas[index]
+      local key = deltas[index + 1]
+      local value = target[key]
+      active[activeIndex] = target
+      active[activeIndex + 1] = key
+      active[activeIndex + 2] = value
+      active[activeIndex + 3] = value ~= nil
+      if constants.isUnset(deltas[index + 2]) then
+        target[key] = nil
       else
-        entry.target.value[entry.key] = merge.copy(entry.value)
+        target[key] = merge.copy(deltas[index + 2])
       end
-      active[index] = entry
+      activeIndex = activeIndex + 4
+    end
+
+    for index = activeIndex, #active do
+      active[index] = nil
     end
   end
 
@@ -337,6 +405,73 @@ local function new(definitions)
     end
   end
 
+  local runtimeStates = setmetatable({}, { __mode = 'k' })
+
+  local function refreshRuntimeState(state)
+    local nextState
+    if state.pressed and state.compiled.pressed then
+      nextState = 'pressed'
+    elseif state.focused and state.compiled.hover then
+      nextState = 'hover'
+    else
+      nextState = state.baseState
+    end
+
+    if state.currentState == nextState then return false end
+    state.currentState = nextState
+    applyStateDeltas(state.active, state.compiled[nextState] or emptyDeltas)
+    return true
+  end
+
+  local function finishRuntimeStateEvent(state, previous, event, eventLayout)
+    local changed = refreshRuntimeState(state)
+    local result
+    if previous then result = previous(event, eventLayout) end
+    if changed and state.invalidate then state.invalidate() end
+    return result
+  end
+
+  local function onFocusGain(event, eventLayout)
+    local state = runtimeStates[eventLayout]
+    if not state then return end
+    state.focused = true
+    return finishRuntimeStateEvent(state, state.focusGain, event, eventLayout)
+  end
+
+  local function onFocusLoss(event, eventLayout)
+    local state = runtimeStates[eventLayout]
+    if not state then return end
+    state.focused = nil
+    state.pressed = nil
+    return finishRuntimeStateEvent(state, state.focusLoss, event, eventLayout)
+  end
+
+  local function onMousePress(event, eventLayout)
+    local state = runtimeStates[eventLayout]
+    if not state then return end
+    if event and event.button == 1 then state.pressed = true end
+    return finishRuntimeStateEvent(state, state.mousePress, event, eventLayout)
+  end
+
+  local function onMouseRelease(event, eventLayout)
+    local state = runtimeStates[eventLayout]
+    if not state then return end
+    if event and event.button == 1 then state.pressed = nil end
+    return finishRuntimeStateEvent(state, state.mouseRelease, event, eventLayout)
+  end
+
+  local stateHandlers = {
+    focusGain = async:callback(onFocusGain),
+    focusLoss = async:callback(onFocusLoss),
+    mousePress = async:callback(onMousePress),
+    mouseRelease = async:callback(onMouseRelease),
+  }
+
+  local function installStateHandler(state, events, name)
+    state[name] = events[name]
+    events[name] = stateHandlers[name]
+  end
+
   function registry.build(name, args, themeStyles, inlineStyles, stateStyles, invalidate)
     local adapter = registry.get(name)
     local options = {}
@@ -344,26 +479,7 @@ local function new(definitions)
     applyStyles(options, adapter, themeStyles)
     overlayArgs(options, adapter, args)
     applyStyles(options, adapter, inlineStyles)
-    if stateStyles then
-      local activeSlots = {}
-      for state, styles in next, stateStyles do
-        if state ~= 'baseState' then
-          applyStyles({}, adapter, styles)
-          for slotName, style in next, styles do
-            local kinds = activeSlots[slotName] or {}
-            activeSlots[slotName] = kinds
-            for styleKind in next, style do
-              assert(
-                styleKind == 'props' or styleKind == 'external',
-                'H3 UI runtime state styles support props and external values only'
-              )
-              kinds[styleKind] = true
-            end
-          end
-        end
-      end
-      markStyleTargets(options, adapter, activeSlots)
-    end
+    if stateStyles then markStyleTargets(options, adapter, stateStyles) end
 
     applyInvalidation(options, adapter, invalidate)
 
@@ -371,57 +487,29 @@ local function new(definitions)
     if stateStyles then
       local targets = collectStyleTargets(layout)
       local protected = protectedStyleKeys(adapter, args, inlineStyles)
-      local compiled, deltaCount = compileStateDeltas(targets, stateStyles, protected)
+      local compiled, deltaCount = compileStateDeltas(adapter, targets, stateStyles, protected)
       if deltaCount == 0 then return layout end
 
       local events = merge.shallowCopy(layout.events or {})
       layout.events = events
-      local baseState = stateStyles.baseState
-      local active = {}
-      local emptyDeltas = {}
-      local currentState
-      local focused = false
-      local pressed = false
+      local state = {
+        active = {},
+        baseState = stateStyles.baseState,
+        compiled = compiled,
+        invalidate = invalidate,
+      }
+      runtimeStates[layout] = state
 
-      local function nextState()
-        if pressed and compiled.pressed then return 'pressed' end
-        if focused and compiled.hover then return 'hover' end
-        return baseState
+      local hasHover = compiled.hover ~= nil
+      local hasPressed = compiled.pressed ~= nil
+      if hasHover then installStateHandler(state, events, 'focusGain') end
+      if hasHover or hasPressed then installStateHandler(state, events, 'focusLoss') end
+      if hasPressed then
+        installStateHandler(state, events, 'mousePress')
+        installStateHandler(state, events, 'mouseRelease')
       end
 
-      local function refreshState()
-        local state = nextState()
-        if currentState == state then return false end
-        currentState = state
-        applyStateDeltas(active, compiled[state] or emptyDeltas)
-        return true
-      end
-
-      local function addStateHandler(name, transition)
-        local previous = events[name]
-        events[name] = async:callback(function(event, eventLayout)
-          transition(event)
-          local changed = refreshState()
-          local result
-          if previous then result = previous(event, eventLayout) end
-          if changed and invalidate then invalidate() end
-          return result
-        end)
-      end
-
-      addStateHandler('focusGain', function() focused = true end)
-      addStateHandler('focusLoss', function()
-        focused = false
-        pressed = false
-      end)
-      addStateHandler('mousePress', function(event)
-        if event and event.button == 1 then pressed = true end
-      end)
-      addStateHandler('mouseRelease', function(event)
-        if event and event.button == 1 then pressed = false end
-      end)
-
-      refreshState()
+      refreshRuntimeState(state)
       return layout
     end
 

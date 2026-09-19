@@ -4,7 +4,9 @@ local root = source:match '^@(.+)/tests/h3ui_runtime_state%.lua$' or '.'
 package.path = root .. '/content/h3lp_yours3lf/?.lua;' .. package.path
 
 package.preload['openmw.async'] = function()
-  return { callback = function(_, callback) return callback end }
+  return {
+    callback = function(_, callback) return callback end,
+  }
 end
 
 package.preload['openmw.interfaces'] = function()
@@ -95,8 +97,10 @@ package.preload['scripts.s3.ui.appearance'] = function()
     token = function(path)
       if path == 'color.chromeBorder' then return 'chrome-border' end
       if path == 'color.text' then return 'text-color' end
+      if path == 'border.normal' then return 2 end
       if path == 'textSize.normal' then return 16 end
       if path == 'transparency.chrome' then return 0.75 end
+      if path == 'spacing.padding' then return 2 end
       return nil
     end,
   }
@@ -123,6 +127,7 @@ local themeModule = require 'scripts.s3.ui.theme'
 local token = require 'scripts.s3.ui.token'
 local tooltip = require 'scripts.s3.components.tooltip'
 local ui = require 'openmw.ui'
+local updateQueue = require 'scripts.s3.ui.updateQueue'
 local window = require 'scripts.s3.components.window'
 
 local registry = newRegistry {
@@ -145,7 +150,7 @@ local registry = newRegistry {
   },
   text = { builder = function(options) return options end, slots = { root = { props = 'props' } } },
   spacer = {
-    builder = function(options) return options end,
+    builder = require 'scripts.s3.components.spacer',
     slots = { root = { props = 'props' } },
   },
   dialog = {
@@ -260,15 +265,20 @@ local starwind = makeTheme('starwind-test', {
 })
 local resolver = newResolver(registry, { 'button', 'text', 'spacer' })
 
-local function build(theme, spec)
-  return resolver.build({ resolveTheme = function() return theme end, recipes = {} }, spec)
+local function build(theme, spec, invalidate)
+  return resolver.build({
+    invalidate = invalidate,
+    resolveTheme = function() return theme end,
+    recipes = {},
+  }, spec)
 end
 
-local function buildWith(theme, spec, recipes)
-  return resolver.build(
-    { resolveTheme = function() return theme end, recipes = recipes or {} },
-    spec
-  )
+local function buildWith(theme, spec, recipes, invalidate)
+  return resolver.build({
+    invalidate = invalidate,
+    resolveTheme = function() return theme end,
+    recipes = recipes or {},
+  }, spec)
 end
 
 local function labelProps(layout)
@@ -399,11 +409,10 @@ local function testStateMachineAndEventReturns()
       end,
       mousePress = function() return mouseReturn end,
     },
-    invalidate = function()
-      assert(callbackCalled)
-      invalidationCount = invalidationCount + 1
-    end,
-  })
+  }, function()
+    assert(callbackCalled)
+    invalidationCount = invalidationCount + 1
+  end)
   assert(type(layout.content) == 'userdata')
   local props = labelProps(layout)
   props.unrelated = 'preserved'
@@ -448,9 +457,9 @@ local function testStateMachineAndEventReturns()
   local hoverOnlyLayout = build(hoverOnly, { component = 'button', label = 'Hover only' })
   local hoverOnlyProps = labelProps(hoverOnlyLayout)
   hoverOnlyLayout.events.focusGain(nil, hoverOnlyLayout)
-  hoverOnlyLayout.events.mousePress({ button = 1 }, hoverOnlyLayout)
   assert(hoverOnlyProps.textColor == 'hover')
-  hoverOnlyLayout.events.mouseRelease({ button = 1 }, hoverOnlyLayout)
+  assert(hoverOnlyLayout.events.mousePress == nil)
+  assert(hoverOnlyLayout.events.mouseRelease == nil)
   hoverOnlyLayout.events.focusLoss(nil, hoverOnlyLayout)
   assert(hoverOnlyProps.textColor == 'normal')
 
@@ -469,19 +478,16 @@ local function testStateMachineAndEventReturns()
   }, registry)
   local pressedOnlyLayout = build(pressedOnly, { component = 'button', label = 'Pressed only' })
   local pressedOnlyProps = labelProps(pressedOnlyLayout)
-  pressedOnlyLayout.events.focusGain(nil, pressedOnlyLayout)
+  assert(pressedOnlyLayout.events.focusGain == nil)
   assert(pressedOnlyProps.textColor == 'normal')
   pressedOnlyLayout.events.mousePress({ button = 1 }, pressedOnlyLayout)
   assert(pressedOnlyProps.textColor == 'pressed')
   pressedOnlyLayout.events.mouseRelease({ button = 1 }, pressedOnlyLayout)
   assert(pressedOnlyProps.textColor == 'normal')
 
-  local recipeLayout = buildWith(morrowind, {
-    recipe = 'buttonRecipe',
-    invalidate = function() invalidationCount = invalidationCount + 1 end,
-  }, {
+  local recipeLayout = buildWith(morrowind, { recipe = 'buttonRecipe' }, {
     buttonRecipe = function(context) return context.button { label = 'Recipe button' } end,
-  })
+  }, function() invalidationCount = invalidationCount + 1 end)
   recipeLayout.events.focusGain(nil, recipeLayout)
   assert(invalidationCount == 5)
 
@@ -500,13 +506,13 @@ local function testStateMachineAndEventReturns()
   scopeLayout.events.focusGain(nil, scopeLayout)
   assert(invalidationCount == 6)
 
-  local overrideCount = 0
-  local overrideLayout = scoped.button {
-    label = 'Override button',
-    invalidate = function() overrideCount = overrideCount + 1 end,
-  }
-  overrideLayout.events.focusGain(nil, overrideLayout)
-  assert(overrideCount == 1)
+  local ok, err = pcall(function()
+    scoped.button {
+      label = 'Override button',
+      invalidate = function() end,
+    }
+  end)
+  assert(not ok and tostring(err):find('invalidation belongs to the scope', 1, true))
   assert(invalidationCount == 6)
 
   local shorthandText = scoped.text 'Constructor text'
@@ -747,8 +753,7 @@ local function testInvalidatorCallbackOrder()
     label = 'Sound',
     value = false,
     onChange = function(value) order[#order + 1] = 'change:' .. tostring(value) end,
-    invalidate = function() order[#order + 1] = 'invalidate' end,
-  })
+  }, function() order[#order + 1] = 'invalidate' end)
   layout.events.mouseClick(nil, layout)
   assert(#order == 2)
   assert(order[1] == 'change:true')
@@ -757,6 +762,161 @@ local function testInvalidatorCallbackOrder()
   assert(#order == 4)
   assert(order[3] == 'change:false')
   assert(order[4] == 'invalidate')
+end
+
+local function testExplainTracePreserved()
+  local explanation = resolver.explain({
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+  }, {
+    component = 'button',
+    label = 'Explain',
+  })
+  assert(#explanation.nodes == 1)
+  local node = explanation.nodes[1]
+  assert(node.component == 'button')
+  assert(type(node.matched) == 'table' and #node.matched > 0)
+  assert(type(node.themeStyle) == 'table')
+end
+
+local function testSharedRuntimeDispatcher()
+  local first = build(morrowind, { component = 'button', label = 'First' })
+  local second = build(morrowind, { component = 'button', label = 'Second' })
+  assert(first.events.focusGain == second.events.focusGain)
+  assert(first.events.focusLoss == second.events.focusLoss)
+  assert(first.events.mousePress == second.events.mousePress)
+  assert(first.events.mouseRelease == second.events.mouseRelease)
+
+  first.events.focusGain(nil, first)
+  assert(labelProps(first).textColor == 'morrowind-hover')
+  assert(labelProps(second).textColor == 'morrowind-text')
+end
+
+local function testInteractionRedrawCoalescing()
+  local updated = 0
+  local fakeElement = {
+    layout = {},
+    update = function() updated = updated + 1 end,
+  }
+  local scoped = newScope({
+    element = function() return fakeElement end,
+  }, {
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+    resolver = resolver,
+    publicComponents = { 'button' },
+  })
+  local layout = scoped.button { label = 'Coalesced' }
+
+  layout.events.focusGain(nil, layout)
+  layout.events.mousePress({ button = 1 }, layout)
+  layout.events.mouseRelease({ button = 1 }, layout)
+  assert(updated == 0)
+  updateQueue.flush()
+  assert(updated == 1)
+
+  layout.events.focusLoss(nil, layout)
+  layout.events.focusGain(nil, layout)
+  assert(updated == 1)
+  updateQueue.flush()
+  assert(updated == 2)
+end
+
+local function testElementRedrawDeduplicationAndRequeue()
+  local updated = 0
+  local firstScope
+  local holder = { name = 'holder', content = ui.content {} }
+  local element = {
+    layout = {},
+    update = function()
+      updated = updated + 1
+      if updated == 1 then firstScope.setChildren(holder, { { name = 'queued-during-update' } }) end
+    end,
+  }
+  local environment = {
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+    resolver = resolver,
+    publicComponents = {},
+  }
+  firstScope = newScope({ element = function() return element end }, environment)
+  local secondScope = newScope({ element = function() return element end }, environment)
+
+  firstScope.setChildren(holder, { { name = 'first' } })
+  secondScope.setChildren(holder, { { name = 'second' } })
+  updateQueue.flush()
+  assert(updated == 1)
+  assert(holder.content[1].name == 'queued-during-update')
+
+  updateQueue.flush()
+  assert(updated == 2)
+  updateQueue.flush()
+  assert(updated == 2)
+end
+
+local function testSharedElementRedrawDeduplication()
+  local updated = 0
+  local fakeElement = {
+    layout = {},
+    update = function() updated = updated + 1 end,
+  }
+  local environment = {
+    resolveTheme = function() return morrowind end,
+    recipes = {},
+    resolver = resolver,
+    publicComponents = {},
+  }
+  local first = newScope({ element = function() return fakeElement end }, environment)
+  local second = newScope({ element = function() return fakeElement end }, environment)
+
+  first.invalidate()
+  second.invalidate()
+  first.invalidate()
+  updateQueue.flush()
+  assert(updated == 1)
+
+  second.invalidate()
+  updateQueue.flush()
+  assert(updated == 2)
+end
+
+local function testRedrawQueueReentrancy()
+  local updatesA = 0
+  local updatesB = 0
+  local updatesC = 0
+  local requestA
+  local requestC
+
+  local elementA = {
+    layout = {},
+    update = function()
+      updatesA = updatesA + 1
+      if updatesA == 1 then
+        updateQueue.queue(requestA)
+        updateQueue.queue(requestC)
+      end
+    end,
+  }
+  local elementB = {
+    layout = {},
+    update = function() updatesB = updatesB + 1 end,
+  }
+  local elementC = {
+    layout = {},
+    update = function() updatesC = updatesC + 1 end,
+  }
+
+  requestA = { pending = false, resolveElement = function() return elementA end }
+  local requestB = { pending = false, resolveElement = function() return elementB end }
+  requestC = { pending = false, resolveElement = function() return elementC end }
+
+  updateQueue.queue(requestA)
+  updateQueue.queue(requestB)
+  updateQueue.flush()
+  assert(updatesA == 1 and updatesB == 1 and updatesC == 0)
+
+  updateQueue.flush()
+  assert(updatesA == 2 and updatesB == 1 and updatesC == 1)
 end
 
 local function testSetChildren()
@@ -798,11 +958,18 @@ local function testScopeElementResolver()
   local holder = { name = 'holder', content = ui.content {} }
   scoped.setChildren(holder, { { name = 'child' } })
   assert(updated == 0)
+  updateQueue.flush()
+  assert(updated == 0)
   current = fakeElement
   scoped.setChildren(holder, { { name = 'other' } })
+  scoped.setChildren(holder, { { name = 'third' } })
+  scoped.setChildren(holder, { { name = 'fourth' } })
+  assert(updated == 0)
+  updateQueue.flush()
   assert(updated == 1)
   current = nil
   scoped.setChildren(holder, { { name = 'again' } })
+  updateQueue.flush()
   assert(updated == 1)
 
   local customCalls = 0
@@ -831,8 +998,7 @@ local function testCollapsibleReattachment()
     title = 'Details',
     children = { { name = 'payload' } },
     onToggle = function() toggles = toggles + 1 end,
-    invalidate = function() invalidations = invalidations + 1 end,
-  })
+  }, function() invalidations = invalidations + 1 end)
   local function bodyCount()
     local count = 0
     for index = 1, #layout.content do
@@ -892,6 +1058,10 @@ testChromeCacheAndSkinSwap()
 testTextInputDefaults()
 testImmediateRecipeConstructors()
 testInvalidatorCallbackOrder()
+testExplainTracePreserved()
+testSharedRuntimeDispatcher()
+testInteractionRedrawCoalescing()
+testElementRedrawDeduplicationAndRequeue()
 testSetChildren()
 testScopeElementResolver()
 testCollapsibleReattachment()

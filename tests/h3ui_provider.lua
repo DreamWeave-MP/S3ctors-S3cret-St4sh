@@ -17,6 +17,14 @@ local provider = require 'scripts.s3.h3uiProvider'
 assert(settingsLoaded)
 assert(provider.interfaceName == 'H3UI')
 assert(provider.interface == H3UI)
+assert(type(provider.engineHandlers.onFrame) == 'function')
+
+local updateQueue = require 'scripts.s3.ui.updateQueue'
+local updates = 0
+local element = { layout = {}, update = function() updates = updates + 1 end }
+updateQueue.queue { pending = false, resolveElement = function() return element end }
+provider.engineHandlers.onFrame()
+assert(updates == 1)
 
 package.loaded['scripts.s3.h3uiProvider'] = nil
 package.loaded['scripts.s3.scriptContext'] = nil
@@ -31,5 +39,6 @@ settingsLoaded = false
 provider = require 'scripts.s3.h3uiProvider'
 assert(not settingsLoaded)
 assert(provider.interface == H3UI)
+assert(type(provider.engineHandlers.onFrame) == 'function')
 
 print 'H3UI provider tests passed'
