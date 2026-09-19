@@ -3,6 +3,7 @@
 local constructors = require 'scripts.s3.ui.constructors'
 local merge = require 'scripts.s3.ui.merge'
 local mutation = require 'scripts.s3.ui.mutation'
+local specModule = require 'scripts.s3.ui.spec'
 local token = require 'scripts.s3.ui.token'
 
 ---@class H3UI.ScopeOptions
@@ -34,13 +35,10 @@ local function new(options, environment)
     end
   end
 
-  local recipes = {}
-  for name, recipe in next, environment.recipes do
-    recipes[name] = recipe
-  end
-
+  local recipes = environment.recipes
   if options.recipes ~= nil then
     assert(merge.isPlainTable(options.recipes), 'H3 UI scope recipes must be a plain table')
+    recipes = merge.shallowCopy(environment.recipes)
     for name, recipe in next, options.recipes do
       assert(type(name) == 'string' and name ~= '', 'H3 UI recipe name must be a string')
       assert(type(recipe) == 'function', 'H3 UI recipe must be a function: ' .. tostring(name))
@@ -66,7 +64,15 @@ local function new(options, environment)
     return environment.resolver.recipe(scope, name, spec or {})
   end
 
+  local portableScope
   function scope.explain(spec) return environment.resolver.explain(scope, spec) end
+  function scope.resolve(spec) return environment.resolver.build(scope, spec) end
+  function scope.spec()
+    if portableScope == nil then
+      portableScope = specModule.newScope(environment.publicComponents, recipes)
+    end
+    return portableScope
+  end
   function scope.token(path) return token.ref(path) end
 
   ---Replace a mounted layout's content with fresh child layouts and invalidate the owning scope.

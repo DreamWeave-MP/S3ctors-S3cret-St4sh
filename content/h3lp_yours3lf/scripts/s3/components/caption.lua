@@ -8,7 +8,6 @@ local util = require 'openmw.util'
 
 local appearance = require 'scripts.s3.ui.appearance'
 local button = require 'scripts.s3.components.button'
-local constants = require 'scripts.omw.mwui.constants'
 local headBlock = require 'scripts.s3.components.headBlock'
 local pinButton = require 'scripts.s3.components.pinButton'
 local row = require 'scripts.s3.components.row'
@@ -64,15 +63,14 @@ local function caption(options)
   props.autoSize = false
   props.arrange = props.arrange or ui.ALIGNMENT.Center
 
-  local textProps = {
-    textSize = appearance.token 'textSize.normal' or constants.textNormalSize,
-    textColor = appearance.token 'color.text' or constants.normalColor,
-  }
+  local textProps = {}
   if options.textProps then
     for key, value in next, options.textProps do
       textProps[key] = value
     end
   end
+  if textProps.textSize == nil then textProps.textSize = appearance.token 'textSize.normal' end
+  if textProps.textColor == nil then textProps.textColor = appearance.token 'color.text' end
 
   local function controlProps(input)
     local control = {}

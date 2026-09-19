@@ -1,7 +1,5 @@
 ---@omw-context menu|player
 
-local node = require 'scripts.s3.ui.node'
-
 ---@class H3UI.ItemGridOptions
 ---@field items? table[]|openmw.ui.Layout[]
 ---@field columns? integer
@@ -30,8 +28,7 @@ local metadata = {
   name = true,
 }
 
-local function itemNode(ctx, item, index)
-  if node.isComponent(item) or node.isRecipe(item) then return item end
+local function itemLayout(ctx, item, index)
   if type(item) ~= 'table' then return item end
   assert(
     item.component == nil and item.recipe == nil,
@@ -57,7 +54,7 @@ local function itemGrid(ctx, spec)
   local items = spec.items or {}
   local children = {}
   for index = 1, #items do
-    children[index] = itemNode(ctx, items[index], index)
+    children[index] = itemLayout(ctx, items[index], index)
   end
   return ctx.grid {
     role = 'root',

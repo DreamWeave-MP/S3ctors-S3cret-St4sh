@@ -90,7 +90,6 @@ end
 
 local function invalidate()
   state.active = nil
-  state.generation = state.generation + 1
 end
 
 local function normalizeHex(value)
@@ -476,7 +475,6 @@ local function initialize(registry, builtins)
     section = storage.playerSection(sectionName),
     customSection = storage.playerSection(customSectionName),
     themes = {},
-    generation = 0,
     initialized = false,
     themeUpdateScheduled = false,
   }

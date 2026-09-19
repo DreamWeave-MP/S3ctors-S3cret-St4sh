@@ -37,13 +37,13 @@ local function tooltip(options)
   options = options or emptyOptions
 
   local textProps = {}
-  textProps.textColor = appearance.token 'color.text'
-  textProps.textSize = appearance.token 'textSize.normal'
   if options.textProps then
     for key, value in next, options.textProps do
       textProps[key] = value
     end
   end
+  if textProps.textColor == nil then textProps.textColor = appearance.token 'color.text' end
+  if textProps.textSize == nil then textProps.textSize = appearance.token 'textSize.normal' end
 
   if options.text ~= nil then textProps.text = options.text end
   textProps.ignorePointerEvents = true

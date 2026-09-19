@@ -11,6 +11,8 @@ local UtilVector2 = util.vector2
 ---@class H3.SpacerOptions
 ---@field name? string Optional layout name for lookup from Content.
 ---@field props? table Optional widget properties (e.g. `size = vector2(8, 8)`).
+---@field width? number Convenience width used when `props.size` is absent; defaults to `0` when only `height` is supplied.
+---@field height? number Convenience height used when `props.size` is absent; defaults to `width`.
 ---@field external? table Optional external properties table. When present, takes precedence over `grow`/`stretch`.
 ---@field events? table Optional event callbacks table.
 ---@field userData? any Arbitrary user data attached to the returned layout.
@@ -32,7 +34,10 @@ local UtilVector2 = util.vector2
 local function spacer(options, height)
   if type(options) == 'number' then
     local width = options
-    options = { props = { size = UtilVector2(width, height or width) } }
+    local resolvedHeight = height or width
+    assert(width >= 0, 'H3 spacer width must be non-negative')
+    assert(type(resolvedHeight) == 'number' and resolvedHeight >= 0, 'H3 spacer height must be non-negative')
+    options = { props = { size = UtilVector2(width, resolvedHeight) } }
   else
     options = options or emptyOptions
   end
@@ -42,6 +47,16 @@ local function spacer(options, height)
     for key, value in next, options.props do
       props[key] = value
     end
+  end
+  if props.size == nil and (options.width ~= nil or options.height ~= nil) then
+    local width = options.width or 0
+    local resolvedHeight = options.height == nil and width or options.height
+    assert(type(width) == 'number' and width >= 0, 'H3 spacer width must be non-negative')
+    assert(
+      type(resolvedHeight) == 'number' and resolvedHeight >= 0,
+      'H3 spacer height must be non-negative'
+    )
+    props.size = UtilVector2(width, resolvedHeight)
   end
 
   local external

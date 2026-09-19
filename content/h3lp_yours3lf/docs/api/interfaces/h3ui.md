@@ -12,10 +12,7 @@ extra:
 
 ```lua
 local I = require 'openmw.interfaces'
-
-local ui = I.H3UI.scope {
-    invalidate = refresh,
-}
+local ui = I.H3UI
 
 return ui.window {
     title = 'My Mod',
@@ -44,9 +41,7 @@ The plugin installs `I.H3UI` in menu and player contexts. Local and global scrip
 {% end %}
 
 {% usage_note(title="Construction is not mounting") %}
-H3UI never calls `ui.create`, chooses a layer, owns a root element, or persists application state. Mount the returned layout yourself. When application state changes what should be visible, update your mounted element.
-
-Pass `invalidate` to a scope so H3 redraws its own in-place mutations: runtime hover/pressed transitions and semantic controls (toggles, sliders, selectors, windows) mutate their own layouts and then call it. Application callbacks run before the redraw, so dependent properties changed there are included. Use `ui.setChildren()` for localized structural replacement, and rebuild the root only when genuinely necessary.
+H3UI never calls `ui.create`, chooses a layer, owns a root element, or persists application state. Mount the returned layout yourself. For interactive mounted UI, give a scope an `element` resolver as shown under [Mounting interactive UI](#mounting-interactive-ui); H3 then redraws its own semantic mutations. Use `ui.setChildren()` for localized structural replacement, and rebuild the root only when genuinely necessary.
 {% end %}
 
 ## The normal constructor surface
@@ -118,9 +113,9 @@ local settings = ui.settings {
 }
 ```
 
-`text` accepts a string or number shorthand. `row` and `column` accept children directly in the array part of their option table and may insert spacing with `gap`. `spacer(width, height)` is available when fixed spacing is clearer than an options table.
+`text` accepts a string or number shorthand. Container-like constructors can place child layouts directly in the array part of their option table; H3 canonicalizes those values to `children`. `row` and `column` may insert spacing with `gap`. `spacer(width, height)` is available when fixed spacing is clearer than an options table.
 
-Component options are flat. H3UI metadata such as `role`, `variant`, `tone`, `class`/`classes`, `style`, and `invalidate` sits beside ordinary component options:
+Component options are flat. H3UI metadata such as `role`, `variant`, `tone`, `class`/`classes`, and `style` sits beside ordinary component options. Invalidation is scope-owned rather than component-owned:
 
 ```lua
 ui.button {
@@ -196,7 +191,7 @@ local card = ui.characterCard {
 }
 ```
 
-Local recipes become named constructors on that scope automatically. Recipe callbacks receive the same constructor vocabulary for public components and recipes, while preserving recipe identity for theme selectors. `ui.component(name, ...)` and `ui.recipe(name, ...)` remain available when a name is genuinely dynamic.
+Local recipes become named constructors on that scope automatically. Recipe callbacks receive the same constructor vocabulary for public components and recipes, while preserving recipe identity for theme selectors. `ui.spec()` mirrors that scoped vocabulary for declarative specs, including local recipe names. `ui.component(name, ...)` and `ui.recipe(name, ...)` remain available when a name is genuinely dynamic.
 
 A scope also provides `ui.setChildren(layout, children)` for replacing the content of an already-mounted layout:
 
@@ -318,7 +313,7 @@ Builds `grid` + `itemSlot` composition. Item descriptors are presentation data o
 
 ### `searchableList`
 
-Builds `searchInput` + `list` + `listItem` and filters items during construction. Pass `query`, `items`, and optionally a `text(item, index)` extractor; update query state in `onQueryChange`, then rebuild the caller-owned surface.
+Builds `searchInput` + `list` + `listItem`. Pass `query`, `items`, and optionally a `text(item, index)` extractor. Search text is normalized once when the recipe is built; later query changes replace only the stable results subtree with `setChildren`, so the input keeps focus while filtering.
 
 ### `section`
 
@@ -426,7 +421,7 @@ selector = {
 }
 ```
 
-All supplied fields must match. `class` tests membership in the node's class set. `selected` is a semantic boolean exposed by selectable components such as `listItem`, `itemSlot`, and `iconButton`; it is separate from index-valued component options such as `selector.selected` and `tabs.selected`. `slot` chooses a component style target and does not itself increase specificity.
+All supplied fields must match. `class` tests membership in the component's class set. `selected` is a semantic boolean exposed by selectable components such as `listItem`, `itemSlot`, and `iconButton`; it is separate from index-valued component options such as `selector.selected` and `tabs.selected`. `slot` chooses a component style target and does not itself increase specificity.
 
 H3 intentionally does not parse CSS selector strings and does not implement descendant, sibling, `nth-child`, or arbitrary tree selectors. Recipes expose `role` values so themes can target a component's job instead of incidental child positions.
 
@@ -522,9 +517,41 @@ local frame = H3UI.nineSlice {
 }
 ```
 
+## Portable specs and documents
+
+H3UI also exposes the constructor vocabulary without creating OpenMW layouts. `H3UI.spec()` returns a spec scope whose constructors produce plain declarative tables. In-memory specs may still contain runtime callbacks; `H3UI.document()` is the portability boundary that strips them:
+
+```lua
+local spec = H3UI.spec()
+
+local root = spec.window {
+    title = 'Inspector',
+    children = {
+        spec.column {
+            spec.text 'Ready',
+            spec.button {
+                label = 'Delete',
+                tone = 'negative',
+            },
+        },
+    },
+}
+```
+
+Wrap a root spec with `H3UI.document(root)` to produce the versioned interchange form. The current version is also exposed as `H3UI.DOCUMENT_VERSION`:
+
+```lua
+local document = H3UI.document(root)
+-- document.h3ui == 1
+```
+
+Documents contain portable declarative data only. Lua functions, runtime-only fields such as `events`, `template`, `userData`, and `invalidate` (including those inside nested recipe descriptors), and engine objects without a portable representation are omitted. Non-finite numbers are rejected because they cannot cross a normal serialization boundary. H3 token references, `UNSET`, vectors, and colors are encoded into ordinary tables so the document can cross a serialization boundary. `H3UI.deserialize(document)` restores the root spec; `H3UI.resolve(document)` compiles either a document or a root spec into the current OpenMW layout. For mounted interactive documents, prefer `ui.resolve(document)` on the element-bound scope so semantic redraws use that scope. Omitted runtime behavior is intentionally not recoverable from the document; attach callbacks in application code when compiling or rebuilding an interactive surface.
+
+This is the debugging and tooling boundary: normal game code uses the fast runtime constructors, while documentation tools and editors can preserve the same component and recipe language as data. The document format is versioned deliberately; unsupported versions fail instead of being guessed at.
+
 ## Diagnostics
 
-`H3UI.explain(spec)` accepts a diagnostic spec containing `component` or `recipe` and returns the resolved layout plus selector traces:
+`H3UI.explain(spec)` accepts a root spec or versioned H3UI document and returns the resolved layout, a portable copy of the document, and selector traces:
 
 ```lua
 local explanation = H3UI.explain {
@@ -534,4 +561,4 @@ local explanation = H3UI.explain {
 }
 ```
 
-Each traced node records its component, recipe, role, matched rules, resolved theme style, and inline style. Use it when a theme rule does not appear to win the way you expect.
+Each traced component records its component, recipe identity, role, matched rules, resolved theme style, and inline style. Runtime-only fields are absent from `explanation.document`, so the diagnostic description can be stored or handed to tooling without serializing callbacks or engine objects. Use the trace when a theme rule does not appear to win the way you expect.

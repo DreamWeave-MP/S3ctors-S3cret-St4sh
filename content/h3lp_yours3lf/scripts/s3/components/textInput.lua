@@ -3,7 +3,7 @@
 local emptyOptions = {}
 
 local appearance = require 'scripts.s3.ui.appearance'
-local async = require 'openmw.async'
+local eventHandlers = require 'scripts.s3.components.eventHandlers'
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
@@ -30,18 +30,18 @@ local function textInput(options)
   options = options or emptyOptions
 
   local props = {}
-  props.textColor = appearance.token 'color.text'
-  props.textSize = appearance.token 'textSize.normal'
-  if options.template == nil then
-    props.size = defaultSize
-    props.autoSize = true
-    props.multiline = false
-    props.textAlignV = ui.ALIGNMENT.Center
-  end
   if options.props then
     for key, value in next, options.props do
       props[key] = value
     end
+  end
+  if props.textColor == nil then props.textColor = appearance.token 'color.text' end
+  if props.textSize == nil then props.textSize = appearance.token 'textSize.normal' end
+  if options.template == nil then
+    if props.size == nil then props.size = defaultSize end
+    if props.autoSize == nil then props.autoSize = true end
+    if props.multiline == nil then props.multiline = false end
+    if props.textAlignV == nil then props.textAlignV = ui.ALIGNMENT.Center end
   end
 
   if options.text ~= nil then props.text = options.text end
@@ -59,27 +59,14 @@ local function textInput(options)
     events[key] = value
   end
   if options.onChange then
-    local previous = events.textChanged
-    events.textChanged = async:callback(function(value, layout)
+    eventHandlers.add(events, 'textChanged', function(value, layout)
       layout.props.text = value
-      local result = options.onChange(value, layout)
-      if previous then
-        local previousResult = previous(value, layout)
-        if previousResult ~= nil then return previousResult end
-      end
-      if result ~= nil then return result end
-      return true
-    end)
+      return options.onChange(value, layout)
+    end, true)
   end
   if options.onCommit then
-    local previous = events.focusLoss
-    events.focusLoss = async:callback(function(event, layout)
-      local result = options.onCommit(layout.props.text or '', layout)
-      if previous then
-        local previousResult = previous(event, layout)
-        if previousResult ~= nil then return previousResult end
-      end
-      if result ~= nil then return result end
+    eventHandlers.add(events, 'focusLoss', function(_, layout)
+      return options.onCommit(layout.props.text or '', layout)
     end)
   end
 

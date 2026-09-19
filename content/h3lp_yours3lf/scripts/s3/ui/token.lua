@@ -3,26 +3,54 @@
 local merge = require 'scripts.s3.ui.merge'
 
 local marker = {}
+local referenceCache = {}
+local pathCache = {}
 local StrFormat = string.format
 local Type = type
+
+local function validatePath(path)
+  assert(Type(path) == 'string' and path ~= '', 'H3 UI token path must be a non-empty string')
+  assert(
+    path:sub(1, 1) ~= '.' and path:sub(-1) ~= '.' and not path:find('..', 1, true),
+    'H3 UI token path contains an empty segment: ' .. path
+  )
+  return path
+end
 
 ---@param path string
 ---@return H3UI.TokenReference
 local function ref(path)
-  assert(Type(path) == 'string' and path ~= '', 'H3 UI token path must be a non-empty string')
-  return {
+  validatePath(path)
+  local cached = referenceCache[path]
+  if cached then return cached end
+  cached = {
     [marker] = true,
     path = path,
   }
+  referenceCache[path] = cached
+  return cached
 end
 
 local function isRef(value) return Type(value) == 'table' and rawget(value, marker) == true end
 
+local function pathParts(path)
+  validatePath(path)
+  local cached = pathCache[path]
+  if cached then return cached end
+  cached = {}
+  for part in string.gmatch(path, '[^%.]+') do
+    cached[#cached + 1] = part
+  end
+  pathCache[path] = cached
+  return cached
+end
+
 local function getPath(root, path)
   local value = root
-  for part in string.gmatch(path, '[^%.]+') do
+  local parts = pathParts(path)
+  for index = 1, #parts do
     if Type(value) ~= 'table' then return nil, false end
-    value = value[part]
+    value = value[parts[index]]
     if value == nil then return nil, false end
   end
   return value, true

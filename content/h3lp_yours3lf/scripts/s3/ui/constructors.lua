@@ -1,8 +1,24 @@
 ---@omw-context menu|player
 
-local util = require 'openmw.util'
+local componentNameCache = setmetatable({}, { __mode = 'k' })
 
-local UtilVector2 = util.vector2
+local function positionalChildren(options)
+  if type(options) ~= 'table' or #options == 0 then return options end
+  assert(
+    options.children == nil and options.content == nil,
+    'H3 UI accepts positional children or children/content, not both'
+  )
+
+  local count = #options
+  local result = {}
+  local children = {}
+  for index = 1, count do children[index] = options[index] end
+  for key, value in next, options do
+    if type(key) ~= 'number' or key > count then result[key] = value end
+  end
+  result.children = children
+  return result
+end
 
 local function componentConstructor(name, component)
   if name == 'text' then
@@ -10,7 +26,7 @@ local function componentConstructor(name, component)
       if type(options) == 'string' or type(options) == 'number' then
         options = { text = tostring(options) }
       end
-      return component(name, options or {})
+      return component(name, positionalChildren(options) or {})
     end
   end
 
@@ -18,27 +34,31 @@ local function componentConstructor(name, component)
     return function(options, height)
       if type(options) == 'number' then
         local width = options
-        options = { props = { size = UtilVector2(width, height or width) } }
+        options = { width = width, height = height or width }
       end
-      return component(name, options or {})
+      return component(name, positionalChildren(options) or {})
     end
   end
 
-  return function(options) return component(name, options or {}) end
+  return function(options) return component(name, positionalChildren(options) or {}) end
 end
 
 local function recipeConstructor(name, recipe)
-  return function(options) return recipe(name, options) end
+  return function(options) return recipe(name, positionalChildren(options) or {}) end
 end
 
 local function install(target, components, recipes, component, recipe)
   local componentConstructors = {}
   local recipeConstructors = {}
-  local componentNames = {}
+  local componentNames = componentNameCache[components]
+  if componentNames == nil then
+    componentNames = {}
+    for index = 1, #components do componentNames[components[index]] = true end
+    componentNameCache[components] = componentNames
+  end
 
   for index = 1, #components do
     local name = components[index]
-    componentNames[name] = true
     assert(rawget(target, name) == nil, 'H3 UI constructor collides with scope API: ' .. name)
   end
   for name in next, recipes do
@@ -57,12 +77,10 @@ local function install(target, components, recipes, component, recipe)
       if constructor then return constructor end
 
       if type(key) == 'string' then
-        for index = 1, #components do
-          if components[index] == key then
-            constructor = componentConstructor(key, component)
-            componentConstructors[key] = constructor
-            return constructor
-          end
+        if componentNames[key] then
+          constructor = componentConstructor(key, component)
+          componentConstructors[key] = constructor
+          return constructor
         end
 
         if recipes[key] then

@@ -1,8 +1,10 @@
 ---@omw-context menu|player
 
 local emptyOptions = {}
-local spacer = require 'scripts.s3.components.spacer'
 local ui = require 'openmw.ui'
+local util = require 'openmw.util'
+
+local UtilVector2 = util.vector2
 
 local function collectChildren(options)
   local explicit = options.content or options.children
@@ -16,11 +18,19 @@ local function collectChildren(options)
 end
 
 local function withGap(children, gap)
+  if gap ~= nil then
+    assert(type(gap) == 'number' and gap >= 0, 'H3 row gap must be a non-negative number')
+  end
   if not children or #children < 2 or gap == nil or gap == 0 then return children end
-  assert(type(gap) == 'number' and gap >= 0, 'H3 row gap must be a non-negative number')
   local result = {}
+  local gapSize = UtilVector2(gap, 0)
   for index = 1, #children do
-    if index > 1 then result[#result + 1] = spacer(gap, 0) end
+    if index > 1 then
+      result[#result + 1] = {
+        type = ui.TYPE.Widget,
+        props = { size = gapSize, ignorePointerEvents = true },
+      }
+    end
     result[#result + 1] = children[index]
   end
   return result

@@ -2,8 +2,7 @@
 
 local emptyOptions = {}
 
-local async = require 'openmw.async'
-
+local eventHandlers = require 'scripts.s3.components.eventHandlers'
 local textInput = require 'scripts.s3.components.textInput'
 
 local MathCeil = math.ceil
@@ -25,20 +24,6 @@ local MathMin = math.min
 ---@field events? table
 ---@field userData? any
 ---@field template? openmw.ui.Template
-
-local function addHandler(events, name, handler)
-  local previous = events[name]
-
-  if not previous then
-    events[name] = async:callback(handler)
-    return
-  end
-
-  events[name] = async:callback(function(value, layout)
-    handler(value, layout)
-    return previous(value, layout)
-  end)
-end
 
 ---@param options? H3.NumberInputOptions
 ---@return openmw.ui.Layout
@@ -99,8 +84,8 @@ local function numberInput(options)
     if onCommit then onCommit(nextValue) end
   end
 
-  addHandler(events, 'textChanged', updateText)
-  addHandler(events, 'focusLoss', function(_, layout) commit(layout) end)
+  eventHandlers.add(events, 'textChanged', updateText)
+  eventHandlers.add(events, 'focusLoss', function(_, layout) commit(layout) end)
 
   return textInput {
     name = options.name,

@@ -89,7 +89,7 @@ local function actionCallback(spec, action)
   if action.role == 'cancel' then return spec.onCancel end
 end
 
-local function actionNode(ctx, spec, action, index)
+local function actionLayout(ctx, spec, action, index)
   if type(action) == 'string' then action = { label = action } end
   assert(type(action) == 'table', 'H3 UI dialog action must be a string or table')
   local callback = actionCallback(spec, action)
@@ -132,7 +132,7 @@ local function confirm(ctx, spec)
   if actions and #actions > 0 then
     local actionChildren = {}
     for index = 1, #actions do
-      actionChildren[index] = actionNode(ctx, spec, actions[index], index)
+      actionChildren[index] = actionLayout(ctx, spec, actions[index], index)
     end
     children[#children + 1] = ctx.row {
       role = 'actions',
