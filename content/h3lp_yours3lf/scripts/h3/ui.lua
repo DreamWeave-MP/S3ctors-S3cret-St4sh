@@ -62,9 +62,9 @@ function H3UI.nineSlice(options) return chrome.nineSlice(options) end
 
 ---@param options? H3UI.ScopeOptions
 ---@return H3UI.Scope
-function H3UI.scope(options) return newScope(options, Environment) end
+function H3UI.scope(options) return newScope(options, Environment, nil, nil, false) end
 
-local DefaultScope = H3UI.scope()
+local DefaultScope = newScope(nil, Environment, nil, nil, false)
 
 ---@return H3UI.SpecScope
 function H3UI.spec() return DefaultScope.spec() end

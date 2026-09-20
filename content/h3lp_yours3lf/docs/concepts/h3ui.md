@@ -37,27 +37,11 @@ Whether `button` is a primitive component and `settings` is a recipe is useful i
 
 H3UI resolves recipes and styles while constructing ordinary OpenMW layouts:
 
-```text
-H3UI constructor call
-    ↓
-recipe expansion when needed
-    ↓
-semantic component specs
-    ↓
-style resolution
-    ↓
-H3 component builders
-    ↓
-openmw.ui.Layout
-    ↓
-caller ui.create(...)
-    ↓
-caller-owned Element
-```
+{{ schematic(data_path="data/schematics/h3ui-construction.json") }}
 
 There is no virtual DOM, retained style graph, polling loop, or automatic root traversal. H3UI has one frame-end redraw queue in menu and player contexts: its idle `onFrame` path is an empty-queue check, while queued element-backed scopes are flushed after input processing.
 
-The caller still owns application state and the mounted root. A scoped `element` resolver lets H3 redraw semantic mutations without exposing invalidation plumbing to ordinary component code. Any number of H3-owned invalidations produced for the same mounted root during one input frame collapse to at most one `Element:update()` on that frame's flush. Invalidations raised during a flush roll forward to the next frame. Use `ui.setChildren()` for localized structural replacement and rebuild the caller-owned root only when the structure genuinely changes. H3UI never takes ownership of the element.
+The caller still owns application state and the mounted root. A scoped `element` resolver lets H3 redraw semantic mutations without exposing invalidation plumbing to ordinary component code. Any number of H3-owned invalidations produced for the same mounted root during one input frame collapse to at most one `Element:update()` on that frame's flush. Invalidations raised during a flush roll forward to the next frame. Use `ui.setChildren()` for localized structural replacement and rebuild the caller-owned root only when the structure genuinely changes. Ordinary components do not create Elements. A recipe that deliberately creates a nested Element must be invoked through a child scope, which owns and destroys that nested update domain.
 
 ## Components and recipes share one public path
 

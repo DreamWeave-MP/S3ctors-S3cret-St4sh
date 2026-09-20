@@ -1,0 +1,41 @@
+{
+  "id": "h3ui-construction-and-ownership",
+  "mode": "flow",
+  "title": "H3UI construction and ownership",
+  "heading_level": 3,
+  "description": "H3UI normally produces ordinary OpenMW layouts. Recipes that create nested Elements are the exception and require an explicit child scope.",
+  "direction": "vertical",
+  "nodes": [
+    { "id": "constructor", "title": "H3UI constructor call", "kind": "source", "detail": "Application code uses one public constructor surface for components and recipes." },
+    { "id": "recipes", "title": "Recipe expansion", "kind": "service", "detail": "Higher-level recipes expand only when the resolver needs them." },
+    { "id": "specs", "title": "Semantic component specs", "kind": "component", "detail": "The resolver preserves component and recipe identity for styling and mutation." },
+    { "id": "styles", "title": "Style resolution", "kind": "service", "detail": "Themes turn semantic roles, variants, tones, and classes into concrete styles." },
+    { "id": "builders", "title": "H3 component builders", "kind": "component", "detail": "Builders produce layouts without owning the caller's mounted root." },
+    { "id": "layout", "title": "openmw.ui.Layout", "kind": "engine", "detail": "The normal result is still an ordinary OpenMW layout." },
+    { "id": "create", "title": "Caller ui.create(...)", "kind": "boundary", "detail": "Application code chooses the layer and creates the mounted root Element." },
+    { "id": "root", "title": "Caller-owned Element", "kind": "result", "detail": "The caller owns the root Element lifetime, destruction, and application state." },
+    { "id": "child-scope", "title": "scope.child()", "kind": "boundary", "role": "support", "detail": "The application creates a child scope before invoking a recipe that owns a nested Element." },
+    { "id": "nested-create", "title": "Nested ui.create(...)", "kind": "engine", "role": "support", "detail": "The isolated recipe creates its nested Element under the child scope." },
+    { "id": "child-element", "title": "Child-scope-owned Element", "kind": "result", "role": "support", "detail": "The child scope destroys this nested Element recursively with its parent." }
+  ],
+  "edges": [
+    { "from": "constructor", "to": "recipes" },
+    { "from": "recipes", "to": "specs" },
+    { "from": "specs", "to": "styles" },
+    { "from": "styles", "to": "builders" },
+    { "from": "builders", "to": "layout" },
+    { "from": "layout", "to": "create" },
+    { "from": "create", "to": "root" },
+    { "from": "child-scope", "to": "recipes", "label": "isolated recipe", "kind": "support" },
+    { "from": "child-scope", "to": "nested-create", "kind": "support" },
+    { "from": "nested-create", "to": "child-element", "kind": "support" }
+  ],
+  "legend": [
+    { "kind": "source", "label": "Application input" },
+    { "kind": "service", "label": "H3UI machinery" },
+    { "kind": "component", "label": "Semantic UI" },
+    { "kind": "boundary", "label": "Ownership boundary" },
+    { "kind": "engine", "label": "OpenMW UI" },
+    { "kind": "result", "label": "Owned result" }
+  ]
+}
