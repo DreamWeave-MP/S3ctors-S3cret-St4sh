@@ -9,7 +9,7 @@ local Assert, Next, RawGet, StrFind, StrFormat, StrLower, ToString, Type =
 
 local UiCreate = ui.create
 
----@param ctx H3UI.Scope
+---@param ctx H3UI.RecipeContext
 ---@param item H3UI.SearchableListItem
 ---@param index integer
 ---@param activate? H3UI.ActivationState
@@ -24,7 +24,10 @@ local function listItem(ctx, item, index, activate)
     return activation.bind(activate, layout, item, index)
   end
 
-  Assert(Type(item) == 'table', 'H3 UI searchableList item must be text, number, descriptor, or layout')
+  Assert(
+    Type(item) == 'table',
+    'H3 UI searchableList item must be text, number, descriptor, or layout'
+  )
 
   Assert(
     not RawGet(item, 'component') and not RawGet(item, 'recipe'),
@@ -62,6 +65,8 @@ end
 ---@param spec H3UI.SearchableListOptions
 ---@return openmw.ui.Layout
 local function searchableList(ctx, spec)
+  Assert(ctx._isChildScope, 'H3 UI searchableList requires a child scope; call scope.child()')
+
   local items = spec.items or {}
   local activate = activation.new(spec.onActivate)
   local query = spec.query or ''

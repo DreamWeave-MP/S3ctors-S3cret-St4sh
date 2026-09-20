@@ -1085,6 +1085,20 @@ local function testChildScopes()
     _ownsElement = true,
   }
   assert(owned ~= nil)
+  local detachedDestroyed = 0
+  local detached = parent.child {
+    element = function()
+      return { destroy = function() detachedDestroyed = detachedDestroyed + 1 end }
+    end,
+    _ownsElement = true,
+  }
+  local detachedReference = setmetatable({ value = detached }, { __mode = 'v' })
+  detached.destroy()
+  detached = nil
+  collectgarbage 'collect'
+  collectgarbage 'collect'
+  assert(detachedDestroyed == 1 and detachedReference.value == nil)
+
   parent.destroy()
   assert(destroyed == 1)
 end
@@ -1296,6 +1310,25 @@ local function testCollectionActivationDispatch()
 end
 
 local function testSearchableListRegion()
+  local facadeRejected, facadeRejection = pcall(searchableList, {
+    _isChildScope = false,
+    child = function() error 'facade must not create a child' end,
+  }, { items = {} })
+  assert(not facadeRejected and facadeRejection:find('requires a child scope', 1, true))
+
+  local scopeEnvironment = {
+    resolveTheme = function() return morrowind end,
+    recipes = { searchableList = searchableList },
+    resolver = resolver,
+    publicComponents = {},
+  }
+  local rootScope = newScope(nil, scopeEnvironment)
+  local rootRejected, rootRejection = pcall(rootScope.searchableList, { items = {} })
+  assert(not rootRejected and rootRejection:find('requires a child scope', 1, true))
+
+  local childScope = rootScope.child()
+  assert(not rootScope._isChildScope and childScope._isChildScope)
+
   local resultLayout
   local replacements = 0
   local itemLayouts = {}
@@ -1315,6 +1348,7 @@ local function testSearchableListRegion()
     end,
   }
   local context = {
+    _isChildScope = childScope._isChildScope,
     child = function() return child end,
     searchInput = function(options) return options end,
     column = function(options) return options end,

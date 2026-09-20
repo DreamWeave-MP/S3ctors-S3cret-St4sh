@@ -7,15 +7,24 @@ local specModule = require 'scripts.h3.ui.spec'
 local token = require 'scripts.h3.ui.token'
 local updateQueue = require 'scripts.h3.ui.updateQueue'
 
-local Assert, Error, Next, StrFormat, ToString, Type =
-  assert, error, next, string.format, tostring, type
+local Assert, Error, Next, StrFormat, TableRemove, ToString, Type =
+  assert, error, next, string.format, table.remove, tostring, type
 
 ---@param options? H3UI.ScopeOptions
 ---@param environment H3UI.Environment
 ---@param inheritedRecipes? table<string, H3UI.Recipe>
 ---@param inheritedResolveTheme? fun(): H3UI.Theme
+---@param isChildScope? boolean
+---@param removeFromParent? fun()
 ---@return H3UI.Scope
-local function new(options, environment, inheritedRecipes, inheritedResolveTheme)
+local function new(
+  options,
+  environment,
+  inheritedRecipes,
+  inheritedResolveTheme,
+  isChildScope,
+  removeFromParent
+)
   options = options or {}
 
   Assert(merge.isPlainTable(options), 'H3 UI scope options must be a plain table')
@@ -58,10 +67,20 @@ local function new(options, environment, inheritedRecipes, inheritedResolveTheme
   local childScopes = {}
   local destroyed = false
   local scope = {
+    _isChildScope = isChildScope == true,
     invalidate = invalidate,
     recipes = recipes,
     resolveTheme = inheritedResolveTheme or environment.resolveTheme,
   }
+
+  local function removeChild(child)
+    for index = #childScopes, 1, -1 do
+      if childScopes[index] == child then
+        TableRemove(childScopes, index)
+        return
+      end
+    end
+  end
 
   ---Build a component by dynamic name. Prefer the named constructors such as `ui.button` in normal code.
   ---@param name string
@@ -130,9 +149,16 @@ local function new(options, environment, inheritedRecipes, inheritedResolveTheme
 
     destroyed = true
 
+    if removeFromParent then
+      removeFromParent()
+      removeFromParent = nil
+    end
+
     for index = #childScopes, 1, -1 do
       childScopes[index].destroy()
     end
+
+    childScopes = {}
 
     if not options._ownsElement or not options.element then return end
 
@@ -141,9 +167,9 @@ local function new(options, environment, inheritedRecipes, inheritedResolveTheme
   end
 
   ---Create a child scope sharing this scope's theme, recipes, and tokens while owning a
-  ---separate invalidation target. Local recipes are inherited and may be overridden. Element
-  ---lifetime stays with the application. Destroy child Elements explicitly when tearing down
-  ---the owning surface; OpenMW detaches nested Elements rather than destroying them.
+  ---separate invalidation target. Local recipes are inherited and may be overridden. Caller-supplied
+  ---Elements remain caller-owned. A child scope may instead own a nested Element when its
+  ---`_ownsElement` option is true; OpenMW detaches nested Elements rather than destroying them.
   ---@param childOptions? H3UI.ScopeOptions
   ---@return H3UI.Scope
   function scope.child(childOptions)
@@ -151,12 +177,13 @@ local function new(options, environment, inheritedRecipes, inheritedResolveTheme
 
     Assert(merge.isPlainTable(childOptions), 'H3 UI child scope options must be a plain table')
 
-    local child = new({
+    local child
+    child = new({
       invalidate = childOptions.invalidate,
       element = childOptions.element,
       recipes = childOptions.recipes,
       _ownsElement = childOptions._ownsElement,
-    }, environment, scope.recipes, scope.resolveTheme)
+    }, environment, scope.recipes, scope.resolveTheme, true, function() removeChild(child) end)
 
     childScopes[#childScopes + 1] = child
 

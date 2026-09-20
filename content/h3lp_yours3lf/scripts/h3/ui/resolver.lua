@@ -290,6 +290,7 @@ local function new(registry, publicComponents)
   local function recipeContext(scope, recipeName, parentContext, trace)
     local invalidate = parentContext and parentContext.invalidate or scope.invalidate
     local context = {
+      _isChildScope = scope._isChildScope,
       theme = parentContext and parentContext.theme or scope.resolveTheme(),
       recipe = recipeName,
       invalidate = invalidate,

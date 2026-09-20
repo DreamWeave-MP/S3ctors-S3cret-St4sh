@@ -551,10 +551,11 @@
 ---@field shell? 'window'|'box' Use a plain box shell for diagnostic fixtures.
 ---@field size? openmw.util.Vector2 Optional diagnostic-shell size.
 
----@class H3UI: H3UI.Scope
+---@class H3UI: H3UI.ConstructorSurface
+---@field DOCUMENT_VERSION integer Portable document format version.
+---@field UNSET table Explicit style-removal sentinel.
 ---@field deserialize fun(document: H3UI.Document): H3UI.Spec
 ---@field document fun(root: H3UI.Spec): H3UI.Document
----@field DOCUMENT_VERSION integer Portable document format version.
 ---@field explain fun(spec: H3UI.Spec|H3UI.Document): table
 ---@field nineSlice fun(options: H3UI.NineSliceOptions): openmw.ui.Layout
 ---@field registerTheme fun(spec: H3UI.ThemeRegistration)
@@ -562,8 +563,6 @@
 ---@field scope fun(options?: H3UI.ScopeOptions): H3UI.Scope
 ---@field slots fun(component: string): string[]
 ---@field spec fun(): H3UI.SpecScope Returns the same constructor vocabulary backed by portable specs instead of OpenMW layouts.
----@field token fun(path: string): H3UI.TokenReference
----@field UNSET table Explicit style-removal sentinel.
 
 ---@class H3UI.ActivationBinding
 ---@field callback? function|openmw.async.Callback
@@ -708,6 +707,43 @@
 ---@field onCancel? fun(action: H3UI.DialogAction, layout: openmw.ui.Layout): boolean?
 ---@field onConfirm? fun(action: H3UI.DialogAction, layout: openmw.ui.Layout): boolean?
 
+---@class H3UI.ConstructorSurface
+---@field bookFrame fun(options?: H3UI.BookFrameOptions): openmw.ui.Layout
+---@field box fun(options?: H3UI.BoxOptions): openmw.ui.Layout
+---@field button fun(options?: H3UI.ButtonOptions): openmw.ui.Layout
+---@field collapsible fun(options?: H3UI.CollapsibleOptions): openmw.ui.Layout
+---@field column fun(options?: H3UI.ColumnOptions): openmw.ui.Layout
+---@field component fun(name: string, spec?: table): openmw.ui.Layout
+---@field confirmDialog fun(spec?: H3UI.ConfirmDialogOptions): openmw.ui.Layout
+---@field dialog fun(spec?: H3UI.DialogOptions): openmw.ui.Layout
+---@field divider fun(options?: H3UI.DividerOptions): openmw.ui.Layout
+---@field grid fun(options?: H3UI.GridOptions): openmw.ui.Layout
+---@field iconButton fun(options?: H3UI.IconButtonOptions): openmw.ui.Layout
+---@field image fun(options?: H3UI.ImageOptions): openmw.ui.Layout
+---@field itemGrid fun(spec?: H3UI.ItemGridOptions): openmw.ui.Layout
+---@field itemSlot fun(options?: H3UI.ItemSlotOptions): openmw.ui.Layout
+---@field list fun(options?: H3UI.ListOptions): openmw.ui.Layout
+---@field listItem fun(options?: H3UI.ListItemOptions): openmw.ui.Layout
+---@field meter fun(options?: H3UI.MeterOptions): openmw.ui.Layout
+---@field numberInput fun(options?: H3UI.NumberInputOptions): openmw.ui.Layout
+---@field recipe fun(name: string, spec?: table): openmw.ui.Layout
+---@field row fun(options?: H3UI.RowOptions): openmw.ui.Layout
+---@field searchableList fun(spec?: H3UI.SearchableListOptions): openmw.ui.Layout
+---@field searchInput fun(options?: H3UI.SearchInputOptions): openmw.ui.Layout
+---@field section fun(spec?: H3UI.SectionOptions): openmw.ui.Layout
+---@field selector fun(options?: H3UI.SelectorOptions): openmw.ui.Layout
+---@field settings fun(spec?: H3UI.SettingsOptions): openmw.ui.Layout
+---@field slider fun(options?: H3UI.SliderOptions): openmw.ui.Layout
+---@field spacer fun(options?: H3UI.SpacerOptions|number, height?: number): openmw.ui.Layout
+---@field tabbedWindow fun(spec?: H3UI.TabbedWindowOptions): openmw.ui.Layout
+---@field tabs fun(options?: H3UI.TabsOptions): openmw.ui.Layout
+---@field text fun(options?: H3UI.TextOptions|string|number): openmw.ui.Layout
+---@field textInput fun(options?: H3UI.TextInputOptions): openmw.ui.Layout
+---@field toggle fun(options?: H3UI.ToggleOptions): openmw.ui.Layout
+---@field token fun(path: string): H3UI.TokenReference
+---@field tooltip fun(options?: H3UI.TooltipOptions): openmw.ui.Layout
+---@field window fun(options?: H3UI.WindowOptions): openmw.ui.Layout
+
 ---@class H3UI.DialogAction
 ---@field class? string
 ---@field classes? string[]|table<string, boolean>
@@ -819,9 +855,14 @@
 ---@field expectedTheme string
 ---@field id string
 
----@class H3UI.RecipeContext: H3UI.Scope
+---@class H3UI.RecipeContext: H3UI.ConstructorSurface
+---@field _isChildScope boolean Whether this context belongs to a disposable child scope.
+---@field child fun(options?: H3UI.ScopeOptions): H3UI.RecipeContext Create a child recipe context with a separate invalidation target.
 ---@field invalidate? fun(): nil
+---@field patch? fun(layout: openmw.ui.Layout, styles: table<string, H3UI.Style>)
 ---@field recipe string
+---@field setChildren fun(layout: openmw.ui.Layout, children: openmw.ui.LayoutOrElement[])
+---@field setSelected? fun(layout: openmw.ui.Layout, selected: boolean)
 ---@field theme H3UI.Theme
 
 ---@class H3UI.Registry
@@ -874,57 +915,23 @@
 ---@class H3UI.RuntimeTypeDescriptor
 ---@field name string
 
----@class H3UI.Scope
----@field bookFrame fun(options?: H3UI.BookFrameOptions): openmw.ui.Layout
----@field box fun(options?: H3UI.BoxOptions): openmw.ui.Layout
----@field button fun(options?: H3UI.ButtonOptions): openmw.ui.Layout
+---@class H3UI.Scope: H3UI.ConstructorSurface
+---@field _isChildScope boolean Whether this scope is a disposable child of another scope.
 ---@field child fun(options?: H3UI.ScopeOptions): H3UI.Scope Create a child scope sharing theme, recipes, and tokens with separate invalidation.
----@field collapsible fun(options?: H3UI.CollapsibleOptions): openmw.ui.Layout
----@field column fun(options?: H3UI.ColumnOptions): openmw.ui.Layout
----@field component fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic component construction.
----@field confirmDialog fun(spec?: H3UI.ConfirmDialogOptions): openmw.ui.Layout
 ---@field destroy fun() Destroy Elements created and owned by this scope and its children.
----@field dialog fun(spec?: H3UI.DialogOptions): openmw.ui.Layout
----@field divider fun(options?: H3UI.DividerOptions): openmw.ui.Layout
 ---@field explain fun(spec: H3UI.Spec|H3UI.Document): table
----@field grid fun(options?: H3UI.GridOptions): openmw.ui.Layout
----@field iconButton fun(options?: H3UI.IconButtonOptions): openmw.ui.Layout
----@field image fun(options?: H3UI.ImageOptions): openmw.ui.Layout
 ---@field invalidate? fun(): nil
----@field itemGrid fun(spec?: H3UI.ItemGridOptions): openmw.ui.Layout
----@field itemSlot fun(options?: H3UI.ItemSlotOptions): openmw.ui.Layout
----@field list fun(options?: H3UI.ListOptions): openmw.ui.Layout
----@field listItem fun(options?: H3UI.ListItemOptions): openmw.ui.Layout
----@field meter fun(options?: H3UI.MeterOptions): openmw.ui.Layout
----@field numberInput fun(options?: H3UI.NumberInputOptions): openmw.ui.Layout
 ---@field patch fun(layout: openmw.ui.Layout, styles: table<string, H3UI.Style>) Patch retained semantic slot targets and invalidate this scope.
----@field recipe fun(name: string, spec?: table): openmw.ui.Layout Advanced dynamic recipe construction.
 ---@field recipes table<string, H3UI.Recipe>
 ---@field resolve fun(spec: H3UI.Spec|H3UI.Document): openmw.ui.Layout
 ---@field resolveTheme fun(): H3UI.Theme
----@field row fun(options?: H3UI.RowOptions): openmw.ui.Layout
----@field searchableList fun(spec?: H3UI.SearchableListOptions): openmw.ui.Layout
----@field searchInput fun(options?: H3UI.SearchInputOptions): openmw.ui.Layout
----@field section fun(spec?: H3UI.SectionOptions): openmw.ui.Layout
----@field selector fun(options?: H3UI.SelectorOptions): openmw.ui.Layout
 ---@field setChildren fun(layout: openmw.ui.Layout, children: openmw.ui.LayoutOrElement[]) Replace a mounted layout's content with fresh children and invalidate the owning scope.
 ---@field setSelected fun(layout: openmw.ui.Layout, selected: boolean) Change retained selection state and invalidate this scope.
----@field settings fun(spec?: H3UI.SettingsOptions): openmw.ui.Layout
----@field slider fun(options?: H3UI.SliderOptions): openmw.ui.Layout
----@field spacer fun(options?: H3UI.SpacerOptions|number, height?: number): openmw.ui.Layout
 ---@field spec fun(): H3UI.SpecScope Returns the same constructor vocabulary backed by portable specs instead of OpenMW layouts.
----@field tabbedWindow fun(spec?: H3UI.TabbedWindowOptions): openmw.ui.Layout
----@field tabs fun(options?: H3UI.TabsOptions): openmw.ui.Layout
----@field text fun(options?: H3UI.TextOptions|string|number): openmw.ui.Layout
----@field textInput fun(options?: H3UI.TextInputOptions): openmw.ui.Layout
----@field toggle fun(options?: H3UI.ToggleOptions): openmw.ui.Layout
----@field token fun(path: string): H3UI.TokenReference
----@field tooltip fun(options?: H3UI.TooltipOptions): openmw.ui.Layout
----@field window fun(options?: H3UI.WindowOptions): openmw.ui.Layout
 
 ---@class H3UI.ScopeOptions
 ---@field _ownsElement? boolean Internal ownership flag used by child scopes.
----@field element? fun(): openmw.ui.Element? Returns the currently mounted OpenMW UI element owned by this scope.
+---@field element? fun(): openmw.ui.Element? Returns the mounted Element targeted by this scope's invalidation. Caller-owned unless explicitly internal to a child update domain.
 ---@field invalidate? fun(): nil Called when H3UI-owned interaction or recipe state needs a mounted Element update.
 ---@field recipes? table<string, H3UI.Recipe>
 

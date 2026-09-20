@@ -41,7 +41,7 @@ The plugin installs `I.H3UI` in menu and player contexts. Local and global scrip
 {% end %}
 
 {% usage_note(title="Construction is not mounting") %}
-H3UI never calls `ui.create`, chooses a layer, owns a root element, or persists application state. Mount the returned layout yourself. For interactive mounted UI, give a scope an `element` resolver as shown under [Mounting interactive UI](#mounting-interactive-ui); H3 then redraws its own semantic mutations. Element-backed scopes coalesce all H3-owned invalidations produced while processing a frame into at most one `Element:update()` per mounted root on the following H3UI frame flush. Use `ui.setChildren()` for localized structural replacement, and rebuild the root only when genuinely necessary.
+H3UI does not create or own the caller's root element, choose a layer, or persist application state. Mount the returned root layout yourself. For interactive mounted UI, give a scope an `element` resolver as shown under [Mounting interactive UI](#mounting-interactive-ui); H3 then redraws its own semantic mutations. Element-backed scopes coalesce all H3-owned invalidations produced while processing a frame into at most one `Element:update()` per mounted root on the following H3UI frame flush. Most components and recipes only return layouts. A recipe that creates a nested Element for an isolated update domain requires a child scope created with `scope.child()`; that child scope owns and destroys the nested Element. The immortal `I.H3UI` facade and a root `I.H3UI.scope()` cannot be used for those recipes. Use `ui.setChildren()` for localized structural replacement, and rebuild the root only when genuinely necessary.
 {% end %}
 
 ## The normal constructor surface
@@ -222,21 +222,27 @@ These operations change retained targets only. They do not rerun component resol
 
 ### Child scopes as update domains
 
-A scope can mint a child scope sharing its theme, recipes, and tokens while owning a separate invalidation target:
+A root scope can mint a child scope sharing its theme, recipes, and tokens while owning a separate invalidation target:
 
 ```lua
-local listUi = ui.child {
+local menuUi = I.H3UI.scope {
+    element = function()
+        return element
+    end,
+}
+
+local listUi = menuUi.child {
     element = function()
         return listElement
     end,
 }
 ```
 
-Build the independently-mutating subtree through the child, mount it in its own nested Element, and `listUi.setChildren()` invalidates only that Element. A scope tracks child scopes; call `ui.destroy()` when tearing down the surface so H3-owned child Elements are destroyed. OpenMW detaches nested Elements rather than destroying them automatically. This is how large surfaces isolate frequently-rebuilt regions (filterable lists, grids, detail panels) without callers knowing where the boundaries are — the scope making the call names the dirty domain.
+Build the independently-mutating subtree through the child, mount it in its own nested Element, and `listUi.setChildren()` invalidates only that Element. A scope tracks child scopes; call `listUi.destroy()` to tear down that update domain independently, or call `menuUi.destroy()` to recursively destroy it with the root surface. OpenMW detaches nested Elements rather than destroying them automatically. This is how large surfaces isolate frequently-rebuilt regions (filterable lists, grids, detail panels) without callers losing the lifetime handle for the dirty domain.
 
 ## Mounting interactive UI
 
-H3UI builds layouts; the application mounts the root. Give the scope a function returning that mounted element; semantic controls then redraw themselves with no further plumbing. Recipes may create nested Elements for deliberately isolated child scopes. Keep those Element handles and destroy them explicitly when tearing down the owning surface; OpenMW detaches nested roots rather than destroying them with the parent.
+H3UI builds layouts; the application mounts the root. Give the root scope a function returning that mounted element; semantic controls then redraw themselves with no further plumbing. Recipes may create nested Elements for deliberately isolated update domains, but those recipes require a child scope rather than the immortal `I.H3UI` facade or a root scope. The child scope owns the nested Element and destroys it recursively with its parent; OpenMW itself detaches nested roots rather than destroying them with the parent.
 
 ```lua
 local openmwUi = require 'openmw.ui'
@@ -269,7 +275,7 @@ element = openmwUi.create {
 }
 ```
 
-The closure captures the local before the element exists, and keeps returning whatever it currently holds if the application ever destroys and recreates the element. Ownership stays split: the application owns `ui.create`, the layer, the element lifetime, destruction, and application state. H3 manages the layouts it constructs, their semantic mutations, and redrawing those layouts. H3 queues element-backed invalidations and flushes them once after input processing each frame; repeated invalidations from hover, press, release, sliders, recipe mutations, or several scopes resolving to the same root are deduplicated to one `Element:update()` for that root. An invalidation raised while that update is being flushed is deferred to the next frame rather than recursively redrawing. Passing `invalidate` to `I.H3UI.scope` instead remains available as an escape hatch when redraw needs custom handling; custom invalidators are caller-owned and are not coalesced by H3.
+The closure captures the local before the element exists, and keeps returning whatever it currently holds if the application ever destroys and recreates the element. Ownership stays split: the application owns `ui.create`, the layer, the root element lifetime, destruction, and application state. H3 manages the layouts it constructs, their semantic mutations, and redrawing those layouts. A recipe-created nested Element is the exception: its explicit child scope owns that update-domain Element and destroys it with the scope. H3 queues element-backed invalidations and flushes them once after input processing each frame; repeated invalidations from hover, press, release, sliders, recipe mutations, or several scopes resolving to the same root are deduplicated to one `Element:update()` for that root. An invalidation raised while that update is being flushed is deferred to the next frame rather than recursively redrawing. Passing `invalidate` to `I.H3UI.scope` instead remains available as an escape hatch when redraw needs custom handling; custom invalidators are caller-owned and are not coalesced by H3.
 
 ## Advanced dynamic construction
 
@@ -345,7 +351,15 @@ Pass `onActivate(item, index, layout)` once for collection-level activation; H3 
 
 ### `searchableList`
 
-Builds `searchInput` + `list` + `listItem`. Pass `query`, `items`, and optionally a `text(item, index)` extractor. Search text is normalized once when the recipe is built; later query changes replace only the nested results Element, so the input keeps focus and the outer surface does not redraw. `onActivate(item, index, layout)` uses the same shared collection dispatch as `itemGrid`.
+Builds `searchInput` + `list` + `listItem`. Because it mounts the results region in an internally isolated Element, create a child scope before invoking it:
+
+```lua
+local menuUi = I.H3UI.scope { element = function() return element end }
+local listUi = menuUi.child()
+local list = listUi.searchableList { items = items }
+```
+
+`I.H3UI.searchableList { ... }` and `I.H3UI.scope().searchableList { ... }` are rejected. The child scope owns the nested results Element and destroys it independently or with the surface scope. Pass `query`, `items`, and optionally a `text(item, index)` extractor. Search text is normalized once when the recipe is built; later query changes replace only the nested results Element, so the input keeps focus and the outer surface does not redraw. `onActivate(item, index, layout)` uses the same shared collection dispatch as `itemGrid`.
 
 ### `section`
 
