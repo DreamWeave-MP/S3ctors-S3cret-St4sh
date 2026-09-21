@@ -15,9 +15,66 @@ No compromises. No bullshit. Your music responds to the world around you.[/cente
 [*][b]H3lp Yours3lf[/b] — [url=https://www.nexusmods.com/morrowind/mods/56417]Download H3lp Yours3lf[/url][/*]
 [/list]
 
-[heading][center][color=#b48cff]INSTALLATION — START HERE[/color][/center]
+[heading][center][color=#b48cff]START HERE — WHAT ARE YOU TRYING TO DO?[/color][/center]
 [/heading]
 
+[color=#b48cff][b][size=5]I just want S3maphore to manage normal Morrowind music.[/size][/b][/color]
+
+Install S3maphore, enable [font=Courier New]00 Core[/font], and enable [font=Courier New]S3maphore.esp[/font].
+
+[b]You're done.[/b]
+
+Vanilla Explore and Battle music should work immediately.
+
+[color=#b48cff][b][size=5]I installed a music mod that S3maphore supports.[/size][/b][/color]
+
+Install the music mod normally, then enable the matching S3maphore playlist module.
+
+For example, MUSE-style music packs use [font=Courier New]03 Muse Expansion Playlists[/font].
+
+[b]You do not need to edit the music mod or S3maphore's Lua files.[/b]
+
+[color=#b48cff][b][size=5]I want to add my own music.[/size][/b][/color]
+
+[center][b][color=#ffcc66][size=6]PUT THE AUDIO FILES IN THE PLAYLIST'S MUSIC FOLDER.[/size][/color][/b]
+[b]There is [color=#9900ff]no Lua step[/color].
+There is [color=#9900ff]no filename-registration step[/color].
+There is [color=#9900ff]no [i]S3maphore[/i] configuration file[/color] you need to edit.[/b][/center]
+
+S3maphore's playlist modules already contain the rules deciding [i]when[/i] music should play. You supply the music by placing supported audio files in the folder that playlist reads.
+
+The empty [font=Courier New]Music[/font] directories included with S3maphore are intentional drop zones.
+
+The [font=Courier New].gitkeep[/font] files inside them are only placeholders used to preserve empty directories. Ignore them.
+
+For example:
+
+[code]03 Muse Expansion Playlists/
+└── Music/
+    └── ms/
+        └── cell/
+            └── hlaalu/
+                ├── my-hlaalu-track.mp3
+                └── another-track.mp3[/code]
+
+Those tracks are now available to the existing Hlaalu playlist.
+
+[b]You may also provide the same [font=Courier New]Music/...[/font] path from another enabled OpenMW data directory.[/b] The files do not have to be copied directly into S3maphore.
+
+See [b][color=#9900ff][size=4]WHERE TO PUT YOUR MUSIC[/size][/color][/b] below for every existing playlist folder.
+
+[color=#b48cff][size=4][b]I want music to play somewhere S3maphore does not already have a playlist for.[/b][/size][/color]
+
+That is when playlist authoring becomes relevant.
+
+Creating entirely new contextual behavior uses S3maphore's Lua playlist API and is intended for mod authors.
+
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/s3maphore/docs/][b][color=#9900ff]Playlist Author Documentation[/color][/b][/url]
+
+[center][color=#d4d4d8][b]If you are only installing S3maphore, installing supported music packs, or adding songs to existing playlists, you do not need to open or edit a .lua file.[/b][/color][/center]
+
+[heading][center][color=#b48cff]INSTALLATION[/color][/center]
+[/heading]
 [center][size=5][b][color=#ffcc66]Enable 00 Core and S3maphore.esp.[/color][/b][/size]
 [b]Everything else in the S3maphore archive is optional.[/b][/center]
 
@@ -28,95 +85,44 @@ No compromises. No bullshit. Your music responds to the world around you.[/cente
 [*][b]2.[/b] Install S3maphore.[/*]
 [*][b]3.[/b] Enable the [font=Courier New]00 Core[/font] data directory.[/*]
 [*][b]4.[/b] Enable [font=Courier New]S3maphore.esp[/font] in OpenMW's content list.[/*]
-[*][b]5.[/b] Enable only optional modules matching music or content you use.[/*]
-[*][b]6.[/b] Launch the game. Vanilla Explore and Battle music should work immediately.[/*]
+[*][b]5.[/b] Enable only optional modules matching music or content you actually use.[/*]
+[*][b]6.[/b] Launch the game.[/*]
 [/list]
 
-[color=#ffcc66][b]Do not enable every module blindly.[/b][/color] Most optional modules define playlists for music supplied by another mod. If S3maphore finds no matching tracks, the playlist stays inactive.
+[b]Installation test:[/b] if normal Explore and Battle music plays, S3maphore Core is installed correctly.
+
+[color=#ffcc66][b]Do not enable every module blindly.[/b][/color]
+
+Optional modules define additional playlists. Many expect music supplied by another mod or by you. If S3maphore cannot find any tracks belonging to one of those playlists, it simply leaves that playlist inactive.
 
 [size=4][b]Manual OpenMW installation[/b][/size]
 
-S3maphore is packaged as several OpenMW data directories. Do [b]not[/b] flatten them into Morrowind's [font=Courier New]Data Files[/font] directory.
+S3maphore is packaged as several separate OpenMW data directories.
 
-Keep them separate and add only the directories you want to [font=Courier New]openmw.cfg[/font].
+[b]Do not flatten them into Morrowind's [font=Courier New]Data Files[/font] directory.[/b]
+
+Add only the directories you want to [font=Courier New]openmw.cfg[/font].
 
 For example:
 
 [code]data="/path/to/S3maphore/00 Core"
 data="/path/to/S3maphore/03 Muse Expansion Playlists"[/code]
 
-Add [font=Courier New]S3maphore.esp[/font] from [font=Courier New]00 Core[/font] to your OpenMW content list.
+Then enable [font=Courier New]S3maphore.esp[/font] from [font=Courier New]00 Core[/font].
 
-[color=#d4d4d8][b]Important:[/b] module numbers are labels, not load-order numbers. They do not need to be enabled in numerical order.[/color]
+[color=#d4d4d8][b]Important:[/b] module numbers are labels, not load-order requirements. They do not need to be enabled in numerical order.[/color]
 
-[heading][center][color=#b48cff]WHAT S3MAPHORE DOES[/color][/center]
+[heading][center][color=#b48cff]WHERE TO PUT YOUR MUSIC[/color][/center]
 [/heading]
 
-S3maphore replaces OpenMW's built-in music handling with contextual playlists.
+[center][size=4][b]Adding your own tracks? This is the section you want.[/b][/size]
 
-Music can react to location, region, cell, faction, enemy, weather, time, tileset, magic effects, or damn near anything else OpenMW exposes to Lua.
+Choose the existing playlist you want to supply music for and put your audio files in its listed [font=Courier New]Music/...[/font] folder.
 
-The mental model is simple:
+[b]For folder-based playlists, every supported audio file in that folder is discovered automatically. Do not add its filename to a Lua file.[/b]
 
-[list]
-[*][b]Playlist[/b] — a collection of tracks with rules for when it may play.[/*]
-[*][b]Priority[/b] — decides which valid playlist wins.[/*]
-[*][b]Playdeck[/b] — every playlist S3maphore discovers in your OpenMW installation.[/*]
-[/list]
-
-When the game state changes, S3maphore checks the playdeck and [b]deals[/b] the highest-priority valid playlist.
-
-Battle music is not magic. It is just a playlist with a combat rule and a high priority.
-
-OpenMW dehardcoded its music system during the 0.49 development cycle, but its public playlist API was removed before release. S3maphore restores that missing layer and builds a complete playlist system on top of it.
-
-[heading][center][color=#b48cff]MODULES[/color][/center]
-[/heading]
-
-Each S3maphore module is an OpenMW data directory containing playlist definitions, music, or both.
-
-[size=4][b]Required[/b][/size]
-
-[list]
-[*][font=Courier New]00 Core[/font] — the S3maphore engine plus vanilla [font=Courier New]Music/Explore[/font] and [font=Courier New]Music/Battle[/font] playlists. It does not include replacement music.[/*]
-[/list]
-
-[size=4][b]Major playlist modules[/b][/size]
-
-[list]
-[*][font=Courier New]01 Tamriel Rebuilt Playlists[/font] — support for [url=https://www.nexusmods.com/morrowind/mods/47254]Tamriel Rebuilt - Original Soundtrack[/url].[/*]
-[*][font=Courier New]02 Project Cyrodiil Playlists[/font] — support for [url=https://www.nexusmods.com/morrowind/mods/55779]Project Cyrodiil Music - Anvil and Sutch[/url].[/*]
-[*][font=Courier New]03 Muse Expansion Playlists[/font] — compatibility playlists for MUSE-style music packs, [url=https://www.nexusmods.com/morrowind/mods/51734]Morrow Winds[/url], [url=https://www.nexusmods.com/morrowind/mods/51769]CaptainCreepy Music Pack[/url], and related music mods.[/*]
-[/list]
-
-[size=4][b]Extended modules[/b][/size]
-
-These are optional and may require a separate music or content mod.
-
-[list]
-[*][font=Courier New]04 Vindsvept Solstheim[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/53597]Vindsvept Solstheim for Dynamic Music[/url].[/*]
-[*][font=Courier New]05 Secrets of the Crystal City[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/51932]Secrets of the Crystal City[/url].[/*]
-[*][font=Courier New]06 Songbook of the North[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/46936]Songbook of the North[/url]. Includes its own music.[/*]
-[*][font=Courier New]08 Redguard Music[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/56798]Elder Scrolls Adventures Redguard Music for Cyrodiil[/url].[/*]
-[*][font=Courier New]09 Nordic Lands[/font][/*]
-[*][font=Courier New]10 Inns and Taverns[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/55294]Inns and Taverns for Dynamic Music[/url].[/*]
-[*][font=Courier New]11 Daggerfall Guild Themes[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/53569]Dynamic Music - Daggerfall Guild Themes[/url].[/*]
-[*][font=Courier New]14 General Dungeon[/font][/*]
-[*][font=Courier New]15 Provincial Music[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/46229]Provincial Music[/url].[/*]
-[*][font=Courier New]18 Better Music System Redone[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/46312]Better Music System Redone[/url].[/*]
-[/list]
-
-[size=4][b]Special-purpose modules[/b][/size]
-
-[list]
-[*][font=Courier New]07 Starwind Playlists[/font] - for [url=https://www.nexusmods.com/morrowind/mods/48909]Starwind[/url] only.[/*]
-[*][font=Courier New]12 BBL Drizzy[/font] - a shitpost playlist pack.[/*]
-[*][font=Courier New]16 Bgi Inor[/font] - a shitpost playlist pack with its own music.[/*]
-[/list]
-
-[size=4][b]Exact playlist folders[/b][/size]
-
-You normally do not need these. Open the list when installing music manually, building compatibility support, or checking exactly where a playlist looks for tracks.
+[b]Use the documented folder names [color=#9900ff]exactly[/color]. Do not [color=#9900ff]invent, rename, or reorganize[/color] them.[/b]
+[/center]
 
 [spoiler]
 [b]00 Core[/b]
@@ -166,8 +172,84 @@ You normally do not need these. Open the list when installing music manually, bu
 [/list]
 [/spoiler]
 
+If the context you want [b]does not have an existing playlist[/b], putting music into a newly invented folder will not create one. That is the distinction between:
+
+[list]
+[*][b]Adding music to an existing playlist[/b] — put audio files in its folder. No Lua.[/*]
+[*][b]Creating a new playlist[/b] — define new contextual behavior using the playlist-author API.[/*]
+[/list]
+
+[heading][center][color=#b48cff]WHAT S3MAPHORE DOES[/color][/center]
+[/heading]
+
+S3maphore replaces OpenMW's built-in music handling with contextual playlists.
+
+Music can react to location, region, cell, faction, enemy, weather, time, tileset, magic effects, or damn near anything else OpenMW exposes to Lua.
+
+For normal users, that complexity is already handled by the installed playlist modules.
+
+You provide music. S3maphore decides when it plays.
+
+For mod authors, the underlying model is:
+
+[list]
+[*][b]Playlist[/b] — a collection of tracks with rules for when it may play.[/*]
+[*][b]Priority[/b] — decides which valid playlist wins.[/*]
+[*][b]Playdeck[/b] — every playlist S3maphore discovers in your OpenMW installation.[/*]
+[/list]
+
+When game state changes, S3maphore checks the playdeck and [b]deals[/b] the highest-priority valid playlist.
+
+Battle music is not magic. It is simply a playlist with a combat condition and high priority.
+
+[heading][center][color=#b48cff]MODULES[/color][/center]
+[/heading]
+
+Each S3maphore module is an OpenMW data directory containing playlist definitions, music, or both.
+
+[size=4][b]Required[/b][/size]
+
+[list]
+[*][font=Courier New]00 Core[/font] — the S3maphore engine plus vanilla [font=Courier New]Music/Explore[/font] and [font=Courier New]Music/Battle[/font] playlists. It does not include replacement music.[/*]
+[/list]
+
+[size=4][b]Major playlist modules[/b][/size]
+
+[list]
+[*][font=Courier New]01 Tamriel Rebuilt Playlists[/font] — support for [url=https://www.nexusmods.com/morrowind/mods/47254]Tamriel Rebuilt - Original Soundtrack[/url].[/*]
+[*][font=Courier New]02 Project Cyrodiil Playlists[/font] — support for [url=https://www.nexusmods.com/morrowind/mods/55779]Project Cyrodiil Music - Anvil and Sutch[/url].[/*]
+[*][font=Courier New]03 Muse Expansion Playlists[/font] — compatibility playlists for MUSE-style music packs, [url=https://www.nexusmods.com/morrowind/mods/51734]Morrow Winds[/url], [url=https://www.nexusmods.com/morrowind/mods/51769]CaptainCreepy Music Pack[/url], and related music mods.[/*]
+[/list]
+
+[size=4][b]Extended modules[/b][/size]
+
+These are optional and may require a separate music or content mod.
+
+[list]
+[*][font=Courier New]04 Vindsvept Solstheim[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/53597]Vindsvept Solstheim for Dynamic Music[/url].[/*]
+[*][font=Courier New]05 Secrets of the Crystal City[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/51932]Secrets of the Crystal City[/url].[/*]
+[*][font=Courier New]06 Songbook of the North[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/46936]Songbook of the North[/url]. Includes its own music.[/*]
+[*][font=Courier New]08 Redguard Music[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/56798]Elder Scrolls Adventures Redguard Music for Cyrodiil[/url].[/*]
+[*][font=Courier New]09 Nordic Lands[/font][/*]
+[*][font=Courier New]10 Inns and Taverns[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/55294]Inns and Taverns for Dynamic Music[/url].[/*]
+[*][font=Courier New]11 Daggerfall Guild Themes[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/53569]Dynamic Music - Daggerfall Guild Themes[/url].[/*]
+[*][font=Courier New]14 General Dungeon[/font][/*]
+[*][font=Courier New]15 Provincial Music[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/46229]Provincial Music[/url].[/*]
+[*][font=Courier New]18 Better Music System Redone[/font] - support for [url=https://www.nexusmods.com/morrowind/mods/46312]Better Music System Redone[/url].[/*]
+[/list]
+
+[size=4][b]Special-purpose modules[/b][/size]
+
+[list]
+[*][font=Courier New]07 Starwind Playlists[/font] - for [url=https://www.nexusmods.com/morrowind/mods/48909]Starwind[/url] only.[/*]
+[*][font=Courier New]12 BBL Drizzy[/font] - a shitpost playlist pack.[/*]
+[*][font=Courier New]16 Bgi Inor[/font] - a shitpost playlist pack with its own music.[/*]
+[/list]
+
 [heading][center][color=#b48cff]MUSE-STYLE MUSIC PACKS[/color][/center]
 [/heading]
+
+S3maphore supports music packs and folder conventions originally designed for MUSE. MUSE itself is an MWSE mod and does not run in OpenMW; you [color=#9900ff]do not need MUSE[/color].
 
 [font=Courier New]03 Muse Expansion Playlists[/font] contains playlist definitions. It does [b]not[/b] include the original music packs.
 
@@ -181,97 +263,97 @@ S3maphore includes ports and compatibility playlists for several MUSE expansions
 
 [spoiler]
 [list]
-[*][url=https://www.nexusmods.com/morrowind/mods/51255]MUSE Expansion - Ashlander[/url] — [font=Courier New]Muse Ashlanders.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/51255]MUSE Expansion - Ashlander[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/ashlander[/font][/*]
 [*][font=Courier New]Music/ms/combat/ashlander[/font][/*]
 [/list]
 [/*]
-[*][font=Courier New]Muse Cavern of the Incarnate.lua[/font]
+[*][font=Courier New]Muse Cavern of the Incarnate[/font]
 [list]
 [*][font=Courier New]Music/ms/cell/incarnate[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/51169]MUSE Expansion - Dwemer[/url] — [font=Courier New]Muse Dwemer.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/51169]MUSE Expansion - Dwemer[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/dwemer[/font][/*]
 [*][font=Courier New]Music/ms/combat/dwemer[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/51082]MUSE Expansion - Sixth House[/url] — [font=Courier New]Muse Sixth House.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/51082]MUSE Expansion - Sixth House[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/6thhouse[/font][/*]
 [*][font=Courier New]Music/ms/combat/dagoth[/font][/*]
 [*][font=Courier New]Music/ms/combat/dagoth ur[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/51407]MUSE Expansion - Tomb[/url] — [font=Courier New]Muse Tombs.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/51407]MUSE Expansion - Tomb[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/tomb[/font][/*]
 [*][font=Courier New]Music/ms/combat/tomb[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/51993]MUSE Expansion - Daedric[/url] — [font=Courier New]Muse Daedric.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/51993]MUSE Expansion - Daedric[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/daedric[/font][/*]
 [*][font=Courier New]Music/ms/combat/daedric[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/52814]MUSE Expansion - Empire[/url] — [font=Courier New]Muse Empire.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/52814]MUSE Expansion - Empire[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/empire[/font][/*]
 [*][font=Courier New]Music/ms/cell/imperial[/font][/*]
 [*][font=Courier New]Music/ms/combat/empire[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/54639]MUSE Expansion - Hlaalu[/url] — [font=Courier New]Muse Hlaalu.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/54639]MUSE Expansion - Hlaalu[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/hlaalu[/font][/*]
 [*][font=Courier New]Music/ms/combat/hlaalu[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/55082]MUSE Expansion - Redoran[/url] — [font=Courier New]Muse Redoran.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/55082]MUSE Expansion - Redoran[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/redoran[/font][/*]
 [*][font=Courier New]Music/ms/combat/redoran[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/55730]MUSE Expansion - Telvanni[/url] — [font=Courier New]Muse Telvanni.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/55730]MUSE Expansion - Telvanni[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/telvanni[/font][/*]
 [*][font=Courier New]Music/ms/combat/telvanni[/font][/*]
 [/list]
 [/*]
-[*][url=https://www.nexusmods.com/morrowind/mods/57875]MUSE Expansion - Temple[/url] — [font=Courier New]Muse Temple.lua[/font]
+[*][url=https://www.nexusmods.com/morrowind/mods/57875]MUSE Expansion - Temple[/url]
 [list]
 [*][font=Courier New]Music/ms/cell/temple[/font][/*]
 [*][font=Courier New]Music/ms/combat/temple[/font][/*]
 [/list]
 [/*]
-[*][font=Courier New]Muse Almalexia.lua[/font]
+[*][font=Courier New]Muse Almalexia[/font]
 [list]
 [*][font=Courier New]Music/ms/cell/almalexia[/font][/*]
 [*][font=Courier New]Music/ms/combat/almalexia[/font][/*]
 [/list]
 [/*]
-[*][font=Courier New]Muse Vivec.lua[/font]
+[*][font=Courier New]Muse Vivec[/font]
 [list]
 [*][font=Courier New]Music/ms/cell/vivec[/font][/*]
 [/list]
 [/*]
-[*][font=Courier New]Muse Vivec Palace.lua[/font]
+[*][font=Courier New]Muse Vivec Palace[/font]
 [list]
 [*][font=Courier New]Music/ms/cell/vivec/vivecpalace.mp3[/font][/*]
 [*][font=Courier New]Music/ms/combat/vivec[/font][/*]
 [/list]
 [/*]
-[*][font=Courier New]Muse Mournhold and Solstheim.lua[/font]
+[*][font=Courier New]Muse Mournhold and Solstheim[/font]
 [list]
 [*][font=Courier New]Music/ms/cell/mournhold[/font][/*]
 [*][font=Courier New]Music/ms/cell/solstheim pack[/font][/*]
 [/list]
 [/*]
-[*][font=Courier New]Muse Regions.lua[/font]
+[*][font=Courier New]Muse Regions[/font]
 [list]
 [*][font=Courier New]Music/ms/region/ashlands pack[/font][/*]
 [*][font=Courier New]Music/ms/region/ascadian isles region[/font][/*]
@@ -283,8 +365,8 @@ S3maphore includes ports and compatibility playlists for several MUSE expansions
 [*][font=Courier New]Music/ms/region/west gash region[/font][/*]
 [/list]
 [/*]
-[*][font=Courier New]Muse Caves.lua[/font] — [font=Courier New]Music/ms/cell/cave[/font][/*]
-[*][font=Courier New]Muse Vampire.lua[/font] — [font=Courier New]Music/ms/combat/vampire[/font][/*]
+[*][font=Courier New]Muse Caves[/font] — [font=Courier New]Music/ms/cell/cave[/font][/*]
+[*][font=Courier New]Muse Vampire[/font] — [font=Courier New]Music/ms/combat/vampire[/font][/*]
 [/list]
 [/spoiler]
 
@@ -320,28 +402,10 @@ Its core music is read from:
 
 The optional [font=Courier New]01 TAVERNS[/font] module is supported by [font=Courier New]10 Inns and Taverns[/font].
 
-The optional [font=Courier New]02 VAMPIRE COMBAT[/font] module is supported through [font=Courier New]Muse Vampire.lua[/font] using [font=Courier New]Music/MS/combat/Vampire[/font].[/spoiler]
+The optional [font=Courier New]02 VAMPIRE COMBAT[/font] module uses [font=Courier New]Music/MS/combat/Vampire[/font].[/spoiler]
 
 [heading][center][color=#b48cff]USAGE[/color][/center]
 [/heading]
-
-[size=4][b]Adding your own music[/b][/size]
-
-Most S3maphore playlists read supported tracks from a folder.
-
-The empty [font=Courier New]Music[/font] folders included with playlist modules are intentional drop zones. You do not need to edit Lua.
-
-For example, this track becomes available to the Hlaalu playlist:
-
-[code]03 Muse Expansion Playlists/Music/ms/cell/hlaalu/my-hlaalu-track.mp3[/code]
-
-You can provide the same [font=Courier New]Music/...[/font] path from any other OpenMW data directory.
-
-S3maphore searches OpenMW's virtual file system, so your music does not need to live inside the S3maphore archive. This is also how playlist-only modules use tracks supplied by other mods.
-
-Some playlists register an explicit track list instead of reading an entire folder.
-
-If a playlist cannot be toggled in the settings menu, S3maphore did not discover any of its registered tracks.
 
 [size=4][b]Controls[/b][/size]
 
@@ -360,7 +424,7 @@ The S3maphore settings menu lets you:
 [*]Enable or disable combat music.[/*]
 [*]Control silence tracks.[/*]
 [*]Choose whether a new playlist interrupts or finishes the current track.[/*]
-[*]Permanently enable or disable individual registered playlists.[/*]
+[*]Permanently enable or disable individual playlists.[/*]
 [/list]
 
 [heading][center][color=#b48cff]COMPATIBILITY[/color][/center]
@@ -372,12 +436,16 @@ Playlist-based music packs are different. Their tracks may live in custom folder
 
 The included compatibility modules provide those definitions for supported MUSE-style packs, [url=https://www.nexusmods.com/morrowind/mods/53568]Dynamic Music[/url] soundbanks, [url=https://www.nexusmods.com/morrowind/mods/51734]Morrow Winds[/url], [url=https://www.nexusmods.com/morrowind/mods/51769]CaptainCreepy Music Pack[/url], and other music mods.
 
-[color=#d4d4d8][b]Important:[/b] support for another mod's music does not mean you should also run its original music-management scripts. S3maphore is the music controller.[/color]
+S3maphore compatibility modules replace the playlist/controller logic required by supported Lua- or MWSE-based music systems. Install the music files they provide, but do not expect their original scripting systems to function under OpenMW.
 
-Some mods use MWScript to play music directly. S3maphore does not change that interface.
+Mods that play music directly through MWScript are separate. S3maphore does not replace or disable that interface.
 
 [heading][center][color=#b48cff]TROUBLESHOOTING[/color][/center]
 [/heading]
+
+[center][size=4][b]If you edited any S3maphore .lua files while trying to add music, restore or reinstall S3maphore before troubleshooting.
+
+Adding music [color=#9900ff]DOES NOT[/color] require Lua changes.[/b][/size][/center]
 
 [size=4][b]No music plays at all[/b][/size]
 
@@ -400,7 +468,7 @@ Confirm that:
 [*]The expected tracks exist somewhere in OpenMW's virtual file system.[/*]
 [/list]
 
-If S3maphore finds no registered tracks for a playlist, that playlist stays inactive.
+If S3maphore finds no tracks for a playlist, that playlist stays inactive.
 
 [size=4][b]Still nothing? Time to interrogate the log.[/b][/size]
 
