@@ -1,3 +1,4 @@
+---@omw-context player
 ---@module 'doc.playlistEnv'
 
 ---@type IDPresenceMap
@@ -15,7 +16,7 @@ end
 ---@type S3maphorePlaylist[]
 return {
   {
-    id = 'ms/cell/cave',
+    id = 'ms/interior/cave',
     priority = PlaylistPriority.Tileset,
     randomize = true,
     isValidCallback = museCaveRule,
