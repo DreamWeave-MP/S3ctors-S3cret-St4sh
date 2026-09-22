@@ -1,3 +1,5 @@
+---@omw-context player
+
 ---@type IDPresenceMap
 local AlmalexiaCells = {
   ['mournhold temple: high chapel'] = true,
@@ -9,12 +11,12 @@ local AlmalexiaCombatTargets = {
 }
 
 ---@type ValidPlaylistCallback
-local function almalexiaCellRule(playback)
+local function almalexiaCellRule()
   return not Playback.state.cellIsExterior and Playback.rules.cellNameExact(AlmalexiaCells)
 end
 
 ---@type ValidPlaylistCallback
-local function almalexiaCombatRule(playback)
+local function almalexiaCombatRule()
   return Playback.state.isInCombat and Playback.rules.combatTargetExact(AlmalexiaCombatTargets)
 end
 
@@ -22,7 +24,7 @@ end
 return {
   {
     id = 'ms/cell/almalexia',
-    priority = PlaylistPriority.Faction,
+    priority = PlaylistPriority.City,
     randomize = true,
 
     isValidCallback = almalexiaCellRule,
