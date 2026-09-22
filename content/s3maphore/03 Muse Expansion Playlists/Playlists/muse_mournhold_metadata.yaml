@@ -1,0 +1,24 @@
+playlists:
+  "ms/cell/mournhold": "Mournhold"
+
+tracks:
+  "music/ms/cell/ebonheart/ebonheart.mp3":
+    title: "Ebonheart"
+    artist: "Revenant?"
+    composer: "Revenant?"
+    source: "Better Music System Redone"
+  "music/ms/cell/ebonheart/overworld 2.mp3":
+    title: "Overworld 2"
+    artist: "Revenant?"
+    composer: "Revenant?"
+    source: "Better Music System Redone"
+  "music/ms/cell/ebonheart/Telvanni 3.mp3":
+    title: "Telvanni 3"
+    artist: "Revenant?"
+    composer: "Revenant?"
+    source: "Better Music System Redone"
+  "music/ms/cell/ebonheart/vivec 3.mp3":
+    title: "Vivec 3"
+    artist: "Revenant?"
+    composer: "Revenant?"
+    source: "Better Music System Redone"
