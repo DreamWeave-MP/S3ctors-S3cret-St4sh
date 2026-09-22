@@ -13,6 +13,19 @@ package.preload['scripts.h3.settings'] = function()
   settingsLoaded = true
   return {}
 end
+package.preload['scripts.h3.input'] = function()
+  return {
+    registerActions = function() end,
+  }
+end
+package.preload['scripts.h3.inputPage'] = function()
+  return {
+    onControllerButtonPress = function() end,
+    onKeyPress = function() end,
+    onMouseButtonPress = function() end,
+    register = function() end,
+  }
+end
 package.preload['openmw.menu'] = function() return {} end
 
 local Provider = require 'scripts.h3.provider'
