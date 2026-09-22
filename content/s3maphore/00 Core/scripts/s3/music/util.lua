@@ -494,6 +494,7 @@ local function OMWSetTracksSignature(playlistId, signature)
   signatureSection:set(playlistId, signature)
 end
 
+---@type S3maphoreHelperModule
 local utilModule = {
   debugLog = debugLog,
   deepCopy = deepCopy,

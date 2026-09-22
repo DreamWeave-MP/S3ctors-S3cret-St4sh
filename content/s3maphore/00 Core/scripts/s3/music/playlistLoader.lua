@@ -27,6 +27,7 @@ local FAILED_TO_LOAD_PLAYLIST = 'Failed to load playlist file: %s\nErr: %s'
 --- Takes any number of paramaters and deep prints them, if debug logging is enabled
 local function printOverride(...) musicUtil.debugLog(musicUtil.deepToString({ ... }, 3)) end
 
+---@class S3maphorePlaylistEnv
 local PlaylistEnvironment = {
   playSpecialTrack = MusicManager.playSpecialTrack,
   skipTrack = MusicManager.skipTrack,

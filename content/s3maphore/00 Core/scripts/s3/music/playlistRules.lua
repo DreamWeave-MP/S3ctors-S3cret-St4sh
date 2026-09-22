@@ -28,6 +28,7 @@ local NearbyActors = nearby.actors
 local PlaylistState = require 'scripts.s3.music.playlistState'
 local clear = require 'scripts.s3.clear'
 
+---@class PlaylistRules
 local PlaylistRules = {}
 
 local combatTargetCacheKey

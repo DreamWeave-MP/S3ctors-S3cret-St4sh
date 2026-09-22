@@ -1,5 +1,6 @@
 ---@omw-context none
 
+---@class S3maphoreTilesets
 local Tilesets = {}
 
 ---@type IDPresenceMap
