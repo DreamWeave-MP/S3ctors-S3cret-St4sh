@@ -2,7 +2,7 @@
 
 [i]A brutally opinionated autosave manager with simplistic options and an extremely lightweight performance footprint.[/i]
 
-[size=4][b][color=#8E44AD]9 MINUTE INTERVAL[/color][/b]  •  [b][color=#8E44AD]10 ROTATING SLOTS[/color][/b]  •  [b][color=#8E44AD]COMBAT SAVES[/color][/b]  •  [b][color=#8E44AD]CHARACTER CREATION SAVES[/color][/b]  •  [b][color=#8E44AD]EXTENSIVE CUSTOMIZATION AND INTEROP[/color][/b][/size][/center]
+[size=4][b][color=#8E44AD]9 MINUTE INTERVAL[/color][/b]  •  [b][color=#8E44AD]10 ROTATING SLOTS[/color][/b]  •  [b][color=#8E44AD]COMBAT SAVES[/color][/b]  •  [b][color=#8E44AD]CHARACTER CREATION SAVES[/color][/b]  •  [b][color=#8E44AD]OPTIONAL REST AND CELL CHANGE SAVES[/color][/b][/size][/center]
 
 [size=5][b][color=#8E44AD]Overview[/color][/b][/size]
 
@@ -11,22 +11,16 @@ S4V3R is my own take on save management, intended to maintain as few options as 
 It tries to offer the most sane defaults it can:
 
 [list]
-[*]Saves every nine minutes[/*]
-[*]Keeps a rotating stack of ten slots[/*]
-[*]Saves when entering and exiting combat[/*]
-[*]Saves when finishing character creation[/*]
-[*]Empty, but customizable, save prefixes.[/*]
+[*]Saves every nine minutes of unpaused play[/*]
+[*]Keeps a rotating stack of ten autosaves, overwriting the oldest[/*]
+[*]Saves when entering and exiting combat, at most once per minute[/*]
+[*]Saves once when character creation finishes[/*]
+[*]Empty, but customizable, save prefixes[/*]
 [/list]
 
 All of the above options are configurable. With the default settings, this gives you about an hour and a half of backups, alongside your combat saves.
 
-As of version 1.1, S4V3R also offers an Ironman option which will delete all saves which S4V3R generated upon your death. Naturally, this is disabled by default.
-
-As of version 1.2, S4V3R will NOT make combat start/end saves when the target is not in combat with you directly. Additionally, this feature is extended to support Sosnoviy Bor's [url=https://www.nexusmods.com/morrowind/mods/58053][color=#8E44AD]Follower Detection Util[/color][/url] as well.
-
-If you have FDU installed, then S4V3R will also account for your followers being targeted by enemies.
-
-Customizable save prefixes were added in version 1.3.
+Combat saves only trigger when an enemy is actually targeting you, or, with [url=https://www.nexusmods.com/morrowind/mods/58053][color=#8E44AD]Follower Detection Util[/color][/url] installed, one of your followers.
 
 You may also disable the mod altogether from its in-game settings menu.
 
@@ -38,7 +32,49 @@ Savor the experience.
 
 Only for OpenMW.
 
-[quote][color=#8E44AD]Note:[/color] Combat saves don't consume your autosave budget, nor does your start save - so with the defaults, you have a rolling total of 13 saves.[/quote]
+[line]
+
+[size=5][b][color=#8E44AD]Optional Saves[/color][/b][/size]
+
+These are disabled by default:
+
+[list]
+[*][b]Save When Resting[/b] saves when you open the rest or wait menu. If you enable it, you'll probably want to disable OpenMW's own autosave on rest (the [i]autosave[/i] option in the [i]Saves[/i] section of settings.cfg), since S4V3R can't take over or replace the engine's autosave.[/*]
+[*][b]Save On Cell Change[/b] saves after you move into or out of an interior. Walking between exterior cells never triggers it. Requires [url=https://www.nexusmods.com/morrowind/mods/56417][color=#8E44AD]H3lp Yours3lf[/color][/url]; the setting only appears when H3lp Yours3lf.esp is enabled.[/*]
+[/list]
+
+[quote][color=#8E44AD]Note:[/color] Combat, start, rest, and cell change saves each keep a single file that's overwritten every time, and none of them count toward your autosave limit. With the defaults, you have a rolling total of 13 saves.[/quote]
+
+[size=5][b][color=#8E44AD]Ironman Mode[/color][/b][/size]
+
+Ironman mode deletes every save S4V3R made for your character when you die, then quits the game. Your manual saves and quicksaves are never touched. Naturally, this is disabled by default.
+
+[line]
+
+[size=5][b][color=#8E44AD]Settings[/color][/b][/size]
+
+[list]
+[*][b]Disable/Enable:[/b] Enabled[/*]
+[*][b]Enable Interval Saves:[/b] Yes[/*]
+[*][b]Save Interval:[/b] 9 minutes[/*]
+[*][b]Max Saves:[/b] 10[/*]
+[*][b]Enable Combat Saves:[/b] Yes[/*]
+[*][b]Combat Save Cooldown:[/b] 1 minute[/*]
+[*][b]Save When Resting:[/b] No[/*]
+[*][b]Enable Start Saves:[/b] Yes[/*]
+[*][b]Ironman Mode:[/b] No[/*]
+[*][b]Save Name Prefix:[/b] Empty[/*]
+[*][b]Enable Logging:[/b] No[/*]
+[*][b]Save On Cell Change:[/b] No (requires H3lp Yours3lf)[/*]
+[/list]
+
+[size=5][b][color=#8E44AD]Optional Integrations[/color][/b][/size]
+
+[list]
+[*][url=https://www.nexusmods.com/morrowind/mods/58053][color=#8E44AD]Follower Detection Util[/color][/url]: combat saves also trigger when enemies target your followers.[/*]
+[*][url=https://www.nexusmods.com/morrowind/mods/56417][color=#8E44AD]H3lp Yours3lf[/color][/url]: enables Save On Cell Change.[/*]
+[*]Starwind: detected automatically, and the start save is timed for Starwind's character creation.[/*]
+[/list]
 
 [line]
 
@@ -51,42 +87,8 @@ Only for OpenMW.
 
 [line]
 
-[size=5][b][color=#8E44AD]Interop for Scripters[/color][/b][/size]
-
-S4V3R doesn't have a lot to offer in terms of interface, but it tries to expose everything it can. Please let me know if you'd like to see the interface extended.
-
-When a save is triggered, two events are emitted:
-
-[list]
-[*][b]MENU scope:[/b] [font=monospace]S4V3R_MENU_TriggerSave[/font][/*]
-[*][b]PLAYER scope:[/b] [font=monospace]S4V3R_PLAYER_SaveComplete[/font][/*]
-[/list]
-
-You may subscribe to either event depending on the exact timing you require. Additionally, you can register a save handler through the interface using [font=monospace]I.S4V3R.addSaveCompletionHandler[/font].
-
-[color=#8E44AD]Interface[/color] [b]fields:[/b]
-
-[code]
----@param handler fun(saveName: string, saveSlot: integer): boolean?
-addSaveCompletionHandler = function(handler)
-assert(
-type(handler) == 'function',
-'S4V3R.addSaveCompletionHandler was passed a non-function value!'
-)
-
-saveCompletionHandlers[#saveCompletionHandlers + 1] = handler
-end,
----@return boolean canSave
-canSave = function() return sinceLastSave >= SaveInterval and allowedToSave() ~= nil end,
----@return integer
-getCurrentSaveSlot = function() return saveSlot end,
----@return integer
-getMaxSaves = function() return MaxSaveSlots end,
----@return number timeBetweenSaves
-getSaveInterval = function() return SaveInterval end,
----@return number timeRemaining
-untilNextSave = function() return SaveInterval - sinceLastSave end,
-version = 1,[/code]
+[center]Scripters: S4V3R's interface, events, and settings are documented on the st4sh.
+[url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/s4v3r/docs/][b][color=#8E44AD]Scripter Documentation[/color][/b][/url][/center]
 
 [center]S4V3R is also available on [url=https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/s4v3r/][color=#8E44AD]the st4sh[/color][/url].[/center]
 
