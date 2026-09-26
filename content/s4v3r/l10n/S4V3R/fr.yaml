@@ -24,6 +24,12 @@ DeleteSavesDesc: |
 
   Par défaut : Non
 
+IntervalSaveToggleName: Activer les sauvegardes périodiques
+IntervalSaveToggleDesc: |
+  Détermine s'il faut sauvegarder ou non à chaque intervalle de sauvegarde.
+
+  Par défaut : Oui
+
 MaxSaveSlotsName: Nombre maximal de sauvegardes
 MaxSaveSlotsDesc: |
   Nombre maximal de sauvegardes à conserver. Lorsque cette limite est atteinte, la sauvegarde la plus ancienne est remplacée.

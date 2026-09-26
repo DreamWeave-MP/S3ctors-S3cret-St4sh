@@ -55,6 +55,18 @@ do
         },
       },
       {
+        key = 'IntervalSaveToggle',
+        name = 'IntervalSaveToggleName',
+        description = 'IntervalSaveToggleDesc',
+        default = true,
+        renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
+      },
+      {
         key = 'SaveInterval',
         name = 'SaveIntervalName',
         description = 'SaveIntervalDesc',

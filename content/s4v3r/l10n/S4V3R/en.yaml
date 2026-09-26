@@ -24,6 +24,12 @@ DeleteSavesDesc: |
 
   Default: No
 
+IntervalSaveToggleName: Enable Interval Saves
+IntervalSaveToggleDesc: |
+  Whether or not to save every Save Interval minutes.
+
+  Default: Yes
+
 MaxSaveSlotsName: Max Saves
 MaxSaveSlotsDesc: |
   Maximum number of saves to keep. When this number is reached, the oldest existing save is overwritten.
