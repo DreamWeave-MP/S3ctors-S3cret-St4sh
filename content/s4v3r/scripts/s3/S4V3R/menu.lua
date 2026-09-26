@@ -199,20 +199,16 @@ return {
 
       if saves['Start_Save.omwsave'] then DeleteGame(saveDir, 'Start_Save.omwsave') end
 
-      local combatStartSave, combatEndSave =
-        CombatSaveFiles[1] .. '.omwsave', CombatSaveFiles[2] .. '.omwsave'
-
-      if saves[combatStartSave] then
-        DeleteGame(saveDir, combatStartSave)
-        CombatSaveFiles[1] = nil
-        StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
+      for _, saveFilePath in pairs(CombatSaveFiles) do
+        local toDelete = saveFilePath .. '.omwsave'
+        if saves[toDelete] then
+          DebugLog('Removing save file due to Ironman setting: %s', saveFilePath)
+          DeleteGame(saveDir, toDelete)
+        end
       end
 
-      if saves[combatEndSave] then
-        DeleteGame(saveDir, combatEndSave)
-        CombatSaveFiles[2] = nil
-        StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
-      end
+      CombatSaveFiles = {}
+      StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
 
       require('openmw.core').quit()
     end,
