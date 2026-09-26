@@ -1,3 +1,11 @@
+CombatSaveCooldownName: Délai entre les sauvegardes de combat
+CombatSaveCooldownDesc: |
+  Temps minimum entre les sauvegardes de combat, en minutes. Mettre à 0 pour désactiver.
+
+  Par défaut : 1
+  Min : 0
+  Max : 60
+
 CombatSaveToggleName: Activer les sauvegardes de combat
 CombatSaveToggleDesc: |
   Détermine s'il faut sauvegarder ou non lorsque le combat commence ou se termine.

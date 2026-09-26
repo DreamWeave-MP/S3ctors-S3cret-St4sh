@@ -37,7 +37,7 @@ S4V3R is my own take on save management, intended to maintain as few options as 
 It tries to offer the most sane defaults it can:
 - Saves every nine minutes
 - Keeps a rotating stack of ten slots
-- Saves when entering and exiting combat
+- Saves when entering and exiting combat, at most once per minute
 - Saves when finishing character creation
 - Empty, but customizable, save prefixes.
 
