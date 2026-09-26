@@ -1,3 +1,11 @@
+CellChangeSaveToggleName: Save On Cell Change
+CellChangeSaveToggleDesc: |
+  Whether or not to save after moving into or out of an interior. Cell change saves overwrite a single file and don't count toward Max Saves.
+
+  Requires H3lp Yours3lf.
+
+  Default: No
+
 CombatSaveCooldownName: Combat Save Cooldown
 CombatSaveCooldownDesc: |
   Minimum time between combat saves in minutes. Set to 0 to disable.

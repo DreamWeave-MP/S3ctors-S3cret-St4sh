@@ -20,7 +20,7 @@ local I = require 'openmw.interfaces'
 ---@field getFollowerList fun(): table<string, table>
 
 local CallEventHandlers, ClassReviewMenu, GetRealTime, GetUIMode, Minute, Regions, RestMenu
-local hasFDU, hasStarwind = false, false
+local hasFDU, hasH3, hasStarwind = false, false, false
 
 do
   ClassReviewMenu, GetUIMode, RestMenu = I.UI.MODE.ChargenClassReview, I.UI.getMode, I.UI.MODE.Rest
@@ -29,6 +29,7 @@ do
   local core = require 'openmw.core'
   local contentFiles = core.contentFiles
   hasFDU = contentFiles.has 'FollowerDetectionUtil.omwscripts'
+  hasH3 = contentFiles.has 'H3lp Yours3lf.esp'
   hasStarwind = contentFiles.has 'StarwindRemasteredV1.15.esm'
     or contentFiles.has 'Star_Data.omwaddon'
   GetRealTime, Regions = core.getRealTime, core.regions.records
@@ -63,12 +64,14 @@ local function nullFunction() end
 local currentUpdateHandler = nullFunction
 
 local actorsInCombat, saveCompletionHandlers = {}, {}
-local isInCombat, saveSlot, sinceLastSave = false, 1, 0
+local cellChangeSavePending, isInCombat, saveSlot, sinceLastSave = false, false, 1, 0
+local lastCell = self.cell
 
 ---@type number?
 local lastCombatSaveTime
 
-local CombatSaveCooldown, CombatSavesEnabled, DeleteSavesOnDeath, IntervalSavesEnabled, RestSavesEnabled, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
+local CellChangeSavesEnabled, CombatSaveCooldown, CombatSavesEnabled, DeleteSavesOnDeath, IntervalSavesEnabled, RestSavesEnabled, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
+  StorageGet(playerStorage, 'CellChangeSaveToggle'),
   StorageGet(playerStorage, 'CombatSaveCooldown') * Minute,
   StorageGet(playerStorage, 'CombatSaveToggle'),
   StorageGet(playerStorage, 'DeleteSavesOnDeath'),
@@ -124,6 +127,15 @@ local function autoSaveHandler(dt)
   if IsDead(self) then
     currentUpdateHandler = nullFunction
     return
+  end
+
+  if cellChangeSavePending and allowedToSave() then
+    cellChangeSavePending = false
+
+    emitSaveEvent(
+      Format('%sCell Change Save, %s', SavePrefix, getCurrentLocation(self.cell)),
+      SaveClass.CELL_CHANGE
+    )
   end
 
   if not IntervalSavesEnabled then return end
@@ -194,6 +206,16 @@ local function saveOnRestMenuOpen(modeChangeData)
   )
 end
 
+local function queueCellChangeSave()
+  local currentCell, previousCell = self.cell, lastCell
+  lastCell = currentCell
+
+  if not (S4V3RActive and CellChangeSavesEnabled and chargenDone) then return end
+  if previousCell.isExterior and currentCell.isExterior then return end
+
+  cellChangeSavePending = true
+end
+
 local function saveOnStarwindChargenOrRest(modeChangeData)
   startSaveOnChargenReviewClose(modeChangeData)
   saveOnRestMenuOpen(modeChangeData)
@@ -202,7 +224,9 @@ end
 playerStorage:subscribe(async:callback(function(_, key)
   local value = StorageGet(playerStorage, key)
 
-  if key == 'MaxSaveSlots' then
+  if key == 'CellChangeSaveToggle' then
+    CellChangeSavesEnabled = value
+  elseif key == 'MaxSaveSlots' then
     MaxSaveSlots = value
     if saveSlot > MaxSaveSlots then saveSlot = 1 end
   elseif key == 'SaveInterval' then
@@ -342,6 +366,7 @@ return {
       local saveType = isInCombat and SaveClass.COMBAT_START or SaveClass.COMBAT_END
       emitSaveEvent(saveName, saveType)
     end,
+    S3LFCellChanged = hasH3 and queueCellChangeSave or nil,
     S4V3R_PLAYER_SaveComplete = function()
       CallEventHandlers(
         saveCompletionHandlers,

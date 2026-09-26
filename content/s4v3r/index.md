@@ -53,7 +53,9 @@ Customizable save prefixes were added in version 1.3.
 
 S4V3R can also save when you open the rest or wait menu. This is disabled by default. If you enable it, you'll probably want to disable OpenMW's own autosave on rest (`autosave` under `[Saves]`), since S4V3R can't take over or replace the engine's autosave.
 
-Note that combat saves don't consume your autosave budget, nor do your start or rest saves - so with the defaults, you have a rolling total of 13 saves.
+If [H3lp Yours3lf](@/h3lp_yours3lf/index.md) is installed, S4V3R can also save after you move into or out of an interior. This is an optional enhancement: the setting only appears when `H3lp Yours3lf.esp` is enabled, and it is disabled by default. Walking between exterior cells never triggers a cell change save.
+
+Note that combat saves don't consume your autosave budget, nor do your start, rest, or cell change saves - so with the defaults, you have a rolling total of 13 saves.
 
 # Interop for Scripters
 

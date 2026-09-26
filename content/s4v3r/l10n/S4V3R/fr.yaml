@@ -1,3 +1,11 @@
+CellChangeSaveToggleName: Sauvegarder au changement de cellule
+CellChangeSaveToggleDesc: |
+  Détermine s'il faut sauvegarder ou non après être entré dans un intérieur ou en être sorti. Les sauvegardes de changement de cellule remplacent un seul fichier et ne comptent pas dans le nombre maximal de sauvegardes.
+
+  Nécessite H3lp Yours3lf.
+
+  Par défaut : Non
+
 CombatSaveCooldownName: Délai entre les sauvegardes de combat
 CombatSaveCooldownDesc: |
   Temps minimum entre les sauvegardes de combat, en minutes. Mettre à 0 pour désactiver.
