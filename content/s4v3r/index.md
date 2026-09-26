@@ -51,7 +51,9 @@ If you have FDU installed, then S4V3R will also account for your followers being
 
 Customizable save prefixes were added in version 1.3.
 
-Note that combat saves don't consume your autosave budget, nor does your start save  - so with the defaults, you have a rolling total of 13 saves.
+S4V3R can also save when you open the rest or wait menu. This is disabled by default. If you enable it, you'll probably want to disable OpenMW's own autosave on rest (`autosave` under `[Saves]`), since S4V3R can't take over or replace the engine's autosave.
+
+Note that combat saves don't consume your autosave budget, nor do your start or rest saves - so with the defaults, you have a rolling total of 13 saves.
 
 # Interop for Scripters
 

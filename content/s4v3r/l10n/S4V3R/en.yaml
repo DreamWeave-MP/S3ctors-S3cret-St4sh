@@ -38,6 +38,14 @@ MaxSaveSlotsDesc: |
   Min: 1
   Max: 100
 
+RestSaveToggleName: Save When Resting
+RestSaveToggleDesc: |
+  Whether or not to save when the rest or wait menu opens. Rest saves overwrite a single file and don't count toward Max Saves.
+
+  If you enable this, consider disabling OpenMW's own autosave on rest.
+
+  Default: No
+
 S4V3RActiveDesc: Whether or not to make any autosaves, ever.
 S4V3RActiveName: Disable/Enable
 S4V3RDesc: Automatically saves the game at regular intervals and optionally when combat starts or stops.

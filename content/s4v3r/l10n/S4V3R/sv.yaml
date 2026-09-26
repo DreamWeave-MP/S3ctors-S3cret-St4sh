@@ -38,6 +38,14 @@ MaxSaveSlotsDesc: |
   Min: 1
   Max: 100
 
+RestSaveToggleName: Spara vid vila
+RestSaveToggleDesc: |
+  Anger om spelet ska sparas när vilo- eller väntemenyn öppnas. Vilosparningar skriver över en enda fil och räknas inte mot maximalt antal sparningar.
+
+  Om du aktiverar detta kan du stänga av OpenMW:s egen autosparning vid vila.
+
+  Standard: Nej
+
 S4V3RActiveDesc: Huruvida autosparningar ska göras eller inte.
 S4V3RActiveName: Inaktivera/Aktivera
 S4V3RDesc: Sparar automatiskt spelet med regelbundna intervall och, om aktiverat, när strid börjar eller slutar.

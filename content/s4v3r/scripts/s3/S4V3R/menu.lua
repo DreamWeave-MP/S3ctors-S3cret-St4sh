@@ -3,6 +3,7 @@
 ---@class S4V3RCharacterSaves
 ---@field autoSaveFiles string[] oldest first
 ---@field combatSaveFiles string[]
+---@field restSaveFile string?
 
 local DebugLog = require 'scripts.s3.S4V3R.debugLog'
 local ModInfo = require 'scripts.s3.S4V3R.modInfo'
@@ -106,6 +107,18 @@ do
         max = 60,
       },
       {
+        key = 'RestSaveToggle',
+        name = 'RestSaveToggleName',
+        description = 'RestSaveToggleDesc',
+        default = false,
+        renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
+      },
+      {
         key = 'StartSaveToggle',
         name = 'StartSaveToggleName',
         description = 'StartSaveToggleDesc',
@@ -178,14 +191,21 @@ end
 
 ---@param saveDir string
 ---@param existingSaves table<string, openmw.menu.SaveInfo>
+---@param saveFile string
+local function deleteSaveFile(saveDir, existingSaves, saveFile)
+  local toDelete = saveFile .. '.omwsave'
+  if not existingSaves[toDelete] then return end
+
+  DebugLog('Removing save file: %s', saveFile)
+  DeleteGame(saveDir, toDelete)
+end
+
+---@param saveDir string
+---@param existingSaves table<string, openmw.menu.SaveInfo>
 ---@param saveFiles string[]
 local function deleteTrackedSaves(saveDir, existingSaves, saveFiles)
   for _, saveFile in next, saveFiles do
-    local toDelete = saveFile .. '.omwsave'
-    if existingSaves[toDelete] then
-      DebugLog('Removing save file: %s', saveFile)
-      DeleteGame(saveDir, toDelete)
-    end
+    deleteSaveFile(saveDir, existingSaves, saveFile)
   end
 end
 
@@ -227,6 +247,8 @@ local function saveGame(saveInfo)
     if saveDir then trimAutoSaves(saveDir, autoSaveFiles, maxSaves) end
 
     if #autoSaveFiles >= maxSaves then previousSaveFile = autoSaveFiles[1] end
+  elseif saveClass == SaveClass.REST then
+    previousSaveFile = characterSaves.restSaveFile
   else
     previousSaveFile = combatSaveFiles[combatSaveIndex]
   end
@@ -242,6 +264,8 @@ local function saveGame(saveInfo)
   if saveClass == SaveClass.AUTO then
     if previousSaveFile then Remove(autoSaveFiles, 1) end
     autoSaveFiles[#autoSaveFiles + 1] = savedFile
+  elseif saveClass == SaveClass.REST then
+    characterSaves.restSaveFile = savedFile
   else
     combatSaveFiles[combatSaveIndex] = savedFile
   end
@@ -261,6 +285,9 @@ return {
 
       deleteTrackedSaves(saveDir, saves, characterSaves.autoSaveFiles)
       deleteTrackedSaves(saveDir, saves, characterSaves.combatSaveFiles)
+
+      local restSaveFile = characterSaves.restSaveFile
+      if restSaveFile then deleteSaveFile(saveDir, saves, restSaveFile) end
 
       if saves['Start_Save.omwsave'] then DeleteGame(saveDir, 'Start_Save.omwsave') end
 
