@@ -4,11 +4,23 @@
 ---@field [1] string saveName
 ---@field [2] integer saveSlot
 ---@field [3] SaveClass
+---@field [4] string? previousSaveFile
+
+---@class S4V3RSaveResult
+---@field saveClass SaveClass
+---@field saveFile string
+---@field saveSlot integer
 
 ---@class S4V3RStoredData
 ---@field chargenDone boolean
+---@field pendingSave S4V3RSaveInfo?
 ---@field saveSlot integer
 ---@field sinceLastSave number
+---@field trackedSaves S4V3RTrackedSaves?
+
+---@class S4V3RTrackedSaves
+---@field autoSaveFiles string[]
+---@field combatSaveFiles string[]
 
 local I = require 'openmw.interfaces'
 ---@class openmw.interfaces
@@ -40,6 +52,8 @@ local ModInfo = require 'scripts.s3.S4V3R.modInfo'
 ---@type SaveClasses
 local SaveClass = require 'scripts.s3.S4V3R.saveClass'
 
+local SaveResults = require('openmw.storage').playerSection 'S4V3RSaveResults'
+local async = require 'openmw.async'
 local playerStorage = require('openmw.storage').playerSection(ModInfo.GroupName)
 
 local Assert, Next, Type, StorageGet, Format = assert, next, type, playerStorage.get, string.format
@@ -59,7 +73,10 @@ local function nullFunction() end
 local currentUpdateHandler = nullFunction
 
 local actorsInCombat, saveCompletionHandlers = {}, {}
-local isInCombat, saveSlot, sinceLastSave = false, 1, 0
+local awaitingSaveResult, isInCombat, saveSlot, sinceLastSave = false, false, 1, 0
+
+---@type S4V3RTrackedSaves
+local trackedSaves = { autoSaveFiles = {}, combatSaveFiles = {} }
 
 local CombatSavesEnabled, DeleteSavesOnDeath, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
   StorageGet(playerStorage, 'CombatSaveToggle'),
@@ -100,8 +117,12 @@ end
 
 ---@param saveName string
 ---@param saveClass SaveClass
-local function emitSaveEvent(saveName, saveClass)
-  SaveEventData[1], SaveEventData[2], SaveEventData[3] = saveName, saveSlot, saveClass
+---@param previousSaveFile string?
+local function emitSaveEvent(saveName, saveClass, previousSaveFile)
+  SaveEventData[1], SaveEventData[2], SaveEventData[3], SaveEventData[4] =
+    saveName, saveSlot, saveClass, previousSaveFile
+
+  awaitingSaveResult = saveClass ~= SaveClass.GAME_START
 
   SendMenuEvent(self, 'S4V3R_MENU_TriggerSave', SaveEventData)
   SendEvent(self, 'S4V3R_PLAYER_SaveComplete')
@@ -121,7 +142,11 @@ local function autoSaveHandler()
 
   local location = getCurrentLocation(self.cell)
 
-  emitSaveEvent(Format('%s%s, %s', SavePrefix, saveSlot, location), SaveClass.AUTO)
+  emitSaveEvent(
+    Format('%s%s, %s', SavePrefix, saveSlot, location),
+    SaveClass.AUTO,
+    trackedSaves.autoSaveFiles[saveSlot]
+  )
 
   saveSlot = saveSlot >= MaxSaveSlots and 1 or saveSlot + 1
 end
@@ -140,7 +165,24 @@ local function selectUpdateHandler()
   currentUpdateHandler = chargenDone and autoSaveHandler or chargenCheck
 end
 
-playerStorage:subscribe(require('openmw.async'):callback(function(_, key)
+SaveResults:subscribe(async:callback(function(_, key)
+  ---@type S4V3RSaveResult?
+  local saveResult = StorageGet(SaveResults, key)
+  if not saveResult then return end
+
+  awaitingSaveResult = false
+
+  local saveClass, saveFile = saveResult.saveClass, saveResult.saveFile
+  if saveClass == SaveClass.AUTO then
+    trackedSaves.autoSaveFiles[saveResult.saveSlot] = saveFile
+  elseif saveClass == SaveClass.COMBAT_START then
+    trackedSaves.combatSaveFiles[1] = saveFile
+  elseif saveClass == SaveClass.COMBAT_END then
+    trackedSaves.combatSaveFiles[2] = saveFile
+  end
+end))
+
+playerStorage:subscribe(async:callback(function(_, key)
   local value = StorageGet(playerStorage, key)
 
   if key == 'MaxSaveSlots' then
@@ -195,8 +237,13 @@ return {
     ---@param data S4V3RStoredData?
     onLoad = function(data)
       if data then
-        chargenDone, saveSlot, sinceLastSave =
-          data.chargenDone or false, data.saveSlot or 1, data.sinceLastSave or 0
+        chargenDone, saveSlot, sinceLastSave, trackedSaves =
+          data.chargenDone or false,
+          data.saveSlot or 1,
+          data.sinceLastSave or 0,
+          data.trackedSaves or trackedSaves
+
+        if data.pendingSave then SendMenuEvent(self, 'S4V3R_MENU_ResolveSave', data.pendingSave) end
       end
 
       selectUpdateHandler()
@@ -205,8 +252,10 @@ return {
     onSave = function()
       return {
         chargenDone = chargenDone,
+        pendingSave = awaitingSaveResult and SaveEventData or nil,
         saveSlot = saveSlot,
         sinceLastSave = sinceLastSave,
+        trackedSaves = trackedSaves,
       }
     end,
     onUpdate = function() currentUpdateHandler() end,
@@ -214,7 +263,7 @@ return {
   eventHandlers = {
     Died = function()
       if not DeleteSavesOnDeath then return end
-      SendMenuEvent(self, 'S4V3R_MENU_DELETE_ALL_SAVES')
+      SendMenuEvent(self, 'S4V3R_MENU_DELETE_ALL_SAVES', trackedSaves)
     end,
     OMWMusicCombatTargetsChanged = function(targetData)
       local actor, targetInCombat, wasInCombat =
@@ -264,8 +313,10 @@ return {
       local saveName =
         Format('%sCombat %s Save, %s', SavePrefix, isInCombat and 'Start' or 'End', location)
 
-      local saveType = isInCombat and SaveClass.COMBAT_START or SaveClass.COMBAT_END
-      emitSaveEvent(saveName, saveType)
+      local saveType, combatSaveIndex =
+        isInCombat and SaveClass.COMBAT_START or SaveClass.COMBAT_END, isInCombat and 1 or 2
+
+      emitSaveEvent(saveName, saveType, trackedSaves.combatSaveFiles[combatSaveIndex])
     end,
     S4V3R_PLAYER_SaveComplete = function()
       CallEventHandlers(
@@ -285,7 +336,7 @@ return {
         return
       end
 
-      emitSaveEvent('Start Save', SaveClass.GAME_START)
+      emitSaveEvent('Start Save', SaveClass.GAME_START, 'Start_Save')
 
       currentUpdateHandler, chargenDone = autoSaveHandler, true
 
