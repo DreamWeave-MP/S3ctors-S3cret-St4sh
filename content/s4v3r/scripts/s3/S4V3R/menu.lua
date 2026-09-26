@@ -10,7 +10,7 @@ local ModInfo = require 'scripts.s3.S4V3R.modInfo'
 ---@type SaveClasses
 local SaveClass = require 'scripts.s3.S4V3R.saveClass'
 
-local pairs, GSub = pairs, string.gsub
+local next, GSub = next, string.gsub
 
 local CharacterSaves = require('openmw.storage').playerSection 'S4V3RCharacterSaves'
 local LegacySavedSlots = require('openmw.storage').playerSection 'S4V3RSavedSlots'
@@ -132,7 +132,7 @@ end
 local function findNewestSaveFile(saveDir, saveName)
   local newestSaveFile, newestCreationTime
 
-  for saveFile, saveInfo in pairs(GetSaves(saveDir)) do
+  for saveFile, saveInfo in next, GetSaves(saveDir) do
     if
       saveInfo.description == saveName
       and (not newestCreationTime or saveInfo.creationTime > newestCreationTime)
@@ -150,7 +150,7 @@ end
 local function adoptLegacySaveFiles(legacySaveFiles, existingSaves)
   local adoptedSaveFiles = {}
 
-  for index, saveFile in pairs(legacySaveFiles or {}) do
+  for index, saveFile in next, legacySaveFiles or {} do
     if existingSaves[saveFile .. '.omwsave'] then adoptedSaveFiles[index] = saveFile end
   end
 
@@ -178,7 +178,7 @@ end
 ---@param existingSaves table<string, openmw.menu.SaveInfo>
 ---@param saveFiles string[]
 local function deleteTrackedSaves(saveDir, existingSaves, saveFiles)
-  for _, saveFile in pairs(saveFiles) do
+  for _, saveFile in next, saveFiles do
     local toDelete = saveFile .. '.omwsave'
     if existingSaves[toDelete] then
       DebugLog('Removing save file due to Ironman setting: %s', saveFile)
