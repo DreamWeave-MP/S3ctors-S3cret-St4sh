@@ -2,6 +2,7 @@
 
 ---@class S4V3RCharacterSaves
 ---@field autoSaveFiles string[] oldest first
+---@field cellChangeSaveFile string?
 ---@field combatSaveFiles string[]
 ---@field restSaveFile string?
 
@@ -35,6 +36,8 @@ do
     name = ModInfo.Name,
     description = 'S4V3RDesc',
   }
+
+  local hasH3 = require('openmw.core').contentFiles.has 'H3lp Yours3lf.esp'
 
   I.Settings.registerGroup {
     key = ModInfo.GroupName,
@@ -161,6 +164,18 @@ do
           falseLabel = 'S4V3RToggleOff',
         },
       },
+      hasH3 and {
+        key = 'CellChangeSaveToggle',
+        name = 'CellChangeSaveToggleName',
+        description = 'CellChangeSaveToggleDesc',
+        default = false,
+        renderer = 'checkbox',
+        argument = {
+          l10n = 'S4V3R',
+          trueLabel = 'S4V3RToggleOn',
+          falseLabel = 'S4V3RToggleOff',
+        },
+      } or nil,
     },
   }
 end
@@ -249,6 +264,8 @@ local function saveGame(saveInfo)
     if #autoSaveFiles >= maxSaves then previousSaveFile = autoSaveFiles[1] end
   elseif saveClass == SaveClass.REST then
     previousSaveFile = characterSaves.restSaveFile
+  elseif saveClass == SaveClass.CELL_CHANGE then
+    previousSaveFile = characterSaves.cellChangeSaveFile
   else
     previousSaveFile = combatSaveFiles[combatSaveIndex]
   end
@@ -266,6 +283,8 @@ local function saveGame(saveInfo)
     autoSaveFiles[#autoSaveFiles + 1] = savedFile
   elseif saveClass == SaveClass.REST then
     characterSaves.restSaveFile = savedFile
+  elseif saveClass == SaveClass.CELL_CHANGE then
+    characterSaves.cellChangeSaveFile = savedFile
   else
     combatSaveFiles[combatSaveIndex] = savedFile
   end
@@ -286,7 +305,10 @@ return {
       deleteTrackedSaves(saveDir, saves, characterSaves.autoSaveFiles)
       deleteTrackedSaves(saveDir, saves, characterSaves.combatSaveFiles)
 
-      local restSaveFile = characterSaves.restSaveFile
+      local cellChangeSaveFile, restSaveFile =
+        characterSaves.cellChangeSaveFile, characterSaves.restSaveFile
+
+      if cellChangeSaveFile then deleteSaveFile(saveDir, saves, cellChangeSaveFile) end
       if restSaveFile then deleteSaveFile(saveDir, saves, restSaveFile) end
 
       if saves['Start_Save.omwsave'] then DeleteGame(saveDir, 'Start_Save.omwsave') end

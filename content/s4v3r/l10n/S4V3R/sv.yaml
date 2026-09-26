@@ -1,3 +1,11 @@
+CellChangeSaveToggleName: Spara vid cellbyte
+CellChangeSaveToggleDesc: |
+  Anger om spelet ska sparas efter att du gått in i eller ut ur ett interiör. Cellbytessparningar skriver över en enda fil och räknas inte mot maximalt antal sparningar.
+
+  Kräver H3lp Yours3lf.
+
+  Standard: Nej
+
 CombatSaveCooldownName: Fördröjning för stridssparningar
 CombatSaveCooldownDesc: |
   Minsta tid mellan stridssparningar i minuter. Ange 0 för att inaktivera.
