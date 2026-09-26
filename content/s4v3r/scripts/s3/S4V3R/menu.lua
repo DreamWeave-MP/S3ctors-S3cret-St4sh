@@ -127,49 +127,52 @@ do
     },
   }
 end
-local function saveNameToFilePath(saveName) return GSub(saveName, '[:\',. ]', '_') end
+---@param saveDir string
+---@param saveName string
+---@return string? saveFile
+local function findNewestSaveFile(saveDir, saveName)
+  local newestSaveFile, newestCreationTime
 
----@param saveInfo S4V3RSaveInfo
-local function saveGame(saveInfo)
-  local saveName, saveType = saveInfo[1], saveInfo[3]
-
-  local newSaveFile, saveDir = saveNameToFilePath(saveName), GetCurrentSaveDir()
-
-  DebugLog('Saving: %s', newSaveFile)
-
-  local saveSlotString, saveToDelete
-  if saveType == SaveClass.AUTO then
-    local saveSlot = saveInfo[2]
-
-    saveSlotString, saveToDelete, SaveSlotsToFilenames[saveSlot] =
-      'S4V3R_' .. saveSlot, SaveSlotsToFilenames[saveSlot], newSaveFile
-
-    StorageSet(SavedSlots, 'AutoSlots', SaveSlotsToFilenames)
-  elseif saveType == SaveClass.COMBAT_START then
-    saveSlotString, saveToDelete, CombatSaveFiles[1] =
-      'S4V3R_COMBAT_START', CombatSaveFiles[1], newSaveFile
-
-    StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
-  elseif saveType == SaveClass.COMBAT_END then
-    saveSlotString, saveToDelete, CombatSaveFiles[2] =
-      'S4V3R_COMBAT_END', CombatSaveFiles[2], newSaveFile
-
-    StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
-  elseif saveType == SaveClass.GAME_START then
-    saveSlotString, saveToDelete = 'S4V3R_START_SAVE', 'Start_Save'
-  end
-
-  if saveDir then
-    if saveToDelete then
-      saveToDelete = saveToDelete .. '.omwsave'
-      if GetSaves(saveDir)[saveToDelete] then
-        DebugLog('Deleting existing save file: %s', saveToDelete)
-        DeleteGame(saveDir, saveToDelete)
-      end
+  for saveFile, saveInfo in pairs(GetSaves(saveDir)) do
+    if
+      saveInfo.description == saveName
+      and (not newestCreationTime or saveInfo.creationTime > newestCreationTime)
+    then
+      newestSaveFile, newestCreationTime = saveFile, saveInfo.creationTime
     end
   end
 
-  SaveGame(saveName, saveSlotString)
+  return newestSaveFile and GSub(newestSaveFile, '%.omwsave$', '')
+end
+
+---@param saveInfo S4V3RSaveInfo
+local function saveGame(saveInfo)
+  local saveName, saveSlot, saveType = saveInfo[1], saveInfo[2], saveInfo[3]
+
+  local trackedSaves, trackedIndex, storageKey, previousSaveFile
+  if saveType == SaveClass.AUTO then
+    trackedSaves, trackedIndex, storageKey = SaveSlotsToFilenames, saveSlot, 'AutoSlots'
+  elseif saveType == SaveClass.COMBAT_START then
+    trackedSaves, trackedIndex, storageKey = CombatSaveFiles, 1, 'CombatSlots'
+  elseif saveType == SaveClass.COMBAT_END then
+    trackedSaves, trackedIndex, storageKey = CombatSaveFiles, 2, 'CombatSlots'
+  elseif saveType == SaveClass.GAME_START then
+    previousSaveFile = 'Start_Save'
+  end
+
+  if trackedSaves then previousSaveFile = trackedSaves[trackedIndex] end
+
+  DebugLog('Saving: %s', saveName)
+  SaveGame(saveName, previousSaveFile and previousSaveFile .. '.omwsave')
+
+  local saveDir = GetCurrentSaveDir()
+  if not trackedSaves or not saveDir then return end
+
+  local savedFile = findNewestSaveFile(saveDir, saveName)
+  if not savedFile then return end
+
+  trackedSaves[trackedIndex] = savedFile
+  StorageSet(SavedSlots, storageKey, trackedSaves)
 end
 
 return {
