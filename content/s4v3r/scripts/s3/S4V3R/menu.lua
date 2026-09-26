@@ -1,5 +1,9 @@
 ---@omw-context menu
 
+---@class S4V3RCharacterSaves
+---@field autoSlots string[]
+---@field combatSlots string[]
+
 local DebugLog = require 'scripts.s3.S4V3R.debugLog'
 local ModInfo = require 'scripts.s3.S4V3R.modInfo'
 
@@ -8,14 +12,9 @@ local SaveClass = require 'scripts.s3.S4V3R.saveClass'
 
 local pairs, GSub = pairs, string.gsub
 
-local SavedSlots = require('openmw.storage').playerSection 'S4V3RSavedSlots'
-local StorageGetCopy, StorageSet = SavedSlots.getCopy, SavedSlots.set
-
----@type string[]
-local SaveSlotsToFilenames = StorageGetCopy(SavedSlots, 'AutoSlots') or {}
-
----@type string[]
-local CombatSaveFiles = StorageGetCopy(SavedSlots, 'CombatSlots') or {}
+local CharacterSaves = require('openmw.storage').playerSection 'S4V3RCharacterSaves'
+local LegacySavedSlots = require('openmw.storage').playerSection 'S4V3RSavedSlots'
+local StorageGetCopy, StorageSet = CharacterSaves.getCopy, CharacterSaves.set
 
 local DeleteGame, GetCurrentSaveDir, GetSaves, SaveGame
 do
@@ -145,17 +144,64 @@ local function findNewestSaveFile(saveDir, saveName)
   return newestSaveFile and GSub(newestSaveFile, '%.omwsave$', '')
 end
 
+---@param legacySaveFiles string[]?
+---@param existingSaves table<string, openmw.menu.SaveInfo>
+---@return string[]
+local function adoptLegacySaveFiles(legacySaveFiles, existingSaves)
+  local adoptedSaveFiles = {}
+
+  for index, saveFile in pairs(legacySaveFiles or {}) do
+    if existingSaves[saveFile .. '.omwsave'] then adoptedSaveFiles[index] = saveFile end
+  end
+
+  return adoptedSaveFiles
+end
+
+---@param saveDir string
+---@return S4V3RCharacterSaves
+local function getCharacterSaves(saveDir)
+  local characterSaves = StorageGetCopy(CharacterSaves, saveDir)
+  if characterSaves then return characterSaves end
+
+  local existingSaves = GetSaves(saveDir)
+
+  return {
+    autoSlots = adoptLegacySaveFiles(StorageGetCopy(LegacySavedSlots, 'AutoSlots'), existingSaves),
+    combatSlots = adoptLegacySaveFiles(
+      StorageGetCopy(LegacySavedSlots, 'CombatSlots'),
+      existingSaves
+    ),
+  }
+end
+
+---@param saveDir string
+---@param existingSaves table<string, openmw.menu.SaveInfo>
+---@param saveFiles string[]
+local function deleteTrackedSaves(saveDir, existingSaves, saveFiles)
+  for _, saveFile in pairs(saveFiles) do
+    local toDelete = saveFile .. '.omwsave'
+    if existingSaves[toDelete] then
+      DebugLog('Removing save file due to Ironman setting: %s', saveFile)
+      DeleteGame(saveDir, toDelete)
+    end
+  end
+end
+
 ---@param saveInfo S4V3RSaveInfo
 local function saveGame(saveInfo)
   local saveName, saveSlot, saveType = saveInfo[1], saveInfo[2], saveInfo[3]
 
-  local trackedSaves, trackedIndex, storageKey, previousSaveFile
+  local saveDir = GetCurrentSaveDir()
+  local characterSaves = saveDir and getCharacterSaves(saveDir)
+    or { autoSlots = {}, combatSlots = {} }
+
+  local trackedSaves, trackedIndex, previousSaveFile
   if saveType == SaveClass.AUTO then
-    trackedSaves, trackedIndex, storageKey = SaveSlotsToFilenames, saveSlot, 'AutoSlots'
+    trackedSaves, trackedIndex = characterSaves.autoSlots, saveSlot
   elseif saveType == SaveClass.COMBAT_START then
-    trackedSaves, trackedIndex, storageKey = CombatSaveFiles, 1, 'CombatSlots'
+    trackedSaves, trackedIndex = characterSaves.combatSlots, 1
   elseif saveType == SaveClass.COMBAT_END then
-    trackedSaves, trackedIndex, storageKey = CombatSaveFiles, 2, 'CombatSlots'
+    trackedSaves, trackedIndex = characterSaves.combatSlots, 2
   elseif saveType == SaveClass.GAME_START then
     previousSaveFile = 'Start_Save'
   end
@@ -165,14 +211,14 @@ local function saveGame(saveInfo)
   DebugLog('Saving: %s', saveName)
   SaveGame(saveName, previousSaveFile and previousSaveFile .. '.omwsave')
 
-  local saveDir = GetCurrentSaveDir()
+  saveDir = GetCurrentSaveDir()
   if not trackedSaves or not saveDir then return end
 
   local savedFile = findNewestSaveFile(saveDir, saveName)
   if not savedFile then return end
 
   trackedSaves[trackedIndex] = savedFile
-  StorageSet(SavedSlots, storageKey, trackedSaves)
+  StorageSet(CharacterSaves, saveDir, characterSaves)
 end
 
 return {
@@ -187,31 +233,14 @@ return {
       local saveDir = GetCurrentSaveDir()
       if not saveDir then return end
 
-      local saves = GetSaves(saveDir)
+      local saves, characterSaves = GetSaves(saveDir), getCharacterSaves(saveDir)
 
-      for _, saveFilePath in pairs(SaveSlotsToFilenames) do
-        local toDelete = saveFilePath .. '.omwsave'
-        if saves[toDelete] then
-          DebugLog('Removing save file due to Ironman setting: %s', saveFilePath)
-          DeleteGame(saveDir, toDelete)
-        end
-      end
-
-      SaveSlotsToFilenames = {}
-      StorageSet(SavedSlots, 'AutoSlots', SaveSlotsToFilenames)
+      deleteTrackedSaves(saveDir, saves, characterSaves.autoSlots)
+      deleteTrackedSaves(saveDir, saves, characterSaves.combatSlots)
 
       if saves['Start_Save.omwsave'] then DeleteGame(saveDir, 'Start_Save.omwsave') end
 
-      for _, saveFilePath in pairs(CombatSaveFiles) do
-        local toDelete = saveFilePath .. '.omwsave'
-        if saves[toDelete] then
-          DebugLog('Removing save file due to Ironman setting: %s', saveFilePath)
-          DeleteGame(saveDir, toDelete)
-        end
-      end
-
-      CombatSaveFiles = {}
-      StorageSet(SavedSlots, 'CombatSlots', CombatSaveFiles)
+      StorageSet(CharacterSaves, saveDir, { autoSlots = {}, combatSlots = {} })
 
       require('openmw.core').quit()
     end,
