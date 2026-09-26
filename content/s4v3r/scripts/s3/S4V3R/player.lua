@@ -32,14 +32,17 @@ local I = require 'openmw.interfaces'
 ---@field getFollowerList fun(): table<string, table>
 
 local CallEventHandlers, ClassReviewMenu, GetRealFrameDuration, GetRealTime, GetUIMode, Minute, Regions
-local hasFDU = false
+local hasFDU, hasStarwind = false, false
 
 do
   ClassReviewMenu, GetUIMode = I.UI.MODE.ChargenClassReview, I.UI.getMode
   Minute = require('openmw_aux.time').minute
 
   local core = require 'openmw.core'
-  hasFDU = core.contentFiles.has 'FollowerDetectionUtil.omwscripts'
+  local contentFiles = core.contentFiles
+  hasFDU = contentFiles.has 'FollowerDetectionUtil.omwscripts'
+  hasStarwind = contentFiles.has 'StarwindRemasteredV1.15.esm'
+    or contentFiles.has 'Star_Data.omwaddon'
   GetRealFrameDuration, GetRealTime, Regions =
     core.getRealFrameDuration, core.getRealTime, core.regions.records
 
@@ -159,6 +162,12 @@ end
 local function chargenCheck()
   if not IsCharGenFinished(self) then return end
 
+  if StartSaveEnabled and not hasStarwind then
+    if not allowedToSave() then return end
+
+    emitSaveEvent('Start Save', SaveClass.GAME_START, 'Start_Save')
+  end
+
   DebugLog 'Chargen is complete! AutoSave enabled.'
 
   currentUpdateHandler, chargenDone = autoSaveHandler, true
@@ -168,6 +177,23 @@ local function selectUpdateHandler()
   if not S4V3RActive then return end
 
   currentUpdateHandler = chargenDone and autoSaveHandler or chargenCheck
+end
+
+local function startSaveOnChargenReviewClose(modeChangeData)
+  if
+    not S4V3RActive
+    or modeChangeData.newMode
+    or not StartSaveEnabled
+    or modeChangeData.oldMode ~= ClassReviewMenu
+  then
+    return
+  end
+
+  emitSaveEvent('Start Save', SaveClass.GAME_START, 'Start_Save')
+
+  currentUpdateHandler, chargenDone = autoSaveHandler, true
+
+  DebugLog 'CharGen has completed. S4V3R is active!'
 end
 
 SaveResults:subscribe(async:callback(function(_, key)
@@ -206,7 +232,8 @@ playerStorage:subscribe(async:callback(function(_, key)
   elseif key == 'StartSaveToggle' then
     StartSaveEnabled = value
   elseif key == 'S4V3RActive' then
-    currentUpdateHandler, S4V3RActive = value and chargenCheck or nullFunction, value
+    S4V3RActive, currentUpdateHandler = value, nullFunction
+    selectUpdateHandler()
     DebugLog('S4V3R has been %s!', S4V3RActive and 'enabled' or 'disabled')
   end
 end))
@@ -341,22 +368,7 @@ return {
         SaveEventData[3]
       )
     end,
-    UiModeChanged = function(modeChangeData)
-      if
-        not S4V3RActive
-        or modeChangeData.newMode
-        or not StartSaveEnabled
-        or modeChangeData.oldMode ~= ClassReviewMenu
-      then
-        return
-      end
-
-      emitSaveEvent('Start Save', SaveClass.GAME_START, 'Start_Save')
-
-      currentUpdateHandler, chargenDone = autoSaveHandler, true
-
-      DebugLog 'CharGen has completed. S4V3R is active!'
-    end,
+    UiModeChanged = hasStarwind and startSaveOnChargenReviewClose or nil,
   },
   interfaceName = ModInfo.Name,
   interface = S4V3RInterface,
