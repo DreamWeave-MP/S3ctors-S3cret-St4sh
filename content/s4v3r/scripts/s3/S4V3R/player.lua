@@ -19,7 +19,7 @@ local I = require 'openmw.interfaces'
 ---Script scope: Global, NPC, Creature, Player
 ---@field getFollowerList fun(): table<string, table>
 
-local CallEventHandlers, ClassReviewMenu, GetRealFrameDuration, GetRealTime, GetUIMode, Minute, Regions
+local CallEventHandlers, ClassReviewMenu, GetRealTime, GetUIMode, Minute, Regions
 local hasFDU, hasStarwind = false, false
 
 do
@@ -31,8 +31,7 @@ do
   hasFDU = contentFiles.has 'FollowerDetectionUtil.omwscripts'
   hasStarwind = contentFiles.has 'StarwindRemasteredV1.15.esm'
     or contentFiles.has 'Star_Data.omwaddon'
-  GetRealFrameDuration, GetRealTime, Regions =
-    core.getRealFrameDuration, core.getRealTime, core.regions.records
+  GetRealTime, Regions = core.getRealTime, core.regions.records
 
   CallEventHandlers = require('openmw_aux.util').callEventHandlers
 end
@@ -118,13 +117,14 @@ local function emitSaveEvent(saveName, saveClass)
   sinceLastSave = 0
 end
 
-local function autoSaveHandler()
+---@param dt number
+local function autoSaveHandler(dt)
   if IsDead(self) then
     currentUpdateHandler = nullFunction
     return
   end
 
-  sinceLastSave = sinceLastSave + GetRealFrameDuration()
+  sinceLastSave = sinceLastSave + dt
 
   if sinceLastSave < SaveInterval or not allowedToSave() then return end
 
@@ -244,7 +244,8 @@ return {
         sinceLastSave = sinceLastSave,
       }
     end,
-    onUpdate = function() currentUpdateHandler() end,
+    ---@param dt number
+    onUpdate = function(dt) currentUpdateHandler(dt) end,
   },
   eventHandlers = {
     Died = function()
