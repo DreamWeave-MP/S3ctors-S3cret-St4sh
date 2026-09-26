@@ -1,9 +1,5 @@
 ---@omw-context menu
 
----@class S4V3RCharacterSaves
----@field autoSlots string[]
----@field combatSlots string[]
-
 local DebugLog = require 'scripts.s3.S4V3R.debugLog'
 local ModInfo = require 'scripts.s3.S4V3R.modInfo'
 
@@ -12,8 +8,16 @@ local SaveClass = require 'scripts.s3.S4V3R.saveClass'
 
 local next, GSub = next, string.gsub
 
-local CharacterSaves = require('openmw.storage').playerSection 'S4V3RCharacterSaves'
-local StorageGetCopy, StorageSet = CharacterSaves.getCopy, CharacterSaves.set
+local SaveResults, StorageSet
+do
+  local storage = require 'openmw.storage'
+  SaveResults = storage.playerSection 'S4V3RSaveResults'
+  SaveResults:setLifeTime(storage.LIFE_TIME.Temporary)
+  StorageSet = SaveResults.set
+end
+
+---@type S4V3RSaveResult
+local SaveResult = { saveClass = SaveClass.AUTO, saveFile = '', saveSlot = 1 }
 
 local DeleteGame, GetCurrentSaveDir, GetSaves, SaveGame
 do
@@ -144,12 +148,6 @@ local function findNewestSaveFile(saveDir, saveName)
 end
 
 ---@param saveDir string
----@return S4V3RCharacterSaves
-local function getCharacterSaves(saveDir)
-  return StorageGetCopy(CharacterSaves, saveDir) or { autoSlots = {}, combatSlots = {} }
-end
-
----@param saveDir string
 ---@param existingSaves table<string, openmw.menu.SaveInfo>
 ---@param saveFiles string[]
 local function deleteTrackedSaves(saveDir, existingSaves, saveFiles)
@@ -163,42 +161,35 @@ local function deleteTrackedSaves(saveDir, existingSaves, saveFiles)
 end
 
 ---@param saveInfo S4V3RSaveInfo
-local function saveGame(saveInfo)
-  local saveName, saveSlot, saveType = saveInfo[1], saveInfo[2], saveInfo[3]
-
+local function reportSaveFile(saveInfo)
   local saveDir = GetCurrentSaveDir()
-  local characterSaves = saveDir and getCharacterSaves(saveDir)
-    or { autoSlots = {}, combatSlots = {} }
+  if not saveDir then return end
 
-  local trackedSaves, trackedIndex, previousSaveFile
-  if saveType == SaveClass.AUTO then
-    trackedSaves, trackedIndex = characterSaves.autoSlots, saveSlot
-  elseif saveType == SaveClass.COMBAT_START then
-    trackedSaves, trackedIndex = characterSaves.combatSlots, 1
-  elseif saveType == SaveClass.COMBAT_END then
-    trackedSaves, trackedIndex = characterSaves.combatSlots, 2
-  elseif saveType == SaveClass.GAME_START then
-    previousSaveFile = 'Start_Save'
-  end
+  local saveFile = findNewestSaveFile(saveDir, saveInfo[1])
+  if not saveFile then return end
 
-  if trackedSaves then previousSaveFile = trackedSaves[trackedIndex] end
+  SaveResult.saveClass, SaveResult.saveFile, SaveResult.saveSlot =
+    saveInfo[3], saveFile, saveInfo[2]
+
+  StorageSet(SaveResults, 'LastSave', SaveResult)
+end
+
+---@param saveInfo S4V3RSaveInfo
+local function saveGame(saveInfo)
+  local saveName, previousSaveFile = saveInfo[1], saveInfo[4]
 
   DebugLog('Saving: %s', saveName)
   SaveGame(saveName, previousSaveFile and previousSaveFile .. '.omwsave')
 
-  saveDir = GetCurrentSaveDir()
-  if not trackedSaves or not saveDir then return end
+  if saveInfo[3] == SaveClass.GAME_START then return end
 
-  local savedFile = findNewestSaveFile(saveDir, saveName)
-  if not savedFile then return end
-
-  trackedSaves[trackedIndex] = savedFile
-  StorageSet(CharacterSaves, saveDir, characterSaves)
+  reportSaveFile(saveInfo)
 end
 
 return {
   eventHandlers = {
-    S4V3R_MENU_DELETE_ALL_SAVES = function()
+    ---@param trackedSaves S4V3RTrackedSaves
+    S4V3R_MENU_DELETE_ALL_SAVES = function(trackedSaves)
       if
         not require('openmw.storage').playerSection(ModInfo.GroupName):get 'DeleteSavesOnDeath'
       then
@@ -208,17 +199,16 @@ return {
       local saveDir = GetCurrentSaveDir()
       if not saveDir then return end
 
-      local saves, characterSaves = GetSaves(saveDir), getCharacterSaves(saveDir)
+      local saves = GetSaves(saveDir)
 
-      deleteTrackedSaves(saveDir, saves, characterSaves.autoSlots)
-      deleteTrackedSaves(saveDir, saves, characterSaves.combatSlots)
+      deleteTrackedSaves(saveDir, saves, trackedSaves.autoSaveFiles)
+      deleteTrackedSaves(saveDir, saves, trackedSaves.combatSaveFiles)
 
       if saves['Start_Save.omwsave'] then DeleteGame(saveDir, 'Start_Save.omwsave') end
 
-      StorageSet(CharacterSaves, saveDir, { autoSlots = {}, combatSlots = {} })
-
       require('openmw.core').quit()
     end,
+    S4V3R_MENU_ResolveSave = reportSaveFile,
     S4V3R_MENU_TriggerSave = saveGame,
   },
 }
