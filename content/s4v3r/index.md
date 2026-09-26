@@ -1,6 +1,6 @@
 ---
 title: S4V3R
-description: Lightweight, combat-aware autosave management with optional start save functionality.
+description: Lightweight, combat-aware autosave management with optional rest and cell change saves.
 date: 2026-07-22
 
 taxonomies:
@@ -35,60 +35,53 @@ S4V3R is a brutally opinionated autosave manager with simplistic options and an 
 S4V3R is my own take on save management, intended to maintain as few options as actually make sense whilst also not breaking the bank in the Lua profiler or your download count.
 
 It tries to offer the most sane defaults it can:
-- Saves every nine minutes
-- Keeps a rotating stack of ten slots
+- Saves every nine minutes of unpaused play
+- Keeps a rotating stack of ten autosaves, overwriting the oldest
 - Saves when entering and exiting combat, at most once per minute
-- Saves when finishing character creation
-- Empty, but customizable, save prefixes.
+- Saves once when character creation finishes
+- Empty, but customizable, save prefixes
 
 All of the above options are configurable. With the default settings, this gives you about an hour and a half of backups, alongside your combat saves.
 
-As of version 1.1, S4V3R also offers an Ironman option which will delete all saves which S4V3R generated upon your death. Naturally, this is disabled by default.
+Combat saves only trigger when an enemy is actually targeting you, or, with [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053) installed, one of your followers.
 
-As of version 1.2, S4V3R will NOT make combat start/end saves when the target is not in combat with you directly. Additionally, this feature is extended to support Sosnoviy Bor's [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053) as well.
+# Optional Saves
 
-If you have FDU installed, then S4V3R will also account for your followers being targeted by enemies.
+These are disabled by default:
+- **Save When Resting** saves when you open the rest or wait menu. If you enable it, you'll probably want to disable OpenMW's own autosave on rest (`autosave` under `[Saves]`), since S4V3R can't take over or replace the engine's autosave.
+- **Save On Cell Change** saves after you move into or out of an interior. Walking between exterior cells never triggers it. Requires [H3lp Yours3lf](@/h3lp_yours3lf/index.md); the setting only appears when `H3lp Yours3lf.esp` is enabled.
 
-Customizable save prefixes were added in version 1.3.
+Combat, start, rest, and cell change saves each keep a single file that's overwritten every time, and none of them count toward your autosave limit. With the defaults, you have a rolling total of 13 saves.
 
-S4V3R can also save when you open the rest or wait menu. This is disabled by default. If you enable it, you'll probably want to disable OpenMW's own autosave on rest (`autosave` under `[Saves]`), since S4V3R can't take over or replace the engine's autosave.
+# Ironman Mode
 
-If [H3lp Yours3lf](@/h3lp_yours3lf/index.md) is installed, S4V3R can also save after you move into or out of an interior. This is an optional enhancement: the setting only appears when `H3lp Yours3lf.esp` is enabled, and it is disabled by default. Walking between exterior cells never triggers a cell change save.
+Ironman mode deletes every save S4V3R made for your character when you die, then quits the game. Your manual saves and quicksaves are never touched. Naturally, this is disabled by default.
 
-Note that combat saves don't consume your autosave budget, nor do your start, rest, or cell change saves - so with the defaults, you have a rolling total of 13 saves.
+# Settings
 
-# Interop for Scripters
+| Setting | Default |
+| --- | --- |
+| Disable/Enable | Enabled |
+| Enable Interval Saves | Yes |
+| Save Interval | 9 minutes |
+| Max Saves | 10 |
+| Enable Combat Saves | Yes |
+| Combat Save Cooldown | 1 minute |
+| Save When Resting | No |
+| Enable Start Saves | Yes |
+| Ironman Mode | No |
+| Save Name Prefix | Empty |
+| Enable Logging | No |
+| Save On Cell Change | No (requires H3lp Yours3lf) |
 
-S4V3R doesn't have a lot to offer in terms of interface, but it tries to expose everything it can. Please let me know if you'd like to see the interface extended. 
+# Optional Integrations
 
-When a save is triggered, two events are emitted:
-- MENU scope: `S4V3R_MENU_TriggerSave`
-- PLAYER scope: `S4V3R_PLAYER_SaveComplete`
+- [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053): combat saves also trigger when enemies target your followers.
+- [H3lp Yours3lf](@/h3lp_yours3lf/index.md): enables Save On Cell Change.
+- Starwind: detected automatically, and the start save is timed for Starwind's character creation.
 
-You may subscribe to either event depending on the exact timing you require. Additionally, you can register a save handler through the interface using `I.S4V3R.addSaveCompletionHandler`.
+S4V3R comes with English, French, and Swedish localizations.
 
-Interface fields:
-```lua
-  ---@param handler fun(saveName: string, saveSlot: integer): boolean?
-  addSaveCompletionHandler = function(handler)
-    assert(
-      type(handler) == 'function',
-      'S4V3R.addSaveCompletionHandler was passed a non-function value!'
-    )
-
-    saveCompletionHandlers[#saveCompletionHandlers + 1] = handler
-  end,
-  ---@return boolean canSave
-  canSave = function() return sinceLastSave >= SaveInterval and allowedToSave() ~= nil end,
-  ---@return integer
-  getCurrentSaveSlot = function() return saveSlot end,
-  ---@return integer
-  getMaxSaves = function() return MaxSaveSlots end,
-  ---@return number timeBetweenSaves
-  getSaveInterval = function() return SaveInterval end,
-  ---@return number timeRemaining
-  untilNextSave = function() return SaveInterval - sinceLastSave end,
-  version = 1,
-```
+Scripters can find S4V3R's interface, events, and settings in the [S4V3R documentation](@/s4v3r/docs/_index.md).
 
 {{ credits(default=true) }}
