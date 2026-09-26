@@ -1,3 +1,11 @@
+CombatSaveCooldownName: Combat Save Cooldown
+CombatSaveCooldownDesc: |
+  Minimum time between combat saves in minutes. Set to 0 to disable.
+
+  Default: 1
+  Min: 0
+  Max: 60
+
 CombatSaveToggleName: Enable Combat Saves
 CombatSaveToggleDesc: |
   Whether or not to save when combat starts or stops.

@@ -31,7 +31,7 @@ local I = require 'openmw.interfaces'
 ---Script scope: Global, NPC, Creature, Player
 ---@field getFollowerList fun(): table<string, table>
 
-local CallEventHandlers, ClassReviewMenu, GetRealFrameDuration, GetUIMode, Minute, Regions
+local CallEventHandlers, ClassReviewMenu, GetRealFrameDuration, GetRealTime, GetUIMode, Minute, Regions
 local hasFDU = false
 
 do
@@ -40,7 +40,8 @@ do
 
   local core = require 'openmw.core'
   hasFDU = core.contentFiles.has 'FollowerDetectionUtil.omwscripts'
-  GetRealFrameDuration, Regions = core.getRealFrameDuration, core.regions.records
+  GetRealFrameDuration, GetRealTime, Regions =
+    core.getRealFrameDuration, core.getRealTime, core.regions.records
 
   CallEventHandlers = require('openmw_aux.util').callEventHandlers
 end
@@ -75,10 +76,14 @@ local currentUpdateHandler = nullFunction
 local actorsInCombat, saveCompletionHandlers = {}, {}
 local awaitingSaveResult, isInCombat, saveSlot, sinceLastSave = false, false, 1, 0
 
+---@type number?
+local lastCombatSaveTime
+
 ---@type S4V3RTrackedSaves
 local trackedSaves = { autoSaveFiles = {}, combatSaveFiles = {} }
 
-local CombatSavesEnabled, DeleteSavesOnDeath, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
+local CombatSaveCooldown, CombatSavesEnabled, DeleteSavesOnDeath, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
+  StorageGet(playerStorage, 'CombatSaveCooldown') * Minute,
   StorageGet(playerStorage, 'CombatSaveToggle'),
   StorageGet(playerStorage, 'DeleteSavesOnDeath'),
   StorageGet(playerStorage, 'SaveInterval') * Minute,
@@ -192,6 +197,8 @@ playerStorage:subscribe(async:callback(function(_, key)
     SaveInterval = value * Minute
   elseif key == 'SavePrefix' then
     SavePrefix = value
+  elseif key == 'CombatSaveCooldown' then
+    CombatSaveCooldown = value * Minute
   elseif key == 'CombatSaveToggle' then
     CombatSavesEnabled = value
   elseif key == 'DeleteSavesOnDeath' then
@@ -306,6 +313,14 @@ return {
       if shouldSkipSave then return end
 
       currentUpdateHandler = isInCombat and nullFunction or autoSaveHandler
+
+      local currentTime = GetRealTime()
+      if lastCombatSaveTime and currentTime - lastCombatSaveTime < CombatSaveCooldown then
+        DebugLog 'Combat state changed, but combat saves are on cooldown.'
+        return
+      end
+
+      lastCombatSaveTime = currentTime
 
       DebugLog 'Combat state changed! Triggering autosave . . .'
       local location = getCurrentLocation(self.cell)

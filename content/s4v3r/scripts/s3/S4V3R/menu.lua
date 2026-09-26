@@ -84,6 +84,15 @@ do
         },
       },
       {
+        key = 'CombatSaveCooldown',
+        name = 'CombatSaveCooldownName',
+        description = 'CombatSaveCooldownDesc',
+        default = 1,
+        renderer = 'number',
+        min = 0,
+        max = 60,
+      },
+      {
         key = 'StartSaveToggle',
         name = 'StartSaveToggleName',
         description = 'StartSaveToggleDesc',

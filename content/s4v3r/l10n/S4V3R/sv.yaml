@@ -1,3 +1,11 @@
+CombatSaveCooldownName: Fördröjning för stridssparningar
+CombatSaveCooldownDesc: |
+  Minsta tid mellan stridssparningar i minuter. Ange 0 för att inaktivera.
+
+  Standard: 1
+  Min: 0
+  Max: 60
+
 CombatSaveToggleName: Aktivera stridssparningar
 CombatSaveToggleDesc: |
   Anger om spelet ska sparas när strid börjar eller slutar.
