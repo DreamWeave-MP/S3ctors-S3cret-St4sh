@@ -13,7 +13,6 @@ local SaveClass = require 'scripts.s3.S4V3R.saveClass'
 local next, GSub = next, string.gsub
 
 local CharacterSaves = require('openmw.storage').playerSection 'S4V3RCharacterSaves'
-local LegacySavedSlots = require('openmw.storage').playerSection 'S4V3RSavedSlots'
 local StorageGetCopy, StorageSet = CharacterSaves.getCopy, CharacterSaves.set
 
 local DeleteGame, GetCurrentSaveDir, GetSaves, SaveGame
@@ -144,35 +143,10 @@ local function findNewestSaveFile(saveDir, saveName)
   return newestSaveFile and GSub(newestSaveFile, '%.omwsave$', '')
 end
 
----@param legacySaveFiles string[]?
----@param existingSaves table<string, openmw.menu.SaveInfo>
----@return string[]
-local function adoptLegacySaveFiles(legacySaveFiles, existingSaves)
-  local adoptedSaveFiles = {}
-  if not legacySaveFiles then return adoptedSaveFiles end
-
-  for index, saveFile in next, legacySaveFiles do
-    if existingSaves[saveFile .. '.omwsave'] then adoptedSaveFiles[index] = saveFile end
-  end
-
-  return adoptedSaveFiles
-end
-
 ---@param saveDir string
 ---@return S4V3RCharacterSaves
 local function getCharacterSaves(saveDir)
-  local characterSaves = StorageGetCopy(CharacterSaves, saveDir)
-  if characterSaves then return characterSaves end
-
-  local existingSaves = GetSaves(saveDir)
-
-  return {
-    autoSlots = adoptLegacySaveFiles(StorageGetCopy(LegacySavedSlots, 'AutoSlots'), existingSaves),
-    combatSlots = adoptLegacySaveFiles(
-      StorageGetCopy(LegacySavedSlots, 'CombatSlots'),
-      existingSaves
-    ),
-  }
+  return StorageGetCopy(CharacterSaves, saveDir) or { autoSlots = {}, combatSlots = {} }
 end
 
 ---@param saveDir string
