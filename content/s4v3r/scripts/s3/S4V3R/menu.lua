@@ -149,8 +149,9 @@ end
 ---@return string[]
 local function adoptLegacySaveFiles(legacySaveFiles, existingSaves)
   local adoptedSaveFiles = {}
+  if not legacySaveFiles then return adoptedSaveFiles end
 
-  for index, saveFile in next, legacySaveFiles or {} do
+  for index, saveFile in next, legacySaveFiles do
     if existingSaves[saveFile .. '.omwsave'] then adoptedSaveFiles[index] = saveFile end
   end
 
