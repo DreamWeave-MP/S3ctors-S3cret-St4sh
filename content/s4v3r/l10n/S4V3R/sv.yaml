@@ -24,6 +24,12 @@ DeleteSavesDesc: |
 
   Standard: Nej
 
+IntervalSaveToggleName: Aktivera intervallsparningar
+IntervalSaveToggleDesc: |
+  Anger om spelet ska sparas vid varje sparintervall.
+
+  Standard: Ja
+
 MaxSaveSlotsName: Maximalt antal sparningar
 MaxSaveSlotsDesc: |
   Maximalt antal sparningar som ska behållas. När detta antal har nåtts skrivs den äldsta sparningen över.

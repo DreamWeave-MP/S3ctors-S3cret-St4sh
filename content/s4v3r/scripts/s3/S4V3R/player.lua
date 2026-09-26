@@ -68,10 +68,11 @@ local isInCombat, saveSlot, sinceLastSave = false, 1, 0
 ---@type number?
 local lastCombatSaveTime
 
-local CombatSaveCooldown, CombatSavesEnabled, DeleteSavesOnDeath, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
+local CombatSaveCooldown, CombatSavesEnabled, DeleteSavesOnDeath, IntervalSavesEnabled, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
   StorageGet(playerStorage, 'CombatSaveCooldown') * Minute,
   StorageGet(playerStorage, 'CombatSaveToggle'),
   StorageGet(playerStorage, 'DeleteSavesOnDeath'),
+  StorageGet(playerStorage, 'IntervalSaveToggle'),
   StorageGet(playerStorage, 'SaveInterval') * Minute,
   StorageGet(playerStorage, 'SavePrefix'),
   StorageGet(playerStorage, 'MaxSaveSlots'),
@@ -123,6 +124,8 @@ local function autoSaveHandler(dt)
     currentUpdateHandler = nullFunction
     return
   end
+
+  if not IntervalSavesEnabled then return end
 
   sinceLastSave = sinceLastSave + dt
 
@@ -188,6 +191,8 @@ playerStorage:subscribe(async:callback(function(_, key)
     CombatSavesEnabled = value
   elseif key == 'DeleteSavesOnDeath' then
     DeleteSavesOnDeath = value
+  elseif key == 'IntervalSaveToggle' then
+    IntervalSavesEnabled = value
   elseif key == 'StartSaveToggle' then
     StartSaveEnabled = value
   elseif key == 'S4V3RActive' then
