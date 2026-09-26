@@ -134,6 +134,12 @@ local function chargenCheck()
   currentUpdateHandler, chargenDone = autoSaveHandler, true
 end
 
+local function selectUpdateHandler()
+  if not S4V3RActive then return end
+
+  currentUpdateHandler = chargenDone and autoSaveHandler or chargenCheck
+end
+
 playerStorage:subscribe(require('openmw.async'):callback(function(_, key)
   local value = StorageGet(playerStorage, key)
 
@@ -185,6 +191,7 @@ local S4V3RInterface = {
 
 return {
   engineHandlers = {
+    onInit = selectUpdateHandler,
     ---@param data S4V3RStoredData?
     onLoad = function(data)
       if data then
@@ -192,9 +199,7 @@ return {
           data.chargenDone or false, data.saveSlot or 1, data.sinceLastSave or 0
       end
 
-      if not S4V3RActive then return end
-
-      currentUpdateHandler = chargenDone and autoSaveHandler or chargenCheck
+      selectUpdateHandler()
     end,
     ---@return S4V3RStoredData
     onSave = function()
