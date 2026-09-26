@@ -54,7 +54,7 @@ RestSaveToggleDesc: |
 
   Par défaut : Non
 
-S4V3RActiveDesc: "Indique s'il faut effectuer des sauvegardes automatiques ou non.S4V3RDesc: Sauvegarde automatiquement le jeu à intervalles réguliers et, en option, lorsque le combat commence ou se termine."
+S4V3RActiveDesc: "Indique s'il faut effectuer des sauvegardes automatiques ou non."
 S4V3RActiveName: Désactiver/Activer
 S4V3RDesc: Sauvegarde automatiquement le jeu à intervalles réguliers et, en option, lorsque le combat commence ou se termine.
 S4V3RName: S4V3R
