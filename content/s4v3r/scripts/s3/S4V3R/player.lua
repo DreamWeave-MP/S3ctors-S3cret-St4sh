@@ -146,6 +146,8 @@ playerStorage:subscribe(require('openmw.async'):callback(function(_, key)
     SavePrefix = value
   elseif key == 'CombatSaveToggle' then
     CombatSavesEnabled = value
+  elseif key == 'DeleteSavesOnDeath' then
+    DeleteSavesOnDeath = value
   elseif key == 'StartSaveToggle' then
     StartSaveEnabled = value
   elseif key == 'S4V3RActive' then
