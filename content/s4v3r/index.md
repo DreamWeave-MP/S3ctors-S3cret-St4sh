@@ -48,7 +48,7 @@ Combat saves only trigger when an enemy is actually targeting you, or, with [Fol
 # Optional Saves
 
 These are disabled by default:
-- **Save When Resting** saves when you open the rest or wait menu. If you enable it, you'll probably want to disable OpenMW's own autosave on rest (`autosave` under `[Saves]`), since S4V3R can't take over or replace the engine's autosave.
+- **Save When Resting** saves after you rest or wait for at least an hour. If you enable it, you'll probably want to disable OpenMW's own autosave on rest (`autosave` under `[Saves]`), since S4V3R can't take over or replace the engine's autosave.
 - **Save On Cell Change** saves after you move into or out of an interior. Walking between exterior cells never triggers it. Requires [H3lp Yours3lf](@/h3lp_yours3lf/index.md); the setting only appears when `H3lp Yours3lf.esp` is enabled.
 
 Combat, start, rest, and cell change saves each keep a single file that's overwritten every time, and none of them count toward your autosave limit. With the defaults, you have a rolling total of 13 saves.

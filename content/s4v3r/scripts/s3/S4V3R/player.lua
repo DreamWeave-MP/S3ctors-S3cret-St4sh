@@ -19,12 +19,14 @@ local I = require 'openmw.interfaces'
 ---Script scope: Global, NPC, Creature, Player
 ---@field getFollowerList fun(): table<string, table>
 
-local CallEventHandlers, ClassReviewMenu, GetRealTime, GetUIMode, Minute, Regions, RestMenu
+local CallEventHandlers, ClassReviewMenu, GetGameTime, GetGameTimeScale, GetRealTime, GetSimulationTime, GetUIMode, Hour, Minute, Regions, RestMenu
 local hasFDU, hasH3, hasStarwind = false, false, false
 
 do
   ClassReviewMenu, GetUIMode, RestMenu = I.UI.MODE.ChargenClassReview, I.UI.getMode, I.UI.MODE.Rest
-  Minute = require('openmw_aux.time').minute
+
+  local time = require 'openmw_aux.time'
+  Hour, Minute = time.hour, time.minute
 
   local core = require 'openmw.core'
   local contentFiles = core.contentFiles
@@ -32,7 +34,12 @@ do
   hasH3 = contentFiles.has 'H3lp Yours3lf.esp'
   hasStarwind = contentFiles.has 'StarwindRemasteredV1.15.esm'
     or contentFiles.has 'Star_Data.omwaddon'
-  GetRealTime, Regions = core.getRealTime, core.regions.records
+  GetGameTime, GetGameTimeScale, GetRealTime, GetSimulationTime, Regions =
+    core.getGameTime,
+    core.getGameTimeScale,
+    core.getRealTime,
+    core.getSimulationTime,
+    core.regions.records
 
   CallEventHandlers = require('openmw_aux.util').callEventHandlers
 end
@@ -69,6 +76,9 @@ local lastCell = self.cell
 
 ---@type number?
 local lastCombatSaveTime
+
+---@type number?
+local skippedGameTimeAtRestStart
 
 local CellChangeSavesEnabled, CombatSaveCooldown, CombatSavesEnabled, DeleteSavesOnDeath, IntervalSavesEnabled, RestSavesEnabled, SaveInterval, SavePrefix, MaxSaveSlots, StartSaveEnabled, S4V3RActive =
   StorageGet(playerStorage, 'CellChangeSaveToggle'),
@@ -188,13 +198,28 @@ local function startSaveOnChargenReviewClose(modeChangeData)
   DebugLog 'CharGen has completed. S4V3R is active!'
 end
 
-local function saveOnRestMenuOpen(modeChangeData)
+---@return number skippedGameTime
+local function getSkippedGameTime() return GetGameTime() - GetSimulationTime() * GetGameTimeScale() end
+
+local function saveAfterRest(modeChangeData)
+  local newMode, oldMode = modeChangeData.newMode, modeChangeData.oldMode
+
+  if newMode == RestMenu and oldMode ~= RestMenu then
+    skippedGameTimeAtRestStart = getSkippedGameTime()
+    return
+  end
+
+  if oldMode ~= RestMenu or newMode == RestMenu or not skippedGameTimeAtRestStart then return end
+
+  local restedTime = getSkippedGameTime() - skippedGameTimeAtRestStart
+  skippedGameTimeAtRestStart = nil
+
   if
-    not S4V3RActive
+    restedTime < Hour / 2
+    or not S4V3RActive
     or not RestSavesEnabled
     or not chargenDone
     or isInCombat
-    or modeChangeData.newMode ~= RestMenu
     or IsDead(self)
   then
     return
@@ -218,7 +243,7 @@ end
 
 local function saveOnStarwindChargenOrRest(modeChangeData)
   startSaveOnChargenReviewClose(modeChangeData)
-  saveOnRestMenuOpen(modeChangeData)
+  saveAfterRest(modeChangeData)
 end
 
 playerStorage:subscribe(async:callback(function(_, key)
@@ -375,7 +400,7 @@ return {
         SaveEventData[3]
       )
     end,
-    UiModeChanged = hasStarwind and saveOnStarwindChargenOrRest or saveOnRestMenuOpen,
+    UiModeChanged = hasStarwind and saveOnStarwindChargenOrRest or saveAfterRest,
   },
   interfaceName = ModInfo.Name,
   interface = S4V3RInterface,

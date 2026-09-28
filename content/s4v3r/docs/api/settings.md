@@ -26,7 +26,7 @@ local combatSavesEnabled = Settings:get('CombatSaveToggle')
 | `MaxSaveSlots` | number | `10` | Number of interval autosaves to keep, from `1` to `100`. Once reached, the oldest is overwritten. Lowering it deletes the excess oldest autosaves at the next autosave. |
 | `CombatSaveToggle` | boolean | `true` | Saves when combat starts and ends. |
 | `CombatSaveCooldown` | number | `1` | Minimum minutes between combat saves, from `0` to `60`. `0` disables the cooldown. |
-| `RestSaveToggle` | boolean | `false` | Saves when the rest or wait menu opens. |
+| `RestSaveToggle` | boolean | `false` | Saves after resting or waiting for at least an hour. |
 | `StartSaveToggle` | boolean | `true` | Saves once when character creation finishes. |
 | `DeleteSavesOnDeath` | boolean | `false` | Ironman mode. On death, deletes every save S4V3R made for the current character and quits the game. |
 | `SavePrefix` | string | `''` | Prefix added to S4V3R's save names. |
