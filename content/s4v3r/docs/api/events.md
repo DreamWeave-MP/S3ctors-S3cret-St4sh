@@ -38,7 +38,7 @@ Menu scripts may observe it, but must not return `false` from their handler, or 
 | `2` | `COMBAT_START` | Combat starts. |
 | `3` | `COMBAT_END` | Combat ends. |
 | `4` | `GAME_START` | Character creation finishes. |
-| `5` | `REST` | The rest or wait menu opens. |
+| `5` | `REST` | The player finishes resting or waiting for at least an hour. |
 | `6` | `CELL_CHANGE` | The player moves into or out of an interior, when H3lp Yours3lf is installed. |
 
 Every class other than `AUTO` keeps a single file that's overwritten each time.

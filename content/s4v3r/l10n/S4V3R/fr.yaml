@@ -48,7 +48,7 @@ MaxSaveSlotsDesc: |
 
 RestSaveToggleName: Sauvegarder au repos
 RestSaveToggleDesc: |
-  Détermine s'il faut sauvegarder ou non à l'ouverture du menu de repos ou d'attente. Les sauvegardes de repos remplacent un seul fichier et ne comptent pas dans le nombre maximal de sauvegardes.
+  Détermine s'il faut sauvegarder ou non après s'être reposé ou avoir attendu au moins une heure. Les sauvegardes de repos remplacent un seul fichier et ne comptent pas dans le nombre maximal de sauvegardes.
 
   Si vous activez cette option, pensez à désactiver la sauvegarde automatique au repos d'OpenMW.
 

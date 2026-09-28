@@ -48,7 +48,7 @@ MaxSaveSlotsDesc: |
 
 RestSaveToggleName: Spara vid vila
 RestSaveToggleDesc: |
-  Anger om spelet ska sparas när vilo- eller väntemenyn öppnas. Vilosparningar skriver över en enda fil och räknas inte mot maximalt antal sparningar.
+  Anger om spelet ska sparas efter att du har vilat eller väntat i minst en timme. Vilosparningar skriver över en enda fil och räknas inte mot maximalt antal sparningar.
 
   Om du aktiverar detta kan du stänga av OpenMW:s egen autosparning vid vila.
 
