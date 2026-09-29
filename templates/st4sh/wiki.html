@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros/dw.html" as dw_macros %}
 {% import "macros/st4sh.html" as st4sh %}
 
 {#- The wiki hub: every docs tree the St4sh's projects link from their mod.toml, largest first,
@@ -25,7 +26,8 @@
 {%- set j_icon = icon | json_encode -%}
 {%- set j_summary = description | json_encode -%}
 {%- set j_project = item.permalink | json_encode -%}
-{%- set_global docs_json = docs_json ~ ',{"path":' ~ j_path ~ ',"title":' ~ j_title ~ ',"pages":' ~ pages_here ~ ',"icon":' ~ j_icon ~ ',"summary":' ~ j_summary ~ ',"project":' ~ j_project ~ '}' -%}
+{%- set j_dir = item.colocated_path | json_encode -%}
+{%- set_global docs_json = docs_json ~ ',{"dir":' ~ j_dir ~ ',"path":' ~ j_path ~ ',"title":' ~ j_title ~ ',"pages":' ~ pages_here ~ ',"icon":' ~ j_icon ~ ',"summary":' ~ j_summary ~ ',"project":' ~ j_project ~ '}' -%}
 {%- endif -%}
 {%- endif -%}
 {%- endfor -%}
@@ -53,11 +55,7 @@
     {%- set root = get_section(path=tree.path, metadata_only=true) %}
     <section class="st4sh-manual" id="{{ tree.title | slugify }}" aria-labelledby="{{ tree.title | slugify }}-title" style="--st4sh-shift: {{ loop.index * 53 % 90 - 45 }}">
         <header class="st4sh-manual__head">
-            {%- if tree.icon %}
-            {%- set icon_path = st4sh::static_path(path=tree.icon) %}
-            {%- set icon = resize_image(path=icon_path, width=128, height=128, op="fit", format="webp", quality=88) %}
-            <img class="st4sh-manual__icon" src="{{ icon.url | safe }}" width="{{ icon.width }}" height="{{ icon.height }}" alt="" loading="lazy">
-            {%- endif %}
+            {%- if tree.icon %}{{ dw_macros::page_art(page_dir=tree.dir, path=tree.icon, width=128, height=128, op="fit", class="st4sh-manual__icon", quality=88) }}{% endif %}
             <div>
                 <h2 id="{{ tree.title | slugify }}-title"><a href="{{ root.permalink | safe }}">{{ tree.title }}</a></h2>
                 <p>{{ tree.summary | markdown(inline=true) | striptags | safe }}</p>
@@ -72,5 +70,4 @@
 
 {%- block extra_body %}
 {{ super() }}
-<script src="{{ get_url(path='js/st4sh.js', trailing_slash=false) | safe }}" data-search-index="{{ get_url(path='search_index.' ~ config.default_language ~ '.json', trailing_slash=false) | safe }}" defer></script>
 {%- endblock extra_body %}

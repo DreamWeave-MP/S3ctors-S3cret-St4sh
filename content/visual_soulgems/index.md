@@ -11,7 +11,7 @@ taxonomies:
     - OpenMW 0.51
 
 extra:
-  icon: img/vsg.webp
+  icon: /img/vsg.webp
 ---
 
 Visual Soul Gems makes filled soul gems look filled.

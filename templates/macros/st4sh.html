@@ -50,8 +50,3 @@
 </ul>
 {%- endmacro outline %}
 
-{#- Where a page's `extra.icon` or `extra.cover` lives, for resize_image: art shared under
-    static/img, or an asset of the page itself under content/. -#}
-{% macro static_path(path) -%}
-{%- if path is starting_with("img/") %}static/{{ path }}{% else %}content/{{ path }}{% endif -%}
-{%- endmacro static_path %}

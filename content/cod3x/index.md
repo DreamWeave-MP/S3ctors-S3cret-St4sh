@@ -10,8 +10,8 @@ taxonomies:
     - Documentation
 
 extra:
-  icon: img/cod3x/icon.webp
-  cover: img/cod3x/nexusHeader.webp
+  icon: /img/cod3x/icon.webp
+  cover: /img/cod3x/nexusHeader.webp
 ---
 
 # Cod3x

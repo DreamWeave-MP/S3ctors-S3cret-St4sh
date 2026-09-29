@@ -4,7 +4,7 @@ description: Monochrome UI supplement is, well... a monochrome UI supplement.
 date: 2024-08-19
 
 extra:
-  cover: img/monosupplement_after.webp
+  cover: /img/monosupplement_after.webp
 ---
 
 Monochrome UI supplement is, well... a monochrome UI supplement.

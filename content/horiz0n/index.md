@@ -10,7 +10,7 @@ taxonomies:
     - OpenMW-Lua
 
 extra:
-  cover: img/horiz0n.webp
+  cover: /img/horiz0n.webp
 ---
 
 I was discussing the concept of occlusion culling with someone recently.
