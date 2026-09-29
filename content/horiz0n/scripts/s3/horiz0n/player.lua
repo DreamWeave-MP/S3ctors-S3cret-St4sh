@@ -3,8 +3,9 @@
 local self = require 'openmw.self'
 
 local hasTag
-local getRealFrameDuration, horiz0nSettings, setViewDistance =
+local getRealFrameDuration, getSimulationTimeScale, horiz0nSettings, setViewDistance =
   require('openmw.core').getRealFrameDuration,
+  require('openmw.core').getSimulationTimeScale,
   require('openmw.storage').playerSection 'SettingsPlayerHoriz0n',
   require('openmw.camera').setViewDistance
 
@@ -25,7 +26,7 @@ if ENABLE then setViewDistance(MIN_VIEW_DISTANCE) end
 
 local viewDistance = MIN_VIEW_DISTANCE
 
-local fastestFrameTime, updateTimer = math.huge, 0.0
+local fastestFrameTime, windowDuration, windowFrames = math.huge, 0.0, 0
 
 local function nullFunction() end
 local frameFunction = nullFunction
@@ -43,16 +44,18 @@ local function isOutdoors()
   return currentCell.isExterior or hasTag(currentCell, 'QuasiExterior')
 end
 
+---@param simTime number
 local function tick(simTime)
   if simTime <= 0 or not isOutdoors() then return end
 
-  local frameTime = getRealFrameDuration()
+  --- getRealFrameDuration is multiplied by the simulation time scale, which is positive whenever simTime is.
+  windowDuration = windowDuration + getRealFrameDuration() / getSimulationTimeScale()
+  windowFrames = windowFrames + 1
 
-  updateTimer = updateTimer + frameTime
+  if windowDuration < UPDATE_INTERVAL then return end
 
-  if updateTimer < UPDATE_INTERVAL then return end
-
-  updateTimer = 0.0
+  local frameTime = windowDuration / windowFrames
+  windowDuration, windowFrames = 0.0, 0
 
   if frameTime < fastestFrameTime then fastestFrameTime = frameTime end
 
