@@ -302,7 +302,8 @@ const LAMP = /* glsl */ `
     if (age < 0.0 || age > 2.4) return 0.0;
     float radius = age * 1.35;
     float d = distance(world.xy, uPulse.xy);
-    float ring = exp(-pow((d - radius) * 9.0, 2.0));
+    float offset = (d - radius) * 9.0;
+    float ring = exp(-offset * offset);
     return ring * (1.0 - age / 2.4);
   }
 `;
@@ -351,7 +352,7 @@ const FACE_FRAGMENT = /* glsl */ `
         vec2 h = hash22(cell + offset);
         if (h.y > 0.6) continue;
         float life = fract(time * (0.12 + 0.2 * h.y) + h.x * 7.0);
-        float radius = (0.14 + 0.24 * h.x) * smoothstep(0.0, 0.35, life) * smoothstep(1.0, 0.9, life);
+        float radius = (0.14 + 0.24 * h.x) * smoothstep(0.0, 0.35, life) * (1.0 - smoothstep(0.9, 1.0, life));
         float d = length(local - offset - 0.2 - 0.6 * h) / max(radius, 1e-3);
         dome = max(dome, sqrt(max(0.0, 1.0 - d * d)) * step(0.001, radius));
       }
@@ -373,7 +374,9 @@ const FACE_FRAGMENT = /* glsl */ `
     return liquidSample.x * 0.7 + liquidSample.y * 0.55;
   }
   void main() {
-    vec3 n = normalize(vNormal);
+    // A degenerate bevel triangle can carry a zero normal; normalizing it would give NaN.
+    float normalLength = length(vNormal);
+    vec3 n = normalLength > 1e-6 ? vNormal / normalLength : vec3(0.0, 0.0, 1.0);
     vec3 v = normalize(cameraPosition - vWorld);
     vec3 l = normalize(uLight - vWorld);
 
@@ -427,7 +430,7 @@ const FACE_FRAGMENT = /* glsl */ `
     float diffuse = max(dot(wet, l), 0.0);
     float specular = pow(max(dot(wet, h), 0.0), 70.0) * (0.3 + 0.9 * max(fold, here.y));
     float sheen = pow(max(dot(wet, h), 0.0), 9.0) * 0.16;
-    float fresnel = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+    float fresnel = pow(clamp(1.0 - dot(n, v), 0.0, 1.0), 3.0);
 
     vec3 color = lit * (0.45 + 0.7 * diffuse)
       + vec3(1.0, 0.93, 1.0) * specular * 1.1
@@ -450,7 +453,9 @@ const SIDE_FRAGMENT = /* glsl */ `
   ${NOISE}
   ${LAMP}
   void main() {
-    vec3 n = normalize(vNormal);
+    // A degenerate bevel triangle can carry a zero normal; normalizing it would give NaN.
+    float normalLength = length(vNormal);
+    vec3 n = normalLength > 1e-6 ? vNormal / normalLength : vec3(0.0, 0.0, 1.0);
     vec3 v = normalize(cameraPosition - vWorld);
     vec3 l = normalize(uLight - vWorld);
     vec3 h = normalize(l + v);
@@ -532,7 +537,7 @@ const SKY_FRAGMENT = /* glsl */ `
     vec2 offset = vec2(hash21(cell + 7.1), hash21(cell + 3.3)) - 0.5;
     float d = length(local - offset * 0.7);
     float twinkle = 0.55 + 0.45 * sin(uTime * (1.0 + h * 3.0) + h * 40.0);
-    return smoothstep(0.08, 0.0, d) * twinkle * (h - threshold) / (1.0 - threshold);
+    return (1.0 - smoothstep(0.0, 0.08, d)) * twinkle * (h - threshold) / (1.0 - threshold);
   }
   void main() {
     float aspect = uResolution.x / uResolution.y;
@@ -573,6 +578,7 @@ const FLAME_FRAGMENT = /* glsl */ `
   ${NOISE}
   ${LAMP}
   void main() {
+    float away = clamp(vOut, 0.0, 1.0);
     float near = lamp(vWorld);
     // Each column along the edge gets its own tongue height, which rises and falls; inside it,
     // upright turbulence advected upward and curled sideways gives the streaks and the flicker.
@@ -582,11 +588,11 @@ const FLAME_FRAGMENT = /* glsl */ `
     float turbulence = fbm3(q);
     float streaks = 1.0 - abs(noise3(q * vec3(1.8, 0.6, 1.0)) * 2.0 - 1.0);
     float heat = clamp(column * 0.8 + turbulence * 1.1 + streaks * 0.25 - 0.7, 0.0, 1.0) * (0.6 + 0.9 * near);
-    float tongue = smoothstep(0.0, 0.2, heat - vOut) * (0.55 + 0.45 * streaks);
-    float core = smoothstep(0.0, 0.25, heat * 0.5 - vOut);
-    float rim = exp(-vOut * 22.0);
+    float tongue = smoothstep(0.0, 0.2, heat - away) * (0.55 + 0.45 * streaks);
+    float core = smoothstep(0.0, 0.25, heat * 0.5 - away);
+    float rim = exp(-away * 22.0);
     float flicker = 0.8 + 0.2 * noise3(vec3(vLocal.xy * 4.0, uTime * 7.0));
-    float tip = pow(1.0 - vOut, 1.2);
+    float tip = pow(1.0 - away, 1.2);
     vec3 pale = mix(uAccent, vec3(1.0), 0.35);
     vec3 color = pale * tongue * 0.5 * streaks + vec3(1.0, 0.97, 1.0) * core * 1.0 + pale * rim * 0.35;
     gl_FragColor = vec4(color * tip * flicker * (1.0 + near * 1.2), 1.0);
@@ -640,7 +646,7 @@ const MOTE_VERTEX = /* glsl */ `
     p.x += sin(uTime * 0.3 + aSeed.y * 6.28) * 0.12;
     vec4 view = modelViewMatrix * vec4(p, 1.0);
     gl_PointSize = (1.2 + aSeed.z * 2.6) * uPixelRatio * 7.0 / -view.z;
-    vAlpha = (0.25 + 0.75 * aSeed.z) * smoothstep(3.0, 2.2, abs(p.y));
+    vAlpha = (0.25 + 0.75 * aSeed.z) * (1.0 - smoothstep(2.2, 3.0, abs(p.y)));
     gl_Position = projectionMatrix * view;
   }
 `;
@@ -650,7 +656,7 @@ const MOTE_FRAGMENT = /* glsl */ `
   varying float vAlpha;
   void main() {
     float r = length(gl_PointCoord - 0.5);
-    float a = smoothstep(0.5, 0.0, r) * vAlpha;
+    float a = (1.0 - smoothstep(0.0, 0.5, r)) * vAlpha;
     gl_FragColor = vec4(mix(uAccent, vec3(1.0), 0.4) * a * 0.7, 1.0);
   }
 `;
@@ -680,12 +686,13 @@ const FLARE_FRAGMENT = /* glsl */ `
     if (uShape == 0) {
       value = exp(-r * r * 9.0) + 0.35 * exp(-r * 3.2);
     } else if (uShape == 1) {
-      value = exp(-pow((r - 0.78) * 14.0, 2.0)) * 0.9 + exp(-r * r * 3.0) * 0.08;
+      float band = (r - 0.78) * 14.0;
+      value = exp(-band * band) * 0.9 + exp(-r * r * 3.0) * 0.08;
     } else if (uShape == 2) {
       // A hexagonal aperture ghost with a soft edge.
       vec2 a = abs(p);
       float hex = max(a.x * 0.866 + a.y * 0.5, a.y);
-      value = smoothstep(0.82, 0.62, hex) * (0.55 + 0.45 * smoothstep(0.2, 0.75, hex));
+      value = (1.0 - smoothstep(0.62, 0.82, hex)) * (0.55 + 0.45 * smoothstep(0.2, 0.75, hex));
     } else {
       // A long anamorphic streak with a fainter vertical spike and a slow shimmer.
       float horizontal = exp(-abs(p.y) * 70.0) * exp(-abs(p.x) * 1.8);
@@ -694,8 +701,17 @@ const FLARE_FRAGMENT = /* glsl */ `
       value = (horizontal + vertical + diagonal) * (0.85 + 0.15 * sin(uTime * 1.7));
     }
     vec2 edge = abs(vUv * 2.0 - 1.0);
-    value *= smoothstep(1.0, 0.72, max(edge.x, edge.y));
+    value *= 1.0 - smoothstep(0.72, 1.0, max(edge.x, edge.y));
     gl_FragColor = vec4(uColor * value * uAlpha, 1.0);
+  }
+`;
+
+// Any NaN or infinity a driver produces is zeroed and bright values capped before the bloom, which
+// would otherwise smear a single bad pixel into a black square.
+const SCRUB = /* glsl */ `
+  vec3 scrub(vec3 c) {
+    if (any(isnan(c)) || any(isinf(c)) || c.r != c.r || c.g != c.g || c.b != c.b) return vec3(0.0);
+    return clamp(c, 0.0, 64.0);
   }
 `;
 
@@ -703,8 +719,9 @@ const BRIGHT_FRAGMENT = /* glsl */ `
   uniform sampler2D tInput;
   uniform float uThreshold;
   varying vec2 vUv;
+  ${SCRUB}
   void main() {
-    vec3 c = texture2D(tInput, vUv).rgb;
+    vec3 c = scrub(texture2D(tInput, vUv).rgb);
     float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
     gl_FragColor = vec4(c * smoothstep(uThreshold, uThreshold + 0.6, luma), 1.0);
   }
@@ -736,9 +753,10 @@ const COMPOSITE_FRAGMENT = /* glsl */ `
   float dither(vec2 p) {
     return fract(sin(dot(p + fract(uTime), vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
   }
+  ${SCRUB}
   void main() {
-    vec3 color = texture2D(tScene, vUv).rgb;
-    color += texture2D(tBloomNear, vUv).rgb * 0.9 + texture2D(tBloomFar, vUv).rgb * 0.7;
+    vec3 color = scrub(texture2D(tScene, vUv).rgb);
+    color += scrub(texture2D(tBloomNear, vUv).rgb) * 0.9 + scrub(texture2D(tBloomFar, vUv).rgb) * 0.7;
     vec2 d = vUv - 0.5;
     color *= 1.0 - dot(d, d) * 0.9;
     color = aces(color * 1.05);
