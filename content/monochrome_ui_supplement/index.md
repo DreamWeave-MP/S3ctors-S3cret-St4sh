@@ -2,6 +2,9 @@
 title: Monochrome User Interface Supplement
 description: Monochrome UI supplement is, well... a monochrome UI supplement.
 date: 2024-08-19
+
+extra:
+  cover: img/monosupplement_after.png
 ---
 
 Monochrome UI supplement is, well... a monochrome UI supplement.

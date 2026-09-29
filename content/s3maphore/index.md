@@ -8,6 +8,10 @@ taxonomies:
     - Music
     - OpenMW-Lua
     - Frameworks
+
+extra:
+  icon: img/S3maphoreIcon.png
+  cover: img/S3maphoreBanner.png
 ---
 
 Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.

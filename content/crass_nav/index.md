@@ -7,6 +7,10 @@ taxonomies:
   tags:
     - User Interface
     - Gameplay
+
+extra:
+  icon: img/crassius.png
+  cover: img/crassnav-map.png
 ---
 # Uncle Crassius Doesn't Need A Map. Why Should You?
 
