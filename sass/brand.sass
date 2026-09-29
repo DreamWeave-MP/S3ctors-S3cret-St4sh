@@ -1,10 +1,204 @@
-// Your branding. This file is yours: the template never changes it, and it loads last.
-//
-// Recolor everything by overriding tokens, for example:
-//
-// :root
-//   --dw-accent: #7fded0
-//   --dw-font-display: "Oxanium", var(--dw-font-mono)
+// The St4sh's own styles. The template never changes this file, and it loads last.
 //
 // Token names are in sass/_tokens.sass. Prefer tokens over new selectors: they keep the
 // template's components, docs and diagrams consistent with each other.
+
+// H3 API pages (templates/docs/api-status.html and api-usage.html)
+
+.docs-api-status
+  margin: 1em 0 1.5em
+  border-top: 1px solid var(--dw-line)
+  border-bottom: 1px solid var(--dw-line)
+  padding: .75em 0
+
+  dl
+    display: grid
+    grid-template-columns: repeat(4, minmax(0, 1fr))
+    gap: .75em 1em
+    margin: 0
+
+  dl > div
+    min-width: 0
+
+  dt
+    color: var(--dw-text-muted)
+    font-size: .75em
+
+  dd
+    margin: .15em 0 0
+    color: var(--dw-text)
+    overflow-wrap: anywhere
+
+.docs-api-status__stability
+  font-weight: 600
+
+.docs-api-status__stability--stable
+  color: var(--dw-ok)
+
+.docs-api-status__stability--evolving
+  color: var(--dw-warn)
+
+.docs-api-status__stability--specialized
+  color: var(--dw-accent)
+
+.docs-usage-map
+  margin: 1.5em 0
+  border: 1px solid var(--dw-accent-line)
+  padding: .75em 1em
+  background: var(--dw-accent-soft)
+
+  > summary
+    color: var(--dw-accent)
+    font-weight: bold
+    cursor: pointer
+
+  &[open] > summary
+    margin-bottom: .75em
+
+  ul
+    margin: 0
+    padding: 0
+    list-style: none
+
+// Learning paths (templates/shortcodes/learning_path.html)
+
+.docs-learning-path,
+.docs-design-tracks
+  margin: 2em 0
+
+  h2
+    margin-bottom: .75em
+
+.docs-learning-path__steps
+  position: relative
+  display: grid
+  gap: 1em
+  margin: 0
+  padding: 0 0 0 2.5em
+  list-style: none
+
+  > li
+    position: relative
+
+  > li:not(:last-child)::after
+    content: ''
+    position: absolute
+    top: 1.85em
+    bottom: -2.85em
+    left: -1.65em
+    width: 1px
+    background: var(--dw-accent-line)
+
+.docs-learning-path__step
+  display: flex
+  min-height: 100%
+  flex-direction: column
+  border: 1px solid var(--dw-accent-line)
+  border-radius: var(--dw-radius)
+  padding: 1em
+  color: var(--dw-text)
+  text-decoration: none
+  transition: border-color .2s ease-in-out, background .2s ease-in-out
+
+  &:hover,
+  &:focus-visible
+    border-color: var(--dw-accent)
+    background: var(--dw-accent-soft)
+
+  strong
+    margin: .35em 0
+    color: var(--dw-accent)
+
+  > span:last-child
+    color: var(--dw-text-muted)
+    font-size: .9em
+
+.docs-learning-path__number
+  position: absolute
+  top: 1em
+  left: -2.5em
+  z-index: 1
+  display: grid
+  width: 1.7em
+  height: 1.7em
+  place-items: center
+  border: 1px solid var(--dw-accent-line)
+  border-radius: 50%
+  background: var(--dw-bg-1)
+  color: var(--dw-accent)
+  font-weight: bold
+  letter-spacing: .08em
+  transform: scale(.75)
+
+.docs-design-tracks__grid
+  display: grid
+  grid-template-columns: repeat(3, minmax(0, 1fr))
+  gap: 1em
+
+.docs-design-track
+  border: 1px solid var(--dw-accent-line)
+  border-radius: var(--dw-radius)
+  padding: 1em
+
+  h3
+    margin: 0 0 .35em
+    color: var(--dw-accent)
+
+  > p
+    margin-top: 0
+    color: var(--dw-text-muted)
+    font-size: .9em
+
+  ol
+    margin: 1em 0 0
+    padding: 0
+    list-style: none
+    counter-reset: design-track
+
+  li
+    counter-increment: design-track
+    display: grid
+    grid-template-columns: 2em minmax(0, 1fr)
+    gap: .5em
+    margin: .7em 0
+    align-items: start
+
+  li::before
+    content: counter(design-track, decimal-leading-zero)
+    padding-top: .1em
+    color: var(--dw-accent)
+    font-size: .8em
+    font-weight: bold
+    letter-spacing: .08em
+
+  li a
+    display: block
+    color: var(--dw-accent)
+    text-decoration: none
+
+    &:hover,
+    &:focus-visible
+      color: var(--dw-accent-hover)
+
+  li strong,
+  li span
+    display: block
+
+  li strong
+    color: var(--dw-text)
+
+  li span
+    margin-top: .15em
+    color: var(--dw-text-faint)
+    font-size: .85em
+
+@media (max-width: 683px)
+  .docs-learning-path__steps
+    padding-left: 2em
+
+  .docs-design-tracks__grid
+    grid-template-columns: 1fr
+
+@media (max-width: 600px)
+  .docs-api-status dl
+    grid-template-columns: repeat(2, minmax(0, 1fr))
