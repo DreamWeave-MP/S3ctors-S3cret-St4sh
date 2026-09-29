@@ -8,7 +8,9 @@
     every project page and docs page is still the template's. -#}
 
 {%- block extra_head %}
+{%- if not dw_offline %}
 <link rel="modulepreload" href="{{ get_url(path='js/st4sh-hero.js', trailing_slash=false) | safe }}">
+{%- endif %}
 {%- endblock extra_head %}
 
 {%- block body_class %}st4sh-home{% endblock body_class %}
@@ -96,7 +98,10 @@
     "Quality of life|quality-of-life performance",
     "Starwind|starwind",
 ] -%}
-{%- set wiki_url = get_url(path="@/wiki/_index.md") -%}
+{#- The wiki page is the St4sh's own; a site built from these templates without it, like the
+    template's test fixtures, simply has no link to it. -#}
+{%- set wiki_source = load_data(path="content/wiki/_index.md", format="plain", required=false) -%}
+{%- if wiki_source %}{% set wiki_url = get_url(path="@/wiki/_index.md") %}{% else %}{% set wiki_url = "" %}{% endif -%}
 
 <section class="st4sh-hero" data-st4sh-hero aria-labelledby="st4sh-title">
     <div class="st4sh-hero__stage" data-st4sh-hero-stage>
@@ -107,14 +112,16 @@
             <p class="dw-kicker"><span>OpenMW</span><span>{{ project_count }} projects</span><span>{{ docs_pages }} wiki pages</span></p>
             <h1 class="st4sh-hero__title" id="st4sh-title">S<em>3</em>ctor's S<em>3</em>cret St<em>4</em>sh</h1>
             <p class="st4sh-hero__summary">Mods, frameworks and tools for OpenMW, each with its releases, and the wiki that documents them, from the first script to the last API call.</p>
+            {%- if not dw_offline %}
             <button class="st4sh-hero__search" type="button" data-st4sh-palette-open aria-haspopup="dialog">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
                 <span>Search {{ project_count }} projects and {{ docs_pages }} wiki pages</span>
                 <kbd>Ctrl K</kbd>
             </button>
+            {%- endif %}
             <nav class="st4sh-hero__doors" aria-label="Start here">
                 <a href="#projects">Every project</a>
-                <a href="{{ wiki_url | safe }}">The wiki</a>
+                {%- if wiki_url %}<a href="{{ wiki_url | safe }}">The wiki</a>{% endif %}
                 {%- if releases | length > 0 %}<a href="#releases">Latest releases</a>{% endif %}
             </nav>
         </div>
@@ -126,7 +133,7 @@
     <header class="st4sh-band__head">
         <p class="st4sh-band__eyebrow">The wiki</p>
         <h2 id="st4sh-wiki-title">Manuals for the frameworks</h2>
-        <p>The libraries here ship their documentation with them: tutorials, concepts, and a reference for every public call. <a href="{{ wiki_url | safe }}">Browse the whole wiki →</a></p>
+        <p>The libraries here ship their documentation with them: tutorials, concepts, and a reference for every public call.{% if wiki_url %} <a href="{{ wiki_url | safe }}">Browse the whole wiki →</a>{% endif %}</p>
     </header>
     <ol class="st4sh-shelf">
     {%- for tree in docs_trees %}
@@ -217,5 +224,7 @@
 
 {%- block extra_body %}
 {{ super() }}
+{%- if not dw_offline %}
 <script type="module" src="{{ get_url(path='js/st4sh-hero.js', trailing_slash=false) | safe }}"></script>
+{%- endif %}
 {%- endblock extra_body %}
