@@ -281,10 +281,11 @@ build_classified() {
         -attenuate 0.012 \
         +noise Gaussian \
         \
-        "./nexusHeader.png"
+        -quality 90 -define webp:method=6 \
+        "./nexusHeader.webp"
 
     rm ./nexusHeaderClean.png
-    echo "Wrote: ./nexusHeader.png"
+    echo "Wrote: ./nexusHeader.webp"
 }
 
 build_classified
