@@ -1,0 +1,28 @@
+# Released as sw_merged-* before the slug followed the title.
+id = "5c86240d-5bf6-4095-a479-59dcaa723853"
+slug = "starwind_merged_plugin_project"
+versioning = "decimal"
+
+[links]
+documentation = "@/sw_merged/api/_index.md"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+# Star_Data.omwaddon and Starwind.omwaddon are what build_starwind.py writes here. They are not
+# committed, so no archive has ever contained them.
+
+[[releases]]
+version = "0.5"
+date = 2024-12-29
+tag = "sw_merged-0.5"
+
+[[releases]]
+version = "0.51"
+date = 2025-01-10
+tag = "sw_merged-0.51"
+
+[[releases]]
+version = "1.0"
+date = 2026-09-13
