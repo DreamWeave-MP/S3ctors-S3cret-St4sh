@@ -2,7 +2,7 @@ id = "d2c0f0bd-19c0-4df2-b899-62690a8212f9"
 slug = "chim_2090"
 
 [runtimes]
-openmw = "*"
+openmw = ">=0.50"
 
 [openmw]
 content_files = ["CHIM2090.esp"]

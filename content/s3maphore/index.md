@@ -31,11 +31,8 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 
 ## Requirements
 
-<div align="center">
-    <a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="H3lp Yours3lf"></a>
-    <a href="https://openmw.org/downloads"><img src="../img/openmwRequired.svg" alt="OpenMW 0.51"></a>
-    <br>
-</div>
+{{ requires(name="H3lp Yours3lf", url="@/h3lp_yours3lf/index.md", icon="/img/h3/icon.webp", note="OpenMW helper modules") }}
+{{ requires_openmw() }}
 
 ## Introduction
 

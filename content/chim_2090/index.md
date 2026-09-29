@@ -30,11 +30,8 @@ See each subsystem's respective section for details on what each one does and ho
 
 # Requirements
 
-<ul style="list-style-type: none;" align="center">
-  <li><a href="https://www.nexusmods.com/morrowind/mods/56417"><img src="../img/h3Required.svg" alt="H3lp Yours3lf"></a></li>
-  <li><a href="https://openmw.org/downloads"><img src="../img/openmwRequired.svg" alt="Download OpenMW"></a></li>
-</ul>
-<br>
+{{ requires(name="H3lp Yours3lf", url="@/h3lp_yours3lf/index.md", icon="/img/h3/icon.webp", note="OpenMW helper modules") }}
+{{ requires_openmw() }}
 
 {{ install_instructions(describe=true) }}
 
