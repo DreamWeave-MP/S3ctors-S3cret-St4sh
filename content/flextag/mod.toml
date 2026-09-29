@@ -1,0 +1,31 @@
+# Releases before 1.0 were tagged tagger-*, FlexTag's name before it was renamed.
+id = "ed77443e-a232-4eee-839d-427c515a358b"
+slug = "flextag"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["FlexTag.esp"]
+
+[nexusmods]
+mod_id = 59488
+file_group_id = "7603883"
+
+[[releases]]
+version = "0.5"
+date = 2025-06-23
+tag = "tagger-0.5"
+
+[[releases]]
+version = "0.6"
+date = 2025-06-26
+tag = "tagger-0.6"
+
+[[releases]]
+version = "1.0"
+date = 2026-07-01
+
+[[releases]]
+version = "1.0.1"
+date = 2026-09-09

@@ -9,18 +9,6 @@ taxonomies:
     - Frameworks
     - Dependencies
 
-extra:
-  nexus_id: 59488
-  nexus_group_id: 7603883
-
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - FlexTag.esp
-
-  version: 1.0.1
-
 aliases:
   - /tagger/
 ---
