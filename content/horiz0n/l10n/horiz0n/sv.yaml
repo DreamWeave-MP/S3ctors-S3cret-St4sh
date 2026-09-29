@@ -52,10 +52,10 @@ Horiz0nViewDistanceSevereMultDesc: |
   Standard: 2,0
   Intervall: 1,0 - 5,0
 
-Horiz0nViewDistanceStepName: Justering av visningsavstånd
-Horiz0nViewDistanceStepDesc: |
-  Anger hur mycket Horiz0n ändrar visningsavståndet vid varje justering.
+Horiz0nViewDistanceStepPercentName: Justering av visningsavstånd
+Horiz0nViewDistanceStepPercentDesc: |
+  Anger hur mycket Horiz0n ändrar visningsavståndet vid varje justering, i procent av det aktuella visningsavståndet.
   Lägre värden gör förändringarna av visningsavståndet mjukare men långsammare.
   Högre värden gör justeringarna snabbare men mer märkbara.
-  Standard: 16
-  Intervall: 8 - 24
+  Standard: 1 %
+  Intervall: 0,25 % - 5 %

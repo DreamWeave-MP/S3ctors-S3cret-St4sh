@@ -12,7 +12,7 @@ local ARGUMENTS = {
   Horiz0nAdjustFramerate = { min = 10, max = 144 },
   Horiz0nPercentAdjustNormal = { min = 1, max = 10 },
   Horiz0nPercentAdjustSevere = { min = 10, max = 50 },
-  Horiz0nViewDistanceStep = { min = 8, max = 24 },
+  Horiz0nViewDistanceStepPercent = { integer = false, min = 0.25, max = 5.0 },
   Horiz0nViewDistanceSevereMult = { min = 1.0, max = 5.0 },
 }
 
@@ -92,12 +92,12 @@ I.Settings.registerGroup {
       argument = ARGUMENTS.Horiz0nPercentAdjustSevere,
     },
     {
-      key = 'Horiz0nViewDistanceStep',
+      key = 'Horiz0nViewDistanceStepPercent',
       renderer = 'number',
-      name = 'Horiz0nViewDistanceStepName',
-      description = 'Horiz0nViewDistanceStepDesc',
-      default = 16,
-      argument = ARGUMENTS.Horiz0nViewDistanceStep,
+      name = 'Horiz0nViewDistanceStepPercentName',
+      description = 'Horiz0nViewDistanceStepPercentDesc',
+      default = 1.0,
+      argument = ARGUMENTS.Horiz0nViewDistanceStepPercent,
     },
     {
       key = 'Horiz0nViewDistanceSevereMult',
@@ -158,7 +158,7 @@ Horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, _)
     disabled = disabled,
   })
 
-  updateArgument('Horiz0nViewDistanceStep', { disabled = disabled })
+  updateArgument('Horiz0nViewDistanceStepPercent', { disabled = disabled })
 
   updateArgument('Horiz0nViewDistanceSevereMult', { disabled = disabled })
 
