@@ -8,18 +8,6 @@ taxonomies:
     - Qualify-Of-Life
     - Performance
     - OpenMW-Lua
-
-extra:
-  nexus_id: 59668
-  nexus_group_id: 7703223
-
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - Horiz0n.esp
-
-  version: 1.3
 ---
 
 I was discussing the concept of occlusion culling with someone recently.
