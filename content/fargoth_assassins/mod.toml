@@ -1,0 +1,16 @@
+id = "9d492d12-1bd3-4b70-afbf-29aadbe64bed"
+slug = "fargoth_assassins"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["Fargoth Assassins.omwaddon"]
+
+[[releases]]
+version = "0.5"
+date = 2025-04-26
+
+[[releases]]
+version = "1.0"
+date = 2026-09-29
