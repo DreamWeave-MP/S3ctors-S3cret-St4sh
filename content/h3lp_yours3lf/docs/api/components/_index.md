@@ -2,7 +2,7 @@
 title: UI Components
 description: Option contracts for H3UI's application-facing constructors and internal building blocks.
 template: docs/section.html
-page_template: docs/page.html
+page_template: docs/api-page.html
 sort_by: title
 weight: 1
 extra:

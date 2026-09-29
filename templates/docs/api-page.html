@@ -1,0 +1,10 @@
+{#- The St4sh's H3 API pages: the template's docs page, with each API's status, its uses across the
+    St4sh and its related helpers from data/h3_usage.json around the content. -#}
+{% extends "docs/page.html" %}
+
+{% block docs_content %}
+    {% include "docs/api-status.html" %}
+    {% include "docs/api-usage.html" %}
+    {{ super() }}
+    {% include "docs/api-links.html" %}
+{% endblock docs_content %}

@@ -2,7 +2,7 @@
 title: Interfaces
 description: H3 contracts provided through openmw.interfaces.
 template: docs/section.html
-page_template: docs/page.html
+page_template: docs/api-page.html
 sort_by: title
 weight: 20
 

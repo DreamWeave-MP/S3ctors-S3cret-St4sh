@@ -2,7 +2,7 @@
 title: Packages
 description: Individual modules loaded directly with require.
 template: docs/section.html
-page_template: docs/page.html
+page_template: docs/api-page.html
 sort_by: title
 weight: 10
 

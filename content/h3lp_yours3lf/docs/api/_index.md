@@ -1,7 +1,7 @@
 ---
 title: API Reference
 template: docs/section.html
-page_template: docs/page.html
+page_template: docs/api-page.html
 sort_by: weight
 weight: 30
 
