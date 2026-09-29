@@ -1,0 +1,19 @@
+id = "cbd85ee7-f08c-4633-8efd-82394f437807"
+slug = "crass_nav"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["Crassified Navigation.omwaddon"]
+
+[nexusmods]
+mod_id = 53756
+
+[[releases]]
+version = "1.0"
+date = 2024-05-27
+
+[[releases]]
+version = "1.1"
+date = 2026-09-29

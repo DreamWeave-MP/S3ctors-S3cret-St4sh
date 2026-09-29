@@ -7,16 +7,6 @@ taxonomies:
   tags:
     - User Interface
     - Gameplay
-
-extra:
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - Crassified Navigation.omwaddon
-
-  version: 1.1    
-  nexus_id: 53756
 ---
 # Uncle Crassius Doesn't Need A Map. Why Should You?
 
