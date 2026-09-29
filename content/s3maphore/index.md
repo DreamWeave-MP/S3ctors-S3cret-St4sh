@@ -21,7 +21,7 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 <div align="center">
 
   <figure>
-    <img src="../img/S3maphoreBanner.png" alt="semaphore icon" width="512" height="608" />
+    <img src="../img/S3maphoreBanner.png" alt="The S3maphore banner" width="512" height="288" />
     <figcaption><h2 class="notoc">Brought to you by DreamWeave</h2></figcaption>
   </figure>
 
