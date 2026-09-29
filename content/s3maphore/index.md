@@ -18,17 +18,6 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 
 <!-- more -->
 
-<div align="center">
-
-  <figure>
-    <img src="../img/S3maphoreBanner.webp" alt="The S3maphore banner" width="512" height="288" />
-    <figcaption><h2 class="notoc">Brought to you by DreamWeave</h2></figcaption>
-  </figure>
-
-  <br>
-  <br>
-</div>
-
 ## Requirements
 
 {{ requires(name="H3lp Yours3lf", url="@/h3lp_yours3lf/index.md", icon="/img/h3/icon.webp", note="OpenMW helper modules") }}
