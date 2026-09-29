@@ -1,0 +1,20 @@
+id = "d5424da4-bc27-4833-8758-4a1c14ffff03"
+slug = "baldurwind"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["baldurwind.omwaddon"]
+
+[[releases]]
+version = "0.1"
+date = 2024-05-27
+
+[[releases]]
+version = "0.1.1"
+date = 2024-05-28
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
