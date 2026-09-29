@@ -1,0 +1,13 @@
+id = "4d0348b2-0622-44d4-a4ef-114380d8912b"
+slug = "starwind_map_expansion"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+data_directories = ["00 Core"]
+content_files = ["Starwind Map Expansion.esp"]
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
