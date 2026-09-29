@@ -8,18 +8,6 @@ taxonomies:
     - Quality-Of-Life
     - OpenMW-Lua
     - Gameplay
-
-extra:
-  nexus_id: 59665
-  nexus_group_id: 7702380
-
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - S4V3R.esp
-
-  version: 1.5
 ---
 
 {{ image(src="/img/s4v3r.png", alt="Saver - OpenMW Autosaves", style="border-radius: 8px;") }}
