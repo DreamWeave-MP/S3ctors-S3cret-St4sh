@@ -468,10 +468,18 @@
     box-shadow: var(--dw-sheen)
     color: var(--dw-text-muted)
     font-size: .94rem
-    transition: border-color var(--dw-duration) var(--dw-ease)
+    transition: border-color var(--dw-duration) var(--dw-ease), box-shadow var(--dw-duration) var(--dw-ease), transform var(--dw-duration) var(--dw-ease)
 
     &:hover
       border-color: var(--dw-accent-line)
+      box-shadow: 0 0 0 1px color-mix(in oklab, var(--dw-accent) 25%, transparent), var(--dw-shadow-2)
+      transform: translateY(-2px)
+
+    @media (prefers-reduced-motion: reduce)
+      transition: none
+
+      &:hover
+        transform: none
 
     > strong:first-child
       display: block
@@ -853,3 +861,8 @@
     color: var(--dw-text-faint)
     font-size: var(--dw-step--1)
     text-align: center
+
+// Cells that hold only a code span are usually numbers or identifiers: tabular figures line them
+// up down the column. From the l3i site's benchmark tables.
+td:has(> code:only-child)
+  font-variant-numeric: tabular-nums
