@@ -1,0 +1,8 @@
+id = "9730fd78-f0d6-4c0f-bc15-51a571c43899"
+slug = "i_am_basket"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["I Am Basket.omwaddon", "I Am Basket.omwscripts"]
