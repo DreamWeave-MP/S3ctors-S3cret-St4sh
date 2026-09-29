@@ -8,13 +8,6 @@ taxonomies:
     - TES3MP
     - Starwind
     - PVP
-
-extra:
-  install_info:
-    data_directories:
-      - .
-
-  version: 0.5
 ---
 
 Presently contained in this archive are only the assets developed for it.

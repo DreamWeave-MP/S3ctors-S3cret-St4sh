@@ -1,0 +1,17 @@
+id = "a0ae5b47-703f-4013-b5ed-3e3bf234fd66"
+slug = "starwind_pvp"
+
+[runtimes]
+openmw = "*"
+
+[[releases]]
+version = "0.0"
+date = 2024-05-29
+
+[[releases]]
+version = "0.1"
+date = 2024-05-29
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
