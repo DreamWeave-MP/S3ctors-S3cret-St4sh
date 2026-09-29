@@ -14,13 +14,13 @@ local MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE =
   CELL_SIZE * horiz0nSettings:get 'Horiz0nMinViewDistance',
   CELL_SIZE * horiz0nSettings:get 'Horiz0nMaxViewDistance'
 
-local ENABLE, TARGET_FRAME_TIME, BAD_FRAME_RATIO, OKAYISH_FRAME_RATIO, SEVERE_MULT, VD_STEP, UPDATE_INTERVAL =
+local ENABLE, TARGET_FRAME_TIME, BAD_FRAME_RATIO, OKAYISH_FRAME_RATIO, SEVERE_MULT, VD_STEP_FRACTION, UPDATE_INTERVAL =
   horiz0nSettings:get 'Horiz0nToggle',
   1 / horiz0nSettings:get 'Horiz0nTargetFramerate',
   1 + horiz0nSettings:get 'Horiz0nPercentAdjustSevere' / 100,
   1 + horiz0nSettings:get 'Horiz0nPercentAdjustNormal' / 100,
   horiz0nSettings:get 'Horiz0nViewDistanceSevereMult',
-  horiz0nSettings:get 'Horiz0nViewDistanceStep',
+  horiz0nSettings:get 'Horiz0nViewDistanceStepPercent' / 100,
   1 / horiz0nSettings:get 'Horiz0nAdjustFramerate'
 
 if ENABLE then setViewDistance(MIN_VIEW_DISTANCE) end
@@ -62,7 +62,7 @@ local function tick(simTime)
   local decreaseOrIncrease = frameRatio >= OKAYISH_FRAME_RATIO
   local doSevereStep = frameRatio >= BAD_FRAME_RATIO
 
-  local step = VD_STEP
+  local step = viewDistance * VD_STEP_FRACTION
   if doSevereStep then step = step * SEVERE_MULT end
   if decreaseOrIncrease then step = -step end
 
@@ -105,8 +105,8 @@ horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, key)
     OKAYISH_FRAME_RATIO = 1 + value / 100
   elseif key == 'Horiz0nViewDistanceSevereMult' then
     SEVERE_MULT = value
-  elseif key == 'Horiz0nViewDistanceStep' then
-    VD_STEP = value
+  elseif key == 'Horiz0nViewDistanceStepPercent' then
+    VD_STEP_FRACTION = value / 100
   elseif key == 'Horiz0nAdjustFramerate' then
     UPDATE_INTERVAL = 1 / value
   end
