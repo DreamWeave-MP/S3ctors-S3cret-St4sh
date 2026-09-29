@@ -8,14 +8,6 @@ taxonomies:
       - Tools
       - OpenMW-Lua
       - Exporters
-
-extra:
-   install_info:
-      data_directories:
-         - .
-      content_files:
-         - toolgun.omwaddon
-   version: 0.5
 ---
 
 Toolgun is a port of the eponymous swiss-army-revolver from Garry's Mod, purpose built for OpenMW. Fix floaters, rotate or scale objects to your liking, and then save them all back into a REAL mod you can share with the world after!
