@@ -1,0 +1,97 @@
+id = "28030d08-79fc-4aeb-aa6f-69e8ebd0940b"
+slug = "s3maphore"
+versioning = "decimal"
+
+[links]
+documentation = "@/s3maphore/docs/_index.md"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+data_directories = ["00 Core", "01 Tamriel Rebuilt Playlists", "02 Project Cyrodiil Playlists", "03 Muse Expansion Playlists", "04 Vindsvept Solstheim", "05 Secrets of the Crystal City", "06 Songbook of the North", "08 Redguard Music", "09 Nordic Lands", "10 Inns and Taverns", "11 Daggerfall Guild Themes", "14 General Dungeon", "15 Provincial Music", "18 Better Music System Redone", "12 BBL Drizzy", "16 Bgi Inor", "07 Starwind Playlists"]
+content_files = ["S3maphore.esp"]
+
+[nexusmods]
+mod_id = 56836
+file_group_id = "3323002"
+
+[[releases]]
+version = "0.0"
+date = 2025-05-31
+
+[[releases]]
+version = "0.5"
+date = 2025-06-02
+
+[[releases]]
+version = "0.51"
+date = 2025-06-02
+
+[[releases]]
+version = "0.52"
+date = 2025-06-05
+
+[[releases]]
+version = "0.53"
+date = 2025-06-05
+
+[[releases]]
+version = "0.54"
+date = 2025-07-19
+
+[[releases]]
+version = "0.6"
+date = 2025-09-30
+
+[[releases]]
+version = "0.61"
+date = 2025-10-01
+
+[[releases]]
+version = "0.62"
+date = 2025-10-02
+
+[[releases]]
+version = "0.63"
+date = 2026-03-02
+
+[[releases]]
+version = "0.9"
+date = 2026-08-19
+
+[[releases]]
+version = "0.91"
+date = 2026-08-19
+
+[[releases]]
+version = "0.92"
+date = 2026-08-19
+
+[[releases]]
+version = "0.93"
+date = 2026-08-19
+
+[[releases]]
+version = "0.94"
+date = 2026-08-19
+
+[[releases]]
+version = "0.95"
+date = 2026-08-22
+
+[[releases]]
+version = "0.96"
+date = 2026-09-05
+
+[[releases]]
+version = "0.961"
+date = 2026-09-07
+
+[[releases]]
+version = "0.962"
+date = 2026-09-08
+
+[[releases]]
+version = "0.963"
+date = 2026-09-08
