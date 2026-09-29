@@ -1,0 +1,8 @@
+id = "8d411c5d-fb05-41aa-9025-b9a60f4ccc33"
+slug = "dr1p"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["dr1p.omwscripts"]
