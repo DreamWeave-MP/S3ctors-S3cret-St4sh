@@ -1,0 +1,17 @@
+id = "e0b8dda4-42d9-4e31-bf3f-43be964038db"
+slug = "ui_modes_slim"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["uiModesSlim.esp"]
+config = true
+
+[[releases]]
+version = "0.1"
+date = 2025-07-20
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
