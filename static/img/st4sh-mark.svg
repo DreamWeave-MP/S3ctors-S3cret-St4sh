@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="61 -635 977 694" role="img" aria-label="S3">
+  <title>S3</title>
+  <defs>
+    <linearGradient id="enamel" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#8a4fc4"/>
+      <stop offset="0.55" stop-color="#4a1470"/>
+      <stop offset="1" stop-color="#23063a"/>
+    </linearGradient>
+    <linearGradient id="pearl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.5" stop-color="#e4d2ff"/>
+      <stop offset="1" stop-color="#b58ae6"/>
+    </linearGradient>
+  </defs>
+  <path d="M280 23Q211 23 159.5 -17.5Q108 -58 95 -125L192 -168L208 -142Q183 -126 183 -118Q183 -102 207 -81Q238 -54 283 -54Q331 -54 364.5 -80.5Q398 -107 398 -154Q398 -202 317 -246L225 -296Q172 -325 148 -355Q120 -391 120 -446Q120 -514 171 -558Q219 -601 288 -601Q407 -601 462 -492L380 -418L361 -448Q380 -464 380 -474Q380 -497 347 -512Q320 -525 294 -525Q254 -525 229 -506Q201 -485 201 -446Q201 -416 223 -397Q235 -386 271 -367L379 -309Q480 -255 480 -153Q480 -74 418 -24Q361 23 280 23Z M830 -364Q892 -344 931 -291.5Q970 -239 970 -174Q970 -89 913 -32Q856 25 771 25Q689 25 628 -34Q567 -93 572 -175L575 -220L706 -222L692 -188Q654 -188 654 -174Q654 -125 688 -91Q722 -57 771 -57Q820 -57 853.5 -91Q887 -125 887 -174Q887 -228 849.5 -260Q812 -292 757 -292Q721 -292 657 -272L838 -512L662 -512Q636 -512 630.5 -505Q625 -498 623 -470L590 -455L592 -596L662 -594L1004 -594Z" fill="url(#enamel)" stroke="url(#pearl)" stroke-width="22" stroke-linejoin="round" paint-order="stroke"/>
+</svg>
