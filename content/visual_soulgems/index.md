@@ -9,18 +9,6 @@ taxonomies:
     - Items
     - OpenMW
     - OpenMW 0.51
-
-extra:
-  nexus_id: 60181
-  nexus_group_id: 7945146
-
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - VSG.esp
-
-  version: 1.1
 ---
 
 Visual Soul Gems makes filled soul gems look filled.
