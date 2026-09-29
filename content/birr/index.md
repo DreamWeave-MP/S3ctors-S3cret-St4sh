@@ -9,8 +9,8 @@ taxonomies:
     - User Interface
 
 extra:
-  icon: img/beta_marksman.png
-  cover: img/birrPreview.png
+  icon: img/beta_marksman.webp
+  cover: img/birrPreview.webp
 ---
 
 Beta Icons Restored and Reimagined provides an alternate glimpse into what might have been. It's based on the [Beta skill icons](https://tcrf.net/Prerelease:The_Elder_Scrolls_III:_Morrowind/Art_and_Textures), which you can find here for reference. However, the beta icons had problems of their own. For one, the rune backgrounds used obfuscated the art a lot for spell icons. Remember, these are displayed at 32x32px for the big spell icons and 16x16px for the small ones. Thus, I took the color palettes of the beta skill icons and extended them to the spell, attribute, and dynamic stat icons. The result is a full suite of character icon replacements (293 in total), best suited for use with [Monochrome UI](https://www.nexusmods.com/morrowind/mods/45174). See below for a preview of all the new icons!
@@ -35,7 +35,7 @@ Some of the icons added by this mod are overwritten by BigIcons, so it should lo
 
 # Icon Preview
 
-{{ image(src="/img/birrPreview.png", alt="Replacement icons added by BIRR.", style="border-radius: 8px;") }}
+{{ image(src="/img/birrPreview.webp", alt="Replacement icons added by BIRR.", style="border-radius: 8px;") }}
 
 {% credits(default=true) %} 
 Bethesda Softworks for the original icons  

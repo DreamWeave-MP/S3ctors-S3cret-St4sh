@@ -11,7 +11,7 @@ taxonomies:
     - OpenMW 0.51
 
 extra:
-  icon: img/vsg.png
+  icon: img/vsg.webp
 ---
 
 Visual Soul Gems makes filled soul gems look filled.
@@ -22,7 +22,7 @@ VSG uses the excellent [Crystal Soul Gems](https://www.nexusmods.com/morrowind/m
 
 <div align="center">
   <figure>
-    <img src="../img/vsg.png" alt="Visual Soul Gems logo" width="512" height="512" />
+    <img src="../img/vsg.webp" alt="Visual Soul Gems logo" width="512" height="512" />
     <figcaption><h2 class="notoc">Dynamic Soul Gem Visuals for OpenMW</h2></figcaption>
   </figure>
   <br>

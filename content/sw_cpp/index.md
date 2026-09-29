@@ -20,7 +20,7 @@ Over time as The Starwind Initiative matured, we collected lots of minor bug fix
 
 Community Patch Project also now includes a replacement file for Lua scripts to make their default layout colors look better. This means better compatibility with fancy script mods for Morrowind, basically. Also, a new and improved font, `Oxanium-SemiBold` has been added. Starwind's UI should look better than ever with CPP! Additionally, the `galactic-basic` font has been added as a replacement for daedric fonts.
 
-<div align="center"> <img src="../img/modathonbanner2024.png" alt="Modathon 2024" /> </div>
+<div align="center"> <img src="../img/modathonbanner2024.webp" alt="Modathon 2024" /> </div>
 
 ## Credits
 

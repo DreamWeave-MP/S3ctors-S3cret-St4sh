@@ -11,8 +11,8 @@ taxonomies:
     - Gameplay
 
 extra:
-  icon: static_switching_system/logo.png
-  cover: img/SSSNexusHeader.png
+  icon: static_switching_system/logo.webp
+  cover: img/SSSNexusHeader.webp
 ---
 
 **Static Switching System (SSS)** is a declarative world-patching framework for OpenMW. Write YAML modules to replace meshes globally or in specific places, or to target live objects with conditions and apply object, inventory, actor, world-state, and scripting actions.
@@ -20,7 +20,7 @@ extra:
 <!-- more -->
 
 <div align="center">
-  <img src="logo.png" alt="Static Switching System logo" width="512" height="512" />
+  <img src="logo.webp" alt="Static Switching System logo" width="512" height="512" />
 </div>
 
 SSS has two module types: static and instance. Pick one.
