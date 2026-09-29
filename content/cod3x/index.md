@@ -8,11 +8,6 @@ taxonomies:
     - OpenMW-Lua
     - Tools
     - Documentation
-
-extra:
-  nexus_id: 59122
-  nexus_group_id: 7468718
-  version: "1.0"
 ---
 
 # Cod3x
