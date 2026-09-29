@@ -1,0 +1,8 @@
+id = "185c3128-dbeb-46e2-8aec-05438a497124"
+slug = "s3ui"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["s3ui.omwscripts"]
