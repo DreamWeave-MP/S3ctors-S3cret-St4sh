@@ -25,15 +25,21 @@ Horiz0nMinViewDistDesc: |
 
 Horiz0nPercentAdjustNormalName: View Distance Decrease Threshold
 Horiz0nPercentAdjustNormalDesc: |
-  Horiz0n lowers the view distance when the current frametime is this much worse than the best recorded frametime.
+  Horiz0n lowers the view distance when the current frametime is this much worse than the target frametime.
   Default: 10%
   Range: 1% - 10%
 
 Horiz0nPercentAdjustSevereName: Severe Decrease Threshold
 Horiz0nPercentAdjustSevereDesc: |
-  Horiz0n multiplies the view distance decrease when the current frametime is this much worse than the best recorded frametime.
+  Horiz0n multiplies the view distance decrease when the current frametime is this much worse than the target frametime.
   Default: 30%
   Range: 10% - 100%
+
+Horiz0nTargetFramerateName: Target Framerate
+Horiz0nTargetFramerateDesc: |
+  The framerate Horiz0n tries to hold. Set this to the framerate limit from the OpenMW launcher or your settings.cfg.
+  Default: 60
+  Range: 20 - 360
 
 Horiz0nToggleName: Toggle view distance management
 Horiz0nToggleOn: Enable
@@ -41,7 +47,7 @@ Horiz0nToggleOff: Disable
 
 Horiz0nViewDistanceSevereMultName: Severe Adjustment Multiplier
 Horiz0nViewDistanceSevereMultDesc: |
-  Multiplies the view distance adjustment when frametime is significantly worse than the best recorded frametime.
+  Multiplies the view distance adjustment when frametime is significantly worse than the target frametime.
   Higher values allow Horiz0n to recover performance more quickly in demanding areas, but make view distance changes more noticeable.
   Default: 2.0
   Range: 1.0 - 5.0

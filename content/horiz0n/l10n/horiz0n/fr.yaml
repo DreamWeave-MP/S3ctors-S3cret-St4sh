@@ -25,15 +25,21 @@ Horiz0nMinViewDistDesc: |
 
 Horiz0nPercentAdjustNormalName: Seuil de réduction de la distance d'affichage
 Horiz0nPercentAdjustNormalDesc: |
-  Horiz0n réduit la distance d'affichage lorsque le temps d'image actuel est supérieur de ce pourcentage au meilleur temps d'image enregistré.
+  Horiz0n réduit la distance d'affichage lorsque le temps d'image actuel est supérieur de ce pourcentage au temps d'image cible.
   Par défaut : 10 %
   Plage : 1 % - 10 %
 
 Horiz0nPercentAdjustSevereName: Seuil de réduction importante
 Horiz0nPercentAdjustSevereDesc: |
-  Horiz0n multiplie la réduction de la distance d'affichage lorsque le temps d'image actuel est supérieur de ce pourcentage au meilleur temps d'image enregistré.
+  Horiz0n multiplie la réduction de la distance d'affichage lorsque le temps d'image actuel est supérieur de ce pourcentage au temps d'image cible.
   Par défaut : 30 %
   Plage : 10 % - 100 %
+
+Horiz0nTargetFramerateName: Fréquence d'images cible
+Horiz0nTargetFramerateDesc: |
+  La fréquence d'images que Horiz0n essaie de maintenir. Réglez-la sur la limite de fréquence d'images du lanceur d'OpenMW ou de votre settings.cfg.
+  Par défaut : 60
+  Plage : 20 - 360
 
 Horiz0nToggleName: Activer ou désactiver la gestion de la distance d'affichage
 Horiz0nToggleOn: Activer
@@ -41,7 +47,7 @@ Horiz0nToggleOff: Désactiver
 
 Horiz0nViewDistanceSevereMultName: Multiplicateur de réduction importante
 Horiz0nViewDistanceSevereMultDesc: |
-  Multiplie la réduction de la distance d'affichage lorsque le temps d'image est nettement supérieur au meilleur temps d'image enregistré.
+  Multiplie la réduction de la distance d'affichage lorsque le temps d'image est nettement supérieur au temps d'image cible.
   Des valeurs plus élevées permettent à Horiz0n de rétablir les performances plus rapidement dans les zones exigeantes, mais rendent les changements de distance d'affichage plus visibles.
   Par défaut : 2,0
   Plage : 1,0 - 5,0

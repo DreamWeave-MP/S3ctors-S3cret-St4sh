@@ -6,6 +6,7 @@ local GROUP_NAME = 'SettingsPlayerHoriz0n'
 
 ---@type table<string, { integer: boolean?, min: number, max: number }>
 local ARGUMENTS = {
+  Horiz0nTargetFramerate = { integer = true, min = 20, max = 360 },
   Horiz0nMinViewDistance = { integer = false, min = 0.01, max = 1.0 },
   Horiz0nMaxViewDistance = { integer = false, min = 1.0, max = 100.0 },
   Horiz0nAdjustFramerate = { min = 10, max = 144 },
@@ -41,6 +42,14 @@ I.Settings.registerGroup {
         trueLabel = 'Horiz0nToggleOn',
         falseLabel = 'Horiz0nToggleOff',
       },
+    },
+    {
+      key = 'Horiz0nTargetFramerate',
+      renderer = 'number',
+      name = 'Horiz0nTargetFramerateName',
+      description = 'Horiz0nTargetFramerateDesc',
+      default = 60,
+      argument = ARGUMENTS.Horiz0nTargetFramerate,
     },
     {
       key = 'Horiz0nMinViewDistance',
@@ -126,6 +135,8 @@ Horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, _)
 
   local MinDist, MaxDist =
     Horiz0nSettings:get 'Horiz0nMinViewDistance', Horiz0nSettings:get 'Horiz0nMaxViewDistance'
+
+  updateArgument('Horiz0nTargetFramerate', { disabled = disabled })
 
   updateArgument('Horiz0nPercentAdjustNormal', {
     max = math.min(ARGUMENTS.Horiz0nPercentAdjustNormal.max, SevereAdjust - 1),
