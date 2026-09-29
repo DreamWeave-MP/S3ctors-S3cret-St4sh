@@ -1,0 +1,12 @@
+id = "5e11d08b-461f-463d-86c0-c247cec63714"
+slug = "p37z"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["p37z.omwscripts"]
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
