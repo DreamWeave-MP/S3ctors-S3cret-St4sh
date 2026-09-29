@@ -34,6 +34,10 @@ const TEXT = 'S3';
 const DEPTH = 120 / EM;
 const BEVEL = { thickness: 22 / EM, size: 13 / EM, segments: 7 };
 const SPARKS = 46;
+// How far flames reach past the outline, in font-relative units; up-facing edges burn 1.3 times
+// as tall, so that is how far above the mark they rise.
+const FLAME_REACH = 0.16;
+const FLAME_OVERHANG = FLAME_REACH * 1.3;
 const MOTES = 420;
 const FLARE_ELEMENTS = [
   // t: position along the axis from the light (0) through the screen centre (1)
@@ -929,7 +933,7 @@ function mount(root) {
         const length = Math.hypot(nx, ny) || 1;
         nx /= length;
         ny /= length;
-        const reach = 0.16 * (0.4 + 0.9 * Math.max(0, ny)) * (isHole ? 0.35 : 1);
+        const reach = FLAME_REACH * (0.4 + 0.9 * Math.max(0, ny)) * (isHole ? 0.35 : 1);
         flamePositions.push(p.x - center.x, p.y - center.y, 0, p.x - center.x + nx * reach, p.y - center.y + ny * reach, 0);
         flameOut.push(0, 1);
         if (i < count) {
@@ -1085,8 +1089,10 @@ function mount(root) {
     const perPixel = worldPerPixel();
     const cx = anchorBox.left + anchorBox.width / 2 - stageBox.left;
     const cy = anchorBox.top + anchorBox.height / 2 - stageBox.top;
-    worldAnchor.set((cx - width / 2) * perPixel, -(cy - height / 2) * perPixel, 0);
-    markScale = Math.min((anchorBox.width * perPixel) / markSize.x, (anchorBox.height * perPixel) / markSize.y) * 0.92;
+    // The mark and the flames above it fit the anchor together: the mark sits lower by half their
+    // height, so the tongues burn inside the box instead of past its top.
+    markScale = Math.min((anchorBox.width * perPixel) / markSize.x, (anchorBox.height * perPixel) / (markSize.y + FLAME_OVERHANG)) * 0.9;
+    worldAnchor.set((cx - width / 2) * perPixel, -(cy - height / 2) * perPixel - (FLAME_OVERHANG * markScale) / 2, 0);
     pivot.position.copy(worldAnchor);
     pivot.scale.setScalar(markScale);
     shared.uReach.value = 0.32 * markScale;
