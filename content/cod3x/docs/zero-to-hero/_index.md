@@ -7,7 +7,7 @@ page_template: docs/page.html
 sort_by: weight
 extra:
   kind: guide
-  suppress_section_links: true
+  hide_child_cards: true
 ---
 
 Never written Lua? Never made an OpenMW script? Do not know what a language server is? Start here.

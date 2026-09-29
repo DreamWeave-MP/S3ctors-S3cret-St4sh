@@ -7,7 +7,7 @@ page_template: docs/page.html
 sort_by: weight
 extra:
   kind: guide
-  suppress_section_links: true
+  hide_child_cards: true
 ---
 
 Cod3x has a shelf for failures. It should also have a shelf for designs that worked unusually well.
