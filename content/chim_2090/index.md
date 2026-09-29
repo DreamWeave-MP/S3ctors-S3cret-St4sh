@@ -10,7 +10,7 @@ taxonomies:
     - Miyazaki-is-god
 
 extra:
-  cover: img/chim/parry.webp
+  cover: /img/chim/parry.webp
 ---
 
 # Overview

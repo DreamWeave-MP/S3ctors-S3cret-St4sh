@@ -10,8 +10,8 @@ taxonomies:
     - OpenMW 0.50
 
 extra:
-  icon: img/t4rg3t5.webp
-  cover: img/t4rg3t5/thumbnail.webp
+  icon: /img/t4rg3t5.webp
+  cover: /img/t4rg3t5/thumbnail.webp
 ---
 
 <div align="center">

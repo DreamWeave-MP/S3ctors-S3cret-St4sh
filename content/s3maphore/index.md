@@ -10,8 +10,8 @@ taxonomies:
     - Frameworks
 
 extra:
-  icon: img/S3maphoreIcon.webp
-  cover: img/S3maphoreBanner.webp
+  icon: /img/S3maphoreIcon.webp
+  cover: /img/S3maphoreBanner.webp
 ---
 
 Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.

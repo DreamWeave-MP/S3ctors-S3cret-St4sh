@@ -10,7 +10,7 @@ taxonomies:
     - Gameplay
 
 extra:
-  cover: img/s4v3r.webp
+  cover: /img/s4v3r.webp
 ---
 
 {{ image(src="/img/s4v3r.webp", alt="Saver - OpenMW Autosaves", style="border-radius: 8px;") }}

@@ -9,7 +9,7 @@ taxonomies:
     - OpenMW-Lua
 
 extra:
-  icon: img/Hawk3ye.webp
+  icon: /img/Hawk3ye.webp
 ---
 
 {{ image(src="/img/Hawk3ye.webp", alt="Hawkeye - OpenMW Zooming", style="border-radius: 8px;") }}

@@ -58,7 +58,8 @@
 {%- set j_title = item.title | json_encode -%}
 {%- set j_icon = icon | json_encode -%}
 {%- set j_summary = description | json_encode -%}
-{%- set_global docs_json = docs_json ~ ',{"path":' ~ j_path ~ ',"title":' ~ j_title ~ ',"pages":' ~ pages_here ~ ',"icon":' ~ j_icon ~ ',"summary":' ~ j_summary ~ '}' -%}
+{%- set j_dir = item.colocated_path | json_encode -%}
+{%- set_global docs_json = docs_json ~ ',{"path":' ~ j_path ~ ',"dir":' ~ j_dir ~ ',"title":' ~ j_title ~ ',"pages":' ~ pages_here ~ ',"icon":' ~ j_icon ~ ',"summary":' ~ j_summary ~ '}' -%}
 {%- endif -%}
 {%- set icon = item.extra.icon | default(value="") -%}
 {%- set cover = item.extra.cover | default(value="") -%}
@@ -73,7 +74,8 @@
 {%- set j_icon = icon | json_encode -%}
 {%- set j_cover = cover | json_encode -%}
 {%- set j_tags = tags | json_encode -%}
-{%- set_global projects_json = projects_json ~ ',{"title":' ~ j_title ~ ',"url":' ~ j_url ~ ',"summary":' ~ j_summary ~ ',"type":' ~ j_type ~ ',"version":' ~ j_version ~ ',"status":' ~ j_status ~ ',"icon":' ~ j_icon ~ ',"cover":' ~ j_cover ~ ',"tags":' ~ j_tags ~ ',"docs":' ~ has_docs ~ '}' -%}
+{%- set j_dir = item.colocated_path | json_encode -%}
+{%- set_global projects_json = projects_json ~ ',{"dir":' ~ j_dir ~ ',"title":' ~ j_title ~ ',"url":' ~ j_url ~ ',"summary":' ~ j_summary ~ ',"type":' ~ j_type ~ ',"version":' ~ j_version ~ ',"status":' ~ j_status ~ ',"icon":' ~ j_icon ~ ',"cover":' ~ j_cover ~ ',"tags":' ~ j_tags ~ ',"docs":' ~ has_docs ~ '}' -%}
 {%- endif -%}
 {%- endif -%}
 {%- endfor -%}
@@ -131,11 +133,7 @@
         {%- set root = get_section(path=tree.path, metadata_only=true) %}
         <li class="st4sh-book" style="--st4sh-shift: {{ loop.index * 53 % 90 - 45 }}">
             <a class="st4sh-book__cover" href="{{ root.permalink | safe }}">
-                {%- if tree.icon %}
-                {%- set icon_path = st4sh::static_path(path=tree.icon) %}
-                {%- set icon = resize_image(path=icon_path, width=160, height=160, op="fit", format="webp", quality=88) %}
-                <img class="st4sh-book__icon" src="{{ icon.url | safe }}" width="{{ icon.width }}" height="{{ icon.height }}" alt="" loading="lazy">
-                {%- endif %}
+                {%- if tree.icon %}{{ dw_macros::page_art(page_dir=tree.dir, path=tree.icon, width=160, height=160, op="fit", class="st4sh-book__icon", quality=88) }}{% endif %}
                 <span class="st4sh-book__text">
                     <span class="st4sh-book__title">{{ tree.title }}</span>
                     <span class="st4sh-book__count">{{ tree.pages }} pages</span>
@@ -172,15 +170,8 @@
         <li class="st4sh-card" data-tags="{% for tag in project.tags %}{{ tag | slugify }} {% endfor %}" data-text="{{ project.title | lower }} {{ project.summary | markdown(inline=true) | striptags | lower }} {{ project.tags | join(sep=' ') | lower }}" style="--st4sh-shift: {{ loop.index * 47 % 90 - 45 }}">
             <a class="st4sh-card__link" href="{{ project.url | safe }}">
                 <span class="st4sh-card__art{% if project.cover %} has-cover{% endif %}{% if project.icon %} has-icon{% endif %}">
-                    {%- if project.cover %}
-                    {%- set cover_path = st4sh::static_path(path=project.cover) %}
-                    {%- set cover = resize_image(path=cover_path, width=640, height=360, op="fill", format="webp", quality=82) %}
-                    <img class="st4sh-card__cover" src="{{ cover.url | safe }}" width="{{ cover.width }}" height="{{ cover.height }}" alt="" loading="lazy">
-                    {%- endif %}
-                    {%- if project.icon %}
-                    {%- set icon_path = st4sh::static_path(path=project.icon) %}
-                    {%- set icon = resize_image(path=icon_path, width=128, height=128, op="fit", format="webp", quality=90) %}
-                    <img class="st4sh-card__icon" src="{{ icon.url | safe }}" width="{{ icon.width }}" height="{{ icon.height }}" alt="" loading="lazy">
+                    {%- if project.cover %}{{ dw_macros::page_art(page_dir=project.dir, path=project.cover, width=640, height=360, op="fill", class="st4sh-card__cover", quality=82) }}{% endif %}
+                    {%- if project.icon %}{{ dw_macros::page_art(page_dir=project.dir, path=project.icon, width=128, height=128, op="fit", class="st4sh-card__icon", quality=90) }}
                     {%- elif not project.cover %}
                     <span class="st4sh-wordmark" aria-hidden="true">{{ project.title }}</span>
                     {%- endif %}
@@ -227,5 +218,4 @@
 {%- block extra_body %}
 {{ super() }}
 <script type="module" src="{{ get_url(path='js/st4sh-hero.js', trailing_slash=false) | safe }}"></script>
-<script src="{{ get_url(path='js/st4sh.js', trailing_slash=false) | safe }}" data-search-index="{{ get_url(path='search_index.' ~ config.default_language ~ '.json', trailing_slash=false) | safe }}" defer></script>
 {%- endblock extra_body %}

@@ -9,8 +9,8 @@ taxonomies:
     - Gameplay
 
 extra:
-  icon: img/crassius.webp
-  cover: img/crassnav-map.webp
+  icon: /img/crassius.webp
+  cover: /img/crassnav-map.webp
 ---
 # Uncle Crassius Doesn't Need A Map. Why Should You?
 
