@@ -1,0 +1,24 @@
+id = "ac37d9df-e920-46fd-9cdf-db16c96338e0"
+slug = "hawk3ye"
+versioning = "decimal"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["Hawk3ye.esp"]
+
+[nexusmods]
+mod_id = 57125
+
+[[releases]]
+version = "0.5"
+date = 2025-07-10
+
+[[releases]]
+version = "0.51"
+date = 2025-07-11
+
+[[releases]]
+version = "0.52"
+date = 2026-06-20

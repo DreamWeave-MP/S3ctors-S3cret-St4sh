@@ -7,16 +7,6 @@ taxonomies:
   tags:
     - Gameplay
     - OpenMW-Lua
-
-extra:
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - Hawk3ye.esp
-
-  version: 0.52
-  nexus_id: 57125
 ---
 
 {{ image(src="/img/Hawk3ye.webp", alt="Hawkeye - OpenMW Zooming", style="border-radius: 8px;") }}
