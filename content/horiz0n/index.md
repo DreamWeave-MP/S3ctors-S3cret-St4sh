@@ -43,29 +43,28 @@ Thus was born, Horiz0n.
 Much like its sibling, S4V3R, Horiz0n is minimalist in design and aggressively tries to optimize your framerate.
 
 The way it works is simple:
-1. Horiz0n keeps track of the fastest frame your game's ever rendered
-2. It checks the current frametime, thirty times per second, if the world is not paused AND you are not in a true interior cell - so Starwind and Tribunal should both work fine.
-3. If the current frametime is 10% worse than the best one recorded, lower the view distance by 16 units. If it's 30% worse, lower by 32 units. Otherwise, raise view distance by 16 units.
+1. You tell Horiz0n your target framerate - 60 by default
+2. It averages your frametime, thirty times per second, if the world is not paused AND you are not in a true interior cell - so Starwind and Tribunal should both work fine.
+3. If the average frametime is 10% worse than your target, lower the view distance by 1%. If it's 30% worse, lower by 2%. Otherwise, raise view distance by 1%.
 
 It'll keep going as-needed until you hit either the minimum or the maximum viewing distance.
 
-In order for Horiz0n to work correctly, you *must* set a framerate limit in the OpenMW launcher, or manually in your `settings.cfg` file. ***YOU HAVE BEEN WARNED***.
-
-The fastest-frame tracking is intended to allow maintaining a moving performance baseline rather than a fixed framerate target - consequently, Horiz0n doesn't care if you're at 60, 120, or 240Hz - it just cares how well your system ran the game during this session.
+In order for Horiz0n to work correctly, you *must* set a framerate limit in the OpenMW launcher, or manually in your `settings.cfg` file, and set Horiz0n's Target Framerate to match it. ***YOU HAVE BEEN WARNED***.
 
 The minimum viewing distance is 2048 units, which is exactly one quarter of a standard Morrowind cell. This prevents your viewing distance from ever becoming *too* short to actually navigate, even in extremely demanding areas.
 
 Interiors are ignored intentionally because they usually hit your framerate limit to begin with.
 
-The steps are all relatively small, and the 30Hz tickrate ensures that transitions generally aren't too noticeable.
+The steps scale with your current view distance, so Horiz0n crosses the whole range in seconds while the 30Hz tickrate keeps transitions from being too noticeable.
 
 As of version 1.2, all of Horiz0n's internal tuning parameters are exposed:
+- Target Framerate
 - Minimum View Distance
 - Maximum View Distance
 - Adjustment Framerate
 - Normal Frametime Decrease Adjustment
 - Severe Frametime Decrease Adjustment
-- View Distance Step
+- View Distance Step (as a percentage of the current view distance)
 - Severe View Distance Step Multiplier
 - Disable/Enable the entire mod
 
