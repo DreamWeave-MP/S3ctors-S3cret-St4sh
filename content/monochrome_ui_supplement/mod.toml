@@ -1,0 +1,12 @@
+id = "56f73f30-68f8-4a06-aff7-9d81b7312a61"
+slug = "monochrome_ui_supplement"
+
+[runtimes]
+openmw = ">=0.48, <0.51"
+
+[openmw]
+data_directories = ["00 Textures", "01 Pre 0.51 Color Correction Script"]
+
+[[releases]]
+version = "1.0"
+date = 2025-01-23
