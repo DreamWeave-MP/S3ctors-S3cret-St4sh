@@ -45,7 +45,7 @@ mesh: "r/CliffRacer.NIF"
 
 **Shape:** `scale: number | { min?: number, max?: number }`
 
-A number requires the current scale to equal that number. A range compares the current scale inclusively; either bound may be omitted in the condition form. See [comparison ranges](comparison-ranges.md).
+A number requires the current scale to equal that number. A range compares the current scale inclusively; either bound may be omitted in the condition form. See [comparison ranges](@/static_switching_system/docs/api/conditions/comparison-ranges.md).
 
 ```yaml
 scale:

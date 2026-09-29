@@ -26,7 +26,7 @@ replace:
   dremora_special_fyr: 0.25
 ```
 
-Each chance is a number from `0` to `1` in the schema. A failed creation is skipped by the handler. If no entry passes, the action is a no-op. See [execution order](execution-order.md) for replacement plus `delete` semantics.
+Each chance is a number from `0` to `1` in the schema. A failed creation is skipped by the handler. If no entry passes, the action is a no-op. See [execution order](@/static_switching_system/docs/api/actions/execution-order.md) for replacement plus `delete` semantics.
 
 When a chance is useful, put it on the action block, for example:
 
@@ -55,7 +55,7 @@ transform:
     z?: number | { min?: number, max: number }
 ```
 
-The default `transform_type` is `relative`. Relative scale multiplies the current scale, rotation composes with the current rotation, and position adds to the current position. Absolute scale uses `1.0` as its reference, absolute rotation starts from the identity transform, and absolute position replaces the position. Numeric range tables are sampled and require `max`; see [random action ranges](random-ranges.md). Rotation values are degrees.
+The default `transform_type` is `relative`. Relative scale multiplies the current scale, rotation composes with the current rotation, and position adds to the current position. Absolute scale uses `1.0` as its reference, absolute rotation starts from the identity transform, and absolute position replaces the position. Numeric range tables are sampled and require `max`; see [random action ranges](@/static_switching_system/docs/api/actions/random-ranges.md). Rotation values are degrees.
 
 ```yaml
 transform:

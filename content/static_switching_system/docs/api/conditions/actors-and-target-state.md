@@ -9,7 +9,7 @@ api_docs = true
 kind = "api"
 +++
 
-Target conditions inspect the object being processed. Player conditions are on [the player and world state page](player-and-world-state.md). Bare numeric thresholds are generally at-least comparisons; `{ min, max }` tables are inclusive comparison ranges.
+Target conditions inspect the object being processed. Player conditions are on [the player and world state page](@/static_switching_system/docs/api/conditions/player-and-world-state.md). Bare numeric thresholds are generally at-least comparisons; `{ min, max }` tables are inclusive comparison ranges.
 
 ## `is_dead`
 

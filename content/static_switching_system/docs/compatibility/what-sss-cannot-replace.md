@@ -20,7 +20,7 @@ Use SSS when the problem is a placed reference:
 - a mesh needs contextual replacement;
 - a one-shot placement script only moves one object.
 
-The [real-world translations](real-world-patches.md) demonstrate this boundary. They use `content_file_target`, cell constraints, `transform`, `teleport`, and `disable` without reproducing the original patch plugin.
+The [real-world translations](@/static_switching_system/docs/compatibility/real-world-patches.md) demonstrate this boundary. They use `content_file_target`, cell constraints, `transform`, `teleport`, and `disable` without reproducing the original patch plugin.
 
 ## Keep plugin surgery
 

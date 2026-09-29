@@ -19,12 +19,12 @@ These references document the instance-module format. Static replacement modules
 
 | Need | Reference |
 | --- | --- |
-| Cells, regions, coordinates, files, and identity | [Location and identity](location-and-identity.md) |
-| Meshes, names, inventory, tags, locks, and object properties | [Object properties](object-properties.md) |
-| Target actors, stats, factions, spells, and disposition | [Actors and target state](actors-and-target-state.md) |
-| Player state, quests, globals, time, equipment, and weather | [Player and world state](player-and-world-state.md) |
-| Inverting conditions and exclusions | [Logic conditions](logic.md) |
-| Comparison bounds and one-sided ranges | [Comparison ranges](comparison-ranges.md) |
+| Cells, regions, coordinates, files, and identity | [Location and identity](@/static_switching_system/docs/api/conditions/location-and-identity.md) |
+| Meshes, names, inventory, tags, locks, and object properties | [Object properties](@/static_switching_system/docs/api/conditions/object-properties.md) |
+| Target actors, stats, factions, spells, and disposition | [Actors and target state](@/static_switching_system/docs/api/conditions/actors-and-target-state.md) |
+| Player state, quests, globals, time, equipment, and weather | [Player and world state](@/static_switching_system/docs/api/conditions/player-and-world-state.md) |
+| Inverting conditions and exclusions | [Logic conditions](@/static_switching_system/docs/api/conditions/logic.md) |
+| Comparison bounds and one-sided ranges | [Comparison ranges](@/static_switching_system/docs/api/conditions/comparison-ranges.md) |
 
 ## Common rule shape
 
