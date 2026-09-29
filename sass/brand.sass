@@ -202,3 +202,825 @@
 @media (max-width: 600px)
   .docs-api-status dl
     grid-template-columns: repeat(2, minmax(0, 1fr))
+
+// ---------------------------------------------------------------------------------------------
+// The St4sh brand: the enamel the hero's liquid is made of, AvQest for display type, the portal
+// (templates/index.html), the wiki hub (templates/st4sh/wiki.html) and the command palette
+// (static/js/st4sh.js).
+
+@font-face
+  font-family: avqest
+  src: url('fonts/avqest.woff2') format('woff2')
+  font-display: swap
+
+:root
+  --st4sh-enamel-deep: #12031c
+  --st4sh-enamel: #3f0f5e
+  --st4sh-font-display: avqest, Georgia, "Times New Roman", serif
+  --st4sh-glow: color-mix(in oklab, var(--dw-accent) 40%, transparent)
+  --st4sh-card-radius: 10px
+
+// Each card and book carries --st4sh-shift, a hue offset in degrees around the accent, so a grid
+// of them shimmers without leaving the palette. Browsers without relative colours use the accent.
+.st4sh-card,
+.st4sh-book,
+.st4sh-manual
+  --st4sh-tint: var(--dw-accent)
+
+@supports (color: oklch(from red l c h))
+  .st4sh-card,
+  .st4sh-book,
+  .st4sh-manual
+    --st4sh-tint: oklch(from var(--dw-accent) l c calc(h + var(--st4sh-shift, 0)))
+
+// A project with no art of its own: its name in AvQest, set as a cover across the art, in its tint.
+.st4sh-wordmark
+  max-width: 88%
+  font: clamp(1.5rem, 12cqi, 2.9rem)/1.02 var(--st4sh-font-display)
+  text-align: center
+  text-wrap: balance
+  letter-spacing: .02em
+  color: color-mix(in oklab, var(--st4sh-tint, var(--dw-accent)) 55%, white)
+  background: linear-gradient(175deg, #fff 0, color-mix(in oklab, var(--st4sh-tint, var(--dw-accent)) 75%, white) 45%, var(--st4sh-tint, var(--dw-accent)) 100%)
+  -webkit-background-clip: text
+  background-clip: text
+  -webkit-text-fill-color: transparent
+  filter: drop-shadow(0 0 18px color-mix(in oklab, var(--st4sh-tint, var(--dw-accent)) 55%, transparent)) drop-shadow(0 3px 6px rgb(0 0 0 / .6))
+
+// The hero ---------------------------------------------------------------------------------
+
+.st4sh-hero
+  position: relative
+  isolation: isolate
+  overflow: hidden
+  min-height: min(88vh, 860px)
+  display: grid
+  align-items: center
+  border-bottom: 1px solid var(--dw-line)
+  background: radial-gradient(ellipse at 72% 40%, color-mix(in oklab, var(--dw-accent) 16%, var(--dw-bg-0)) 0, var(--dw-bg-0) 62%)
+
+.st4sh-hero__stage
+  position: absolute
+  inset: 0
+  z-index: -1
+  pointer-events: none
+
+  // The still stands where the live mark will be until the first frame lands.
+  .st4sh-hero__still
+    position: absolute
+    right: 8%
+    top: 50%
+    width: min(40vw, 560px)
+    height: auto
+    transform: translateY(-50%)
+    filter: drop-shadow(0 0 40px var(--st4sh-glow))
+    transition: opacity .8s ease
+
+  canvas
+    position: absolute
+    inset: 0
+    width: 100%
+    height: 100%
+    opacity: 0
+    transition: opacity .9s ease
+
+.st4sh-hero.is-live
+  .st4sh-hero__still
+    opacity: 0
+  canvas
+    opacity: 1
+
+.st4sh-hero__grid
+  display: grid
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr)
+  gap: clamp(1.5rem, 4vw, 4rem)
+  align-items: center
+  padding-block: clamp(3rem, 8vh, 6rem)
+
+.st4sh-hero__text
+  position: relative
+  max-width: 40rem
+
+.st4sh-hero__title
+  margin: .15em 0 .3em
+  font: clamp(2.8rem, 6.4vw, 5.6rem)/.95 var(--st4sh-font-display)
+  letter-spacing: .01em
+  color: var(--dw-text)
+  text-wrap: balance
+  text-shadow: 0 2px 30px rgb(0 0 0 / .6)
+
+  em
+    font-style: normal
+    color: var(--dw-accent)
+    text-shadow: 0 0 22px var(--st4sh-glow)
+
+.st4sh-hero__summary
+  max-width: 34rem
+  margin: 0 0 1.6rem
+  color: var(--dw-text-muted)
+  font-size: clamp(1.02rem, 1.4vw, 1.2rem)
+  line-height: 1.55
+
+// The big search, a button that opens the palette.
+.st4sh-hero__search
+  display: flex
+  align-items: center
+  gap: .75rem
+  width: 100%
+  max-width: 34rem
+  min-height: 3.4rem
+  padding: .6rem .8rem .6rem 1rem
+  border: 1px solid var(--dw-accent-line)
+  border-radius: var(--st4sh-card-radius)
+  background: color-mix(in oklab, var(--dw-bg-1) 82%, transparent)
+  backdrop-filter: blur(10px)
+  color: var(--dw-text-muted)
+  font: inherit
+  text-align: left
+  cursor: text
+  box-shadow: 0 10px 40px -18px var(--st4sh-glow)
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease
+
+  svg
+    flex: none
+    width: 1.3rem
+    height: 1.3rem
+    fill: none
+    stroke: var(--dw-accent)
+    stroke-width: 2
+    stroke-linecap: round
+
+  span
+    flex: 1
+    min-width: 0
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  kbd
+    flex: none
+    padding: .2em .5em
+    border: 1px solid var(--dw-line-strong)
+    border-radius: 5px
+    color: var(--dw-text-faint)
+    font: .78rem var(--dw-font-mono)
+
+  &:hover,
+  &:focus-visible
+    border-color: var(--dw-accent)
+    background: color-mix(in oklab, var(--dw-bg-2) 88%, transparent)
+    box-shadow: 0 12px 48px -14px var(--st4sh-glow)
+
+.st4sh-hero__doors
+  display: flex
+  flex-wrap: wrap
+  gap: .5rem 1.4rem
+  margin-top: 1.25rem
+
+  a
+    color: var(--dw-text)
+    font-weight: 600
+    text-decoration: none
+    border-bottom: 1px solid var(--dw-accent-line)
+    padding-bottom: .1em
+
+    &:hover,
+    &:focus-visible
+      color: var(--dw-accent-hover)
+      border-bottom-color: var(--dw-accent)
+
+.st4sh-hero__anchor
+  min-height: clamp(260px, 48vh, 520px)
+
+@media (max-width: 860px)
+  .st4sh-hero
+    min-height: 0
+
+  .st4sh-hero__grid
+    grid-template-columns: 1fr
+    padding-block: 1.25rem 2.5rem
+
+  .st4sh-hero__anchor
+    order: -1
+    min-height: 0
+    height: clamp(210px, 42vw, 340px)
+
+  .st4sh-hero__stage .st4sh-hero__still
+    top: 1.2rem
+    right: 50%
+    width: min(78vw, 420px)
+    transform: translateX(50%)
+
+  .st4sh-hero__search kbd
+    display: none
+
+// Bands ------------------------------------------------------------------------------------
+
+.st4sh-band
+  padding-block: clamp(2.5rem, 6vw, 4.5rem) 0
+
+.st4sh-band__head
+  max-width: 48rem
+  margin-bottom: 1.75rem
+
+  h2
+    margin: .1em 0 .35em
+    font: clamp(2rem, 3.6vw, 2.9rem)/1.05 var(--st4sh-font-display)
+    color: var(--dw-text)
+
+  p
+    margin: 0
+    color: var(--dw-text-muted)
+
+.st4sh-band__eyebrow
+  color: var(--dw-accent) !important
+  font: 600 .76rem var(--dw-font-mono)
+  letter-spacing: .14em
+  text-transform: uppercase
+
+// The wiki shelf ---------------------------------------------------------------------------
+
+.st4sh-shelf
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr))
+  gap: 1rem
+  margin: 0
+  padding: 0
+  list-style: none
+
+.st4sh-book
+  display: flex
+  flex-direction: column
+  gap: .75rem
+  padding: 1.1rem 1.15rem 1.2rem
+  border: 1px solid var(--dw-line)
+  border-radius: var(--st4sh-card-radius)
+  background: linear-gradient(160deg, color-mix(in oklab, var(--st4sh-tint) 11%, var(--dw-bg-1)) 0, var(--dw-bg-1) 55%)
+  transition: border-color .2s ease, transform .2s ease
+
+  &:hover,
+  &:focus-within
+    border-color: color-mix(in oklab, var(--st4sh-tint) 55%, var(--dw-line))
+
+.st4sh-book__cover
+  display: flex
+  align-items: center
+  gap: .9rem
+  color: inherit
+  text-decoration: none
+
+.st4sh-book__icon
+  flex: none
+  width: 3.6rem
+  height: 3.6rem
+  object-fit: contain
+  border-radius: 8px
+  filter: drop-shadow(0 0 14px color-mix(in oklab, var(--st4sh-tint) 45%, transparent))
+
+.st4sh-book__text
+  display: grid
+
+.st4sh-book__title
+  color: var(--dw-text)
+  font: 1.6rem/1.05 var(--st4sh-font-display)
+
+.st4sh-book__count
+  color: var(--dw-text-faint)
+  font: .8rem var(--dw-font-mono)
+
+.st4sh-book__summary
+  margin: 0
+  color: var(--dw-text-muted)
+  font-size: .94rem
+
+// A docs tree's outline, on the shelf and the wiki hub.
+.st4sh-outline
+  display: grid
+  gap: .35rem
+  margin: 0
+  padding: .75rem 0 0
+  border-top: 1px solid var(--dw-line)
+  list-style: none
+
+  ul
+    display: flex
+    flex-wrap: wrap
+    gap: .15rem .9rem
+    margin: .15rem 0 .35rem
+    padding: 0
+    list-style: none
+
+    a
+      color: var(--dw-text-muted)
+      font-size: .88rem
+      text-decoration: none
+
+      &:hover,
+      &:focus-visible
+        color: var(--dw-accent-hover)
+        text-decoration: underline
+
+.st4sh-outline__section
+  color: var(--dw-text)
+  font-weight: 600
+  text-decoration: none
+
+  &:hover,
+  &:focus-visible
+    color: var(--dw-accent-hover)
+
+.st4sh-outline__more a
+  color: var(--dw-accent) !important
+
+// Every project ----------------------------------------------------------------------------
+
+.st4sh-filters
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  justify-content: space-between
+  gap: .75rem 1.25rem
+  margin-bottom: 1.25rem
+
+.st4sh-chips
+  display: flex
+  flex-wrap: wrap
+  gap: .45rem
+
+.st4sh-chip
+  min-height: 2.4rem
+  padding: .3rem .95rem
+  border: 1px solid var(--dw-line-strong)
+  border-radius: 999px
+  background: var(--dw-bg-1)
+  color: var(--dw-text-muted)
+  font: inherit
+  font-size: .9rem
+  cursor: pointer
+  transition: background .15s ease, color .15s ease, border-color .15s ease
+
+  &:hover
+    border-color: var(--dw-accent-line)
+    color: var(--dw-text)
+
+  &[aria-pressed="true"]
+    border-color: var(--dw-accent)
+    background: var(--dw-accent-soft)
+    color: var(--dw-text)
+
+.st4sh-filter-field input
+  width: min(100%, 17rem)
+  min-height: 2.4rem
+  padding: .3rem .9rem
+  border: 1px solid var(--dw-line-strong)
+  border-radius: 999px
+  background: var(--dw-bg-1)
+  color: var(--dw-text)
+  font: inherit
+
+  &:focus
+    border-color: var(--dw-accent)
+    outline: none
+
+.st4sh-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16.5rem), 1fr))
+  gap: 1rem
+  margin: 0
+  padding: 0
+  list-style: none
+
+.st4sh-card
+  position: relative
+  display: flex
+  flex-direction: column
+  overflow: hidden
+  border: 1px solid var(--dw-line)
+  border-radius: var(--st4sh-card-radius)
+  background: var(--dw-bg-1)
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease
+
+  &:hover,
+  &:focus-within
+    border-color: color-mix(in oklab, var(--st4sh-tint) 60%, var(--dw-line))
+    box-shadow: 0 18px 50px -26px var(--st4sh-tint)
+    transform: translateY(-2px)
+
+    .st4sh-card__art:not(.has-icon) .st4sh-card__cover
+      transform: scale(1.04)
+
+    .st4sh-card__icon
+      transform: scale(1.06)
+
+  &[hidden]
+    display: none
+
+.st4sh-card__link
+  display: flex
+  flex: 1
+  flex-direction: column
+  color: inherit
+  text-decoration: none
+
+// The art: a cover, an icon on its own, or the name as a wordmark, on a tinted field.
+.st4sh-card__art
+  position: relative
+  display: grid
+  place-items: center
+  aspect-ratio: 16 / 9
+  container-type: inline-size
+  overflow: hidden
+  background: radial-gradient(ellipse at 50% 120%, color-mix(in oklab, var(--st4sh-tint) 34%, var(--dw-bg-2)) 0, var(--dw-bg-2) 55%, var(--dw-bg-1) 100%)
+  border-bottom: 1px solid var(--dw-line)
+
+  // With a logo, the cover is only its backdrop: blurred and dimmed, the logo large on top.
+  &.has-cover.has-icon
+    .st4sh-card__cover
+      filter: blur(14px) brightness(.42) saturate(1.3)
+      transform: scale(1.25)
+
+    .st4sh-card__icon
+      width: 6rem
+      height: 6rem
+
+.st4sh-card__cover
+  position: absolute
+  inset: 0
+  width: 100%
+  height: 100%
+  object-fit: cover
+  transition: transform .5s ease
+
+.st4sh-card__icon
+  position: relative
+  width: 5.2rem
+  height: 5.2rem
+  object-fit: contain
+  filter: drop-shadow(0 6px 18px rgb(0 0 0 / .5)) drop-shadow(0 0 22px color-mix(in oklab, var(--st4sh-tint) 35%, transparent))
+  transition: transform .3s ease
+
+  &[width="32"],
+  &[height="32"]
+    image-rendering: pixelated
+
+.st4sh-card__body
+  display: grid
+  gap: .35rem
+  padding: .9rem 1rem 1rem
+
+.st4sh-card__meta
+  display: flex
+  flex-wrap: wrap
+  gap: .3rem .6rem
+  color: var(--dw-text-faint)
+  font: .74rem var(--dw-font-mono)
+  letter-spacing: .04em
+  text-transform: uppercase
+
+.st4sh-card__version
+  color: var(--dw-ok)
+
+.st4sh-card__docs
+  color: var(--dw-accent)
+
+.st4sh-card__title
+  color: var(--dw-text)
+  font: 1.45rem/1.1 var(--st4sh-font-display)
+
+.st4sh-card__summary
+  display: -webkit-box
+  overflow: hidden
+  color: var(--dw-text-muted)
+  font-size: .92rem
+  line-height: 1.5
+  -webkit-box-orient: vertical
+  -webkit-line-clamp: 3
+
+.st4sh-card__tags
+  display: flex
+  flex-wrap: wrap
+  gap: .35rem
+  margin: 0
+  padding: 0 1rem 1rem
+  list-style: none
+
+  a
+    display: inline-block
+    padding: .12rem .55rem
+    border: 1px solid var(--dw-line)
+    border-radius: 999px
+    color: var(--dw-text-faint)
+    font-size: .76rem
+    text-decoration: none
+
+    &:hover,
+    &:focus-visible
+      border-color: var(--dw-accent-line)
+      color: var(--dw-text)
+
+.st4sh-empty
+  padding: 2rem 0
+  color: var(--dw-text-muted)
+
+.st4sh-link-button
+  padding: 0
+  border: 0
+  background: none
+  color: var(--dw-accent)
+  font: inherit
+  text-decoration: underline
+  cursor: pointer
+
+// Latest releases --------------------------------------------------------------------------
+
+.st4sh-timeline
+  display: grid
+  gap: 0
+  margin: 0 0 clamp(2.5rem, 6vw, 4.5rem)
+  padding: 0
+  list-style: none
+  border-left: 1px solid var(--dw-line-strong)
+
+  li
+    position: relative
+    display: grid
+    grid-template-columns: 7.5rem minmax(0, 1fr)
+    gap: .2rem 1.2rem
+    padding: .8rem 0 .8rem 1.4rem
+
+    &::before
+      content: ""
+      position: absolute
+      left: -5px
+      top: 1.2rem
+      width: 9px
+      height: 9px
+      border-radius: 50%
+      background: var(--dw-accent)
+      box-shadow: 0 0 12px var(--st4sh-glow)
+
+    p
+      grid-column: 2
+      margin: 0
+      color: var(--dw-text-muted)
+      font-size: .92rem
+
+  time
+    color: var(--dw-text-faint)
+    font: .82rem/1.9 var(--dw-font-mono)
+
+  a
+    color: var(--dw-text)
+    text-decoration: none
+
+    &:hover strong,
+    &:focus-visible strong
+      color: var(--dw-accent-hover)
+
+.st4sh-timeline__version
+  margin-left: .35rem
+  color: var(--dw-accent)
+  font: .88rem var(--dw-font-mono)
+
+@media (max-width: 560px)
+  .st4sh-timeline li
+    grid-template-columns: 1fr
+
+    p
+      grid-column: 1
+
+// The wiki hub -----------------------------------------------------------------------------
+
+.st4sh-wiki__hero
+  .dw-hero__title
+    font: clamp(2.6rem, 6vw, 4.4rem)/1 var(--st4sh-font-display)
+
+  .st4sh-hero__search
+    margin-top: 1.25rem
+
+.st4sh-toc
+  display: flex
+  flex-wrap: wrap
+  gap: .4rem
+  margin-top: 1.25rem
+
+  a
+    padding: .3rem .8rem
+    border: 1px solid var(--dw-line-strong)
+    border-radius: 999px
+    color: var(--dw-text-muted)
+    font-size: .88rem
+    text-decoration: none
+
+    &:hover,
+    &:focus-visible
+      border-color: var(--dw-accent)
+      color: var(--dw-text)
+
+.st4sh-wiki__body
+  display: grid
+  gap: 1.25rem
+  padding-block: 2rem 4rem
+
+.st4sh-manual
+  padding: 1.4rem 1.5rem 1.5rem
+  border: 1px solid var(--dw-line)
+  border-radius: var(--st4sh-card-radius)
+  background: linear-gradient(170deg, color-mix(in oklab, var(--st4sh-tint) 9%, var(--dw-bg-1)) 0, var(--dw-bg-1) 45%)
+  scroll-margin-top: 5rem
+
+  .st4sh-outline
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr))
+    gap: .9rem 1.5rem
+
+    ul
+      display: grid
+      gap: .15rem
+
+.st4sh-manual__head
+  display: flex
+  gap: 1.1rem
+  align-items: center
+  margin-bottom: 1rem
+
+  h2
+    margin: 0
+    font: 2rem/1.05 var(--st4sh-font-display)
+
+    a
+      color: var(--dw-text)
+      text-decoration: none
+
+  p
+    margin: .3rem 0 0
+    color: var(--dw-text-muted)
+
+.st4sh-manual__icon
+  flex: none
+  width: 4.5rem
+  height: 4.5rem
+  object-fit: contain
+  filter: drop-shadow(0 0 16px color-mix(in oklab, var(--st4sh-tint) 45%, transparent))
+
+.st4sh-manual__links
+  display: flex
+  flex-wrap: wrap
+  gap: .2rem 1rem
+  font-size: .9rem
+
+  span
+    color: var(--dw-text-faint)
+
+// The command palette ----------------------------------------------------------------------
+
+.st4sh-palette
+  width: min(46rem, calc(100vw - 1.5rem))
+  max-height: min(78vh, 44rem)
+  margin: 10vh auto auto
+  padding: 0
+  overflow: hidden
+  border: 1px solid var(--dw-accent-line)
+  border-radius: 14px
+  background: color-mix(in oklab, var(--dw-bg-1) 94%, transparent)
+  color: var(--dw-text)
+  box-shadow: 0 30px 90px -20px rgb(0 0 0 / .8), 0 0 0 1px rgb(255 255 255 / .03), 0 0 60px -20px var(--st4sh-glow)
+
+  &[open]
+    display: flex
+    flex-direction: column
+
+  &::backdrop
+    background: rgb(4 2 8 / .66)
+    backdrop-filter: blur(4px)
+
+.st4sh-palette__field
+  display: flex
+  align-items: center
+  gap: .7rem
+  padding: .9rem 1rem
+  border-bottom: 1px solid var(--dw-line)
+
+  svg
+    flex: none
+    width: 1.25rem
+    height: 1.25rem
+    fill: none
+    stroke: var(--dw-accent)
+    stroke-width: 2
+    stroke-linecap: round
+
+  input
+    flex: 1
+    min-width: 0
+    border: 0
+    background: none
+    color: var(--dw-text)
+    font: inherit
+    font-size: 1.1rem
+    outline: none
+
+  kbd
+    padding: .15em .45em
+    border: 1px solid var(--dw-line-strong)
+    border-radius: 5px
+    color: var(--dw-text-faint)
+    font: .74rem var(--dw-font-mono)
+
+.st4sh-palette__results
+  flex: 1
+  overflow-y: auto
+  overscroll-behavior: contain
+  padding: .4rem 0 .6rem
+
+.st4sh-palette__group
+  margin: .5rem 0 .15rem
+  padding: 0 1rem
+  color: var(--dw-accent)
+  font: 600 .72rem var(--dw-font-mono)
+  letter-spacing: .12em
+  text-transform: uppercase
+
+.st4sh-palette__item
+  display: block
+  margin: 0 .4rem
+  padding: .55rem .7rem
+  border-radius: 8px
+  color: inherit
+  text-decoration: none
+
+  strong
+    display: block
+    color: var(--dw-text)
+    font-weight: 600
+
+  small
+    display: block
+    margin-top: .1rem
+    color: var(--dw-text-faint)
+    font-size: .8rem
+
+  span
+    display: block
+    margin-top: .2rem
+    overflow: hidden
+    color: var(--dw-text-muted)
+    font-size: .86rem
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  mark
+    border-radius: 2px
+    background: var(--dw-accent-soft)
+    color: var(--dw-accent-hover)
+
+  &[aria-selected="true"]
+    background: var(--dw-accent-soft)
+    box-shadow: inset 2px 0 0 var(--dw-accent)
+
+.st4sh-palette__status
+  margin: 0
+  padding: 1rem
+  color: var(--dw-text-muted)
+
+.st4sh-palette__foot
+  display: flex
+  flex-wrap: wrap
+  gap: .3rem 1.1rem
+  padding: .55rem 1rem
+  border-top: 1px solid var(--dw-line)
+  color: var(--dw-text-faint)
+  font: .74rem var(--dw-font-mono)
+
+@media (prefers-reduced-motion: reduce)
+  .st4sh-card,
+  .st4sh-card__cover,
+  .st4sh-book,
+  .st4sh-hero__stage canvas,
+  .st4sh-hero__stage .st4sh-hero__still
+    transition: none
+
+  .st4sh-card:hover,
+  .st4sh-card:focus-within
+    transform: none
+
+.st4sh-outline--compact
+  display: flex
+  flex-wrap: wrap
+  gap: .3rem 1rem
+
+  .st4sh-outline__section
+    font-weight: 500
+    font-size: .9rem
+
+// The header: the S3 mark and AvQest in place of the DreamWeave diamond and monospace.
+.dw-brand
+  font-family: var(--st4sh-font-display)
+  font-size: 1.2rem
+  letter-spacing: .02em
+
+.dw-brand__mark
+  width: 1.9rem
+  height: 1.4rem
+  border: 0
+  transform: none
+  background: url('img/st4sh-mark.svg') center / contain no-repeat

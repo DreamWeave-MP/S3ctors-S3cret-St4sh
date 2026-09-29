@@ -1,0 +1,57 @@
+{#- The St4sh's own macros, for the portal (templates/index.html) and the wiki hub
+    (templates/st4sh/wiki.html). Imported as `st4sh`; siblings call each other through it. -#}
+
+{#- How many pages a docs tree holds, its own and every subsection's, as text. -#}
+{% macro page_count(path) -%}
+{%- set tree = get_section(path=path) -%}
+{%- set_global count = tree.pages | length -%}
+{%- for child in tree.subsections -%}
+{%- set below = st4sh::page_count(path=child) -%}
+{%- set below_count = below | trim | int -%}
+{%- set_global count = count + below_count -%}
+{%- endfor -%}
+{{ count }}
+{%- endmacro page_count %}
+
+{#- A docs tree's outline: its top-level sections, each with its first pages. `sections` caps
+    the sections listed, `pages` the pages under each; with `pages=0` it is sections only. -#}
+{% macro outline(path, sections=99, pages=5) -%}
+{%- set tree = get_section(path=path) -%}
+{%- set limit = pages -%}
+<ul class="st4sh-outline{% if pages == 0 %} st4sh-outline--compact{% endif %}">
+{%- for child_path in tree.subsections %}
+{%- set child = get_section(path=child_path) %}
+{%- if loop.index <= sections and not child.extra.hide_from_sidebar | default(value=false) %}
+    <li>
+        <a class="st4sh-outline__section" href="{{ child.permalink | safe }}">{{ child.title }}</a>
+        {%- if limit > 0 and child.pages | length > 0 %}
+        <ul>
+        {%- for leaf in child.pages | slice(end=limit) %}
+            <li><a href="{{ leaf.permalink | safe }}">{{ leaf.title }}</a></li>
+        {%- endfor %}
+        {%- if child.pages | length > limit %}
+            <li class="st4sh-outline__more"><a href="{{ child.permalink | safe }}">{{ child.pages | length - limit }} more</a></li>
+        {%- endif %}
+        </ul>
+        {%- endif %}
+    </li>
+{%- endif %}
+{%- endfor %}
+{%- if tree.subsections | length > sections %}
+    <li class="st4sh-outline__more"><a href="{{ tree.permalink | safe }}">{{ tree.subsections | length - sections }} more sections</a></li>
+{%- endif %}
+{%- if limit > 0 %}
+{%- for leaf in tree.pages | slice(end=limit) %}
+{%- if not leaf.extra.hide_from_sidebar | default(value=false) %}
+    <li><a class="st4sh-outline__section" href="{{ leaf.permalink | safe }}">{{ leaf.title }}</a></li>
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+</ul>
+{%- endmacro outline %}
+
+{#- Where a page's `extra.icon` or `extra.cover` lives, for resize_image: art shared under
+    static/img, or an asset of the page itself under content/. -#}
+{% macro static_path(path) -%}
+{%- if path is starting_with("img/") %}static/{{ path }}{% else %}content/{{ path }}{% endif -%}
+{%- endmacro static_path %}

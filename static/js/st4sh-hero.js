@@ -2,11 +2,13 @@
 //
 // Back to front. A full-screen shader draws deep space: stars that twinkle, and a purple nebula,
 // domain-warped noise lit by the flare and by the pointer. The mark is the two glyphs extruded
-// with a rounded bevel: dark enamel faces mottled by noise, pearlescent bevels that catch a key
-// light, a fresnel rim, and a glint that sweeps across now and then. The pointer is a lamp: the
-// nearer it comes to a stroke, the lighter that stroke's purple, and the mark turns towards it.
-// Sparks run along the outlines, dust drifts through the scene, and a lens flare, every element
-// drawn by a shader, burns above the 3. A click sends a ring of light through the letters.
+// with a rounded bevel. Its faces are a river of deep purple blood: a distance field baked from
+// the outlines tells each point which way its stroke runs, so the liquid flows down the strokes,
+// pools on the level, boils, and bubbles, with a wet surface that catches the light. Its bevels
+// are pearl that burns with pale flame tongues. The pointer is a lamp: the nearer it comes to a
+// stroke, the lighter that stroke's purple, and the mark turns towards it. Sparks run along the
+// outlines, dust drifts through the scene, and a lens flare, every element drawn by a shader,
+// burns above the 3. A click sends a ring of light through the letters.
 //
 // The scene renders to a half-float target; a bright pass and four blur passes make the bloom,
 // and the composite applies ACES tone mapping, a vignette and dithering. Colours come from the

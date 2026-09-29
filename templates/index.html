@@ -1,62 +1,231 @@
 {% extends "base.html" %}
 {% import "macros/dw.html" as dw_macros %}
 {% import "macros/project.html" as project_model %}
+{% import "macros/st4sh.html" as st4sh %}
 
-{#- The root section. With redirect_to set in content/_index.md this never renders: the site
-    opens on its one project. Without it, this is the catalog of every project. -#}
+{#- The St4sh portal: the S3 mark rendered live, one search for the whole wiki, the frameworks and
+    their manuals, every project, and the latest releases. It replaces the template's catalog;
+    every project page and docs page is still the template's. -#}
+
+{%- block extra_head %}
+<link rel="modulepreload" href="{{ get_url(path='js/st4sh-hero.js', trailing_slash=false) | safe }}">
+{%- endblock extra_head %}
+
+{%- block body_class %}st4sh-home{% endblock body_class %}
+
 {%- block content %}
-{%- if paginator %}{% set listed = paginator.pages %}{% else %}{% set listed = section.pages %}{% endif %}
-<header class="dw-hero">
-    <div class="dw-shell">
-        {%- if paginator %}{% set listed_total = paginator.total_pages %}{% else %}{% set listed_total = section.pages | length %}{% endif %}
-        <p class="dw-kicker"><span>Catalog</span><span>{{ listed_total }} project{{ listed_total | pluralize }}</span>{% if paginator and paginator.number_pagers > 1 %}<span>page {{ paginator.current_index }} of {{ paginator.number_pagers }}</span>{% endif %}</p>
-        <h1 class="dw-hero__title">{% if section.title %}{{ section.title }}{% else %}{{ config.title }}{% endif %}</h1>
-        {%- if section.description or config.description %}<p class="dw-hero__summary">{% if section.description %}{{ section.description }}{% else %}{{ config.description }}{% endif %}</p>{% endif %}
+{#- One pass over the projects: their models, the docs trees they link, and their releases,
+    gathered as JSON text since Tera has no dict literals. -#}
+{%- set_global projects_json = "" -%}
+{%- set_global releases_json = "" -%}
+{%- set_global docs_json = "" -%}
+{%- set_global project_count = 0 -%}
+{%- set_global docs_pages = 0 -%}
+{%- set_global release_count = 0 -%}
+{%- for item in section.pages -%}
+{%- if item.colocated_path -%}
+{%- set mod_toml = load_data(path="content/" ~ item.colocated_path ~ "mod.toml", required=false) -%}
+{%- if mod_toml -%}
+{%- set item_ci = false %}{% if dw and item.colocated_path in dw.projects %}{% set item_ci = dw.projects[item.colocated_path] %}{% endif -%}
+{%- set model_text = project_model::model(path=item.colocated_path, page=item, ci=item_ci) -%}
+{%- set project = load_data(literal=model_text, format="json") -%}
+{%- set_global project_count = project_count + 1 -%}
+{%- if project.heads.stable is defined %}{% set version = project.heads.stable.version %}{% elif project.heads.development is defined %}{% set version = "dev" %}{% else %}{% set version = "" %}{% endif -%}
+{%- set type_text = dw_macros::type_label(type=project.type) -%}
+{%- set type_label = type_text | trim -%}
+{%- for declared in project.declared_releases | filter(attribute="state", value="published") | concat(with=project.declared_releases | filter(attribute="state", value="unverified")) -%}
+{%- set_global release_count = release_count + 1 -%}
+{%- set summary = declared.summary | default(value="") -%}
+{%- set j_date = declared.date | json_encode -%}
+{%- set j_version = declared.version | json_encode -%}
+{%- set j_title = item.title | json_encode -%}
+{%- set j_url = item.permalink | json_encode -%}
+{%- set j_summary = summary | json_encode -%}
+{%- set_global releases_json = releases_json ~ ',{"date":' ~ j_date ~ ',"version":' ~ j_version ~ ',"title":' ~ j_title ~ ',"url":' ~ j_url ~ ',"summary":' ~ j_summary ~ '}' -%}
+{%- endfor -%}
+{%- set docs_link = "" -%}
+{%- if mod_toml.links and mod_toml.links.documentation is defined %}{% set docs_link = mod_toml.links.documentation %}{% endif -%}
+{%- set has_docs = "false" -%}
+{%- if docs_link is starting_with("@/") -%}
+{%- set has_docs = "true" -%}
+{%- set docs_path = docs_link | replace(from="@/", to="") -%}
+{%- set counted = st4sh::page_count(path=docs_path) -%}
+{%- set pages_here = counted | trim | int -%}
+{%- set_global docs_pages = docs_pages + pages_here -%}
+{%- set icon = item.extra.icon | default(value="") -%}
+{%- set description = item.description | default(value="") -%}
+{%- set j_path = docs_path | json_encode -%}
+{%- set j_title = item.title | json_encode -%}
+{%- set j_icon = icon | json_encode -%}
+{%- set j_summary = description | json_encode -%}
+{%- set_global docs_json = docs_json ~ ',{"path":' ~ j_path ~ ',"title":' ~ j_title ~ ',"pages":' ~ pages_here ~ ',"icon":' ~ j_icon ~ ',"summary":' ~ j_summary ~ '}' -%}
+{%- endif -%}
+{%- set icon = item.extra.icon | default(value="") -%}
+{%- set cover = item.extra.cover | default(value="") -%}
+{%- set description = item.description | default(value="") -%}
+{%- set tags = item.taxonomies.tags | default(value=[]) -%}
+{%- set j_title = item.title | json_encode -%}
+{%- set j_url = item.permalink | json_encode -%}
+{%- set j_summary = description | json_encode -%}
+{%- set j_type = type_label | json_encode -%}
+{%- set j_version = version | json_encode -%}
+{%- set j_status = project.status | json_encode -%}
+{%- set j_icon = icon | json_encode -%}
+{%- set j_cover = cover | json_encode -%}
+{%- set j_tags = tags | json_encode -%}
+{%- set_global projects_json = projects_json ~ ',{"title":' ~ j_title ~ ',"url":' ~ j_url ~ ',"summary":' ~ j_summary ~ ',"type":' ~ j_type ~ ',"version":' ~ j_version ~ ',"status":' ~ j_status ~ ',"icon":' ~ j_icon ~ ',"cover":' ~ j_cover ~ ',"tags":' ~ j_tags ~ ',"docs":' ~ has_docs ~ '}' -%}
+{%- endif -%}
+{%- endif -%}
+{%- endfor -%}
+{%- set projects_text = projects_json | trim_start_matches(pat=",") -%}
+{%- set releases_text = releases_json | trim_start_matches(pat=",") -%}
+{%- set docs_text = docs_json | trim_start_matches(pat=",") -%}
+{%- set projects = load_data(literal="[" ~ projects_text ~ "]", format="json") -%}
+{%- set releases = load_data(literal="[" ~ releases_text ~ "]", format="json") | sort(attribute="date") | reverse -%}
+{%- set docs_trees = load_data(literal="[" ~ docs_text ~ "]", format="json") | sort(attribute="pages") | reverse -%}
+{#- Each category is its label and the tag slugs it gathers. -#}
+{%- set categories = [
+    "Gameplay|gameplay",
+    "Interface|user-interface hud icons",
+    "Frameworks|frameworks libraries dependencies",
+    "Tools|tools debugging exporters documentation",
+    "Combat|combat turn-based",
+    "Graphics|shaders graphics vfx visuals postprocessing",
+    "Quality of life|quality-of-life performance",
+    "Starwind|starwind",
+] -%}
+{%- set wiki_url = get_url(path="@/wiki/_index.md") -%}
+
+<section class="st4sh-hero" data-st4sh-hero aria-labelledby="st4sh-title">
+    <div class="st4sh-hero__stage" data-st4sh-hero-stage>
+        <img class="st4sh-hero__still" src="{{ get_url(path='img/st4sh-mark.svg', trailing_slash=false) | safe }}" alt="" width="520" height="382">
     </div>
-</header>
-<div class="dw-shell">
-    {%- if section.content %}<div class="dw-prose dw-catalog__intro">{{ section.content | safe }}</div>{% endif %}
-    <ol class="dw-catalog">
-    {%- for item in listed %}
-        {%- set project = false %}
-        {%- if item.colocated_path %}
-        {%- set mod_toml = load_data(path="content/" ~ item.colocated_path ~ "mod.toml", required=false) %}
-        {%- if mod_toml %}
-        {%- set item_ci = false %}{% if dw and item.colocated_path in dw.projects %}{% set item_ci = dw.projects[item.colocated_path] %}{% endif %}
-        {%- set model_text = project_model::model(path=item.colocated_path, page=item, ci=item_ci) %}
-        {%- set project = load_data(literal=model_text, format="json") %}
-        {%- endif %}
-        {%- endif %}
-        <li class="dw-catalog__row">
-            <h2 class="dw-catalog__name"><a href="{{ item.permalink | safe }}">{{ item.title }}</a></h2>
-            <p class="dw-catalog__summary">{{ item.description | default(value="") }}</p>
-            <div class="dw-catalog__facts">
-                {%- if project %}
-                <span class="dw-badge">{{ dw_macros::type_label(type=project.type) }}</span>
-                {%- if project.heads.stable is defined %}<span class="dw-badge dw-badge--ok">{{ project.heads.stable.version }}</span>{% elif project.heads.development is defined %}<span class="dw-badge dw-badge--info">dev</span>{% endif %}
-                {%- if project.status != "active" %}<span class="dw-badge dw-badge--warn">{{ project.status }}</span>{% endif %}
+    <div class="dw-shell st4sh-hero__grid">
+        <div class="st4sh-hero__text">
+            <p class="dw-kicker"><span>OpenMW</span><span>{{ project_count }} projects</span><span>{{ docs_pages }} wiki pages</span></p>
+            <h1 class="st4sh-hero__title" id="st4sh-title">S<em>3</em>ctor's S<em>3</em>cret St<em>4</em>sh</h1>
+            <p class="st4sh-hero__summary">Mods, frameworks and tools for OpenMW, each with its releases, and the wiki that documents them, from the first script to the last API call.</p>
+            <button class="st4sh-hero__search" type="button" data-st4sh-palette-open aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+                <span>Search {{ project_count }} projects and {{ docs_pages }} wiki pages</span>
+                <kbd>Ctrl K</kbd>
+            </button>
+            <nav class="st4sh-hero__doors" aria-label="Start here">
+                <a href="#projects">Every project</a>
+                <a href="{{ wiki_url | safe }}">The wiki</a>
+                {%- if releases | length > 0 %}<a href="#releases">Latest releases</a>{% endif %}
+            </nav>
+        </div>
+        <div class="st4sh-hero__anchor" data-st4sh-hero-anchor aria-hidden="true"></div>
+    </div>
+</section>
+
+<section class="dw-shell st4sh-band" aria-labelledby="st4sh-wiki-title">
+    <header class="st4sh-band__head">
+        <p class="st4sh-band__eyebrow">The wiki</p>
+        <h2 id="st4sh-wiki-title">Manuals for the frameworks</h2>
+        <p>The libraries here ship their documentation with them: tutorials, concepts, and a reference for every public call. <a href="{{ wiki_url | safe }}">Browse the whole wiki →</a></p>
+    </header>
+    <ol class="st4sh-shelf">
+    {%- for tree in docs_trees %}
+        {%- set root = get_section(path=tree.path, metadata_only=true) %}
+        <li class="st4sh-book" style="--st4sh-shift: {{ loop.index * 53 % 90 - 45 }}">
+            <a class="st4sh-book__cover" href="{{ root.permalink | safe }}">
+                {%- if tree.icon %}
+                {%- set icon_path = st4sh::static_path(path=tree.icon) %}
+                {%- set icon = resize_image(path=icon_path, width=160, height=160, op="fit", format="webp", quality=88) %}
+                <img class="st4sh-book__icon" src="{{ icon.url | safe }}" width="{{ icon.width }}" height="{{ icon.height }}" alt="" loading="lazy">
                 {%- endif %}
-            </div>
-            {%- if item.taxonomies.tags is defined %}
-            <div class="dw-catalog__meta">
-                <ul class="dw-tags">{% for tag in item.taxonomies.tags %}<li><a href="{{ get_taxonomy_url(kind='tags', name=tag) | safe }}">{{ tag }}</a></li>{% endfor %}</ul>
-            </div>
-            {%- endif %}
+                <span class="st4sh-book__text">
+                    <span class="st4sh-book__title">{{ tree.title }}</span>
+                    <span class="st4sh-book__count">{{ tree.pages }} pages</span>
+                </span>
+            </a>
+            <p class="st4sh-book__summary">{{ tree.summary | markdown(inline=true) | striptags | safe }}</p>
+            {{ st4sh::outline(path=tree.path, sections=5, pages=0) }}
         </li>
     {%- endfor %}
     </ol>
-    {%- if paginator and paginator.number_pagers > 1 %}
-    <nav class="dw-pagination" aria-label="Catalog pages">
-        {%- if paginator.previous %}<a class="dw-button dw-button--small" href="{{ paginator.previous | safe }}" rel="prev">← Previous</a>{% else %}<span></span>{% endif %}
-        <span class="dw-pagination__pages">
-        {%- for number in range(start=1, end=paginator.number_pagers + 1) %}
-            {%- if number == paginator.current_index %}<span aria-current="page">{{ number }}</span>
-            {%- elif number == 1 %}<a href="{{ paginator.first | safe }}">1</a>
-            {%- else %}<a href="{{ paginator.base_url | safe }}{{ number }}/">{{ number }}</a>{% endif %}
-        {%- endfor %}
-        </span>
-        {%- if paginator.next %}<a class="dw-button dw-button--small" href="{{ paginator.next | safe }}" rel="next">Next →</a>{% else %}<span></span>{% endif %}
-    </nav>
-    {%- endif %}
-</div>
+</section>
+
+<section class="dw-shell st4sh-band" id="projects" aria-labelledby="st4sh-projects-title">
+    <header class="st4sh-band__head">
+        <p class="st4sh-band__eyebrow">The St4sh</p>
+        <h2 id="st4sh-projects-title">Every project</h2>
+        <p>{{ project_count }} mods, frameworks and tools. Filter by what they do, or type to narrow the list.</p>
+    </header>
+    <div class="st4sh-filters" data-st4sh-filters>
+        <div class="st4sh-chips" role="group" aria-label="Filter by category">
+            <button type="button" class="st4sh-chip" aria-pressed="true" data-st4sh-filter="">All</button>
+            {%- for category in categories %}
+            {%- set parts = category | split(pat="|") %}
+            <button type="button" class="st4sh-chip" aria-pressed="false" data-st4sh-filter="{{ parts | last }}">{{ parts | first }}</button>
+            {%- endfor %}
+        </div>
+        <label class="st4sh-filter-field">
+            <span class="dw-visually-hidden">Filter projects</span>
+            <input type="search" placeholder="Filter projects…" autocomplete="off" data-st4sh-filter-text>
+        </label>
+    </div>
+    <ul class="st4sh-grid" data-st4sh-grid>
+    {%- for project in projects %}
+        <li class="st4sh-card" data-tags="{% for tag in project.tags %}{{ tag | slugify }} {% endfor %}" data-text="{{ project.title | lower }} {{ project.summary | markdown(inline=true) | striptags | lower }} {{ project.tags | join(sep=' ') | lower }}" style="--st4sh-shift: {{ loop.index * 47 % 90 - 45 }}">
+            <a class="st4sh-card__link" href="{{ project.url | safe }}">
+                <span class="st4sh-card__art{% if project.cover %} has-cover{% endif %}{% if project.icon %} has-icon{% endif %}">
+                    {%- if project.cover %}
+                    {%- set cover_path = st4sh::static_path(path=project.cover) %}
+                    {%- set cover = resize_image(path=cover_path, width=640, height=360, op="fill", format="webp", quality=82) %}
+                    <img class="st4sh-card__cover" src="{{ cover.url | safe }}" width="{{ cover.width }}" height="{{ cover.height }}" alt="" loading="lazy">
+                    {%- endif %}
+                    {%- if project.icon %}
+                    {%- set icon_path = st4sh::static_path(path=project.icon) %}
+                    {%- set icon = resize_image(path=icon_path, width=128, height=128, op="fit", format="webp", quality=90) %}
+                    <img class="st4sh-card__icon" src="{{ icon.url | safe }}" width="{{ icon.width }}" height="{{ icon.height }}" alt="" loading="lazy">
+                    {%- elif not project.cover %}
+                    <span class="st4sh-wordmark" aria-hidden="true">{{ project.title }}</span>
+                    {%- endif %}
+                </span>
+                <span class="st4sh-card__body">
+                    <span class="st4sh-card__meta">
+                        <span>{{ project.type }}</span>
+                        {%- if project.version and project.version != "dev" %}<span class="st4sh-card__version">{{ project.version }}</span>{% elif project.version %}<span>development</span>{% endif %}
+                        {%- if project.docs %}<span class="st4sh-card__docs">docs</span>{% endif %}
+                    </span>
+                    <strong class="st4sh-card__title">{{ project.title }}</strong>
+                    <span class="st4sh-card__summary">{{ project.summary | markdown(inline=true) | striptags | safe }}</span>
+                </span>
+            </a>
+            {%- if project.tags | length > 0 %}
+            <ul class="st4sh-card__tags">{% for tag in project.tags | slice(end=3) %}<li><a href="{{ get_taxonomy_url(kind='tags', name=tag) | safe }}">{{ tag }}</a></li>{% endfor %}</ul>
+            {%- endif %}
+        </li>
+    {%- endfor %}
+    </ul>
+    <p class="st4sh-empty" data-st4sh-empty hidden>No project matches. <button type="button" class="st4sh-link-button" data-st4sh-filter-reset>Show every project</button></p>
+</section>
+
+{%- if releases | length > 0 %}
+<section class="dw-shell st4sh-band" id="releases" aria-labelledby="st4sh-releases-title">
+    <header class="st4sh-band__head">
+        <p class="st4sh-band__eyebrow">Changelog</p>
+        <h2 id="st4sh-releases-title">Latest releases</h2>
+        <p>{{ release_count }} releases across the St4sh. Each project's page has its full history.</p>
+    </header>
+    <ol class="st4sh-timeline">
+    {%- for release in releases | slice(end=10) %}
+        <li>
+            <time datetime="{{ release.date }}">{{ release.date | date(format="%d %b %Y") }}</time>
+            <a href="{{ release.url | safe }}#v{{ release.version | slugify }}"><strong>{{ release.title }}</strong> <span class="st4sh-timeline__version">{{ release.version }}</span></a>
+            {%- if release.summary %}<p>{{ release.summary | markdown(inline=true) | safe }}</p>{% endif %}
+        </li>
+    {%- endfor %}
+    </ol>
+</section>
+{%- endif %}
 {%- endblock content %}
+
+{%- block extra_body %}
+{{ super() }}
+<script type="module" src="{{ get_url(path='js/st4sh-hero.js', trailing_slash=false) | safe }}"></script>
+<script src="{{ get_url(path='js/st4sh.js', trailing_slash=false) | safe }}" data-search-index="{{ get_url(path='search_index.' ~ config.default_language ~ '.json', trailing_slash=false) | safe }}" defer></script>
+{%- endblock extra_body %}
