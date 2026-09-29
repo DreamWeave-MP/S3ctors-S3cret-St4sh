@@ -1,0 +1,16 @@
+id = "f1a9f346-fdc3-4b71-b9bb-d06022c6f145"
+slug = "transmog"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["transmog.omwscripts"]
+
+[[releases]]
+version = "0.5"
+date = 2024-05-27
+
+[[releases]]
+version = "0.6"
+date = 2025-02-13
