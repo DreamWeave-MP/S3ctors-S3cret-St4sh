@@ -1,0 +1,19 @@
+id = "81abbe84-b6ae-4104-96e7-d993fae68ae5"
+slug = "static_switching_system"
+
+[links]
+documentation = "@/static_switching_system/docs/_index.md"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["Static Switching System.esp"]
+
+[nexusmods]
+mod_id = 57282
+file_group_id = "3324658"
+
+[[releases]]
+version = "1.0"
+date = 2026-09-11
