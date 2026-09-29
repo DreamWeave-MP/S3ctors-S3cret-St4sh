@@ -1,0 +1,16 @@
+id = "ec13bb40-584e-45e6-aabc-b426ea6833a3"
+slug = "toolgun"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["toolgun.omwaddon"]
+
+[[releases]]
+version = "0.1.0"
+date = 2024-05-27
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
