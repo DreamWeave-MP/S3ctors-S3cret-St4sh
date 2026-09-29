@@ -40,13 +40,19 @@ skip_prefixes = ["https://github.com/", "https://www.nexusmods.com/"]
 github_username = "DreamWeave-MP"
 github_project = "S3ctors-S3cret-St4sh"
 
-# Logo text displayed in the header.
+# Logo text displayed in the header, and the same spelled with its numerals in the accent.
 logo_text = "S3ctor's S3cret St4sh"
+logo_html = 'S<span class="st4sh-numeral">3</span>ctor’s S<span class="st4sh-numeral">3</span>cret St<span class="st4sh-numeral">4</span>sh'
+
+# The command palette (Ctrl+K) on every page, and the wiki page the docs' manual switcher links.
+scripts = ["js/st4sh.js"]
+docs_index = "@/wiki/_index.md"
 
 # The header's links. `@/` paths are content files.
 menu_items = [
     { name = "Projects", url = "@/_index.md#projects" },
     { name = "Wiki", url = "@/wiki/_index.md" },
+    { name = "Tags", url = "tags/" },
 ]
 
 # Palette: purple (DreamWeave), teal, gold, ember, moss, umber, grove, prism, slate, crimson,
