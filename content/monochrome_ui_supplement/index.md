@@ -2,12 +2,6 @@
 title: Monochrome User Interface Supplement
 description: Monochrome UI supplement is, well... a monochrome UI supplement.
 date: 2024-08-19
-
-extra:
-  install_info:
-    data_directories:
-      - .
-  version: "1.0"
 ---
 
 Monochrome UI supplement is, well... a monochrome UI supplement.
