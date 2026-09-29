@@ -8,15 +8,6 @@ taxonomies:
     - Combat
     - Gameplay
     - Miyazaki-is-god
-
-extra:
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - CHIM2090.esp
-
-  version: UNRELEASED
 ---
 
 # Overview
