@@ -7,16 +7,6 @@ taxonomies:
   tags:
     - Gameplay
     - OpenMW-Lua
-
-extra:
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - I Am Basket.omwaddon
-      - I Am Basket.omwscripts
-
-  version: UNRELEASED
 ---
 
 Whoops, didn't feel like writing this one!
