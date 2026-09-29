@@ -553,49 +553,58 @@ const SKY_FRAGMENT = /* glsl */ `
   }
 `;
 
-// Flames: ribbons laid outward from every contour, shaded with rising turbulence into tongues
-// that are white at the rim and pale accent at their tips.
-const FLAME_VERTEX = /* glsl */ `
-  attribute float aOut;
-  varying vec3 vWorld;
-  varying vec3 vLocal;
-  varying float vOut;
-  void main() {
-    vOut = aOut;
-    vLocal = position;
-    vec4 world = modelMatrix * vec4(position, 1.0);
-    vWorld = world.xyz;
-    gl_Position = projectionMatrix * viewMatrix * world;
-  }
-`;
-
+// Flames, drawn in screen space around the silhouette the camera sees, so they always wrap the
+// visible edge at its true depth. The mark is rendered white into a mask and blurred into a halo;
+// a pixel outside the mark burns when the halo a little below it is strong, the distance set by
+// rising turbulence, so tongues lick upward off every edge, taller and brighter near the lamp.
 const FLAME_FRAGMENT = /* glsl */ `
+  uniform sampler2D tMask;
+  uniform sampler2D tHalo;
   uniform float uTime;
+  uniform float uAspect;
+  uniform float uRise;
+  uniform vec2 uPointer;
+  uniform float uPresence;
   uniform vec3 uAccent;
-  varying vec3 vWorld;
-  varying vec3 vLocal;
-  varying float vOut;
+  varying vec2 vUv;
   ${NOISE}
-  ${LAMP}
   void main() {
-    float away = clamp(vOut, 0.0, 1.0);
-    float near = lamp(vWorld);
-    // Each column along the edge gets its own tongue height, which rises and falls; inside it,
-    // upright turbulence advected upward and curled sideways gives the streaks and the flicker.
-    float column = noise3(vec3(vLocal.x * 17.0, vLocal.y * 17.0, uTime * 1.4));
-    vec3 q = vec3(vLocal.x * 13.0, vLocal.y * 2.8 - uTime * 2.7, uTime * 0.5);
-    q.x += 1.7 * (fbm3(vec3(vLocal.xy * 2.4, uTime * 0.4)) - 0.5);
-    float turbulence = fbm3(q);
-    float streaks = 1.0 - abs(noise3(q * vec3(1.8, 0.6, 1.0)) * 2.0 - 1.0);
-    float heat = clamp(column * 0.8 + turbulence * 1.1 + streaks * 0.25 - 0.7, 0.0, 1.0) * (0.6 + 0.9 * near);
-    float tongue = smoothstep(0.0, 0.2, heat - away) * (0.55 + 0.45 * streaks);
-    float core = smoothstep(0.0, 0.25, heat * 0.5 - away);
-    float rim = exp(-away * 22.0);
-    float flicker = 0.8 + 0.2 * noise3(vec3(vLocal.xy * 4.0, uTime * 7.0));
-    float tip = pow(1.0 - away, 1.2);
-    vec3 pale = mix(uAccent, vec3(1.0), 0.35);
-    vec3 color = pale * tongue * 0.5 * streaks + vec3(1.0, 0.97, 1.0) * core * 1.0 + pale * rim * 0.35;
-    gl_FragColor = vec4(color * tip * flicker * (1.0 + near * 1.2), 1.0);
+    float reach = uRise * 0.4;
+    float here = texture2D(tHalo, vUv).r;
+    if (here < 0.002 && texture2D(tHalo, vUv - vec2(0.0, reach)).r < 0.002) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
+    }
+    // Turbulence in the mark's own scale: broad columns, stretched upright, advected upward and
+    // curled sideways, squared so only its peaks reach far.
+    vec2 p = vec2(vUv.x * uAspect, vUv.y) / max(uRise, 1e-3);
+    vec3 q = vec3(p.x * 7.0, p.y * 3.0 - uTime * 2.8, uTime * 0.6);
+    q.x += 1.2 * (noise3(vec3(p * 2.0, uTime * 0.5)) - 0.5);
+    float n = noise3(q) * 0.55 + noise3(q * 2.03 + 3.7) * 0.3 + noise3(q * 4.1 + 1.3) * 0.15;
+    float peak = n * n * 1.7;
+    vec2 fromLamp = (vUv - uPointer) * vec2(uAspect, 1.0) / max(uRise, 1e-3);
+    float near = uPresence * exp(-dot(fromLamp, fromLamp) * 4.0);
+
+    // Fire rises: a point burns when the mark lies below it, within a height set by the
+    // turbulence. Three taps down the column fade the tongue with height, and a faint glow still
+    // outlines every edge. The mark itself stays clear of the fire.
+    float lift = uRise * (0.02 + 0.2 * peak) * (1.0 + near * 0.8);
+    vec2 sway = vec2((n - 0.5) * 0.03 * uRise, 0.0);
+    float fuel = texture2D(tHalo, vUv - sway - vec2(0.0, lift)).r * 0.5
+      + texture2D(tHalo, vUv - sway * 0.6 - vec2(0.0, lift * 0.55)).r * 0.3
+      + texture2D(tHalo, vUv - vec2(0.0, lift * 0.2)).r * 0.2;
+    fuel *= 0.55 + 0.8 * peak;
+    // Fire does not pass through the mark: under an overhang or inside a counter, where the
+    // mark lies just above, it dies down.
+    float cover = texture2D(tHalo, vUv + vec2(0.0, lift * 0.9)).r;
+    fuel *= 1.0 - 0.85 * smoothstep(0.25, 0.7, cover);
+    float outside = 1.0 - smoothstep(0.3, 0.7, texture2D(tMask, vUv).r);
+    float body = smoothstep(0.26, 0.72, fuel) * outside;
+    float core = smoothstep(0.55, 0.95, fuel) * outside;
+    float rim = smoothstep(0.3, 0.8, here) * outside * 0.14;
+    vec3 pale = mix(uAccent, vec3(1.0), 0.4);
+    vec3 color = pale * body * 0.3 + vec3(1.0, 0.97, 1.0) * core * 0.42 + pale * rim;
+    gl_FragColor = vec4(color * (0.6 + near * 0.9), 1.0);
   }
 `;
 
@@ -924,63 +933,6 @@ function mount(root) {
   sparkPoints.frustumCulled = false;
   mark.add(sparkPoints);
 
-  // Flame ribbons, one per contour, pointing away from the solid: out of an outline, into a
-  // counter. Top edges burn tallest.
-  const flamePositions = [];
-  const flameOut = [];
-  const flameIndex = [];
-  let flameVertex = 0;
-  for (const shape of shapes) {
-    for (const [curve, isHole] of [[shape, false], ...shape.holes.map((hole) => [hole, true])]) {
-      const points = curve.getSpacedPoints(320);
-      points.pop();
-      let area = 0;
-      for (let i = 0; i < points.length; i++) {
-        const a = points[i];
-        const b = points[(i + 1) % points.length];
-        area += a.x * b.y - b.x * a.y;
-      }
-      const away = (isHole ? area > 0 : area < 0) ? 1 : -1;
-      const count = points.length;
-      for (let i = 0; i <= count; i++) {
-        const p = points[i % count];
-        const prev = points[(i - 6 + count) % count];
-        const next = points[(i + 6) % count];
-        let nx = -(next.y - prev.y) * away;
-        let ny = (next.x - prev.x) * away;
-        const length = Math.hypot(nx, ny) || 1;
-        nx /= length;
-        ny /= length;
-        const reach = FLAME_REACH * (0.4 + 0.9 * Math.max(0, ny)) * (isHole ? 0.35 : 1);
-        flamePositions.push(p.x - center.x, p.y - center.y, 0, p.x - center.x + nx * reach, p.y - center.y + ny * reach, 0);
-        flameOut.push(0, 1);
-        if (i < count) {
-          const a = flameVertex + i * 2;
-          flameIndex.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
-        }
-      }
-      flameVertex += (count + 1) * 2;
-    }
-  }
-  const flameGeometry = new THREE.BufferGeometry();
-  flameGeometry.setAttribute('position', new THREE.Float32BufferAttribute(flamePositions, 3));
-  flameGeometry.setAttribute('aOut', new THREE.Float32BufferAttribute(flameOut, 1));
-  flameGeometry.setIndex(flameIndex);
-  // Max blending: where ribbons overlap in a concave curve they must not add up into stripes.
-  const flames = new THREE.Mesh(flameGeometry, new THREE.ShaderMaterial({
-    vertexShader: FLAME_VERTEX,
-    fragmentShader: FLAME_FRAGMENT,
-    uniforms: shared,
-    blending: THREE.CustomBlending,
-    blendEquation: THREE.MaxEquation,
-    blendSrc: THREE.OneFactor,
-    blendDst: THREE.OneFactor,
-    depthWrite: false,
-    transparent: true,
-    side: THREE.DoubleSide,
-  }));
-  flames.frustumCulled = false;
-  mark.add(flames);
 
   // Dust.
   const motePositions = new Float32Array(MOTES * 3);
@@ -1048,6 +1000,29 @@ function mount(root) {
     uTime: shared.uTime,
   });
 
+  // The flames' silhouette: the mark in white on black, antialiased at full resolution so the fire
+  // meets the mark without steps, and its halo at a quarter.
+  const maskScene = new THREE.Scene();
+  const maskMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  maskMesh.matrixAutoUpdate = false;
+  maskMesh.matrixWorldAutoUpdate = false;
+  maskScene.add(maskMesh);
+  const maskTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.UnsignedByteType, samples: 4 });
+  const haloTargets = [makeTarget(), makeTarget()];
+  const flameMaterial = fullscreenMaterial(FLAME_FRAGMENT, {
+    tMask: { value: maskTarget.texture },
+    tHalo: { value: haloTargets[0].texture },
+    uTime: shared.uTime,
+    uAspect: { value: 1 },
+    uRise: { value: 0.3 },
+    uPointer: { value: new THREE.Vector2(-1, -1) },
+    uPresence: shared.uPresence,
+    uAccent: shared.uAccent,
+  });
+  flameMaterial.blending = THREE.AdditiveBlending;
+  flameMaterial.transparent = true;
+  let haloRadius = 1;
+
   function pass(material, target) {
     postQuad.material = material;
     renderer.setRenderTarget(target);
@@ -1103,6 +1078,10 @@ function mount(root) {
     sparkUniforms.uPixelRatio.value = ratio;
     sparkUniforms.uScale.value = height * 0.09;
     for (const { material } of flares) material.uniforms.uAspect.value = width / height;
+    maskTarget.setSize(w, h);
+    haloTargets[0].setSize(Math.max(1, w >> 2), Math.max(1, h >> 2));
+    haloTargets[1].setSize(Math.max(1, w >> 2), Math.max(1, h >> 2));
+    flameMaterial.uniforms.uAspect.value = width / height;
 
     const perPixel = worldPerPixel();
     const cx = anchorBox.left + anchorBox.width / 2 - stageBox.left;
@@ -1114,6 +1093,11 @@ function mount(root) {
     pivot.position.copy(worldAnchor);
     pivot.scale.setScalar(markScale);
     shared.uReach.value = 0.32 * markScale;
+    // The flames scale with the mark on screen: its height as a share of the canvas, and a halo
+    // blur that reaches a few percent of it at the quarter resolution the halo is drawn at.
+    const markPixels = (markSize.y * markScale) / perPixel;
+    flameMaterial.uniforms.uRise.value = markPixels / height;
+    haloRadius = Math.max(0.6, (markPixels * ratio) / 4 * 0.009);
   }
 
   // The pointer lamp.
@@ -1255,6 +1239,19 @@ function mount(root) {
     renderer.clear();
     renderer.render(scene, camera);
     renderer.render(overlay, camera);
+
+    // Flames: the silhouette as the camera sees it, blurred into a halo, burned over the scene.
+    mark.updateMatrixWorld(true);
+    maskMesh.matrixWorld.copy(mark.matrixWorld);
+    renderer.setRenderTarget(maskTarget);
+    renderer.setClearColor(0x000000, 1);
+    renderer.clear();
+    renderer.render(maskScene, camera);
+    pass(fullscreenCopy(maskTarget), haloTargets[0]);
+    blur(haloTargets[0], haloTargets[1], haloTargets[0], haloRadius);
+    blur(haloTargets[0], haloTargets[1], haloTargets[0], haloRadius * 1.8);
+    flameMaterial.uniforms.uPointer.value.set(pointerNdc.x * 0.5 + 0.5, pointerNdc.y * 0.5 + 0.5);
+    pass(flameMaterial, sceneTarget);
 
     // Near bloom at a quarter of the resolution, far bloom at an eighth, each blurred twice.
     brightMaterial.uniforms.tInput.value = sceneTarget.texture;
