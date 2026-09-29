@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% import "macros/st4sh.html" as st4sh %}
+
+{#- The wiki hub: every docs tree the St4sh's projects link from their mod.toml, largest first,
+    each with its outline, so any page is two clicks from here. -#}
+
+{%- block body_class %}st4sh-wiki{% endblock body_class %}
+
+{%- block content %}
+{%- set_global docs_json = "" -%}
+{%- set_global docs_pages = 0 -%}
+{%- set root_section = get_section(path="_index.md") -%}
+{%- for item in root_section.pages -%}
+{%- if item.colocated_path -%}
+{%- set mod_toml = load_data(path="content/" ~ item.colocated_path ~ "mod.toml", required=false) -%}
+{%- if mod_toml and mod_toml.links and mod_toml.links.documentation is defined and mod_toml.links.documentation is starting_with("@/") -%}
+{%- set docs_path = mod_toml.links.documentation | replace(from="@/", to="") -%}
+{%- set counted = st4sh::page_count(path=docs_path) -%}
+{%- set pages_here = counted | trim | int -%}
+{%- set_global docs_pages = docs_pages + pages_here -%}
+{%- set icon = item.extra.icon | default(value="") -%}
+{%- set description = item.description | default(value="") -%}
+{%- set j_path = docs_path | json_encode -%}
+{%- set j_title = item.title | json_encode -%}
+{%- set j_icon = icon | json_encode -%}
+{%- set j_summary = description | json_encode -%}
+{%- set j_project = item.permalink | json_encode -%}
+{%- set_global docs_json = docs_json ~ ',{"path":' ~ j_path ~ ',"title":' ~ j_title ~ ',"pages":' ~ pages_here ~ ',"icon":' ~ j_icon ~ ',"summary":' ~ j_summary ~ ',"project":' ~ j_project ~ '}' -%}
+{%- endif -%}
+{%- endif -%}
+{%- endfor -%}
+{%- set docs_text = docs_json | trim_start_matches(pat=",") -%}
+{%- set docs_trees = load_data(literal="[" ~ docs_text ~ "]", format="json") | sort(attribute="pages") | reverse -%}
+
+<header class="dw-hero st4sh-wiki__hero">
+    <div class="dw-shell">
+        <p class="dw-kicker"><span>Wiki</span><span>{{ docs_trees | length }} manuals</span><span>{{ docs_pages }} pages</span></p>
+        <h1 class="dw-hero__title">{{ section.title }}</h1>
+        <p class="dw-hero__summary">{{ section.description }}</p>
+        <button class="st4sh-hero__search" type="button" data-st4sh-palette-open aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+            <span>Search every page of the wiki</span>
+            <kbd>Ctrl K</kbd>
+        </button>
+        <nav class="st4sh-toc" aria-label="Manuals">
+            {%- for tree in docs_trees %}<a href="#{{ tree.title | slugify }}">{{ tree.title }}</a>{% endfor %}
+        </nav>
+    </div>
+</header>
+
+<div class="dw-shell st4sh-wiki__body">
+{%- for tree in docs_trees %}
+    {%- set root = get_section(path=tree.path, metadata_only=true) %}
+    <section class="st4sh-manual" id="{{ tree.title | slugify }}" aria-labelledby="{{ tree.title | slugify }}-title" style="--st4sh-shift: {{ loop.index * 53 % 90 - 45 }}">
+        <header class="st4sh-manual__head">
+            {%- if tree.icon %}
+            {%- set icon_path = st4sh::static_path(path=tree.icon) %}
+            {%- set icon = resize_image(path=icon_path, width=128, height=128, op="fit", format="webp", quality=88) %}
+            <img class="st4sh-manual__icon" src="{{ icon.url | safe }}" width="{{ icon.width }}" height="{{ icon.height }}" alt="" loading="lazy">
+            {%- endif %}
+            <div>
+                <h2 id="{{ tree.title | slugify }}-title"><a href="{{ root.permalink | safe }}">{{ tree.title }}</a></h2>
+                <p>{{ tree.summary | markdown(inline=true) | striptags | safe }}</p>
+                <p class="st4sh-manual__links"><a href="{{ root.permalink | safe }}">Open the manual</a> <span>{{ tree.pages }} pages</span> <a href="{{ tree.project | safe }}">Project page</a></p>
+            </div>
+        </header>
+        {{ st4sh::outline(path=tree.path, pages=8) }}
+    </section>
+{%- endfor %}
+</div>
+{%- endblock content %}
+
+{%- block extra_body %}
+{{ super() }}
+<script src="{{ get_url(path='js/st4sh.js', trailing_slash=false) | safe }}" data-search-index="{{ get_url(path='search_index.' ~ config.default_language ~ '.json', trailing_slash=false) | safe }}" defer></script>
+{%- endblock extra_body %}
