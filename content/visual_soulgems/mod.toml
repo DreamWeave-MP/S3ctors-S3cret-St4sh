@@ -1,0 +1,20 @@
+id = "d870dfb4-f434-4dd9-91e8-1a71c0e541bb"
+slug = "visual_soul_gems"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["VSG.esp"]
+
+[nexusmods]
+mod_id = 60181
+file_group_id = "7945146"
+
+[[releases]]
+version = "1.0"
+date = 2026-09-11
+
+[[releases]]
+version = "1.1"
+date = 2026-09-11
