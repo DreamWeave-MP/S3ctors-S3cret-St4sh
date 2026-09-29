@@ -37,7 +37,10 @@
 
   // The palette ---------------------------------------------------------------------------------
 
-  const indexUrl = script && script.dataset.searchIndex;
+  // The template's dreamweave.js carries the search index's URL; the St4sh loads this script on
+  // every page through [extra] scripts.
+  const indexScript = document.querySelector('script[data-search-index]');
+  const indexUrl = (script && script.dataset.searchIndex) || (indexScript && indexScript.dataset.searchIndex);
   let entries = null;
   let loading = null;
   let dialog = null;
