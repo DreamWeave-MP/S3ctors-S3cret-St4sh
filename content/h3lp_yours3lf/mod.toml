@@ -1,0 +1,40 @@
+id = "cd195eb1-05e3-4982-bba0-2e23abd9acec"
+slug = "h3lp_yours3lf"
+versioning = "decimal"
+
+[links]
+documentation = "@/h3lp_yours3lf/docs/_index.md"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["H3lp Yours3lf.esp"]
+
+[nexusmods]
+mod_id = 56417
+file_group_id = "3321511"
+
+[[releases]]
+version = "0.5"
+date = 2025-10-24
+
+[[releases]]
+version = "0.6"
+date = 2025-11-24
+
+[[releases]]
+version = "0.7"
+date = 2026-06-26
+
+[[releases]]
+version = "0.8"
+date = 2026-07-23
+
+[[releases]]
+version = "0.81"
+date = 2026-07-24
+
+[[releases]]
+version = "0.82"
+date = 2026-08-04
