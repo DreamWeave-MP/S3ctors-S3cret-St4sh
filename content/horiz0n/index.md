@@ -19,7 +19,7 @@ extra:
     content_files:
       - Horiz0n.esp
 
-  version: 1.2
+  version: 1.3
 ---
 
 I was discussing the concept of occlusion culling with someone recently.
