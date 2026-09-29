@@ -48,4 +48,4 @@ All code was written by Dave Corley under the GPL3 license. Please enjoy my mod,
 
 Brought to you by:  
 
-<a class="MWText" id="kartoffel" href="https://discord.com/channels/260439894298460160/1235260117566357535">Kartoffel's OpenMW Mod Bounties<a/>
+<a class="MWText" id="kartoffel" href="https://discord.com/channels/260439894298460160/1235260117566357535">Kartoffel's OpenMW Mod Bounties</a>
