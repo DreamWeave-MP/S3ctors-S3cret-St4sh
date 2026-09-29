@@ -1,0 +1,17 @@
+id = "1968bc35-2839-4a92-9161-17481e76896d"
+slug = "chim_climbing"
+versioning = "decimal"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["Chim_Climbing.omwscripts"]
+
+[[releases]]
+version = "0.5"
+date = 2025-04-03
+
+[[releases]]
+version = "0.51"
+date = 2025-06-04
