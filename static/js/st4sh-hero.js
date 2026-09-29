@@ -569,9 +569,18 @@ const FLAME_FRAGMENT = /* glsl */ `
   varying vec2 vUv;
   ${NOISE}
   void main() {
-    float reach = uRise * 0.4;
     float here = texture2D(tHalo, vUv).r;
-    if (here < 0.002 && texture2D(tHalo, vUv - vec2(0.0, reach)).r < 0.002) {
+    vec2 fromLamp = (vUv - uPointer) * vec2(uAspect, 1.0) / max(uRise, 1e-3);
+    float near = uPresence * exp(-dot(fromLamp, fromLamp) * 4.0);
+    // The sky is skipped before any noise is spent, but only where no tongue can reach: the
+    // column below is sampled down to the tallest lift below (peak under 1.7), closer together
+    // than the halo fades. Two taps missed a slanted edge between them and cut tongues off square.
+    float reach = uRise * (0.02 + 0.2 * 1.7) * (1.0 + near * 0.8);
+    float below = here;
+    for (int i = 1; i < 12; i++) {
+      below = max(below, texture2D(tHalo, vUv - vec2(0.0, reach * float(i) / 11.0)).r);
+    }
+    if (below < 0.002) {
       gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       return;
     }
@@ -582,8 +591,6 @@ const FLAME_FRAGMENT = /* glsl */ `
     q.x += 1.2 * (noise3(vec3(p * 2.0, uTime * 0.5)) - 0.5);
     float n = noise3(q) * 0.55 + noise3(q * 2.03 + 3.7) * 0.3 + noise3(q * 4.1 + 1.3) * 0.15;
     float peak = n * n * 1.7;
-    vec2 fromLamp = (vUv - uPointer) * vec2(uAspect, 1.0) / max(uRise, 1e-3);
-    float near = uPresence * exp(-dot(fromLamp, fromLamp) * 4.0);
 
     // Fire rises: a point burns when the mark lies below it, within a height set by the
     // turbulence. Three taps down the column fade the tongue with height, and a faint glow still
