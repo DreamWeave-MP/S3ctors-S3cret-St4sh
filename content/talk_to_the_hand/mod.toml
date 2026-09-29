@@ -1,0 +1,8 @@
+id = "e371b89c-7cc6-4cb3-a9f4-425b31afd855"
+slug = "talk_to_the_h4nd"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["TTTH.omwscripts"]
