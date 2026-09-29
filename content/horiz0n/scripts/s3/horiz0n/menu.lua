@@ -4,6 +4,17 @@ local I = require 'openmw.interfaces'
 
 local GROUP_NAME = 'SettingsPlayerHoriz0n'
 
+---@type table<string, { integer: boolean?, min: number, max: number }>
+local ARGUMENTS = {
+  Horiz0nMinViewDistance = { integer = false, min = 0.01, max = 1.0 },
+  Horiz0nMaxViewDistance = { integer = false, min = 1.0, max = 100.0 },
+  Horiz0nAdjustFramerate = { min = 10, max = 144 },
+  Horiz0nPercentAdjustNormal = { min = 1, max = 10 },
+  Horiz0nPercentAdjustSevere = { min = 10, max = 50 },
+  Horiz0nViewDistanceStep = { min = 8, max = 24 },
+  Horiz0nViewDistanceSevereMult = { min = 1.0, max = 5.0 },
+}
+
 I.Settings.registerPage {
   key = 'Horiz0nPage',
   l10n = 'horiz0n',
@@ -37,11 +48,7 @@ I.Settings.registerGroup {
       name = 'Horiz0nMinViewDistName',
       description = 'Horiz0nMinViewDistDesc',
       default = 0.25,
-      argument = {
-        integer = false,
-        max = 1.0,
-        min = 0.01,
-      },
+      argument = ARGUMENTS.Horiz0nMinViewDistance,
     },
     {
       key = 'Horiz0nMaxViewDistance',
@@ -49,11 +56,7 @@ I.Settings.registerGroup {
       name = 'Horiz0nMaxViewDistName',
       description = 'Horiz0nMaxViewDistDesc',
       default = 25.0,
-      argument = {
-        integer = false,
-        min = 1.0,
-        max = 100.0,
-      },
+      argument = ARGUMENTS.Horiz0nMaxViewDistance,
     },
     {
       key = 'Horiz0nAdjustFramerate',
@@ -61,10 +64,7 @@ I.Settings.registerGroup {
       name = 'Horiz0nAdjustFramerateName',
       description = 'Horiz0nAdjustFramerateDesc',
       default = 30,
-      argument = {
-        min = 10,
-        max = 144,
-      },
+      argument = ARGUMENTS.Horiz0nAdjustFramerate,
     },
     {
       key = 'Horiz0nPercentAdjustNormal',
@@ -72,10 +72,7 @@ I.Settings.registerGroup {
       name = 'Horiz0nPercentAdjustNormalName',
       description = 'Horiz0nPercentAdjustNormalDesc',
       default = 10,
-      argument = {
-        min = 1,
-        max = 10,
-      },
+      argument = ARGUMENTS.Horiz0nPercentAdjustNormal,
     },
     {
       key = 'Horiz0nPercentAdjustSevere',
@@ -83,10 +80,7 @@ I.Settings.registerGroup {
       name = 'Horiz0nPercentAdjustSevereName',
       description = 'Horiz0nPercentAdjustSevereDesc',
       default = 30,
-      argument = {
-        min = 10,
-        max = 50,
-      },
+      argument = ARGUMENTS.Horiz0nPercentAdjustSevere,
     },
     {
       key = 'Horiz0nViewDistanceStep',
@@ -94,10 +88,7 @@ I.Settings.registerGroup {
       name = 'Horiz0nViewDistanceStepName',
       description = 'Horiz0nViewDistanceStepDesc',
       default = 16,
-      argument = {
-        min = 8,
-        max = 24,
-      },
+      argument = ARGUMENTS.Horiz0nViewDistanceStep,
     },
     {
       key = 'Horiz0nViewDistanceSevereMult',
@@ -105,13 +96,25 @@ I.Settings.registerGroup {
       name = 'Horiz0nViewDistanceSevereMultName',
       description = 'Horiz0nViewDistanceSevereMultDesc',
       default = 2.0,
-      argument = {
-        min = 1.0,
-        max = 5.0,
-      },
+      argument = ARGUMENTS.Horiz0nViewDistanceSevereMult,
     },
   },
 }
+
+--- OpenMW replaces the whole renderer argument, so the registered bounds must be resent with every update.
+---@param settingKey string
+---@param dynamicArgument { disabled: boolean, min: number?, max: number? }
+local function updateArgument(settingKey, dynamicArgument)
+  local argument = {}
+  for key, value in next, ARGUMENTS[settingKey] do
+    argument[key] = value
+  end
+  for key, value in next, dynamicArgument do
+    argument[key] = value
+  end
+
+  I.Settings.updateRendererArgument(GROUP_NAME, settingKey, argument)
+end
 
 local Horiz0nSettings = require('openmw.storage').playerSection(GROUP_NAME)
 Horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, _)
@@ -124,37 +127,29 @@ Horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, _)
   local MinDist, MaxDist =
     Horiz0nSettings:get 'Horiz0nMinViewDistance', Horiz0nSettings:get 'Horiz0nMaxViewDistance'
 
-  I.Settings.updateRendererArgument(
-    GROUP_NAME,
-    'Horiz0nPercentAdjustNormal',
-    { max = SevereAdjust - 1, disabled = disabled }
-  )
+  updateArgument('Horiz0nPercentAdjustNormal', {
+    max = math.min(ARGUMENTS.Horiz0nPercentAdjustNormal.max, SevereAdjust - 1),
+    disabled = disabled,
+  })
 
-  I.Settings.updateRendererArgument(
-    GROUP_NAME,
-    'Horiz0nPercentAdjustSevere',
-    { min = NormalAdjust + 1, disabled = disabled }
-  )
+  updateArgument('Horiz0nPercentAdjustSevere', {
+    min = math.max(ARGUMENTS.Horiz0nPercentAdjustSevere.min, NormalAdjust + 1),
+    disabled = disabled,
+  })
 
-  I.Settings.updateRendererArgument(
-    GROUP_NAME,
-    'Horiz0nMinViewDistance',
-    { max = MaxDist - 0.01, disabled = disabled }
-  )
+  updateArgument('Horiz0nMinViewDistance', {
+    max = math.min(ARGUMENTS.Horiz0nMinViewDistance.max, MaxDist - 0.01),
+    disabled = disabled,
+  })
 
-  I.Settings.updateRendererArgument(
-    GROUP_NAME,
-    'Horiz0nMaxViewDistance',
-    { min = MinDist + 0.01, disabled = disabled }
-  )
+  updateArgument('Horiz0nMaxViewDistance', {
+    min = math.max(ARGUMENTS.Horiz0nMaxViewDistance.min, MinDist + 0.01),
+    disabled = disabled,
+  })
 
-  I.Settings.updateRendererArgument(GROUP_NAME, 'Horiz0nViewDistanceStep', { disabled = disabled })
+  updateArgument('Horiz0nViewDistanceStep', { disabled = disabled })
 
-  I.Settings.updateRendererArgument(
-    GROUP_NAME,
-    'Horiz0nViewDistanceSevereMult',
-    { disabled = disabled }
-  )
+  updateArgument('Horiz0nViewDistanceSevereMult', { disabled = disabled })
 
-  I.Settings.updateRendererArgument(GROUP_NAME, 'Horiz0nAdjustFramerate', { disabled = disabled })
+  updateArgument('Horiz0nAdjustFramerate', { disabled = disabled })
 end))
