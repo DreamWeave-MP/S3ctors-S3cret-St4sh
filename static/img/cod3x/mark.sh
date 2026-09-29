@@ -32,7 +32,8 @@ magick -size "${W}x${H}" xc:"$BG" \
     -fill "$MUTED" \
     -pointsize 17 \
     -annotate +0+206 'COD3X' \
-    "$OUTDIR/icon.png"
+    -define webp:lossless=true \
+    "$OUTDIR/icon.webp"
 
 magick -size 1600x1600 xc:"$BG" \
     -fill none \

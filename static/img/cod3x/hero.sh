@@ -36,4 +36,5 @@ magick -size "${W}x${H}" xc:"$BG" \
     -pointsize 11 \
     -annotate +60+327 'API REFERENCE   //   LUALS TOOLING   //   ENGINEERING   //   PERFORMANCE' \
     "$OUTDIR/hero-base.png"
-mv "$OUTDIR/hero-base.png" "$OUTDIR/nexusHeader.png"
+magick "$OUTDIR/hero-base.png" -quality 90 -define webp:method=6 "$OUTDIR/nexusHeader.webp"
+rm "$OUTDIR/hero-base.png"
