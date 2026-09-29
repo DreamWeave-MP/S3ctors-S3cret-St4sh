@@ -22,7 +22,7 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 
   <figure>
     <img src="../img/S3maphoreBanner.png" alt="semaphore icon" width="512" height="608" />
-    <figcaption><h2 class="notoc">Brought to You by the DreamWeave-MP</h2></figcaption>
+    <figcaption><h2 class="notoc">Brought to you by DreamWeave</h2></figcaption>
   </figure>
 
   <br>
