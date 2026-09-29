@@ -1,0 +1,16 @@
+id = "bfeb1441-8280-4804-9abc-398f27ce805e"
+slug = "luamics"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["luamics.omwaddon"]
+
+[[releases]]
+version = "0.1"
+date = 2025-02-10
+
+[[releases]]
+version = "1.0"
+date = 2026-09-29
