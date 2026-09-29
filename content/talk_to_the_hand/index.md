@@ -9,14 +9,6 @@ taxonomies:
     - OpenMW-Lua
     - HUD
     - Diablo
-
-extra:
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - TTTH.omwscripts
-  version: unreleased
 ---
 
 {{ h3_usage(mod="H4ND") }}
