@@ -11,18 +11,18 @@ api_docs = true
 kind = "api"
 +++
 
-Instance actions run from YAML `actions` arrays after a rule's conditions match. An action table may contain multiple fields; SSS executes those fields in a fixed priority order rather than YAML key order. See [action execution order](execution-order.md).
+Instance actions run from YAML `actions` arrays after a rule's conditions match. An action table may contain multiple fields; SSS executes those fields in a fixed priority order rather than YAML key order. See [action execution order](@/static_switching_system/docs/api/actions/execution-order.md).
 
 ## Choose a reference
 
 | Need | Reference |
 | --- | --- |
-| Replacement, transforms, teleport, and spawning | [World and transform actions](world-and-transform.md) |
-| Add, remove, equip, and unequip inventory items | [Inventory and equipment actions](inventory-and-equipment.md) |
-| Locks, keys, traps, ownership, globals, disable, and delete | [World-state actions](world-state.md) |
-| Scripts, activation, tags, and sounds | [Scripts, tags, and sound actions](scripts-tags-and-sound.md) |
-| Sampled action values and required upper bounds | [Random action ranges](random-ranges.md) |
-| Combined action order and chance rolls | [Action execution order](execution-order.md) |
+| Replacement, transforms, teleport, and spawning | [World and transform actions](@/static_switching_system/docs/api/actions/world-and-transform.md) |
+| Add, remove, equip, and unequip inventory items | [Inventory and equipment actions](@/static_switching_system/docs/api/actions/inventory-and-equipment.md) |
+| Locks, keys, traps, ownership, globals, disable, and delete | [World-state actions](@/static_switching_system/docs/api/actions/world-state.md) |
+| Scripts, activation, tags, and sounds | [Scripts, tags, and sound actions](@/static_switching_system/docs/api/actions/scripts-tags-and-sound.md) |
+| Sampled action values and required upper bounds | [Random action ranges](@/static_switching_system/docs/api/actions/random-ranges.md) |
+| Combined action order and chance rolls | [Action execution order](@/static_switching_system/docs/api/actions/execution-order.md) |
 
 ## Common rule shape
 

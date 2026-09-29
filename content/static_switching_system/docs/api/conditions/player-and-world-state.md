@@ -174,4 +174,4 @@ current_weather:
   name: rain
 ```
 
-Player/world conditions use [condition comparison ranges](comparison-ranges.md), not action random ranges. They do not themselves change or persist player/world state.
+Player/world conditions use [condition comparison ranges](@/static_switching_system/docs/api/conditions/comparison-ranges.md), not action random ranges. They do not themselves change or persist player/world state.

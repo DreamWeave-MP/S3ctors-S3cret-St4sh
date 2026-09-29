@@ -18,7 +18,7 @@ All four actions accept the common item forms below. The target must expose an A
 | `{ item_id: count }` | Fixed count per item. |
 | `{ item_id: { count?: integer | { min?: integer, max: integer }, chance?: number | { min?: number, max: number } } }` | Count and optional per-entry chance. |
 
-Item count range tables are sampled integer ranges and require `max`; their default `min` is `1`. A chance is a number from `0` to `1`, or `{ min?: number, max: number }`; entry chance is tested independently. A nested item-detail map must provide `count` or `chance`. See [random action ranges](random-ranges.md).
+Item count range tables are sampled integer ranges and require `max`; their default `min` is `1`. A chance is a number from `0` to `1`, or `{ min?: number, max: number }`; entry chance is tested independently. A nested item-detail map must provide `count` or `chance`. See [random action ranges](@/static_switching_system/docs/api/actions/random-ranges.md).
 
 ## `add`
 
