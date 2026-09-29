@@ -1,0 +1,30 @@
+id = "cfebb85d-0200-43aa-91f4-843b0c50cb44"
+slug = "birr"
+versioning = "decimal"
+
+[runtimes]
+openmw = "*"
+
+[[releases]]
+version = "0.5"
+date = 2025-02-10
+
+[[releases]]
+version = "0.6"
+date = 2025-02-11
+
+[[releases]]
+version = "0.7"
+date = 2025-02-12
+
+[[releases]]
+version = "0.8"
+date = 2025-02-13
+
+[[releases]]
+version = "0.81"
+date = 2025-07-10
+
+[[releases]]
+version = "0.82"
+date = 2025-07-11
