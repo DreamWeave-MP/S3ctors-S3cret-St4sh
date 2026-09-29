@@ -1,0 +1,12 @@
+id = "89b83222-696a-4b0b-b243-98c44b863ff0"
+slug = "pr0f1l3r"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["Pr0f1l3r.esp"]
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
