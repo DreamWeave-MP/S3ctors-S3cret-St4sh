@@ -6,7 +6,7 @@ versioning = "decimal"
 documentation = "@/s3maphore/docs/_index.md"
 
 [runtimes]
-openmw = "*"
+openmw = ">=0.51"
 
 [openmw]
 data_directories = ["00 Core", "01 Tamriel Rebuilt Playlists", "02 Project Cyrodiil Playlists", "03 Muse Expansion Playlists", "04 Vindsvept Solstheim", "05 Secrets of the Crystal City", "06 Songbook of the North", "08 Redguard Music", "09 Nordic Lands", "10 Inns and Taverns", "11 Daggerfall Guild Themes", "14 General Dungeon", "15 Provincial Music", "18 Better Music System Redone", "12 BBL Drizzy", "16 Bgi Inor", "07 Starwind Playlists"]

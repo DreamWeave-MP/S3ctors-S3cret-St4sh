@@ -6,7 +6,7 @@ versioning = "decimal"
 documentation = "@/t4rg3t5/docs/_index.md"
 
 [runtimes]
-openmw = "*"
+openmw = ">=0.50"
 
 [openmw]
 content_files = ["T4rg3t5.esp"]
