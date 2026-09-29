@@ -25,15 +25,21 @@ Horiz0nMinViewDistDesc: |
 
 Horiz0nPercentAdjustNormalName: Tröskel för minskat visningsavstånd
 Horiz0nPercentAdjustNormalDesc: |
-  Horiz0n minskar visningsavståndet när den aktuella bildtiden är så här mycket sämre än den bästa registrerade bildtiden.
+  Horiz0n minskar visningsavståndet när den aktuella bildtiden är så här mycket sämre än målbildtiden.
   Standard: 10 %
   Intervall: 1 % - 10 %
 
 Horiz0nPercentAdjustSevereName: Tröskel för kraftig minskning
 Horiz0nPercentAdjustSevereDesc: |
-  Horiz0n multiplicerar minskningen av visningsavståndet när den aktuella bildtiden är så här mycket sämre än den bästa registrerade bildtiden.
+  Horiz0n multiplicerar minskningen av visningsavståndet när den aktuella bildtiden är så här mycket sämre än målbildtiden.
   Standard: 30 %
   Intervall: 10 % - 100 %
+
+Horiz0nTargetFramerateName: Målbildfrekvens
+Horiz0nTargetFramerateDesc: |
+  Bildfrekvensen som Horiz0n försöker hålla. Ställ in den på bildfrekvensgränsen från OpenMW-startprogrammet eller din settings.cfg.
+  Standard: 60
+  Intervall: 20 - 360
 
 Horiz0nToggleName: Aktivera eller inaktivera hantering av visningsavstånd
 Horiz0nToggleOn: Aktivera
@@ -41,7 +47,7 @@ Horiz0nToggleOff: Inaktivera
 
 Horiz0nViewDistanceSevereMultName: Multiplikator för kraftig justering
 Horiz0nViewDistanceSevereMultDesc: |
-  Multiplicerar justeringen av visningsavståndet när bildtiden är betydligt sämre än den bästa registrerade bildtiden.
+  Multiplicerar justeringen av visningsavståndet när bildtiden är betydligt sämre än målbildtiden.
   Högre värden gör att Horiz0n kan återställa prestandan snabbare i krävande områden, men gör förändringarna av visningsavståndet mer märkbara.
   Standard: 2,0
   Intervall: 1,0 - 5,0
