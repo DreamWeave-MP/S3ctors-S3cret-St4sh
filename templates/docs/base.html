@@ -53,13 +53,24 @@
     {% endif %}
     {% set_global docs_has_toc = docs_current_toc and docs_current_toc | length > 0 %}
 
-    {#- Every docs root at the top of the site. With more than one, the sidebar lets a reader
-        switch between them. -#}
+    {#- Every manual on the site: the docs trees projects link as [links] documentation in their
+        mod.toml, and docs roots at the top of content/. Zola lists neither kind as a subsection of
+        the other when it sits inside a page's directory, so both are gathered here. With more than
+        one, the sidebar lets a reader switch between them. -#}
     {% set_global docs_manuals = [] %}
-    {% set docs_site_root = get_section(path="_index.md", metadata_only=true) %}
+    {% set docs_site_root = get_section(path="_index.md") %}
+    {% for candidate_page in docs_site_root.pages %}
+        {% if candidate_page.colocated_path %}
+            {% set candidate_toml = load_data(path="content/" ~ candidate_page.colocated_path ~ "mod.toml", required=false) %}
+            {% if candidate_toml and candidate_toml.links and candidate_toml.links.documentation is defined and candidate_toml.links.documentation is starting_with("@/") and candidate_toml.links.documentation is ending_with("_index.md") %}
+                {% set candidate_path = candidate_toml.links.documentation | replace(from="@/", to="") %}
+                {% set_global docs_manuals = docs_manuals | concat(with=candidate_path) %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
     {% for candidate_path in docs_site_root.subsections %}
         {% set candidate = get_section(path=candidate_path, metadata_only=true) %}
-        {% if candidate.extra.docs_root | default(value=false) %}
+        {% if candidate.extra.docs_root | default(value=false) and not candidate_path in docs_manuals %}
             {% set_global docs_manuals = docs_manuals | concat(with=candidate_path) %}
         {% endif %}
     {% endfor %}
