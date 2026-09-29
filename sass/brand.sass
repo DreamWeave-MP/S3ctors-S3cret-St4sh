@@ -1018,12 +1018,20 @@
   font-size: 1.2rem
   letter-spacing: .02em
 
+// The glow follows the glyphs, not the box, and a hover turns them once round to land upright
+// where the diamond's quarter turn would leave them tilted.
 .dw-brand__mark
   width: 1.9rem
   height: 1.4rem
   border: 0
-  transform: none
+  box-shadow: none
+  transform: rotate(0turn)
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--dw-accent) 45%, transparent))
   background: url('img/st4sh-mark.svg') center / contain no-repeat
+  transition: transform .6s var(--dw-ease)
+
+.dw-brand:hover .dw-brand__mark
+  transform: rotate(1turn)
 
 // The numerals of the St4sh's name, in the header (logo_html) as on the portal's title.
 .st4sh-numeral
