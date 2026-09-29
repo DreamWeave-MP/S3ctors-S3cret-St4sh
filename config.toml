@@ -43,6 +43,12 @@ github_project = "S3ctors-S3cret-St4sh"
 # Logo text displayed in the header.
 logo_text = "S3ctor's S3cret St4sh"
 
+# The header's links. `@/` paths are content files.
+menu_items = [
+    { name = "Projects", url = "@/_index.md#projects" },
+    { name = "Wiki", url = "@/wiki/_index.md" },
+]
+
 # Palette: purple (DreamWeave), teal, gold, ember, moss, umber, grove, prism, slate, crimson,
 # indigo, azure or frost. Anything bigger belongs in sass/brand.sass.
 palette = "purple"
