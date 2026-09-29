@@ -1,0 +1,9 @@
+id = "a9796e0f-2e06-402b-b1c5-c80a8bda1096"
+slug = "sh4des"
+
+[runtimes]
+openmw = "*"
+
+[[releases]]
+version = "0.5"
+date = 2026-09-29
