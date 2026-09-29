@@ -23,8 +23,6 @@ The problem that I found with prior approaches was that they were *all* dedicate
 
 Thus was born, Horiz0n.
 
-{{ image(src="/img/horiz0n.webp", alt="Horiz0n - View Distance Manager", style="border-radius: 8px;") }}
-
 <!-- more -->
 
 {{ install_instructions(describe=true) }}

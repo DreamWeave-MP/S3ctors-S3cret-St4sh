@@ -20,8 +20,6 @@ Nevertheless, it works just as well and easily as anything else.
 
 <!-- more -->
 
-{{ image(src="/img/crassnav-map.webp", alt="Crassius Curio is on the Map.", style="border-radius: 8px;") }}
-
 {{ install_instructions(describe=true) }}
 
 Also, add the following to your [settings.cfg](https://openmw.readthedocs.io/en/stable/reference/modding/paths.html):
