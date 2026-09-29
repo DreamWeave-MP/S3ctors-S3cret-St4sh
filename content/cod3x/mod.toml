@@ -1,0 +1,26 @@
+id = "77a5e247-6e75-4507-a97a-7d849744446d"
+slug = "cod3x"
+type = "tool"
+
+[links]
+documentation = "@/cod3x/docs/_index.md"
+
+[nexusmods]
+mod_id = 59122
+file_group_id = "7468718"
+
+[[releases]]
+version = "0.2"
+date = 2026-05-28
+
+[[releases]]
+version = "0.3"
+date = 2026-05-29
+
+[[releases]]
+version = "0.4"
+date = 2026-09-04
+
+[[releases]]
+version = "1.0"
+date = 2026-09-15
