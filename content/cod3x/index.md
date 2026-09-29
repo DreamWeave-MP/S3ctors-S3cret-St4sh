@@ -10,15 +10,15 @@ taxonomies:
     - Documentation
 
 extra:
-  icon: img/cod3x/icon.png
-  cover: img/cod3x/nexusHeader.png
+  icon: img/cod3x/icon.webp
+  cover: img/cod3x/nexusHeader.webp
 ---
 
 # Cod3x
 
 Cod3x is the OpenMW-Lua development companion: Lua Language Server annotations, context-aware diagnostics, and an engineering field manual built from years of production OpenMW Lua, profiler work, repository history, and runtime archaeology.
 
-{{ image(src="/img/cod3x/icon.png", alt="Cod3x: Code, Context, Consequence.", style="border-radius: 8px;") }}
+{{ image(src="/img/cod3x/icon.webp", alt="Cod3x: Code, Context, Consequence.", style="border-radius: 8px;") }}
 
 The annotations answer **what exists**.
 

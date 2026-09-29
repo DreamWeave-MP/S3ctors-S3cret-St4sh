@@ -4,7 +4,7 @@ description: Monochrome UI supplement is, well... a monochrome UI supplement.
 date: 2024-08-19
 
 extra:
-  cover: img/monosupplement_after.png
+  cover: img/monosupplement_after.webp
 ---
 
 Monochrome UI supplement is, well... a monochrome UI supplement.
@@ -18,8 +18,8 @@ This only supports OpenMW 0.48 to 0.50. It is INCOMPATIBLE! With OpenMW 0.51 and
 ## Before And After
 
 <div align="center">
-    <img src="../img/monosupplement_before.png" alt="Before Monochrome UI Supplement" />
-    <img src="../img/monosupplement_after.png" alt="After Monochrome UI Supplement" />
+    <img src="../img/monosupplement_before.webp" alt="Before Monochrome UI Supplement" />
+    <img src="../img/monosupplement_after.webp" alt="After Monochrome UI Supplement" />
 </div>
 
 {{ install_instructions(describe=true) }}

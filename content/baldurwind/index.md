@@ -26,7 +26,7 @@ Pairs great with [AttendMe](https://gitlab.com/urm-openmw-mods/attend-me/-/tree/
 
 {{ install_instructions(describe=true) }}
 
-{{ image(src="/img/modathonbanner2024.png", alt="Morrowind Modathon 2024", style="border-radius: 8px;") }}
+{{ image(src="/img/modathonbanner2024.webp", alt="Morrowind Modathon 2024", style="border-radius: 8px;") }}
 
 {% credits(default=true) %} 
 Everyone in the MMC who kept constantly going on about how good BG3 was, thank you for annoying me into making this.

@@ -10,7 +10,7 @@ taxonomies:
     - OpenMW-Lua
 
 extra:
-  cover: img/horiz0n.png
+  cover: img/horiz0n.webp
 ---
 
 I was discussing the concept of occlusion culling with someone recently.
@@ -23,7 +23,7 @@ The problem that I found with prior approaches was that they were *all* dedicate
 
 Thus was born, Horiz0n.
 
-{{ image(src="/img/horiz0n.png", alt="Horiz0n - View Distance Manager", style="border-radius: 8px;") }}
+{{ image(src="/img/horiz0n.webp", alt="Horiz0n - View Distance Manager", style="border-radius: 8px;") }}
 
 <!-- more -->
 

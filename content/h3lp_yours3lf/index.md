@@ -11,8 +11,8 @@ taxonomies:
     - OpenMW-Lua
 
 extra:
-  icon: img/h3/icon.png
-  cover: img/h3/nexusHeader.png
+  icon: img/h3/icon.webp
+  cover: img/h3/nexusHeader.webp
 ---
 Sometimes, you just have to h3lp yours3lf.
 

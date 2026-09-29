@@ -9,8 +9,8 @@ taxonomies:
     - Gameplay
 
 extra:
-  icon: img/crassius.png
-  cover: img/crassnav-map.png
+  icon: img/crassius.webp
+  cover: img/crassnav-map.webp
 ---
 # Uncle Crassius Doesn't Need A Map. Why Should You?
 
@@ -20,7 +20,7 @@ Nevertheless, it works just as well and easily as anything else.
 
 <!-- more -->
 
-{{ image(src="/img/crassnav-map.png", alt="Crassius Curio is on the Map.", style="border-radius: 8px;") }}
+{{ image(src="/img/crassnav-map.webp", alt="Crassius Curio is on the Map.", style="border-radius: 8px;") }}
 
 {{ install_instructions(describe=true) }}
 

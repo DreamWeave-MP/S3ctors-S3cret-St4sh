@@ -10,8 +10,8 @@ taxonomies:
     - Frameworks
 
 extra:
-  icon: img/S3maphoreIcon.png
-  cover: img/S3maphoreBanner.png
+  icon: img/S3maphoreIcon.webp
+  cover: img/S3maphoreBanner.webp
 ---
 
 Your music, just the way you want it. No compromises, no bullshit, with a focus on scalability and extreme attention to performance optimization.
@@ -21,7 +21,7 @@ Your music, just the way you want it. No compromises, no bullshit, with a focus 
 <div align="center">
 
   <figure>
-    <img src="../img/S3maphoreBanner.png" alt="The S3maphore banner" width="512" height="288" />
+    <img src="../img/S3maphoreBanner.webp" alt="The S3maphore banner" width="512" height="288" />
     <figcaption><h2 class="notoc">Brought to you by DreamWeave</h2></figcaption>
   </figure>
 

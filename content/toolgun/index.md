@@ -60,7 +60,7 @@ Otherwise, just equip the toolgun and fire to activate it.
 5. Rotate - Just rotates objects around. Quite unwieldy when rotating on all three axes, so highly recommended to lock rotation to a specific axis.
 
 <div align="center">
-  <img src="../img/modathonbanner2024.png" alt="Modathon 2024" />
+  <img src="../img/modathonbanner2024.webp" alt="Modathon 2024" />
 </div>
 
 ## Credits

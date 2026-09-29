@@ -38,7 +38,7 @@ Follow the installation instructions below, and that should get you started! Tra
 
 {{ install_instructions(describe=true) }}
 
-{{ image(src="/img/modathonbanner2024.png", alt="Modathon 2024", style="border-radius: 8px;") }}
+{{ image(src="/img/modathonbanner2024.webp", alt="Modathon 2024", style="border-radius: 8px;") }}
 
 ## Credits
 
