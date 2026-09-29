@@ -8,17 +8,6 @@ taxonomies:
     - User Interface
     - Combat
     - OpenMW 0.50
-
-extra:
-  nexus_id: 57703
-  nexus_group_id: 6591580
-  install_info:
-    data_directories:
-      - .
-    content_files:
-      - T4rg3t5.esp
-
-  version: "1.0"
 ---
 
 <div align="center">

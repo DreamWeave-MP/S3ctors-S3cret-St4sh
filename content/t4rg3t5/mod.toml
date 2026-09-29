@@ -1,0 +1,36 @@
+id = "2480cc49-8743-4fb2-854c-2073513049c8"
+slug = "t4rg3t5"
+versioning = "decimal"
+
+[links]
+documentation = "@/t4rg3t5/docs/_index.md"
+
+[runtimes]
+openmw = "*"
+
+[openmw]
+content_files = ["T4rg3t5.esp"]
+
+[nexusmods]
+mod_id = 57703
+file_group_id = "6591580"
+
+[[releases]]
+version = "0.5"
+date = 2025-10-27
+
+[[releases]]
+version = "0.51"
+date = 2025-10-28
+
+[[releases]]
+version = "1.01"
+date = 2025-11-01
+
+[[releases]]
+version = "0.6"
+date = 2026-07-23
+
+[[releases]]
+version = "1.0"
+date = 2026-09-10
