@@ -5,9 +5,12 @@ date: 2026-07-23
 
 taxonomies:
   tags:
-    - Qualify-Of-Life
+    - Quality-Of-Life
     - Performance
     - OpenMW-Lua
+
+extra:
+  cover: img/horiz0n.png
 ---
 
 I was discussing the concept of occlusion culling with someone recently.

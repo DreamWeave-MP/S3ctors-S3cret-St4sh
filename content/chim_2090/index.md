@@ -8,6 +8,9 @@ taxonomies:
     - Combat
     - Gameplay
     - Miyazaki-is-god
+
+extra:
+  cover: img/chim/parry.webp
 ---
 
 # Overview

@@ -9,6 +9,10 @@ taxonomies:
     - Dependencies
     - Gameplay
     - OpenMW-Lua
+
+extra:
+  icon: img/h3/icon.png
+  cover: img/h3/nexusHeader.png
 ---
 Sometimes, you just have to h3lp yours3lf.
 

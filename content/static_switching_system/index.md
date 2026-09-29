@@ -9,6 +9,10 @@ taxonomies:
     - Frameworks
     - Quality-Of-Life
     - Gameplay
+
+extra:
+  icon: static_switching_system/logo.png
+  cover: img/SSSNexusHeader.png
 ---
 
 **Static Switching System (SSS)** is a declarative world-patching framework for OpenMW. Write YAML modules to replace meshes globally or in specific places, or to target live objects with conditions and apply object, inventory, actor, world-state, and scripting actions.

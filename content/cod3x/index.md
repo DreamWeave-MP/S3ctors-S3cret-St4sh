@@ -8,6 +8,10 @@ taxonomies:
     - OpenMW-Lua
     - Tools
     - Documentation
+
+extra:
+  icon: img/cod3x/icon.png
+  cover: img/cod3x/nexusHeader.png
 ---
 
 # Cod3x

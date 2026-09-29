@@ -8,6 +8,9 @@ taxonomies:
     - Quality-Of-Life
     - OpenMW-Lua
     - Gameplay
+
+extra:
+  cover: img/s4v3r.png
 ---
 
 {{ image(src="/img/s4v3r.png", alt="Saver - OpenMW Autosaves", style="border-radius: 8px;") }}
