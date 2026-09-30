@@ -53,6 +53,33 @@ const FLARE_ELEMENTS = [
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// Rendering levels, best first: the device-pixel-ratio cap, and whether the lite tier's cheaper
+// shaders and half-resolution flames are used.
+const LEVELS = [
+  { lite: false, ratio: 1.5 },
+  { lite: false, ratio: 1.2 },
+  { lite: true, ratio: 1.25 },
+  { lite: true, ratio: 1.0 },
+  { lite: true, ratio: 0.8 },
+];
+
+// Phones and small touch screens start on the lite tier; everything else starts at the top.
+// ?st4sh-tier=full|lite picks one, for testing.
+function startLevel() {
+  let forced = null;
+  try {
+    forced = new URLSearchParams(location.search).get('st4sh-tier');
+  } catch {
+    forced = null;
+  }
+  if (forced === 'full') return 0;
+  if (forced === 'lite') return 2;
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const small = Math.min(screen.width, screen.height) <= 820;
+  const weak = (navigator.hardwareConcurrency || 8) <= 2;
+  return (coarse && small) || weak ? 2 : 0;
+}
+
 function cssColor(name, fallback) {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const color = new THREE.Color(fallback);
@@ -589,7 +616,11 @@ const FLAME_FRAGMENT = /* glsl */ `
     vec2 p = vec2(vUv.x * uAspect, vUv.y) / max(uRise, 1e-3);
     vec3 q = vec3(p.x * 7.0, p.y * 3.0 - uTime * 2.8, uTime * 0.6);
     q.x += 1.2 * (noise3(vec3(p * 2.0, uTime * 0.5)) - 0.5);
+#ifdef ST4SH_LITE
+    float n = noise3(q) * 0.62 + noise3(q * 2.03 + 3.7) * 0.38;
+#else
     float n = noise3(q) * 0.55 + noise3(q * 2.03 + 3.7) * 0.3 + noise3(q * 4.1 + 1.3) * 0.15;
+#endif
     float peak = n * n * 1.7;
 
     // Fire rises: a point burns when the mark lies below it, within a height set by the
@@ -800,7 +831,7 @@ function mount(root) {
   const canvas = document.createElement('canvas');
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
   } catch {
     return;
   }
@@ -817,7 +848,9 @@ function mount(root) {
   const floatTargets = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
   const targetType = floatTargets ? THREE.HalfFloatType : THREE.UnsignedByteType;
   const makeTarget = () => new THREE.WebGLRenderTarget(1, 1, { type: targetType, depthBuffer: false });
-  const sceneTarget = new THREE.WebGLRenderTarget(1, 1, { type: targetType, samples: 4 });
+  // The scene at 4x multisampling, or 2x on the lite tier, where it costs the most.
+  const sceneTargets = { full: new THREE.WebGLRenderTarget(1, 1, { type: targetType, samples: 4 }), lite: null };
+  let sceneTarget = sceneTargets.full;
   const bloomTargets = [makeTarget(), makeTarget(), makeTarget(), makeTarget()];
 
   // Palette, from the site's tokens.
@@ -1016,7 +1049,7 @@ function mount(root) {
   maskScene.add(maskMesh);
   const maskTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.UnsignedByteType, samples: 4 });
   const haloTargets = [makeTarget(), makeTarget()];
-  const flameMaterial = fullscreenMaterial(FLAME_FRAGMENT, {
+  const flameUniforms = {
     tMask: { value: maskTarget.texture },
     tHalo: { value: haloTargets[0].texture },
     uTime: shared.uTime,
@@ -1025,9 +1058,15 @@ function mount(root) {
     uPointer: { value: new THREE.Vector2(-1, -1) },
     uPresence: shared.uPresence,
     uAccent: shared.uAccent,
-  });
+  };
+  const flameMaterial = fullscreenMaterial(FLAME_FRAGMENT, flameUniforms);
   flameMaterial.blending = THREE.AdditiveBlending;
   flameMaterial.transparent = true;
+  // The lite tier burns the flames at half resolution, then adds them over the scene: fire is a
+  // soft glow, and the mark's own edge stays at full resolution in the scene.
+  let flameLite = null;
+  let flameTarget = null;
+  let flameAdd = null;
   let haloRadius = 1;
 
   function pass(material, target) {
@@ -1049,9 +1088,41 @@ function mount(root) {
   let width = 1;
   let height = 1;
   let nebulaAge = Infinity;
-  // Resolution scale, lowered a step whenever frames run slow for a while.
-  let quality = 1;
+  // Rendering levels, best first. A level lowers a step whenever frames run slow for a while, and
+  // climbs back towards where it started after a long run of frames on time. Phones start on the
+  // lite tier: their GPUs are bound by fill rate and bandwidth, not by the shading itself.
+  const levelIndexAtStart = startLevel();
+  let levelIndex = levelIndexAtStart;
+  let level = LEVELS[levelIndex];
   let slowTime = 0;
+  let steadyTime = 0;
+  let climbAfter = 10;
+  let lastRender = -Infinity;
+
+  function applyLevel() {
+    const lite = level.lite;
+    if (lite && !sceneTargets.lite) sceneTargets.lite = new THREE.WebGLRenderTarget(1, 1, { type: targetType, samples: 2 });
+    const unused = lite ? sceneTargets.full : sceneTargets.lite;
+    if (unused) unused.setSize(1, 1);
+    sceneTarget = lite ? sceneTargets.lite : sceneTargets.full;
+    compositeMaterial.uniforms.tScene.value = sceneTarget.texture;
+    if (lite && !flameLite) {
+      flameLite = fullscreenMaterial(FLAME_FRAGMENT, flameUniforms);
+      flameLite.defines = { ST4SH_LITE: '' };
+      flameLite.blending = THREE.AdditiveBlending;
+      flameLite.transparent = true;
+      flameTarget = makeTarget();
+      flameAdd = fullscreenMaterial(/* glsl */ `
+        uniform sampler2D tInput;
+        varying vec2 vUv;
+        void main() { gl_FragColor = vec4(texture2D(tInput, vUv).rgb, 1.0); }
+      `, { tInput: { value: flameTarget.texture } });
+      flameAdd.blending = THREE.AdditiveBlending;
+      flameAdd.transparent = true;
+    }
+    if (!lite && flameTarget) flameTarget.setSize(1, 1);
+    layout();
+  }
   const worldAnchor = new THREE.Vector3();
   let markScale = 1;
   const tmp = new THREE.Vector3();
@@ -1066,7 +1137,7 @@ function mount(root) {
     const anchorBox = anchor.getBoundingClientRect();
     width = Math.max(1, Math.round(stageBox.width));
     height = Math.max(1, Math.round(stageBox.height));
-    const ratio = Math.min(window.devicePixelRatio || 1, 1.5) * quality;
+    const ratio = Math.min(window.devicePixelRatio || 1, level.ratio);
     renderer.setPixelRatio(ratio);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
@@ -1080,12 +1151,13 @@ function mount(root) {
     bloomTargets[2].setSize(Math.max(1, w >> 3), Math.max(1, h >> 3));
     bloomTargets[3].setSize(Math.max(1, w >> 3), Math.max(1, h >> 3));
     skyUniforms.uResolution.value.set(w, h);
-    nebulaTarget.setSize(Math.max(1, w >> 1), Math.max(1, h >> 1));
+    nebulaTarget.setSize(Math.max(1, w >> (level.lite ? 2 : 1)), Math.max(1, h >> (level.lite ? 2 : 1)));
     nebulaAge = Infinity;
     sparkUniforms.uPixelRatio.value = ratio;
     sparkUniforms.uScale.value = height * 0.09;
     for (const { material } of flares) material.uniforms.uAspect.value = width / height;
-    maskTarget.setSize(w, h);
+    maskTarget.setSize(Math.max(1, w >> (level.lite ? 1 : 0)), Math.max(1, h >> (level.lite ? 1 : 0)));
+    if (level.lite) flameTarget.setSize(Math.max(1, w >> 1), Math.max(1, h >> 1));
     haloTargets[0].setSize(Math.max(1, w >> 2), Math.max(1, h >> 2));
     haloTargets[1].setSize(Math.max(1, w >> 2), Math.max(1, h >> 2));
     flameMaterial.uniforms.uAspect.value = width / height;
@@ -1153,16 +1225,32 @@ function mount(root) {
   const projected = new THREE.Vector3();
   const lightLocal = new THREE.Vector3();
 
-  function frame() {
+  function frame(now) {
     running = false;
+    // The lite tier draws at 30 frames a second: the scene moves slowly, and a phone's battery
+    // and temperature are worth more than the in-between frames.
+    if (level.lite && !reduceMotion && now - lastRender < 1000 / 30 - 4) {
+      if (visible && !document.hidden) requestFrame();
+      return;
+    }
+    lastRender = now;
     const rawDt = clock.getDelta();
     const dt = Math.min(rawDt, 0.05);
     if (!reduceMotion && rawDt < 0.5) {
-      slowTime = rawDt > 1 / 40 ? slowTime + rawDt : Math.max(0, slowTime - rawDt * 0.5);
-      if (slowTime > 1.5 && quality > 0.5) {
-        quality = Math.max(0.5, quality - 0.2);
+      const budget = level.lite ? 1 / 20 : 1 / 40;
+      slowTime = rawDt > budget ? slowTime + rawDt : Math.max(0, slowTime - rawDt * 0.5);
+      steadyTime = rawDt < budget * 0.7 ? steadyTime + rawDt : 0;
+      if (slowTime > 1.5 && levelIndex < LEVELS.length - 1) {
+        level = LEVELS[++levelIndex];
         slowTime = 0;
-        layout();
+        steadyTime = 0;
+        applyLevel();
+      } else if (steadyTime > climbAfter && levelIndex > levelIndexAtStart) {
+        level = LEVELS[--levelIndex];
+        steadyTime = 0;
+        // A climb that falls straight back waits twice as long before the next try.
+        climbAfter = Math.min(120, climbAfter * 2);
+        applyLevel();
       }
     }
     if (!reduceMotion) time += dt;
@@ -1238,7 +1326,7 @@ function mount(root) {
 
     // Render. The nebula drifts slowly enough to redraw every third frame at half resolution.
     nebulaAge++;
-    if (nebulaAge >= 3 || reduceMotion) {
+    if (nebulaAge >= (level.lite ? 4 : 3) || reduceMotion) {
       nebulaAge = 0;
       pass(nebulaMaterial, nebulaTarget);
     }
@@ -1257,8 +1345,16 @@ function mount(root) {
     pass(fullscreenCopy(maskTarget), haloTargets[0]);
     blur(haloTargets[0], haloTargets[1], haloTargets[0], haloRadius);
     blur(haloTargets[0], haloTargets[1], haloTargets[0], haloRadius * 1.8);
-    flameMaterial.uniforms.uPointer.value.set(pointerNdc.x * 0.5 + 0.5, pointerNdc.y * 0.5 + 0.5);
-    pass(flameMaterial, sceneTarget);
+    flameUniforms.uPointer.value.set(pointerNdc.x * 0.5 + 0.5, pointerNdc.y * 0.5 + 0.5);
+    if (level.lite) {
+      renderer.setRenderTarget(flameTarget);
+      renderer.setClearColor(0x000000, 1);
+      renderer.clear();
+      pass(flameLite, flameTarget);
+      pass(flameAdd, sceneTarget);
+    } else {
+      pass(flameMaterial, sceneTarget);
+    }
 
     // Near bloom at a quarter of the resolution, far bloom at an eighth, each blurred twice.
     brightMaterial.uniforms.tInput.value = sceneTarget.texture;
@@ -1295,7 +1391,7 @@ function mount(root) {
     requestAnimationFrame(frame);
   }
 
-  layout();
+  applyLevel();
   new ResizeObserver(() => {
     layout();
     requestFrame();
