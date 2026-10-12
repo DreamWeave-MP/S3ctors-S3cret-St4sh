@@ -116,8 +116,46 @@
 
 ---@alias SSSItemAction RecordId|RecordId[]|table<RecordId, integer|SSSItemActionDetails>
 
+---@class SSSSpellDetails
+---@field chance SSSChanceRange? fixed or random chance to apply this spell entry
+
+---@alias SSSSpellAction RecordId|RecordId[]|table<RecordId, SSSSpellDetails>
+
+---@class SSSActiveSpellDetails
+---@field chance SSSChanceRange? fixed or random chance to apply this entry
+---@field effects integer[]? zero-based effect indexes to apply; defaults to every effect of the spell record
+---@field name string? display name in the active effects UI
+---@field stackable boolean? whether the effect stacks like a potion
+---@field ignoreResistances boolean?
+---@field ignoreSpellAbsorption boolean?
+---@field ignoreReflect boolean?
+---@field quiet boolean?
+
+---@alias SSSActiveSpellAction RecordId|RecordId[]|table<RecordId, SSSActiveSpellDetails>
+
+---@class SSSRunLuaScriptAction
+---@field script string VFS path of a CUSTOM-flagged local script to attach, initialize, and detach
+---@field ["function"] string? function name the script's onInit dispatches to
+---@field args any[]? positional arguments forwarded in the init data
+
+---@class SSSRunLuaScriptInitData
+---@field ["function"] string?
+---@field args any[]?
+
+---@class SSSInterfaceCallAction
+---@field interface string global interface name looked up in openmw.interfaces
+---@field ["function"] string function name on that interface; receives the action target first
+---@field args any[]? positional arguments appended after the action target
+
+---@class SSSEventAction
+---@field name string event name
+---@field data table<string, any>? additional payload fields copied before `object` is injected
+
+---@class SSSEventPayload
+---@field object openmw.GObject current action target
+
 --- Instance action tables may combine fields, for example replace + delete.
---- Combined actions run in priority order: replace, transform, teleport, set_ownership, add_tag, remove_tag, add, remove, equip, unequip, lock_level, key, trap, create, global_set, playsound, add_lua_script, activate_by_player, remove_lua_script, disable, delete.
+--- Combined actions run in priority order: replace, transform, teleport, set_ownership, add_tag, remove_tag, add, remove, equip, unequip, add_spell, remove_spell, add_active_spell, lock_level, key, trap, create, global_set, playsound, add_lua_script, activate_by_player, remove_lua_script, run_lua_script, call_interface, send_event, send_global_event, disable, delete.
 --- Same-table delete paired with replace queues removal only when replacement succeeds;
 --- use a separate delete action entry when source removal must be unconditional.
 ---@class SSSInstanceAction
@@ -128,6 +166,9 @@
 ---@field remove SSSItemAction? removes item(s) from the current action target when it is an Actor or Container and enough items are available
 ---@field equip SSSItemAction? queues forced OpenMW UseItem for item(s) on Actor targets, creating the requested count first only when missing; usable non-equipment may be consumed/used
 ---@field unequip SSSItemAction? queues forced OpenMW UseItem for currently equipped item(s) on Actor targets; requested count must already be equipped
+---@field add_spell SSSSpellAction? adds known spell(s) to Actor targets; already-known spells no-op
+---@field remove_spell SSSSpellAction? removes known spell(s) from Actor targets; unknown spells no-op
+---@field add_active_spell SSSActiveSpellAction? adds active spell effect(s) to Actor targets without VFX; effects default to every effect of the spell record
 ---@field disable true|{chance: number?}? disables the final action target; with replace, disables the replacement; chance field rolls independently
 --- NOTE: Disabled objects do NOT trigger onObjectActive on subsequent cell loads. The engine
 --- filters out disabled objects during scene insertion (scene.cpp:248), so there is no engine
@@ -146,6 +187,10 @@
 ---@field add_lua_script string? attaches a Lua script (VFS path) to the target object
 ---@field activate_by_player boolean? activates the target object as if the player used it
 ---@field remove_lua_script string? removes a Lua script (VFS path) from the target object
+---@field run_lua_script SSSRunLuaScriptAction? attaches a CUSTOM local script, runs its onInit with `{function, args}`, then detaches it
+---@field call_interface SSSInterfaceCallAction? calls a global interface function with the target object followed by positional args
+---@field send_event SSSEventAction? sends a local event to the target object's scripts with `object` injected into the payload
+---@field send_global_event SSSEventAction? sends a global event with `object` injected into the payload
 ---@field global_set {name: string, value: SSSRandomNumericRange}? sets a MWScript global variable
 ---@field teleport {cell?: string, position?: {x?: SSSRandomNumericRange, y?: SSSRandomNumericRange, z?: SSSRandomNumericRange}, rotation?: SSSVector3Range, onGround?: boolean}? teleports the target object
 
@@ -189,6 +234,7 @@
 ---@field has_tag string|string[]? FlexTag tag(s) on the object. Requires FlexTag mod. Match any.
 ---@field cell_tag string|string[]? FlexTag tag(s) on the object's cell. Requires FlexTag mod. Match any.
 ---@field is_dead boolean? Whether the target actor is dead. Non-actors return false.
+---@field is_follower boolean? Whether Follower Detection Util currently lists the target actor as following the player. Requires FDU; without it, or for non-actors, returns false.
 ---@field is_respawning boolean? Whether the target NPC or Creature record is flagged to respawn. Other object types return false.
 ---@field creature_type string|number|(string|number)[]? Target creature type (creatures/daedra/undead/humanoid). Non-creatures return false.
 ---@field has_enchantment boolean? Whether the target object has an enchantment.
@@ -304,7 +350,7 @@
 ---@field composedReplacements fun(): table<string, SSSModule> Returns loaded static replacement data keyed by canonical module ID.
 ---@field objectModificationStore fun(): SSSObjectModificationStore Returns the loaded instance-modification rule store.
 ---@field overrideRecords fun(): SSSOverrideRecords Returns generated override record IDs keyed by canonical module id.
----@field version integer Static Switching System interface version. Version 4 is the current contract.
+---@field version integer Static Switching System interface version. Version 5 is the current contract.
 
 ---@class openmw.interfaces
 ---@field StaticSwitcher_G openmw.interfaces.StaticSwitcher_G

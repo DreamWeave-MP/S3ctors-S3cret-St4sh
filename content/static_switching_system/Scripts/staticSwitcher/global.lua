@@ -100,7 +100,7 @@ return {
     end,
     ---@return SSSOverrideRecords
     overrideRecords = function() return util.makeReadOnly(StaticReplacements.OverrideRecords) end,
-    version = 4,
+    version = 5,
   },
   interfaceName = 'StaticSwitcher_G',
   engineHandlers = {

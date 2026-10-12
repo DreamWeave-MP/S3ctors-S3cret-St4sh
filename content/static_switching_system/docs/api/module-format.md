@@ -72,7 +72,7 @@ The supported condition keys are:
 - **Location and provenance:** `cell`, `cell_match`, `coords`, `content_file`, `content_file_target`, `exterior`, `quasi_exterior`, `region`, `worldspace`.
 - **Object identity and record data:** `record_id`, `object_type`, `mesh`, `generated_record`, `generated_object`, `nameMatch`, `has_name`, `scale`.
 - **Scripts, tags, and equipment:** `has_lua_script`, `has_mwscript`, `has_tag`, `cell_tag`, `player_equipped`.
-- **Actor and inventory state:** `carrying`, `is_dead`, `is_respawning`, `creature_type`, `race`, `target_class`, `target_disposition`, `target_level`, `target_attribute`, `target_skill`, `target_spell`.
+- **Actor and inventory state:** `carrying`, `is_dead`, `is_follower`, `is_respawning`, `creature_type`, `race`, `target_class`, `target_disposition`, `target_level`, `target_attribute`, `target_skill`, `target_spell`.
 - **Locks and ownership:** `locked`, `has_key`, `has_trap`, `owner_id`, `faction_owner_id`, `faction_owner_rank`, `target_faction`, `player_faction`.
 - **Player and world state:** `player_level`, `player_attribute`, `player_skill`, `player_health`, `player_magicka`, `player_fatigue`, `player_spell`, `global_value`, `has_journal`, `time_of_day`, `day_of_week`, `current_weather`.
 - **Logic:** `not` for one inverted inner condition.
@@ -100,6 +100,8 @@ The stable actions are:
 | `add_tag`, `remove_tag` | Add or remove a FlexTag tag when FlexTag is available. |
 | `add`, `remove` | Add to or remove from Actor/Container inventories. Array removal uses the available quantity as its effective count. |
 | `equip`, `unequip` | Force OpenMW item use on Actor targets. `equip` may create a missing item; `unequip` requires the requested count already equipped. |
+| `add_spell`, `remove_spell` | Add or remove known spells on Actor targets. |
+| `add_active_spell` | Apply a timed spell effect on Actor targets, defaulting to every effect of the spell record. |
 | `lock_level` | Positive values lock; zero or negative values unlock. Non-lockable objects no-op. |
 | `key`, `trap` | Set a selected key/trap from an ordered chance table, or use `false` to remove it. |
 | `create` | Spawn one or more record pools at the trigger position, optionally with chance and per-object position/rotation/scale overrides. |
@@ -107,6 +109,9 @@ The stable actions are:
 | `playsound` | Play a record sound or VFS sound file at the target, with optional chance, volume, pitch, loop, and time offset. |
 | `add_lua_script`, `remove_lua_script` | Attach or remove a Lua script by VFS path. |
 | `activate_by_player` | Activate the target as if the player used it. |
+| `run_lua_script` | Attach a `CUSTOM` script, run its `onInit` with `{ function, args }`, and detach it. |
+| `call_interface` | Call a global interface function with the target followed by positional args. |
+| `send_event`, `send_global_event` | Send a local or global event whose payload is `data` plus the target as `object`. |
 | `disable` | Disable the final action target, optionally with a chance. A replacement is the final target when replacement succeeds. |
 | `delete` | Queue removal of the original source. With same-entry `replace`, removal occurs only after successful replacement. |
 
@@ -118,9 +123,11 @@ When fields are combined in one action entry, SSS executes them in this order. Y
 
 ```text
 replace → transform → teleport → set_ownership → add_tag → remove_tag
-→ add → remove → equip → unequip → lock_level → key → trap → create
-→ global_set → playsound → add_lua_script → activate_by_player
-→ remove_lua_script → disable → delete
+→ add → remove → equip → unequip → add_spell → remove_spell → add_active_spell
+→ lock_level → key → trap → create → global_set → playsound
+→ add_lua_script → activate_by_player → remove_lua_script
+→ run_lua_script → call_interface → send_event → send_global_event
+→ disable → delete
 ```
 
 The `actions` array still determines the rule's action entries, but entries are normalized into this action-type order at module load. Use separate entries when you need separate `chance` rolls or unconditional deletion semantics.

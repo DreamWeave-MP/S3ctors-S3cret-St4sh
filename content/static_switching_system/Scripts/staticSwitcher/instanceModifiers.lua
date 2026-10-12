@@ -400,6 +400,14 @@ local function tryModifyObject(object, instanceModificationList)
             actionData.teleport,
             actionData.add_tag,
             actionData.remove_tag
+          local addSpellAction, removeSpellAction, addActiveSpellAction, runLuaScriptAction, callInterfaceAction, sendEventAction, sendGlobalEventAction =
+            actionData.add_spell,
+            actionData.remove_spell,
+            actionData.add_active_spell,
+            actionData.run_lua_script,
+            actionData.call_interface,
+            actionData.send_event,
+            actionData.send_global_event
           local replaceActionSucceeded = false
 
           --- Should we allow only one successful replacement???
@@ -512,6 +520,28 @@ local function tryModifyObject(object, instanceModificationList)
             )
           end
 
+          if addSpellAction then
+            local didAddSpell = actionHandlers.add_spell(modifyTarget, addSpellAction)
+            anyActionApplied = anyActionApplied or didAddSpell
+            currentRuleApplied = currentRuleApplied or didAddSpell
+            DebugLog('  add_spell on %s: %s', objectId, didAddSpell and 'OK' or 'noop')
+          end
+
+          if removeSpellAction then
+            local didRemoveSpell = actionHandlers.remove_spell(modifyTarget, removeSpellAction)
+            anyActionApplied = anyActionApplied or didRemoveSpell
+            currentRuleApplied = currentRuleApplied or didRemoveSpell
+            DebugLog('  remove_spell on %s: %s', objectId, didRemoveSpell and 'OK' or 'noop')
+          end
+
+          if addActiveSpellAction then
+            local didAddActiveSpell =
+              actionHandlers.add_active_spell(modifyTarget, addActiveSpellAction)
+            anyActionApplied = anyActionApplied or didAddActiveSpell
+            currentRuleApplied = currentRuleApplied or didAddActiveSpell
+            DebugLog('  add_active_spell on %s: %s', objectId, didAddActiveSpell and 'OK' or 'noop')
+          end
+
           if lockLevelAction then
             local didLock = actionHandlers.lock_level(modifyTarget, lockLevelAction)
             anyActionApplied = anyActionApplied or didLock
@@ -596,6 +626,34 @@ local function tryModifyObject(object, instanceModificationList)
             anyActionApplied = anyActionApplied or didRemove
             currentRuleApplied = currentRuleApplied or didRemove
             DebugLog('  remove_lua_script on %s: OK', objectId)
+          end
+
+          if runLuaScriptAction then
+            local didRun = actionHandlers.run_lua_script(modifyTarget, runLuaScriptAction)
+            anyActionApplied = anyActionApplied or didRun
+            currentRuleApplied = currentRuleApplied or didRun
+            DebugLog('  run_lua_script on %s: %s', objectId, didRun and 'OK' or 'failed')
+          end
+
+          if callInterfaceAction then
+            local didCall = actionHandlers.call_interface(modifyTarget, callInterfaceAction)
+            anyActionApplied = anyActionApplied or didCall
+            currentRuleApplied = currentRuleApplied or didCall
+            DebugLog('  call_interface on %s: %s', objectId, didCall and 'OK' or 'failed')
+          end
+
+          if sendEventAction then
+            actionHandlers.send_event(modifyTarget, sendEventAction)
+            anyActionApplied = true
+            currentRuleApplied = true
+            DebugLog('  send_event on %s: %s', objectId, sendEventAction.name)
+          end
+
+          if sendGlobalEventAction then
+            actionHandlers.send_global_event(modifyTarget, sendGlobalEventAction)
+            anyActionApplied = true
+            currentRuleApplied = true
+            DebugLog('  send_global_event on %s: %s', objectId, sendGlobalEventAction.name)
           end
 
           if disableAction then

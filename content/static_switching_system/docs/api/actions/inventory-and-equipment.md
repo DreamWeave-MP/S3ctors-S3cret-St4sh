@@ -1,6 +1,6 @@
 +++
-title = "Inventory and Equipment Actions"
-description = "Add, remove, equip, and unequip items on actor and container targets."
+title = "Inventory, Equipment, and Spell Actions"
+description = "Add, remove, equip, and unequip items on actor and container targets, and add, remove, or apply spells on actors."
 page_template = "docs/page.html"
 weight = 30
 
@@ -9,7 +9,7 @@ api_docs = true
 kind = "api"
 +++
 
-All four actions accept the common item forms below. The target must expose an Actor or Container inventory; otherwise the action no-ops.
+The four item actions accept the common item forms below. The target must expose an Actor or Container inventory; otherwise the action no-ops.
 
 | Form | Meaning |
 | --- | --- |
@@ -74,3 +74,46 @@ unequip:
 ```
 
 If fewer matching items are equipped than requested, that entry fails without partially queueing its requested count. As with `equip`, OpenMW processes the use event rather than the action synchronously.
+
+## Spell actions
+
+The three spell actions target Actors only; other objects no-op. They accept a spell record ID, an array of IDs, or a map of IDs to per-entry options. Map entries may carry a `chance` that is tested independently. There is no count.
+
+## `add_spell`
+
+**Shape:** `add_spell: RecordId | RecordId[] | { RecordId: { chance?: number | { min?: number, max: number } } }`
+
+Adds spells to the actor's known spell list. Abilities, diseases, curses, and powers belong here, since they have no duration. A spell the actor already knows is a no-op and does not count as an applied action.
+
+```yaml
+add_spell:
+  corprus: { chance: 0.25 }
+```
+
+## `remove_spell`
+
+**Shape:** `remove_spell: RecordId | RecordId[] | { RecordId: { chance?: number | { min?: number, max: number } } }`
+
+Removes spells from the actor's known spell list. A spell the actor does not know is a no-op.
+
+```yaml
+remove_spell:
+  - common disease
+  - ash woe blight
+```
+
+## `add_active_spell`
+
+**Shape:** `add_active_spell: RecordId | RecordId[] | { RecordId: { chance?, effects?: integer[], name?: string, stackable?: boolean, ignoreResistances?: boolean, ignoreSpellAbsorption?: boolean, ignoreReflect?: boolean, quiet?: boolean } }`
+
+Applies a timed spell effect to the actor through OpenMW's active spells, without casting VFX or sound. When `effects` is omitted, every effect of the spell record is applied; a record ID that is not a spell record, such as a potion or enchanted item, requires an explicit `effects` list of zero-based indexes and otherwise logs a warning and no-ops. The remaining fields are forwarded to OpenMW unchanged.
+
+```yaml
+add_active_spell:
+  frenzy humanoid:
+    name: Sixth House Whispers
+    stackable: false
+```
+
+Spells without durations expire instantly when applied this way; use `add_spell` for those. Rules without `once` re-apply on every activation, which is the intended way to keep a cell-wide effect active while a condition such as `has_journal` holds.
+

@@ -17,7 +17,7 @@ end
 
 local StrFormat = string.format
 
-local next, pairs, pcall, type = next, pairs, pcall, type
+local next, pairs, pcall, type, unpack = next, pairs, pcall, type, unpack
 
 local addTag, removeTag
 local I = require 'openmw.interfaces'
@@ -35,6 +35,19 @@ local ActorObjectIsInstance = types.Actor.objectIsInstance
 local ContainerObjectIsInstance = types.Container.objectIsInstance
 
 local Player = world.players[1]
+
+local ActorSpells = types.Actor.spells
+local ActorActiveSpells = types.Actor.activeSpells
+local SpellRecords = core.magic.spells.records
+
+local ACTIVE_SPELL_OPTION_KEYS = {
+  'name',
+  'stackable',
+  'ignoreResistances',
+  'ignoreSpellAbsorption',
+  'ignoreReflect',
+  'quiet',
+}
 
 ---@param object openmw.GObject
 ---@return openmw.core.Inventory? inventory
@@ -154,6 +167,75 @@ local function unequipInventoryItem(actor, recordId, count)
   return false
 end
 
+---@param actor openmw.GObject
+---@param spellId RecordId
+---@return boolean wasAdded
+local function addSpellToActor(actor, spellId)
+  if not ActorObjectIsInstance(actor) then return false end
+
+  local spells = ActorSpells(actor)
+  if spells[spellId] then return false end
+
+  spells:add(spellId)
+  return true
+end
+
+---@param actor openmw.GObject
+---@param spellId RecordId
+---@return boolean wasRemoved
+local function removeSpellFromActor(actor, spellId)
+  if not ActorObjectIsInstance(actor) then return false end
+
+  local spells = ActorSpells(actor)
+  if not spells[spellId] then return false end
+
+  spells:remove(spellId)
+  return true
+end
+
+---@param spellId RecordId
+---@return integer[]? effectIndexes
+local function getAllSpellEffectIndexes(spellId)
+  local spellRecord = SpellRecords[spellId]
+  if not spellRecord then return end
+
+  local effectIndexes = {}
+  for effectIndex = 1, #spellRecord.effects do
+    effectIndexes[effectIndex] = effectIndex - 1
+  end
+
+  return effectIndexes
+end
+
+---@param actor openmw.GObject
+---@param spellId RecordId
+---@param details SSSActiveSpellDetails?
+---@return boolean wasAdded
+local function addActiveSpellToActor(actor, spellId, details)
+  if not ActorObjectIsInstance(actor) then return false end
+
+  local effectIndexes = details and details.effects or getAllSpellEffectIndexes(spellId)
+  if not effectIndexes then
+    WarnLog(
+      StrFormat('add_active_spell: %s is not a spell record and has no effects list', spellId)
+    )
+    return false
+  end
+
+  ---@type openmw.types.ActiveSpellAddOptions
+  local options = { id = spellId, effects = effectIndexes }
+
+  if details then
+    for keyIndex = 1, #ACTIVE_SPELL_OPTION_KEYS do
+      local optionKey = ACTIVE_SPELL_OPTION_KEYS[keyIndex]
+      options[optionKey] = details[optionKey]
+    end
+  end
+
+  ActorActiveSpells(actor):add(options)
+  return true
+end
+
 ---@param itemData integer|SSSItemActionDetails
 ---@return integer count
 ---@return SSSChanceRange? chance
@@ -246,6 +328,99 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
   end
 
   return false
+end
+
+---@param object openmw.GObject
+---@param spellAction SSSSpellAction
+---@param spellHandler fun(object: openmw.GObject, spellId: RecordId): boolean
+---@return boolean wasApplied
+local function applySpellAction(object, spellAction, spellHandler)
+  local actionType = type(spellAction)
+
+  if actionType == 'string' then return spellHandler(object, spellAction) end
+  if actionType ~= 'table' then return false end
+
+  local wasApplied = false
+  local firstKey = next(spellAction)
+
+  if firstKey and type(firstKey) == 'number' then
+    ---@cast spellAction RecordId[]
+    for spellIndex = 1, #spellAction do
+      wasApplied = spellHandler(object, spellAction[spellIndex]) or wasApplied
+    end
+
+    return wasApplied
+  end
+
+  ---@cast spellAction table<RecordId, SSSSpellDetails>
+  for spellId, details in pairs(spellAction) do
+    if shouldApplyChance(details.chance) then
+      wasApplied = spellHandler(object, spellId) or wasApplied
+    end
+  end
+
+  return wasApplied
+end
+
+---@param object openmw.GObject
+---@param activeSpellAction SSSActiveSpellAction
+---@return boolean wasApplied
+local function applyActiveSpellAction(object, activeSpellAction)
+  local actionType = type(activeSpellAction)
+
+  if actionType == 'string' then return addActiveSpellToActor(object, activeSpellAction) end
+  if actionType ~= 'table' then return false end
+
+  local wasApplied = false
+  local firstKey = next(activeSpellAction)
+
+  if firstKey and type(firstKey) == 'number' then
+    ---@cast activeSpellAction RecordId[]
+    for spellIndex = 1, #activeSpellAction do
+      wasApplied = addActiveSpellToActor(object, activeSpellAction[spellIndex]) or wasApplied
+    end
+
+    return wasApplied
+  end
+
+  ---@cast activeSpellAction table<RecordId, SSSActiveSpellDetails>
+  for spellId, details in pairs(activeSpellAction) do
+    if shouldApplyChance(details.chance) then
+      wasApplied = addActiveSpellToActor(object, spellId, details) or wasApplied
+    end
+  end
+
+  return wasApplied
+end
+
+---@param object openmw.GObject
+---@param eventAction SSSEventAction
+---@return SSSEventPayload payload
+local function buildEventPayload(object, eventAction)
+  local payload = {}
+
+  local eventData = eventAction.data
+  if eventData then
+    for key, value in pairs(eventData) do
+      payload[key] = value
+    end
+  end
+
+  payload.object = object
+
+  return payload
+end
+
+---@param object openmw.GObject
+---@param runAction SSSRunLuaScriptAction
+local function runTransientScript(object, runAction)
+  local scriptPath = runAction.script
+
+  ---@type SSSRunLuaScriptInitData
+  local initData = { ['function'] = runAction['function'], args = runAction.args }
+
+  object:addScript(scriptPath, initData)
+  object:removeScript(scriptPath)
 end
 
 ---
@@ -371,6 +546,15 @@ local actionHandlers = {
   end,
   ['unequip'] = function(object, unequipActionData)
     return applyItemAction(object, unequipActionData, unequipInventoryItem, 1)
+  end,
+  ['add_spell'] = function(object, addSpellActionData)
+    return applySpellAction(object, addSpellActionData, addSpellToActor)
+  end,
+  ['remove_spell'] = function(object, removeSpellActionData)
+    return applySpellAction(object, removeSpellActionData, removeSpellFromActor)
+  end,
+  ['add_active_spell'] = function(object, addActiveSpellActionData)
+    return applyActiveSpellAction(object, addActiveSpellActionData)
   end,
   ['disable'] = function(_, disableAction)
     if disableAction == true then return true end
@@ -591,6 +775,56 @@ local actionHandlers = {
   end,
   ['remove_lua_script'] = function(object, scriptPath)
     object:removeScript(scriptPath)
+    return true
+  end,
+  ['run_lua_script'] = function(object, runAction)
+    local didRun, runError = pcall(runTransientScript, object, runAction)
+    if not didRun then
+      WarnLog(
+        StrFormat('run_lua_script: %s on %s failed: %s', runAction.script, object.id, runError)
+      )
+    end
+
+    return didRun
+  end,
+  ['call_interface'] = function(object, callAction)
+    local interfaceName, functionName = callAction.interface, callAction['function']
+    local interface = I[interfaceName]
+    local interfaceFunction = interface and interface[functionName]
+
+    if type(interfaceFunction) ~= 'function' then
+      WarnLog(StrFormat('call_interface: %s.%s is not available', interfaceName, functionName))
+      return false
+    end
+
+    local args = callAction.args
+    local didCall, callError
+    if args then
+      didCall, callError = pcall(interfaceFunction, object, unpack(args))
+    else
+      didCall, callError = pcall(interfaceFunction, object)
+    end
+
+    if not didCall then
+      WarnLog(
+        StrFormat(
+          'call_interface: %s.%s on %s failed: %s',
+          interfaceName,
+          functionName,
+          object.id,
+          callError
+        )
+      )
+    end
+
+    return didCall
+  end,
+  ['send_event'] = function(object, eventAction)
+    object:sendEvent(eventAction.name, buildEventPayload(object, eventAction))
+    return true
+  end,
+  ['send_global_event'] = function(object, eventAction)
+    core.sendGlobalEvent(eventAction.name, buildEventPayload(object, eventAction))
     return true
   end,
   ['global_set'] = function(_, globalData)

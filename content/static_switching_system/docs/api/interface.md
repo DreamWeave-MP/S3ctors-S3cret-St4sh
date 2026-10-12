@@ -8,11 +8,11 @@ api_docs = true
 kind = "interface"
 +++
 
-{{ api_signature(value="require('openmw.interfaces').StaticSwitcher_G → version 4 interface") }}
+{{ api_signature(value="require('openmw.interfaces').StaticSwitcher_G → version 5 interface") }}
 
 `StaticSwitcher_G` is an advanced OpenMW-Lua integration surface provided by SSS's global script. Prefer YAML for authoring.
 
-The interface reports `version = 4`.
+The interface reports `version = 5`. Version 5 added the spell, transient script, interface call, and event actions and the `is_follower` condition to the YAML contract; the Lua members are unchanged from version 4.
 
 ## Version guard
 
@@ -23,7 +23,7 @@ The provider is optional. Check that it exists and that it exposes the interface
 local I = require 'openmw.interfaces'
 local SSS = I.StaticSwitcher_G
 
-if not SSS or SSS.version < 4 then
+if not SSS or SSS.version < 5 then
     return
 end
 ```
@@ -38,7 +38,7 @@ Use a minimum-version check when later versions preserve the members your integr
 | `composedReplacements` | `fun() → table` | Returns a read-only view of loaded static replacement data. This is diagnostic/advanced data, not a stable YAML authoring substitute. |
 | `objectModificationStore` | `fun() → table` | Returns a read-only view of loaded instance rules keyed by canonical module ID. Rule-table internals are advanced data. |
 | `overrideRecords` | `fun() → table` | Returns a read-only view of generated replacement record IDs keyed by canonical static module ID. |
-| `version` | `integer` | Current interface version, currently `4`. |
+| `version` | `integer` | Current interface version, currently `5`. |
 
 “Read-only” applies to the exposed view. Do not mutate returned tables, object handles, generated record IDs, or bookkeeping. Validate object handles before using them; an object can become invalid during deferred replacement or deletion.
 
