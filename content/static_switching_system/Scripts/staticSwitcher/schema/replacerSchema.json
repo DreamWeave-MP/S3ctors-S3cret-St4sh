@@ -26,8 +26,16 @@
                         }
                     },
                     "anyOf": [
-                        {"required": ["min"]},
-                        {"required": ["max"]}
+                        {
+                            "required": [
+                                "min"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "max"
+                            ]
+                        }
                     ],
                     "additionalProperties": false,
                     "description": "Range with at least one bound"
@@ -52,7 +60,9 @@
                             "description": "Required maximum sampled value"
                         }
                     },
-                    "required": ["max"],
+                    "required": [
+                        "max"
+                    ],
                     "additionalProperties": false,
                     "description": "Randomly sampled numeric range. The consuming action supplies the default minimum when it is omitted."
                 }
@@ -194,35 +204,37 @@
                                 {
                                     "type": "object",
                                     "properties": {
-                                    "count": {
-                                        "oneOf": [
-                                            {
-                                                "type": "integer",
-                                                "minimum": 1,
-                                                "description": "Fixed item count."
-                                            },
-                                            {
-                                                "type": "object",
-                                                "properties": {
-                                                    "min": {
-                                                        "type": "integer",
-                                                        "minimum": 1,
-                                                        "description": "Minimum count (defaults to 1)."
-                                                    },
-                                                    "max": {
-                                                        "type": "integer",
-                                                        "minimum": 1,
-                                                        "description": "Required maximum count."
-                                                    }
+                                        "count": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "integer",
+                                                    "minimum": 1,
+                                                    "description": "Fixed item count."
                                                 },
-                                                "required": ["max"],
-                                                "additionalProperties": false,
-                                                "description": "Random count range."
-                                            }
-                                        ],
-                                        "default": 1,
-                                        "description": "Number of items to apply, or a random range."
-                                    },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "min": {
+                                                            "type": "integer",
+                                                            "minimum": 1,
+                                                            "description": "Minimum count (defaults to 1)."
+                                                        },
+                                                        "max": {
+                                                            "type": "integer",
+                                                            "minimum": 1,
+                                                            "description": "Required maximum count."
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "max"
+                                                    ],
+                                                    "additionalProperties": false,
+                                                    "description": "Random count range."
+                                                }
+                                            ],
+                                            "default": 1,
+                                            "description": "Number of items to apply, or a random range."
+                                        },
                                         "chance": {
                                             "$ref": "#/definitions/chanceRange",
                                             "description": "Chance to apply this item entry."
@@ -281,14 +293,26 @@
             "properties": {
                 "count": {
                     "oneOf": [
-                        {"type": "integer", "minimum": 1, "description": "Fixed number of objects."},
+                        {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Fixed number of objects."
+                        },
                         {
                             "type": "object",
                             "properties": {
-                                "min": {"type": "integer", "minimum": 1},
-                                "max": {"type": "integer", "minimum": 1}
+                                "min": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "max": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                }
                             },
-                            "required": ["max"],
+                            "required": [
+                                "max"
+                            ],
                             "additionalProperties": false,
                             "description": "Random count range."
                         }
@@ -313,7 +337,10 @@
                 },
                 "transform_type": {
                     "type": "string",
-                    "enum": ["relative", "absolute"],
+                    "enum": [
+                        "relative",
+                        "absolute"
+                    ],
                     "default": "relative",
                     "description": "Whether position/rotation/scale overrides are relative to the current accumulated action placement (default) or absolute."
                 }
@@ -326,9 +353,18 @@
             "patternProperties": {
                 "^.*$": {
                     "oneOf": [
-                        {"type": "string", "description": "Spawn 1 copy at the accumulated action placement."},
-                        {"type": "integer", "minimum": 1, "description": "Spawn this many copies at the accumulated action placement."},
-                        {"$ref": "#/definitions/createPool"}
+                        {
+                            "type": "string",
+                            "description": "Spawn 1 copy at the accumulated action placement."
+                        },
+                        {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Spawn this many copies at the accumulated action placement."
+                        },
+                        {
+                            "$ref": "#/definitions/createPool"
+                        }
                     ]
                 }
             },
@@ -421,12 +457,18 @@
                 "global_set": {
                     "type": "object",
                     "properties": {
-                        "name": {"type": "string", "description": "Global variable name."},
+                        "name": {
+                            "type": "string",
+                            "description": "Global variable name."
+                        },
                         "value": {
                             "$ref": "#/definitions/randomNumericRange"
                         }
                     },
-                    "required": ["name", "value"],
+                    "required": [
+                        "name",
+                        "value"
+                    ],
                     "additionalProperties": false,
                     "description": "Set a MWScript global variable to a value or random range."
                 },
@@ -435,34 +477,69 @@
                     "properties": {
                         "cell": {
                             "oneOf": [
-                                {"type": "string", "description": "Cell name or ID."},
-                                {"type": "object", "properties": {"x": {"type": "integer"}, "y": {"type": "integer"}}, "required": ["x", "y"], "additionalProperties": false, "description": "Exterior grid coordinates."}
+                                {
+                                    "type": "string",
+                                    "description": "Cell name or ID."
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "x": {
+                                            "type": "integer"
+                                        },
+                                        "y": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "x",
+                                        "y"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Exterior grid coordinates."
+                                }
                             ]
                         },
                         "position": {
                             "type": "object",
                             "properties": {
-                                "x": {"$ref": "#/definitions/randomNumericRange"},
-                                "y": {"$ref": "#/definitions/randomNumericRange"},
-                                "z": {"$ref": "#/definitions/randomNumericRange"}
+                                "x": {
+                                    "$ref": "#/definitions/randomNumericRange"
+                                },
+                                "y": {
+                                    "$ref": "#/definitions/randomNumericRange"
+                                },
+                                "z": {
+                                    "$ref": "#/definitions/randomNumericRange"
+                                }
                             },
                             "additionalProperties": false
                         },
-                        "rotation": {"$ref": "#/definitions/randomVector3Range"},
-                        "onGround": {"type": "boolean", "description": "Place on ground after teleport."}
+                        "rotation": {
+                            "$ref": "#/definitions/randomVector3Range"
+                        },
+                        "onGround": {
+                            "type": "boolean",
+                            "description": "Place on ground after teleport."
+                        }
                     },
                     "additionalProperties": false,
                     "description": "Teleport the target object to a cell and/or position."
                 },
                 "key": {
                     "oneOf": [
-                        {"const": false, "description": "Remove the key from the object."},
+                        {
+                            "const": false,
+                            "description": "Remove the key from the object."
+                        },
                         {
                             "type": "array",
                             "items": {
                                 "type": "object",
                                 "patternProperties": {
-                                    "^.*$": {"$ref": "#/definitions/chanceRange"}
+                                    "^.*$": {
+                                        "$ref": "#/definitions/chanceRange"
+                                    }
                                 },
                                 "minProperties": 1,
                                 "maxProperties": 1,
@@ -476,13 +553,18 @@
                 },
                 "trap": {
                     "oneOf": [
-                        {"const": false, "description": "Remove the trap from the object."},
+                        {
+                            "const": false,
+                            "description": "Remove the trap from the object."
+                        },
                         {
                             "type": "array",
                             "items": {
                                 "type": "object",
                                 "patternProperties": {
-                                    "^.*$": {"$ref": "#/definitions/chanceRange"}
+                                    "^.*$": {
+                                        "$ref": "#/definitions/chanceRange"
+                                    }
                                 },
                                 "minProperties": 1,
                                 "maxProperties": 1,
@@ -497,31 +579,71 @@
                 "set_ownership": {
                     "type": "object",
                     "properties": {
-                        "owner": {"type": "string", "description": "NPC record ID to set as owner."},
-                        "faction": {"type": "string", "description": "Faction ID to set as owner."},
-                        "factionRank": {"type": "integer", "minimum": 0, "description": "Required faction rank."}
+                        "owner": {
+                            "type": "string",
+                            "description": "NPC record ID to set as owner."
+                        },
+                        "faction": {
+                            "type": "string",
+                            "description": "Faction ID to set as owner."
+                        },
+                        "factionRank": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Required faction rank."
+                        }
                     },
                     "additionalProperties": false,
                     "description": "Set ownership on the target object. All fields optional."
                 },
                 "playsound": {
                     "oneOf": [
-                        {"type": "string", "description": "Sound record ID to play."},
+                        {
+                            "type": "string",
+                            "description": "Sound record ID to play."
+                        },
                         {
                             "type": "object",
                             "properties": {
-                                "id": {"type": "string", "description": "Sound record ID."},
-                                "file": {"type": "string", "description": "VFS path to a sound file."},
-                                "chance": {"$ref": "#/definitions/chanceRange"},
-                                "volume": {"type": "number", "minimum": 0},
-                                "pitch": {"type": "number", "minimum": 0},
-                                "loop": {"type": "boolean"},
-                                "timeOffset": {"type": "number", "minimum": 0}
+                                "id": {
+                                    "type": "string",
+                                    "description": "Sound record ID."
+                                },
+                                "file": {
+                                    "type": "string",
+                                    "description": "VFS path to a sound file."
+                                },
+                                "chance": {
+                                    "$ref": "#/definitions/chanceRange"
+                                },
+                                "volume": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "pitch": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "loop": {
+                                    "type": "boolean"
+                                },
+                                "timeOffset": {
+                                    "type": "number",
+                                    "minimum": 0
+                                }
                             },
                             "additionalProperties": false,
                             "anyOf": [
-                                {"required": ["id"]},
-                                {"required": ["file"]}
+                                {
+                                    "required": [
+                                        "id"
+                                    ]
+                                },
+                                {
+                                    "required": [
+                                        "file"
+                                    ]
+                                }
                             ],
                             "description": "3D positional sound at target. Requires id or file."
                         }
@@ -739,8 +861,12 @@
                 },
                 "not": {
                     "allOf": [
-                        {"$ref": "#/definitions/conditionData"},
-                        {"maxProperties": 1}
+                        {
+                            "$ref": "#/definitions/conditionData"
+                        },
+                        {
+                            "maxProperties": 1
+                        }
                     ],
                     "description": "Invert a single inner condition. The value is a condition table like {nameMatch: \"Guard\"} — the inner condition is evaluated and the result negated."
                 },
@@ -751,11 +877,31 @@
                         "patternProperties": {
                             "^.*$": {
                                 "oneOf": [
-                                    {"type": "number"},
+                                    {
+                                        "type": "number"
+                                    },
                                     {
                                         "type": "object",
-                                        "properties": {"min": {"type": "number"}, "max": {"type": "number"}},
-                                        "anyOf": [{"required": ["min"]}, {"required": ["max"]}],
+                                        "properties": {
+                                            "min": {
+                                                "type": "number"
+                                            },
+                                            "max": {
+                                                "type": "number"
+                                            }
+                                        },
+                                        "anyOf": [
+                                            {
+                                                "required": [
+                                                    "min"
+                                                ]
+                                            },
+                                            {
+                                                "required": [
+                                                    "max"
+                                                ]
+                                            }
+                                        ],
                                         "additionalProperties": false
                                     }
                                 ]
@@ -816,17 +962,43 @@
                 },
                 "has_trap": {
                     "oneOf": [
-                        {"type": "boolean", "description": "Check if object has any trap set."},
-                        {"type": "string", "description": "Trap spell ID to match exactly."},
-                        {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "Match any of the listed trap spell IDs."}
+                        {
+                            "type": "boolean",
+                            "description": "Check if object has any trap set."
+                        },
+                        {
+                            "type": "string",
+                            "description": "Trap spell ID to match exactly."
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "minItems": 1,
+                            "description": "Match any of the listed trap spell IDs."
+                        }
                     ],
                     "description": "Gate by object trap state. Non-lockable objects return false."
                 },
                 "has_key": {
                     "oneOf": [
-                        {"type": "boolean", "description": "Check if object has any key set."},
-                        {"type": "string", "description": "Key record ID to match exactly."},
-                        {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "Match any of the listed key record IDs."}
+                        {
+                            "type": "boolean",
+                            "description": "Check if object has any key set."
+                        },
+                        {
+                            "type": "string",
+                            "description": "Key record ID to match exactly."
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "minItems": 1,
+                            "description": "Match any of the listed key record IDs."
+                        }
                     ],
                     "description": "Gate by object key state. Non-lockable objects return false."
                 },
@@ -859,8 +1031,30 @@
                 },
                 "creature_type": {
                     "oneOf": [
-                        {"type": "string", "enum": ["creatures", "daedra", "undead", "humanoid"], "description": "Creature type name."},
-                        {"type": "array", "items": {"type": "string", "enum": ["creatures", "daedra", "undead", "humanoid"]}, "minItems": 1, "description": "Match any."}
+                        {
+                            "type": "string",
+                            "enum": [
+                                "creatures",
+                                "daedra",
+                                "undead",
+                                "humanoid"
+                            ],
+                            "description": "Creature type name."
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "creatures",
+                                    "daedra",
+                                    "undead",
+                                    "humanoid"
+                                ]
+                            },
+                            "minItems": 1,
+                            "description": "Match any."
+                        }
                     ],
                     "description": "Target creature type classification. Non-creatures return false."
                 },
@@ -882,13 +1076,26 @@
                 },
                 "locked": {
                     "oneOf": [
-                        {"type": "boolean", "description": "Check if the object is locked or unlocked."},
-                        {"type": "integer", "minimum": 1, "description": "Object must be locked at this level or higher."},
+                        {
+                            "type": "boolean",
+                            "description": "Check if the object is locked or unlocked."
+                        },
+                        {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Object must be locked at this level or higher."
+                        },
                         {
                             "type": "object",
                             "properties": {
-                                "min": {"type": "integer", "minimum": 1},
-                                "max": {"type": "integer", "minimum": 1}
+                                "min": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "max": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                }
                             },
                             "additionalProperties": false,
                             "description": "Lock level range. Object must be locked. At least one of min/max required."
@@ -906,16 +1113,30 @@
                         {
                             "type": "object",
                             "properties": {
-                                "min": {"type": "integer", "minimum": 1},
-                                "max": {"type": "integer", "minimum": 1}
+                                "min": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "max": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                }
                             },
                             "additionalProperties": false,
                             "description": "Player level range. At least one of min or max is required."
                         }
                     ],
                     "anyOf": [
-                        {"required": ["min"]},
-                        {"required": ["max"]}
+                        {
+                            "required": [
+                                "min"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "max"
+                            ]
+                        }
                     ],
                     "description": "Gate by player level. Bare number means at-least."
                 },
@@ -928,16 +1149,31 @@
                     "patternProperties": {
                         "^.*$": {
                             "oneOf": [
-                                {"type": "number", "description": "Minimum modified attribute value."},
+                                {
+                                    "type": "number",
+                                    "description": "Minimum modified attribute value."
+                                },
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "min": {"type": "number"},
-                                        "max": {"type": "number"}
+                                        "min": {
+                                            "type": "number"
+                                        },
+                                        "max": {
+                                            "type": "number"
+                                        }
                                     },
                                     "anyOf": [
-                                        {"required": ["min"]},
-                                        {"required": ["max"]}
+                                        {
+                                            "required": [
+                                                "min"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "max"
+                                            ]
+                                        }
                                     ],
                                     "additionalProperties": false,
                                     "description": "Modified attribute range."
@@ -954,16 +1190,31 @@
                     "patternProperties": {
                         "^.*$": {
                             "oneOf": [
-                                {"type": "number", "description": "Minimum modified skill value."},
+                                {
+                                    "type": "number",
+                                    "description": "Minimum modified skill value."
+                                },
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "min": {"type": "number"},
-                                        "max": {"type": "number"}
+                                        "min": {
+                                            "type": "number"
+                                        },
+                                        "max": {
+                                            "type": "number"
+                                        }
                                     },
                                     "anyOf": [
-                                        {"required": ["min"]},
-                                        {"required": ["max"]}
+                                        {
+                                            "required": [
+                                                "min"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "max"
+                                            ]
+                                        }
                                     ],
                                     "additionalProperties": false,
                                     "description": "Modified skill range."
@@ -980,16 +1231,31 @@
                     "patternProperties": {
                         "^.*$": {
                             "oneOf": [
-                                {"type": "number", "description": "Minimum modified attribute value."},
+                                {
+                                    "type": "number",
+                                    "description": "Minimum modified attribute value."
+                                },
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "min": {"type": "number"},
-                                        "max": {"type": "number"}
+                                        "min": {
+                                            "type": "number"
+                                        },
+                                        "max": {
+                                            "type": "number"
+                                        }
                                     },
                                     "anyOf": [
-                                        {"required": ["min"]},
-                                        {"required": ["max"]}
+                                        {
+                                            "required": [
+                                                "min"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "max"
+                                            ]
+                                        }
                                     ],
                                     "additionalProperties": false
                                 }
@@ -1005,16 +1271,31 @@
                     "patternProperties": {
                         "^.*$": {
                             "oneOf": [
-                                {"type": "number", "description": "Minimum modified skill value."},
+                                {
+                                    "type": "number",
+                                    "description": "Minimum modified skill value."
+                                },
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "min": {"type": "number"},
-                                        "max": {"type": "number"}
+                                        "min": {
+                                            "type": "number"
+                                        },
+                                        "max": {
+                                            "type": "number"
+                                        }
                                     },
                                     "anyOf": [
-                                        {"required": ["min"]},
-                                        {"required": ["max"]}
+                                        {
+                                            "required": [
+                                                "min"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "max"
+                                            ]
+                                        }
                                     ],
                                     "additionalProperties": false
                                 }
@@ -1025,7 +1306,10 @@
                     "additionalProperties": false,
                     "description": "Target NPC modified skill checks. Non-NPCs return false."
                 },
-                "player_health": {"$ref": "#/definitions/numericRange", "description": "Player current health gate. Bare number means at-least."},
+                "player_health": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Player current health gate. Bare number means at-least."
+                },
                 "player_spell": {
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "Spell ID(s) the player must know. Exact match."
@@ -1034,11 +1318,26 @@
                     "$ref": "#/definitions/stringOrStringList",
                     "description": "Spell ID(s) the target must know. Non-actors return false."
                 },
-                "player_magicka": {"$ref": "#/definitions/numericRange", "description": "Player current magicka gate."},
-                "player_fatigue": {"$ref": "#/definitions/numericRange", "description": "Player current fatigue gate."},
-                "target_health": {"$ref": "#/definitions/numericRange", "description": "Target current health gate. Non-actors return false."},
-                "target_magicka": {"$ref": "#/definitions/numericRange", "description": "Target current magicka gate. Non-actors return false."},
-                "target_fatigue": {"$ref": "#/definitions/numericRange", "description": "Target current fatigue gate. Non-actors return false."},
+                "player_magicka": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Player current magicka gate."
+                },
+                "player_fatigue": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Player current fatigue gate."
+                },
+                "target_health": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Target current health gate. Non-actors return false."
+                },
+                "target_magicka": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Target current magicka gate. Non-actors return false."
+                },
+                "target_fatigue": {
+                    "$ref": "#/definitions/numericRange",
+                    "description": "Target current fatigue gate. Non-actors return false."
+                },
                 "time_of_day": {
                     "$ref": "#/definitions/numericRange",
                     "description": "Game hour gate. Bare number means at-least, table with min/max for range. Hour is a 0-23 float."
@@ -1091,16 +1390,43 @@
                 "player_faction": {
                     "type": "object",
                     "properties": {
-                        "faction": {"type": "string", "description": "Faction ID to check membership of."},
-                        "rank": {"type": "integer", "minimum": 1, "description": "Shorthand for min. Rank >= rank."},
-                        "min": {"type": "integer", "minimum": 1},
-                        "max": {"type": "integer", "minimum": 1}
+                        "faction": {
+                            "type": "string",
+                            "description": "Faction ID to check membership of."
+                        },
+                        "rank": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Shorthand for min. Rank >= rank."
+                        },
+                        "min": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "max": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
                     },
-                    "required": ["faction"],
+                    "required": [
+                        "faction"
+                    ],
                     "anyOf": [
-                        {"required": ["rank"]},
-                        {"required": ["min"]},
-                        {"required": ["max"]}
+                        {
+                            "required": [
+                                "rank"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "min"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "max"
+                            ]
+                        }
                     ],
                     "additionalProperties": false,
                     "description": "Player faction membership. At least one of rank/min/max is required. Returns false if player is not in the faction."
@@ -1108,16 +1434,43 @@
                 "target_faction": {
                     "type": "object",
                     "properties": {
-                        "faction": {"type": "string", "description": "Faction ID to check membership of."},
-                        "rank": {"type": "integer", "minimum": 1, "description": "Shorthand for min. Rank >= rank."},
-                        "min": {"type": "integer", "minimum": 1},
-                        "max": {"type": "integer", "minimum": 1}
+                        "faction": {
+                            "type": "string",
+                            "description": "Faction ID to check membership of."
+                        },
+                        "rank": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Shorthand for min. Rank >= rank."
+                        },
+                        "min": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "max": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
                     },
-                    "required": ["faction"],
+                    "required": [
+                        "faction"
+                    ],
                     "anyOf": [
-                        {"required": ["rank"]},
-                        {"required": ["min"]},
-                        {"required": ["max"]}
+                        {
+                            "required": [
+                                "rank"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "min"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "max"
+                            ]
+                        }
                     ],
                     "additionalProperties": false,
                     "description": "Target NPC faction membership. Same shape as player_faction. Non-NPCs return false."
@@ -1138,23 +1491,37 @@
                         },
                         {
                             "type": "array",
-                            "items": {"type": "string"},
+                            "items": {
+                                "type": "string"
+                            },
                             "minItems": 1,
                             "description": "Match any of the listed weather name substrings. Include \"none\" to match when no weather is active."
                         },
                         {
                             "type": "object",
                             "properties": {
-                                "isStorm": {"type": "boolean"},
-                                "name": {"type": "string"}
+                                "isStorm": {
+                                    "type": "boolean"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
                             },
                             "additionalProperties": false,
                             "description": "Match by storm flag and/or weather name substring. At least one of isStorm or name is required; when both are present both must match."
                         }
                     ],
                     "anyOf": [
-                        {"required": ["isStorm"]},
-                        {"required": ["name"]}
+                        {
+                            "required": [
+                                "isStorm"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "name"
+                            ]
+                        }
                     ],
                     "description": "Gate by current weather in the player's cell."
                 },
@@ -1228,7 +1595,9 @@
                         },
                         {
                             "type": "string",
-                            "enum": ["per_cell"],
+                            "enum": [
+                                "per_cell"
+                            ],
                             "description": "The rule is eligible once per SSS activation batch. Applied actions do not persist across save/load."
                         }
                     ],
@@ -1248,7 +1617,15 @@
         },
         "priority": {
             "type": "string",
-            "enum": ["cleanup", "foundation", "remodel", "balance", "standard", "polish", "finisher"],
+            "enum": [
+                "cleanup",
+                "foundation",
+                "remodel",
+                "balance",
+                "standard",
+                "polish",
+                "finisher"
+            ],
             "default": "standard",
             "description": "SSS module execution-order tier. Earlier tiers are evaluated first; modules within the same tier are ordered by canonical module ID. Applies to both instance modules and static replacement modules. For static modules, priority determines the order in which replacement modules are considered. Defaults to standard."
         },
@@ -1389,7 +1766,9 @@
                     "conditions": [
                         {
                             "content_file_target": {
-                                "Morrowind.esm": [67647]
+                                "Morrowind.esm": [
+                                    67647
+                                ]
                             }
                         }
                     ],
