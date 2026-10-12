@@ -52,13 +52,15 @@ Instance rules remain in the order written in `instances`; matching rules are co
 4. `set_ownership`
 5. `add_tag`, `remove_tag`
 6. `add`, `remove`, `equip`, `unequip`
-7. `lock_level`, `key`, `trap`
-8. `create`
-9. `global_set`
-10. `playsound`
-11. `add_lua_script`, `activate_by_player`, `remove_lua_script`
-12. `disable`
-13. `delete`
+7. `add_spell`, `remove_spell`, `add_active_spell`
+8. `lock_level`, `key`, `trap`
+9. `create`
+10. `global_set`
+11. `playsound`
+12. `add_lua_script`, `activate_by_player`, `remove_lua_script`
+13. `run_lua_script`, `call_interface`, `send_event`, `send_global_event`
+14. `disable`
+15. `delete`
 
 An action block's `chance` is rolled before the fields in that block. Some fields have a second chance: item entries, sound data, key/trap candidates, replacement candidates, pools, and conditional disable. These rolls are independent.
 

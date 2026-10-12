@@ -264,6 +264,122 @@
                 }
             ]
         },
+        "spellAction": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/recordId",
+                    "description": "A spell record ID."
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/recordId"
+                    },
+                    "minItems": 1,
+                    "description": "Spell record IDs applied in order."
+                },
+                {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "type": "object",
+                            "properties": {
+                                "chance": {
+                                    "$ref": "#/definitions/chanceRange",
+                                    "description": "Chance to apply this spell entry."
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Per-spell options."
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Spell record IDs mapped to per-entry options."
+                }
+            ]
+        },
+        "activeSpellAction": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/recordId",
+                    "description": "A spell record ID; every effect of the record is applied."
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/recordId"
+                    },
+                    "minItems": 1,
+                    "description": "Spell record IDs; every effect of each record is applied."
+                },
+                {
+                    "type": "object",
+                    "patternProperties": {
+                        "^.*$": {
+                            "type": "object",
+                            "properties": {
+                                "chance": {
+                                    "$ref": "#/definitions/chanceRange",
+                                    "description": "Chance to apply this entry."
+                                },
+                                "effects": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "description": "Zero-based effect indexes to apply. Defaults to every effect of the spell record; required for enchanted item, potion, and ingredient records."
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "description": "Name shown in the active effects UI."
+                                },
+                                "stackable": {
+                                    "type": "boolean",
+                                    "description": "Allow the effect to stack like a potion."
+                                },
+                                "ignoreResistances": {
+                                    "type": "boolean"
+                                },
+                                "ignoreSpellAbsorption": {
+                                    "type": "boolean"
+                                },
+                                "ignoreReflect": {
+                                    "type": "boolean"
+                                },
+                                "quiet": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "OpenMW active spell options for this record."
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "description": "Record IDs mapped to active spell options."
+                }
+            ]
+        },
+        "eventAction": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Event name."
+                },
+                "data": {
+                    "type": "object",
+                    "description": "Extra payload fields. SSS copies them and injects the current action target as `object`."
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "additionalProperties": false
+        },
         "transformAction": {
             "type": "object",
             "properties": {
@@ -410,6 +526,18 @@
                     "$ref": "#/definitions/itemAction",
                     "description": "Queues forced OpenMW UseItem for one or more currently equipped matching items on the current action target when the target is an Actor. The requested count must already be equipped; missing items are not created."
                 },
+                "add_spell": {
+                    "$ref": "#/definitions/spellAction",
+                    "description": "Adds spell(s) to the known spells of an Actor target. Already-known spells no-op."
+                },
+                "remove_spell": {
+                    "$ref": "#/definitions/spellAction",
+                    "description": "Removes spell(s) from the known spells of an Actor target. Unknown spells no-op."
+                },
+                "add_active_spell": {
+                    "$ref": "#/definitions/activeSpellAction",
+                    "description": "Adds active spell effect(s) to an Actor target without VFX or sound. Spells without durations (abilities, curses, diseases) expire instantly; use add_spell for those."
+                },
                 "disable": {
                     "oneOf": [
                         {
@@ -453,6 +581,59 @@
                 "remove_lua_script": {
                     "type": "string",
                     "description": "VFS path to a Lua script to remove from the target object."
+                },
+                "run_lua_script": {
+                    "type": "object",
+                    "properties": {
+                        "script": {
+                            "type": "string",
+                            "description": "VFS path of a CUSTOM-flagged local script."
+                        },
+                        "function": {
+                            "type": "string",
+                            "description": "Function name passed to the script's onInit as `function`."
+                        },
+                        "args": {
+                            "type": "array",
+                            "description": "Positional arguments passed to the script's onInit as `args`."
+                        }
+                    },
+                    "required": [
+                        "script"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Attaches the script to the target, which runs its onInit synchronously with `{ function, args }`, then detaches it. One-shot: timers and callbacks the script creates are discarded."
+                },
+                "call_interface": {
+                    "type": "object",
+                    "properties": {
+                        "interface": {
+                            "type": "string",
+                            "description": "Global interface name in openmw.interfaces."
+                        },
+                        "function": {
+                            "type": "string",
+                            "description": "Function name on that interface."
+                        },
+                        "args": {
+                            "type": "array",
+                            "description": "Positional arguments appended after the target object."
+                        }
+                    },
+                    "required": [
+                        "interface",
+                        "function"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Calls a global interface function synchronously with the target object as the first argument followed by args. Missing interfaces and errors are logged and no-op."
+                },
+                "send_event": {
+                    "$ref": "#/definitions/eventAction",
+                    "description": "Sends a local event to the target object's scripts. The payload is `data` plus `object`."
+                },
+                "send_global_event": {
+                    "$ref": "#/definitions/eventAction",
+                    "description": "Sends a global event. The payload is `data` plus `object`."
                 },
                 "global_set": {
                     "type": "object",
@@ -684,6 +865,21 @@
                 },
                 {
                     "required": [
+                        "add_spell"
+                    ]
+                },
+                {
+                    "required": [
+                        "remove_spell"
+                    ]
+                },
+                {
+                    "required": [
+                        "add_active_spell"
+                    ]
+                },
+                {
+                    "required": [
                         "disable"
                     ]
                 },
@@ -755,6 +951,26 @@
                 {
                     "required": [
                         "remove_lua_script"
+                    ]
+                },
+                {
+                    "required": [
+                        "run_lua_script"
+                    ]
+                },
+                {
+                    "required": [
+                        "call_interface"
+                    ]
+                },
+                {
+                    "required": [
+                        "send_event"
+                    ]
+                },
+                {
+                    "required": [
+                        "send_global_event"
                     ]
                 }
             ],
@@ -1024,6 +1240,10 @@
                 "is_dead": {
                     "type": "boolean",
                     "description": "Whether the target actor is dead. Non-actors return false."
+                },
+                "is_follower": {
+                    "type": "boolean",
+                    "description": "Whether Follower Detection Util currently lists the target actor as following the player. Requires FDU; without it, or for non-actors, returns false."
                 },
                 "is_respawning": {
                     "type": "boolean",

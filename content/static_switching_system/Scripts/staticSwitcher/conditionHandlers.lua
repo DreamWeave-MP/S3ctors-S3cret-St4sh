@@ -180,6 +180,17 @@ local conditionHandlers = {
 
     return types.Actor.isDead(object) == shouldBeDead
   end,
+  ---@param object openmw.GObject
+  ---@param shouldBeFollower boolean
+  ---@return boolean
+  is_follower = function(object, shouldBeFollower)
+    local followerDetection = I.FollowerDetectionUtil
+    if not followerDetection or not types.Actor.objectIsInstance(object) then return false end
+
+    local isFollower = followerDetection.getFollowerList()[object.id] ~= nil
+
+    return isFollower == shouldBeFollower
+  end,
   is_respawning = function(object, shouldBeRespawning)
     local objectRecord
 

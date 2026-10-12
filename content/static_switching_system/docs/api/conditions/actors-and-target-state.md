@@ -21,6 +21,18 @@ Matches an Actor's dead state. Non-actors return false.
 is_dead: false
 ```
 
+## `is_follower`
+
+**Shape:** `is_follower: boolean`
+
+Matches whether [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053) currently lists the actor as following the player, directly or through another follower. This condition requires that optional mod; without it, and for non-actors, it always returns false, including `is_follower: false`.
+
+```yaml
+is_follower: true
+```
+
+Follower Detection Util tracks followers from their own local scripts and drops an actor from its list when the actor goes inactive, re-adding it shortly after it becomes active again. SSS evaluates conditions as objects activate, so a follower arriving with the player in a new cell is commonly still unlisted at that moment. Treat `is_follower: false` as "not currently listed", not as proof that the actor is independent, and prefer rules that evaluate once the follower has settled.
+
 ## `is_respawning`
 
 **Shape:** `is_respawning: boolean`

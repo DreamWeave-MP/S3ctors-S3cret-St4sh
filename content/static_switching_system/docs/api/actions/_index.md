@@ -18,9 +18,9 @@ Instance actions run from YAML `actions` arrays after a rule's conditions match.
 | Need | Reference |
 | --- | --- |
 | Replacement, transforms, teleport, and spawning | [World and transform actions](@/static_switching_system/docs/api/actions/world-and-transform.md) |
-| Add, remove, equip, and unequip inventory items | [Inventory and equipment actions](@/static_switching_system/docs/api/actions/inventory-and-equipment.md) |
+| Add, remove, equip, and unequip inventory items; add, remove, and apply spells | [Inventory, equipment, and spell actions](@/static_switching_system/docs/api/actions/inventory-and-equipment.md) |
 | Locks, keys, traps, ownership, globals, disable, and delete | [World-state actions](@/static_switching_system/docs/api/actions/world-state.md) |
-| Scripts, activation, tags, and sounds | [Scripts, tags, and sound actions](@/static_switching_system/docs/api/actions/scripts-tags-and-sound.md) |
+| Scripts, interface calls, events, activation, tags, and sounds | [Scripts, tags, and sound actions](@/static_switching_system/docs/api/actions/scripts-tags-and-sound.md) |
 | Sampled action values and required upper bounds | [Random action ranges](@/static_switching_system/docs/api/actions/random-ranges.md) |
 | Combined action order and chance rolls | [Action execution order](@/static_switching_system/docs/api/actions/execution-order.md) |
 

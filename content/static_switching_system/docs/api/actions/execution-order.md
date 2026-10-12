@@ -23,17 +23,24 @@ SSS sorts action fields by this fixed priority, independent of YAML mapping orde
 | 8 | `remove` |
 | 9 | `equip` |
 | 10 | `unequip` |
-| 11 | `lock_level` |
-| 12 | `key` |
-| 13 | `trap` |
-| 14 | `create` |
-| 15 | `global_set` |
-| 16 | `playsound` |
-| 17 | `add_lua_script` |
-| 18 | `activate_by_player` |
-| 19 | `remove_lua_script` |
-| 20 | `disable` |
-| 21 | `delete` |
+| 11 | `add_spell` |
+| 12 | `remove_spell` |
+| 13 | `add_active_spell` |
+| 14 | `lock_level` |
+| 15 | `key` |
+| 16 | `trap` |
+| 17 | `create` |
+| 18 | `global_set` |
+| 19 | `playsound` |
+| 20 | `add_lua_script` |
+| 21 | `activate_by_player` |
+| 22 | `remove_lua_script` |
+| 23 | `run_lua_script` |
+| 24 | `call_interface` |
+| 25 | `send_event` |
+| 26 | `send_global_event` |
+| 27 | `disable` |
+| 28 | `delete` |
 
 ## Action-block chance
 
@@ -67,8 +74,8 @@ instances:
         delete: true
 ```
 
-`replace` changes the current action target to a newly created object only when a replacement roll succeeds. With `replace: self`, that object is created from the original object's record ID. Later transform, teleport, object-property, inventory, script, tag, sound, and disable operations use that replacement target. `delete` always refers to the original matched source; when it shares an action table with `replace`, it queues deletion only after a successful replacement. Use a separate delete action table when source deletion must be unconditional.
+`replace` changes the current action target to a newly created object only when a replacement roll succeeds. With `replace: self`, that object is created from the original object's record ID. Later transform, teleport, object-property, inventory, spell, script, interface, event, tag, sound, and disable operations use that replacement target. `delete` always refers to the original matched source; when it shares an action table with `replace`, it queues deletion only after a successful replacement. Use a separate delete action table when source deletion must be unconditional.
 
-SSS accumulates transform and teleport placement changes, then performs one engine placement operation after the action list finishes. A teleport starts from the current accumulated cell, position, and rotation, so transforms and teleports compose without depending on the engine applying `GameObject:teleport()` immediately. A later transform continues from the intended teleported placement and clears an earlier teleport's `onGround` request. `create` receives that same accumulated cell, position, rotation, and scale, so pools are based on the pending placement rather than the target's still-committed engine state. A pending `onGround: true` teleport still contributes its requested, unsnapped position; `create` cannot observe the later ground-snapped result. `playsound` remains attached to the target's currently committed engine position. Deletes are queued and processed asynchronously, not necessarily during the handler call. A failed or unsupported action generally no-ops; invalid types, missing required random upper bounds, invalid records, and invalid cells can raise or log according to the action.
+SSS accumulates transform and teleport placement changes, then performs one engine placement operation after the action list finishes. A teleport starts from the current accumulated cell, position, and rotation, so transforms and teleports compose without depending on the engine applying `GameObject:teleport()` immediately. A later transform continues from the intended teleported placement and clears an earlier teleport's `onGround` request. `create` receives that same accumulated cell, position, rotation, and scale, so pools are based on the pending placement rather than the target's still-committed engine state. A pending `onGround: true` teleport still contributes its requested, unsnapped position; `create` cannot observe the later ground-snapped result. `playsound` remains attached to the target's currently committed engine position. `send_event` and `send_global_event` are delivered on a later frame; a receiver that shares a block with `delete` may receive an `object` that is already invalid. Deletes are queued and processed asynchronously, not necessarily during the handler call. A failed or unsupported action generally no-ops; invalid types, missing required random upper bounds, invalid records, and invalid cells can raise or log according to the action.
 
 See [random action ranges](@/static_switching_system/docs/api/actions/random-ranges.md) for sampled values and the relevant grouped pages for target restrictions and no-op behavior.
