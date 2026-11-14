@@ -49,6 +49,30 @@ local ACTIVE_SPELL_OPTION_KEYS = {
   'quiet',
 }
 
+---@type table<RecordId, true>
+local UncreatableRecordWarnings = {}
+
+--- Creates an object, warning once per record ID when the record cannot be instantiated.
+---@param actionName string
+---@param recordId RecordId
+---@return openmw.GObject? createdObject
+local function tryCreateObject(actionName, recordId)
+  local wasCreated, createdObject = pcall(world.createObject, recordId)
+  if wasCreated then return createdObject end
+
+  if UncreatableRecordWarnings[recordId] then return end
+  UncreatableRecordWarnings[recordId] = true
+
+  WarnLog(
+    StrFormat(
+      '%s: could not create an object from record "%s": %s',
+      actionName,
+      recordId,
+      tostring(createdObject)
+    )
+  )
+end
+
 ---@param object openmw.GObject
 ---@return openmw.core.Inventory? inventory
 local function getObjectInventory(object)
@@ -520,18 +544,13 @@ local actionHandlers = {
     return wasModified, newTransform, newPos, targetScale
   end,
   ['replace'] = function(object, replaceActionData)
-    if replaceActionData == 'self' then
-      local result, replacement = pcall(world.createObject, object.recordId)
-      if result then return replacement end
-
-      return
-    end
+    if replaceActionData == 'self' then return tryCreateObject('replace', object.recordId) end
 
     for replaceId, replaceChance in pairs(replaceActionData) do
       if randomGen.float() <= replaceChance then
-        local result, replacement = pcall(world.createObject, replaceId)
+        local replacement = tryCreateObject('replace', replaceId)
 
-        if result then return replacement end
+        if replacement then return replacement end
       end
     end
   end,
@@ -640,7 +659,9 @@ local actionHandlers = {
               targetScale = getScaleValue(scaleOverride, referenceScale)
             end
 
-            local obj = world.createObject(recordId)
+            local obj = tryCreateObject('create', recordId)
+            if not obj then break end
+
             obj:teleport(baseCell, newPos, newTransform)
             if scaleOverride then obj:setScale(targetScale) end
             totalCreated = totalCreated + 1
@@ -653,7 +674,8 @@ local actionHandlers = {
     return totalCreated, createdObjects
   end,
   ['lock_level'] = function(object, lockData)
-    if not object.type.lock then return false end
+    local objType = object.type
+    if not objType or not objType.lock then return false end
 
     local level
     if type(lockData) == 'number' then
@@ -667,9 +689,9 @@ local actionHandlers = {
     end
 
     if level <= 0 then
-      object.type.unlock(object)
+      objType.unlock(object)
     else
-      object.type.lock(object, level)
+      objType.lock(object, level)
     end
 
     return true
@@ -730,17 +752,18 @@ local actionHandlers = {
     return madeChange
   end,
   ['key'] = function(object, keyData)
-    if not object.type.setKeyRecord then return false end
+    local objType = object.type
+    if not objType or not objType.setKeyRecord then return false end
 
     if keyData == false then
-      object.type.setKeyRecord(object, nil)
+      objType.setKeyRecord(object, nil)
       return true
     end
 
     for i = 1, #keyData do
       local keyId, chance = next(keyData[i])
       if shouldApplyChance(chance) then
-        object.type.setKeyRecord(object, keyId)
+        objType.setKeyRecord(object, keyId)
         return true
       end
     end
@@ -748,17 +771,18 @@ local actionHandlers = {
     return false
   end,
   ['trap'] = function(object, trapData)
-    if not object.type.setTrapSpell then return false end
+    local objType = object.type
+    if not objType or not objType.setTrapSpell then return false end
 
     if trapData == false then
-      object.type.setTrapSpell(object, nil)
+      objType.setTrapSpell(object, nil)
       return true
     end
 
     for i = 1, #trapData do
       local trapId, chance = next(trapData[i])
       if shouldApplyChance(chance) then
-        object.type.setTrapSpell(object, trapId)
+        objType.setTrapSpell(object, trapId)
         return true
       end
     end
@@ -766,6 +790,8 @@ local actionHandlers = {
     return false
   end,
   ['add_lua_script'] = function(object, scriptPath)
+    if object:hasScript(scriptPath) then return false end
+
     object:addScript(scriptPath)
     return true
   end,
@@ -774,6 +800,8 @@ local actionHandlers = {
     return true
   end,
   ['remove_lua_script'] = function(object, scriptPath)
+    if not object:hasScript(scriptPath) then return false end
+
     object:removeScript(scriptPath)
     return true
   end,

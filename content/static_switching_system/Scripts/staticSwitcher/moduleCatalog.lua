@@ -10,14 +10,16 @@ local tableHash = require 'scripts.s3.tableHash'
 local staticUtil = require 'Scripts.staticSwitcher.util'
 local validation = require 'Scripts.staticSwitcher.validation'
 
-local InfoLog
+local InfoLog, ErrorLog
 do
   local logger = require 'Scripts.staticSwitcher.logger'
   InfoLog = logger.info
+  ErrorLog = logger.error
 end
 
-local type = type
-local StrLower, StrGsub, StrMatch = string.lower, string.gsub, string.match
+local pcall, type = pcall, type
+local StrFormat, StrLower, StrGsub, StrMatch =
+  string.format, string.lower, string.gsub, string.match
 
 local DATA_PREFIX = 'scripts/staticswitcher/data/'
 
@@ -263,6 +265,45 @@ local LOWERED_CONDITION_KEYS = {
   global_value = 'arrayKeys',
 }
 
+---@param value string|string[]
+---@return string|string[] loweredValue
+local function lowerStrings(value)
+  local valueType = type(value)
+
+  if valueType == 'string' then return StrLower(value) end
+
+  if valueType == 'table' then
+    for i = 1, #value do
+      value[i] = StrLower(value[i])
+    end
+  end
+
+  return value
+end
+
+--- Lowercases the key of a single-entry map such as `{ RecordId = chance }`.
+---@param entry table<string, number|table>
+local function lowerSingleKey(entry)
+  local key, value = next(entry)
+  assert(key ~= nil and value ~= nil, 'expected a single-entry map')
+
+  local loweredKey = StrLower(key)
+  if loweredKey == key then return end
+
+  entry[loweredKey] = value
+  entry[key] = nil
+end
+
+--- `cell` values are lowered only after the rule is hashed: the authored casing is part of
+--- every actionHash already stored in saved once caches.
+---@param conditionData SSSConditionData
+local function lowerCellCondition(conditionData)
+  if conditionData.cell ~= nil then conditionData.cell = lowerStrings(conditionData.cell) end
+
+  local negatedCondition = conditionData['not']
+  if type(negatedCondition) == 'table' then lowerCellCondition(negatedCondition) end
+end
+
 --- Pre-lowercase string condition values at module load time so handlers
 --- don't pay :lower() on user-provided strings in the hot path.
 ---@param conditionName string
@@ -286,25 +327,13 @@ local function sanitizeConditionValue(conditionName, conditionValue)
   if keyPolicy == 'arrayKeys' then
     if type(conditionValue) == 'table' then
       for i = 1, #conditionValue do
-        local k, v = next(conditionValue[i])
-        conditionValue[i][StrLower(k)] = v
-        conditionValue[i][k] = nil
+        lowerSingleKey(conditionValue[i])
       end
     end
     return conditionValue
   end
 
-  local valueType = type(conditionValue)
-
-  if valueType == 'string' then return StrLower(conditionValue) end
-
-  if valueType == 'table' then
-    for i = 1, #conditionValue do
-      conditionValue[i] = StrLower(conditionValue[i])
-    end
-  end
-
-  return conditionValue
+  return lowerStrings(conditionValue)
 end
 
 ---@param meshReplacementsTable SSSModuleStatic
@@ -423,110 +452,129 @@ local function staticModuleLoader(meshReplacementsTable)
   return replacementTable
 end
 
+---@param instanceRule SSSInstanceRule
+local function prepareInstanceRule(instanceRule)
+  local conditions = instanceRule.conditions
+
+  if conditions then
+    for condIdx = 1, #conditions do
+      local conditionData = conditions[condIdx]
+      for conditionName, conditionValue in pairs(conditionData) do
+        if conditionName == 'not' and type(conditionValue) == 'table' then
+          for innerName, innerValue in pairs(conditionValue) do
+            conditionValue[innerName] = sanitizeConditionValue(innerName, innerValue)
+          end
+        else
+          conditionData[conditionName] = sanitizeConditionValue(conditionName, conditionValue)
+        end
+      end
+    end
+
+    conditions = aux_util.mapFilterSort(conditions, sortConditionByType)
+    instanceRule.conditions = conditions
+  end
+
+  instanceRule.actions = aux_util.mapFilterSort(instanceRule.actions, sortActionByType)
+
+  for actSanIdx = 1, #instanceRule.actions do
+    local actionData = instanceRule.actions[actSanIdx]
+
+    if actionData.key then
+      for i = 1, #actionData.key do
+        lowerSingleKey(actionData.key[i])
+      end
+    end
+
+    if actionData.trap then
+      for i = 1, #actionData.trap do
+        lowerSingleKey(actionData.trap[i])
+      end
+    end
+  end
+
+  instanceRule.actionHash = tableHash(instanceRule)
+
+  if conditions then
+    for condIdx = 1, #conditions do
+      lowerCellCondition(conditions[condIdx])
+    end
+  end
+end
+
+---@param modulePath string
+---@param instances SSSInstanceRule[]
+---@return SSSInstanceRule[] rules
+local function buildInstanceRules(modulePath, instances)
+  local rules = {}
+
+  for ruleIdx = 1, #instances do
+    local instanceRule = instances[ruleIdx]
+
+    if validation.validateRule(modulePath, ruleIdx, instanceRule) then
+      prepareInstanceRule(instanceRule)
+      rules[#rules + 1] = instanceRule
+    end
+  end
+
+  return rules
+end
+
+---@param modulePath string
+---@return SSSModuleRaw moduleData
+local function readSwitcherModule(modulePath)
+  local moduleFile = vfs.open(modulePath)
+  local moduleText = moduleFile:read '*all'
+  moduleFile:close()
+
+  local moduleData = markup.decodeYaml(moduleText)
+  if type(moduleData) ~= 'table' then error('the file does not contain a YAML map', 0) end
+
+  return moduleData
+end
+
+--- Registers nothing until the whole module has been built, so a module that fails
+--- part-way leaves no trace in the catalog.
 ---@param meshReplacementsPath string
 ---@param moduleIdentity SSSModuleIdentity
 local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
-  local meshReplacementsFile = vfs.open(meshReplacementsPath)
-  local meshReplacementsText = meshReplacementsFile:read '*all'
-
-  if not meshReplacementsText then error('Failed to read' .. meshReplacementsFile .. '!') end
-
-  addModuleIdentity(moduleIdentity)
-
-  ---@type SSSModuleRaw
-  local meshReplacementsTable = markup.decodeYaml(meshReplacementsText)
+  local meshReplacementsTable = readSwitcherModule(meshReplacementsPath)
 
   validation.validate(meshReplacementsPath, meshReplacementsTable)
   local priority = meshReplacementsTable.priority or 'standard'
   assert(PRIORITY_ORDER[priority], 'Invalid SSS module priority: ' .. tostring(priority))
-  ModulePriorities[moduleIdentity.id] = priority
+
+  local moduleId = moduleIdentity.id
 
   ---@cast meshReplacementsTable SSSModuleInstances
   if meshReplacementsTable.instances then
-    local modStore = {}
+    local rules = buildInstanceRules(meshReplacementsPath, meshReplacementsTable.instances)
 
-    for ruleIdx = 1, #meshReplacementsTable.instances do
-      local instance_action = meshReplacementsTable.instances[ruleIdx]
-      if instance_action.conditions then
-        for condIdx = 1, #instance_action.conditions do
-          local conditionData = instance_action.conditions[condIdx]
-          for conditionName, conditionValue in pairs(conditionData) do
-            if conditionName == 'not' and type(conditionValue) == 'table' then
-              for innerName, innerValue in pairs(conditionValue) do
-                conditionValue[innerName] = sanitizeConditionValue(innerName, innerValue)
-              end
-            else
-              conditionData[conditionName] = sanitizeConditionValue(conditionName, conditionValue)
-            end
-          end
-        end
-
-        instance_action.conditions =
-          aux_util.mapFilterSort(instance_action.conditions, sortConditionByType)
-      end
-
-      instance_action.actions = aux_util.mapFilterSort(instance_action.actions, sortActionByType)
-
-      for actSanIdx = 1, #instance_action.actions do
-        local actionData = instance_action.actions[actSanIdx]
-
-        if actionData.key then
-          for i = 1, #actionData.key do
-            local k, v = next(actionData.key[i])
-            assert(k ~= nil and v ~= nil)
-
-            actionData.key[i][StrLower(k)] = v
-            actionData.key[i][k] = nil
-          end
-        end
-
-        if actionData.trap then
-          for i = 1, #actionData.trap do
-            local k, v = next(actionData.trap[i])
-            assert(k ~= nil and v ~= nil)
-
-            actionData.trap[i][StrLower(k)] = v
-            actionData.trap[i][k] = nil
-          end
-        end
-      end
-
-      local actionHash = tableHash(instance_action)
-      instance_action.actionHash = actionHash
-
-      modStore[ruleIdx] = instance_action
-    end
-
-    ObjectModificationStore[moduleIdentity.id] = {
-      rules = modStore,
+    ObjectModificationStore[moduleId] = {
+      rules = rules,
       moduleOnce = meshReplacementsTable.once,
     }
+    SortedModuleIds[#SortedModuleIds + 1] = moduleId
 
-    SortedModuleIds[#SortedModuleIds + 1] = moduleIdentity.id
+    InfoLog('Loaded module %s: %d instance rule(s)', moduleIdentity.displayName, #rules)
   else
     ---@cast meshReplacementsTable SSSModuleStatic
-    SortedStaticModuleIds[#SortedStaticModuleIds + 1] = moduleIdentity.id
-    StaticReplacements.ComposedReplacements[moduleIdentity.id] =
-      staticModuleLoader(meshReplacementsTable)
-  end
+    local staticModule = staticModuleLoader(meshReplacementsTable)
 
-  if meshReplacementsTable.instances then
-    InfoLog(
-      'Loaded module %s: %d instance rule(s)',
-      moduleIdentity.displayName,
-      #meshReplacementsTable.instances
-    )
-  else
     local numReplacements = 0
     if meshReplacementsTable.replace_meshes then
       for _ in pairs(meshReplacementsTable.replace_meshes) do
         numReplacements = numReplacements + 1
       end
     end
+
+    SortedStaticModuleIds[#SortedStaticModuleIds + 1] = moduleId
+    StaticReplacements.ComposedReplacements[moduleId] = staticModule
+
     InfoLog('Loaded module %s: %d replacement(s)', moduleIdentity.displayName, numReplacements)
   end
 
-  meshReplacementsFile:close()
+  addModuleIdentity(moduleIdentity)
+  ModulePriorities[moduleId] = priority
 end
 
 ---@param staticReplacements SSSStaticReplacements
@@ -547,7 +595,12 @@ return function(staticReplacements)
 
   for pathIdx = 1, #modulePaths do
     local meshReplacementsPath = modulePaths[pathIdx]
-    loadSwitcherModule(meshReplacementsPath, createModuleIdentity(meshReplacementsPath))
+    local wasLoaded, loadError =
+      pcall(loadSwitcherModule, meshReplacementsPath, createModuleIdentity(meshReplacementsPath))
+
+    if not wasLoaded then
+      ErrorLog(StrFormat('Skipped module %s: %s', meshReplacementsPath, tostring(loadError)))
+    end
   end
 
   local function moduleComesBefore(a, b)

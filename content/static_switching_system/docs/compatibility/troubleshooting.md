@@ -12,7 +12,7 @@ kind = "compatibility"
 
 1. Check that `Static Switching System.esp` is enabled and SSS's data directory is active.
 2. Check that the module is below `scripts/staticSwitcher/data/` and ends in `.yaml` or `.yml`.
-3. Check the OpenMW log for an SSS “Loaded module” line.
+3. Check the OpenMW log for an SSS “Loaded module” line, and for `Skipped module` or `Skipped rule` lines naming your file. A rule with a misspelled condition or action name is skipped rather than applied without it.
 4. Confirm the object becomes active in the cell you are testing. SSS processes active objects in batches; it does not pre-patch every unloaded cell.
 5. For instance modules, verify every condition. Conditions in one rule are ANDed; array values for most conditions are OR-lists.
 
@@ -22,14 +22,14 @@ The [VFS and package boundaries](@/static_switching_system/docs/compatibility/vf
 
 For a static module, confirm both mesh values are VFS-visible. SSS logs a missing replacement mesh with the requested model, source model, object, and module name, then skips that swap. A source mesh path copied from another mod is not evidence that the replacement asset is installed.
 
-For an instance `replace`, confirm the replacement record ID exists in enabled content. For `teleport`, confirm the destination cell name/ID or exterior coordinates resolve. For `add`, `equip`, and `create`, confirm the item or object record is available.
+For an instance `replace`, confirm the replacement record ID exists in enabled content; SSS logs a `could not create an object from record` warning when it does not. For `teleport`, confirm the destination cell name/ID or exterior coordinates resolve. For `add`, `equip`, and `create`, confirm the item or object record is available.
 
 ## A condition never matches
 
 - `record_id` uses Lua pattern matching; use `^` and `$` when a substring match is too broad. Escape a literal pattern character where needed.
-- `cell_match` is a case-insensitive substring match. `cell` is an exact name or ID comparison.
+- `cell_match` is a case-insensitive substring match. `cell` is a case-insensitive exact name or ID comparison.
 - `replace_regions` on a static module uses exact, case-insensitive region matching, while `region` is an instance condition.
-- `has_journal` checks the player's quest stage when the object is processed. It is not a general event subscription.
+- `has_journal` checks the player's quest stage when the object is processed. It is not a general event subscription. `index` is a minimum, so a rule meant for one stage keeps matching at later stages unless it also sets `max`.
 - `content_file_target` requires both the content filename and the local reference number.
 - `cell_tag` and `has_tag` require FlexTag; see [FlexTag compatibility](@/static_switching_system/docs/compatibility/flextag.md).
 

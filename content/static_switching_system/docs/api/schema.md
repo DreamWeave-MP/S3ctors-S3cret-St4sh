@@ -41,6 +41,6 @@ Use the schema shipped with the SSS release, not one from a different release.
 
 **Use your editor properly.** The shipped schema is the real authoring check. It catches field names, types, required fields, enum values, mutually exclusive root fields, and invalid range shapes, including top-level `once` on static modules, mixed static/instance roots, stale condition names such as `ref_num`, random action ranges with only `min`, and unknown priority values.
 
-Runtime validation is only a smoke alarm. It reports warnings such as unknown top-level keys, an empty module root, or mixed root markers. Passing it does not make a module valid.
+Runtime validation is only a smoke alarm. It reports warnings such as unknown top-level keys, an empty module root, or mixed root markers, and skips an instance rule that uses an unknown condition or action name. Passing it does not make a module valid.
 
 See [Module Format](@/static_switching_system/docs/api/module-format.md) for fields, [Comparison Ranges](@/static_switching_system/docs/api/conditions/comparison-ranges.md) and [Random Action Ranges](@/static_switching_system/docs/api/actions/random-ranges.md) for range syntax, and [Validation and Debugging](@/static_switching_system/docs/concepts/validation-and-debugging.md) for runtime diagnosis.

@@ -11,6 +11,13 @@ Use the JSON Schema shipped at `Scripts/staticSwitcher/schema/replacerSchema.jso
 
 Runtime validation is lighter than the schema. SSS warns about unknown top-level keys, modules with neither `replace_meshes` nor `instances`, and mixed root shapes. Validate in the editor before installing a module.
 
+Two runtime checks fail closed, and both log regardless of the debug setting:
+
+- An instance rule with an unknown condition or action name, a malformed `record_id` Lua pattern, or a missing `actions` list is skipped whole, with a `[WARN] Skipped rule N in <module>` line naming the problem. The module's other rules still load.
+- A module that cannot be read or parsed is skipped with an `[ERROR] Skipped module <path>` line. Other modules still load.
+
+At activation time, an object whose rule raises an error is reported once with `[ERROR] Skipped <object id> (<record id>)` and SSS moves on to the next object. A `replace` or `create` action naming a record that cannot be instantiated logs one `[WARN]` per record ID.
+
 ## Debug logging
 
 Enable `StaticSwitcherEnableDebug` in the OpenMW settings menu. It defaults to `false`. SSS then emits verbose `[ SSS ]` debug and information messages. The setting is operational; module behavior still comes from YAML. These messages can show:
