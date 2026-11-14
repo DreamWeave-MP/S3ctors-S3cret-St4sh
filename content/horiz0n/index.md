@@ -34,9 +34,12 @@ Much like its sibling, S4V3R, Horiz0n is minimalist in design and aggressively t
 The way it works is simple:
 1. You tell Horiz0n your target framerate - 60 by default
 2. It averages your frametime, thirty times per second, if the world is not paused AND you are not in a true interior cell - so Starwind and Tribunal should both work fine.
-3. If the average frametime is 10% worse than your target, lower the view distance by 1%. If it's 30% worse, lower by 2%. Otherwise, raise view distance by 1%.
+3. If the average frametime stays 10% worse than your target, lower the view distance by 1% per measurement. If it's 30% worse, lower by 2%. Reductions are applied at most four times per second, each one covering the time since the last and never more than a quarter of the current view distance, so it falls about as fast with far fewer changes. After any change Horiz0n ignores a quarter second of frames, so the cost of the change itself is never mistaken for load.
+4. After lowering it, hold still for the Grow Cooldown - three seconds by default - and only then try raising the view distance by 1% again, at most four times per second so each raise can be judged before the next. If a raise immediately costs frames again, the cooldown doubles, up to one minute.
 
-It'll keep going as-needed until you hit either the minimum or the maximum viewing distance.
+It'll keep going as-needed until you hit either the minimum or the maximum viewing distance, and once it finds a distance your framerate can hold, it leaves the view distance alone.
+
+The maximum is never higher than the viewing distance you set in OpenMW's own options. Horiz0n only takes view distance away when you need the frames, and gives it back up to what you asked the engine for. If you want longer vistas, raise OpenMW's viewing distance and let Horiz0n manage it.
 
 In order for Horiz0n to work correctly, you *must* set a framerate limit in the OpenMW launcher, or manually in your `settings.cfg` file, and set Horiz0n's Target Framerate to match it. ***YOU HAVE BEEN WARNED***.
 
@@ -45,6 +48,8 @@ The minimum viewing distance is 2048 units, which is exactly one quarter of a st
 Interiors are ignored intentionally because they usually hit your framerate limit to begin with.
 
 The steps scale with your current view distance, so Horiz0n crosses the whole range in seconds while the 30Hz tickrate keeps transitions from being too noticeable.
+
+Every view distance change makes the engine rebuild its distant terrain, so as of version 1.4 Horiz0n only changes it when it has a reason to. Earlier versions adjusted it thirty times per second, which caused lag spikes with distant terrain and object paging enabled.
 
 As of version 1.2, all of Horiz0n's internal tuning parameters are exposed:
 - Target Framerate
@@ -55,16 +60,19 @@ As of version 1.2, all of Horiz0n's internal tuning parameters are exposed:
 - Severe Frametime Decrease Adjustment
 - View Distance Step (as a percentage of the current view distance)
 - Severe View Distance Step Multiplier
+- Grow Cooldown
 - Disable/Enable the entire mod
 
-By default, the max view distance is 25 cells, as view distance is extremely cheap outside of the active grid.
+By default, the max view distance is 25 cells or OpenMW's viewing distance, whichever is lower.
 
-This setting is exposed for those who wish to use extreme view distances on either end.
+This setting is exposed for those who wish to cap Horiz0n below what the engine is configured for.
 
 Personally, I cap it to 5 cells.
 
-Additionally, 1.2 and onward interop with [H3lp Yours3lf](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/) to ensure view distance is always maxed whilst indoors, to avoid unneccessary blind spots in dungeons.
+View distance is always maxed whilst indoors, to avoid unneccessary blind spots in dungeons. As of 1.4 this no longer needs [H3lp Yours3lf](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/), and turning Horiz0n off puts your view distance back to OpenMW's setting.
 
-Also, I recommend using it with [Hawk3ye](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/hawk3ye/), as the zoom effect produces a very fun interaction with Horiz0n that causes your view distance to *literally* increase when you zoom in, due to Hawk3ye changing your field of view. Try it out!
+If another mod changes the view distance while Horiz0n is managing it, Horiz0n steps back for five seconds at a time instead of fighting over it.
+
+Also, I recommend using it with [Hawk3ye](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/hawk3ye/), as zooming in changes your field of view and with it your framerate, so Horiz0n can hand back view distance while you are zoomed. Try it out!
 
 {{ credits(default=true) }}

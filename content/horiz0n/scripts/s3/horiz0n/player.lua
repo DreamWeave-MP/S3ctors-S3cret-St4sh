@@ -2,150 +2,258 @@
 
 local self = require 'openmw.self'
 
-local hasTag
-local getRealFrameDuration, getSimulationTimeScale, horiz0nSettings, setViewDistance =
-  require('openmw.core').getRealFrameDuration,
-  require('openmw.core').getSimulationTimeScale,
-  require('openmw.storage').playerSection 'SettingsPlayerHoriz0n',
+local getBaseViewDistance, getViewDistance, setViewDistance =
+  require('openmw.camera').getBaseViewDistance,
+  require('openmw.camera').getViewDistance,
   require('openmw.camera').setViewDistance
 
+local getRealFrameDuration, getRealTime, getSimulationTimeScale, horiz0nSettings =
+  require('openmw.core').getRealFrameDuration,
+  require('openmw.core').getRealTime,
+  require('openmw.core').getSimulationTimeScale,
+  require('openmw.storage').playerSection 'SettingsPlayerHoriz0n'
+
+local mathAbs, mathFloor, mathHuge, mathMax, mathMin =
+  math.abs, math.floor, math.huge, math.max, math.min
+
+---@alias Horiz0nMode 'disabled'|'indoors'|'managing'
+
 local CELL_SIZE = 8192
+local MAX_GROW_COOLDOWN = 60.0
+local MAX_SHRINK_FRACTION = 0.25
+local SETTLE_TIME = 0.25
+local SUSTAINED_BAD_WINDOWS = 2
+local YIELD_TIME = 5.0
+
 local MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE =
   CELL_SIZE * horiz0nSettings:get 'Horiz0nMinViewDistance',
   CELL_SIZE * horiz0nSettings:get 'Horiz0nMaxViewDistance'
 
-local ENABLE, TARGET_FRAME_TIME, BAD_FRAME_RATIO, OKAYISH_FRAME_RATIO, SEVERE_MULT, VD_STEP_FRACTION, UPDATE_INTERVAL =
+local ENABLE, TARGET_FRAME_TIME, BAD_FRAME_RATIO, OKAYISH_FRAME_RATIO, SEVERE_MULT, VD_STEP_FRACTION, UPDATE_INTERVAL, GROW_COOLDOWN =
   horiz0nSettings:get 'Horiz0nToggle',
   1 / horiz0nSettings:get 'Horiz0nTargetFramerate',
   1 + horiz0nSettings:get 'Horiz0nPercentAdjustSevere' / 100,
   1 + horiz0nSettings:get 'Horiz0nPercentAdjustNormal' / 100,
   horiz0nSettings:get 'Horiz0nViewDistanceSevereMult',
   horiz0nSettings:get 'Horiz0nViewDistanceStepPercent' / 100,
-  1 / horiz0nSettings:get 'Horiz0nAdjustFramerate'
+  1 / horiz0nSettings:get 'Horiz0nAdjustFramerate',
+  horiz0nSettings:get 'Horiz0nGrowCooldown'
 
-if ENABLE then setViewDistance(MIN_VIEW_DISTANCE) end
+---@type Horiz0nMode
+local mode = 'disabled'
 
-local viewDistance = MIN_VIEW_DISTANCE
+local viewDistance = getBaseViewDistance()
 
-local windowDuration, windowFrames = 0.0, 0
+local windowDuration, windowFrames, badWindows, overloadTime = 0.0, 0, 0, 0.0
 
-local function nullFunction() end
-local frameFunction = nullFunction
+local growCooldown, cooldownRemaining, settleRemaining, isProbing = GROW_COOLDOWN, 0.0, 0.0, false
 
----@param value number
----@param min number
----@param max number
----@return number clamped
-local function clamp(value, min, max) return value <= min and min or value >= max and max or value end
+---@type number?
+local failedViewDistance
 
----@return boolean isOutdoors
-local function isOutdoors()
-  local currentCell = self.cell
-  ---@cast currentCell openmw.core.LCell
-  return currentCell.isExterior or hasTag(currentCell, 'QuasiExterior')
+local probeSurvivedTime = 0.0
+
+---@type number?
+local writtenViewDistance
+
+local yieldUntil = 0.0
+
+---@param cell openmw.core.LCell
+---@return Horiz0nMode
+local function modeIn(cell)
+  if not ENABLE then return 'disabled' end
+  if cell.isExterior or cell:hasTag 'QuasiExterior' then return 'managing' end
+
+  return 'indoors'
 end
 
----@param simTime number
-local function tick(simTime)
-  if simTime <= 0 or not isOutdoors() then return end
+---@return number
+local function maxViewDistance() return mathMin(MAX_VIEW_DISTANCE, getBaseViewDistance()) end
 
-  --- getRealFrameDuration is multiplied by the simulation time scale, which is positive whenever simTime is.
-  windowDuration = windowDuration + getRealFrameDuration() / getSimulationTimeScale()
+---@param distance number
+---@return number clamped
+local function clampViewDistance(distance)
+  local maximum = maxViewDistance()
+
+  return mathMax(mathMin(MIN_VIEW_DISTANCE, maximum), mathMin(distance, maximum))
+end
+
+--- The engine stores view distance as a 32-bit float, and whole units survive that round trip exactly.
+---@param distance number
+local function applyViewDistance(distance)
+  local wholeUnits = mathFloor(distance + 0.5)
+
+  writtenViewDistance = wholeUnits
+  if getViewDistance() == wholeUnits then return end
+
+  settleRemaining = SETTLE_TIME
+  setViewDistance(wholeUnits)
+end
+
+--- A distance other than the one last written came from another writer, which gets the camera for YIELD_TIME.
+---@return boolean holdsCamera
+local function holdsCamera()
+  local now = getRealTime()
+  if now < yieldUntil then return false end
+  if not writtenViewDistance or getViewDistance() == writtenViewDistance then return true end
+
+  writtenViewDistance, yieldUntil = nil, now + YIELD_TIME
+  windowDuration, windowFrames, badWindows, overloadTime = 0.0, 0, 0, 0.0
+  isProbing, probeSurvivedTime = false, 0.0
+
+  return false
+end
+
+---@param step number
+local function shrink(step)
+  if isProbing and failedViewDistance then
+    growCooldown = mathMin(growCooldown * 2, MAX_GROW_COOLDOWN)
+  end
+
+  isProbing, failedViewDistance, cooldownRemaining = false, viewDistance, growCooldown
+  probeSurvivedTime, overloadTime = 0.0, SETTLE_TIME
+  viewDistance = clampViewDistance(viewDistance - step)
+end
+
+---@param step number
+local function grow(step)
+  local grownViewDistance = clampViewDistance(viewDistance + step)
+
+  isProbing, viewDistance = grownViewDistance ~= viewDistance, grownViewDistance
+end
+
+---@param elapsed number
+local function confirmProbe(elapsed)
+  if not failedViewDistance or viewDistance <= failedViewDistance then return end
+
+  probeSurvivedTime = probeSurvivedTime + elapsed
+  if probeSurvivedTime < growCooldown then return end
+
+  failedViewDistance, growCooldown, probeSurvivedTime = nil, GROW_COOLDOWN, 0.0
+end
+
+local function measureFrame()
+  --- getRealFrameDuration is multiplied by the simulation time scale, which is positive whenever the world is unpaused.
+  local frameTime = getRealFrameDuration() / getSimulationTimeScale()
+
+  if cooldownRemaining > 0 then cooldownRemaining = cooldownRemaining - frameTime end
+
+  if settleRemaining > 0 then
+    settleRemaining = settleRemaining - frameTime
+    windowDuration, windowFrames, badWindows = 0.0, 0, 0
+    return
+  end
+
+  overloadTime = overloadTime + frameTime
+  windowDuration = windowDuration + frameTime
   windowFrames = windowFrames + 1
 
   if windowDuration < UPDATE_INTERVAL then return end
 
-  local frameTime = windowDuration / windowFrames
+  local elapsed, frameRatio = windowDuration, windowDuration / windowFrames / TARGET_FRAME_TIME
   windowDuration, windowFrames = 0.0, 0
 
-  local frameRatio = frameTime / TARGET_FRAME_TIME
-  local decreaseOrIncrease = frameRatio >= OKAYISH_FRAME_RATIO
-  local doSevereStep = frameRatio >= BAD_FRAME_RATIO
-
   local step = viewDistance * VD_STEP_FRACTION
-  if doSevereStep then step = step * SEVERE_MULT end
-  if decreaseOrIncrease then step = -step end
 
-  viewDistance = clamp(viewDistance + step, MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE)
+  if frameRatio >= OKAYISH_FRAME_RATIO then
+    badWindows = badWindows + 1
+    if badWindows < SUSTAINED_BAD_WINDOWS then return end
 
-  setViewDistance(viewDistance)
-end
+    if frameRatio >= BAD_FRAME_RATIO then step = step * SEVERE_MULT end
+    if not isProbing then step = step * overloadTime / UPDATE_INTERVAL end
 
-local function initFunction(_)
-  if not self.cell then return end
-  hasTag, frameFunction = self.cell.hasTag, tick
-end
-
-if ENABLE then frameFunction = initFunction end
-
-horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, key)
-  local value = horiz0nSettings:get(key)
-
-  if key == 'Horiz0nToggle' then
-    ENABLE, frameFunction = value, value and initFunction or nullFunction
-  elseif key == 'Horiz0nTargetFramerate' then
-    TARGET_FRAME_TIME = 1 / value
-  elseif key == 'Horiz0nMaxViewDistance' then
-    MAX_VIEW_DISTANCE = CELL_SIZE * value
-
-    if MAX_VIEW_DISTANCE < viewDistance then
-      viewDistance = MAX_VIEW_DISTANCE
-      setViewDistance(viewDistance)
-    end
-  elseif key == 'Horiz0nMinViewDistance' then
-    MIN_VIEW_DISTANCE = CELL_SIZE * value
-
-    if MIN_VIEW_DISTANCE > viewDistance then
-      viewDistance = MIN_VIEW_DISTANCE
-      setViewDistance(viewDistance)
-    end
-  elseif key == 'Horiz0nPercentAdjustSevere' then
-    BAD_FRAME_RATIO = 1 + value / 100
-  elseif key == 'Horiz0nPercentAdjustNormal' then
-    OKAYISH_FRAME_RATIO = 1 + value / 100
-  elseif key == 'Horiz0nViewDistanceSevereMult' then
-    SEVERE_MULT = value
-  elseif key == 'Horiz0nViewDistanceStepPercent' then
-    VD_STEP_FRACTION = value / 100
-  elseif key == 'Horiz0nAdjustFramerate' then
-    UPDATE_INTERVAL = 1 / value
+    shrink(mathMin(step, viewDistance * MAX_SHRINK_FRACTION))
+    return
   end
-end))
+
+  badWindows, overloadTime = 0, 0.0
+  confirmProbe(elapsed)
+
+  if cooldownRemaining <= 0 then grow(step) end
+end
+
+---@param newMode Horiz0nMode
+local function enterMode(newMode)
+  mode = newMode
+
+  writtenViewDistance, yieldUntil = nil, 0.0
+  windowDuration, windowFrames, badWindows, overloadTime = 0.0, 0, 0, 0.0
+  growCooldown, cooldownRemaining, settleRemaining = GROW_COOLDOWN, 0.0, 0.0
+  isProbing, failedViewDistance, probeSurvivedTime = false, nil, 0.0
+
+  if mode == 'disabled' then
+    viewDistance = getBaseViewDistance()
+    applyViewDistance(viewDistance)
+  end
+end
+
+horiz0nSettings:subscribe(require('openmw.async'):callback(
+  ---@param _ string
+  ---@param key string
+  function(_, key)
+    local value = horiz0nSettings:get(key)
+
+    if key == 'Horiz0nToggle' then
+      ENABLE = value
+    elseif key == 'Horiz0nTargetFramerate' then
+      TARGET_FRAME_TIME = 1 / value
+    elseif key == 'Horiz0nMaxViewDistance' then
+      MAX_VIEW_DISTANCE = CELL_SIZE * value
+    elseif key == 'Horiz0nMinViewDistance' then
+      MIN_VIEW_DISTANCE = CELL_SIZE * value
+    elseif key == 'Horiz0nPercentAdjustSevere' then
+      BAD_FRAME_RATIO = 1 + value / 100
+    elseif key == 'Horiz0nPercentAdjustNormal' then
+      OKAYISH_FRAME_RATIO = 1 + value / 100
+    elseif key == 'Horiz0nViewDistanceSevereMult' then
+      SEVERE_MULT = value
+    elseif key == 'Horiz0nViewDistanceStepPercent' then
+      VD_STEP_FRACTION = value / 100
+    elseif key == 'Horiz0nAdjustFramerate' then
+      UPDATE_INTERVAL = 1 / value
+    elseif key == 'Horiz0nGrowCooldown' then
+      GROW_COOLDOWN, growCooldown = value, value
+      cooldownRemaining = mathMin(cooldownRemaining, value)
+    end
+  end
+))
 
 return {
   engineHandlers = {
-    onFrame = function(simTime) frameFunction(simTime) end,
-    onLoad = function(data)
-      if not data then return end
+    ---@param frameDuration number
+    onFrame = function(frameDuration)
+      local cell = self.cell
+      if not cell then return end
 
-      local oldDist = data.viewDistance
+      local currentMode = modeIn(cell)
+      if currentMode ~= mode then enterMode(currentMode) end
 
-      if oldDist then
-        viewDistance = clamp(oldDist, MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE)
-        setViewDistance(viewDistance)
+      if mode == 'disabled' or not holdsCamera() then return end
+
+      if mode == 'indoors' then
+        applyViewDistance(maxViewDistance())
+        return
       end
+
+      if frameDuration > 0 then measureFrame() end
+
+      viewDistance = clampViewDistance(viewDistance)
+      applyViewDistance(viewDistance)
     end,
+    ---@param data { viewDistance: number? }?
+    onLoad = function(data)
+      local savedViewDistance = data and data.viewDistance
+      local isUsable = type(savedViewDistance) == 'number'
+        and savedViewDistance == savedViewDistance
+        and mathAbs(savedViewDistance) ~= mathHuge
+
+      if isUsable then viewDistance = savedViewDistance end
+    end,
+    ---@return { viewDistance: number }
     onSave = function()
       return {
         viewDistance = viewDistance,
       }
-    end,
-  },
-  eventHandlers = {
-    ---@param _ string old cell ID
-    S3LFCellChanged = function(_)
-      if not ENABLE then return end
-
-      local currentlyOutdoors, activelyAdjusting =
-        isOutdoors(), frameFunction == tick or frameFunction == initFunction
-
-      if currentlyOutdoors and not activelyAdjusting then
-        frameFunction = initFunction
-        setViewDistance(viewDistance)
-      elseif not currentlyOutdoors and activelyAdjusting then
-        setViewDistance(MAX_VIEW_DISTANCE)
-        frameFunction = nullFunction
-      end
     end,
   },
 }

@@ -14,6 +14,7 @@ Horiz0nManagerSettingsDesc: Aktivera eller inaktivera hantering av visningsavst�
 Horiz0nMaxViewDistName: Maximalt visningsavstånd
 Horiz0nMaxViewDistDesc: |
   Anger den övre gränsen för Horiz0ns automatiska hantering av visningsavståndet.
+  Horiz0n överskrider aldrig visningsavståndet som ställts in i OpenMW:s egna inställningar; det lägsta av de två gäller.
   Standard: 25.0
   Intervall: 1.0 - 100.0
 
@@ -33,7 +34,7 @@ Horiz0nPercentAdjustSevereName: Tröskel för kraftig minskning
 Horiz0nPercentAdjustSevereDesc: |
   Horiz0n multiplicerar minskningen av visningsavståndet när den aktuella bildtiden är så här mycket sämre än målbildtiden.
   Standard: 30 %
-  Intervall: 10 % - 100 %
+  Intervall: 10 % - 50 %
 
 Horiz0nTargetFramerateName: Målbildfrekvens
 Horiz0nTargetFramerateDesc: |
@@ -55,7 +56,16 @@ Horiz0nViewDistanceSevereMultDesc: |
 Horiz0nViewDistanceStepPercentName: Justering av visningsavstånd
 Horiz0nViewDistanceStepPercentDesc: |
   Anger hur mycket Horiz0n ändrar visningsavståndet vid varje justering, i procent av det aktuella visningsavståndet.
+  Minskningar tillämpas högst fyra gånger per sekund, var och en täcker tiden sedan den föregående och tar aldrig bort mer än en fjärdedel av det aktuella visningsavståndet.
   Lägre värden gör förändringarna av visningsavståndet mjukare men långsammare.
   Högre värden gör justeringarna snabbare men mer märkbara.
   Standard: 1 %
   Intervall: 0,25 % - 5 %
+
+Horiz0nGrowCooldownName: Väntetid före ökning
+Horiz0nGrowCooldownDesc: |
+  Hur många sekunder Horiz0n väntar efter att ha minskat visningsavståndet innan det försöker öka det igen.
+  Väntetiden fördubblas, upp till en minut, varje gång en ökning genast kostar bildfrekvens igen.
+  Lägre värden återställer visningsavståndet snabbare men ändrar det oftare, vilket kan ge hack med avlägsen terräng.
+  Standard: 3,0
+  Intervall: 0,0 - 30,0

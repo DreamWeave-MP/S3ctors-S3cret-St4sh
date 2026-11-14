@@ -14,6 +14,7 @@ Horiz0nManagerSettingsDesc: Toggle view distance management and related paramete
 Horiz0nMaxViewDistName: Maximum View Distance
 Horiz0nMaxViewDistDesc: |
   Sets the upper limit for Horiz0n's automatic view distance management.
+  Horiz0n never exceeds the viewing distance set in OpenMW's own options, whichever is lower.
   Default: 25.0
   Range: 1.0 - 100.0
 
@@ -33,7 +34,7 @@ Horiz0nPercentAdjustSevereName: Severe Decrease Threshold
 Horiz0nPercentAdjustSevereDesc: |
   Horiz0n multiplies the view distance decrease when the current frametime is this much worse than the target frametime.
   Default: 30%
-  Range: 10% - 100%
+  Range: 10% - 50%
 
 Horiz0nTargetFramerateName: Target Framerate
 Horiz0nTargetFramerateDesc: |
@@ -55,7 +56,16 @@ Horiz0nViewDistanceSevereMultDesc: |
 Horiz0nViewDistanceStepPercentName: View Distance Adjustment
 Horiz0nViewDistanceStepPercentDesc: |
   Sets how much Horiz0n changes the view distance with each adjustment, as a percentage of the current view distance.
+  Reductions are applied at most four times per second, each covering the time since the last one, and never remove more than a quarter of the current view distance.
   Lower values make view distance changes smoother but slower.
   Higher values make adjustments faster but more noticeable.
   Default: 1%
   Range: 0.25% - 5%
+
+Horiz0nGrowCooldownName: Grow Cooldown
+Horiz0nGrowCooldownDesc: |
+  How many seconds Horiz0n waits after lowering the view distance before it tries to raise it again.
+  The wait doubles, up to one minute, each time raising it immediately costs frames again.
+  Lower values recover view distance sooner but change it more often, which can stutter with distant terrain.
+  Default: 3.0
+  Range: 0.0 - 30.0
