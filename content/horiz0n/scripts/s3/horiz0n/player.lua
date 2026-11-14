@@ -79,26 +79,25 @@ local function clampViewDistance(distance)
 end
 
 --- The engine stores view distance as a 32-bit float, and whole units survive that round trip exactly.
---- A distance that is neither wanted nor the one last written came from another writer, which gets the camera for YIELD_TIME.
 ---@param distance number
 local function applyViewDistance(distance)
-  local wholeUnits, engineViewDistance = mathFloor(distance + 0.5), getViewDistance()
+  local wholeUnits = mathFloor(distance + 0.5)
 
-  if engineViewDistance == wholeUnits then
-    writtenViewDistance = wholeUnits
-    return
-  end
-
-  local now = getRealTime()
-  if now < yieldUntil then return end
-
-  if writtenViewDistance and engineViewDistance ~= writtenViewDistance then
-    writtenViewDistance, yieldUntil = nil, now + YIELD_TIME
-    return
-  end
-
+  if getViewDistance() ~= wholeUnits then setViewDistance(wholeUnits) end
   writtenViewDistance = wholeUnits
-  setViewDistance(wholeUnits)
+end
+
+--- A distance other than the one last written came from another writer, which gets the camera for YIELD_TIME.
+---@return boolean holdsCamera
+local function holdsCamera()
+  local now = getRealTime()
+  if now < yieldUntil then return false end
+  if not writtenViewDistance or getViewDistance() == writtenViewDistance then return true end
+
+  writtenViewDistance, yieldUntil = nil, now + YIELD_TIME
+  windowDuration, windowFrames, badWindows, settleRemaining = 0.0, 0, 0, SETTLE_TIME
+
+  return false
 end
 
 ---@param step number
@@ -219,14 +218,14 @@ return {
       local currentMode = modeIn(cell)
       if currentMode ~= mode then enterMode(currentMode) end
 
-      if mode == 'disabled' then return end
+      if mode == 'disabled' or not holdsCamera() then return end
 
       if mode == 'indoors' then
         applyViewDistance(maxViewDistance())
         return
       end
 
-      if frameDuration > 0 and getRealTime() >= yieldUntil then measureFrame() end
+      if frameDuration > 0 then measureFrame() end
 
       viewDistance = clampViewDistance(viewDistance)
       applyViewDistance(viewDistance)
