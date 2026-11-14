@@ -72,7 +72,10 @@ local function newObject(recordId, cell, type)
     self.count = 0
   end
   function object:hasScript() return false end
-  function object:moveInto(inventory) inventory.items[#inventory.items + 1] = self end
+  function object:moveInto(inventory)
+    if inventory.refusesItems then error 'the inventory is full' end
+    inventory.items[#inventory.items + 1] = self
+  end
   function object:teleport(targetCell)
     if placementsBeforeFailure then
       if placementsBeforeFailure == 0 then error 'the cell refused the object' end
@@ -154,6 +157,35 @@ local moduleSources = {
         {
           conditions = { { record_id = 'clingy' } },
           actions = { { replace = { crate = 1 } } },
+        },
+        {
+          conditions = { { record_id = 'brittle' } },
+          actions = { { transform = { scale = 2 }, disable = true } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'condemned' } },
+          actions = { { transform = { scale = 2 }, delete = true } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'jinxed' } },
+          actions = { { replace = { crate = 1 }, delete = true } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'litterer' } },
+          actions = { { create = { crate = 1 } } },
+        },
+        {
+          conditions = { { record_id = 'pickpocketed' } },
+          actions = { { remove = { gold_001 = 5 } } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'butterfingers' } },
+          actions = { { add = { 'crate' } } },
+          once = true,
         },
         {
           conditions = { { record_id = 'sturdy' } },
@@ -371,6 +403,16 @@ actionHandlersUnderTest.disable = function(object, disableAction)
   return disableHandler(object, disableAction)
 end
 
+--- The delete queue is the last thing a pass touches; making it fail shows what happens when
+--- the final step of a commit goes wrong after placement has already been accepted.
+local deleteManagerUnderTest = require 'Scripts.staticSwitcher.deleteManager'
+local addObjectToDeleteQueue = deleteManagerUnderTest.addObjectToDeleteQueue
+local deleteQueueRaises = false
+deleteManagerUnderTest.addObjectToDeleteQueue = function(self, object, removeOrDisable)
+  if deleteQueueRaises then error 'the delete queue is unavailable' end
+  return addObjectToDeleteQueue(self, object, removeOrDisable)
+end
+
 local staticSwitcher = require 'Scripts.staticSwitcher.global'
 local handlers = staticSwitcher.engineHandlers
 local ruleStore = staticSwitcher.interface.objectModificationStore()
@@ -404,7 +446,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 17)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 23)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -478,7 +520,7 @@ assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[15]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[21]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -675,12 +717,107 @@ placementsBeforeFailure, removalsRefused = nil, false
 local strandedReplacement = createdObjects[createdBeforeClingy + 1]
 assert(clingy.enabled == true)
 assert(strandedReplacement.cell == nil and strandedReplacement.count == 1)
-assert(countLogLines '%[WARN%] Action replacement cleanup failed and was skipped' == 1)
+assert(countLogLines '%[WARN%] An unplaced crate could not be removed and will be retried' == 1)
 
 activate(clingy)
 runFrames(4)
 assert(strandedReplacement.count == 0, 'a replacement whose removal failed was forgotten')
 assert(clingy.enabled == false)
+
+-- Disabling and deleting are part of the commit: when placement is refused they do not happen,
+-- and the rule stays eligible.
+local brittle = newObject('brittle', TEL_BRANORA)
+placementsBeforeFailure = 0
+activate(brittle)
+runFrames(4)
+placementsBeforeFailure = nil
+assert(brittle.enabled == true, 'disabled although its placement was refused')
+assert(brittle.scale == 1)
+
+activate(brittle)
+runFrames(4)
+assert(brittle.scale == 2 and brittle.enabled == false)
+
+local condemned = newObject('condemned', TEL_BRANORA)
+placementsBeforeFailure = 0
+activate(condemned)
+runFrames(12)
+placementsBeforeFailure = nil
+assert(condemned.count == 1, 'deleted although its placement was refused')
+assert(condemned.scale == 1)
+
+activate(condemned)
+runFrames(12)
+assert(condemned.count == 0)
+
+-- A commit whose last step fails after placement went through is undone: the replacement is
+-- removed, the original is back, and the rule is not recorded.
+local jinxed = newObject('jinxed', TEL_BRANORA)
+local createdBeforeJinxed = #createdObjects
+deleteQueueRaises = true
+activate(jinxed)
+runFrames(6)
+deleteQueueRaises = false
+
+assert(jinxed.enabled == true and jinxed.count == 1)
+assert(
+  createdObjects[createdBeforeJinxed + 1].count == 0,
+  'a replacement outlived its failed commit'
+)
+assert(countLogLines '%[WARN%] Action commit failed and was skipped' == 1)
+
+activate(jinxed)
+runFrames(12)
+assert(#createdObjects == createdBeforeJinxed + 2 and jinxed.count == 0)
+
+-- A created object that can be neither placed nor removed is kept for another attempt, the
+-- same way a replacement is.
+local litterer = newObject('litterer', TEL_BRANORA)
+local createdBeforeLitterer = #createdObjects
+placementsBeforeFailure, removalsRefused = 0, true
+activate(litterer)
+runFrames(4)
+placementsBeforeFailure, removalsRefused = nil, false
+
+local strandedCrate = createdObjects[createdBeforeLitterer + 1]
+assert(strandedCrate.cell == nil and strandedCrate.count == 1)
+
+activate(newObject('ownable', TEL_BRANORA))
+runFrames(4)
+assert(strandedCrate.count == 0, 'a created object whose removal failed was forgotten')
+
+-- A removal spread over several stacks reports what it removed before a stack was refused,
+-- so a once rule does not take the same items again.
+local firstStack, secondStack = { count = 3 }, { count = 10 }
+function firstStack:remove(removeCount) self.count = self.count - removeCount end
+function secondStack:remove() error 'the stack is locked' end
+
+local pocket = {}
+function pocket:countOf() return firstStack.count + secondStack.count end
+function pocket:findAll() return { firstStack, secondStack } end
+
+local pickpocketed = newObject('pickpocketed', TEL_BRANORA)
+pickpocketed.isContainer, pickpocketed.inventory = true, pocket
+activate(pickpocketed)
+runFrames(4)
+assert(firstStack.count == 0 and secondStack.count == 10)
+assert(countLogLines '%[WARN%] "gold_001" could not be removed from an inventory' == 1)
+
+firstStack.count = 3
+activate(pickpocketed)
+runFrames(4)
+assert(firstStack.count == 3, 'a partly completed removal ran again')
+
+-- An item the inventory refuses is removed again, not left outside any cell.
+local butterfingers = newObject('butterfingers', TEL_BRANORA)
+butterfingers.isContainer = true
+butterfingers.inventory = { items = {}, refusesItems = true }
+local createdBeforeButterfingers = #createdObjects
+activate(butterfingers)
+runFrames(4)
+assert(#butterfingers.inventory.items == 0)
+assert(createdObjects[createdBeforeButterfingers + 1].count == 0)
+assert(countLogLines '%[WARN%] "crate" could not be put in an inventory' == 1)
 
 -- An item action that the engine accepts in part reports what it added and does not add it
 -- again.

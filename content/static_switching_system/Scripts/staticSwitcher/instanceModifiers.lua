@@ -6,6 +6,7 @@ local randomGen = require 'scripts.s3.randomGen'
 
 local types = require 'openmw.types'
 
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
 local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
 
@@ -19,7 +20,6 @@ end
 local StrFormat = string.format
 
 local next, pcall, tostring = next, pcall, tostring
-local Remove = table.remove
 
 local PlayerObjectIsInstance = types.Player.objectIsInstance
 
@@ -440,43 +440,15 @@ local function tryApplyReplacement(object, modifyTarget, replaceAction)
   return foundReplacement, true
 end
 
---- Replacements whose removal the engine refused. They are kept so the removal can be tried
---- again; forgetting them would leave an object outside any cell for good.
----@type openmw.GObject[]
-local UnremovedReplacements = {}
-
----@param replacement openmw.GObject
----@return boolean wasRemoved
-local function removeReplacement(replacement)
-  if not replacement:isValid() or replacement.count < 1 then return true end
-
-  local wasRemoved, removeError = pcall(replacement.remove, replacement)
-  if not wasRemoved then reportActionFailure('replacement cleanup', removeError) end
-
-  return wasRemoved
-end
-
-local function retryReplacementCleanup()
-  for replacementIdx = #UnremovedReplacements, 1, -1 do
-    if removeReplacement(UnremovedReplacements[replacementIdx]) then
-      Remove(UnremovedReplacements, replacementIdx)
-    end
-  end
-end
-
 --- Removes a replacement that was created but never took its original's place. The original
 --- is only disabled once its replacement has been placed, so whatever interrupts a rule in
 --- between leaves the original exactly as it was and only this object to clear away.
 local function discardUncommittedReplacement()
-  if UnremovedReplacements[1] then retryReplacementCleanup() end
-
   local replacement = UncommittedReplacement
   if not replacement then return end
   UncommittedReplacement = nil
 
-  if not removeReplacement(replacement) then
-    UnremovedReplacements[#UnremovedReplacements + 1] = replacement
-  end
+  ObjectCleanup.discard(replacement)
 end
 
 --- Records a rule as applied to an object under whichever once policy the rule declares.
@@ -528,6 +500,46 @@ end
 local function restoreScale(object, scale)
   local wasRestored, restoreError = pcall(object.setScale, object, scale)
   if not wasRestored then reportActionFailure('scale restore', restoreError) end
+end
+
+---@param object openmw.GObject
+---@param isEnabled boolean
+local function setEnabled(object, isEnabled) object.enabled = isEnabled end
+
+--- The last step of a pass, after placement: the original gives way to its replacement, and
+--- disabling and deleting happen. Only when all of it has gone through is the pass committed.
+---@param object openmw.GObject
+---@param target openmw.GObject the object, or the replacement now standing in for it
+---@param shouldDisable boolean
+---@param shouldDelete boolean
+local function finalizeCommit(object, target, shouldDisable, shouldDelete)
+  if target ~= object then object.enabled = false end
+
+  if shouldDisable and target:isValid() then target.enabled = false end
+
+  if shouldDelete and object:isValid() then DeleteManager:addObjectToDeleteQueue(object, true) end
+end
+
+--- Undoes a pass whose last step failed after its placement had already gone through, so the
+--- object is left as it was found and its rules can be tried again from the same state.
+---@param object openmw.GObject
+---@param target openmw.GObject
+---@param wasMoved boolean whether placement was committed for this pass
+---@param cell openmw.core.GCell where the object was before the rules ran
+---@param position openmw.util.Vector3
+---@param rotation openmw.util.Transform
+---@param scale number
+local function rollBackCommit(object, target, wasMoved, cell, position, rotation, scale)
+  local wasRolledBack, rollbackError = true, nil
+
+  if target ~= object then
+    discardUncommittedReplacement()
+    wasRolledBack, rollbackError = pcall(setEnabled, object, true)
+  elseif wasMoved then
+    wasRolledBack, rollbackError = pcall(commitPlacement, object, cell, position, rotation, scale)
+  end
+
+  if not wasRolledBack then reportActionFailure('rollback', rollbackError) end
 end
 
 --- When a rule is recorded as applied depends on where each effect lives, not only on whether
@@ -592,14 +604,15 @@ local function tryModifyObject(object, instanceModificationList)
   local commitDependentRules
   --- Do replacements first, then transforms, then item additions/removals, then spells
 
-  local originalScale = object.scale
+  local originalRotation, originalPosition, originalCell, originalScale =
+    object.rotation, object.position, object.cell, object.scale
   local newTransform, newPos, newCell, targetScale =
-    object.rotation, object.position, object.cell, originalScale
+    originalRotation, originalPosition, originalCell, originalScale
   local teleportOnGround
 
   Execution.object, Execution.target, Execution.hadAnyEffect = object, object, false
 
-  if UnremovedReplacements[1] then retryReplacementCleanup() end
+  if ObjectCleanup.hasPending() then ObjectCleanup.retryPending() end
 
   DebugLog(
     'APPLY %d rule(s) to %s (%s)',
@@ -929,14 +942,13 @@ local function tryModifyObject(object, instanceModificationList)
 
   if not Execution.hadAnyEffect then return end
 
-  local wasPlacementCommitted = not needsPlacementUpdate
+  local sentPlayerElsewhere = false
 
   if needsPlacementUpdate then
     local sendsPlayerElsewhere = PlayerObjectIsInstance(modifyTarget)
-      and newCell.id ~= object.cell.id
+      and newCell.id ~= originalCell.id
 
-    local placeError
-    wasPlacementCommitted, placeError = pcall(
+    local wasPlaced, placeError = pcall(
       commitPlacement,
       modifyTarget,
       newCell,
@@ -946,39 +958,55 @@ local function tryModifyObject(object, instanceModificationList)
       teleportOnGround
     )
 
-    if not wasPlacementCommitted then
+    if not wasPlaced then
       reportActionFailure('placement', placeError)
-    elseif sendsPlayerElsewhere then
-      TriggerContext.expectedPlayerCellId = newCell.id
-    end
-  end
 
-  if not wasPlacementCommitted then
-    if modifyTarget ~= object then
-      discardUncommittedReplacement()
+      if modifyTarget ~= object then
+        discardUncommittedReplacement()
+      else
+        restoreScale(object, originalScale)
+      end
+
       return
     end
 
-    restoreScale(object, originalScale)
-  end
-
-  if wasPlacementCommitted then
-    if commitDependentRules then
-      for ruleIdx = 1, #commitDependentRules do
-        recordRuleApplied(object, modifyTarget, commitDependentRules[ruleIdx])
-      end
-    end
-
-    if modifyTarget ~= object then
-      UncommittedReplacement = nil
-      inheritOnceActions(object, modifyTarget)
-      object.enabled = false
+    if sendsPlayerElsewhere then
+      TriggerContext.expectedPlayerCellId = newCell.id
+      sentPlayerElsewhere = true
     end
   end
 
-  if shouldDisable and modifyTarget:isValid() then modifyTarget.enabled = false end
+  local wasFinalized, finalizeError =
+    pcall(finalizeCommit, object, modifyTarget, shouldDisable, shouldDelete)
 
-  if shouldDelete and object:isValid() then DeleteManager:addObjectToDeleteQueue(object, true) end
+  if not wasFinalized then
+    reportActionFailure('commit', finalizeError)
+
+    if sentPlayerElsewhere then TriggerContext.expectedPlayerCellId = nil end
+
+    rollBackCommit(
+      object,
+      modifyTarget,
+      needsPlacementUpdate,
+      originalCell,
+      originalPosition,
+      originalRotation,
+      originalScale
+    )
+
+    return
+  end
+
+  if commitDependentRules then
+    for ruleIdx = 1, #commitDependentRules do
+      recordRuleApplied(object, modifyTarget, commitDependentRules[ruleIdx])
+    end
+  end
+
+  if modifyTarget ~= object then
+    UncommittedReplacement = nil
+    inheritOnceActions(object, modifyTarget)
+  end
 end
 
 ---@class SSSInstanceModifiers

@@ -28,6 +28,8 @@ Creates and moves requested items into an Actor or Container inventory. String a
 
 Each entry of an item or spell action stands on its own. An entry the engine refuses, for example a record that is not in the load order, is logged once as `"<record>" was refused` and skipped; the entries that were accepted stay, and the action counts as applied. A `once: true` rule in that position is recorded and does not add the accepted items again.
 
+The same holds inside one entry. An item the inventory refuses after it was created is removed again and logged as `could not be put in an inventory`. A `remove` whose count is spread over several stacks counts as applied as soon as one stack has been reduced; if the engine refuses a later stack, what was already taken stays taken, the refusal is logged as `could not be removed from an inventory`, and the rule is recorded rather than taking the same items again.
+
 ```yaml
 add:
   gold_001:

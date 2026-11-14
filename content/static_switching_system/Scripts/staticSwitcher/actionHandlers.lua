@@ -8,6 +8,7 @@ local world = require 'openmw.world'
 local randomGen = require 'scripts.s3.randomGen'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
 local Regions = require 'Scripts.staticSwitcher.regions'
 local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 
@@ -128,6 +129,22 @@ local function getObjectInventory(object)
   return object.type.inventory(object)
 end
 
+--- Creating an item and putting it in an inventory are two engine operations. An item the
+--- inventory refuses is removed again rather than left outside any cell.
+---@param inventory openmw.core.Inventory
+---@param recordId RecordId
+---@param count integer
+---@return openmw.GObject? item nil when the inventory refused it
+local function createItemIn(inventory, recordId, count)
+  local item = world.createObject(recordId, count)
+
+  local wasMoved, moveError = pcall(item.moveInto, item, inventory)
+  if wasMoved then return item end
+
+  ObjectCleanup.discard(item)
+  warnOnce(StrFormat('"%s" could not be put in an inventory: %s', recordId, tostring(moveError)))
+end
+
 ---@param object openmw.GObject
 ---@param recordId RecordId
 ---@param count integer
@@ -138,14 +155,15 @@ local function addItemToInventory(object, recordId, count)
   local inventory = getObjectInventory(object)
   if not inventory then return false end
 
-  world.createObject(recordId, count):moveInto(inventory)
-  return true
+  return createItemIn(inventory, recordId, count) ~= nil
 end
 
+--- A count can be spread over several stacks, each removed by its own engine call. Whatever
+--- was removed before a stack was refused stays removed, so it is reported as removed.
 ---@param object openmw.GObject
 ---@param recordId RecordId
 ---@param count integer
----@return boolean wasRemoved
+---@return boolean wasRemoved whether anything was removed
 local function removeItemFromInventory(object, recordId, count)
   if count < 1 then return false end
 
@@ -157,18 +175,34 @@ local function removeItemFromInventory(object, recordId, count)
 
   local remainingCount = math.min(count, availableCount)
   local items = inventory:findAll(recordId)
+  local wasAnyRemoved = false
 
   for i = 1, #items do
     local itemStack = items[i]
     local removeCount = math.min(remainingCount, itemStack.count)
 
-    itemStack:remove(removeCount)
-    remainingCount = remainingCount - removeCount
+    if removeCount > 0 then
+      local wasRemoved, removeError = pcall(itemStack.remove, itemStack, removeCount)
 
-    if remainingCount <= 0 then return true end
+      if not wasRemoved then
+        warnOnce(
+          StrFormat(
+            '"%s" could not be removed from an inventory: %s',
+            recordId,
+            tostring(removeError)
+          )
+        )
+        break
+      end
+
+      wasAnyRemoved = true
+      remainingCount = remainingCount - removeCount
+    end
+
+    if remainingCount <= 0 then break end
   end
 
-  return false
+  return wasAnyRemoved
 end
 
 ---@param actor openmw.GObject
@@ -181,13 +215,7 @@ local function getOrCreateInventoryItem(actor, recordId, count)
   local inventory = getObjectInventory(actor)
   if not inventory then return end
 
-  local item = inventory:find(recordId)
-  if item then return item end
-
-  item = world.createObject(recordId, count)
-  item:moveInto(inventory)
-
-  return item
+  return inventory:find(recordId) or createItemIn(inventory, recordId, count)
 end
 
 ---@param actor openmw.GObject
@@ -669,7 +697,7 @@ local function createPlacedObject(recordId, pool, cell, basePosition, baseRotati
 
   if wasPlaced then return object end
 
-  pcall(object.remove, object)
+  ObjectCleanup.discard(object)
   warnOnce(StrFormat('create: "%s" could not be placed: %s', recordId, tostring(placeError)))
 end
 
