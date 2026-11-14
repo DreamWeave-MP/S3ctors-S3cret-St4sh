@@ -34,7 +34,7 @@ Horiz0nPercentAdjustSevereName: Seuil de réduction importante
 Horiz0nPercentAdjustSevereDesc: |
   Horiz0n multiplie la réduction de la distance d'affichage lorsque le temps d'image actuel est supérieur de ce pourcentage au temps d'image cible.
   Par défaut : 30 %
-  Plage : 10 % - 100 %
+  Plage : 10 % - 50 %
 
 Horiz0nTargetFramerateName: Fréquence d'images cible
 Horiz0nTargetFramerateDesc: |

@@ -34,7 +34,7 @@ Horiz0nPercentAdjustSevereName: Severe Decrease Threshold
 Horiz0nPercentAdjustSevereDesc: |
   Horiz0n multiplies the view distance decrease when the current frametime is this much worse than the target frametime.
   Default: 30%
-  Range: 10% - 100%
+  Range: 10% - 50%
 
 Horiz0nTargetFramerateName: Target Framerate
 Horiz0nTargetFramerateDesc: |
