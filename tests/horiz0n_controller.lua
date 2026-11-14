@@ -28,6 +28,8 @@ local DEFAULT_SETTINGS = {
 ---@field frameTimeFloor number fastest frame the scene can produce regardless of view distance
 ---@field handlers table<string, function>
 ---@field history number[] every distinct distance written to the engine
+---@field writePrevious number[] the engine distance each write replaced
+---@field writeTimes number[] the clock at each write
 ---@field realFrameTime fun(): number
 ---@field settings table<string, boolean|number>
 ---@field subscriber fun(section: string?, key: string)
@@ -45,6 +47,8 @@ local function newWorld(overrides)
     cell = { isExterior = true, hasTag = function() return false end },
     frameTimeFloor = TARGET_FRAME_TIME,
     history = {},
+    writePrevious = {},
+    writeTimes = {},
     settings = {},
     timeScale = 1,
   }
@@ -80,7 +84,12 @@ local function newWorld(overrides)
           distance == distance and math.abs(distance) ~= math.huge,
           'engine rejects non-finite view distance'
         )
-        if distance ~= world.engineDistance then world.history[#world.history + 1] = distance end
+        if distance ~= world.engineDistance then
+          local writeIndex = #world.history + 1
+          world.history[writeIndex] = distance
+          world.writePrevious[writeIndex] = world.engineDistance
+          world.writeTimes[writeIndex] = world.clock
+        end
         world.engineDistance = distance
       end,
     },
@@ -132,6 +141,23 @@ end
 local function setSetting(world, key, value)
   world.settings[key] = value
   world.subscriber(nil, key)
+end
+
+---@param world Horiz0nTestWorld
+---@param firstWrite integer
+---@param span number seconds
+---@return integer writes most writes inside any span-long stretch of the clock
+local function busiestSpan(world, firstWrite, span)
+  local busiest, oldest = 0, firstWrite
+
+  for newest = firstWrite, #world.writeTimes do
+    while world.writeTimes[newest] - world.writeTimes[oldest] >= span do
+      oldest = oldest + 1
+    end
+    busiest = math.max(busiest, newest - oldest + 1)
+  end
+
+  return busiest
 end
 
 ---@param world Horiz0nTestWorld
@@ -230,12 +256,9 @@ do
   run(world, 1)
   world.frameTimeFloor = 1 / 40
 
-  local busiestSecond, descentWrites = 0, 0
-  for _ = 1, 20 do
-    local writes = run(world, 1)
-    descentWrites = descentWrites + writes
-    busiestSecond = math.max(busiestSecond, writes)
-  end
+  local firstWrite = #world.history + 1
+  local descentWrites = run(world, 20)
+  local busiestSecond = busiestSpan(world, firstWrite, 1)
   check(
     cells(world) == 0.25,
     'sustained 40 FPS did not reach the minimum in 20s: %.2f cells',
