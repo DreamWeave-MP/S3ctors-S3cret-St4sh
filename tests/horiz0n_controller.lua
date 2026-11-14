@@ -361,6 +361,48 @@ for _, adjustFramerate in next, { 10, 30, 60, 144 } do
   end
 end
 
+do
+  local world = newWorld()
+  world.affordableCells = 5
+  run(world, 30)
+  local managed = world.engineDistance
+
+  world.externalDistance = 9 * CELL_SIZE
+  run(world, 60)
+
+  world.externalDistance = nil
+  local firstWrite = #world.history + 1
+  run(world, 6)
+  check(
+    world.history[firstWrite] == managed,
+    'learned from another writer: reclaimed at %.2f cells instead of %.2f',
+    (world.history[firstWrite] or 0) / CELL_SIZE,
+    managed / CELL_SIZE
+  )
+end
+
+do
+  local world = newWorld()
+  world.affordableCells = 5
+  run(world, 30)
+
+  world.externalDistance = 9 * CELL_SIZE
+  run(world, 30)
+
+  world.externalDistance = nil
+  world.affordableCells = 3
+  local firstWrite = #world.history + 1
+  run(world, 8)
+
+  local reclaimedAt, adjustedAt = world.writeTimes[firstWrite], world.writeTimes[firstWrite + 1]
+  check(adjustedAt ~= nil, 'never adjusted after taking the camera back')
+  check(
+    adjustedAt ~= nil and adjustedAt - reclaimedAt >= 0.2,
+    'adjusted %.3fs after taking the camera back',
+    (adjustedAt or reclaimedAt) - reclaimedAt
+  )
+end
+
 for _, timeScale in next, { 0.5, 2 } do
   local world = newWorld()
   world.timeScale = timeScale
