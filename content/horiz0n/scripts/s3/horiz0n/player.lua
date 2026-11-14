@@ -99,6 +99,7 @@ local function holdsCamera()
 
   writtenViewDistance, yieldUntil = nil, now + YIELD_TIME
   windowDuration, windowFrames, badWindows, overloadTime = 0.0, 0, 0, 0.0
+  isProbing, probeSurvivedTime = false, 0.0
 
   return false
 end
