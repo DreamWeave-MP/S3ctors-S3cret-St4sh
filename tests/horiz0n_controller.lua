@@ -25,8 +25,10 @@ local DEFAULT_SETTINGS = {
 ---@field cell { isExterior: boolean, hasTag: fun(): boolean }
 ---@field engineDistance number
 ---@field externalDistance number? written to the engine by another mod before every frame
+---@field forcedFrameTime number? frame time the running loop has already decided on
 ---@field frameTimeFloor number fastest frame the scene can produce regardless of view distance
 ---@field handlers table<string, function>
+---@field pendingStall number seconds of rendering stall still owed after a write
 ---@field history number[] every distinct distance written to the engine
 ---@field writePrevious number[] the engine distance each write replaced
 ---@field writeTimes number[] the clock at each write
@@ -34,6 +36,7 @@ local DEFAULT_SETTINGS = {
 ---@field settings table<string, boolean|number>
 ---@field subscriber fun(section: string?, key: string)
 ---@field timeScale number
+---@field writeStall number seconds of rendering stall every view distance write causes
 
 ---@param overrides { baseCells: number?, engineCells: number?, settings: table<string, boolean|number>? }?
 ---@return Horiz0nTestWorld
@@ -47,6 +50,8 @@ local function newWorld(overrides)
     cell = { isExterior = true, hasTag = function() return false end },
     frameTimeFloor = TARGET_FRAME_TIME,
     history = {},
+    pendingStall = 0,
+    writeStall = 0,
     writePrevious = {},
     writeTimes = {},
     settings = {},
@@ -89,13 +94,16 @@ local function newWorld(overrides)
           world.history[writeIndex] = distance
           world.writePrevious[writeIndex] = world.engineDistance
           world.writeTimes[writeIndex] = world.clock
+          world.pendingStall = world.writeStall
         end
         world.engineDistance = distance
       end,
     },
     --- OpenMW's main loop multiplies the frame duration by the simulation time scale before Lua sees it.
     ['openmw.core'] = {
-      getRealFrameDuration = function() return realFrameTime() * world.timeScale end,
+      getRealFrameDuration = function()
+        return (world.forcedFrameTime or realFrameTime()) * world.timeScale
+      end,
       getRealTime = function() return world.clock end,
       getSimulationTimeScale = function() return world.timeScale end,
     },
@@ -126,9 +134,14 @@ local function run(world, seconds, paused)
   while elapsed < seconds do
     if world.externalDistance then world.engineDistance = world.externalDistance end
 
-    local frameTime = world.realFrameTime()
+    local stall = math.min(world.pendingStall, 0.15)
+    world.pendingStall = world.pendingStall - stall
+
+    local frameTime = world.realFrameTime() + stall
     world.clock = world.clock + frameTime
+    world.forcedFrameTime = frameTime
     world.handlers.onFrame(paused and 0 or frameTime * world.timeScale)
+    world.forcedFrameTime = nil
     elapsed = elapsed + frameTime
   end
 
