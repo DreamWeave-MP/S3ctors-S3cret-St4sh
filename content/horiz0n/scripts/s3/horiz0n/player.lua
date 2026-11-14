@@ -18,6 +18,7 @@ local mathFloor, mathMax, mathMin = math.floor, math.max, math.min
 
 local CELL_SIZE = 8192
 local MAX_GROW_COOLDOWN = 60.0
+local PROBE_SETTLE_TIME = 0.25
 local SUSTAINED_BAD_WINDOWS = 2
 
 local MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE =
@@ -86,12 +87,14 @@ end
 
 ---@param step number
 local function grow(step)
-  isProbing = true
-  viewDistance = clampViewDistance(viewDistance + step)
-
   if failedViewDistance and viewDistance > failedViewDistance then
     failedViewDistance, growCooldown = nil, GROW_COOLDOWN
   end
+
+  local grownViewDistance = clampViewDistance(viewDistance + step)
+
+  isProbing, cooldownRemaining = grownViewDistance ~= viewDistance, PROBE_SETTLE_TIME
+  viewDistance = grownViewDistance
 end
 
 local function measureFrame()
@@ -106,6 +109,8 @@ local function measureFrame()
 
   local step = viewDistance * VD_STEP_FRACTION
 
+  if cooldownRemaining > 0 then cooldownRemaining = cooldownRemaining - elapsed end
+
   if frameRatio >= OKAYISH_FRAME_RATIO then
     badWindows = badWindows + 1
     if badWindows < SUSTAINED_BAD_WINDOWS then return end
@@ -117,11 +122,7 @@ local function measureFrame()
 
   badWindows = 0
 
-  if cooldownRemaining > 0 then
-    cooldownRemaining = cooldownRemaining - elapsed
-  else
-    grow(step)
-  end
+  if cooldownRemaining <= 0 then grow(step) end
 end
 
 ---@param newMode Horiz0nMode
