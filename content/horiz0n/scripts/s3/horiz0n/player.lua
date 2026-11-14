@@ -13,7 +13,8 @@ local getRealFrameDuration, getRealTime, getSimulationTimeScale, horiz0nSettings
   require('openmw.core').getSimulationTimeScale,
   require('openmw.storage').playerSection 'SettingsPlayerHoriz0n'
 
-local mathFloor, mathMax, mathMin = math.floor, math.max, math.min
+local mathAbs, mathFloor, mathHuge, mathMax, mathMin =
+  math.abs, math.floor, math.huge, math.max, math.min
 
 ---@alias Horiz0nMode 'disabled'|'indoors'|'managing'
 
@@ -234,6 +235,7 @@ return {
       local savedViewDistance = data and data.viewDistance
       local isUsable = type(savedViewDistance) == 'number'
         and savedViewDistance == savedViewDistance
+        and mathAbs(savedViewDistance) ~= mathHuge
 
       if isUsable then viewDistance = savedViewDistance end
     end,
