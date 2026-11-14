@@ -41,6 +41,23 @@ Static mesh replacement is not affected by triggers; it only happens when an obj
 | `death` | An NPC or creature dies. | The dead actor. |
 | `custom:<name>` | Another mod fires the named trigger. | The object that mod passes. |
 
+## Shipped examples
+
+Each trigger has a working module under `Examples/`:
+
+| Trigger | Example |
+| --- | --- |
+| `journal` | `InstanceModifier_SixthHouseFalls.yaml` |
+| `hour` | `InstanceModifier_CaiusClocksOut.yaml` |
+| `day`, `weather` | `InstanceModifier_WhileYouWereStandingThere.yaml` |
+| `cell_enter` | `InstanceModifier_ADremoraWalksIntoACornerclub.yaml` |
+| `activate` | `InstanceModifier_RatsInTheLockbox.yaml` |
+| `drop`, `place` | `InstanceModifier_MudcrabsLikeShinyThings.yaml` |
+| `use`, `death` | `InstanceModifier_StormAtronachsLastWord.yaml` |
+| `custom:<name>` | `InstanceModifier_SoundTheAlarm.yaml` |
+
+The recipes [Placing something unique in a cell](@/static_switching_system/docs/recipes/unique-placement.md), [Reacting when a quest advances](@/static_switching_system/docs/recipes/reacting-to-quest-progress.md), and [Reacting to what the player does](@/static_switching_system/docs/recipes/reacting-to-the-player.md) walk through three of them.
+
 ## World triggers
 
 `journal`, `hour`, `day`, and `weather` are not about any one object. When one fires, SSS *sweeps*: it runs that trigger's rules on the objects in the player's cell and, outdoors, the eight exterior cells around it. Objects farther away are not swept, even if your settings keep them loaded. Disabled objects are not swept.

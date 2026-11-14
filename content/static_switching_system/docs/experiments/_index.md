@@ -20,7 +20,7 @@ The shared rule is simple: every module here uses the default `active` trigger, 
 - [The House Moves When You're Not Looking](@/static_switching_system/docs/experiments/house-moves.md) — accumulated relative transforms on fresh activation batches.
 - [Necromantic Compound Interest](@/static_switching_system/docs/experiments/necromantic-compound-interest.md) — generated-object feedback and a self-propagating undead population.
 - [Low Health Makes Vvardenfell Worse](@/static_switching_system/docs/experiments/low-health-vvardenfell.md) — persistent world scarring controlled by player health at activation time.
-- [Bad Weather Has Consequences](@/static_switching_system/docs/experiments/bad-weather-consequences.md) — weather as a condition, never as a trigger.
+- [Bad Weather Has Consequences](@/static_switching_system/docs/experiments/bad-weather-consequences.md) — weather as an activation-time condition rather than a trigger.
 - [The Door Knows What You're Wearing](@/static_switching_system/docs/experiments/door-disguise.md) — equipment and faction ownership becoming an access system.
 - [Caius Takes Weekends Off](@/static_switching_system/docs/experiments/caius-takes-weekends-off.md) — the Tamrielic weekday as an activation-time world condition.
 - [You Probably Want Lua](@/static_switching_system/docs/experiments/you-probably-want-lua.md) — the deliberate warning label for over-composing declarative rules.

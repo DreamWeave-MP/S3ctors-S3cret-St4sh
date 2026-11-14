@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Rats in the Lockbox
+priority: polish
+
+# The activate trigger runs when an actor activates the object, before the engine opens it.
+# by_player keeps NPCs and creatures from setting it off. The rule runs on the container,
+# so the create offsets are measured from the container, not from the player.
+instances:
+  - trigger: activate
+    conditions:
+      - object_type: Container
+      - by_player: true
+      - locked: true
+      - exterior: false
+    actions:
+      - chance: 0.2
+        create:
+          rat:
+            count:
+              max: 2
+            position:
+              x: { min: -60, max: 60 }
+              y: { min: -60, max: 60 }
+    once: true

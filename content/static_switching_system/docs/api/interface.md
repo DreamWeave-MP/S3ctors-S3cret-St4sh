@@ -58,6 +58,33 @@ local function describeObject(object)
 end
 ```
 
+### Firing a custom trigger
+
+`trigger` runs the rules a module author wrote for `custom:<name>` on one object. It returns whether the rules were run:
+
+```lua
+---@omw-context global
+local I = require 'openmw.interfaces'
+local SSS = I.StaticSwitcher_G
+
+local function soundTheAlarm(guard)
+    if not SSS or SSS.version < 6 then return false end
+    return SSS.trigger('myMod_alarm', guard)
+end
+```
+
+Scripts in other contexts send the global event instead; it carries no return value:
+
+```lua
+---@omw-context local
+local core = require 'openmw.core'
+local self = require 'openmw.self'
+
+core.sendGlobalEvent('StaticSwitcherTrigger', { name = 'myMod_alarm', object = self.object })
+```
+
+`Examples/InstanceModifier_SoundTheAlarm.yaml` is the module side of this pair.
+
 Apart from `trigger`, the interface is observational. It does not provide registration, module mutation, deletion, or save-state editing operations. `trigger` runs only rules a module author wrote for that custom trigger name; see [Triggers](@/static_switching_system/docs/concepts/triggers.md#custom-triggers). The same request can be sent from any script context as the global event `StaticSwitcherTrigger` with `{ name, object }`.
 
 It does not combine static and instance pipelines. See [Pipelines and Module Boundaries](@/static_switching_system/docs/concepts/pipelines.md).

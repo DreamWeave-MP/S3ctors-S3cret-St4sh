@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Sound the Alarm
+priority: polish
+
+# A custom trigger runs when another mod asks for it, on the object that mod names.
+#
+# From a global script:
+#
+#   local I = require 'openmw.interfaces'
+#   I.StaticSwitcher_G.trigger('myMod_alarm', guard)
+#
+# From any script, including a local or player script:
+#
+#   local core = require 'openmw.core'
+#   core.sendGlobalEvent('StaticSwitcherTrigger', { name = 'myMod_alarm', object = guard })
+#
+# The name after "custom:" is yours to choose; prefix it with your mod's name.
+instances:
+  - trigger: custom:myMod_alarm
+    conditions:
+      - object_type: NPC
+      - is_dead: false
+    actions:
+      - transform:
+          scale: 1.15
+    once: true
