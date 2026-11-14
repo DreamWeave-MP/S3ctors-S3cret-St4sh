@@ -35,7 +35,7 @@ The way it works is simple:
 1. You tell Horiz0n your target framerate - 60 by default
 2. It averages your frametime, thirty times per second, if the world is not paused AND you are not in a true interior cell - so Starwind and Tribunal should both work fine.
 3. If the average frametime stays 10% worse than your target, lower the view distance by 1%. If it's 30% worse, lower by 2%.
-4. After lowering it, hold still for the Grow Cooldown - three seconds by default - and only then try raising the view distance by 1% again. If raising it immediately costs frames again, the cooldown doubles, up to one minute.
+4. After lowering it, hold still for the Grow Cooldown - three seconds by default - and only then try raising the view distance by 1% again, at most four times per second so each raise can be judged before the next. If a raise immediately costs frames again, the cooldown doubles, up to one minute.
 
 It'll keep going as-needed until you hit either the minimum or the maximum viewing distance, and once it finds a distance your framerate can hold, it leaves the view distance alone.
 
