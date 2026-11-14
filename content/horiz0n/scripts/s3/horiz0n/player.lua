@@ -12,7 +12,7 @@ local getRealFrameDuration, getSimulationTimeScale, horiz0nSettings =
   require('openmw.core').getSimulationTimeScale,
   require('openmw.storage').playerSection 'SettingsPlayerHoriz0n'
 
-local mathFloor, mathMin = math.floor, math.min
+local mathFloor, mathMax, mathMin = math.floor, math.max, math.min
 
 ---@alias Horiz0nMode 'disabled'|'indoors'|'managing'
 
@@ -63,9 +63,7 @@ local function maxViewDistance() return mathMin(MAX_VIEW_DISTANCE, getBaseViewDi
 local function clampViewDistance(distance)
   local maximum = maxViewDistance()
 
-  return distance >= maximum and maximum
-    or distance <= MIN_VIEW_DISTANCE and MIN_VIEW_DISTANCE
-    or distance
+  return mathMax(mathMin(MIN_VIEW_DISTANCE, maximum), mathMin(distance, maximum))
 end
 
 --- The engine stores view distance as a 32-bit float, and whole units survive that round trip exactly.
