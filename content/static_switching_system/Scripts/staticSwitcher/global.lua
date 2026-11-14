@@ -7,13 +7,15 @@ local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
 
-local DebugLog
+local DebugLog, ErrorLog
 do
   local logger = require 'Scripts.staticSwitcher.logger'
   DebugLog = logger.debug
+  ErrorLog = logger.error
 end
 
-local type = type
+local pcall, type = pcall, type
+local StrFormat = string.format
 
 local DeleteManager = require 'Scripts.staticSwitcher.deleteManager'
 
@@ -38,36 +40,51 @@ local processActiveObject, processDeletions
 
 local REPLACE_PER_BATCH = 4
 
+---@param object openmw.GObject
+local function applyModulesToObject(object)
+  local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+
+  -- Instance and static modules are intentionally separate pipelines.
+  -- Matching instance rules own this activation; static replacement is the fallback.
+  if instanceModificationList then
+    InstanceModifiers.tryModifyObject(object, instanceModificationList)
+  else
+    StaticReplacements.tryReplaceObject(object)
+  end
+end
+
+--- An object taken into an inventory or container while it was still queued has no cell.
+--- Returning it to the world activates it again, so it is safe to drop from this batch.
+---@param object openmw.GObject
+---@return boolean
+local function isPlacedInWorld(object)
+  return object:isValid() and object.count >= 1 and object.cell ~= nil
+end
+
 processActiveObject = function()
-  local numObjects = 0
-
   for _ = 1, REPLACE_PER_BATCH do
-    numObjects = #ActiveObjectStack
-
+    local numObjects = #ActiveObjectStack
     if numObjects == 0 then break end
 
     local object = ActiveObjectStack[numObjects]
+    ActiveObjectStack[numObjects] = nil
 
-    if object:isValid() and object.count >= 1 then
-      local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+    if isPlacedInWorld(object) then
+      local wasProcessed, processError = pcall(applyModulesToObject, object)
 
-      -- Instance and static modules are intentionally separate pipelines.
-      -- Matching instance rules own this activation; static replacement is the fallback.
-      if instanceModificationList then
-        InstanceModifiers.tryModifyObject(object, instanceModificationList)
-      else
-        StaticReplacements.tryReplaceObject(object)
+      if not wasProcessed then
+        ErrorLog(
+          StrFormat('Skipped %s (%s): %s', object.id, object.recordId, tostring(processError))
+        )
       end
     end
-
-    ActiveObjectStack[numObjects] = nil
   end
 
   DebugLog('Batch processed, stack: %d remaining', #ActiveObjectStack)
 
   if not DeleteManager:queueIsEmpty() then
     UpdateFunction = processDeletions
-  elseif numObjects <= 1 then
+  elseif #ActiveObjectStack == 0 then
     UpdateFunction = NullFunction
   end
 end
