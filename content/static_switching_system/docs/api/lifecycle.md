@@ -22,6 +22,8 @@ A module load does not mean every object has already been processed. SSS waits f
 
 For each active object, SSS checks instance rules first and uses static replacement only when no instance rule owns the activation. Active objects are processed in bounded batches during `onUpdate`, rather than all at once. Instance transforms are accumulated and placement updates are applied after the relevant actions. Replacement, disable, and delete work can be queued for later frames so that object validity and chain bookkeeping remain coherent.
 
+OpenMW carries out a move at the end of the frame in which it was requested. Until then the object is in transit: it reports a count of zero, and SSS skips it if another trigger reaches it in the same frame. An object SSS has just moved or created is therefore acted on again no earlier than the next frame.
+
 Static replacement chains have a maximum depth of **8 replacement steps**. Each successful static module application adds one step to the chain. When a chain already has eight steps, SSS logs `chain max depth reached` and does not apply another static replacement to that lineage. A module is also applied at most once to a chain lineage, even before the depth limit is reached.
 
 Missing meshes, invalid cells, unsupported object types, failed condition checks, and chance misses are normal reasons for an action to have no effect; inspect debug output when distinguishing them matters.

@@ -141,6 +141,6 @@ A pool whose `count`, `chance`, `position`, or `rotate` range has no `max`, whos
 
 ### When a create only partly succeeds
 
-Each object is created and placed on its own. If one cannot be placed, it is removed again, the failure is logged once, and that pool stops; objects already placed stay, and other pools still run. If the engine will not remove it either, SSS keeps hold of it and tries again the next time a rule runs.
+Each object is created and placed on its own. If one cannot be placed, it is removed again, the failure is logged once, and that pool stops; objects already placed stay, and other pools still run. If the engine will not remove it either, SSS keeps hold of it and tries again on later frames, a few such corrections per frame, before giving up.
 
 The action counts as applied as soon as it has placed at least one object. That has a consequence worth knowing before you rely on it: **a `once: true` rule whose `create` placed two of three objects is recorded as done, and the third never appears.** SSS does not go back for it, because retrying would place the first two again. If a set of objects must appear together or not at all, do not depend on a single `create` for that guarantee; check the log for `create:` warnings while testing the module, since anything that stops a placement will usually stop it every time.

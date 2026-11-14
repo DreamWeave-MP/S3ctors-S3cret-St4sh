@@ -35,6 +35,25 @@ local placementsBeforeFailure
 local sentGlobalEvents = {}
 local globalEventsFail = false
 local removalsRefused = false
+local removeCalls = 0
+
+--- OpenMW does not carry out a move, a rescale or an inventory transfer when a script asks for
+--- it. It checks the request, queues it, and applies the queue at the end of the frame. Until
+--- then a moving object reports a count of zero, cannot be moved again, and cannot be removed.
+--- These stubs behave the same way, so nothing here passes merely because a request and its
+--- effect happen to coincide.
+local engineActions = {}
+
+local function queueEngineAction(action) engineActions[#engineActions + 1] = action end
+
+local function applyEngineActions()
+  local actions = engineActions
+  engineActions = {}
+
+  for actionIndex = 1, #actions do
+    actions[actionIndex]()
+  end
+end
 local nextObjectIndex = 0
 
 local knownRecords = {
@@ -62,28 +81,58 @@ local function newObject(recordId, cell, type)
     enabled = true,
     owner = {},
     scale = 1,
+    teleportCount = 0,
     type = type or objectType,
   }
 
   function object:isValid() return true end
-  function object:setScale(scale) self.scale = scale end
+  function object:hasScript() return false end
+
+  function object:setScale(scale)
+    queueEngineAction(function() self.scale = scale end)
+  end
+
   function object:remove()
+    removeCalls = removeCalls + 1
+
     if removalsRefused then error 'the engine kept the object' end
+    if self.count < 1 then error 'Can\'t remove 0 of 0 items' end
+
     self.count = 0
   end
-  function object:hasScript() return false end
+
   function object:moveInto(inventory)
     if inventory.refusesItems then error 'the inventory is full' end
-    inventory.items[#inventory.items + 1] = self
+
+    local count = self.count
+    self.count = 0
+
+    queueEngineAction(function()
+      self.count = count
+      inventory.items[#inventory.items + 1] = self
+    end)
   end
+
   function object:teleport(targetCell)
+    if self.count < 1 then
+      error 'Object is either removed or already in the process of teleporting'
+    end
+
     if placementsBeforeFailure then
       if placementsBeforeFailure == 0 then error 'the cell refused the object' end
       placementsBeforeFailure = placementsBeforeFailure - 1
     end
 
-    self.cell = targetCell
-    pendingActivations[#pendingActivations + 1] = self
+    local count = self.count
+    self.count = 0
+    self.teleportCount = self.teleportCount + 1
+
+    queueEngineAction(function()
+      self.count = count
+      self.cell = targetCell
+
+      if not self.arrivesSilently then pendingActivations[#pendingActivations + 1] = self end
+    end)
   end
 
   return object
@@ -185,6 +234,11 @@ local moduleSources = {
         {
           conditions = { { record_id = 'butterfingers' } },
           actions = { { add = { 'crate' } } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'wanderer' } },
+          actions = { { transform = { scale = 2 }, delete = true } },
           once = true,
         },
         {
@@ -429,6 +483,7 @@ local function runFrames(frameCount)
     end
 
     handlers.onUpdate()
+    applyEngineActions()
   end
 end
 
@@ -446,7 +501,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 23)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 24)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -520,7 +575,7 @@ assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[21]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[22]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -717,7 +772,7 @@ placementsBeforeFailure, removalsRefused = nil, false
 local strandedReplacement = createdObjects[createdBeforeClingy + 1]
 assert(clingy.enabled == true)
 assert(strandedReplacement.cell == nil and strandedReplacement.count == 1)
-assert(countLogLines '%[WARN%] An unplaced crate could not be removed and will be retried' == 1)
+assert(countLogLines '%[WARN%] A stray crate could not be removed and will be retried' == 1)
 
 activate(clingy)
 runFrames(4)
@@ -750,8 +805,9 @@ activate(condemned)
 runFrames(12)
 assert(condemned.count == 0)
 
--- A commit whose last step fails after placement went through is undone: the replacement is
--- removed, the original is back, and the rule is not recorded.
+-- A move the engine has accepted cannot be called off. When a pass fails after its replacement
+-- is already on its way, the replacement is removed once it has landed and the original is
+-- left as it was: nothing extra materialises.
 local jinxed = newObject('jinxed', TEL_BRANORA)
 local createdBeforeJinxed = #createdObjects
 deleteQueueRaises = true
@@ -759,16 +815,86 @@ activate(jinxed)
 runFrames(6)
 deleteQueueRaises = false
 
+local straggler = createdObjects[createdBeforeJinxed + 1]
+assert(straggler.teleportCount == 1, 'the replacement was not yet on its way when the pass failed')
+assert(straggler.count == 0, 'a replacement materialised after its pass was abandoned')
 assert(jinxed.enabled == true and jinxed.count == 1)
-assert(
-  createdObjects[createdBeforeJinxed + 1].count == 0,
-  'a replacement outlived its failed commit'
-)
-assert(countLogLines '%[WARN%] Action commit failed and was skipped' == 1)
+assert(countLogLines '%[ERROR%] Skipped @%d+ %(jinxed%)' == 1)
 
 activate(jinxed)
 runFrames(12)
 assert(#createdObjects == createdBeforeJinxed + 2 and jinxed.count == 0)
+
+-- An original that was disabled before the pass is still disabled after the pass is abandoned.
+local dormant = newObject('jinxed', TEL_BRANORA)
+dormant.enabled = false
+deleteQueueRaises = true
+activate(dormant)
+runFrames(6)
+deleteQueueRaises = false
+assert(dormant.enabled == false, 'an abandoned pass enabled an object that had been disabled')
+assert(dormant.count == 1)
+
+-- An object that was itself moved by a pass that then failed is put back once the move has
+-- landed, and its rule can still run.
+local wanderer = newObject('wanderer', TEL_BRANORA)
+wanderer.arrivesSilently = true
+deleteQueueRaises = true
+activate(wanderer)
+runFrames(1)
+deleteQueueRaises = false
+assert(wanderer.teleportCount == 1 and wanderer.scale == 2, 'the accepted move did not happen')
+
+runFrames(6)
+assert(wanderer.teleportCount == 2, 'a moved object was not put back after its pass failed')
+assert(wanderer.scale == 1 and wanderer.cell == TEL_BRANORA and wanderer.count == 1)
+
+activate(wanderer)
+runFrames(12)
+assert(wanderer.scale == 2 and wanderer.count == 0, 'the rule did not stay eligible')
+
+-- Removals the engine keeps refusing are worked off a few per frame however many are waiting,
+-- and each is given up after a fixed number of tries.
+local STRAY_OBJECTS = 300
+local removeCallsBeforeBacklog = removeCalls
+placementsBeforeFailure, removalsRefused = 0, true
+for _ = 1, STRAY_OBJECTS do
+  activate(newObject('litterer', TEL_BRANORA))
+end
+
+local mostRemovalsInOneFrame = 0
+for _ = 1, 900 do
+  local removeCallsBeforeFrame = removeCalls
+  runFrames(1)
+  mostRemovalsInOneFrame = math.max(mostRemovalsInOneFrame, removeCalls - removeCallsBeforeFrame)
+end
+placementsBeforeFailure, removalsRefused = nil, false
+
+assert(mostRemovalsInOneFrame <= 8, 'removal attempts in one frame grew with the backlog')
+assert(
+  removeCalls - removeCallsBeforeBacklog == STRAY_OBJECTS * 8,
+  'a refused removal was retried without limit'
+)
+assert(countLogLines '%[WARN%] Gave up: a stray crate was never removed' == 1)
+
+local removeCallsAfterBacklog = removeCalls
+runFrames(20)
+assert(removeCalls == removeCallsAfterBacklog, 'given-up removals were still being retried')
+
+-- A delayed deletion the engine refuses is reported and dropped; the queue keeps working.
+local stubborn = newObject('condemned', TEL_BRANORA)
+activate(stubborn)
+runFrames(2)
+removalsRefused = true
+runFrames(10)
+removalsRefused = false
+assert(stubborn.count == 1)
+assert(countLogLines '%[WARN%] A queued removal was refused and dropped' == 1)
+
+local compliant = newObject('condemned', TEL_BRANORA)
+activate(compliant)
+runFrames(12)
+assert(compliant.count == 0, 'the delete queue stopped working after a refused removal')
 
 -- A created object that can be neither placed nor removed is kept for another attempt, the
 -- same way a replacement is.
@@ -902,8 +1028,8 @@ local liveAtStageSixty = findLiveObjects()
 assert(#liveAtStageSixty == 1 and liveAtStageSixty[1].recordId == 'flora_muckspunge_03')
 
 assert(
-  countLogLines '%[ERROR%] Skipped @' == 3,
-  'only the three deliberately failing rules may fail'
+  countLogLines '%[ERROR%] Skipped @' == 6,
+  'only the six deliberately failing passes may fail'
 )
 
 print = realPrint

@@ -310,6 +310,29 @@
 ---@field name string custom trigger name, without the `custom:` prefix
 ---@field object openmw.GObject object the rules run on
 
+--- What a pass has started on an object and not yet committed.
+---@class SSSUncommittedPass
+---@field original openmw.GObject? object the pass is running on
+---@field replacement openmw.GObject? replacement the pass created for it
+---@field wasEnabled boolean? whether the original was enabled before the pass
+---@field enabledWasChanged boolean whether the pass has asked for the original to be disabled
+---@field wasMoved boolean whether the engine has accepted a move of the original
+---@field sentPlayerElsewhere boolean whether the pass registered a player arrival to ignore
+---@field cell openmw.core.GCell? where the original was before the pass
+---@field position openmw.util.Vector3? where in that cell
+---@field rotation openmw.util.Transform? how it was turned
+---@field scale number? how it was scaled
+
+--- A correction SSS still owes the world. With a cell it puts an object back; without one it
+--- removes the object.
+---@class SSSPendingCorrection
+---@field object openmw.GObject
+---@field attemptsLeft integer frames the correction may still be tried on
+---@field cell openmw.core.GCell? where to put the object back
+---@field position openmw.util.Vector3?
+---@field rotation openmw.util.Transform?
+---@field scale number?
+
 --- Running state of one pass of rules over one object.
 ---@class SSSRuleExecution
 ---@field object openmw.GObject? object the rules were matched against
@@ -396,7 +419,7 @@
 ---@class SSSInstanceModifiers
 ---@field getMatchingInstanceModules fun(object: openmw.GObject, triggerRules: SSSTriggerRule[]): SSSInstanceModificationList?
 ---@field clearPerCellTracking fun()
----@field discardUncommittedReplacement fun() removes a replacement that an interrupted rule created but never placed
+---@field abandonUncommittedPass fun() puts right whatever an interrupted pass had started and not committed
 ---@field loadOnceCache fun(savedOnceCache?: SSSOnceCacheSaved)
 ---@field saveOnceCache fun(): SSSOnceCacheSaved
 ---@field tryModifyObject fun(object: openmw.GObject, instanceModificationList: SSSInstanceModificationList)

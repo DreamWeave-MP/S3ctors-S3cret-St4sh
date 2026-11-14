@@ -8,6 +8,7 @@ local util = require 'openmw.util'
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
 local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 
 local DebugLog, ErrorLog, WarnLog
@@ -253,6 +254,7 @@ return {
     ---@param dt number
     onUpdate = function(dt)
       PollWorldTriggers(dt)
+      if ObjectCleanup.hasPending() then ObjectCleanup.step() end
       UpdateFunction()
     end,
     ---@param object openmw.GObject

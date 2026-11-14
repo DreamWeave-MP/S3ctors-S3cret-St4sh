@@ -423,9 +423,25 @@ local function getMatchingInstanceModules(object, triggerRules)
   return matchingActions
 end
 
---- A replacement created by a rule that has not yet been placed in the world.
----@type openmw.GObject?
-local UncommittedReplacement
+---@param object openmw.GObject
+---@param isEnabled boolean
+local function setEnabled(object, isEnabled) object.enabled = isEnabled end
+
+--- What the running pass has started and not yet committed. If the pass is abandoned, this is
+--- what has to be put right.
+---@type SSSUncommittedPass
+local Uncommitted = {
+  enabledWasChanged = false,
+  sentPlayerElsewhere = false,
+  wasMoved = false,
+}
+
+local function clearUncommitted()
+  Uncommitted.original, Uncommitted.replacement = nil, nil
+  Uncommitted.cell, Uncommitted.position, Uncommitted.rotation = nil, nil, nil
+  Uncommitted.enabledWasChanged, Uncommitted.sentPlayerElsewhere, Uncommitted.wasMoved =
+    false, false, false
+end
 
 ---@param object openmw.GObject
 ---@param modifyTarget openmw.GObject
@@ -436,19 +452,42 @@ local function tryApplyReplacement(object, modifyTarget, replaceAction)
   local foundReplacement = actionHandlers.replace(object, replaceAction)
   if not foundReplacement then return modifyTarget, false end
 
-  UncommittedReplacement = foundReplacement
+  Uncommitted.replacement = foundReplacement
   return foundReplacement, true
 end
 
---- Removes a replacement that was created but never took its original's place. The original
---- is only disabled once its replacement has been placed, so whatever interrupts a rule in
---- between leaves the original exactly as it was and only this object to clear away.
-local function discardUncommittedReplacement()
-  local replacement = UncommittedReplacement
-  if not replacement then return end
-  UncommittedReplacement = nil
+--- Puts right whatever an abandoned pass had started, so the object is left as it was found.
+---
+--- A move the engine has accepted cannot be called off; it is applied at the end of the frame.
+--- A replacement that is already on its way is therefore removed once it has landed, and an
+--- object that was moved is put back once it has arrived. Both are left to ObjectCleanup,
+--- which waits for that. The original's enabled state is restored to what it was, which is
+--- not always enabled.
+local function abandonUncommittedPass()
+  local original, replacement = Uncommitted.original, Uncommitted.replacement
 
-  ObjectCleanup.discard(replacement)
+  if replacement then ObjectCleanup.discard(replacement) end
+
+  if original then
+    if Uncommitted.wasMoved then
+      ObjectCleanup.restoreLater(
+        original,
+        Uncommitted.cell,
+        Uncommitted.position,
+        Uncommitted.rotation,
+        Uncommitted.scale
+      )
+    end
+
+    if Uncommitted.enabledWasChanged then
+      local wasRestored, restoreError = pcall(setEnabled, original, Uncommitted.wasEnabled)
+      if not wasRestored then reportActionFailure('rollback', restoreError) end
+    end
+  end
+
+  if Uncommitted.sentPlayerElsewhere then TriggerContext.expectedPlayerCellId = nil end
+
+  clearUncommitted()
 end
 
 --- Records a rule as applied to an object under whichever once policy the rule declares.
@@ -476,7 +515,9 @@ local function recordRuleApplied(object, modifyTarget, instanceModification)
   end
 end
 
---- Placement is committed once, after every rule has had its say. The engine can refuse it.
+--- Placement is committed once, after every rule has had its say. It is the one step of a
+--- commit the engine can refuse outright: the cell may not exist, or the object may already be
+--- on its way somewhere. Once it returns, the move will happen at the end of the frame.
 ---@param target openmw.GObject
 ---@param cell openmw.core.GCell
 ---@param position openmw.util.Vector3
@@ -492,54 +533,14 @@ local function commitPlacement(target, cell, position, rotation, scale, onGround
   target:teleport(cell, position, teleportOptions)
 end
 
---- Placement can set the scale and then be refused the move. An object that already existed
---- must not keep half of a transform that is reported as not applied, or a relative scale
---- would compound on the next attempt.
+--- Placement asks for the scale before it asks for the move. When the move is refused, an
+--- object that already existed must not keep that scale, or a relative scale would compound
+--- on the next attempt.
 ---@param object openmw.GObject
 ---@param scale number the scale the object had before the rules ran
 local function restoreScale(object, scale)
   local wasRestored, restoreError = pcall(object.setScale, object, scale)
   if not wasRestored then reportActionFailure('scale restore', restoreError) end
-end
-
----@param object openmw.GObject
----@param isEnabled boolean
-local function setEnabled(object, isEnabled) object.enabled = isEnabled end
-
---- The last step of a pass, after placement: the original gives way to its replacement, and
---- disabling and deleting happen. Only when all of it has gone through is the pass committed.
----@param object openmw.GObject
----@param target openmw.GObject the object, or the replacement now standing in for it
----@param shouldDisable boolean
----@param shouldDelete boolean
-local function finalizeCommit(object, target, shouldDisable, shouldDelete)
-  if target ~= object then object.enabled = false end
-
-  if shouldDisable and target:isValid() then target.enabled = false end
-
-  if shouldDelete and object:isValid() then DeleteManager:addObjectToDeleteQueue(object, true) end
-end
-
---- Undoes a pass whose last step failed after its placement had already gone through, so the
---- object is left as it was found and its rules can be tried again from the same state.
----@param object openmw.GObject
----@param target openmw.GObject
----@param wasMoved boolean whether placement was committed for this pass
----@param cell openmw.core.GCell where the object was before the rules ran
----@param position openmw.util.Vector3
----@param rotation openmw.util.Transform
----@param scale number
-local function rollBackCommit(object, target, wasMoved, cell, position, rotation, scale)
-  local wasRolledBack, rollbackError = true, nil
-
-  if target ~= object then
-    discardUncommittedReplacement()
-    wasRolledBack, rollbackError = pcall(setEnabled, object, true)
-  elseif wasMoved then
-    wasRolledBack, rollbackError = pcall(commitPlacement, object, cell, position, rotation, scale)
-  end
-
-  if not wasRolledBack then reportActionFailure('rollback', rollbackError) end
 end
 
 --- When a rule is recorded as applied depends on where each effect lives, not only on whether
@@ -612,7 +613,10 @@ local function tryModifyObject(object, instanceModificationList)
 
   Execution.object, Execution.target, Execution.hadAnyEffect = object, object, false
 
-  if ObjectCleanup.hasPending() then ObjectCleanup.retryPending() end
+  clearUncommitted()
+  Uncommitted.original, Uncommitted.wasEnabled = object, object.enabled
+  Uncommitted.cell, Uncommitted.position, Uncommitted.rotation, Uncommitted.scale =
+    originalCell, originalPosition, originalRotation, originalScale
 
   DebugLog(
     'APPLY %d rule(s) to %s (%s)',
@@ -940,9 +944,17 @@ local function tryModifyObject(object, instanceModificationList)
     end
   end
 
-  if not Execution.hadAnyEffect then return end
+  if not Execution.hadAnyEffect then
+    clearUncommitted()
+    return
+  end
 
-  local sentPlayerElsewhere = false
+  local replacesObject = modifyTarget ~= object
+
+  if shouldDisable and not replacesObject then
+    Uncommitted.enabledWasChanged = true
+    object.enabled = false
+  end
 
   if needsPlacementUpdate then
     local sendsPlayerElsewhere = PlayerObjectIsInstance(modifyTarget)
@@ -961,41 +973,31 @@ local function tryModifyObject(object, instanceModificationList)
     if not wasPlaced then
       reportActionFailure('placement', placeError)
 
-      if modifyTarget ~= object then
-        discardUncommittedReplacement()
-      else
-        restoreScale(object, originalScale)
-      end
+      if not replacesObject then restoreScale(object, originalScale) end
+      abandonUncommittedPass()
 
       return
     end
 
+    if not replacesObject then Uncommitted.wasMoved = true end
+
     if sendsPlayerElsewhere then
       TriggerContext.expectedPlayerCellId = newCell.id
-      sentPlayerElsewhere = true
+      Uncommitted.sentPlayerElsewhere = true
     end
   end
 
-  local wasFinalized, finalizeError =
-    pcall(finalizeCommit, object, modifyTarget, shouldDisable, shouldDelete)
+  -- Nothing from here on can be refused by the engine: enabled changes are queued like the
+  -- move, and the rest is SSS's own bookkeeping. If any of it raises all the same, the
+  -- per-object guard abandons the pass and what was started above is put right.
+  if replacesObject then
+    Uncommitted.enabledWasChanged = true
+    object.enabled = false
 
-  if not wasFinalized then
-    reportActionFailure('commit', finalizeError)
-
-    if sentPlayerElsewhere then TriggerContext.expectedPlayerCellId = nil end
-
-    rollBackCommit(
-      object,
-      modifyTarget,
-      needsPlacementUpdate,
-      originalCell,
-      originalPosition,
-      originalRotation,
-      originalScale
-    )
-
-    return
+    if shouldDisable and modifyTarget:isValid() then modifyTarget.enabled = false end
   end
+
+  if shouldDelete and object:isValid() then DeleteManager:addObjectToDeleteQueue(object, true) end
 
   if commitDependentRules then
     for ruleIdx = 1, #commitDependentRules do
@@ -1003,10 +1005,9 @@ local function tryModifyObject(object, instanceModificationList)
     end
   end
 
-  if modifyTarget ~= object then
-    UncommittedReplacement = nil
-    inheritOnceActions(object, modifyTarget)
-  end
+  if replacesObject then inheritOnceActions(object, modifyTarget) end
+
+  clearUncommitted()
 end
 
 ---@class SSSInstanceModifiers
@@ -1015,7 +1016,7 @@ local InstanceModifiers = {
   loadOnceCache = loadOnceCache,
   saveOnceCache = saveOnceCache,
   tryModifyObject = tryModifyObject,
-  discardUncommittedReplacement = discardUncommittedReplacement,
+  abandonUncommittedPass = abandonUncommittedPass,
   clearPerCellTracking = clearPerCellTracking,
 }
 

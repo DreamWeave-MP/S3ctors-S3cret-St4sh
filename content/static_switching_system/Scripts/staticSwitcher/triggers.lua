@@ -69,7 +69,7 @@ local function runGuarded(applyToObject, object, triggerRules)
 
   ErrorLog(StrFormat('Skipped %s (%s): %s', object.id, object.recordId, tostring(processError)))
 
-  InstanceModifiers.discardUncommittedReplacement()
+  InstanceModifiers.abandonUncommittedPass()
 end
 
 ---@param object openmw.GObject
