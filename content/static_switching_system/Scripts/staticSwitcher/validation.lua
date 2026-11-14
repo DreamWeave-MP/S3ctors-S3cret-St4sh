@@ -152,15 +152,17 @@ local function isOrderedRange(rangeValue)
   return (rangeValue.min or 1) <= rangeValue.max
 end
 
---- A scale range may omit either bound, but a bound that is present has to be a number.
+--- A scale range needs `max`. Without it the sampler would read `min` as the upper bound and
+--- sample below the value the author gave as the floor. `min` is optional and defaults to 1,
+--- which may be above `max` for a range that only shrinks, so the order is only checked when
+--- both bounds are written.
 ---@param scaleValue number|RangeTable|nil
 ---@return boolean isUsable
 local function isScale(scaleValue)
-  if scaleValue == nil or type(scaleValue) == 'number' then return true end
-  if type(scaleValue) ~= 'table' then return false end
+  if not isSampledRange(scaleValue) then return false end
+  if type(scaleValue) ~= 'table' then return true end
 
-  local min, max = scaleValue.min, scaleValue.max
-  return (min == nil or type(min) == 'number') and (max == nil or type(max) == 'number')
+  return scaleValue.min == nil or scaleValue.min <= scaleValue.max
 end
 
 --- An unknown transform_type would not raise; it would silently be read as `absolute`.
@@ -200,7 +202,7 @@ local function findCreatePoolProblem(details)
 
   if not isOrderedRange(details.count) then return 'has a count range without a usable max' end
   if not isSampledRange(details.chance) then return 'has a chance range without max' end
-  if not isScale(details.scale) then return 'has a scale that is not a number or range' end
+  if not isScale(details.scale) then return 'has a scale range without a usable max' end
 
   return findVectorProblem(details, 'position')
     or findVectorProblem(details, 'rotate')
@@ -294,7 +296,7 @@ local ACTION_PAYLOAD_PROBLEMS = {
   transform = function(transformAction)
     if type(transformAction) ~= 'table' then return 'transform needs a map' end
     if not isScale(transformAction.scale) then
-      return 'transform has a scale that is not a number or range'
+      return 'transform has a scale range without a usable max'
     end
 
     local vectorProblem = findVectorProblem(transformAction, 'position')

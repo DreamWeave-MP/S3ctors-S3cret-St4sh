@@ -137,7 +137,7 @@ create:
 
 Pool counts default to `1`; count range tables require `max`, default `min` to `1`, and produce integer counts. Pool chance is a number from `0` to `1` in the YAML schema. Each pool chance is rolled once; transform overrides are sampled separately for each created object. Relative positioning/rotation/scale is the default, and absolute mode uses the accumulated action placement as its cell and transform base. Transforms and teleports already processed in the same action list are therefore visible to created objects, even though the engine placement commit is deferred. A pending `onGround: true` teleport contributes its requested position; `create` cannot observe the later ground-snapped result.
 
-A pool whose `count`, `chance`, `position`, or `rotate` range has no `max`, whose `count` has `min` above `max`, whose `scale` has a bound that is not a number, or whose `transform_type` is anything but `relative` or `absolute`, is rejected when the module loads and its rule is skipped. The same applies to the ranges and `transform_type` of a `transform` action. A record ID that does not exist is logged once and that pool creates nothing.
+A pool whose `count`, `chance`, `position`, or `rotate` range has no `max`, whose `count` has `min` above `max`, whose `scale` range has no `max` or has `min` above `max`, or whose `transform_type` is anything but `relative` or `absolute`, is rejected when the module loads and its rule is skipped. The same applies to the ranges and `transform_type` of a `transform` action. A record ID that does not exist is logged once and that pool creates nothing.
 
 ### When a create only partly succeeds
 

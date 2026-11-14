@@ -310,6 +310,16 @@
 ---@field name string custom trigger name, without the `custom:` prefix
 ---@field object openmw.GObject object the rules run on
 
+--- Running state of one pass of rules over one object.
+---@class SSSRuleExecution
+---@field object openmw.GObject? object the rules were matched against
+---@field target openmw.GObject? object the actions currently apply to: the object, or its replacement
+---@field rule SSSInstanceModification? rule whose actions are running
+---@field hadAnyEffect boolean whether any rule in this pass has had an effect
+---@field isRuleRecorded boolean whether the running rule has already been recorded as applied
+---@field ruleAwaitsCommit boolean whether the running rule has an effect that only lasts if the pass commits
+---@field ruleHadEffect boolean whether the running rule has had any effect
+
 ---@class SSSInstanceModification
 ---@field moduleName string canonical module id that provided this modification rule
 ---@field actionHash string stable hash of the parsed rule data

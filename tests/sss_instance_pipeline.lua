@@ -34,6 +34,7 @@ local createdObjects = {}
 local placementsBeforeFailure
 local sentGlobalEvents = {}
 local globalEventsFail = false
+local removalsRefused = false
 local nextObjectIndex = 0
 
 local knownRecords = {
@@ -60,12 +61,16 @@ local function newObject(recordId, cell, type)
     count = 1,
     enabled = true,
     owner = {},
+    scale = 1,
     type = type or objectType,
   }
 
   function object:isValid() return true end
-  function object:setScale() end
-  function object:remove() self.count = 0 end
+  function object:setScale(scale) self.scale = scale end
+  function object:remove()
+    if removalsRefused then error 'the engine kept the object' end
+    self.count = 0
+  end
   function object:hasScript() return false end
   function object:moveInto(inventory) inventory.items[#inventory.items + 1] = self end
   function object:teleport(targetCell)
@@ -130,6 +135,25 @@ local moduleSources = {
           conditions = { { record_id = 'fragile' } },
           actions = { { replace = { crate = 1 } } },
           once = true,
+        },
+        {
+          conditions = { { record_id = 'ephemeral' } },
+          actions = { { replace = { crate = 1 }, set_ownership = { owner = 'marked' } } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'stretchy' } },
+          actions = { { transform = { scale = 2 } } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'noisy' } },
+          actions = { { send_global_event = { name = 'OnceExpected' }, disable = true } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'clingy' } },
+          actions = { { replace = { crate = 1 } } },
         },
         {
           conditions = { { record_id = 'sturdy' } },
@@ -203,6 +227,8 @@ local moduleSources = {
         { actions = { { create = { crate = { scale = { max = 'bad' } } } } } },
         { actions = { { create = { crate = { transform_type = 'reltaive' } } } } },
         { actions = { { transform = { scale = 2, transform_type = 'sideways' } } } },
+        { actions = { { transform = { scale = { min = 5 } } } } },
+        { actions = { { transform = { scale = { min = 3, max = 2 } } } } },
       },
     }
   end,
@@ -378,7 +404,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 13)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 17)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -426,7 +452,7 @@ assert(
     == 1
 )
 assert(
-  countLogLines 'Skipped rule 17 in .-rejected%.yaml: create pool "crate" has a scale that is not a number or range'
+  countLogLines 'Skipped rule 17 in .-rejected%.yaml: create pool "crate" has a scale range without a usable max'
     == 1
 )
 assert(
@@ -437,6 +463,14 @@ assert(
   countLogLines 'Skipped rule 19 in .-rejected%.yaml: transform has unknown transform_type "sideways"'
     == 1
 )
+assert(
+  countLogLines 'Skipped rule 20 in .-rejected%.yaml: transform has a scale range without a usable max'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 21 in .-rejected%.yaml: transform has a scale range without a usable max'
+    == 1
+)
 
 -- `cell` is lowered for matching, but the hash still reflects the authored casing.
 assert(keptRules[1].conditions[1].cell == 'tel branora')
@@ -444,7 +478,7 @@ assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[11]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[15]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -468,7 +502,9 @@ assert(countLogLines '%[ERROR%] Skipped @' == 0)
 -- A condition that raises is reported for its object and does not block later objects.
 local queuedBehindThrower = newObject('ownable', TEL_BRANORA)
 activate(queuedBehindThrower)
-activate(newObject('thrower', TEL_BRANORA))
+local thrower = newObject('thrower', TEL_BRANORA)
+thrower.scale = nil
+activate(thrower)
 runFrames(4)
 assert(queuedBehindThrower.owner.recordId == 'marked')
 assert(countLogLines '%[ERROR%] Skipped @%d+ %(thrower%)' == 1)
@@ -576,6 +612,76 @@ assert(doomed.enabled == true, 'an interrupted rule left its original disabled')
 assert(abandonedReplacement.cell == nil and abandonedReplacement.count == 0)
 assert(countLogLines '%[ERROR%] Skipped @%d+ %(doomed%).-a programming error' == 1)
 
+-- What a rule did to a replacement is gone when the replacement is discarded, so it does not
+-- count: the rule stays eligible and replaces on the next attempt.
+local ephemeral = newObject('ephemeral', TEL_BRANORA)
+local createdBeforeEphemeral = #createdObjects
+placementsBeforeFailure = 0
+activate(ephemeral)
+runFrames(4)
+placementsBeforeFailure = nil
+assert(ephemeral.enabled == true and #createdObjects == createdBeforeEphemeral + 1)
+
+activate(ephemeral)
+runFrames(4)
+assert(
+  #createdObjects == createdBeforeEphemeral + 2,
+  'work on a discarded replacement used up once'
+)
+assert(createdObjects[createdBeforeEphemeral + 2].owner.recordId == 'marked')
+assert(ephemeral.enabled == false)
+
+-- A transform the engine refuses leaves the object's scale as it was, so a relative scale
+-- does not compound when the rule runs again.
+local stretchy = newObject('stretchy', TEL_BRANORA)
+placementsBeforeFailure = 0
+activate(stretchy)
+runFrames(4)
+placementsBeforeFailure = nil
+assert(stretchy.scale == 1, 'a refused transform left its scale behind')
+
+activate(stretchy)
+runFrames(4)
+assert(stretchy.scale == 2)
+
+activate(stretchy)
+runFrames(4)
+assert(stretchy.scale == 2, 'a once transform ran again after succeeding')
+
+-- An effect that cannot be taken back is recorded when it happens, so an error later in the
+-- same rule does not let it happen twice.
+local noisy = newObject('noisy', TEL_BRANORA)
+local eventsBeforeNoisy = #sentGlobalEvents
+disableRaises = true
+activate(noisy)
+runFrames(4)
+disableRaises = false
+assert(#sentGlobalEvents == eventsBeforeNoisy + 1)
+assert(countLogLines '%[ERROR%] Skipped @%d+ %(noisy%)' == 1)
+
+activate(noisy)
+runFrames(4)
+assert(#sentGlobalEvents == eventsBeforeNoisy + 1, 'an event already sent was sent again')
+
+-- A replacement the engine will neither place nor remove is reported and remembered, and is
+-- removed as soon as the engine allows it.
+local clingy = newObject('clingy', TEL_BRANORA)
+local createdBeforeClingy = #createdObjects
+placementsBeforeFailure, removalsRefused = 0, true
+activate(clingy)
+runFrames(4)
+placementsBeforeFailure, removalsRefused = nil, false
+
+local strandedReplacement = createdObjects[createdBeforeClingy + 1]
+assert(clingy.enabled == true)
+assert(strandedReplacement.cell == nil and strandedReplacement.count == 1)
+assert(countLogLines '%[WARN%] Action replacement cleanup failed and was skipped' == 1)
+
+activate(clingy)
+runFrames(4)
+assert(strandedReplacement.count == 0, 'a replacement whose removal failed was forgotten')
+assert(clingy.enabled == false)
+
 -- An item action that the engine accepts in part reports what it added and does not add it
 -- again.
 local hoarder = newObject('hoarder', TEL_BRANORA)
@@ -658,7 +764,10 @@ assert(countCreated 'ck_disturbed_mucksponge' == 1, 'rule 1 must not fire on the
 local liveAtStageSixty = findLiveObjects()
 assert(#liveAtStageSixty == 1 and liveAtStageSixty[1].recordId == 'flora_muckspunge_03')
 
-assert(countLogLines '%[ERROR%] Skipped @' == 2, 'only the two deliberately failing rules may fail')
+assert(
+  countLogLines '%[ERROR%] Skipped @' == 3,
+  'only the three deliberately failing rules may fail'
+)
 
 print = realPrint
 print 'SSS instance pipeline tests passed'

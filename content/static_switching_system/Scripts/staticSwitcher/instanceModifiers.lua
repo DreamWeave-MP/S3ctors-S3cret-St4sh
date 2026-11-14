@@ -19,6 +19,7 @@ end
 local StrFormat = string.format
 
 local next, pcall, tostring = next, pcall, tostring
+local Remove = table.remove
 
 local PlayerObjectIsInstance = types.Player.objectIsInstance
 
@@ -439,15 +440,43 @@ local function tryApplyReplacement(object, modifyTarget, replaceAction)
   return foundReplacement, true
 end
 
+--- Replacements whose removal the engine refused. They are kept so the removal can be tried
+--- again; forgetting them would leave an object outside any cell for good.
+---@type openmw.GObject[]
+local UnremovedReplacements = {}
+
+---@param replacement openmw.GObject
+---@return boolean wasRemoved
+local function removeReplacement(replacement)
+  if not replacement:isValid() or replacement.count < 1 then return true end
+
+  local wasRemoved, removeError = pcall(replacement.remove, replacement)
+  if not wasRemoved then reportActionFailure('replacement cleanup', removeError) end
+
+  return wasRemoved
+end
+
+local function retryReplacementCleanup()
+  for replacementIdx = #UnremovedReplacements, 1, -1 do
+    if removeReplacement(UnremovedReplacements[replacementIdx]) then
+      Remove(UnremovedReplacements, replacementIdx)
+    end
+  end
+end
+
 --- Removes a replacement that was created but never took its original's place. The original
 --- is only disabled once its replacement has been placed, so whatever interrupts a rule in
 --- between leaves the original exactly as it was and only this object to clear away.
 local function discardUncommittedReplacement()
+  if UnremovedReplacements[1] then retryReplacementCleanup() end
+
   local replacement = UncommittedReplacement
   if not replacement then return end
   UncommittedReplacement = nil
 
-  if replacement:isValid() then replacement:remove() end
+  if not removeReplacement(replacement) then
+    UnremovedReplacements[#UnremovedReplacements + 1] = replacement
+  end
 end
 
 --- Records a rule as applied to an object under whichever once policy the rule declares.
@@ -491,14 +520,67 @@ local function commitPlacement(target, cell, position, rotation, scale, onGround
   target:teleport(cell, position, teleportOptions)
 end
 
---- Replacing, transforming and teleporting only take effect when placement is committed at the
---- end, so a rule that did nothing else is recorded as applied only once that has succeeded.
---- A rule whose other actions applied is recorded straight away: those did happen and must
---- not repeat, whatever becomes of the placement.
+--- Placement can set the scale and then be refused the move. An object that already existed
+--- must not keep half of a transform that is reported as not applied, or a relative scale
+--- would compound on the next attempt.
+---@param object openmw.GObject
+---@param scale number the scale the object had before the rules ran
+local function restoreScale(object, scale)
+  local wasRestored, restoreError = pcall(object.setScale, object, scale)
+  if not wasRestored then reportActionFailure('scale restore', restoreError) end
+end
+
+--- When a rule is recorded as applied depends on where each effect lives, not only on whether
+--- its handler reported success:
+---
+--- * An effect outside the target (an event, a created object, a global, the weather) cannot be
+---   taken back, so the rule is recorded the moment it happens. Whatever goes wrong afterwards,
+---   it does not happen twice.
+--- * An effect on the target lasts if the target is the original object. On a replacement it
+---   lasts only if the replacement is placed.
+--- * Replacing, transforming, teleporting, disabling and deleting only take effect when the
+---   pass is committed at the end.
+---
+--- A rule with only the last two kinds is recorded once the commit has succeeded.
+---@type SSSRuleExecution
+local Execution = {
+  hadAnyEffect = false,
+  isRuleRecorded = false,
+  ruleAwaitsCommit = false,
+  ruleHadEffect = false,
+}
+
+---@param didApply boolean
+local function noteLastingEffect(didApply)
+  if not didApply then return end
+
+  Execution.hadAnyEffect, Execution.ruleHadEffect = true, true
+
+  if Execution.isRuleRecorded then return end
+  Execution.isRuleRecorded = true
+
+  recordRuleApplied(Execution.object, Execution.target, Execution.rule)
+end
+
+---@param didApply boolean
+local function noteCommitEffect(didApply)
+  if not didApply then return end
+
+  Execution.hadAnyEffect, Execution.ruleHadEffect, Execution.ruleAwaitsCommit = true, true, true
+end
+
+---@param didApply boolean
+local function noteTargetEffect(didApply)
+  if Execution.target == Execution.object then
+    noteLastingEffect(didApply)
+  else
+    noteCommitEffect(didApply)
+  end
+end
+
 ---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
-  local anyActionApplied = false
   local needsPlacementUpdate = false
   local shouldDisable = false
   local shouldDelete = false
@@ -507,12 +589,17 @@ local function tryModifyObject(object, instanceModificationList)
   local moduleOnceApplied = {}
 
   ---@type SSSInstanceModificationList?
-  local placementDependentRules
+  local commitDependentRules
   --- Do replacements first, then transforms, then item additions/removals, then spells
 
+  local originalScale = object.scale
   local newTransform, newPos, newCell, targetScale =
-    object.rotation, object.position, object.cell, object.scale
+    object.rotation, object.position, object.cell, originalScale
   local teleportOnGround
+
+  Execution.object, Execution.target, Execution.hadAnyEffect = object, object, false
+
+  if UnremovedReplacements[1] then retryReplacementCleanup() end
 
   DebugLog(
     'APPLY %d rule(s) to %s (%s)',
@@ -523,8 +610,9 @@ local function tryModifyObject(object, instanceModificationList)
 
   for modIndex = 1, #instanceModificationList do
     local instanceModification = instanceModificationList[modIndex]
-    local currentRuleApplied = false
-    local currentRuleNeedsPlacement = false
+    Execution.rule = instanceModification
+    Execution.isRuleRecorded, Execution.ruleAwaitsCommit, Execution.ruleHadEffect =
+      false, false, false
 
     if
       not (instanceModification.moduleOnce and moduleOnceApplied[instanceModification.moduleName])
@@ -570,9 +658,9 @@ local function tryModifyObject(object, instanceModificationList)
             local didReplace
             modifyTarget, didReplace = tryApplyReplacement(object, modifyTarget, replaceAction)
             replaceActionSucceeded = didReplace
-            anyActionApplied = anyActionApplied or didReplace
             needsPlacementUpdate = needsPlacementUpdate or didReplace
-            currentRuleNeedsPlacement = currentRuleNeedsPlacement or didReplace
+            Execution.target = modifyTarget
+            noteCommitEffect(didReplace)
             DebugLog(
               '  replace on %s: %s',
               objectId,
@@ -596,9 +684,8 @@ local function tryModifyObject(object, instanceModificationList)
               newPos,
               targetScale
             )
-            anyActionApplied = anyActionApplied or didTransform
             needsPlacementUpdate = needsPlacementUpdate or didTransform
-            currentRuleNeedsPlacement = currentRuleNeedsPlacement or didTransform
+            noteCommitEffect(didTransform)
             if didTransform then
               teleportOnGround = nil
               DebugLog('  transform on %s: scale=%.3f', objectId, targetScale)
@@ -617,57 +704,49 @@ local function tryModifyObject(object, instanceModificationList)
               needsPlacementUpdate = true
             end
 
-            anyActionApplied = anyActionApplied or didTeleport
-            currentRuleNeedsPlacement = currentRuleNeedsPlacement or didTeleport
+            noteCommitEffect(didTeleport)
             DebugLog('  teleport on %s: %s', objectId, didTeleport and 'OK' or 'failed')
           end
 
           if setOwnershipAction then
             local didSet = actionHandlers.set_ownership(modifyTarget, setOwnershipAction)
-            anyActionApplied = anyActionApplied or didSet
-            currentRuleApplied = currentRuleApplied or didSet
+            noteTargetEffect(didSet)
             DebugLog('  set_ownership on %s: %s', objectId, didSet and 'OK' or 'noop')
           end
 
           if addTagAction then
             local didAddTag = actionHandlers.add_tag(modifyTarget, addTagAction)
-            anyActionApplied = anyActionApplied or didAddTag
-            currentRuleApplied = currentRuleApplied or didAddTag
+            noteTargetEffect(didAddTag)
             DebugLog('  add_tag on %s: %s', objectId, didAddTag and 'OK' or 'unavailable')
           end
 
           if removeTagAction then
             local didRemoveTag = actionHandlers.remove_tag(modifyTarget, removeTagAction)
-            anyActionApplied = anyActionApplied or didRemoveTag
-            currentRuleApplied = currentRuleApplied or didRemoveTag
+            noteTargetEffect(didRemoveTag)
             DebugLog('  remove_tag on %s: %s', objectId, didRemoveTag and 'OK' or 'unavailable')
           end
 
           if addAction then
             local didAdd = actionHandlers.add(modifyTarget, addAction)
-            anyActionApplied = anyActionApplied or didAdd
-            currentRuleApplied = currentRuleApplied or didAdd
+            noteTargetEffect(didAdd)
             DebugLog('  add on %s: %s', objectId, didAdd and 'OK' or 'failed')
           end
 
           if removeAction then
             local didRemove = actionHandlers.remove(modifyTarget, removeAction)
-            anyActionApplied = anyActionApplied or didRemove
-            currentRuleApplied = currentRuleApplied or didRemove
+            noteTargetEffect(didRemove)
             DebugLog('  remove on %s: %s', objectId, didRemove and 'OK' or 'nothing to remove')
           end
 
           if equipAction then
             local didEquip = actionHandlers.equip(modifyTarget, equipAction)
-            anyActionApplied = anyActionApplied or didEquip
-            currentRuleApplied = currentRuleApplied or didEquip
+            noteTargetEffect(didEquip)
             DebugLog('  equip on %s: %s', objectId, didEquip and 'OK' or 'failed')
           end
 
           if unequipAction then
             local didUnequip = actionHandlers.unequip(modifyTarget, unequipAction)
-            anyActionApplied = anyActionApplied or didUnequip
-            currentRuleApplied = currentRuleApplied or didUnequip
+            noteTargetEffect(didUnequip)
             DebugLog(
               '  unequip on %s: %s',
               objectId,
@@ -677,30 +756,26 @@ local function tryModifyObject(object, instanceModificationList)
 
           if addSpellAction then
             local didAddSpell = actionHandlers.add_spell(modifyTarget, addSpellAction)
-            anyActionApplied = anyActionApplied or didAddSpell
-            currentRuleApplied = currentRuleApplied or didAddSpell
+            noteTargetEffect(didAddSpell)
             DebugLog('  add_spell on %s: %s', objectId, didAddSpell and 'OK' or 'noop')
           end
 
           if removeSpellAction then
             local didRemoveSpell = actionHandlers.remove_spell(modifyTarget, removeSpellAction)
-            anyActionApplied = anyActionApplied or didRemoveSpell
-            currentRuleApplied = currentRuleApplied or didRemoveSpell
+            noteTargetEffect(didRemoveSpell)
             DebugLog('  remove_spell on %s: %s', objectId, didRemoveSpell and 'OK' or 'noop')
           end
 
           if addActiveSpellAction then
             local didAddActiveSpell =
               actionHandlers.add_active_spell(modifyTarget, addActiveSpellAction)
-            anyActionApplied = anyActionApplied or didAddActiveSpell
-            currentRuleApplied = currentRuleApplied or didAddActiveSpell
+            noteTargetEffect(didAddActiveSpell)
             DebugLog('  add_active_spell on %s: %s', objectId, didAddActiveSpell and 'OK' or 'noop')
           end
 
           if lockLevelAction then
             local didLock = actionHandlers.lock_level(modifyTarget, lockLevelAction)
-            anyActionApplied = anyActionApplied or didLock
-            currentRuleApplied = currentRuleApplied or didLock
+            noteTargetEffect(didLock)
             DebugLog(
               '  lock_level on %s: %s',
               objectId,
@@ -710,15 +785,13 @@ local function tryModifyObject(object, instanceModificationList)
 
           if keyAction then
             local didKey = actionHandlers.key(modifyTarget, keyAction)
-            anyActionApplied = anyActionApplied or didKey
-            currentRuleApplied = currentRuleApplied or didKey
+            noteTargetEffect(didKey)
             DebugLog('  key on %s: %s', objectId, didKey and 'OK' or 'failed (not lockable)')
           end
 
           if trapAction then
             local didTrap = actionHandlers.trap(modifyTarget, trapAction)
-            anyActionApplied = anyActionApplied or didTrap
-            currentRuleApplied = currentRuleApplied or didTrap
+            noteTargetEffect(didTrap)
             DebugLog('  trap on %s: %s', objectId, didTrap and 'OK' or 'failed (not lockable)')
           end
 
@@ -732,8 +805,7 @@ local function tryModifyObject(object, instanceModificationList)
               targetScale
             )
             if numCreated > 0 then
-              anyActionApplied = true
-              currentRuleApplied = true
+              noteLastingEffect(true)
               DebugLog('  create on %s: %d spawned', objectId, numCreated)
 
               if instanceModification.once == 'per_cell' then
@@ -750,43 +822,37 @@ local function tryModifyObject(object, instanceModificationList)
 
           if globalSetAction then
             local didSet = actionHandlers.global_set(modifyTarget, globalSetAction)
-            anyActionApplied = anyActionApplied or didSet
-            currentRuleApplied = currentRuleApplied or didSet
+            noteLastingEffect(didSet)
             DebugLog('  global_set: %s', didSet and 'OK' or 'failed')
           end
 
           if setWeatherAction then
             local didSetWeather = actionHandlers.set_weather(modifyTarget, setWeatherAction)
-            anyActionApplied = anyActionApplied or didSetWeather
-            currentRuleApplied = currentRuleApplied or didSetWeather
+            noteLastingEffect(didSetWeather)
             DebugLog('  set_weather: %s', didSetWeather and 'OK' or 'noop')
           end
 
           if playsoundAction then
             local didPlay = actionHandlers.playsound(modifyTarget, playsoundAction)
-            anyActionApplied = anyActionApplied or didPlay
-            currentRuleApplied = currentRuleApplied or didPlay
+            noteLastingEffect(didPlay)
             DebugLog('  playsound on %s: %s', objectId, didPlay and 'OK' or 'miss')
           end
 
           if addLuaScriptAction then
             local didAdd = actionHandlers.add_lua_script(modifyTarget, addLuaScriptAction)
-            anyActionApplied = anyActionApplied or didAdd
-            currentRuleApplied = currentRuleApplied or didAdd
+            noteTargetEffect(didAdd)
             DebugLog('  add_lua_script on %s: %s', objectId, didAdd and 'OK' or 'already attached')
           end
 
           if activateByPlayerAction then
             local didActivate = actionHandlers.activate_by_player(modifyTarget)
-            anyActionApplied = anyActionApplied or didActivate
-            currentRuleApplied = currentRuleApplied or didActivate
+            noteLastingEffect(didActivate)
             DebugLog('  activate_by_player on %s: %s', objectId, didActivate and 'OK' or 'failed')
           end
 
           if removeLuaScriptAction then
             local didRemove = actionHandlers.remove_lua_script(modifyTarget, removeLuaScriptAction)
-            anyActionApplied = anyActionApplied or didRemove
-            currentRuleApplied = currentRuleApplied or didRemove
+            noteTargetEffect(didRemove)
             DebugLog(
               '  remove_lua_script on %s: %s',
               objectId,
@@ -796,22 +862,19 @@ local function tryModifyObject(object, instanceModificationList)
 
           if runLuaScriptAction then
             local didRun = actionHandlers.run_lua_script(modifyTarget, runLuaScriptAction)
-            anyActionApplied = anyActionApplied or didRun
-            currentRuleApplied = currentRuleApplied or didRun
+            noteLastingEffect(didRun)
             DebugLog('  run_lua_script on %s: %s', objectId, didRun and 'OK' or 'failed')
           end
 
           if callInterfaceAction then
             local didCall = actionHandlers.call_interface(modifyTarget, callInterfaceAction)
-            anyActionApplied = anyActionApplied or didCall
-            currentRuleApplied = currentRuleApplied or didCall
+            noteLastingEffect(didCall)
             DebugLog('  call_interface on %s: %s', objectId, didCall and 'OK' or 'failed')
           end
 
           if sendEventAction then
             local didSend = actionHandlers.send_event(modifyTarget, sendEventAction)
-            anyActionApplied = anyActionApplied or didSend
-            currentRuleApplied = currentRuleApplied or didSend
+            noteLastingEffect(didSend)
             DebugLog(
               '  send_event %s on %s: %s',
               sendEventAction.name,
@@ -822,8 +885,7 @@ local function tryModifyObject(object, instanceModificationList)
 
           if sendGlobalEventAction then
             local didSend = actionHandlers.send_global_event(modifyTarget, sendGlobalEventAction)
-            anyActionApplied = anyActionApplied or didSend
-            currentRuleApplied = currentRuleApplied or didSend
+            noteLastingEffect(didSend)
             DebugLog(
               '  send_global_event %s: %s',
               sendGlobalEventAction.name,
@@ -836,8 +898,7 @@ local function tryModifyObject(object, instanceModificationList)
             DebugLog('  disable on %s: roll=%s', objectId, didDisable and 'OK' or 'miss')
             if didDisable then
               shouldDisable = true
-              anyActionApplied = true
-              currentRuleApplied = true
+              noteCommitEffect(true)
             end
           end
 
@@ -846,8 +907,7 @@ local function tryModifyObject(object, instanceModificationList)
               actionHandlers.delete(object, deleteAction, replaceAction, replaceActionSucceeded)
             if didDelete then
               shouldDelete = true
-              anyActionApplied = true
-              currentRuleApplied = true
+              noteCommitEffect(true)
               DebugLog('  delete on %s', objectId)
             end
           end
@@ -856,20 +916,18 @@ local function tryModifyObject(object, instanceModificationList)
         end
       end
 
-      if currentRuleApplied then
-        recordRuleApplied(object, modifyTarget, instanceModification)
-      elseif currentRuleNeedsPlacement then
-        placementDependentRules = placementDependentRules or {}
-        placementDependentRules[#placementDependentRules + 1] = instanceModification
+      if Execution.ruleAwaitsCommit and not Execution.isRuleRecorded then
+        commitDependentRules = commitDependentRules or {}
+        commitDependentRules[#commitDependentRules + 1] = instanceModification
       end
 
-      if instanceModification.moduleOnce and (currentRuleApplied or currentRuleNeedsPlacement) then
+      if instanceModification.moduleOnce and Execution.ruleHadEffect then
         moduleOnceApplied[instanceModification.moduleName] = true
       end
     end
   end
 
-  if not anyActionApplied then return end
+  if not Execution.hadAnyEffect then return end
 
   local wasPlacementCommitted = not needsPlacementUpdate
 
@@ -895,15 +953,19 @@ local function tryModifyObject(object, instanceModificationList)
     end
   end
 
-  if not wasPlacementCommitted and modifyTarget ~= object then
-    discardUncommittedReplacement()
-    return
+  if not wasPlacementCommitted then
+    if modifyTarget ~= object then
+      discardUncommittedReplacement()
+      return
+    end
+
+    restoreScale(object, originalScale)
   end
 
   if wasPlacementCommitted then
-    if placementDependentRules then
-      for ruleIdx = 1, #placementDependentRules do
-        recordRuleApplied(object, modifyTarget, placementDependentRules[ruleIdx])
+    if commitDependentRules then
+      for ruleIdx = 1, #commitDependentRules do
+        recordRuleApplied(object, modifyTarget, commitDependentRules[ruleIdx])
       end
     end
 
