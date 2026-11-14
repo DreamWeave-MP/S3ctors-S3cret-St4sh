@@ -14,6 +14,7 @@ local ARGUMENTS = {
   Horiz0nPercentAdjustSevere = { min = 10, max = 50 },
   Horiz0nViewDistanceStepPercent = { integer = false, min = 0.25, max = 5.0 },
   Horiz0nViewDistanceSevereMult = { min = 1.0, max = 5.0 },
+  Horiz0nGrowCooldown = { integer = false, min = 0.0, max = 30.0 },
 }
 
 I.Settings.registerPage {
@@ -107,6 +108,14 @@ I.Settings.registerGroup {
       default = 2.0,
       argument = ARGUMENTS.Horiz0nViewDistanceSevereMult,
     },
+    {
+      key = 'Horiz0nGrowCooldown',
+      renderer = 'number',
+      name = 'Horiz0nGrowCooldownName',
+      description = 'Horiz0nGrowCooldownDesc',
+      default = 3.0,
+      argument = ARGUMENTS.Horiz0nGrowCooldown,
+    },
   },
 }
 
@@ -161,6 +170,8 @@ Horiz0nSettings:subscribe(require('openmw.async'):callback(function(_, _)
   updateArgument('Horiz0nViewDistanceStepPercent', { disabled = disabled })
 
   updateArgument('Horiz0nViewDistanceSevereMult', { disabled = disabled })
+
+  updateArgument('Horiz0nGrowCooldown', { disabled = disabled })
 
   updateArgument('Horiz0nAdjustFramerate', { disabled = disabled })
 end))
