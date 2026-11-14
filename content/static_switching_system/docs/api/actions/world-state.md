@@ -1,6 +1,6 @@
 +++
 title = "World-State Actions"
-description = "Modify locks, keys, traps, ownership, globals, visibility, and object lifetime."
+description = "Modify locks, keys, traps, ownership, globals, weather, visibility, and object lifetime."
 page_template = "docs/page.html"
 weight = 40
 
@@ -72,6 +72,28 @@ global_set:
 ```
 
 The action does not require the global to pre-exist. Use the schema-approved `name` and `value` fields; malformed ranges can assert. A `min: 0` lower bound is preserved when sampling a global.
+
+## `set_weather`
+
+**Shape:** `set_weather: string | { weather: string, region?: string }`
+
+Changes a region's weather to the named weather record. The engine transitions to it as it would for a scripted weather change.
+
+```yaml
+set_weather: thunderstorm
+```
+
+```yaml
+set_weather:
+  weather: blight
+  region: "Red Mountain Region"
+```
+
+Without `region`, the action targets the player's region, not the matched object's. Indoors the player's region is the one behind the nearest door leading outside; if there is no such door the action does nothing.
+
+The action does nothing, and does not count as a successful application, when the weather record does not exist, when the region cannot be changed, or when the player's region already has that weather or is already turning to it. An unknown weather or region is logged once.
+
+Weather is not a property of the matched object, so an unconditional `active` rule would request the same change once per object. Pair `set_weather` with a [world trigger](@/static_switching_system/docs/concepts/triggers.md), a narrowing condition, or `once: true`. A change made by this action does not fire the `weather` trigger.
 
 ## `disable`
 

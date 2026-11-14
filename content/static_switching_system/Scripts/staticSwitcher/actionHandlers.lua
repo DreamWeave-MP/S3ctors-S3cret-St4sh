@@ -8,6 +8,8 @@ local world = require 'openmw.world'
 local randomGen = require 'scripts.s3.randomGen'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+local Regions = require 'Scripts.staticSwitcher.regions'
+local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 
 local WarnLog
 do
@@ -39,6 +41,7 @@ local Player = world.players[1]
 local ActorSpells = types.Actor.spells
 local ActorActiveSpells = types.Actor.activeSpells
 local SpellRecords = core.magic.spells.records
+local Weather = core.weather
 
 local ACTIVE_SPELL_OPTION_KEYS = {
   'name',
@@ -71,6 +74,32 @@ local function tryCreateObject(actionName, recordId)
       tostring(createdObject)
     )
   )
+end
+
+---@type table<string, true>
+local WeatherWarnings = {}
+
+---@param subject string weather or region ID the warning is about
+---@param message string
+local function warnWeatherOnce(subject, message)
+  if WeatherWarnings[subject] then return end
+  WeatherWarnings[subject] = true
+
+  WarnLog(message)
+end
+
+---@param regionId string
+---@param weather openmw.core.WeatherRecord
+---@return boolean isAlreadyComing whether the player's region already has, or is turning to, this weather
+local function playerRegionAlreadyHasWeather(regionId, weather)
+  local playerCell = Player.cell
+  if not playerCell or Regions.resolveRegion(playerCell, Player.position) ~= regionId then
+    return false
+  end
+
+  local upcomingWeather = Weather.getNext(playerCell) or Weather.getCurrent(playerCell)
+
+  return upcomingWeather ~= nil and upcomingWeather.recordId == weather.recordId
 end
 
 ---@param object openmw.GObject
@@ -624,7 +653,7 @@ local actionHandlers = {
 
       if count and count >= 1 then
         if chance and not shouldApplyChance(chance) then
-          -- pool missed
+        -- pool missed
         else
           local useRelativeTransform = transformType == nil or transformType == 'relative'
           local baseTransform = accumulatedRotation
@@ -862,6 +891,39 @@ local actionHandlers = {
     if type(value) == 'table' then value = randomGen.range(value.min or 1, value.max, true) end
 
     globals[globalData.name] = value
+    return true
+  end,
+  ['set_weather'] = function(_, weatherAction)
+    local weatherId, regionId = weatherAction, nil
+    if type(weatherAction) == 'table' then
+      weatherId, regionId = weatherAction.weather, weatherAction.region
+    end
+
+    local weather = Weather.records[weatherId]
+    if not weather then
+      warnWeatherOnce(weatherId, StrFormat('set_weather: "%s" is not a weather record', weatherId))
+      return false
+    end
+
+    local playerCell = Player.cell
+    local playerRegionId = playerCell and Regions.resolveRegion(playerCell, Player.position)
+
+    regionId = regionId or playerRegionId
+    if not regionId then return false end
+
+    if playerRegionAlreadyHasWeather(regionId, weather) then return false end
+
+    local didChange, changeError = pcall(Weather.changeWeather, regionId, weather)
+    if not didChange then
+      warnWeatherOnce(
+        regionId,
+        StrFormat('set_weather: could not change region "%s": %s', regionId, tostring(changeError))
+      )
+      return false
+    end
+
+    if regionId == playerRegionId then TriggerContext.expectedWeatherId = weather.recordId end
+
     return true
   end,
   ['teleport'] = function(object, teleportData, currentCell, currentPos, currentRotation)

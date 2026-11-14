@@ -192,7 +192,12 @@
 ---@field send_event SSSEventAction? sends a local event to the target object's scripts with `object` injected into the payload
 ---@field send_global_event SSSEventAction? sends a global event with `object` injected into the payload
 ---@field global_set {name: string, value: SSSRandomNumericRange}? sets a MWScript global variable
+---@field set_weather string|SSSSetWeatherAction? changes a region's weather; a bare string is the weather record ID and targets the player's region
 ---@field teleport {cell?: string, position?: {x?: SSSRandomNumericRange, y?: SSSRandomNumericRange, z?: SSSRandomNumericRange}, rotation?: SSSVector3Range, onGround?: boolean}? teleports the target object
+
+---@class SSSSetWeatherAction
+---@field weather string weather record ID
+---@field region string? region record ID; defaults to the player's region, inferred from the nearest exterior door indoors
 
 ---@class SSSConditionData
 ---@field by_player boolean? Whether the actor that caused the trigger is the player. Only on the activate, drop, place, and use triggers.

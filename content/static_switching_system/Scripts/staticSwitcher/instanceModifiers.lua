@@ -398,7 +398,7 @@ local function tryModifyObject(object, instanceModificationList)
       for actIndex = 1, #instanceModification.actions do
         local actionData = instanceModification.actions[actIndex]
         if not actionData.chance or randomGen.float() <= actionData.chance then
-          local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction, addLuaScriptAction, activateByPlayerAction, removeLuaScriptAction, globalSetAction, teleportAction, addTagAction, removeTagAction =
+          local replaceAction, transformAction, addAction, removeAction, equipAction, unequipAction, disableAction, deleteAction, createAction, lockLevelAction, setOwnershipAction, playsoundAction, keyAction, trapAction, addLuaScriptAction, activateByPlayerAction, removeLuaScriptAction, globalSetAction, teleportAction, addTagAction, removeTagAction, setWeatherAction =
             actionData.replace,
             actionData.transform,
             actionData.add,
@@ -419,7 +419,8 @@ local function tryModifyObject(object, instanceModificationList)
             actionData.global_set,
             actionData.teleport,
             actionData.add_tag,
-            actionData.remove_tag
+            actionData.remove_tag,
+            actionData.set_weather
           local addSpellAction, removeSpellAction, addActiveSpellAction, runLuaScriptAction, callInterfaceAction, sendEventAction, sendGlobalEventAction =
             actionData.add_spell,
             actionData.remove_spell,
@@ -618,6 +619,13 @@ local function tryModifyObject(object, instanceModificationList)
             anyActionApplied = anyActionApplied or didSet
             currentRuleApplied = currentRuleApplied or didSet
             DebugLog('  global_set: %s', didSet and 'OK' or 'failed')
+          end
+
+          if setWeatherAction then
+            local didSetWeather = actionHandlers.set_weather(modifyTarget, setWeatherAction)
+            anyActionApplied = anyActionApplied or didSetWeather
+            currentRuleApplied = currentRuleApplied or didSetWeather
+            DebugLog('  set_weather: %s', didSetWeather and 'OK' or 'noop')
           end
 
           if playsoundAction then

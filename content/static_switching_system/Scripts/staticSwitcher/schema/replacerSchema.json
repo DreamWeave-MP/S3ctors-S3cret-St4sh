@@ -653,6 +653,32 @@
                     "additionalProperties": false,
                     "description": "Set a MWScript global variable to a value or random range."
                 },
+                "set_weather": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "Weather record ID. Changes the weather of the player's region."
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "weather": {
+                                    "type": "string",
+                                    "description": "Weather record ID."
+                                },
+                                "region": {
+                                    "type": "string",
+                                    "description": "Region record ID. Defaults to the player's region; indoors that is the region behind the nearest exterior door."
+                                }
+                            },
+                            "required": [
+                                "weather"
+                            ],
+                            "additionalProperties": false
+                        }
+                    ],
+                    "description": "Change a region's weather. Not specific to the matched object; pair it with a world trigger, a narrowing condition, or once."
+                },
                 "teleport": {
                     "type": "object",
                     "properties": {
@@ -936,6 +962,11 @@
                 {
                     "required": [
                         "global_set"
+                    ]
+                },
+                {
+                    "required": [
+                        "set_weather"
                     ]
                 },
                 {

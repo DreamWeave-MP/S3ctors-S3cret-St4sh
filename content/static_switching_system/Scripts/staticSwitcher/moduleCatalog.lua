@@ -94,6 +94,7 @@ local ACTIONPRIORITY = {
   'trap',
   'create',
   'global_set',
+  'set_weather',
   'playsound',
   'add_lua_script',
   'activate_by_player',
