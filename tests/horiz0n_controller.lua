@@ -225,6 +225,26 @@ do
   check(cells(world) == 10, 'successful probes never reached the ceiling: %.2f cells', cells(world))
 end
 
+do
+  local world = newWorld()
+  run(world, 1)
+  world.frameTimeFloor = 1 / 40
+
+  local busiestSecond, descentWrites = 0, 0
+  for _ = 1, 20 do
+    local writes = run(world, 1)
+    descentWrites = descentWrites + writes
+    busiestSecond = math.max(busiestSecond, writes)
+  end
+  check(
+    cells(world) == 0.25,
+    'sustained 40 FPS did not reach the minimum in 20s: %.2f cells',
+    cells(world)
+  )
+  check(busiestSecond <= 5, 'sustained 40 FPS wrote %d times in one second', busiestSecond)
+  check(descentWrites <= 40, 'sustained 40 FPS took %d writes to reach the minimum', descentWrites)
+end
+
 for _, timeScale in next, { 0.5, 2 } do
   local world = newWorld()
   world.timeScale = timeScale

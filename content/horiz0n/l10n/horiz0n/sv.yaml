@@ -56,6 +56,7 @@ Horiz0nViewDistanceSevereMultDesc: |
 Horiz0nViewDistanceStepPercentName: Justering av visningsavstånd
 Horiz0nViewDistanceStepPercentDesc: |
   Anger hur mycket Horiz0n ändrar visningsavståndet vid varje justering, i procent av det aktuella visningsavståndet.
+  Minskningar tillämpas högst fyra gånger per sekund, och var och en täcker mätningarna sedan den föregående.
   Lägre värden gör förändringarna av visningsavståndet mjukare men långsammare.
   Högre värden gör justeringarna snabbare men mer märkbara.
   Standard: 1 %

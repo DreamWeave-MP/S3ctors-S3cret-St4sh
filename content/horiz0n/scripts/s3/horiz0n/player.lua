@@ -18,7 +18,7 @@ local mathFloor, mathMax, mathMin = math.floor, math.max, math.min
 
 local CELL_SIZE = 8192
 local MAX_GROW_COOLDOWN = 60.0
-local PROBE_SETTLE_TIME = 0.25
+local SETTLE_TIME = 0.25
 local SUSTAINED_BAD_WINDOWS = 2
 
 local MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE =
@@ -42,7 +42,7 @@ local viewDistance = getBaseViewDistance()
 
 local windowDuration, windowFrames, badWindows = 0.0, 0, 0
 
-local growCooldown, cooldownRemaining, isProbing = GROW_COOLDOWN, 0.0, false
+local growCooldown, cooldownRemaining, settleRemaining, isProbing = GROW_COOLDOWN, 0.0, 0.0, false
 
 ---@type number?
 local failedViewDistance
@@ -81,7 +81,8 @@ local function shrink(step)
     growCooldown = mathMin(growCooldown * 2, MAX_GROW_COOLDOWN)
   end
 
-  isProbing, failedViewDistance, cooldownRemaining = false, viewDistance, growCooldown
+  isProbing, failedViewDistance, badWindows = false, viewDistance, 0
+  cooldownRemaining, settleRemaining = growCooldown, SETTLE_TIME
   viewDistance = clampViewDistance(viewDistance - step)
 end
 
@@ -93,7 +94,7 @@ local function grow(step)
 
   local grownViewDistance = clampViewDistance(viewDistance + step)
 
-  isProbing, cooldownRemaining = grownViewDistance ~= viewDistance, PROBE_SETTLE_TIME
+  isProbing, settleRemaining = grownViewDistance ~= viewDistance, SETTLE_TIME
   viewDistance = grownViewDistance
 end
 
@@ -110,19 +111,22 @@ local function measureFrame()
   local step = viewDistance * VD_STEP_FRACTION
 
   if cooldownRemaining > 0 then cooldownRemaining = cooldownRemaining - elapsed end
+  if settleRemaining > 0 then settleRemaining = settleRemaining - elapsed end
 
   if frameRatio >= OKAYISH_FRAME_RATIO then
     badWindows = badWindows + 1
-    if badWindows < SUSTAINED_BAD_WINDOWS then return end
+    if badWindows < SUSTAINED_BAD_WINDOWS or settleRemaining > 0 then return end
 
     if frameRatio >= BAD_FRAME_RATIO then step = step * SEVERE_MULT end
+    if not isProbing then step = step * SETTLE_TIME / UPDATE_INTERVAL end
+
     shrink(step)
     return
   end
 
   badWindows = 0
 
-  if cooldownRemaining <= 0 then grow(step) end
+  if cooldownRemaining <= 0 and settleRemaining <= 0 then grow(step) end
 end
 
 ---@param newMode Horiz0nMode
@@ -130,7 +134,8 @@ local function enterMode(newMode)
   mode = newMode
 
   windowDuration, windowFrames, badWindows = 0.0, 0, 0
-  growCooldown, cooldownRemaining, isProbing, failedViewDistance = GROW_COOLDOWN, 0.0, false, nil
+  growCooldown, cooldownRemaining, settleRemaining = GROW_COOLDOWN, 0.0, 0.0
+  isProbing, failedViewDistance = false, nil
 
   if mode == 'disabled' then
     viewDistance = getBaseViewDistance()

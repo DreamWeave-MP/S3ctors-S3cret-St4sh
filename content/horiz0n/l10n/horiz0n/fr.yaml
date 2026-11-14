@@ -56,6 +56,7 @@ Horiz0nViewDistanceSevereMultDesc: |
 Horiz0nViewDistanceStepPercentName: Ajustement de la distance d'affichage
 Horiz0nViewDistanceStepPercentDesc: |
   Définit l'ampleur des changements de distance d'affichage effectués par Horiz0n à chaque ajustement, en pourcentage de la distance d'affichage actuelle.
+  Les réductions sont appliquées au plus quatre fois par seconde, chacune couvrant les mesures effectuées depuis la précédente.
   Des valeurs plus faibles rendent les changements de distance d'affichage plus fluides, mais plus lents.
   Des valeurs plus élevées accélèrent les ajustements, mais les rendent plus visibles.
   Par défaut : 1 %
