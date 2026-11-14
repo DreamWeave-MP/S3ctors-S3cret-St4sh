@@ -196,7 +196,7 @@
 
 ---@class SSSConditionData
 ---@field carrying string|table<RecordId, integer>?
----@field cell string?
+---@field cell string|string[]? exact match against object.cell.name or object.cell.id, case-insensitive
 ---@field cell_match string? substring match against object.cell.name or object.cell.id, case-insensitive
 ---@field coords ExteriorGrid?
 ---@field content_file string?
