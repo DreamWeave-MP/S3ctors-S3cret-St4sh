@@ -135,4 +135,12 @@ create:
       y: { min: -300, max: 300 }
 ```
 
-Pool counts default to `1`; count range tables require `max`, default `min` to `1`, and produce integer counts. Pool chance is a number from `0` to `1` in the YAML schema. Each pool chance is rolled once; transform overrides are sampled separately for each created object. Relative positioning/rotation/scale is the default, and absolute mode uses the accumulated action placement as its cell and transform base. Transforms and teleports already processed in the same action list are therefore visible to created objects, even though the engine placement commit is deferred. A pending `onGround: true` teleport contributes its requested position; `create` cannot observe the later ground-snapped result. Invalid creation records or malformed action ranges can error.
+Pool counts default to `1`; count range tables require `max`, default `min` to `1`, and produce integer counts. Pool chance is a number from `0` to `1` in the YAML schema. Each pool chance is rolled once; transform overrides are sampled separately for each created object. Relative positioning/rotation/scale is the default, and absolute mode uses the accumulated action placement as its cell and transform base. Transforms and teleports already processed in the same action list are therefore visible to created objects, even though the engine placement commit is deferred. A pending `onGround: true` teleport contributes its requested position; `create` cannot observe the later ground-snapped result.
+
+A pool with a malformed `count`, `chance`, `position`, `rotate`, or `scale` range, or an unknown `transform_type`, is rejected when the module loads and its rule is skipped. A record ID that does not exist is logged once and that pool creates nothing.
+
+### When a create only partly succeeds
+
+Each object is created and placed on its own. If one cannot be placed, it is removed again, the failure is logged once, and that pool stops; objects already placed stay, and other pools still run.
+
+The action counts as applied as soon as it has placed at least one object. That has a consequence worth knowing before you rely on it: **a `once: true` rule whose `create` placed two of three objects is recorded as done, and the third never appears.** SSS does not go back for it, because retrying would place the first two again. If a set of objects must appear together or not at all, do not depend on a single `create` for that guarantee; check the log for `create:` warnings while testing the module, since anything that stops a placement will usually stop it every time.

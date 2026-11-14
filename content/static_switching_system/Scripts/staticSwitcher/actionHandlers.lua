@@ -78,12 +78,12 @@ local function tryCreateObject(actionName, recordId)
 end
 
 ---@type table<string, true>
-local WeatherWarnings = {}
+local IssuedWarnings = {}
 
 ---@param message string
-local function warnWeatherOnce(message)
-  if WeatherWarnings[message] then return end
-  WeatherWarnings[message] = true
+local function warnOnce(message)
+  if IssuedWarnings[message] then return end
+  IssuedWarnings[message] = true
 
   WarnLog(message)
 end
@@ -551,6 +551,112 @@ local function getScaleValue(scaleAction, referenceScale)
   error(StrFormat('Invalid type for scale parameter: %s', scaleType))
 end
 
+--- Rolls how many objects a pool creates this time.
+---@param details string|number|SSSCreatePool
+---@return SSSRolledCreatePool? pool nil when the pool creates nothing this time
+local function rollCreatePool(details)
+  local detailsType = type(details)
+
+  if detailsType == 'string' then return { count = 1, usesRelativeTransform = true } end
+  if detailsType == 'number' then
+    local count = math.floor(details)
+    return count >= 1 and { count = count, usesRelativeTransform = true } or nil
+  end
+  if detailsType ~= 'table' then return end
+
+  local count = details.count or 1
+  if type(count) == 'table' then
+    assert(count.max, 'RangeTable requires a "max"')
+    count.min = count.min or 1
+    assert(count.min <= count.max, 'RangeTable requires min <= max')
+    -- Must use randomGen.range(_, true) for integer output;
+    -- getRangeValue returns floats (correct for positions, not counts).
+    count = randomGen.range(count.min or 1, count.max, true)
+  end
+
+  if count < 1 or (details.chance and not shouldApplyChance(details.chance)) then return end
+
+  local transformType = details.transform_type
+
+  return {
+    count = count,
+    position = details.position,
+    rotate = details.rotate,
+    scale = details.scale,
+    usesRelativeTransform = transformType == nil or transformType == 'relative',
+  }
+end
+
+---@param pool SSSRolledCreatePool
+---@param basePosition openmw.util.Vector3
+---@param baseRotation openmw.util.Transform
+---@param baseScale number
+---@return openmw.util.Vector3 position
+---@return openmw.util.Transform rotation
+---@return number scale
+local function resolveCreatedPlacement(pool, basePosition, baseRotation, baseScale)
+  local position, rotation, scale = basePosition, baseRotation, baseScale
+  local usesRelativeTransform = pool.usesRelativeTransform
+
+  local positionOverride = pool.position
+  if positionOverride then
+    local offset = util.vector3(
+      getRangeValue(positionOverride.x),
+      getRangeValue(positionOverride.y),
+      getRangeValue(positionOverride.z)
+    )
+
+    position = usesRelativeTransform and position + offset or offset
+  end
+
+  if pool.rotate then rotation = getRotationValue(usesRelativeTransform, pool.rotate, rotation) end
+
+  if pool.scale then scale = getScaleValue(pool.scale, usesRelativeTransform and scale or 1.0) end
+
+  return position, rotation, scale
+end
+
+---@param object openmw.GObject
+---@param cell openmw.core.GCell
+---@param position openmw.util.Vector3
+---@param rotation openmw.util.Transform
+---@param scale number? only set when the pool overrides scale
+local function placeCreatedObject(object, cell, position, rotation, scale)
+  object:teleport(cell, position, rotation)
+  if scale then object:setScale(scale) end
+end
+
+--- Creates one pool object and puts it in the world. An object that cannot be placed is
+--- removed again rather than left stranded outside any cell. Each object stands alone, so the
+--- caller can count exactly what now exists even when a later object fails.
+---@param recordId RecordId
+---@param pool SSSRolledCreatePool
+---@param cell openmw.core.GCell
+---@param basePosition openmw.util.Vector3
+---@param baseRotation openmw.util.Transform
+---@param baseScale number
+---@return openmw.GObject? placedObject
+local function createPlacedObject(recordId, pool, cell, basePosition, baseRotation, baseScale)
+  local didResolve, position, rotation, scale =
+    pcall(resolveCreatedPlacement, pool, basePosition, baseRotation, baseScale)
+
+  if not didResolve then
+    warnOnce(StrFormat('create: "%s" has no usable placement: %s', recordId, tostring(position)))
+    return
+  end
+
+  local object = tryCreateObject('create', recordId)
+  if not object then return end
+
+  local wasPlaced, placeError =
+    pcall(placeCreatedObject, object, cell, position, rotation, pool.scale and scale)
+
+  if wasPlaced then return object end
+
+  pcall(object.remove, object)
+  warnOnce(StrFormat('create: "%s" could not be placed: %s', recordId, tostring(placeError)))
+end
+
 ---@type table<string, function>
 local actionHandlers = {
   ['transform'] = function(_, transformAction, newTransform, newPos, targetScale)
@@ -651,75 +757,24 @@ local actionHandlers = {
     local createdObjects = {}
 
     for recordId, details in pairs(createActionData) do
-      local count, chance, positionOverride, rotateOverride, scaleOverride, transformType
-      local detailsType = type(details)
+      local didRoll, pool = pcall(rollCreatePool, details)
 
-      if detailsType == 'string' then
-        count = 1
-      elseif detailsType == 'number' then
-        count = math.floor(details)
-      elseif detailsType == 'table' then
-        count = details.count or 1
-        if type(count) == 'table' then
-          assert(count.max, 'RangeTable requires a "max"')
-          count.min = count.min or 1
-          assert(count.min <= count.max, 'RangeTable requires min <= max')
-          -- Must use randomGen.range(_, true) for integer output;
-          -- getRangeValue returns floats (correct for positions, not counts).
-          count = randomGen.range(count.min or 1, count.max, true)
-        end
-        chance = details.chance
-        positionOverride = details.position
-        rotateOverride = details.rotate
-        scaleOverride = details.scale
-        transformType = details.transform_type
-      end
+      if not didRoll then
+        warnOnce(StrFormat('create: pool "%s" is malformed: %s', recordId, tostring(pool)))
+      elseif pool then
+        for _ = 1, pool.count do
+          local object = createPlacedObject(
+            recordId,
+            pool,
+            accumulatedCell,
+            accumulatedPosition,
+            accumulatedRotation,
+            accumulatedScale
+          )
+          if not object then break end
 
-      if count and count >= 1 then
-        if chance and not shouldApplyChance(chance) then
-        -- pool missed
-        else
-          local useRelativeTransform = transformType == nil or transformType == 'relative'
-          local baseTransform = accumulatedRotation
-          local basePos = accumulatedPosition
-          local baseScale = accumulatedScale
-          local baseCell = accumulatedCell
-
-          for _ = 1, count do
-            local newPos = basePos
-            local newTransform = baseTransform
-            local targetScale = baseScale
-
-            if positionOverride then
-              local offset = util.vector3(
-                getRangeValue(positionOverride.x),
-                getRangeValue(positionOverride.y),
-                getRangeValue(positionOverride.z)
-              )
-              if useRelativeTransform then
-                newPos = newPos + offset
-              else
-                newPos = offset
-              end
-            end
-
-            if rotateOverride then
-              newTransform = getRotationValue(useRelativeTransform, rotateOverride, newTransform)
-            end
-
-            if scaleOverride then
-              local referenceScale = useRelativeTransform and targetScale or 1.0
-              targetScale = getScaleValue(scaleOverride, referenceScale)
-            end
-
-            local obj = tryCreateObject('create', recordId)
-            if not obj then break end
-
-            obj:teleport(baseCell, newPos, newTransform)
-            if scaleOverride then obj:setScale(targetScale) end
-            totalCreated = totalCreated + 1
-            createdObjects[totalCreated] = obj
-          end
+          totalCreated = totalCreated + 1
+          createdObjects[totalCreated] = object
         end
       end
     end
@@ -925,7 +980,7 @@ local actionHandlers = {
 
     local weather = type(weatherId) == 'string' and Weather.records[weatherId] or nil
     if not weather then
-      warnWeatherOnce(StrFormat('set_weather: "%s" is not a weather record', tostring(weatherId)))
+      warnOnce(StrFormat('set_weather: "%s" is not a weather record', tostring(weatherId)))
       return false
     end
 
@@ -946,7 +1001,7 @@ local actionHandlers = {
 
     local didChange, changeError = pcall(Weather.changeWeather, regionId, weather)
     if not didChange then
-      warnWeatherOnce(
+      warnOnce(
         StrFormat('set_weather: could not change region "%s": %s', regionId, tostring(changeError))
       )
       return false

@@ -22,7 +22,7 @@ The [VFS and package boundaries](@/static_switching_system/docs/compatibility/vf
 
 For a static module, confirm both mesh values are VFS-visible. SSS logs a missing replacement mesh with the requested model, source model, object, and module name, then skips that swap. A source mesh path copied from another mod is not evidence that the replacement asset is installed.
 
-For an instance `replace`, confirm the replacement record ID exists in enabled content; SSS logs a `could not create an object from record` warning when it does not. For `teleport`, confirm the destination cell name/ID or exterior coordinates resolve. For `add`, `equip`, and `create`, confirm the item or object record is available.
+For an instance `replace`, confirm the replacement record ID exists in enabled content; SSS logs a `could not create an object from record` warning when it does not. For `teleport`, confirm the destination cell name/ID or exterior coordinates resolve. For `add`, `equip`, and `create`, confirm the item or object record is available. A `create` that placed only some of its objects logs a `create:` warning and still counts as applied, so a `once: true` rule will not try again.
 
 ## A condition never matches
 

@@ -126,9 +126,81 @@ local function findUnknownObjectType(objectTypeValue)
   end
 end
 
+local CREATE_VECTOR_FIELDS = { 'position', 'rotate' }
+local VECTOR_AXES = { 'x', 'y', 'z' }
+
+local CREATE_TRANSFORM_TYPES = {
+  relative = true,
+  absolute = true,
+}
+
+--- A sampled range is a fixed number or a table with a numeric `max`; `min` is optional.
+---@param rangeValue number|RangeTable|nil
+---@return boolean isUsable
+local function isSampledRange(rangeValue)
+  if rangeValue == nil or type(rangeValue) == 'number' then return true end
+  if type(rangeValue) ~= 'table' or type(rangeValue.max) ~= 'number' then return false end
+
+  local min = rangeValue.min
+  return min == nil or type(min) == 'number'
+end
+
+---@param countValue integer|RangeTable|nil
+---@return boolean isUsable
+local function isCountRange(countValue)
+  if not isSampledRange(countValue) then return false end
+  if type(countValue) ~= 'table' then return true end
+
+  return (countValue.min or 1) <= countValue.max
+end
+
+---@param details string|number|SSSCreatePool
+---@return string? problem phrased to follow the pool's record ID
+local function findCreatePoolProblem(details)
+  local detailsType = type(details)
+
+  if detailsType == 'string' or detailsType == 'number' then return end
+  if detailsType ~= 'table' then return 'must be a record ID, a count, or a pool' end
+
+  if not isCountRange(details.count) then return 'has a count range without a usable max' end
+  if not isSampledRange(details.chance) then return 'has a chance range without max' end
+  if not isSampledRange(details.scale) then return 'has a scale range without max' end
+
+  for fieldIndex = 1, #CREATE_VECTOR_FIELDS do
+    local fieldName = CREATE_VECTOR_FIELDS[fieldIndex]
+    local vector = details[fieldName]
+
+    if vector ~= nil then
+      if type(vector) ~= 'table' then return StrFormat('has a %s that is not a map', fieldName) end
+
+      for axisIndex = 1, #VECTOR_AXES do
+        if not isSampledRange(vector[VECTOR_AXES[axisIndex]]) then
+          return StrFormat('has a %s range without max', fieldName)
+        end
+      end
+    end
+  end
+
+  local transformType = details.transform_type
+  if transformType ~= nil and not CREATE_TRANSFORM_TYPES[transformType] then
+    return StrFormat('has unknown transform_type "%s"', tostring(transformType))
+  end
+end
+
 --- Shapes a handler would otherwise only discover by raising, once per object it ran on.
 ---@type table<string, fun(actionValue: string|number|boolean|table): string?>
 local ACTION_PAYLOAD_PROBLEMS = {
+  create = function(createAction)
+    if type(createAction) ~= 'table' then return 'create needs a map of record IDs to pools' end
+
+    for recordId, details in next, createAction do
+      local poolProblem = findCreatePoolProblem(details)
+
+      if poolProblem then
+        return StrFormat('create pool "%s" %s', tostring(recordId), poolProblem)
+      end
+    end
+  end,
   set_weather = function(weatherAction)
     if isText(weatherAction) then return end
 

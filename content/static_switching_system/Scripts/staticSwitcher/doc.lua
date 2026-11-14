@@ -104,6 +104,14 @@
 ---@field count integer|SSSRandomNumericRange? item count or random range; defaults to 1 when absent
 ---@field chance SSSChanceRange? fixed or random chance to apply this item entry
 
+--- A pool after its count and chance have been rolled for one execution.
+---@class SSSRolledCreatePool
+---@field count integer objects to create this time
+---@field position SSSVector3Range? per-object position override
+---@field rotate SSSVector3Range? per-object rotation override
+---@field scale SSSRandomNumericRange? per-object scale override
+---@field usesRelativeTransform boolean whether overrides are offsets from the accumulated placement
+
 ---@class SSSCreatePool
 ---@field count integer|SSSRandomNumericRange? number of objects to spawn or random range; defaults to 1
 ---@field chance number? probability 0-1 that this pool activates; no chance means always

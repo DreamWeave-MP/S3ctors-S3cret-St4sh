@@ -30,12 +30,15 @@ local TEL_BRANORA = { id = 'tel branora', name = 'Tel Branora', isExterior = fal
 local questStage = 0
 local pendingActivations = {}
 local createdRecordIds = {}
+local createdObjects = {}
+local placementsBeforeFailure
 local nextObjectIndex = 0
 
 local knownRecords = {
   flora_muckspunge_03 = true,
   ck_disturbed_mucksponge = true,
   selfie = true,
+  crate = true,
 }
 
 local objectType = { records = {} }
@@ -63,6 +66,11 @@ local function newObject(recordId, cell, type)
   function object:remove() self.count = 0 end
   function object:hasScript() return false end
   function object:teleport(targetCell)
+    if placementsBeforeFailure then
+      if placementsBeforeFailure == 0 then error 'the cell refused the object' end
+      placementsBeforeFailure = placementsBeforeFailure - 1
+    end
+
     self.cell = targetCell
     pendingActivations[#pendingActivations + 1] = self
   end
@@ -111,6 +119,11 @@ local moduleSources = {
           actions = { { set_ownership = { owner = 'marked' } } },
         },
         {
+          conditions = { { record_id = 'spawner' } },
+          actions = { { create = { crate = 3 } } },
+          once = true,
+        },
+        {
           conditions = { { record_id = 'partial' } },
           actions = {
             { set_ownership = { owner = 'marked' } },
@@ -147,6 +160,11 @@ local moduleSources = {
         { conditions = { { ['not'] = { nope = true } } }, actions = { { delete = true } } },
         { conditions = { { cell = 'Tel Branora' } }, actions = { { add_tag = 'kept' } } },
         { conditions = { { cell = 'tel branora' } }, actions = { { add_tag = 'kept' } } },
+        { actions = { { create = { crate = { count = { min = 3 } } } } } },
+        { actions = { { create = { crate = { count = { min = 5, max = 2 } } } } } },
+        { actions = { { create = { crate = { position = { x = { min = -5 } } } } } } },
+        { actions = { { create = { crate = { transform_type = 'sideways' } } } } },
+        { actions = { { create = 'crate' } } },
       },
     }
   end,
@@ -231,7 +249,10 @@ package.preload['openmw.world'] = function()
       if not knownRecords[recordId] then error(('no record %s'):format(recordId)) end
 
       createdRecordIds[#createdRecordIds + 1] = recordId
-      return newObject(recordId)
+
+      local object = newObject(recordId)
+      createdObjects[#createdObjects + 1] = object
+      return object
     end,
     createRecord = function() end,
     mwscript = {
@@ -306,7 +327,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 7)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 8)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -315,13 +336,34 @@ assert(countLogLines 'Skipped rule 2 in .-rejected%.yaml: record_id "%[unclosed"
 assert(countLogLines 'Skipped rule 3 in .-rejected%.yaml: unknown action "explode"' == 1)
 assert(countLogLines 'Skipped rule 4 in .-rejected%.yaml: unknown condition "nope"' == 1)
 
+assert(
+  countLogLines 'Skipped rule 7 in .-rejected%.yaml: create pool "crate" has a count range without a usable max'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 8 in .-rejected%.yaml: create pool "crate" has a count range without a usable max'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 9 in .-rejected%.yaml: create pool "crate" has a position range without max'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 10 in .-rejected%.yaml: create pool "crate" has unknown transform_type "sideways"'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 11 in .-rejected%.yaml: create needs a map of record IDs to pools'
+    == 1
+)
+
 -- `cell` is lowered for matching, but the hash still reflects the authored casing.
 assert(keptRules[1].conditions[1].cell == 'tel branora')
 assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[5]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[6]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -364,6 +406,26 @@ firstPartial.owner.recordId = nil
 activate(firstPartial)
 runFrames(4)
 assert(firstPartial.owner.recordId == nil, 'a once rule that partly failed must not replay')
+
+-- A create that fails part-way keeps what it placed, removes what it could not place, and
+-- counts as applied, so a once rule does not create the same objects again.
+local spawner = newObject('spawner', TEL_BRANORA)
+placementsBeforeFailure = 2
+activate(spawner)
+runFrames(6)
+placementsBeforeFailure = nil
+
+assert(countCreated 'crate' == 3)
+assert(createdObjects[1].cell == TEL_BRANORA and createdObjects[2].cell == TEL_BRANORA)
+assert(
+  createdObjects[3].cell == nil and createdObjects[3].count == 0,
+  'the unplaced crate was left behind'
+)
+assert(countLogLines '%[WARN%] create: "crate" could not be placed' == 1)
+
+activate(spawner)
+runFrames(6)
+assert(countCreated 'crate' == 3, 'a once rule whose create partly failed must not replay')
 
 -- Lowercase trap, key, and global names apply instead of clearing the lock data.
 local trapped = newObject('trapped', TEL_BRANORA, lockableType)
