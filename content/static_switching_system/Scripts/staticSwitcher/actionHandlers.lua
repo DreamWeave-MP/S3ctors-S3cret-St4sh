@@ -629,6 +629,8 @@ end
 --- Creates one pool object and puts it in the world. An object that cannot be placed is
 --- removed again rather than left stranded outside any cell. Each object stands alone, so the
 --- caller can count exactly what now exists even when a later object fails.
+--- Only the engine calls are protected. Pool shapes are checked when the module loads, so
+--- working out a placement cannot fail on anything an author wrote.
 ---@param recordId RecordId
 ---@param pool SSSRolledCreatePool
 ---@param cell openmw.core.GCell
@@ -637,13 +639,8 @@ end
 ---@param baseScale number
 ---@return openmw.GObject? placedObject
 local function createPlacedObject(recordId, pool, cell, basePosition, baseRotation, baseScale)
-  local didResolve, position, rotation, scale =
-    pcall(resolveCreatedPlacement, pool, basePosition, baseRotation, baseScale)
-
-  if not didResolve then
-    warnOnce(StrFormat('create: "%s" has no usable placement: %s', recordId, tostring(position)))
-    return
-  end
+  local position, rotation, scale =
+    resolveCreatedPlacement(pool, basePosition, baseRotation, baseScale)
 
   local object = tryCreateObject('create', recordId)
   if not object then return end
@@ -757,11 +754,9 @@ local actionHandlers = {
     local createdObjects = {}
 
     for recordId, details in pairs(createActionData) do
-      local didRoll, pool = pcall(rollCreatePool, details)
+      local pool = rollCreatePool(details)
 
-      if not didRoll then
-        warnOnce(StrFormat('create: pool "%s" is malformed: %s', recordId, tostring(pool)))
-      elseif pool then
+      if pool then
         for _ = 1, pool.count do
           local object = createPlacedObject(
             recordId,

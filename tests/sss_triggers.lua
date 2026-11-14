@@ -143,7 +143,10 @@ local function newObject(recordId, cell, objectType)
     if fields.refusesScripts then error 'this actor cannot hold scripts' end
     fields.scripts[scriptPath] = true
   end
-  function fields.teleport(_, targetCell) fields.cell = targetCell end
+  function fields.teleport(_, targetCell)
+    if fields.refusesTeleport then error 'the engine refused the teleport' end
+    fields.cell = targetCell
+  end
   function fields.remove() fields.count = 0 end
 
   local object = newproxy(true)
@@ -861,6 +864,23 @@ settle()
 settle()
 assert(countProbes 'sent-east' == 1 and countProbes 'sent-west' == 0)
 assert(player.cell == getExteriorCell(8, 8))
+
+-- A teleport the engine refused sent the player nowhere, so walking into that cell later is
+-- an ordinary entry and its rule runs.
+player.cell = HOME_CELL
+settle()
+player.refusesTeleport = true
+player.cell = getExteriorCell(7, 7)
+settle()
+settle()
+player.refusesTeleport = nil
+assert(countProbes 'sent-east' == 2 and player.cell == getExteriorCell(7, 7))
+assert(countLogLines '%[WARN%] Action placement failed and was skipped' == 1)
+
+player.cell = getExteriorCell(8, 8)
+settle()
+settle()
+assert(countProbes 'sent-west' == 1, 'a failed teleport left a stale arrival to ignore')
 
 player.cell = HOME_CELL
 settle()

@@ -25,9 +25,6 @@ local PlayerObjectIsInstance = types.Player.objectIsInstance
 ---@type table<string, true>
 local ActionFailureWarnings = {}
 
----@type openmw.GObject[]
-local NO_CREATED_OBJECTS = {}
-
 ---@param actionName string
 ---@param failure string
 local function reportActionFailure(actionName, failure)
@@ -38,38 +35,44 @@ local function reportActionFailure(actionName, failure)
   WarnLog(warning)
 end
 
---- An action that raises is treated as an action that did not apply. The rest of its rule
---- still runs and the rule is finalised, so placement is committed and `once` is recorded for
---- whatever did apply. Without this, a rule failing part-way would repeat its earlier actions
---- every time it was triggered.
+--- Actions whose handler hands an authored ID or payload straight to the engine or to another
+--- mod, and has no boundary of its own. Whether such a call succeeds depends on the load order
+--- and cannot be checked when a module loads, so a refusal is an expected outcome, not a bug.
+---
+--- Everything else is left unwrapped on purpose. Handlers that already contain their own
+--- boundary do not need a second one, and handlers that only compute must not have one: an
+--- error there is a programming error and has to reach the per-object guard and be reported
+--- as one, not be turned into a quietly skipped action.
+local ENGINE_BOUNDARY_ACTIONS = {
+  activate_by_player = true,
+  add = true,
+  add_active_spell = true,
+  add_lua_script = true,
+  add_spell = true,
+  add_tag = true,
+  equip = true,
+  global_set = true,
+  key = true,
+  lock_level = true,
+  playsound = true,
+  remove = true,
+  remove_lua_script = true,
+  remove_spell = true,
+  remove_tag = true,
+  send_event = true,
+  send_global_event = true,
+  set_ownership = true,
+  teleport = true,
+  trap = true,
+  unequip = true,
+}
+
+--- A refused engine call is treated as an action that did not apply. The rest of its rule
+--- still runs and the rule is finalised, so `once` is recorded for whatever did apply.
 ---@param actionName string
 ---@param actionHandler function
 ---@return function guardedHandler
-local function guardActionHandler(actionName, actionHandler)
-  if actionName == 'transform' then
-    return function(object, transformAction, transform, position, scale)
-      local didRun, wasModified, newTransform, newPosition, newScale =
-        pcall(actionHandler, object, transformAction, transform, position, scale)
-
-      if didRun then return wasModified, newTransform, newPosition, newScale end
-
-      reportActionFailure(actionName, wasModified)
-      return false, transform, position, scale
-    end
-  end
-
-  if actionName == 'create' then
-    return function(object, createAction, cell, position, rotation, scale)
-      local didRun, createdCount, createdObjects =
-        pcall(actionHandler, object, createAction, cell, position, rotation, scale)
-
-      if didRun then return createdCount, createdObjects end
-
-      reportActionFailure(actionName, createdCount)
-      return 0, NO_CREATED_OBJECTS
-    end
-  end
-
+local function guardEngineBoundary(actionName, actionHandler)
   return function(object, actionData, third, fourth, fifth)
     local didRun, first, second, thirdResult, fourthResult, fifthResult =
       pcall(actionHandler, object, actionData, third, fourth, fifth)
@@ -84,7 +87,9 @@ end
 ---@type table<string, function>
 local actionHandlers = {}
 for actionName, actionHandler in next, require 'Scripts.staticSwitcher.actionHandlers' do
-  actionHandlers[actionName] = guardActionHandler(actionName, actionHandler)
+  actionHandlers[actionName] = ENGINE_BOUNDARY_ACTIONS[actionName]
+      and guardEngineBoundary(actionName, actionHandler)
+    or actionHandler
 end
 
 --- Migration/default handling: versioned separately from the global save shape;
@@ -437,6 +442,25 @@ local function tryApplyReplacement(object, modifyTarget, replaceAction)
   return foundReplacement, true
 end
 
+--- Placement is committed once, after every rule has had its say. The engine can refuse it.
+---@param target openmw.GObject
+---@param cell openmw.core.GCell
+---@param position openmw.util.Vector3
+---@param rotation openmw.util.Transform
+---@param scale number
+---@param onGround boolean?
+local function commitPlacement(target, cell, position, rotation, scale, onGround)
+  target:setScale(scale)
+
+  local teleportOptions = { rotation = rotation }
+  if onGround then teleportOptions.onGround = true end
+
+  target:teleport(cell, position, teleportOptions)
+end
+
+--- A replacement that could not be placed never reached the world. The original is restored
+--- and nothing further is done to it, so the object is left as it was found. Rules that had
+--- already applied stay recorded: their other actions did happen and must not repeat.
 ---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
@@ -715,10 +739,10 @@ local function tryModifyObject(object, instanceModificationList)
           end
 
           if activateByPlayerAction then
-            actionHandlers.activate_by_player(modifyTarget)
-            anyActionApplied = true
-            currentRuleApplied = true
-            DebugLog('  activate_by_player on %s', objectId)
+            local didActivate = actionHandlers.activate_by_player(modifyTarget)
+            anyActionApplied = anyActionApplied or didActivate
+            currentRuleApplied = currentRuleApplied or didActivate
+            DebugLog('  activate_by_player on %s: %s', objectId, didActivate and 'OK' or 'failed')
           end
 
           if removeLuaScriptAction then
@@ -747,17 +771,26 @@ local function tryModifyObject(object, instanceModificationList)
           end
 
           if sendEventAction then
-            actionHandlers.send_event(modifyTarget, sendEventAction)
-            anyActionApplied = true
-            currentRuleApplied = true
-            DebugLog('  send_event on %s: %s', objectId, sendEventAction.name)
+            local didSend = actionHandlers.send_event(modifyTarget, sendEventAction)
+            anyActionApplied = anyActionApplied or didSend
+            currentRuleApplied = currentRuleApplied or didSend
+            DebugLog(
+              '  send_event %s on %s: %s',
+              sendEventAction.name,
+              objectId,
+              didSend and 'OK' or 'failed'
+            )
           end
 
           if sendGlobalEventAction then
-            actionHandlers.send_global_event(modifyTarget, sendGlobalEventAction)
-            anyActionApplied = true
-            currentRuleApplied = true
-            DebugLog('  send_global_event on %s: %s', objectId, sendGlobalEventAction.name)
+            local didSend = actionHandlers.send_global_event(modifyTarget, sendGlobalEventAction)
+            anyActionApplied = anyActionApplied or didSend
+            currentRuleApplied = currentRuleApplied or didSend
+            DebugLog(
+              '  send_global_event %s: %s',
+              sendGlobalEventAction.name,
+              didSend and 'OK' or 'failed'
+            )
           end
 
           if disableAction then
@@ -832,16 +865,30 @@ local function tryModifyObject(object, instanceModificationList)
   if modifyTarget ~= object then inheritOnceActions(object, modifyTarget) end
 
   if needsPlacementUpdate and modifyTarget:isValid() then
-    modifyTarget:setScale(targetScale)
+    local sendsPlayerElsewhere = PlayerObjectIsInstance(modifyTarget)
+      and newCell.id ~= object.cell.id
 
-    local teleportOptions = { rotation = newTransform }
-    if teleportOnGround then teleportOptions.onGround = true end
+    local wasPlaced, placeError = pcall(
+      commitPlacement,
+      modifyTarget,
+      newCell,
+      newPos,
+      newTransform,
+      targetScale,
+      teleportOnGround
+    )
 
-    if PlayerObjectIsInstance(modifyTarget) and newCell.id ~= object.cell.id then
-      TriggerContext.expectedPlayerCellId = newCell.id
+    if wasPlaced then
+      if sendsPlayerElsewhere then TriggerContext.expectedPlayerCellId = newCell.id end
+    else
+      reportActionFailure('placement', placeError)
+
+      if modifyTarget ~= object then
+        object.enabled = true
+        modifyTarget:remove()
+        return
+      end
     end
-
-    modifyTarget:teleport(newCell, newPos, teleportOptions)
   end
 
   if shouldDisable and modifyTarget:isValid() then modifyTarget.enabled = false end

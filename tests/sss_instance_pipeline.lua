@@ -32,6 +32,8 @@ local pendingActivations = {}
 local createdRecordIds = {}
 local createdObjects = {}
 local placementsBeforeFailure
+local sentGlobalEvents = {}
+local globalEventsFail = false
 local nextObjectIndex = 0
 
 local knownRecords = {
@@ -119,6 +121,16 @@ local moduleSources = {
           actions = { { set_ownership = { owner = 'marked' } } },
         },
         {
+          conditions = { { record_id = 'herald' } },
+          actions = { { send_global_event = { name = 'HeraldArrived' } } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'fragile' } },
+          actions = { { replace = { crate = 1 } }, { set_ownership = { owner = 'marked' } } },
+          once = true,
+        },
+        {
           conditions = { { record_id = 'spawner' } },
           actions = { { create = { crate = 3 } } },
           once = true,
@@ -163,7 +175,12 @@ local moduleSources = {
         { actions = { { create = { crate = { count = { min = 3 } } } } } },
         { actions = { { create = { crate = { count = { min = 5, max = 2 } } } } } },
         { actions = { { create = { crate = { position = { x = { min = -5 } } } } } } },
-        { actions = { { create = { crate = { transform_type = 'sideways' } } } } },
+        { actions = { { transform = { rotate = { z = { min = 3 } } } } } },
+        { actions = { { lock_level = { min = 9, max = 2 } } } },
+        { actions = { { add = { gold_001 = { count = { min = 2 } } } } } },
+        { actions = { { trap = { { trap_fire00 = { min = 0.2 } } } } } },
+        { actions = { { teleport = { position = { x = { min = 1 } } } } } },
+        { actions = { { global_set = { name = 'someglobal', value = { min = 1 } } } } },
         { actions = { { create = 'crate' } } },
       },
     }
@@ -175,7 +192,10 @@ package.preload['openmw.core'] = function()
     getGameTime = function() return 0 end,
     getRealTime = function() return 1 end,
     magic = { spells = { records = {} } },
-    sendGlobalEvent = function() end,
+    sendGlobalEvent = function(eventName)
+      sentGlobalEvents[#sentGlobalEvents + 1] = eventName
+      if globalEventsFail then error 'the event could not be serialized' end
+    end,
   }
 end
 package.preload['openmw.interfaces'] = function()
@@ -327,7 +347,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 8)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 10)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -349,11 +369,29 @@ assert(
     == 1
 )
 assert(
-  countLogLines 'Skipped rule 10 in .-rejected%.yaml: create pool "crate" has unknown transform_type "sideways"'
+  countLogLines 'Skipped rule 10 in .-rejected%.yaml: transform has a rotate range without max' == 1
+)
+assert(
+  countLogLines 'Skipped rule 11 in .-rejected%.yaml: lock_level has a range without a usable max'
     == 1
 )
 assert(
-  countLogLines 'Skipped rule 11 in .-rejected%.yaml: create needs a map of record IDs to pools'
+  countLogLines 'Skipped rule 12 in .-rejected%.yaml: add "gold_001" has a count range without a usable max'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 13 in .-rejected%.yaml: trap entry 1 needs a record ID and a chance'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 14 in .-rejected%.yaml: teleport has a position range without max'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 15 in .-rejected%.yaml: global_set has a value range without max' == 1
+)
+assert(
+  countLogLines 'Skipped rule 16 in .-rejected%.yaml: create needs a map of record IDs to pools'
     == 1
 )
 
@@ -363,7 +401,7 @@ assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[6]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[8]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -426,6 +464,36 @@ assert(countLogLines '%[WARN%] create: "crate" could not be placed' == 1)
 activate(spawner)
 runFrames(6)
 assert(countCreated 'crate' == 3, 'a once rule whose create partly failed must not replay')
+
+-- An event that could not be sent did not apply, so a once rule tries again next time.
+local herald = newObject('herald', TEL_BRANORA)
+globalEventsFail = true
+activate(herald)
+runFrames(4)
+globalEventsFail = false
+assert(#sentGlobalEvents == 1)
+assert(countLogLines '%[WARN%] Action send_global_event failed and was skipped' == 1)
+
+activate(herald)
+runFrames(4)
+assert(#sentGlobalEvents == 2, 'a failed send must not use up once: true')
+
+activate(herald)
+runFrames(4)
+assert(#sentGlobalEvents == 2, 'a successful send is recorded')
+
+-- A replacement the engine refuses to place is removed and the original is restored.
+local fragile = newObject('fragile', TEL_BRANORA)
+local createdBeforeFragile = #createdObjects
+placementsBeforeFailure = 0
+activate(fragile)
+runFrames(4)
+placementsBeforeFailure = nil
+
+local unplacedReplacement = createdObjects[createdBeforeFragile + 1]
+assert(fragile.enabled == true, 'the original stayed disabled after its replacement failed')
+assert(unplacedReplacement.cell == nil and unplacedReplacement.count == 0)
+assert(countLogLines '%[WARN%] Action placement failed and was skipped' == 1)
 
 -- Lowercase trap, key, and global names apply instead of clearing the lock data.
 local trapped = newObject('trapped', TEL_BRANORA, lockableType)

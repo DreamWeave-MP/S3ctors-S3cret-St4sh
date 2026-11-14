@@ -126,13 +126,10 @@ local function findUnknownObjectType(objectTypeValue)
   end
 end
 
-local CREATE_VECTOR_FIELDS = { 'position', 'rotate' }
 local VECTOR_AXES = { 'x', 'y', 'z' }
 
-local CREATE_TRANSFORM_TYPES = {
-  relative = true,
-  absolute = true,
-}
+--- The checks below reject exactly the shapes a handler would raise on, and nothing stricter:
+--- a module that works today must keep loading.
 
 --- A sampled range is a fixed number or a table with a numeric `max`; `min` is optional.
 ---@param rangeValue number|RangeTable|nil
@@ -145,13 +142,37 @@ local function isSampledRange(rangeValue)
   return min == nil or type(min) == 'number'
 end
 
----@param countValue integer|RangeTable|nil
+--- Counts and lock levels are sampled as integers and also need `min <= max`.
+---@param rangeValue integer|RangeTable|nil
 ---@return boolean isUsable
-local function isCountRange(countValue)
-  if not isSampledRange(countValue) then return false end
-  if type(countValue) ~= 'table' then return true end
+local function isOrderedRange(rangeValue)
+  if not isSampledRange(rangeValue) then return false end
+  if type(rangeValue) ~= 'table' then return true end
 
-  return (countValue.min or 1) <= countValue.max
+  return (rangeValue.min or 1) <= rangeValue.max
+end
+
+---@param scaleValue number|RangeTable|nil
+---@return boolean isUsable
+local function isScale(scaleValue)
+  local scaleType = type(scaleValue)
+  return scaleValue == nil or scaleType == 'number' or scaleType == 'table'
+end
+
+---@param owner table action or pool that carries the vector
+---@param fieldName string
+---@return string? problem phrased to follow the name of what carries the vector
+local function findVectorProblem(owner, fieldName)
+  local vector = owner[fieldName]
+  if vector == nil then return end
+
+  if type(vector) ~= 'table' then return StrFormat('has a %s that is not a map', fieldName) end
+
+  for axisIndex = 1, #VECTOR_AXES do
+    if not isSampledRange(vector[VECTOR_AXES[axisIndex]]) then
+      return StrFormat('has a %s range without max', fieldName)
+    end
+  end
 end
 
 ---@param details string|number|SSSCreatePool
@@ -162,29 +183,61 @@ local function findCreatePoolProblem(details)
   if detailsType == 'string' or detailsType == 'number' then return end
   if detailsType ~= 'table' then return 'must be a record ID, a count, or a pool' end
 
-  if not isCountRange(details.count) then return 'has a count range without a usable max' end
+  if not isOrderedRange(details.count) then return 'has a count range without a usable max' end
   if not isSampledRange(details.chance) then return 'has a chance range without max' end
-  if not isSampledRange(details.scale) then return 'has a scale range without max' end
+  if not isScale(details.scale) then return 'has a scale that is not a number or range' end
 
-  for fieldIndex = 1, #CREATE_VECTOR_FIELDS do
-    local fieldName = CREATE_VECTOR_FIELDS[fieldIndex]
-    local vector = details[fieldName]
+  return findVectorProblem(details, 'position') or findVectorProblem(details, 'rotate')
+end
 
-    if vector ~= nil then
-      if type(vector) ~= 'table' then return StrFormat('has a %s that is not a map', fieldName) end
+--- Item actions take a record ID, a list of them, or a map of record ID to count or details.
+---@param actionName string
+---@param itemAction SSSItemAction
+---@return string? problem
+local function findItemActionProblem(actionName, itemAction)
+  if type(itemAction) ~= 'table' or type(next(itemAction)) == 'number' then return end
 
-      for axisIndex = 1, #VECTOR_AXES do
-        if not isSampledRange(vector[VECTOR_AXES[axisIndex]]) then
-          return StrFormat('has a %s range without max', fieldName)
-        end
+  for recordId, itemDetails in next, itemAction do
+    if type(itemDetails) == 'table' then
+      if not isOrderedRange(itemDetails.count) then
+        return StrFormat('%s "%s" has a count range without a usable max', actionName, recordId)
+      end
+
+      if not isSampledRange(itemDetails.chance) then
+        return StrFormat('%s "%s" has a chance range without max', actionName, recordId)
       end
     end
   end
+end
 
-  local transformType = details.transform_type
-  if transformType ~= nil and not CREATE_TRANSFORM_TYPES[transformType] then
-    return StrFormat('has unknown transform_type "%s"', tostring(transformType))
+--- Key and trap actions are `false` or a list of single-entry `{ recordId = chance }` maps.
+---@param actionName string
+---@param candidates false|table<string, SSSChanceRange>[]
+---@return string? problem
+local function findChanceListProblem(actionName, candidates)
+  if candidates == false then return end
+  if type(candidates) ~= 'table' then return StrFormat('%s needs false or a list', actionName) end
+
+  for candidateIndex = 1, #candidates do
+    local candidate = candidates[candidateIndex]
+    local recordId, chance = next(type(candidate) == 'table' and candidate or {})
+
+    if recordId == nil or chance == nil or not isSampledRange(chance) then
+      return StrFormat('%s entry %d needs a record ID and a chance', actionName, candidateIndex)
+    end
   end
+end
+
+---@param actionName string
+---@return fun(itemAction: SSSItemAction): string?
+local function itemActionProblemFinder(actionName)
+  return function(itemAction) return findItemActionProblem(actionName, itemAction) end
+end
+
+---@param actionName string
+---@return fun(candidates: false|table<string, SSSChanceRange>[]): string?
+local function chanceListProblemFinder(actionName)
+  return function(candidates) return findChanceListProblem(actionName, candidates) end
 end
 
 --- Shapes a handler would otherwise only discover by raising, once per object it ran on.
@@ -216,7 +269,48 @@ local ACTION_PAYLOAD_PROBLEMS = {
     if type(globalAction) ~= 'table' or not isText(globalAction.name) then
       return 'global_set needs a name'
     end
+
+    if not isSampledRange(globalAction.value) then
+      return 'global_set has a value range without max'
+    end
   end,
+  transform = function(transformAction)
+    if type(transformAction) ~= 'table' then return 'transform needs a map' end
+    if not isScale(transformAction.scale) then
+      return 'transform has a scale that is not a number or range'
+    end
+
+    local vectorProblem = findVectorProblem(transformAction, 'position')
+      or findVectorProblem(transformAction, 'rotate')
+
+    if vectorProblem then return StrFormat('transform %s', vectorProblem) end
+  end,
+  teleport = function(teleportAction)
+    if type(teleportAction) ~= 'table' then return 'teleport needs a map' end
+
+    local vectorProblem = findVectorProblem(teleportAction, 'position')
+      or findVectorProblem(teleportAction, 'rotation')
+
+    if vectorProblem then return StrFormat('teleport %s', vectorProblem) end
+  end,
+  lock_level = function(lockAction)
+    if not isOrderedRange(lockAction) then return 'lock_level has a range without a usable max' end
+  end,
+  disable = function(disableAction)
+    if
+      type(disableAction) == 'table'
+      and disableAction.chance ~= nil
+      and type(disableAction.chance) ~= 'number'
+    then
+      return 'disable chance must be a number'
+    end
+  end,
+  add = itemActionProblemFinder 'add',
+  remove = itemActionProblemFinder 'remove',
+  equip = itemActionProblemFinder 'equip',
+  unequip = itemActionProblemFinder 'unequip',
+  key = chanceListProblemFinder 'key',
+  trap = chanceListProblemFinder 'trap',
   call_interface = function(callAction)
     if
       type(callAction) ~= 'table'
