@@ -34,7 +34,7 @@ Horiz0nPercentAdjustSevereName: Tröskel för kraftig minskning
 Horiz0nPercentAdjustSevereDesc: |
   Horiz0n multiplicerar minskningen av visningsavståndet när den aktuella bildtiden är så här mycket sämre än målbildtiden.
   Standard: 30 %
-  Intervall: 10 % - 100 %
+  Intervall: 10 % - 50 %
 
 Horiz0nTargetFramerateName: Målbildfrekvens
 Horiz0nTargetFramerateDesc: |
