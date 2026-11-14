@@ -40,6 +40,7 @@ For an instance `replace`, confirm the replacement record ID exists in enabled c
 - `cell_enter` only concerns the cell the player is standing in, and its rules run on the player: match the place with `cell` or `coords`, not an object with `record_id`.
 - `death` needs the current `Static Switching System.esp`; look for `The death trigger is unavailable` in the log. An actor that was already dead when it loaded does not fire it.
 - A log line saying a trigger was `suspended until the next load` means it fired more than four times in ten seconds.
+- A log line saying a trigger `was fired while a rule was running` means a rule's own action called back into SSS. Send the `StaticSwitcherTrigger` global event from that action instead.
 - `by_player` and `used_item` are only valid under the interaction triggers; a rule misusing them is reported as a skipped rule.
 
 ## A random value errors or behaves unexpectedly

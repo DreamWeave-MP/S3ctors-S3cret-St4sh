@@ -4,8 +4,8 @@ local source = debug.getinfo(1, 'S').source
 local root = source:match '^@(.+)/tests/sss_trigger_sweep_bench%.lua$' or '.'
 
 package.path = table.concat({
-  root .. '/content/h3lp_yours3lf/?.lua',
-  root .. '/content/static_switching_system/?.lua',
+  ('%s/content/h3lp_yours3lf/?.lua'):format(root),
+  ('%s/content/static_switching_system/?.lua'):format(root),
   package.path,
 }, ';')
 
@@ -50,7 +50,7 @@ end
 
 local function newObject(recordId, objectType)
   local object = {
-    id = '@' .. (#cell.objects + 1),
+    id = ('@%d'):format(#cell.objects + 1),
     recordId = recordId,
     cell = cell,
     count = 1,
@@ -70,8 +70,8 @@ end
 for objectIndex = 1, OBJECT_COUNT do
   local isActivator = objectIndex % 10 == 0
   local isTarget = objectIndex % (OBJECT_COUNT / RULE_COUNT) == 0
-  local recordId = isTarget and ('target_' .. objectIndex / (OBJECT_COUNT / RULE_COUNT))
-    or ('filler_' .. objectIndex)
+  local recordId = isTarget and ('target_%d'):format(objectIndex / (OBJECT_COUNT / RULE_COUNT))
+    or ('filler_%d'):format(objectIndex)
 
   newObject(recordId, isActivator and openmwTypes.Activator or openmwTypes.Static)
 end
@@ -82,7 +82,7 @@ local function buildModule()
   local instances = {}
 
   for ruleIndex = 1, RULE_COUNT do
-    local conditions = { { record_id = '^target_' .. ruleIndex .. '$' } }
+    local conditions = { { record_id = ('^target_%d$'):format(ruleIndex) } }
     if rulesNameObjectType then conditions[2] = { object_type = 'Activator' } end
 
     instances[ruleIndex] = {
@@ -189,10 +189,6 @@ local function measureSweep(label)
   probeCount = 0
   gameTime = gameTime + 3600
 
-  local snapshotStart = os.clock()
-  runFrame(handlers, 1)
-  local snapshotSeconds = os.clock() - snapshotStart
-
   local frameCount, slowestFrame = 0, 0
   local sweepStart = os.clock()
 
@@ -203,14 +199,13 @@ local function measureSweep(label)
     frameCount = frameCount + 1
   until probeCount == RULE_COUNT or frameCount > OBJECT_COUNT
 
-  assert(probeCount == RULE_COUNT, label .. ': sweep did not reach every matching object')
+  assert(probeCount == RULE_COUNT, ('%s: sweep did not reach every matching object'):format(label))
 
   local sweepSeconds = os.clock() - sweepStart
 
   print(
-    ('%-22s snapshot %6.3f ms; %4d frames, %6.3f ms mean, %6.3f ms slowest'):format(
+    ('%-22s %4d frames, %6.3f ms mean, %6.3f ms slowest'):format(
       label,
-      snapshotSeconds * 1000,
       frameCount,
       sweepSeconds / frameCount * 1000,
       slowestFrame * 1000

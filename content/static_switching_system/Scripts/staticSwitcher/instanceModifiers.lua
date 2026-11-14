@@ -4,16 +4,88 @@ local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local randomGen = require 'scripts.s3.randomGen'
 
-local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
+local types = require 'openmw.types'
+
+local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
 
-local DebugLog
+local DebugLog, WarnLog
 do
   local logger = require 'Scripts.staticSwitcher.logger'
   DebugLog = logger.debug
+  WarnLog = logger.warn
 end
 
 local StrFormat = string.format
+
+local next, pcall, tostring = next, pcall, tostring
+
+local PlayerObjectIsInstance = types.Player.objectIsInstance
+
+---@type table<string, true>
+local ActionFailureWarnings = {}
+
+---@type openmw.GObject[]
+local NO_CREATED_OBJECTS = {}
+
+---@param actionName string
+---@param failure string
+local function reportActionFailure(actionName, failure)
+  local warning = StrFormat('Action %s failed and was skipped: %s', actionName, tostring(failure))
+  if ActionFailureWarnings[warning] then return end
+  ActionFailureWarnings[warning] = true
+
+  WarnLog(warning)
+end
+
+--- An action that raises is treated as an action that did not apply. The rest of its rule
+--- still runs and the rule is finalised, so placement is committed and `once` is recorded for
+--- whatever did apply. Without this, a rule failing part-way would repeat its earlier actions
+--- every time it was triggered.
+---@param actionName string
+---@param actionHandler function
+---@return function guardedHandler
+local function guardActionHandler(actionName, actionHandler)
+  if actionName == 'transform' then
+    return function(object, transformAction, transform, position, scale)
+      local didRun, wasModified, newTransform, newPosition, newScale =
+        pcall(actionHandler, object, transformAction, transform, position, scale)
+
+      if didRun then return wasModified, newTransform, newPosition, newScale end
+
+      reportActionFailure(actionName, wasModified)
+      return false, transform, position, scale
+    end
+  end
+
+  if actionName == 'create' then
+    return function(object, createAction, cell, position, rotation, scale)
+      local didRun, createdCount, createdObjects =
+        pcall(actionHandler, object, createAction, cell, position, rotation, scale)
+
+      if didRun then return createdCount, createdObjects end
+
+      reportActionFailure(actionName, createdCount)
+      return 0, NO_CREATED_OBJECTS
+    end
+  end
+
+  return function(object, actionData, third, fourth, fifth)
+    local didRun, first, second, thirdResult, fourthResult, fifthResult =
+      pcall(actionHandler, object, actionData, third, fourth, fifth)
+
+    if didRun then return first, second, thirdResult, fourthResult, fifthResult end
+
+    reportActionFailure(actionName, first)
+    return false
+  end
+end
+
+---@type table<string, function>
+local actionHandlers = {}
+for actionName, actionHandler in next, require 'Scripts.staticSwitcher.actionHandlers' do
+  actionHandlers[actionName] = guardActionHandler(actionName, actionHandler)
+end
 
 --- Migration/default handling: versioned separately from the global save shape;
 --- missing or unknown once-cache versions are treated as empty caches so old saves load safely.
@@ -44,7 +116,7 @@ local ModuleCatalog
 ---@type SSSDeleteManager
 local DeleteManager
 
-local assert, error, next, pairs, type = assert, error, next, pairs, type
+local assert, error, pairs, type = assert, error, pairs, type
 
 local function resetOnceCache()
   OnceCache = {
@@ -764,6 +836,10 @@ local function tryModifyObject(object, instanceModificationList)
 
     local teleportOptions = { rotation = newTransform }
     if teleportOnGround then teleportOptions.onGround = true end
+
+    if PlayerObjectIsInstance(modifyTarget) and newCell.id ~= object.cell.id then
+      TriggerContext.expectedPlayerCellId = newCell.id
+    end
 
     modifyTarget:teleport(newCell, newPos, teleportOptions)
   end

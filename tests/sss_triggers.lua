@@ -2,8 +2,8 @@ local source = debug.getinfo(1, 'S').source
 local root = source:match '^@(.+)/tests/sss_triggers%.lua$' or '.'
 
 package.path = table.concat({
-  root .. '/content/h3lp_yours3lf/?.lua',
-  root .. '/content/static_switching_system/?.lua',
+  ('%s/content/h3lp_yours3lf/?.lua'):format(root),
+  ('%s/content/static_switching_system/?.lua'):format(root),
   package.path,
 }, ';')
 
@@ -54,7 +54,9 @@ local openmwTypes = {
   Static = newType 'Static',
 }
 openmwTypes.Creature.TYPE = {}
-openmwTypes.Door = {}
+openmwTypes.Door = newType 'Door'
+openmwTypes.Door.isTeleport = function(door) return door.destinationCell ~= nil end
+openmwTypes.Door.destCell = function(door) return door.destinationCell end
 openmwTypes.Container = { objectIsInstance = function() return false end }
 openmwTypes.Actor = {
   objectIsInstance = function(object)
@@ -103,7 +105,7 @@ end
 
 local exteriorCells = {}
 local function getExteriorCell(gridX, gridY)
-  local cellKey = gridX .. ',' .. gridY
+  local cellKey = ('%d,%d'):format(gridX, gridY)
   local cell = exteriorCells[cellKey]
 
   if not cell then
@@ -124,7 +126,7 @@ local function newObject(recordId, cell, objectType)
 
   local fields = {
     __type = { name = 'MWLua::GObject' },
-    id = '@' .. nextObjectIndex,
+    id = ('@%d'):format(nextObjectIndex),
     recordId = recordId,
     cell = cell,
     count = 1,
@@ -137,7 +139,11 @@ local function newObject(recordId, cell, objectType)
   function fields.isValid() return true end
   function fields.setScale() end
   function fields.hasScript(_, scriptPath) return fields.scripts[scriptPath] == true end
-  function fields.addScript(_, scriptPath) fields.scripts[scriptPath] = true end
+  function fields.addScript(_, scriptPath)
+    if fields.refusesScripts then error 'this actor cannot hold scripts' end
+    fields.scripts[scriptPath] = true
+  end
+  function fields.teleport(_, targetCell) fields.cell = targetCell end
   function fields.remove() fields.count = 0 end
 
   local object = newproxy(true)
@@ -231,6 +237,53 @@ local triggerModules = {
         arrivalRule,
         probeRule('cell_enter', { { cell = 'cell 6 6' } }),
         {
+          trigger = 'cell_enter',
+          conditions = { { cell = 'cell 7 7' } },
+          actions = {
+            {
+              call_interface = {
+                interface = 'TestProbe',
+                ['function'] = 'record',
+                args = { 'sent-east' },
+              },
+            },
+            { teleport = { cell = { x = 8, y = 8 } } },
+          },
+        },
+        {
+          trigger = 'cell_enter',
+          conditions = { { cell = 'cell 8 8' } },
+          actions = {
+            {
+              call_interface = {
+                interface = 'TestProbe',
+                ['function'] = 'record',
+                args = { 'sent-west' },
+              },
+            },
+            { teleport = { cell = { x = 7, y = 7 } } },
+          },
+        },
+        {
+          trigger = 'hour',
+          conditions = { { object_type = 'Activator' }, { record_id = 'sweepbell' } },
+          actions = { { call_interface = { interface = 'TestProbe', ['function'] = 'refire' } } },
+        },
+        {
+          conditions = { { record_id = 'activebell' } },
+          actions = { { call_interface = { interface = 'TestProbe', ['function'] = 'refire' } } },
+        },
+        probeRule('hour', {
+          { object_type = 'Miscellaneous' },
+          { record_id = 'livecheck' },
+          { has_journal = { quest = 'q1', min = 10 } },
+        }),
+        {
+          trigger = 'custom:farweather',
+          actions = { { set_weather = { weather = 'storm', region = 'far region' } } },
+        },
+        probeRule('custom:indoors', { { region = 'far region' } }),
+        {
           trigger = 'use',
           conditions = { { used_item = '^cursed' } },
           actions = { { delete = true }, { disable = true }, { replace = 'self' } },
@@ -250,6 +303,16 @@ local triggerModules = {
         probeRule({ 'use', 'death' }, { { ['not'] = { by_player = true } } }),
         { trigger = 'cell_enter', actions = { { delete = true } } },
         { trigger = { 'active', 'cell_enter' }, actions = { { replace = 'self' } } },
+        probeRule({ 'custom:double', 'custom:double' }, { { record_id = 'bell' } }),
+        probeRule('custom:badtype', { { object_type = 'NoSuchType' } }),
+        {
+          trigger = 'custom:badweather',
+          actions = { { set_weather = { region = 'far region' } } },
+        },
+        {
+          trigger = 'custom:badcall',
+          actions = { { call_interface = { interface = 'TestProbe' } } },
+        },
       },
     }
   end,
@@ -274,7 +337,7 @@ package.preload['openmw.core'] = function()
       getCurrent = function(cell) return regionWeather[cell.region] end,
       getNext = function() end,
       changeWeather = function(regionId, weather)
-        weatherChanges[#weatherChanges + 1] = regionId .. '=' .. weather.recordId
+        weatherChanges[#weatherChanges + 1] = ('%s=%s'):format(regionId, weather.recordId)
         regionWeather[regionId] = weather
       end,
     },
@@ -325,7 +388,7 @@ package.preload['openmw.vfs'] = function()
 end
 package.preload['openmw.world'] = function()
   return {
-    createObject = function(recordId) error('no record ' .. recordId) end,
+    createObject = function(recordId) error(('no record %s'):format(recordId)) end,
     createRecord = function() end,
     getExteriorCell = getExteriorCell,
     mwscript = { getGlobalVariables = function() return {} end },
@@ -457,6 +520,15 @@ assert(
     == 1
 )
 
+assert(
+  countLogLines 'Skipped rule 10 in .-rejected%.yaml: trigger "custom:double" is listed twice' == 1
+)
+assert(countLogLines 'Skipped rule 11 in .-rejected%.yaml: unknown object_type "NoSuchType"' == 1)
+assert(
+  countLogLines 'Skipped rule 12 in .-rejected%.yaml: set_weather needs a weather record ID' == 1
+)
+assert(countLogLines 'Skipped rule 13 in .-rejected%.yaml: call_interface needs an interface' == 1)
+
 -- Each rule runs only on the triggers it names; an untagged rule runs only on activation.
 local plain = newObject('plain', HOME_CELL)
 local clock = newObject('clock', HOME_CELL, openmwTypes.Activator)
@@ -488,13 +560,14 @@ assert(countProbes 'hour' == 0)
 typedEnumerations, untypedEnumerations = 0, 0
 gameTime = gameTime + 86400
 settle()
+settle()
 assert(countProbes('hour', clock) == 1)
 assert(countProbes('hour', distantClock) == 1, 'adjacent exterior cells are swept')
 assert(countProbes('hour', unreachableClock) == 0, 'cells beyond the adjacent ring are not swept')
 assert(countProbes 'both' == 2)
 assert(countProbes('day', calendar) == 1)
 assert(countProbes('hour', plain) == 0 and countProbes('day', clock) == 0)
-assert(typedEnumerations == 9, 'the hour sweep enumerates only the type its rules name')
+assert(typedEnumerations == 18, 'the hour sweep enumerates only the two types its rules name')
 assert(untypedEnumerations == 9, 'the day sweep leaves the type open')
 
 -- A journal sweep fires for the watched quest only, once per stage change.
@@ -565,7 +638,7 @@ assert(
 local flapper = newObject('flapper', HOME_CELL)
 for flip = 1, 12 do
   questStages.flap = flip
-  runFrames(4, 0.25)
+  runFrames(20, 0.05)
 end
 settle()
 assert(countProbes('journal', flapper) == 4, 'the flapping quest may start four sweeps')
@@ -655,7 +728,7 @@ local bell = newObject('bell', HOME_CELL)
 assert(staticSwitcher.interface.trigger('ping', bell) == true)
 assert(countProbes('custom:ping', bell) == 1)
 assert(countProbes 'refire-refused' == 1 and countProbes 'refired' == 0)
-assert(countLogLines 'Trigger "custom:ping" was fired from inside another trigger' == 1)
+assert(countLogLines 'Trigger "custom:ping" was fired while a rule was running' == 1)
 
 assert(staticSwitcher.interface.trigger('unheard', bell) == false)
 assert(staticSwitcher.interface.trigger('ping', 'not an object') == false)
@@ -664,6 +737,145 @@ assert(staticSwitcher.interface.trigger('ping', newObject('bell', nil)) == false
 simulationTime = simulationTime + 1
 staticSwitcher.eventHandlers.StaticSwitcherTrigger { name = 'ping', object = bell }
 assert(countProbes('custom:ping', bell) == 2)
+
+-- A malformed public event is ignored, not raised.
+staticSwitcher.eventHandlers.StaticSwitcherTrigger(nil)
+staticSwitcher.eventHandlers.StaticSwitcherTrigger 'ping'
+staticSwitcher.eventHandlers.StaticSwitcherTrigger { name = 7, object = bell }
+staticSwitcher.eventHandlers.StaticSwitcherTrigger { name = 'ping' }
+assert(countProbes('custom:ping', bell) == 2)
+
+-- Two different items used by one actor are two events; the same item twice is one.
+simulationTime = simulationTime + 1
+local usesBefore = countProbes 'use'
+local firstPotion = newObject('potion_custom_a', nil, openmwTypes.Potion)
+onItemUsed(firstPotion, player)
+onItemUsed(newObject('potion_custom_b', nil, openmwTypes.Potion), player)
+onItemUsed(firstPotion, player)
+assert(countProbes 'use' - usesBefore == 2)
+
+-- A burst larger than the debounce table keeps every recent entry.
+simulationTime = simulationTime + 1
+local firstOfBurst = newObject('bell', HOME_CELL)
+assert(staticSwitcher.interface.trigger('ping', firstOfBurst) == true)
+for _ = 1, 600 do
+  staticSwitcher.interface.trigger('ping', newObject('bell', HOME_CELL))
+end
+assert(
+  staticSwitcher.interface.trigger('ping', firstOfBurst) == false,
+  'a recent entry was evicted'
+)
+
+-- A trigger fired from a rule's own actions is refused whichever path is running the rule:
+-- an activation, a world sweep, or another trigger.
+local refusedBefore = countProbes 'refire-refused'
+handlers.onObjectActive(newObject('activebell', HOME_CELL))
+settle()
+assert(countProbes 'refire-refused' - refusedBefore == 1, 'activation let a rule fire a trigger')
+
+newObject('sweepbell', HOME_CELL, openmwTypes.Activator)
+gameTime = gameTime + 3600
+settle()
+settle()
+assert(countProbes 'refire-refused' - refusedBefore == 2, 'a sweep let a rule fire a trigger')
+assert(countProbes 'refired' == 0)
+
+-- Sweep conditions see the world as it is on the frame they run, not as it was at the start.
+for _ = 1, 40 do
+  newObject('livecheck', HOME_CELL, openmwTypes.Miscellaneous)
+end
+questStages.q1 = 10
+settle()
+gameTime = gameTime + 3600
+
+local function countLiveChecks()
+  local count = 0
+  for callIndex = 1, #probeCalls do
+    local call = probeCalls[callIndex]
+    if call.tag == 'hour' and call.object.recordId == 'livecheck' then count = count + 1 end
+  end
+  return count
+end
+
+for _ = 1, 400 do
+  runFrames(1, 0.25)
+  if countLiveChecks() > 0 then break end
+end
+
+local checkedBeforeChange = countLiveChecks()
+assert(checkedBeforeChange > 0 and checkedBeforeChange < 40)
+
+questStages.q1 = 0
+settle()
+settle()
+assert(
+  countLiveChecks() == checkedBeforeChange,
+  'a sweep kept using the quest stage it started with'
+)
+
+-- The same weather requested again for the same region is one engine call, but only for a
+-- while: a later request must still go through.
+simulationTime = simulationTime + 1
+local weatherChangesBefore = #weatherChanges
+staticSwitcher.interface.trigger('farweather', newObject('anything', HOME_CELL))
+simulationTime = simulationTime + 1
+staticSwitcher.interface.trigger('farweather', newObject('anything', HOME_CELL))
+assert(#weatherChanges - weatherChangesBefore == 1)
+
+simulationTime = simulationTime + 30
+staticSwitcher.interface.trigger('farweather', newObject('anything', HOME_CELL))
+assert(#weatherChanges - weatherChangesBefore == 2)
+
+-- An interior with exits into two regions belongs to whichever exit is nearer.
+local function newPosition(x)
+  return setmetatable({ x = x }, {
+    __sub = function(a, b)
+      local distance = a.x - b.x
+      return { length2 = function() return distance * distance end }
+    end,
+  })
+end
+
+local interior = newCell(0, 0, nil)
+interior.id, interior.isExterior = 'two-door cave', false
+
+local westDoor = newObject('door', interior, openmwTypes.Door)
+westDoor.position, westDoor.destinationCell = newPosition(0), HOME_CELL
+local eastDoor = newObject('door', interior, openmwTypes.Door)
+eastDoor.position, eastDoor.destinationCell = newPosition(1000), getExteriorCell(10, 0)
+
+local nearWestDoor = newObject('crate', interior)
+nearWestDoor.position = newPosition(100)
+local nearEastDoor = newObject('crate', interior)
+nearEastDoor.position = newPosition(900)
+
+staticSwitcher.interface.trigger('indoors', nearWestDoor)
+staticSwitcher.interface.trigger('indoors', nearEastDoor)
+assert(countProbes('custom:indoors', nearWestDoor) == 0)
+assert(countProbes('custom:indoors', nearEastDoor) == 1)
+
+-- Arriving where an SSS teleport sent the player is not a cell entry, so two rules that send
+-- the player to each other's cells do not chase each other.
+player.cell = getExteriorCell(7, 7)
+settle()
+settle()
+assert(countProbes 'sent-east' == 1 and countProbes 'sent-west' == 0)
+assert(player.cell == getExteriorCell(8, 8))
+
+player.cell = HOME_CELL
+settle()
+
+-- One actor that cannot be watched does not end death watching for the rest.
+local unwatchable = newObject('rat', HOME_CELL, openmwTypes.Creature)
+unwatchable.refusesScripts = true
+local laterRat = newObject('rat', HOME_CELL, openmwTypes.Creature)
+local alsoUnwatchable = newObject('rat', HOME_CELL, openmwTypes.Creature)
+alsoUnwatchable.refusesScripts = true
+handlers.onObjectActive(unwatchable)
+handlers.onObjectActive(alsoUnwatchable)
+handlers.onObjectActive(laterRat)
+assert(laterRat:hasScript(DEATH_WATCHER_SCRIPT))
+assert(countLogLines '%[WARN%] The death of rat cannot be watched' == 1)
 
 assert(countLogLines '%[ERROR%]' == 0)
 

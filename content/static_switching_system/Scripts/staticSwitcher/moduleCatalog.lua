@@ -69,7 +69,6 @@ local Sweeps = {}
 local JournalSweepKeys = {}
 
 local DEFAULT_TRIGGER_NAMES = { TriggerContext.ACTIVE }
-local JOURNAL_SWEEP_PREFIX = 'journal:'
 
 ---@type SSSStaticReplacements
 local StaticReplacements
@@ -198,7 +197,7 @@ end
 ---@param modulePath string
 ---@return string label
 local function getModuleLabel(modulePath)
-  local result, _ = StrGsub(stripYamlExtension(modulePath), '^' .. DATA_PREFIX, '')
+  local result, _ = StrGsub(stripYamlExtension(modulePath), StrFormat('^%s', DATA_PREFIX), '')
   return result
 end
 
@@ -559,7 +558,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 
   validation.validate(meshReplacementsPath, meshReplacementsTable)
   local priority = meshReplacementsTable.priority or 'standard'
-  assert(PRIORITY_ORDER[priority], 'Invalid SSS module priority: ' .. tostring(priority))
+  assert(PRIORITY_ORDER[priority], StrFormat('Invalid SSS module priority: %s', tostring(priority)))
 
   local moduleId = moduleIdentity.id
 
@@ -661,7 +660,7 @@ local function addJournalSweepRules(triggerRule)
     if type(questId) == 'string' and not addedQuestIds[questId] then
       addedQuestIds[questId] = true
 
-      local sweepKey = JOURNAL_SWEEP_PREFIX .. questId
+      local sweepKey = StrFormat('journal:%s', questId)
       JournalSweepKeys[questId] = sweepKey
       addSweepRule(sweepKey, triggerRule)
     end

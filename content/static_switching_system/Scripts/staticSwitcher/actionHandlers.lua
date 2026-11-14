@@ -80,13 +80,30 @@ end
 ---@type table<string, true>
 local WeatherWarnings = {}
 
----@param subject string weather or region ID the warning is about
 ---@param message string
-local function warnWeatherOnce(subject, message)
-  if WeatherWarnings[subject] then return end
-  WeatherWarnings[subject] = true
+local function warnWeatherOnce(message)
+  if WeatherWarnings[message] then return end
+  WeatherWarnings[message] = true
 
   WarnLog(message)
+end
+
+--- A repeat of the same request for the same region inside this window is dropped. It is short
+--- on purpose: something else may change the weather, and a later request must go through.
+local WEATHER_REQUEST_REPEAT_SECONDS = 10
+
+---@type table<string, SSSWeatherRequest>
+local LastWeatherRequests = {}
+
+---@param regionId string
+---@param weatherId string
+---@return boolean wasJustRequested
+local function wasWeatherJustRequested(regionId, weatherId)
+  local lastRequest = LastWeatherRequests[regionId]
+
+  return lastRequest ~= nil
+    and lastRequest.weatherId == weatherId
+    and core.getSimulationTime() - lastRequest.time < WEATHER_REQUEST_REPEAT_SECONDS
 end
 
 ---@param regionId string
@@ -492,7 +509,7 @@ local function getRangeValue(numberOrTable)
   elseif actionDataType == 'nil' then
     return 0
   else
-    error('Incorrect type provided to getRangeValue: ' .. actionDataType)
+    error(StrFormat('Incorrect type provided to getRangeValue: %s', actionDataType))
   end
 end
 
@@ -531,7 +548,7 @@ local function getScaleValue(scaleAction, referenceScale)
     return referenceScale * randomGen.range(scaleAction.min or 1.0, scaleAction.max)
   end
 
-  error('Invalid type for scale parameter: ' .. scaleType)
+  error(StrFormat('Invalid type for scale parameter: %s', scaleType))
 end
 
 ---@type table<string, function>
@@ -906,9 +923,9 @@ local actionHandlers = {
       weatherId, regionId = weatherAction.weather, weatherAction.region
     end
 
-    local weather = Weather.records[weatherId]
+    local weather = type(weatherId) == 'string' and Weather.records[weatherId] or nil
     if not weather then
-      warnWeatherOnce(weatherId, StrFormat('set_weather: "%s" is not a weather record', weatherId))
+      warnWeatherOnce(StrFormat('set_weather: "%s" is not a weather record', tostring(weatherId)))
       return false
     end
 
@@ -918,18 +935,29 @@ local actionHandlers = {
     regionId = regionId or playerRegionId
     if not regionId then return false end
 
-    if playerRegionAlreadyHasWeather(regionId, weather) then return false end
+    local weatherRecordId = weather.recordId
+
+    if
+      wasWeatherJustRequested(regionId, weatherRecordId)
+      or playerRegionAlreadyHasWeather(regionId, weather)
+    then
+      return false
+    end
 
     local didChange, changeError = pcall(Weather.changeWeather, regionId, weather)
     if not didChange then
       warnWeatherOnce(
-        regionId,
         StrFormat('set_weather: could not change region "%s": %s', regionId, tostring(changeError))
       )
       return false
     end
 
-    if regionId == playerRegionId then TriggerContext.expectedWeatherId = weather.recordId end
+    LastWeatherRequests[regionId] = { weatherId = weatherRecordId, time = core.getSimulationTime() }
+
+    if regionId == playerRegionId then
+      local expectedWeatherIds = TriggerContext.expectedWeatherIds
+      expectedWeatherIds[#expectedWeatherIds + 1] = weatherRecordId
+    end
 
     return true
   end,

@@ -38,7 +38,7 @@ Use a minimum-version check when later versions preserve the members your integr
 | `composedReplacements` | `fun() → table` | Returns a read-only view of loaded static replacement data. This is diagnostic/advanced data, not a stable YAML authoring substitute. |
 | `objectModificationStore` | `fun() → table` | Returns a read-only view of loaded instance rules keyed by canonical module ID. Rule-table internals are advanced data. |
 | `overrideRecords` | `fun() → table` | Returns a read-only view of generated replacement record IDs keyed by canonical static module ID. |
-| `trigger` | `fun(triggerName: string, object: openmw.GObject) → boolean` | Runs every rule listening to `custom:<triggerName>` on the object. Returns false when no rule listens, the object is not in the world, the call repeats within the debounce window, or it is made from inside another trigger. Added in version 6. |
+| `trigger` | `fun(triggerName: string, object: openmw.GObject) → boolean` | Runs every rule listening to `custom:<triggerName>` on the object. Returns false when no rule listens, the object is not in the world, the call repeats within the debounce window, or it is made while any SSS rule is running. Added in version 6. |
 | `version` | `integer` | Current interface version, currently `6`. |
 
 “Read-only” applies to the exposed view. Do not mutate returned tables, object handles, generated record IDs, or bookkeeping. Validate object handles before using them; an object can become invalid during deferred replacement or deletion.

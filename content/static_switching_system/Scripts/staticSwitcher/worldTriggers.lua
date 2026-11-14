@@ -95,6 +95,26 @@ local function pollClock()
   end
 end
 
+--- SSS can have several weather requests outstanding, and the engine drops a queued one when
+--- a later one arrives. Seeing a requested weather settles it and every request made before it.
+---@param weatherId string|false
+---@return boolean wasRequested
+local function wasWeatherRequestedBySSS(weatherId)
+  local expectedWeatherIds = TriggerContext.expectedWeatherIds
+
+  for expectedIdx = #expectedWeatherIds, 1, -1 do
+    if expectedWeatherIds[expectedIdx] == weatherId then
+      for _ = 1, expectedIdx do
+        Remove(expectedWeatherIds, 1)
+      end
+
+      return true
+    end
+  end
+
+  return false
+end
+
 --- Weather differing because the player moved somewhere else is not a weather change, and
 --- neither is a change SSS asked for itself through `set_weather`.
 local function pollWeather()
@@ -107,17 +127,14 @@ local function pollWeather()
 
   if weatherLocation ~= knownWeatherLocation then
     knownWeatherLocation, knownWeatherId = weatherLocation, weatherId
-    TriggerContext.expectedWeatherId = nil
+    TriggerContext.expectedWeatherIds = {}
     return
   end
 
   if weatherId == knownWeatherId then return end
   knownWeatherId = weatherId
 
-  local wasRequestedBySSS = weatherId == TriggerContext.expectedWeatherId
-  TriggerContext.expectedWeatherId = nil
-
-  if not wasRequestedBySSS then requestSweep 'weather' end
+  if not wasWeatherRequestedBySSS(weatherId) then requestSweep 'weather' end
 end
 
 local function pollJournal()
@@ -137,6 +154,8 @@ end
 
 --- Unlike the world triggers, this fires on the first poll after a load: the player is already
 --- standing in a cell, and a rule that must not repeat says so with `once`.
+--- Arriving where an SSS teleport sent the player is not an entry, or two rules that send the
+--- player to each other's cells would do so forever.
 local function pollPlayerCell()
   local playerCell = Player.cell
   if not playerCell then return end
@@ -145,7 +164,10 @@ local function pollPlayerCell()
   if playerCellId == knownPlayerCellId then return end
   knownPlayerCellId = playerCellId
 
-  Triggers.dispatch('cell_enter', Player)
+  local wasSentBySSS = playerCellId == TriggerContext.expectedPlayerCellId
+  TriggerContext.expectedPlayerCellId = nil
+
+  if not wasSentBySSS then Triggers.dispatch('cell_enter', Player) end
 end
 
 --- The first poll after a load only records what the world looks like; no sweep starts for it.
@@ -182,36 +204,31 @@ local function collectNearbyCells()
   return cells
 end
 
----@param objects openmw.GObject[]
----@param cellObjects openmw.GObject[]
-local function appendObjects(objects, cellObjects)
-  local objectCount = #objects
+--- Lists the next cell's objects for a running sweep, one engine enumeration per call, so
+--- that enumerating nine cells is spread over frames like the rule work is.
+---@param activeSweep SSSActiveSweep
+---@return boolean hasObjects false once every cell has been listed
+local function listNextObjects(activeSweep)
+  local cell = activeSweep.cells[activeSweep.cellIndex]
+  if not cell then return false end
 
-  for objectIdx = 1, #cellObjects do
-    objects[objectCount + objectIdx] = cellObjects[objectIdx]
-  end
-end
+  local objectTypes = activeSweep.sweep.objectTypes
 
----@param sweep SSSSweep
----@return openmw.GObject[] objects
-local function collectSweepObjects(sweep)
-  local objects = {}
-  local cells = collectNearbyCells()
-  local objectTypes = sweep.objectTypes
+  if objectTypes then
+    activeSweep.objects = cell:getAll(objectTypes[activeSweep.typeIndex])
+    activeSweep.typeIndex = activeSweep.typeIndex + 1
 
-  for cellIdx = 1, #cells do
-    local cell = cells[cellIdx]
-
-    if objectTypes then
-      for typeIdx = 1, #objectTypes do
-        appendObjects(objects, cell:getAll(objectTypes[typeIdx]))
-      end
-    else
-      appendObjects(objects, cell:getAll())
+    if activeSweep.typeIndex > #objectTypes then
+      activeSweep.typeIndex = 1
+      activeSweep.cellIndex = activeSweep.cellIndex + 1
     end
+  else
+    activeSweep.objects = cell:getAll()
+    activeSweep.cellIndex = activeSweep.cellIndex + 1
   end
 
-  return objects
+  activeSweep.nextIndex = 1
+  return true
 end
 
 ---@param sweepKey string
@@ -252,29 +269,46 @@ local function startNextSweep()
     return
   end
 
-  local sweep = Sweeps[sweepKey]
-
-  BatchCache.clear()
-
   ActiveSweep = {
-    sweep = sweep,
-    objects = collectSweepObjects(sweep),
+    sweep = Sweeps[sweepKey],
+    cells = collectNearbyCells(),
+    cellIndex = 1,
+    typeIndex = 1,
+    objects = {},
     nextIndex = 1,
   }
 
-  DebugLog('Sweep %s started over %d object(s)', sweepKey, #ActiveSweep.objects)
+  DebugLog('Sweep %s started over %d cell(s)', sweepKey, #ActiveSweep.cells)
 end
 
---- Advances the running sweep by one frame's budget, or starts the next requested one.
---- The object list is fixed when a sweep starts, so objects a sweep creates are not swept.
+--- Advances the running sweep by one frame, or starts the next requested one. A frame either
+--- lists one cell's objects or runs rules on a budgeted number of them, never both.
+--- The cells are fixed when a sweep starts and each cell is listed once, so objects a sweep
+--- creates beside the object that made them are not swept. Conditions see the world as it is
+--- on the frame they run, not as it was when the sweep began.
 local function step()
-  if not ActiveSweep then
+  local activeSweep = ActiveSweep
+
+  if not activeSweep then
     if PendingSweepKeys[1] then startNextSweep() end
     return
   end
 
-  local objects, triggerRules = ActiveSweep.objects, ActiveSweep.sweep.rules
-  local firstIndex = ActiveSweep.nextIndex
+  local objects = activeSweep.objects
+  local firstIndex = activeSweep.nextIndex
+
+  if firstIndex > #objects then
+    if not listNextObjects(activeSweep) then
+      DebugLog('Sweep %s finished', activeSweep.sweep.key)
+      ActiveSweep = nil
+    end
+
+    return
+  end
+
+  BatchCache.clear()
+
+  local triggerRules = activeSweep.sweep.rules
   local lastIndex = Min(firstIndex + SWEEP_OBJECTS_PER_FRAME - 1, #objects)
 
   for objectIdx = firstIndex, lastIndex do
@@ -285,12 +319,7 @@ local function step()
     end
   end
 
-  if lastIndex >= #objects then
-    DebugLog('Sweep %s finished', ActiveSweep.sweep.key)
-    ActiveSweep = nil
-  else
-    ActiveSweep.nextIndex = lastIndex + 1
-  end
+  activeSweep.nextIndex = lastIndex + 1
 end
 
 ---@return boolean isArmed whether any loaded rule listens to a trigger this module polls for

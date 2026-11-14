@@ -53,11 +53,13 @@ end
 ---@class SSSTriggerContext
 ---@field actor openmw.GObject? actor that caused the trigger being dispatched
 ---@field item openmw.GObject? item used in the `use` trigger being dispatched
----@field expectedWeatherId string? weather SSS itself requested for the player's region, not yet observed
+---@field expectedWeatherIds string[] weathers SSS itself requested for the player's region and has not yet seen arrive, oldest first
+---@field expectedPlayerCellId string? cell an SSS teleport is sending the player to
 local TriggerContext = {
   ACTIVE = 'active',
   ACTOR_TRIGGERS = ACTOR_TRIGGERS,
   CUSTOM_PREFIX = CUSTOM_PREFIX,
+  expectedWeatherIds = {},
   PLAYER_SUBJECT_TRIGGERS = PLAYER_SUBJECT_TRIGGERS,
   WORLD_TRIGGERS = WORLD_TRIGGERS,
   isKnownTrigger = isKnownTrigger,

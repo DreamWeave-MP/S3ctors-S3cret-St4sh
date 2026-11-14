@@ -20,7 +20,7 @@ instances:
     once: true
 ```
 
-`trigger` takes one name or a list. A rule listed under several triggers is the same rule each time, so `once: true` covers all of them together.
+`trigger` takes one name or a list. A rule listed under several triggers is the same rule each time, so `once: true` covers all of them together. Listing the same trigger twice is an error and the rule is skipped.
 
 Static mesh replacement is not affected by triggers; it only happens when an object becomes active.
 
@@ -52,10 +52,11 @@ World triggers are built so that one busy rule cannot run away with the game:
 - A trigger that no loaded rule uses costs nothing. It is not checked at all.
 - Loading a save never fires a trigger. The first check after a load only records the current hour, day, weather, and quest stages.
 - A sweep runs only that trigger's rules, and when every one of those rules names an `object_type`, it only looks at objects of those types. Naming `object_type` is the single most effective way to keep a sweep cheap.
-- A sweep is spread over frames, a fixed number of objects per frame, and only advances on frames where SSS has no newly active objects to process.
-- The list of objects is fixed when a sweep starts. Objects a sweep creates, or puts in place of others, are not swept by it.
+- A sweep is spread over frames and only advances on frames where SSS has no newly active objects to process. A frame either lists one cell's objects or runs rules on a fixed number of them, never both.
+- The cells are fixed when a sweep starts and each is listed once, when the sweep reaches it. Objects a sweep creates beside the object that made them, or puts in place of others, are not swept by it. An object a rule teleports into a cell the sweep has not reached yet can be swept there.
+- Conditions are evaluated against the world as it is on the frame they run. If a quest stage changes halfway through a sweep, the remaining objects see the new stage.
 - One sweep runs at a time. A trigger that fires again while it is waiting or running is remembered once, not queued repeatedly. Waiting 24 hours is one `hour` sweep, not 24.
-- A weather change made by SSS's own `set_weather` does not fire `weather`. Arriving somewhere with different weather does not fire it either.
+- A weather change made by SSS's own `set_weather` does not fire `weather`, including when several requests are outstanding at once. Arriving somewhere with different weather does not fire it either.
 - A trigger that starts more than four sweeps within ten seconds of simulation time is suspended until the next load, with a warning in the log.
 
 A `journal` rule must contain a `has_journal` condition; that is how SSS knows which quest to watch. It fires on any stage change of that quest, and the condition then decides whether the rule applies at the new stage.
@@ -86,7 +87,7 @@ instances:
 - It also fires on the first check after a load or a new game, because the player is already standing somewhere. This is the one trigger that does; rely on `once` or conditions, not on it staying quiet.
 - Only the cell the player is in counts. Outdoors, something meant for a neighbouring exterior cell appears when the player steps into that cell, not when it comes into view.
 - `replace`, `disable`, and `delete` are refused on a `cell_enter` rule, since their target would be the player. Under any trigger, those three actions do nothing when the rule is running on the player.
-- A `teleport` moves the player and therefore fires `cell_enter` again in the destination. Two rules that send the player back and forth will keep doing so.
+- A `teleport` moves the player, but arriving where an SSS rule sent them is not an entry and does not fire `cell_enter`. Two rules that send the player to each other's cells therefore stop after the first move.
 
 A rule like this is evaluated once per cell change against one object. That is far cheaper than an `active` rule that looks for an anchor object in every cell that loads.
 
@@ -105,7 +106,7 @@ Two conditions exist only for these triggers:
 
 A rule that uses them under a trigger that cannot supply them is skipped when the module loads.
 
-The same trigger on the same object is ignored if it repeats within a quarter of a second of simulation time.
+The same trigger on the same object is ignored if it repeats within a quarter of a second of simulation time. For `use`, the item is part of that identity: two different items used in quick succession are two events.
 
 ## Death
 
@@ -134,4 +135,6 @@ I.StaticSwitcher_G.trigger('myMod_bellRung', bell)
 core.sendGlobalEvent('StaticSwitcherTrigger', { name = 'myMod_bellRung', object = bell })
 ```
 
-The object must be in the world. A custom trigger fired from inside another rule's actions, while that rule is still running, is refused with a warning; triggers cannot recurse into each other.
+The object must be in the world. A trigger fired while any rule is still running is refused with a warning. That covers a rule's own actions calling back into SSS, whether the rule was started by an activation, a sweep, or another trigger; rules cannot start further rule execution. Send the global event instead when a rule needs to cause a trigger: it arrives on a later frame, after the rule has finished.
+
+A `StaticSwitcherTrigger` event whose payload is not a table with a string `name` and an object is ignored.

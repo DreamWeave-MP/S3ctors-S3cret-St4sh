@@ -284,8 +284,19 @@
 
 ---@class SSSActiveSweep
 ---@field sweep SSSSweep
----@field objects openmw.GObject[] objects near the player when the sweep started
+---@field cells openmw.core.GCell[] cells around the player when the sweep started
+---@field cellIndex integer index of the next cell to list
+---@field typeIndex integer index of the next object type to list in that cell, when the sweep names types
+---@field objects openmw.GObject[] objects of the cell currently being processed
 ---@field nextIndex integer index of the next object to process
+
+---@class SSSExteriorDoor
+---@field position openmw.util.Vector3 where the door stands in its interior
+---@field region string? region of the exterior cell the door leads to
+
+---@class SSSWeatherRequest
+---@field weatherId string weather record ID last requested for a region
+---@field time number simulation time of that request
 
 ---@class SSSCustomTriggerEvent
 ---@field name string custom trigger name, without the `custom:` prefix

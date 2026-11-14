@@ -91,7 +91,7 @@ set_weather:
 
 Without `region`, the action targets the player's region, not the matched object's. Indoors the player's region is the one behind the nearest door leading outside; if there is no such door the action does nothing.
 
-The action does nothing, and does not count as a successful application, when the weather record does not exist, when the region cannot be changed, or when the player's region already has that weather or is already turning to it. An unknown weather or region is logged once.
+The action does nothing, and does not count as a successful application, when the weather record does not exist, when the region cannot be changed, when the player's region already has that weather or is already turning to it, or when SSS requested the same weather for the same region within the last ten seconds of simulation time. That last rule keeps a sweep from sending one request per matching object; it is deliberately short so that a later request still goes through after something else has changed the weather. An unknown weather or region is logged once. A `set_weather` table without a `weather` ID is rejected when the module loads.
 
 Weather is not a property of the matched object, so an unconditional `active` rule would request the same change once per object. Pair `set_weather` with a [world trigger](@/static_switching_system/docs/concepts/triggers.md), a narrowing condition, or `once: true`. A change made by this action does not fire the `weather` trigger.
 

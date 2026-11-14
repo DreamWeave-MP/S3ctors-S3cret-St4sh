@@ -1,6 +1,8 @@
 ---@omw-context global
 
 local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
+local types = require 'openmw.types'
+
 local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
 
@@ -72,6 +74,8 @@ local RECORD_PATTERN_CONDITIONS = {
   used_item = true,
 }
 
+--- A trigger listed twice would index its rule twice, and the rule would then match twice in
+--- one pass, before `once` had been recorded for either match.
 ---@param trigger string|string[]?
 ---@return string[]? triggerNames
 ---@return string? problem
@@ -81,16 +85,97 @@ local function readTriggerNames(trigger)
   local triggerNames = type(trigger) == 'table' and trigger or { trigger }
   if #triggerNames == 0 then return nil, 'trigger is an empty list' end
 
+  local seenTriggerNames = {}
+
   for triggerIndex = 1, #triggerNames do
     local triggerName = triggerNames[triggerIndex]
 
     if type(triggerName) ~= 'string' or not TriggerContext.isKnownTrigger(triggerName) then
       return nil, StrFormat('unknown trigger "%s"', tostring(triggerName))
     end
+
+    if seenTriggerNames[triggerName] then
+      return nil, StrFormat('trigger "%s" is listed twice', triggerName)
+    end
+    seenTriggerNames[triggerName] = true
   end
 
   return triggerNames
 end
+
+---@param value string|number|boolean|table|nil
+---@return boolean
+local function isText(value) return type(value) == 'string' and value ~= '' end
+
+---@param objectTypeValue string|string[]
+---@return string? unknownTypeName
+local function findUnknownObjectType(objectTypeValue)
+  if type(objectTypeValue) == 'table' then
+    for typeIndex = 1, #objectTypeValue do
+      local unknownTypeName = findUnknownObjectType(objectTypeValue[typeIndex])
+      if unknownTypeName then return unknownTypeName end
+    end
+
+    return
+  end
+
+  local objectType = isText(objectTypeValue) and types[objectTypeValue]
+
+  if type(objectType) ~= 'table' or type(objectType.objectIsInstance) ~= 'function' then
+    return tostring(objectTypeValue)
+  end
+end
+
+--- Shapes a handler would otherwise only discover by raising, once per object it ran on.
+---@type table<string, fun(actionValue: string|number|boolean|table): string?>
+local ACTION_PAYLOAD_PROBLEMS = {
+  set_weather = function(weatherAction)
+    if isText(weatherAction) then return end
+
+    if type(weatherAction) ~= 'table' or not isText(weatherAction.weather) then
+      return 'set_weather needs a weather record ID'
+    end
+
+    if weatherAction.region ~= nil and not isText(weatherAction.region) then
+      return 'set_weather region must be a region record ID'
+    end
+  end,
+  global_set = function(globalAction)
+    if type(globalAction) ~= 'table' or not isText(globalAction.name) then
+      return 'global_set needs a name'
+    end
+  end,
+  call_interface = function(callAction)
+    if
+      type(callAction) ~= 'table'
+      or not isText(callAction.interface)
+      or not isText(callAction['function'])
+    then
+      return 'call_interface needs an interface and a function'
+    end
+  end,
+  send_event = function(eventAction)
+    if type(eventAction) ~= 'table' or not isText(eventAction.name) then
+      return 'send_event needs a name'
+    end
+  end,
+  send_global_event = function(eventAction)
+    if type(eventAction) ~= 'table' or not isText(eventAction.name) then
+      return 'send_global_event needs a name'
+    end
+  end,
+  run_lua_script = function(runAction)
+    if type(runAction) ~= 'table' or not isText(runAction.script) then
+      return 'run_lua_script needs a script'
+    end
+  end,
+  add_lua_script = function(scriptPath)
+    if not isText(scriptPath) then return 'add_lua_script needs a script path' end
+  end,
+  remove_lua_script = function(scriptPath)
+    if not isText(scriptPath) then return 'remove_lua_script needs a script path' end
+  end,
+}
 
 ---@param conditionName string
 ---@param triggerNames string[]
@@ -141,6 +226,9 @@ local function findConditionProblem(conditionData, triggerNames)
     if conditionName == 'not' then
       local negatedProblem = findConditionProblem(conditionValue, triggerNames)
       if negatedProblem then return negatedProblem end
+    elseif conditionName == 'object_type' then
+      local unknownTypeName = findUnknownObjectType(conditionValue)
+      if unknownTypeName then return StrFormat('unknown object_type "%s"', unknownTypeName) end
     elseif RECORD_PATTERN_CONDITIONS[conditionName] then
       local invalidPattern = findInvalidRecordIdPattern(conditionValue)
 
@@ -166,10 +254,14 @@ end
 local function findActionProblem(actionData, playerSubjectTrigger)
   if type(actionData) ~= 'table' then return 'an action entry is not a map' end
 
-  for actionName in next, actionData do
+  for actionName, actionValue in next, actionData do
     if not ACTION_MODIFIER_KEYS[actionName] and type(actionHandlers[actionName]) ~= 'function' then
       return StrFormat('unknown action "%s"', tostring(actionName))
     end
+
+    local findPayloadProblem = ACTION_PAYLOAD_PROBLEMS[actionName]
+    local payloadProblem = findPayloadProblem and findPayloadProblem(actionValue)
+    if payloadProblem then return payloadProblem end
 
     if playerSubjectTrigger and TARGET_REMOVING_ACTIONS[actionName] then
       return StrFormat(

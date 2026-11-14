@@ -4,10 +4,37 @@ local types = require 'openmw.types'
 
 local Door = types.Door
 
-local ipairs, type = ipairs, type
+local ipairs = ipairs
 
----@type table<string, string|true>
-local InteriorRegions = {}
+---@type table<string, SSSExteriorDoor[]>
+local ExteriorDoorsByCell = {}
+
+--- The doors are cached, not the answer: an interior with exits into different regions
+--- belongs to whichever is nearest to the position asked about.
+---@param cell openmw.core.GCell
+---@return SSSExteriorDoor[] exteriorDoors
+local function getExteriorDoors(cell)
+  local exteriorDoors = ExteriorDoorsByCell[cell.id]
+  if exteriorDoors then return exteriorDoors end
+
+  exteriorDoors = {}
+
+  for _, door in ipairs(cell:getAll(types.Door)) do
+    if Door.isTeleport(door) then
+      local destination = Door.destCell(door)
+
+      if destination and destination.isExterior then
+        exteriorDoors[#exteriorDoors + 1] = {
+          position = door.position,
+          region = destination.region,
+        }
+      end
+    end
+  end
+
+  ExteriorDoorsByCell[cell.id] = exteriorDoors
+  return exteriorDoors
+end
 
 --- An interior has no region of its own; it takes the region of the exterior cell behind
 --- its nearest teleport door.
@@ -15,43 +42,21 @@ local InteriorRegions = {}
 ---@param position openmw.util.Vector3
 ---@return string? region
 local function getExteriorRegionFromDoor(cell, position)
-  local cached = InteriorRegions[cell.id]
-
-  if cached then
-    if type(cached) == 'string' then return cached end
-
-    return
-  end
-
-  local nearestDoor
+  local exteriorDoors = getExteriorDoors(cell)
+  local nearestRegion
   local nearestDistSq = math.huge
 
-  for _, door in ipairs(cell:getAll(types.Door)) do
-    if Door.isTeleport(door) then
-      local dest = Door.destCell(door)
+  for doorIdx = 1, #exteriorDoors do
+    local exteriorDoor = exteriorDoors[doorIdx]
+    local distSq = (position - exteriorDoor.position):length2()
 
-      if dest and dest.isExterior then
-        local distSq = (position - door.position):length2()
-
-        if distSq < nearestDistSq then
-          nearestDistSq = distSq
-          nearestDoor = door
-        end
-      end
+    if distSq < nearestDistSq then
+      nearestDistSq = distSq
+      nearestRegion = exteriorDoor.region
     end
   end
 
-  if not nearestDoor then
-    InteriorRegions[cell.id] = true
-
-    return
-  end
-
-  local region = Door.destCell(nearestDoor).region
-
-  InteriorRegions[cell.id] = region or true
-
-  return region
+  return nearestRegion
 end
 
 ---@param cell openmw.core.GCell

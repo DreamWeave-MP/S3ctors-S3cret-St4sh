@@ -16,6 +16,8 @@ kind = "concepts"
 
 With no rule-level `once`, an eligible rule can run whenever the object becomes active, or whenever its [trigger](@/static_switching_system/docs/concepts/triggers.md) fires. This is useful for re-randomized decoration but is unsafe for effects that should not repeat. The top-level `once: true` is instance-module-only: once any rule in that module applies to an object, remaining rules from that module are skipped for that object. It has no static-module meaning and should not be placed on a static module.
 
+A rule counts as applied when at least one of its actions applied. An action that raised an error counts as not applied, but does not undo the others: a `once: true` rule whose first action succeeded and whose second failed is recorded and will not run again.
+
 Persistence records successful rule applications by remappable object handle, module ID, and rule data hash. Keep module paths and rule shapes stable when you want an existing save to recognize prior applications. Changing a rule can give it a new identity and cause it to apply again; the exact resulting world state is action-dependent.
 
 A disabled object may not emit a later `onObjectActive` event. Do not use a repeating disable action as if it were a toggle. For a one-time disable, prefer `once: true`, as shown in the [Loot, locks, and traps recipe](@/static_switching_system/docs/recipes/loot-locks-traps.md).

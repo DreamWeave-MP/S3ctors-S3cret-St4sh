@@ -2,8 +2,8 @@ local source = debug.getinfo(1, 'S').source
 local root = source:match '^@(.+)/tests/sss_instance_pipeline%.lua$' or '.'
 
 package.path = table.concat({
-  root .. '/content/h3lp_yours3lf/?.lua',
-  root .. '/content/static_switching_system/?.lua',
+  ('%s/content/h3lp_yours3lf/?.lua'):format(root),
+  ('%s/content/static_switching_system/?.lua'):format(root),
   package.path,
 }, ';')
 
@@ -49,7 +49,7 @@ local function newObject(recordId, cell, type)
   nextObjectIndex = nextObjectIndex + 1
 
   local object = {
-    id = '@' .. nextObjectIndex,
+    id = ('@%d'):format(nextObjectIndex),
     recordId = recordId,
     cell = cell,
     count = 1,
@@ -107,8 +107,16 @@ local moduleSources = {
           actions = { { set_ownership = { owner = 'marked' } } },
         },
         {
-          conditions = { { record_id = 'thrower' } },
-          actions = { { global_set = { name = 'unknownglobal', value = 1 } } },
+          conditions = { { record_id = 'thrower' }, { scale = { min = 1 } } },
+          actions = { { set_ownership = { owner = 'marked' } } },
+        },
+        {
+          conditions = { { record_id = 'partial' } },
+          actions = {
+            { set_ownership = { owner = 'marked' } },
+            { global_set = { name = 'unknownglobal', value = 1 } },
+          },
+          once = true,
         },
         {
           conditions = { { record_id = '^selfie$' } },
@@ -220,7 +228,7 @@ end
 package.preload['openmw.world'] = function()
   return {
     createObject = function(recordId)
-      if not knownRecords[recordId] then error('no record ' .. recordId) end
+      if not knownRecords[recordId] then error(('no record %s'):format(recordId)) end
 
       createdRecordIds[#createdRecordIds + 1] = recordId
       return newObject(recordId)
@@ -229,7 +237,7 @@ package.preload['openmw.world'] = function()
     mwscript = {
       getGlobalVariables = function()
         return setmetatable({ gamehour = 12 }, {
-          __newindex = function(_, name) error('No global variable ' .. name) end,
+          __newindex = function(_, name) error(('No global variable %s'):format(name)) end,
         })
       end,
     },
@@ -298,7 +306,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 6)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 7)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -313,7 +321,7 @@ assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[4]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[5]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -334,13 +342,28 @@ assert(carriedOwnable.owner.recordId == nil)
 assert(carriedLocationless.owner.recordId == nil, 'rules must not run on an object with no cell')
 assert(countLogLines '%[ERROR%] Skipped @' == 0)
 
--- A rule that throws is reported once per object and does not block later objects.
+-- A condition that raises is reported for its object and does not block later objects.
 local queuedBehindThrower = newObject('ownable', TEL_BRANORA)
 activate(queuedBehindThrower)
 activate(newObject('thrower', TEL_BRANORA))
 runFrames(4)
 assert(queuedBehindThrower.owner.recordId == 'marked')
 assert(countLogLines '%[ERROR%] Skipped @%d+ %(thrower%)' == 1)
+
+-- An action that raises is skipped on its own: the rule's other actions apply, the failure is
+-- reported once however many objects hit it, and `once` is recorded for what did apply.
+local firstPartial = newObject('partial', TEL_BRANORA)
+local secondPartial = newObject('partial', TEL_BRANORA)
+activate(firstPartial)
+activate(secondPartial)
+runFrames(4)
+assert(firstPartial.owner.recordId == 'marked' and secondPartial.owner.recordId == 'marked')
+assert(countLogLines '%[WARN%] Action global_set failed and was skipped' == 1)
+
+firstPartial.owner.recordId = nil
+activate(firstPartial)
+runFrames(4)
+assert(firstPartial.owner.recordId == nil, 'a once rule that partly failed must not replay')
 
 -- Lowercase trap, key, and global names apply instead of clearing the lock data.
 local trapped = newObject('trapped', TEL_BRANORA, lockableType)

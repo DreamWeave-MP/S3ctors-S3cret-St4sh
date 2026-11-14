@@ -10,15 +10,16 @@ local staticUtil = require 'Scripts.staticSwitcher.util'
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
 local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 
-local DebugLog, ErrorLog
+local DebugLog, ErrorLog, WarnLog
 do
   local logger = require 'Scripts.staticSwitcher.logger'
   DebugLog = logger.debug
   ErrorLog = logger.error
+  WarnLog = logger.warn
 end
 
-local pcall, type = pcall, type
-local StrFormat = string.format
+local pcall, tostring, type = pcall, tostring, type
+local StrFind, StrFormat = string.find, string.format
 
 local DeleteManager = require 'Scripts.staticSwitcher.deleteManager'
 
@@ -56,6 +57,10 @@ local REPLACE_PER_BATCH = 4
 
 local DEATH_WATCHER_SCRIPT = 'scripts/staticSwitcher/deathWatcher.lua'
 local watchesDeaths = Triggers.isArmed 'death'
+local hasWarnedOfUnwatchedActor = false
+
+--- What OpenMW says when the plugin in use does not declare the death watcher script at all.
+local UNDECLARED_SCRIPT_ERRORS = { 'Unknown script', 'CUSTOM tag' }
 
 local ACTIVATABLE_TYPE_NAMES = {
   'Activator',
@@ -93,8 +98,9 @@ local USABLE_TYPE_NAMES = {
 }
 
 ---@param object openmw.GObject
-local function applyModulesToObject(object)
-  local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object, ActiveRules)
+---@param activeRules SSSTriggerRule[]
+local function applyModulesToObject(object, activeRules)
+  local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object, activeRules)
 
   -- Instance and static modules are intentionally separate pipelines.
   -- Matching instance rules own this activation; static replacement is the fallback.
@@ -121,8 +127,20 @@ local function watchForDeath(object)
   local wasAttached, attachError = pcall(object.addScript, object, DEATH_WATCHER_SCRIPT)
   if wasAttached then return end
 
-  watchesDeaths = false
-  ErrorLog(StrFormat('The death trigger is unavailable: %s', tostring(attachError)))
+  local failure = tostring(attachError)
+
+  for errorIdx = 1, #UNDECLARED_SCRIPT_ERRORS do
+    if StrFind(failure, UNDECLARED_SCRIPT_ERRORS[errorIdx], 1, true) then
+      watchesDeaths = false
+      ErrorLog(StrFormat('The death trigger is unavailable: %s', failure))
+      return
+    end
+  end
+
+  if hasWarnedOfUnwatchedActor then return end
+  hasWarnedOfUnwatchedActor = true
+
+  WarnLog(StrFormat('The death of %s cannot be watched: %s', object.recordId, failure))
 end
 
 --- Runs before the engine's own activation, so an item is still in the world when rules see it.
@@ -172,7 +190,7 @@ end
 local function fireCustomTrigger(triggerName, object)
   if type(triggerName) ~= 'string' or not staticUtil.isGObject(object) then return false end
 
-  return Triggers.dispatch(TriggerContext.CUSTOM_PREFIX .. triggerName, object)
+  return Triggers.dispatch(StrFormat('custom:%s', triggerName), object)
 end
 
 processActiveObject = function()
@@ -184,13 +202,7 @@ processActiveObject = function()
     ActiveObjectStack[numObjects] = nil
 
     if Triggers.isPlacedInWorld(object) then
-      local wasProcessed, processError = pcall(applyModulesToObject, object)
-
-      if not wasProcessed then
-        ErrorLog(
-          StrFormat('Skipped %s (%s): %s', object.id, object.recordId, tostring(processError))
-        )
-      end
+      Triggers.runGuarded(applyModulesToObject, object, ActiveRules)
     end
   end
 
@@ -308,7 +320,10 @@ return {
     StaticSwitcherActorDied = function(actor)
       if staticUtil.isGObject(actor) then Triggers.dispatch('death', actor) end
     end,
+    --- Any script can send this, so nothing about the payload is taken on trust.
     ---@param data SSSCustomTriggerEvent
-    StaticSwitcherTrigger = function(data) fireCustomTrigger(data.name, data.object) end,
+    StaticSwitcherTrigger = function(data)
+      if type(data) == 'table' then fireCustomTrigger(data.name, data.object) end
+    end,
   },
 }

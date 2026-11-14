@@ -13,10 +13,10 @@ Runtime validation is lighter than the schema. SSS warns about unknown top-level
 
 Two runtime checks fail closed, and both log regardless of the debug setting:
 
-- An instance rule with an unknown condition or action name, a malformed `record_id` Lua pattern, or a missing `actions` list is skipped whole, with a `[WARN] Skipped rule N in <module>` line naming the problem. The module's other rules still load.
+- An instance rule is skipped whole, with a `[WARN] Skipped rule N in <module>` line naming the problem, when it has an unknown condition, action, or trigger name; a trigger listed twice; a condition or action its trigger cannot support; an `object_type` that is not an OpenMW type; a malformed `record_id` or `used_item` Lua pattern; a missing `actions` list; or an action missing a required field (`set_weather` without a weather, `global_set` without a name, `call_interface` without an interface and function, an event without a name, a script action without a path). The module's other rules still load.
 - A module that cannot be read or parsed is skipped with an `[ERROR] Skipped module <path>` line. Other modules still load.
 
-At activation time, an object whose rule raises an error is reported once with `[ERROR] Skipped <object id> (<record id>)` and SSS moves on to the next object. A `replace` or `create` action naming a record that cannot be instantiated logs one `[WARN]` per record ID.
+When a single action raises an error, that action is skipped and reported once with `[WARN] Action <name> failed and was skipped`. The rest of the rule still runs, placement is still committed, and `once` is still recorded if anything else in the rule applied, so a rule that fails part-way does not repeat its earlier actions the next time it is triggered. An error anywhere else in a rule, such as in a condition, skips the object with `[ERROR] Skipped <object id> (<record id>)` and SSS moves on to the next object. A `replace` or `create` action naming a record that cannot be instantiated logs one `[WARN]` per record ID.
 
 ## Debug logging
 
