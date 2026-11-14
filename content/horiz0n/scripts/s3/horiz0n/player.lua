@@ -164,6 +164,7 @@ horiz0nSettings:subscribe(require('openmw.async'):callback(
       UPDATE_INTERVAL = 1 / value
     elseif key == 'Horiz0nGrowCooldown' then
       GROW_COOLDOWN, growCooldown = value, value
+      cooldownRemaining = mathMin(cooldownRemaining, value)
     end
   end
 ))
