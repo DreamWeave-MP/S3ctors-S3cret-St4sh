@@ -15,7 +15,7 @@ SSS keeps the normal path small, but valid-looking modules can still hit boundar
 - When an object becomes active, matching instance rules own that activation. If an instance action later misses its chance roll, SSS does not fall back to static replacement for the same activation.
 - Conditions in one rule are ANDed. Array values are usually OR-lists, but `global_value` entries are all required.
 - `record_id` uses Lua-pattern matching. Anchor exact matches with `^` and `$`, and escape Lua pattern characters when necessary.
-- String matching is field-specific. `cell` is exact and case-sensitive; `cell_match` is case-insensitive substring matching; `nameMatch` is plain substring matching without case folding; static `replace_names` is case-insensitive substring matching.
+- String matching is field-specific. `cell` is exact and case-insensitive; `cell_match` is case-insensitive substring matching; `nameMatch` is plain substring matching without case folding; static `replace_names` is case-insensitive substring matching.
 - An unsupported target usually makes a specialized condition false or an action a no-op. An unknown `object_type` is different: it raises an invalid-type error.
 
 ## Ordering and selection

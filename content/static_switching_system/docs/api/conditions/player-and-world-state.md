@@ -15,12 +15,21 @@ These conditions read the player or shared world state rather than the target ob
 
 **Shape:** `has_journal: { quest: string, index?: integer, min?: integer, max?: integer }`
 
-Matches the player's journal stage for `quest`, inclusive. `index` is shorthand for `min`. The schema requires `quest` and at least one of `index`, `min`, or `max`; a missing quest entry fails.
+Matches the player's journal stage for `quest`, inclusive. `index` is shorthand for `min`: `index: 50` means stage 50 *or later*, not stage 50 only. The schema requires `quest` and at least one of `index`, `min`, or `max`; a missing quest entry fails.
 
 ```yaml
 has_journal:
   quest: a1_v_vivecinformants
   min: 50
+```
+
+To match a single stage, or a window that ends before a later stage, set both bounds:
+
+```yaml
+has_journal:
+  quest: a1_v_vivecinformants
+  min: 50
+  max: 59
 ```
 
 ## `global_value`
