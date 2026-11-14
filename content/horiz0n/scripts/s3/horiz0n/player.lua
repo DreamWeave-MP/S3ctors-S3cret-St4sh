@@ -7,8 +7,9 @@ local getBaseViewDistance, getViewDistance, setViewDistance =
   require('openmw.camera').getViewDistance,
   require('openmw.camera').setViewDistance
 
-local getRealFrameDuration, getSimulationTimeScale, horiz0nSettings =
+local getRealFrameDuration, getRealTime, getSimulationTimeScale, horiz0nSettings =
   require('openmw.core').getRealFrameDuration,
+  require('openmw.core').getRealTime,
   require('openmw.core').getSimulationTimeScale,
   require('openmw.storage').playerSection 'SettingsPlayerHoriz0n'
 
@@ -20,6 +21,7 @@ local CELL_SIZE = 8192
 local MAX_GROW_COOLDOWN = 60.0
 local SETTLE_TIME = 0.25
 local SUSTAINED_BAD_WINDOWS = 2
+local YIELD_TIME = 5.0
 
 local MIN_VIEW_DISTANCE, MAX_VIEW_DISTANCE =
   CELL_SIZE * horiz0nSettings:get 'Horiz0nMinViewDistance',
@@ -49,6 +51,11 @@ local failedViewDistance
 
 local probeSurvivedTime = 0.0
 
+---@type number?
+local writtenViewDistance
+
+local yieldUntil = 0.0
+
 ---@param cell openmw.core.LCell
 ---@return Horiz0nMode
 local function modeIn(cell)
@@ -70,11 +77,26 @@ local function clampViewDistance(distance)
 end
 
 --- The engine stores view distance as a 32-bit float, and whole units survive that round trip exactly.
+--- A distance that is neither wanted nor the one last written came from another writer, which gets the camera for YIELD_TIME.
 ---@param distance number
 local function applyViewDistance(distance)
-  local wholeUnits = mathFloor(distance + 0.5)
+  local wholeUnits, engineViewDistance = mathFloor(distance + 0.5), getViewDistance()
 
-  if getViewDistance() ~= wholeUnits then setViewDistance(wholeUnits) end
+  if engineViewDistance == wholeUnits then
+    writtenViewDistance = wholeUnits
+    return
+  end
+
+  local now = getRealTime()
+  if now < yieldUntil then return end
+
+  if writtenViewDistance and engineViewDistance ~= writtenViewDistance then
+    writtenViewDistance, yieldUntil = nil, now + YIELD_TIME
+    return
+  end
+
+  writtenViewDistance = wholeUnits
+  setViewDistance(wholeUnits)
 end
 
 ---@param step number
@@ -143,6 +165,7 @@ end
 local function enterMode(newMode)
   mode = newMode
 
+  writtenViewDistance, yieldUntil = nil, 0.0
   windowDuration, windowFrames, badWindows = 0.0, 0, 0
   growCooldown, cooldownRemaining, settleRemaining = GROW_COOLDOWN, 0.0, 0.0
   isProbing, failedViewDistance, probeSurvivedTime = false, nil, 0.0
@@ -201,7 +224,7 @@ return {
         return
       end
 
-      if frameDuration > 0 then measureFrame() end
+      if frameDuration > 0 and getRealTime() >= yieldUntil then measureFrame() end
 
       viewDistance = clampViewDistance(viewDistance)
       applyViewDistance(viewDistance)
