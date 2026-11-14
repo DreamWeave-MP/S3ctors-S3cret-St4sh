@@ -47,6 +47,8 @@ local growCooldown, cooldownRemaining, settleRemaining, isProbing = GROW_COOLDOW
 ---@type number?
 local failedViewDistance
 
+local probeSurvivedTime = 0.0
+
 ---@param cell openmw.core.LCell
 ---@return Horiz0nMode
 local function modeIn(cell)
@@ -82,20 +84,27 @@ local function shrink(step)
   end
 
   isProbing, failedViewDistance, badWindows = false, viewDistance, 0
+  probeSurvivedTime = 0.0
   cooldownRemaining, settleRemaining = growCooldown, SETTLE_TIME
   viewDistance = clampViewDistance(viewDistance - step)
 end
 
 ---@param step number
 local function grow(step)
-  if failedViewDistance and viewDistance > failedViewDistance then
-    failedViewDistance, growCooldown = nil, GROW_COOLDOWN
-  end
-
   local grownViewDistance = clampViewDistance(viewDistance + step)
 
   isProbing, settleRemaining = grownViewDistance ~= viewDistance, SETTLE_TIME
   viewDistance = grownViewDistance
+end
+
+---@param elapsed number
+local function confirmProbe(elapsed)
+  if not failedViewDistance or viewDistance <= failedViewDistance then return end
+
+  probeSurvivedTime = probeSurvivedTime + elapsed
+  if probeSurvivedTime < growCooldown then return end
+
+  failedViewDistance, growCooldown, probeSurvivedTime = nil, GROW_COOLDOWN, 0.0
 end
 
 local function measureFrame()
@@ -125,6 +134,7 @@ local function measureFrame()
   end
 
   badWindows = 0
+  confirmProbe(elapsed)
 
   if cooldownRemaining <= 0 and settleRemaining <= 0 then grow(step) end
 end
@@ -135,7 +145,7 @@ local function enterMode(newMode)
 
   windowDuration, windowFrames, badWindows = 0.0, 0, 0
   growCooldown, cooldownRemaining, settleRemaining = GROW_COOLDOWN, 0.0, 0.0
-  isProbing, failedViewDistance = false, nil
+  isProbing, failedViewDistance, probeSurvivedTime = false, nil, 0.0
 
   if mode == 'disabled' then
     viewDistance = getBaseViewDistance()
