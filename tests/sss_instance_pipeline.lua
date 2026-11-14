@@ -174,6 +174,7 @@ package.preload['openmw.types'] = function()
     Creature = { TYPE = {} },
     Door = {},
     Player = {
+      objectIsInstance = neverInstance,
       quests = function()
         return setmetatable({}, {
           __index = function(_, questId)

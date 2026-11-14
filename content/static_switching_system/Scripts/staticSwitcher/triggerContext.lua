@@ -12,6 +12,7 @@ local OBJECT_TRIGGERS = {
   place = true,
   use = true,
   death = true,
+  cell_enter = true,
 }
 
 --- Triggers with no object of their own; they sweep the objects around the player.
@@ -20,6 +21,11 @@ local WORLD_TRIGGERS = {
   hour = true,
   day = true,
   weather = true,
+}
+
+--- Triggers whose rules always run on the player, who cannot be replaced or removed.
+local PLAYER_SUBJECT_TRIGGERS = {
+  cell_enter = true,
 }
 
 --- Triggers that carry the actor who caused them.
@@ -52,6 +58,7 @@ local TriggerContext = {
   ACTIVE = 'active',
   ACTOR_TRIGGERS = ACTOR_TRIGGERS,
   CUSTOM_PREFIX = CUSTOM_PREFIX,
+  PLAYER_SUBJECT_TRIGGERS = PLAYER_SUBJECT_TRIGGERS,
   WORLD_TRIGGERS = WORLD_TRIGGERS,
   isKnownTrigger = isKnownTrigger,
 }

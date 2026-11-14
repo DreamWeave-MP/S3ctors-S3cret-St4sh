@@ -28,7 +28,7 @@ Missing meshes, invalid cells, unsupported object types, failed condition checks
 
 ## Triggers other than activation
 
-Rules that name a [trigger](@/static_switching_system/docs/concepts/triggers.md) other than `active` are evaluated when that trigger fires. Interaction, death, and custom triggers run their rules on one object immediately. World triggers are detected by a check twice per second of simulation time and then sweep nearby objects a fixed number per frame, on frames with no activation or deletion work pending. Static replacement never runs from a trigger.
+Rules that name a [trigger](@/static_switching_system/docs/concepts/triggers.md) other than `active` are evaluated when that trigger fires. Interaction, death, and custom triggers run their rules on one object immediately. `cell_enter` runs its rules on the player when the same check sees the player in a different cell, including the first check after a load. World triggers are detected by a check twice per second of simulation time and then sweep nearby objects a fixed number per frame, on frames with no activation or deletion work pending. Static replacement never runs from a trigger.
 
 Trigger bookkeeping is runtime-only. Nothing about it is saved, and the first check after a load records the current world state without firing.
 

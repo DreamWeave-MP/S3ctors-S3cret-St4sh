@@ -66,6 +66,9 @@ local knownWeatherId, knownWeatherLocation
 ---@type table<string, integer|false>
 local KnownQuestStages = {}
 
+---@type string?
+local knownPlayerCellId
+
 --- Requests are a set: a trigger that fires again before its sweep starts is not queued twice.
 ---@param sweepKey string
 local function requestSweep(sweepKey)
@@ -132,7 +135,20 @@ local function pollJournal()
   end
 end
 
---- The first poll after a load only records what the world looks like; nothing fires for it.
+--- Unlike the world triggers, this fires on the first poll after a load: the player is already
+--- standing in a cell, and a rule that must not repeat says so with `once`.
+local function pollPlayerCell()
+  local playerCell = Player.cell
+  if not playerCell then return end
+
+  local playerCellId = playerCell.id
+  if playerCellId == knownPlayerCellId then return end
+  knownPlayerCellId = playerCellId
+
+  Triggers.dispatch('cell_enter', Player)
+end
+
+--- The first poll after a load only records what the world looks like; no sweep starts for it.
 ---@param dt number simulation seconds since the last frame; zero while paused
 local function poll(dt)
   secondsSincePoll = secondsSincePoll + dt
@@ -142,6 +158,7 @@ local function poll(dt)
   if Sweeps.hour or Sweeps.day then pollClock() end
   if Sweeps.weather then pollWeather() end
   if next(JournalSweepKeys) then pollJournal() end
+  if Triggers.isArmed 'cell_enter' then pollPlayerCell() end
 end
 
 ---@return openmw.core.GCell[] cells the player's cell and, outdoors, the eight cells around it
@@ -276,8 +293,8 @@ local function step()
   end
 end
 
----@return boolean isArmed whether any loaded rule listens to a world trigger
-local function isArmed() return next(Sweeps) ~= nil end
+---@return boolean isArmed whether any loaded rule listens to a trigger this module polls for
+local function isArmed() return next(Sweeps) ~= nil or Triggers.isArmed 'cell_enter' end
 
 ---@class SSSWorldTriggers
 local WorldTriggers = {

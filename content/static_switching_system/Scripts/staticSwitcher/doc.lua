@@ -268,7 +268,7 @@
 ---@field actions SSSInstanceAction[]
 ---@field actionHash string hash of the table. Provided *after* being parsed from YAML data.
 ---@field once boolean|'per_cell'?
----@field trigger string|string[]? when the rule runs: active (default), journal, hour, day, weather, activate, drop, place, use, death, or custom:<name>
+---@field trigger string|string[]? when the rule runs: active (default), journal, hour, day, weather, cell_enter, activate, drop, place, use, death, or custom:<name>
 
 ---@class SSSTriggerRule
 ---@field moduleName string canonical module id that provided the rule

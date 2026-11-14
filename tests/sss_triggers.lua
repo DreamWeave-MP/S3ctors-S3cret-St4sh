@@ -138,6 +138,7 @@ local function newObject(recordId, cell, objectType)
   function fields.setScale() end
   function fields.hasScript(_, scriptPath) return fields.scripts[scriptPath] == true end
   function fields.addScript(_, scriptPath) fields.scripts[scriptPath] = true end
+  function fields.remove() fields.count = 0 end
 
   local object = newproxy(true)
   local metatable = getmetatable(object)
@@ -200,6 +201,10 @@ local triggerModules = {
     local weatherRule = probeRule('weather', { { record_id = 'vane' } })
     weatherRule.actions[2] = { set_weather = 'storm' }
 
+    local arrivalRule = probeRule('cell_enter', { { cell = 'Cell 5 5' } })
+    arrivalRule.once = true
+    arrivalRule.actions[1].call_interface.args = { 'arrival' }
+
     local pingRule = probeRule('custom:ping', { { record_id = 'bell' } })
     pingRule.actions[2] = { call_interface = { interface = 'TestProbe', ['function'] = 'refire' } }
 
@@ -223,6 +228,13 @@ local triggerModules = {
         pingRule,
         probeRule('drop', { { record_id = 'coin' } }),
         probeRule('place', { { record_id = 'coin' } }),
+        arrivalRule,
+        probeRule('cell_enter', { { cell = 'cell 6 6' } }),
+        {
+          trigger = 'use',
+          conditions = { { used_item = '^cursed' } },
+          actions = { { delete = true }, { disable = true }, { replace = 'self' } },
+        },
       },
     }
   end,
@@ -236,6 +248,8 @@ local triggerModules = {
         probeRule({}, { { record_id = 'plain' } }),
         probeRule('custom:', { { record_id = 'plain' } }),
         probeRule({ 'use', 'death' }, { { ['not'] = { by_player = true } } }),
+        { trigger = 'cell_enter', actions = { { delete = true } } },
+        { trigger = { 'active', 'cell_enter' }, actions = { { replace = 'self' } } },
       },
     }
   end,
@@ -434,6 +448,14 @@ assert(
   countLogLines 'Skipped rule 7 in .-rejected%.yaml: condition "by_player" is not available on trigger "death"'
     == 1
 )
+assert(
+  countLogLines 'Skipped rule 8 in .-rejected%.yaml: action "delete" is not available on trigger "cell_enter"'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 9 in .-rejected%.yaml: action "replace" is not available on trigger "cell_enter"'
+    == 1
+)
 
 -- Each rule runs only on the triggers it names; an untagged rule runs only on activation.
 local plain = newObject('plain', HOME_CELL)
@@ -579,6 +601,33 @@ simulationTime = simulationTime + 1
 onItemUsed(newObject('coin', nil, openmwTypes.Miscellaneous), player)
 onItemUsed(potion, npc)
 assert(countProbes 'use' == 1)
+
+-- Removing actions never apply to the player, whichever trigger put the player in their path.
+simulationTime = simulationTime + 1
+onItemUsed(newObject('cursed_ring', nil, openmwTypes.Miscellaneous), player)
+assert(player.count == 1 and player.enabled == true)
+
+-- Cell entry: the rule runs on the player, once per entry; `once: true` makes it once ever.
+assert(countProbes 'arrival' == 0 and countProbes 'cell_enter' == 0)
+
+player.cell = getExteriorCell(5, 5)
+settle()
+assert(countProbes('arrival', player) == 1)
+
+player.cell = getExteriorCell(6, 6)
+settle()
+settle()
+assert(countProbes('cell_enter', player) == 1, 'standing in a cell is one entry')
+
+player.cell = getExteriorCell(5, 5)
+settle()
+player.cell = getExteriorCell(6, 6)
+settle()
+assert(countProbes 'arrival' == 1, 'once: true survives leaving and returning')
+assert(countProbes 'cell_enter' == 2, 'a rule without once runs on every entry')
+
+player.cell = HOME_CELL
+settle()
 
 -- Drop and place.
 local coin = newObject('coin', HOME_CELL, openmwTypes.Miscellaneous)

@@ -62,7 +62,7 @@ An instance module contains an ordered `instances` array. Each rule has:
 | `conditions` | array, optional | All condition entries must pass. Omit it for an unconditional rule. |
 | `actions` | array, required | Action entries applied in the fixed action order below. |
 | `once` | `true` or `per_cell`, optional | Cache successful application across saves, or only for the current activation batch. Despite its name, `per_cell` is not keyed by a tracked cell identity. |
-| `trigger` | name or array of names, optional | When the rule runs: `active` (default), `journal`, `hour`, `day`, `weather`, `activate`, `drop`, `place`, `use`, `death`, or `custom:<name>`. See [Triggers](@/static_switching_system/docs/concepts/triggers.md). |
+| `trigger` | name or array of names, optional | When the rule runs: `active` (default), `journal`, `hour`, `day`, `weather`, `cell_enter`, `activate`, `drop`, `place`, `use`, `death`, or `custom:<name>`. See [Triggers](@/static_switching_system/docs/concepts/triggers.md). |
 
 Top-level `once: true` stops all later rules from that module for an object after any rule applies. It is not valid for static modules. A rule can combine multiple action fields, but each action entry must contain at least one supported action.
 

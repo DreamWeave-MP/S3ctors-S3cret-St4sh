@@ -35,6 +35,7 @@ local rad = math.rad
 
 local ActorObjectIsInstance = types.Actor.objectIsInstance
 local ContainerObjectIsInstance = types.Container.objectIsInstance
+local PlayerObjectIsInstance = types.Player.objectIsInstance
 
 local Player = world.players[1]
 
@@ -573,6 +574,8 @@ local actionHandlers = {
     return wasModified, newTransform, newPos, targetScale
   end,
   ['replace'] = function(object, replaceActionData)
+    if PlayerObjectIsInstance(object) then return end
+
     if replaceActionData == 'self' then return tryCreateObject('replace', object.recordId) end
 
     for replaceId, replaceChance in pairs(replaceActionData) do
@@ -604,7 +607,9 @@ local actionHandlers = {
   ['add_active_spell'] = function(object, addActiveSpellActionData)
     return applyActiveSpellAction(object, addActiveSpellActionData)
   end,
-  ['disable'] = function(_, disableAction)
+  ['disable'] = function(object, disableAction)
+    if PlayerObjectIsInstance(object) then return false end
+
     if disableAction == true then return true end
     if type(disableAction) == 'table' then
       if not disableAction.chance then return true end
@@ -612,7 +617,9 @@ local actionHandlers = {
     end
     return false
   end,
-  ['delete'] = function(_, deleteAction, replaceAction, replaceActionSucceeded)
+  ['delete'] = function(object, deleteAction, replaceAction, replaceActionSucceeded)
+    if PlayerObjectIsInstance(object) then return false end
+
     return deleteAction and (not replaceAction or replaceActionSucceeded)
   end,
   ['create'] = function(

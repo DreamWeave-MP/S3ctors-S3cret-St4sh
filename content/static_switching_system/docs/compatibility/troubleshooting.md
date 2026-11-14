@@ -37,6 +37,7 @@ For an instance `replace`, confirm the replacement record ID exists in enabled c
 
 - A world trigger (`journal`, `hour`, `day`, `weather`) only reaches objects in the player's cell and the eight exterior cells around it, and is checked only while the game is unpaused.
 - A `journal` rule fires when the quest in its own `has_journal` changes stage, not when it is already at that stage on load.
+- `cell_enter` only concerns the cell the player is standing in, and its rules run on the player: match the place with `cell` or `coords`, not an object with `record_id`.
 - `death` needs the current `Static Switching System.esp`; look for `The death trigger is unavailable` in the log. An actor that was already dead when it loaded does not fire it.
 - A log line saying a trigger was `suspended until the next load` means it fired more than four times in ten seconds.
 - `by_player` and `used_item` are only valid under the interaction triggers; a rule misusing them is reported as a skipped rule.

@@ -1,6 +1,6 @@
 +++
 title = "Triggers"
-description = "Choose when an instance rule runs: on activation, on world changes, on interaction, on death, or when another mod asks."
+description = "Choose when an instance rule runs: on activation, on world changes, on entering a cell, on interaction, on death, or when another mod asks."
 weight = 85
 
 [extra]
@@ -33,6 +33,7 @@ Static mesh replacement is not affected by triggers; it only happens when an obj
 | `hour` | The game hour rolls over. | Objects near the player. |
 | `day` | The game day rolls over. | Objects near the player. |
 | `weather` | The weather in the player's cell changes. | Objects near the player. |
+| `cell_enter` | The player enters a cell, including on load. | The player. |
 | `activate` | An actor activates the object. | The activated object. |
 | `drop` | An actor drops an item from their inventory. | The item. |
 | `place` | The player places an item on a surface. | The item. |
@@ -60,6 +61,34 @@ World triggers are built so that one busy rule cannot run away with the game:
 A `journal` rule must contain a `has_journal` condition; that is how SSS knows which quest to watch. It fires on any stage change of that quest, and the condition then decides whether the rule applies at the new stage.
 
 A world rule without `once` runs on every firing. That is the point for an hourly schedule, and a trap for anything cumulative: a relative `transform` compounds each time. `once: per_cell` is not a safeguard here, since it only lasts until the next batch of objects becomes active. Use `once: true`, or conditions that stop matching after the rule has done its work.
+
+## Entering a cell
+
+`cell_enter` is for rules about a place rather than about something in it: put a unique NPC in a tavern, leave a chest in a cave, change the weather on arrival. It fires once each time the player enters a cell, and the rule runs on the *player*. No object in the cell has to match anything.
+
+```yaml
+instances:
+  - trigger: cell_enter
+    conditions:
+      - cell: "Balmora, South Wall Cornerclub"
+    actions:
+      - create:
+          my_unique_npc:
+            transform_type: absolute
+            position: { x: 291, y: 537, z: 261 }
+            rotate: { z: 90 }
+    once: true
+```
+
+- `create` spawns into the player's cell. With `transform_type: absolute` the position and rotation are exact cell coordinates; without it they are offsets from the player.
+- `once: true` marks the player for that rule, and there is one player per save, so the rule applies once ever. Without `once` it applies on every entry.
+- Location conditions (`cell`, `cell_match`, `coords`, `region`, `exterior`) describe the cell being entered. Player and world conditions work as usual.
+- It also fires on the first check after a load or a new game, because the player is already standing somewhere. This is the one trigger that does; rely on `once` or conditions, not on it staying quiet.
+- Only the cell the player is in counts. Outdoors, something meant for a neighbouring exterior cell appears when the player steps into that cell, not when it comes into view.
+- `replace`, `disable`, and `delete` are refused on a `cell_enter` rule, since their target would be the player. Under any trigger, those three actions do nothing when the rule is running on the player.
+- A `teleport` moves the player and therefore fires `cell_enter` again in the destination. Two rules that send the player back and forth will keep doing so.
+
+A rule like this is evaluated once per cell change against one object. That is far cheaper than an `active` rule that looks for an anchor object in every cell that loads.
 
 ## Interaction triggers
 

@@ -60,6 +60,13 @@ local TRIGGER_SCOPED_CONDITIONS = {
   used_item = { use = true },
 }
 
+--- Actions that take their target out of the world; the player cannot be their target.
+local TARGET_REMOVING_ACTIONS = {
+  replace = true,
+  disable = true,
+  delete = true,
+}
+
 local RECORD_PATTERN_CONDITIONS = {
   record_id = true,
   used_item = true,
@@ -144,14 +151,32 @@ local function findConditionProblem(conditionData, triggerNames)
   end
 end
 
+---@param triggerNames string[]
+---@return string? playerSubjectTrigger
+local function findPlayerSubjectTrigger(triggerNames)
+  for triggerIndex = 1, #triggerNames do
+    local triggerName = triggerNames[triggerIndex]
+    if TriggerContext.PLAYER_SUBJECT_TRIGGERS[triggerName] then return triggerName end
+  end
+end
+
 ---@param actionData SSSInstanceAction
+---@param playerSubjectTrigger string? trigger of this rule that runs it on the player, if any
 ---@return string? problem
-local function findActionProblem(actionData)
+local function findActionProblem(actionData, playerSubjectTrigger)
   if type(actionData) ~= 'table' then return 'an action entry is not a map' end
 
   for actionName in next, actionData do
     if not ACTION_MODIFIER_KEYS[actionName] and type(actionHandlers[actionName]) ~= 'function' then
       return StrFormat('unknown action "%s"', tostring(actionName))
+    end
+
+    if playerSubjectTrigger and TARGET_REMOVING_ACTIONS[actionName] then
+      return StrFormat(
+        'action "%s" is not available on trigger "%s", which runs on the player',
+        actionName,
+        playerSubjectTrigger
+      )
     end
   end
 end
@@ -188,8 +213,10 @@ local function findRuleProblem(instanceRule)
     end
   end
 
+  local playerSubjectTrigger = findPlayerSubjectTrigger(triggerNames)
+
   for actionIndex = 1, #actions do
-    local problem = findActionProblem(actions[actionIndex])
+    local problem = findActionProblem(actions[actionIndex], playerSubjectTrigger)
     if problem then return problem end
   end
 end
