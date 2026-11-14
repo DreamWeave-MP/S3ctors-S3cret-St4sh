@@ -20,6 +20,7 @@ local mathAbs, mathFloor, mathHuge, mathMax, mathMin =
 
 local CELL_SIZE = 8192
 local MAX_GROW_COOLDOWN = 60.0
+local MAX_SHRINK_FRACTION = 0.25
 local SETTLE_TIME = 0.25
 local SUSTAINED_BAD_WINDOWS = 2
 local YIELD_TIME = 5.0
@@ -150,9 +151,9 @@ local function measureFrame()
     if badWindows < SUSTAINED_BAD_WINDOWS or settleRemaining > 0 then return end
 
     if frameRatio >= BAD_FRAME_RATIO then step = step * SEVERE_MULT end
-    if not isProbing then step = step * SETTLE_TIME / UPDATE_INTERVAL end
+    if not isProbing then step = step * badWindows end
 
-    shrink(step)
+    shrink(mathMin(step, viewDistance * MAX_SHRINK_FRACTION))
     return
   end
 
