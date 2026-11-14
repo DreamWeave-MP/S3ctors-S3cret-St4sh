@@ -44,7 +44,7 @@ local mode = 'disabled'
 
 local viewDistance = getBaseViewDistance()
 
-local windowDuration, windowFrames, badWindows = 0.0, 0, 0
+local windowDuration, windowFrames, badWindows, overloadTime = 0.0, 0, 0, 0.0
 
 local growCooldown, cooldownRemaining, settleRemaining, isProbing = GROW_COOLDOWN, 0.0, 0.0, false
 
@@ -83,8 +83,11 @@ end
 local function applyViewDistance(distance)
   local wholeUnits = mathFloor(distance + 0.5)
 
-  if getViewDistance() ~= wholeUnits then setViewDistance(wholeUnits) end
   writtenViewDistance = wholeUnits
+  if getViewDistance() == wholeUnits then return end
+
+  settleRemaining = SETTLE_TIME
+  setViewDistance(wholeUnits)
 end
 
 --- A distance other than the one last written came from another writer, which gets the camera for YIELD_TIME.
@@ -95,7 +98,7 @@ local function holdsCamera()
   if not writtenViewDistance or getViewDistance() == writtenViewDistance then return true end
 
   writtenViewDistance, yieldUntil = nil, now + YIELD_TIME
-  windowDuration, windowFrames, badWindows, settleRemaining = 0.0, 0, 0, SETTLE_TIME
+  windowDuration, windowFrames, badWindows, overloadTime = 0.0, 0, 0, 0.0
 
   return false
 end
@@ -106,9 +109,8 @@ local function shrink(step)
     growCooldown = mathMin(growCooldown * 2, MAX_GROW_COOLDOWN)
   end
 
-  isProbing, failedViewDistance, badWindows = false, viewDistance, 0
-  probeSurvivedTime = 0.0
-  cooldownRemaining, settleRemaining = growCooldown, SETTLE_TIME
+  isProbing, failedViewDistance, cooldownRemaining = false, viewDistance, growCooldown
+  probeSurvivedTime, overloadTime = 0.0, 0.0
   viewDistance = clampViewDistance(viewDistance - step)
 end
 
@@ -116,8 +118,7 @@ end
 local function grow(step)
   local grownViewDistance = clampViewDistance(viewDistance + step)
 
-  isProbing, settleRemaining = grownViewDistance ~= viewDistance, SETTLE_TIME
-  viewDistance = grownViewDistance
+  isProbing, viewDistance = grownViewDistance ~= viewDistance, grownViewDistance
 end
 
 ---@param elapsed number
@@ -132,7 +133,18 @@ end
 
 local function measureFrame()
   --- getRealFrameDuration is multiplied by the simulation time scale, which is positive whenever the world is unpaused.
-  windowDuration = windowDuration + getRealFrameDuration() / getSimulationTimeScale()
+  local frameTime = getRealFrameDuration() / getSimulationTimeScale()
+
+  overloadTime = overloadTime + frameTime
+  if cooldownRemaining > 0 then cooldownRemaining = cooldownRemaining - frameTime end
+
+  if settleRemaining > 0 then
+    settleRemaining = settleRemaining - frameTime
+    windowDuration, windowFrames, badWindows = 0.0, 0, 0
+    return
+  end
+
+  windowDuration = windowDuration + frameTime
   windowFrames = windowFrames + 1
 
   if windowDuration < UPDATE_INTERVAL then return end
@@ -142,24 +154,21 @@ local function measureFrame()
 
   local step = viewDistance * VD_STEP_FRACTION
 
-  if cooldownRemaining > 0 then cooldownRemaining = cooldownRemaining - elapsed end
-  if settleRemaining > 0 then settleRemaining = settleRemaining - elapsed end
-
   if frameRatio >= OKAYISH_FRAME_RATIO then
     badWindows = badWindows + 1
-    if badWindows < SUSTAINED_BAD_WINDOWS or settleRemaining > 0 then return end
+    if badWindows < SUSTAINED_BAD_WINDOWS then return end
 
     if frameRatio >= BAD_FRAME_RATIO then step = step * SEVERE_MULT end
-    if not isProbing then step = step * badWindows end
+    if not isProbing then step = step * overloadTime / UPDATE_INTERVAL end
 
     shrink(mathMin(step, viewDistance * MAX_SHRINK_FRACTION))
     return
   end
 
-  badWindows = 0
+  badWindows, overloadTime = 0, 0.0
   confirmProbe(elapsed)
 
-  if cooldownRemaining <= 0 and settleRemaining <= 0 then grow(step) end
+  if cooldownRemaining <= 0 then grow(step) end
 end
 
 ---@param newMode Horiz0nMode
@@ -167,7 +176,7 @@ local function enterMode(newMode)
   mode = newMode
 
   writtenViewDistance, yieldUntil = nil, 0.0
-  windowDuration, windowFrames, badWindows = 0.0, 0, 0
+  windowDuration, windowFrames, badWindows, overloadTime = 0.0, 0, 0, 0.0
   growCooldown, cooldownRemaining, settleRemaining = GROW_COOLDOWN, 0.0, 0.0
   isProbing, failedViewDistance, probeSurvivedTime = false, nil, 0.0
 

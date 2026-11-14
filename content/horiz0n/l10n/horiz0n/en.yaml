@@ -56,7 +56,7 @@ Horiz0nViewDistanceSevereMultDesc: |
 Horiz0nViewDistanceStepPercentName: View Distance Adjustment
 Horiz0nViewDistanceStepPercentDesc: |
   Sets how much Horiz0n changes the view distance with each adjustment, as a percentage of the current view distance.
-  Reductions are applied at most four times per second, each covering the bad measurements since the last one, and never remove more than a quarter of the current view distance.
+  Reductions are applied at most four times per second, each covering the time since the last one, and never remove more than a quarter of the current view distance.
   Lower values make view distance changes smoother but slower.
   Higher values make adjustments faster but more noticeable.
   Default: 1%
