@@ -28,4 +28,4 @@ conditions:
   - not: { nameMatch: Soldier }
 ```
 
-An unknown inner condition raises an error. A failed inversion is an ordinary false match; `not` has no independent persistence or chance behavior. The schema describes the inner value through `conditionData`, but authoring a multi-key inner map is not supported by the handler's single-entry evaluation contract.
+A rule whose `not` names an unknown inner condition is skipped when the module loads, with a warning in the log. A failed inversion is an ordinary false match; `not` has no independent persistence or chance behavior. The schema describes the inner value through `conditionData`, but authoring a multi-key inner map is not supported by the handler's single-entry evaluation contract.

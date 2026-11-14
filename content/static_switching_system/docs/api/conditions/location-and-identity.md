@@ -15,7 +15,7 @@ These conditions inspect the target object's cell or identity. Sequence forms ar
 
 **Shape:** `cell: string | string[]`
 
-Exact match against `object.cell.name` or `object.cell.id`. The comparison is not a substring match. Use the cell spelling exposed by the active content; the handler does not perform a case-insensitive comparison for this condition.
+Case-insensitive exact match against `object.cell.name` or `object.cell.id`. The comparison is not a substring match; use `cell_match` for that.
 
 ```yaml
 cell: "Balmora, Caius Cosades' House"

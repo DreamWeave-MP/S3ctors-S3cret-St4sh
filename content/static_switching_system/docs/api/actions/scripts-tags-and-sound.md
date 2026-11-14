@@ -19,7 +19,7 @@ Attaches the supplied VFS Lua script path to the current action target.
 add_lua_script: Scripts/myMod/activator.lua
 ```
 
-The action passes the path to OpenMW; SSS does not provide a portable file-existence or script-behavior guarantee. A replacement target receives the script when `replace` precedes it in the same action table.
+The action passes the path to OpenMW; SSS does not provide a portable file-existence or script-behavior guarantee. A replacement target receives the script when `replace` precedes it in the same action table. If the script is already attached to the target, the action does nothing and does not count as a successful application.
 
 ## `remove_lua_script`
 
@@ -31,7 +31,7 @@ Removes the supplied VFS Lua script path from the current action target.
 remove_lua_script: Scripts/myMod/activator.lua
 ```
 
-The path is passed to OpenMW for removal. Removing a path that is not attached is not described as a content migration or a persistence operation by SSS.
+The path is passed to OpenMW for removal. If the script is not attached to the target, the action does nothing and does not count as a successful application.
 
 ## `run_lua_script`
 

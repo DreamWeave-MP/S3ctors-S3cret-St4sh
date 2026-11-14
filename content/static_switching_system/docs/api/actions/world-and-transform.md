@@ -35,7 +35,7 @@ chance: 0.5
 replace: self
 ```
 
-Map keys remain record IDs, including a literal record ID named `self`. Do not use unconditional self-replacement without a narrowing condition or `once`; the fresh object can match the same rule again.
+Map keys remain record IDs, including a literal record ID named `self`. Do not use unconditional self-replacement without a narrowing condition or `once`; the fresh object can match the same rule again. With `once: true` the fresh object inherits the original's once marks, and with `once: per_cell` it is marked for the current activation batch, so the rule does not repeat on it.
 
 ## `transform`
 

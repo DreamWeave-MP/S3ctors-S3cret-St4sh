@@ -99,7 +99,10 @@ local conditionHandlers = {
   ---@param cellName string
   ---@return boolean
   cell = function(object, cellName)
-    return object.cell.name == cellName or object.cell.id == cellName
+    local cell = object.cell
+    if not cell then return false end
+
+    return StrLower(cell.name) == cellName or StrLower(cell.id) == cellName
   end,
   ---@param object openmw.GObject
   ---@param matchStr string
@@ -346,7 +349,10 @@ local conditionHandlers = {
     return false
   end,
   has_key = function(object, keyData)
-    local getKeyRecord = object.type.getKeyRecord
+    local objType = object.type
+    if not objType then return false end
+
+    local getKeyRecord = objType.getKeyRecord
     if not getKeyRecord then return false end
 
     local keyId = getKeyRecord(object)
@@ -366,7 +372,10 @@ local conditionHandlers = {
     return false
   end,
   has_trap = function(object, trapData)
-    local getTrapSpell = object.type.getTrapSpell
+    local objType = object.type
+    if not objType then return false end
+
+    local getTrapSpell = objType.getTrapSpell
     if not getTrapSpell then return false end
 
     local trapId = getTrapSpell(object)
