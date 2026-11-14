@@ -8,11 +8,11 @@ api_docs = true
 kind = "interface"
 +++
 
-{{ api_signature(value="require('openmw.interfaces').StaticSwitcher_G → version 5 interface") }}
+{{ api_signature(value="require('openmw.interfaces').StaticSwitcher_G → version 6 interface") }}
 
 `StaticSwitcher_G` is an advanced OpenMW-Lua integration surface provided by SSS's global script. Prefer YAML for authoring.
 
-The interface reports `version = 5`. Version 5 added the spell, transient script, interface call, and event actions and the `is_follower` condition to the YAML contract; the Lua members are unchanged from version 4.
+The interface reports `version = 6`. Version 6 added rule triggers, the `set_weather` action, and the `trigger` member. Version 5 added the spell, transient script, interface call, and event actions and the `is_follower` condition to the YAML contract; its Lua members were unchanged from version 4.
 
 ## Version guard
 
@@ -38,7 +38,8 @@ Use a minimum-version check when later versions preserve the members your integr
 | `composedReplacements` | `fun() → table` | Returns a read-only view of loaded static replacement data. This is diagnostic/advanced data, not a stable YAML authoring substitute. |
 | `objectModificationStore` | `fun() → table` | Returns a read-only view of loaded instance rules keyed by canonical module ID. Rule-table internals are advanced data. |
 | `overrideRecords` | `fun() → table` | Returns a read-only view of generated replacement record IDs keyed by canonical static module ID. |
-| `version` | `integer` | Current interface version, currently `5`. |
+| `trigger` | `fun(triggerName: string, object: openmw.GObject) → boolean` | Runs every rule listening to `custom:<triggerName>` on the object. Returns false when no rule listens, the object is not in the world, the call repeats within the debounce window, or it is made from inside another trigger. Added in version 6. |
+| `version` | `integer` | Current interface version, currently `6`. |
 
 “Read-only” applies to the exposed view. Do not mutate returned tables, object handles, generated record IDs, or bookkeeping. Validate object handles before using them; an object can become invalid during deferred replacement or deletion.
 
@@ -57,6 +58,6 @@ local function describeObject(object)
 end
 ```
 
-The interface is intentionally observational. It does not provide registration, module mutation, replacement triggering, deletion, or save-state editing operations.
+Apart from `trigger`, the interface is observational. It does not provide registration, module mutation, deletion, or save-state editing operations. `trigger` runs only rules a module author wrote for that custom trigger name; see [Triggers](@/static_switching_system/docs/concepts/triggers.md#custom-triggers). The same request can be sent from any script context as the global event `StaticSwitcherTrigger` with `{ name, object }`.
 
 It does not combine static and instance pipelines. See [Pipelines and Module Boundaries](@/static_switching_system/docs/concepts/pipelines.md).

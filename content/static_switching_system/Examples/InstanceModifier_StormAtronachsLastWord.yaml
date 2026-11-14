@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: A Storm Atronach's Last Word
+priority: polish
+
+# The death trigger runs on the actor that just died. set_weather is not about the matched
+# object: with no region it changes the weather where the player is.
+instances:
+  - trigger: death
+    conditions:
+      - object_type: Creature
+      - record_id: "^atronach_storm"
+      - exterior: true
+    actions:
+      - set_weather: thunderstorm
+
+  # Drinking skooma outdoors has consequences too. A use rule runs on the actor who used
+  # the item; the item itself is matched with used_item.
+  - trigger: use
+    conditions:
+      - by_player: true
+      - used_item: "^potion_skooma_01$"
+      - exterior: true
+    actions:
+      - chance: 0.25
+        set_weather: foggy

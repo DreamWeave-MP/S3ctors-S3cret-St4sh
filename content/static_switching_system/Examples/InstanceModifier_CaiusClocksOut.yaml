@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Caius Clocks Out
+priority: polish
+
+# The hour trigger re-evaluates these rules each time the game hour rolls over, so Caius
+# leaves while you are standing in his house instead of only when you next walk in.
+# A world trigger only reaches objects near the player; listing active as well moves him
+# when you arrive somewhere he should no longer be.
+instances:
+  - trigger:
+      - hour
+      - active
+    conditions:
+      - object_type: NPC
+      - record_id: "^caius cosades$"
+      - cell: "Balmora, Caius Cosades' House"
+      - time_of_day: { min: 20 }
+    actions:
+      - teleport:
+          cell: "Balmora, South Wall Cornerclub"
+          position:
+            x: 291
+            y: 537
+            z: 261
+          onGround: true
+
+  - trigger:
+      - hour
+      - active
+    conditions:
+      - object_type: NPC
+      - record_id: "^caius cosades$"
+      - cell: "Balmora, South Wall Cornerclub"
+      - time_of_day: { max: 20 }
+    actions:
+      - teleport:
+          cell: "Balmora, Caius Cosades' House"
+          position:
+            x: 163
+            y: -228
+            z: 192
+          onGround: true

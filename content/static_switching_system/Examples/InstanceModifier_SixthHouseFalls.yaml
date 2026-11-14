@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: The Sixth House Falls
+priority: polish
+
+# The journal trigger fires when c3_destroydagoth changes stage, so ash statues around the
+# player crumble the moment Dagoth Ur is defeated. Listing active as well catches every
+# statue the player meets afterwards.
+instances:
+  - trigger:
+      - journal
+      - active
+    conditions:
+      - object_type: Static
+      - record_id: "^furn_6th_ashstatue$"
+      - has_journal:
+          quest: c3_destroydagoth
+          min: 50
+    actions:
+      - create:
+          furn_bone_01:
+            count:
+              max: 3
+            position:
+              x: { min: -40, max: 40 }
+              y: { min: -40, max: 40 }
+      - disable: true
+    once: true

@@ -8,7 +8,7 @@ api_docs = true
 kind = "lifecycle"
 +++
 
-SSS discovers modules at startup, then processes objects as they become active with bounded, deferred work.
+SSS discovers modules at startup, then processes objects as they become active, and when a rule's trigger fires, with bounded, deferred work.
 
 ## Startup and discovery
 
@@ -25,6 +25,12 @@ For each active object, SSS checks instance rules first and uses static replacem
 Static replacement chains have a maximum depth of **8 replacement steps**. Each successful static module application adds one step to the chain. When a chain already has eight steps, SSS logs `chain max depth reached` and does not apply another static replacement to that lineage. A module is also applied at most once to a chain lineage, even before the depth limit is reached.
 
 Missing meshes, invalid cells, unsupported object types, failed condition checks, and chance misses are normal reasons for an action to have no effect; inspect debug output when distinguishing them matters.
+
+## Triggers other than activation
+
+Rules that name a [trigger](@/static_switching_system/docs/concepts/triggers.md) other than `active` are evaluated when that trigger fires. Interaction, death, and custom triggers run their rules on one object immediately. World triggers are detected by a check twice per second of simulation time and then sweep nearby objects a fixed number per frame, on frames with no activation or deletion work pending. Static replacement never runs from a trigger.
+
+Trigger bookkeeping is runtime-only. Nothing about it is saved, and the first check after a load records the current world state without firing.
 
 Disabled objects are a special lifecycle case: OpenMW may not report them as active on later cell loads. Do not expect an SSS rule that disables an object to re-enable or re-roll it automatically on re-entry.
 

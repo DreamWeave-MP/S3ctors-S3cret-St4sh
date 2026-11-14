@@ -62,6 +62,7 @@ An instance module contains an ordered `instances` array. Each rule has:
 | `conditions` | array, optional | All condition entries must pass. Omit it for an unconditional rule. |
 | `actions` | array, required | Action entries applied in the fixed action order below. |
 | `once` | `true` or `per_cell`, optional | Cache successful application across saves, or only for the current activation batch. Despite its name, `per_cell` is not keyed by a tracked cell identity. |
+| `trigger` | name or array of names, optional | When the rule runs: `active` (default), `journal`, `hour`, `day`, `weather`, `activate`, `drop`, `place`, `use`, `death`, or `custom:<name>`. See [Triggers](@/static_switching_system/docs/concepts/triggers.md). |
 
 Top-level `once: true` stops all later rules from that module for an object after any rule applies. It is not valid for static modules. A rule can combine multiple action fields, but each action entry must contain at least one supported action.
 
@@ -75,6 +76,7 @@ The supported condition keys are:
 - **Actor and inventory state:** `carrying`, `is_dead`, `is_follower`, `is_respawning`, `creature_type`, `race`, `target_class`, `target_disposition`, `target_level`, `target_attribute`, `target_skill`, `target_spell`.
 - **Locks and ownership:** `locked`, `has_key`, `has_trap`, `owner_id`, `faction_owner_id`, `faction_owner_rank`, `target_faction`, `player_faction`.
 - **Player and world state:** `player_level`, `player_attribute`, `player_skill`, `player_health`, `player_magicka`, `player_fatigue`, `player_spell`, `global_value`, `has_journal`, `time_of_day`, `day_of_week`, `current_weather`.
+- **Trigger context:** `by_player` on the `activate`, `drop`, `place`, and `use` triggers; `used_item` on `use`.
 - **Logic:** `not` for one inverted inner condition.
 
 Condition keys that refer to actors, NPCs, inventories, locks, tags, or other specialized state return false or no-op when the target does not support that state. `record_id` uses Lua pattern matching; anchor it when exact matching is required, for example `^rat$`. `content_file_target` scopes local reference numbers to a named content file:
@@ -106,6 +108,7 @@ The stable actions are:
 | `key`, `trap` | Set a selected key/trap from an ordered chance table, or use `false` to remove it. |
 | `create` | Spawn one or more record pools at the trigger position, optionally with chance and per-object position/rotation/scale overrides. |
 | `global_set` | Set an MWScript global to a fixed value or a sampled range. |
+| `set_weather` | Change a region's weather; defaults to the player's region. |
 | `playsound` | Play a record sound or VFS sound file at the target, with optional chance, volume, pitch, loop, and time offset. |
 | `add_lua_script`, `remove_lua_script` | Attach or remove a Lua script by VFS path. |
 | `activate_by_player` | Activate the target as if the player used it. |
@@ -124,7 +127,7 @@ When fields are combined in one action entry, SSS executes them in this order. Y
 ```text
 replace → transform → teleport → set_ownership → add_tag → remove_tag
 → add → remove → equip → unequip → add_spell → remove_spell → add_active_spell
-→ lock_level → key → trap → create → global_set → playsound
+→ lock_level → key → trap → create → global_set → set_weather → playsound
 → add_lua_script → activate_by_player → remove_lua_script
 → run_lua_script → call_interface → send_event → send_global_event
 → disable → delete

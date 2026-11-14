@@ -33,6 +33,14 @@ For an instance `replace`, confirm the replacement record ID exists in enabled c
 - `content_file_target` requires both the content filename and the local reference number.
 - `cell_tag` and `has_tag` require FlexTag; see [FlexTag compatibility](@/static_switching_system/docs/compatibility/flextag.md).
 
+## A triggered rule never runs
+
+- A world trigger (`journal`, `hour`, `day`, `weather`) only reaches objects in the player's cell and the eight exterior cells around it, and is checked only while the game is unpaused.
+- A `journal` rule fires when the quest in its own `has_journal` changes stage, not when it is already at that stage on load.
+- `death` needs the current `Static Switching System.esp`; look for `The death trigger is unavailable` in the log. An actor that was already dead when it loaded does not fire it.
+- A log line saying a trigger was `suspended until the next load` means it fired more than four times in ten seconds.
+- `by_player` and `used_item` are only valid under the interaction triggers; a rule misusing them is reported as a skipped rule.
+
 ## A random value errors or behaves unexpectedly
 
 Condition ranges and action ranges are not interchangeable. Condition tables can provide `min`, `max`, or both. A table-form sampled action value requires `max`; this includes transform components, create position/rotation/scale values, lock levels, and teleport position/rotation components.

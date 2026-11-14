@@ -13,7 +13,7 @@ kind = "guide"
 
 These are not the core recipes. They are a small gallery of executable documentation: each module demonstrates several SSS primitives at once, stresses an interaction that a basic example does not, and states the catch before showing the YAML.
 
-The shared rule is simple: SSS gets one shot when an object becomes active. Nothing here is a hidden polling loop or a substitute for an event-driven Lua script. Objects change when activation-time conditions match, and normal save-state semantics determine what remains changed, while `once` controls whether the rule may apply again.
+The shared rule is simple: every module here uses the default `active` trigger, so SSS gets one shot when an object becomes active. Nothing here is a hidden polling loop or a substitute for an event-driven Lua script. For rules that run at other moments, see [Triggers](@/static_switching_system/docs/concepts/triggers.md). Objects change when activation-time conditions match, and normal save-state semantics determine what remains changed, while `once` controls whether the rule may apply again.
 
 ## Gallery
 
