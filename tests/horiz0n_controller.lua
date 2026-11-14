@@ -21,8 +21,10 @@ local DEFAULT_SETTINGS = {
 ---@class Horiz0nTestWorld
 ---@field affordableCells number view distance, in cells, the scene can render at the target framerate
 ---@field baseCells number OpenMW's configured viewing distance in cells
+---@field clock number
 ---@field cell { isExterior: boolean, hasTag: fun(): boolean }
 ---@field engineDistance number
+---@field externalDistance number? written to the engine by another mod before every frame
 ---@field frameTimeFloor number fastest frame the scene can produce regardless of view distance
 ---@field handlers table<string, function>
 ---@field history number[] every distinct distance written to the engine
@@ -39,6 +41,7 @@ local function newWorld(overrides)
   local world = {
     affordableCells = 1000,
     baseCells = overrides.baseCells or 10,
+    clock = 0,
     cell = { isExterior = true, hasTag = function() return false end },
     frameTimeFloor = TARGET_FRAME_TIME,
     history = {},
@@ -84,6 +87,7 @@ local function newWorld(overrides)
     --- OpenMW's main loop multiplies the frame duration by the simulation time scale before Lua sees it.
     ['openmw.core'] = {
       getRealFrameDuration = function() return realFrameTime() * world.timeScale end,
+      getRealTime = function() return world.clock end,
       getSimulationTimeScale = function() return world.timeScale end,
     },
     ['openmw.storage'] = { playerSection = function() return section end },
@@ -111,7 +115,10 @@ local function run(world, seconds, paused)
   local elapsed, writesBefore = 0, #world.history
 
   while elapsed < seconds do
+    if world.externalDistance then world.engineDistance = world.externalDistance end
+
     local frameTime = world.realFrameTime()
+    world.clock = world.clock + frameTime
     world.handlers.onFrame(paused and 0 or frameTime * world.timeScale)
     elapsed = elapsed + frameTime
   end
