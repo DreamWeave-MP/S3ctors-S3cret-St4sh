@@ -314,6 +314,53 @@ do
   )
 end
 
+for _, adjustFramerate in next, { 10, 30, 60, 144 } do
+  for _, tuning in next, { { step = 1, severe = 2 }, { step = 5, severe = 5 } } do
+    local world = newWorld {
+      settings = {
+        Horiz0nAdjustFramerate = adjustFramerate,
+        Horiz0nViewDistanceStepPercent = tuning.step,
+        Horiz0nViewDistanceSevereMult = tuning.severe,
+      },
+    }
+    run(world, 1)
+    world.frameTimeFloor = 1 / 30
+
+    local firstWrite = #world.history + 1
+    run(world, 30)
+
+    local largestCut = 0
+    for writeIndex = firstWrite, #world.history do
+      local cut = 1 - world.history[writeIndex] / world.writePrevious[writeIndex]
+      largestCut = math.max(largestCut, cut)
+    end
+    check(
+      largestCut <= 0.2501,
+      '%d Hz, %d%% step, %dx severe cut %.0f%% of the view distance at once',
+      adjustFramerate,
+      tuning.step,
+      tuning.severe,
+      largestCut * 100
+    )
+    check(
+      busiestSpan(world, firstWrite, 1) <= 5,
+      '%d Hz, %d%% step, %dx severe wrote %d times in one second',
+      adjustFramerate,
+      tuning.step,
+      tuning.severe,
+      busiestSpan(world, firstWrite, 1)
+    )
+    check(
+      cells(world) == 0.25,
+      '%d Hz, %d%% step, %dx severe did not reach the minimum: %.2f cells',
+      adjustFramerate,
+      tuning.step,
+      tuning.severe,
+      cells(world)
+    )
+  end
+end
+
 for _, timeScale in next, { 0.5, 2 } do
   local world = newWorld()
   world.timeScale = timeScale
