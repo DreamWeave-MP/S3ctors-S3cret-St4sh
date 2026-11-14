@@ -111,7 +111,7 @@ local function shrink(step)
   end
 
   isProbing, failedViewDistance, cooldownRemaining = false, viewDistance, growCooldown
-  probeSurvivedTime, overloadTime = 0.0, 0.0
+  probeSurvivedTime, overloadTime = 0.0, SETTLE_TIME
   viewDistance = clampViewDistance(viewDistance - step)
 end
 
@@ -136,7 +136,6 @@ local function measureFrame()
   --- getRealFrameDuration is multiplied by the simulation time scale, which is positive whenever the world is unpaused.
   local frameTime = getRealFrameDuration() / getSimulationTimeScale()
 
-  overloadTime = overloadTime + frameTime
   if cooldownRemaining > 0 then cooldownRemaining = cooldownRemaining - frameTime end
 
   if settleRemaining > 0 then
@@ -145,6 +144,7 @@ local function measureFrame()
     return
   end
 
+  overloadTime = overloadTime + frameTime
   windowDuration = windowDuration + frameTime
   windowFrames = windowFrames + 1
 

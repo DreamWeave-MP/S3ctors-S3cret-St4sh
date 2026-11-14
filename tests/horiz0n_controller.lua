@@ -483,6 +483,31 @@ do
 end
 
 do
+  ---@param writeStall number
+  ---@return number cut fraction of the view distance the second reduction removed
+  local function secondReduction(writeStall)
+    local world = newWorld()
+    run(world, 1)
+
+    world.writeStall = writeStall
+    world.frameTimeFloor = 1 / 50
+    local firstWrite = #world.history + 1
+    run(world, 5)
+
+    local second = firstWrite + 1
+    return 1 - world.history[second] / world.writePrevious[second]
+  end
+
+  local withoutStall, withStall = secondReduction(0), secondReduction(0.3)
+  check(
+    math.abs(withStall - withoutStall) < 0.005,
+    'a rebuild stall changed the next reduction from %.1f%% to %.1f%%',
+    withoutStall * 100,
+    withStall * 100
+  )
+end
+
+do
   local world = newWorld { settings = { Horiz0nMaxViewDistance = 5 } }
   world.cell.isExterior = false
   run(world, 1)
