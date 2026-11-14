@@ -348,7 +348,7 @@ for _, adjustFramerate in next, { 10, 30, 60, 144 } do
       largestCut = math.max(largestCut, cut)
     end
     check(
-      largestCut <= 0.2501,
+      largestCut <= 0.251,
       '%d Hz, %d%% step, %dx severe cut %.0f%% of the view distance at once',
       adjustFramerate,
       tuning.step,
@@ -413,6 +413,72 @@ do
     adjustedAt ~= nil and adjustedAt - reclaimedAt >= 0.2,
     'adjusted %.3fs after taking the camera back',
     (adjustedAt or reclaimedAt) - reclaimedAt
+  )
+end
+
+---@param world Horiz0nTestWorld
+---@param firstWrite integer
+---@return integer reductions
+local function reductionsSince(world, firstWrite)
+  local reductions = 0
+  for writeIndex = firstWrite, #world.history do
+    if world.history[writeIndex] < world.writePrevious[writeIndex] then
+      reductions = reductions + 1
+    end
+  end
+  return reductions
+end
+
+do
+  local world = newWorld()
+  world.affordableCells = 5
+  run(world, 30)
+
+  world.writeStall = 0.3
+  world.affordableCells = 1000
+  local firstWrite = #world.history + 1
+  run(world, 60)
+  check(#world.history >= firstWrite, 'never probed upward under a rebuild stall')
+  check(
+    reductionsSince(world, firstWrite) == 0,
+    'a rebuild stall after raising caused %d reductions',
+    reductionsSince(world, firstWrite)
+  )
+end
+
+do
+  local world = newWorld()
+  run(world, 1)
+
+  world.writeStall = 0.3
+  world.affordableCells = 8
+  local firstWrite = #world.history + 1
+  run(world, 10)
+  check(
+    reductionsSince(world, firstWrite) <= 3,
+    'a rebuild stall after lowering chained %d reductions',
+    reductionsSince(world, firstWrite)
+  )
+  check(
+    cells(world) > 7,
+    'a rebuild stall after lowering drove it down to %.2f cells',
+    cells(world)
+  )
+end
+
+do
+  local world = newWorld()
+  run(world, 1)
+
+  world.writeStall = 0.3
+  setSetting(world, 'Horiz0nMaxViewDistance', 8)
+  local firstWrite = #world.history + 1
+  run(world, 10)
+  check(cells(world) == 8, 'a rebuild stall after a lowered maximum left %.2f cells', cells(world))
+  check(
+    #world.history == firstWrite,
+    'a lowered maximum caused %d writes',
+    #world.history - firstWrite + 1
   )
 end
 

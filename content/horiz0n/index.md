@@ -34,7 +34,7 @@ Much like its sibling, S4V3R, Horiz0n is minimalist in design and aggressively t
 The way it works is simple:
 1. You tell Horiz0n your target framerate - 60 by default
 2. It averages your frametime, thirty times per second, if the world is not paused AND you are not in a true interior cell - so Starwind and Tribunal should both work fine.
-3. If the average frametime stays 10% worse than your target, lower the view distance by 1% per measurement. If it's 30% worse, lower by 2%. Reductions are applied at most four times per second, each one covering the bad measurements since the last and never more than a quarter of the current view distance, so it falls about as fast with far fewer changes.
+3. If the average frametime stays 10% worse than your target, lower the view distance by 1% per measurement. If it's 30% worse, lower by 2%. Reductions are applied at most four times per second, each one covering the time since the last and never more than a quarter of the current view distance, so it falls about as fast with far fewer changes. After any change Horiz0n ignores a quarter second of frames, so the cost of the change itself is never mistaken for load.
 4. After lowering it, hold still for the Grow Cooldown - three seconds by default - and only then try raising the view distance by 1% again, at most four times per second so each raise can be judged before the next. If a raise immediately costs frames again, the cooldown doubles, up to one minute.
 
 It'll keep going as-needed until you hit either the minimum or the maximum viewing distance, and once it finds a distance your framerate can hold, it leaves the view distance alone.
