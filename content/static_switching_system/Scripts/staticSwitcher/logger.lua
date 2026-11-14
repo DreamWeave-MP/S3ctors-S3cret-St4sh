@@ -29,16 +29,16 @@ end
 local function info(formatString, ...)
   if not isDebugEnabled() then return end
   local message = select('#', ...) > 0 and StrFormat(formatString, ...) or formatString
-  StaticLog('[INFO] ' .. message, LOG_PREFIX)
+  StaticLog(StrFormat('[INFO] %s', message), LOG_PREFIX)
 end
 
 --- Non-critical issue surfaced regardless of debug setting.
 ---@param message string
-local function warn(message) StaticLog('[WARN] ' .. message, LOG_PREFIX) end
+local function warn(message) StaticLog(StrFormat('[WARN] %s', message), LOG_PREFIX) end
 
 --- Critical error surfaced regardless of debug setting.
 ---@param message string
-local function error(message) StaticLog('[ERROR] ' .. message, LOG_PREFIX) end
+local function error(message) StaticLog(StrFormat('[ERROR] %s', message), LOG_PREFIX) end
 
 ---@type SSSLogger
 return {

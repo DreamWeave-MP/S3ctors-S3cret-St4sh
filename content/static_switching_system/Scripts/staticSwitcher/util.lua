@@ -47,7 +47,7 @@ local function deepCopy(inputTarget, source)
   local target = inputTarget or {}
 
   if source and type(source) ~= 'table' then
-    error('Source table was not even a table, it was: ' .. source)
+    error(StrFormat('Source table was not even a table, it was: %s', tostring(source)))
   end
 
   for k, v in pairs(source or {}) do
@@ -71,7 +71,7 @@ local function deepLog(object) print(LogString(aux_util.deepToString(object, 5))
 local function getMeshPath(path)
   path = StrGsub(normalizePath(path), '^/+', '')
 
-  if not StrMatch(path, '^meshes/') then path = 'meshes/' .. path end
+  if not StrMatch(path, '^meshes/') then path = StrFormat('meshes/%s', path) end
 
   return path
 end
