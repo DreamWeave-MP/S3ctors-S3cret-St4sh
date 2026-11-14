@@ -245,6 +245,34 @@ do
   check(descentWrites <= 40, 'sustained 40 FPS took %d writes to reach the minimum', descentWrites)
 end
 
+do
+  local world = newWorld()
+  world.affordableCells = 5
+  run(world, 2.5)
+  local settled = cells(world)
+
+  world.affordableCells = 1000
+  local waited = 0
+  while cells(world) <= settled * 1.18 and waited < 30 do
+    run(world, 0.25)
+    waited = waited + 0.25
+  end
+  check(
+    cells(world) > settled * 1.18,
+    'probes did not pass the failed distance: %.2f cells',
+    cells(world)
+  )
+
+  world.affordableCells = 5
+  run(world, 1.5)
+  local writes = run(world, 4)
+  check(
+    writes == 0,
+    'a regression after a passing probe kept the short cooldown: %d writes',
+    writes
+  )
+end
+
 for _, timeScale in next, { 0.5, 2 } do
   local world = newWorld()
   world.timeScale = timeScale
