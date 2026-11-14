@@ -193,7 +193,11 @@ return {
     end,
     ---@param data { viewDistance: number? }?
     onLoad = function(data)
-      if data and data.viewDistance then viewDistance = data.viewDistance end
+      local savedViewDistance = data and data.viewDistance
+      local isUsable = type(savedViewDistance) == 'number'
+        and savedViewDistance == savedViewDistance
+
+      if isUsable then viewDistance = savedViewDistance end
     end,
     ---@return { viewDistance: number }
     onSave = function()
