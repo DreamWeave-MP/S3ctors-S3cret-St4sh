@@ -71,6 +71,8 @@ Personally, I cap it to 5 cells.
 
 View distance is always maxed whilst indoors, to avoid unneccessary blind spots in dungeons. As of 1.4 this no longer needs [H3lp Yours3lf](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/h3lp_yours3lf/), and turning Horiz0n off puts your view distance back to OpenMW's setting.
 
+If another mod changes the view distance while Horiz0n is managing it, Horiz0n steps back for five seconds at a time instead of fighting over it.
+
 Also, I recommend using it with [Hawk3ye](https://dreamweave-mp.github.io/S3ctors-S3cret-St4sh/hawk3ye/), as zooming in changes your field of view and with it your framerate, so Horiz0n can hand back view distance while you are zoomed. Try it out!
 
 {{ credits(default=true) }}

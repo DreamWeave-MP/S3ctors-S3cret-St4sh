@@ -273,6 +273,24 @@ do
   )
 end
 
+do
+  local world = newWorld()
+  world.affordableCells = 5
+  run(world, 30)
+
+  world.externalDistance = 7 * CELL_SIZE
+  local writes = run(world, 20)
+  check(writes <= 5, 'fought another view distance writer with %d writes in 20s', writes)
+
+  world.externalDistance = nil
+  run(world, 6)
+  check(
+    cells(world) < 7,
+    'did not take the camera back after the other writer stopped: %.2f cells',
+    cells(world)
+  )
+end
+
 for _, timeScale in next, { 0.5, 2 } do
   local world = newWorld()
   world.timeScale = timeScale
