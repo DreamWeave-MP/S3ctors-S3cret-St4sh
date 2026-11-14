@@ -14,6 +14,7 @@ Horiz0nManagerSettingsDesc: Activer ou désactiver la gestion de la distance d'a
 Horiz0nMaxViewDistName: Distance de vue maximale
 Horiz0nMaxViewDistDesc: |
   Définit la limite supérieure de la gestion automatique de la distance de vue par Horiz0n.
+  Horiz0n ne dépasse jamais la distance d'affichage réglée dans les options d'OpenMW ; la plus basse des deux s'applique.
   Par défaut : 25.0
   Plage : 1.0 - 100.0
 
@@ -59,3 +60,11 @@ Horiz0nViewDistanceStepPercentDesc: |
   Des valeurs plus élevées accélèrent les ajustements, mais les rendent plus visibles.
   Par défaut : 1 %
   Plage : 0,25 % - 5 %
+
+Horiz0nGrowCooldownName: Délai avant augmentation
+Horiz0nGrowCooldownDesc: |
+  Nombre de secondes pendant lesquelles Horiz0n attend, après avoir réduit la distance d'affichage, avant d'essayer de l'augmenter à nouveau.
+  Ce délai double, jusqu'à une minute, chaque fois que l'augmentation fait aussitôt perdre des images.
+  Des valeurs plus faibles rétablissent la distance d'affichage plus vite, mais la modifient plus souvent, ce qui peut provoquer des saccades avec le terrain distant.
+  Par défaut : 3,0
+  Plage : 0,0 - 30,0
