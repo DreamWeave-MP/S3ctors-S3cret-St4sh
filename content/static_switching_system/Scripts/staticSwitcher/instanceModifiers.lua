@@ -44,7 +44,7 @@ local ModuleCatalog
 ---@type SSSDeleteManager
 local DeleteManager
 
-local assert, error, pairs, type = assert, error, pairs, type
+local assert, error, next, pairs, type = assert, error, next, pairs, type
 
 local function resetOnceCache()
   OnceCache = {
@@ -114,6 +114,30 @@ local function markOnceActionApplied(object, moduleName, actionHash)
   end
 
   moduleActions[actionHash] = true
+end
+
+--- A replacement stands in for the object it replaced, so every once mark follows it.
+--- Otherwise the replacement is a fresh object that the same rule can match again.
+---@param source openmw.GObject
+---@param replacement openmw.GObject
+local function inheritOnceActions(source, replacement)
+  local sourceEntry = OnceCache.byObjectId[source.id]
+  if not sourceEntry then return end
+
+  local replacementModules = getOrCreateOnceCacheEntry(replacement).modules
+
+  for moduleName, moduleActions in next, sourceEntry.modules do
+    local replacementActions = replacementModules[moduleName]
+
+    if not replacementActions then
+      replacementActions = {}
+      replacementModules[moduleName] = replacementActions
+    end
+
+    for actionHash in next, moduleActions do
+      replacementActions[actionHash] = true
+    end
+  end
 end
 
 ---
@@ -611,7 +635,7 @@ local function tryModifyObject(object, instanceModificationList)
             local didAdd = actionHandlers.add_lua_script(modifyTarget, addLuaScriptAction)
             anyActionApplied = anyActionApplied or didAdd
             currentRuleApplied = currentRuleApplied or didAdd
-            DebugLog('  add_lua_script on %s: OK', objectId)
+            DebugLog('  add_lua_script on %s: %s', objectId, didAdd and 'OK' or 'already attached')
           end
 
           if activateByPlayerAction then
@@ -625,7 +649,11 @@ local function tryModifyObject(object, instanceModificationList)
             local didRemove = actionHandlers.remove_lua_script(modifyTarget, removeLuaScriptAction)
             anyActionApplied = anyActionApplied or didRemove
             currentRuleApplied = currentRuleApplied or didRemove
-            DebugLog('  remove_lua_script on %s: OK', objectId)
+            DebugLog(
+              '  remove_lua_script on %s: %s',
+              objectId,
+              didRemove and 'OK' or 'not attached'
+            )
           end
 
           if runLuaScriptAction then
@@ -724,6 +752,8 @@ local function tryModifyObject(object, instanceModificationList)
   end
 
   if not anyActionApplied then return end
+
+  if modifyTarget ~= object then inheritOnceActions(object, modifyTarget) end
 
   if needsPlacementUpdate and modifyTarget:isValid() then
     modifyTarget:setScale(targetScale)
