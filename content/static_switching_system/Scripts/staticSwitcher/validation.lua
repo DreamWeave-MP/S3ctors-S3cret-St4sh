@@ -1,5 +1,6 @@
 ---@omw-context global
 
+local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 local actionHandlers = require 'Scripts.staticSwitcher.actionHandlers'
 local conditionHandlers = require 'Scripts.staticSwitcher.conditionHandlers'
 
@@ -52,6 +53,51 @@ local function validateModule(modulePath, moduleData)
   end
 end
 
+--- Conditions that read the trigger's own context, with the triggers that supply it.
+---@type table<string, table<string, true>>
+local TRIGGER_SCOPED_CONDITIONS = {
+  by_player = TriggerContext.ACTOR_TRIGGERS,
+  used_item = { use = true },
+}
+
+local RECORD_PATTERN_CONDITIONS = {
+  record_id = true,
+  used_item = true,
+}
+
+---@param trigger string|string[]?
+---@return string[]? triggerNames
+---@return string? problem
+local function readTriggerNames(trigger)
+  if trigger == nil then return { TriggerContext.ACTIVE } end
+
+  local triggerNames = type(trigger) == 'table' and trigger or { trigger }
+  if #triggerNames == 0 then return nil, 'trigger is an empty list' end
+
+  for triggerIndex = 1, #triggerNames do
+    local triggerName = triggerNames[triggerIndex]
+
+    if type(triggerName) ~= 'string' or not TriggerContext.isKnownTrigger(triggerName) then
+      return nil, StrFormat('unknown trigger "%s"', tostring(triggerName))
+    end
+  end
+
+  return triggerNames
+end
+
+---@param conditionName string
+---@param triggerNames string[]
+---@return string? unsupportedTrigger
+local function findUnsupportedTrigger(conditionName, triggerNames)
+  local supportedTriggers = TRIGGER_SCOPED_CONDITIONS[conditionName]
+  if not supportedTriggers then return end
+
+  for triggerIndex = 1, #triggerNames do
+    local triggerName = triggerNames[triggerIndex]
+    if not supportedTriggers[triggerName] then return triggerName end
+  end
+end
+
 ---@param recordIdValue string|string[]
 ---@return string? invalidPattern
 local function findInvalidRecordIdPattern(recordIdValue)
@@ -66,8 +112,9 @@ local function findInvalidRecordIdPattern(recordIdValue)
 end
 
 ---@param conditionData SSSConditionData
+---@param triggerNames string[]
 ---@return string? problem
-local function findConditionProblem(conditionData)
+local function findConditionProblem(conditionData, triggerNames)
   if type(conditionData) ~= 'table' then return 'a condition entry is not a map' end
 
   for conditionName, conditionValue in next, conditionData do
@@ -75,14 +122,23 @@ local function findConditionProblem(conditionData)
       return StrFormat('unknown condition "%s"', tostring(conditionName))
     end
 
+    local unsupportedTrigger = findUnsupportedTrigger(conditionName, triggerNames)
+    if unsupportedTrigger then
+      return StrFormat(
+        'condition "%s" is not available on trigger "%s"',
+        conditionName,
+        unsupportedTrigger
+      )
+    end
+
     if conditionName == 'not' then
-      local negatedProblem = findConditionProblem(conditionValue)
+      local negatedProblem = findConditionProblem(conditionValue, triggerNames)
       if negatedProblem then return negatedProblem end
-    elseif conditionName == 'record_id' then
+    elseif RECORD_PATTERN_CONDITIONS[conditionName] then
       local invalidPattern = findInvalidRecordIdPattern(conditionValue)
 
       if invalidPattern then
-        return StrFormat('record_id "%s" is not a valid Lua pattern', invalidPattern)
+        return StrFormat('%s "%s" is not a valid Lua pattern', conditionName, invalidPattern)
       end
     end
   end
@@ -110,10 +166,25 @@ local function findRuleProblem(instanceRule)
   if type(actions) ~= 'table' then return 'the rule has no actions list' end
   if conditions ~= nil and type(conditions) ~= 'table' then return 'conditions is not a list' end
 
+  local triggerNames, triggerProblem = readTriggerNames(instanceRule.trigger)
+  if not triggerNames then return triggerProblem end
+
+  local namesJournalQuest = false
+
   if conditions then
     for conditionIndex = 1, #conditions do
-      local problem = findConditionProblem(conditions[conditionIndex])
+      local conditionData = conditions[conditionIndex]
+
+      local problem = findConditionProblem(conditionData, triggerNames)
       if problem then return problem end
+
+      namesJournalQuest = namesJournalQuest or conditionData.has_journal ~= nil
+    end
+  end
+
+  for triggerIndex = 1, #triggerNames do
+    if triggerNames[triggerIndex] == 'journal' and not namesJournalQuest then
+      return 'trigger "journal" needs a has_journal condition naming the quest to watch'
     end
   end
 

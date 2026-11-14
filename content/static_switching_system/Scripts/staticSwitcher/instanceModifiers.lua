@@ -292,60 +292,56 @@ local function matchesAllConditions(object, conditions)
 end
 
 ---@param object openmw.GObject
+---@param triggerRules SSSTriggerRule[] rules bound to the trigger being processed, in evaluation order
 ---@return SSSInstanceModificationList?
-local function getMatchingInstanceModules(object)
+local function getMatchingInstanceModules(object, triggerRules)
   local matchingActions, actionIndex
 
-  for modIdx = 1, #ModuleCatalog.SortedModuleIds do
-    local moduleName = ModuleCatalog.SortedModuleIds[modIdx]
-    local moduleData = ModuleCatalog.ObjectModificationStore[moduleName]
-    local actionList = moduleData.rules
-    local moduleOnce = moduleData.moduleOnce
+  for ruleIdx = 1, #triggerRules do
+    local triggerRule = triggerRules[ruleIdx]
+    local moduleName, moduleOnce, actionData =
+      triggerRule.moduleName, triggerRule.moduleOnce, triggerRule.rule
 
-    for listIdx = 1, #actionList do
-      local actionData = actionList[listIdx]
+    local actionTableHash = actionData.actionHash
+    local skipReason
 
-      local actionTableHash = actionData.actionHash
-      local skipReason
+    if actionData.once == true and onceActionWasApplied(object, moduleName, actionTableHash) then
+      skipReason = 'once=true already applied'
+    end
 
-      if actionData.once == true and onceActionWasApplied(object, moduleName, actionTableHash) then
-        skipReason = 'once=true already applied'
-      end
+    -- Per-cell once: only skip for this activation batch; not saved
+    if
+      not skipReason
+      and actionData.once == 'per_cell'
+      and wasAppliedThisLoad(object, moduleName, actionTableHash)
+    then
+      skipReason = 'once=per_cell already applied this activation batch'
+    end
 
-      -- Per-cell once: only skip for this activation batch; not saved
-      if
-        not skipReason
-        and actionData.once == 'per_cell'
-        and wasAppliedThisLoad(object, moduleName, actionTableHash)
-      then
-        skipReason = 'once=per_cell already applied this activation batch'
-      end
+    -- Module-level once: skip all rules for this module if any rule has already applied
+    if not skipReason and moduleOnce and onceActionWasApplied(object, moduleName, '*') then
+      skipReason = 'module once=true already applied'
+    end
 
-      -- Module-level once: skip all rules for this module if any rule has already applied
-      if not skipReason and moduleOnce and onceActionWasApplied(object, moduleName, '*') then
-        skipReason = 'module once=true already applied'
-      end
+    if not skipReason then
+      local conditionsPassed = not actionData.conditions
+        or matchesAllConditions(object, actionData.conditions)
 
-      if not skipReason then
-        local conditionsPassed = not actionData.conditions
-          or matchesAllConditions(object, actionData.conditions)
+      if not conditionsPassed then skipReason = 'conditions failed' end
+    end
 
-        if not conditionsPassed then skipReason = 'conditions failed' end
-      end
-
-      if skipReason then
-        DebugLog('SKIP %s/%s on %s: %s', moduleName, actionTableHash, object.id, skipReason)
-      else
-        matchingActions = matchingActions or {}
-        actionIndex = (actionIndex or 0) + 1
-        matchingActions[actionIndex] = {
-          moduleName = moduleName,
-          actionHash = actionTableHash,
-          once = actionData.once,
-          moduleOnce = moduleOnce,
-          actions = actionData.actions,
-        }
-      end
+    if skipReason then
+      DebugLog('SKIP %s/%s on %s: %s', moduleName, actionTableHash, object.id, skipReason)
+    else
+      matchingActions = matchingActions or {}
+      actionIndex = (actionIndex or 0) + 1
+      matchingActions[actionIndex] = {
+        moduleName = moduleName,
+        actionHash = actionTableHash,
+        once = actionData.once,
+        moduleOnce = moduleOnce,
+        actions = actionData.actions,
+      }
     end
   end
 

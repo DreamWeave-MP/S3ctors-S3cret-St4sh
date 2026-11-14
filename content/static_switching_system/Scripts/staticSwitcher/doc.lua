@@ -195,6 +195,8 @@
 ---@field teleport {cell?: string, position?: {x?: SSSRandomNumericRange, y?: SSSRandomNumericRange, z?: SSSRandomNumericRange}, rotation?: SSSVector3Range, onGround?: boolean}? teleports the target object
 
 ---@class SSSConditionData
+---@field by_player boolean? Whether the actor that caused the trigger is the player. Only on the activate, drop, place, and use triggers.
+---@field used_item string|string[]? Lua pattern match against the record ID of the item being used. Only on the use trigger.
 ---@field carrying string|table<RecordId, integer>?
 ---@field cell string|string[]? exact match against object.cell.name or object.cell.id, case-insensitive
 ---@field cell_match string? substring match against object.cell.name or object.cell.id, case-insensitive
@@ -261,6 +263,28 @@
 ---@field actions SSSInstanceAction[]
 ---@field actionHash string hash of the table. Provided *after* being parsed from YAML data.
 ---@field once boolean|'per_cell'?
+---@field trigger string|string[]? when the rule runs: active (default), journal, hour, day, weather, activate, drop, place, use, death, or custom:<name>
+
+---@class SSSTriggerRule
+---@field moduleName string canonical module id that provided the rule
+---@field moduleOnce boolean? the module's top-level once setting
+---@field rule SSSInstanceRule
+
+---@class SSSSweep
+---@field key string world trigger name, or `journal:<questId>` for one watched quest
+---@field rules SSSTriggerRule[] rules to run on each swept object, in evaluation order
+---@field objectTypeNames table<string, true> every object_type named by the sweep's rules
+---@field sweepsEveryType boolean? true when a rule leaves object_type open
+---@field objectTypes table[]? OpenMW types to enumerate; nil enumerates every object
+
+---@class SSSActiveSweep
+---@field sweep SSSSweep
+---@field objects openmw.GObject[] objects near the player when the sweep started
+---@field nextIndex integer index of the next object to process
+
+---@class SSSCustomTriggerEvent
+---@field name string custom trigger name, without the `custom:` prefix
+---@field object openmw.GObject object the rules run on
 
 ---@class SSSInstanceModification
 ---@field moduleName string canonical module id that provided this modification rule
@@ -319,6 +343,9 @@
 ---@field resolveModuleId fun(moduleKey: string): string? resolves canonical ids and unambiguous legacy basenames
 ---@field ObjectModificationStore SSSObjectModificationStore canonical module-id keyed instance modification rules
 ---@field SortedModuleIds string[] instance module IDs in priority-sorted evaluation order
+---@field RulesByTrigger table<string, SSSTriggerRule[]> rules indexed by the trigger they listen to, in evaluation order
+---@field Sweeps table<string, SSSSweep> world-trigger sweeps keyed by sweep key; empty when no rule listens to a world trigger
+---@field JournalSweepKeys table<string, string> watched quest id to its sweep key
 ---@field SortedStaticModuleIds string[] static module IDs in priority-sorted execution order
 
 ---@class SSSStaticReplacements
@@ -333,7 +360,8 @@
 ---@field tryReplaceObject fun(object: openmw.GObject)
 
 ---@class SSSInstanceModifiers
----@field getMatchingInstanceModules fun(object: openmw.GObject): SSSInstanceModificationList?
+---@field getMatchingInstanceModules fun(object: openmw.GObject, triggerRules: SSSTriggerRule[]): SSSInstanceModificationList?
+---@field clearPerCellTracking fun()
 ---@field loadOnceCache fun(savedOnceCache?: SSSOnceCacheSaved)
 ---@field saveOnceCache fun(): SSSOnceCacheSaved
 ---@field tryModifyObject fun(object: openmw.GObject, instanceModificationList: SSSInstanceModificationList)
@@ -350,7 +378,8 @@
 ---@field composedReplacements fun(): table<string, SSSModule> Returns loaded static replacement data keyed by canonical module ID.
 ---@field objectModificationStore fun(): SSSObjectModificationStore Returns the loaded instance-modification rule store.
 ---@field overrideRecords fun(): SSSOverrideRecords Returns generated override record IDs keyed by canonical module id.
----@field version integer Static Switching System interface version. Version 5 is the current contract.
+---@field trigger fun(triggerName: string, object: openmw.GObject): boolean Runs every rule listening to `custom:<triggerName>` on the object. Added in version 6.
+---@field version integer Static Switching System interface version. Version 6 is the current contract.
 
 ---@class openmw.interfaces
 ---@field StaticSwitcher_G openmw.interfaces.StaticSwitcher_G

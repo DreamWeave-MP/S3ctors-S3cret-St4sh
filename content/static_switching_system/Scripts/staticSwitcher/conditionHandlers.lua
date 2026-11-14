@@ -8,13 +8,12 @@ local BatchCache = require 'Scripts.staticSwitcher.batchCache'
 local I = require 'openmw.interfaces'
 
 local Player = world.players[1]
-local Door = types.Door
 
+local Regions = require 'Scripts.staticSwitcher.regions'
+local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local INVALID_TYPE = 'Invalid type was provided: %s'
-
-local cellToExteriorRegion = {}
 
 local CREATURE_TYPE_MAP = {
   creatures = types.Creature.TYPE.Creatures,
@@ -29,49 +28,6 @@ local StrFind, StrLower, StrFormat, StrUpper =
 
 local hasTag
 if I.FlexTagG then hasTag = I.FlexTagG.objectHasTag end
-
----@param cell openmw.core.GCell
----@param position openmw.util.Vector3
----@return string|nil
-local function getExteriorRegionFromDoor(cell, position)
-  local cached = cellToExteriorRegion[cell.id]
-
-  if cached then
-    if type(cached) == 'string' then return cached end
-
-    return
-  end
-
-  local nearestDoor
-  local nearestDistSq = math.huge
-
-  for _, door in ipairs(cell:getAll(types.Door)) do
-    if Door.isTeleport(door) then
-      local dest = Door.destCell(door)
-
-      if dest and dest.isExterior then
-        local distSq = (position - door.position):length2()
-
-        if distSq < nearestDistSq then
-          nearestDistSq = distSq
-          nearestDoor = door
-        end
-      end
-    end
-  end
-
-  if not nearestDoor then
-    cellToExteriorRegion[cell.id] = true
-
-    return
-  end
-
-  local region = Door.destCell(nearestDoor).region
-
-  cellToExteriorRegion[cell.id] = region or true
-
-  return region
-end
 
 ---@type table<string, SSSConditionHandler>
 local conditionHandlers = {
@@ -446,6 +402,26 @@ local conditionHandlers = {
     -- none of which are Lua-pattern-special, so this is backwards compatible.
     return originalId == targetId or StrFind(originalId, targetId, 1) ~= nil
   end,
+  ---@param _ openmw.GObject
+  ---@param shouldBePlayer boolean
+  ---@return boolean
+  by_player = function(_, shouldBePlayer)
+    local actor = TriggerContext.actor
+    if not actor then return false end
+
+    return (actor.type == types.Player) == shouldBePlayer
+  end,
+  ---@param _ openmw.GObject
+  ---@param targetRecordId RecordId
+  ---@return boolean
+  used_item = function(_, targetRecordId)
+    local item = TriggerContext.item
+    if not item then return false end
+
+    local itemRecordId = item.recordId
+
+    return itemRecordId == targetRecordId or StrFind(itemRecordId, targetRecordId, 1) ~= nil
+  end,
   ---@param object openmw.GObject
   ---@param targetData table<string, number[]>
   ---@return boolean
@@ -484,14 +460,7 @@ local conditionHandlers = {
   ---@param targetRegion string
   ---@return boolean
   region = function(object, targetRegion)
-    local cell = object.cell
-    ---@cast cell openmw.core.GCell
-    ---@type string?
-    local region = cell.region
-
-    if not region and not cell.isExterior then
-      region = getExteriorRegionFromDoor(cell, object.position)
-    end
+    local region = Regions.resolveRegion(object.cell, object.position)
 
     return region ~= nil and StrLower(region) == targetRegion
   end,
