@@ -128,9 +128,14 @@ end
 ---@param newMode Horiz0nMode
 local function enterMode(newMode)
   mode = newMode
-  windowDuration, windowFrames, badWindows = 0.0, 0, 0
 
-  if mode == 'disabled' then applyViewDistance(getBaseViewDistance()) end
+  windowDuration, windowFrames, badWindows = 0.0, 0, 0
+  growCooldown, cooldownRemaining, isProbing, failedViewDistance = GROW_COOLDOWN, 0.0, false, nil
+
+  if mode == 'disabled' then
+    viewDistance = getBaseViewDistance()
+    applyViewDistance(viewDistance)
+  end
 end
 
 horiz0nSettings:subscribe(require('openmw.async'):callback(
