@@ -13,7 +13,7 @@ kind = "api"
 
 **Shape:** `replace: self` or `replace: { ReplacementRecordId: chance, ... }`
 
-`replace: self` recreates the matched object from its base record. The original instance is disabled, and the new instance becomes the action target. SSS carries the replacement through the normal placement pipeline, so later transforms and teleports apply to the new instance. This is a fresh instance, not an in-place reset: instance state, inventory, health, scripts, and other runtime state are not restored from the old object.
+`replace: self` recreates the matched object from its base record. The new instance becomes the action target, and the original is disabled once the new instance has been placed in the world; if it cannot be placed, it is removed and the original stays as it was. SSS carries the replacement through the normal placement pipeline, so later transforms and teleports apply to the new instance. This is a fresh instance, not an in-place reset: instance state, inventory, health, scripts, and other runtime state are not restored from the old object.
 
 ```yaml
 replace: self
@@ -137,7 +137,7 @@ create:
 
 Pool counts default to `1`; count range tables require `max`, default `min` to `1`, and produce integer counts. Pool chance is a number from `0` to `1` in the YAML schema. Each pool chance is rolled once; transform overrides are sampled separately for each created object. Relative positioning/rotation/scale is the default, and absolute mode uses the accumulated action placement as its cell and transform base. Transforms and teleports already processed in the same action list are therefore visible to created objects, even though the engine placement commit is deferred. A pending `onGround: true` teleport contributes its requested position; `create` cannot observe the later ground-snapped result.
 
-A pool whose `count`, `chance`, `position`, or `rotate` range has no `max`, or whose `count` has `min` above `max`, is rejected when the module loads and its rule is skipped. A record ID that does not exist is logged once and that pool creates nothing.
+A pool whose `count`, `chance`, `position`, or `rotate` range has no `max`, whose `count` has `min` above `max`, whose `scale` has a bound that is not a number, or whose `transform_type` is anything but `relative` or `absolute`, is rejected when the module loads and its rule is skipped. The same applies to the ranges and `transform_type` of a `transform` action. A record ID that does not exist is logged once and that pool creates nothing.
 
 ### When a create only partly succeeds
 

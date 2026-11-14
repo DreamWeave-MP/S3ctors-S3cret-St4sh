@@ -40,31 +40,24 @@ end
 --- and cannot be checked when a module loads, so a refusal is an expected outcome, not a bug.
 ---
 --- Everything else is left unwrapped on purpose. Handlers that already contain their own
---- boundary do not need a second one, and handlers that only compute must not have one: an
+--- boundary, including the item and spell actions that guard each entry, do not need a second one, and handlers that only compute must not have one: an
 --- error there is a programming error and has to reach the per-object guard and be reported
 --- as one, not be turned into a quietly skipped action.
 local ENGINE_BOUNDARY_ACTIONS = {
   activate_by_player = true,
-  add = true,
-  add_active_spell = true,
   add_lua_script = true,
-  add_spell = true,
   add_tag = true,
-  equip = true,
   global_set = true,
   key = true,
   lock_level = true,
   playsound = true,
-  remove = true,
   remove_lua_script = true,
-  remove_spell = true,
   remove_tag = true,
   send_event = true,
   send_global_event = true,
   set_ownership = true,
   teleport = true,
   trap = true,
-  unequip = true,
 }
 
 --- A refused engine call is treated as an action that did not apply. The rest of its rule
@@ -429,6 +422,10 @@ local function getMatchingInstanceModules(object, triggerRules)
   return matchingActions
 end
 
+--- A replacement created by a rule that has not yet been placed in the world.
+---@type openmw.GObject?
+local UncommittedReplacement
+
 ---@param object openmw.GObject
 ---@param modifyTarget openmw.GObject
 ---@param replaceAction SSSReplaceAction
@@ -438,8 +435,44 @@ local function tryApplyReplacement(object, modifyTarget, replaceAction)
   local foundReplacement = actionHandlers.replace(object, replaceAction)
   if not foundReplacement then return modifyTarget, false end
 
-  modifyTarget.enabled = false
+  UncommittedReplacement = foundReplacement
   return foundReplacement, true
+end
+
+--- Removes a replacement that was created but never took its original's place. The original
+--- is only disabled once its replacement has been placed, so whatever interrupts a rule in
+--- between leaves the original exactly as it was and only this object to clear away.
+local function discardUncommittedReplacement()
+  local replacement = UncommittedReplacement
+  if not replacement then return end
+  UncommittedReplacement = nil
+
+  if replacement:isValid() then replacement:remove() end
+end
+
+--- Records a rule as applied to an object under whichever once policy the rule declares.
+---@param object openmw.GObject
+---@param modifyTarget openmw.GObject the object or the replacement that now stands in for it
+---@param instanceModification SSSInstanceModification
+local function recordRuleApplied(object, modifyTarget, instanceModification)
+  local moduleName, actionHash = instanceModification.moduleName, instanceModification.actionHash
+
+  if instanceModification.once == true then
+    markOnceActionApplied(object, moduleName, actionHash)
+    DebugLog('  once=true cached: %s/%s', moduleName, actionHash)
+  end
+
+  if instanceModification.once == 'per_cell' then
+    markAppliedThisLoad(object, moduleName, actionHash)
+    -- Also mark the replacement target so fresh activations skip re-processing
+    if modifyTarget ~= object then markAppliedThisLoad(modifyTarget, moduleName, actionHash) end
+    DebugLog('  once=per_cell marked: %s/%s', moduleName, actionHash)
+  end
+
+  if instanceModification.moduleOnce then
+    markOnceActionApplied(object, moduleName, '*')
+    DebugLog('  module once=true cached: %s', moduleName)
+  end
 end
 
 --- Placement is committed once, after every rule has had its say. The engine can refuse it.
@@ -458,9 +491,10 @@ local function commitPlacement(target, cell, position, rotation, scale, onGround
   target:teleport(cell, position, teleportOptions)
 end
 
---- A replacement that could not be placed never reached the world. The original is restored
---- and nothing further is done to it, so the object is left as it was found. Rules that had
---- already applied stay recorded: their other actions did happen and must not repeat.
+--- Replacing, transforming and teleporting only take effect when placement is committed at the
+--- end, so a rule that did nothing else is recorded as applied only once that has succeeded.
+--- A rule whose other actions applied is recorded straight away: those did happen and must
+--- not repeat, whatever becomes of the placement.
 ---@param object openmw.GObject
 ---@param instanceModificationList SSSInstanceModificationList
 local function tryModifyObject(object, instanceModificationList)
@@ -471,6 +505,9 @@ local function tryModifyObject(object, instanceModificationList)
   local modifyTarget = object
   local objectId = object.id
   local moduleOnceApplied = {}
+
+  ---@type SSSInstanceModificationList?
+  local placementDependentRules
   --- Do replacements first, then transforms, then item additions/removals, then spells
 
   local newTransform, newPos, newCell, targetScale =
@@ -487,6 +524,7 @@ local function tryModifyObject(object, instanceModificationList)
   for modIndex = 1, #instanceModificationList do
     local instanceModification = instanceModificationList[modIndex]
     local currentRuleApplied = false
+    local currentRuleNeedsPlacement = false
 
     if
       not (instanceModification.moduleOnce and moduleOnceApplied[instanceModification.moduleName])
@@ -534,7 +572,7 @@ local function tryModifyObject(object, instanceModificationList)
             replaceActionSucceeded = didReplace
             anyActionApplied = anyActionApplied or didReplace
             needsPlacementUpdate = needsPlacementUpdate or didReplace
-            currentRuleApplied = currentRuleApplied or didReplace
+            currentRuleNeedsPlacement = currentRuleNeedsPlacement or didReplace
             DebugLog(
               '  replace on %s: %s',
               objectId,
@@ -560,7 +598,7 @@ local function tryModifyObject(object, instanceModificationList)
             )
             anyActionApplied = anyActionApplied or didTransform
             needsPlacementUpdate = needsPlacementUpdate or didTransform
-            currentRuleApplied = currentRuleApplied or didTransform
+            currentRuleNeedsPlacement = currentRuleNeedsPlacement or didTransform
             if didTransform then
               teleportOnGround = nil
               DebugLog('  transform on %s: scale=%.3f', objectId, targetScale)
@@ -580,7 +618,7 @@ local function tryModifyObject(object, instanceModificationList)
             end
 
             anyActionApplied = anyActionApplied or didTeleport
-            currentRuleApplied = currentRuleApplied or didTeleport
+            currentRuleNeedsPlacement = currentRuleNeedsPlacement or didTeleport
             DebugLog('  teleport on %s: %s', objectId, didTeleport and 'OK' or 'failed')
           end
 
@@ -818,57 +856,29 @@ local function tryModifyObject(object, instanceModificationList)
         end
       end
 
-      if instanceModification.once == true and currentRuleApplied then
-        markOnceActionApplied(
-          object,
-          instanceModification.moduleName,
-          instanceModification.actionHash
-        )
-        DebugLog(
-          '  once=true cached: %s/%s',
-          instanceModification.moduleName,
-          instanceModification.actionHash
-        )
+      if currentRuleApplied then
+        recordRuleApplied(object, modifyTarget, instanceModification)
+      elseif currentRuleNeedsPlacement then
+        placementDependentRules = placementDependentRules or {}
+        placementDependentRules[#placementDependentRules + 1] = instanceModification
       end
 
-      if instanceModification.once == 'per_cell' and currentRuleApplied then
-        markAppliedThisLoad(
-          object,
-          instanceModification.moduleName,
-          instanceModification.actionHash
-        )
-        -- Also mark the replacement target so fresh activations skip re-processing
-        if modifyTarget ~= object then
-          markAppliedThisLoad(
-            modifyTarget,
-            instanceModification.moduleName,
-            instanceModification.actionHash
-          )
-        end
-        DebugLog(
-          '  once=per_cell marked: %s/%s',
-          instanceModification.moduleName,
-          instanceModification.actionHash
-        )
-      end
-
-      if instanceModification.moduleOnce and currentRuleApplied then
-        markOnceActionApplied(object, instanceModification.moduleName, '*')
+      if instanceModification.moduleOnce and (currentRuleApplied or currentRuleNeedsPlacement) then
         moduleOnceApplied[instanceModification.moduleName] = true
-        DebugLog('  module once=true cached: %s', instanceModification.moduleName)
       end
     end
   end
 
   if not anyActionApplied then return end
 
-  if modifyTarget ~= object then inheritOnceActions(object, modifyTarget) end
+  local wasPlacementCommitted = not needsPlacementUpdate
 
-  if needsPlacementUpdate and modifyTarget:isValid() then
+  if needsPlacementUpdate then
     local sendsPlayerElsewhere = PlayerObjectIsInstance(modifyTarget)
       and newCell.id ~= object.cell.id
 
-    local wasPlaced, placeError = pcall(
+    local placeError
+    wasPlacementCommitted, placeError = pcall(
       commitPlacement,
       modifyTarget,
       newCell,
@@ -878,16 +888,29 @@ local function tryModifyObject(object, instanceModificationList)
       teleportOnGround
     )
 
-    if wasPlaced then
-      if sendsPlayerElsewhere then TriggerContext.expectedPlayerCellId = newCell.id end
-    else
+    if not wasPlacementCommitted then
       reportActionFailure('placement', placeError)
+    elseif sendsPlayerElsewhere then
+      TriggerContext.expectedPlayerCellId = newCell.id
+    end
+  end
 
-      if modifyTarget ~= object then
-        object.enabled = true
-        modifyTarget:remove()
-        return
+  if not wasPlacementCommitted and modifyTarget ~= object then
+    discardUncommittedReplacement()
+    return
+  end
+
+  if wasPlacementCommitted then
+    if placementDependentRules then
+      for ruleIdx = 1, #placementDependentRules do
+        recordRuleApplied(object, modifyTarget, placementDependentRules[ruleIdx])
       end
+    end
+
+    if modifyTarget ~= object then
+      UncommittedReplacement = nil
+      inheritOnceActions(object, modifyTarget)
+      object.enabled = false
     end
   end
 
@@ -902,6 +925,7 @@ local InstanceModifiers = {
   loadOnceCache = loadOnceCache,
   saveOnceCache = saveOnceCache,
   tryModifyObject = tryModifyObject,
+  discardUncommittedReplacement = discardUncommittedReplacement,
   clearPerCellTracking = clearPerCellTracking,
 }
 

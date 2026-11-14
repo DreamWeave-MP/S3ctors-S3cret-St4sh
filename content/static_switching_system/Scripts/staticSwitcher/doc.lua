@@ -386,6 +386,7 @@
 ---@class SSSInstanceModifiers
 ---@field getMatchingInstanceModules fun(object: openmw.GObject, triggerRules: SSSTriggerRule[]): SSSInstanceModificationList?
 ---@field clearPerCellTracking fun()
+---@field discardUncommittedReplacement fun() removes a replacement that an interrupted rule created but never placed
 ---@field loadOnceCache fun(savedOnceCache?: SSSOnceCacheSaved)
 ---@field saveOnceCache fun(): SSSOnceCacheSaved
 ---@field tryModifyObject fun(object: openmw.GObject, instanceModificationList: SSSInstanceModificationList)

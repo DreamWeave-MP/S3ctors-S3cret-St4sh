@@ -128,8 +128,8 @@ end
 
 local VECTOR_AXES = { 'x', 'y', 'z' }
 
---- The checks below reject exactly the shapes a handler would raise on, and nothing stricter:
---- a module that works today must keep loading.
+--- The checks below reject the shapes a handler would raise on, plus the one value that would
+--- not raise but would quietly change what the author asked for: an unknown transform_type.
 
 --- A sampled range is a fixed number or a table with a numeric `max`; `min` is optional.
 ---@param rangeValue number|RangeTable|nil
@@ -152,11 +152,26 @@ local function isOrderedRange(rangeValue)
   return (rangeValue.min or 1) <= rangeValue.max
 end
 
+--- A scale range may omit either bound, but a bound that is present has to be a number.
 ---@param scaleValue number|RangeTable|nil
 ---@return boolean isUsable
 local function isScale(scaleValue)
-  local scaleType = type(scaleValue)
-  return scaleValue == nil or scaleType == 'number' or scaleType == 'table'
+  if scaleValue == nil or type(scaleValue) == 'number' then return true end
+  if type(scaleValue) ~= 'table' then return false end
+
+  local min, max = scaleValue.min, scaleValue.max
+  return (min == nil or type(min) == 'number') and (max == nil or type(max) == 'number')
+end
+
+--- An unknown transform_type would not raise; it would silently be read as `absolute`.
+---@param owner table action or pool that carries the transform_type
+---@return string? problem phrased to follow the name of what carries it
+local function findTransformTypeProblem(owner)
+  local transformType = owner.transform_type
+
+  if transformType ~= nil and transformType ~= 'relative' and transformType ~= 'absolute' then
+    return StrFormat('has unknown transform_type "%s"', tostring(transformType))
+  end
 end
 
 ---@param owner table action or pool that carries the vector
@@ -187,7 +202,9 @@ local function findCreatePoolProblem(details)
   if not isSampledRange(details.chance) then return 'has a chance range without max' end
   if not isScale(details.scale) then return 'has a scale that is not a number or range' end
 
-  return findVectorProblem(details, 'position') or findVectorProblem(details, 'rotate')
+  return findVectorProblem(details, 'position')
+    or findVectorProblem(details, 'rotate')
+    or findTransformTypeProblem(details)
 end
 
 --- Item actions take a record ID, a list of them, or a map of record ID to count or details.
@@ -282,6 +299,7 @@ local ACTION_PAYLOAD_PROBLEMS = {
 
     local vectorProblem = findVectorProblem(transformAction, 'position')
       or findVectorProblem(transformAction, 'rotate')
+      or findTransformTypeProblem(transformAction)
 
     if vectorProblem then return StrFormat('transform %s', vectorProblem) end
   end,

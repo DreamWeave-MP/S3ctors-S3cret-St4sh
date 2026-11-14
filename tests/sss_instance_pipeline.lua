@@ -43,7 +43,7 @@ local knownRecords = {
   crate = true,
 }
 
-local objectType = { records = {} }
+local objectType = { records = {}, inventory = function(object) return object.inventory end }
 local lockableType = {
   records = {},
   setTrapSpell = function(object, trapId) object.trapId = trapId end,
@@ -67,6 +67,7 @@ local function newObject(recordId, cell, type)
   function object:setScale() end
   function object:remove() self.count = 0 end
   function object:hasScript() return false end
+  function object:moveInto(inventory) inventory.items[#inventory.items + 1] = self end
   function object:teleport(targetCell)
     if placementsBeforeFailure then
       if placementsBeforeFailure == 0 then error 'the cell refused the object' end
@@ -127,7 +128,24 @@ local moduleSources = {
         },
         {
           conditions = { { record_id = 'fragile' } },
-          actions = { { replace = { crate = 1 } }, { set_ownership = { owner = 'marked' } } },
+          actions = { { replace = { crate = 1 } } },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'sturdy' } },
+          actions = {
+            { replace = { crate = 1 } },
+            { send_global_event = { name = 'SturdyReplaced' } },
+          },
+          once = true,
+        },
+        {
+          conditions = { { record_id = 'doomed' } },
+          actions = { { replace = { crate = 1 } }, { disable = true } },
+        },
+        {
+          conditions = { { record_id = 'hoarder' } },
+          actions = { { add = { 'crate', 'no_such_record' } } },
           once = true,
         },
         {
@@ -182,6 +200,9 @@ local moduleSources = {
         { actions = { { teleport = { position = { x = { min = 1 } } } } } },
         { actions = { { global_set = { name = 'someglobal', value = { min = 1 } } } } },
         { actions = { { create = 'crate' } } },
+        { actions = { { create = { crate = { scale = { max = 'bad' } } } } } },
+        { actions = { { create = { crate = { transform_type = 'reltaive' } } } } },
+        { actions = { { transform = { scale = 2, transform_type = 'sideways' } } } },
       },
     }
   end,
@@ -216,7 +237,7 @@ package.preload['openmw.types'] = function()
 
   return {
     Actor = { objectIsInstance = neverInstance },
-    Container = { objectIsInstance = neverInstance },
+    Container = { objectIsInstance = function(object) return object.isContainer == true end },
     Creature = { TYPE = {} },
     Door = {},
     Player = {
@@ -314,6 +335,16 @@ package.preload['openmw_aux.util'] = function()
   }
 end
 
+--- A handler that only computes has no boundary of its own; this one can be made to fail the
+--- way a programming error would, to show where such an error ends up.
+local actionHandlersUnderTest = require 'Scripts.staticSwitcher.actionHandlers'
+local disableHandler = actionHandlersUnderTest.disable
+local disableRaises = false
+actionHandlersUnderTest.disable = function(object, disableAction)
+  if disableRaises then error 'a programming error' end
+  return disableHandler(object, disableAction)
+end
+
 local staticSwitcher = require 'Scripts.staticSwitcher.global'
 local handlers = staticSwitcher.engineHandlers
 local ruleStore = staticSwitcher.interface.objectModificationStore()
@@ -347,7 +378,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 10)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 13)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -394,6 +425,18 @@ assert(
   countLogLines 'Skipped rule 16 in .-rejected%.yaml: create needs a map of record IDs to pools'
     == 1
 )
+assert(
+  countLogLines 'Skipped rule 17 in .-rejected%.yaml: create pool "crate" has a scale that is not a number or range'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 18 in .-rejected%.yaml: create pool "crate" has unknown transform_type "reltaive"'
+    == 1
+)
+assert(
+  countLogLines 'Skipped rule 19 in .-rejected%.yaml: transform has unknown transform_type "sideways"'
+    == 1
+)
 
 -- `cell` is lowered for matching, but the hash still reflects the authored casing.
 assert(keptRules[1].conditions[1].cell == 'tel branora')
@@ -401,7 +444,7 @@ assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[8]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[11]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -482,7 +525,8 @@ activate(herald)
 runFrames(4)
 assert(#sentGlobalEvents == 2, 'a successful send is recorded')
 
--- A replacement the engine refuses to place is removed and the original is restored.
+-- A replacement the engine refuses to place is removed, the original is left as it was, and
+-- a rule that did nothing but replace is not recorded, so it replaces on the next attempt.
 local fragile = newObject('fragile', TEL_BRANORA)
 local createdBeforeFragile = #createdObjects
 placementsBeforeFailure = 0
@@ -491,9 +535,59 @@ runFrames(4)
 placementsBeforeFailure = nil
 
 local unplacedReplacement = createdObjects[createdBeforeFragile + 1]
-assert(fragile.enabled == true, 'the original stayed disabled after its replacement failed')
+assert(fragile.enabled == true, 'the original was disabled although its replacement failed')
 assert(unplacedReplacement.cell == nil and unplacedReplacement.count == 0)
 assert(countLogLines '%[WARN%] Action placement failed and was skipped' == 1)
+
+activate(fragile)
+runFrames(4)
+assert(
+  #createdObjects == createdBeforeFragile + 2,
+  'a replacement that never happened used up once'
+)
+assert(fragile.enabled == false)
+assert(createdObjects[createdBeforeFragile + 2].cell == TEL_BRANORA)
+
+-- A rule that also did something else is recorded even though its replacement failed: the
+-- event went out and must not go out again.
+local sturdy = newObject('sturdy', TEL_BRANORA)
+local eventsBeforeSturdy, createdBeforeSturdy = #sentGlobalEvents, #createdObjects
+placementsBeforeFailure = 0
+activate(sturdy)
+runFrames(4)
+placementsBeforeFailure = nil
+assert(#sentGlobalEvents == eventsBeforeSturdy + 1 and sturdy.enabled == true)
+
+activate(sturdy)
+runFrames(4)
+assert(#sentGlobalEvents == eventsBeforeSturdy + 1 and #createdObjects == createdBeforeSturdy + 1)
+
+-- An error that is not an engine refusal is reported as an error, and a replacement begun
+-- before it is rolled back: the original is untouched and nothing is left outside a cell.
+local doomed = newObject('doomed', TEL_BRANORA)
+local createdBeforeDoomed = #createdObjects
+disableRaises = true
+activate(doomed)
+runFrames(4)
+disableRaises = false
+
+local abandonedReplacement = createdObjects[createdBeforeDoomed + 1]
+assert(doomed.enabled == true, 'an interrupted rule left its original disabled')
+assert(abandonedReplacement.cell == nil and abandonedReplacement.count == 0)
+assert(countLogLines '%[ERROR%] Skipped @%d+ %(doomed%).-a programming error' == 1)
+
+-- An item action that the engine accepts in part reports what it added and does not add it
+-- again.
+local hoarder = newObject('hoarder', TEL_BRANORA)
+hoarder.isContainer, hoarder.inventory = true, { items = {} }
+activate(hoarder)
+runFrames(4)
+assert(#hoarder.inventory.items == 1 and hoarder.inventory.items[1].recordId == 'crate')
+assert(countLogLines '%[WARN%] "no_such_record" was refused' == 1)
+
+activate(hoarder)
+runFrames(4)
+assert(#hoarder.inventory.items == 1, 'the accepted item was added a second time')
 
 -- Lowercase trap, key, and global names apply instead of clearing the lock data.
 local trapped = newObject('trapped', TEL_BRANORA, lockableType)
@@ -564,7 +658,7 @@ assert(countCreated 'ck_disturbed_mucksponge' == 1, 'rule 1 must not fire on the
 local liveAtStageSixty = findLiveObjects()
 assert(#liveAtStageSixty == 1 and liveAtStageSixty[1].recordId == 'flora_muckspunge_03')
 
-assert(countLogLines '%[ERROR%] Skipped @' == 1, 'only the deliberately throwing rule may fail')
+assert(countLogLines '%[ERROR%] Skipped @' == 2, 'only the two deliberately failing rules may fail')
 
 print = realPrint
 print 'SSS instance pipeline tests passed'

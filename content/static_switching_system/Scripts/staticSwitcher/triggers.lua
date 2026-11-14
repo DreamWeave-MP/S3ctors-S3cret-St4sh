@@ -68,6 +68,8 @@ local function runGuarded(applyToObject, object, triggerRules)
   if wasProcessed then return end
 
   ErrorLog(StrFormat('Skipped %s (%s): %s', object.id, object.recordId, tostring(processError)))
+
+  InstanceModifiers.discardUncommittedReplacement()
 end
 
 ---@param object openmw.GObject

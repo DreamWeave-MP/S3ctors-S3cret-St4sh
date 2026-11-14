@@ -330,6 +330,22 @@ local function getItemActionDetails(itemData)
   return itemData
 end
 
+--- Applies one entry of an action that names several items or spells. Each entry is its own
+--- engine boundary, so an entry the engine refuses does not hide the ones it accepted: the
+--- action still reports that it applied, and what it added is not added again.
+---@param entryHandler fun(object: openmw.GObject, recordId: RecordId, detail: integer|SSSActiveSpellDetails|nil): boolean
+---@param object openmw.GObject
+---@param recordId RecordId
+---@param detail integer|SSSActiveSpellDetails|nil
+---@return boolean wasApplied
+local function applyEntry(entryHandler, object, recordId, detail)
+  local didRun, wasApplied = pcall(entryHandler, object, recordId, detail)
+  if didRun then return wasApplied end
+
+  warnOnce(StrFormat('"%s" was refused: %s', tostring(recordId), tostring(wasApplied)))
+  return false
+end
+
 ---@param chance SSSChanceRange?
 ---@return boolean shouldApply
 local function shouldApplyChance(chance)
@@ -367,7 +383,7 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
   local actionType = type(itemAction)
 
   if actionType == 'string' then
-    return itemHandler(object, itemAction, 1)
+    return applyEntry(itemHandler, object, itemAction, 1)
   elseif actionType == 'table' then
     local firstKey = next(itemAction)
 
@@ -378,7 +394,7 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
       local numItems = #itemAction
 
       for i = 1, numItems do
-        wasApplied = itemHandler(object, itemAction[i], count) or wasApplied
+        wasApplied = applyEntry(itemHandler, object, itemAction[i], count) or wasApplied
       end
 
       return wasApplied
@@ -391,7 +407,7 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
       local count, chance = getItemActionDetails(itemData)
 
       if count >= 1 and shouldApplyChance(chance) then
-        wasApplied = itemHandler(object, recordId, count) or wasApplied
+        wasApplied = applyEntry(itemHandler, object, recordId, count) or wasApplied
       end
     end
 
@@ -408,7 +424,7 @@ end
 local function applySpellAction(object, spellAction, spellHandler)
   local actionType = type(spellAction)
 
-  if actionType == 'string' then return spellHandler(object, spellAction) end
+  if actionType == 'string' then return applyEntry(spellHandler, object, spellAction) end
   if actionType ~= 'table' then return false end
 
   local wasApplied = false
@@ -417,7 +433,7 @@ local function applySpellAction(object, spellAction, spellHandler)
   if firstKey and type(firstKey) == 'number' then
     ---@cast spellAction RecordId[]
     for spellIndex = 1, #spellAction do
-      wasApplied = spellHandler(object, spellAction[spellIndex]) or wasApplied
+      wasApplied = applyEntry(spellHandler, object, spellAction[spellIndex]) or wasApplied
     end
 
     return wasApplied
@@ -426,7 +442,7 @@ local function applySpellAction(object, spellAction, spellHandler)
   ---@cast spellAction table<RecordId, SSSSpellDetails>
   for spellId, details in pairs(spellAction) do
     if shouldApplyChance(details.chance) then
-      wasApplied = spellHandler(object, spellId) or wasApplied
+      wasApplied = applyEntry(spellHandler, object, spellId) or wasApplied
     end
   end
 
@@ -439,7 +455,9 @@ end
 local function applyActiveSpellAction(object, activeSpellAction)
   local actionType = type(activeSpellAction)
 
-  if actionType == 'string' then return addActiveSpellToActor(object, activeSpellAction) end
+  if actionType == 'string' then
+    return applyEntry(addActiveSpellToActor, object, activeSpellAction)
+  end
   if actionType ~= 'table' then return false end
 
   local wasApplied = false
@@ -448,7 +466,8 @@ local function applyActiveSpellAction(object, activeSpellAction)
   if firstKey and type(firstKey) == 'number' then
     ---@cast activeSpellAction RecordId[]
     for spellIndex = 1, #activeSpellAction do
-      wasApplied = addActiveSpellToActor(object, activeSpellAction[spellIndex]) or wasApplied
+      wasApplied = applyEntry(addActiveSpellToActor, object, activeSpellAction[spellIndex])
+        or wasApplied
     end
 
     return wasApplied
@@ -457,7 +476,7 @@ local function applyActiveSpellAction(object, activeSpellAction)
   ---@cast activeSpellAction table<RecordId, SSSActiveSpellDetails>
   for spellId, details in pairs(activeSpellAction) do
     if shouldApplyChance(details.chance) then
-      wasApplied = addActiveSpellToActor(object, spellId, details) or wasApplied
+      wasApplied = applyEntry(addActiveSpellToActor, object, spellId, details) or wasApplied
     end
   end
 

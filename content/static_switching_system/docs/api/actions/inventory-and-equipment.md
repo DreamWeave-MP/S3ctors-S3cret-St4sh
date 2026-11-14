@@ -26,6 +26,8 @@ Item count range tables are sampled integer ranges and require `max`; their defa
 
 Creates and moves requested items into an Actor or Container inventory. String and array entries use count `1`; map entries default to count `1` when only `chance` is supplied.
 
+Each entry of an item or spell action stands on its own. An entry the engine refuses, for example a record that is not in the load order, is logged once as `"<record>" was refused` and skipped; the entries that were accepted stay, and the action counts as applied. A `once: true` rule in that position is recorded and does not add the accepted items again.
+
 ```yaml
 add:
   gold_001:
