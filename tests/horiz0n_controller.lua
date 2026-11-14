@@ -482,6 +482,17 @@ do
   )
 end
 
+do
+  local world = newWorld { settings = { Horiz0nMaxViewDistance = 5 } }
+  world.cell.isExterior = false
+  run(world, 1)
+  check(
+    cells(world) == 5,
+    'indoors did not use the lower of both maximums: %.2f cells',
+    cells(world)
+  )
+end
+
 for _, timeScale in next, { 0.5, 2 } do
   local world = newWorld()
   world.timeScale = timeScale
