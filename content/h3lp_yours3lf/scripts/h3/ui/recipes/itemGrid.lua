@@ -2,7 +2,8 @@
 
 local activation = require 'scripts.h3.ui.recipes.activation'
 
-local Assert, Next, RawGet, StrFormat, ToString, Type = assert, next, rawget, string.format, tostring, type
+local Assert, Next, RawGet, StrFormat, ToString, Type =
+  assert, next, rawget, string.format, tostring, type
 
 local Metadata = {
   role = true,
@@ -14,7 +15,7 @@ local Metadata = {
   name = true,
 }
 
----@param ctx H3UI.Scope
+---@param ctx H3UI.RecipeContext
 ---@param item H3UI.ItemGridItem
 ---@param index integer
 ---@param activate? H3UI.ActivationState

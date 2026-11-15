@@ -228,9 +228,8 @@ end
 ---@param state? H3ComponentTest.InventoryState
 ---@return openmw.ui.Layout
 local function inventoryPanel(invalidate, rebuild, state)
-  rebuild = rebuild or
-    ---@return nil
-    function() end
+  rebuild = rebuild ---@return nil
+    or function() end
   state = state or {}
   initializeState(state)
 

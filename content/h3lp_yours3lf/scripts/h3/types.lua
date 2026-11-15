@@ -35,6 +35,8 @@
 
 ---@alias H3UI.DocumentValue nil|boolean|number|string|table|userdata
 
+---@alias H3UI.InputBindingDevice 'keyboard'|'mouse'|'controller'
+
 ---@alias H3UI.ItemGridItem H3UI.ItemSlotOptions|openmw.ui.Layout
 
 ---@alias H3UI.CompiledRuntimeStyles table<string, H3UI.StateDeltaList>
@@ -183,6 +185,9 @@
 ---@field thickness? number Defaults to `1`.
 ---@field userData? H3.UserData
 
+---@class H3.EngineUserdata
+---@field __type? H3UI.RuntimeTypeDescriptor LuaJIT builds only; Luau names the type through typeof.
+
 ---@class H3.GridOptions
 ---@field columnGap? number
 ---@field columns? integer
@@ -319,6 +324,12 @@
 ---@field template? openmw.ui.Template
 ---@field userData? H3.UserData
 
+---@class H3.Runtime
+---@field isLuaJIT boolean
+---@field isLuau boolean
+---@field userdataType H3.UserdataTypeNames
+---@field userdataTypeName fun(value: userdata|H3.EngineUserdata|openmw.core.Spell): string?
+
 ---@class H3.SearchInputOptions
 ---@field bordered? boolean
 ---@field clearable? boolean
@@ -449,6 +460,13 @@
 ---@field text? string
 ---@field textProps? table
 ---@field userData? H3.UserData
+
+---@class H3.UserdataTypeNames
+---@field Color string
+---@field Spell string
+---@field Vector2 string
+---@field Vector3 string
+---@field Vector4 string
 
 ---@class H3.WidgetOptions
 ---@field children? openmw.ui.Content|openmw.ui.LayoutOrElement[]
@@ -645,8 +663,7 @@
 
 ---@class H3UI.CollapsibleOptions: H3.CollapsibleOptions, H3UI.ComponentOptions
 
----@class H3UI.ColorLikeUserdata
----@field __type H3UI.RuntimeTypeDescriptor
+---@class H3UI.ColorLikeUserdata: H3.EngineUserdata
 ---@field asHex fun(self: H3UI.ColorLikeUserdata): string
 
 ---@class H3UI.ColorRendererArgument
@@ -805,6 +822,41 @@
 
 ---@class H3UI.ImageOptions: H3.ImageOptions, H3UI.ComponentOptions
 
+---@class H3UI.InputActionDefinition
+---@field bindings H3UI.InputBindingSlot[]
+---@field info openmw.input.ActionInfo
+---@field settingKey string
+
+---@class H3UI.InputBindingRecord
+---@field button integer
+---@field device H3UI.InputBindingDevice
+---@field key string
+---@field type 'action'
+
+---@class H3UI.InputBindingRecording
+---@field argument H3UI.InputBindingRecordingArgument
+---@field refresh fun(): nil
+---@field slot H3UI.InputBindingSlot
+
+---@class H3UI.InputBindingRecordingArgument
+---@field bindings H3UI.InputBindingSlot[]
+---@field key string
+---@field type 'action'
+
+---@class H3UI.InputBindingSlot
+---@field default? integer
+---@field device H3UI.InputBindingDevice
+---@field id string
+---@field label? string
+
+---@class H3UI.Intent
+---@field Activate 'H3UI.Activate'
+---@field Cancel 'H3UI.Cancel'
+---@field Down 'H3UI.NavigateDown'
+---@field Left 'H3UI.NavigateLeft'
+---@field Right 'H3UI.NavigateRight'
+---@field Up 'H3UI.NavigateUp'
+
 ---@class H3UI.ItemGridOptions
 ---@field class? string
 ---@field classes? string[]|table<string, boolean>
@@ -855,15 +907,13 @@
 ---@field expectedTheme string
 ---@field id string
 
----@class H3UI.RecipeContext: H3UI.ConstructorSurface
+---@class H3UI.RecipeContext: H3UI.ConstructorSurface, H3UI.ResolveContext
 ---@field _isChildScope boolean Whether this context belongs to a disposable child scope.
 ---@field child fun(options?: H3UI.ScopeOptions): H3UI.RecipeContext Create a child recipe context with a separate invalidation target.
----@field invalidate? fun(): nil
 ---@field patch? fun(layout: openmw.ui.Layout, styles: table<string, H3UI.Style>)
 ---@field recipe string
 ---@field setChildren fun(layout: openmw.ui.Layout, children: openmw.ui.LayoutOrElement[])
 ---@field setSelected? fun(layout: openmw.ui.Layout, selected: boolean)
----@field theme H3UI.Theme
 
 ---@class H3UI.Registry
 ---@field build fun(name: string, args: table, themeStyles: table, inlineStyles: table, stateStyles: table?, invalidate: fun()?, selectionStyles: table?, selected: boolean?): openmw.ui.Layout
@@ -1012,8 +1062,7 @@
 
 ---@class H3UI.SelectorOptions: H3.SelectorOptions, H3UI.ComponentOptions
 
----@class H3UI.SerializableUserdata
----@field __type H3UI.RuntimeTypeDescriptor
+---@class H3UI.SerializableUserdata: H3.EngineUserdata
 ---@field a? number
 ---@field b? number
 ---@field g? number

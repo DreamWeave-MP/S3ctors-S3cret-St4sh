@@ -23,7 +23,7 @@
 ---  setAlpha(smooth)   -- sine-curved 0..1, smooth for fades
 ---                     -- linear is raw 0..1 phase (sawtooth)
 
-local core = require('openmw.core')
+local core = require 'openmw.core'
 local sin, pi = math.sin, math.pi
 local TAU = 2 * pi
 
@@ -34,20 +34,22 @@ local TAU = 2 * pi
 ---@param simulation? boolean Omit or false for real time; true for simulation time.
 ---@return OscillatorTick pulse Returns smooth sine value and raw sawtooth phase.
 local function oscillator(period, simulation)
-    assert(type(period) == 'number' and period > 0,
-        'oscillator: period must be > 0')
+  assert(type(period) == 'number' and period > 0, 'oscillator: period must be > 0')
 
-    assert(simulation == nil or type(simulation) == 'boolean', 'oscillator: simulation flag must be boolean')
-    local clock = simulation and core.getSimulationTime or core.getRealTime
-    local start = clock()
+  assert(
+    simulation == nil or type(simulation) == 'boolean',
+    'oscillator: simulation flag must be boolean'
+  )
+  local clock = simulation and core.getSimulationTime or core.getRealTime
+  local start = clock()
 
-    ---@return number smooth
-    ---@return number phase
-    return function()
-        local phase = ((clock() - start) / period) % 1
-        local smooth = (sin(phase * TAU - pi * 0.5) + 1) * 0.5
-        return smooth, phase
-    end
+  ---@return number smooth
+  ---@return number phase
+  return function()
+    local phase = ((clock() - start) / period) % 1
+    local smooth = (sin(phase * TAU - pi * 0.5) + 1) * 0.5
+    return smooth, phase
+  end
 end
 
 return oscillator

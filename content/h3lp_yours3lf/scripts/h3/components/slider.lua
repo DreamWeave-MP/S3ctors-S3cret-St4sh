@@ -93,50 +93,62 @@ local function slider(options)
     return minimum + range * ratio
   end
 
-  eventHandlers.add(events, 'mousePress',
+  eventHandlers.add(
+    events,
+    'mousePress',
     ---@param event openmw.ui.MouseEvent?
     ---@return boolean?
     function(event)
-    if not event or event.button ~= 1 then return end
+      if not event or event.button ~= 1 then return end
 
-    dragging = true
-    updateValue(valueAt(event))
-    return true
-  end)
-
-  eventHandlers.add(events, 'mouseMove',
-    ---@param event openmw.ui.MouseEvent?
-    ---@return boolean?
-    function(event)
-    if not dragging or not event then return end
-
-    if event.button ~= 1 then
-      dragging = false
-      return
+      dragging = true
+      updateValue(valueAt(event))
+      return true
     end
+  )
 
-    updateValue(valueAt(event))
-    return true
-  end)
-
-  eventHandlers.add(events, 'mouseRelease',
+  eventHandlers.add(
+    events,
+    'mouseMove',
     ---@param event openmw.ui.MouseEvent?
     ---@return boolean?
     function(event)
-    if not event or event.button ~= 1 or not dragging then return end
+      if not dragging or not event then return end
 
-    dragging = false
-    return true
-  end)
+      if event.button ~= 1 then
+        dragging = false
+        return
+      end
 
-  eventHandlers.add(events, 'focusLoss',
+      updateValue(valueAt(event))
+      return true
+    end
+  )
+
+  eventHandlers.add(
+    events,
+    'mouseRelease',
+    ---@param event openmw.ui.MouseEvent?
+    ---@return boolean?
+    function(event)
+      if not event or event.button ~= 1 or not dragging then return end
+
+      dragging = false
+      return true
+    end
+  )
+
+  eventHandlers.add(
+    events,
+    'focusLoss',
     ---@return boolean?
     function()
-    if not dragging then return end
+      if not dragging then return end
 
-    dragging = false
-    return true
-  end)
+      dragging = false
+      return true
+    end
+  )
 
   local layout = meter {
     name = options.name,

@@ -137,3 +137,24 @@ H3UIColor_negative_Name: Negative
 H3UIColor_count_Name: Item count
 H3UIColor_accent_Name: Accent
 H3UIColor_chromeBorder_Name: Chrome border color
+
+H3UIInputPageName: H3UI Controls
+H3UIInputPageDescription: Choose the keys and buttons that move through and operate H3UI windows.
+H3UIInputNavigateUpName: Navigate up
+H3UIInputNavigateUpDescription: Move to the control above.
+H3UIInputNavigateDownName: Navigate down
+H3UIInputNavigateDownDescription: Move to the control below.
+H3UIInputNavigateLeftName: Navigate left
+H3UIInputNavigateLeftDescription: Move to the control on the left.
+H3UIInputNavigateRightName: Navigate right
+H3UIInputNavigateRightDescription: Move to the control on the right.
+H3UIInputActivateName: Activate
+H3UIInputActivateDescription: Use the selected control.
+H3UIInputCancelName: Cancel
+H3UIInputCancelDescription: Back out of the current control or window.
+input_binding_listening: Press a button...
+input_binding_clear: Clear
+input_binding_default: Default
+input_binding_keyboard: Keyboard
+input_binding_mouse: Mouse
+input_binding_controller: Controller

@@ -430,8 +430,10 @@ local function new(registry, publicComponents)
     end
 
     local result = recipeFunction(context, recipeInput)
+    local resolved = resolveValue(scope, result, context, trace)
+    ---@cast resolved openmw.ui.Layout
 
-    return resolveValue(scope, result, context, trace)
+    return resolved
   end
 
   ---@param scope H3UI.Scope

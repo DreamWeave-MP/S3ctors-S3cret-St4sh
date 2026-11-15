@@ -21,68 +21,78 @@ local loadCount = 0
 local saveCount = 0
 
 local function emit(event, phase, fields)
-    seq = seq + 1
-    fields = fields or {}
-    fields.fixture = FIXTURE
-    fields.ctx = CTX
-    fields.seq = seq
-    fields.event = event
-    fields.phase = phase
-    trace.emit(fields)
+  seq = seq + 1
+  fields = fields or {}
+  fields.fixture = FIXTURE
+  fields.ctx = CTX
+  fields.seq = seq
+  fields.event = event
+  fields.phase = phase
+  trace.emit(fields)
 end
 
 emit('module', 'eval')
 
 local function deferredAck()
-    emit('timer', 'unsavable')
-    core.sendGlobalEvent('S3FixtureAck', { from = CTX, kind = 'timer', seq = seq })
+  emit('timer', 'unsavable')
+  core.sendGlobalEvent('S3FixtureAck', { from = CTX, kind = 'timer', seq = seq })
 end
 
 return {
-    engineHandlers = {
-        onInit = function(initData)
-            initCount = initCount + 1
-            emit('onInit', 'enter', { initCount = initCount, hasInitData = initData ~= nil, recordId = self.object.recordId or 'nil' })
-            async:newUnsavableSimulationTimer(0, deferredAck)
-        end,
+  engineHandlers = {
+    onInit = function(initData)
+      initCount = initCount + 1
+      emit('onInit', 'enter', {
+        initCount = initCount,
+        hasInitData = initData ~= nil,
+        recordId = self.object.recordId or 'nil',
+      })
+      async:newUnsavableSimulationTimer(0, deferredAck)
+    end,
 
-        onLoad = function(data)
-            -- Save migration/default handling: schema v1 has only primitive counters;
-            -- missing/older fields intentionally keep current defaults.
-            loadCount = loadCount + 1
-            if data then
-                seq = tonumber(data.seq) or seq
-                initCount = tonumber(data.initCount) or initCount
-                saveCount = tonumber(data.saveCount) or saveCount
-            end
-            emit('onLoad', 'enter', { hasData = data ~= nil, loadCount = loadCount, version = data and data.version or 0 })
-        end,
+    onLoad = function(data)
+      -- Save migration/default handling: schema v1 has only primitive counters;
+      -- missing/older fields intentionally keep current defaults.
+      loadCount = loadCount + 1
+      if data then
+        seq = tonumber(data.seq) or seq
+        initCount = tonumber(data.initCount) or initCount
+        saveCount = tonumber(data.saveCount) or saveCount
+      end
+      emit(
+        'onLoad',
+        'enter',
+        { hasData = data ~= nil, loadCount = loadCount, version = data and data.version or 0 }
+      )
+    end,
 
-        onSave = function()
-            saveCount = saveCount + 1
-            emit('onSave', 'enter', { saveCount = saveCount })
-            return {
-                version = VERSION,
-                seq = seq,
-                initCount = initCount,
-                loadCount = loadCount,
-                saveCount = saveCount,
-            }
-        end,
+    onSave = function()
+      saveCount = saveCount + 1
+      emit('onSave', 'enter', { saveCount = saveCount })
+      return {
+        version = VERSION,
+        seq = seq,
+        initCount = initCount,
+        loadCount = loadCount,
+        saveCount = saveCount,
+      }
+    end,
 
-        onUpdate = function()
-            if updateSeen then
-                return
-            end
-            updateSeen = true
-            emit('onUpdate', 'first', { active = self.isActive(), recordId = self.object.recordId or 'nil' })
-        end,
-    },
+    onUpdate = function()
+      if updateSeen then return end
+      updateSeen = true
+      emit(
+        'onUpdate',
+        'first',
+        { active = self.isActive(), recordId = self.object.recordId or 'nil' }
+      )
+    end,
+  },
 
-    eventHandlers = {
-        S3FixturePingLocal = function(payload)
-            emit('S3FixturePingLocal', 'receive', { from = payload and payload.from or 'unknown' })
-            core.sendGlobalEvent('S3FixtureAck', { from = CTX, kind = 'local-ping', seq = seq })
-        end,
-    },
+  eventHandlers = {
+    S3FixturePingLocal = function(payload)
+      emit('S3FixturePingLocal', 'receive', { from = payload and payload.from or 'unknown' })
+      core.sendGlobalEvent('S3FixtureAck', { from = CTX, kind = 'local-ping', seq = seq })
+    end,
+  },
 }

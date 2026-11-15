@@ -87,22 +87,24 @@ local function default_factory() return {} end
 ---@param obj table
 ---@return nil
 local function default_reset(obj)
-    local k = next(obj)
-    while k ~= nil do
-        obj[k] = nil
-        k = next(obj)
-    end
+  local k = next(obj)
+  while k ~= nil do
+    obj[k] = nil
+    k = next(obj)
+  end
 end
 
 ---@param self Pool
 ---@return any obj
 local function new_object(self)
-    local obj = self._factory()
-    assert(obj ~= nil, 'pool: factory must not return nil')
-    assert(not self._uses_default_reset or type(obj) == 'table',
-        'pool: non-table objects require a custom reset')
-    self._allocated = self._allocated + 1
-    return obj
+  local obj = self._factory()
+  assert(obj ~= nil, 'pool: factory must not return nil')
+  assert(
+    not self._uses_default_reset or type(obj) == 'table',
+    'pool: non-table objects require a custom reset'
+  )
+  self._allocated = self._allocated + 1
+  return obj
 end
 
 ---Creates a fixed-capacity pool and pre-populates it with available objects.
@@ -111,43 +113,45 @@ end
 ---@param reset? fun(obj: any) Defaults to clearing table keys with next().
 ---@return Pool
 function Pool.new(capacity, factory, reset)
-    assert(type(capacity) == 'number' and capacity >= 1 and math.floor(capacity) == capacity,
-        'pool: capacity must be a positive integer')
-    local uses_default_reset = reset == nil
-    factory = factory == nil and default_factory or factory
-    reset   = reset == nil and default_reset or reset
-    assert(type(factory) == 'function', 'pool: factory must be a function')
-    assert(type(reset) == 'function', 'pool: reset must be a function')
+  assert(
+    type(capacity) == 'number' and capacity >= 1 and math.floor(capacity) == capacity,
+    'pool: capacity must be a positive integer'
+  )
+  local uses_default_reset = reset == nil
+  factory = factory == nil and default_factory or factory
+  reset = reset == nil and default_reset or reset
+  assert(type(factory) == 'function', 'pool: factory must be a function')
+  assert(type(reset) == 'function', 'pool: reset must be a function')
 
-    local self = setmetatable({
-        _stack     = {},
-        _capacity  = capacity,
-        _factory   = factory,
-        _reset     = reset,
-        _allocated = 0,
-        _uses_default_reset = uses_default_reset,
-    }, Pool)
+  local self = setmetatable({
+    _stack = {},
+    _capacity = capacity,
+    _factory = factory,
+    _reset = reset,
+    _allocated = 0,
+    _uses_default_reset = uses_default_reset,
+  }, Pool)
 
-    -- Pre-populate the pool so the first burst of acquires doesn't allocate.
-    for _ = 1, capacity do
-        self._stack[#self._stack + 1] = new_object(self)
-    end
+  -- Pre-populate the pool so the first burst of acquires doesn't allocate.
+  for _ = 1, capacity do
+    self._stack[#self._stack + 1] = new_object(self)
+  end
 
-    return self
+  return self
 end
 
 ---Acquires an object, allocating a fresh one if the pool is exhausted.
 ---@return any obj
 function Pool:acquire()
-    local stack = self._stack
-    local n     = #stack
-    if n > 0 then
-        local obj = stack[n]
-        stack[n]  = nil
-        return obj
-    end
-    -- Pool exhausted: allocate fresh rather than blocking.
-    return new_object(self)
+  local stack = self._stack
+  local n = #stack
+  if n > 0 then
+    local obj = stack[n]
+    stack[n] = nil
+    return obj
+  end
+  -- Pool exhausted: allocate fresh rather than blocking.
+  return new_object(self)
 end
 
 ---Releases an object after resetting it; release(nil) is invalid.
@@ -155,16 +159,16 @@ end
 ---@param obj any No ownership check is performed; nil is invalid.
 ---@return nil
 function Pool:release(obj)
-    self._reset(obj)
+  self._reset(obj)
 
-    local stack = self._stack
-    if #stack >= self._capacity then
-        -- Pool full: object has been reset; drop it and let it be GC'd.
-        self._allocated = self._allocated - 1
-        return
-    end
+  local stack = self._stack
+  if #stack >= self._capacity then
+    -- Pool full: object has been reset; drop it and let it be GC'd.
+    self._allocated = self._allocated - 1
+    return
+  end
 
-    stack[#stack + 1] = obj
+  stack[#stack + 1] = obj
 end
 
 ---Returns the number of objects currently idle in the pool stack.
@@ -185,8 +189,8 @@ function Pool:allocated() return self._allocated end
 ---@return integer allocated Current pool-created object count.
 ---@return integer capacity Maximum retained idle objects.
 function Pool:stats()
-    local available = #self._stack
-    return available, self._allocated - available, self._allocated, self._capacity
+  local available = #self._stack
+  return available, self._allocated - available, self._allocated, self._capacity
 end
 
 return Pool

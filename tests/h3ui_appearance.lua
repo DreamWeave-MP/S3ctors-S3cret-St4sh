@@ -15,6 +15,33 @@ local requestedSections = {}
 local defaultThemeExists = false
 local DefaultThemeHint = 'morrowind'
 
+-- Luau's typeof reads a metatable __type only from engine-tagged userdata, never from newproxy,
+-- so the mock records each engine type name and answers for it the way the engine's typeof does.
+local IsLuau = _VERSION == 'Luau'
+local EngineTypeNames = setmetatable({}, { __mode = 'k' })
+
+if IsLuau then
+  local builtinTypeof = typeof
+  typeof = function(value) return EngineTypeNames[value] or builtinTypeof(value) end
+end
+
+local function engineColor(hex)
+  local color = newproxy(true)
+  local metatable = getmetatable(color)
+
+  if IsLuau then
+    EngineTypeNames[color] = 'openmw.util.Color'
+    metatable.__index = { asHex = function() return hex end }
+  else
+    metatable.__index = {
+      __type = { name = 'Misc::Color' },
+      asHex = function() return hex end,
+    }
+  end
+
+  return color
+end
+
 package.preload['openmw.vfs'] = function()
   return {
     fileExists = function(path)
@@ -87,14 +114,7 @@ package.preload['openmw.util'] = function()
   return {
     clamp = function(value, minimum, maximum) return math.max(minimum, math.min(value, maximum)) end,
     color = {
-      hex = function(hex)
-        local color = newproxy(true)
-        getmetatable(color).__index = {
-          __type = { name = 'Misc::Color' },
-          asHex = function() return hex end,
-        }
-        return color
-      end,
+      hex = engineColor,
       rgb = function(red, green, blue) return { red, green, blue } end,
       rgba = function(red, green, blue, alpha) return { red, green, blue, alpha } end,
     },
@@ -178,7 +198,7 @@ local starwind = themeModule.new({
   tokens = {
     color = {
       text = '22affb',
-      header = '80fff5',
+      header = engineColor '80fff5',
       active = '22affb',
       accent = '22affb',
       misc = '22affb',

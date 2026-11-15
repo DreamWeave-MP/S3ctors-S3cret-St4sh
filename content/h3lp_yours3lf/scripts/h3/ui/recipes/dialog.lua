@@ -80,11 +80,12 @@ local function actionLayout(ctx, spec, action, index)
     events = action.events,
     userData = action.userData,
     template = action.template,
-    onActivate = callback and
-      ---@param _ openmw.ui.MouseEvent
-      ---@param layout openmw.ui.Layout
-      ---@return boolean?
-      function(_, layout) return callback(action, layout) end or nil,
+    onActivate = callback
+        ---@param _ openmw.ui.MouseEvent
+        ---@param layout openmw.ui.Layout
+        ---@return boolean?
+        and function(_, layout) return callback(action, layout) end
+      or nil,
   })
 end
 

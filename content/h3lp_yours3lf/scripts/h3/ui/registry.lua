@@ -752,7 +752,7 @@ local function new(definitions)
     end
 
     for index = 1, #callbacks do
-      local name = callbacks[index] or Error('H3 UI invalidation callback name is missing')
+      local name = callbacks[index] or Error 'H3 UI invalidation callback name is missing'
       options[name] = mutation.invalidateAfter(options[name], invalidate)
     end
   end

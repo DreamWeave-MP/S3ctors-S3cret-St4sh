@@ -4,12 +4,14 @@
 local ui = require 'openmw.ui'
 local util = require 'openmw.util'
 
+local Runtime = require 'scripts.h3.runtime'
 local chromeAssets = require 'scripts.h3.ui.themes.chromeAssets'
 
 local Assert, Next, SetMetatable, StrFormat, StrGmatch, TableConcat, TableSort, ToString, Type =
   assert, next, setmetatable, string.format, string.gmatch, table.concat, table.sort, tostring, type
 
 local UiContent, UiTexture, UiType, UtilVector2 = ui.content, ui.texture, ui.TYPE, util.vector2
+local UserdataType, UserdataTypeName = Runtime.userdataType, Runtime.userdataTypeName
 
 local TextureCache = {}
 local WeakKeys = { __mode = 'k' }
@@ -623,7 +625,7 @@ local function cacheKey(value, seen)
 
   if valueType == 'userdata' then
     ---@cast value H3UI.ColorLikeUserdata
-    if value.__type.name == 'Misc::Color' then
+    if UserdataTypeName(value) == UserdataType.Color then
       local cached = ColorKeyCache[value]
       if cached then return cached end
 

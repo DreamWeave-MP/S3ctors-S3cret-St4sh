@@ -17,7 +17,7 @@
 ---  local fired, value = tick()
 ---  if fired then applyValue(value) end
 
-local core = require('openmw.core')
+local core = require 'openmw.core'
 
 ---@alias DebounceTick fun(): boolean, any?
 ---@alias DebouncePush fun(value: any)
@@ -25,9 +25,12 @@ local core = require('openmw.core')
 ---@param simulation? boolean Omit or false for real time; true for simulation time.
 ---@return fun(): number clock
 local function clock_for_simulation(simulation)
-    assert(simulation == nil or type(simulation) == 'boolean', 'debounce: simulation flag must be boolean')
-    if simulation then return core.getSimulationTime end
-    return core.getRealTime
+  assert(
+    simulation == nil or type(simulation) == 'boolean',
+    'debounce: simulation flag must be boolean'
+  )
+  if simulation then return core.getSimulationTime end
+  return core.getRealTime
 end
 
 ---Creates paired tick/push functions for debounced value changes.
@@ -37,36 +40,35 @@ end
 ---@return DebounceTick tick Returns true and the last value after quiet time elapses.
 ---@return DebouncePush push Restarts the quiet interval with a new value.
 local function debounce(wait, simulation)
-    assert(type(wait) == 'number' and wait > 0,
-        'debounce: wait must be > 0')
-    local clock = clock_for_simulation(simulation)
-    local pushed_at = nil
-    local has_pending = false
-    local pending = nil
+  assert(type(wait) == 'number' and wait > 0, 'debounce: wait must be > 0')
+  local clock = clock_for_simulation(simulation)
+  local pushed_at = nil
+  local has_pending = false
+  local pending = nil
 
-    ---@return boolean fired
-    ---@return any? value
-    local function tick()
-        if not has_pending then return false, nil end
-        if clock() - pushed_at >= wait then
-            local v = pending
-            pushed_at = nil
-            has_pending = false
-            pending = nil
-            return true, v
-        end
-        return false, nil
+  ---@return boolean fired
+  ---@return any? value
+  local function tick()
+    if not has_pending then return false, nil end
+    if clock() - pushed_at >= wait then
+      local v = pending
+      pushed_at = nil
+      has_pending = false
+      pending = nil
+      return true, v
     end
+    return false, nil
+  end
 
-    ---@param value any
-    ---@return nil
-    local function push(value)
-        pushed_at = clock()
-        has_pending = true
-        pending = value
-    end
+  ---@param value any
+  ---@return nil
+  local function push(value)
+    pushed_at = clock()
+    has_pending = true
+    pending = value
+  end
 
-    return tick, push
+  return tick, push
 end
 
 return debounce

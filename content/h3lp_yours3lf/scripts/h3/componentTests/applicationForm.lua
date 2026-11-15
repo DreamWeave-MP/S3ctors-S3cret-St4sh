@@ -29,9 +29,8 @@ end
 ---@param state? H3ComponentTest.ApplicationFormState
 ---@return openmw.ui.Layout
 local function applicationForm(invalidate, rebuild, state)
-  rebuild = rebuild or
-    ---@return nil
-    function() end
+  rebuild = rebuild ---@return nil
+    or function() end
   state = state or {}
   initializeState(state)
 

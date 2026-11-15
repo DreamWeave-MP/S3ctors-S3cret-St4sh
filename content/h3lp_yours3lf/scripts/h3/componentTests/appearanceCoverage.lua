@@ -70,9 +70,8 @@ end
 ---@param invalidate? fun(): nil
 ---@return openmw.ui.Layout
 local function coverage(invalidate)
-  local refresh = invalidate or
-    ---@return nil
-    function() end
+  local refresh = invalidate ---@return nil
+    or function() end
 
   return column {
     name = 'ct_demo_appearance_coverage',

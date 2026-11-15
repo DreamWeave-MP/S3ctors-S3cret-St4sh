@@ -69,49 +69,40 @@ local SUPER_KEY = {} -- unique key to store parent class
 
 ---@param value any
 ---@return boolean
-local function is_class(value)
-    return type(value) == 'table' and rawget(value, CLASS_KEY) == true
-end
+local function is_class(value) return type(value) == 'table' and rawget(value, CLASS_KEY) == true end
 
 ---Creates a class table, optionally inheriting from a base class.
 ---@param base? Class Raises if non-nil and not a class created by this module.
 ---@return Class class Dynamic class table; subclass fields are intentionally not modeled.
 function Class.new(base)
-    assert(base == nil or is_class(base),
-        'Class.new: base must be a Class or nil')
+  assert(base == nil or is_class(base), 'Class.new: base must be a Class or nil')
 
-    local cls = {}
-    cls.__index = cls
-    cls[CLASS_KEY] = true
-    cls[SUPER_KEY] = base
+  local cls = {}
+  cls.__index = cls
+  cls[CLASS_KEY] = true
+  cls[SUPER_KEY] = base
 
-    -- Inherit from base by delegating __index up the chain.
-    if base then
-        setmetatable(cls, { __index = base })
-    end
+  -- Inherit from base by delegating __index up the chain.
+  if base then setmetatable(cls, { __index = base }) end
 
-    -- Calling the class creates an instance.
-    local mt = getmetatable(cls) or {}
-    setmetatable(cls, mt)
-    ---@param c Class
-    ---@return table instance Dynamic instance table with class metatable `c`.
-    mt.__call = function(c, ...)
-        local instance = setmetatable({}, c)
-        local init = c.init
-        if init then
-            init(instance, ...)
-        end
-        return instance
-    end
+  -- Calling the class creates an instance.
+  local mt = getmetatable(cls) or {}
+  setmetatable(cls, mt)
+  ---@param c Class
+  ---@return table instance Dynamic instance table with class metatable `c`.
+  mt.__call = function(c, ...)
+    local instance = setmetatable({}, c)
+    local init = c.init
+    if init then init(instance, ...) end
+    return instance
+  end
 
-    -- Instance method: instance:is_a(SomeClass)
-    ---@param klass Class Raises if not a class created by this module.
-    ---@return boolean
-    function cls:is_a(klass)
-        return Class.is(self, klass)
-    end
+  -- Instance method: instance:is_a(SomeClass)
+  ---@param klass Class Raises if not a class created by this module.
+  ---@return boolean
+  function cls:is_a(klass) return Class.is(self, klass) end
 
-    return cls
+  return cls
 end
 
 -- Walk the inheritance chain to check if `instance` is an instance of `klass`
@@ -121,32 +112,30 @@ end
 ---@param klass Class Raises if not a class created by this module.
 ---@return boolean
 function Class.is(instance, klass)
-    assert(is_class(klass),
-        'Class.is: klass must be a Class')
-    local cls = getmetatable(instance)
-    while is_class(cls) do
-        if cls == klass then return true end
-        cls = rawget(cls, SUPER_KEY)
-    end
-    return false
+  assert(is_class(klass), 'Class.is: klass must be a Class')
+  local cls = getmetatable(instance)
+  while is_class(cls) do
+    if cls == klass then return true end
+    cls = rawget(cls, SUPER_KEY)
+  end
+  return false
 end
 
 ---Returns the direct class of an instance.
 ---@param instance any
 ---@return Class? class The direct class, or nil when the metatable is not a class.
 function Class.class_of(instance)
-    local cls = getmetatable(instance)
-    if is_class(cls) then return cls end
-    return nil
+  local cls = getmetatable(instance)
+  if is_class(cls) then return cls end
+  return nil
 end
 
 ---Returns the parent class of a class, or nil for root classes.
 ---@param cls Class Raises if not a class created by this module.
 ---@return Class? parent
 function Class.super(cls)
-    assert(is_class(cls),
-        'Class.super: argument must be a Class')
-    return rawget(cls, SUPER_KEY)
+  assert(is_class(cls), 'Class.super: argument must be a Class')
+  return rawget(cls, SUPER_KEY)
 end
 
 return Class

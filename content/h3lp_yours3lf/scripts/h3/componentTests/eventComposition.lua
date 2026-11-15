@@ -77,11 +77,12 @@ local function eventComposition()
     mouseClick = async:callback(
       ---@return boolean
       function()
-      bubbled = bubbled + 1
-      bubbleStatus.props.text = StrFormat('Root bubbles (toggle/search clicks): %d', bubbled)
-      I.H3ComponentTest.refresh()
-      return true
-    end),
+        bubbled = bubbled + 1
+        bubbleStatus.props.text = StrFormat('Root bubbles (toggle/search clicks): %d', bubbled)
+        I.H3ComponentTest.refresh()
+        return true
+      end
+    ),
   }
 
   return column {

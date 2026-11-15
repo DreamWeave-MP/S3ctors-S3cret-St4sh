@@ -6,6 +6,7 @@ local storage = require 'openmw.storage'
 local util = require 'openmw.util'
 local vfs = require 'openmw.vfs'
 
+local Runtime = require 'scripts.h3.runtime'
 local builtinChrome = require 'scripts.h3.ui.chrome'
 local themeModule = require 'scripts.h3.ui.theme'
 
@@ -21,6 +22,8 @@ local Assert, Error, MathFloor, MathMax, MathMin, Next, TableSort, StrFormat, To
   tonumber,
   tostring,
   type
+
+local UserdataType, UserdataTypeName = Runtime.userdataType, Runtime.userdataTypeName
 
 local ColorHex, ContentFiles, FileExists, PlayerSection =
   util.color.hex, core.contentFiles, vfs.fileExists, storage.playerSection
@@ -152,7 +155,7 @@ local function colorHex(value)
 
   if Type(value) == 'userdata' then
     ---@cast value H3UI.ColorLikeUserdata
-    if value.__type.name == 'Misc::Color' then return normalizeHex(value:asHex()) end
+    if UserdataTypeName(value) == UserdataType.Color then return normalizeHex(value:asHex()) end
   end
 end
 
@@ -416,7 +419,9 @@ local function initializeSettings()
   state.initialized = true
 
   local explicitTheme = settingValue 'theme'
-  if Type(explicitTheme) == 'string' and validPreset(explicitTheme) then state.lastPresetId = explicitTheme end
+  if Type(explicitTheme) == 'string' and validPreset(explicitTheme) then
+    state.lastPresetId = explicitTheme
+  end
   invalidate()
 
   async:newUnsavableSimulationTimer(0, canonicalizeStorage)
@@ -542,21 +547,23 @@ local function scheduleThemeUpdate(id, expectedTheme)
   if state.themeUpdateScheduled then return end
 
   state.themeUpdateScheduled = true
-  async:newUnsavableSimulationTimer(0,
+  async:newUnsavableSimulationTimer(
+    0,
     ---@return nil
     function()
-    state.themeUpdateScheduled = false
-    local pending = state.pendingTheme
-    state.pendingTheme = nil
-    if not pending or settingValue 'theme' ~= pending.expectedTheme then return end
+      state.themeUpdateScheduled = false
+      local pending = state.pendingTheme
+      state.pendingTheme = nil
+      if not pending or settingValue 'theme' ~= pending.expectedTheme then return end
 
-    if pending.id == CustomThemeId then
-      state.section:set('theme', CustomThemeId)
-      restoreCustomPalette()
-    elseif validPreset(pending.id) then
-      writePreset(pending.id)
+      if pending.id == CustomThemeId then
+        state.section:set('theme', CustomThemeId)
+        restoreCustomPalette()
+      elseif validPreset(pending.id) then
+        writePreset(pending.id)
+      end
     end
-  end)
+  )
 end
 
 ---@param _ openmw.storage.StorageSection
@@ -567,7 +574,9 @@ local function onStorageChanged(_, key)
 
   if key == 'theme' then
     local selected = settingValue 'theme'
-    if Type(selected) == 'string' and validPreset(selected) then scheduleThemeUpdate(selected, selected) end
+    if Type(selected) == 'string' and validPreset(selected) then
+      scheduleThemeUpdate(selected, selected)
+    end
   end
 end
 
