@@ -125,7 +125,7 @@ registerBooleanAction(
   'H3UIInputCancelName',
   'H3UIInputCancelDescription',
   'cancel',
-  input.KEY.Escape,
+  input.KEY.Backspace,
   input.CONTROLLER_BUTTON.B
 )
 

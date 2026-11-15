@@ -28,6 +28,11 @@ local BindingState = {
   Uninitialized = 'uninitialized',
 }
 
+local RecordingCancelKeys = {
+  [input.KEY.Backspace] = true,
+  [input.KEY.Escape] = true,
+}
+
 local MouseButtonNames = {
   [1] = 'Left',
   [2] = 'Middle',
@@ -329,7 +334,7 @@ end
 ---@param event openmw.input.KeyboardEvent
 ---@return nil
 local function onKeyPress(event)
-  bindInputButton(event.code ~= input.KEY.Backspace and 'keyboard' or nil, event.code)
+  bindInputButton(not RecordingCancelKeys[event.code] and 'keyboard' or nil, event.code)
 end
 
 ---@param button number

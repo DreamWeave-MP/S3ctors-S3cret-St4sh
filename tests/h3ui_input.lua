@@ -124,7 +124,7 @@ local ExpectedDefinitions = {
   { key = Intent.Left, keyboard = KEY.A, controller = CONTROLLER_BUTTON.DPadLeft },
   { key = Intent.Right, keyboard = KEY.D, controller = CONTROLLER_BUTTON.DPadRight },
   { key = Intent.Activate, keyboard = KEY.Enter, controller = CONTROLLER_BUTTON.A },
-  { key = Intent.Cancel, keyboard = KEY.Escape, controller = CONTROLLER_BUTTON.B },
+  { key = Intent.Cancel, keyboard = KEY.Backspace, controller = CONTROLLER_BUTTON.B },
 }
 
 local function keyPress(code)
@@ -327,20 +327,15 @@ local function testBackspaceAndBackCancelRecording()
   assert(writes == writesBefore)
 end
 
-local function testEscapeRecordsLikeAnyKey()
+local function testEscapeCancelsRecording()
+  local writesBefore = writes
+
   activate(slotControls(3, 1).record)
   InputPage.onKeyPress(keyPress(KEY.Escape))
 
-  assertEngineRecord(
-    Bindings.values['H3UI.NavigateLeft.keyboard'],
-    'keyboard',
-    KEY.Escape,
-    Intent.Left
-  )
-  assert(slotControls(3, 1).label == 'Escape')
-
-  activate(slotControls(3, 1).default)
+  assert(writes == writesBefore)
   assertEngineRecord(Bindings.values['H3UI.NavigateLeft.keyboard'], 'keyboard', KEY.A, Intent.Left)
+  assert(slotControls(3, 1).label == 'A')
 end
 
 local function testClearAndRestoreDefault()
@@ -393,7 +388,7 @@ testRegisterActionsBeforePage()
 testDefaultsInitialised()
 testRecordingWritesEngineRecord()
 testBackspaceAndBackCancelRecording()
-testEscapeRecordsLikeAnyKey()
+testEscapeCancelsRecording()
 testClearAndRestoreDefault()
 testSecondRecordingCannotStart()
 
