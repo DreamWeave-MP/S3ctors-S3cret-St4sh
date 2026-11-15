@@ -260,14 +260,33 @@ local function slotControls(definitionIndex, slotIndex)
   local page = settingsPages[1].element.layout
   local bindingRow = page.children[3 + definitionIndex]
   local slot = bindingRow.children[1 + slotIndex]
-  local slotActions = slot[3].children
+  local slotActions = slot[2].children
 
   return {
     clear = slotActions[1],
     default = slotActions[2],
-    label = slot[2].label,
-    record = slot[2],
+    label = slot[1].label,
+    record = slot[1],
   }
+end
+
+local function testColumnsAlign()
+  local page = settingsPages[1].element.layout
+  local headings = page.children[3]
+
+  for index = 3, #page.children do
+    local row = page.children[index]
+    assert(row.kind == 'row')
+    assert(row.props.size.x == page.props.size.x)
+    assert(row.children[1].external.grow == 1)
+
+    for slotIndex = 2, #row.children do
+      local column = row.children[slotIndex]
+      assert(column.kind == 'column')
+      assert(column.props.arrange == 'Center')
+      assert(column.props.size.x == headings.children[slotIndex].props.size.x)
+    end
+  end
 end
 
 local function activate(control)
@@ -389,6 +408,7 @@ testDefinitions()
 testInputOutsideRecordingWritesNothing()
 testRegisterActionsBeforePage()
 testDefaultsInitialised()
+testColumnsAlign()
 testRecordingWritesEngineRecord()
 testBackspaceAndBackCancelRecording()
 testEscapeCancelsRecording()

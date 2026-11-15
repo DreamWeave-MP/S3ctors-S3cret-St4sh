@@ -18,6 +18,7 @@ local InterfaceL10n, L10n = core.l10n 'Interface', core.l10n 'H3'
 local UiAlignment, UiCreate, UtilVector2 = ui.ALIGNMENT, ui.create, util.vector2
 
 local PageSize = UtilVector2(900, 640)
+local RowSize = UtilVector2(PageSize.x, 0)
 local InputBindingColumnWidth = 128
 local InputBindingColumnSize = UtilVector2(InputBindingColumnWidth, 0)
 local RecordButtonSize = UtilVector2(InputBindingColumnWidth, 28)
@@ -202,7 +203,6 @@ local function bindingSlot(slot, definition)
 
   local binding = BindingSection:get(slot.id)
   local isRecording = inputBindingRecording ~= nil and inputBindingRecording.slot.id == slot.id
-  local deviceLabel = slot.label or L10n(StrFormat('input_binding_%s', slot.device))
   local controls = {
     H3UI.button {
       label = L10n 'input_binding_clear',
@@ -233,11 +233,7 @@ local function bindingSlot(slot, definition)
 
   return H3UI.column {
     gap = 4,
-    props = { size = InputBindingColumnSize },
-    H3UI.text {
-      text = deviceLabel,
-      props = { textAlignH = UiAlignment.Center },
-    },
+    props = { size = InputBindingColumnSize, arrange = UiAlignment.Center },
     H3UI.button {
       label = inputBindingLabel(binding, slot.device, isRecording),
       props = { size = RecordButtonSize },
@@ -281,6 +277,7 @@ local function bindingRow(definition)
 
   return H3UI.row {
     gap = 8,
+    props = { size = RowSize },
     children = children,
   }
 end
@@ -296,12 +293,12 @@ pageLayout = function()
   local headings = { H3UI.text { external = { grow = 1 } } }
   for index = 1, #definitions[1].bindings do
     local slot = definitions[1].bindings[index]
-    headings[#headings + 1] = H3UI.text {
-      text = slot.label or L10n(StrFormat('input_binding_%s', slot.device)),
-      props = { size = InputBindingColumnSize, textAlignH = UiAlignment.Center },
+    headings[#headings + 1] = H3UI.column {
+      props = { size = InputBindingColumnSize, arrange = UiAlignment.Center },
+      H3UI.text { text = slot.label or L10n(StrFormat('input_binding_%s', slot.device)) },
     }
   end
-  rows[#rows + 1] = H3UI.row { gap = 8, children = headings }
+  rows[#rows + 1] = H3UI.row { gap = 8, props = { size = RowSize }, children = headings }
 
   for index = 1, #definitions do
     rows[#rows + 1] = bindingRow(definitions[index])
