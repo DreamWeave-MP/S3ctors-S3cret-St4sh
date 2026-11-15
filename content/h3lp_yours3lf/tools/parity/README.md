@@ -31,6 +31,26 @@ jess workspace run extract --trusted -- <openmw checkout> ../../scripts/h3/parit
 
 Re-extract whenever the build that captures move to a new engine commit.
 
+## The manifest
+
+`scripts/h3/parity/manifest.lua` has one entry per reference layout, in #11's order. Each entry
+gives:
+
+- its group;
+- how the capture fixture opens it (`opens`);
+- the game state it needs;
+- the widgets every diff masks;
+- its status: `not started`, `fixture`, `diffed` or `exact`.
+
+The file's header defines each field.
+
+The manifest test holds it to the metrics module:
+
+- every extracted layout is classified exactly once, so a layout added upstream fails the test
+  until it has an entry;
+- every mask names a widget of its layout;
+- every mode and window is one Lua can open at the engine commit the metrics came from.
+
 ## Tests
 
 ```sh
@@ -42,7 +62,8 @@ jess package test .
   XML.
 - **XML reader:** the edge cases the real files contain.
 - **Writer:** its layout, and a round trip through it.
-- **Checked-in metrics:** the file is exactly what the writer writes for it.
+- **Checked-in metrics:** the file is exactly what the extractor writes for it.
+- **Manifest:** the checks above, and each mistake they exist to catch.
 - **Style:** every file passes `@jess/style`.
 
 CI runs both commands in the `Parity tools` job.

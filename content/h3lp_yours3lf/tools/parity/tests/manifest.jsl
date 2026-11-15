@@ -1,0 +1,89 @@
+--!strict
+-- The checked-in manifest against the checked-in metrics, and the check against the mistakes it
+-- exists to catch.
+
+local luaData = require '@h3uiparity/luadata'
+local manifest = require '@h3uiparity/manifest'
+local support = require './support'
+local test = require '@jess/test'
+
+local suite, expect = test.new(), test.expect
+
+type Table = luaData.Table
+
+local function metricsWith(names: { string }): Table
+  local layouts: Table = {}
+  for _, name in names do
+    layouts[name] = { widgets = { { name = '_Main', type = 'Window', widgets = { { name = 'Avatar', type = 'Widget' } } } } }
+  end
+
+  return { layouts = layouts }
+end
+
+local function entry(layout: string): Table
+  return {
+    layout = layout,
+    group = 'main',
+    opens = { kind = 'mode', mode = 'Interface', windows = { 'Inventory' } },
+    state = 'A loaded game.',
+    masks = { 'Avatar' },
+    status = 'not started',
+  }
+end
+
+suite.it('classifies every extracted layout exactly once', function()
+  local problems = manifest.check(support.h3Data 'parity/manifest', support.h3Data 'parity/vanillaMetrics')
+  expect(table.concat(problems, '\n')).toBe ''
+end)
+
+suite.it('lists all 61 reference layouts of #11', function()
+  expect(#(support.h3Data 'parity/manifest' :: { Table })).toBe(61)
+end)
+
+suite.it('fails on a layout added upstream until it is classified', function()
+  local problems = manifest.check({ entry 'inventory_window' }, metricsWith { 'inventory_window', 'new_window' })
+  expect(problems).toEqual { 'new_window: extracted but not classified in the manifest' }
+end)
+
+suite.it('fails on a layout listed twice', function()
+  local problems = manifest.check({ entry 'inventory_window', entry 'inventory_window' }, metricsWith { 'inventory_window' })
+  expect(problems).toEqual { 'entry 2 (inventory_window): inventory_window is listed twice' }
+end)
+
+suite.it('fails on a layout that was not extracted', function()
+  local problems = manifest.check({ entry 'gone' }, metricsWith {})
+  expect(problems).toEqual { 'entry 1 (gone): names no extracted layout' }
+end)
+
+suite.it('fails on a mask that names no widget of the layout', function()
+  local wrong = entry 'inventory_window'
+  wrong.masks = { 'Preview' }
+
+  local problems = manifest.check({ wrong }, metricsWith { 'inventory_window' })
+  expect(problems).toEqual { 'entry 1 (inventory_window): mask Preview is no widget of inventory_window' }
+end)
+
+suite.it('fails on a mode or window Lua cannot open', function()
+  local wrong = entry 'inventory_window'
+  wrong.opens = { kind = 'mode', mode = 'Settings', windows = { 'Options' } }
+
+  local problems = manifest.check({ wrong }, metricsWith { 'inventory_window' })
+  expect(problems).toEqual {
+    'entry 1 (inventory_window): Settings is not a mode Lua can open',
+    'entry 1 (inventory_window): Options is not a window Lua can show',
+  }
+end)
+
+suite.it('fails on a manual entry without steps, and on an unknown status', function()
+  local wrong = entry 'inventory_window'
+  wrong.opens = { kind = 'manual' }
+  wrong.status = 'done'
+
+  local problems = manifest.check({ wrong }, metricsWith { 'inventory_window' })
+  expect(problems).toEqual {
+    'entry 1 (inventory_window): status done is unknown',
+    'entry 1 (inventory_window): a manual entry needs steps',
+  }
+end)
+
+return suite

@@ -905,6 +905,21 @@
 
 ---@class H3UI.NumberInputOptions: H3.NumberInputOptions, H3UI.ComponentOptions
 
+---@class H3UI.ParityManifestEntry
+---@field group 'main'|'dialogue'|'services'|'chargen'|'system'|'overlays'
+---@field layout string
+---@field masks string[]
+---@field opens H3UI.ParityOpens
+---@field state string
+---@field status 'not started'|'fixture'|'diffed'|'exact'
+
+---@class H3UI.ParityOpens
+---@field inMode? string
+---@field kind 'mode'|'message'|'interactiveMessage'|'hud'|'manual'
+---@field mode? string
+---@field steps? string
+---@field windows? string[]
+
 ---@class H3UI.PendingTheme
 ---@field expectedTheme string
 ---@field id string

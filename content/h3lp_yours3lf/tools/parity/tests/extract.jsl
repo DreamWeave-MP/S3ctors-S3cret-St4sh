@@ -4,9 +4,9 @@
 -- cases, the writer's layout, and the checked-in metrics module against the writer.
 
 local files = require '@h3uiparity/files'
-local fs = require '@dream/fs'
 local luaData = require '@h3uiparity/luadata'
 local mygui = require '@h3uiparity/mygui'
+local support = require './support'
 local test = require '@jess/test'
 local xml = require '@h3uiparity/xml'
 
@@ -106,15 +106,6 @@ local ExpectedLayout = {
     },
   },
 }
-
---- This package's folder, from this file's chunk name.
-local function packageRoot(): string
-  local source = debug.info(1, 's')
-  local first = string.sub(source, 1, 1)
-  local path = if first == '@' or first == '=' then string.sub(source, 2) else source
-
-  return string.match(path, '^(.*)/tests/[^/]*$') or '.'
-end
 
 suite.describe('the extractor', function()
   suite.it('reads two skins as their XML declares them', function()
@@ -233,7 +224,7 @@ suite.describe('the data module writer', function()
 end)
 
 suite.describe('the checked-in metrics', function()
-  local path = fs.join(packageRoot(), '../../scripts/h3/parity/vanillaMetrics.lua')
+  local path = support.h3Path 'parity/vanillaMetrics'
 
   suite.it('are exactly what the extractor writes for them', function()
     local text = files.readText(path)

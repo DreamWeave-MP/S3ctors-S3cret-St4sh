@@ -1,0 +1,176 @@
+--!strict
+-- The reference layout manifest, scripts/h3/parity/manifest.lua, held to the metrics module:
+-- every extracted layout classified exactly once, and every field one the fixture can act on.
+
+local luaData = require './luaData'
+
+type Table = luaData.Table
+
+local Groups = { chargen = true, dialogue = true, main = true, overlays = true, services = true, system = true }
+
+local Statuses = { diffed = true, exact = true, fixture = true, ['not started'] = true }
+
+local Kinds = { hud = true, interactiveMessage = true, manual = true, message = true, mode = true }
+
+-- The modes Lua can open: apps/openmw/mwlua/uibindings.cpp at the metrics' engine commit.
+local Modes = {
+  Alchemy = true,
+  Barter = true,
+  Book = true,
+  ChargenBirth = true,
+  ChargenClass = true,
+  ChargenClassCreate = true,
+  ChargenClassGenerate = true,
+  ChargenClassPick = true,
+  ChargenClassReview = true,
+  ChargenName = true,
+  ChargenRace = true,
+  Companion = true,
+  Container = true,
+  Dialogue = true,
+  Enchanting = true,
+  Interface = true,
+  Jail = true,
+  Journal = true,
+  LevelUp = true,
+  Loading = true,
+  LoadingWallpaper = true,
+  MainMenu = true,
+  MerchantRepair = true,
+  QuickKeysMenu = true,
+  Recharge = true,
+  Repair = true,
+  Rest = true,
+  Scroll = true,
+  SpellBuying = true,
+  SpellCreation = true,
+  Training = true,
+  Travel = true,
+}
+
+-- The windows a mode can show: every getWindowIdForLua in apps/openmw/mwgui at that commit.
+local Windows = {
+  Alchemy = true,
+  Book = true,
+  Companion = true,
+  Container = true,
+  Dialogue = true,
+  EnchantingDialog = true,
+  Inventory = true,
+  JailScreen = true,
+  Journal = true,
+  LevelUpDialog = true,
+  Magic = true,
+  Map = true,
+  MerchantRepair = true,
+  QuickKeys = true,
+  Recharge = true,
+  Repair = true,
+  Scroll = true,
+  SpellBuying = true,
+  SpellCreationDialog = true,
+  Stats = true,
+  Trade = true,
+  Training = true,
+  Travel = true,
+  WaitDialog = true,
+}
+
+local Manifest = {}
+
+local function addWidgetNames(names: { [string]: boolean }, widgets: unknown)
+  if type(widgets) ~= 'table' then return end
+
+  for _, widget in widgets :: { Table } do
+    local name = widget.name
+    if type(name) == 'string' then names[name] = true end
+
+    addWidgetNames(names, widget.widgets)
+  end
+end
+
+local function isText(value: unknown): boolean
+  return type(value) == 'string' and value ~= ''
+end
+
+local function checkOpens(problems: { string }, where: string, opens: unknown)
+  if type(opens) ~= 'table' then
+    table.insert(problems, `{where}: opens must be a table`)
+    return
+  end
+
+  local kind = (opens :: Table).kind
+  if not Kinds[kind :: string] then
+    table.insert(problems, `{where}: opens.kind {kind} is not one of hud, interactiveMessage, manual, message, mode`)
+    return
+  end
+
+  local mode, inMode, windows = (opens :: Table).mode, (opens :: Table).inMode, (opens :: Table).windows
+  if kind == 'mode' and not Modes[mode :: string] then
+    table.insert(problems, `{where}: {mode} is not a mode Lua can open`)
+  end
+
+  if inMode ~= nil and not Modes[inMode :: string] then
+    table.insert(problems, `{where}: inMode {inMode} is not a mode Lua can open`)
+  end
+
+  if kind == 'manual' and not isText((opens :: Table).steps) then
+    table.insert(problems, `{where}: a manual entry needs steps`)
+  end
+
+  if windows == nil then return end
+
+  for _, window in windows :: { string } do
+    if not Windows[window] then table.insert(problems, `{where}: {window} is not a window Lua can show`) end
+  end
+end
+
+--- What is wrong with `manifest` against `metrics`, one line each; empty when nothing is.
+function Manifest.check(manifest: Table, metrics: Table): { string }
+  local problems: { string } = {}
+  local layouts = metrics.layouts :: Table
+  local seen: { [string]: boolean } = {}
+
+  for index, entry in manifest :: { Table } do
+    local name = entry.layout
+    local where = `entry {index} ({name})`
+
+    if type(name) ~= 'string' or not layouts[name] then
+      table.insert(problems, `{where}: names no extracted layout`)
+      continue
+    end
+
+    if seen[name] then table.insert(problems, `{where}: {name} is listed twice`) end
+    seen[name] = true
+
+    if not Groups[entry.group :: string] then table.insert(problems, `{where}: group {entry.group} is unknown`) end
+
+    if not Statuses[entry.status :: string] then
+      table.insert(problems, `{where}: status {entry.status} is unknown`)
+    end
+
+    if not isText(entry.state) then table.insert(problems, `{where}: state must say what the game needs`) end
+
+    checkOpens(problems, where, entry.opens)
+
+    local names: { [string]: boolean } = {}
+    addWidgetNames(names, (layouts[name] :: Table).widgets)
+    for _, mask in (entry.masks or {}) :: { string } do
+      if not names[mask] then table.insert(problems, `{where}: mask {mask} is no widget of {name}`) end
+    end
+  end
+
+  local unclassified: { string } = {}
+  for name in layouts do
+    if not seen[name :: string] then table.insert(unclassified, name :: string) end
+  end
+
+  table.sort(unclassified)
+  for _, name in unclassified do
+    table.insert(problems, `{name}: extracted but not classified in the manifest`)
+  end
+
+  return problems
+end
+
+return Manifest
