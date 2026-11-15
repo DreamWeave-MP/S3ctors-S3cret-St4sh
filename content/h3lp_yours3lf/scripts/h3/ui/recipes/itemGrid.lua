@@ -14,7 +14,7 @@ local Metadata = {
   name = true,
 }
 
----@param ctx H3UI.Scope
+---@param ctx H3UI.RecipeContext
 ---@param item H3UI.ItemGridItem
 ---@param index integer
 ---@param activate? H3UI.ActivationState

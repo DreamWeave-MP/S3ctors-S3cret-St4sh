@@ -907,15 +907,13 @@
 ---@field expectedTheme string
 ---@field id string
 
----@class H3UI.RecipeContext: H3UI.ConstructorSurface
+---@class H3UI.RecipeContext: H3UI.ConstructorSurface, H3UI.ResolveContext
 ---@field _isChildScope boolean Whether this context belongs to a disposable child scope.
 ---@field child fun(options?: H3UI.ScopeOptions): H3UI.RecipeContext Create a child recipe context with a separate invalidation target.
----@field invalidate? fun(): nil
 ---@field patch? fun(layout: openmw.ui.Layout, styles: table<string, H3UI.Style>)
 ---@field recipe string
 ---@field setChildren fun(layout: openmw.ui.Layout, children: openmw.ui.LayoutOrElement[])
 ---@field setSelected? fun(layout: openmw.ui.Layout, selected: boolean)
----@field theme H3UI.Theme
 
 ---@class H3UI.Registry
 ---@field build fun(name: string, args: table, themeStyles: table, inlineStyles: table, stateStyles: table?, invalidate: fun()?, selectionStyles: table?, selected: boolean?): openmw.ui.Layout
