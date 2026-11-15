@@ -1,0 +1,71 @@
+{
+  "schema_version": "2",
+  "document": "lock",
+  "project": "81abbe84-b6ae-4104-96e7-d993fae68ae5",
+  "note": "Written by CI when a release tag is pushed: what each published release's archive contains. Do not edit.",
+  "releases": [
+    {
+      "version": "1.1",
+      "locked_from": "06fc77c545394f7ece02ee1815c776c55e11e846",
+      "artifacts": [
+        {
+          "id": "flat",
+          "format": "flat",
+          "filename": "static_switching_system.zip",
+          "media_type": "application/zip",
+          "size": 2420476,
+          "digests": {
+            "sha256": "3cf2d42a0cfd492507f11139e9dc3079a8d8f9dff4ec0cf14d454106e629de3c"
+          },
+          "layout": {
+            "release_document": "dreamweave.release.json",
+            "documentation": "static_switching_system-Documentation/index.html"
+          }
+        }
+      ],
+      "runtimes": {
+        "openmw": "*"
+      },
+      "platforms": [],
+      "provides": [],
+      "relationships": [],
+      "components": [
+        {
+          "id": "main",
+          "name": "Static Switching System",
+          "path": ".",
+          "required": true,
+          "default": true,
+          "requires": [],
+          "conflicts": [],
+          "suggested_with": []
+        }
+      ],
+      "groups": [],
+      "extensions": {
+        "openmw": {
+          "components": {
+            "main": {
+              "data_directories": [
+                "."
+              ],
+              "content_files": [
+                "Static Switching System.esp"
+              ],
+              "groundcover_files": [],
+              "fallback_archives": [],
+              "fallback_entries": {},
+              "config": false,
+              "requires_content": []
+            }
+          },
+          "requires_content": [],
+          "settings": []
+        }
+      },
+      "critical_extensions": [
+        "openmw"
+      ]
+    }
+  ]
+}
