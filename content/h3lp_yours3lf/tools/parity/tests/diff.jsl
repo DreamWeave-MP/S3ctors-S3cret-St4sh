@@ -1,0 +1,296 @@
+--!strict
+-- The differ: pixel counts, masks, sizes, regions, the capture log, each layout outcome, the
+-- alignment arithmetic held to count_window's XML by hand, and one run end to end.
+
+local captureLog = require '@h3uiparity/capturelog'
+local compare = require '@h3uiparity/compare'
+local differ = require '@h3uiparity/differ'
+local files = require '@h3uiparity/files'
+local fs = require '@dream/fs'
+local geometry = require '@h3uiparity/geometry'
+local h3Data = require '@h3uiparity/h3data'
+local magick = require '@magick'
+local run = require '@h3uiparity/run'
+local support = require './support'
+local test = require '@jess/test'
+
+local suite, expect = test.new(), test.expect
+
+type Image = magick.Image
+
+local Black, White, Gold = { 0, 0, 0, 255 }, { 255, 255, 255, 255 }, { 202, 165, 96, 255 }
+
+local Whole = { left = 0, top = 0, width = 8, height = 6 }
+
+local function canvas(): Image
+  return magick.new(8, 6, Black)
+end
+
+local function window(color: { number }): Image
+  return canvas():rect(2, 1, 5, 3, color)
+end
+
+--- A folder of the suite's own under the harness's scratch root.
+local function scratch(name: string): string
+  local root = assert(rawget(_G, 'scratchRoot') :: string?, 'the case needs a scratchRoot')
+  local folder = fs.join(root, name)
+  local made, problem = fs.mkdir(folder, { recursive = true })
+  if not made then error(problem, 0) end
+
+  return folder
+end
+
+suite.describe('the pixel count', function()
+  suite.it('is zero for identical captures', function()
+    expect(compare.compare(window(Gold), window(Gold), Whole, {}).differing).toBe(0)
+  end)
+
+  suite.it('is one for a one-pixel change', function()
+    local changed = window(Gold):set(3, 2, 202, 165, 97, 255)
+    local comparison = compare.compare(window(Gold), changed, Whole, {})
+
+    expect(comparison.differing).toBe(1)
+    expect(comparison.regions).toEqual { { pixels = 1, rect = { left = 3, top = 2, width = 1, height = 1 } } }
+  end)
+
+  suite.it('is zero for a change inside a mask', function()
+    local changed = window(Gold):set(3, 2, 0, 0, 255, 255)
+    local comparison = compare.compare(window(Gold), changed, Whole, { { left = 3, top = 2, width = 2, height = 2 } })
+
+    expect(comparison.differing).toBe(0)
+    expect(comparison.masked).toBe(4)
+    expect(comparison.compared).toBe(44)
+  end)
+
+  suite.it('is an error for captures of different sizes, not a number', function()
+    expect(function()
+      compare.compare(canvas(), magick.new(8, 7, Black), Whole, {})
+    end).toThrow 'captures differ in size: 8x6 and 8x7'
+
+    expect(function()
+      compare.count(canvas(), magick.new(9, 6, Black))
+    end).toThrow 'captures differ in size'
+  end)
+
+  suite.it('counts only inside the compared rectangle', function()
+    local changed = window(Gold):set(0, 0, 9, 9, 9, 255):set(3, 2, 1, 1, 1, 255)
+    local comparison = compare.compare(window(Gold), changed, { left = 2, top = 1, width = 4, height = 3 }, {})
+
+    expect(comparison.differing).toBe(1)
+    expect(comparison.compared).toBe(12)
+  end)
+
+  suite.it('refuses a rectangle outside the captures', function()
+    expect(function()
+      compare.compare(canvas(), canvas(), { left = 5, top = 0, width = 4, height = 1 }, {})
+    end).toThrow 'is outside the captures'
+  end)
+
+  suite.it('groups differing pixels into regions, largest first', function()
+    local changed = canvas():set(0, 0, 1, 1, 1, 255):rect(4, 3, 6, 4, White)
+    local comparison = compare.compare(canvas(), changed, Whole, {})
+
+    expect(comparison.differing).toBe(7)
+    expect(comparison.regions).toEqual {
+      { pixels = 6, rect = { left = 4, top = 3, width = 3, height = 2 } },
+      { pixels = 1, rect = { left = 0, top = 0, width = 1, height = 1 } },
+    }
+  end)
+
+  suite.it('draws differing pixels red, masked ones grey and the rest dimmed', function()
+    local changed = window(Gold):set(3, 2, 0, 0, 0, 255)
+    local mask = { left = 5, top = 3, width = 1, height = 1 }
+    local difference = compare.compare(window(Gold), changed, Whole, { mask }).difference
+
+    expect({ difference:get(3, 2) }).toEqual { 255, 0, 0, 255 }
+    expect({ difference:get(5, 3) }).toEqual { 128, 128, 128, 255 }
+    expect({ difference:get(2, 1) }).toEqual { 50, 41, 24, 255 }
+  end)
+
+  suite.it('finds the window where a capture differs from its baseline', function()
+    expect(compare.boundingBox(canvas(), window(Gold))).toEqual { left = 2, top = 1, width = 4, height = 3 }
+    expect(compare.boundingBox(canvas(), canvas())).toBeNil()
+    expect(compare.union({ left = 2, top = 1, width = 4, height = 3 }, { left = 0, top = 3, width = 3, height = 3 })).toEqual {
+      left = 0,
+      top = 1,
+      width = 6,
+      height = 5,
+    }
+  end)
+end)
+
+suite.describe('the capture log', function()
+  local function trace(sequence: number, layout: string, variant: string, attempt: number): string
+    return `[12:00:0{sequence}.000 I] L@0x1[scripts/h3/parity/capture.lua]:\tS3TRACE|fixture=h3ui_parity|ctx=player|seq={sequence}|event=capture|phase=shot|attempt={attempt}|layout={layout}|variant={variant}`
+  end
+
+  suite.it('pairs each shot with the file the engine saved next, in order', function()
+    local text = table.concat({
+      '[12:00:00.000 I] S3TRACE|fixture=h3ui_parity|ctx=player|seq=1|event=conditions|phase=record|screen=1920x1080',
+      trace(2, 'messagebox', 'baseline', 1),
+      '[12:00:02.100 I] "/home/player/.local/share/openmw/screenshots/screenshot000.png" has been saved',
+      trace(3, 'messagebox', 'baseline', 2),
+      trace(4, 'messagebox', 'vanilla', 1),
+      '[12:00:04.100 I] "/home/player/screenshots/screenshot001.png" has been saved',
+      '[12:00:04.200 E] Failed to write screenshot to file with path="/home/player/screenshots", format="png": disk full',
+      '[12:00:05.000 I] S3TRACE|fixture=other|ctx=player|seq=9|event=capture|phase=shot|layout=x|variant=y|attempt=1',
+    }, '\n')
+
+    local parsed = captureLog.parse(text)
+    expect(parsed.conditions).toEqual { screen = '1920x1080' }
+    expect(parsed.shots).toEqual {
+      { attempt = 1, layout = 'messagebox', path = '/home/player/.local/share/openmw/screenshots/screenshot000.png', variant = 'baseline' },
+      { attempt = 2, layout = 'messagebox', path = '/home/player/screenshots/screenshot001.png', variant = 'baseline' },
+      {
+        attempt = 1,
+        failure = 'Failed to write screenshot to file with path="/home/player/screenshots", format="png": disk full',
+        layout = 'messagebox',
+        variant = 'vanilla',
+      },
+    }
+    expect(parsed.problems).toEqual {}
+  end)
+
+  suite.it('reports a shot that was never saved, and a file no shot asked for', function()
+    local text = table.concat({
+      '[12:00:00.000 I] "/shots/screenshot009.png" has been saved',
+      trace(1, 'hud', 'vanilla', 1),
+      '[12:00:02.000 I] S3TRACE|fixture=h3ui_parity|ctx=player|seq=2|event=run|phase=error|reason=boom',
+    }, '\n')
+
+    expect(captureLog.parse(text).problems).toEqual {
+      'a screenshot no capture asked for: /shots/screenshot009.png',
+      'run error: boom ',
+      'hud vanilla 1: no screenshot was saved',
+    }
+  end)
+end)
+
+suite.describe('a layout', function()
+  local entry = { layout = 'messagebox', masks = {} }
+  local metrics = { layouts = {}, skins = {} }
+
+  suite.it('is unstable when its two captures differ', function()
+    local result = differ.layout(metrics, entry, {
+      baseline = { canvas(), canvas() },
+      h3 = {},
+      vanilla = { window(Gold), window(Gold):set(2, 1, 0, 0, 0, 255) },
+    })
+
+    expect(result.status).toBe 'unstable'
+    expect(result.reason).toBe 'the two vanilla captures differ in 1 pixels'
+  end)
+
+  suite.it('has no window when the vanilla capture matches its baseline', function()
+    local result = differ.layout(metrics, entry, { baseline = { canvas(), canvas() }, h3 = {}, vanilla = { canvas(), canvas() } })
+    expect(result.status).toBe 'no window'
+  end)
+
+  suite.it('is not captured without a baseline', function()
+    local result = differ.layout(metrics, entry, { baseline = {}, h3 = {}, vanilla = { canvas(), canvas() } })
+    expect(result.status).toBe 'not captured'
+    expect(result.reason).toBe 'no baseline capture'
+  end)
+
+  suite.it('has only its window without a reconstruction', function()
+    local result = differ.layout(metrics, entry, { baseline = { canvas(), canvas() }, h3 = {}, vanilla = { window(Gold), window(Gold) } })
+    expect(result.status).toBe 'vanilla only'
+    expect(result.window).toEqual { left = 2, top = 1, width = 4, height = 3 }
+  end)
+
+  suite.it('is compared over the window and wherever the reconstruction strays', function()
+    local stray = canvas():rect(1, 1, 4, 3, Gold)
+    local result = differ.layout(metrics, entry, { baseline = { canvas(), canvas() }, h3 = { stray, stray }, vanilla = { window(Gold), window(Gold) } })
+
+    expect(result.status).toBe 'diffed'
+    expect(result.rect).toEqual { left = 1, top = 1, width = 5, height = 3 }
+    local comparison = result.comparison :: compare.Comparison
+    expect(comparison.differing).toBe(6)
+  end)
+end)
+
+suite.describe('the alignment arithmetic', function()
+  -- count_window.layout: _Main is a 600x128 Window in skin MW_DialogNoTransp, which is 256x54 with
+  -- its Client child at 4,4 248x46, Stretch. So the client area is at 4,4 and 592x120.
+  local metrics = h3Data.read(support.packageRoot(), 'parity/vanillaMetrics')
+
+  suite.it('places count_window as its XML declares it', function()
+    local rects = geometry.widgetRects(metrics, 'count_window', 600, 128)
+
+    expect(rects._Main).toEqual { left = 0, top = 0, width = 600, height = 128 }
+    expect(rects.LabelText).toEqual { left = 4, top = 8, width = 592, height = 24 }
+    expect(rects.ItemText).toEqual { left = 16, top = 40, width = 471, height = 24 }
+    expect(rects.ItemEdit).toEqual { left = 489, top = 40, width = 100, height = 24 }
+    expect(rects.CountSlider).toEqual { left = 11, top = 71, width = 578, height = 18 }
+    expect(rects.OkButton).toEqual { left = 4, top = 95, width = 53, height = 28 }
+  end)
+
+  suite.it('moves and stretches count_window as MyGUI does when it is 100 wider and 10 taller', function()
+    local rects = geometry.widgetRects(metrics, 'count_window', 700, 138)
+
+    -- LabelText, Left Top HStretch: wider by 100.
+    expect(rects.LabelText).toEqual { left = 4, top = 8, width = 692, height = 24 }
+    -- ItemEdit, Right Top: moved right by 100.
+    expect(rects.ItemEdit).toEqual { left = 589, top = 40, width = 100, height = 24 }
+    -- The button row, Center Bottom HStretch: wider by 100 and lower by 10; its OkButton,
+    -- Left Top in a skinless HBox, moves with it.
+    expect(rects.OkButton).toEqual { left = 4, top = 105, width = 53, height = 28 }
+  end)
+
+  suite.it('recentres a widget aligned to neither side', function()
+    -- confirmation_dialog.layout: Message is 338x130 at 16,8, align Center Top, in a 360x130
+    -- MW_DialogNoTransp window whose client area is 352x122. Widened by 40, it is centred again:
+    -- (392 - 338) / 2 = 27, plus the client area's 4.
+    local rects = geometry.widgetRects(metrics, 'confirmation_dialog', 400, 130)
+    expect(rects.Message).toEqual { left = 31, top = 12, width = 338, height = 130 }
+  end)
+
+  suite.it('places a mask inside the window found in the capture', function()
+    local masks = differ.masks(metrics, { layout = 'count_window', masks = { 'ItemEdit' } }, { left = 100, top = 50, width = 600, height = 128 })
+    expect(masks).toEqual { { left = 589, top = 90, width = 100, height = 24 } }
+  end)
+end)
+
+suite.describe('a run', function()
+  suite.it('compares what was captured and reports every other layout as not captured', function()
+    local folder = scratch 'run'
+    local shots, output = fs.join(folder, 'screenshots'), fs.join(folder, 'report')
+    local images = { window(Gold), window(White) }
+    local log: { string } = {}
+    local plan = { { 'baseline', canvas() }, { 'vanilla', images[1] }, { 'h3', images[2] } }
+
+    for _, step in plan do
+      for attempt = 1, 2 do
+        local fileName = `screenshot{#log}.png`
+        files.write(fs.join(shots, fileName), magick.png(step[2] :: Image))
+        table.insert(log, `S3TRACE|fixture=h3ui_parity|ctx=player|seq={#log}|event=capture|phase=shot|attempt={attempt}|layout=messagebox|variant={step[1]}`)
+        table.insert(log, `"C:\\Users\\player\\Documents\\My Games\\OpenMW\\screenshots/{fileName}" has been saved`)
+      end
+    end
+
+    local logPath = fs.join(folder, 'openmw.log')
+    files.write(logPath, table.concat(log, '\n'))
+
+    local results = run.diff(support.packageRoot(), logPath, shots, output)
+    expect(#results).toBe(61)
+
+    local byLayout: { [string]: differ.LayoutResult } = {}
+    for _, result in results do
+      byLayout[result.layout] = result
+    end
+
+    local messagebox = byLayout.messagebox
+    expect(messagebox.status).toBe 'diffed'
+    expect((messagebox.comparison :: compare.Comparison).differing).toBe(12)
+    expect(byLayout.hud.status).toBe 'not captured'
+    expect(byLayout.hud.reason).toBe 'not in this run'
+
+    local report = files.readText(fs.join(output, 'report.md'))
+    expect(string.find(report, '| messagebox | system | diffed | 4x3 at 2,1 | 12 | 12 | 4x3 at 0,0 (12 px) |', 1, true) ~= nil).toBe(true)
+    expect(string.find(report, '| hud | overlays | not captured: not in this run |', 1, true) ~= nil).toBe(true)
+    expect((fs.exists(fs.join(output, 'messagebox.png')))).toBe(true)
+    expect((fs.exists(fs.join(output, 'hud.png')))).toBe(false)
+  end)
+end)
+
+return suite

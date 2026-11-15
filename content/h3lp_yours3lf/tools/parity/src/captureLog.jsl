@@ -1,0 +1,102 @@
+--!strict
+-- A capture run, read from openmw.log. The fixture writes an S3TRACE `capture`/`shot` line before
+-- each debug.takeScreenshot(), and the engine logs `"<path>" has been saved` once the file is
+-- written (components/sceneutil/screencapture.cpp), or an error when it is not. Lua cannot see
+-- the file, so the log is the only record of which file each capture made: the saved lines pair
+-- with the shot lines in order.
+
+export type Shot = {
+  attempt: number,
+  failure: string?,
+  layout: string,
+  path: string?,
+  variant: string,
+}
+
+export type CaptureLog = {
+  conditions: { [string]: string },
+  problems: { string },
+  shots: { Shot },
+}
+
+local Fixture = 'h3ui_parity'
+
+-- The fields every S3TRACE line carries (scripts/s3/fixtures/trace.lua); the rest are the facts.
+local TraceKeys: { [string]: boolean } = {}
+for _, key in { 'ctx', 'event', 'fixture', 'phase', 'seq' } do
+  TraceKeys[key] = true
+end
+
+local CaptureLog = {}
+
+local function traceFields(line: string): { [string]: string }?
+  local start = string.find(line, 'S3TRACE|', 1, true)
+  if not start then return nil end
+
+  local fields: { [string]: string } = {}
+  for part in string.gmatch(string.sub(line, start + 8), '[^|]+') do
+    local key, value = string.match(part, '^([^=]+)=(.*)$')
+    if key then fields[key] = value :: string end
+  end
+
+  if fields.fixture ~= Fixture then return nil end
+
+  return fields
+end
+
+local function savedPath(line: string): string?
+  return string.match(line, '"([^"]+)" has been saved%s*$') or string.match(line, '(%S+) has been saved%s*$')
+end
+
+local function failure(line: string): string?
+  if string.find(line, 'Failed to write screenshot', 1, true) or string.find(line, "Can't write screenshot", 1, true) then
+    return (string.gsub(line, '^%[[^%]]*%]%s*', ''))
+  end
+
+  return nil
+end
+
+--- The run recorded in `text`, the contents of openmw.log.
+function CaptureLog.parse(text: string): CaptureLog
+  local result: CaptureLog = { conditions = {}, problems = {}, shots = {} }
+  local waiting: { Shot } = {}
+
+  for line in string.gmatch(text, '[^\n]+') do
+    local fields = traceFields(line)
+    if fields and fields.event == 'capture' and fields.phase == 'shot' then
+      local shot: Shot = {
+        attempt = tonumber(fields.attempt) or 0,
+        layout = fields.layout,
+        variant = fields.variant,
+      }
+      table.insert(result.shots, shot)
+      table.insert(waiting, shot)
+    elseif fields and fields.event == 'conditions' then
+      for key, value in fields do
+        if not TraceKeys[key] then result.conditions[key] = value end
+      end
+    elseif fields and fields.event == 'run' and (fields.phase == 'error' or fields.phase == 'refuse') then
+      table.insert(result.problems, `run {fields.phase}: {fields.reason or ''} {fields.content or ''}`)
+    end
+
+    local path, failed = savedPath(line), failure(line)
+    if path or failed then
+      local shot = table.remove(waiting, 1)
+      if not shot then
+        table.insert(result.problems, `a screenshot no capture asked for: {path or failed}`)
+      elseif path then
+        shot.path = path
+      else
+        shot.failure = failed
+      end
+    end
+  end
+
+  for _, shot in waiting do
+    table.insert(result.problems, `{shot.layout} {shot.variant} {shot.attempt}: no screenshot was saved`)
+  end
+
+  return result
+end
+
+return CaptureLog

@@ -1,0 +1,187 @@
+--!strict
+-- Pixel comparison of two captures made under one set of conditions. Two pixels differ when any
+-- of their channels differs: H3UI and the engine share a renderer and a font rasteriser, so
+-- there is no tolerance. Rectangles are { left, top, width, height } in pixels from the top left.
+
+local magick = require '@magick'
+
+type Image = magick.Image
+
+export type Rect = { height: number, left: number, top: number, width: number }
+
+export type Region = { pixels: number, rect: Rect }
+
+export type Comparison = {
+  compared: number,
+  difference: Image,
+  differing: number,
+  masked: number,
+  regions: { Region },
+}
+
+local Differing, Masked = { 255, 0, 0, 255 }, { 128, 128, 128, 255 }
+
+local Compare = {}
+
+local function requireSameSize(first: Image, second: Image)
+  if first.width ~= second.width or first.height ~= second.height then
+    error(`captures differ in size: {first.width}x{first.height} and {second.width}x{second.height}`, 0)
+  end
+end
+
+local function differsAt(first: Image, second: Image, offset: number): boolean
+  return buffer.readu32(first.data, offset) ~= buffer.readu32(second.data, offset)
+end
+
+--- The smallest rectangle holding every pixel where `first` and `second` differ, or nil.
+function Compare.boundingBox(first: Image, second: Image): Rect?
+  requireSameSize(first, second)
+
+  local left, top, right, bottom = math.huge, math.huge, -1, -1
+  for row = 0, first.height - 1 do
+    for column = 0, first.width - 1 do
+      if differsAt(first, second, (row * first.width + column) * 4) then
+        left, right = math.min(left, column), math.max(right, column)
+        top, bottom = math.min(top, row), math.max(bottom, row)
+      end
+    end
+  end
+
+  if right < 0 then return nil end
+
+  return { left = left, top = top, width = right - left + 1, height = bottom - top + 1 }
+end
+
+--- The smallest rectangle holding both, either of which may be nil.
+function Compare.union(first: Rect?, second: Rect?): Rect?
+  if not first then return second end
+  if not second then return first end
+
+  local left, top = math.min(first.left, second.left), math.min(first.top, second.top)
+  local right = math.max(first.left + first.width, second.left + second.width)
+  local bottom = math.max(first.top + first.height, second.top + second.height)
+
+  return { left = left, top = top, width = right - left, height = bottom - top }
+end
+
+local function inside(rect: Rect, column: number, row: number): boolean
+  return column >= rect.left and column < rect.left + rect.width and row >= rect.top and row < rect.top + rect.height
+end
+
+local function isMasked(masks: { Rect }, column: number, row: number): boolean
+  for _, mask in masks do
+    if inside(mask, column, row) then return true end
+  end
+
+  return false
+end
+
+--- The 4-connected groups of differing pixels in `grid`, a rect.width by rect.height buffer of
+--- one byte a pixel, 1 where the pixel differs; largest first, in `rect`'s frame.
+local function regionsOf(grid: buffer, rect: Rect): { Region }
+  local regions: { Region } = {}
+  local width, height = rect.width, rect.height
+  local queue: { number } = {}
+
+  for start = 0, width * height - 1 do
+    if buffer.readu8(grid, start) ~= 1 then continue end
+
+    buffer.writeu8(grid, start, 2)
+    table.clear(queue)
+    table.insert(queue, start)
+
+    local left, top, right, bottom, pixels = math.huge, math.huge, -1, -1, 0
+    local cursor = 1
+    while cursor <= #queue do
+      local index = queue[cursor]
+      cursor += 1
+      pixels += 1
+
+      local column, row = index % width, index // width
+      left, right = math.min(left, column), math.max(right, column)
+      top, bottom = math.min(top, row), math.max(bottom, row)
+
+      local neighbours = {
+        if column > 0 then index - 1 else -1,
+        if column < width - 1 then index + 1 else -1,
+        if row > 0 then index - width else -1,
+        if row < height - 1 then index + width else -1,
+      }
+
+      for _, neighbour in neighbours do
+        if neighbour >= 0 and buffer.readu8(grid, neighbour) == 1 then
+          buffer.writeu8(grid, neighbour, 2)
+          table.insert(queue, neighbour)
+        end
+      end
+    end
+
+    local frame = { left = rect.left + left, top = rect.top + top, width = right - left + 1, height = bottom - top + 1 }
+    table.insert(regions, { pixels = pixels, rect = frame })
+  end
+
+  table.sort(regions, function(first: Region, second: Region): boolean
+    if first.pixels ~= second.pixels then return first.pixels > second.pixels end
+    if first.rect.top ~= second.rect.top then return first.rect.top < second.rect.top end
+
+    return first.rect.left < second.rect.left
+  end)
+
+  return regions
+end
+
+--- `candidate` against `reference` inside `rect`, leaving out every pixel inside one of `masks`.
+--- The difference image is `rect`'s size: differing pixels red, masked ones grey, and the rest
+--- the reference at a quarter of its brightness.
+function Compare.compare(reference: Image, candidate: Image, rect: Rect, masks: { Rect }): Comparison
+  requireSameSize(reference, candidate)
+
+  if rect.left < 0 or rect.top < 0 or rect.left + rect.width > reference.width or rect.top + rect.height > reference.height then
+    error(`rectangle {rect.left},{rect.top} {rect.width}x{rect.height} is outside the captures`, 0)
+  end
+
+  local difference = magick.new(rect.width, rect.height)
+  local grid = buffer.create(rect.width * rect.height)
+  local differing, masked = 0, 0
+
+  for row = 0, rect.height - 1 do
+    for column = 0, rect.width - 1 do
+      local frameColumn, frameRow = rect.left + column, rect.top + row
+      local offset = (frameRow * reference.width + frameColumn) * 4
+
+      if isMasked(masks, frameColumn, frameRow) then
+        masked += 1
+        difference:set(column, row, Masked[1], Masked[2], Masked[3], Masked[4])
+      elseif differsAt(reference, candidate, offset) then
+        differing += 1
+        buffer.writeu8(grid, row * rect.width + column, 1)
+        difference:set(column, row, Differing[1], Differing[2], Differing[3], Differing[4])
+      else
+        local red, green, blue = reference:get(frameColumn, frameRow)
+        difference:set(column, row, red // 4, green // 4, blue // 4, 255)
+      end
+    end
+  end
+
+  return {
+    compared = rect.width * rect.height - masked,
+    difference = difference,
+    differing = differing,
+    masked = masked,
+    regions = regionsOf(grid, rect),
+  }
+end
+
+--- How many pixels differ between two whole captures.
+function Compare.count(first: Image, second: Image): number
+  requireSameSize(first, second)
+
+  local differing = 0
+  for offset = 0, first.width * first.height * 4 - 4, 4 do
+    if differsAt(first, second, offset) then differing += 1 end
+  end
+
+  return differing
+end
+
+return Compare

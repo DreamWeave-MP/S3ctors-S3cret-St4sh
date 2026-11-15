@@ -1,3 +1,12 @@
 # Written by `jess workspace sync`: what the members depend on beyond each other, pinned.
 # Change a member's dependencies and sync again rather than editing this.
 lock_version = 2
+
+[[package]]
+id = "org.dreamweave.magick"
+version = "0.1.3"
+digest = "08ef69240ae2a041651d94b67240149357733070f327f3085b944f6c814ddb6f"
+source = "publisher"
+manifest = "https://dreamweave-mp.github.io/magick/dreamweave/projects/4aefcc8f-913f-48f5-8980-2326173a7288.json"
+artifact_sha256 = "bac4b460ebaaed78ff164c8f04866057bd01a235f857dc23d2a480dd7b22a358"
+dependencies = []

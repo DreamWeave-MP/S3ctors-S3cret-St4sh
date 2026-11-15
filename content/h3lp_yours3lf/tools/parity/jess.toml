@@ -5,22 +5,51 @@ id = "org.dreamweave.h3uiparity"
 version = "0.1.0"
 jess_api = "1"
 include = ["src", "tests", "tools"]
-tests = ["tests/extract.jsl", "tests/manifest.jsl", "tests/style.jsl"]
+tests = ["tests/diff.jsl", "tests/extract.jsl", "tests/manifest.jsl", "tests/style.jsl"]
 
 [modules]
+"@h3uiparity/capturelog" = "src/captureLog.jsl"
+"@h3uiparity/compare" = "src/compare.jsl"
+"@h3uiparity/differ" = "src/differ.jsl"
 "@h3uiparity/files" = "src/files.jsl"
+"@h3uiparity/geometry" = "src/geometry.jsl"
+"@h3uiparity/h3data" = "src/h3Data.jsl"
 "@h3uiparity/luadata" = "src/luaData.jsl"
 "@h3uiparity/manifest" = "src/manifest.jsl"
 "@h3uiparity/mygui" = "src/mygui.jsl"
+"@h3uiparity/report" = "src/report.jsl"
+"@h3uiparity/run" = "src/run.jsl"
 "@h3uiparity/xml" = "src/xml.jsl"
 
 [[layer]]
 id = "org.dreamweave.h3uiparity"
 requires = []
-exports = ["@h3uiparity/files", "@h3uiparity/luadata", "@h3uiparity/manifest", "@h3uiparity/mygui", "@h3uiparity/xml"]
+exports = [
+  "@h3uiparity/capturelog",
+  "@h3uiparity/compare",
+  "@h3uiparity/differ",
+  "@h3uiparity/files",
+  "@h3uiparity/geometry",
+  "@h3uiparity/h3data",
+  "@h3uiparity/luadata",
+  "@h3uiparity/manifest",
+  "@h3uiparity/mygui",
+  "@h3uiparity/report",
+  "@h3uiparity/run",
+  "@h3uiparity/xml",
+]
 
 [targets.extract]
 kind = "command"
 command = "extract"
 entry = "tools/extract.jsl"
 capabilities = ["filesystem.read", "filesystem.write", "process.spawn"]
+
+[targets.diff]
+kind = "command"
+command = "diff"
+entry = "tools/diff.jsl"
+capabilities = ["filesystem.read", "filesystem.write"]
+
+[dependencies]
+"org.dreamweave.magick" = "^0.1"

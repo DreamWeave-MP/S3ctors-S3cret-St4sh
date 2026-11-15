@@ -1,0 +1,160 @@
+--!strict
+-- Where a layout's named widgets sit once its window has a given size, by the arithmetic MyGUI
+-- applies at run time (MyGUI 3.4, Widget::_setAlign and Align::parse):
+--
+-- - A widget's position is relative to its parent's client area: the skin's child named Client,
+--   or the whole parent when the skin has none.
+-- - Only when a parent's client area changes size does a child follow its align flags. Stretch
+--   adds the change to its size; Right or Bottom alone adds it to its position; neither Left nor
+--   Right (or neither Top nor Bottom) centres it again, (size - own size) / 2, truncated toward
+--   zero.
+-- - A widget with no align attribute is Left Top.
+--
+-- These are declared values only. Engine code that moves a widget itself is not modelled.
+
+local compare = require './compare'
+local luaData = require './luaData'
+
+type Rect = compare.Rect
+type Table = luaData.Table
+
+type Flags = { bottom: boolean, left: boolean, right: boolean, top: boolean }
+
+local AlignWords: { [string]: { string } } = {
+  Bottom = { 'bottom' },
+  Center = {},
+  Default = { 'left', 'top' },
+  HCenter = {},
+  HStretch = { 'left', 'right' },
+  Left = { 'left' },
+  Right = { 'right' },
+  Stretch = { 'left', 'right', 'top', 'bottom' },
+  Top = { 'top' },
+  VCenter = {},
+  VStretch = { 'top', 'bottom' },
+}
+
+local Geometry = {}
+
+local function parseAlign(text: string?): Flags
+  local flags = { bottom = false, left = false, right = false, top = false }
+  if not text then return { bottom = false, left = true, right = false, top = true } end
+
+  for word in string.gmatch(text, '[^%s|]+') do
+    for _, flag in AlignWords[word] or {} do
+      flags[flag] = true
+    end
+  end
+
+  return flags
+end
+
+local function truncatedHalf(value: number): number
+  if value < 0 then return -math.floor(-value / 2) end
+
+  return math.floor(value / 2)
+end
+
+--- `rect` after its parent's client area went from `oldWidth` x `oldHeight` to the new size.
+local function realign(
+  rect: Rect,
+  flags: Flags,
+  oldWidth: number,
+  oldHeight: number,
+  newWidth: number,
+  newHeight: number
+): Rect
+  local left, top, width, height = rect.left, rect.top, rect.width, rect.height
+  local widthChange, heightChange = newWidth - oldWidth, newHeight - oldHeight
+
+  if widthChange ~= 0 then
+    if flags.left and flags.right then
+      width += widthChange
+    elseif flags.right then
+      left += widthChange
+    elseif not flags.left then
+      left = truncatedHalf(newWidth - width)
+    end
+  end
+
+  if heightChange ~= 0 then
+    if flags.top and flags.bottom then
+      height += heightChange
+    elseif flags.bottom then
+      top += heightChange
+    elseif not flags.top then
+      top = truncatedHalf(newHeight - height)
+    end
+  end
+
+  return { left = left, top = top, width = width, height = height }
+end
+
+local function rectOf(values: unknown): Rect
+  local list = (values or { 0, 0, 0, 0 }) :: { number }
+
+  return { left = list[1], top = list[2], width = list[3], height = list[4] }
+end
+
+--- The client area of a widget of `skinName` that is `width` x `height`, relative to the widget.
+local function clientArea(skins: Table, skinName: unknown, width: number, height: number): Rect
+  local skin = if type(skinName) == 'string' then skins[skinName] :: Table? else nil
+  local whole = { left = 0, top = 0, width = width, height = height }
+  if not skin or not skin.size then return whole end
+
+  local size = skin.size :: { number }
+  for _, child in (skin.children or {}) :: { Table } do
+    if child.name == 'Client' then
+      local flags = parseAlign(child.align :: string?)
+      return realign(rectOf(child.offset), flags, size[1], size[2], width, height)
+    end
+  end
+
+  return whole
+end
+
+local function placeChildren(
+  rects: { [string]: Rect },
+  skins: Table,
+  widgets: unknown,
+  originLeft: number,
+  originTop: number,
+  oldClient: Rect,
+  newClient: Rect
+)
+  for _, widget in (widgets or {}) :: { Table } do
+    local declared = rectOf(widget.position)
+    local placed = realign(declared, parseAlign(widget.align :: string?), oldClient.width, oldClient.height, newClient.width, newClient.height)
+    local left, top = originLeft + placed.left, originTop + placed.top
+
+    local name = widget.name
+    if type(name) == 'string' then rects[name] = { left = left, top = top, width = placed.width, height = placed.height } end
+
+    local oldInner = clientArea(skins, widget.skin, declared.width, declared.height)
+    local newInner = clientArea(skins, widget.skin, placed.width, placed.height)
+    placeChildren(rects, skins, widget.widgets, left + newInner.left, top + newInner.top, oldInner, newInner)
+  end
+end
+
+--- Every named widget of the layout `layoutName`, relative to its first top-level widget's top
+--- left, once that widget is `width` x `height`.
+function Geometry.widgetRects(metrics: Table, layoutName: string, width: number, height: number): { [string]: Rect }
+  local layout = (metrics.layouts :: Table)[layoutName] :: Table?
+  if not layout then error(`no layout {layoutName} in the metrics`, 0) end
+
+  local skins = metrics.skins :: Table
+  local root = ((layout.widgets :: { Table })[1])
+  local declared = rectOf(root.position)
+  local rects: { [string]: Rect } = {}
+
+  local name = root.name
+  if type(name) == 'string' then rects[name] = { left = 0, top = 0, width = width, height = height } end
+
+  local oldClient = clientArea(skins, root.skin, declared.width, declared.height)
+  local newClient = clientArea(skins, root.skin, width, height)
+  placeChildren(rects, skins, root.widgets, newClient.left, newClient.top, oldClient, newClient)
+
+  return rects
+end
+
+return Geometry

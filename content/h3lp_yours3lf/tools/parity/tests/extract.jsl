@@ -4,6 +4,7 @@
 -- cases, the writer's layout, and the checked-in metrics module against the writer.
 
 local files = require '@h3uiparity/files'
+local h3Data = require '@h3uiparity/h3data'
 local luaData = require '@h3uiparity/luadata'
 local mygui = require '@h3uiparity/mygui'
 local support = require './support'
@@ -224,7 +225,7 @@ suite.describe('the data module writer', function()
 end)
 
 suite.describe('the checked-in metrics', function()
-  local path = support.h3Path 'parity/vanillaMetrics'
+  local path = h3Data.path(support.packageRoot(), 'parity/vanillaMetrics')
 
   suite.it('are exactly what the extractor writes for them', function()
     local text = files.readText(path)

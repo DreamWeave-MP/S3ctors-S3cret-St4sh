@@ -1,0 +1,101 @@
+--!strict
+-- The differ's report, as Markdown: one row per layout with its status, window, pixel counts and
+-- largest differing regions, then the capture conditions and anything wrong with the run.
+
+local compare = require './compare'
+local differ = require './differ'
+
+type LayoutResult = differ.LayoutResult
+type Rect = compare.Rect
+
+export type Context = {
+  commit: string,
+  conditions: { [string]: string },
+  problems: { string },
+  repository: string,
+}
+
+local RegionsShown = 5
+
+local Report = {}
+
+local function rectText(rect: Rect, originLeft: number, originTop: number): string
+  return `{rect.width}x{rect.height} at {rect.left - originLeft},{rect.top - originTop}`
+end
+
+local function regionsText(row: LayoutResult): string
+  local comparison, window = row.comparison, row.window
+  if not comparison or not window then return '' end
+
+  local parts: { string } = {}
+  for index, region in comparison.regions do
+    if index > RegionsShown then break end
+
+    table.insert(parts, `{rectText(region.rect, window.left, window.top)} ({region.pixels} px)`)
+  end
+
+  if #comparison.regions > RegionsShown then
+    table.insert(parts, `and {#comparison.regions - RegionsShown} more`)
+  end
+
+  return table.concat(parts, '; ')
+end
+
+local function row(result: LayoutResult, group: string): string
+  local window = if result.window then rectText(result.window, 0, 0) else ''
+  local comparison = result.comparison
+  local compared = if comparison then tostring(comparison.compared) else ''
+  local differing = if comparison then tostring(comparison.differing) else ''
+  local status = if result.reason then `{result.status}: {result.reason}` else result.status
+
+  return `| {result.layout} | {group} | {status} | {window} | {compared} | {differing} | {regionsText(result)} |`
+end
+
+--- The report for `results`, each with the group its manifest entry gives in `groups`.
+function Report.markdown(results: { LayoutResult }, groups: { [string]: string }, context: Context): string
+  local lines = {
+    '# H3UI parity report',
+    '',
+    `Engine: {context.repository} at {context.commit}.`,
+    '',
+    'Windows and rectangles are in pixels, width x height at left,top. A window is placed in the',
+    'capture; a region is placed in its window. Masked pixels are not compared.',
+    '',
+    '| Layout | Group | Status | Window | Compared | Differing | Largest differing regions |',
+    '| --- | --- | --- | --- | ---: | ---: | --- |',
+  }
+
+  for _, result in results do
+    table.insert(lines, row(result, groups[result.layout] or ''))
+  end
+
+  table.insert(lines, '')
+  table.insert(lines, '## Capture conditions')
+  table.insert(lines, '')
+
+  local keys: { string } = {}
+  for key in context.conditions do
+    table.insert(keys, key)
+  end
+
+  table.sort(keys)
+  for _, key in keys do
+    table.insert(lines, `- {key}: {context.conditions[key]}`)
+  end
+
+  if #keys == 0 then table.insert(lines, '- None recorded.') end
+
+  table.insert(lines, '')
+  table.insert(lines, '## Problems in the run')
+  table.insert(lines, '')
+
+  for _, problem in context.problems do
+    table.insert(lines, `- {problem}`)
+  end
+
+  if #context.problems == 0 then table.insert(lines, '- None.') end
+
+  return table.concat(lines, '\n') .. '\n'
+end
+
+return Report

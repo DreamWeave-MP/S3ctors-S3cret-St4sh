@@ -95,11 +95,39 @@ Engine limits it works around, all at the metrics' engine commit:
 - **Lua cannot tell whether a UI replacer is loaded from a data folder.** Only the content list is
   checked; the rest is a capture condition you set by hand.
 
+## diff
+
+Compares a capture run. It writes `report.md` and one `<layout>.png` difference image per compared
+layout:
+
+```sh
+jess workspace run diff --trusted -- <openmw.log> <screenshots folder> <output folder>
+```
+
+- **Pairing:** each `capture`/`shot` line in the log takes the next screenshot the engine reports,
+  as saved or failed. Screenshots are found by file name in the folder given.
+- **Per layout, in manifest order:**
+  - **not captured:** a capture is missing, or failed to save. The reason is given.
+  - **unstable:** the two captures of a variant differ, so the window had not settled.
+  - **no window:** the vanilla capture matches its baseline.
+  - **vanilla only:** there is no H3UI capture. The window is still recorded.
+  - **diffed:** the comparison ran:
+    - the window is where vanilla differs from its baseline;
+    - the compared rectangle also covers wherever the H3UI capture differs from the baseline;
+    - the manifest's masks are placed inside the window by the layout's own geometry, as MyGUI
+      aligns it;
+    - every differing pixel counts, with no tolerance;
+    - the report gives the count and the largest 4-connected differing regions.
+- **Difference image:** differing pixels red, masked pixels grey, everything else the vanilla
+  capture at a quarter of its brightness.
+- **Sizes:** captures of different sizes are an error, never a count.
+
 ## Tests
 
 ```sh
-jess package check .
-jess package test .
+jess workspace sync --locked
+jess package check . --package-path .jess/packages
+jess package test . --package-path .jess/packages
 ```
 
 - **Golden tests:** two skins and one layout, with the expected tables written by hand from the
@@ -108,6 +136,12 @@ jess package test .
 - **Writer:** its layout, and a round trip through it.
 - **Checked-in metrics:** the file is exactly what the extractor writes for it.
 - **Manifest:** the checks above, and each mistake they exist to catch.
+- **Differ:**
+  - identical captures count zero, a one-pixel change counts one, a change inside a mask counts
+    zero, and captures of different sizes are an error;
+  - log pairing, every layout outcome, and the regions and difference image;
+  - the alignment arithmetic, held to `count_window`'s XML by hand;
+  - one run end to end.
 - **Style:** every file passes `@jess/style`.
 
 CI runs both commands in the `Parity tools` job.

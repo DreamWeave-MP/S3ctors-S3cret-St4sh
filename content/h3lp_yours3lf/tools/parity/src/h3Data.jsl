@@ -1,0 +1,25 @@
+--!strict
+-- The H3 data modules this package reads, the metrics and the manifest under scripts/h3, from
+-- this package's folder, two folders below the mod's root. A package module's chunk name is not a
+-- path, so the folder is passed in: commands run from it, and suites find it from their own path.
+
+local files = require './files'
+local fs = require '@dream/fs'
+local luaData = require './luaData'
+
+local H3Data = {}
+
+--- The path of the H3 module `name`, such as 'parity/manifest', for the package in `packageRoot`.
+function H3Data.path(packageRoot: string, name: string): string
+  return fs.join(packageRoot, `../../scripts/h3/{name}.lua`)
+end
+
+--- The table the H3 data module `name` returns, for the package in `packageRoot`.
+function H3Data.read(packageRoot: string, name: string): luaData.Table
+  local path = H3Data.path(packageRoot, name)
+  if not fs.exists(path) then error(`{path} is not there: run from content/h3lp_yours3lf/tools/parity`, 0) end
+
+  return luaData.read(files.readText(path), path)
+end
+
+return H3Data

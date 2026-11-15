@@ -174,7 +174,7 @@ jobs:
         run: jess workspace sync --locked
 
       - name: Type-check
-        run: jess package check .
+        run: jess package check . --package-path .jess/packages
 
       - name: Run the tests
-        run: jess package test .
+        run: jess package test . --package-path .jess/packages

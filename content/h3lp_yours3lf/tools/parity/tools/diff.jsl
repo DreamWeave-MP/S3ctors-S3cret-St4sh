@@ -1,0 +1,21 @@
+--!strict
+-- diff <openmw.log> <screenshots folder> <output folder>
+--
+-- Compares a capture run and writes report.md and the difference images; see src/run.jsl.
+
+local fs = require '@dream/fs'
+local run = require '@h3uiparity/run'
+
+local logPath, screenshots, output = ...
+if not logPath or not screenshots or not output then
+  error('usage: diff <openmw.log> <screenshots folder> <output folder>', 0)
+end
+
+local folder, problem = fs.cwd()
+if not folder then error(problem, 0) end
+
+for _, result in run.diff(folder, logPath, screenshots, output) do
+  local comparison = result.comparison
+  local counted = if comparison then `, {comparison.differing} differing pixels` else ''
+  print(`{result.layout}: {result.status}{counted}`)
+end

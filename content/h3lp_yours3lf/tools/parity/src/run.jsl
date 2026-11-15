@@ -1,0 +1,96 @@
+--!strict
+-- The differ end to end: pairs the capture fixture's shots in openmw.log with the screenshots the
+-- engine saved, compares every layout in the manifest, and writes report.md and one
+-- <layout>.png difference image for each compared layout. Screenshots are found by file name, so
+-- the folder can be a copy of the one the game wrote to.
+
+local captureLog = require './captureLog'
+local differ = require './differ'
+local files = require './files'
+local fs = require '@dream/fs'
+local h3Data = require './h3Data'
+local magick = require '@magick'
+local report = require './report'
+
+type LayoutResult = differ.LayoutResult
+type Shot = captureLog.Shot
+
+local Run = {}
+
+--- Compares the run in the log at `logPath`, with its screenshots in `screenshots`, and writes the
+--- report and difference images into `output`. `packageRoot` is this package's folder. Returns
+--- each layout's result, in manifest order.
+function Run.diff(packageRoot: string, logPath: string, screenshots: string, output: string): { LayoutResult }
+  local run = captureLog.parse(files.readText(logPath))
+  local metrics, manifest = h3Data.read(packageRoot, 'parity/vanillaMetrics'), h3Data.read(packageRoot, 'parity/manifest')
+  local source = metrics.source :: { [string]: string }
+
+  local shotsByLayout: { [string]: { [string]: { [number]: Shot } } } = {}
+  for _, shot in run.shots do
+    local layout = shotsByLayout[shot.layout] or {}
+    shotsByLayout[shot.layout] = layout
+
+    local variant = layout[shot.variant] or {}
+    layout[shot.variant] = variant
+    variant[shot.attempt] = shot
+  end
+
+  --- The captures of `layout`, or why they cannot be compared.
+  local function capturesOf(layout: string): (differ.Captures?, string?)
+    local shots = shotsByLayout[layout]
+    if not shots then return nil, 'not in this run' end
+
+    local captures: differ.Captures = { baseline = {}, h3 = {}, vanilla = {} }
+    for variant, attempts in shots do
+      for attempt, shot in attempts do
+        if shot.failure then return nil, `{variant} {attempt}: {shot.failure}` end
+        if not shot.path then return nil, `{variant} {attempt}: no screenshot was saved` end
+
+        local fileName = string.match(shot.path :: string, '[^/\\]+$') :: string
+        local path = fs.join(screenshots, fileName)
+        if not fs.exists(path) then return nil, `{variant} {attempt}: {fileName} is not in {screenshots}` end
+
+        local images = if variant == 'baseline'
+          then captures.baseline
+          elseif variant == 'vanilla' then captures.vanilla
+          elseif variant == 'h3' then captures.h3
+          else nil
+        if not images then return nil, `{variant}: not a variant the fixture captures` end
+
+        images[attempt] = magick.read(path)
+      end
+    end
+
+    return captures, nil
+  end
+
+  local results: { LayoutResult } = {}
+  local groups: { [string]: string } = {}
+  for _, entry in manifest :: { differ.Table } do
+    local layout = entry.layout :: string
+    groups[layout] = entry.group :: string
+
+    local captures, missing = capturesOf(layout)
+    local result = if captures
+      then differ.layout(metrics, entry, captures)
+      else { layout = layout, masks = {}, reason = missing, status = 'not captured' } :: LayoutResult
+
+    local comparison = result.comparison
+    if comparison then files.write(fs.join(output, `{layout}.png`), magick.png(comparison.difference)) end
+
+    table.insert(results, result)
+  end
+
+  local context = {
+    commit = source.commit,
+    conditions = run.conditions,
+    problems = run.problems,
+    repository = source.repository,
+  }
+
+  files.write(fs.join(output, 'report.md'), report.markdown(results, groups, context))
+
+  return results
+end
+
+return Run

@@ -1,0 +1,98 @@
+--!strict
+-- One layout's captures, compared. Each variant (baseline, vanilla, h3) is captured twice, and
+-- the two must be identical, or the window had not settled. The window is where the vanilla
+-- capture differs from its baseline; the compared rectangle also holds where the H3UI capture
+-- differs from it, so a reconstruction in the wrong place counts. The manifest's masks are
+-- placed by the layout's own geometry inside the vanilla window.
+
+local compare = require './compare'
+local geometry = require './geometry'
+local luaData = require './luaData'
+local magick = require '@magick'
+
+type Comparison = compare.Comparison
+type Image = magick.Image
+type Rect = compare.Rect
+export type Table = luaData.Table
+
+export type Captures = { baseline: { Image }, h3: { Image }, vanilla: { Image } }
+
+export type Status = 'not captured' | 'unstable' | 'no window' | 'vanilla only' | 'diffed'
+
+export type LayoutResult = {
+  comparison: Comparison?,
+  layout: string,
+  masks: { Rect },
+  reason: string?,
+  rect: Rect?,
+  status: Status,
+  window: Rect?,
+}
+
+local Variants = { 'baseline', 'vanilla', 'h3' }
+
+local Differ = {}
+
+local function result(layout: string, status: Status, reason: string?): LayoutResult
+  return { layout = layout, masks = {}, reason = reason, status = status }
+end
+
+--- The manifest's masks for `entry`, in capture coordinates, inside `window`.
+function Differ.masks(metrics: Table, entry: Table, window: Rect): { Rect }
+  local names = (entry.masks or {}) :: { string }
+  if #names == 0 then return {} end
+
+  local rects = geometry.widgetRects(metrics, entry.layout :: string, window.width, window.height)
+  local masks: { Rect } = {}
+  for _, name in names do
+    local rect = rects[name]
+    if not rect then error(`{entry.layout}: no widget {name} to mask`, 0) end
+
+    table.insert(masks, { left = window.left + rect.left, top = window.top + rect.top, width = rect.width, height = rect.height })
+  end
+
+  return masks
+end
+
+--- `entry`'s captures compared.
+function Differ.layout(metrics: Table, entry: Table, captures: Captures): LayoutResult
+  local name = entry.layout :: string
+
+  for _, variant in { 'baseline', 'vanilla' } do
+    if #(captures :: Table)[variant] :: { Image } == 0 then return result(name, 'not captured', `no {variant} capture`) end
+  end
+
+  for _, variant in Variants do
+    local images = (captures :: Table)[variant] :: { Image }
+    if #images == 1 then return result(name, 'unstable', `one {variant} capture, where two are needed`) end
+
+    if #images == 2 then
+      local differing = compare.count(images[1], images[2])
+      if differing > 0 then return result(name, 'unstable', `the two {variant} captures differ in {differing} pixels`) end
+    end
+  end
+
+  local baseline, vanilla = captures.baseline[1], captures.vanilla[1]
+  local window = compare.boundingBox(baseline, vanilla)
+  if not window then return result(name, 'no window', 'the vanilla capture is identical to its baseline') end
+
+  local masks = Differ.masks(metrics, entry, window)
+  local reconstruction = captures.h3[1]
+  if not reconstruction then
+    local only = result(name, 'vanilla only', 'no H3UI reconstruction was captured')
+    only.window, only.masks = window, masks
+    return only
+  end
+
+  local rect = compare.union(window, compare.boundingBox(baseline, reconstruction)) :: Rect
+  return {
+    comparison = compare.compare(vanilla, reconstruction, rect, masks),
+    layout = name,
+    masks = masks,
+    rect = rect,
+    status = 'diffed',
+    window = window,
+  }
+end
+
+return Differ

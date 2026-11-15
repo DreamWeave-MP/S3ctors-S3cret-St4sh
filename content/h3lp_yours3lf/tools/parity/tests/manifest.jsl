@@ -2,6 +2,7 @@
 -- The checked-in manifest against the checked-in metrics, and the check against the mistakes it
 -- exists to catch.
 
+local h3Data = require '@h3uiparity/h3data'
 local luaData = require '@h3uiparity/luadata'
 local manifest = require '@h3uiparity/manifest'
 local support = require './support'
@@ -32,12 +33,12 @@ local function entry(layout: string): Table
 end
 
 suite.it('classifies every extracted layout exactly once', function()
-  local problems = manifest.check(support.h3Data 'parity/manifest', support.h3Data 'parity/vanillaMetrics')
+  local problems = manifest.check(h3Data.read(support.packageRoot(), 'parity/manifest'), h3Data.read(support.packageRoot(), 'parity/vanillaMetrics'))
   expect(table.concat(problems, '\n')).toBe ''
 end)
 
 suite.it('lists all 61 reference layouts of #11', function()
-  expect(#(support.h3Data 'parity/manifest' :: { Table })).toBe(61)
+  expect(#(h3Data.read(support.packageRoot(), 'parity/manifest') :: { Table })).toBe(61)
 end)
 
 suite.it('fails on a layout added upstream until it is classified', function()
