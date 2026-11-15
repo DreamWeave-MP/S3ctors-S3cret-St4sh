@@ -144,7 +144,7 @@ return {
     opens = { kind = 'mode', mode = 'ChargenName' },
     state = 'A throwaway save: character creation modes can change the character.',
     masks = {},
-    status = 'not started',
+    status = 'fixture',
   },
   {
     layout = 'alchemy_window',
@@ -245,10 +245,10 @@ return {
   {
     layout = 'count_window',
     group = 'services',
-    opens = { kind = 'manual', steps = 'In the inventory, drag one item from a stack.' },
-    state = 'A stack of two or more items in the inventory.',
+    opens = { kind = 'manual', steps = 'In the inventory, drag the stack of five Ash Yams.' },
+    state = 'Exactly five Ash Yams in the inventory: player->additem ingred_ash_yam_01 5.',
     masks = {},
-    status = 'not started',
+    status = 'fixture',
   },
   {
     layout = 'chargen_race',
@@ -376,7 +376,7 @@ return {
     opens = { kind = 'mode', mode = 'Rest' },
     state = 'A loaded game where waiting is allowed.',
     masks = {},
-    status = 'not started',
+    status = 'fixture',
   },
   {
     layout = 'wait_dialog_progressbar',
@@ -400,7 +400,7 @@ return {
     opens = { kind = 'manual', steps = 'In the main menu, choose Exit.' },
     state = 'A loaded game after character creation.',
     masks = {},
-    status = 'not started',
+    status = 'fixture',
   },
   {
     layout = 'messagebox',
@@ -408,7 +408,7 @@ return {
     opens = { kind = 'message', text = 'H3UI parity: the message box reference.' },
     state = 'A loaded game after character creation.',
     masks = {},
-    status = 'not started',
+    status = 'fixture',
   },
   {
     layout = 'interactive_messagebox',
@@ -419,7 +419,7 @@ return {
     },
     state = 'A loaded game after character creation.',
     masks = {},
-    status = 'not started',
+    status = 'fixture',
   },
   {
     layout = 'interactive_messagebox_notransp',
@@ -439,7 +439,7 @@ return {
     opens = { kind = 'mode', mode = 'ChargenClass' },
     state = 'A throwaway save: character creation modes can change the character.',
     masks = {},
-    status = 'not started',
+    status = 'fixture',
   },
   {
     layout = 'hud',

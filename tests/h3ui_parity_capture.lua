@@ -338,7 +338,7 @@ local function testRunsTheWorldOnlyWhileAStepIsFollowedByHand()
   for index = 1, #calls do
     if
       calls[index]
-      == 'message Open count_window: In the inventory, drag one item from a stack. Then press Insert.'
+      == 'message Open count_window: In the inventory, drag the stack of five Ash Yams. Then press Insert.'
     then
       announced = announced + 1
       assert(calls[index - 1] == 'H3UIParityUnpause')

@@ -95,6 +95,28 @@ Engine limits it works around, all at the metrics' engine commit:
 - **Lua cannot tell whether a UI replacer is loaded from a data folder.** Only the content list is
   checked; the rest is a capture condition you set by hand.
 
+## Reconstructions
+
+`scripts/h3/parity/reconstructions.lua` rebuilds seven layouts with H3UI components:
+`messagebox`, `interactive_messagebox`, `confirmation_dialog`, `count_window`, `text_input`,
+`wait_dialog` and `infobox`.
+
+**From the metrics:** the declared sizes, positions, alignments, paddings, spacings, captions,
+layers and skins (frame and opacity). Each MyGUI align flag becomes OpenMW's relativeSize,
+relativePosition and anchor, so the engine keeps each child aligned.
+
+**From the engine's C++,** cited in the module: what it sets at run time, such as texts, the
+message box's 48-pixel bottom margin, and the interactive message box's paddings.
+
+**What they cannot match, by design of this phase:**
+
+- **Measured text:** the engine sizes several of these windows from measured text, and Lua cannot
+  measure text. H3UI's auto sizing stands in for it.
+- **Box-stretched scroll bars:** H3UI's slider needs a fixed track width, so a scroll bar that a
+  box stretches (`wait_dialog`'s `HourSlider`) is left as empty space.
+
+The diff measures both.
+
 ## diff
 
 Compares a capture run. It writes `report.md` and one `<layout>.png` difference image per compared

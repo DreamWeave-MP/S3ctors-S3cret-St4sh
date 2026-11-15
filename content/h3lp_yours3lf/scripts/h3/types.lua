@@ -909,6 +909,12 @@
 
 ---@class H3UI.NumberInputOptions: H3.NumberInputOptions, H3UI.ComponentOptions
 
+---@class H3UI.ParityAlignFlags
+---@field bottom boolean
+---@field left boolean
+---@field right boolean
+---@field top boolean
+
 ---@class H3UI.ParityCaptureOptions
 ---@field layouts? string[] Only these layouts, in manifest order; every layout when absent.
 ---@field messageSeconds? number Real seconds to wait after each capture for its message box to close.
@@ -929,6 +935,12 @@
 ---@field steps? string
 ---@field text? string
 ---@field windows? string[]
+
+---@class H3UI.ParityReconstructionContext
+---@field growth openmw.util.Vector2 How much larger than declared the reconstruction's root is.
+---@field sliderRange? integer
+---@field sliderValue? integer
+---@field texts table<string, string> Text the engine sets at run time, by widget name; tags are resolved.
 
 ---@class H3UI.PendingTheme
 ---@field expectedTheme string
