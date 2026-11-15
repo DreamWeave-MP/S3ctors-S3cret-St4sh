@@ -6,6 +6,7 @@ local storage = require 'openmw.storage'
 local util = require 'openmw.util'
 local vfs = require 'openmw.vfs'
 
+local Runtime = require 'scripts.h3.runtime'
 local builtinChrome = require 'scripts.h3.ui.chrome'
 local themeModule = require 'scripts.h3.ui.theme'
 
@@ -21,6 +22,8 @@ local Assert, Error, MathFloor, MathMax, MathMin, Next, TableSort, StrFormat, To
   tonumber,
   tostring,
   type
+
+local UserdataType, UserdataTypeName = Runtime.userdataType, Runtime.userdataTypeName
 
 local ColorHex, ContentFiles, FileExists, PlayerSection =
   util.color.hex, core.contentFiles, vfs.fileExists, storage.playerSection
@@ -152,7 +155,7 @@ local function colorHex(value)
 
   if Type(value) == 'userdata' then
     ---@cast value H3UI.ColorLikeUserdata
-    if value.__type.name == 'Misc::Color' then return normalizeHex(value:asHex()) end
+    if UserdataTypeName(value) == UserdataType.Color then return normalizeHex(value:asHex()) end
   end
 end
 

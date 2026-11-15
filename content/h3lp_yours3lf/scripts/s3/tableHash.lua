@@ -1,4 +1,9 @@
 ---@omw-context none
+
+local Runtime = require 'scripts.h3.runtime'
+
+local UserdataTypeName = Runtime.userdataTypeName
+
 local function simpleHash(str)
   local hash = 0
   for i = 1, #str do
@@ -35,8 +40,9 @@ local function tableToHash(t, visited)
     elseif valueType == "number" then
       valueRep = string.format("num:%.15g", value)
     elseif valueType == 'userdata' then
-      if value.__type and value.__type.name then
-        valueRep = value.__type.name
+      local typeName = UserdataTypeName(value)
+      if typeName then
+        valueRep = typeName
       else
         error('Userdata value does not have a type name: ' .. tostring(value))
       end

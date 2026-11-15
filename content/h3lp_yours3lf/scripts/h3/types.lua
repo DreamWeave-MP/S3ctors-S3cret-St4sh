@@ -185,6 +185,9 @@
 ---@field thickness? number Defaults to `1`.
 ---@field userData? H3.UserData
 
+---@class H3.EngineUserdata
+---@field __type? H3UI.RuntimeTypeDescriptor LuaJIT builds only; Luau names the type through typeof.
+
 ---@class H3.GridOptions
 ---@field columnGap? number
 ---@field columns? integer
@@ -324,6 +327,8 @@
 ---@class H3.Runtime
 ---@field isLuaJIT boolean
 ---@field isLuau boolean
+---@field userdataType H3.UserdataTypeNames
+---@field userdataTypeName fun(value: userdata|H3.EngineUserdata|openmw.core.Spell): string?
 
 ---@class H3.SearchInputOptions
 ---@field bordered? boolean
@@ -455,6 +460,13 @@
 ---@field text? string
 ---@field textProps? table
 ---@field userData? H3.UserData
+
+---@class H3.UserdataTypeNames
+---@field Color string
+---@field Spell string
+---@field Vector2 string
+---@field Vector3 string
+---@field Vector4 string
 
 ---@class H3.WidgetOptions
 ---@field children? openmw.ui.Content|openmw.ui.LayoutOrElement[]
@@ -651,8 +663,7 @@
 
 ---@class H3UI.CollapsibleOptions: H3.CollapsibleOptions, H3UI.ComponentOptions
 
----@class H3UI.ColorLikeUserdata
----@field __type H3UI.RuntimeTypeDescriptor
+---@class H3UI.ColorLikeUserdata: H3.EngineUserdata
 ---@field asHex fun(self: H3UI.ColorLikeUserdata): string
 
 ---@class H3UI.ColorRendererArgument
@@ -1053,8 +1064,7 @@
 
 ---@class H3UI.SelectorOptions: H3.SelectorOptions, H3UI.ComponentOptions
 
----@class H3UI.SerializableUserdata
----@field __type H3UI.RuntimeTypeDescriptor
+---@class H3UI.SerializableUserdata: H3.EngineUserdata
 ---@field a? number
 ---@field b? number
 ---@field g? number

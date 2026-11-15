@@ -5,6 +5,7 @@ local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 local I = require 'openmw.interfaces'
+local Runtime = require 'scripts.h3.runtime'
 local s3lf = I.s3.lf
 local isPlayer = s3lf.actorType == 0
 
@@ -16,8 +17,9 @@ if isPlayer then
 end
 ---@omw-context-end player
 
-local error, floor, huge, max, min, random, tostring =
-  error, math.floor, math.huge, math.max, math.min, math.random, tostring
+local error, floor, huge, max, min, random, StrFormat, tostring =
+  error, math.floor, math.huge, math.max, math.min, math.random, string.format, tostring
+local UserdataType, UserdataTypeName = Runtime.userdataType, Runtime.userdataTypeName
 
 local EffectRecords, MagicEffects, SpellRecords, SkillRecords, RANGE_Target, RANGE_Self, SPELL_TYPE_Spell, SPELL_TYPE_Power, EFFECT_TYPE_Silence, EFFECT_TYPE_Sound, ENCHANTMENT_TYPE_CastOnce, ENCHANTMENT_TYPE_CastOnStrike, ENCHANTMENT_TYPE_CastOnUse, ENCHANTMENT_TYPE_ConstantEffect, ActiveEffects, GetSelectedEnchantedItem, GetSelectedSpell =
   core.magic.effects.records,
@@ -224,10 +226,9 @@ end
 ---@param checkMagicka boolean? whether to actually take caster magicka into account when determining success chance
 ---@param cap boolean? cap chance between 0-100
 function Magic:getSpellCastChance(spell, actor, checkMagicka, cap)
-  ---@diagnostic disable-next-line: undefined-field
-  if not spell or spell.__type.name ~= 'ESM::Spell' then
-    ---@diagnostic disable-next-line: undefined-field
-    error('Invalid spell provided to Magic:getSpellCastChance: ' .. spell.__type.name)
+  local spellType = spell and UserdataTypeName(spell)
+  if spellType ~= UserdataType.Spell then
+    error(StrFormat('Invalid spell provided to Magic:getSpellCastChance: %s', tostring(spellType)))
   end
 
   if checkMagicka == nil then checkMagicka = true end

@@ -3,6 +3,7 @@
 
 local util = require 'openmw.util'
 
+local Runtime = require 'scripts.h3.runtime'
 local constants = require 'scripts.h3.ui.constants'
 local constructors = require 'scripts.h3.ui.constructors'
 local merge = require 'scripts.h3.ui.merge'
@@ -13,6 +14,8 @@ local Assert, Error, MathFloor, MathHuge, Next, RawGet, StrFormat, ToString, Typ
 
 local ColorRGBA, UtilVector2, UtilVector3, UtilVector4 =
   util.color.rgba, util.vector2, util.vector3, util.vector4
+
+local UserdataType, UserdataTypeName = Runtime.userdataType, Runtime.userdataTypeName
 
 local DOCUMENT_VERSION = 1
 
@@ -140,10 +143,9 @@ end
 ---@param value H3UI.SerializableUserdata
 ---@return table
 local function portableUserdata(value)
-  local typeInfo = value.__type
-  local typeName = typeInfo and typeInfo.name
+  local typeName = UserdataTypeName(value)
 
-  if typeName == 'osg::Vec2f' then
+  if typeName == UserdataType.Vector2 then
     return {
       __h3ui = 'vector2',
       x = assertFinite(value.x, 'vector x'),
@@ -151,7 +153,7 @@ local function portableUserdata(value)
     }
   end
 
-  if typeName == 'osg::Vec3f' then
+  if typeName == UserdataType.Vector3 then
     return {
       __h3ui = 'vector3',
       x = assertFinite(value.x, 'vector x'),
@@ -160,7 +162,7 @@ local function portableUserdata(value)
     }
   end
 
-  if typeName == 'osg::Vec4f' then
+  if typeName == UserdataType.Vector4 then
     return {
       __h3ui = 'vector4',
       x = assertFinite(value.x, 'vector x'),
@@ -170,7 +172,7 @@ local function portableUserdata(value)
     }
   end
 
-  if typeName == 'Misc::Color' then
+  if typeName == UserdataType.Color then
     return {
       __h3ui = 'color',
       r = assertFinite(value.r, 'color r'),
