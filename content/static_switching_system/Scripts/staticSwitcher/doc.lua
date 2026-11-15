@@ -333,11 +333,21 @@
 ---@field rotation openmw.util.Transform?
 ---@field scale number?
 
---- An object on its way back to where it was before an abandoned pass moved it.
+--- A watched object on its way back to where it was before an abandoned pass moved it.
 ---@class SSSObjectReturn
----@field cellId string ID of the cell the object is being put back in
----@field isPending boolean whether the move back has still to be issued
----@field observationsLeft integer times the object may still be looked for once the move back has been issued
+---@field object openmw.GObject
+---@field cellId string ID of the cell the most recently issued move back takes the object to
+---@field pendingMoves integer moves back that are queued and not yet issued
+---@field wasIssued boolean whether any move back has been issued
+---@field observationsLeft integer times the object may still be looked for once every move back has been issued
+
+--- A return as it is written to a save. Its pending moves are counted again from the saved
+--- corrections.
+---@class SSSSavedReturn
+---@field object openmw.GObject
+---@field cellId string
+---@field wasIssued boolean
+---@field observationsLeft integer
 
 --- A pending correction as it is written to a save. A cell cannot be saved, so its ID is.
 ---@class SSSSavedCorrection
@@ -445,6 +455,7 @@
 ---@field instanceModifiers SSSOnceCacheSaved?
 ---@field replacementChains SSSReplacementChainsSaved?
 ---@field pendingCorrections SSSSavedCorrection[]? corrections still owed when the game was saved
+---@field objectReturns SSSSavedReturn[]? watched objects that were on their way back when the game was saved
 ---@field replacedObjectSet SSSReplacedObjectSet? legacy save data accepted only for migration when replacementChains is absent
 
 ---@class openmw.interfaces.StaticSwitcher_G

@@ -349,5 +349,9 @@ return function(moduleCatalog, triggers)
   Sweeps = assert(moduleCatalog.Sweeps)
   JournalSweepKeys = assert(moduleCatalog.JournalSweepKeys)
   Triggers = assert(triggers)
+
+  -- Entering a cell is only acted on when a rule listens for it, and only then does anything
+  -- need to know that the player's movements are a correction rather than an arrival.
+  if Triggers.isArmed 'cell_enter' then ObjectCleanup.watchReturns(Player) end
   return WorldTriggers
 end

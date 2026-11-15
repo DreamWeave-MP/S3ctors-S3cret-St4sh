@@ -38,7 +38,7 @@ Disabled objects are a special lifecycle case: OpenMW may not report them as act
 
 ## Save and load
 
-SSS saves generated replacement records, pending deletion work, corrections it still owes the world after an abandoned pass, instance `once: true` state, and static replacement chains. It restores that state when the save loads.
+SSS saves generated replacement records, pending deletion work, corrections it still owes the world after an abandoned pass, the fact that the player is being put back by one of them, instance `once: true` state, and static replacement chains. It restores that state when the save loads.
 
 `once: per_cell` data is runtime-only and is not saved.
 

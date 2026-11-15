@@ -323,6 +323,12 @@ local triggerModules = {
         },
         {
           trigger = 'use',
+          conditions = { { used_item = '^ferry' } },
+          actions = { { teleport = { cell = { x = 12, y = 12 } } } },
+          once = true,
+        },
+        {
+          trigger = 'use',
           conditions = { { used_item = '^cursed' } },
           actions = { { delete = true }, { disable = true }, { replace = 'self' } },
         },
@@ -1028,6 +1034,55 @@ assert(
 player.cell = HOME_CELL
 settle()
 
+-- Once the move back has been issued there is no correction left, but the return is not over
+-- until the cell poll has seen the player arrive. A save taken in between carries the return
+-- itself, so the arrival is still not an entry after loading.
+for _ = 1, 400 do
+  runFrames(1, 0.25)
+end
+
+player.cell = getExteriorCell(9, 9)
+settle()
+enteredNineBefore, enteredTwelveBefore = countProbes 'entered-9', countProbes 'entered-12'
+
+onItemUsed = assert(itemUsageHandlers[openmwTypes.Miscellaneous])
+recordingRaises = true
+simulationTime = simulationTime + 1
+onItemUsed(newObject('ferry', nil, openmwTypes.Miscellaneous), player)
+recordingRaises = false
+applyEngineActions()
+assert(player.cell == getExteriorCell(12, 12), 'the accepted move did not happen')
+
+runFrames(1, 0)
+assert(player.cell == getExteriorCell(9, 9), 'the move back was not issued')
+
+local issuedState = handlers.onSave()
+assert(
+  #issuedState.pendingCorrections == 0,
+  'the move back was still waiting, so this tests nothing new'
+)
+assert(#issuedState.objectReturns == 1 and issuedState.objectReturns[1].wasIssued == true)
+
+staticSwitcher = loadStaticSwitcher(triggerModules)
+handlers = staticSwitcher.engineHandlers
+handlers.onLoad(issuedState)
+
+runFrames(6, 0.5)
+assert(
+  countProbes 'entered-9' == enteredNineBefore and countProbes 'entered-12' == enteredTwelveBefore,
+  'a return issued before the save was treated as an entry after loading'
+)
+
+player.cell = getExteriorCell(12, 12)
+runFrames(2, 0.5)
+assert(
+  countProbes 'entered-12' == enteredTwelveBefore + 1,
+  'entries stopped counting after the return'
+)
+
+player.cell = HOME_CELL
+settle()
+
 -- One actor that cannot be watched does not end death watching for the rest.
 local unwatchable = newObject('rat', HOME_CELL, openmwTypes.Creature)
 unwatchable.refusesScripts = true
@@ -1040,7 +1095,7 @@ handlers.onObjectActive(laterRat)
 assert(laterRat:hasScript(DEATH_WATCHER_SCRIPT))
 assert(countLogLines '%[WARN%] The death of rat cannot be watched' == 1)
 
-assert(countLogLines '%[ERROR%]' == 2, 'only the two deliberately failing passes may fail')
+assert(countLogLines '%[ERROR%]' == 3, 'only the three deliberately failing passes may fail')
 
 print = realPrint
 print 'SSS trigger tests passed'

@@ -952,17 +952,66 @@ ObjectCleanup.loadCorrections {
 }
 assert(not ObjectCleanup.hasPending(), 'a correction that cannot be carried out was kept')
 
--- An object is known to be returning for as long as the correction that returns it exists, and
--- no longer: once the correction is given up, so is the return.
+-- A return is only kept for an object something is watching. Nothing in this test listens
+-- for cell entry, so nothing is watched: neither the objects put back above nor the player
+-- leave a return behind.
+assert(ObjectCleanup.getReturn(wanderer) == nil and ObjectCleanup.getReturn(drifter) == nil)
+assert(#handlers.onSave().objectReturns == 0)
+
+ObjectCleanup.restoreLater(player, TEL_BRANORA, nil, nil, 1)
+assert(ObjectCleanup.getReturn(player) == nil, 'a return was kept for an object nobody watches')
+runFrames(2)
+
+-- A watched object's return lasts as long as there is a move back to wait for, and no longer:
+-- once the only move back is given up, so is the return.
 local castaway = newObject('castaway', TEL_BRANORA)
+ObjectCleanup.watchReturns(castaway)
 ObjectCleanup.restoreLater(castaway, TEL_BRANORA, nil, nil, 1)
-assert(ObjectCleanup.getReturn(castaway).isPending == true)
+assert(ObjectCleanup.getReturn(castaway).pendingMoves == 1)
 
 placementsBeforeFailure = 0
 runFrames(12)
 placementsBeforeFailure = nil
 assert(ObjectCleanup.getReturn(castaway) == nil, 'a return outlived the correction it belonged to')
 assert(countLogLines '%[WARN%] Gave up: a stray castaway was never put back where it was' == 1)
+
+-- Two moves back for one object share one return. It is not over while either is waiting,
+-- whether the other has been issued or given up.
+local twin = newObject('twin', TEL_BRANORA)
+ObjectCleanup.watchReturns(twin)
+ObjectCleanup.restoreLater(twin, TEL_BRANORA, nil, nil, 1)
+ObjectCleanup.restoreLater(twin, TEL_BRANORA, nil, nil, 1)
+assert(ObjectCleanup.getReturn(twin).pendingMoves == 2)
+
+runFrames(1)
+assert(ObjectCleanup.getReturn(twin).pendingMoves == 1 and ObjectCleanup.getReturn(twin).wasIssued)
+ObjectCleanup.observeReturn(twin, TEL_BRANORA.id)
+assert(ObjectCleanup.getReturn(twin) ~= nil, 'a return ended while a move back was still waiting')
+
+runFrames(1)
+assert(ObjectCleanup.getReturn(twin).pendingMoves == 0)
+ObjectCleanup.observeReturn(twin, TEL_BRANORA.id)
+assert(ObjectCleanup.getReturn(twin) == nil, 'a return was not retired when its arrival was seen')
+
+local sibling = newObject('sibling', TEL_BRANORA)
+ObjectCleanup.watchReturns(sibling)
+placementsBeforeFailure = 0
+ObjectCleanup.restoreLater(sibling, TEL_BRANORA, nil, nil, 1)
+runFrames(4)
+ObjectCleanup.restoreLater(sibling, TEL_BRANORA, nil, nil, 1)
+runFrames(5)
+assert(
+  ObjectCleanup.getReturn(sibling) ~= nil and ObjectCleanup.getReturn(sibling).pendingMoves == 1,
+  'giving up one move back ended the return the other still belongs to'
+)
+
+placementsBeforeFailure = nil
+runFrames(2)
+assert(
+  ObjectCleanup.getReturn(sibling).pendingMoves == 0 and ObjectCleanup.getReturn(sibling).wasIssued
+)
+ObjectCleanup.observeReturn(sibling, TEL_BRANORA.id)
+assert(ObjectCleanup.getReturn(sibling) == nil)
 
 -- A delayed deletion the engine refuses is reported and dropped; the queue keeps working.
 local stubborn = newObject('condemned', TEL_BRANORA)
