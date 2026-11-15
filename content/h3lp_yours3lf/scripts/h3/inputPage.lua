@@ -14,7 +14,7 @@ local StrFormat = string.format
 
 local BindingSection = storage.playerSection 'OMWInputBindings'
 local BindingStateSection = storage.playerSection 'H3UIInputBindingState'
-local EngineL10n, InterfaceL10n, L10n = core.l10n 'OMWEngine', core.l10n 'Interface', core.l10n 'H3'
+local InterfaceL10n, L10n = core.l10n 'Interface', core.l10n 'H3'
 local UiAlignment, UiCreate, UtilVector2 = ui.ALIGNMENT, ui.create, util.vector2
 
 local PageSize = UtilVector2(900, 640)
@@ -71,30 +71,27 @@ local pageOptions
 local pageLayout
 
 ---@param binding? H3UI.InputBindingRecord
+---@param slotDevice H3UI.InputBindingDevice
 ---@param isRecording boolean
 ---@return string
-local function inputBindingLabel(binding, isRecording)
+local function inputBindingLabel(binding, slotDevice, isRecording)
   if isRecording then return L10n 'input_binding_listening' end
   if not binding or not binding.button then return InterfaceL10n 'None' end
 
+  local buttonName
   if binding.device == 'keyboard' then
-    local name = input.getKeyName(binding.button)
-    return name ~= '' and name or InterfaceL10n 'NotAvailableShort'
+    buttonName = input.getKeyName(binding.button)
+    if buttonName == '' then buttonName = nil end
   elseif binding.device == 'mouse' then
-    return StrFormat(
-      '%s %s',
-      InterfaceL10n 'Mouse',
-      MouseButtonNames[binding.button] or InterfaceL10n 'NotAvailableShort'
-    )
+    buttonName = MouseButtonNames[binding.button]
   elseif binding.device == 'controller' then
-    return StrFormat(
-      '%s %s',
-      EngineL10n 'Controller',
-      ControllerButtonNames[binding.button] or InterfaceL10n 'NotAvailableShort'
-    )
+    buttonName = ControllerButtonNames[binding.button]
   end
+  buttonName = buttonName or InterfaceL10n 'NotAvailableShort'
 
-  return InterfaceL10n 'NotAvailableShort'
+  if binding.device == slotDevice then return buttonName end
+
+  return StrFormat('%s %s', L10n(StrFormat('input_binding_%s', binding.device)), buttonName)
 end
 
 ---@param slot H3UI.InputBindingSlot
@@ -242,7 +239,7 @@ local function bindingSlot(slot, definition)
       props = { textAlignH = UiAlignment.Center },
     },
     H3UI.button {
-      label = inputBindingLabel(binding, isRecording),
+      label = inputBindingLabel(binding, slot.device, isRecording),
       props = { size = RecordButtonSize },
       onActivate =
         ---@param _ openmw.ui.MouseEvent

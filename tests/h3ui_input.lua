@@ -283,7 +283,7 @@ local function testRecordingWritesEngineRecord()
   InputPage.onMouseButtonPress(3)
   assertEngineRecord(Bindings.values['H3UI.Activate.mouse'], 'mouse', 3, Intent.Activate)
   assert(BindingStates.values['H3UI.Activate.mouse'] == 'configured')
-  assert(slotControls(5, 2).label ~= 'input_binding_listening')
+  assert(slotControls(5, 2).label == 'Right')
 
   activate(slotControls(1, 3).record)
   InputPage.onControllerButtonPress(CONTROLLER_BUTTON.Y)
@@ -293,6 +293,8 @@ local function testRecordingWritesEngineRecord()
     CONTROLLER_BUTTON.Y,
     Intent.Up
   )
+  assert(slotControls(1, 3).label == 'Y')
+  assert(slotControls(2, 3).label == 'D-pad Down')
 
   activate(slotControls(2, 1).record)
   InputPage.onKeyPress(keyPress(KEY.X))
@@ -374,6 +376,7 @@ local function testSecondRecordingCannotStart()
     CONTROLLER_BUTTON.X,
     Intent.Cancel
   )
+  assert(slotControls(6, 1).label == 'input_binding_controller X')
   assertEngineRecord(
     Bindings.values['H3UI.Cancel.controller'],
     'controller',
