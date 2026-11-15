@@ -321,6 +321,10 @@
 ---@field template? openmw.ui.Template
 ---@field userData? H3.UserData
 
+---@class H3.Runtime
+---@field isLuaJIT boolean
+---@field isLuau boolean
+
 ---@class H3.SearchInputOptions
 ---@field bordered? boolean
 ---@field clearable? boolean
