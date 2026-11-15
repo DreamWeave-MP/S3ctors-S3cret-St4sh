@@ -21,6 +21,9 @@ env:
   # Move both when OpenMW 0.53 fixes the version.
   LUAU_COMMIT: c0e346edd89066b44dca174c9f54ce84c746a540
   LUAU_SHA512: 09420cffce599189c08e85060d84e58ab6b5eb19060e8da0463ff841f49543768891da607746cfbad53b59a3feac8145fe19eadfc5e4e362ded11b6fe14ad119
+  # The jess release that runs the parity tools under content/h3lp_yours3lf/tools/parity.
+  JESS_VERSION: v0.3.0
+  JESS_SHA256: 0b2e1fddd3fe6e1733cb0eb870b4f6d6eef56024e84dee58e1f882dde6f5448d
 
 jobs:
   rubic0n:
@@ -149,3 +152,29 @@ jobs:
           echo "LuaJIT: $luajitFailure"
           echo "Luau:   $luauFailure"
           test "$luajitFailure" = "$luauFailure"
+
+  parity-tools:
+    name: Parity tools
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: content/h3lp_yours3lf/tools/parity
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install jess
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSL -o jess.zip "https://github.com/DreamWeave-MP/jess/releases/download/$JESS_VERSION/jess-Linux-X64.zip"
+          echo "$JESS_SHA256  jess.zip" | sha256sum --check
+          unzip -q jess.zip -d jess
+          echo "$RUNNER_TEMP/jess" >> "$GITHUB_PATH"
+
+      - name: Fetch the locked packages
+        run: jess workspace sync --locked
+
+      - name: Type-check
+        run: jess package check .
+
+      - name: Run the tests
+        run: jess package test .

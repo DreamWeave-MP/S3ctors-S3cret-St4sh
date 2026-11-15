@@ -1,0 +1,175 @@
+--!strict
+-- The XML MyGUI's resource files are written in: elements, attributes, comments, the declaration,
+-- and the predefined and numeric character references. Text between elements is skipped, as
+-- MyGUI skips it for every element these files use; upstream's openmw_chargen_birth.layout has a
+-- stray `>` after a closing tag. Anything else stops the read, naming the file and line.
+
+export type Element = {
+  attributes: { [string]: string },
+  children: { Element },
+  line: number,
+  name: string,
+}
+
+local Entities = { amp = '&', apos = "'", gt = '>', lt = '<', quot = '"' }
+
+local Xml = {}
+
+--- The line `position` falls on in `text`.
+local function lineAt(text: string, position: number): number
+  local _, newlines = string.gsub(string.sub(text, 1, position), '\n', '')
+
+  return newlines + 1
+end
+
+local function fail(fileName: string, text: string, position: number, message: string): never
+  error(`{fileName}:{lineAt(text, position)}: {message}`, 0)
+end
+
+--- `value` with its character references replaced by the characters they stand for.
+local function decode(fileName: string, text: string, position: number, value: string): string
+  return (
+    string.gsub(value, '&(#?[%w]+);', function(reference: string): string
+      if string.sub(reference, 1, 2) == '#x' then
+        return utf8.char(tonumber(string.sub(reference, 3), 16) :: number)
+      end
+
+      if string.sub(reference, 1, 1) == '#' then
+        return utf8.char(tonumber(string.sub(reference, 2)) :: number)
+      end
+
+      local character = Entities[reference]
+      if not character then fail(fileName, text, position, `unknown entity &{reference};`) end
+
+      return character
+    end)
+  )
+end
+
+--- The attributes in `source`, the text between an element's name and its closing `>` or `/>`.
+local function attributesOf(
+  fileName: string,
+  text: string,
+  position: number,
+  source: string
+): { [string]: string }
+  local attributes: { [string]: string } = {}
+  local cursor = 1
+
+  while true do
+    local start, finish, name, quote = string.find(source, '^%s*([%w_:%.%-]+)%s*=%s*(["\'])', cursor)
+    if not start then break end
+
+    local closing = string.find(source, quote :: string, (finish :: number) + 1, true)
+    if not closing then fail(fileName, text, position, `attribute {name} is not closed`) end
+
+    if attributes[name :: string] then
+      fail(fileName, text, position, `attribute {name} is given twice`)
+    end
+
+    local raw = string.sub(source, (finish :: number) + 1, (closing :: number) - 1)
+    attributes[name :: string] = decode(fileName, text, position, raw)
+    cursor = (closing :: number) + 1
+  end
+
+  if not string.find(source, '^%s*$', cursor) then
+    fail(fileName, text, position, `cannot read attributes from '{string.sub(source, cursor)}'`)
+  end
+
+  return attributes
+end
+
+--- Where the tag opened at `open` ends: its `>`, past any quoted value, which may hold one.
+local function tagEnd(fileName: string, text: string, open: number): number
+  local cursor = open + 1
+  while true do
+    local found, _, character = string.find(text, '(["\'>])', cursor)
+    if not found then fail(fileName, text, open, 'tag is not closed') end
+    if character == '>' then return found :: number end
+
+    local closing = string.find(text, character :: string, (found :: number) + 1, true)
+    if not closing then fail(fileName, text, open, 'attribute value is not closed') end
+
+    cursor = (closing :: number) + 1
+  end
+end
+
+--- The root element of the document in `text`. `fileName` names it in errors.
+function Xml.parse(text: string, fileName: string): Element
+  local stack: { Element } = {}
+  local root: Element? = nil
+  local position = 1
+
+  if string.sub(text, 1, 3) == '\239\187\191' then position = 4 end
+
+  while true do
+    local open = string.find(text, '<', position, true)
+    if not open then
+      if string.find(text, '%S', position) then fail(fileName, text, position, 'text after the root') end
+
+      break
+    end
+
+    if string.sub(text, open, open + 3) == '<!--' then
+      local close = string.find(text, '-->', open + 4, true)
+      if not close then fail(fileName, text, open, 'comment is not closed') end
+
+      position = (close :: number) + 3
+      continue
+    end
+
+    if string.sub(text, open, open + 1) == '<?' then
+      local close = string.find(text, '?>', open + 2, true)
+      if not close then fail(fileName, text, open, 'declaration is not closed') end
+
+      position = (close :: number) + 2
+      continue
+    end
+
+    local close = tagEnd(fileName, text, open)
+
+    local tag = string.sub(text, open + 1, (close :: number) - 1)
+    position = (close :: number) + 1
+
+    if string.sub(tag, 1, 1) == '/' then
+      local name = string.match(tag, '^/([%w_:%.%-]+)%s*$')
+      local current = table.remove(stack)
+      if not current or current.name ~= name then
+        fail(fileName, text, open, `closing tag </{name}> does not match an open element`)
+      end
+
+      continue
+    end
+
+    local selfClosing = string.sub(tag, -1) == '/'
+    if selfClosing then tag = string.sub(tag, 1, -2) end
+
+    local name, rest = string.match(tag, '^([%w_:%.%-]+)(.*)$')
+    if not name then fail(fileName, text, open, `cannot read tag <{tag}>`) end
+
+    local element: Element = {
+      attributes = attributesOf(fileName, text, open, rest :: string),
+      children = {},
+      line = lineAt(text, open),
+      name = name :: string,
+    }
+
+    local parent = stack[#stack]
+    if parent then
+      table.insert(parent.children, element)
+    elseif root then
+      fail(fileName, text, open, 'a second root element')
+    else
+      root = element
+    end
+
+    if not selfClosing then table.insert(stack, element) end
+  end
+
+  if #stack > 0 then fail(fileName, text, #text, `<{stack[#stack].name}> is never closed`) end
+  if not root then fail(fileName, text, 1, 'no root element') end
+
+  return root :: Element
+end
+
+return Xml

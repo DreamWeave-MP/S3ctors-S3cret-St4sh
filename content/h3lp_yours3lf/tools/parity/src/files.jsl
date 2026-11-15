@@ -1,0 +1,35 @@
+--!strict
+-- @dream/fs answers a failure with nil and a message. Every file these tools touch is one they
+-- cannot do without, so each failure stops the run with that message.
+
+local fs = require '@dream/fs'
+
+local Files = {}
+
+function Files.list(folder: string): { string }
+  local names, problem = fs.list(folder)
+  if not names then error(problem, 0) end
+
+  return names
+end
+
+function Files.readText(path: string): string
+  local text, problem = fs.readFileString(path)
+  if not text then error(problem, 0) end
+
+  return text
+end
+
+function Files.read(path: string): buffer
+  local contents, problem = fs.readFile(path)
+  if not contents then error(problem, 0) end
+
+  return contents
+end
+
+function Files.write(path: string, contents: string | buffer)
+  local written, problem = fs.writeFile(path, contents, { atomic = true, createParents = true })
+  if not written then error(problem, 0) end
+end
+
+return Files

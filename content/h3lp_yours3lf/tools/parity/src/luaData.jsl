@@ -1,0 +1,227 @@
+--!strict
+-- Lua data modules: a file that is one `return` of a table of strings, numbers, booleans and
+-- tables. The game loads one with `require`; these tools write and read the same file, so
+-- the data has one copy. Writing lays a table out the way Stylua (stylua.toml) would, so a
+-- file this writes passes `stylua --check` and a later run of the tool changes nothing.
+
+local luau = require '@dream/luau'
+
+export type Value = string | number | boolean | Table
+export type Table = { [string | number]: Value }
+
+local ColumnWidth, IndentWidth = 100, 2
+
+local Keywords = {
+  ['and'] = true,
+  ['break'] = true,
+  ['do'] = true,
+  ['else'] = true,
+  ['elseif'] = true,
+  ['end'] = true,
+  ['false'] = true,
+  ['for'] = true,
+  ['function'] = true,
+  ['goto'] = true,
+  ['if'] = true,
+  ['in'] = true,
+  ['local'] = true,
+  ['nil'] = true,
+  ['not'] = true,
+  ['or'] = true,
+  ['repeat'] = true,
+  ['return'] = true,
+  ['then'] = true,
+  ['true'] = true,
+  ['until'] = true,
+  ['while'] = true,
+}
+
+local Escapes = { ['\\'] = '\\\\', ["'"] = "\\'", ['\n'] = '\\n', ['\r'] = '\\r', ['\t'] = '\\t' }
+
+local LuaData = {}
+
+local function quote(text: string): string
+  local escaped = string.gsub(text, "[\\'%c]", function(character: string): string
+    return Escapes[character] or `\\{string.byte(character)}`
+  end)
+
+  return `'{escaped}'`
+end
+
+local function number(value: number): string
+  if value == math.floor(value) and math.abs(value) < 2 ^ 53 then
+    return string.format('%d', value)
+  end
+
+  for digits = 1, 17 do
+    local text = string.format(`%.{digits}g`, value)
+    if tonumber(text) == value then return text end
+  end
+
+  error(`cannot write the number {value}`, 0)
+end
+
+local function keyText(key: string | number): string
+  if type(key) == 'number' then return `[{number(key)}]` end
+
+  if string.match(key, '^[%a_][%w_]*$') and not Keywords[key] then return key end
+
+  return `[{quote(key)}]`
+end
+
+--- The array part of `value`, 1 to n, or nil when `value` has keys of its own.
+local function arrayItems(value: Table): { Value }?
+  local count = 0
+  for _ in value do
+    count += 1
+  end
+
+  if count ~= #value then return nil end
+
+  return value :: { Value }
+end
+
+local function sortedKeys(value: Table): { string | number }
+  local keys: { string | number } = {}
+  for key in value do
+    table.insert(keys, key)
+  end
+
+  table.sort(keys, function(left: string | number, right: string | number): boolean
+    return tostring(left) < tostring(right)
+  end)
+
+  return keys
+end
+
+--- `value`'s entries in order, each with the text that comes before it inside a table.
+local function entries(value: Table): { { prefix: string, value: Value } }
+  local list = {}
+  local items = arrayItems(value)
+  if items then
+    for _, item in items do
+      table.insert(list, { prefix = '', value = item })
+    end
+
+    return list
+  end
+
+  for _, key in sortedKeys(value) do
+    table.insert(list, { prefix = `{keyText(key)} = `, value = value[key] })
+  end
+
+  return list
+end
+
+--- `value` on one line, or nil once it is longer than `budget`.
+local function inline(value: Value, budget: number): string?
+  if type(value) == 'string' then return quote(value) end
+  if type(value) == 'number' then return number(value) end
+  if type(value) == 'boolean' then return tostring(value) end
+  if next(value) == nil then return '{}' end
+
+  local parts: { string } = {}
+  local length = 4
+  for _, entry in entries(value) do
+    local text = inline(entry.value, budget - length - #entry.prefix)
+    if not text then return nil end
+
+    table.insert(parts, entry.prefix .. text)
+    length += #entry.prefix + #text + 2
+    if length > budget then return nil end
+  end
+
+  return `\{ {table.concat(parts, ', ')} }`
+end
+
+local function writeValue(value: Value, indent: number, prefixWidth: number, suffixWidth: number): string
+  local single = inline(value, ColumnWidth - prefixWidth - suffixWidth)
+  if single then return single end
+
+  local inner = indent + IndentWidth
+  local padding = string.rep(' ', inner)
+  local lines = { '{' }
+  for _, entry in entries(value :: Table) do
+    local text = writeValue(entry.value, inner, inner + #entry.prefix, 1)
+    table.insert(lines, `{padding}{entry.prefix}{text},`)
+  end
+
+  table.insert(lines, `{string.rep(' ', indent)}}`)
+  return table.concat(lines, '\n')
+end
+
+--- A Lua module that returns `value`, after `directives`, each written as a `---@` annotation line,
+--- and `header`, a comment block of lines.
+function LuaData.write(value: Table, directives: { string }, header: { string }): string
+  local lines: { string } = {}
+  for _, directive in directives do
+    table.insert(lines, `---@{directive}`)
+  end
+
+  if #directives > 0 then table.insert(lines, '') end
+
+  for _, line in header do
+    table.insert(lines, if line == '' then '--' else `-- {line}`)
+  end
+
+  table.insert(lines, '')
+  table.insert(lines, `return {writeValue(value, 0, #'return ', 0)}`)
+  return table.concat(lines, '\n') .. '\n'
+end
+
+type Node = { [string]: unknown }
+
+local function evaluate(node: Node, chunkName: string): Value
+  local kind = node.kind
+  if kind == 'ExprConstantString' or kind == 'ExprConstantNumber' or kind == 'ExprConstantBool' then
+    return node.value :: Value
+  end
+
+  if kind == 'ExprUnary' and node.op == '-' then
+    local operand = evaluate(node.expr :: Node, chunkName)
+    if type(operand) == 'number' then return -operand end
+  end
+
+  if kind ~= 'ExprTable' then
+    error(`{chunkName}:{node.line}: a data module holds constants and tables, not {kind}`, 0)
+  end
+
+  local result: Table = {}
+  for _, item in node.items :: { Node } do
+    local itemValue = evaluate(item.value :: Node, chunkName)
+    if item.itemKind == 'list' then
+      table.insert(result :: { Value }, itemValue)
+      continue
+    end
+
+    local key = evaluate(item.key :: Node, chunkName)
+    if type(key) ~= 'string' and type(key) ~= 'number' then
+      error(`{chunkName}:{item.line}: a key must be a string or a number`, 0)
+    end
+
+    result[key :: string | number] = itemValue
+  end
+
+  return result
+end
+
+--- The table a data module returns. `chunkName` names the module in errors.
+function LuaData.read(source: string, chunkName: string): Table
+  local parsed = luau.parse(source, { dialect = 'luau' })
+  local problem = parsed.errors[1]
+  if problem then error(`{chunkName}:{problem.line}: {problem.message}`, 0) end
+
+  local body = parsed.root.body
+  local statement = body[1] :: Node
+  if #body ~= 1 or statement.kind ~= 'StatReturn' then
+    error(`{chunkName}: a data module is one return statement`, 0)
+  end
+
+  local values = statement.list :: { Node }
+  local result = if #values == 1 then evaluate(values[1], chunkName) else nil
+  if type(result) ~= 'table' then error(`{chunkName}: a data module returns one table`, 0) end
+
+  return result
+end
+
+return LuaData

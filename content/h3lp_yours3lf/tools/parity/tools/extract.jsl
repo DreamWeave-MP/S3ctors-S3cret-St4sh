@@ -1,0 +1,52 @@
+--!strict
+-- extract <openmw checkout> <output file> <repository URL> <build>
+--
+-- Reads the checkout's files/data/mygui and writes the metrics module. The commit is the
+-- checkout's own HEAD, and a checkout whose mygui folder has local changes is refused, so the
+-- recorded commit is the one the values came from.
+
+local files = require '@h3uiparity/files'
+local fs = require '@dream/fs'
+local mygui = require '@h3uiparity/mygui'
+local process = require '@dream/process'
+
+local MyguiPath = 'files/data/mygui'
+
+local checkout, output, repository, build = ...
+if not checkout or not output or not repository or not build then
+  error('usage: extract <openmw checkout> <output file> <repository URL> <build>', 0)
+end
+
+local function git(arguments: { string }): string
+  local args = { '-C', checkout }
+  for _, argument in arguments do
+    table.insert(args, argument)
+  end
+
+  local result, problem = process.run('git', args, { stdout = 'capture' })
+  if not result then error(problem, 0) end
+  if not result.success then error(`git {table.concat(arguments, ' ')} failed`, 0) end
+
+  return (string.gsub(result.stdout or '', '%s+$', ''))
+end
+
+local commit = git { 'rev-parse', 'HEAD' }
+if git { 'status', '--porcelain', '--', MyguiPath } ~= '' then
+  error(`{checkout}/{MyguiPath} has local changes; extract from a clean checkout`, 0)
+end
+
+local folder = fs.join(checkout, MyguiPath)
+local skins: mygui.Table, layouts: mygui.Table = {}, {}
+for _, fileName in files.list(folder) do
+  local text = files.readText(fs.join(folder, fileName))
+  local layoutName = mygui.layoutName(fileName)
+  if layoutName then
+    layouts[layoutName] = mygui.layout(fileName, text)
+  elseif string.match(fileName, '%.skin%.xml$') then
+    mygui.addSkins(skins, fileName, text)
+  end
+end
+
+local source = { build = build, commit = commit, path = MyguiPath, repository = repository }
+files.write(output, mygui.metricsModule(skins, layouts, source))
+print(`{output}: {commit}`)

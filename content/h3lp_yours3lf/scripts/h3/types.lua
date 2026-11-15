@@ -77,6 +77,8 @@
 
 ---@alias H3UI.TokenValue H3UI.TokenScalar|table
 
+---@alias H3UI.VanillaPair [string, string] A MyGUI Property or UserString: key, then value.
+
 ---@class H3.BookFrameOptions
 ---@field backgroundProps? table
 ---@field children? openmw.ui.Content|openmw.ui.LayoutOrElement[]
@@ -1366,6 +1368,68 @@
 ---@class H3UI.UpdateRequest
 ---@field pending boolean
 ---@field resolveElement fun(): openmw.ui.Element?
+
+---@class H3UI.VanillaBasisSkin
+---@field align? string
+---@field offset? integer[]
+---@field states? H3UI.VanillaSkinState[]
+---@field type string
+
+---@class H3UI.VanillaLayout
+---@field file string
+---@field version? string
+---@field widgets H3UI.VanillaWidget[]
+
+---@class H3UI.VanillaMetrics
+---@field layouts table<string, H3UI.VanillaLayout>
+---@field skins table<string, H3UI.VanillaSkin>
+---@field source H3UI.VanillaMetricsSource
+
+---@class H3UI.VanillaMetricsSource
+---@field build string
+---@field commit string
+---@field path string
+---@field repository string
+
+---@class H3UI.VanillaSkin
+---@field align? string
+---@field basis? H3UI.VanillaBasisSkin[]
+---@field children? H3UI.VanillaSkinChild[]
+---@field file string
+---@field properties? H3UI.VanillaPair[]
+---@field size? integer[]
+---@field texture? string
+---@field type string
+---@field version? string
+---@field widgets? H3UI.VanillaWidget[]
+
+---@class H3UI.VanillaSkinChild
+---@field align? string
+---@field name? string
+---@field offset? integer[]
+---@field properties? H3UI.VanillaPair[]
+---@field skin? string
+---@field type string
+
+---@class H3UI.VanillaSkinState
+---@field colour? string
+---@field name string
+---@field offset? integer[]
+---@field properties? H3UI.VanillaPair[]
+---@field shift? string
+
+---@class H3UI.VanillaWidget
+---@field Align? string MyGUI reads `align`; this capitalised attribute is declared upstream and ignored.
+---@field align? string
+---@field layer? string
+---@field name? string
+---@field position? integer[]
+---@field position_real? number[]
+---@field properties? H3UI.VanillaPair[]
+---@field skin? string
+---@field type string
+---@field userStrings? H3UI.VanillaPair[]
+---@field widgets? H3UI.VanillaWidget[]
 
 ---@class H3UI.WindowOptions: H3.WindowOptions, H3UI.ComponentOptions
 

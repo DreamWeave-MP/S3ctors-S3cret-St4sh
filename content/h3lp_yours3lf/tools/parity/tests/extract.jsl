@@ -1,0 +1,263 @@
+--!strict
+-- The extractor against XML copied from das-uberbranch's files/data/mygui, with the expected
+-- tables written by hand from that XML: two small skins and one layout. Then the parser's edge
+-- cases, the writer's layout, and the checked-in metrics module against the writer.
+
+local files = require '@h3uiparity/files'
+local fs = require '@dream/fs'
+local luaData = require '@h3uiparity/luadata'
+local mygui = require '@h3uiparity/mygui'
+local test = require '@jess/test'
+local xml = require '@h3uiparity/xml'
+
+local suite, expect = test.new(), test.expect
+
+-- openmw_windows.skin.xml, lines 1 to 10.
+local WindowsSkins = [[<?xml version="1.0" encoding="UTF-8"?>
+
+<MyGUI type="Resource" version="1.1">
+    <!-- Defines a transparent background -->
+    <Resource type="ResourceSkin" name="BlackBG" size="8 8" texture="transparent">
+        <Property key="Colour" value="#{fontcolour=background}"/>
+        <BasisSkin type="MainSkin" offset="0 0 8 8">
+            <State name="normal" offset="0 0 8 8"/>
+        </BasisSkin>
+    </Resource>
+</MyGUI>
+]]
+
+-- openmw_box.skin.xml, lines 74 to 78, in its root element.
+local BoxSkins = [[<?xml version="1.0" encoding="UTF-8"?>
+<MyGUI type="Resource" version="1.1">
+    <Resource type="ResourceSkin" name="MW_Box_Overlay" size="516 516">
+        <Property key="NeedMouse" value="false"/>
+        <Child type="Widget" skin="MW_Box" offset="0 0 516 516" align="Stretch"/>
+    </Resource>
+</MyGUI>
+]]
+
+-- openmw_messagebox.layout, whole.
+local Layout = [[<?xml version="1.0" encoding="UTF-8"?>
+
+<MyGUI type="Layout">
+    <Widget type="VBox" skin="HUD_Box" layer="Notification" position="0 0 0 0" name="_Main">
+        <Property key="Padding" value="10"/>
+        <Property key="AutoResize" value="true"/>
+
+        <Widget type="AutoSizedEditBox" skin="MW_TextEditClient" position="0 0 300 0" name="message" align="Left Top">
+            <Property key="FontName" value="Default"/>
+            <Property key="TextAlign" value="Center"/>
+            <Property key="Static" value="true"/>
+            <Property key="WordWrap" value="true"/>
+            <Property key="MultiLine" value="1"/>
+            <Property key="VisibleVScroll" value="1"/>
+        </Widget>
+    </Widget>
+</MyGUI>
+]]
+
+local ExpectedSkins = {
+  BlackBG = {
+    basis = {
+      { offset = { 0, 0, 8, 8 }, states = { { name = 'normal', offset = { 0, 0, 8, 8 } } }, type = 'MainSkin' },
+    },
+    file = 'openmw_windows.skin.xml',
+    properties = { { 'Colour', '#{fontcolour=background}' } },
+    size = { 8, 8 },
+    texture = 'transparent',
+    type = 'ResourceSkin',
+  },
+  MW_Box_Overlay = {
+    children = { { align = 'Stretch', offset = { 0, 0, 516, 516 }, skin = 'MW_Box', type = 'Widget' } },
+    file = 'openmw_box.skin.xml',
+    properties = { { 'NeedMouse', 'false' } },
+    size = { 516, 516 },
+    type = 'ResourceSkin',
+  },
+}
+
+local ExpectedLayout = {
+  file = 'openmw_messagebox.layout',
+  widgets = {
+    {
+      layer = 'Notification',
+      name = '_Main',
+      position = { 0, 0, 0, 0 },
+      properties = { { 'Padding', '10' }, { 'AutoResize', 'true' } },
+      skin = 'HUD_Box',
+      type = 'VBox',
+      widgets = {
+        {
+          align = 'Left Top',
+          name = 'message',
+          position = { 0, 0, 300, 0 },
+          properties = {
+            { 'FontName', 'Default' },
+            { 'TextAlign', 'Center' },
+            { 'Static', 'true' },
+            { 'WordWrap', 'true' },
+            { 'MultiLine', '1' },
+            { 'VisibleVScroll', '1' },
+          },
+          skin = 'MW_TextEditClient',
+          type = 'AutoSizedEditBox',
+        },
+      },
+    },
+  },
+}
+
+--- This package's folder, from this file's chunk name.
+local function packageRoot(): string
+  local source = debug.info(1, 's')
+  local first = string.sub(source, 1, 1)
+  local path = if first == '@' or first == '=' then string.sub(source, 2) else source
+
+  return string.match(path, '^(.*)/tests/[^/]*$') or '.'
+end
+
+suite.describe('the extractor', function()
+  suite.it('reads two skins as their XML declares them', function()
+    local skins = {}
+    mygui.addSkins(skins, 'openmw_windows.skin.xml', WindowsSkins)
+    mygui.addSkins(skins, 'openmw_box.skin.xml', BoxSkins)
+
+    expect(skins).toEqual(ExpectedSkins)
+  end)
+
+  suite.it('reads a layout as its XML declares it', function()
+    expect(mygui.layout('openmw_messagebox.layout', Layout)).toEqual(ExpectedLayout)
+  end)
+
+  suite.it('names a layout after its file', function()
+    expect(mygui.layoutName 'openmw_messagebox.layout').toBe 'messagebox'
+    expect(mygui.layoutName 'openmw_box.skin.xml').toBeNil()
+  end)
+
+  suite.it('refuses a skin declared twice', function()
+    local skins = {}
+    mygui.addSkins(skins, 'first.skin.xml', WindowsSkins)
+
+    expect(function()
+      mygui.addSkins(skins, 'second.skin.xml', WindowsSkins)
+    end).toThrow 'BlackBG is already declared in first.skin.xml'
+  end)
+
+  suite.it('refuses an element it does not know', function()
+    local text = '<MyGUI type="Layout"><Widget type="Widget"><Unknown/></Widget></MyGUI>'
+    expect(function()
+      mygui.layout('openmw_x.layout', text)
+    end).toThrow 'openmw_x.layout:1: unexpected <Unknown>'
+  end)
+
+  suite.it('keeps an attribute under its own name, case included', function()
+    local text = '<MyGUI type="Layout"><Widget type="ImageButton" Align="Top|Left"/></MyGUI>'
+    expect(mygui.layout('openmw_journal.layout', text).widgets).toEqual {
+      { Align = 'Top|Left', type = 'ImageButton' },
+    }
+  end)
+end)
+
+suite.describe('the XML reader', function()
+  suite.it('reads > inside a quoted value', function()
+    local root = xml.parse('<a caption=">" label=\'x>y\'/>', 'quoted')
+    expect(root.attributes).toEqual { caption = '>', label = 'x>y' }
+  end)
+
+  suite.it('skips text between elements, as MyGUI does', function()
+    local root = xml.parse('<a>\n  <b/>>\n</a>', 'stray')
+    expect(#root.children).toBe(1)
+  end)
+
+  suite.it('decodes character references', function()
+    local root = xml.parse('<a b="&lt;&amp;&#65;&#x42;&quot;"/>', 'entities')
+    expect(root.attributes.b).toBe '<&AB"'
+  end)
+
+  suite.it('allows space around =', function()
+    expect(xml.parse('<a b ="1"/>', 'spaced').attributes.b).toBe '1'
+  end)
+
+  suite.it('refuses a closing tag that does not match', function()
+    expect(function()
+      xml.parse('<a>\n<b></a>', 'mismatch')
+    end).toThrow 'mismatch:2: closing tag </a> does not match an open element'
+  end)
+
+  suite.it('refuses an element never closed', function()
+    expect(function()
+      xml.parse('<a><b/>', 'open')
+    end).toThrow '<a> is never closed'
+  end)
+end)
+
+suite.describe('the data module writer', function()
+  suite.it('writes a table the way Stylua lays it out', function()
+    local text = luaData.write({
+      long = { 'aaaaaaaaaaaaaaaaaaaa', 'bbbbbbbbbbbbbbbbbbbb', 'cccccccccccccccccccc', 'dddddddddddddddddddd' },
+      short = { 1, -2, 0.5 },
+      ['not an identifier'] = "it's",
+      ['end'] = true,
+    }, { 'omw-context none' }, { 'Header.' })
+
+    expect(text).toBe(table.concat({
+      '---@omw-context none',
+      '',
+      '-- Header.',
+      '',
+      'return {',
+      "  ['end'] = true,",
+      '  long = {',
+      "    'aaaaaaaaaaaaaaaaaaaa',",
+      "    'bbbbbbbbbbbbbbbbbbbb',",
+      "    'cccccccccccccccccccc',",
+      "    'dddddddddddddddddddd',",
+      '  },',
+      "  ['not an identifier'] = 'it\\'s',",
+      '  short = { 1, -2, 0.5 },',
+      '}',
+      '',
+    }, '\n'))
+  end)
+
+  suite.it('reads back what it wrote', function()
+    local value = { layouts = { window = { position = { 0, -4, 8.5, 2 } } }, flag = false }
+    expect(luaData.read(luaData.write(value, {}, {}), 'roundTrip')).toEqual(value)
+  end)
+
+  suite.it('refuses a module that runs code', function()
+    expect(function()
+      luaData.read('return { size = math.max(1, 2) }', 'code')
+    end).toThrow 'a data module holds constants and tables, not ExprCall'
+  end)
+end)
+
+suite.describe('the checked-in metrics', function()
+  local path = fs.join(packageRoot(), '../../scripts/h3/parity/vanillaMetrics.lua')
+
+  suite.it('are exactly what the extractor writes for them', function()
+    local text = files.readText(path)
+    local metrics = luaData.read(text, path)
+    local source = metrics.source :: luaData.Table
+    local rewritten = mygui.metricsModule(metrics.skins :: luaData.Table, metrics.layouts :: luaData.Table, {
+      build = source.build :: string,
+      commit = source.commit :: string,
+      path = source.path :: string,
+      repository = source.repository :: string,
+    })
+
+    expect(rewritten).toBe(text)
+  end)
+
+  suite.it('hold the golden skins and layout as the extractor read them', function()
+    local metrics = luaData.read(files.readText(path), path)
+    local skins = metrics.skins :: luaData.Table
+    local layouts = metrics.layouts :: luaData.Table
+
+    expect(skins.BlackBG).toEqual(ExpectedSkins.BlackBG)
+    expect(skins.MW_Box_Overlay).toEqual(ExpectedSkins.MW_Box_Overlay)
+    expect(layouts.messagebox).toEqual(ExpectedLayout)
+  end)
+end)
+
+return suite
