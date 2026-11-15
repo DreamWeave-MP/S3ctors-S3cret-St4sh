@@ -43,7 +43,7 @@ The once-cache and replacement object's saved state let the successful instance 
 
 ## Caveats
 
-- `has_journal` reads the player's quest state when the object is processed; it is not a continuously running quest listener.
+- In a rule without a `trigger`, `has_journal` reads the player's quest state when the object becomes active; the rule does not notice the quest advancing while the object stays loaded. Add `trigger: [journal, active]` to have it run the moment the stage changes as well; see [Reacting when a quest advances](@/static_switching_system/docs/recipes/reacting-to-quest-progress.md).
 - `replace` chooses candidates through their chance values. Do not rely on YAML map order to define a weighted distribution.
 - The replacement record must exist in the active content files. A failed creation attempt leaves the original target unchanged.
 - Broad `cell_match: tomb` also matches cell IDs containing that text. Narrow it with additional conditions when a quest patch must be local.

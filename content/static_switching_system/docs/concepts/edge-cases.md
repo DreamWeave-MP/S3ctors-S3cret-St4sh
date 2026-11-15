@@ -16,6 +16,7 @@ SSS keeps the normal path small, but valid-looking modules can still hit boundar
 - Conditions in one rule are ANDed. Array values are usually OR-lists, but `global_value` entries are all required.
 - `record_id` uses Lua-pattern matching. Anchor exact matches with `^` and `$`, and escape Lua pattern characters when necessary.
 - String matching is field-specific. `cell` is exact and case-insensitive; `cell_match` is case-insensitive substring matching; `nameMatch` is plain substring matching without case folding; static `replace_names` is case-insensitive substring matching.
+- A rule with a `trigger` other than `active` does not run when its object becomes active unless `active` is also listed. A `use` rule runs on the actor, not the item. See [Triggers](@/static_switching_system/docs/concepts/triggers.md).
 - An unsupported target usually makes a specialized condition false or an action a no-op. An unknown `object_type` is different: it raises an invalid-type error.
 
 ## Ordering and selection

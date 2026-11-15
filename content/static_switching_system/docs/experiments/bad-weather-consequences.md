@@ -19,7 +19,9 @@ kind = "experiment"
 
 When a selected statue or shrine becomes active while the player's current weather is an ash storm, SSS twists it and scatters bones nearby. The weather map requires both `isStorm: true` and the name substring `ash`, so ordinary rain does not qualify.
 
-The memorable rule is the boundary: weather is a condition, not a trigger. An ash storm beginning does not wake every statue in Vvardenfell. A statue entering the active scene while the storm condition already matches can be changed.
+The memorable rule is the boundary: in this module weather is a condition, not a trigger. An ash storm beginning does not wake every statue in Vvardenfell. A statue entering the active scene while the storm condition already matches can be changed.
+
+For the other side of that boundary, `Examples/InstanceModifier_WhileYouWereStandingThere.yaml` uses the [`weather` trigger](@/static_switching_system/docs/concepts/triggers.md#world-triggers) to turn the statues around the player when the storm arrives.
 
 ## The catch
 

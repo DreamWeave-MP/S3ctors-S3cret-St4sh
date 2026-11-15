@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: Mudcrabs Like Shiny Things
+priority: polish
+
+# drop fires when an actor drops an item from their inventory; place fires when the player
+# sets one down on a surface. Both run on the item, which is back in the world by then.
+# There is no once here on purpose: every pile of gold left outdoors is another roll.
+instances:
+  - trigger:
+      - drop
+      - place
+    conditions:
+      - by_player: true
+      - record_id: "^gold_"
+      - exterior: true
+    actions:
+      - chance: 0.3
+        create:
+          mudcrab:
+            position:
+              x: { min: -200, max: 200 }
+              y: { min: -200, max: 200 }

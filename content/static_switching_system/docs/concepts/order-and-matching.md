@@ -55,7 +55,7 @@ Instance rules remain in the order written in `instances`; matching rules are co
 7. `add_spell`, `remove_spell`, `add_active_spell`
 8. `lock_level`, `key`, `trap`
 9. `create`
-10. `global_set`
+10. `global_set`, `set_weather`
 11. `playsound`
 12. `add_lua_script`, `activate_by_player`, `remove_lua_script`
 13. `run_lua_script`, `call_interface`, `send_event`, `send_global_event`

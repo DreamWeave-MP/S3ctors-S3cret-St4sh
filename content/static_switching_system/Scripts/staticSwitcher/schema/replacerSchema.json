@@ -653,6 +653,32 @@
                     "additionalProperties": false,
                     "description": "Set a MWScript global variable to a value or random range."
                 },
+                "set_weather": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "Weather record ID. Changes the weather of the player's region."
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "weather": {
+                                    "type": "string",
+                                    "description": "Weather record ID."
+                                },
+                                "region": {
+                                    "type": "string",
+                                    "description": "Region record ID. Defaults to the player's region; indoors that is the region behind the nearest exterior door."
+                                }
+                            },
+                            "required": [
+                                "weather"
+                            ],
+                            "additionalProperties": false
+                        }
+                    ],
+                    "description": "Change a region's weather. Not specific to the matched object; pair it with a world trigger, a narrowing condition, or once."
+                },
                 "teleport": {
                     "type": "object",
                     "properties": {
@@ -936,6 +962,11 @@
                 {
                     "required": [
                         "global_set"
+                    ]
+                },
+                {
+                    "required": [
+                        "set_weather"
                     ]
                 },
                 {
@@ -1754,6 +1785,14 @@
                 "record_id": {
                     "$ref": "#/definitions/stringOrStringList"
                 },
+                "by_player": {
+                    "type": "boolean",
+                    "description": "Whether the actor that caused the trigger is the player. Only valid on rules whose triggers are all among activate, drop, place, and use."
+                },
+                "used_item": {
+                    "$ref": "#/definitions/stringOrStringList",
+                    "description": "Lua pattern match against the record ID of the item being used. Only valid on rules whose only trigger is use."
+                },
                 "content_file_target": {
                     "type": "object",
                     "patternProperties": {
@@ -1822,12 +1861,54 @@
                         }
                     ],
                     "description": "When to process this rule. true persists across saves; \"per_cell\" permits one application per SSS activation batch."
+                },
+                "trigger": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/triggerName"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/triggerName"
+                            },
+                            "minItems": 1,
+                            "uniqueItems": true
+                        }
+                    ],
+                    "default": "active",
+                    "description": "When the rule runs. active (default): the object becomes active. journal: a quest named by the rule's own has_journal condition changes stage. hour, day: the game hour or day rolls over. weather: the weather in the player's cell changes. World triggers run on objects in the player's cell and, outdoors, the eight cells around it. cell_enter: the player enters a cell, including on load; the rule runs on the player, so replace, disable, and delete are not available. activate, drop, place: an actor activates, drops, or places the object. use: an actor uses an item; the rule runs on the actor. death: an NPC or creature dies. A journal rule must contain a has_journal condition."
                 }
             },
             "required": [
                 "actions"
             ],
             "additionalProperties": false
+        },
+        "triggerName": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "journal",
+                        "hour",
+                        "day",
+                        "weather",
+                        "cell_enter",
+                        "activate",
+                        "drop",
+                        "place",
+                        "use",
+                        "death"
+                    ]
+                },
+                {
+                    "type": "string",
+                    "pattern": "^custom:.+",
+                    "description": "A named trigger another mod fires through I.StaticSwitcher_G.trigger or the StaticSwitcherTrigger global event."
+                }
+            ]
         }
     },
     "properties": {

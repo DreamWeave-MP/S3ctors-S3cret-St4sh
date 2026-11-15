@@ -31,16 +31,17 @@ SSS sorts action fields by this fixed priority, independent of YAML mapping orde
 | 16 | `trap` |
 | 17 | `create` |
 | 18 | `global_set` |
-| 19 | `playsound` |
-| 20 | `add_lua_script` |
-| 21 | `activate_by_player` |
-| 22 | `remove_lua_script` |
-| 23 | `run_lua_script` |
-| 24 | `call_interface` |
-| 25 | `send_event` |
-| 26 | `send_global_event` |
-| 27 | `disable` |
-| 28 | `delete` |
+| 19 | `set_weather` |
+| 20 | `playsound` |
+| 21 | `add_lua_script` |
+| 22 | `activate_by_player` |
+| 23 | `remove_lua_script` |
+| 24 | `run_lua_script` |
+| 25 | `call_interface` |
+| 26 | `send_event` |
+| 27 | `send_global_event` |
+| 28 | `disable` |
+| 29 | `delete` |
 
 ## Action-block chance
 

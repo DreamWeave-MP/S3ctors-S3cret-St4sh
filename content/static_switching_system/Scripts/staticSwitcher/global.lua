@@ -1,21 +1,26 @@
 ---@omw-context global
 
+local I = require 'openmw.interfaces'
+local types = require 'openmw.types'
 local util = require 'openmw.util'
 
 ---@type StaticUtil
 local staticUtil = require 'Scripts.staticSwitcher.util'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
+local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 
-local DebugLog, ErrorLog
+local DebugLog, ErrorLog, WarnLog
 do
   local logger = require 'Scripts.staticSwitcher.logger'
   DebugLog = logger.debug
   ErrorLog = logger.error
+  WarnLog = logger.warn
 end
 
-local pcall, type = pcall, type
-local StrFormat = string.format
+local pcall, tostring, type = pcall, tostring, type
+local StrFind, StrFormat = string.find, string.format
 
 local DeleteManager = require 'Scripts.staticSwitcher.deleteManager'
 
@@ -29,20 +34,74 @@ StaticReplacements.setModuleOrder(ModuleCatalog.SortedStaticModuleIds)
 local InstanceModifiers =
   require 'Scripts.staticSwitcher.instanceModifiers'(ModuleCatalog, DeleteManager)
 
+local Triggers = require 'Scripts.staticSwitcher.triggers'(ModuleCatalog, InstanceModifiers)
+local WorldTriggers = require 'Scripts.staticSwitcher.worldTriggers'(ModuleCatalog, Triggers)
+
 require 'Scripts.staticSwitcher.globalSettings'
 
 ---@type openmw.GObject[]
 local ActiveObjectStack = {}
 
+local ActiveRules = ModuleCatalog.RulesByTrigger[TriggerContext.ACTIVE]
+
 local NullFunction = require 'scripts.s3.nullFunction'
-local UpdateFunction = NullFunction
+
+--- World triggers cost nothing unless a loaded rule listens to one. Sweeps only advance on
+--- frames with no activation or deletion work, so newly active objects always settle first.
+local PollWorldTriggers = WorldTriggers.isArmed() and WorldTriggers.poll or NullFunction
+local IdleFunction = WorldTriggers.isArmed() and WorldTriggers.step or NullFunction
+
+local UpdateFunction = IdleFunction
 local processActiveObject, processDeletions
 
 local REPLACE_PER_BATCH = 4
 
+local DEATH_WATCHER_SCRIPT = 'scripts/staticSwitcher/deathWatcher.lua'
+local watchesDeaths = Triggers.isArmed 'death'
+local hasWarnedOfUnwatchedActor = false
+
+--- What OpenMW says when the plugin in use does not declare the death watcher script at all.
+local UNDECLARED_SCRIPT_ERRORS = { 'Unknown script', 'CUSTOM tag' }
+
+local ACTIVATABLE_TYPE_NAMES = {
+  'Activator',
+  'Apparatus',
+  'Armor',
+  'Book',
+  'Clothing',
+  'Container',
+  'Creature',
+  'Door',
+  'Ingredient',
+  'Light',
+  'Lockpick',
+  'Miscellaneous',
+  'NPC',
+  'Potion',
+  'Probe',
+  'Repair',
+  'Weapon',
+}
+
+local USABLE_TYPE_NAMES = {
+  'Apparatus',
+  'Armor',
+  'Book',
+  'Clothing',
+  'Ingredient',
+  'Light',
+  'Lockpick',
+  'Miscellaneous',
+  'Potion',
+  'Probe',
+  'Repair',
+  'Weapon',
+}
+
 ---@param object openmw.GObject
-local function applyModulesToObject(object)
-  local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object)
+---@param activeRules SSSTriggerRule[]
+local function applyModulesToObject(object, activeRules)
+  local instanceModificationList = InstanceModifiers.getMatchingInstanceModules(object, activeRules)
 
   -- Instance and static modules are intentionally separate pipelines.
   -- Matching instance rules own this activation; static replacement is the fallback.
@@ -53,12 +112,86 @@ local function applyModulesToObject(object)
   end
 end
 
---- An object taken into an inventory or container while it was still queued has no cell.
---- Returning it to the world activates it again, so it is safe to drop from this batch.
+--- Death is only announced to an actor's own scripts, so a live actor gets a script that
+--- relays it. A plugin that does not declare the script cannot attach it at all.
 ---@param object openmw.GObject
----@return boolean
-local function isPlacedInWorld(object)
-  return object:isValid() and object.count >= 1 and object.cell ~= nil
+local function watchForDeath(object)
+  if
+    not types.Actor.objectIsInstance(object)
+    or types.Player.objectIsInstance(object)
+    or types.Actor.isDead(object)
+    or object:hasScript(DEATH_WATCHER_SCRIPT)
+  then
+    return
+  end
+
+  local wasAttached, attachError = pcall(object.addScript, object, DEATH_WATCHER_SCRIPT)
+  if wasAttached then return end
+
+  local failure = tostring(attachError)
+
+  for errorIdx = 1, #UNDECLARED_SCRIPT_ERRORS do
+    if StrFind(failure, UNDECLARED_SCRIPT_ERRORS[errorIdx], 1, true) then
+      watchesDeaths = false
+      ErrorLog(StrFormat('The death trigger is unavailable: %s', failure))
+      return
+    end
+  end
+
+  if hasWarnedOfUnwatchedActor then return end
+  hasWarnedOfUnwatchedActor = true
+
+  WarnLog(StrFormat('The death of %s cannot be watched: %s', object.recordId, failure))
+end
+
+--- Runs before the engine's own activation, so an item is still in the world when rules see it.
+--- Returns nothing: rules observe an activation, they do not replace it.
+---@param object openmw.GObject
+---@param actor openmw.GObject
+local function onObjectActivated(object, actor) Triggers.dispatch('activate', object, actor) end
+
+--- A used item sits in an inventory and has no cell, so `use` rules run on the actor using it.
+---@param item openmw.GObject
+---@param actor openmw.GObject
+local function onItemUsed(item, actor) Triggers.dispatch('use', actor, actor, item) end
+
+---@param typeNames string[]
+---@param addHandlerForType fun(objectType: table, handler: fun(object: openmw.GObject, actor: openmw.GObject))
+---@param handler fun(object: openmw.GObject, actor: openmw.GObject)
+local function addHandlerForTypes(typeNames, addHandlerForType, handler)
+  for typeIdx = 1, #typeNames do
+    local objectType = types[typeNames[typeIdx]]
+    if objectType then addHandlerForType(objectType, handler) end
+  end
+end
+
+if Triggers.isArmed 'activate' then
+  local Activation = I.Activation
+
+  if Activation then
+    addHandlerForTypes(ACTIVATABLE_TYPE_NAMES, Activation.addHandlerForType, onObjectActivated)
+  else
+    ErrorLog 'The activate trigger is unavailable: the Activation interface is missing'
+  end
+end
+
+if Triggers.isArmed 'use' then
+  local ItemUsage = I.ItemUsage
+
+  if ItemUsage then
+    addHandlerForTypes(USABLE_TYPE_NAMES, ItemUsage.addHandlerForType, onItemUsed)
+  else
+    ErrorLog 'The use trigger is unavailable: the ItemUsage interface is missing'
+  end
+end
+
+---@param triggerName string custom trigger name, without the `custom:` prefix
+---@param object openmw.GObject
+---@return boolean wasDispatched
+local function fireCustomTrigger(triggerName, object)
+  if type(triggerName) ~= 'string' or not staticUtil.isGObject(object) then return false end
+
+  return Triggers.dispatch(StrFormat('custom:%s', triggerName), object)
 end
 
 processActiveObject = function()
@@ -69,14 +202,8 @@ processActiveObject = function()
     local object = ActiveObjectStack[numObjects]
     ActiveObjectStack[numObjects] = nil
 
-    if isPlacedInWorld(object) then
-      local wasProcessed, processError = pcall(applyModulesToObject, object)
-
-      if not wasProcessed then
-        ErrorLog(
-          StrFormat('Skipped %s (%s): %s', object.id, object.recordId, tostring(processError))
-        )
-      end
+    if Triggers.isPlacedInWorld(object) then
+      Triggers.runGuarded(applyModulesToObject, object, ActiveRules)
     end
   end
 
@@ -85,7 +212,7 @@ processActiveObject = function()
   if not DeleteManager:queueIsEmpty() then
     UpdateFunction = processDeletions
   elseif #ActiveObjectStack == 0 then
-    UpdateFunction = NullFunction
+    UpdateFunction = IdleFunction
   end
 end
 
@@ -97,7 +224,7 @@ processDeletions = function()
   if next(ActiveObjectStack) ~= nil then
     UpdateFunction = processActiveObject
   elseif deletionsFinished then
-    UpdateFunction = NullFunction
+    UpdateFunction = IdleFunction
   end
 
   DebugLog('Deletions: queue empty=%s, stack=%d', deletionsFinished, #ActiveObjectStack)
@@ -117,11 +244,19 @@ return {
     end,
     ---@return SSSOverrideRecords
     overrideRecords = function() return util.makeReadOnly(StaticReplacements.OverrideRecords) end,
-    version = 5,
+    --- Runs every rule listening to `custom:<triggerName>` on the object. Returns false when
+    --- no rule listens, the object is not in the world, or the call was debounced.
+    trigger = fireCustomTrigger,
+    version = 6,
   },
   interfaceName = 'StaticSwitcher_G',
   engineHandlers = {
-    onUpdate = function() UpdateFunction() end,
+    ---@param dt number
+    onUpdate = function(dt)
+      PollWorldTriggers(dt)
+      if ObjectCleanup.hasPending() then ObjectCleanup.step() end
+      UpdateFunction()
+    end,
     ---@param object openmw.GObject
     onObjectActive = function(object)
       local stackWasEmpty = not next(ActiveObjectStack)
@@ -130,6 +265,8 @@ return {
         InstanceModifiers.clearPerCellTracking()
         BatchCache.clear()
       end
+
+      if watchesDeaths then watchForDeath(object) end
 
       ActiveObjectStack[#ActiveObjectStack + 1] = object
       DebugLog(
@@ -141,6 +278,12 @@ return {
 
       if UpdateFunction ~= processActiveObject then UpdateFunction = processActiveObject end
     end,
+    ---@param object openmw.GObject
+    ---@param actor openmw.GObject
+    onDropped = function(object, actor) Triggers.dispatch('drop', object, actor) end,
+    ---@param object openmw.GObject
+    ---@param actor openmw.GObject
+    onPlaced = function(object, actor) Triggers.dispatch('place', object, actor) end,
     ---@return SSSSavedState
     onSave = function()
       DebugLog 'Saving SSS state'
@@ -149,6 +292,8 @@ return {
         objectDeleteQueue = DeleteManager.queue,
         instanceModifiers = InstanceModifiers.saveOnceCache(),
         replacementChains = StaticReplacements.saveReplacementChains(),
+        pendingCorrections = ObjectCleanup.saveCorrections(),
+        objectReturns = ObjectCleanup.saveReturns(),
       }
     end,
     ---@param data SSSSavedState?
@@ -158,6 +303,7 @@ return {
         DeleteManager.queue = {}
         InstanceModifiers.loadOnceCache()
         StaticReplacements.loadReplacementChains()
+        ObjectCleanup.loadCorrections()
         return
       end
 
@@ -170,8 +316,20 @@ return {
       end
       InstanceModifiers.loadOnceCache(data.instanceModifiers)
       StaticReplacements.loadReplacementChains(data.replacementChains, data.replacedObjectSet)
+      ObjectCleanup.loadCorrections(data.pendingCorrections, data.objectReturns)
 
       if not DeleteManager:queueIsEmpty() then UpdateFunction = processDeletions end
+    end,
+  },
+  eventHandlers = {
+    ---@param actor openmw.GObject
+    StaticSwitcherActorDied = function(actor)
+      if staticUtil.isGObject(actor) then Triggers.dispatch('death', actor) end
+    end,
+    --- Any script can send this, so nothing about the payload is taken on trust.
+    ---@param data SSSCustomTriggerEvent
+    StaticSwitcherTrigger = function(data)
+      if type(data) == 'table' then fireCustomTrigger(data.name, data.object) end
     end,
   },
 }

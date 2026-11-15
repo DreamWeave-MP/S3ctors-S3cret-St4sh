@@ -24,6 +24,9 @@ These recipes turn the shipped SSS examples into focused patterns. Put each modu
 - [Loot, locks, and traps](@/static_switching_system/docs/recipes/loot-locks-traps.md) — modify containers and doors with level and chance gates.
 - [Actor scaling and equipment](@/static_switching_system/docs/recipes/actor-scaling-equipment.md) — target one actor, equip items, and set scale.
 - [Dungeon creature repopulation](@/static_switching_system/docs/recipes/dungeon-creature-repopulation.md) — recreate dead, respawning-marked creatures in tagged dungeon cells.
+- [Placing something unique in a cell](@/static_switching_system/docs/recipes/unique-placement.md) — put one NPC or object at exact coordinates, once per save.
+- [Reacting when a quest advances](@/static_switching_system/docs/recipes/reacting-to-quest-progress.md) — change nearby objects the moment a journal stage is reached.
+- [Reacting to what the player does](@/static_switching_system/docs/recipes/reacting-to-the-player.md) — run a rule on activation, drop, placement, or item use.
 - [Scheduled teleportation](@/static_switching_system/docs/recipes/scheduled-teleportation.md) — move an actor when activation-time conditions match.
 
 For range semantics, use [Comparison and Random Ranges](@/static_switching_system/docs/concepts/ranges.md). Comparison ranges test values; random ranges sample them. They use different syntax.

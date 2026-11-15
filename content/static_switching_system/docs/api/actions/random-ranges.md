@@ -26,7 +26,7 @@ transform:
 | `value: { max: 20 }` | Sample from the consumer's default lower bound through `20`. |
 | `value: { min: 10 }` | Invalid for sampled action values; runtime consumers assert that `max` exists. |
 
-Defaults depend on the action. Position and rotation components default their missing lower bound to `0`; scale defaults its lower bound to `1.0`; lock and count ranges default their lower bound to `1`; `global_set` defaults its range lower bound to `1`. Count and lock ranges are sampled as integers. Transform, teleport, and scale ranges use numeric sampling.
+Defaults depend on the action. Position and rotation components default their missing lower bound to `0`; scale defaults its lower bound to `1.0`, so `scale: { max: 0.8 }` samples between `0.8` and `1.0`; lock and count ranges default their lower bound to `1`; `global_set` defaults its range lower bound to `1`. Count and lock ranges are sampled as integers. Transform, teleport, and scale ranges use numeric sampling.
 
 Random values are sampled when the action executes. With `once: true`, the successful result is retained through the once cache; with `once: per_cell`, it is rerolled for a later activation batch. Without a once mode, the action can reroll whenever the object is activated.
 

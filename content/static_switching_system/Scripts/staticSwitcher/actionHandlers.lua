@@ -8,6 +8,9 @@ local world = require 'openmw.world'
 local randomGen = require 'scripts.s3.randomGen'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
+local Regions = require 'Scripts.staticSwitcher.regions'
+local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 
 local WarnLog
 do
@@ -33,12 +36,14 @@ local rad = math.rad
 
 local ActorObjectIsInstance = types.Actor.objectIsInstance
 local ContainerObjectIsInstance = types.Container.objectIsInstance
+local PlayerObjectIsInstance = types.Player.objectIsInstance
 
 local Player = world.players[1]
 
 local ActorSpells = types.Actor.spells
 local ActorActiveSpells = types.Actor.activeSpells
 local SpellRecords = core.magic.spells.records
+local Weather = core.weather
 
 local ACTIVE_SPELL_OPTION_KEYS = {
   'name',
@@ -73,12 +78,71 @@ local function tryCreateObject(actionName, recordId)
   )
 end
 
+---@type table<string, true>
+local IssuedWarnings = {}
+
+---@param message string
+local function warnOnce(message)
+  if IssuedWarnings[message] then return end
+  IssuedWarnings[message] = true
+
+  WarnLog(message)
+end
+
+--- A repeat of the same request for the same region inside this window is dropped. It is short
+--- on purpose: something else may change the weather, and a later request must go through.
+local WEATHER_REQUEST_REPEAT_SECONDS = 10
+
+---@type table<string, SSSWeatherRequest>
+local LastWeatherRequests = {}
+
+---@param regionId string
+---@param weatherId string
+---@return boolean wasJustRequested
+local function wasWeatherJustRequested(regionId, weatherId)
+  local lastRequest = LastWeatherRequests[regionId]
+
+  return lastRequest ~= nil
+    and lastRequest.weatherId == weatherId
+    and core.getSimulationTime() - lastRequest.time < WEATHER_REQUEST_REPEAT_SECONDS
+end
+
+---@param regionId string
+---@param weather openmw.core.WeatherRecord
+---@return boolean isAlreadyComing whether the player's region already has, or is turning to, this weather
+local function playerRegionAlreadyHasWeather(regionId, weather)
+  local playerCell = Player.cell
+  if not playerCell or Regions.resolveRegion(playerCell, Player.position) ~= regionId then
+    return false
+  end
+
+  local upcomingWeather = Weather.getNext(playerCell) or Weather.getCurrent(playerCell)
+
+  return upcomingWeather ~= nil and upcomingWeather.recordId == weather.recordId
+end
+
 ---@param object openmw.GObject
 ---@return openmw.core.Inventory? inventory
 local function getObjectInventory(object)
   if not ContainerObjectIsInstance(object) and not ActorObjectIsInstance(object) then return end
 
   return object.type.inventory(object)
+end
+
+--- Creating an item and putting it in an inventory are two engine operations. An item the
+--- inventory refuses is removed again rather than left outside any cell.
+---@param inventory openmw.core.Inventory
+---@param recordId RecordId
+---@param count integer
+---@return openmw.GObject? item nil when the inventory refused it
+local function createItemIn(inventory, recordId, count)
+  local item = world.createObject(recordId, count)
+
+  local wasMoved, moveError = pcall(item.moveInto, item, inventory)
+  if wasMoved then return item end
+
+  ObjectCleanup.discard(item)
+  warnOnce(StrFormat('"%s" could not be put in an inventory: %s', recordId, tostring(moveError)))
 end
 
 ---@param object openmw.GObject
@@ -91,14 +155,15 @@ local function addItemToInventory(object, recordId, count)
   local inventory = getObjectInventory(object)
   if not inventory then return false end
 
-  world.createObject(recordId, count):moveInto(inventory)
-  return true
+  return createItemIn(inventory, recordId, count) ~= nil
 end
 
+--- A count can be spread over several stacks, each removed by its own engine call. Whatever
+--- was removed before a stack was refused stays removed, so it is reported as removed.
 ---@param object openmw.GObject
 ---@param recordId RecordId
 ---@param count integer
----@return boolean wasRemoved
+---@return boolean wasRemoved whether anything was removed
 local function removeItemFromInventory(object, recordId, count)
   if count < 1 then return false end
 
@@ -110,18 +175,34 @@ local function removeItemFromInventory(object, recordId, count)
 
   local remainingCount = math.min(count, availableCount)
   local items = inventory:findAll(recordId)
+  local wasAnyRemoved = false
 
   for i = 1, #items do
     local itemStack = items[i]
     local removeCount = math.min(remainingCount, itemStack.count)
 
-    itemStack:remove(removeCount)
-    remainingCount = remainingCount - removeCount
+    if removeCount > 0 then
+      local wasRemoved, removeError = pcall(itemStack.remove, itemStack, removeCount)
 
-    if remainingCount <= 0 then return true end
+      if not wasRemoved then
+        warnOnce(
+          StrFormat(
+            '"%s" could not be removed from an inventory: %s',
+            recordId,
+            tostring(removeError)
+          )
+        )
+        break
+      end
+
+      wasAnyRemoved = true
+      remainingCount = remainingCount - removeCount
+    end
+
+    if remainingCount <= 0 then break end
   end
 
-  return false
+  return wasAnyRemoved
 end
 
 ---@param actor openmw.GObject
@@ -134,13 +215,7 @@ local function getOrCreateInventoryItem(actor, recordId, count)
   local inventory = getObjectInventory(actor)
   if not inventory then return end
 
-  local item = inventory:find(recordId)
-  if item then return item end
-
-  item = world.createObject(recordId, count)
-  item:moveInto(inventory)
-
-  return item
+  return inventory:find(recordId) or createItemIn(inventory, recordId, count)
 end
 
 ---@param actor openmw.GObject
@@ -283,6 +358,22 @@ local function getItemActionDetails(itemData)
   return itemData
 end
 
+--- Applies one entry of an action that names several items or spells. Each entry is its own
+--- engine boundary, so an entry the engine refuses does not hide the ones it accepted: the
+--- action still reports that it applied, and what it added is not added again.
+---@param entryHandler fun(object: openmw.GObject, recordId: RecordId, detail: integer|SSSActiveSpellDetails|nil): boolean
+---@param object openmw.GObject
+---@param recordId RecordId
+---@param detail integer|SSSActiveSpellDetails|nil
+---@return boolean wasApplied
+local function applyEntry(entryHandler, object, recordId, detail)
+  local didRun, wasApplied = pcall(entryHandler, object, recordId, detail)
+  if didRun then return wasApplied end
+
+  warnOnce(StrFormat('"%s" was refused: %s', tostring(recordId), tostring(wasApplied)))
+  return false
+end
+
 ---@param chance SSSChanceRange?
 ---@return boolean shouldApply
 local function shouldApplyChance(chance)
@@ -320,7 +411,7 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
   local actionType = type(itemAction)
 
   if actionType == 'string' then
-    return itemHandler(object, itemAction, 1)
+    return applyEntry(itemHandler, object, itemAction, 1)
   elseif actionType == 'table' then
     local firstKey = next(itemAction)
 
@@ -331,7 +422,7 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
       local numItems = #itemAction
 
       for i = 1, numItems do
-        wasApplied = itemHandler(object, itemAction[i], count) or wasApplied
+        wasApplied = applyEntry(itemHandler, object, itemAction[i], count) or wasApplied
       end
 
       return wasApplied
@@ -344,7 +435,7 @@ local function applyItemAction(object, itemAction, itemHandler, arrayItemCount)
       local count, chance = getItemActionDetails(itemData)
 
       if count >= 1 and shouldApplyChance(chance) then
-        wasApplied = itemHandler(object, recordId, count) or wasApplied
+        wasApplied = applyEntry(itemHandler, object, recordId, count) or wasApplied
       end
     end
 
@@ -361,7 +452,7 @@ end
 local function applySpellAction(object, spellAction, spellHandler)
   local actionType = type(spellAction)
 
-  if actionType == 'string' then return spellHandler(object, spellAction) end
+  if actionType == 'string' then return applyEntry(spellHandler, object, spellAction) end
   if actionType ~= 'table' then return false end
 
   local wasApplied = false
@@ -370,7 +461,7 @@ local function applySpellAction(object, spellAction, spellHandler)
   if firstKey and type(firstKey) == 'number' then
     ---@cast spellAction RecordId[]
     for spellIndex = 1, #spellAction do
-      wasApplied = spellHandler(object, spellAction[spellIndex]) or wasApplied
+      wasApplied = applyEntry(spellHandler, object, spellAction[spellIndex]) or wasApplied
     end
 
     return wasApplied
@@ -379,7 +470,7 @@ local function applySpellAction(object, spellAction, spellHandler)
   ---@cast spellAction table<RecordId, SSSSpellDetails>
   for spellId, details in pairs(spellAction) do
     if shouldApplyChance(details.chance) then
-      wasApplied = spellHandler(object, spellId) or wasApplied
+      wasApplied = applyEntry(spellHandler, object, spellId) or wasApplied
     end
   end
 
@@ -392,7 +483,9 @@ end
 local function applyActiveSpellAction(object, activeSpellAction)
   local actionType = type(activeSpellAction)
 
-  if actionType == 'string' then return addActiveSpellToActor(object, activeSpellAction) end
+  if actionType == 'string' then
+    return applyEntry(addActiveSpellToActor, object, activeSpellAction)
+  end
   if actionType ~= 'table' then return false end
 
   local wasApplied = false
@@ -401,7 +494,8 @@ local function applyActiveSpellAction(object, activeSpellAction)
   if firstKey and type(firstKey) == 'number' then
     ---@cast activeSpellAction RecordId[]
     for spellIndex = 1, #activeSpellAction do
-      wasApplied = addActiveSpellToActor(object, activeSpellAction[spellIndex]) or wasApplied
+      wasApplied = applyEntry(addActiveSpellToActor, object, activeSpellAction[spellIndex])
+        or wasApplied
     end
 
     return wasApplied
@@ -410,7 +504,7 @@ local function applyActiveSpellAction(object, activeSpellAction)
   ---@cast activeSpellAction table<RecordId, SSSActiveSpellDetails>
   for spellId, details in pairs(activeSpellAction) do
     if shouldApplyChance(details.chance) then
-      wasApplied = addActiveSpellToActor(object, spellId, details) or wasApplied
+      wasApplied = applyEntry(addActiveSpellToActor, object, spellId, details) or wasApplied
     end
   end
 
@@ -462,7 +556,7 @@ local function getRangeValue(numberOrTable)
   elseif actionDataType == 'nil' then
     return 0
   else
-    error('Incorrect type provided to getRangeValue: ' .. actionDataType)
+    error(StrFormat('Incorrect type provided to getRangeValue: %s', actionDataType))
   end
 end
 
@@ -501,7 +595,110 @@ local function getScaleValue(scaleAction, referenceScale)
     return referenceScale * randomGen.range(scaleAction.min or 1.0, scaleAction.max)
   end
 
-  error('Invalid type for scale parameter: ' .. scaleType)
+  error(StrFormat('Invalid type for scale parameter: %s', scaleType))
+end
+
+--- Rolls how many objects a pool creates this time.
+---@param details string|number|SSSCreatePool
+---@return SSSRolledCreatePool? pool nil when the pool creates nothing this time
+local function rollCreatePool(details)
+  local detailsType = type(details)
+
+  if detailsType == 'string' then return { count = 1, usesRelativeTransform = true } end
+  if detailsType == 'number' then
+    local count = math.floor(details)
+    return count >= 1 and { count = count, usesRelativeTransform = true } or nil
+  end
+  if detailsType ~= 'table' then return end
+
+  local count = details.count or 1
+  if type(count) == 'table' then
+    assert(count.max, 'RangeTable requires a "max"')
+    count.min = count.min or 1
+    assert(count.min <= count.max, 'RangeTable requires min <= max')
+    -- Must use randomGen.range(_, true) for integer output;
+    -- getRangeValue returns floats (correct for positions, not counts).
+    count = randomGen.range(count.min or 1, count.max, true)
+  end
+
+  if count < 1 or (details.chance and not shouldApplyChance(details.chance)) then return end
+
+  local transformType = details.transform_type
+
+  return {
+    count = count,
+    position = details.position,
+    rotate = details.rotate,
+    scale = details.scale,
+    usesRelativeTransform = transformType == nil or transformType == 'relative',
+  }
+end
+
+---@param pool SSSRolledCreatePool
+---@param basePosition openmw.util.Vector3
+---@param baseRotation openmw.util.Transform
+---@param baseScale number
+---@return openmw.util.Vector3 position
+---@return openmw.util.Transform rotation
+---@return number scale
+local function resolveCreatedPlacement(pool, basePosition, baseRotation, baseScale)
+  local position, rotation, scale = basePosition, baseRotation, baseScale
+  local usesRelativeTransform = pool.usesRelativeTransform
+
+  local positionOverride = pool.position
+  if positionOverride then
+    local offset = util.vector3(
+      getRangeValue(positionOverride.x),
+      getRangeValue(positionOverride.y),
+      getRangeValue(positionOverride.z)
+    )
+
+    position = usesRelativeTransform and position + offset or offset
+  end
+
+  if pool.rotate then rotation = getRotationValue(usesRelativeTransform, pool.rotate, rotation) end
+
+  if pool.scale then scale = getScaleValue(pool.scale, usesRelativeTransform and scale or 1.0) end
+
+  return position, rotation, scale
+end
+
+---@param object openmw.GObject
+---@param cell openmw.core.GCell
+---@param position openmw.util.Vector3
+---@param rotation openmw.util.Transform
+---@param scale number? only set when the pool overrides scale
+local function placeCreatedObject(object, cell, position, rotation, scale)
+  object:teleport(cell, position, rotation)
+  if scale then object:setScale(scale) end
+end
+
+--- Creates one pool object and puts it in the world. An object that cannot be placed is
+--- removed again rather than left stranded outside any cell. Each object stands alone, so the
+--- caller can count exactly what now exists even when a later object fails.
+--- Only the engine calls are protected. Pool shapes are checked when the module loads, so
+--- working out a placement cannot fail on anything an author wrote.
+---@param recordId RecordId
+---@param pool SSSRolledCreatePool
+---@param cell openmw.core.GCell
+---@param basePosition openmw.util.Vector3
+---@param baseRotation openmw.util.Transform
+---@param baseScale number
+---@return openmw.GObject? placedObject
+local function createPlacedObject(recordId, pool, cell, basePosition, baseRotation, baseScale)
+  local position, rotation, scale =
+    resolveCreatedPlacement(pool, basePosition, baseRotation, baseScale)
+
+  local object = tryCreateObject('create', recordId)
+  if not object then return end
+
+  local wasPlaced, placeError =
+    pcall(placeCreatedObject, object, cell, position, rotation, pool.scale and scale)
+
+  if wasPlaced then return object end
+
+  ObjectCleanup.discard(object)
+  warnOnce(StrFormat('create: "%s" could not be placed: %s', recordId, tostring(placeError)))
 end
 
 ---@type table<string, function>
@@ -544,6 +741,8 @@ local actionHandlers = {
     return wasModified, newTransform, newPos, targetScale
   end,
   ['replace'] = function(object, replaceActionData)
+    if PlayerObjectIsInstance(object) then return end
+
     if replaceActionData == 'self' then return tryCreateObject('replace', object.recordId) end
 
     for replaceId, replaceChance in pairs(replaceActionData) do
@@ -575,7 +774,9 @@ local actionHandlers = {
   ['add_active_spell'] = function(object, addActiveSpellActionData)
     return applyActiveSpellAction(object, addActiveSpellActionData)
   end,
-  ['disable'] = function(_, disableAction)
+  ['disable'] = function(object, disableAction)
+    if PlayerObjectIsInstance(object) then return false end
+
     if disableAction == true then return true end
     if type(disableAction) == 'table' then
       if not disableAction.chance then return true end
@@ -583,7 +784,9 @@ local actionHandlers = {
     end
     return false
   end,
-  ['delete'] = function(_, deleteAction, replaceAction, replaceActionSucceeded)
+  ['delete'] = function(object, deleteAction, replaceAction, replaceActionSucceeded)
+    if PlayerObjectIsInstance(object) then return false end
+
     return deleteAction and (not replaceAction or replaceActionSucceeded)
   end,
   ['create'] = function(
@@ -598,75 +801,22 @@ local actionHandlers = {
     local createdObjects = {}
 
     for recordId, details in pairs(createActionData) do
-      local count, chance, positionOverride, rotateOverride, scaleOverride, transformType
-      local detailsType = type(details)
+      local pool = rollCreatePool(details)
 
-      if detailsType == 'string' then
-        count = 1
-      elseif detailsType == 'number' then
-        count = math.floor(details)
-      elseif detailsType == 'table' then
-        count = details.count or 1
-        if type(count) == 'table' then
-          assert(count.max, 'RangeTable requires a "max"')
-          count.min = count.min or 1
-          assert(count.min <= count.max, 'RangeTable requires min <= max')
-          -- Must use randomGen.range(_, true) for integer output;
-          -- getRangeValue returns floats (correct for positions, not counts).
-          count = randomGen.range(count.min or 1, count.max, true)
-        end
-        chance = details.chance
-        positionOverride = details.position
-        rotateOverride = details.rotate
-        scaleOverride = details.scale
-        transformType = details.transform_type
-      end
+      if pool then
+        for _ = 1, pool.count do
+          local object = createPlacedObject(
+            recordId,
+            pool,
+            accumulatedCell,
+            accumulatedPosition,
+            accumulatedRotation,
+            accumulatedScale
+          )
+          if not object then break end
 
-      if count and count >= 1 then
-        if chance and not shouldApplyChance(chance) then
-          -- pool missed
-        else
-          local useRelativeTransform = transformType == nil or transformType == 'relative'
-          local baseTransform = accumulatedRotation
-          local basePos = accumulatedPosition
-          local baseScale = accumulatedScale
-          local baseCell = accumulatedCell
-
-          for _ = 1, count do
-            local newPos = basePos
-            local newTransform = baseTransform
-            local targetScale = baseScale
-
-            if positionOverride then
-              local offset = util.vector3(
-                getRangeValue(positionOverride.x),
-                getRangeValue(positionOverride.y),
-                getRangeValue(positionOverride.z)
-              )
-              if useRelativeTransform then
-                newPos = newPos + offset
-              else
-                newPos = offset
-              end
-            end
-
-            if rotateOverride then
-              newTransform = getRotationValue(useRelativeTransform, rotateOverride, newTransform)
-            end
-
-            if scaleOverride then
-              local referenceScale = useRelativeTransform and targetScale or 1.0
-              targetScale = getScaleValue(scaleOverride, referenceScale)
-            end
-
-            local obj = tryCreateObject('create', recordId)
-            if not obj then break end
-
-            obj:teleport(baseCell, newPos, newTransform)
-            if scaleOverride then obj:setScale(targetScale) end
-            totalCreated = totalCreated + 1
-            createdObjects[totalCreated] = obj
-          end
+          totalCreated = totalCreated + 1
+          createdObjects[totalCreated] = object
         end
       end
     end
@@ -862,6 +1012,50 @@ local actionHandlers = {
     if type(value) == 'table' then value = randomGen.range(value.min or 1, value.max, true) end
 
     globals[globalData.name] = value
+    return true
+  end,
+  ['set_weather'] = function(_, weatherAction)
+    local weatherId, regionId = weatherAction, nil
+    if type(weatherAction) == 'table' then
+      weatherId, regionId = weatherAction.weather, weatherAction.region
+    end
+
+    local weather = type(weatherId) == 'string' and Weather.records[weatherId] or nil
+    if not weather then
+      warnOnce(StrFormat('set_weather: "%s" is not a weather record', tostring(weatherId)))
+      return false
+    end
+
+    local playerCell = Player.cell
+    local playerRegionId = playerCell and Regions.resolveRegion(playerCell, Player.position)
+
+    regionId = regionId or playerRegionId
+    if not regionId then return false end
+
+    local weatherRecordId = weather.recordId
+
+    if
+      wasWeatherJustRequested(regionId, weatherRecordId)
+      or playerRegionAlreadyHasWeather(regionId, weather)
+    then
+      return false
+    end
+
+    local didChange, changeError = pcall(Weather.changeWeather, regionId, weather)
+    if not didChange then
+      warnOnce(
+        StrFormat('set_weather: could not change region "%s": %s', regionId, tostring(changeError))
+      )
+      return false
+    end
+
+    LastWeatherRequests[regionId] = { weatherId = weatherRecordId, time = core.getSimulationTime() }
+
+    if regionId == playerRegionId then
+      local expectedWeatherIds = TriggerContext.expectedWeatherIds
+      expectedWeatherIds[#expectedWeatherIds + 1] = weatherRecordId
+    end
+
     return true
   end,
   ['teleport'] = function(object, teleportData, currentCell, currentPos, currentRotation)

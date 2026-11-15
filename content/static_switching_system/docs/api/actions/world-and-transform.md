@@ -13,7 +13,7 @@ kind = "api"
 
 **Shape:** `replace: self` or `replace: { ReplacementRecordId: chance, ... }`
 
-`replace: self` recreates the matched object from its base record. The original instance is disabled, and the new instance becomes the action target. SSS carries the replacement through the normal placement pipeline, so later transforms and teleports apply to the new instance. This is a fresh instance, not an in-place reset: instance state, inventory, health, scripts, and other runtime state are not restored from the old object.
+`replace: self` recreates the matched object from its base record. The new instance becomes the action target, and the original is disabled once the new instance has been placed in the world; if it cannot be placed, it is removed and the original stays as it was. SSS carries the replacement through the normal placement pipeline, so later transforms and teleports apply to the new instance. This is a fresh instance, not an in-place reset: instance state, inventory, health, scripts, and other runtime state are not restored from the old object.
 
 ```yaml
 replace: self
@@ -135,4 +135,12 @@ create:
       y: { min: -300, max: 300 }
 ```
 
-Pool counts default to `1`; count range tables require `max`, default `min` to `1`, and produce integer counts. Pool chance is a number from `0` to `1` in the YAML schema. Each pool chance is rolled once; transform overrides are sampled separately for each created object. Relative positioning/rotation/scale is the default, and absolute mode uses the accumulated action placement as its cell and transform base. Transforms and teleports already processed in the same action list are therefore visible to created objects, even though the engine placement commit is deferred. A pending `onGround: true` teleport contributes its requested position; `create` cannot observe the later ground-snapped result. Invalid creation records or malformed action ranges can error.
+Pool counts default to `1`; count range tables require `max`, default `min` to `1`, and produce integer counts. Pool chance is a number from `0` to `1` in the YAML schema. Each pool chance is rolled once; transform overrides are sampled separately for each created object. Relative positioning/rotation/scale is the default, and absolute mode uses the accumulated action placement as its cell and transform base. Transforms and teleports already processed in the same action list are therefore visible to created objects, even though the engine placement commit is deferred. A pending `onGround: true` teleport contributes its requested position; `create` cannot observe the later ground-snapped result.
+
+A pool whose `count`, `chance`, `position`, or `rotate` range has no `max`, whose `count` has `min` above `max`, whose `scale` range has no `max` or has `min` above `max`, or whose `transform_type` is anything but `relative` or `absolute`, is rejected when the module loads and its rule is skipped. The same applies to the ranges and `transform_type` of a `transform` action. A record ID that does not exist is logged once and that pool creates nothing.
+
+### When a create only partly succeeds
+
+Each object is created and placed on its own. If one cannot be placed, it is removed again, the failure is logged once, and that pool stops; objects already placed stay, and other pools still run. If the engine will not remove it either, SSS keeps hold of it and tries again on later frames, a few such corrections per frame, before giving up.
+
+The action counts as applied as soon as it has placed at least one object. That has a consequence worth knowing before you rely on it: **a `once: true` rule whose `create` placed two of three objects is recorded as done, and the third never appears.** SSS does not go back for it, because retrying would place the first two again. If a set of objects must appear together or not at all, do not depend on a single `create` for that guarantee; check the log for `create:` warnings while testing the module, since anything that stops a placement will usually stop it every time.

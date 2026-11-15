@@ -2,11 +2,13 @@
 
 local aux_util = require 'openmw_aux.util'
 local markup = require 'openmw.markup'
+local types = require 'openmw.types'
 local vfs = require 'openmw.vfs'
 
 local szudzik = require 'scripts.s3.szudzik'
 local tableHash = require 'scripts.s3.tableHash'
 
+local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 local staticUtil = require 'Scripts.staticSwitcher.util'
 local validation = require 'Scripts.staticSwitcher.validation'
 
@@ -57,6 +59,17 @@ local SortedModuleIds = {}
 ---@type string[]
 local SortedStaticModuleIds = {}
 
+---@type table<string, SSSTriggerRule[]>
+local RulesByTrigger = { [TriggerContext.ACTIVE] = {} }
+
+---@type table<string, SSSSweep>
+local Sweeps = {}
+
+---@type table<string, string>
+local JournalSweepKeys = {}
+
+local DEFAULT_TRIGGER_NAMES = { TriggerContext.ACTIVE }
+
 ---@type SSSStaticReplacements
 local StaticReplacements
 
@@ -80,6 +93,7 @@ local ACTIONPRIORITY = {
   'trap',
   'create',
   'global_set',
+  'set_weather',
   'playsound',
   'add_lua_script',
   'activate_by_player',
@@ -106,6 +120,8 @@ local CONDITIONPRIORITY = {
   'object_type',
   --- Record ID comes before many other searches as it's likely to be cheap and common
   'record_id',
+  'by_player',
+  'used_item',
   'content_file_target',
   --- Object property checks
   'generated_record',
@@ -181,7 +197,7 @@ end
 ---@param modulePath string
 ---@return string label
 local function getModuleLabel(modulePath)
-  local result, _ = StrGsub(stripYamlExtension(modulePath), '^' .. DATA_PREFIX, '')
+  local result, _ = StrGsub(stripYamlExtension(modulePath), StrFormat('^%s', DATA_PREFIX), '')
   return result
 end
 
@@ -250,6 +266,7 @@ local LOWERED_CONDITION_KEYS = {
   content_file = true,
   content_file_target = 'keys',
   record_id = true,
+  used_item = true,
   faction_owner_id = true,
   owner_id = true,
   target_class = true,
@@ -541,7 +558,7 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 
   validation.validate(meshReplacementsPath, meshReplacementsTable)
   local priority = meshReplacementsTable.priority or 'standard'
-  assert(PRIORITY_ORDER[priority], 'Invalid SSS module priority: ' .. tostring(priority))
+  assert(PRIORITY_ORDER[priority], StrFormat('Invalid SSS module priority: %s', tostring(priority)))
 
   local moduleId = moduleIdentity.id
 
@@ -575,6 +592,134 @@ local function loadSwitcherModule(meshReplacementsPath, moduleIdentity)
 
   addModuleIdentity(moduleIdentity)
   ModulePriorities[moduleId] = priority
+end
+
+---@param instanceRule SSSInstanceRule
+---@return string[] triggerNames
+local function getRuleTriggerNames(instanceRule)
+  local trigger = instanceRule.trigger
+
+  if trigger == nil then return DEFAULT_TRIGGER_NAMES end
+  if type(trigger) == 'string' then return { trigger } end
+
+  return trigger
+end
+
+--- Collects what a rule's top-level conditions say for one condition name, flattening OR-lists.
+---@param instanceRule SSSInstanceRule
+---@param conditionName string
+---@return (string|table)[] values
+local function getRuleConditionValues(instanceRule, conditionName)
+  local values = {}
+  local conditions = instanceRule.conditions
+  if not conditions then return values end
+
+  for condIdx = 1, #conditions do
+    local conditionValue = conditions[condIdx][conditionName]
+
+    if type(conditionValue) == 'table' and conditionValue[1] ~= nil then
+      for valueIdx = 1, #conditionValue do
+        values[#values + 1] = conditionValue[valueIdx]
+      end
+    elseif conditionValue ~= nil then
+      values[#values + 1] = conditionValue
+    end
+  end
+
+  return values
+end
+
+---@param sweepKey string
+---@param triggerRule SSSTriggerRule
+local function addSweepRule(sweepKey, triggerRule)
+  local sweep = Sweeps[sweepKey]
+
+  if not sweep then
+    sweep = { key = sweepKey, rules = {}, objectTypeNames = {} }
+    Sweeps[sweepKey] = sweep
+  end
+
+  sweep.rules[#sweep.rules + 1] = triggerRule
+
+  local ruleTypeNames = getRuleConditionValues(triggerRule.rule, 'object_type')
+  if #ruleTypeNames == 0 then sweep.sweepsEveryType = true end
+
+  for typeIdx = 1, #ruleTypeNames do
+    sweep.objectTypeNames[ruleTypeNames[typeIdx]] = true
+  end
+end
+
+---@param triggerRule SSSTriggerRule
+local function addJournalSweepRules(triggerRule)
+  local journalConditions = getRuleConditionValues(triggerRule.rule, 'has_journal')
+  local addedQuestIds = {}
+
+  for journalIdx = 1, #journalConditions do
+    local questId = journalConditions[journalIdx].quest
+
+    if type(questId) == 'string' and not addedQuestIds[questId] then
+      addedQuestIds[questId] = true
+
+      local sweepKey = StrFormat('journal:%s', questId)
+      JournalSweepKeys[questId] = sweepKey
+      addSweepRule(sweepKey, triggerRule)
+    end
+  end
+end
+
+--- A sweep only enumerates the object types its rules name, unless any rule leaves the type open.
+local function resolveSweepObjectTypes()
+  for _, sweep in next, Sweeps do
+    if not sweep.sweepsEveryType then
+      local objectTypes = {}
+
+      for typeName in next, sweep.objectTypeNames do
+        objectTypes[#objectTypes + 1] = types[typeName]
+      end
+
+      sweep.objectTypes = objectTypes
+    end
+  end
+end
+
+--- Indexes every loaded rule under the triggers it listens to, in module evaluation order.
+local function indexRulesByTrigger()
+  for modIdx = 1, #SortedModuleIds do
+    local moduleId = SortedModuleIds[modIdx]
+    local moduleData = ObjectModificationStore[moduleId]
+
+    for ruleIdx = 1, #moduleData.rules do
+      local instanceRule = moduleData.rules[ruleIdx]
+
+      ---@type SSSTriggerRule
+      local triggerRule = {
+        moduleName = moduleId,
+        moduleOnce = moduleData.moduleOnce,
+        rule = instanceRule,
+      }
+
+      local triggerNames = getRuleTriggerNames(instanceRule)
+
+      for triggerIdx = 1, #triggerNames do
+        local triggerName = triggerNames[triggerIdx]
+
+        local triggerRules = RulesByTrigger[triggerName]
+        if not triggerRules then
+          triggerRules = {}
+          RulesByTrigger[triggerName] = triggerRules
+        end
+        triggerRules[#triggerRules + 1] = triggerRule
+
+        if triggerName == 'journal' then
+          addJournalSweepRules(triggerRule)
+        elseif TriggerContext.WORLD_TRIGGERS[triggerName] then
+          addSweepRule(triggerName, triggerRule)
+        end
+      end
+    end
+  end
+
+  resolveSweepObjectTypes()
 end
 
 ---@param staticReplacements SSSStaticReplacements
@@ -613,6 +758,8 @@ return function(staticReplacements)
   table.sort(SortedModuleIds, moduleComesBefore)
   table.sort(SortedStaticModuleIds, moduleComesBefore)
 
+  indexRulesByTrigger()
+
   ---@type SSSModuleCatalog
   return {
     legacyIdsByBasename = LegacyIdsByBasename,
@@ -626,6 +773,9 @@ return function(staticReplacements)
     --- all values in said array will be strings, and, when each lookup is performed they can/should be cached
     --- based on the generated hash of each set of table values (itself, keyed by the id of the loaded module)
     ObjectModificationStore = ObjectModificationStore,
+    JournalSweepKeys = JournalSweepKeys,
+    RulesByTrigger = RulesByTrigger,
+    Sweeps = Sweeps,
     SortedModuleIds = SortedModuleIds,
     SortedStaticModuleIds = SortedStaticModuleIds,
   }

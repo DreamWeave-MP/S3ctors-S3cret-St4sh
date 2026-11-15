@@ -8,7 +8,7 @@ api_docs = true
 kind = "lifecycle"
 +++
 
-SSS discovers modules at startup, then processes objects as they become active with bounded, deferred work.
+SSS discovers modules at startup, then processes objects as they become active, and when a rule's trigger fires, with bounded, deferred work.
 
 ## Startup and discovery
 
@@ -22,15 +22,23 @@ A module load does not mean every object has already been processed. SSS waits f
 
 For each active object, SSS checks instance rules first and uses static replacement only when no instance rule owns the activation. Active objects are processed in bounded batches during `onUpdate`, rather than all at once. Instance transforms are accumulated and placement updates are applied after the relevant actions. Replacement, disable, and delete work can be queued for later frames so that object validity and chain bookkeeping remain coherent.
 
+OpenMW carries out a move at the end of the frame in which it was requested. Until then the object is in transit: it reports a count of zero, and SSS skips it if another trigger reaches it in the same frame. An object SSS has just moved or created is therefore acted on again no earlier than the next frame.
+
 Static replacement chains have a maximum depth of **8 replacement steps**. Each successful static module application adds one step to the chain. When a chain already has eight steps, SSS logs `chain max depth reached` and does not apply another static replacement to that lineage. A module is also applied at most once to a chain lineage, even before the depth limit is reached.
 
 Missing meshes, invalid cells, unsupported object types, failed condition checks, and chance misses are normal reasons for an action to have no effect; inspect debug output when distinguishing them matters.
+
+## Triggers other than activation
+
+Rules that name a [trigger](@/static_switching_system/docs/concepts/triggers.md) other than `active` are evaluated when that trigger fires. Interaction, death, and custom triggers run their rules on one object immediately. `cell_enter` runs its rules on the player when the same check sees the player in a different cell, including the first check after a load. World triggers are detected by a check twice per second of simulation time and then sweep nearby objects a fixed number per frame, on frames with no activation or deletion work pending. Static replacement never runs from a trigger.
+
+Trigger bookkeeping is runtime-only. Nothing about it is saved, and the first check after a load records the current world state without firing.
 
 Disabled objects are a special lifecycle case: OpenMW may not report them as active on later cell loads. Do not expect an SSS rule that disables an object to re-enable or re-roll it automatically on re-entry.
 
 ## Save and load
 
-SSS saves generated replacement records, pending deletion work, instance `once: true` state, and static replacement chains. It restores that state when the save loads.
+SSS saves generated replacement records, pending deletion work, corrections it still owes the world after an abandoned pass, the fact that the player is being put back by one of them, instance `once: true` state, and static replacement chains. It restores that state when the save loads.
 
 `once: per_cell` data is runtime-only and is not saved.
 

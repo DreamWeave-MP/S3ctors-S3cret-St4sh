@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: A Dremora Walks Into a Cornerclub
+priority: polish
+
+# cell_enter runs on the player when they enter a cell, so nothing in the cell has to be
+# matched. The absolute transform places the newcomer at exact cell coordinates, and
+# once: true marks the player for this rule: there will only ever be one.
+instances:
+  - trigger: cell_enter
+    conditions:
+      - cell: "Balmora, South Wall Cornerclub"
+    actions:
+      - create:
+          dremora:
+            transform_type: absolute
+            position:
+              x: 291
+              y: 537
+              z: 261
+            rotate:
+              z: 90
+    once: true

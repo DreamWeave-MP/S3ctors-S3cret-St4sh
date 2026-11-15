@@ -32,6 +32,30 @@ has_journal:
   max: 59
 ```
 
+## `by_player`
+
+**Shape:** `by_player: boolean`
+
+Whether the actor that caused the trigger is the player. Only valid on rules whose triggers are all among `activate`, `drop`, `place`, and `use`; a rule using it under any other trigger is skipped at load.
+
+```yaml
+trigger: activate
+conditions:
+  - by_player: true
+```
+
+## `used_item`
+
+**Shape:** `used_item: string | string[]`
+
+Lua pattern match against the record ID of the item being used, with the same matching rules as `record_id`. Only valid on rules whose only trigger is `use`. The rule itself runs on the actor using the item.
+
+```yaml
+trigger: use
+conditions:
+  - used_item: "^potion_skooma_01$"
+```
+
 ## `global_value`
 
 **Shape:** `global_value: [{ GlobalName: number | { min?: number, max?: number } }, ...]`

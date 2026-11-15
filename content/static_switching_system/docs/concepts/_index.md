@@ -16,6 +16,7 @@ SSS's public authoring contract is YAML. These pages explain the execution model
 - [Matching, Priority, and Action Order](@/static_switching_system/docs/concepts/order-and-matching.md) explains VFS discovery order, priority tiers, conditions, chance, and actions.
 - [Ranges](@/static_switching_system/docs/concepts/ranges.md) distinguishes comparison bounds from sampled action ranges.
 - [Persistence and Once Semantics](@/static_switching_system/docs/concepts/persistence.md) explains `once`, `per_cell`, replacement chains, and saves.
+- [Triggers](@/static_switching_system/docs/concepts/triggers.md) explains when a rule runs: activation, world changes, interaction, death, and triggers fired by other mods.
 - [Behavioral Edge Cases](@/static_switching_system/docs/concepts/edge-cases.md) collects dispatch, ordering, target, persistence, and value traps.
 - [Validation and Debugging](@/static_switching_system/docs/concepts/validation-and-debugging.md) explains schema checks, runtime warnings, and the debug log.
 

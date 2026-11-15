@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../Scripts/staticSwitcher/schema/replacerSchema.json
+log_name: While You Were Standing There
+priority: polish
+
+# World triggers reach objects that are already active around the player, so these rules
+# happen in front of you instead of waiting for the next time a cell loads. Both name an
+# object_type, which lets a sweep look only at objects of those types.
+instances:
+  # weather fires when the weather in the player's cell changes. The condition then decides
+  # whether the new weather is the one this rule cares about.
+  - trigger: weather
+    conditions:
+      - object_type: Static
+      - record_id:
+          - ex_v_vivecstatue_01
+          - ex_v_vivecstatue_02
+          - furn_6th_ashstatue
+      - current_weather:
+          isStorm: true
+          name: ash
+    actions:
+      - transform:
+          rotate:
+            z: { min: -12, max: 12 }
+    once: true
+
+  # day fires when the game day rolls over. Dead creatures flagged to respawn get up again at
+  # midnight even if the player never left the dungeon.
+  - trigger: day
+    conditions:
+      - object_type: Creature
+      - is_dead: true
+      - is_respawning: true
+      - exterior: false
+    actions:
+      - replace: self

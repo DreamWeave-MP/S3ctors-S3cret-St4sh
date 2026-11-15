@@ -28,6 +28,8 @@ SSS has two module types: static and instance. Pick one.
 - **Static modules** replace meshes and maintain tracked replacement chains. They are the original Static Switching System path.
 - **Instance modules** match active objects with conditions and apply rules such as replacement, transforms, inventory changes, actor equipment, locks, traps, creation, teleportation, tags, and other supported actions.
 
+An instance rule normally runs when its object becomes active. A rule can instead name a **trigger** and run when a quest advances, when the hour, day, or weather changes, when the player enters a cell, when something is activated, dropped, placed, or used, when an actor dies, or when another mod asks. See [Triggers](@/static_switching_system/docs/concepts/triggers.md).
+
 A YAML file must not combine `instances` with static replacement fields. When an object matches an instance rule, that pipeline owns the activation; static replacement is the fallback for objects with no matching instance rules.
 
 ## Dependencies and optional integrations

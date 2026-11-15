@@ -104,6 +104,14 @@
 ---@field count integer|SSSRandomNumericRange? item count or random range; defaults to 1 when absent
 ---@field chance SSSChanceRange? fixed or random chance to apply this item entry
 
+--- A pool after its count and chance have been rolled for one execution.
+---@class SSSRolledCreatePool
+---@field count integer objects to create this time
+---@field position SSSVector3Range? per-object position override
+---@field rotate SSSVector3Range? per-object rotation override
+---@field scale SSSRandomNumericRange? per-object scale override
+---@field usesRelativeTransform boolean whether overrides are offsets from the accumulated placement
+
 ---@class SSSCreatePool
 ---@field count integer|SSSRandomNumericRange? number of objects to spawn or random range; defaults to 1
 ---@field chance number? probability 0-1 that this pool activates; no chance means always
@@ -192,9 +200,16 @@
 ---@field send_event SSSEventAction? sends a local event to the target object's scripts with `object` injected into the payload
 ---@field send_global_event SSSEventAction? sends a global event with `object` injected into the payload
 ---@field global_set {name: string, value: SSSRandomNumericRange}? sets a MWScript global variable
+---@field set_weather string|SSSSetWeatherAction? changes a region's weather; a bare string is the weather record ID and targets the player's region
 ---@field teleport {cell?: string, position?: {x?: SSSRandomNumericRange, y?: SSSRandomNumericRange, z?: SSSRandomNumericRange}, rotation?: SSSVector3Range, onGround?: boolean}? teleports the target object
 
+---@class SSSSetWeatherAction
+---@field weather string weather record ID
+---@field region string? region record ID; defaults to the player's region, inferred from the nearest exterior door indoors
+
 ---@class SSSConditionData
+---@field by_player boolean? Whether the actor that caused the trigger is the player. Only on the activate, drop, place, and use triggers.
+---@field used_item string|string[]? Lua pattern match against the record ID of the item being used. Only on the use trigger.
 ---@field carrying string|table<RecordId, integer>?
 ---@field cell string|string[]? exact match against object.cell.name or object.cell.id, case-insensitive
 ---@field cell_match string? substring match against object.cell.name or object.cell.id, case-insensitive
@@ -261,6 +276,97 @@
 ---@field actions SSSInstanceAction[]
 ---@field actionHash string hash of the table. Provided *after* being parsed from YAML data.
 ---@field once boolean|'per_cell'?
+---@field trigger string|string[]? when the rule runs: active (default), journal, hour, day, weather, cell_enter, activate, drop, place, use, death, or custom:<name>
+
+---@class SSSTriggerRule
+---@field moduleName string canonical module id that provided the rule
+---@field moduleOnce boolean? the module's top-level once setting
+---@field rule SSSInstanceRule
+
+---@class SSSSweep
+---@field key string world trigger name, or `journal:<questId>` for one watched quest
+---@field rules SSSTriggerRule[] rules to run on each swept object, in evaluation order
+---@field objectTypeNames table<string, true> every object_type named by the sweep's rules
+---@field sweepsEveryType boolean? true when a rule leaves object_type open
+---@field objectTypes table[]? OpenMW types to enumerate; nil enumerates every object
+
+---@class SSSActiveSweep
+---@field sweep SSSSweep
+---@field cells openmw.core.GCell[] cells around the player when the sweep started
+---@field cellIndex integer index of the next cell to list
+---@field typeIndex integer index of the next object type to list in that cell, when the sweep names types
+---@field objects openmw.GObject[] objects of the cell currently being processed
+---@field nextIndex integer index of the next object to process
+
+---@class SSSExteriorDoor
+---@field position openmw.util.Vector3 where the door stands in its interior
+---@field region string? region of the exterior cell the door leads to
+
+---@class SSSWeatherRequest
+---@field weatherId string weather record ID last requested for a region
+---@field time number simulation time of that request
+
+---@class SSSCustomTriggerEvent
+---@field name string custom trigger name, without the `custom:` prefix
+---@field object openmw.GObject object the rules run on
+
+--- What a pass has started on an object and not yet committed.
+---@class SSSUncommittedPass
+---@field original openmw.GObject? object the pass is running on
+---@field replacement openmw.GObject? replacement the pass created for it
+---@field wasEnabled boolean? whether the original was enabled before the pass
+---@field enabledWasChanged boolean whether the pass has asked for the original to be disabled
+---@field wasMoved boolean whether the engine has accepted a move of the original
+---@field sentPlayerElsewhere boolean whether the pass registered a player arrival to ignore
+---@field cell openmw.core.GCell? where the original was before the pass
+---@field position openmw.util.Vector3? where in that cell
+---@field rotation openmw.util.Transform? how it was turned
+---@field scale number? how it was scaled
+
+--- A correction SSS still owes the world. With a cell it puts an object back; without one it
+--- removes the object.
+---@class SSSPendingCorrection
+---@field object openmw.GObject
+---@field attemptsLeft integer frames the correction may still be tried on
+---@field cell openmw.core.GCell? where to put the object back
+---@field position openmw.util.Vector3?
+---@field rotation openmw.util.Transform?
+---@field scale number?
+
+--- A watched object on its way back to where it was before an abandoned pass moved it.
+---@class SSSObjectReturn
+---@field object openmw.GObject
+---@field cellId string ID of the cell the most recently issued move back takes the object to
+---@field pendingMoves integer moves back that are queued and not yet issued
+---@field wasIssued boolean whether any move back has been issued
+---@field observationsLeft integer times the object may still be looked for once every move back has been issued
+
+--- A return as it is written to a save. Its pending moves are counted again from the saved
+--- corrections.
+---@class SSSSavedReturn
+---@field object openmw.GObject
+---@field cellId string
+---@field wasIssued boolean
+---@field observationsLeft integer
+
+--- A pending correction as it is written to a save. A cell cannot be saved, so its ID is.
+---@class SSSSavedCorrection
+---@field object openmw.GObject
+---@field attemptsLeft integer
+---@field cellId string? ID of the cell to put the object back in
+---@field position openmw.util.Vector3?
+---@field rotation openmw.util.Transform?
+---@field scale number?
+
+--- Running state of one pass of rules over one object.
+---@class SSSRuleExecution
+---@field object openmw.GObject? object the rules were matched against
+---@field target openmw.GObject? object the actions currently apply to: the object, or its replacement
+---@field rule SSSInstanceModification? rule whose actions are running
+---@field hadAnyEffect boolean whether any rule in this pass has had an effect
+---@field isRuleRecorded boolean whether the running rule has already been recorded as applied
+---@field ruleAwaitsCommit boolean whether the running rule has an effect that only lasts if the pass commits
+---@field ruleHadEffect boolean whether the running rule has had any effect
 
 ---@class SSSInstanceModification
 ---@field moduleName string canonical module id that provided this modification rule
@@ -319,6 +425,9 @@
 ---@field resolveModuleId fun(moduleKey: string): string? resolves canonical ids and unambiguous legacy basenames
 ---@field ObjectModificationStore SSSObjectModificationStore canonical module-id keyed instance modification rules
 ---@field SortedModuleIds string[] instance module IDs in priority-sorted evaluation order
+---@field RulesByTrigger table<string, SSSTriggerRule[]> rules indexed by the trigger they listen to, in evaluation order
+---@field Sweeps table<string, SSSSweep> world-trigger sweeps keyed by sweep key; empty when no rule listens to a world trigger
+---@field JournalSweepKeys table<string, string> watched quest id to its sweep key
 ---@field SortedStaticModuleIds string[] static module IDs in priority-sorted execution order
 
 ---@class SSSStaticReplacements
@@ -333,7 +442,9 @@
 ---@field tryReplaceObject fun(object: openmw.GObject)
 
 ---@class SSSInstanceModifiers
----@field getMatchingInstanceModules fun(object: openmw.GObject): SSSInstanceModificationList?
+---@field getMatchingInstanceModules fun(object: openmw.GObject, triggerRules: SSSTriggerRule[]): SSSInstanceModificationList?
+---@field clearPerCellTracking fun()
+---@field abandonUncommittedPass fun() puts right whatever an interrupted pass had started and not committed
 ---@field loadOnceCache fun(savedOnceCache?: SSSOnceCacheSaved)
 ---@field saveOnceCache fun(): SSSOnceCacheSaved
 ---@field tryModifyObject fun(object: openmw.GObject, instanceModificationList: SSSInstanceModificationList)
@@ -343,6 +454,8 @@
 ---@field objectDeleteQueue ObjectDeleteData[]?
 ---@field instanceModifiers SSSOnceCacheSaved?
 ---@field replacementChains SSSReplacementChainsSaved?
+---@field pendingCorrections SSSSavedCorrection[]? corrections still owed when the game was saved
+---@field objectReturns SSSSavedReturn[]? watched objects that were on their way back when the game was saved
 ---@field replacedObjectSet SSSReplacedObjectSet? legacy save data accepted only for migration when replacementChains is absent
 
 ---@class openmw.interfaces.StaticSwitcher_G
@@ -350,7 +463,8 @@
 ---@field composedReplacements fun(): table<string, SSSModule> Returns loaded static replacement data keyed by canonical module ID.
 ---@field objectModificationStore fun(): SSSObjectModificationStore Returns the loaded instance-modification rule store.
 ---@field overrideRecords fun(): SSSOverrideRecords Returns generated override record IDs keyed by canonical module id.
----@field version integer Static Switching System interface version. Version 5 is the current contract.
+---@field trigger fun(triggerName: string, object: openmw.GObject): boolean Runs every rule listening to `custom:<triggerName>` on the object. Added in version 6.
+---@field version integer Static Switching System interface version. Version 6 is the current contract.
 
 ---@class openmw.interfaces
 ---@field StaticSwitcher_G openmw.interfaces.StaticSwitcher_G

@@ -22,7 +22,7 @@ The [VFS and package boundaries](@/static_switching_system/docs/compatibility/vf
 
 For a static module, confirm both mesh values are VFS-visible. SSS logs a missing replacement mesh with the requested model, source model, object, and module name, then skips that swap. A source mesh path copied from another mod is not evidence that the replacement asset is installed.
 
-For an instance `replace`, confirm the replacement record ID exists in enabled content; SSS logs a `could not create an object from record` warning when it does not. For `teleport`, confirm the destination cell name/ID or exterior coordinates resolve. For `add`, `equip`, and `create`, confirm the item or object record is available.
+For an instance `replace`, confirm the replacement record ID exists in enabled content; SSS logs a `could not create an object from record` warning when it does not. For `teleport`, confirm the destination cell name/ID or exterior coordinates resolve. For `add`, `equip`, and `create`, confirm the item or object record is available. A `create` that placed only some of its objects logs a `create:` warning and still counts as applied, so a `once: true` rule will not try again.
 
 ## A condition never matches
 
@@ -32,6 +32,16 @@ For an instance `replace`, confirm the replacement record ID exists in enabled c
 - `has_journal` checks the player's quest stage when the object is processed. It is not a general event subscription. `index` is a minimum, so a rule meant for one stage keeps matching at later stages unless it also sets `max`.
 - `content_file_target` requires both the content filename and the local reference number.
 - `cell_tag` and `has_tag` require FlexTag; see [FlexTag compatibility](@/static_switching_system/docs/compatibility/flextag.md).
+
+## A triggered rule never runs
+
+- A world trigger (`journal`, `hour`, `day`, `weather`) only reaches objects in the player's cell and the eight exterior cells around it, and is checked only while the game is unpaused.
+- A `journal` rule fires when the quest in its own `has_journal` changes stage, not when it is already at that stage on load.
+- `cell_enter` only concerns the cell the player is standing in, and its rules run on the player: match the place with `cell` or `coords`, not an object with `record_id`.
+- `death` needs the current `Static Switching System.esp`; look for `The death trigger is unavailable` in the log. An actor that was already dead when it loaded does not fire it.
+- A log line saying a trigger was `suspended until the next load` means it fired more than four times in ten seconds.
+- A log line saying a trigger `was fired while a rule was running` means a rule's own action called back into SSS. Send the `StaticSwitcherTrigger` global event from that action instead.
+- `by_player` and `used_item` are only valid under the interaction triggers; a rule misusing them is reported as a skipped rule.
 
 ## A random value errors or behaves unexpectedly
 

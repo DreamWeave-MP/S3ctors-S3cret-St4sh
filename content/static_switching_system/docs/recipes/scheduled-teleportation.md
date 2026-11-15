@@ -48,7 +48,7 @@ The per-cell marker is runtime-only and is not saved as a permanent schedule. A 
 
 ## Caveats
 
-- This is activation-time scheduling, not a continuously running clock callback. An actor that remains active will not be teleported merely because the hour changes.
+- As written this is activation-time scheduling: an actor that remains active is not teleported merely because the hour changes. Add `trigger: [hour, active]` to re-evaluate the rule each time the game hour rolls over, for actors near the player; `Examples/InstanceModifier_CaiusClocksOut.yaml` does this. See [Triggers](@/static_switching_system/docs/concepts/triggers.md#world-triggers).
 - Several schedule rules can be written, but `once: per_cell` means the first matching successful rule can mark that rule for the current activation batch. Test overlapping time and location windows carefully.
 - Cell names and IDs must resolve through the active content set. A missing destination is logged and the teleport is skipped.
 - Teleport position components accept fixed numbers or random ranges; table-form random components need `max`. Rotation values are applied by the supported teleport handler and should be tested in the destination cell.
