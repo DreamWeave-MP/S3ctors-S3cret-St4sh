@@ -18,7 +18,9 @@ local EngineL10n, InterfaceL10n, L10n = core.l10n 'OMWEngine', core.l10n 'Interf
 local UiAlignment, UiCreate, UtilVector2 = ui.ALIGNMENT, ui.create, util.vector2
 
 local PageSize = UtilVector2(900, 640)
-local InputBindingColumnSize = UtilVector2(112, 0)
+local InputBindingColumnWidth = 128
+local InputBindingColumnSize = UtilVector2(InputBindingColumnWidth, 0)
+local RecordButtonSize = UtilVector2(InputBindingColumnWidth, 28)
 
 local BindingState = {
   Configured = 'configured',
@@ -202,7 +204,6 @@ local function bindingSlot(slot, definition)
   local controls = {
     H3UI.button {
       label = L10n 'input_binding_clear',
-      props = { size = UtilVector2(52, 24) },
       onActivate =
         ---@param _ openmw.ui.MouseEvent
         ---@param __ openmw.ui.Layout
@@ -217,7 +218,6 @@ local function bindingSlot(slot, definition)
   if slot.default ~= nil then
     controls[#controls + 1] = H3UI.button {
       label = L10n 'input_binding_default',
-      props = { size = UtilVector2(56, 24) },
       onActivate =
         ---@param _ openmw.ui.MouseEvent
         ---@param __ openmw.ui.Layout
@@ -238,7 +238,7 @@ local function bindingSlot(slot, definition)
     },
     H3UI.button {
       label = inputBindingLabel(binding, isRecording),
-      props = { size = UtilVector2(112, 28) },
+      props = { size = RecordButtonSize },
       onActivate =
         ---@param _ openmw.ui.MouseEvent
         ---@param __ openmw.ui.Layout
