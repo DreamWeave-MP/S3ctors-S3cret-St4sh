@@ -53,6 +53,10 @@
 
 ---@alias H3UI.Palette table<string, string>
 
+---@alias H3UI.ParityReconstruction fun(entry: H3UI.ParityManifestEntry): openmw.ui.Layout
+
+---@alias H3UI.ParityVariant 'baseline'|'vanilla'|'h3'
+
 ---@alias H3UI.Recipe fun(ctx: H3UI.RecipeContext, spec: table): openmw.ui.Layout
 
 ---@alias H3UI.RecipeConstructor fun(options?: table): openmw.ui.Layout
@@ -905,6 +909,11 @@
 
 ---@class H3UI.NumberInputOptions: H3.NumberInputOptions, H3UI.ComponentOptions
 
+---@class H3UI.ParityCaptureOptions
+---@field layouts? string[] Only these layouts, in manifest order; every layout when absent.
+---@field messageSeconds? number Real seconds to wait after each capture for its message box to close.
+---@field settleFrames? integer Frames between opening a window and capturing it.
+
 ---@class H3UI.ParityManifestEntry
 ---@field group 'main'|'dialogue'|'services'|'chargen'|'system'|'overlays'
 ---@field layout string
@@ -918,6 +927,7 @@
 ---@field kind 'mode'|'message'|'interactiveMessage'|'hud'|'manual'
 ---@field mode? string
 ---@field steps? string
+---@field text? string
 ---@field windows? string[]
 
 ---@class H3UI.PendingTheme
@@ -1451,6 +1461,7 @@
 ---@class openmw.interfaces
 ---@field H3ComponentTest? openmw.interfaces.H3ComponentTest
 ---@field H3UI? openmw.interfaces.H3UI
+---@field H3UIParity? openmw.interfaces.H3UIParity
 
 ---@class openmw.interfaces.H3ComponentTest
 ---@field appearanceCoverage fun(invalidate?: fun()): openmw.ui.Layout
@@ -1471,3 +1482,7 @@
 ---@field windowGeometry fun(): openmw.ui.Layout
 
 ---@class openmw.interfaces.H3UI: H3UI
+
+---@class openmw.interfaces.H3UIParity
+---@field run fun(options?: H3UI.ParityCaptureOptions): nil
+---@field stop fun(): nil

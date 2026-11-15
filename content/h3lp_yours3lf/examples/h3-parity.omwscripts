@@ -1,0 +1,5 @@
+# Opt-in capture fixture for H3UI's vanilla parity harness (#11).
+# Load only for parity captures, with vanilla content and no UI replacers; see
+# tools/parity/README.md. Start a run from the console: luap, then I.H3UIParity.run().
+GLOBAL: scripts/h3/parity/pause.lua
+PLAYER: scripts/h3/parity/capture.lua

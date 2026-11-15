@@ -118,6 +118,10 @@ local function checkOpens(problems: { string }, where: string, opens: unknown)
     table.insert(problems, `{where}: a manual entry needs steps`)
   end
 
+  if (kind == 'message' or kind == 'interactiveMessage') and not isText((opens :: Table).text) then
+    table.insert(problems, `{where}: a message entry needs the text it shows`)
+  end
+
   if windows == nil then return end
 
   for _, window in windows :: { string } do

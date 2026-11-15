@@ -51,6 +51,50 @@ The manifest test holds it to the metrics module:
 - every mask names a widget of its layout;
 - every mode and window is one Lua can open at the engine commit the metrics came from.
 
+## Capturing in game
+
+`examples/h3-parity.omwscripts` is the opt-in capture fixture, loaded like
+`examples/h3-fixtures.omwscripts`. Start a run from the console:
+
+```text
+luap
+I.H3UIParity.run()
+I.H3UIParity.run { layouts = { 'messagebox', 'wait_dialog' }, messageSeconds = 15, settleFrames = 10 }
+```
+
+The run starts when you close the console and press Insert. It then:
+
+1. **Checks the content list.** It refuses to run with anything loaded besides the three vanilla
+   masters, `H3lp Yours3lf.esp`, `h3-parity.omwscripts`, and the `builtin.omwscripts` the engine
+   always adds.
+2. **Records the conditions** as `S3TRACE` lines: screen and Windows layer size, API revision,
+   content list, `fMessageTimePerChar`, and its own timings.
+3. **Freezes the scene:** it pauses the world and hides the HUD.
+4. **Captures each layout in the manifest** three ways, each twice:
+   - **baseline:** the same UI mode with no windows;
+   - **vanilla:** the engine's window;
+   - **h3:** the H3UI reconstruction over the baseline, where one exists.
+
+   Every capture opens the window afresh, waits `settleFrames` frames, writes a `capture`/`shot`
+   trace line, calls `debug.takeScreenshot()`, and closes the window again.
+5. **Hands manual layouts to you.** It runs the world, announces the steps, waits for Insert,
+   then pauses the world again to capture.
+
+Engine limits it works around, all at the metrics' engine commit:
+
+- **No Lua API places a vanilla window.** The engine decides where each window goes, so the
+  differ finds each window from the baseline instead.
+- **Lua cannot see the screenshots folder.** The fixture cannot wait for a file. The engine logs
+  `<path> has been saved` for each screenshot, and the differ pairs those lines with the
+  fixture's `shot` lines in `openmw.log`.
+- **Every screenshot puts up its own message box.** It stays for its length times
+  `fMessageTimePerChar`, so no capture starts until `messageSeconds` have passed since the last
+  one.
+- **An interactive message box stays until OK is clicked,** and Lua cannot close it. The fixture
+  waits for Insert after each one.
+- **Lua cannot tell whether a UI replacer is loaded from a data folder.** Only the content list is
+  checked; the rest is a capture condition you set by hand.
+
 ## Tests
 
 ```sh

@@ -74,6 +74,14 @@ suite.it('fails on a mode or window Lua cannot open', function()
   }
 end)
 
+suite.it('fails on a message entry without its text', function()
+  local wrong = entry 'inventory_window'
+  wrong.opens = { kind = 'interactiveMessage', inMode = 'Interface' }
+
+  local problems = manifest.check({ wrong }, metricsWith { 'inventory_window' })
+  expect(problems).toEqual { 'entry 1 (inventory_window): a message entry needs the text it shows' }
+end)
+
 suite.it('fails on a manual entry without steps, and on an unknown status', function()
   local wrong = entry 'inventory_window'
   wrong.opens = { kind = 'manual' }

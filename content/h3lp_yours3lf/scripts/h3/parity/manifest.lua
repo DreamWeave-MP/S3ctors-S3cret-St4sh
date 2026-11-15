@@ -5,9 +5,10 @@
 -- group: main, dialogue, services, chargen, system or overlays.
 -- opens: how the capture fixture opens the vanilla window.
 --   mode: I.UI.setMode(mode, { windows = windows }).
---   message: ui.showMessage(MessageText), with no UI mode.
---   interactiveMessage: I.UI.showInteractiveMessage(MessageText); with inMode, inside that mode,
---     which makes the engine load the _notransp layout (apps/openmw/mwgui/messagebox.cpp).
+--   message: ui.showMessage(text), with no UI mode.
+--   interactiveMessage: I.UI.showInteractiveMessage(text); with inMode, inside that mode, which
+--     makes the engine load the _notransp layout (apps/openmw/mwgui/messagebox.cpp). The box
+--     stays until OK is clicked, so the fixture waits for Insert after each capture.
 --   hud: the HUD, with no UI mode.
 --   manual: no Lua call opens it; the fixture waits while steps are followed by hand.
 -- state: what the game needs before the window opens.
@@ -404,7 +405,7 @@ return {
   {
     layout = 'messagebox',
     group = 'system',
-    opens = { kind = 'message' },
+    opens = { kind = 'message', text = 'H3UI parity: the message box reference.' },
     state = 'A loaded game after character creation.',
     masks = {},
     status = 'not started',
@@ -412,7 +413,10 @@ return {
   {
     layout = 'interactive_messagebox',
     group = 'system',
-    opens = { kind = 'interactiveMessage' },
+    opens = {
+      kind = 'interactiveMessage',
+      text = 'H3UI parity: the interactive message reference.',
+    },
     state = 'A loaded game after character creation.',
     masks = {},
     status = 'not started',
@@ -420,7 +424,11 @@ return {
   {
     layout = 'interactive_messagebox_notransp',
     group = 'system',
-    opens = { kind = 'interactiveMessage', inMode = 'Interface' },
+    opens = {
+      kind = 'interactiveMessage',
+      inMode = 'Interface',
+      text = 'H3UI parity: the interactive message reference.',
+    },
     state = 'A loaded game after character creation.',
     masks = {},
     status = 'not started',

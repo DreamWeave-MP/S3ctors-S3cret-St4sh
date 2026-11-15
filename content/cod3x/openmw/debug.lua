@@ -62,6 +62,12 @@ function debug.isMWScriptEnabled() end
 ---Reloads all Lua scripts
 function debug.reloadLua() end
 
+---Takes a screenshot, as if the screenshot key had been pressed. The screenshot is captured on the
+---next frame and written asynchronously to the screenshots directory in the user data folder,
+---using the configured screenshot format. Quitting the game immediately afterwards discards a
+---screenshot that has not finished writing.
+function debug.takeScreenshot() end
+
 ---Navigation mesh rendering mode values
 ---@type openmw.debug.NAV_MESH_RENDER_MODE
 debug.NAV_MESH_RENDER_MODE = nil
