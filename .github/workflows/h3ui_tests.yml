@@ -1,0 +1,151 @@
+name: H3UI tests
+
+# Every H3UI suite, on both runtimes OpenMW supports until 0.53: LuaJIT, as DreamWeave's Rubic0n
+# build, and stock Luau through tests/support/bundle.lua. build_site.yml runs the shared StroggForge template, whose test step
+# belongs to the template, so these suites run from this file instead.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Rubic0n accepts compound assignment since a2ce8114 and OpenMW's build does not, so this job does
+  # not reject `+=`; it rejects syntax no LuaJIT build parses, such as type annotations.
+  RUBIC0N_COMMIT: 7a7a0ab6798f2f1f45622078cb26675e295f958d
+  # The Luau commit and archive hash OpenMW's Luau-enabled build fetches in extern/CMakeLists.txt.
+  # Move both when OpenMW 0.53 fixes the version.
+  LUAU_COMMIT: c0e346edd89066b44dca174c9f54ce84c746a540
+  LUAU_SHA512: 09420cffce599189c08e85060d84e58ab6b5eb19060e8da0463ff841f49543768891da607746cfbad53b59a3feac8145fe19eadfc5e4e362ded11b6fe14ad119
+
+jobs:
+  rubic0n:
+    name: Build Rubic0n
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Restore Rubic0n
+        id: rubic0n-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.rubic0n
+          key: rubic0n-${{ env.RUBIC0N_COMMIT }}-${{ runner.os }}
+
+      - name: Build Rubic0n
+        if: steps.rubic0n-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}
+        run: |
+          git init --quiet rubic0n
+          git -C rubic0n fetch --quiet --depth 1 https://github.com/DreamWeave-MP/rubic0n.git "$RUBIC0N_COMMIT"
+          git -C rubic0n checkout --quiet FETCH_HEAD
+          make -C rubic0n -j"$(nproc)"
+          mkdir -p ~/.rubic0n
+          cp rubic0n/src/luajit ~/.rubic0n/luajit
+
+  luajit:
+    name: LuaJIT
+    needs: rubic0n
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore Rubic0n
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.rubic0n
+          key: rubic0n-${{ env.RUBIC0N_COMMIT }}-${{ runner.os }}
+          fail-on-cache-miss: true
+
+      - name: Put Rubic0n on the PATH
+        run: |
+          echo "$HOME/.rubic0n" >> "$GITHUB_PATH"
+          "$HOME/.rubic0n/luajit" -e 'assert(_VERSION == "Lua 5.1-DW", _VERSION)'
+
+      - name: Run every suite
+        run: |
+          for suite in tests/h3ui_*.lua; do
+            echo "$suite"
+            luajit "$suite"
+          done
+
+  luau:
+    name: Luau
+    needs: rubic0n
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore Rubic0n, which writes the bundles
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.rubic0n
+          key: rubic0n-${{ env.RUBIC0N_COMMIT }}-${{ runner.os }}
+          fail-on-cache-miss: true
+
+      - name: Restore Luau
+        id: luau-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.luau
+          key: luau-${{ env.LUAU_COMMIT }}-${{ runner.os }}
+
+      - name: Build Luau
+        if: steps.luau-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSL -o luau.tar.gz "https://github.com/luau-lang/luau/archive/$LUAU_COMMIT.tar.gz"
+          echo "$LUAU_SHA512  luau.tar.gz" | sha512sum --check
+          tar -xzf luau.tar.gz
+          cmake -S "luau-$LUAU_COMMIT" -B luau-build -DCMAKE_BUILD_TYPE=Release -DLUAU_BUILD_TESTS=OFF
+          cmake --build luau-build --target Luau.Repl.CLI --parallel
+          mkdir -p ~/.luau
+          cp luau-build/luau ~/.luau/luau
+
+      - name: Put Luau and Rubic0n on the PATH
+        run: |
+          echo "$HOME/.luau" >> "$GITHUB_PATH"
+          echo "$HOME/.rubic0n" >> "$GITHUB_PATH"
+
+      # h3ui_chrome_library reads the shipped chrome atlas with io.open. Stock Luau has no io
+      # library, so that suite runs on LuaJIT only.
+      - name: Bundle the suites twice
+        run: |
+          suites=()
+          for suite in tests/h3ui_*.lua; do
+            [ "$suite" = tests/h3ui_chrome_library.lua ] || suites+=("$suite")
+          done
+          mkdir "$RUNNER_TEMP/bundles" "$RUNNER_TEMP/bundles-again"
+          luajit tests/support/bundle.lua "$RUNNER_TEMP/bundles" "${suites[@]}"
+          luajit tests/support/bundle.lua "$RUNNER_TEMP/bundles-again" "${suites[@]}"
+          diff -r "$RUNNER_TEMP/bundles" "$RUNNER_TEMP/bundles-again"
+          sha256sum "$RUNNER_TEMP"/bundles/*.lua
+
+      - name: Run every bundle
+        run: |
+          for bundle in "$RUNNER_TEMP"/bundles/*.lua; do
+            echo "$bundle"
+            luau "$bundle"
+          done
+
+      - name: Fail with the same assertion on both runtimes
+        run: |
+          if luajit tests/support/failing_suite.lua 2> "$RUNNER_TEMP/luajit.err"; then
+            echo 'tests/support/failing_suite.lua passed on LuaJIT'
+            exit 1
+          fi
+
+          mkdir "$RUNNER_TEMP/failing"
+          luajit tests/support/bundle.lua "$RUNNER_TEMP/failing" tests/support/failing_suite.lua
+          if luau "$RUNNER_TEMP/failing/failing_suite.lua" 2> "$RUNNER_TEMP/luau.err"; then
+            echo 'tests/support/failing_suite.lua passed on Luau'
+            exit 1
+          fi
+
+          luajitFailure=$(head -n 1 "$RUNNER_TEMP/luajit.err" | sed 's/^luajit: //')
+          luauFailure=$(head -n 1 "$RUNNER_TEMP/luau.err")
+          echo "LuaJIT: $luajitFailure"
+          echo "Luau:   $luauFailure"
+          test "$luajitFailure" = "$luauFailure"
