@@ -197,7 +197,7 @@ local function bindingSlot(slot, definition)
   initializeInputBinding(slot, definition)
 
   local binding = BindingSection:get(slot.id)
-  local isRecording = inputBindingRecording and inputBindingRecording.slot.id == slot.id
+  local isRecording = inputBindingRecording ~= nil and inputBindingRecording.slot.id == slot.id
   local deviceLabel = slot.label or L10n(StrFormat('input_binding_%s', slot.device))
   local controls = {
     H3UI.button {

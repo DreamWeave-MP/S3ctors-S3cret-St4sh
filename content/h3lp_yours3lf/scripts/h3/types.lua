@@ -35,6 +35,8 @@
 
 ---@alias H3UI.DocumentValue nil|boolean|number|string|table|userdata
 
+---@alias H3UI.InputBindingDevice 'keyboard'|'mouse'|'controller'
+
 ---@alias H3UI.ItemGridItem H3UI.ItemSlotOptions|openmw.ui.Layout
 
 ---@alias H3UI.CompiledRuntimeStyles table<string, H3UI.StateDeltaList>
@@ -804,6 +806,41 @@
 ---@class H3UI.IconButtonOptions: H3.IconButtonOptions, H3UI.ComponentOptions
 
 ---@class H3UI.ImageOptions: H3.ImageOptions, H3UI.ComponentOptions
+
+---@class H3UI.InputActionDefinition
+---@field bindings H3UI.InputBindingSlot[]
+---@field info openmw.input.ActionInfo
+---@field settingKey string
+
+---@class H3UI.InputBindingRecord
+---@field button integer
+---@field device H3UI.InputBindingDevice
+---@field key string
+---@field type 'action'
+
+---@class H3UI.InputBindingRecording
+---@field argument H3UI.InputBindingRecordingArgument
+---@field refresh fun(): nil
+---@field slot H3UI.InputBindingSlot
+
+---@class H3UI.InputBindingRecordingArgument
+---@field bindings H3UI.InputBindingSlot[]
+---@field key string
+---@field type 'action'
+
+---@class H3UI.InputBindingSlot
+---@field default? integer
+---@field device H3UI.InputBindingDevice
+---@field id string
+---@field label? string
+
+---@class H3UI.Intent
+---@field Activate 'H3UI.Activate'
+---@field Cancel 'H3UI.Cancel'
+---@field Down 'H3UI.NavigateDown'
+---@field Left 'H3UI.NavigateLeft'
+---@field Right 'H3UI.NavigateRight'
+---@field Up 'H3UI.NavigateUp'
 
 ---@class H3UI.ItemGridOptions
 ---@field class? string
