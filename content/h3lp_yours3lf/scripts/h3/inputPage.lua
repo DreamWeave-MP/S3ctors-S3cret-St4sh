@@ -329,7 +329,7 @@ end
 ---@param event openmw.input.KeyboardEvent
 ---@return nil
 local function onKeyPress(event)
-  bindInputButton(event.code ~= input.KEY.Escape and 'keyboard' or nil, event.code)
+  bindInputButton(event.code ~= input.KEY.Backspace and 'keyboard' or nil, event.code)
 end
 
 ---@param button number
@@ -338,7 +338,9 @@ local function onMouseButtonPress(button) bindInputButton('mouse', button) end
 
 ---@param button number
 ---@return nil
-local function onControllerButtonPress(button) bindInputButton('controller', button) end
+local function onControllerButtonPress(button)
+  bindInputButton(button ~= input.CONTROLLER_BUTTON.Back and 'controller' or nil, button)
+end
 
 return {
   bindInputButton = bindInputButton,

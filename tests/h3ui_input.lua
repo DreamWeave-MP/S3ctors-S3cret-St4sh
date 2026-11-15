@@ -11,8 +11,9 @@ local events = {}
 
 local function record(event) events[#events + 1] = event end
 
-local KEY = { A = 4, D = 7, Enter = 40, Escape = 41, S = 22, W = 26, X = 27 }
-local KeyNames = { [4] = 'A', [7] = 'D', [22] = 'S', [26] = 'W', [27] = 'X', [40] = 'Enter' }
+local KEY = { A = 4, Backspace = 42, D = 7, Enter = 40, Escape = 41, S = 22, W = 26, X = 27 }
+local KeyNames =
+  { [4] = 'A', [7] = 'D', [22] = 'S', [26] = 'W', [27] = 'X', [40] = 'Enter', [41] = 'Escape' }
 
 local CONTROLLER_BUTTON = {
   A = 0,
@@ -299,18 +300,47 @@ local function testRecordingWritesEngineRecord()
   assert(slotControls(2, 1).label == 'X')
 end
 
-local function testEscapeCancelsKeyboardRecording()
+local function testBackspaceAndBackCancelRecording()
   local writesBefore = writes
 
   activate(slotControls(3, 1).record)
-  InputPage.onKeyPress(keyPress(KEY.Escape))
+  InputPage.onKeyPress(keyPress(KEY.Backspace))
 
   assert(writes == writesBefore)
   assertEngineRecord(Bindings.values['H3UI.NavigateLeft.keyboard'], 'keyboard', KEY.A, Intent.Left)
   assert(slotControls(3, 1).label == 'A')
 
-  InputPage.onKeyPress(keyPress(KEY.X))
+  activate(slotControls(3, 3).record)
+  InputPage.onControllerButtonPress(CONTROLLER_BUTTON.Back)
+
   assert(writes == writesBefore)
+  assertEngineRecord(
+    Bindings.values['H3UI.NavigateLeft.controller'],
+    'controller',
+    CONTROLLER_BUTTON.DPadLeft,
+    Intent.Left
+  )
+  assert(slotControls(3, 3).label ~= 'input_binding_listening')
+
+  InputPage.onKeyPress(keyPress(KEY.X))
+  InputPage.onControllerButtonPress(CONTROLLER_BUTTON.X)
+  assert(writes == writesBefore)
+end
+
+local function testEscapeRecordsLikeAnyKey()
+  activate(slotControls(3, 1).record)
+  InputPage.onKeyPress(keyPress(KEY.Escape))
+
+  assertEngineRecord(
+    Bindings.values['H3UI.NavigateLeft.keyboard'],
+    'keyboard',
+    KEY.Escape,
+    Intent.Left
+  )
+  assert(slotControls(3, 1).label == 'Escape')
+
+  activate(slotControls(3, 1).default)
+  assertEngineRecord(Bindings.values['H3UI.NavigateLeft.keyboard'], 'keyboard', KEY.A, Intent.Left)
 end
 
 local function testClearAndRestoreDefault()
@@ -362,7 +392,8 @@ testInputOutsideRecordingWritesNothing()
 testRegisterActionsBeforePage()
 testDefaultsInitialised()
 testRecordingWritesEngineRecord()
-testEscapeCancelsKeyboardRecording()
+testBackspaceAndBackCancelRecording()
+testEscapeRecordsLikeAnyKey()
 testClearAndRestoreDefault()
 testSecondRecordingCannotStart()
 
