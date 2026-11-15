@@ -427,9 +427,6 @@ end
 ---@param isEnabled boolean
 local function setEnabled(object, isEnabled) object.enabled = isEnabled end
 
---- How many cell polls a player being put back is given to arrive before entries count again.
-local PLAYER_RETURN_POLLS = 6
-
 --- What the running pass has started and not yet committed. If the pass is abandoned, this is
 --- what has to be put right.
 ---@type SSSUncommittedPass
@@ -468,7 +465,8 @@ end
 --- not always enabled.
 ---
 --- A player sent elsewhere arrives there first and is then put back. Neither arrival is an
---- entry, so the cell poll is told where the player is being returned to.
+--- entry; the cell poll learns that from ObjectCleanup, which knows the player is returning
+--- for exactly as long as the correction that returns them exists.
 local function abandonUncommittedPass()
   local original, replacement = Uncommitted.original, Uncommitted.replacement
 
@@ -491,11 +489,7 @@ local function abandonUncommittedPass()
     end
   end
 
-  if Uncommitted.sentPlayerElsewhere then
-    TriggerContext.expectedPlayerCellId = nil
-    TriggerContext.playerReturnCellId = Uncommitted.cell.id
-    TriggerContext.playerReturnPollsLeft = PLAYER_RETURN_POLLS
-  end
+  if Uncommitted.sentPlayerElsewhere then TriggerContext.expectedPlayerCellId = nil end
 
   clearUncommitted()
 end

@@ -952,6 +952,18 @@ ObjectCleanup.loadCorrections {
 }
 assert(not ObjectCleanup.hasPending(), 'a correction that cannot be carried out was kept')
 
+-- An object is known to be returning for as long as the correction that returns it exists, and
+-- no longer: once the correction is given up, so is the return.
+local castaway = newObject('castaway', TEL_BRANORA)
+ObjectCleanup.restoreLater(castaway, TEL_BRANORA, nil, nil, 1)
+assert(ObjectCleanup.getReturn(castaway).isPending == true)
+
+placementsBeforeFailure = 0
+runFrames(12)
+placementsBeforeFailure = nil
+assert(ObjectCleanup.getReturn(castaway) == nil, 'a return outlived the correction it belonged to')
+assert(countLogLines '%[WARN%] Gave up: a stray castaway was never put back where it was' == 1)
+
 -- A delayed deletion the engine refuses is reported and dropped; the queue keeps working.
 local stubborn = newObject('condemned', TEL_BRANORA)
 activate(stubborn)

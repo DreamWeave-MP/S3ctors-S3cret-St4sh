@@ -160,7 +160,10 @@ local function newObject(recordId, cell, objectType)
     if fields.refusesTeleport then error 'the engine refused the teleport' end
     engineActions[#engineActions + 1] = function() fields.cell = targetCell end
   end
-  function fields.remove() fields.count = 0 end
+  function fields.remove()
+    if fields.refusesRemoval then error 'the engine kept the object' end
+    fields.count = 0
+  end
 
   local object = newproxy(true)
   local metatable = getmetatable(object)
@@ -314,6 +317,12 @@ local triggerModules = {
         },
         {
           trigger = 'use',
+          conditions = { { used_item = '^carrier' } },
+          actions = { { teleport = { cell = { x = 12, y = 12 } } } },
+          once = true,
+        },
+        {
+          trigger = 'use',
           conditions = { { used_item = '^cursed' } },
           actions = { { delete = true }, { disable = true }, { replace = 'self' } },
         },
@@ -419,6 +428,13 @@ package.preload['openmw.world'] = function()
   return {
     createObject = function(recordId) error(('no record %s'):format(recordId)) end,
     createRecord = function() end,
+    getCellById = function(cellId)
+      for _, cell in pairs(exteriorCells) do
+        if cell.id == cellId then return cell end
+      end
+
+      error(('no cell %s'):format(cellId))
+    end,
     getExteriorCell = getExteriorCell,
     mwscript = { getGlobalVariables = function() return {} end },
     players = { player },
@@ -954,6 +970,64 @@ assert(countProbes 'entered-12' == 1, 'entries stopped counting after the player
 player.cell = HOME_CELL
 settle()
 
+-- The same, across a save and a reload, with enough other corrections waiting that the
+-- player's is not reached for many polls. The player is known to be returning for as long as
+-- the correction that returns them exists, however long that is and whichever session it is in.
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
+
+player.cell = getExteriorCell(9, 9)
+settle()
+local enteredNineBefore, enteredTwelveBefore = countProbes 'entered-9', countProbes 'entered-12'
+
+local STRAY_OBJECTS = 120
+for _ = 1, STRAY_OBJECTS do
+  local stray = newObject('stray', nil)
+  stray.refusesRemoval = true
+  ObjectCleanup.discard(stray)
+end
+
+recordingRaises = true
+simulationTime = simulationTime + 1
+onItemUsed(newObject('carrier', nil, openmwTypes.Miscellaneous), player)
+recordingRaises = false
+applyEngineActions()
+assert(player.cell == getExteriorCell(12, 12), 'the accepted move did not happen')
+
+local savedState = handlers.onSave()
+assert(#savedState.pendingCorrections == STRAY_OBJECTS + 1)
+
+staticSwitcher = loadStaticSwitcher(triggerModules)
+handlers = staticSwitcher.engineHandlers
+handlers.onLoad(savedState)
+
+local pollsSpentAway = 0
+for _ = 1, 80 do
+  runFrames(1, 0.5)
+
+  if player.cell == getExteriorCell(12, 12) then pollsSpentAway = pollsSpentAway + 1 end
+
+  assert(
+    countProbes 'entered-12' == enteredTwelveBefore,
+    'after loading, where the player had been sent was treated as an entry'
+  )
+  assert(
+    countProbes 'entered-9' == enteredNineBefore,
+    'after loading, being put back was treated as an entry'
+  )
+end
+assert(pollsSpentAway > 20, 'the backlog did not delay the player long enough to test anything')
+assert(player.cell == getExteriorCell(9, 9), 'a saved move back was not carried out after loading')
+
+player.cell = getExteriorCell(12, 12)
+runFrames(2, 0.5)
+assert(
+  countProbes 'entered-12' == enteredTwelveBefore + 1,
+  'entries stopped counting after the return'
+)
+
+player.cell = HOME_CELL
+settle()
+
 -- One actor that cannot be watched does not end death watching for the rest.
 local unwatchable = newObject('rat', HOME_CELL, openmwTypes.Creature)
 unwatchable.refusesScripts = true
@@ -966,7 +1040,7 @@ handlers.onObjectActive(laterRat)
 assert(laterRat:hasScript(DEATH_WATCHER_SCRIPT))
 assert(countLogLines '%[WARN%] The death of rat cannot be watched' == 1)
 
-assert(countLogLines '%[ERROR%]' == 1, 'only the deliberately failing pass may fail')
+assert(countLogLines '%[ERROR%]' == 2, 'only the two deliberately failing passes may fail')
 
 print = realPrint
 print 'SSS trigger tests passed'

@@ -333,6 +333,12 @@
 ---@field rotation openmw.util.Transform?
 ---@field scale number?
 
+--- An object on its way back to where it was before an abandoned pass moved it.
+---@class SSSObjectReturn
+---@field cellId string ID of the cell the object is being put back in
+---@field isPending boolean whether the move back has still to be issued
+---@field observationsLeft integer times the object may still be looked for once the move back has been issued
+
 --- A pending correction as it is written to a save. A cell cannot be saved, so its ID is.
 ---@class SSSSavedCorrection
 ---@field object openmw.GObject

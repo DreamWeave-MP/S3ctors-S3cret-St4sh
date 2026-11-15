@@ -5,6 +5,7 @@ local types = require 'openmw.types'
 local world = require 'openmw.world'
 
 local BatchCache = require 'Scripts.staticSwitcher.batchCache'
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
 local TriggerContext = require 'Scripts.staticSwitcher.triggerContext'
 
 local DebugLog, WarnLog
@@ -152,23 +153,6 @@ local function pollJournal()
   end
 end
 
---- A player moved by a pass that was then abandoned turns up at the destination before being
---- put back. Until they are back, or have had long enough to be, wherever they are seen is
---- noted without being treated as an entry.
----@param playerCellId string
-local function followPlayerReturn(playerCellId)
-  knownPlayerCellId = playerCellId
-
-  TriggerContext.playerReturnPollsLeft = TriggerContext.playerReturnPollsLeft - 1
-
-  if
-    playerCellId == TriggerContext.playerReturnCellId
-    or TriggerContext.playerReturnPollsLeft <= 0
-  then
-    TriggerContext.playerReturnCellId = nil
-  end
-end
-
 --- Unlike the world triggers, this fires on the first poll after a load: the player is already
 --- standing in a cell, and a rule that must not repeat says so with `once`.
 --- Arriving where an SSS teleport sent the player is not an entry, or two rules that send the
@@ -179,8 +163,11 @@ local function pollPlayerCell()
 
   local playerCellId = playerCell.id
 
-  if TriggerContext.playerReturnCellId then
-    followPlayerReturn(playerCellId)
+  -- A player moved by a pass that was then abandoned turns up at the destination before being
+  -- put back. While that return lasts, wherever the player is seen is noted, not entered.
+  if ObjectCleanup.getReturn(Player) then
+    knownPlayerCellId = playerCellId
+    ObjectCleanup.observeReturn(Player, playerCellId)
     return
   end
 
