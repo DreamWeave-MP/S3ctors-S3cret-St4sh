@@ -1,12 +1,16 @@
 ---@omw-context global
 
+local world = require 'openmw.world'
+
+local staticUtil = require 'Scripts.staticSwitcher.util'
+
 local WarnLog
 do
   local logger = require 'Scripts.staticSwitcher.logger'
   WarnLog = logger.warn
 end
 
-local pcall, tostring = pcall, tostring
+local pcall, tonumber, tostring, type = pcall, tonumber, tostring, type
 local Min = math.min
 local StrFormat = string.format
 
@@ -133,6 +137,68 @@ local function restoreLater(object, cell, position, rotation, scale)
   }
 end
 
+--- Corrections that are still waiting when the game is saved are saved with it. Without that,
+--- a replacement that landed just before the save would be in the world after loading with
+--- nothing left that knew it had to go. A cell cannot be saved, so its ID is, and the cell is
+--- looked up again on load.
+---@return SSSSavedCorrection[] savedCorrections
+local function saveCorrections()
+  local savedCorrections = {}
+
+  for correctionIdx = firstPending, lastPending do
+    local correction = PendingCorrections[correctionIdx]
+
+    savedCorrections[#savedCorrections + 1] = {
+      object = correction.object,
+      attemptsLeft = correction.attemptsLeft,
+      cellId = correction.cell and correction.cell.id,
+      position = correction.position,
+      rotation = correction.rotation,
+      scale = correction.scale,
+    }
+  end
+
+  return savedCorrections
+end
+
+---@param savedCorrection SSSSavedCorrection
+---@return SSSPendingCorrection? correction nil when it can no longer be carried out
+local function restoreCorrection(savedCorrection)
+  if type(savedCorrection) ~= 'table' or not staticUtil.isGObject(savedCorrection.object) then
+    return
+  end
+
+  ---@type SSSPendingCorrection
+  local correction = {
+    object = savedCorrection.object,
+    attemptsLeft = tonumber(savedCorrection.attemptsLeft) or MAX_ATTEMPTS,
+  }
+
+  if savedCorrection.cellId == nil then return correction end
+
+  local wasFound, cell = pcall(world.getCellById, savedCorrection.cellId)
+  if not wasFound or not cell then return end
+
+  correction.cell = cell
+  correction.position = savedCorrection.position
+  correction.rotation = savedCorrection.rotation
+  correction.scale = savedCorrection.scale
+
+  return correction
+end
+
+---@param savedCorrections SSSSavedCorrection[]?
+local function loadCorrections(savedCorrections)
+  PendingCorrections, firstPending, lastPending = {}, 1, 0
+
+  if type(savedCorrections) ~= 'table' then return end
+
+  for correctionIdx = 1, #savedCorrections do
+    local correction = restoreCorrection(savedCorrections[correctionIdx])
+    if correction then enqueue(correction) end
+  end
+end
+
 ---@return boolean hasPending whether any correction is still waiting
 local function hasPending() return lastPending >= firstPending end
 
@@ -150,6 +216,8 @@ end
 return {
   discard = discard,
   hasPending = hasPending,
+  loadCorrections = loadCorrections,
   restoreLater = restoreLater,
+  saveCorrections = saveCorrections,
   step = step,
 }

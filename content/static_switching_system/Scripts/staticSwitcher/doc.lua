@@ -333,6 +333,15 @@
 ---@field rotation openmw.util.Transform?
 ---@field scale number?
 
+--- A pending correction as it is written to a save. A cell cannot be saved, so its ID is.
+---@class SSSSavedCorrection
+---@field object openmw.GObject
+---@field attemptsLeft integer
+---@field cellId string? ID of the cell to put the object back in
+---@field position openmw.util.Vector3?
+---@field rotation openmw.util.Transform?
+---@field scale number?
+
 --- Running state of one pass of rules over one object.
 ---@class SSSRuleExecution
 ---@field object openmw.GObject? object the rules were matched against
@@ -429,6 +438,7 @@
 ---@field objectDeleteQueue ObjectDeleteData[]?
 ---@field instanceModifiers SSSOnceCacheSaved?
 ---@field replacementChains SSSReplacementChainsSaved?
+---@field pendingCorrections SSSSavedCorrection[]? corrections still owed when the game was saved
 ---@field replacedObjectSet SSSReplacedObjectSet? legacy save data accepted only for migration when replacementChains is absent
 
 ---@class openmw.interfaces.StaticSwitcher_G

@@ -292,6 +292,7 @@ return {
         objectDeleteQueue = DeleteManager.queue,
         instanceModifiers = InstanceModifiers.saveOnceCache(),
         replacementChains = StaticReplacements.saveReplacementChains(),
+        pendingCorrections = ObjectCleanup.saveCorrections(),
       }
     end,
     ---@param data SSSSavedState?
@@ -301,6 +302,7 @@ return {
         DeleteManager.queue = {}
         InstanceModifiers.loadOnceCache()
         StaticReplacements.loadReplacementChains()
+        ObjectCleanup.loadCorrections()
         return
       end
 
@@ -313,6 +315,7 @@ return {
       end
       InstanceModifiers.loadOnceCache(data.instanceModifiers)
       StaticReplacements.loadReplacementChains(data.replacementChains, data.replacedObjectSet)
+      ObjectCleanup.loadCorrections(data.pendingCorrections)
 
       if not DeleteManager:queueIsEmpty() then UpdateFunction = processDeletions end
     end,

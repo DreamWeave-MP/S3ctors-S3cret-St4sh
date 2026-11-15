@@ -242,6 +242,10 @@ local moduleSources = {
           once = true,
         },
         {
+          conditions = { { record_id = 'evictee' } },
+          actions = { { delete = true } },
+        },
+        {
           conditions = { { record_id = 'sturdy' } },
           actions = {
             { replace = { crate = 1 } },
@@ -408,6 +412,10 @@ package.preload['openmw.world'] = function()
       return object
     end,
     createRecord = function() end,
+    getCellById = function(cellId)
+      if cellId ~= TEL_BRANORA.id then error(('no cell %s'):format(cellId)) end
+      return TEL_BRANORA
+    end,
     mwscript = {
       getGlobalVariables = function()
         return setmetatable({ gamehour = 12 }, {
@@ -467,6 +475,12 @@ deleteManagerUnderTest.addObjectToDeleteQueue = function(self, object, removeOrD
   return addObjectToDeleteQueue(self, object, removeOrDisable)
 end
 
+--- Objects in this test are tables, not engine userdata, so the check a loaded save is held to
+--- is pointed at what stands in for an object here.
+require('Scripts.staticSwitcher.util').isGObject = function(value)
+  return type(value) == 'table' and value.recordId ~= nil
+end
+
 local staticSwitcher = require 'Scripts.staticSwitcher.global'
 local handlers = staticSwitcher.engineHandlers
 local ruleStore = staticSwitcher.interface.objectModificationStore()
@@ -501,7 +515,7 @@ assert(countLogLines 'Skipped module scripts/staticswitcher/data/empty%.yaml' ==
 assert(ruleStore['scripts/staticswitcher/data/broken.yaml'] == nil)
 assert(ruleStore['scripts/staticswitcher/data/empty.yaml'] == nil)
 assert(#ruleStore['scripts/staticswitcher/data/mucksponge.yaml'].rules == 2)
-assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 24)
+assert(#ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules == 25)
 
 local keptRules = ruleStore['scripts/staticswitcher/data/rejected.yaml'].rules
 assert(#keptRules == 2, 'rules with unknown names or malformed patterns must be skipped')
@@ -575,7 +589,7 @@ assert(keptRules[2].conditions[1].cell == 'tel branora')
 assert(keptRules[1].actionHash ~= keptRules[2].actionHash)
 
 -- Lowercase single-entry keys survive load; mixed-case keys are lowered.
-local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[22]
+local trapRule = ruleStore['scripts/staticswitcher/data/pipeline.yaml'].rules[23]
 assert(trapRule.actions[1].trap[1].trap_fire00 == 1)
 assert(trapRule.actions[1].key[1].key_mixed == 1)
 assert(trapRule.actions[1].key[1].Key_Mixed == nil)
@@ -881,6 +895,63 @@ local removeCallsAfterBacklog = removeCalls
 runFrames(20)
 assert(removeCalls == removeCallsAfterBacklog, 'given-up removals were still being retried')
 
+-- A delayed deletion whose target is being moved when its turn comes waits for the target to
+-- land. A zero count is what a moving object reports, not proof that it is gone.
+local evictee = newObject('evictee', TEL_BRANORA)
+activate(evictee)
+runFrames(2)
+evictee.count = 0
+runFrames(4)
+evictee.count = 1
+runFrames(3)
+assert(evictee.count == 0, 'a deletion was dropped because its target was in transit')
+
+-- Corrections still owed when the game is saved are saved with it and carried out after
+-- loading: a removal, and a move back to a cell that is saved by ID.
+local ObjectCleanup = require 'Scripts.staticSwitcher.objectCleanup'
+
+local createdBeforeKeepsake = #createdObjects
+placementsBeforeFailure, removalsRefused = 0, true
+activate(newObject('litterer', TEL_BRANORA))
+runFrames(2)
+placementsBeforeFailure = nil
+
+local keepsake = createdObjects[createdBeforeKeepsake + 1]
+assert(keepsake.count == 1)
+
+local drifter = newObject('wanderer', TEL_BRANORA)
+drifter.arrivesSilently = true
+deleteQueueRaises = true
+activate(drifter)
+runFrames(1)
+deleteQueueRaises = false
+assert(drifter.scale == 2, 'the accepted move did not happen')
+
+local savedCorrections = handlers.onSave().pendingCorrections
+assert(#savedCorrections == 2)
+
+local savedRemoval, savedReturn = savedCorrections[1], savedCorrections[2]
+assert(savedRemoval.object == keepsake and savedRemoval.cellId == nil)
+assert(savedReturn.object == drifter and savedReturn.cellId == TEL_BRANORA.id)
+assert(savedReturn.cell == nil, 'a cell cannot be written to a save')
+
+ObjectCleanup.loadCorrections(nil)
+removalsRefused = false
+runFrames(4)
+assert(keepsake.count == 1 and drifter.scale == 2, 'corrections ran without having been loaded')
+
+ObjectCleanup.loadCorrections(savedCorrections)
+runFrames(4)
+assert(keepsake.count == 0, 'a saved removal was not carried out after loading')
+assert(drifter.scale == 1 and drifter.teleportCount == 2, 'a saved move back was not carried out')
+
+ObjectCleanup.loadCorrections {
+  'junk',
+  { object = 'not an object' },
+  { object = keepsake, cellId = 'nowhere' },
+}
+assert(not ObjectCleanup.hasPending(), 'a correction that cannot be carried out was kept')
+
 -- A delayed deletion the engine refuses is reported and dropped; the queue keeps working.
 local stubborn = newObject('condemned', TEL_BRANORA)
 activate(stubborn)
@@ -1028,8 +1099,8 @@ local liveAtStageSixty = findLiveObjects()
 assert(#liveAtStageSixty == 1 and liveAtStageSixty[1].recordId == 'flora_muckspunge_03')
 
 assert(
-  countLogLines '%[ERROR%] Skipped @' == 6,
-  'only the six deliberately failing passes may fail'
+  countLogLines '%[ERROR%] Skipped @' == 7,
+  'only the seven deliberately failing passes may fail'
 )
 
 print = realPrint

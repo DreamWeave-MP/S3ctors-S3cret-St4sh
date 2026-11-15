@@ -37,6 +37,19 @@ local activationHandlers = {}
 local itemUsageHandlers = {}
 local typedEnumerations, untypedEnumerations = 0, 0
 local nextObjectIndex = 0
+local recordingRaises = false
+
+--- OpenMW queues a move and applies it at the end of the frame; so do these stubs.
+local engineActions = {}
+
+local function applyEngineActions()
+  local actions = engineActions
+  engineActions = {}
+
+  for actionIndex = 1, #actions do
+    actions[actionIndex]()
+  end
+end
 
 local function newType(name)
   local objectType = { name = name, records = {} }
@@ -145,7 +158,7 @@ local function newObject(recordId, cell, objectType)
   end
   function fields.teleport(_, targetCell)
     if fields.refusesTeleport then error 'the engine refused the teleport' end
-    fields.cell = targetCell
+    engineActions[#engineActions + 1] = function() fields.cell = targetCell end
   end
   function fields.remove() fields.count = 0 end
 
@@ -213,6 +226,11 @@ local triggerModules = {
     local arrivalRule = probeRule('cell_enter', { { cell = 'Cell 5 5' } })
     arrivalRule.once = true
     arrivalRule.actions[1].call_interface.args = { 'arrival' }
+
+    local visitNineRule = probeRule('cell_enter', { { cell = 'cell 9 9' } })
+    visitNineRule.actions[1].call_interface.args = { 'entered-9' }
+    local visitTwelveRule = probeRule('cell_enter', { { cell = 'cell 12 12' } })
+    visitTwelveRule.actions[1].call_interface.args = { 'entered-12' }
 
     local pingRule = probeRule('custom:ping', { { record_id = 'bell' } })
     pingRule.actions[2] = { call_interface = { interface = 'TestProbe', ['function'] = 'refire' } }
@@ -286,6 +304,14 @@ local triggerModules = {
           actions = { { set_weather = { weather = 'storm', region = 'far region' } } },
         },
         probeRule('custom:indoors', { { region = 'far region' } }),
+        visitNineRule,
+        visitTwelveRule,
+        {
+          trigger = 'use',
+          conditions = { { used_item = '^relocator' } },
+          actions = { { teleport = { cell = { x = 12, y = 12 } } } },
+          once = true,
+        },
         {
           trigger = 'use',
           conditions = { { used_item = '^cursed' } },
@@ -442,6 +468,18 @@ local function loadStaticSwitcher(sources)
     if moduleName:find '^Scripts%.staticSwitcher%.' then package.loaded[moduleName] = nil end
   end
 
+  --- Recording a rule is the last thing a pass does, after its move has been accepted. Making
+  --- it fail shows what happens to a pass that goes wrong at that point.
+  local logger = require 'Scripts.staticSwitcher.logger'
+  local debugLog = logger.debug
+  logger.debug = function(formatString, ...)
+    if recordingRaises and formatString:find('once=true cached', 1, true) then
+      error 'a programming error after the move'
+    end
+
+    return debugLog(formatString, ...)
+  end
+
   return require 'Scripts.staticSwitcher.global'
 end
 
@@ -451,6 +489,7 @@ local function runFrames(frameCount, dt)
   for _ = 1, frameCount do
     simulationTime = simulationTime + dt
     handlers.onUpdate(dt)
+    applyEngineActions()
   end
 end
 
@@ -885,6 +924,36 @@ assert(countProbes 'sent-west' == 1, 'a failed teleport left a stale arrival to 
 player.cell = HOME_CELL
 settle()
 
+-- A player moved by a pass that then failed turns up at the destination before being put
+-- back. Neither that arrival nor the return is a cell entry. The pass is started by using an
+-- item, outside the frame's own poll, so the arrival is there to be seen on the next poll.
+player.cell = getExteriorCell(9, 9)
+settle()
+assert(countProbes 'entered-9' == 1)
+
+recordingRaises = true
+simulationTime = simulationTime + 1
+onItemUsed(newObject('relocator', nil, openmwTypes.Miscellaneous), player)
+recordingRaises = false
+applyEngineActions()
+assert(player.cell == getExteriorCell(12, 12), 'the accepted move did not happen')
+assert(countLogLines '%[ERROR%] Skipped @%d+ %(player%)' == 1)
+
+runFrames(1, 0.5)
+assert(countProbes 'entered-12' == 0, 'the intermediate arrival was treated as an entry')
+assert(player.cell == getExteriorCell(9, 9), 'the player was not put back')
+
+runFrames(8, 0.5)
+assert(countProbes 'entered-9' == 1, 'being put back was treated as an entry')
+assert(countProbes 'entered-12' == 0)
+
+player.cell = getExteriorCell(12, 12)
+runFrames(2, 0.5)
+assert(countProbes 'entered-12' == 1, 'entries stopped counting after the player was put back')
+
+player.cell = HOME_CELL
+settle()
+
 -- One actor that cannot be watched does not end death watching for the rest.
 local unwatchable = newObject('rat', HOME_CELL, openmwTypes.Creature)
 unwatchable.refusesScripts = true
@@ -897,7 +966,7 @@ handlers.onObjectActive(laterRat)
 assert(laterRat:hasScript(DEATH_WATCHER_SCRIPT))
 assert(countLogLines '%[WARN%] The death of rat cannot be watched' == 1)
 
-assert(countLogLines '%[ERROR%]' == 0)
+assert(countLogLines '%[ERROR%]' == 1, 'only the deliberately failing pass may fail')
 
 print = realPrint
 print 'SSS trigger tests passed'

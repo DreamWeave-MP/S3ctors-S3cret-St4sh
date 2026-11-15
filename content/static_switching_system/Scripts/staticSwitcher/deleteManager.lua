@@ -8,6 +8,9 @@ end
 
 local TICKS_TO_DELETE = 3
 
+--- How many frames delayed work waits for a target that reports no count before letting go.
+local MAX_TRANSIT_WAITS = 8
+
 local next, pcall, tostring = next, pcall, tostring
 local remove = table.remove
 local StrFormat = string.format
@@ -26,16 +29,27 @@ local function addObjectToDeleteQueue(self, object, removeOrDisable)
   }
 end
 
+--- An object being moved reports a count of zero until the move lands at the end of the
+--- frame, exactly as a removed object does. A target with no count is therefore waited for,
+--- for a while, before its entry is let go.
 ---@param objectInfo ObjectDeleteData
+---@return boolean isFinished false while the work still has to wait for its target
 local function finishDelayedWork(objectInfo)
   local object = objectInfo.object
-  if not object:isValid() or object.count < 1 then return end
+  if not object:isValid() then return true end
+
+  if object.count < 1 then
+    objectInfo.transitWaits = (objectInfo.transitWaits or 0) + 1
+    return objectInfo.transitWaits > MAX_TRANSIT_WAITS
+  end
 
   if objectInfo.removeOrDisable then
     object:remove()
   else
     object.enabled = false
   end
+
+  return true
 end
 
 --- Processes delayed object deletion/disable work and removes completed queue entries.
@@ -48,10 +62,11 @@ local function processDeleteQueue(self)
     if objectInfo.ticks > 0 then
       objectInfo.ticks = objectInfo.ticks - 1
     else
-      local wasFinished, refusal = pcall(finishDelayedWork, objectInfo)
+      local didRun, isFinished = pcall(finishDelayedWork, objectInfo)
 
-      if not wasFinished then
-        local warning = StrFormat('A queued removal was refused and dropped: %s', tostring(refusal))
+      if not didRun then
+        local warning =
+          StrFormat('A queued removal was refused and dropped: %s', tostring(isFinished))
 
         if not IssuedWarnings[warning] then
           IssuedWarnings[warning] = true
@@ -59,7 +74,7 @@ local function processDeleteQueue(self)
         end
       end
 
-      remove(self.queue, i)
+      if not didRun or isFinished then remove(self.queue, i) end
     end
   end
 end

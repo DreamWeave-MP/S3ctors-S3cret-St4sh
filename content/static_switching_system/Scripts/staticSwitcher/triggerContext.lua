@@ -55,11 +55,14 @@ end
 ---@field item openmw.GObject? item used in the `use` trigger being dispatched
 ---@field expectedWeatherIds string[] weathers SSS itself requested for the player's region and has not yet seen arrive, oldest first
 ---@field expectedPlayerCellId string? cell an SSS teleport is sending the player to
+---@field playerReturnCellId string? cell the player is being put back in after an abandoned pass moved them
+---@field playerReturnPollsLeft integer cell polls left before the player is taken to have settled
 local TriggerContext = {
   ACTIVE = 'active',
   ACTOR_TRIGGERS = ACTOR_TRIGGERS,
   CUSTOM_PREFIX = CUSTOM_PREFIX,
   expectedWeatherIds = {},
+  playerReturnPollsLeft = 0,
   PLAYER_SUBJECT_TRIGGERS = PLAYER_SUBJECT_TRIGGERS,
   WORLD_TRIGGERS = WORLD_TRIGGERS,
   isKnownTrigger = isKnownTrigger,
