@@ -110,9 +110,7 @@ local function recipe(name, options) return named('recipe', name, options) end
 local function isComponent(value)
   if Type(value) ~= 'table' or not merge.isPlainTable(value) then return false end
 
-  return Type(value.component) == 'string'
-    and value.component ~= ''
-    and value.recipe == nil
+  return Type(value.component) == 'string' and value.component ~= '' and value.recipe == nil
 end
 
 ---@param value H3UI.LuaValue
@@ -120,9 +118,7 @@ end
 local function isRecipe(value)
   if Type(value) ~= 'table' or not merge.isPlainTable(value) then return false end
 
-  return Type(value.recipe) == 'string'
-    and value.recipe ~= ''
-    and value.component == nil
+  return Type(value.recipe) == 'string' and value.recipe ~= '' and value.component == nil
 end
 
 ---@param value number

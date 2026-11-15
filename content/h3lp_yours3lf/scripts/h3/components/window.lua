@@ -126,181 +126,193 @@ local function window(options)
   end
 
   if canMove or resizable then
-    eventHandlers.add(events, 'mousePress',
+    eventHandlers.add(
+      events,
+      'mousePress',
       ---@param event openmw.ui.MouseEvent?
       ---@param layout openmw.ui.Layout
       ---@return boolean?
       function(event, layout)
-      if not event or event.button ~= 1 then return end
+        if not event or event.button ~= 1 then return end
 
-      local size = layout.props.size
-      local width = size.x
-      local height = size.y
-      local horizontalHandle = MathMin(resizeHandle, width * 0.5)
-      local verticalHandle = MathMin(resizeHandle, height * 0.5)
-      local offset = event.offset
+        local size = layout.props.size
+        local width = size.x
+        local height = size.y
+        local horizontalHandle = MathMin(resizeHandle, width * 0.5)
+        local verticalHandle = MathMin(resizeHandle, height * 0.5)
+        local offset = event.offset
 
-      resizeLeft = offset.x <= horizontalHandle
-      resizeRight = not resizeLeft and offset.x >= width - horizontalHandle
-      resizeTop = offset.y <= verticalHandle
-      resizeBottom = not resizeTop and offset.y >= height - verticalHandle
+        resizeLeft = offset.x <= horizontalHandle
+        resizeRight = not resizeLeft and offset.x >= width - horizontalHandle
+        resizeTop = offset.y <= verticalHandle
+        resizeBottom = not resizeTop and offset.y >= height - verticalHandle
 
-      if resizable and (resizeLeft or resizeRight or resizeTop or resizeBottom) then
-        resizing = true
-      elseif canMove and offset.y >= captionTop and offset.y <= captionBottom then
-        moving = true
-      else
-        return
-      end
-
-      local mousePosition = event.position
-      local position = layout.props.position
-      startMouseX = mousePosition.x
-      startMouseY = mousePosition.y
-      startPositionX = position.x
-      startPositionY = position.y
-      startWidth = width
-      startHeight = height
-      currentPositionX = startPositionX
-      currentPositionY = startPositionY
-      currentWidth = width
-      currentHeight = height
-
-      if clampToScreen then
-        local sizeReference = getReferenceSize(layout, referenceSize)
-        interactionReferenceWidth = sizeReference.x
-        interactionReferenceHeight = sizeReference.y
-      end
-
-      return true
-    end)
-
-    eventHandlers.add(events, 'mouseMove',
-      ---@param event openmw.ui.MouseEvent?
-      ---@param layout openmw.ui.Layout
-      ---@return boolean?
-      function(event, layout)
-      if not event or (not moving and not resizing) then return end
-      if event.button ~= 1 then
-        finishInteraction()
-        return
-      end
-
-      local mousePosition = event.position
-      local deltaX = mousePosition.x - startMouseX
-      local deltaY = mousePosition.y - startMouseY
-      local positionX = startPositionX
-      local positionY = startPositionY
-      local width = startWidth
-      local height = startHeight
-
-      if moving then
-        positionX = positionX + deltaX
-        positionY = positionY + deltaY
-      else
-        if resizeLeft then
-          width = startWidth - deltaX
-        elseif resizeRight then
-          width = startWidth + deltaX
+        if resizable and (resizeLeft or resizeRight or resizeTop or resizeBottom) then
+          resizing = true
+        elseif canMove and offset.y >= captionTop and offset.y <= captionBottom then
+          moving = true
+        else
+          return
         end
 
-        if resizeTop then
-          height = startHeight - deltaY
-        elseif resizeBottom then
-          height = startHeight + deltaY
-        end
+        local mousePosition = event.position
+        local position = layout.props.position
+        startMouseX = mousePosition.x
+        startMouseY = mousePosition.y
+        startPositionX = position.x
+        startPositionY = position.y
+        startWidth = width
+        startHeight = height
+        currentPositionX = startPositionX
+        currentPositionY = startPositionY
+        currentWidth = width
+        currentHeight = height
 
-        width = UtilClamp(width, minimumWidth, maximumWidth)
-        height = UtilClamp(height, minimumHeight, maximumHeight)
-
-        if resizeLeft then positionX = startPositionX + startWidth - width end
-        if resizeTop then positionY = startPositionY + startHeight - height end
-      end
-
-      if clampToScreen then
-        local referenceWidth = interactionReferenceWidth
-        local referenceHeight = interactionReferenceHeight
-        if not referenceWidth then
+        if clampToScreen then
           local sizeReference = getReferenceSize(layout, referenceSize)
-          referenceWidth = sizeReference.x
-          referenceHeight = sizeReference.y
+          interactionReferenceWidth = sizeReference.x
+          interactionReferenceHeight = sizeReference.y
         end
+
+        return true
+      end
+    )
+
+    eventHandlers.add(
+      events,
+      'mouseMove',
+      ---@param event openmw.ui.MouseEvent?
+      ---@param layout openmw.ui.Layout
+      ---@return boolean?
+      function(event, layout)
+        if not event or (not moving and not resizing) then return end
+        if event.button ~= 1 then
+          finishInteraction()
+          return
+        end
+
+        local mousePosition = event.position
+        local deltaX = mousePosition.x - startMouseX
+        local deltaY = mousePosition.y - startMouseY
+        local positionX = startPositionX
+        local positionY = startPositionY
+        local width = startWidth
+        local height = startHeight
 
         if moving then
-          positionX = UtilClamp(positionX, 0, MathMax(0, referenceWidth - width))
-          positionY = UtilClamp(positionY, 0, MathMax(0, referenceHeight - height))
+          positionX = positionX + deltaX
+          positionY = positionY + deltaY
         else
           if resizeLeft then
-            positionX =
-              UtilClamp(positionX, 0, MathMax(0, startPositionX + startWidth - minimumWidth))
-            width = startPositionX + startWidth - positionX
-          else
-            width = MathMin(width, MathMax(0, referenceWidth - positionX))
+            width = startWidth - deltaX
+          elseif resizeRight then
+            width = startWidth + deltaX
           end
 
           if resizeTop then
-            positionY =
-              UtilClamp(positionY, 0, MathMax(0, startPositionY + startHeight - minimumHeight))
-            height = startPositionY + startHeight - positionY
-          else
-            height = MathMin(height, MathMax(0, referenceHeight - positionY))
+            height = startHeight - deltaY
+          elseif resizeBottom then
+            height = startHeight + deltaY
           end
 
           width = UtilClamp(width, minimumWidth, maximumWidth)
           height = UtilClamp(height, minimumHeight, maximumHeight)
+
+          if resizeLeft then positionX = startPositionX + startWidth - width end
+          if resizeTop then positionY = startPositionY + startHeight - height end
         end
-      end
 
-      local props = layout.props
-      if moving then
-        if currentPositionX == positionX and currentPositionY == positionY then return true end
+        if clampToScreen then
+          local referenceWidth = interactionReferenceWidth
+          local referenceHeight = interactionReferenceHeight
+          if not referenceWidth then
+            local sizeReference = getReferenceSize(layout, referenceSize)
+            referenceWidth = sizeReference.x
+            referenceHeight = sizeReference.y
+          end
 
-        currentPositionX = positionX
-        currentPositionY = positionY
-        props.position = UtilVector2(positionX, positionY)
+          if moving then
+            positionX = UtilClamp(positionX, 0, MathMax(0, referenceWidth - width))
+            positionY = UtilClamp(positionY, 0, MathMax(0, referenceHeight - height))
+          else
+            if resizeLeft then
+              positionX =
+                UtilClamp(positionX, 0, MathMax(0, startPositionX + startWidth - minimumWidth))
+              width = startPositionX + startWidth - positionX
+            else
+              width = MathMin(width, MathMax(0, referenceWidth - positionX))
+            end
 
-        if onMove then onMove(props.position) end
+            if resizeTop then
+              positionY =
+                UtilClamp(positionY, 0, MathMax(0, startPositionY + startHeight - minimumHeight))
+              height = startPositionY + startHeight - positionY
+            else
+              height = MathMin(height, MathMax(0, referenceHeight - positionY))
+            end
+
+            width = UtilClamp(width, minimumWidth, maximumWidth)
+            height = UtilClamp(height, minimumHeight, maximumHeight)
+          end
+        end
+
+        local props = layout.props
+        if moving then
+          if currentPositionX == positionX and currentPositionY == positionY then return true end
+
+          currentPositionX = positionX
+          currentPositionY = positionY
+          props.position = UtilVector2(positionX, positionY)
+
+          if onMove then onMove(props.position) end
+          return true
+        end
+
+        local positionChanged = currentPositionX ~= positionX or currentPositionY ~= positionY
+        local sizeChanged = currentWidth ~= width or currentHeight ~= height
+        if not positionChanged and not sizeChanged then return true end
+
+        if positionChanged then
+          currentPositionX = positionX
+          currentPositionY = positionY
+          props.position = UtilVector2(positionX, positionY)
+        end
+
+        if sizeChanged then
+          currentWidth = width
+          currentHeight = height
+          props.size = UtilVector2(width, height)
+        end
+
+        if onResize then onResize(props.size, props.position) end
         return true
       end
+    )
 
-      local positionChanged = currentPositionX ~= positionX or currentPositionY ~= positionY
-      local sizeChanged = currentWidth ~= width or currentHeight ~= height
-      if not positionChanged and not sizeChanged then return true end
-
-      if positionChanged then
-        currentPositionX = positionX
-        currentPositionY = positionY
-        props.position = UtilVector2(positionX, positionY)
-      end
-
-      if sizeChanged then
-        currentWidth = width
-        currentHeight = height
-        props.size = UtilVector2(width, height)
-      end
-
-      if onResize then onResize(props.size, props.position) end
-      return true
-    end)
-
-    eventHandlers.add(events, 'mouseRelease',
+    eventHandlers.add(
+      events,
+      'mouseRelease',
       ---@param event openmw.ui.MouseEvent?
       ---@return boolean?
       function(event)
-      if not event or event.button ~= 1 or (not moving and not resizing) then return end
+        if not event or event.button ~= 1 or (not moving and not resizing) then return end
 
-      finishInteraction()
-      return true
-    end)
+        finishInteraction()
+        return true
+      end
+    )
 
-    eventHandlers.add(events, 'focusLoss',
+    eventHandlers.add(
+      events,
+      'focusLoss',
       ---@return boolean?
       function()
-      if not moving and not resizing then return end
+        if not moving and not resizing then return end
 
-      finishInteraction()
-      return true
-    end)
+        finishInteraction()
+        return true
+      end
+    )
   end
 
   local content = {

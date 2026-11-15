@@ -1,5 +1,5 @@
 ---@omw-context global
-local S3S = require 'openmw.storage'.globalSection 'S3lfColdStorage'
+local S3S = require('openmw.storage').globalSection 'S3lfColdStorage'
 
 ---@alias KeyBehavior
 ---| 0 # Ignored

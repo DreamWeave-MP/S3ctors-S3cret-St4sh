@@ -9,14 +9,12 @@ local function simpleHash(str)
   for i = 1, #str do
     hash = (hash * 31 + string.byte(str, i)) % 2 ^ 32
   end
-  return string.format("%08x", hash)
+  return string.format('%08x', hash)
 end
 
 local function sortTableValue(a, b)
   local ta, tb = type(a), type(b)
-  if ta == tb then
-    return tostring(a) < tostring(b)
-  end
+  if ta == tb then return tostring(a) < tostring(b) end
   return ta < tb
 end
 
@@ -35,10 +33,10 @@ local function tableToHash(t, visited)
     local valueRep
     local valueType = type(value)
 
-    if valueType == "table" then
+    if valueType == 'table' then
       valueRep = tableToHash(value, visited)
-    elseif valueType == "number" then
-      valueRep = string.format("num:%.15g", value)
+    elseif valueType == 'number' then
+      valueRep = string.format('num:%.15g', value)
     elseif valueType == 'userdata' then
       local typeName = UserdataTypeName(value)
       if typeName then
@@ -50,10 +48,10 @@ local function tableToHash(t, visited)
       valueRep = tostring(value)
     end
 
-    table.insert(content, tostring(key) .. "=" .. valueRep)
+    table.insert(content, tostring(key) .. '=' .. valueRep)
   end
 
-  return simpleHash(table.concat(content, ";"))
+  return simpleHash(table.concat(content, ';'))
 end
 
 return tableToHash

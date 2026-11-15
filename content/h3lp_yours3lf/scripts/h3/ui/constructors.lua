@@ -41,9 +41,9 @@ end
 local function componentConstructor(name, component)
   if name == 'text' then
     return
-      ---@param options? H3UI.TextOptions|string|number
-      ---@return openmw.ui.Layout
-      function(options)
+    ---@param options? H3UI.TextOptions|string|number
+    ---@return openmw.ui.Layout
+    function(options)
       local optionType = Type(options)
 
       if optionType == 'string' or optionType == 'number' then
@@ -57,10 +57,10 @@ local function componentConstructor(name, component)
 
   if name == 'spacer' then
     return
-      ---@param options? H3UI.SpacerOptions|number
-      ---@param height? number
-      ---@return openmw.ui.Layout
-      function(options, height)
+    ---@param options? H3UI.SpacerOptions|number
+    ---@param height? number
+    ---@return openmw.ui.Layout
+    function(options, height)
       if Type(options) == 'number' then
         local width = options
         options = { width = width, height = height or width }
@@ -72,9 +72,9 @@ local function componentConstructor(name, component)
   end
 
   return
-    ---@param options? table
-    ---@return openmw.ui.Layout
-    function(options) return component(name, positionalChildren(options) or {}) end
+  ---@param options? table
+  ---@return openmw.ui.Layout
+  function(options) return component(name, positionalChildren(options) or {}) end
 end
 
 ---@param name string
@@ -82,9 +82,9 @@ end
 ---@return H3UI.RecipeConstructor
 local function recipeConstructor(name, recipe)
   return
-    ---@param options? table
-    ---@return openmw.ui.Layout
-    function(options) return recipe(name, positionalChildren(options) or {}) end
+  ---@param options? table
+  ---@return openmw.ui.Layout
+  function(options) return recipe(name, positionalChildren(options) or {}) end
 end
 
 ---@param target table

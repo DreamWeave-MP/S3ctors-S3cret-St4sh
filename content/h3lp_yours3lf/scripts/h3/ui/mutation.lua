@@ -28,9 +28,9 @@ local function invalidateAfter(callback, invalidate)
   if not callback then return invalidate end
 
   return
-    ---@param ... H3UI.LuaValue
-    ---@return H3UI.LuaValue
-    function(...)
+  ---@param ... H3UI.LuaValue
+  ---@return H3UI.LuaValue
+  function(...)
     local result = callback(...)
 
     invalidate()

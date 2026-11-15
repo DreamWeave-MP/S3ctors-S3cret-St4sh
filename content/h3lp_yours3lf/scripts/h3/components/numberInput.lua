@@ -76,11 +76,14 @@ local function numberInput(options)
   end
 
   eventHandlers.add(events, 'textChanged', updateText)
-  eventHandlers.add(events, 'focusLoss',
+  eventHandlers.add(
+    events,
+    'focusLoss',
     ---@param _? openmw.ui.MouseEvent
     ---@param layout openmw.ui.Layout
     ---@return nil
-    function(_, layout) commit(layout) end)
+    function(_, layout) commit(layout) end
+  )
 
   return textInput {
     name = options.name,

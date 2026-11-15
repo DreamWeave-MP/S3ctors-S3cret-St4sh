@@ -21,18 +21,19 @@ local function new(onActivate)
       ---@param layout openmw.ui.Layout
       ---@return boolean
       function(event, layout)
-      local target = targets[layout]
-      if not target then return true end
+        local target = targets[layout]
+        if not target then return true end
 
-      local previousResult
-      if target.callback then previousResult = target.callback(event, layout) end
+        local previousResult
+        if target.callback then previousResult = target.callback(event, layout) end
 
-      local result = onActivate(target.item, target.index, layout)
+        local result = onActivate(target.item, target.index, layout)
 
-      if previousResult ~= nil then return previousResult end
-      if result ~= nil then return result end
-      return true
-    end),
+        if previousResult ~= nil then return previousResult end
+        if result ~= nil then return result end
+        return true
+      end
+    ),
   }
 end
 

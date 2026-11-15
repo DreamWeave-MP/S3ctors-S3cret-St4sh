@@ -11,7 +11,8 @@ return {
     local sqrtz = floor(sqrt(z))
     local sqz = sqrtz * sqrtz
 
-    local squareFirst = (z - sqz) >= sqrtz; local result1, result2
+    local squareFirst = (z - sqz) >= sqrtz
+    local result1, result2
 
     if squareFirst then
       result1, result2 = sqrtz, z - sqz - sqrtz
@@ -22,5 +23,5 @@ return {
     local xx = result1 % 2 == 0 and result1 / 2 or (result1 + 1) / -2
     local yy = result2 % 2 == 0 and result2 / 2 or (result2 + 1) / -2
     return xx, yy
-  end
+  end,
 }

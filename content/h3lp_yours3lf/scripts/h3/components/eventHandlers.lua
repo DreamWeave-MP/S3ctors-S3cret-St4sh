@@ -19,14 +19,15 @@ local function add(events, name, handler, defaultResult)
     ---@param ... H3UI.LuaValue
     ---@return boolean?
     function(...)
-    local result = handler(...)
-    if previous then
-      local previousResult = previous(...)
-      if previousResult ~= nil then return previousResult end
+      local result = handler(...)
+      if previous then
+        local previousResult = previous(...)
+        if previousResult ~= nil then return previousResult end
+      end
+      if result ~= nil then return result end
+      return defaultResult
     end
-    if result ~= nil then return result end
-    return defaultResult
-  end)
+  )
 end
 
 return {

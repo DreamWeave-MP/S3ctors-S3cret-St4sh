@@ -13,16 +13,19 @@
 ---  -- in onUpdate:
 ---  if tick() then ... end
 
-local core = require('openmw.core')
+local core = require 'openmw.core'
 
 ---@alias EveryTick fun(): boolean
 
 ---@param simulation? boolean Omit or false for real time; true for simulation time.
 ---@return fun(): number clock
 local function clock_for_simulation(simulation)
-    assert(simulation == nil or type(simulation) == 'boolean', 'every: simulation flag must be boolean')
-    if simulation then return core.getSimulationTime end
-    return core.getRealTime
+  assert(
+    simulation == nil or type(simulation) == 'boolean',
+    'every: simulation flag must be boolean'
+  )
+  if simulation then return core.getSimulationTime end
+  return core.getRealTime
 end
 
 ---Creates a timer function that fires true on every completed interval.
@@ -31,22 +34,21 @@ end
 ---@param simulation? boolean Omit or false for real time; true for simulation time.
 ---@return EveryTick tick One call returns at most one true.
 local function every(interval, simulation)
-    assert(type(interval) == 'number' and interval > 0,
-        'every: interval must be > 0')
-    local clock = clock_for_simulation(simulation)
-    local elapsed = 0
-    local last = clock()
-    ---@return boolean fired
-    return function()
-        local now = clock()
-        elapsed = elapsed + now - last
-        last = now
-        if elapsed >= interval then
-            elapsed = elapsed % interval
-            return true
-        end
-        return false
+  assert(type(interval) == 'number' and interval > 0, 'every: interval must be > 0')
+  local clock = clock_for_simulation(simulation)
+  local elapsed = 0
+  local last = clock()
+  ---@return boolean fired
+  return function()
+    local now = clock()
+    elapsed = elapsed + now - last
+    last = now
+    if elapsed >= interval then
+      elapsed = elapsed % interval
+      return true
     end
+    return false
+  end
 end
 
 return every

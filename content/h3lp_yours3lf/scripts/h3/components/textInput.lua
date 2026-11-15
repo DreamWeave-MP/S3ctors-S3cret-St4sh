@@ -57,14 +57,18 @@ local function textInput(options)
   end
 
   if options.onChange then
-    eventHandlers.add(events, 'textChanged',
+    eventHandlers.add(
+      events,
+      'textChanged',
       ---@param value string
       ---@param layout openmw.ui.Layout
       ---@return boolean?
       function(value, layout)
-      layout.props.text = value
-      return options.onChange(value, layout)
-    end, true)
+        layout.props.text = value
+        return options.onChange(value, layout)
+      end,
+      true
+    )
   end
   if options.onCommit then
     eventHandlers.add(

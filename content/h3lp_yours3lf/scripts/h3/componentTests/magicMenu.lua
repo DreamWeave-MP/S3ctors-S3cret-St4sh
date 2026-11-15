@@ -150,9 +150,8 @@ end
 ---@param state? H3ComponentTest.MagicState
 ---@return openmw.ui.Layout
 local function magicMenu(invalidate, rebuild, state)
-  rebuild = rebuild or
-    ---@return nil
-    function() end
+  rebuild = rebuild ---@return nil
+    or function() end
   state = state or {}
   state.query = state.query or ''
   state.deleted = state.deleted or {}
@@ -177,11 +176,12 @@ local function magicMenu(invalidate, rebuild, state)
     ---@param layout openmw.ui.Layout
     ---@return boolean
     function(event, layout)
-    local item = activation.targets[layout]
-    if not item then return true end
-    selectSpell(item.name, layout)
-    return true
-  end)
+      local item = activation.targets[layout]
+      if not item then return true end
+      selectSpell(item.name, layout)
+      return true
+    end
+  )
 
   ---@return openmw.ui.Layout
   local function buildListBody()

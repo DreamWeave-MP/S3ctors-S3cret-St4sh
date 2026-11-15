@@ -49,15 +49,18 @@ local function pinButton(options)
     end
   end
 
-  eventHandlers.add(events, 'mouseClick',
+  eventHandlers.add(
+    events,
+    'mouseClick',
     ---@param _ openmw.ui.MouseEvent
     ---@param layout openmw.ui.Layout
     ---@return boolean
     function(_, layout)
-    pinned = not pinned
-    chrome.applyCompatibleSkin(layout, pinned and downSkin or upSkin, tint, alpha)
-    if onToggle then onToggle(pinned) end
-  end)
+      pinned = not pinned
+      chrome.applyCompatibleSkin(layout, pinned and downSkin or upSkin, tint, alpha)
+      if onToggle then onToggle(pinned) end
+    end
+  )
 
   return chrome.frame {
     skin = skin,

@@ -419,7 +419,9 @@ local function initializeSettings()
   state.initialized = true
 
   local explicitTheme = settingValue 'theme'
-  if Type(explicitTheme) == 'string' and validPreset(explicitTheme) then state.lastPresetId = explicitTheme end
+  if Type(explicitTheme) == 'string' and validPreset(explicitTheme) then
+    state.lastPresetId = explicitTheme
+  end
   invalidate()
 
   async:newUnsavableSimulationTimer(0, canonicalizeStorage)
@@ -545,21 +547,23 @@ local function scheduleThemeUpdate(id, expectedTheme)
   if state.themeUpdateScheduled then return end
 
   state.themeUpdateScheduled = true
-  async:newUnsavableSimulationTimer(0,
+  async:newUnsavableSimulationTimer(
+    0,
     ---@return nil
     function()
-    state.themeUpdateScheduled = false
-    local pending = state.pendingTheme
-    state.pendingTheme = nil
-    if not pending or settingValue 'theme' ~= pending.expectedTheme then return end
+      state.themeUpdateScheduled = false
+      local pending = state.pendingTheme
+      state.pendingTheme = nil
+      if not pending or settingValue 'theme' ~= pending.expectedTheme then return end
 
-    if pending.id == CustomThemeId then
-      state.section:set('theme', CustomThemeId)
-      restoreCustomPalette()
-    elseif validPreset(pending.id) then
-      writePreset(pending.id)
+      if pending.id == CustomThemeId then
+        state.section:set('theme', CustomThemeId)
+        restoreCustomPalette()
+      elseif validPreset(pending.id) then
+        writePreset(pending.id)
+      end
     end
-  end)
+  )
 end
 
 ---@param _ openmw.storage.StorageSection
@@ -570,7 +574,9 @@ local function onStorageChanged(_, key)
 
   if key == 'theme' then
     local selected = settingValue 'theme'
-    if Type(selected) == 'string' and validPreset(selected) then scheduleThemeUpdate(selected, selected) end
+    if Type(selected) == 'string' and validPreset(selected) then
+      scheduleThemeUpdate(selected, selected)
+    end
   end
 end
 
