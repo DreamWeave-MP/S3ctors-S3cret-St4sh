@@ -17,3 +17,26 @@ file_group_id = "3324658"
 [[releases]]
 version = "1.0"
 date = 2026-09-11
+
+[[releases]]
+version = "1.1"
+date = 2026-11-14
+summary = "Rules can now run on triggers other than an object becoming active, and can change the weather."
+added = [
+  "Rule triggers: journal, hour, day, weather, cell_enter, activate, drop, place, use, death, and custom triggers fired by other mods.",
+  "The by_player and used_item conditions for interaction triggers.",
+  "The set_weather action.",
+  "The StaticSwitcher_G interface is version 6 and adds trigger(); the StaticSwitcherTrigger global event does the same from any script.",
+]
+changed = [
+  "The cell condition matches case-insensitively.",
+  "A rule with an unknown condition, action or trigger name, a malformed range, or an unknown transform_type is skipped with a warning instead of being loaded without it.",
+  "once: true follows the object a rule replaces with, and is recorded by where each effect lives rather than by whether any action reported success.",
+  "A module that cannot be read or parsed is skipped instead of stopping every module from loading.",
+]
+fixed = [
+  "An item picked up while still queued no longer jams the queue and spams the log.",
+  "Two rules that swap an object back and forth no longer replace it forever.",
+  "trap, key and global_value entries with lowercase names are no longer discarded when a module loads.",
+  "A queued deletion the engine refuses no longer raises on every frame.",
+]
