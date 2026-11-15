@@ -6,7 +6,7 @@ versioning = "decimal"
 documentation = "@/h3lp_yours3lf/docs/_index.md"
 
 [runtimes]
-openmw = "*"
+openmw = ">=0.52"
 
 [openmw]
 content_files = ["H3lp Yours3lf.esp"]
